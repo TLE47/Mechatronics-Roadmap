@@ -42,6 +42,9 @@ flowchart LR
 
 ## Learn
 
+<!-- figure: datasheet-window | Min, typ and max are a band the part has to stay inside, not three unrelated numbers. -->
+
+
 ### Idea 1: Reading datasheet specification tables and unit columns
 - **Primary resource:** [SparkFun Tutorials — How to Read a Schematic & Datasheet Basics](https://learn.sparkfun.com/tutorials/how-to-read-a-schematic/all) `[HTTP 200 — Verified by scripts/check_links.py]`
   - **What to read:** Read exact headings **`Overview`** and **`Name Designators and Values`**.

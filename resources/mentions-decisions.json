@@ -6,7 +6,7 @@
       "concept": "four_layer_pcb_ground_plane_stackup",
       "decision": "keep",
       "core": "stackup",
-      "lines": 9,
+      "lines": 11,
       "sections": [
         "1. Why it matters",
         "2. Intuition first",

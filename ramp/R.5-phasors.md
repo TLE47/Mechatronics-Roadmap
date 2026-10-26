@@ -44,6 +44,9 @@ flowchart LR
 
 ## Learn
 
+<!-- figure: complex-plane | A phasor is a point on the unit circle; adding them is adding arrows. -->
+
+
 ### Idea 1: A rotation can be carried by one number with two parts, and multiplying by a unit-length one adds angles while keeping lengths
 - **Primary resource:** [Wikipedia — Complex number](https://en.wikipedia.org/wiki/Complex_number)
   - **What to read:** The lead section and the `Multiplication` subsection, where lengths multiply and angles add.

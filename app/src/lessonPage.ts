@@ -23,8 +23,12 @@
  * Bumped to 3 when `route` blocks arrived (the page's own Mermaid `flowchart`, drawn as numbered
  * steps). Same rule: a version 2 payload has no route and a version 3 one whose routes were dropped
  * look identical once blocks are filtered, so the shape is named rather than guessed.
+ *
+ * Bumped to 4 when `graph` blocks arrived: a branching flowchart is now drawn as the graph it is,
+ * not dropped for being un-chainable. A version 3 payload has no graphs, and a page whose graphs
+ * were dropped looks the same as one that never had a branching map.
  */
-export const LESSON_PAGE_VERSION = 3;
+export const LESSON_PAGE_VERSION = 4;
 
 export type ReaderCodeLanguage = string;
 
@@ -48,7 +52,18 @@ export type ReaderBlock =
    * The page's own route: its Mermaid `flowchart` when it is a single chain, already flattened into
    * ordered steps. Drawn vertically (`Diagram`'s `route` kind), because the labels are page titles.
    */
-  | { t: 'route'; steps: string[]; caption?: string };
+  | { t: 'route'; steps: string[]; caption?: string }
+  /**
+   * The page's own map when its flowchart branches: the nodes and the arrows between them, drawn as
+   * a graph. A line and a fan-out are different diagrams, so they are different blocks.
+   */
+  | {
+      t: 'graph';
+      direction: 'LR' | 'TD';
+      nodes: { id: string; label: string }[];
+      edges: { from: string; to: string; label?: string }[];
+      caption?: string;
+    };
 
 export interface LessonPage {
   v: number;
@@ -106,6 +121,25 @@ function isBlock(value: unknown): value is ReaderBlock {
         block.steps.length >= 2 &&
         block.steps.every((step) => isText(step) && step.trim().length > 0)
       );
+    case 'graph': {
+      const nodes = block.nodes;
+      const edges = block.edges;
+      if (block.direction !== 'LR' && block.direction !== 'TD') return false;
+      if (!Array.isArray(nodes) || nodes.length < 2 || nodes.length > 40) return false;
+      if (!Array.isArray(edges) || edges.length < 1 || edges.length > 60) return false;
+      const ids = new Set<string>();
+      for (const node of nodes) {
+        if (!node || typeof node !== 'object') return false;
+        const { id, label } = node as { id?: unknown; label?: unknown };
+        if (!isText(id) || !/^[A-Za-z0-9_.-]+$/.test(id) || !isText(label) || !label.trim()) return false;
+        ids.add(id);
+      }
+      return edges.every((edge) => {
+        if (!edge || typeof edge !== 'object') return false;
+        const { from, to, label } = edge as { from?: unknown; to?: unknown; label?: unknown };
+        return isText(from) && isText(to) && ids.has(from) && ids.has(to) && (label === undefined || isText(label));
+      });
+    }
     default:
       return false;
   }

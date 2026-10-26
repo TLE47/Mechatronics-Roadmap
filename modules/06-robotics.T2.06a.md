@@ -41,6 +41,12 @@ plant: tier1_arm_motor
 This is the dedicated **ROS 2 bridge module** before Step 2.7 (`06-robotics.T2.07`) and your gateway to the Graduate Goal (building and tuning a custom robot arm with ROS 2 and a learned policy). Before running Cartesian impedance controllers (`06-robotics.T2.07`), `MoveIt 2`, or `Hugging Face LeRobot` policies (`06-robotics.T3.07`), you must master the complete **ROS 2 (`Jazzy` / `Lyrical`)** architecture: how **Nodes** and **Executors** (`SingleThreadedExecutor` vs. `MultiThreadedExecutor` + `CallbackGroups`) schedule callbacks, how **Topics**, **Services**, **Actions**, and **Parameters** exchange typed messages under strict **QoS** rules (`Reliable` vs. `Best-Effort`, `Transient Local` vs. `Volatile`), how workspaces are built (`package.xml`, `colcon build`, Python `LaunchDescription`), how the **`tf2` transform tree** chains 3D coordinate frames (`world -> base_link -> link_1 -> tool0`) from your **URDF/Xacro** robot description, and how **`ros2_control`** separates real-time hardware drivers (`SystemInterface::read()` / `write()`) from controllers (`joint_trajectory_controller`) without DDS network jitter! Already know this? Take the Skip test in section 7 first.
 
 ## 2. Intuition first
+
+<!-- figure: ros-graph | Boxes are processes and arrows are typed messages; nothing calls anything directly. -->
+
+
+<!-- figure: loop-timing | An executor is a deadline: the work has to finish before the next callback. -->
+
 Imagine a robot software stack as a modern airport:
 - **ROS 2 Nodes, Executors & Callback Groups:** Each **Node** (`rclcpp::Node` / `rclpy.node.Node`) is a modular specialist team (Camera Node, Planner Node, Safety Monitor Node). An **Executor** is the dispatcher that pulls incoming events (timers, topic messages, service requests) from the DDS middleware queue and runs your callback functions. A `SingleThreadedExecutor` runs one callback at a time sequentially (if one callback blocks for $200\text{ ms}$, every timer in that node stalls!), whereas a `MultiThreadedExecutor` paired with `MutuallyExclusiveCallbackGroup` or `ReentrantCallbackGroup` lets a slow planning service run on Thread B without delaying a $100\text{ Hz}$ state-publishing timer on Thread A.
 - **Topics, Services, Actions & Parameters:**

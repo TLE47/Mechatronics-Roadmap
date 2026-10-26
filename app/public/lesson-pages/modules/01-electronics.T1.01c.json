@@ -1,4 +1,4 @@
-{"v":3,"path":"modules/01-electronics.T1.01c.md","title":"Multimeter, Current-Limited Bench Supply, Breadboard & ESD/Short-Circuit Safety","blocks":[
+{"v":4,"path":"modules/01-electronics.T1.01c.md","title":"Multimeter, Current-Limited Bench Supply, Breadboard & ESD/Short-Circuit Safety","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"More beginner circuits are destroyed in the first five seconds of power-on by a breadboard row short, a multimeter lead left in the $10\\text{ A}$ current jack, or an unprotected LiPo battery than by any software bug. Mastering how solderless breadboard clips are wired internally, how to measure voltage vs. current safely with a Digital Multimeter (DMM), and how to set a bench power supply's Constant-Current (CC) limit protects every board you build from Stage 0 (`L0.1`) through Track 08. Already know this? Read `### Safety notes` first, then take the Skip test in section 7."},
 {"t":"h","l":2,"x":"2. Intuition first"},

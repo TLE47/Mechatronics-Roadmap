@@ -1,4 +1,4 @@
-{"v":3,"path":"modules/05-control.T3.05a.md","title":"Joseph-Form Covariance Update, Suboptimal Kalman Gains & NEES Consistency","blocks":[
+{"v":4,"path":"modules/05-control.T3.05a.md","title":"Joseph-Form Covariance Update, Suboptimal Kalman Gains & NEES Consistency","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"A propagating covariance matrix decides how much a filter trusts its own model, and in 32-bit `float` the textbook update $P^+ = (I - KH)P^-$ can hand back a **negative variance** - a state no real sensor can produce. The Joseph form rewrites the same algebra as a sum of two squares, so symmetry and positive semi-definiteness survive roundoff and even a wrong gain. This is the first of the three Track 05 Tier 3 bridges: it fixes the covariance, Step `05-control.T3.05b` fixes the attitude injection, and `05-control.T3.05c` builds the safety filter. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},

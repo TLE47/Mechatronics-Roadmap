@@ -346,20 +346,621 @@ function Bars({ spec }: { spec: DiagramSpec }) {
   );
 }
 
+/** A short number: three significant decimals at most, and an exponent when it is tiny. */
+function fmt(value: number): string {
+  if (!Number.isFinite(value)) return '–';
+  const size = Math.abs(value);
+  if (size !== 0 && (size < 0.01 || size >= 10_000)) return value.toExponential(0);
+  return String(Math.round(value * 1000) / 1000);
+}
+
+/** A label broken into at most two lines, so a box never grows a paragraph. */
+function wrap(text: string, perLine: number): string[] {
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let line = '';
+  for (const word of words) {
+    const candidate = line ? `${line} ${word}` : word;
+    if (candidate.length > perLine && line) {
+      lines.push(line);
+      line = word;
+      if (lines.length === 2) break;
+      continue;
+    }
+    line = candidate;
+  }
+  if (lines.length < 2 && line) lines.push(line);
+  return lines.length ? lines : [''];
+}
+
+interface PlacedNode {
+  id: string;
+  label: string;
+  tone?: 'accent' | 'ink' | 'muted';
+  level: number;
+  row: number;
+}
+
+/**
+ * Where each node sits, from the edges alone.
+ *
+ * Longest-path layering: a box is one column past the furthest box that feeds it, which is what makes
+ * a flow read left to right. The relaxation is bounded by the node count, so a cycle (a state machine
+ * that loops back) settles instead of spinning: the loop closes to the right of its own body.
+ */
+export function graphLayers(spec: DiagramSpec): { nodes: PlacedNode[]; levels: number; rows: number } {
+  const nodes = spec.nodes ?? [];
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const level = new Map<string, number>();
+  for (const node of nodes) level.set(node.id, node.col ?? 0);
+  for (let pass = 0; pass < nodes.length; pass += 1) {
+    let changed = false;
+    for (const edge of spec.edges ?? []) {
+      const from = byId.get(edge.from);
+      const to = byId.get(edge.to);
+      if (!from || !to || to.col !== undefined) continue;
+      const want = (level.get(from.id) ?? 0) + 1;
+      if (want > (level.get(to.id) ?? 0) && want <= nodes.length) {
+        level.set(to.id, want);
+        changed = true;
+      }
+    }
+    if (!changed) break;
+  }
+  const taken = new Map<number, number>();
+  const placed: PlacedNode[] = nodes.map((node) => {
+    const column = level.get(node.id) ?? 0;
+    const row = node.row ?? taken.get(column) ?? 0;
+    taken.set(column, Math.max(taken.get(column) ?? 0, row + 1));
+    return { id: node.id, label: node.label, tone: node.tone, level: column, row };
+  });
+  return {
+    nodes: placed,
+    levels: Math.max(0, ...placed.map((node) => node.level)) + 1,
+    rows: Math.max(...placed.map((node) => node.row), 0) + 1,
+  };
+}
+
+/** A box per node, an arrow per edge: a graph that may fan out, unlike `chain`. */
+function Graph({ spec }: { spec: DiagramSpec }) {
+  const { nodes, levels, rows } = graphLayers(spec);
+  const across = spec.direction === 'TD' ? rows : levels;
+  const down = spec.direction === 'TD' ? levels : rows;
+  const gapX = 18;
+  const gapY = 22;
+  const boxW = Math.max(74, Math.min(138, (W - 26 - gapX * (across - 1)) / Math.max(1, across)));
+  const boxH = 38;
+  const at = (node: PlacedNode) => {
+    const column = spec.direction === 'TD' ? node.row : node.level;
+    const row = spec.direction === 'TD' ? node.level : node.row;
+    const total = across * boxW + (across - 1) * gapX;
+    return { x: (W - total) / 2 + column * (boxW + gapX), y: 14 + row * (boxH + gapY), w: boxW, h: boxH };
+  };
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const toneFill = (tone?: 'accent' | 'ink' | 'muted') => (tone === 'accent' ? ACCENT : tone === 'muted' ? MUTED : INK);
+  return (
+    <g>
+      {(spec.edges ?? []).map((edge, index) => {
+        const from = byId.get(edge.from);
+        const to = byId.get(edge.to);
+        if (!from || !to) return null;
+        const a = at(from);
+        const b = at(to);
+        const horizontal = spec.direction !== 'TD';
+        const x1 = horizontal ? a.x + a.w : a.x + a.w / 2;
+        const y1 = horizontal ? a.y + a.h / 2 : a.y + a.h;
+        const x2 = horizontal ? b.x - 2 : b.x + b.w / 2;
+        const y2 = horizontal ? b.y + b.h / 2 : b.y - 2;
+        return (
+          <g key={`${edge.from}-${edge.to}-${index}`}>
+            <Arrow x1={x1} y1={y1} x2={x2} y2={y2} />
+            {edge.label && (
+              <text
+                x={(x1 + x2) / 2}
+                y={(y1 + y2) / 2 - 4}
+                textAnchor="middle"
+                fontSize={9.5}
+                fill={MUTED}
+                fontFamily={font}
+              >
+                {edge.label}
+              </text>
+            )}
+          </g>
+        );
+      })}
+      {nodes.map((node) => {
+        const box = at(node);
+        const lines = wrap(node.label, Math.max(8, Math.floor(box.w / 6.4)));
+        const stroke = node.tone === 'accent' ? ACCENT : LINE;
+        return (
+          <g key={node.id}>
+            <rect x={box.x} y={box.y} width={box.w} height={box.h} rx={7} fill={CANVAS} stroke={stroke} />
+            {lines.map((line, lineIndex) => (
+              <text
+                key={line + lineIndex}
+                x={box.x + box.w / 2}
+                y={box.y + box.h / 2 - (lines.length - 1) * 6 + lineIndex * 12 + 3.5}
+                textAnchor="middle"
+                fontSize={10.5}
+                fill={toneFill(node.tone)}
+                fontFamily={font}
+              >
+                {line}
+              </text>
+            ))}
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
+/** A grid of values: a matrix, a layer stack, a struct's field map. */
+function Matrix({ spec }: { spec: DiagramSpec }) {
+  const grid = spec.matrix;
+  const rows = grid?.rows ?? [];
+  const cols = grid?.cols ?? [];
+  const labelW = rows.some((row) => row.length > 7) ? 84 : 46;
+  const cellW = Math.min(92, (W - labelW - 26) / Math.max(1, cols.length));
+  const cellH = 38;
+  const left = 8 + labelW;
+  const top = 30;
+  const marked = new Set((grid?.highlight ?? []).map(([row, col]) => `${row}:${col}`));
+  return (
+    <g>
+      {cols.map((col, index) => (
+        <text
+          key={col + index}
+          x={left + index * cellW + cellW / 2}
+          y={top - 10}
+          textAnchor="middle"
+          fontSize={10}
+          fill={MUTED}
+          fontFamily={font}
+        >
+          {col}
+        </text>
+      ))}
+      {rows.map((row, rowIndex) => (
+        <g key={row + rowIndex}>
+          <text
+            x={left - 10}
+            y={top + rowIndex * cellH + cellH / 2 + 3.5}
+            textAnchor="end"
+            fontSize={10.5}
+            fill={BODY}
+            fontFamily={font}
+          >
+            {row}
+          </text>
+          {cols.map((col, colIndex) => {
+            const on = marked.has(`${rowIndex}:${colIndex}`);
+            const text = grid?.cells[rowIndex]?.[colIndex] ?? '';
+            return (
+              <g key={col + colIndex}>
+                <rect
+                  x={left + colIndex * cellW + 1}
+                  y={top + rowIndex * cellH + 1}
+                  width={cellW - 2}
+                  height={cellH - 2}
+                  rx={5}
+                  fill={on ? ACCENT : CANVAS}
+                  fillOpacity={on ? 0.16 : 1}
+                  stroke={on ? ACCENT : LINE}
+                />
+                <text
+                  x={left + colIndex * cellW + cellW / 2}
+                  y={top + rowIndex * cellH + cellH / 2 + 3.5}
+                  textAnchor="middle"
+                  fontSize={text.length > 7 ? 9.5 : 11}
+                  fill={on ? INK : BODY}
+                  fontFamily={font}
+                >
+                  {text}
+                </text>
+              </g>
+            );
+          })}
+        </g>
+      ))}
+    </g>
+  );
+}
+
+/** A register, high bit on the left, with the field each run of bits means. */
+function Bits({ spec }: { spec: DiagramSpec }) {
+  const register = spec.bits;
+  const width = register?.width ?? 8;
+  const left = 18;
+  const cellW = (W - left * 2) / width;
+  const top = 46;
+  const cellH = 38;
+  const xOf = (bit: number) => left + (width - 1 - bit) * cellW;
+  const tone = (value?: 'accent' | 'ink' | 'muted') => (value === 'accent' ? ACCENT : value === 'muted' ? MUTED : INK);
+  return (
+    <g>
+      {(register?.segments ?? []).map((segment, index) => {
+        const x1 = xOf(segment.to);
+        const x2 = xOf(segment.from) + cellW;
+        const y = 30 - index * 0;
+        return (
+          <g key={segment.label + index}>
+            <path
+              d={`M${x1},${y} L${x1},${y - 7} L${x2},${y - 7} L${x2},${y}`}
+              fill="none"
+              stroke={tone(segment.tone)}
+              strokeWidth={1.1}
+              opacity={0.9}
+            />
+            <text
+              x={(x1 + x2) / 2}
+              y={y - 11}
+              textAnchor="middle"
+              fontSize={segment.to - segment.from < 1 ? 9.5 : 10.5}
+              fill={tone(segment.tone)}
+              fontFamily={font}
+            >
+              {segment.label}
+            </text>
+          </g>
+        );
+      })}
+      {Array.from({ length: width }, (_, bit) => (
+        <g key={bit}>
+          <rect x={xOf(bit)} y={top} width={cellW - 1} height={cellH} rx={3} fill={CANVAS} stroke={LINE} />
+          <text x={xOf(bit) + (cellW - 1) / 2} y={top + cellH + 13} textAnchor="middle" fontSize={9} fill={MUTED} fontFamily={font}>
+            {bit}
+          </text>
+        </g>
+      ))}
+      {register?.value && (
+        <text x={W / 2} y={top + cellH + 36} textAnchor="middle" fontSize={12} fill={ACCENT} fontFamily={font}>
+          {register.value}
+        </text>
+      )}
+      {register?.note && (
+        <text x={W / 2} y={top + cellH + 54} textAnchor="middle" fontSize={9.5} fill={MUTED} fontFamily={font}>
+          {register.note}
+        </text>
+      )}
+    </g>
+  );
+}
+
+/** A dial with two limits: the ring a machine can reach, a tolerance window, a duty range. */
+function Reach({ spec }: { spec: DiagramSpec }) {
+  const dial = spec.reach;
+  const min = dial?.min ?? 0;
+  const max = dial?.max ?? 1;
+  const points = dial?.points ?? [];
+  const cx = 160;
+  const cy = 132;
+  const radius = 96;
+  const at = (value: number) => (value / (max || 1)) * radius;
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={radius} fill={ACCENT} fillOpacity={0.06} stroke={LINE} />
+      <circle cx={cx} cy={cy} r={Math.max(2, at(min))} fill={CANVAS} stroke={LINE} strokeDasharray="4 5" />
+      <circle cx={cx} cy={cy} r={2.5} fill={MUTED} />
+      <text x={cx} y={cy + radius + 16} textAnchor="middle" fontSize={10} fill={MUTED} fontFamily={font}>
+        {fmt(max)} {dial?.unit ?? ''}
+      </text>
+      <text x={cx} y={cy} textAnchor="middle" fontSize={9.5} fill={MUTED} fontFamily={font}>
+        0
+      </text>
+      {points.map((point, index) => {
+        const angle = (-80 + (160 / Math.max(1, points.length - 1)) * index) * (Math.PI / 180);
+        const r = Math.min(radius, Math.max(2, at(point.at)));
+        const x = cx + r * Math.cos(angle);
+        const y = cy + r * Math.sin(angle);
+        return (
+          <g key={point.label + index}>
+            <circle cx={x} cy={y} r={4} fill={point.ok === false ? 'var(--amber, #f59e0b)' : ACCENT} />
+            <text
+              x={x + (Math.cos(angle) >= 0 ? 8 : -8)}
+              y={y + 3.5}
+              textAnchor={Math.cos(angle) >= 0 ? 'start' : 'end'}
+              fontSize={9.5}
+              fill={BODY}
+              fontFamily={font}
+            >
+              {point.label}
+            </text>
+          </g>
+        );
+      })}
+      <line x1={cx + radius + 18} y1={38} x2={cx + radius + 18} y2={226} stroke={SOFT} />
+      {points.map((point, index) => (
+        <g key={`l-${point.label}-${index}`}>
+          <circle cx={cx + radius + 26} cy={56 + index * 22} r={3} fill={point.ok === false ? 'var(--amber, #f59e0b)' : ACCENT} />
+          <text x={cx + radius + 36} y={60 + index * 22} fontSize={10} fill={BODY} fontFamily={font}>
+            {point.label} · {fmt(point.at)} {dial?.unit ?? ''}
+          </text>
+        </g>
+      ))}
+      {dial?.note && (
+        <text x={12} y={240} fontSize={9.5} fill={MUTED} fontFamily={font}>
+          {dial.note}
+        </text>
+      )}
+    </g>
+  );
+}
+
+/** One part's glyph on the wire, centred on `x`. A label and a value hang under it. */
+function Part({ part, x, y }: { part: { kind: string; label: string; value?: string }; x: number; y: number }) {
+  const stroke = ACCENT;
+  const common = { fill: 'none', stroke, strokeWidth: 1.6 };
+  let glyph: React.ReactNode = null;
+  switch (part.kind) {
+    case 'source':
+      glyph = (
+        <g>
+          <circle cx={x} cy={y} r={13} {...common} />
+          <text x={x} y={y + 3.5} textAnchor="middle" fontSize={9.5} fill={ACCENT} fontFamily={font}>
+            V
+          </text>
+        </g>
+      );
+      break;
+    case 'resistor':
+      glyph = (
+        <path
+          d={`M${x - 18},${y} l5,-6 l6,12 l6,-12 l6,12 l5,-6`}
+          {...common}
+        />
+      );
+      break;
+    case 'capacitor':
+      glyph = (
+        <g>
+          <line x1={x - 5} y1={y - 10} x2={x - 5} y2={y + 10} {...common} />
+          <line x1={x + 5} y1={y - 10} x2={x + 5} y2={y + 10} {...common} />
+          <line x1={x - 18} y1={y} x2={x - 5} y2={y} {...common} />
+          <line x1={x + 5} y1={y} x2={x + 18} y2={y} {...common} />
+        </g>
+      );
+      break;
+    case 'inductor':
+      glyph = (
+        <path d={`M${x - 18},${y} q4,-12 9,0 q4,-12 9,0 q4,-12 9,0`} {...common} />
+      );
+      break;
+    case 'diode':
+      glyph = (
+        <g>
+          <path d={`M${x - 6},${y - 8} L${x + 6},${y} L${x - 6},${y + 8} Z`} fill={ACCENT} fillOpacity={0.4} stroke={ACCENT} />
+          <line x1={x + 6} y1={y - 9} x2={x + 6} y2={y + 9} {...common} />
+        </g>
+      );
+      break;
+    case 'switch':
+      glyph = (
+        <g>
+          <circle cx={x - 8} cy={y} r={2} fill={ACCENT} />
+          <circle cx={x + 8} cy={y} r={2} fill={ACCENT} />
+          <line x1={x - 8} y1={y} x2={x + 6} y2={y - 11} {...common} />
+        </g>
+      );
+      break;
+    case 'motor':
+      glyph = (
+        <g>
+          <circle cx={x} cy={y} r={13} {...common} />
+          <text x={x} y={y + 3.5} textAnchor="middle" fontSize={9.5} fill={ACCENT} fontFamily={font}>
+            M
+          </text>
+        </g>
+      );
+      break;
+    default:
+      glyph = <circle cx={x} cy={y} r={3} fill={ACCENT} />;
+  }
+  return (
+    <g>
+      {glyph}
+      <text x={x} y={y + 24} textAnchor="middle" fontSize={10} fill={INK} fontFamily={font}>
+        {part.label}
+      </text>
+      {part.value && (
+        <text x={x} y={y + 37} textAnchor="middle" fontSize={9.5} fill={MUTED} fontFamily={font}>
+          {part.value}
+        </text>
+      )}
+    </g>
+  );
+}
+
+/** A two-terminal loop drawn left to right, with an optional shunt to ground. */
+function Schematic({ spec }: { spec: DiagramSpec }) {
+  const circuit = spec.schematic;
+  const series = circuit?.series ?? [];
+  const y = 74;
+  const left = 34;
+  const right = W - 34;
+  const slot = (right - left) / Math.max(1, series.length);
+  const xAt = (index: number) => left + slot * index + slot / 2;
+  const shunt = circuit?.shunt;
+  const shuntX = xAt(Math.min(series.length - 1, shunt?.after ?? 0)) + slot / 2 - 8;
+  return (
+    <g>
+      <line x1={left - 12} y1={y} x2={right} y2={y} stroke={SOFT} strokeWidth={1.4} />
+      {series.map((part, index) => (
+        <Part key={part.label + index} part={part} x={xAt(index)} y={y} />
+      ))}
+      {shunt && (
+        <g>
+          <line x1={shuntX} y1={y} x2={shuntX} y2={132} stroke={SOFT} strokeWidth={1.4} />
+          <line x1={shuntX - 12} y1={132} x2={shuntX + 12} y2={132} stroke={ACCENT} strokeWidth={1.6} />
+          <line x1={shuntX - 8} y1={138} x2={shuntX + 8} y2={138} stroke={ACCENT} strokeWidth={1.6} />
+          <line x1={shuntX - 4} y1={144} x2={shuntX + 4} y2={144} stroke={ACCENT} strokeWidth={1.6} />
+          <text x={shuntX + 18} y={128} fontSize={10} fill={INK} fontFamily={font}>
+            {shunt.label}
+          </text>
+          {shunt.value && (
+            <text x={shuntX + 18} y={141} fontSize={9.5} fill={MUTED} fontFamily={font}>
+              {shunt.value}
+            </text>
+          )}
+        </g>
+      )}
+      {circuit?.note && (
+        <text x={W / 2} y={180} textAnchor="middle" fontSize={9.5} fill={MUTED} fontFamily={font}>
+          {circuit.note}
+        </text>
+      )}
+    </g>
+  );
+}
+
+/** A quantitative plot with both axes labelled: the figure that can carry real units. */
+function Plot({ spec }: { spec: DiagramSpec }) {
+  const plot = spec.plot;
+  const xAxis = plot?.x ?? { label: 'x', min: 0, max: 1 };
+  const yAxis = plot?.y ?? { label: 'y', min: 0, max: 1 };
+  const left = 58;
+  const right = W - 20;
+  const top = 28;
+  const bottom = 168;
+  const sx = (value: number) => {
+    if (xAxis.log) {
+      const lo = Math.log10(Math.max(1e-9, xAxis.min));
+      const hi = Math.log10(Math.max(xAxis.min * 10, xAxis.max));
+      return left + ((Math.log10(Math.max(1e-9, value)) - lo) / (hi - lo || 1)) * (right - left);
+    }
+    return left + ((value - xAxis.min) / (xAxis.max - xAxis.min || 1)) * (right - left);
+  };
+  const sy = (value: number) => bottom - ((value - yAxis.min) / (yAxis.max - yAxis.min || 1)) * (bottom - top);
+  const xTicks = [0, 0.33, 0.66, 1].map((fraction) =>
+    xAxis.log
+      ? Math.pow(10, Math.log10(Math.max(1e-9, xAxis.min)) + fraction * (Math.log10(Math.max(xAxis.min * 10, xAxis.max)) - Math.log10(Math.max(1e-9, xAxis.min))))
+      : xAxis.min + fraction * (xAxis.max - xAxis.min)
+  );
+  const yTicks = [0, 0.33, 0.66, 1].map((fraction) => yAxis.min + fraction * (yAxis.max - yAxis.min));
+  return (
+    <g>
+      {(plot?.bands ?? []).map((band) => {
+        const rect =
+          band.axis === 'y'
+            ? { x: left, y: sy(band.to), width: right - left, height: Math.max(1, sy(band.from) - sy(band.to)) }
+            : { x: sx(band.from), y: top, width: Math.max(1, sx(band.to) - sx(band.from)), height: bottom - top };
+        return (
+          <g key={band.label}>
+            <rect {...rect} fill={ACCENT} fillOpacity={0.08} />
+            <text x={rect.x + 4} y={rect.y + 11} fontSize={9} fill={ACCENT} fontFamily={font}>
+              {band.label}
+            </text>
+          </g>
+        );
+      })}
+      {yTicks.map((value) => (
+        <g key={`y-${value}`}>
+          <line x1={left} y1={sy(value)} x2={right} y2={sy(value)} stroke={SOFT} strokeWidth={1} />
+          <text x={left - 7} y={sy(value) + 3.5} textAnchor="end" fontSize={9} fill={MUTED} fontFamily={font}>
+            {fmt(value)}
+          </text>
+        </g>
+      ))}
+      {xTicks.map((value) => (
+        <text key={`x-${value}`} x={sx(value)} y={bottom + 14} textAnchor="middle" fontSize={9} fill={MUTED} fontFamily={font}>
+          {fmt(value)}
+        </text>
+      ))}
+      <line x1={left} y1={top} x2={left} y2={bottom} stroke={LINE} />
+      <line x1={left} y1={bottom} x2={right} y2={bottom} stroke={LINE} />
+      <text x={(left + right) / 2} y={bottom + 30} textAnchor="middle" fontSize={10} fill={BODY} fontFamily={font}>
+        {xAxis.label}
+        {xAxis.unit ? ` (${xAxis.unit})` : ''}
+      </text>
+      <text
+        x={14}
+        y={(top + bottom) / 2}
+        textAnchor="middle"
+        fontSize={10}
+        fill={BODY}
+        fontFamily={font}
+        transform={`rotate(-90 14 ${(top + bottom) / 2})`}
+      >
+        {yAxis.label}
+        {yAxis.unit ? ` (${yAxis.unit})` : ''}
+      </text>
+      {(plot?.series ?? []).map((line, index) => {
+        const colour = index === 0 ? ACCENT : index === 1 ? INK : MUTED;
+        const path = line.points
+          .map((point, i) => `${i === 0 ? 'M' : 'L'}${sx(point.x).toFixed(1)},${sy(point.y).toFixed(1)}`)
+          .join(' ');
+        const dots = line.markers || line.points.length <= 6;
+        return (
+          <g key={line.label + index}>
+            <path d={path} fill="none" stroke={colour} strokeWidth={1.7} strokeDasharray={line.dashed ? '5 4' : undefined} />
+            {dots &&
+              line.points.map((point, i) => (
+                <circle key={i} cx={sx(point.x)} cy={sy(point.y)} r={2.6} fill={colour} />
+              ))}
+          </g>
+        );
+      })}
+      {(plot?.series ?? []).map((line, index) => (
+        <g key={`k-${line.label}`}>
+          <line
+            x1={left + 8}
+            y1={186 + index * 15}
+            x2={left + 26}
+            y2={186 + index * 15}
+            stroke={index === 0 ? ACCENT : index === 1 ? INK : MUTED}
+            strokeWidth={1.8}
+            strokeDasharray={line.dashed ? '5 4' : undefined}
+          />
+          <text x={left + 32} y={190 + index * 15} fontSize={9.5} fill={BODY} fontFamily={font}>
+            {line.label}
+          </text>
+        </g>
+      ))}
+    </g>
+  );
+}
+
 /** The drawing, without the caption: what a tab or a card wants when it has its own label. */
+/** How tall a figure is, from the same data its renderer uses, so the two cannot disagree. */
+export function artHeight(spec: DiagramSpec): number {
+  switch (spec.kind) {
+    case 'chain':
+      return 150;
+    case 'loop':
+      return 215;
+    case 'timing':
+      return 190;
+    case 'states':
+      return 22 + (spec.stages?.length ?? 1) * 56 + 8;
+    case 'route':
+      return routeLayout(spec.steps ?? []).height;
+    case 'bars':
+      return 26 + (spec.bars?.length ?? 1) * 34 + 16;
+    case 'graph': {
+      const { levels, rows } = graphLayers(spec);
+      const down = spec.direction === 'TD' ? levels : rows;
+      return 14 + down * 38 + Math.max(0, down - 1) * 22 + 14;
+    }
+    case 'matrix':
+      return 30 + (spec.matrix?.rows.length ?? 1) * 38 + (spec.matrix?.note ? 20 : 0) + 8;
+    case 'bits': {
+      const register = spec.bits;
+      return 84 + 38 + (register?.value ? 22 : 0) + (register?.note ? 20 : 0);
+    }
+    case 'reach':
+      return 252;
+    case 'schematic':
+      return 196;
+    case 'plot':
+      return Math.max(210, 200 + (spec.plot?.series.length ?? 1) * 15);
+    default:
+      return 160;
+  }
+}
+
 export function DiagramArt({ spec }: { spec: DiagramSpec }) {
-  const height =
-    spec.kind === 'chain'
-      ? 150
-      : spec.kind === 'loop'
-        ? 215
-        : spec.kind === 'timing'
-          ? 190
-          : spec.kind === 'states'
-            ? 22 + (spec.stages?.length ?? 1) * 56 + 8
-            : spec.kind === 'route'
-              ? routeLayout(spec.steps ?? []).height
-              : 26 + (spec.bars?.length ?? 1) * 34 + 16;
+  const height = artHeight(spec);
   return (
     <svg viewBox={`0 0 ${W} ${height}`} className="block h-auto w-full" role="img" aria-label={`${spec.title}. ${spec.caption}`}>
       <Defs />
@@ -369,6 +970,12 @@ export function DiagramArt({ spec }: { spec: DiagramSpec }) {
       {spec.kind === 'states' && <States spec={spec} />}
       {spec.kind === 'bars' && <Bars spec={spec} />}
       {spec.kind === 'route' && <Route spec={spec} />}
+      {spec.kind === 'graph' && <Graph spec={spec} />}
+      {spec.kind === 'matrix' && <Matrix spec={spec} />}
+      {spec.kind === 'bits' && <Bits spec={spec} />}
+      {spec.kind === 'reach' && <Reach spec={spec} />}
+      {spec.kind === 'schematic' && <Schematic spec={spec} />}
+      {spec.kind === 'plot' && <Plot spec={spec} />}
     </svg>
   );
 }

@@ -1,4 +1,4 @@
-{"v":3,"path":"track-p/P.4-lists-and-for-loops.md","title":"Ordered Lists and Repeating Actions with for Loops","blocks":[
+{"v":4,"path":"track-p/P.4-lists-and-for-loops.md","title":"Ordered Lists and Repeating Actions with for Loops","blocks":[
 {"t":"h","l":2,"x":"Goal"},
 {"t":"p","x":"Store sequences of sensor readings in zero-indexed Python `lists` (`[a, b, c]`) and process every item automatically using `for` loops and `range()`."},
 {"t":"ul","items":[{"x":"**New ideas (max 2):**","d":0},{"x":"**Ordered lists with zero-based indexing**: Grouping multiple values in square brackets `[...]` where position counting starts at index `0`.","d":1},{"x":"**Repeating actions with `for` loops**: Stepping through every element of a list (`for item in my_list:`) or a fixed number of ticks (`for step in range(n):`).","d":1},{"x":"**New syntax:** `[a, b, c]`, `items[0]`, `items.append(x)`, `len(items)`, `for x in items:`, `range(n)`.","d":0},{"x":"**Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours","d":0}]},
@@ -6,6 +6,7 @@
 {"t":"ul","items":[{"x":"[Lesson P.3: Conditional Decisions (`if/elif/else`) & Command Clamping](P.3-decisions-and-clamping.md)","d":0}]},
 {"t":"route","steps":["P.3: Decisions & Clamping","P.4: Lists & For Loops","P.5: Functions & While Loops"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"Learn"},
+{"t":"figure","id":"for-loop","caption":"One item per pass, and the body never decides when the loop ends."},
 {"t":"h","l":3,"x":"Idea 1: Ordered lists with zero-based indexing"},
 {"t":"ul","items":[{"x":"**Primary resource:** [Official Python 3 Tutorial — Section 3.1.3: Lists](https://docs.python.org/3/tutorial/introduction.html) `[HTTP 200 — Verified by scripts/check_links.py]`","d":0},{"x":"**What to read:** Read exact heading **`3.1.3. Lists`** (creating lists with square brackets, indexing with `[0]`, `.append()`, and `len()`).","d":1},{"x":"**What to skip:** Skip nested lists at the very end of the section.","d":1},{"x":"**Key takeaway:** A **list** stores an ordered sequence of values inside square brackets, such as `distances = [12.1, 11.9, 11.8]`. Python uses **zero-based indexing**: the first item is at index `0` (`distances[0]` is `12.1`), the second is at index `1`, and the last item in a list of length `len(distances)` (`3`) is at index `2`.","d":1},{"x":"**Alternative resource:** [futurecoder.io — Chapter 6 (`Lists`)](https://futurecoder.io/course/#toc) `[verify in-app]` — Complete **Chapter 6 (`Lists`)** `[verify in-app]`.","d":1}]},
 {"t":"h","l":3,"x":"Idea 2: Repeating actions with `for` loops"},

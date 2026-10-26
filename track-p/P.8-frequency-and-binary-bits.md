@@ -41,6 +41,9 @@ flowchart LR
 
 ## Learn
 
+<!-- figure: bit-weights | Eight bits, eight weights: the byte the lesson builds is the three bits it turns on. -->
+
+
 ### Idea 1: Cycle frequency (`Hz`) and period ($T = 1/f$)
 - **Primary resource:** [The Physics Classroom — Frequency and Period of a Wave](https://www.physicsclassroom.com/class/waves/Lesson-2/Frequency-and-Period-of-a-Wave) `[HTTP 200 — Verified by scripts/check_links.py]`
   - **What to read:** Read exact heading **`Frequency and Period of a Wave`** (specifically the reciprocal formulas $f = 1/T$ and $T = 1/f$).

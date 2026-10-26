@@ -1,4 +1,4 @@
-{"v":3,"path":"modules/00-foundations.T2.00h.md","title":"Winding Impedance, Transfer Functions, Decibels & the Resonance Peak","blocks":[
+{"v":4,"path":"modules/00-foundations.T2.00h.md","title":"Winding Impedance, Transfer Functions, Decibels & the Resonance Peak","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"A motor winding is a resistor and an inductor in series, and at $1\\,\\text{krad/s}$ the inductor's opposition is not a number you can add to the resistor's - it is $90^\\circ$ out of phase with it. Write both as one complex number and the arithmetic becomes trivial: magnitudes form a hypotenuse, angles add, and a current loop's PI gains have something to be tuned against. The same ratio, read across frequency, is the **Bode plot** that tells you where a joint resonates, how much it lags, and whether a filter will make it worse. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},

@@ -35,6 +35,9 @@ plant: tier1_arm_motor
 This is the final bridge module in the Track 06 Tier 3 Embodied AI ladder before Step 3.7 (`06-robotics.T3.07`). While Behavior Cloning (`06-robotics.T3.06a`) imitates human demonstrations, **Reinforcement Learning (RL / PPO)** discovers agile locomotion and contact behaviors in GPU simulators (`Newton`, `Isaac Lab`, `MuJoCo Playground`) by maximizing discounted cumulative reward $G_t = \sum_{k=0}^\infty \gamma^k r_{t+k}$. And to deploy *either* an RL policy or a Vision-Language-Action (`VLA` / `ACT` / `Diffusion` / `π₀`) policy onto real $48\text{ V}$ hardware without violent jitter or collisions, you must master **Action Chunking with Temporal Ensembling / Real-Time Chunking (`RTC`)**, **Domain Randomization**, and a hard $1\text{ kHz}$ **Sim-to-Real CBF/Impedance Safety Shield**. Already know this? Read `### Safety notes` first, then take the Skip test or the Ladder Gate test in section 7.
 
 ## 2. Intuition first
+
+<!-- figure: rl-loop | State, action, reward: the reward is the only teacher. -->
+
 In supervised learning (`06-robotics.T3.06a`), a teacher tells the network the exact right action $a_t^*$ on every step. In **Reinforcement Learning (MDP)**, there is no teacher—only a scoreboard (the **reward function** $r_t$, which awards points for reaching the goal and deducts points for excessive torque or falling over). The policy tries actions, sees which rollouts scored higher than expected (positive **Advantage** $\hat{A}_t > 0$), and increases the log-probability of those winning actions while **PPO (Proximal Policy Optimization)** clips the update ratio $r_t(\theta) = \frac{\pi_\theta}{\pi_{\theta_{\text{old}}}}$ to $[1-\epsilon, 1+\epsilon]$ so one lucky rollout doesn't wreck the policy! Second, why do modern manipulation policies (`ACT`, `Diffusion Policy`, `π₀`) predict a whole **chunk of $K=16$ future waypoints** instead of a single step, and blend overlapping chunks with exponential weights $w_i = \exp(-m \cdot i)$ (**Temporal Ensembling / Real-Time Chunking**)? Because blending overlapping predictions smooths out frame-to-frame camera noise and bridges the $30\text{–}100\text{ ms}$ vision inference delay! Finally, because a neural network can output an arbitrary wild number if given an out-of-distribution camera image, **never** wire a neural network directly to raw motor voltage—always wrap it inside a $1\text{ kHz}$ **Safety Shield** that clamps joint step size $|\Delta q_{\text{cmd}}| \le \Delta q_{\max}$, joint limits, and Control Barrier Function (`CBF-QP`) workspace walls!
 
 ## 3. Formalization
@@ -326,6 +329,9 @@ print("G_0=%.3f over %d plant ticks | shield step=%.2f rad" % (G[0], len(rewards
 ```
 
 ### Break it on purpose
+
+<!-- figure: fault-cost | A fault caught on the bench costs minutes; the same fault in the demo costs the demo. -->
+
 Inject the `ppo_max_not_min` fault and diagnose it from the loss alone, keeping $\epsilon = 0.20$ and $\hat{A} = +2.0$ for the positive case:
 - **Inject:** replace the pessimistic `min` in the clipped surrogate with `max`, i.e. `max(rho * adv, rho_clipped * adv)`, which is the single most common transcription slip in PPO code.
 - **Symptom:** the positive-advantage case silently grows from $2.40$ to $3.00$ - a $25\%$ larger step for a ratio the clip was meant to reject - and the negative-advantage exercise case with $\rho_0 = 0.60$ and $\hat{A}_0 = -3.0$ returns $-1.80$ instead of $-2.40$, so the policy is punished $0.60$ less for a ratio outside the trust region. Training still runs and the loss still falls, which is why the fault survives a smoke test.

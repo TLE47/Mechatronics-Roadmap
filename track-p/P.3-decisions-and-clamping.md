@@ -41,6 +41,9 @@ flowchart LR
 
 ## Learn
 
+<!-- figure: decision-fork | One comparison, two roads; clamping is the branch that keeps the command inside the limit. -->
+
+
 ### Idea 1: Conditional branching (`if/elif/else`)
 - **Primary resource:** [futurecoder.io — Chapter 5 (`If Statements`)](https://futurecoder.io/course/#toc) `[verify in-app]`
   - **What to complete:** Complete **Chapter 5 (`If Statements`)** `[verify in-app]`.

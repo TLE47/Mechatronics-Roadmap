@@ -1,4 +1,4 @@
-{"v":3,"path":"track-p/P.6-modules-and-automated-asserts.md","title":"Loading Modules (import) and Automated Self-Checks (assert)","blocks":[
+{"v":4,"path":"track-p/P.6-modules-and-automated-asserts.md","title":"Loading Modules (import) and Automated Self-Checks (assert)","blocks":[
 {"t":"h","l":2,"x":"Goal"},
 {"t":"p","x":"Load built-in math tools (`math.sqrt`, `math.pi`) using `import math`, and write automated self-checks (`assert`) so your code verifies its own calculations automatically."},
 {"t":"ul","items":[{"x":"**New ideas (max 2):**","d":0},{"x":"**Loading standard-library modules with `import`**: Using `import math` at the top of a script to unlock square roots (`math.sqrt`), $\\pi$ (`math.pi`), and trigonometry.","d":1},{"x":"**Automated self-checks with `assert`**: Writing `assert condition` so Python immediately flags an `AssertionError` if a function returns the wrong number.","d":1},{"x":"**New syntax:** `import math`, `math.sqrt(x)`, `round(val, digits)`, `assert condition`.","d":0},{"x":"**Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–3.0 hours","d":0}]},

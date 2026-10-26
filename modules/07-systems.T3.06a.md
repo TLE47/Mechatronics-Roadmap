@@ -37,6 +37,9 @@ plant: tier1_arm_motor
 This is the bridge module in Track 07 Tier 3 before Step 3.7 (`06-robotics.T3.07`) and Step 3.8 (`08-capstones.T3.08`). When a mechatronic workcell moves from a research lab onto a factory floor, it must speak two industrial standards and pass a hardware functional-safety audit: **OPC UA (`IEC 62541`)** exposes live typed variables and methods across machines, the **Asset Administration Shell (`IEC 63278` AAS)** packages the machine's standardized Digital Twin metadata (`DigitalNameplate`, `TechnicalData`, `OperationalData`), and **ISO 13849-1 Category 3 / Performance Level d (`PLd`)** with **IEC 61800-5-2 Safe Torque Off (`STO`)** guarantees that a single welded relay or stuck transistor can never prevent the E-stop from removing motor torque! Already know this? Read `### Safety notes` first, then take the Skip test or the Ladder Gate test in section 7.
 
 ## 2. Intuition first
+
+<!-- figure: asset-model | An addressable tree: server, machine, asset, properties. -->
+
 Why not directly stream custom JSON strings over a raw TCP socket on the factory floor? Because in a plant with 200 machines from 30 vendors, custom JSON means nobody knows whether `temp_1` is Celsius or Kelvin, or whether `stop()` is safe to call while the spindle is spinning!
 - **OPC UA (`IEC 62541`)** turns your machine into a strongly-typed, browseable **Object Graph (Address Space)** where every `NodeId` (`ns=2;s=Actuator1.BusVoltage`) carries its engineering unit (`V`), access permissions, and real-time `PubSub` rate.
 - **Asset Administration Shell (`IEC 63278` AAS)** is the standardized "digital passport" of every physical asset (identified by a globally unique `globalAssetId` URI): its **Submodels** (`DigitalNameplate`, `CarbonFootprint`, `PredictiveMaintenance`) use universal semantic dictionary IDs (`ECLASS` / `IEC CDD` IRDIs) so any ERP/MES system can query peak torque, serial number, and remaining bearing life automatically.
@@ -331,6 +334,9 @@ print("pubsub=%.0f B/s | 8N1=%.0f baud | tick=%.1f ms" % (rate_bps, rate_bps * 1
 ```
 
 ### Break it on purpose
+
+<!-- figure: latency-budget | Every stage spends part of the period, and the unmeasured one overruns it. -->
+
 Inject the `sto_no_filter` fault and diagnose it from the restart behaviour alone, keeping $t_{\text{disc,max}} = 20\text{ ms}$:
 - **Inject:** decide the discrepancy on the channel states alone, `discrepancy_fault = (ch_a_safe != ch_b_safe)`, deleting the `discrepancy_ms > t_disc_max_ms` comparison.
 - **Symptom:** every ordinary E-stop press latches `FAULT_LOCKOUT`, because real contacts skew by $2\text{–}8\text{ ms}$; the exercise's $12\text{ ms}$ case now returns `discrepancy_fault = True` where the module expects `False`, and at the plant's $1\text{ kHz}$ tick the latch is set on the first of those twelve ticks. Torque removal is unchanged (`True`, from Channel A), so the safety function appears healthy while the machine refuses to restart.

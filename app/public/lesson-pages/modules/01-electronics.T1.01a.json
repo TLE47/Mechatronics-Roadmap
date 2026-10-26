@@ -1,4 +1,4 @@
-{"v":3,"path":"modules/01-electronics.T1.01a.md","title":"Voltage, Current, Resistance, Ohm's Law, KVL/KCL & Voltage Dividers","blocks":[
+{"v":4,"path":"modules/01-electronics.T1.01a.md","title":"Voltage, Current, Resistance, Ohm's Law, KVL/KCL & Voltage Dividers","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"Before wiring an H-bridge motor driver or level-shifting a $5\\text{ V}$ sensor to a $3.3\\text{ V}$ microcontroller in Step 1.2 (`01-electronics.T1.02`), you must be able to calculate how much current flows through a resistor, how two resistors divide a voltage, and how much heat ($P = I^2 R$) a wire or resistor dissipates. Getting these three laws right prevents magic smoke on your very first breadboard build. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},

@@ -43,6 +43,9 @@ flowchart LR
 
 ## Learn
 
+<!-- figure: value-types | Every value in this lesson is one of these four boxes; most first bugs are a value in the wrong box. -->
+
+
 ### Idea 1: Storing values in named variables
 - **Primary resource:** [futurecoder.io — Chapters 1 and 3 (`The Shell` & `Variables`)](https://futurecoder.io/course/#toc) `[verify in-app]`
   - **What to complete:** Complete **Chapter 1 (`The Shell`)** and **Chapter 3 (`Variables`)** `[verify in-app]`.

@@ -43,6 +43,9 @@ flowchart LR
 
 ## Learn
 
+<!-- figure: state-update | One tick is one matrix times one vector. -->
+
+
 ### Idea 1: A matrix is a table of coefficients: each row of A x is a weighted sum of the inputs, and each column says where one input goes
 - **Primary resource:** [Wikipedia — Matrix multiplication](https://en.wikipedia.org/wiki/Matrix_multiplication)
   - **What to read:** The lead section and the `Matrix times column vector` example — that is the only multiplication this lesson uses.

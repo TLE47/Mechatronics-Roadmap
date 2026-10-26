@@ -16,6 +16,58 @@ flowchart LR
 
 ---
 
+## [2026-10-26] — Run 256: every page gets its picture
+
+Run 254 gave the reader its first figures and its map: 21 named scenes, 39 pages, and the page's own
+single-chain flowchart drawn as numbered steps. A beginner page still opened on a wall of prose — 53 of
+the 92 pages had no named figure at all — and a branching flowchart was dropped. This run closes both.
+
+**Six new kinds of picture.** `app/src/visuals/Diagram.tsx` gains a renderer for each, and
+`scenes.ts` gives each one real data: `plot` (two labelled axes with units and shaded windows —
+efficiency, three-phase currents, pole-zero maps, a notch, the loop-inductance spike), `matrix` (a 4×4
+transform, a state update, a stackup, a byte frame, a struct's field map), `bits` (a register, high bit
+left, fields bracketed above), `reach` (a ring with its two limits and marked radii — the arm's
+workspace, a datasheet's min/typ/max), `schematic` (parts on a wire with a shunt to ground — the RC
+charge and the brake chopper) and `graph` (boxes and labelled arrows, layered from the edges — ROS 2,
+a devicetree, a launch tree, an autograd chain, an asset tree). The scene library went from 21 to 72.
+
+**A branching page keeps its map.** The generator's `flow_graph` parses a Mermaid `flowchart` that fans
+out into `nodes` and `edges`, including the label on an arrow, and the payload format moved to v4 to
+carry it. Ten pages now draw their graph instead of dropping it. Two things are still refused: a
+diagram that is not a flowchart, and a graph past 14 boxes or 24 arrows — a hairball is not a picture.
+A quoted node label may now contain brackets (`R3["state = [q, qd]"]`): the old token pattern stopped
+at the inner `]` and silently lost the graph.
+
+**Every page carries one.** 63 figure directives were placed at the section they illustrate — the
+beginner track's `Learn`, a module's `2. Intuition first` — taking the payloads from 39 figures on 39
+pages to **106 on 92**. The pages that were still a wall of prose got a second: the capstone's build
+order, the ROS 2 executor's deadline, the six-layer worked example's loop-inductance spike (which also
+split one 2,614-character paragraph into the four questions it was hiding).
+
+**The pace is a gate.** `tests/test_lesson_pages.py`'s `ReadingPace` reads the committed payloads and
+fails when a page has no named figure, no map (route or graph), or a teaching run of consecutive
+paragraphs over **1,400 characters on the beginner track** and **2,500 in a module, ramp page or
+chapter** — exam sections exempt, because a paper is read one question at a time. Paragraph runs only:
+a heading, list, table, formula, code fence or picture already ends one. The test also shows itself
+failing on a 2,000-character paragraph, so the number is not vacuous.
+
+**Verified.** `npm run test:visuals` 14/14 (each kind checked against its own data: a graph's arrows land
+on boxes it has, a matrix's cells match its labels, a bitfield spans bits that exist, a plot's points
+stay inside its axes, a schematic's shunt hangs off a drawn part);
+`python3 -m unittest tests.test_lesson_pages` **28/28** (route and graph parsing, the cycle case, the
+size ceiling, the pace gate); `npm run test:reader` 21/21; `npm run test:e2e:pages` green in Chromium
+and Firefox, including a new assertion that R.1's branched map draws **5 boxes and 4 arrows** with a
+name and a caption; `check:snapshot` 48 surfaces, `check:axe` clean, `check:weight` re-recorded with
+two ceilings moved by hand (entry 522.1 of 530 kB, largest 338.3 of 344 kB — 11.7 kB of new renderers and
+scenes on the first-screen chunk; the reader's payloads are 685.7 of 720 kB).
+
+**Decisions.** A picture is placed at the section it illustrates, never dropped into a paragraph at
+random; the renderers share the seven theme variables, so no palette needed a special case; nothing
+animates, so `prefers-reduced-motion` has nothing to switch off; and the pace gate measures paragraphs,
+not lists — a bulleted list is already scannable, a twelve-paragraph block is not.
+
+---
+
 ## [2026-10-26] — Run 255: the same gates, in four lanes
 
 The run had grown into one long job: a Python matrix, a macOS install check, then a single

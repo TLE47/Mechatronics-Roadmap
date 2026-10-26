@@ -1,7 +1,8 @@
-{"v":3,"path":"modules/00-foundations.T2.00d.md","title":"Complex Numbers, Euler's Formula & Phasors","blocks":[
+{"v":4,"path":"modules/00-foundations.T2.00d.md","title":"Complex Numbers, Euler's Formula & Phasors","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"A sine wave has two numbers that matter - how big it is and when it peaks - and ordinary arithmetic keeps losing one of them. A complex number holds both at once: the magnitude is the amplitude, the angle is the phase, and Euler's formula $e^{j\\phi} = \\cos\\phi + j\\sin\\phi$ is the bridge back to the time domain. Every later frequency-domain tool in this track - impedance, transfer functions, Bode plots, the Kalman filter's complex poles - is arithmetic on these two-number containers. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
+{"t":"figure","id":"complex-plane","caption":"Multiplying by i is a quarter turn; the unit circle is every number of size one."},
 {"t":"p","x":"Think of a clock face with an arrow from the centre. The arrow's **length** is the amplitude; the **position** of its tip around the face is the phase. Multiplying by $j$ turns the arrow a quarter turn counter-clockwise without changing its length; multiplying by $e^{j\\phi}$ turns it by $\\phi$. Adding two arrows tip-to-tail is what adding two same-frequency sinusoids does - which is why two equally loud tones $180^\\circ$ apart cancel, and two $60^\\circ$ apart make a louder single tone rather than two."},
 {"t":"h","l":2,"x":"3. Formalization"},
 {"t":"ol","items":[{"x":"**The complex plane and polar form:** a complex number $z = x + jy$ (with $j = \\sqrt{-1}$) has magnitude and angle","d":0}]},

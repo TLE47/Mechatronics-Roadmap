@@ -34,6 +34,9 @@ plant: tier1_arm_motor
 A sine wave has two numbers that matter - how big it is and when it peaks - and ordinary arithmetic keeps losing one of them. A complex number holds both at once: the magnitude is the amplitude, the angle is the phase, and Euler's formula $e^{j\phi} = \cos\phi + j\sin\phi$ is the bridge back to the time domain. Every later frequency-domain tool in this track - impedance, transfer functions, Bode plots, the Kalman filter's complex poles - is arithmetic on these two-number containers. Already know this? Take the Skip test in section 7 first.
 
 ## 2. Intuition first
+
+<!-- figure: complex-plane | Multiplying by i is a quarter turn; the unit circle is every number of size one. -->
+
 Think of a clock face with an arrow from the centre. The arrow's **length** is the amplitude; the **position** of its tip around the face is the phase. Multiplying by $j$ turns the arrow a quarter turn counter-clockwise without changing its length; multiplying by $e^{j\phi}$ turns it by $\phi$. Adding two arrows tip-to-tail is what adding two same-frequency sinusoids does - which is why two equally loud tones $180^\circ$ apart cancel, and two $60^\circ$ apart make a louder single tone rather than two.
 
 ## 3. Formalization

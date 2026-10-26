@@ -42,7 +42,7 @@ flowchart LR
 | [`STORY.md`](STORY.md) | The Last Hands: the premise, the ten missions and what each earns, the Black Box, and the five rules the story may never break. |
 | [`CONTENT.md`](CONTENT.md) | The content pipeline: `content/` as the source of truth, the schemas, `npm run build:content`, what `--check` proves, and how a rename resolves through `aliases.yaml`. |
 | [`REPO_GAME.md`](REPO_GAME.md) | The repository as the game board: the four issue forms, the PR template, the labels and the ten milestones — and what is deliberately not automated. |
-| [`VISUALS.md`](VISUALS.md) | The pictures beside the words: the 21 named scenes and their six kinds, the page's own Mermaid flowchart drawn as a numbered route, the draggable arm hologram, the rules a figure may not break (no motion, no hard-coded colour, no unlabelled picture, no redrawn graph), what the kit costs, and the checks that keep a figure honest. |
+| [`VISUALS.md`](VISUALS.md) | The pictures beside the words: the 72 named scenes and their twelve kinds, a page's own Mermaid flowchart drawn as a numbered route or — when it branches — as a graph, the draggable arm hologram, the reading-pace gate that keeps a beginner page from becoming a wall of prose, the rules a figure may not break (no motion, no hard-coded colour, no unlabelled picture, no redrawn graph), what the kit costs, and the checks that keep a figure honest. |
 | [`AUDIO.md`](AUDIO.md) | Sound: off by default and armed by a gesture, the settings panel and its switches, the mixer and its limiter, the seven interface ticks and their pacing, the room's four layers, the two CC0 lo-fi beds with the drone as their fallback, the recorded rain, what ducks a run, and how focus stays quiet. |
 
 ## Accounts and administration

@@ -60,7 +60,7 @@ flowchart LR
 
 | Page | Concept | Lines | Sections |
 | :--- | :--- | ---: | :--- |
-| `01-electronics.T3.01a` | `four_layer_pcb_ground_plane_stackup` | 9 | 1. Why it matters, 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 8. Common mistakes |
+| `01-electronics.T3.01a` | `four_layer_pcb_ground_plane_stackup` | 11 | 1. Why it matters, 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 8. Common mistakes |
 | `02-mechanics.T2.02a` | `planar_2link_forward_kinematics` | 1 | 5. Exercise |
 | `02-mechanics.T3.02a` | `rodrigues_so3_se3_exp_log_maps` | 1 | 5. Exercise |
 | `02-mechanics.T3.02a` | `parallel_axis_urdf_inertia_tensor` | 4 | 1. Why it matters, 2. Intuition first, 5. Exercise |

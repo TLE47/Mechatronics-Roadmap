@@ -46,9 +46,15 @@ import mechalab_plant as plant      # L1 = L2 = 0.10 m, m1 = 0.20 kg, m2 = 0.15 
 So the chain you build here is the chain the arm's own controller runs, `plant.fk` is what that chain computes, and `plant.gravity_torque` is the same transpose $\tau = J^\top F$ applied to each link's weight. Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 
 ## 2. Intuition first
+
+<!-- figure: homogeneous | One 4x4 holds the rotation and the shift together. -->
+
 A part floating in space has **6 Degrees of Freedom** - slide along $X, Y, Z$ and roll, pitch, yaw about them. Every ideal point contact removes exactly $1$ along its surface normal, so fixing a part completely without over-constraining it takes exactly $6$ non-redundant contacts (**Maxwell's exact-constraint principle**, Step 2.3). A fourth contact on three legs preloads the part instead of holding it: over-constraint is a manufacturing problem, not a rigidity win.
 
 Why do robotics engineers love $4\times 4$ matrices $T = \begin{bmatrix} R & p \\ 0 & 1 \end{bmatrix}$? Because a `1` appended to a 3D point turns "rotate by $R$, then add $p$" into one matrix multiply, and a chain of links becomes one product, $T_{02} = T_{01}T_{12}$ - which is exactly how a `URDF` states a robot and exactly what the plant's `fk` evaluates for two planar links.
+
+
+<!-- figure: rotation-2d | Every rotation is a table, and composing two is two products in order. -->
 
 The **Jacobian** $J(q)$ is a posture-dependent multi-dimensional gear ratio. It tells you how much tip speed one rad/s of shoulder buys at the current pose, and by conservation of virtual work ($\tau^\top \dot{q} = F^\top \dot{x}$) its transpose tells you what tip force costs in joint torque: $\tau = J(q)^\top F$. Read that as a promise: **you never invert $J$**. The inverse exists only away from $\det J(q) = 0$, and near a singularity the tip speed for a given joint speed goes to zero while $J^{-1}$ blows up. The transpose has no such trap, which is why a Cartesian virtual spring-damper (Step 2.7) is written with $J^\top$ and not $J^{-1}$.
 

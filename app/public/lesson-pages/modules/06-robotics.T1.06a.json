@@ -1,4 +1,4 @@
-{"v":3,"path":"modules/06-robotics.T1.06a.md","title":"1D Point-to-Point Motion, Boundary Conditions & Virtual Joint Spring-Damper","blocks":[
+{"v":4,"path":"modules/06-robotics.T1.06a.md","title":"1D Point-to-Point Motion, Boundary Conditions & Virtual Joint Spring-Damper","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"This is the bridge module before Step 1.7 (`06-robotics.T1.07`). Feeding an instantaneous step jump ($q_{\\text{des}}: 0^\\circ \\to 90^\\circ$ in $0\\text{ s}$) into a robot arm controller demands infinite velocity and slams the actuator into saturation. Generating a smooth time-parameterized **trajectory** $q_d(t), \\dot{q}_d(t), \\ddot{q}_d(t)$ that starts and ends at zero velocity—and tracking it with a **virtual joint spring-damper** plus gravity feedforward—lets your arm glide smoothly and yield safely when touched. Already know this? Take the Skip test or the Ladder Gate test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},

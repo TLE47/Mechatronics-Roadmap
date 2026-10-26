@@ -297,17 +297,25 @@ source link out of the DOM, reloads and finds the same heading at the top of the
 
 ### The pictures beside the words
 
-The pane is 92 pages of prose, so it draws what the prose describes. Two things do that, and neither is
+The pane is 92 pages of prose, so it draws what the prose describes. Three things do that, and none is
 an image file:
 
 - **Named scenes** ([`src/visuals/scenes.ts`](src/visuals/scenes.ts)). A page writes
   `<!-- figure: control-loop | … -->` and the workbench draws it: a chain, a loop, a timing figure, a
-  row of state gates, or bars. 21 scenes, 39 pages, one renderer per kind in
+  row of state gates, bars, a plotted curve, a matrix, a bitfield, a reach dial, a circuit or a graph.
+  72 scenes in twelve kinds, one renderer per kind in
   [`src/visuals/Diagram.tsx`](src/visuals/Diagram.tsx) — so a new diagram is a data edit, and every
-  figure follows the same rules.
+  figure follows the same rules. All 92 pages carry at least one; 106 figures in the committed payloads.
 - **The page's own route** ([`src/lessonPage.ts`](src/lessonPage.ts), `route` blocks). A single-chain
   Mermaid flowchart becomes numbered steps, top to bottom, because a page title is too long for a box in
-  a row. `scripts/generate_lesson_pages.py` parses it; a graph that branches is left out.
+  a row. `scripts/generate_lesson_pages.py` parses it.
+- **The page's own graph** (`graph` blocks). A flowchart that branches keeps its shape: the same nodes,
+  the same arrows and their labels, drawn as boxes and arrows. Ten pages carry one; a graph past 14
+  boxes is left out rather than drawn as a hairball.
+
+The reading pace is a test, not a review note: `tests/test_lesson_pages.py` (`ReadingPace`) fails when a
+page has no figure, no map, or a teaching section with more than 1,400 characters of unbroken prose on
+the beginner track (2,500 in a module or chapter).
 
 **The arm you can grab** is the dashboard's top tile: [`src/visuals/Hologram.tsx`](src/visuals/Hologram.tsx)
 projects a two-link arm from 3D, with a view to orbit and two joints to pose. Its geometry is
@@ -1191,7 +1199,7 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/lessonFiles.ts`](src/lessonFiles.ts) | The read-only helper files a lesson brings (the shared plant). |
 | [`src/lessonPage.ts`](src/lessonPage.ts) | The lesson text as data: the payload's shape and guard, where it is served from, and one fetch per page. |
 | [`src/readerMarkdown.ts`](src/readerMarkdown.ts) | Inline Markdown for the reader (emphasis, code, links, maths) and the heading anchors that match GitHub's. |
-| [`src/visuals/scenes.ts`](src/visuals/scenes.ts) | The named figures, as data: 21 scenes in six kinds, and `sceneFor` refusing an id it does not draw. |
+| [`src/visuals/scenes.ts`](src/visuals/scenes.ts) | The named figures, as data: 72 scenes in twelve kinds, and `sceneFor` refusing an id it does not draw. |
 | [`src/visuals/Diagram.tsx`](src/visuals/Diagram.tsx) | One SVG renderer per figure kind, all theme-token colours, `role="img"` and a `<figcaption>`; the route's vertical layout and its label wrapping. |
 | [`src/visuals/holoModel.ts`](src/visuals/holoModel.ts) | The arm as pure functions: forward and inverse kinematics, the orbit clamps, the projection, the bounded trail, the demo pose. |
 | [`src/visuals/Hologram.tsx`](src/visuals/Hologram.tsx) | The dashboard's hologram: the projection drawn, the view dragged, the joints posed, the readout. |

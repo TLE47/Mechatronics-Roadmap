@@ -41,6 +41,9 @@ flowchart LR
 
 ## Learn
 
+<!-- figure: while-loop | The condition is checked before every pass, so a body that never settles never stops. -->
+
+
 ### Idea 1: Reusable functions (`def` and `return`)
 - **Primary resource:** [futurecoder.io — Chapter 10 (`Functions`)](https://futurecoder.io/course/#toc) `[verify in-app]`
   - **What to complete:** Complete the pages on defining functions, parameters, and returning values in **Chapter 10 (`Functions`)** `[verify in-app]`.

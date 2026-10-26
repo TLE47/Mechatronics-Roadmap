@@ -34,8 +34,8 @@ import { lessonPageUrl as sourceUrl } from '../startHere';
  *
  * The other picture is the page's own: a single-chain Mermaid `flowchart` becomes a `route` block, so
  * the "where this lesson goes" map every module already writes is drawn as numbered steps instead of
- * being dropped. A flowchart that branches is still dropped — redrawing a graph as a list would be a
- * different diagram — but a line is a line.
+ * being dropped, and a flowchart that branches becomes a `graph` block with the same nodes and
+ * arrows. Redrawing a graph as a list would be a different diagram; drawing it as a graph is not.
  *
  * It is deliberately *read-only*. The full solution is not in the payload
  * (`scripts/generate_lesson_pages.py` skips it), the code in the editor is the code that runs, and
@@ -493,6 +493,21 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
                         title: 'Where this lesson goes',
                         caption: block.caption ?? ROUTE_CAPTION,
                         steps: block.steps,
+                      }}
+                    />
+                  );
+                case 'graph':
+                  return (
+                    <Diagram
+                      key={index}
+                      id="graph"
+                      spec={{
+                        kind: 'graph',
+                        title: 'How this page fits together',
+                        caption: block.caption ?? '',
+                        direction: block.direction,
+                        nodes: block.nodes.map((node) => ({ id: node.id, label: node.label })),
+                        edges: block.edges,
                       }}
                     />
                   );

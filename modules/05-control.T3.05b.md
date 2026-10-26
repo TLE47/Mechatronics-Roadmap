@@ -35,6 +35,9 @@ plant: tier1_arm_motor
 An attitude filter cannot add a correction to a rotation matrix the way it adds a number to a scalar: $R + \delta$ is not a rotation. The Error-State Kalman Filter keeps its error in the 3-D **tangent space** $\delta\theta \in \mathbb{R}^3$, then folds that error into the nominal rotation with $R^+ = R^-\exp([\delta\hat{\theta}]_\times)$ and **resets the error-state mean to zero**, because the correction has just been consumed. Skip the reset and the same correction is applied again on the next update - the filter double-counts, and every determinant and orthogonality check still says the matrix is perfect. This is the second Track 05 Tier 3 bridge: `05-control.T3.05a` fixed the covariance, this module fixes the injection, and `05-control.T3.05c` adds the safety filter. Already know this? Take the Skip test in section 7 first.
 
 ## 2. Intuition first
+
+<!-- figure: rotation-3d | A rotation about z leaves the z axis alone. -->
+
 You are steering with a compass that reads $2^\circ$ left of north. You do not bend the needle; you turn the wheel by that correction and then **write the correction off your to-do list**. If you left it on the list and turned again on the next reading - even a reading that says you are now dead on - you would drift another $2^\circ$, and another. The wheel is the nominal rotation, the note is the error-state mean, and the reset is the crossing-out. The tangent space is just the language the note is written in: a small rotation is described by an axis and an angle, and for small angles that is a plain 3-vector.
 
 ## 3. Formalization

@@ -44,10 +44,10 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(ROOT, "app", "public", "lesson-pages")
-# 3 with `route` blocks (2 was `figure`): the reader's validator refuses a version it does not know
-# rather than guessing at a shape that changed, and a lesson written before figures or routes reads
-# the same.
-PAYLOAD_VERSION = 3
+# 4 with `graph` blocks (3 was `route`, 2 was `figure`): the reader's validator refuses a version it
+# does not know rather than guessing at a shape that changed, and a lesson written before any of them
+# reads the same.
+PAYLOAD_VERSION = 4
 
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 import generate_python_lessons_data as registry  # noqa: E402
@@ -90,11 +90,23 @@ MERMAID = {"mermaid"}
 # into ordered steps and drawn by the app. Anything a `route` block cannot represent — branches,
 # subgraphs, sequence or class diagrams — is still dropped rather than shown as source.
 FLOW_HEADER = re.compile(r"^\s*(?:flowchart|graph)\s+(?:LR|RL|TD|TB|BT)\s*;?\s*$", re.I)
+# A quoted label may hold the brackets an unquoted one may not: `R3["state = [q, qd]"]` is the
+# ramp's own node text, and the naive class stops at the inner `]` and loses the whole graph.
 FLOW_TOKEN = re.compile(
-    r"^([A-Za-z0-9_.\-]+)\s*(?:\[\s*\"?([^\"\]]*?)\"?\s*\]|\(\s*\"?([^\"\)]*?)\"?\s*\)|\{\s*\"?([^\"}]*?)\"?\s*\})?$"
+    r"^([A-Za-z0-9_.\-]+)\s*(?:"
+    r"\[\s*\"([^\"]*)\"\s*\]|\[\s*([^\"\]]*?)\s*\]"
+    r"|\(\s*\"([^\"]*)\"\s*\)|\(\s*([^\"\)]*?)\s*\)"
+    r"|\{\s*\"([^\"]*)\"\s*\}|\{\s*([^\"}]*?)\s*\}"
+    r")?$"
 )
 FLOW_SKIP = re.compile(r"^\s*(?:%%|subgraph\b|end\b|style\b|classDef\b|class\b|linkStyle\b|click\b|direction\b)", re.I)
 ROUTE_CAPTION = "Each box is a checkpoint in order; the last one is the verified pass this page ends on."
+GRAPH_CAPTION = "The page's own map: every box is a piece it needs, and every arrow is a dependency."
+# A graph larger than this stops being a picture: the crossing arrows hide the boxes they join. The
+# page keeps its Mermaid source (below the learning steps, where it already lives) and gets no drawn
+# map rather than a hairball.
+GRAPH_MAX_NODES = 14
+GRAPH_MAX_EDGES = 24
 
 
 def _flow_node(token):
@@ -170,6 +182,66 @@ def flow_route(text):
 # `<!-- figure: id | caption -->`: the id names a scene in the app's library, the caption is the
 # sentence under it. The comment form keeps the Markdown clean on GitHub, which hides it.
 # `re.M`: the directive is a line in a document, not the whole document.
+def flow_graph(text):
+    """A flowchart's nodes and edges, or None when it cannot be drawn as a graph.
+
+    This is what a branching page gets instead of nothing: the ten pages whose Mermaid graph fans out
+    (two lessons feeding one, a fan to a joint's Jacobian) used to lose their map entirely because a
+    `route` can only be a line. A graph keeps the shape: the same nodes, the same arrows, including
+    the labels on them. What it still refuses is a diagram that is not a flowchart at all (a sequence
+    or class diagram) and one too large to read.
+    """
+    lines = [line for line in text.split("\n") if line.strip() and not FLOW_SKIP.match(line)]
+    if not lines or not FLOW_HEADER.match(lines[0]):
+        return None
+    direction = "TD" if re.search(r"\b(?:TD|TB|BT)\b", lines[0], re.I) else "LR"
+    labels, order, edges = {}, [], []
+    for line in lines[1:]:
+        parts = line.split("-->")
+        if len(parts) == 1:
+            node = _flow_node(parts[0])
+            if not node:
+                return None
+            name, label, explicit = node
+            if explicit or name not in labels:
+                labels[name] = label
+            if name not in order:
+                order.append(name)
+            continue
+        for index in range(len(parts) - 1):
+            left = _flow_node(parts[index])
+            right_text = re.sub(r"^\s*\|[^|]*\|\s*", "", parts[index + 1])
+            right = _flow_node(right_text)
+            if not left or not right:
+                return None
+            for name, label, explicit in (left, right):
+                if explicit or name not in labels:
+                    labels[name] = label
+                if name not in order:
+                    order.append(name)
+            label = re.match(r"^\s*\|([^|]*)\|", parts[index + 1])
+            edges.append({"from": left[0], "to": right[0], **({"label": label.group(1).strip()} if label else {})})
+    if len(order) < 2 or not edges:
+        return None
+    if len(order) > GRAPH_MAX_NODES or len(edges) > GRAPH_MAX_EDGES:
+        return None
+    # The same graph drawn twice in one page is one picture; a self-edge says nothing in a layout.
+    unique = []
+    for edge in edges:
+        if edge["from"] == edge["to"]:
+            continue
+        if edge not in unique:
+            unique.append(edge)
+    if not unique:
+        return None
+    return {
+        "t": "graph",
+        "direction": direction,
+        "nodes": [{"id": name, "label": labels[name]} for name in order],
+        "edges": unique,
+        "caption": GRAPH_CAPTION,
+    }
+# `<!-- figure: id | caption -->`: the id names a scene in the app's library, the caption is the
 FIGURE_COMMENT = re.compile(
     r"^\s*<!--\s*figure:\s*([a-z0-9][a-z0-9-]*)\s*(?:\|\s*(.*?))?\s*-->\s*$", re.I | re.M
 )
@@ -325,6 +397,10 @@ def parse_blocks(raw):
                 route = flow_route(text)
                 if route and not skip_level:
                     blocks.append({"t": "route", "steps": route, "caption": ROUTE_CAPTION})
+                    continue
+                graph = flow_graph(text)
+                if graph and not skip_level:
+                    blocks.append(graph)
                 continue
             if skip_level:
                 continue

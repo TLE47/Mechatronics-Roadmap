@@ -40,6 +40,9 @@ flowchart LR
 
 ## Learn
 
+<!-- figure: for-loop | One item per pass, and the body never decides when the loop ends. -->
+
+
 ### Idea 1: Ordered lists with zero-based indexing
 - **Primary resource:** [Official Python 3 Tutorial — Section 3.1.3: Lists](https://docs.python.org/3/tutorial/introduction.html) `[HTTP 200 — Verified by scripts/check_links.py]`
   - **What to read:** Read exact heading **`3.1.3. Lists`** (creating lists with square brackets, indexing with `[0]`, `.append()`, and `len()`).

@@ -104,6 +104,104 @@ check('every scene carries a title, a caption and the data its kind draws', () =
           assert.ok(row.value >= 0 && row.value <= row.max, `${id}/${row.label} draws outside its own axis`);
         }
         break;
+      case 'graph': {
+        const nodes = spec.nodes ?? [];
+        const edges = spec.edges ?? [];
+        assert.ok(nodes.length >= 2, `${id} is a graph with fewer than two boxes`);
+        assert.ok(spec.direction === 'LR' || spec.direction === 'TD', `${id} has no direction, so it has no layout`);
+        const ids = new Set(nodes.map((node) => node.id));
+        assert.equal(ids.size, nodes.length, `${id} has two nodes with the same id, so one box is unreachable`);
+        assert.ok(edges.length >= 1, `${id} is a graph with no arrow: that is a list of boxes`);
+        for (const edge of edges) {
+          assert.ok(ids.has(edge.from) && ids.has(edge.to), `${id} draws an arrow between boxes it does not have`);
+        }
+        assert.ok(nodes.every((node) => node.label.trim().length > 0), `${id} has an unlabelled box`);
+        break;
+      }
+      case 'matrix': {
+        const grid = spec.matrix;
+        assert.ok(grid, `${id} has no matrix`);
+        assert.equal(grid.cells.length, grid.rows.length, `${id} has ${grid.rows.length} row labels but ${grid.cells.length} rows`);
+        for (const row of grid.cells) {
+          assert.equal(row.length, grid.cols.length, `${id} has a row whose length is not the column count`);
+        }
+        for (const [row, col] of grid.highlight ?? []) {
+          assert.ok(
+            row >= 0 && row < grid.rows.length && col >= 0 && col < grid.cols.length,
+            `${id} highlights a cell it does not draw`
+          );
+        }
+        break;
+      }
+      case 'bits': {
+        const register = spec.bits;
+        assert.ok(register, `${id} has no register`);
+        assert.ok(Number.isInteger(register.width) && register.width >= 4 && register.width <= 32, `${id} is a register of ${register.width} bits`);
+        assert.ok(register.segments.length >= 1, `${id} labels no field`);
+        for (const segment of register.segments) {
+          assert.ok(
+            segment.from >= 0 && segment.to < register.width && segment.from <= segment.to,
+            `${id}/${segment.label} spans bits outside the register`
+          );
+        }
+        break;
+      }
+      case 'reach': {
+        const dial = spec.reach;
+        assert.ok(dial, `${id} has no reach`);
+        assert.ok(dial.max > dial.min && dial.min >= 0, `${id} has an impossible ring: min ${dial.min}, max ${dial.max}`);
+        assert.ok(dial.points.length >= 1, `${id} marks nothing on the dial`);
+        for (const point of dial.points) {
+          assert.ok(Number.isFinite(point.at), `${id}/${point.label} is not at a number`);
+        }
+        break;
+      }
+      case 'schematic': {
+        const circuit = spec.schematic;
+        assert.ok(circuit, `${id} has no circuit`);
+        assert.ok(circuit.series.length >= 2, `${id} is a circuit with fewer than two parts`);
+        if (circuit.shunt) {
+          assert.ok(
+            circuit.shunt.after >= 0 && circuit.shunt.after < circuit.series.length,
+            `${id} hangs its shunt off a part it does not draw`
+          );
+        }
+        break;
+      }
+      case 'plot': {
+        const chart = spec.plot;
+        assert.ok(chart, `${id} has no plot`);
+        assert.ok(chart.x.max > chart.x.min && chart.y.max > chart.y.min, `${id} has an empty axis`);
+        assert.ok(chart.series.length >= 1, `${id} plots no series`);
+        for (const line of chart.series) {
+          assert.ok(line.points.length >= 1, `${id}/${line.label} has no points`);
+          for (const point of line.points) {
+            assert.ok(
+              Number.isFinite(point.x) && Number.isFinite(point.y),
+              `${id}/${line.label} has a non-finite point`
+            );
+            assert.ok(
+              point.x >= chart.x.min - 1e-9 && point.x <= chart.x.max + 1e-9,
+              `${id}/${line.label} plots x=${point.x} outside [${chart.x.min}, ${chart.x.max}]`
+            );
+            assert.ok(
+              point.y >= chart.y.min - 1e-9 && point.y <= chart.y.max + 1e-9,
+              `${id}/${line.label} plots y=${point.y} outside [${chart.y.min}, ${chart.y.max}]`
+            );
+          }
+        }
+        for (const band of chart.bands ?? []) {
+          const axis = band.axis === 'x' ? chart.x : chart.y;
+          assert.ok(
+            band.from >= axis.min && band.to <= axis.max && band.to > band.from,
+            `${id}/${band.label} shades a window outside its axis`
+          );
+        }
+        break;
+      }
+      case 'route':
+        assert.fail(`${id} is a route, but a route is a page's own flowchart, never a named scene`);
+        break;
       default:
         assert.fail(`${id} has kind ${spec.kind}, which no renderer draws`);
     }
@@ -152,7 +250,7 @@ check('every committed payload is the version this build reads', () => {
       }
       if (!name.endsWith('.json')) continue;
       const payload = JSON.parse(fs.readFileSync(full, 'utf8'));
-      assert.equal(payload.v, 3, `${path.relative(PAGES, full)} is payload v${payload.v}; re-run the generator`);
+      assert.equal(payload.v, 4, `${path.relative(PAGES, full)} is payload v${payload.v}; re-run the generator`);
       for (const block of payload.blocks ?? []) {
         if (block.t === 'figure') assert.equal(typeof block.caption, 'string', `${full} has a figure with no caption field`);
         if (block.t === 'route') {
@@ -160,6 +258,15 @@ check('every committed payload is the version this build reads', () => {
           assert.ok(
             block.steps.every((step) => typeof step === 'string' && step.trim().length > 0),
             `${full} has a route step that is not a label: an empty box is a gap in the map`
+          );
+        }
+        if (block.t === 'graph') {
+          const ids = new Set((block.nodes ?? []).map((node) => node.id));
+          assert.ok(ids.size >= 2, `${full} has a graph with fewer than two boxes`);
+          assert.ok((block.edges ?? []).length >= 1, `${full} has a graph with no arrows`);
+          assert.ok(
+            (block.edges ?? []).every((edge) => ids.has(edge.from) && ids.has(edge.to)),
+            `${full} has a graph arrow that lands on a box the page does not name`
           );
         }
       }
