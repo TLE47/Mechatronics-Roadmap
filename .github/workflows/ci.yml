@@ -266,8 +266,8 @@ jobs:
       - name: Install the locked dependencies
         run: npm ci
 
-      # The bundle was built once, in build-workbench. `dist/` arrives newer than the checkout, so
-      # every suite's `ensureBuilt` reuses it instead of running the build again.
+      # The bundle was built once, in build-workbench. Its archive is older than this checkout's
+      # files, so the next step stamps it; from there every suite's `ensureBuilt` reuses it.
       - name: Fetch the bundle the build job produced
         uses: actions/download-artifact@v4
         with:
@@ -321,8 +321,8 @@ jobs:
       - name: Install the locked dependencies
         run: npm ci
 
-      # The bundle was built once, in build-workbench. `dist/` arrives newer than the checkout, so
-      # every suite's `ensureBuilt` reuses it instead of running the build again.
+      # The bundle was built once, in build-workbench. Its archive is older than this checkout's
+      # files, so the next step stamps it; from there every suite's `ensureBuilt` reuses it.
       - name: Fetch the bundle the build job produced
         uses: actions/download-artifact@v4
         with:
@@ -385,8 +385,8 @@ jobs:
       - name: Install the locked dependencies
         run: npm ci
 
-      # The bundle was built once, in build-workbench. `dist/` arrives newer than the checkout, so
-      # every suite's `ensureBuilt` reuses it instead of running the build again.
+      # The bundle was built once, in build-workbench. Its archive is older than this checkout's
+      # files, so the next step stamps it; from there every suite's `ensureBuilt` reuses it.
       - name: Fetch the bundle the build job produced
         uses: actions/download-artifact@v4
         with:
