@@ -564,7 +564,9 @@ installs, run in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) on Ub
 [`link-check.yml`](../.github/workflows/link-check.yml) lints every lesson, verifies links, and
 compiles the Arduino sketches against the hosted toolchain; blocked citations are collected in
 [`UNVERIFIED_CITATIONS.md`](UNVERIFIED_CITATIONS.md) and charted in the workbench's Link Health
-tab.
+tab. The chart is generated from the sweep's history file, and the weekly job's own commit regenerates
+it *with* the new row — `ci.yml` fails the pair when they disagree, so they cannot land apart;
+`tests/test_link_history_data.py` holds that step to generating first and committing both paths.
 
 `npm run test:smoke` and `npm run test:e2e` need `npm ci` first; the browser suites find
 Chromium through Playwright or the documented fallback paths.

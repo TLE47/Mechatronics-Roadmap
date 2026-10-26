@@ -8,8 +8,9 @@ on:
     - cron: "0 6 * * 1"
   workflow_dispatch:
 
-# Only the scheduled/dispatch run pushes (one history row); the scope is declared here because the
-# default token is read-only in some repository settings and the push step would fail silently there.
+# Only the scheduled/dispatch run pushes (one history row and the dashboard module regenerated from
+# it); the scope is declared here because the default token is read-only in some repository settings
+# and the push step would fail silently there.
 permissions:
   contents: write
   # The rise gate files an issue naming the URLs a scheduled run could not verify.
@@ -80,17 +81,24 @@ jobs:
       # hand, so a rise across weeks is visible in one committed file.
       # `always()` because the row is the evidence for a failed rise gate: without it the baseline
       # would never move and the next weekly run would report the same delta.
-      - name: Record the sweep's not-checked count (scheduled runs only)
+      #
+      # The dashboard's module is regenerated and committed in the same step, not by a follow-up:
+      # `ci.yml` fails the pair when they disagree, so a commit that carried only the row turned every
+      # PR red until someone regenerated it by hand (`be434a0` did exactly that to `main`). Generation
+      # runs before the diff check so a row that somehow wrote nothing still repairs a stale module,
+      # and a failing generator fails this step rather than pushing half a record.
+      - name: Record the sweep's counts and regenerate the link history (scheduled runs only)
         if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         run: |
-          if git diff --quiet -- docs/link-check-history.jsonl; then
+          python3 scripts/generate_link_history_data.py
+          if git diff --quiet -- docs/link-check-history.jsonl app/src/data/linkHistoryData.ts; then
             echo "No new history row."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/link-check-history.jsonl
-          git commit -m "Record the link sweep's served and not-checked counts"
+          git add docs/link-check-history.jsonl app/src/data/linkHistoryData.ts
+          git commit -m "Record the link sweep's counts and regenerate its history data"
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push
 
