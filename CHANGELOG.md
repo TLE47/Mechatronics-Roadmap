@@ -16,6 +16,33 @@ flowchart LR
 
 ---
 
+## [2026-10-26] — Run 253: the sweep commits its own chart
+
+`main` went red on `be434a0`: the weekly sweep's bot appended a link-sweep row to
+`docs/link-check-history.jsonl` and committed it alone, while `ci.yml` runs
+`generate_link_history_data.py --check` on the module generated from that file. Every PR then failed a
+gate nobody had touched, and PR #47 had to regenerate the module by hand before it could merge.
+
+**The record step regenerates before it commits.** `Record the sweep's counts and regenerate the link
+history (scheduled runs only)` now runs the generator *first*, compares both files to decide whether
+there is anything to record at all, and stages `docs/link-check-history.jsonl` and
+`app/src/data/linkHistoryData.ts` in one commit. A generator that fails fails the step rather than
+pushing half a record, and generation comes before the empty-diff check so a row that somehow wrote
+nothing still repairs a stale module.
+
+**Guarded, not just fixed.** `tests/test_link_history_data.py` grows `SweepWorkflowTests`: the record
+step's block in the workflow must run the generator (and not with `--check`, which writes nothing),
+before it reads the diff, and must stage both paths in a single `git commit`. Reverting the step to
+row-only fails those two tests.
+
+**Verified.** `python3.12 -m unittest tests.test_link_history_data` **14 tests** (two new); the
+negative case reproduced in a scratch clone — a row-only commit still makes `--check` exit 1, which is
+the red this closes; a row appended, generated and committed as one change leaves `--check` green at 6
+runs and all rows plottable; the workflow YAML parses with the new step body; `check_workflows.py`
+(3 workflows, actionlint clean); `check_all.py` **36/36**.
+
+---
+
 ## [2026-10-26] — Run 252: real lo-fi, and a panel to set it by
 
 Sound v2 gave the workbench an interface and a room; the music was still two oscillator drones. This

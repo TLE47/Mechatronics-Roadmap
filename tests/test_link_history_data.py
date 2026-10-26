@@ -255,6 +255,63 @@ class LinkHistoryGeneratorTests(unittest.TestCase):
         self.assertEqual(summary["skipped"], 0, "expected no skipped lines when every row is valid")
 
 
+class SweepWorkflowTests(unittest.TestCase):
+    """The commit that records a history row must carry the module generated from it.
+
+    `ci.yml` runs the generator with `--check`, so the two files disagreeing is a red build. The weekly
+    sweep is the only writer of the row, so it is the only place that can commit them apart: a step
+    that staged `docs/link-check-history.jsonl` alone turned `main` red (`be434a0`) and every PR with
+    it. These assertions are that step's contract, not its wording: generate, then stage both, then
+    one commit.
+    """
+
+    WORKFLOW = ROOT / ".github" / "workflows" / "link-check.yml"
+    STEP_PREFIX = "      - name: "
+
+    def record_step(self) -> str:
+        self.assertTrue(
+            self.WORKFLOW.exists(),
+            f"expected the sweep's workflow at {self.WORKFLOW}; a moved file would silently stop checking it",
+        )
+        lines = self.WORKFLOW.read_text(encoding="utf-8").splitlines()
+        start = next(
+            (i for i, line in enumerate(lines) if line.startswith(self.STEP_PREFIX) and "Record the sweep" in line),
+            None,
+        )
+        self.assertIsNotNone(start, "expected a step that records the sweep's counts")
+        end = next(
+            (i for i, line in enumerate(lines[start + 1 :], start + 1) if line.startswith(self.STEP_PREFIX)),
+            len(lines),
+        )
+        return "\n".join(lines[start:end])
+
+    def test_the_row_and_the_module_land_in_one_commit(self):
+        step = self.record_step()
+        self.assertEqual(
+            step.count("git commit"),
+            1,
+            "expected one commit for the pair; two commits leave main red in between",
+        )
+        add = next((line for line in step.splitlines() if "git add" in line), "")
+        for path in ("docs/link-check-history.jsonl", "app/src/data/linkHistoryData.ts"):
+            self.assertIn(path, add, f"expected the record step to stage {path} in the same commit")
+
+    def test_the_module_is_generated_before_the_diff_is_read(self):
+        step = self.record_step()
+        generate = step.find("python3 scripts/generate_link_history_data.py")
+        self.assertGreaterEqual(generate, 0, "expected the record step to run the generator")
+        self.assertLess(
+            generate,
+            step.find("git diff --quiet"),
+            "expected generation before the empty-diff check, or a stale module skips the commit",
+        )
+        self.assertNotIn(
+            "generate_link_history_data.py --check",
+            step,
+            "expected the step to write the module; --check compares and writes nothing",
+        )
+
+
 class CommittedHistoryTests(unittest.TestCase):
     def test_every_committed_line_is_plottable(self):
         if not HISTORY.exists():
