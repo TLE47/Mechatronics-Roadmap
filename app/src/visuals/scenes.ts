@@ -530,14 +530,16 @@ export const SCENES: Record<string, DiagramSpec> = {
   ),
 
   'parse-tree': graph(
-    'Which operation runs first',
+    '2 + 3 × 4, as a tree',
     'A precedence rule is a shape: the multiplication hangs below the addition, so it has to be finished first.',
     [
-      { id: 'plus', label: '2 + …', row: 0, tone: 'accent' },
-      { id: 'two', label: '2', row: 1 },
-      { id: 'times', label: '3 × 4', row: 1 },
+      // In `TD` the row *is* the column, so the lanes are what place the fan: the root sits over
+      // both of its operands, and `×` sits over its own pair. One lane per box, never shared.
+      { id: 'plus', label: '+', row: 1, tone: 'accent' },
+      { id: 'two', label: '2', row: 0 },
+      { id: 'times', label: '×', row: 2 },
       { id: 'three', label: '3', row: 2 },
-      { id: 'four', label: '4', row: 2 },
+      { id: 'four', label: '4', row: 3 },
     ],
     [
       { from: 'plus', to: 'two' },
@@ -552,9 +554,9 @@ export const SCENES: Record<string, DiagramSpec> = {
     'One question, two roads',
     'A branch is not two behaviours: it is one comparison, and whichever road the answer chooses.',
     [
-      { id: 'read', label: 'read command', row: 0 },
+      { id: 'read', label: 'read command', row: 1 },
       { id: 'ask', label: 'above limit?', row: 1, tone: 'accent' },
-      { id: 'clamp', label: 'clamp to limit', row: 2 },
+      { id: 'clamp', label: 'clamp to limit', row: 0 },
       { id: 'keep', label: 'pass it through', row: 2 },
     ],
     [
@@ -880,10 +882,10 @@ export const SCENES: Record<string, DiagramSpec> = {
     'Hardware, described as a tree',
     'Zephyr does not hunt for devices at run time: the board file names each bus and each chip on it, and the build generates the bindings.',
     [
-      { id: 'soc', label: 'SoC', row: 0, tone: 'accent' },
-      { id: 'i2c', label: 'i2c1', row: 1 },
-      { id: 'spi', label: 'spi2', row: 1 },
-      { id: 'baro', label: 'bme280', row: 2 },
+      { id: 'soc', label: 'SoC', row: 1, tone: 'accent' },
+      { id: 'i2c', label: 'i2c1', row: 0 },
+      { id: 'spi', label: 'spi2', row: 2 },
+      { id: 'baro', label: 'bme280', row: 0 },
       { id: 'imu', label: 'icm42688', row: 2 },
     ],
     [
@@ -1226,10 +1228,10 @@ export const SCENES: Record<string, DiagramSpec> = {
     'One launch file, many nodes',
     'Launch files are the map of a running system: which nodes start, in what order, and with which parameters.',
     [
-      { id: 'launch', label: 'bringup.launch.py', row: 0, tone: 'accent' },
-      { id: 'sensors', label: 'sensors', row: 1 },
+      { id: 'launch', label: 'bringup.launch.py', row: 1, tone: 'accent' },
+      { id: 'sensors', label: 'sensors', row: 0 },
       { id: 'control', label: 'control', row: 1 },
-      { id: 'bring', label: 'state publisher', row: 1 },
+      { id: 'bring', label: 'state publisher', row: 2 },
     ],
     [
       { from: 'launch', to: 'sensors', label: 'params' },
@@ -1244,10 +1246,10 @@ export const SCENES: Record<string, DiagramSpec> = {
     'The forward pass builds a chain of operations; the backward pass applies one derivative per arrow, all the way to the parameter.',
     [
       { id: 'x', label: 'x', row: 0 },
-      { id: 'w', label: 'w', row: 0 },
-      { id: 'prod', label: 'w · x', row: 0, tone: 'accent' },
-      { id: 'loss', label: 'loss', row: 0 },
-      { id: 'grad', label: '∂L/∂w', row: 0 },
+      { id: 'w', label: 'w', row: 1 },
+      { id: 'prod', label: 'w · x', row: 1, tone: 'accent' },
+      { id: 'loss', label: 'loss', row: 1 },
+      { id: 'grad', label: '∂L/∂w', row: 1 },
     ],
     [
       { from: 'x', to: 'prod', label: '×' },

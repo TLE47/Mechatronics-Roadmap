@@ -40,7 +40,7 @@ at the inner `]` and silently lost the graph.
 
 **Every page carries one.** 63 figure directives were placed at the section they illustrate — the
 beginner track's `Learn`, a module's `2. Intuition first` — taking the payloads from 39 figures on 39
-pages to **106 on 92**. The pages that were still a wall of prose got a second: the capstone's build
+pages to **106 on 92** — 107 after the walkthrough below. The pages that were still a wall of prose got a second: the capstone's build
 order, the ROS 2 executor's deadline, the six-layer worked example's loop-inductance spike (which also
 split one 2,614-character paragraph into the four questions it was hiding).
 
@@ -51,15 +51,24 @@ chapter** — exam sections exempt, because a paper is read one question at a ti
 a heading, list, table, formula, code fence or picture already ends one. The test also shows itself
 failing on a 2,000-character paragraph, so the number is not vacuous.
 
-**Verified.** `npm run test:visuals` 14/14 (each kind checked against its own data: a graph's arrows land
-on boxes it has, a matrix's cells match its labels, a bitfield spans bits that exist, a plot's points
-stay inside its axes, a schematic's shunt hangs off a drawn part);
+**Five fans drew one box on top of another.** Walking the pages found `parse-tree` (P.2),
+`decision-fork` (P.3), `devicetree`, `launch-tree` and `autograd-graph` each handing two nodes the same
+`(level, row)` cell — in `TD` the row *is* the column, so two siblings both given `row: 1` drew in one
+place and the fan the figure existed for was gone, with no broken link and no missing scene to notice.
+Each scene now names one lane per box, and `graphLayers` moved out of `Diagram.tsx` into
+`app/src/visuals/graphLayout.ts` so `test:visuals` calls the same layout the renderer does and fails a
+scene whose boxes collide (`collidingCells`). The one kind no page used got its page: the reach dial now
+sits under 02.3's reachability idea, so all twelve kinds are drawn somewhere in the reader.
+
+**Verified.** `npm run test:visuals` 15/15 (each kind checked against its own data: a graph's arrows land
+on boxes it has and no two boxes share a cell, a matrix's cells match its labels, a bitfield spans bits
+that exist, a plot's points stay inside its axes, a schematic's shunt hangs off a drawn part);
 `python3 -m unittest tests.test_lesson_pages` **28/28** (route and graph parsing, the cycle case, the
 size ceiling, the pace gate); `npm run test:reader` 21/21; `npm run test:e2e:pages` green in Chromium
 and Firefox, including a new assertion that R.1's branched map draws **5 boxes and 4 arrows** with a
 name and a caption; `check:snapshot` 48 surfaces, `check:axe` clean, `check:weight` re-recorded with
 two ceilings moved by hand (entry 522.1 of 530 kB, largest 338.3 of 344 kB — 11.7 kB of new renderers and
-scenes on the first-screen chunk; the reader's payloads are 685.7 of 720 kB).
+scenes on the first-screen chunk; the reader's payloads are 685.8 of 720 kB, 107 figures).
 
 **Decisions.** A picture is placed at the section it illustrates, never dropped into a paragraph at
 random; the renderers share the seven theme variables, so no palette needed a special case; nothing

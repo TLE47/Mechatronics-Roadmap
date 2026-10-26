@@ -26,7 +26,7 @@ flowchart LR
 
 | Kind | Where it comes from | How many | What it answers |
 | :--- | :--- | :--- | :--- |
-| **A named scene** | A line `<!-- figure: control-loop \| … -->` in the page's Markdown, naming an entry in [`app/src/visuals/scenes.ts`](../app/src/visuals/scenes.ts) | 106 figures on all 92 pages | "what is the chain, the field, the curve or the circuit this section describes?" |
+| **A named scene** | A line `<!-- figure: control-loop \| … -->` in the page's Markdown, naming an entry in [`app/src/visuals/scenes.ts`](../app/src/visuals/scenes.ts) | 107 figures on all 92 pages | "what is the chain, the field, the curve or the circuit this section describes?" |
 | **A route** | The page's own Mermaid `flowchart`, when it is a single chain, parsed by the generator into a `route` block | 82 pages | "where does this lesson go, and what is the next checkpoint?" |
 | **A graph** | The page's own Mermaid `flowchart`, when it branches: nodes and labelled arrows, drawn as the graph it is | 10 pages | "how do these lessons fit together, and what feeds what?" |
 
@@ -124,7 +124,7 @@ picture, that is one branch in `Diagram.tsx` and one assertion in `test_visuals.
 | :--- | :--- | :--- | :--- |
 | `entry_gzip` | 522.1 kB | 530 kB | the figures are app code on the first-screen chunk: the reader draws them beside the text |
 | `largest_js_gzip` | 338.3 kB | 344 kB | the runner chunk carries the kit |
-| `reader_gzip` | 685.7 kB | 720 kB | 106 figures, 82 routes and 10 graphs later; still fetched one page at a time |
+| `reader_gzip` | 685.8 kB | 720 kB | 107 figures, 82 routes and 10 graphs later; still fetched one page at a time |
 
 No audio file, no image, no font. The whole visual kit — 72 scenes, twelve renderers, the arm model, the
 hologram — is 11.7 kB gzipped on chunks that already existed.

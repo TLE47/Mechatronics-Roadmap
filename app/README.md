@@ -305,7 +305,7 @@ an image file:
   row of state gates, bars, a plotted curve, a matrix, a bitfield, a reach dial, a circuit or a graph.
   72 scenes in twelve kinds, one renderer per kind in
   [`src/visuals/Diagram.tsx`](src/visuals/Diagram.tsx) — so a new diagram is a data edit, and every
-  figure follows the same rules. All 92 pages carry at least one; 106 figures in the committed payloads.
+  figure follows the same rules. All 92 pages carry at least one; 107 figures in the committed payloads.
 - **The page's own route** ([`src/lessonPage.ts`](src/lessonPage.ts), `route` blocks). A single-chain
   Mermaid flowchart becomes numbered steps, top to bottom, because a page title is too long for a box in
   a row. `scripts/generate_lesson_pages.py` parses it.

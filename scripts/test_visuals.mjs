@@ -26,6 +26,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { collidingCells } from '../app/src/visuals/graphLayout.ts';
 import { SCENES, SCENE_IDS, sceneFor } from '../app/src/visuals/scenes.ts';
 import {
   HOME,
@@ -205,6 +206,15 @@ check('every scene carries a title, a caption and the data its kind draws', () =
       default:
         assert.fail(`${id} has kind ${spec.kind}, which no renderer draws`);
     }
+  }
+});
+
+check('no graph draws two boxes in one cell', () => {
+  // A scene names its own lanes, and a lane repeated at one depth is a box hidden under another:
+  // the fan it was meant to show is gone, with no broken link and no missing scene to notice.
+  for (const [id, spec] of Object.entries(SCENES)) {
+    if (spec.kind !== 'graph') continue;
+    assert.deepEqual(collidingCells(spec), [], `${id} stacks its boxes`);
   }
 });
 
