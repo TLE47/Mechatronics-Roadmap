@@ -44,7 +44,8 @@ verification stamp are fetched when a verification needs them. `entry_gzip` is 5
 505.0 kB ceiling, and `largest_js_gzip` 319.4 kB against 325.0 kB.
 
 **The repository plays too.** Four issue forms (Work Order, Field Service Call, Black Box Voice,
-Leave a Recording), a bench-task PR template that asks for the lesson id and the checks run, and
+Leave a Recording — `work-order.yml`, `field-service-call.yml`, `black-box-voice.yml` and
+`leave-a-recording.yml`), a bench-task PR template that asks for the lesson id and the checks run, and
 `labels.yml` / `milestones.yml` as reviewed files — the ten missions are the ten milestones.
 
 **Verified.** `test:content` 15 checks and `test:game` 17 checks; `test:e2e:game` 7 browser checks
@@ -56,6 +57,9 @@ pairs, the tour and every unit suite) PASS; axe 12 tabs × 4 themes; the surface
 for the landing screen only (+1 heading, +2 buttons, +276 px) and re-checked; label sizes PASS after
 the new card was brought to the 11 px metadata / 12 px control floor; weight PASS; `python3 -m
 unittest discover -s tests` and `check_workflows` clean.
+
+The validator's README-size claim moves with this entry: the page is `111 KB $\to$ 21 KB` now that the
+README carries the 3.0 rows.
 
 Files: `content/**`, `schemas/*.schema.json`, `scripts/build_content.py`, `scripts/test_content.mjs`,
 `scripts/test_gamification.mjs`, `scripts/e2e_game.mjs`, `tests/test_content_build.py`,
