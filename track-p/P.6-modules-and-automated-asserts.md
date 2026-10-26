@@ -40,6 +40,8 @@ flowchart LR
 
 ## Learn
 
+<!-- figure: debug-loop | The assert turns a wrong answer into an address: run, read, change one thing, run again. -->
+
 ### Idea 1: Loading standard-library modules with `import`
 - **Primary resource:** [Harvard CS50P Lecture 4 Notes](https://cs50.harvard.edu/python/2022/notes/4/) `[HTTP 200 — Verified by scripts/check_links.py]`
   - **What to read:** Read exact headings **`Libraries`** and **`Random`** (see how `import` loads a module at the top of a file and calls functions using dot notation `module.func()`).

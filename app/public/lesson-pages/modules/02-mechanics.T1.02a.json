@@ -1,4 +1,4 @@
-{"v":1,"path":"modules/02-mechanics.T1.02a.md","title":"Free-Body Diagrams, Gravity Lever-Arm Torque & Gear Speed/Torque Power Scaling","blocks":[
+{"v":3,"path":"modules/02-mechanics.T1.02a.md","title":"Free-Body Diagrams, Gravity Lever-Arm Torque & Gear Speed/Torque Power Scaling","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"This is the bridge module before Step 1.3 (`02-mechanics.T1.03`). Before sizing a robot arm motor or computing $N^2$ reflected inertia in Step 1.3, you need to isolate a link in a **Free-Body Diagram (FBD)**, calculate how gravity torque varies with shoulder angle ($\\tau_g = m g L_{\\text{com}} \\cos\\theta$), and understand how a gearbox or timing belt trades speed for torque while conserving mechanical power ($P = \\tau \\omega$). Already know this? Take the Skip test or the Ladder Gate test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
@@ -38,6 +38,7 @@
 {"t":"p","x":"No hardware required for this module (`hardware_required: false`). In Step 1.3 (`02-mechanics.T1.03`) and Step 1.7 (`06-robotics.T1.07`), your gravity torque equation $\\tau_g(\\theta) = M g L_{\\text{eff}}\\cos\\theta$ becomes the exact **gravity feedforward compensation term** added to the PID controller output:"},
 {"t":"code","lang":"text","text":"[Encoder Angle theta] ---> [tau_ff = (m*L_com + m_tip*L)*g*cos(theta)] ---> (+) ---> [Motor Torque Command]"},
 {"t":"p","x":"Pass/fail verification in simulation: `tau_0 == 1.3734 N*m`, `tau_60 == 0.6867 N*m`, and `tau_motor_0 == 0.2543 N*m`."},
+{"t":"route","steps":["02-mechanics.T1.02a: free body diagram static equilibrium","gravity lever arm cosine torque","gear reduction speed torque power conservation","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: score $\\ge 80\\%$ ($4/4$) on the Skip test or score $\\ge 80\\%$ ($7/8$) on the Ladder Gate test below to unlock Step 1.3 (`02-mechanics.T1.03`)."},
 {"t":"h","l":3,"x":"Skip test"},

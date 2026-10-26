@@ -44,6 +44,8 @@ flowchart LR
 
 ## Learn
 
+<!-- figure: motion-chain | Two samples are a slope; the same two samples, read the other way, are an area. -->
+
 ### Idea 1: Reading a rate of change from two samples: the quotient, its units and its sign
 - **Primary resource:** [Wikipedia — Derivative](https://en.wikipedia.org/wiki/Derivative)
   - **What to read:** The lead section, and the subsection on *difference quotients* under `Definition` — the fraction of a change in the output over a change in the input.

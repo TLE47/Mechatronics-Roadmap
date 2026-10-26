@@ -37,6 +37,8 @@ plant: tier1_arm_motor
 More beginner circuits are destroyed in the first five seconds of power-on by a breadboard row short, a multimeter lead left in the $10\text{ A}$ current jack, or an unprotected LiPo battery than by any software bug. Mastering how solderless breadboard clips are wired internally, how to measure voltage vs. current safely with a Digital Multimeter (DMM), and how to set a bench power supply's Constant-Current (CC) limit protects every board you build from Stage 0 (`L0.1`) through Track 08. Already know this? Read `### Safety notes` first, then take the Skip test in section 7.
 
 ## 2. Intuition first
+<!-- figure: bring-up | Bench practice is a sequence of gates: the meter reading is what lets you enter the next one. -->
+
 Imagine a solderless breadboard as an apartment building with hidden copper hallways underneath the plastic holes: the long vertical side strips (`+` and `-`) are power elevators running the full height of the board, while each horizontal group of 5 holes (`a–b–c–d–e` and `f–g–h–i–j`, split by a center ravine) shares a single metal clip. Plugging both legs of a resistor into the *same* 5-hole row shorts the resistor out completely! Next, a **Digital Multimeter (DMM)** in **Voltage mode (`V`)** acts like an infinitely high-resistance stethoscope ($R_{\text{DMM,V}} \approx 10\text{ M}\Omega$) that you touch *across* two points in parallel; in **Current mode (`A`)**, it acts like a near-zero-ohm pipe ($R_{\text{shunt}} \approx 0.01\ \Omega$) that must be placed *in series* by breaking the circuit. Finally, a **current-limited bench supply** is an automatic circuit breaker that smoothly folds back its output voltage the instant current exceeds your preset ceiling $I_{\text{limit}}$.
 
 ## 3. Formalization

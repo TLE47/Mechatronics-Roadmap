@@ -185,6 +185,7 @@ async function main() {
     { label: 'firstrun', script: 'test_tour.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'layout', script: 'test_layout.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'reader', script: 'test_reader.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'visuals', script: 'test_visuals.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'keymap', script: 'test_keymap.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'vim', script: 'test_vim.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'trace', script: 'test_trace.mjs', env: { NODE_OPTIONS: TYPES } },

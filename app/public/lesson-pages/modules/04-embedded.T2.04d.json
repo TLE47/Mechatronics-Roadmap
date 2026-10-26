@@ -1,4 +1,4 @@
-{"v":1,"path":"modules/04-embedded.T2.04d.md","title":"micro-ROS on Microcontrollers: XRCE-DDS Client-Agent Transport, Static rclc_executor & MCU-to-ROS 2 Bridging","blocks":[
+{"v":3,"path":"modules/04-embedded.T2.04d.md","title":"micro-ROS on Microcontrollers: XRCE-DDS Client-Agent Transport, Static rclc_executor & MCU-to-ROS 2 Bridging","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"This is the final bridge module in the Track 04 Tier 2 ladder before Step 2.5 (`04-embedded.T2.05`). Once your microcontroller runs FreeRTOS (`04-embedded.T2.04b`) or Zephyr RTOS (`04-embedded.T2.04c`), how does it exchange typed topics, services, and timestamps with a Linux companion computer running **ROS 2** (`Track 06`)? Standard ROS 2 DDS (`Fast DDS` / `Cyclone DDS`) requires megabytes of RAM, multicast UDP discovery sockets, and dynamic C++ heap allocations that do not fit on a microcontroller with $128\\text{ KiB}$ of SRAM. **micro-ROS** solves this by running an ultra-lightweight **`XRCE-DDS` (eXtremely Resource Constrained Environments DDS) Client** on the MCU (over UART DMA, CAN-FD, or UDP) that bridges through a **`micro_ros_agent`** on the Linux host into the native ROS 2 graph, driven by a deterministic **`rclc_executor`** with zero dynamic heap allocation during real-time execution! Already know this? Take the Skip test or the Ladder Gate test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
@@ -46,6 +46,7 @@
 {"t":"p","x":"Or inspect the MCU-to-host packet framing and real-time scheduling budgets in **Attitude ESKF & SeqLock** of the MechaLab Workbench (`npm run dev`)."},
 {"t":"code","lang":"text","text":"[MCU Task_Ctrl (1 kHz)] --(k_mutex / Queue)--> [MCU Task_uROS: rclc_executor (500 Hz)]\n                                                        || (XRCE-DDS over CAN-FD / UART DMA / UDP)\n[ROS 2 Graph (/joint_states, /cmd_torque)] <== [Linux Host: micro_ros_agent]"},
 {"t":"p","x":"Pass/fail verification in simulation: `u_link == 0.0832`, `H_total == 4`, `t_spin_wcet_us == 185.0 us`, and `offset_us == 499000.0 us`."},
+{"t":"route","steps":["04-embedded.T2.04d: microros xrcedds client agent bridge","rclc static lifecycle and executor","mcu to ros2 deterministic transport","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: score $\\ge 80\\%$ ($4/4$) on the Skip test or score $\\ge 80\\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.5 (`04-embedded.T2.05`)."},
 {"t":"h","l":3,"x":"Skip test"},

@@ -1,4 +1,4 @@
-{"v":1,"path":"modules/06-robotics.T3.06a.md","title":"PyTorch Tensors, Automatic Differentiation (autograd), Loss Functions & Behavior Cloning on Trajectory Logs","blocks":[
+{"v":3,"path":"modules/06-robotics.T3.06a.md","title":"PyTorch Tensors, Automatic Differentiation (autograd), Loss Functions & Behavior Cloning on Trajectory Logs","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"To achieve the Graduate Goal—deploying a learned visuomotor or proprioceptive policy (`LeRobot`, `ACT`, `Diffusion Policy`, `π₀`) on your robot arm in Step 3.7 (`06-robotics.T3.07`)—you first need a crystal-clear understanding of how a neural policy maps robot observations $o_t = [q_t, \\dot{q}_t, x_{\\text{goal}}]^\\top$ to action targets $a_t$, how **automatic differentiation (`autograd` / backpropagation)** computes the exact gradient $\\nabla_\\theta \\mathcal{L}$ of a loss function using the chain rule, and how **Behavior Cloning (BC)** trains a policy by imitating expert demonstrations. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
@@ -54,6 +54,7 @@
 {"t":"code","lang":"text","text":"[Teleop Demonstrations (o_t, a_t*)] ---> [PyTorch BC Training] ---> [Trained Policy pi_theta(o_t) @ 50 Hz]\n                                                                                   |\n                                                                    [1 kHz Impedance + CBF Safety Filter]"},
 {"t":"p","x":"Pass/fail verification in simulation: finite-difference gradient check matches analytical backprop within $< 10^{-7}$ and Behavior Cloning MSE drops from `13.57` to `< 0.01`."},
 {"t":"p","x":"The graded package is also a workbench entry: **Modules -> `EX.06-robotics.T3.06a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed."},
+{"t":"route","steps":["06-robotics.T3.06a: neural network forward pass and mse loss","chain rule backpropagation and gradient descent","behavior cloning expert demonstration fit","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: run the worked example and exercise asserts with zero errors, or score $\\ge 80\\%$ ($4/5$) on the Skip test below and $\\ge 80\\%$ ($8/10$, with $2/2$ on `[SAFETY]`) on the ladder's Gate test."},
 {"t":"h","l":3,"x":"Skip test"},

@@ -11,7 +11,20 @@
  * the page, and a block this build does not know is refused instead of painted raw.
  */
 
-export const LESSON_PAGE_VERSION = 1;
+/**
+ * The payload shape this build reads.
+ *
+ * Bumped to 2 when `figure` blocks arrived: a service worker can serve an older app beside a newer
+ * payload (or the reverse), and `isLessonPage` refusing a version it does not know is what turns that
+ * into "the lesson text is in a format this build cannot read" instead of a pane that renders half a
+ * page. Version 1 payloads are refused rather than guessed at, because a figure-less page and a page
+ * whose figures were dropped look identical once the blocks are filtered.
+ *
+ * Bumped to 3 when `route` blocks arrived (the page's own Mermaid `flowchart`, drawn as numbered
+ * steps). Same rule: a version 2 payload has no route and a version 3 one whose routes were dropped
+ * look identical once blocks are filtered, so the shape is named rather than guessed.
+ */
+export const LESSON_PAGE_VERSION = 3;
 
 export type ReaderCodeLanguage = string;
 
@@ -23,7 +36,19 @@ export type ReaderBlock =
   | { t: 'table'; head: string[]; rows: string[][] }
   | { t: 'quote'; x: string }
   | { t: 'math'; tex: string }
-  | { t: 'img'; src: string; alt: string };
+  | { t: 'img'; src: string; alt: string }
+  /**
+   * A named picture from `visuals/scenes.ts`. The payload carries the id and an optional caption;
+   * the drawing is the app's, so a figure can move, be restyled or be replaced without touching a
+   * lesson's Markdown — and an id this build does not know is visible as a missing figure, never a
+   * blank space where a diagram should be.
+   */
+  | { t: 'figure'; id: string; caption: string }
+  /**
+   * The page's own route: its Mermaid `flowchart` when it is a single chain, already flattened into
+   * ordered steps. Drawn vertically (`Diagram`'s `route` kind), because the labels are page titles.
+   */
+  | { t: 'route'; steps: string[]; caption?: string };
 
 export interface LessonPage {
   v: number;
@@ -73,6 +98,14 @@ function isBlock(value: unknown): value is ReaderBlock {
       );
     case 'img':
       return isText(block.src) && isText(block.alt);
+    case 'figure':
+      return isText(block.id) && /^[a-z0-9][a-z0-9-]*$/.test(block.id) && isText(block.caption);
+    case 'route':
+      return (
+        Array.isArray(block.steps) &&
+        block.steps.length >= 2 &&
+        block.steps.every((step) => isText(step) && step.trim().length > 0)
+      );
     default:
       return false;
   }

@@ -20,6 +20,7 @@ import { missionProgressForAll, verifiedMissionCount } from '../gamification/mis
 import { currentNightShift, nightShiftLabel } from '../gamification/nightShifts';
 import { awardsOfKind, scrapShelf, scrapTotal, type Award } from '../gamification/rewards';
 import { REWARDS } from '../content/loader';
+import { Hologram } from '../visuals/Hologram';
 
 export interface LearnerDashboardProps {
   email: string | null;
@@ -54,6 +55,11 @@ const heading = 'flex items-center gap-1.5 text-[11px] font-semibold uppercase t
  * lesson that was open, every number is read from the stores the workbench already keeps, and nothing
  * here is required to keep learning. A signed-out visitor can open it too — it just offers the
  * account panel instead of a name.
+ *
+ * The arm at the top is the page's one interactive model (`visuals/Hologram.tsx`): the dashboard can
+ * say "6 of 10 missions verified" in a sentence, or show the arm those missions are supposed to
+ * restore, grabbable and posing under the learner's own hands. The numbers below it are unchanged;
+ * this is the same progress, made visible.
  */
 export const LearnerDashboard: React.FC<LearnerDashboardProps> = (props) => {
   const model = buildDashboard({
@@ -134,6 +140,19 @@ export const LearnerDashboard: React.FC<LearnerDashboardProps> = (props) => {
         checkpoints={{ verifiedCount: current?.verifiedCount ?? 0, total: current?.total ?? 0 }}
         missionName={current?.mission.name}
       />
+
+      <section className={card} data-testid="dashboard-hologram">
+        <div className={heading}>
+          <Wrench className="w-3.5 h-3.5" />
+          Your arm
+        </div>
+        <Hologram compact title="Your arm" />
+        <p className="text-[11px] text-muted">
+          {verifiedMissions} of {missions.length} missions verified. Drag the model to orbit it, pose either
+          joint, or press Demo to watch the figure-eight the capstone asks for. Nothing here is locked: the
+          arm is the one the lessons are about.
+        </p>
+      </section>
 
       <section className={card} data-testid="mission-control-lab">
         <div className={heading}>

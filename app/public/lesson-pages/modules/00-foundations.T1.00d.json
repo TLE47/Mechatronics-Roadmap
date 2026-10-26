@@ -1,4 +1,4 @@
-{"v":1,"path":"modules/00-foundations.T1.00d.md","title":"Linear Equations, Unit-Circle Trig, Radians, atan2 & 2D Vectors","blocks":[
+{"v":3,"path":"modules/00-foundations.T1.00d.md","title":"Linear Equations, Unit-Circle Trig, Radians, atan2 & 2D Vectors","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"Robot joints rotate in angles while cameras and workpieces sit at Cartesian $(x, y)$ coordinates, and analog sensors output voltages that scale linearly with current or angle. Mastering linear calibration lines, radian angles on the unit circle, 2D vector projections, and four-quadrant `atan2(y, x)` prevents your robot arm from snapping $180^\\circ$ into the wrong quadrant when crossing the negative $x$-axis. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
@@ -39,6 +39,7 @@
 {"t":"p","x":"No hardware required for this module (`hardware_required: false`). In Track 03 (`Step 1.4`), an on-axis magnetic encoder (`AS5600`) uses two orthogonal Hall sensors ($B_x, B_y$) to run this exact `atan2(By, Bx)` calculation in silicon:"},
 {"t":"code","lang":"text","text":"[Diametric Magnet] ---> [Hall Sensors: Bx = B*cos(theta), By = B*sin(theta)] ---> [atan2(By, Bx) -> 12-bit Angle]"},
 {"t":"p","x":"Pass/fail verification in simulation: `length_m == 0.40 m` and `recovered_deg == 135.0 deg`."},
+{"t":"route","steps":["00-foundations.T1.00d: linear functions and slope","radians unit circle and atan2","2d vectors and components","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: run the worked example and exercise asserts with zero errors, or score $\\ge 80\\%$ ($4/5$) on the Skip test below."},
 {"t":"h","l":3,"x":"Skip test"},

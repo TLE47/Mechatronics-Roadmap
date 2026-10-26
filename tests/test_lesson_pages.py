@@ -83,6 +83,53 @@ Still read.
 """
 
 
+class FigureDirectives(unittest.TestCase):
+    """A figure is a comment on GitHub and a diagram in the workbench, so the parse is the contract."""
+
+    def test_a_figure_comment_becomes_a_block(self):
+        blocks = pages.parse_blocks("## Learn\n\n<!-- figure: control-loop | The loop you tune. -->\n\nText.\n")
+        figures = [block for block in blocks if block["t"] == "figure"]
+        self.assertEqual(
+            len(figures),
+            1,
+            "expected the directive to become exactly one figure block; check that figures are lifted out before comments are stripped",
+        )
+        self.assertEqual(figures[0]["id"], "control-loop", "expected the id to be the scene name, lowercased")
+        self.assertEqual(figures[0]["caption"], "The loop you tune.", "expected the caption to survive as the sentence under the figure")
+
+    def test_a_figure_without_a_caption_still_parses(self):
+        blocks = pages.parse_blocks("## Learn\n\n<!-- figure: bring-up -->\n")
+        figure = next(block for block in blocks if block["t"] == "figure")
+        self.assertEqual(
+            figure["caption"],
+            "",
+            "expected an empty caption rather than the id doubling as one: the renderer falls back to the scene's own caption",
+        )
+
+    def test_a_malformed_id_is_not_a_figure(self):
+        blocks = pages.parse_blocks("## Learn\n\n<!-- figure: Not A Scene! | nope -->\n\nText.\n")
+        self.assertEqual(
+            [block for block in blocks if block["t"] == "figure"],
+            [],
+            "expected an id that is not kebab-case to be refused, not silently rendered as a missing figure",
+        )
+        self.assertNotIn(
+            "nope",
+            json.dumps(blocks),
+            "expected the whole comment to be dropped: it is hidden on GitHub too, so a typo must not leak its caption into the page",
+        )
+
+    def test_a_figure_inside_the_solution_is_dropped_with_it(self):
+        blocks = pages.parse_blocks(
+            "## Learn\n\nText.\n\n### Full Solution\n\n<!-- figure: fault-cost | hidden -->\n"
+        )
+        self.assertEqual(
+            [block for block in blocks if block["t"] == "figure"],
+            [],
+            "expected the answer's section to keep its figures: the reader does not print that section at all",
+        )
+
+
 class ParseBlocks(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -172,11 +219,42 @@ class ParseBlocks(unittest.TestCase):
             "check that a code fence keeps its bytes exactly, without the fence lines or a trailing newline",
         )
 
-    def test_mermaid_is_dropped_rather_than_shown_as_source(self):
+    def test_a_linear_flowchart_becomes_a_route_not_source_text(self):
+        routes = [block for block in self.blocks if block["t"] == "route"]
+        self.assertEqual(
+            len(routes),
+            1,
+            "expected the page's single-chain flowchart to become one route block: 170 pages carry one, and dropping it left the reader with prose and no map",
+        )
+        self.assertEqual(
+            routes[0]["steps"],
+            ["A", "B"],
+            "expected the chain's nodes in order, labelled from the Mermaid node text",
+        )
         self.assertNotIn(
             "flowchart",
             json.dumps(self.blocks),
-            "expected no mermaid source in the payload: the app has no renderer, so it would read as noise",
+            "expected no mermaid source in the payload: source is noise in a reading pane, and the picture is the block",
+        )
+
+    def test_a_branching_flowchart_is_dropped_rather_than_redrawn_as_a_line(self):
+        blocks = pages.parse_blocks(
+            "## Learn\n\n```mermaid\nflowchart LR\n  A['start'] --> B['one']\n  A --> C['two']\n```\n"
+        )
+        self.assertEqual(
+            [block for block in blocks if block["t"] == "route"],
+            [],
+            "expected a flowchart that branches to be left out: drawing it as a list would be a different diagram",
+        )
+
+    def test_a_repeated_node_keeps_the_label_it_was_given(self):
+        route = pages.flow_route(
+            "flowchart LR\n  A[\"first_link\"] --> B[\"second_link\"]\n  B --> C[\"third_link\"]\n"
+        )
+        self.assertEqual(
+            route,
+            ["first link", "second link", "third link"],
+            "expected every label to survive: a later mention of a node names it again without repeating its text",
         )
 
     def test_a_table_keeps_escaped_pipes_inside_its_cell(self):

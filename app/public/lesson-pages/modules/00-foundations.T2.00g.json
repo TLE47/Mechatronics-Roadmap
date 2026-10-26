@@ -1,4 +1,4 @@
-{"v":1,"path":"modules/00-foundations.T2.00g.md","title":"Matrix-Vector Multiplication & the One-Step State Update","blocks":[
+{"v":3,"path":"modules/00-foundations.T2.00g.md","title":"Matrix-Vector Multiplication & the One-Step State Update","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"The backward difference from `00-foundations.T2.00a` turns a sequence of samples into a velocity. This page turns that velocity into a **state**: one column that holds everything the next tick needs, advanced by one matrix-vector product. Writing the update as $\\vec{x}_{k+1} = A_d\\vec{x}_k + B_d u_k$ is not notation for its own sake - a two-mass drivetrain has four states, a Kalman filter nine, and the same six lines of code advance all of them. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
@@ -37,6 +37,7 @@
 {"t":"p","x":"No hardware required for this module (`hardware_required: false`). On the STM32/ESP32 in Pass 2 (`Track 05`), this exact matrix-vector product executes inside the $1\\,\\text{kHz}$ Kalman filter prediction step:"},
 {"t":"code","lang":"text","text":"[State Vector x_k] ---> [Matrix Multiply: x_{k+1} = Ad * x_k + Bd * u_k] ---> [Predicted State x_{k+1}]"},
 {"t":"p","x":"Pass/fail verification in simulation: `x1 == 0.1020 m`, `v1 == 0.0800 m/s`, and the 500-step equilibrium at `0.0500 m`."},
+{"t":"route","steps":["00-foundations.T2.00g: matrix vector multiplication","state vector one step update","simulate: the same step, repeated","4-state two-mass drivetrain on the arm","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: run the worked example and the 500-step equilibrium exercise with zero assertion errors, or score $\\ge 80\\%$ ($4/5$) on the Skip test below."},
 {"t":"h","l":3,"x":"Skip test"},

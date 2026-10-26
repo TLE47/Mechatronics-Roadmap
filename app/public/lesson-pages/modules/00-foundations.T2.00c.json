@@ -1,7 +1,8 @@
-{"v":1,"path":"modules/00-foundations.T2.00c.md","title":"First- & Second-Order ODEs, Characteristic Roots, Natural Frequency & Damping Ratio","blocks":[
+{"v":3,"path":"modules/00-foundations.T2.00c.md","title":"First- & Second-Order ODEs, Characteristic Roots, Natural Frequency & Damping Ratio","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"Every motor winding, thermal heatsink, and RC filter obeys a first-order differential equation governed by a time constant $\\tau$, while every compliant robot joint and closed-loop PID servo obeys a second-order differential equation governed by natural frequency $\\omega_n$ and damping ratio $\\zeta$. Knowing how $\\omega_n$ and $\\zeta$ determine overshoot and settling time lets you compute exact controller gains instead of guessing by trial and error. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
+{"t":"figure","id":"step-response","caption":"Damping ratio is not a tuning choice here, it is the shape of the answer: the same step, three responses."},
 {"t":"p","x":"Push open a heavy glass office door equipped with an overhead hydraulic closer. If the closer valve is wide open (underdamped), the door swings fast, slams past the frame, and rings back and forth several times before stopping. If a mechanic tightens the hydraulic valve way too far (overdamped), the door creeps shut painfully slowly without ever overshooting. Right on the boundary between those two regimes sits a sweet spot (critical damping) where the door snaps shut as fast as physically possible with zero rebound."},
 {"t":"h","l":2,"x":"3. Formalization"},
 {"t":"ol","items":[{"x":"**First-Order System ($\\tau\\dot{y} + y = u$):** Driven by a unit step $u(t) = 1$ from $y(0) = 0$, the solution is $y(t) = 1 - e^{-t/\\tau}$, where time constant $\\tau$ in seconds ($\\text{s}$) is the time to reach $1 - e^{-1} \\approx 63.2\\%$ of the step. At $t = \\tau = 0.010\\text{ s}$, $y(0.010\\text{ s}) = 1 - e^{-1} = 0.6321$.","d":0},{"x":"**Canonical Second-Order ODE ($\\omega_n$ and $\\zeta$):** Dividing rotary joint dynamics $J\\ddot{\\theta} + b\\dot{\\theta} + k\\theta = \\tau_{\\text{in}}$ by inertia $J$ ($\\text{kg}\\cdot\\text{m}^2$) yields the canonical form with natural frequency $\\omega_n$ ($\\text{rad/s}$) and dimensionless damping ratio $\\zeta$:","d":0}]},
@@ -38,6 +39,7 @@
 {"t":"p","x":"No hardware required for this module (`hardware_required: false`). On a physical servo joint in Track 05 (`Step 1.6`), proportional gain $K_p$ sets $k$ and derivative gain $K_d$ sets $b$:"},
 {"t":"code","lang":"text","text":"[Step Command 1.0 rad] ---> [PD Loop: Kp=8.0, Kd=0.80 on J=0.02] ---> [Critically Damped Shaft Response (zeta=1.0)]"},
 {"t":"p","x":"Pass/fail verification in simulation: `wn == 20.0 rad/s`, `zeta == 0.50`, and `Mp == 16.30%`."},
+{"t":"route","steps":["00-foundations.T2.00c: first order ode time constant","second order ode wn zeta","characteristic polynomial roots","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: run the worked example and critical-damping exercise asserts with zero errors, or score $\\ge 80\\%$ ($4/5$) on the Skip test below."},
 {"t":"h","l":3,"x":"Skip test"},

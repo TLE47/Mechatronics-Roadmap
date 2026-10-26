@@ -1,4 +1,4 @@
-{"v":1,"path":"modules/00-foundations.T1.00c.md","title":"SI Units, Engineering Prefixes & Dimensional Analysis","blocks":[
+{"v":3,"path":"modules/00-foundations.T1.00c.md","title":"SI Units, Engineering Prefixes & Dimensional Analysis","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"Real motors and power stages fail violently when units are mixed up: plugging a $1\\text{ ms}$ sample period into a derivative formula as `dt = 1` instead of `dt = 0.001` multiplies motor torque commands by $1,000\\times$, and confusing RPM with radians per second ruins back-EMF calculations. Dimensional analysis lets you catch wrong equations before running code by checking that units cancel cleanly on both sides of `=`. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
@@ -39,6 +39,7 @@
 {"t":"p","x":"No hardware required for this module (`hardware_required: false`). On the physical bench in Stage 0 (`L0.2`), this unit discipline prevents DMM and oscilloscope scaling errors:"},
 {"t":"code","lang":"text","text":"[Datasheet: R=5 mOhm, I=20 A] ---> [SI Conversion: 0.005 Ohm * 20 A] ---> [DMM Readout: 0.100 V (100 mV)]"},
 {"t":"p","x":"Pass/fail verification in simulation: `omega == 251.33 rad/s`, `P == 113.10 W`, and `tau_RC == 1.00 ms`."},
+{"t":"route","steps":["00-foundations.T1.00c: si base and derived units","scientific notation and prefixes","dimensional analysis unit checks","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: run the worked example and exercise asserts with zero errors, or score $\\ge 80\\%$ ($4/5$) on the Skip test below."},
 {"t":"h","l":3,"x":"Skip test"},

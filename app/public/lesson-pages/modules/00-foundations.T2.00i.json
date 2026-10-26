@@ -1,4 +1,4 @@
-{"v":1,"path":"modules/00-foundations.T2.00i.md","title":"Pre-Warped Tustin Biquads: Where the Notch Really Lands","blocks":[
+{"v":3,"path":"modules/00-foundations.T2.00i.md","title":"Pre-Warped Tustin Biquads: Where the Notch Really Lands","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"`00-foundations.T2.00e` turned a continuous transfer function into a difference equation with the Tustin substitution. That substitution is not free: it bends the frequency axis, so a filter designed for $850\\,\\text{Hz}$ in the analog domain lands at $749\\,\\text{Hz}$ in code - and a resonance at the frequency you meant to kill survives untouched. This page is the correction, and the five coefficients it produces are the ones a microcontroller runs on every ADC sample in Tier 2. Sampling that decides which frequencies exist at all is `00-foundations.T2.00f`; the uncertainty that survives the filter is `00-foundations.T2.00j`."},
 {"t":"h","l":2,"x":"2. Intuition first"},
@@ -44,6 +44,7 @@
 {"t":"p","x":"No hardware required for this module (`hardware_required: false`). In Step 2.1 (`00-foundations.T2.01`) the five pre-warped coefficients execute inside the microcontroller's `TDF-II` loop on every encoder sample:"},
 {"t":"code","lang":"text","text":"[ADC @ f_s] ---> [Pre-Warped TDF-II Biquad Notch] ---> [clean signal]"},
 {"t":"p","x":"Pass/fail verification in simulation: `f_unwarped == 749.48 Hz`, `f_landed == 850.00 Hz`, and a $200\\,\\text{Hz}$ tone passing at unity gain."},
+{"t":"route","steps":["00-foundations.T2.00f: sampling","00-foundations.T2.00i: tustin frequency prewarping and biquad","00-foundations.T2.00j: covariance predict step"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: run the worked example and the exercise with zero assertion errors, or score $\\ge 80\\%$ ($4/5$) on the Skip test below. The ladder's Gate paper is taken once, after the last Tier 2 page."},
 {"t":"h","l":3,"x":"Skip test"},

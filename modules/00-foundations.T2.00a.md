@@ -33,6 +33,8 @@ plant: tier1_arm_motor
 Every controller you will write in Pass 2 runs on numbers that arrive once per tick, not on a formula. A joint's velocity exists only as the **difference between two encoder readings**, and a position integral exists only as a running sum of those readings. Get either wrong and a $1\,\text{kHz}$ loop is confidently wrong $1000$ times a second: a derivative that forgot $\Delta t$ is off by $1000\times$, and one that ignores the encoder's wrap reads $4095 \to 0$ as a full backwards turn. Already know this? Take the Skip test in section 7 first.
 
 ## 2. Intuition first
+<!-- figure: motion-chain | A derivative is the slope between two samples; an integral is the area under them, and the same chain runs both ways. -->
+
 Two columns in a spreadsheet. Column A holds encoder counts, one row per millisecond. A new column B is the **difference** between this row and the one above, divided by the time between rows - that is speed. A new column C is a running **sum** of column B times the time step, and it must hand you back column A's shape, because adding up all the little differences is the same as subtracting the endpoints. That round trip is the whole page: difference is the discrete derivative, running sum is its inverse, and both are one line of code.
 
 ## 3. Formalization

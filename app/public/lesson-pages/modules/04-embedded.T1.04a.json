@@ -1,4 +1,4 @@
-{"v":1,"path":"modules/04-embedded.T1.04a.md","title":"From Python to C/Arduino: Fixed-Width Types, Bitwise Masks, Structs & Pointers","blocks":[
+{"v":3,"path":"modules/04-embedded.T1.04a.md","title":"From Python to C/Arduino: Fixed-Width Types, Bitwise Masks, Structs & Pointers","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"Python integers grow arbitrarily large and never overflow, but microcontroller C/C++ variables occupy a fixed number of bits (`uint8_t`, `int16_t`, `uint32_t`, `float`) in hardware registers. Before writing real-time timer interrupts and binary serial telemetry in Step 1.5 (`04-embedded.T1.05`), you must know how fixed-width integers wrap around, how bitwise masks (`|`, `&`, `~`, `<<`) flip single register bits without corrupting neighbors, and how `struct` pointers pass data with zero copy overhead. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
@@ -39,6 +39,7 @@
 {"t":"p","x":"No hardware required for this module (`hardware_required: false`). In Step 1.5 (`04-embedded.T1.05`), the exact `struct.pack(\"<Hhf\", ...)` layout matches the `__attribute__((packed))` C struct transmitted over the microcontroller's USB-UART bridge (flashed via `pio run -t upload` in [`04-embedded-and-realtime/README.md` §1.2](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive)):"},
 {"t":"code","lang":"text","text":"[MCU C Struct: uint16_t + int16_t + float (8 B)] ---> (UART 115200 bps) ---> [Python struct.unpack(\"<Hhf\")]"},
 {"t":"p","x":"Pass/fail verification in simulation: `uint16_elapsed(4, 65530) == 10`, `reg == 0x08`, and `len(raw_bytes) == 8`."},
+{"t":"route","steps":["04-embedded.T1.04a: c fixed width integer types and overflow","bitwise masks and shifts","c structs and pointers pass by reference","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: run the worked example and exercise asserts with zero errors, or score $\\ge 80\\%$ ($4/5$) on the Skip test below."},
 {"t":"h","l":3,"x":"Skip test"},

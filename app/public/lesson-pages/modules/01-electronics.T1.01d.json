@@ -1,4 +1,4 @@
-{"v":1,"path":"modules/01-electronics.T1.01d.md","title":"Capacitors, Inductors, RC Time Constants & Inductive Flyback","blocks":[
+{"v":3,"path":"modules/01-electronics.T1.01d.md","title":"Capacitors, Inductors, RC Time Constants & Inductive Flyback","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"Resistors respond instantaneously to voltage changes, but every real motor drive is dominated by two energy-storage components: **capacitors** (which store electric-field energy to stabilize power rails and filter noisy sensors) and **inductors** (the copper coils inside every motor, which store magnetic-field energy and unleash destructive high-voltage flyback spikes if switched off without a return path). Understanding $I_C = C\\frac{dV}{dt}$ and $V_L = L\\frac{dI}{dt}$ prepares you directly for PWM switching in `01-electronics.T1.01b` and Step 1.2 (`01-electronics.T1.02`). Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
@@ -43,6 +43,7 @@
 {"t":"p","x":"Pass/fail verification in simulation: `tau == 1.0 ms`, `fc == 159.15 Hz`, `v_flyback_unclamped == 12000 V`, and `v_flyback_clamped == 12.7 V`."},
 {"t":"h","l":3,"x":"Safety notes"},
 {"t":"quote","x":"**⚠️ Bench Safety Note (`safety_level: low`):** Always verify probe placement (`V/Ohm` voltage port, never the `10A` shunt port in parallel) and set your CC/CV bench power supply current limit ($\\le 0.5\\text{ A}$) before energizing any breadboard or sensor circuit."},
+{"t":"route","steps":["01-electronics.T1.01d: capacitor charge storage and decoupling","rc time constant and filtering","inductor flyback and freewheeling diode","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: run the worked example and exercise asserts with zero errors, or score $\\ge 80\\%$ ($4/5$) on the Skip test below."},
 {"t":"h","l":3,"x":"Skip test"},

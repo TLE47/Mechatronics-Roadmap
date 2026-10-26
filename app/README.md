@@ -266,9 +266,12 @@ Markdown page — the file the repository ships, not a second copy in TypeScript
 [`app/public/lesson-pages/`](public/lesson-pages): h2–h4 headings with GitHub's anchors, paragraphs,
 nested lists, tables, fenced code, the safety-note blockquotes, display maths and images. It deliberately
 leaves out the generated callouts ("Run this in the workbench" is a link to where the learner is already
-standing), the ladder-gate exam (one paper reprinted on every page of a ladder), Mermaid (the app has no
-renderer, so its source would read as noise) and the **Full Solution** — Load Solution keeps the answer
-behind one door, and a reading pane that printed it would open the same door quietly. Inline emphasis,
+standing), the ladder-gate exam (one paper reprinted on every page of a ladder) and the **Full
+Solution** — Load Solution keeps the answer behind one door, and a reading pane that printed it would
+open the same door quietly. Mermaid is not copied either, but a single-chain `flowchart` is *drawn*: the
+generator parses it into a `route` block and the reader lays it out as numbered steps, which is how 82
+of the 92 pages show the map they already wrote. A flowchart that branches stays in the Markdown untold
+rather than being redrawn as a line. Inline emphasis,
 links, code spans and `$…$` maths stay Markdown in the payload and are parsed once in
 [`src/readerMarkdown.ts`](src/readerMarkdown.ts); the maths is the KaTeX every other tab uses. The page
 list is the registry's, not a glob: an entry with no page has none, and the pane says so.
@@ -289,8 +292,42 @@ it belongs: copying, printing, filing an issue — not the reading copy.
 `npm run test:reader` pins the inline parser, the payload guard and the position store;
 `python3 scripts/generate_lesson_pages.py --check` is the drift gate (a page edited without its payload
 being rebuilt fails), `tests/test_lesson_pages.py` pins what the generator must and must not copy, and
-`npm run test:e2e:pages` opens a lesson, reads a heading, an equation and the source link out of the DOM,
-reloads and finds the same heading at the top of the pane.
+`npm run test:e2e:pages` opens a lesson, reads a heading, an equation, a figure, the page's route and the
+source link out of the DOM, reloads and finds the same heading at the top of the pane.
+
+### The pictures beside the words
+
+The pane is 92 pages of prose, so it draws what the prose describes. Two things do that, and neither is
+an image file:
+
+- **Named scenes** ([`src/visuals/scenes.ts`](src/visuals/scenes.ts)). A page writes
+  `<!-- figure: control-loop | … -->` and the workbench draws it: a chain, a loop, a timing figure, a
+  row of state gates, or bars. 21 scenes, 39 pages, one renderer per kind in
+  [`src/visuals/Diagram.tsx`](src/visuals/Diagram.tsx) — so a new diagram is a data edit, and every
+  figure follows the same rules.
+- **The page's own route** ([`src/lessonPage.ts`](src/lessonPage.ts), `route` blocks). A single-chain
+  Mermaid flowchart becomes numbered steps, top to bottom, because a page title is too long for a box in
+  a row. `scripts/generate_lesson_pages.py` parses it; a graph that branches is left out.
+
+**The arm you can grab** is the dashboard's top tile: [`src/visuals/Hologram.tsx`](src/visuals/Hologram.tsx)
+projects a two-link arm from 3D, with a view to orbit and two joints to pose. Its geometry is
+[`src/visuals/holoModel.ts`](src/visuals/holoModel.ts) — pure functions, so joint stops, the reach, the
+IK/FK round trip, the projection and the trail are asserted under Node rather than eyeballed in a
+browser.
+
+**Every figure follows the same rules.** No motion (a figure is a still, so reduced-motion has nothing to
+switch off), no hard-coded colour (all seven fills are theme tokens, so all four palettes work without a
+special case), `role="img"` with an `aria-label` from its title and caption, the caption as a
+`<figcaption>`, and a visible note instead of a blank when a page names a scene this build does not know.
+The kit is 5.6 kB gzipped on chunks that already existed — the reader draws figures beside the text, so
+there is no lazy boundary to hide behind — and [`docs/VISUALS.md`](../docs/VISUALS.md) carries the
+measurements and the reasoning.
+
+`npm run test:visuals` pins the scenes, the scene ids, every figure and route a committed page asks for,
+and the arm's own limits; `python3 -m unittest tests.test_lesson_pages` pins the flowchart parse, both
+ways it can go wrong (a branching graph, a repeated node losing its label); `npm run test:e2e:pages`
+reads a named figure and the page's route out of the built bundle's DOM and checks each has a name and a
+caption.
 
 ### Study notes
 
@@ -1154,6 +1191,10 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/lessonFiles.ts`](src/lessonFiles.ts) | The read-only helper files a lesson brings (the shared plant). |
 | [`src/lessonPage.ts`](src/lessonPage.ts) | The lesson text as data: the payload's shape and guard, where it is served from, and one fetch per page. |
 | [`src/readerMarkdown.ts`](src/readerMarkdown.ts) | Inline Markdown for the reader (emphasis, code, links, maths) and the heading anchors that match GitHub's. |
+| [`src/visuals/scenes.ts`](src/visuals/scenes.ts) | The named figures, as data: 21 scenes in six kinds, and `sceneFor` refusing an id it does not draw. |
+| [`src/visuals/Diagram.tsx`](src/visuals/Diagram.tsx) | One SVG renderer per figure kind, all theme-token colours, `role="img"` and a `<figcaption>`; the route's vertical layout and its label wrapping. |
+| [`src/visuals/holoModel.ts`](src/visuals/holoModel.ts) | The arm as pure functions: forward and inverse kinematics, the orbit clamps, the projection, the bounded trail, the demo pose. |
+| [`src/visuals/Hologram.tsx`](src/visuals/Hologram.tsx) | The dashboard's hologram: the projection drawn, the view dragged, the joints posed, the readout. |
 | [`src/readingPosition.ts`](src/readingPosition.ts) | Where each lesson was left: a heading anchor plus an offset, kept apart from the draft store. |
 | [`src/components/LessonReader.tsx`](src/components/LessonReader.tsx) | The pane: blocks rendered as React, the position restored and flushed, Highlight, Top, and the source link. |
 | [`src/draftHistory.ts`](src/draftHistory.ts) | The versions behind the draft: what each run started from, with its verdict, bounded per lesson and in total, plus the merge a restore uses. |

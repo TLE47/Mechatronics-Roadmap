@@ -1,7 +1,8 @@
-{"v":1,"path":"modules/01-electronics.T1.01a.md","title":"Voltage, Current, Resistance, Ohm's Law, KVL/KCL & Voltage Dividers","blocks":[
+{"v":3,"path":"modules/01-electronics.T1.01a.md","title":"Voltage, Current, Resistance, Ohm's Law, KVL/KCL & Voltage Dividers","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"Before wiring an H-bridge motor driver or level-shifting a $5\\text{ V}$ sensor to a $3.3\\text{ V}$ microcontroller in Step 1.2 (`01-electronics.T1.02`), you must be able to calculate how much current flows through a resistor, how two resistors divide a voltage, and how much heat ($P = I^2 R$) a wire or resistor dissipates. Getting these three laws right prevents magic smoke on your very first breadboard build. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
+{"t":"figure","id":"water-analogy","caption":"Where the water comparison holds (flow, restriction, pressure), and where the page stops trusting it (heat, transients)."},
 {"t":"p","x":"Picture water pumped through a closed loop of pipes. **Voltage** ($V$, in volts) is the water pressure difference between two points; **current** ($I$, in amperes) is the flow rate of charge through the pipe; and **resistance** ($R$, in ohms, $\\Omega$) is a narrow constriction that fights the flow. **Ohm's Law** ($V = I R$) says that pushing more current through a constriction takes proportionally more pressure. **Kirchhoff's Current Law (KCL)** says charge never vanishes at a pipe junction (what flows in must flow out), and **Kirchhoff's Voltage Law (KVL)** says if you walk around any closed loop and return to your starting point, the pressure rises and drops must sum to zero. When current squeezes through a resistor, the lost pressure turns directly into heat at rate $P = V I = I^2 R$."},
 {"t":"h","l":2,"x":"3. Formalization"},
 {"t":"ol","items":[{"x":"**Ohm's Law ($V = I R$):** Across a resistor of resistance $R$ in ohms ($\\Omega$), the voltage drop $V$ in volts ($\\text{V}$) and current $I$ in amperes ($\\text{A}$) obey:","d":0}]},
@@ -43,6 +44,7 @@
 {"t":"p","x":"Pass/fail verification: unloaded $24\\text{ V}$ divider reads $3.077\\text{ V} < 3.3\\text{ V}$ and $P_{R1} = 6.44\\text{ mW} \\ll 250\\text{ mW}$."},
 {"t":"h","l":3,"x":"Safety notes"},
 {"t":"quote","x":"**⚠️ Bench Safety Note (`safety_level: low`):** Always verify probe placement (`V/Ohm` voltage port, never the `10A` shunt port in parallel) and set your CC/CV bench power supply current limit ($\\le 0.5\\text{ A}$) before energizing any breadboard or sensor circuit."},
+{"t":"route","steps":["01-electronics.T1.01a: voltage current resistance ohms law","kvl kcl and voltage divider","electrical power i2r dissipation","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: run the worked example and exercise asserts with zero errors, or score $\\ge 80\\%$ ($4/5$) on the Skip test below."},
 {"t":"h","l":3,"x":"Skip test"},

@@ -35,6 +35,8 @@ plant: tier1_arm_motor
 Every estimator in Tier 3 answers one question the model alone cannot: *how wrong am I, and in which direction?* A single number cannot hold that. A joint's position error and velocity error are coupled - if the position reads high, the velocity is probably reading high too - and a Kalman filter's predict step has to carry both the two spreads and that coupling forward through the same matrix that advances the state. This page is the last bridge module before Step 2.1 (`00-foundations.T2.01`). What sampling does to a signal is `00-foundations.T2.00f`; the filter that cleans it is `00-foundations.T2.00i`; this page is the uncertainty that survives both.
 
 ## 2. Intuition first
+<!-- figure: kalman-step | Variance is the prediction's doubt, and the gain is how much of the measurement this step believes. -->
+
 Picture a laser pointer held by a slightly shaky hand. The dot wanders, and if you mark where it lands a thousand times you get a blob, not a circle. The blob's width left-to-right is one variance and its height up-and-down is another; if the hand drifts diagonally, the blob is a tilted ellipse, and that tilt *is* the covariance.
 
 Now push the pointer through a lens that stretches the horizontal axis. The blob stretches with it, and so does the tilt. The predict step is that lens, applied to the ellipse: propagate the state with $A$, and the ellipse with $A$ on both sides - because a matrix acting on a shape squeezes it along one axis and stretches it along another, the error has to be transformed on the way in *and* on the way out.

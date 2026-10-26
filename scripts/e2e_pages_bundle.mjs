@@ -812,9 +812,33 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
         editorLeft: Math.round(editor.left),
         editorWidth: Math.round(editor.width),
         scrollable: scroll.scrollHeight > scroll.clientHeight,
+        // The figures: the lesson's own named scene and the page's flowchart drawn as numbered
+        // steps. Both are app-drawn, so "is it there" has to be asked of the built bundle.
+        figures: [...box.querySelectorAll('[data-testid^="diagram-"]')].map((figure) => ({
+          id: figure.dataset.testid,
+          labelled: Boolean(figure.querySelector('svg[role="img"]')?.getAttribute('aria-label')),
+          caption: (figure.querySelector('figcaption')?.textContent ?? '').trim(),
+        })),
+        routeSteps: [...box.querySelectorAll('[data-testid="diagram-route"] text')].filter((node) =>
+          /^\d+$/.test((node.textContent ?? '').trim())
+        ).length,
       };
     });
     assert.ok(reader.headings.length >= 3, `${name}: the pane rendered ${reader.headings.length} headings`);
+    assert.ok(
+      reader.figures.length >= 2,
+      `${name}: the page draws ${reader.figures.length} figure(s) (${reader.figures
+        .map((figure) => figure.id)
+        .join(', ')}): a named scene and the page's own route are both expected`
+    );
+    assert.ok(
+      reader.figures.every((figure) => figure.labelled && figure.caption.length > 10),
+      `${name}: every figure needs a role="img" name and a caption, got ${JSON.stringify(reader.figures)}`
+    );
+    assert.ok(
+      reader.routeSteps >= 3,
+      `${name}: the page's flowchart is drawn as ${reader.routeSteps} numbered steps; the route is missing or unnumbered`
+    );
     assert.ok(reader.formulas > 0, `${name}: the pane must typeset the lesson's equations`);
     assert.ok(reader.code > 0, `${name}: the pane must render the lesson's own code fences`);
     assert.equal(

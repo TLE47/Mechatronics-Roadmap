@@ -36,6 +36,8 @@ plant: tier1_arm_motor
 This is the bridge module before Step 1.7 (`06-robotics.T1.07`). Feeding an instantaneous step jump ($q_{\text{des}}: 0^\circ \to 90^\circ$ in $0\text{ s}$) into a robot arm controller demands infinite velocity and slams the actuator into saturation. Generating a smooth time-parameterized **trajectory** $q_d(t), \dot{q}_d(t), \ddot{q}_d(t)$ that starts and ends at zero velocity—and tracking it with a **virtual joint spring-damper** plus gravity feedforward—lets your arm glide smoothly and yield safely when touched. Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 
 ## 2. Intuition first
+<!-- figure: trajectory | A move is a position curve and its slope; zero velocity at both ends is what makes it compliant. -->
+
 Imagine an elevator moving from Floor 1 to Floor 5 in $T = 2.0\text{ s}$. A **step setpoint** is teleporting the target indicator to Floor 5 at $t = 0.001\text{ s}$: the controller panics, sees a massive error, and yanks the cable at $100\%$ torque. A **smooth trajectory** is a moving ghost cab that accelerates gently from rest ($\dot{q}_d(0) = 0$), cruises smoothly through the middle, and decelerates to a feather-soft stop at Floor 5 ($\dot{q}_d(T) = 0$). Because we have four boundary conditions (start position, start velocity, end position, end velocity), a cubic polynomial $q_d(t) = a_0 + a_1 t + a_2 t^2 + a_3 t^3$ has the exact four knobs $(a_0, a_1, a_2, a_3)$ needed to satisfy all four! Then, instead of fighting external contact with an infinite-gain integrator, a **virtual joint spring-damper** $\tau = K_p(q_d - q) + K_d(\dot{q}_d - \dot{q}) + \tau_g(q)$ lets you dial the mechanical stiffness $K_p$ up for precision or down for soft human-safe compliance.
 
 ## 3. Formalization

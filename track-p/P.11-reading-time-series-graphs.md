@@ -41,6 +41,8 @@ flowchart LR
 
 ## Learn
 
+<!-- figure: motion-chain | Slope is a derivative and area is an integral: the same graph answers both questions. -->
+
 ### Idea 1: Graph slope as rate of change
 - **Primary resource:** [The Physics Classroom — Meaning of Slope for a p-t Graph](https://www.physicsclassroom.com/class/1DKin/Lesson-3/Meaning-of-Slope-for-a-p-t-Graph) `[HTTP 200 — Verified by scripts/check_links.py]`
   - **What to read:** Read exact heading **`Meaning of Slope for a p-t Graph`**.

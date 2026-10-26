@@ -1,4 +1,4 @@
-{"v":1,"path":"modules/00-foundations.T2.00e.md","title":"Laplace Transform, Poles/Zeros, Continuous State-Space (x_dot = Ax + Bu) & Euler/Tustin Discretization","blocks":[
+{"v":3,"path":"modules/00-foundations.T2.00e.md","title":"Laplace Transform, Poles/Zeros, Continuous State-Space (x_dot = Ax + Bu) & Euler/Tustin Discretization","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"Transfer functions $G(s)$ are great for single-input single-output filters, but modern control algorithms (LQR, Kalman filters, and Model Predictive Control in Track 05) operate on multi-variable **state-space models** $\\dot{x} = Ax + Bu$ discretized into $x_{k+1} = A_d x_k + B_d u_k$. Connecting transfer-function poles and zeros to the eigenvalues of the state matrix $A$ is the direct foundation for Step 2.1 (`00-foundations.T2.01`). Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
@@ -38,6 +38,7 @@
 {"t":"p","x":"No hardware required for this module (`hardware_required: false`). In Track 05 (`05-control.T2.06` and `05-control.T3.06`), the discretized matrices $(A_d, B_d)$ run inside the microcontroller's $1\\text{ kHz}$ Kalman filter prediction step:"},
 {"t":"code","lang":"text","text":"[Offline Python: (A, B) ---> Tustin/ZOH ---> (A_d, B_d)] ---> [MCU 1 kHz Loop: x_hat = A_d * x_hat + B_d * u]"},
 {"t":"p","x":"Pass/fail verification in simulation: `rho_euler == 1.0247 > 1.0` and `rho_tustin == 0.9258 < 1.0`."},
+{"t":"route","steps":["00-foundations.T2.00e: laplace poles and zeros","continuous state space matrices","discrete state transition euler tustin","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: run the worked example and exercise asserts with zero errors, or score $\\ge 80\\%$ ($4/5$) on the Skip test below."},
 {"t":"h","l":3,"x":"Skip test"},

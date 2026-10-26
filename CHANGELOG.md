@@ -16,6 +16,56 @@ flowchart LR
 
 ---
 
+## [2026-10-26] — Run 254: the pages get their pictures
+
+Ninety-two reading pages, most of them fifteen to twenty-nine thousand characters of prose, and eleven
+of them carried a diagram. The complaint was fair: the course explained chains, loops, timings and
+routes in words while the site showed almost none of them. This run makes the pictures part of the
+water rather than an occasional flourish, and it does it without an image file or a renderer dependency.
+
+**A named scene library.** [`app/src/visuals/scenes.ts`](app/src/visuals/scenes.ts) is 21 scenes as
+data — chains, loops, timings, state gates, bars — and one renderer per kind in
+[`Diagram.tsx`](app/src/visuals/Diagram.tsx). A page asks for one with a comment
+(`<!-- figure: control-loop | … -->`), which GitHub hides and the workbench draws. 39 pages now carry a
+figure, up from 11: the control loop in Tier 1 control, encoder edges in the sensor module, aliasing in
+the sampling lesson, Bode margins, a Kalman step, the ISR-to-output chain, the toolchain, the debug
+loop, the water analogy at the start of electricity, motion's three rates of change, and the trajectory
+in the robotics module.
+
+**The route the pages already wrote.** 170 pages contain a Mermaid `flowchart` and every one of them
+was dropped by the generator, because the app had no renderer. It has one now, for the shape nearly all
+of them have: a single chain. `generate_lesson_pages.py` parses ordered flowcharts into a `route` block
+(payload version **3**) and the reader draws numbered steps — 82 of the 92 pages show their own map, and
+the ten that branch (two prerequisites into one lesson, a Jacobian fan-out) are still left out rather
+than redrawn as a list. That is also why an assertion changed rather than being deleted: the suite that
+used to require Mermaid to be *absent* now requires its source to be absent and its picture present.
+
+**The arm you can grab.** [`visuals/Hologram.tsx`](app/src/visuals/Hologram.tsx) is the dashboard's top
+tile: a two-link arm projected from 3D, with a view you can orbit and two joints you can pose, and its
+geometry in [`holoModel.ts`](app/src/visuals/holoModel.ts) as pure functions. The suite proves what the
+component claims — the joints clamp at their stops, inverse kinematics round-trips forward kinematics
+inside the reach and refuses a target outside it, the demo's figure-eight never leaves the hardware's
+range, the projection is deterministic and the trail is bounded — so a future Three.js view inherits the
+assertions instead of starting over.
+
+**Three bugs the work found.** (1) A node named again later in a flowchart (`B --> C`) was overwriting
+the label the first line gave it, so every second step of a route read `B`; labels now survive a repeated
+mention, which is what `test_a_repeated_node_keeps_the_label_it_was_given` pins. (2) The old figure
+lookup in the browser probe matched the start-here card's own route before the lesson had fetched its
+page, so the suite could pass on the wrong picture — the wait is now for the lesson's route. (3) The
+reader's `route` figure needed a vertical layout, not the five-box chain: page titles are long and a row
+of them ran each label into its neighbour, so a route wraps to two lines and ellipsizes the third.
+
+**Verified.** `npm run test:visuals` **14/14**; `python3 -m unittest tests.test_lesson_pages` **20/20**;
+`npm run test:e2e:pages` (the reader block now asserts a named figure, the page's route with at least
+three numbered steps, a name and a caption on each); `npm run check:snapshot` **48 surfaces**;
+`npm run check:axe` **12 tabs × 4 themes**; `npm run check:weight` with the record refreshed — entry
+510.4 kB / 520, largest 326.5 / 335, reader 680.8 / 720, total 2.40 / 2.46 MB. A focused browser probe
+drove the built bundle: four chapters' figures painted with their captions, a module's flowchart drew
+four numbered steps with its own labels, and the dashboard hologram mounted and described itself.
+
+---
+
 ## [2026-10-26] — Run 253: the sweep commits its own chart
 
 `main` went red on `be434a0`: the weekly sweep's bot appended a link-sweep row to

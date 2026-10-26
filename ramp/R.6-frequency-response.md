@@ -45,6 +45,8 @@ flowchart LR
 
 ## Learn
 
+<!-- figure: bode-margins | Wiggle in, wiggle out: gain is the height ratio, phase is the delay, and both change with frequency. -->
+
 ### Idea 1: Shake the joint at one frequency and record two numbers: how much the response moved, and how late it was
 - **Primary resource:** [Wikipedia — Frequency response](https://en.wikipedia.org/wiki/Frequency_response)
   - **What to read:** The lead section, where the response is described per frequency by a magnitude and a phase.

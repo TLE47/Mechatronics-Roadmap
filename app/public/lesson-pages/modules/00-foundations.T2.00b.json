@@ -1,4 +1,4 @@
-{"v":1,"path":"modules/00-foundations.T2.00b.md","title":"Vectors, Dot & Cross Products, Linear Independence & Change of Basis","blocks":[
+{"v":3,"path":"modules/00-foundations.T2.00b.md","title":"Vectors, Dot & Cross Products, Linear Independence & Change of Basis","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"In 3D robot manipulators and field-oriented brushless drives, forces and magnetic fields act along tilted 3D axes while joints rotate around specific hinge vectors. You need the dot product to project forces onto a link axis, the 3D cross product to compute the moment vector $\\vec{\\tau} = \\vec{r} \\times \\vec{F}$, and basis-change determinants to detect when a robot arm hits a kinematic singularity. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
@@ -39,6 +39,7 @@
 {"t":"p","x":"No hardware required for this module (`hardware_required: false`). In Track 03 (`Step 2.4`), the Clarke transform changes basis from three $120^\\circ$-spaced stator coil axes $(a, b, c)$ into two orthogonal $(\\alpha, \\beta)$ axes via this exact projection:"},
 {"t":"code","lang":"text","text":"[3-Phase Coil Currents ia, ib, ic] ---> [Change-of-Basis Dot Projections] ---> [Orthogonal i_alpha, i_beta]"},
 {"t":"p","x":"Pass/fail verification in simulation: `F_axial == -16.0 N` and `tau == [6.0, -4.5, -6.0] N*m`."},
+{"t":"route","steps":["00-foundations.T2.00b: dot product projection","cross product 3d moment","basis change and invertibility","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: run the worked example and exercise asserts with zero errors, or score $\\ge 80\\%$ ($4/5$) on the Skip test below."},
 {"t":"h","l":3,"x":"Skip test"},

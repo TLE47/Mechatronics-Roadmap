@@ -67,9 +67,10 @@
       "concept": "open_loop_three_phase_sine_modulation",
       "decision": "keep",
       "core": "modulation",
-      "lines": 11,
+      "lines": 12,
       "sections": [
         "1. Why it matters",
+        "2. Intuition first",
         "3. Formalization",
         "5. Exercise",
         "6. Simulation path",
