@@ -16,6 +16,59 @@ flowchart LR
 
 ---
 
+## [2026-10-26] — Run 255: the same gates, in four lanes
+
+The run had grown into one long job: a Python matrix, a macOS install check, then a single
+`build-workbench` that built the bundle and went on to run fourteen browser suites one after another.
+A push to a branch with an open pull request started *two* of those. Nothing here removes a gate; the
+shape around the gates changed.
+
+**One run per push.** `on.push.branches` was `["main", "master", "**"]`, so a branch push started a
+run of its own and the pull request's `synchronize` event started a second, identical one. A push now
+starts a run on the deployed branches only; a feature branch is graded by its pull request. A
+`concurrency` group keyed on the pull request number (the ref elsewhere) cancels the run a newer push
+supersedes — on pull requests only, because a cancelled `main` run is the publish that never happened.
+
+**Four lanes instead of one queue.** `build-workbench` now ends at the gates that need no browser
+(typecheck, build, the unit suites, the weight budget and the perf page) and publishes `dist/` once as
+the `workbench-dist` artifact. Three jobs fetch it and run side by side:
+
+| Job | Suites |
+| :--- | :--- |
+| `workbench-suites` | `test:workbench` (smoke, dev-server E2E, built bundle, control pairs) and `test:e2e:game` |
+| `audit-suites` | `test:theme:e2e`, `check:axe`, `check:lighthouse`, `check:snapshot`, `check:labels` |
+| `runtime-suites` | `test:runtime` and `test:offline` |
+
+None of them builds: the bundle arrives newer than the checkout, so each suite's `ensureBuilt` reuses
+it — and a lane that remade it would be a second copy of the same commit's bytes. That last sentence
+needed a step rather than a hope: an archive keeps the build job's timestamps, and a fresh checkout is
+newer than that clock, so each lane stamped the restored `dist/` to now (`find dist -exec touch {} +`)
+before asking. Measured locally on the real tree: an archived bundle with old mtimes reads as **308
+stale source files** and would rebuild; one `touch` later it reads as **0** and every suite reuses it. `deploy-pages` now `needs` all four, so a red audit
+cannot publish the bundle it graded — before, the browser suites ran inside the job that uploaded the
+Pages artifact.
+
+**The browser download is cached.** Each suite job restores `~/.cache/ms-playwright` under a key that
+follows `package-lock.json`, so an upgraded Playwright cannot be handed the old browser build. The
+install step still runs on a hit, because the OS libraries are not in that cache and a cached browser
+is a no-op to `playwright install`.
+
+**The shape is guarded, not just written.** `tests/test_workflows.py` grows `WorkflowSpeedTests`: a
+branch push must start one run, the concurrency block must cancel a superseded pull-request run (and
+must not cancel `main`), every one of the nine browser commands must appear exactly once, each suite
+job must depend on the build and download `workbench-dist` and must contain no `npm run build`, every
+suite job must cache the browsers by lockfile hash, and the deploy must wait for all four jobs.
+`python3 scripts/check_workflows.py` still gates the file itself, and now also validates an
+`on:`/`concurrency:` pair that actionlint is happy with.
+
+**Verified.** `python3 scripts/check_workflows.py` — 3 workflows, built-in scan clean, **actionlint
+clean**; `python3 -m unittest tests.test_workflows` **9/9** (six new); `python3 scripts/check_all.py`
+**36/36**; the artifact stamping measured against `buildFreshness.staleBuild` (308 stale → 0). Wall-clock is not measured here: it is a property of the runner, and the honest claim is the
+shape — one run instead of two per branch push, a cached browser, one build shared by the lanes rather
+than three rebuilds, and the browser work in three lanes instead of in sequence behind the build.
+
+---
+
 ## [2026-10-26] — Run 254: the pages get their pictures
 
 Ninety-two reading pages, most of them fifteen to twenty-nine thousand characters of prose, and eleven

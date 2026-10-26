@@ -40,6 +40,20 @@ flowchart LR
 | The built bundle draws the figures in the reading pane: a named scene and the page's own route, each with a `role="img"` name and a caption, beside the editor | the app, driven in Chromium | `npm run test:e2e:pages` |
 | The three recorded files are what their generators make, and each set has its own weight | `app/src/audio/assets/rain-loop.m4a` (rendered) and `app/src/audio/assets/music/*.m4a` (cut from CC0 sources under `NOTICE.md`) | `node scripts/build_ambience.mjs --check`, `node scripts/build_music.mjs --check`, `npm run check:weight` (`audio`, `music`) |
 
+**The run is shaped for one round trip per push.** A push starts a run only on `main`/`master` — a
+feature branch is graded by its pull request, so the old `"**"` filter's second, identical run is gone
+— and a `concurrency` group keyed on the pull request cancels the run a newer push supersedes (never on
+`main`, whose run is the one that publishes). The build and the browser work are separate jobs:
+`build-workbench` finishes at the gates that need no browser and publishes `dist/` as the
+`workbench-dist` artifact; `workbench-suites`, `audit-suites` and `runtime-suites` fetch it (stamping the restored files newer
+than the checkout, because an archive keeps the build job's clock and every suite would otherwise read
+it as stale), restore `~/.cache/ms-playwright` under a key that follows `package-lock.json`, and run
+side by side; and
+`deploy-pages` needs all four, so a red audit cannot publish what it graded. The shape is guarded by
+`tests/test_workflows.py` (`WorkflowSpeedTests`): one run per branch push, cancellation on pull
+requests only, every browser command present exactly once, no suite job that rebuilds, the cache key,
+and a deploy that waits for every lane.
+
 `check_consistency.py` is the contradiction detector: it compares a quoted count with the count
 derived from the lesson files and `modules/_index.yaml`, and fails on a second name for a step
 (`Tier`, `Pass`, or `Gate`) in a learner-facing page. It exists because the README once quoted a
