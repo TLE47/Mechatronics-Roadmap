@@ -29,12 +29,26 @@ flowchart LR
 | Which views the course-level nav is drawn on: the roadmap, and every tab with a guide for all four passes — never the runner, quiz, board, survey, dashboard or lesson page | `app/src/courseLevels.ts`, derived from `SIMULATOR_TIER_GUIDES` | `npm run test:levels` |
 | The first-run tour: six steps, which ones wait for a real edit or a finished run, and that every `data-tour` anchor still exists (and no anchor is left with no step) | `app/src/tour.ts`, against the app's own source | `npm run test:firstrun` |
 | Every count quoted anywhere in the docs | `scripts/check_consistency.py` | `python3.12 scripts/check_consistency.py` |
+| The story: ten missions that each name their own spine step, ten recordings of at most 120 words, a ladder of 0..10 with a perk at every level, one part per mission, and no alias pointing at itself | `content/`, against `schemas/*.schema.json` | `npm run check:content` |
+| The bundle the app imports is what `content/` says, and it is usable: every mission joins to lessons, every recording exists, every level unlocks something | `app/src/data/contentBundle.ts`, `contentRecordings.ts` | `npm run test:content` |
+| The reward engine: a level from verified missions, an award granted once across a restore and a merge, no idle time, no randomness, a hint costs nothing, a missed week erases nothing, a changed grader asks for a re-verify | `app/src/gamification/*.ts`, rules from `content/rewards/rules.yaml` | `npm run test:game` |
+| The 3.0 surfaces in a browser: the prologue and its red-checks warning, LV 1 with Mission 2 in progress, the Perk panel, the Black Box's open and locked rows, and one real pass filing exactly one award | the app, driven as a learner drives it | `npm run test:e2e:game` |
 
 `check_consistency.py` is the contradiction detector: it compares a quoted count with the count
 derived from the lesson files and `modules/_index.yaml`, and fails on a second name for a step
 (`Tier`, `Pass`, or `Gate`) in a learner-facing page. It exists because the README once quoted a
 hand-typed lesson count beside a generated table with one more row, and because the route total
 once omitted all 23 lesson pages inside Tracks 00-08.
+
+**The 3.0 game is checked in three layers.** `scripts/test_content.mjs` reads the built bundle the way
+one would read a lesson: does every mission name its own spine step, does every recording exist and
+stay a voice memo, does every level above 0 unlock something. `scripts/test_gamification.mjs` runs
+the reward engine on plain objects — it is where "granted once" is asserted, in both merge orders and
+after a reload-equivalent second pass, and where a hint's cost and a missed week's forgiveness are
+pinned to numbers rather than intentions. `scripts/e2e_game.mjs` is the only one that can answer
+whether the game is *wired to the work*: it drives a real passing run and reads the ledger the app
+wrote. The content build itself is also checked for staleness — `npm run check:content` fails when a
+mission was edited without rebuilding, so the site cannot render a story the repository does not have.
 
 **A browser suite waits for a condition, never a stopwatch.** `page.goto()`, then `waitForTimeout(n)`,
 then `assert` measures how fast the runner is. On a machine sharing one dev server with three other

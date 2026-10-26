@@ -1,0 +1,13 @@
+number: 6
+slug: give-it-senses
+name: Give It Senses
+chapter: II
+spineStep: 6
+capability: Knows where it is
+capabilityShort: Senses
+bossMoment: Encoder disc spins up
+toys: [Senses panel, Noise slider, Filter toggle]
+homeHotspot: robot
+doorLine: "A robot that does not know where it is will lie to you with a straight face."
+recording: 06-give-it-senses
+clue: Encoder offset and scaling, both, in the same install.

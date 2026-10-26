@@ -29,6 +29,19 @@
 > When to use it: any time a lesson asks you to run something — Run Python Lessons lists every lesson and exercise that has an entry. Read the page for the idea, then type, run and verify in MechaLab; your progress stays in this browser unless you sign in, and nothing is saved on GitHub.
 <!-- start-here:end -->
 
+<!-- story:start -->
+> **3.0 — The Last Hands.** The course now has a story, and the story has one rule: no proof, no
+> power. Ten missions follow the ten steps; each is verified by the same checks that always graded
+> your code, and a level is only ever a set of them passing here. The robot wakes up as you do — a
+> controller board, a joint, an arm that holds its own weight — and ten short Black Box recordings
+> tell you what the workshop learned the hard way. The whole story lives in [`content/`](content/)
+> as reviewed files; the site is a build of them (["the story"](docs/STORY.md) ·
+> ["the content pipeline"](docs/CONTENT.md)).
+>
+> **One thing to know before your first Run:** the starter code is *designed to fail*. Red checks on
+> lesson 1 are the lesson working, not you breaking it.
+<!-- story:end -->
+
 ---
 
 <div align="center">

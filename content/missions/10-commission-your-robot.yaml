@@ -1,0 +1,13 @@
+number: 10
+slug: commission-your-robot
+name: Commission Your Robot
+chapter: III
+spineStep: 10
+capability: Recovers from faults
+capabilityShort: Commissioned
+bossMoment: Figure-eight, then the repair flashes
+toys: [Drive mode, Fault calls, Share card]
+homeHotspot: alley
+doorLine: "No proof, no power. You have both. Finish it."
+recording: 10-last-message
+clue: "The truth: four faults came in together, through a patch nobody could check."

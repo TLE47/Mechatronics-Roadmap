@@ -1,0 +1,63 @@
+name: Black Box Voice
+description: Contribute a recorded voice memo to the story.
+title: "Black box voice: "
+labels: ["black-box", "content"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The Last Hands are a dozen engineers who each left one recording. A contribution is a
+        **voice memo, not a chapter**: at most 120 words, one lesson learned, in the voice of
+        somebody who was there. The file lands in `content/blackbox/NN-slug.md` with front matter.
+  - type: dropdown
+    id: voice
+    attributes:
+      label: Whose voice
+      options:
+        - The Machinist
+        - A member of The Last Hands
+        - An EA Corp system notice
+    validations:
+      required: true
+  - type: input
+    id: title
+    attributes:
+      label: Title
+      description: Six words or fewer. "I trusted a green LED" is the house style.
+      placeholder: The pin I burned
+    validations:
+      required: true
+  - type: input
+    id: unlocks
+    attributes:
+      label: Unlocks after
+      description: The mission number the recording belongs to (1-10).
+      placeholder: "2"
+    validations:
+      required: true
+  - type: textarea
+    id: body
+    attributes:
+      label: The recording
+      description: At most 120 words. One concrete mistake, one thing it taught, no sermon.
+      placeholder: |
+        I skipped a resistor once. One. Nineteen years old, in a hurry...
+    validations:
+      required: true
+  - type: input
+    id: credit
+    attributes:
+      label: Credit
+      description: The handle to print, or "anonymous".
+      placeholder: anonymous
+    validations:
+      required: true
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: Before you send
+      options:
+        - label: This is at most 120 words and contains no personal data.
+          required: true
+        - label: I am happy for it to be published in the repository under the credit above.
+          required: true

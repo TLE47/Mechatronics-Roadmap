@@ -1,0 +1,13 @@
+number: 2
+slug: first-spark
+name: First Spark
+chapter: I
+spineStep: 2
+capability: Responds to inputs
+capabilityShort: Inputs
+bossMoment: LED lights on the bench
+toys: [Breadboard wiring, Clickable LED, Knob and PWM playground]
+homeHotspot: bench
+doorLine: "A resistor is cheaper than a lesson. You will buy both anyway."
+recording: 02-first-spark
+clue: A burned pin from skipping a resistor, the night the arch lights died.

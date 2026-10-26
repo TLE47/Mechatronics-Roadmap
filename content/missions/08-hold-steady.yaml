@@ -1,0 +1,13 @@
+number: 8
+slug: hold-steady
+name: Hold Steady
+chapter: III
+spineStep: 8
+capability: Resists disturbances
+capabilityShort: Holds
+bossMoment: Lift and hold, the first time in years
+toys: [Gain-pad rig, Disturbance poke, Closed Loop radio]
+homeHotspot: robot
+doorLine: "Hit it. If it holds, it is a controller. If it shakes, it is a suggestion."
+recording: 08-hold-steady
+clue: Anti-windup and gravity compensation — two of the four.

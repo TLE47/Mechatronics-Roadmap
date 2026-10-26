@@ -1,0 +1,60 @@
+name: Leave a Recording
+description: Finished the arm? Leave the message the Machinist asked for.
+title: "A recording from "
+labels: ["recording", "community"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        In Chapter 10 you record one mistake you made and leave it in the Black Box. This form is
+        that recording, aimed at the repository's community archive.
+
+        It is **optional and public**: your handle, your robot's name and what you wrote are
+        published under `community/archive/`. Never include personal details, and do not paste code
+        you would not publish — nothing here is required to finish the course.
+  - type: input
+    id: handle
+    attributes:
+      label: The handle to print
+      description: A name or a pseudonym. Public.
+      placeholder: anonymous
+    validations:
+      required: true
+  - type: input
+    id: robot
+    attributes:
+      label: What you named the robot
+      placeholder: H-7
+    validations:
+      required: true
+  - type: input
+    id: missions
+    attributes:
+      label: Missions verified
+      description: How many of the ten, from the LV bar.
+      placeholder: "10"
+    validations:
+      required: true
+  - type: textarea
+    id: recording
+    attributes:
+      label: Your recording
+      description: One mistake you made and what it taught you. At most 120 words, like every other recording in the Black Box.
+    validations:
+      required: true
+  - type: input
+    id: figure-eight
+    attributes:
+      label: The figure-eight
+      description: Optional. The numbers from your final run (tracking error, settling time) if you want them archived beside the recording.
+    validations:
+      required: false
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Publication
+      options:
+        - label: I understand this is public, permanent, and that a maintainer reviews it before it is merged.
+          required: true
+        - label: I have not included personal details or anything I do not want published.
+          required: true

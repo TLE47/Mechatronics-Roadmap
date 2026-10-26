@@ -8,6 +8,18 @@ import { lessonSearchItems } from './lessonSearch';
 import { loadProseIndex, proseSearchItems, type ProsePage } from './proseSearch';
 import { SimulatorTierBanner } from './components/SimulatorTierBanner';
 import { StartHereCard } from './components/StartHereCard';
+import { StoryCard } from './components/game/StoryCard';
+import { markStorySeen, readStorySeen } from './story';
+// The toast ships with the reward engine, not with the first screen: it can only appear after a
+// verification, and by then its chunk is already fetched beside the rules that decided it.
+const AwardToast = React.lazy(() =>
+  import('./components/game/AwardToast').then((module) => ({ default: module.AwardToast }))
+);
+// The reward engine is fetched when a verification earns something, not on every visit: the rules,
+// the ladder and the mission model are ~4 kB gzipped that a learner who never verifies never needs.
+// `import type` is erased, so the type does not pull the module back into the entry chunk.
+import type { Award } from './gamification/rewards';
+import { readPredictions } from './predictGate';
 import { STORAGE_KEY_START_HERE_DISMISSED } from './startHere';
 import { SPINE_STEP_COUNT, stepForMilestone } from './spine';
 import { passChangesContent } from './courseLevels';
@@ -590,6 +602,11 @@ export const App: React.FC = () => {
     }
   });
 
+  // 3.0's game state: the award ledger (its own key, idempotent on write) and the one toast the
+  // last verification earned. Both are local; a restore merges rather than replaces.
+  const [awardsLedger, setAwardsLedger] = useState<Award[]>([]);
+  const [gameAwards, setGameAwards] = useState<Award[]>([]);
+  const [storySeen, setStorySeen] = useState<boolean>(() => readStorySeen());
   const [verifiedLessons, setVerifiedLessons] = useState<Record<string, boolean>>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY_VERIFIED);
@@ -611,6 +628,18 @@ export const App: React.FC = () => {
   // A zip restore writes the stores; this component's copies of them did not change. Re-read on the
   // event rather than reloading the page, so the learner keeps their tab and unsaved editor text.
   const [storeNonce, setStoreNonce] = useState(0);
+
+  // The award ledger, read after the engine's chunk arrives (and again after a restore): the
+  // dashboard's achievement wall and Scrap shelf read it, and nothing on the first screen needs it.
+  useEffect(() => {
+    let alive = true;
+    void import('./gamification/awardStore').then((store) => {
+      if (alive) setAwardsLedger(store.readAwards());
+    });
+    return () => {
+      alive = false;
+    };
+  }, [storeNonce]);
 
   useEffect(() => {
     const onRestored = () => {
@@ -998,11 +1027,32 @@ export const App: React.FC = () => {
     }));
   };
 
+  // One verification, three things: the flag, the stamp that says what it was taken against, and
+  // whatever it earned. The context is read from the stores themselves, so the counts a reward
+  // depends on cannot drift from the work that was actually done.
   const handleMarkLessonVerified = (lessonId: string) => {
-    setVerifiedLessons((prev) => ({
-      ...prev,
-      [lessonId]: true,
-    }));
+    const next = { ...verifiedLessons, [lessonId]: true };
+    setVerifiedLessons(next);
+
+    const predictions = readPredictions().filter(
+      (record) => record.verdict === 'match' && !record.skipped
+    ).length;
+    const events = readLearningLog();
+    const lesson = PYTHON_LESSONS.find((entry) => entry.id === lessonId);
+    void Promise.all([
+      import('./gamification/rewards'),
+      import('./gamification/context'),
+      import('./gamification/awardStore'),
+      import('./gamification/verifyStamp'),
+    ]).then(([rewards, gameContext, store, stamp]) => {
+      const context = gameContext.awardContextFor({ verified: next, events, matchedPredictions: predictions });
+      const granted = store.recordAwards(rewards.candidateAwards(context));
+      if (granted.length > 0) {
+        setAwardsLedger(store.readAwards());
+        setGameAwards(granted);
+      }
+      if (lesson) stamp.writeStamp(lessonId, stamp.graderFingerprint(lesson));
+    });
   };
 
   const handleToggleLessonCompleted = (lessonId: string, forceValue?: boolean) => {
@@ -1525,6 +1575,7 @@ export const App: React.FC = () => {
                 study={dashboardData?.study ?? {}}
                 events={dashboardData?.events ?? []}
                 dueCards={dashboardData?.due ?? 0}
+                awards={awardsLedger}
                 workspaceSync={workspaceSync}
                 conflicts={workspaceConflicts}
                 syncNote={syncNote}
@@ -1830,6 +1881,21 @@ export const App: React.FC = () => {
               }}
             />
           )}
+          {/* The story, once, on the landing screen and never over the editor. It carries the one
+              sentence a first-timer needs before their first Run: the red is the starter, not them. */}
+          {activeTab === 'tab-pyodide' && !storySeen && !verifiedLessons['P.1'] && (
+            <StoryCard
+              onStartLesson={() => {
+                markStorySeen();
+                setStorySeen(true);
+                openLesson('P.1');
+              }}
+              onDismiss={() => {
+                markStorySeen();
+                setStorySeen(true);
+              }}
+            />
+          )}
           {activeTab !== 'tab-arch' &&
             activeTab !== 'tab-pyodide' &&
             activeTab !== 'tab-placement' &&
@@ -1985,6 +2051,14 @@ export const App: React.FC = () => {
       )}
 
       {accountPanel}
+
+      {/* What the last verification earned. It never takes focus and never blocks the editor, and
+          its source is the ledger write that just happened — not a replay of the whole ledger. */}
+      {gameAwards.length > 0 && (
+        <React.Suspense fallback={null}>
+          <AwardToast awards={gameAwards} onClose={() => setGameAwards([])} />
+        </React.Suspense>
+      )}
 
       {/* Focus mode hides every control that would offer a different task, so the way out has to be
           on screen itself: one pill, and Escape doing the same thing. */}

@@ -1,0 +1,13 @@
+number: 7
+slug: build-its-reflexes
+name: Build Its Reflexes
+chapter: II
+spineStep: 7
+capability: Runs a reliable loop
+capabilityShort: Real-time
+bossMoment: Heartbeat locks steady
+toys: [Loop-rate dial, Reflex mini-game, Roof access]
+homeHotspot: roof
+doorLine: "Fast is easy. On time, every time, is the job."
+recording: 07-build-its-reflexes
+clue: A late loop — real, and a red herring. The demo failed for other reasons.

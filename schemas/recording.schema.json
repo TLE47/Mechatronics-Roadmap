@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mechalab.dev/schemas/section.schema.json",
+  "title": "MechaLab story recording",
+  "description": "Front matter of one Black Box recording (content/blackbox/NN-slug.md). The body is the recording itself and is capped at 120 words: a voice memo, not a chapter.",
+  "type": "object",
+  "required": ["id", "number", "title", "voice", "unlocksAfter", "clue", "credit"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^\\d\\d-[a-z0-9-]+$" },
+    "number": { "type": "integer", "minimum": 1, "maximum": 10 },
+    "title": { "type": "string", "minLength": 3, "maxLength": 60 },
+    "voice": { "type": "string", "enum": ["machinist", "collective", "glados", "you"] },
+    "unlocksAfter": { "type": "string", "enum": ["mission", "lesson"] },
+    "clue": { "type": "string", "minLength": 3, "maxLength": 120 },
+    "credit": { "type": "string", "minLength": 1, "maxLength": 60 },
+    "optional": { "type": "boolean" }
+  }
+}

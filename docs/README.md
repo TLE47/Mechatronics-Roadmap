@@ -35,6 +35,14 @@ flowchart LR
 | [`UNVERIFIED_CITATIONS.md`](UNVERIFIED_CITATIONS.md) | The external links a host would not answer, kept visible rather than dropped. |
 | [`coverage-table.md`](coverage-table.md) | Concept coverage across the modules. |
 
+## The story and the repository
+
+| Page | What it is |
+| :--- | :--- |
+| [`STORY.md`](STORY.md) | The Last Hands: the premise, the ten missions and what each earns, the Black Box, and the five rules the story may never break. |
+| [`CONTENT.md`](CONTENT.md) | The content pipeline: `content/` as the source of truth, the schemas, `npm run build:content`, what `--check` proves, and how a rename resolves through `aliases.yaml`. |
+| [`REPO_GAME.md`](REPO_GAME.md) | The repository as the game board: the four issue forms, the PR template, the labels and the ten milestones — and what is deliberately not automated. |
+
 ## Accounts and administration
 
 | Page | What it is |

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mechalab.dev/schemas/aliases.schema.json",
+  "title": "MechaLab id aliases",
+  "description": "content/aliases.yaml: an id is never reused. A rename adds one line here, and a learner's stored progress resolves through it instead of being orphaned.",
+  "type": "object",
+  "required": ["version", "lessons", "missions"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "integer", "minimum": 1 },
+    "lessons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to"],
+        "additionalProperties": false,
+        "properties": {
+          "from": { "type": "string", "minLength": 2 },
+          "to": { "type": "string", "minLength": 2 }
+        }
+      }
+    },
+    "missions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to"],
+        "additionalProperties": false,
+        "properties": {
+          "from": { "type": "integer", "minimum": 1, "maximum": 99 },
+          "to": { "type": "integer", "minimum": 1, "maximum": 99 }
+        }
+      }
+    }
+  }
+}

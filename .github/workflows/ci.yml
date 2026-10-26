@@ -51,6 +51,13 @@ jobs:
           python3 scripts/generate_plant_data.py --check
           python3 scripts/check_term_order.py
           python3 scripts/generate_python_lessons_data.py --check
+          # The 3.0 story, missions and reward rules: `content/` is the source of truth and the
+          # bundle the site imports is a build of it. A story edited without rebuilding fails here,
+          # so the site can never render a mission the repository does not have.
+          python3 scripts/build_content.py --check
+          # ... and the bundle is honest: every mission joins to a spine step with lessons, every
+          # recording is a voice memo, the ladder is 0..10 with a perk at every level.
+          npm run test:content
           # The lesson text the workbench renders beside the editor, generated from the same pages
           # the runner's registry names. A page edited without regenerating is stale here.
           python3 scripts/generate_lesson_pages.py --check
@@ -183,6 +190,12 @@ jobs:
       - name: Check the 08.1 fault-bench metrics
         run: npm run test:faultbench
 
+      # The reward engine without a browser: a level comes from verified missions, an award is
+      # granted once across a restore and a merge, a missed week erases nothing, a hint costs
+      # nothing, and a changed grader asks for a re-verify instead of resetting a flag.
+      - name: Check the 3.0 reward engine (levels, ledger idempotence, night shifts, stamps)
+        run: npm run test:game
+
       - name: Check the roadmap <-> workbench join (every entry claimed once)
         run: npm run test:practice
 
@@ -202,6 +215,13 @@ jobs:
       # `npm run test:smoke`, `test:e2e`, `test:e2e:pages` and `test:pairs` still run standalone.
       - name: Run the Workbench suites (SSR smoke, dev-server E2E, built-bundle E2E, control pairs) on one server pair
         run: npm run test:workbench
+
+      # The 3.0 game, driven as a learner drives it: the prologue and its red-checks warning, Mission
+      # Control at LV 1 with Mission 2 in progress, the Black Box opening what was earned, and one real
+      # passing run filing exactly one award. Its own step for the same reason as the theme sweep — it
+      # boots Pyodide once, and it should fail on the game, not on a loaded runner's click timeout.
+      - name: "Check the 3.0 game: prologue, Mission Control, journey map, Black Box, award ledger"
+        run: npm run test:e2e:game
 
       # Its own step, not a seventh suite in the parallel run above: it drives a browser through all
       # eleven tabs twice, and under that much contention the older suites start missing their 30 s

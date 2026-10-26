@@ -6,11 +6,20 @@ import {
   CalendarClock,
   ClipboardList,
   GraduationCap,
+  Moon,
   ShieldCheck,
   Sparkles,
   UserRound,
+  Wrench,
 } from 'lucide-react';
 import { buildDashboard, type DashboardEvent, type DashboardStudy } from '../dashboardData';
+import { LevelBar } from './game/LevelBar';
+import { JourneyMap } from './game/JourneyMap';
+import { BlackBoxPage } from './game/BlackBoxPage';
+import { missionProgressForAll, verifiedMissionCount } from '../gamification/missions';
+import { currentNightShift, nightShiftLabel } from '../gamification/nightShifts';
+import { awardsOfKind, scrapShelf, scrapTotal, type Award } from '../gamification/rewards';
+import { REWARDS } from '../content/loader';
 
 export interface LearnerDashboardProps {
   email: string | null;
@@ -24,6 +33,8 @@ export interface LearnerDashboardProps {
   study: DashboardStudy;
   events: readonly DashboardEvent[];
   dueCards: number;
+  /** The award ledger: the achievement wall, the Scrap shelf and the proof marks. */
+  awards: readonly Award[];
   workspaceSync: boolean;
   conflicts: number;
   syncNote: string;
@@ -62,6 +73,21 @@ export const LearnerDashboard: React.FC<LearnerDashboardProps> = (props) => {
       conflicts: props.conflicts,
     },
   });
+
+  // The lab's own numbers, from the same stores the workbench writes: missions and checks for the
+  // level, the log for this week's night shifts, the ledger for Scrap and the marks.
+  const missions = missionProgressForAll(props.verified);
+  const verifiedMissions = verifiedMissionCount(props.verified);
+  const current = missions.find((mission) => !mission.verified) ?? missions[missions.length - 1];
+  const week = currentNightShift(
+    props.events,
+    Date.now(),
+    REWARDS.nightShifts.defaultTarget,
+    REWARDS.nightShifts.weekStartsOn
+  );
+  const scrap = scrapTotal(props.awards);
+  const shelf = scrapShelf(props.awards);
+  const marks = awardsOfKind(props.awards, 'proof-mark');
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-5" data-testid="learner-dashboard">
@@ -102,6 +128,52 @@ export const LearnerDashboard: React.FC<LearnerDashboardProps> = (props) => {
           )}
         </div>
       </div>
+
+      <LevelBar
+        verifiedMissions={verifiedMissions}
+        checkpoints={{ verifiedCount: current?.verifiedCount ?? 0, total: current?.total ?? 0 }}
+        missionName={current?.mission.name}
+      />
+
+      <section className={card} data-testid="mission-control-lab">
+        <div className={heading}>
+          <Wrench className="w-3.5 h-3.5" />
+          Your lab
+        </div>
+        <div className="grid gap-2 sm:grid-cols-3">
+          <div className="rounded-lg bg-canvas border border-line-soft px-2.5 py-2">
+            <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted">
+              <Moon className="w-3 h-3" aria-hidden="true" />
+              This week
+            </div>
+            <div className="text-[13px] font-semibold text-ink" data-testid="lab-night-shifts">
+              {nightShiftLabel(week)}
+            </div>
+            <p className="text-[11px] text-muted">A run or a verify counts. Missing a day erases nothing.</p>
+          </div>
+          <div className="rounded-lg bg-canvas border border-line-soft px-2.5 py-2">
+            <div className="text-[11px] uppercase tracking-wide text-muted">Scrap</div>
+            <div className="text-[13px] font-semibold text-ink" data-testid="lab-scrap">
+              {scrap} piece{scrap === 1 ? '' : 's'}
+            </div>
+            <p className="text-[11px] text-muted">
+              {shelf.length === 0 ? 'Named achievements drop Scrap.' : shelf.map((row) => row.label).join(' · ')}
+            </p>
+          </div>
+          <div className="rounded-lg bg-canvas border border-line-soft px-2.5 py-2">
+            <div className="text-[11px] uppercase tracking-wide text-muted">Proof marks</div>
+            <div className="text-[13px] font-semibold text-ink" data-testid="lab-proof-marks">
+              {marks.length} of {REWARDS.proofMarks.length}
+            </div>
+            <p className="text-[11px] text-muted">
+              {marks.length === 0 ? 'How you learn, not how fast.' : marks.map((mark) => mark.label).join(' · ')}
+            </p>
+          </div>
+        </div>
+        <p className="text-[11px] text-muted">
+          Neon relights the street outside; it never moves a level. Hints reduce nothing.
+        </p>
+      </section>
 
       <section className={`${card} border-accent/40`} data-testid="dashboard-continue">
         <div className={heading}>
@@ -149,7 +221,7 @@ export const LearnerDashboard: React.FC<LearnerDashboardProps> = (props) => {
             ].map(([label, value]) => (
               <div key={String(label)} className="rounded-lg bg-canvas border border-line-soft py-2">
                 <div className="text-lg font-bold text-ink">{value}</div>
-                <div className="text-[10px] uppercase tracking-wide text-muted">{label}</div>
+                <div className="text-[11px] uppercase tracking-wide text-muted">{label}</div>
               </div>
             ))}
           </div>
@@ -229,6 +301,19 @@ export const LearnerDashboard: React.FC<LearnerDashboardProps> = (props) => {
           </button>
         </section>
       </div>
+
+      <section className={`${card} p-3.5`}>
+        <JourneyMap
+          progress={missions}
+          verifiedMissions={verifiedMissions}
+          verified={props.verified}
+          onOpenLesson={props.onOpenLesson}
+        />
+      </section>
+
+      <section className={`${card} p-3.5`}>
+        <BlackBoxPage verifiedMissions={verifiedMissions} />
+      </section>
 
       <section className={card} data-testid="dashboard-recent">
         <div className={heading}>

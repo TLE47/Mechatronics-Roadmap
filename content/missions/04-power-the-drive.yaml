@@ -1,0 +1,13 @@
+number: 4
+slug: power-the-drive
+name: Power the Drive
+chapter: II
+spineStep: 4
+capability: Drives a motor safely
+capabilityShort: Drive
+bossMoment: Power rail hum and inrush thump
+toys: [Power toggle, Current-budget playground]
+homeHotspot: window
+doorLine: "Motors eat current. Budget it, or the street will budget it for you."
+recording: 04-power-the-drive
+clue: The lights flickered at startup that night. Nobody wrote it down.

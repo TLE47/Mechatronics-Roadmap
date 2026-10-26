@@ -1,0 +1,45 @@
+# MechaLab's labels, as one reviewed file.
+#
+# A maintainer syncs these with `gh label create` (or any label-sync action pointed at this file);
+# nothing here runs on its own, so the list cannot change a repository behind a pull request's back.
+#
+# Three families:
+#   * work — what a contributor is being asked to do;
+#   * field — a fault, and which part of the machine it is in;
+#   * state — where the task is on the bench, mirroring the Projects board.
+- name: work-order
+  color: "1f6feb"
+  description: A content task — a lesson, a mission, a recording, a reward rule.
+- name: black-box
+  color: "8250df"
+  description: A recording for the Black Box.
+- name: recording
+  color: "bf8700"
+  description: A learner's own Chapter 10 recording, for the community archive.
+- name: content
+  color: "0e8a16"
+  description: curriculum, missions, story or reward rules.
+- name: site
+  color: "1d76db"
+  description: a workbench surface, tab or the dashboard.
+- name: field-call
+  color: "d73a4a"
+  description: A fault in the machine — a run, a check, a tab, the site.
+- name: bug
+  color: "b60205"
+  description: Something is wrong, and it is not the lesson's fault.
+- name: good first issue
+  color: "7057ff"
+  description: A bench task that needs no context beyond the file it names.
+- name: accessibility
+  color: "fbca04"
+  description: A barrier for keyboard, screen-reader, motion or contrast users.
+- name: on the bench
+  color: "fef2c0"
+  description: Being worked on.
+- name: in review
+  color: "c5def5"
+  description: A pull request is open.
+- name: verified
+  color: "0e8a16"
+  description: Merged, and the check that proves it has run.
