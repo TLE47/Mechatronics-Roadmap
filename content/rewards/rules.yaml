@@ -1,0 +1,191 @@
+# MechaLab 3.0 reward rules — the one file every number comes from.
+#
+# Reviewed like any other content: a pull request, not an app release. The engine
+# (app/src/gamification/rewards.ts) reads this and nothing else, so a rule that is not here
+# is a rule the game does not have.
+#
+# Hard rules, restated where they are implemented:
+#   * a level is earned by verifying a mission's checks, never by Neon, idle time or speed;
+#   * no reward may lock Run, hints, scopes or any learning tool;
+#   * every award is idempotent (a stable id in a ledger), so a restore or a second device
+#     can never grant the same thing twice;
+#   * hints never reduce anything (neon.hints is 0 on purpose, not a missing field).
+version: 1
+
+levels:
+  - number: 0
+    handle: OPTIMIZED OUT
+    tagline: "Employee #40817. Role deleted."
+    earnedAt: Start
+    perks:
+      - { id: alley-walk, label: "The alley, the oil trail and the door", kind: surface }
+      - { id: gray-jacket, label: A gray EA Corp jacket and a struck-through badge, kind: look }
+
+  - number: 1
+    handle: RAIN GHOST
+    tagline: You followed the oil. The door opened.
+    earnedAt: Mission 1 verified
+    perks:
+      - { id: telemetry-tiles, label: Live telemetry tiles, kind: surface }
+      - { id: status-light, label: H-7's status light, kind: flair }
+      - { id: lab-night, label: The Lab Night radio station, kind: audio }
+      - { id: hood-up, label: A hood and a hand-lettered paper badge, kind: look }
+
+  - number: 2
+    handle: SPARK THIEF
+    tagline: You stole a spark from a dead circuit.
+    earnedAt: Mission 2 verified
+    perks:
+      - { id: breadboard, label: Breadboard wiring toy, kind: toy }
+      - { id: bench-led, label: A clickable LED on the bench, kind: toy }
+      - { id: knob-pwm, label: Knob and PWM playground, kind: toy }
+
+  - number: 3
+    handle: RUST WAKER
+    tagline: Dead metal moved because you said so.
+    earnedAt: Mission 3 verified
+    perks:
+      - { id: poke-joint, label: Poke-the-joint toy, kind: toy }
+      - { id: step-scope, label: Step-response scope, kind: toy }
+      - { id: paint-station, label: Paint station, kind: room }
+      - { id: oil-gloves, label: Oil-stained gloves, kind: look }
+
+  - number: 4
+    handle: GRID LEECH
+    tagline: The whole street is your power strip.
+    earnedAt: Mission 4 verified
+    perks:
+      - { id: power-toggle, label: Power toggle, kind: toy }
+      - { id: current-budget, label: Current-budget playground, kind: toy }
+
+  - number: 5
+    handle: LONG ARM
+    tagline: It reaches. You made it reach.
+    earnedAt: Mission 5 verified
+    perks:
+      - { id: ik-target, label: IK target gizmo, kind: toy }
+      - { id: trail-draw, label: Light-trail drawing, kind: toy }
+      - { id: back-room, label: The Back Room, kind: room }
+
+  - number: 6
+    handle: SIGNAL SPLICER
+    tagline: You taught a robot where its body is.
+    earnedAt: Mission 6 verified
+    perks:
+      - { id: senses-panel, label: Senses panel, kind: surface }
+      - { id: noise-slider, label: Noise slider and filter, kind: toy }
+
+  - number: 7
+    handle: ZERO LAG
+    tagline: Faster than the drone's scan.
+    earnedAt: Mission 7 verified
+    perks:
+      - { id: loop-rate, label: Loop-rate dial, kind: toy }
+      - { id: reflex-game, label: Reflex mini-game, kind: toy }
+      - { id: roof, label: Roof access, kind: room }
+
+  - number: 8
+    handle: IRON NERVE
+    tagline: Hit it. It holds.
+    earnedAt: Mission 8 verified
+    perks:
+      - { id: gain-pads, label: Gain-pad rig, kind: toy }
+      - { id: disturbance-poke, label: Disturbance poke, kind: toy }
+      - { id: closed-loop, label: The Closed Loop radio station, kind: audio }
+
+  - number: 9
+    handle: SILK HAND
+    tagline: Smooth. Safe. Every time.
+    earnedAt: Mission 9 verified
+    perks:
+      - { id: path-draw, label: Path-drawing toy, kind: toy }
+      - { id: ghost-run, label: Ghost of the last run, kind: surface }
+      - { id: safe-start, label: Safe-start checklist, kind: surface }
+
+  - number: 10
+    handle: LAST HAND
+    tagline: No proof, no power. You have both.
+    earnedAt: Mission 10 verified
+    perks:
+      - { id: drive-mode, label: Drive mode, kind: toy }
+      - { id: fault-calls, label: Fault calls, kind: surface }
+      - { id: leave-recording, label: Leave your own recording, kind: surface }
+      - { id: last-hands-jacket, label: The Last Hands jacket, kind: look }
+
+# Behaviour, not speed. Each mark records a way of learning that a test can see.
+proofMarks:
+  - id: predicted
+    label: Predicted
+    earnedWhen: You committed to a prediction before Run and it matched
+    why: Builds a mental model instead of a guess
+  - id: read-the-evidence
+    label: Read the Evidence
+    earnedWhen: You fixed a failure after opening its diagnostic card
+    why: Rewards debugging rather than retrying
+  - id: second-opinion
+    label: Second Opinion
+    earnedWhen: You solved it after using a hint
+    why: Makes asking for help something to be proud of
+  - id: different-input
+    label: Different Input
+    earnedWhen: You verified a lesson again, much later, with different values
+    why: Shows learning that lasted
+  - id: before-and-after
+    label: Before and After
+    earnedWhen: You pinned two runs and compared them
+    why: Teaches evidence-based tuning
+  - id: field-repair
+    label: Field Repair
+    earnedWhen: You repaired a fault in a fault call
+    why: Shows transfer to an unfamiliar problem
+
+# Named achievements that drop a piece of Scrap. Deterministic: one trigger, one reward.
+streetCred:
+  - id: cold-boot
+    label: Cold Boot
+    trigger: first-verified
+    scrap: 1
+    reward: { id: open-sign, label: A hand-lettered OPEN sign for the arch door, kind: sign }
+  - id: called-it
+    label: Called It
+    trigger: three-predictions
+    scrap: 1
+    reward: { id: lucky-cat, label: A neon lucky-cat for the bench, kind: lamp }
+  - id: paper-trail
+    label: Paper Trail
+    trigger: five-diagnostic-fixes
+    scrap: 1
+    reward: { id: magnifier-lamp, label: A magnifier lamp, kind: lamp }
+  - id: steady-hands
+    label: Steady Hands
+    trigger: hold-steady-verified
+    scrap: 1
+    reward: { id: steady-decal, label: A steady-hand decal for H-7, kind: decal }
+  - id: back-from-the-dead
+    label: Back From the Dead
+    trigger: first-fault-repair
+    scrap: 1
+    reward: { id: parts-crate, label: A spare-parts crate with extra paint, kind: crate }
+  - id: night-owl
+    label: Night Owl
+    trigger: four-days-four-weeks
+    scrap: 1
+    reward: { id: new-skyline, label: A new skyline outside the window, kind: skyline }
+  - id: last-hand
+    label: The Last Hand
+    trigger: ten-missions
+    scrap: 2
+    reward: { id: hand-sign, label: "The Last Hands sign, relit", kind: sign }
+
+# The soft meter: it relights the street, and it never moves a level.
+neon:
+  firstVerified: 5
+  review: 2
+  integration: 10
+  reRun: 0
+  hints: 0
+
+nightShifts:
+  defaultTarget: 4
+  weekStartsOn: monday
+  countsAs: meaningful-attempt

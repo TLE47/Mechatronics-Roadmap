@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `2.0.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `3.0.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,58 @@ flowchart LR
 ```
 
 ---
+
+## [2026-10-25] — Run 246: MechaLab 3.0 — The Last Hands
+
+3.0 is one idea with two halves. **The repository is the source of truth**, and **the story is the
+wrapper, never the work**. Ten missions, ten Black Box recordings, the LV ladder, the reward rules and
+the robot's parts are reviewed files under `content/`; `scripts/build_content.py` validates them and
+builds the site's bundle, and `--check` in CI fails if the two ever disagree. Nothing in the app
+hard-codes a mission or a reward.
+
+**The game cannot be farmed.** A level is the count of missions verified in an unbroken run — every
+check that spine step's arm pass lists, executed and passed here. The reward engine has no clock and
+no `Math.random`; Neon relights the street and never moves a level; a hint costs nothing; a missed
+night shift erases nothing; and an award is a stable id in an idempotent ledger, so a restore or a
+replay cannot grant it twice. `scripts/test_gamification.mjs` asserts each of those.
+
+**What a learner sees.** A four-line prologue card on the first visit that says, in writing, that the
+starter code is designed to fail — the red result is the lesson working, not the learner breaking it.
+Mission Control (the dashboard) opens with the LV bar, the current mission's real checks, this
+week's night shifts, Scrap and proof marks; then the ten-mission journey map, in which every row opens
+its next unverified check (no lesson is ever locked) and the Black Box, where a recording unlocks when
+its mission verifies and stays replayable. A passing run files the award and shows it in a quiet
+corner card that never takes focus.
+
+**Weight stayed inside the budget without raising it.** The recordings are 9 kB of prose only the
+dashboard reads, so they are a generated file of their own; the reward engine, the toast and the
+verification stamp are fetched when a verification needs them. `entry_gzip` is 502.9 kB against the
+505.0 kB ceiling, and `largest_js_gzip` 319.4 kB against 325.0 kB.
+
+**The repository plays too.** Four issue forms (Work Order, Field Service Call, Black Box Voice,
+Leave a Recording — `work-order.yml`, `field-service-call.yml`, `black-box-voice.yml` and
+`leave-a-recording.yml`), a bench-task PR template that asks for the lesson id and the checks run, and
+`labels.yml` / `milestones.yml` as reviewed files — the ten missions are the ten milestones.
+
+**Verified.** `test:content` 15 checks and `test:game` 17 checks; `test:e2e:game` 7 browser checks
+(the prologue and its warning, LV 1 with Mission 2 in progress, the Perk panel's Now/Next/Later, the
+Black Box's open and locked rows, a real pass earning Cold Boot, and a reload that does not duplicate
+it); `tests/test_content_build.py` 18 cases including the validator's own negative paths; the full
+workbench matrix on one dev server and one built bundle (smoke, dev e2e, built-bundle e2e, control
+pairs, the tour and every unit suite) PASS; axe 12 tabs × 4 themes; the surface snapshot re-recorded
+for the landing screen only (+1 heading, +2 buttons, +276 px) and re-checked; label sizes PASS after
+the new card was brought to the 11 px metadata / 12 px control floor; weight PASS; `python3 -m
+unittest discover -s tests` and `check_workflows` clean.
+
+The validator's README-size claim moves with this entry: the page is `111 KB $\to$ 21 KB` now that the
+README carries the 3.0 rows.
+
+Files: `content/**`, `schemas/*.schema.json`, `scripts/build_content.py`, `scripts/test_content.mjs`,
+`scripts/test_gamification.mjs`, `scripts/e2e_game.mjs`, `tests/test_content_build.py`,
+`app/src/{content,gamification,story.ts}`, `app/src/components/game/{LevelBar,JourneyMap,BlackBoxPage,AwardToast,StoryCard}.tsx`,
+`app/src/components/LearnerDashboard.tsx`, `App.tsx`, `package.json`, `.github/{workflows/ci.yml,ISSUE_TEMPLATE/*,pull_request_template.md,labels.yml,milestones.yml}`,
+`docs/{STORY,CONTENT,REPO_GAME}.md`, `docs/{VERIFICATION,README,surface-snapshot.json}`,
+`README.md`, `CHANGELOG.md`.
 
 ## [2026-10-25] — Run 245: the archive says what it leaves out
 

@@ -61,6 +61,10 @@ GATES: list[tuple[str, list[str], bool]] = [
     ("plant_data", ["scripts/generate_plant_data.py", "--check"], False),
     ("term_order", ["scripts/check_term_order.py"], False),
     ("python_lessons_data", ["scripts/generate_python_lessons_data.py", "--check"], False),
+    # The 3.0 story, missions and reward rules: `content/` is the source of truth and the bundle the
+    # site imports is a build of it. A story edited without rebuilding fails here, so the site can
+    # never render a mission the repository does not have.
+    ("content", ["scripts/build_content.py", "--check"], False),
     # The lesson text the reader renders, generated from the same pages the registry names: a page
     # edited without regenerating would leave the pane showing last week's explanation.
     ("lesson_pages", ["scripts/generate_lesson_pages.py", "--check"], False),

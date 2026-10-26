@@ -1,0 +1,58 @@
+name: Work Order
+description: A content task — a lesson, a mission, a recording, a reward rule.
+title: "Work order: "
+labels: ["work-order", "content"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A Work Order is bench work: something on the route that should exist, be clearer, or be
+        fixed. Every field below maps onto a file in `content/`, a page in the curriculum, or a
+        generator — if the answer is "somewhere in the app", say where you looked.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of work
+      options:
+        - Lesson text or its checks
+        - A mission (content/missions)
+        - A Black Box recording (content/blackbox)
+        - A reward rule (content/rewards)
+        - The robot's parts (content/arm)
+        - The site (a surface, a tab, the dashboard)
+    validations:
+      required: true
+  - type: input
+    id: lesson-id
+    attributes:
+      label: Lesson or mission id
+      description: The id as the workbench lists it (for example `P.1`, `05-control.T1.05a`, or mission 8). Leave blank for a site task.
+      placeholder: P.1
+    validations:
+      required: false
+  - type: textarea
+    id: what
+    attributes:
+      label: What should change for the learner
+      description: One paragraph, in the learner's terms. "A beginner cannot tell X from Y" beats "refactor Z".
+    validations:
+      required: true
+  - type: textarea
+    id: checks
+    attributes:
+      label: What would prove it
+      description: The command or browser step that should pass afterwards, and the one that fails now.
+      placeholder: |
+        `npm run check:content` (fails now: mission 8 names no recording)
+        `npm run test:e2e:game` (passes now)
+    validations:
+      required: true
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: The five hard rules
+      options:
+        - label: This rewards verified work, not time on page, speed or randomness.
+          required: true
+        - label: This does not lock Run, hints, scopes or any lesson behind progress.
+          required: true

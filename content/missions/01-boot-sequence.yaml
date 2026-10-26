@@ -1,0 +1,13 @@
+number: 1
+slug: boot-sequence
+name: Boot Sequence
+chapter: I
+spineStep: 1
+capability: Reports its own status
+capabilityShort: Telemetry
+bossMoment: Dead board boots
+toys: [Telemetry tiles, Board LEDs]
+homeHotspot: bench
+doorLine: "That's a green light. A green light is not proof. Print the number."
+recording: 01-boot-sequence
+clue: "The creed, from the first night: evidence over appearance."

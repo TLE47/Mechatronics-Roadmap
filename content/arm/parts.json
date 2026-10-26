@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "parts": [
+    { "id": "controller-board", "name": "Controller board", "mission": 1, "kind": "board", "lesson": "P.1" },
+    { "id": "arch-leds", "name": "Arch LEDs", "mission": 2, "kind": "light" },
+    { "id": "shoulder-joint", "name": "Shoulder joint", "mission": 3, "kind": "joint" },
+    { "id": "drive-stage", "name": "Drive stage", "mission": 4, "kind": "drive" },
+    { "id": "upper-arm", "name": "Upper arm", "mission": 5, "kind": "arm" },
+    { "id": "encoder", "name": "Encoder", "mission": 6, "kind": "sense" },
+    { "id": "loop-timer", "name": "Loop timer", "mission": 7, "kind": "reflex" },
+    { "id": "gravity-term", "name": "Gravity term", "mission": 8, "kind": "control" },
+    { "id": "safe-start", "name": "Safe-start sequence", "mission": 9, "kind": "path" },
+    { "id": "commissioned-arm", "name": "The finished arm", "mission": 10, "kind": "finish" }
+  ]
+}

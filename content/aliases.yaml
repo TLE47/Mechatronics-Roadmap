@@ -1,0 +1,7 @@
+# Ids are permanent. A rename adds one line here; a learner's stored progress resolves
+# through it, so a rename never silently un-verifies work that was really done.
+#
+# An id that has been removed is never reused for something else.
+version: 1
+lessons: []
+missions: []

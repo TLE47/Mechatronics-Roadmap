@@ -1,0 +1,13 @@
+number: 9
+slug: move-with-confidence
+name: Move with Confidence
+chapter: III
+spineStep: 9
+capability: Follows smooth paths, starts safely
+capabilityShort: Safe paths
+bossMoment: Safe-start sequence passes
+toys: [Path draw, Ghost of the last run, Safe-start checklist]
+homeHotspot: bench
+doorLine: "Smooth is not pretty. Smooth is predictable, and predictable is safe."
+recording: 09-move-with-confidence
+clue: The chain of events on demo night, told by someone who was there.

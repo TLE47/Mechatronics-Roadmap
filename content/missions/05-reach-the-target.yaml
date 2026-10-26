@@ -1,0 +1,13 @@
+number: 5
+slug: reach-the-target
+name: Reach the Target
+chapter: II
+spineStep: 5
+capability: Reaches a point
+capabilityShort: Reach
+bossMoment: Silhouette becomes an arm
+toys: [IK target gizmo, Light-trail drawing]
+homeHotspot: robot
+doorLine: "Reach for something. If you miss, you will know why, and that is the point."
+recording: 05-reach-the-target
+clue: At full reach the arm sagged below the target, and the target was blamed.

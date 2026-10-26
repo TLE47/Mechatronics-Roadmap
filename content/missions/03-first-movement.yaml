@@ -1,0 +1,13 @@
+number: 3
+slug: first-movement
+name: First Movement
+chapter: I
+spineStep: 3
+capability: One joint moves
+capabilityShort: One joint
+bossMoment: Joint swings and settles
+toys: [Poke-the-joint toy, Step-response scope]
+homeHotspot: robot
+doorLine: "One joint. Not the whole arm. Learn what one thing does before you ask two."
+recording: 03-first-movement
+clue: The arm was tuned by feel, and it hit its limit on the first power-up.

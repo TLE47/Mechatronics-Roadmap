@@ -1,0 +1,28 @@
+# The ten missions, as GitHub milestones.
+#
+# One milestone per mission, because closing one is what makes a chapter a release candidate: the
+# milestone holds the Work Orders for that mission's lessons, recordings and reward rules, and the
+# release note names the firmware version the chapter shipped as.
+#
+# Sync with `gh api` (a maintainer's one-off) or a milestone action pointed at this file. The order
+# is the route's order; the number is the spine step, so a milestone and a mission cannot disagree.
+- title: "Mission 1 · Boot Sequence"
+  description: "Telemetry online. The controller board boots, and the first recording explains the creed."
+- title: "Mission 2 · First Spark"
+  description: "Inputs. Breadboard, LED, knob and PWM — the arch sign lights."
+- title: "Mission 3 · First Movement"
+  description: "One joint moves. Poke it, scope the step response, and it settles."
+- title: "Mission 4 · Power the Drive"
+  description: "Drive safely. Current budget, inrush, and the street that flickers when you forget it."
+- title: "Mission 5 · Reach the Target"
+  description: "Reach. The second link attaches and the silhouette becomes an arm."
+- title: "Mission 6 · Give It Senses"
+  description: "Know where you are. Encoder offset and scaling, both, in the same install."
+- title: "Mission 7 · Build Its Reflexes"
+  description: "A reliable loop. Timing diagram, heartbeat meter, and one red herring."
+- title: "Mission 8 · Hold Steady"
+  description: "Resist disturbance. Anti-windup and gravity compensation; the arm lifts and holds."
+- title: "Mission 9 · Move with Confidence"
+  description: "Smooth paths, safe starts. The checklist nobody was allowed to skip."
+- title: "Mission 10 · Commission Your Robot"
+  description: "Recover from faults. The figure-eight, the four faults, and your own recording."

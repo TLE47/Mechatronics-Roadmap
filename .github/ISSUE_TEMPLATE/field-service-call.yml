@@ -1,0 +1,56 @@
+name: Field Service Call
+description: Something broke — a run, a check, a tab, the site.
+title: "Field call: "
+labels: ["field-call", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A Field Service Call is a fault in the machine. The two fields that make it fixable are the
+        build and the lesson: without them a maintainer cannot reproduce what you saw.
+  - type: input
+    id: build
+    attributes:
+      label: The build
+      description: The version in the footer (`v3.0.0`) and the content version below it (`content v…`).
+      placeholder: v3.0.0 · content v4b665eb0b8
+    validations:
+      required: true
+  - type: input
+    id: lesson-id
+    attributes:
+      label: Lesson, mission or tab
+      description: The id or the tab's name, as the workbench shows it.
+      placeholder: P.1 / Tab 5 · Bode
+    validations:
+      required: true
+  - type: textarea
+    id: saw
+    attributes:
+      label: What you saw
+      description: The exact message or the numbers on screen, copied rather than paraphrased.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should have happened
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where
+      options:
+        - The deployed site (tle47.github.io/Mechatronics-Roadmap)
+        - A local `npm run dev`
+        - Both
+    validations:
+      required: true
+  - type: checkboxes
+    id: portable
+    attributes:
+      label: Before you post
+      options:
+        - label: I removed anything private from the log or screenshot (the learning log is yours; it never leaves your browser unless you export it).
+          required: true
