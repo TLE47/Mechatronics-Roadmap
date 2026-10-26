@@ -135,6 +135,7 @@ import {
 } from './progressKeys';
 import { STORE_RESTORED_EVENT } from './backupBundle';
 import { FOCUS_EVENT, focusLabel, readFocus, setFocus } from './focusMode';
+import { SoundControlLazy } from './components/SoundControlLazy';
 import { attemptsByLesson, downloadLearningLog, readLearningLog, replaceLearningLog } from './learningLog';
 import type { Session } from '@supabase/supabase-js';
 import { TabId } from './types';
@@ -2063,22 +2064,30 @@ export const App: React.FC = () => {
       {/* Focus mode hides every control that would offer a different task, so the way out has to be
           on screen itself: one pill, and Escape doing the same thing. */}
       {focus && (
-        <button
-          type="button"
-          data-testid="btn-focus-pill"
-          onClick={() => setFocusOn(setFocus(false))}
-          title="Leave focus mode (Esc)"
-          aria-keyshortcuts="Escape"
-          className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-semibold shadow-lg"
-          style={{
-            borderColor: 'var(--border-strong)',
-            backgroundColor: 'var(--panel)',
-            color: 'var(--accent)',
-          }}
-        >
-          <Minimize2 className="h-3.5 w-3.5" aria-hidden="true" />
-          Focus · Esc to leave
-        </button>
+        <div className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5">
+          {/* The header is hidden in focus, so the mute travels with the way out: a mute you cannot
+              reach is not one click away. The pill variant is the button only — no panel over the
+              work — and it reads the same store as the header's control. */}
+          <React.Suspense fallback={null}>
+            <SoundControlLazy variant="pill" />
+          </React.Suspense>
+          <button
+            type="button"
+            data-testid="btn-focus-pill"
+            onClick={() => setFocusOn(setFocus(false))}
+            title="Leave focus mode (Esc)"
+            aria-keyshortcuts="Escape"
+            className="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-semibold shadow-lg"
+            style={{
+              borderColor: 'var(--border-strong)',
+              backgroundColor: 'var(--panel)',
+              color: 'var(--accent)',
+            }}
+          >
+            <Minimize2 className="h-3.5 w-3.5" aria-hidden="true" />
+            Focus · Esc to leave
+          </button>
+        </div>
       )}
 
       <SiteFooter />
