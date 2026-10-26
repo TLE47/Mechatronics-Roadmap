@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `3.1.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `3.2.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,37 @@ flowchart LR
 ```
 
 ---
+
+## [2026-10-25] — Run 248: MechaLab 3.2 — The workshop you can walk
+
+The plan's fourth layer is a place, and this is its first shippable version: one 2.5D room under the
+rail arch, two depth lanes (the bench at the back, the floor at the front), and the three hotspots
+the story names — the **bench terminal**, **H-7**, and the **alley door**. It opens from the header's
+new **Lab** button or `?view=lab`, and it is its own lazy chunk, so a learner who never walks in pays
+nothing for the street outside.
+
+**Atmosphere is never a gate.** Continue sits above the room and opens the lesson the workbench would
+resume in one press; the door leaves for the workbench; every hotspot is also a row in the menu under
+the room, generated from the same list the room is drawn from. A / D walk, W / S change lane, E uses
+what you stand at, and tapping the floor walks there; `prefers-reduced-motion` turns the 240 ms walk
+into an instant move, and the room has no loops, no autoplay and no lock. H-7's card reads the
+verified store — capabilities restored, the next mission, the names already earned — from the same
+numbers the LV bar and Rebuild meter use.
+
+**Where it lives.** `app/src/workshop.ts` owns the rules (start pose, step 0.06, reach 0.075, the key
+map, clamping, the status sentence) and `app/src/components/game/Workshop.tsx` draws them; the page
+is `React.lazy` in `App.tsx`, and the palette's *Walk into the lab* is a second door that works
+signed out.
+
+**Verified.** `npm run test:workshop` 10 checks (walls, lanes, reach, the key map, a breadth-first
+walkability sweep, the status line); `npm run test:e2e:workshop` 9 browser checks (the header's door,
+`?view=lab`, A/D/W/S, E at the terminal, a hotspot clicked from across the room, the menu copy,
+Continue, the alley door, reduced motion, and axe serious/critical clear in both default palettes);
+`check:snapshot` re-recorded 48 surfaces with the intended diff — exactly `buttons +1` on each, the
+new door — and re-checked; `check:axe` 12 tabs × 4 themes unchanged; `test:weight` and `check:weight`
+pass in both bundle shapes (local 1.38 MB / 74 files, signed-in 1.44 MB; entry 502.3/504.4 kB against
+a raised 510 kB ceiling, js 798.1/857.9 kB against 810/870 kB); `tsc -b` clean; docs and plan rows
+current.
 
 ## [2026-10-25] — Run 247: MechaLab 3.1 — Sound, off by default
 

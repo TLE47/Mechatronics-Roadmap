@@ -1,7 +1,7 @@
 {
   "name": "mechalab",
   "private": true,
-  "version": "3.1.0",
+  "version": "3.2.0",
   "type": "module",
   "scripts": {
     "predev": "python3 scripts/generate_python_lessons_data.py",
@@ -123,6 +123,8 @@
     "test:e2e:focus": "node --experimental-strip-types scripts/e2e_focus.mjs",
     "test:editor:deferred": "node --experimental-strip-types scripts/e2e_editor_deferred.mjs",
     "test:e2e:trail": "node --experimental-strip-types scripts/e2e_trail.mjs",
+    "test:workshop": "node --experimental-strip-types scripts/test_workshop.mjs",
+    "test:e2e:workshop": "node --experimental-strip-types scripts/e2e_workshop.mjs",
     "test:e2e:predict": "node --experimental-strip-types scripts/e2e_predict_gate.mjs",
     "test:fonts": "node scripts/test_fonts.mjs",
     "test:theme": "node --experimental-strip-types scripts/test_theme.mjs",

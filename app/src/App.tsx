@@ -201,14 +201,19 @@ const LearnerDashboard = React.lazy(() =>
 const AdminDashboard = React.lazy(() =>
   import('./components/AdminDashboard').then((module) => ({ default: module.AdminDashboard }))
 );
+// The walkable room is its own chunk for the same reason: it is a place to visit, not the price of a
+// first lesson, and a learner who never opens it downloads neither it nor the street outside.
+const Workshop = React.lazy(() =>
+  import('./components/game/Workshop').then((module) => ({ default: module.Workshop }))
+);
 
-type WholePage = 'workbench' | 'dashboard' | 'admin';
+type WholePage = 'workbench' | 'dashboard' | 'admin' | 'lab';
 
-/** `?view=dashboard` and `?view=admin` are addresses, so a dashboard survives a reload. */
+/** `?view=dashboard`, `?view=admin` and `?view=lab` are addresses, so a page survives a reload. */
 function pageFromLocation(): WholePage {
   if (typeof window === 'undefined' || !window.location) return 'workbench';
   const view = new URLSearchParams(window.location.search || '').get('view');
-  return view === 'dashboard' || view === 'admin' ? view : 'workbench';
+  return view === 'dashboard' || view === 'admin' || view === 'lab' ? view : 'workbench';
 }
 
 /** The sentence shown after a workspace merge: what arrived, and what was kept twice. */
@@ -1189,6 +1194,9 @@ export const App: React.FC = () => {
       case 'action-theme-tokens':
         if (typeof window !== 'undefined') window.location.assign(themeViewSearch());
         break;
+      case 'action-open-lab':
+        openPage('lab');
+        break;
       case 'action-pass-level0':
       case 'action-pass-tier1':
       case 'action-pass-tier2':
@@ -1537,11 +1545,13 @@ export const App: React.FC = () => {
           onExportPortfolio={() => setIsPortfolioModalOpen(true)}
           activeTierPass={activeTierPass}
           onSelectTierPass={setActiveTierPass}
-          // The dashboard and the admin area read no pass: the links would only move a highlight.
+          // The dashboard, the admin area and the lab read no pass: the links would only move a
+          // highlight.
           showCourseLevels={false}
           accountEmail={accountEmail}
           onOpenAccount={() => setIsAccountOpen(true)}
           onOpenPalette={() => setIsPaletteOpen(true)}
+          onOpenLab={() => openPage('lab')}
           focus={focus}
           onToggleFocus={toggleFocusMode}
         />
@@ -1563,7 +1573,24 @@ export const App: React.FC = () => {
               </p>
             }
           >
-            {wholePage === 'dashboard' ? (
+            {wholePage === 'lab' ? (
+              <Workshop
+                continueLesson={
+                  offer
+                    ? {
+                        ...offer,
+                        // The lab labels its Continue button with the lesson's name; the offer
+                        // itself carries only the id and why it was chosen.
+                        title:
+                          PYTHON_LESSONS.find((lesson) => lesson.id === offer.id)?.title ?? offer.id,
+                      }
+                    : null
+                }
+                verifiedLessons={verifiedLessons}
+                onOpenLesson={openLessonFromDashboard}
+                onLeave={() => openPage('workbench')}
+              />
+            ) : wholePage === 'dashboard' ? (
               <LearnerDashboard
                 email={accountEmail}
                 role={accountRole}
@@ -1666,6 +1693,7 @@ export const App: React.FC = () => {
         accountEmail={accountEmail}
         onOpenAccount={() => setIsAccountOpen(true)}
         onOpenPalette={() => setIsPaletteOpen(true)}
+        onOpenLab={() => openPage('lab')}
         focus={focus}
         onToggleFocus={toggleFocusMode}
       />
