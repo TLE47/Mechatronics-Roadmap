@@ -13,6 +13,7 @@ import {
   type Theme,
 } from '../theme';
 import { focusLabel } from '../focusMode';
+import { SoundControlLazy } from './SoundControlLazy';
 
 interface HeaderProps {
   /** The palette on screen, the OS palette leaving high contrast returns to, and the three controls. */
@@ -227,6 +228,19 @@ export const Header: React.FC<HeaderProps> = ({
             <BookOpen className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span className="hidden 2xl:inline">Paper</span>
           </button>
+          {/* Sound is a preference, so its control is on every screen — including this one, where
+              the switch is the first thing a learner reaches for after a loud surprise. The panel
+              next to it holds the two levels; the button alone is the mute. Behind a lazy boundary:
+              the entry chunk is a first paint, and sound is opt-in. */}
+          <React.Suspense
+            fallback={
+              <span aria-hidden="true" className="btn" style={{ visibility: 'hidden' }}>
+                Sound
+              </span>
+            }
+          >
+            <SoundControlLazy />
+          </React.Suspense>
           {onToggleFocus && (
             <button
               onClick={onToggleFocus}

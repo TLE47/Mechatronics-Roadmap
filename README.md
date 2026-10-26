@@ -40,6 +40,10 @@
 >
 > **One thing to know before your first Run:** the starter code is *designed to fail*. Red checks on
 > lesson 1 are the lesson working, not you breaking it.
+>
+> **Sound is off until you turn it on**, and a remembered yes waits for your first click rather than
+> starting by itself. Every cue has a visual already on screen, so a muted visit loses nothing
+> (["the sound"](docs/AUDIO.md)).
 <!-- story:end -->
 
 ---

@@ -1170,6 +1170,10 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`../scripts/weight_budget.mjs`](../scripts/weight_budget.mjs) | The weight rules: what counts, what a breach is, and why an unmeasured budget fails too. |
 | [`src/components/TrailCard.tsx`](src/components/TrailCard.tsx) | The roadmap's trail: a day's time and work, a row per event, and rows that open their lesson. |
 | [`src/focusMode.ts`](src/focusMode.ts) | Focus mode's stored choice and the event the header, the pill and the page share. |
+| [`src/audio/prefs.ts`](src/audio/prefs.ts) | Sound's stored choice (`mechalab_sound_v1`), its clamping, the subscribers both controls read, and the labels. Off by default. |
+| [`src/audio/facade.ts`](src/audio/facade.ts) | The two functions the runner and focus mode call — `playCue`, `setSoundScene` — as one window event, so no audio code reaches the entry chunk. |
+| [`src/audio/engine.ts`](src/audio/engine.ts) | The only AudioContext: the mixer graph, synthesised cues, two beds, ducking and the focus scene. A lazy chunk, fetched after first paint. |
+| [`src/components/SoundControl.tsx`](src/components/SoundControl.tsx) | The header's sound button and panel, the focus pill's mute, and the one-shot gesture that starts a remembered "on" without autoplaying. |
 | [`src/portfolio.ts`](src/portfolio.ts) | The exported Markdown: progress, notes and passages, the deck, and the measured sittings. |
 | [`src/traceback.ts`](src/traceback.ts) | CPython's failure text as data: frames, the learner's own frame, chains, and both SyntaxError shapes. |
 | [`src/errorIndex.ts`](src/errorIndex.ts) | The explainer's entries matched to a parsed failure, and the honest "not in the index" case. |
@@ -1204,6 +1208,7 @@ npm run test:trail           # the trail: local days, the fold, sitting time on 
 npm run test:trailreading    # the same trail read for advice: a resisting lesson, a quiet deck, opens alone
 npm run test:paint          # the first paint as a reading: one sample per visit, medians, the export shape
 npm run test:weight          # the weight budget's rules: the boundary, an unmeasured metric, the tightest
+npm run test:audio           # sound: off by default, the graph, the duck, the focus factor, the cue gap, the bus
 npm run test:share           # the share link: round trips, the URL-safe alphabet, the measured cap, every malformed fragment
 npm run test:inline          # inline values: top-level bindings only, the last binding, payload validation, the cut
 npm run test:board           # the Board card: each lesson's sketch, a prediction graded against the proven serial, malformed bridges refused

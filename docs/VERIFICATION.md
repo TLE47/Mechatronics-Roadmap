@@ -33,6 +33,8 @@ flowchart LR
 | The bundle the app imports is what `content/` says, and it is usable: every mission joins to lessons, every recording exists, every level unlocks something | `app/src/data/contentBundle.ts`, `contentRecordings.ts` | `npm run test:content` |
 | The reward engine: a level from verified missions, an award granted once across a restore and a merge, no idle time, no randomness, a hint costs nothing, a missed week erases nothing, a changed grader asks for a re-verify | `app/src/gamification/*.ts`, rules from `content/rewards/rules.yaml` | `npm run test:game` |
 | The 3.0 surfaces in a browser: the prologue and its red-checks warning, LV 1 with Mission 2 in progress, the Perk panel, the Black Box's open and locked rows, and one real pass filing exactly one award | the app, driven as a learner drives it | `npm run test:e2e:game` |
+| Sound is off by default, one press starts it, a pass plays the verify cue, a run ducks the bed and lifts it, and a reload arms rather than autoplays | `app/src/audio/*` and the header's control, driven in Chromium through the engine's debug snapshot | `npm run test:e2e:game` |
+| The sound engine without a browser: the store's defaults and clamps, no context before a gesture, the graph built once, cue lengths and peaks, the rate limit, ducking, the focus factor, the bus | `app/src/audio/{prefs,facade,engine}.ts`, with a recording AudioContext double | `npm run test:audio` |
 
 `check_consistency.py` is the contradiction detector: it compares a quoted count with the count
 derived from the lesson files and `modules/_index.yaml`, and fails on a second name for a step

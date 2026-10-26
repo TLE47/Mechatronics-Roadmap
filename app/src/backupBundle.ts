@@ -150,11 +150,11 @@ What is not in this zip
 -----------------------
 Preferences. The theme and the palette, the layout and the side a panel is docked
 on, focus mode, breakpoints and watch expressions, the lesson the next visit reopens,
-and the fold of each roadmap card (the resume card, the trail, the board card, in
+the fold of each roadmap card (the resume card, the trail, the board card, in
 mechalab_resume_collapsed_v1, mechalab_trail_collapsed_v1 and
-mechalab_board_collapsed_v1). They are choices about reading on one screen rather
-than work, and a restore that imported them would fight the choices already made on
-the machine it lands on.
+mechalab_board_collapsed_v1), and sound (mechalab_sound_v1). They are choices about
+reading and listening on one screen rather than work, and a restore that imported
+them would fight the choices already made on the machine it lands on.
 
 The exception is tour.json. That the first-run tour was *shown* is a fact about you
 rather than a choice about a screen, so it travels: a restore on a new laptop does

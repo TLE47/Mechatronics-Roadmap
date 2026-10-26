@@ -36,6 +36,7 @@ import {
   type TourState,
 } from '../../tour';
 import { readTour, resumeLabel, tourOffer, writeTour } from '../../tourState';
+import { playCue } from '../../audio/facade';
 import type { HarnessReport } from '../../harnessGrading.ts';
 import { harnessGate, parseHarnessReport } from '../../harnessGrading.ts';
 import { harnessForLesson, harnessSourceForLesson } from '../../lessonHarnesses.ts';
@@ -906,6 +907,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // each of the six branches that can set it. `pendingRun` stops a re-render from logging twice.
   const pendingRunRef = useRef<boolean>(false);
   const runStartedAtRef = useRef<number>(0);
+  // Whether this lesson was already verified *before* this run. Read at the start, because by the
+  // time the verdict effect runs the store has usually written the new flag — and a re-run of passed
+  // work must not play the stamp's stinger again.
+  const verifiedNowRef = useRef(verifiedLessons);
+  verifiedNowRef.current = verifiedLessons;
+  const runStartedVerifiedRef = useRef<boolean>(false);
   // The text this run started from, captured before the worker is even asked: a learner who keeps
   // typing while it runs would otherwise file their in-progress edit under the old run's verdict.
   const runCodeRef = useRef<string>('');
@@ -915,6 +922,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       runStartedAtRef.current = performance.now();
       runCodeRef.current = codeRef.current;
       runScratchRef.current = scratchRef.current;
+      runStartedVerifiedRef.current = Boolean(verifiedNowRef.current[selectedId]);
+      // The bench answering Run, heard: a relay click, and the music bus stepping back so the checks
+      // are not talking over a bed. A watch run is the machine repeating a check on the learner's
+      // behalf and stays silent — it is `watchRunRef` that says so, set before `isRunning` flips.
+      if (!watchRunRef.current) playCue('run-start');
     }
   }, [isRunning]);
   useEffect(() => {
@@ -948,7 +960,16 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         ms: Math.round(performance.now() - runStartedAtRef.current),
       });
     }
-    if (passStatus === 'passed') logEvent({ kind: 'verified', lesson: selectedId });
+    if (passStatus === 'passed') {
+      logEvent({ kind: 'verified', lesson: selectedId });
+      // The first pass of a lesson earns the stamp's stinger; pressing Run again on work that already
+      // passed gets the shorter pip phrase, so the sound never claims a capability twice.
+      playCue(runStartedVerifiedRef.current ? 'run-pass' : 'verify');
+    } else if (!watched) {
+      // A neutral low tick: not this time, never a buzzer. It also lifts the duck the start click set,
+      // which is the one thing every finished run must do or the bed stays quiet for good.
+      playCue('run-fail');
+    }
     // A run is the clearest sign of work in a sitting, and the one that stretches it: the clock counts
     // to the last run, so an hour spent debugging is an hour, not a gap after the lesson opened.
     recordSittingEvent({ at: Date.now(), kind: 'run', lesson: selectedId });
