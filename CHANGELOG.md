@@ -16,6 +16,30 @@ flowchart LR
 
 ---
 
+## [2026-10-26] — Run 249: the lab comes out
+
+The walkable room is removed. It was a place beside the course — the header's **Lab** door, its own
+`?view=lab` address, a palette command and a lazy chunk — and the owner judged that a 2.5D game does
+not belong in a workbench whose job is to get someone to a lesson and a verified check. It arrived
+whole in 3.2; it leaves whole rather than shrinking into something that is neither a game nor a page.
+
+**What left.** `app/src/workshop.ts` (the room's rules), `app/src/components/game/Workshop.tsx` (the
+screen), their two suites (`test:workshop`, `test:e2e:workshop`), `docs/WORKSHOP.md`, the header's
+door and its `onOpenLab` prop, the `lab` member of `WholePage` and of `?view=` parsing, the
+palette's `action-open-lab`, the two `package.json` scripts and the two rows in the `test:workbench`
+matrix.
+
+**What did not move.** Every lesson, the runner, the roadmap, the reward ledger, Mission Control,
+the Black Box, sound and focus mode are untouched: the room never gated a lesson, so nothing a
+learner earned was stored in it. A bookmarked `?view=lab` now falls back to the workbench, which is
+what every unknown `?view=` value already did.
+
+**Docs.** `docs/README.md` and `app/README.md` no longer list the room; `docs/VERIFICATION.md` no
+longer claims its two suites. Run 248 stays in this file as the record of the room arriving; this
+entry is the record of it leaving.
+
+---
+
 ## [2026-10-25] — Run 248: MechaLab 3.2 — The workshop you can walk
 
 The plan's fourth layer is a place, and this is its first shippable version: one 2.5D room under the

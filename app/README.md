@@ -1174,8 +1174,6 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/audio/facade.ts`](src/audio/facade.ts) | The two functions the runner and focus mode call — `playCue`, `setSoundScene` — as one window event, so no audio code reaches the entry chunk. |
 | [`src/audio/engine.ts`](src/audio/engine.ts) | The only AudioContext: the mixer graph, synthesised cues, two beds, ducking and the focus scene. A lazy chunk, fetched after first paint. |
 | [`src/components/SoundControl.tsx`](src/components/SoundControl.tsx) | The header's sound button and panel, the focus pill's mute, and the one-shot gesture that starts a remembered "on" without autoplaying. |
-| [`src/workshop.ts`](src/workshop.ts) | The walkable room's rules: the three hotspots, the start pose, step and reach, the key map, clamping, and the status sentence. No React. |
-| [`src/components/game/Workshop.tsx`](src/components/game/Workshop.tsx) | The 2.5D room: parallax city and arch, the bench with H-7 and the terminal, the figure, the hotspot buttons and their menu, and the H-7 service record. A lazy chunk behind the header's Lab button and `?view=lab`. |
 | [`src/portfolio.ts`](src/portfolio.ts) | The exported Markdown: progress, notes and passages, the deck, and the measured sittings. |
 | [`src/traceback.ts`](src/traceback.ts) | CPython's failure text as data: frames, the learner's own frame, chains, and both SyntaxError shapes. |
 | [`src/errorIndex.ts`](src/errorIndex.ts) | The explainer's entries matched to a parsed failure, and the honest "not in the index" case. |
@@ -1211,8 +1209,6 @@ npm run test:trailreading    # the same trail read for advice: a resisting lesso
 npm run test:paint          # the first paint as a reading: one sample per visit, medians, the export shape
 npm run test:weight          # the weight budget's rules: the boundary, an unmeasured metric, the tightest
 npm run test:audio           # sound: off by default, the graph, the duck, the focus factor, the cue gap, the bus
-npm run test:workshop        # the room: hotspots, clamping, lanes, reach, the key map, walkability, the status line
-npm run test:e2e:workshop    # in Chromium: the door, the keys, one-click hotspots, Continue, reduced motion, axe
 npm run test:share           # the share link: round trips, the URL-safe alphabet, the measured cap, every malformed fragment
 npm run test:inline          # inline values: top-level bindings only, the last binding, payload validation, the cut
 npm run test:board           # the Board card: each lesson's sketch, a prediction graded against the proven serial, malformed bridges refused

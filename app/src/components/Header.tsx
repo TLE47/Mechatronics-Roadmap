@@ -1,5 +1,5 @@
 import React from 'react';
-import { Printer, Download, FileJson, User, Compass, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, DoorOpen } from 'lucide-react';
+import { Printer, Download, FileJson, User, Compass, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2 } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
 import { downloadLearningLog } from '../learningLog';
 import { BackupControls } from './BackupControls';
@@ -37,11 +37,6 @@ interface HeaderProps {
   onOpenAccount: () => void;
   /** Opens the `⌘K` palette: the header's door to the same dialog the shortcut opens. */
   onOpenPalette: () => void;
-  /**
-   * The workshop's door. Optional because the token page renders this header and has no room to
-   * walk into; the workbench, the dashboard and the lab itself pass it.
-   */
-  onOpenLab?: () => void;
   /**
    * Focus mode, and its toggle. Optional because the token page renders this header too and has no
    * work to focus on: a button there would hide the page it is on and offer no way back.
@@ -88,7 +83,6 @@ export const Header: React.FC<HeaderProps> = ({
   accountEmail,
   onOpenAccount,
   onOpenPalette,
-  onOpenLab,
   focus = false,
   onToggleFocus,
 }) => {
@@ -173,19 +167,6 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Zone 3: actions. Secondary tools stay reachable but quiet; the account button is the
             only one that shows state, so it keeps a border. */}
         <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
-          {/* The room is optional, so its door is quiet: one button, and the palette names it too. */}
-          {onOpenLab && (
-            <button
-              onClick={onOpenLab}
-              data-testid="btn-open-lab"
-              aria-label="Lab — walk into the workshop"
-              title="The workshop: the bench, H-7 and the alley door"
-              className="btn"
-            >
-              <DoorOpen className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span className="hidden 2xl:inline">Lab</span>
-            </button>
-          )}
           {/* The palette is a shortcut first, but a shortcut nobody can see is a secret. */}
           <button
             onClick={onOpenPalette}

@@ -35,8 +35,6 @@ flowchart LR
 | The 3.0 surfaces in a browser: the prologue and its red-checks warning, LV 1 with Mission 2 in progress, the Perk panel, the Black Box's open and locked rows, and one real pass filing exactly one award | the app, driven as a learner drives it | `npm run test:e2e:game` |
 | Sound is off by default, one press starts it, a pass plays the verify cue, a run ducks the bed and lifts it, and a reload arms rather than autoplays | `app/src/audio/*` and the header's control, driven in Chromium through the engine's debug snapshot | `npm run test:e2e:game` |
 | The sound engine without a browser: the store's defaults and clamps, no context before a gesture, the graph built once, cue lengths and peaks, the rate limit, ducking, the focus factor, the bus | `app/src/audio/{prefs,facade,engine}.ts`, with a recording AudioContext double | `npm run test:audio` |
-| The workshop's rules without the room: the three hotspots, clamping at both walls, a lane change that is not a walk, reach needing both lane and distance, the key map, every hotspot reachable by the keys, and the status sentence | `app/src/workshop.ts` | `npm run test:workshop` |
-| The workshop in a browser: the header's door and `?view=lab`, A/D and W/S moving the figure, E at the terminal opening the lesson, a hotspot clicked from across the room, the menu copy, Continue in one press, the alley door, reduced motion as an instant move, and axe clear in both default palettes | `app/src/components/game/Workshop.tsx`, driven as a learner walks it | `npm run test:e2e:workshop` |
 
 `check_consistency.py` is the contradiction detector: it compares a quoted count with the count
 derived from the lesson files and `modules/_index.yaml`, and fails on a second name for a step
