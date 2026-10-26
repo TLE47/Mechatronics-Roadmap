@@ -23,6 +23,7 @@ import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workben
 import { waitForEditor } from './editor-code.mjs';
 import { clickToolbar } from './e2e_toolbar.mjs';
 import { seedTourSeen } from './tour_seed.mjs';
+import { SOUND_STORAGE_KEY } from '../app/src/audio/prefs.ts';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 import { missionProgressForAll } from '../app/src/gamification/missions.ts';
 import { STORY_SEEN_KEY } from '../app/src/story.ts';
@@ -187,9 +188,54 @@ async function main() {
       await page.getByTestId(`lesson-item-${LESSON.id}`).click();
       await waitForEditor(page, undefined, 20000);
 
+      // ---- 3a. Sound is off until asked for, and one press turns it on ----
+      assert.equal(
+        await page.getByTestId('btn-sound-toggle').getAttribute('aria-pressed'),
+        'false',
+        'a fresh profile must show sound off'
+      );
+      assert.equal(
+        await page.evaluate(() => window.__mechalabAudio?.().running ?? false),
+        false,
+        'nothing may hold a running AudioContext before the learner asks for sound'
+      );
+      await page.getByTestId('btn-sound-toggle').click();
+      await page.waitForFunction(() => window.__mechalabAudio?.().running === true, undefined, {
+        timeout: 15000,
+      });
+      const storedSound = await page.evaluate((key) => localStorage.getItem(key), SOUND_STORAGE_KEY);
+      assert.match(storedSound ?? '', /"on":true/, 'the toggle must remember the choice');
+      console.log('  ok sound is off by default and turns on in one click');
+
+      // Focus is a scene on the same bus: the bed crossfades quieter and the header's control goes
+      // with the chrome, so the pill carries the one press from muted.
+      await page.getByTestId('btn-focus-toggle').click();
+      await page.waitForFunction(() => window.__mechalabAudio?.().scene === 'focus', undefined, {
+        timeout: 15000,
+      });
+      assert.equal(
+        await page.getByTestId('btn-sound-toggle-pill').getAttribute('aria-pressed'),
+        'true',
+        'the focus pill must show the same sound state'
+      );
+      await page.getByTestId('btn-focus-pill').click();
+      await page.waitForFunction(() => window.__mechalabAudio?.().scene === 'home', undefined, {
+        timeout: 15000,
+      });
+      console.log('  ok focus quiets the bed and the pill keeps the mute one click away');
+
       await clickToolbar(page, 'btn-load-solution');
       await page.getByTestId('btn-run-verify').click();
+      // A run ducks the bed while it executes (the plan's "ducking while Run is active"). The poll is
+      // generous because a fast lesson can finish before a slow reader asks; the assertion is at the
+      // end state too, so a missed window fails rather than passes silently.
+      await page.waitForFunction(() => window.__mechalabAudio?.().ducked === true, undefined, {
+        timeout: 30000,
+      });
       await page.getByTestId('status-assert-passed').waitFor({ timeout: 90000 });
+      const audio = await page.evaluate(() => window.__mechalabAudio?.());
+      assert.ok(audio?.cues?.includes('verify'), `verify must make a sound, got ${audio?.cues}`);
+      assert.equal(audio?.ducked, false, 'a finished run must lift the duck');
 
       const toast = page.getByTestId('award-toast');
       await toast.waitFor({ timeout: 15000 });
@@ -216,13 +262,26 @@ async function main() {
       );
       assert.equal(await page.getByTestId('award-toast').count(), 0, 'no toast without new work');
       console.log('  ok the ledger survives a reload without duplicating the award');
+
+      // A remembered "on" is armed, not playing: the context must stay suspended until a gesture.
+      assert.equal(
+        await page.evaluate(() => window.__mechalabAudio?.().running ?? false),
+        false,
+        'a reload must not autoplay the room tone'
+      );
+      await page.getByTestId('btn-sound-toggle').click(); // on -> off
+      await page.getByTestId('btn-sound-toggle').click(); // off -> on, a real gesture
+      await page.waitForFunction(() => window.__mechalabAudio?.().running === true, undefined, {
+        timeout: 15000,
+      });
+      console.log('  ok a remembered "on" waits for a gesture instead of autoplaying');
       await context.close();
     }
   } finally {
     await browser.close();
     if (ownServer) await ownServer.viteServer.close();
   }
-  console.log('[PASS] game: 7 browser checks');
+  console.log('[PASS] game: 10 browser checks');
 }
 
 main().catch((error) => {

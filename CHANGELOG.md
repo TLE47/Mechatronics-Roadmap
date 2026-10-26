@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `3.0.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `3.1.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,52 @@ flowchart LR
 ```
 
 ---
+
+## [2026-10-25] — Run 247: MechaLab 3.1 — Sound, off by default
+
+Sound v1 is the plan's phase 5, and it ships with the two rules that keep atmosphere from getting in
+the way: **nothing autoplays** — a remembered "on" is armed and starts on the first pointer or key
+press — and **the mute is one press** from the header and from the focus pill, because focus hides the
+header and a mute you cannot reach is not a mute. Every cue has a visual already on screen (the pips,
+the stamp, the award card), so a muted learner loses no information.
+
+**No audio files.** Five cues and both named beds (Lab Night at home, Focus Current in focus) are
+synthesised from oscillators and gain envelopes when they play, so there is no media pack, no licence
+to track, no third-party request, and nothing to cache. The graph is `music bus → duck → master` and
+`sfx bus → master`, with the bed at `level × scene × duck`: a run ducks it to 0.32, focus keeps it at
+0.45, and the two compose because they are separate nodes — the bug this shape prevents.
+
+**What a learner hears.** A relay click on Run; a neutral low tick on a failure, never a buzzer; the
+pips cascade on a pass; the stamp's sub-second stinger on the first verification of a lesson, and the
+shorter pip phrase when already-passed work is run again. A **watch run** — the machine repeating a
+check on the learner's behalf — is silent: it did not press Run. The boot swell plays once, when sound
+is first enabled.
+
+**Cost.** The synthesiser is a lazy chunk (2.0 kB gzipped) and the control sits behind a `React.lazy`
+boundary (2.4 kB), so `entry_gzip` did not move for anyone who never enables it: 503.6 kB measured
+against 505.0. `js_gzip` counts every emitted byte, and the whole feature is 4.3 kB, so the signed-in
+ceiling moved by hand from 850 to 860 kB — 8 kB of headroom with the reason in
+`docs/weight-budget.json`, not a blank cheque.
+
+**The preference does not travel.** Like the palette, the layout and the fold keys, sound is a
+choice about this machine, so a backup leaves it behind and the archive's README now says so beside
+the others. Returns, restores and a second device never change what the first one sounds like.
+
+**Verified.** `test:audio` 17 checks (defaults, clamping, no context before a gesture, the graph built
+once, cue length and peak ceilings, the 60 ms gap, ducking, the focus factor, the bus); `test:e2e:game`
+9 browser checks, three of them new — off by default, one press on with the choice stored, a verify cue
+with the duck lifted, and a reload that arms instead of autoplaying; `test:workbench` on one dev server
+and one built bundle; axe 12 tabs × 4 themes; label sizes; the surface snapshot re-recorded for the
+header's new controls and re-checked; weight PASS in the shipped shape.
+
+Files: `app/src/audio/{prefs,facade,engine}.ts`, `app/src/components/{SoundControl,SoundControlLazy}.tsx`,
+`app/src/components/Header.tsx`, `app/src/App.tsx`, `app/src/components/tabs/TabPyodideRunner.tsx`,
+`app/src/backupBundle.ts`, `scripts/test_audio.mjs`, `scripts/e2e_game.mjs`, `scripts/test_workbench.mjs`,
+`package.json`, `docs/AUDIO.md`, `docs/README.md`, `docs/VERIFICATION.md`, `docs/weight-budget.json`,
+`README.md`, `app/README.md`, `CHANGELOG.md`.
+
+Also in this release: 3.0 was squash-merged as `8e64a17` in PR
+[#42](https://github.com/TLE47/Mechatronics-Roadmap/pull/42), green through the Pages deploy.
 
 ## [2026-10-25] — Run 246: MechaLab 3.0 — The Last Hands
 
