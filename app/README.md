@@ -303,7 +303,7 @@ an image file:
 - **Named scenes** ([`src/visuals/scenes.ts`](src/visuals/scenes.ts)). A page writes
   `<!-- figure: control-loop | … -->` and the workbench draws it: a chain, a loop, a timing figure, a
   row of state gates, bars, a plotted curve, a matrix, a bitfield, a reach dial, a circuit or a graph.
-  72 scenes in twelve kinds, one renderer per kind in
+  73 scenes in twelve kinds, one renderer per kind in
   [`src/visuals/Diagram.tsx`](src/visuals/Diagram.tsx) — so a new diagram is a data edit, and every
   figure follows the same rules. All 92 pages carry at least one; 107 figures in the committed payloads.
 - **The page's own route** ([`src/lessonPage.ts`](src/lessonPage.ts), `route` blocks). A single-chain
@@ -1199,7 +1199,7 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/lessonFiles.ts`](src/lessonFiles.ts) | The read-only helper files a lesson brings (the shared plant). |
 | [`src/lessonPage.ts`](src/lessonPage.ts) | The lesson text as data: the payload's shape and guard, where it is served from, and one fetch per page. |
 | [`src/readerMarkdown.ts`](src/readerMarkdown.ts) | Inline Markdown for the reader (emphasis, code, links, maths) and the heading anchors that match GitHub's. |
-| [`src/visuals/scenes.ts`](src/visuals/scenes.ts) | The named figures, as data: 72 scenes in twelve kinds, and `sceneFor` refusing an id it does not draw. |
+| [`src/visuals/scenes.ts`](src/visuals/scenes.ts) | The named figures, as data: 73 scenes in twelve kinds, and `sceneFor` refusing an id it does not draw. |
 | [`src/visuals/Diagram.tsx`](src/visuals/Diagram.tsx) | One SVG renderer per figure kind, all theme-token colours, `role="img"` and a `<figcaption>`; the route's vertical layout and its label wrapping. |
 | [`src/visuals/holoModel.ts`](src/visuals/holoModel.ts) | The arm as pure functions: forward and inverse kinematics, the orbit clamps, the projection, the bounded trail, the demo pose. |
 | [`src/visuals/Hologram.tsx`](src/visuals/Hologram.tsx) | The dashboard's hologram: the projection drawn, the view dragged, the joints posed, the readout. |

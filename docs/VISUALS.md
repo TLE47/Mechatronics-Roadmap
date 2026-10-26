@@ -17,7 +17,7 @@ flowchart LR
     MD -->|"```mermaid flowchart```"| Gen
     Gen --> Payload["dist/lesson-pages/*.json (v4)"]
     Payload --> Reader["LessonReader.tsx"]
-    Scenes["visuals/scenes.ts<br/>72 named scenes"] --> Reader
+    Scenes["visuals/scenes.ts<br/>73 named scenes"] --> Reader
     Reader --> Diagram["visuals/Diagram.tsx<br/>chain · loop · timing · states · bars · plot<br/>graph · matrix · bits · reach · schematic · route"]
     Hologram["visuals/Hologram.tsx<br/>the arm, draggable"] --> Dashboard["LearnerDashboard.tsx"]
 ```
@@ -52,7 +52,7 @@ because drawing a branch as a list would be a different diagram.
 | `graph` | boxes and labelled arrows, layered from the edges | ROS 2 graphs, a devicetree, a launch tree, an autograd chain, an asset tree |
 | `route` | numbered steps, top to bottom | the page's own linear flowchart |
 
-The 72 named scenes live in `SCENES` — 13 chains, 6 loops, 8 timings, 2 states, 2 bar charts, 16 plots,
+The 73 named scenes live in `SCENES` — 13 chains, 6 loops, 8 timings, 2 states, 2 bar charts, 17 plots,
 11 matrices, 3 bitfields, 1 reach dial, 2 schematics and 8 graphs. `scripts/test_visuals.mjs` checks
 each kind against its own data: every arrow in a graph lands on a box the scene has, a matrix's cells
 match its labels, a bitfield spans bits that exist, a plot's points and bands stay inside their axes, a
@@ -122,11 +122,11 @@ picture, that is one branch in `Diagram.tsx` and one assertion in `test_visuals.
 
 | Metric | Measured | Ceiling | Why |
 | :--- | :--- | :--- | :--- |
-| `entry_gzip` | 522.1 kB | 530 kB | the figures are app code on the first-screen chunk: the reader draws them beside the text |
-| `largest_js_gzip` | 338.3 kB | 344 kB | the runner chunk carries the kit |
+| `entry_gzip` | 522.3 kB | 530 kB | the figures are app code on the first-screen chunk: the reader draws them beside the text |
+| `largest_js_gzip` | 338.5 kB | 344 kB | the runner chunk carries the kit |
 | `reader_gzip` | 685.8 kB | 720 kB | 107 figures, 82 routes and 10 graphs later; still fetched one page at a time |
 
-No audio file, no image, no font. The whole visual kit — 72 scenes, twelve renderers, the arm model, the
+No audio file, no image, no font. The whole visual kit — 73 scenes, twelve renderers, the arm model, the
 hologram — is 11.7 kB gzipped on chunks that already existed.
 
 ## The checks

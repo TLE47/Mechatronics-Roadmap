@@ -57,8 +57,11 @@ failing on a 2,000-character paragraph, so the number is not vacuous.
 place and the fan the figure existed for was gone, with no broken link and no missing scene to notice.
 Each scene now names one lane per box, and `graphLayers` moved out of `Diagram.tsx` into
 `app/src/visuals/graphLayout.ts` so `test:visuals` calls the same layout the renderer does and fails a
-scene whose boxes collide (`collidingCells`). The one kind no page used got its page: the reach dial now
-sits under 02.3's reachability idea, so all twelve kinds are drawn somewhere in the reader.
+scene whose boxes collide (`collidingCells`). Two data gaps closed on the walk: the reach dial — the one
+kind no page used — now sits under 02.3's reachability idea, and P.11, a page about reading graphs, had a
+chain where it needed a graph; it now carries a position trace with a tangent (`slope-is-velocity`), so
+every one of the twelve kinds is drawn in the reader and the beginner page opens on the thing it teaches.
+The scene library is 73, and the page count of figures stays 107: a picture replaced, not added.
 
 **Verified.** `npm run test:visuals` 15/15 (each kind checked against its own data: a graph's arrows land
 on boxes it has and no two boxes share a cell, a matrix's cells match its labels, a bitfield spans bits
@@ -67,7 +70,7 @@ that exist, a plot's points stay inside its axes, a schematic's shunt hangs off 
 size ceiling, the pace gate); `npm run test:reader` 21/21; `npm run test:e2e:pages` green in Chromium
 and Firefox, including a new assertion that R.1's branched map draws **5 boxes and 4 arrows** with a
 name and a caption; `check:snapshot` 48 surfaces, `check:axe` clean, `check:weight` re-recorded with
-two ceilings moved by hand (entry 522.1 of 530 kB, largest 338.3 of 344 kB — 11.7 kB of new renderers and
+two ceilings moved by hand (entry 522.3 of 530 kB, largest 338.5 of 344 kB — 11.7 kB of new renderers and
 scenes on the first-screen chunk; the reader's payloads are 685.8 of 720 kB, 107 figures).
 
 **Decisions.** A picture is placed at the section it illustrates, never dropped into a paragraph at

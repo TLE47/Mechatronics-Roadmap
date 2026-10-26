@@ -619,6 +619,38 @@ export const SCENES: Record<string, DiagramSpec> = {
     }
   ),
 
+  'slope-is-velocity': plot(
+    'The slope is the speed',
+    'A position trace is not one number: how steep it is at an instant is the velocity, and a straight tangent reads that steepness off the curve.',
+    {
+      x: { label: 'time', unit: 's', min: 0, max: 2 },
+      y: { label: 'position', unit: 'm', min: 0, max: 1.8 },
+      series: [
+        {
+          label: 'position x(t)',
+          points: [
+            { x: 0, y: 0 },
+            { x: 0.4, y: 0.064 },
+            { x: 0.8, y: 0.256 },
+            { x: 1.2, y: 0.576 },
+            { x: 1.6, y: 1.024 },
+            { x: 2.0, y: 1.6 },
+          ],
+        },
+        {
+          label: 'tangent at 1.2 s: 0.96 m/s',
+          dashed: true,
+          points: [
+            { x: 0.7, y: 0.096 },
+            { x: 1.2, y: 0.576 },
+            { x: 1.7, y: 1.056 },
+          ],
+          markers: true,
+        },
+      ],
+    }
+  ),
+
   'counts-to-degrees': plot(
     'Counts become degrees',
     'A 10-bit reading is a number from 0 to 1023. Scaling is one straight line from that range to the one the joint speaks.',
