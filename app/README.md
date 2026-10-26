@@ -479,7 +479,7 @@ It is empty.
 **`npm run check:weight`** gzips the built shell (`dist/assets/**` plus `dist/index.html`) and compares
 it against [`docs/weight-budget.json`](../docs/weight-budget.json): `js_gzip`, `css_gzip`, `fonts` (raw,
 because woff2 is already compressed — the two UI faces and KaTeX's 19 maths faces), `largest_js_gzip`,
-`prose_gzip`, `reader_gzip` and `total`. Today that is **1.35 MB across 62 files** (1.41 MB with the
+`prose_gzip`, `reader_gzip` and `total`. Today that is **1.38 MB across 72 files** (1.44 MB with the
 account library, which is how CI builds it), with the budgets a few percent above. A breach fails with the overshoot named, and
 so does a budget with nothing measured behind it — a metric the build stopped emitting would otherwise
 pass forever. The rules are pure ([`../scripts/weight_budget.mjs`](../scripts/weight_budget.mjs)) and
