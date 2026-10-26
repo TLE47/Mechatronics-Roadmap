@@ -210,6 +210,7 @@ async function main() {
     { label: 'paint', script: 'test_paint_timing.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'weight', script: 'test_weight_budget.mjs' },
     { label: 'audio', script: 'test_audio.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'workshop', script: 'test_workshop.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'fonts', script: 'test_fonts.mjs' },
     { label: 'e2e', script: 'e2e_browser_workbench.mjs', env: { E2E_BASE_URL: devUrl }, browser: true },
     { label: 'pages', script: 'e2e_pages_bundle.mjs', env: { PAGES_SERVER_URL: pagesUrl }, browser: true },
@@ -223,6 +224,7 @@ async function main() {
     { label: 'predict2e', script: 'e2e_predict_gate.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
     { label: 'focus2e', script: 'e2e_focus.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
     { label: 'store2e', script: 'e2e_storage.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
+    { label: 'workshop2e', script: 'e2e_workshop.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
   ];
   // Ctrl-C must not leave a Vite server or two Chromium runs behind.
   const stop = () => {

@@ -3640,17 +3640,19 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       await searchPage.keyboard.press('Escape');
       await searchPage.getByTestId('shortcuts-modal').waitFor({ state: 'detached', timeout: 5000 });
       await searchPage.keyboard.press('Control+Shift+J');
-      await searchPage.getByTestId('btn-focus-pill').waitFor({ timeout: 5000 });
+      // A mount, not a network round trip: the wait is generous because this suite runs in the
+      // matrix's four-wide wave, where a sibling Chromium can hold the renderer for seconds.
+      await searchPage.getByTestId('btn-focus-pill').waitFor({ timeout: 15000 });
       await searchPage.keyboard.press('Escape');
-      await searchPage.getByTestId('btn-focus-pill').waitFor({ state: 'detached', timeout: 5000 });
+      await searchPage.getByTestId('btn-focus-pill').waitFor({ state: 'detached', timeout: 15000 });
       await searchPage.reload({ waitUntil: 'networkidle' });
       await searchPage.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, {
         timeout: 20000,
       });
       await searchPage.keyboard.press('Control+Shift+J');
-      await searchPage.getByTestId('btn-focus-pill').waitFor({ timeout: 5000 });
+      await searchPage.getByTestId('btn-focus-pill').waitFor({ timeout: 15000 });
       await searchPage.keyboard.press('Escape');
-      await searchPage.getByTestId('btn-focus-pill').waitFor({ state: 'detached', timeout: 5000 });
+      await searchPage.getByTestId('btn-focus-pill').waitFor({ state: 'detached', timeout: 15000 });
 
       // ⌘K is the palette's: the clash is refused with its name, the row keeps waiting, and Escape
       // during capture cancels the key rather than closing the sheet.

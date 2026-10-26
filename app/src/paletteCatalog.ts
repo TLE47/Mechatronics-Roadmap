@@ -94,6 +94,13 @@ export const PALETTE_ACTIONS: PaletteItem[] = [
     keywords: 'design colours colors palette css',
   },
   {
+    id: 'action-open-lab',
+    kind: 'action',
+    label: 'Walk into the lab (the workshop)',
+    detail: '2.5D room',
+    keywords: 'workshop room walk bench robot h7 door story explore place',
+  },
+  {
     id: 'action-tour-replay',
     kind: 'action',
     label: 'Replay the first-lesson tour',
