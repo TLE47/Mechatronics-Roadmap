@@ -29,11 +29,15 @@
  *   lesson opens, and neither JavaScript nor part of a first paint. Summed rather than averaged
  *   because the ceiling is on what a course costs if every lesson is read; a single page's ceiling
  *   would let a slow page hide among fast ones.
- * - **`audio`** — every emitted media file, at its own size: today that is the one recorded rain
- *   loop (`app/src/audio/assets/rain-loop.m4a`). Audio is already compressed, so gzipping it again
- *   would flatter the number, and the metric exists so a second loop cannot arrive unnoticed. It is
- *   in `total` because it ships in the bundle, but it is fetched only after sound is turned on — see
+ * - **`audio`** — the room's recorded file at its own size: the rain loop
+ *   (`app/src/audio/assets/rain-loop.m4a`). Audio is already compressed, so gzipping it again would
+ *   flatter the number, and the metric exists so a second room file cannot arrive unnoticed. It is in
+ *   `total` because it ships in the bundle, but it is fetched only after sound is turned on — see
  *   `docs/AUDIO.md`.
+ * - **`music`** — the two recorded beds (`app/src/audio/assets/music/*.m4a`), at their own size for
+ *   the same reason, and split from `audio` so a 400 kB lo-fi track cannot hide inside a room-tone
+ *   budget. Both are inside `total` and outside `entry_gzip`: a learner who leaves sound off fetches
+ *   neither, and one who chooses the drone never fetches the beds.
  * - **`total`** — everything emitted (assets plus the document): a ceiling on the bundle as a whole,
  *     not the cost of a visit. A split raises this slightly (chunk headers) while lowering
  *     `entry_gzip`, which is exactly the trade the report is meant to show.
@@ -57,11 +61,17 @@ export const METRICS = [
   'prose_gzip',
   'reader_gzip',
   'audio',
+  'music',
   'total',
 ];
 
 /** The container formats the room may be recorded in. One file today; the list is the ceiling's. */
 const AUDIO_FILE = /\.(m4a|aac|mp3|ogg|opus|flac|wav|webm)$/i;
+/** The two beds, by their ids in `app/src/audio/musicCatalogue.ts`. */
+const MUSIC_FILE = /(?:^|\/)(lab-night|focus-current)[\w-]*\.(m4a|aac|mp3|ogg|opus|flac|wav)$/i;
+
+export const isMediaFile = (name) => AUDIO_FILE.test(name);
+export const isMusicFile = (name) => MUSIC_FILE.test(name);
 
 /** `1234567` -> `1.18 MB`, `45678` -> `44.6 kB` — a size a person reads without arithmetic. */
 export function formatBytes(bytes) {
@@ -268,10 +278,17 @@ export function measurementFrom(files, entry = [], prose = null, reader = null) 
     prose_gzip: prose && Number.isFinite(prose.gzip) ? prose.gzip : Number.NaN,
     reader_gzip: reader && Number.isFinite(reader.gzip) ? reader.gzip : Number.NaN,
     // Media is already compressed: its own bytes, not a gzip of them. A build with no media reads as
-    // unmeasured, so removing the room's loop fails the gate instead of passing as zero bytes.
-    audio: files.some((file) => AUDIO_FILE.test(file.name))
+    // unmeasured, so removing the room's loop fails the gate instead of passing as zero bytes. The
+    // beds are the same kind of number, split out so a track cannot hide inside a room-tone ceiling;
+    // a build with no beds is unmeasured for `music` and does not fail the room's metric.
+    audio: files.some((file) => isMediaFile(file.name) && !isMusicFile(file.name))
       ? files
-          .filter((file) => AUDIO_FILE.test(file.name))
+          .filter((file) => isMediaFile(file.name) && !isMusicFile(file.name))
+          .reduce((total, file) => total + file.size, 0)
+      : Number.NaN,
+    music: files.some((file) => isMusicFile(file.name))
+      ? files
+          .filter((file) => isMusicFile(file.name))
           .reduce((total, file) => total + file.size, 0)
       : Number.NaN,
     total: files.reduce((total, file) => total + file.gzip, 0),

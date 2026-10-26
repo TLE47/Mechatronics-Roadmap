@@ -280,6 +280,11 @@ function printBuild(heading, build) {
       `${(Number.isFinite(build.measured.audio) ? formatBytes(build.measured.audio) : 'missing').padStart(8)}  ` +
       '(fetched only after sound is turned on)'
   );
+  log(
+    `  lofi beds (two loops)${' '.repeat(19)}` +
+      `${(Number.isFinite(build.measured.music) ? formatBytes(build.measured.music) : 'missing').padStart(8)}  ` +
+      '(fetched only when Music is on and the beds are chosen)'
+  );
   log('');
   log('  metric              measured     budget      used');
   for (const row of build.rows) {

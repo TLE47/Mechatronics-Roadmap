@@ -13,10 +13,14 @@
  *    `writeSoundPrefs` returns what to render, so blocked storage costs the memory, never the toggle —
  *    the same contract as `focusMode.ts` and the fold keys.
  *
- * The four numbers are deliberately few: a master toggle, the music bed, the room, and the effects.
- * Per-cue volume is an implementation detail, and every knob here is one a learner can reason about
- * in a second — "the bed", "the rain", "the buttons and the checkmarks".
+ * The numbers are deliberately few: a master toggle, the music bed, the room, and the effects, plus
+ * two choices that are switches rather than levels — whether the interface clicks at all, and whether
+ * the music is a song or a drone. Per-cue volume is an implementation detail, and every knob here is
+ * one a learner can reason about in a second.
  */
+
+/** `lofi` is the two recorded beds; `synth` is the oscillator drone the engine has always had. */
+export type BedChoice = 'lofi' | 'synth';
 
 export interface SoundPrefs {
   /** The master. Off means nothing is scheduled and the context is suspended. */
@@ -30,13 +34,28 @@ export interface SoundPrefs {
   room: number;
   /** Cue level, 0..1. Every interface tick and every verdict rides this number. */
   sfx: number;
+  /**
+   * Whether the interface makes any sound at all. Separate from `sfx` because a learner may want the
+   * verdicts and the room while finding a tick under every button distracting — and a slider at zero
+   * would be a hidden way to say the same thing.
+   */
+  clicks: boolean;
+  /** Which music: the recorded lo-fi beds, or the synthesised drone. */
+  beds: BedChoice;
 }
 
 export const SOUND_STORAGE_KEY = 'mechalab_sound_v1';
 export const SOUND_SCHEMA = 'mechalab.sound/1';
 
 /** What a fresh browser hears: nothing, until the toggle is pressed. */
-export const DEFAULT_SOUND_PREFS: SoundPrefs = { on: false, music: 0.6, room: 0.45, sfx: 0.8 };
+export const DEFAULT_SOUND_PREFS: SoundPrefs = {
+  on: false,
+  music: 0.6,
+  room: 0.45,
+  sfx: 0.8,
+  clicks: true,
+  beds: 'lofi',
+};
 
 /** A level that would not round-trip is a level the slider could never show. */
 export function clampLevel(value: unknown, fallback: number): number {
@@ -70,6 +89,9 @@ export function parseSoundPrefs(raw: string | null | undefined): SoundPrefs {
       // A record written before the Room fader existed simply has no `room`; it gets the default.
       room: clampLevel(parsed.room, DEFAULT_SOUND_PREFS.room),
       sfx: clampLevel(parsed.sfx, DEFAULT_SOUND_PREFS.sfx),
+      // Same for the two switches: an old record keeps its levels and gains today's defaults.
+      clicks: parsed.clicks !== false,
+      beds: parsed.beds === 'synth' ? 'synth' : 'lofi',
     };
   } catch {
     return { ...DEFAULT_SOUND_PREFS };
@@ -115,6 +137,8 @@ export function writeSoundPrefs(patch: Partial<SoundPrefs>): SoundPrefs {
     music: clampLevel(patch.music, base.music),
     room: clampLevel(patch.room, base.room),
     sfx: clampLevel(patch.sfx, base.sfx),
+    clicks: typeof patch.clicks === 'boolean' ? patch.clicks : base.clicks,
+    beds: patch.beds === 'synth' || patch.beds === 'lofi' ? patch.beds : base.beds,
   };
   current = next;
   const store = storage();
@@ -143,6 +167,6 @@ export function soundLabel(on: boolean): string {
 /** The panel's one-line explanation; the same words in both variants. */
 export function soundHint(on: boolean): string {
   return on
-    ? 'Every click, and the room: rain, the floor, the city. Muted in one click.'
+    ? 'Lo-fi at the bench, rain on the window, a tick under the controls. Muted in one click.'
     : 'Nothing plays until you turn this on. The choice is remembered.';
 }

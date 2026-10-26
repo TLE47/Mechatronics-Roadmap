@@ -1,20 +1,32 @@
 import React from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
-import { SOUND_EVENT, readSoundMessage } from '../audio/facade.ts';
+import { SOUND_EVENT, previewUi, readSoundMessage, type UiRole } from '../audio/facade.ts';
 import {
+  DEFAULT_SOUND_PREFS,
   cachedSoundPrefs,
-  soundHint,
   soundLabel,
   subscribeSoundPrefs,
   writeSoundPrefs,
   type SoundPrefs,
 } from '../audio/prefs.ts';
 import { FOCUS_EVENT, readFocus } from '../focusMode.ts';
+import { SoundSettingsPanel } from './SoundSettingsPanel.tsx';
 
 type Engine = import('../audio/engine.ts').SoundEngine;
+type Handle = typeof import('../audio/engine.ts').handleSoundMessage;
 
 let resolved: Engine | null = null;
 let loading: Promise<Engine> | null = null;
+/**
+ * The handler, kept beside the engine so a press reaches it **inside the event**.
+ *
+ * This is not a micro-optimisation. A press is dispatched on `pointerdown` and the control's own
+ * `onClick` runs after it; if the message waited on a promise chain, the click would flip a setting
+ * (interface clicks off, say) before the tick it caused was scheduled — and that tick would be
+ * correctly-but-uselessly dropped, because by then the interface really was silent. Handling the
+ * message synchronously is what makes "the press that turns the clicks off is still heard" true.
+ */
+let handler: Handle | null = null;
 
 /**
  * Load the synthesiser without constructing anything. The chunk is small and fetched at idle, so the
@@ -26,6 +38,7 @@ export function loadSoundEngine(): Promise<Engine> {
     loading = import('../audio/engine.ts').then((module) => {
       const engine = new module.SoundEngine();
       resolved = engine;
+      handler = module.handleSoundMessage;
       // A read-only snapshot for the browser suites: no secret, no setter, the same numbers the panel
       // renders. `scripts/e2e_game.mjs` reads it to prove a cue fired and a run ducked the bed.
       (window as unknown as { __mechalabAudio?: () => unknown }).__mechalabAudio = () => engine.debug();
@@ -101,9 +114,14 @@ export const SoundControl: React.FC<{ variant?: 'header' | 'pill' }> = ({ varian
     const onSound = (event: Event) => {
       const message = readSoundMessage(event);
       if (!message) return;
-      void loadSoundEngine().then((engine) =>
-        import('../audio/engine.ts').then((module) => module.handleSoundMessage(engine, message))
-      );
+      // Synchronous once the engine is here, which is the common case by the time sound is on.
+      if (resolved && handler) {
+        handler(resolved, message);
+        return;
+      }
+      void loadSoundEngine().then((engine) => {
+        if (handler) handler(engine, message);
+      });
     };
     const onFocus = (event: Event) => {
       const on = Boolean((event as CustomEvent<{ on?: boolean }>).detail?.on);
@@ -144,11 +162,31 @@ export const SoundControl: React.FC<{ variant?: 'header' | 'pill' }> = ({ varian
     }
   };
 
-  const setLevel = (key: 'music' | 'room' | 'sfx', value: number) => {
-    const next = writeSoundPrefs({ [key]: value / 100 } as Partial<SoundPrefs>);
+  /** One writer for every control in the panel: store, render, and the engine in the same breath. */
+  const change = (patch: Partial<SoundPrefs>) => {
+    const next = writeSoundPrefs(patch);
     setPrefs(next);
     void loadSoundEngine().then((engine) => engine.apply(next));
   };
+
+  const setLevel = (key: 'music' | 'room' | 'sfx', value: number) =>
+    change({ [key]: value / 100 } as Partial<SoundPrefs>);
+
+  /** A preview is a request to hear one tick, so it plays even with interface clicks switched off. */
+  const preview = (role: UiRole) => {
+    if (!prefsRef.current.on) return;
+    void loadSoundEngine();
+    previewUi(role);
+  };
+
+  /** Reset the levels and choices, but never switch the learner's sound off behind their back. */
+  const reset = () =>
+    change({
+      ...DEFAULT_SOUND_PREFS,
+      on: prefsRef.current.on,
+      // A reset that changed the music mid-phrase would be a surprise; it is a level reset first.
+      beds: prefsRef.current.beds,
+    });
 
   return (
     <div ref={wrapRef} data-testid={pill ? 'sound-control-pill' : 'sound-control'} className="relative flex items-center">
@@ -196,59 +234,17 @@ export const SoundControl: React.FC<{ variant?: 'header' | 'pill' }> = ({ varian
         </button>
       )}
       {open && !pill && (
-        <div
+        <SoundSettingsPanel
           id={panelId}
-          role="group"
-          aria-label="Sound settings"
-          data-testid="sound-settings"
-          className="absolute right-0 z-50 mt-2 w-[16rem] rounded-lg border p-3 shadow-xl"
-          style={{
-            top: '100%',
-            borderColor: 'var(--border-strong)',
-            backgroundColor: 'var(--panel)',
-            color: 'var(--text)',
-          }}
-        >
-          <p className="text-[12px] leading-relaxed" data-testid="sound-hint">
-            {soundHint(prefs.on)}
-          </p>
-          {prefs.on && !armed && (
-            <p className="mt-1 text-[11px]" style={{ color: 'var(--dim)' }}>
-              Starts on your next click.
-            </p>
-          )}
-          {(['music', 'room', 'sfx'] as const).map((key) => {
-            const value = Math.round(prefs[key] * 100);
-            const label = key === 'music' ? 'Music' : key === 'room' ? 'Room' : 'Cues';
-            return (
-              <label key={key} className="mt-3 block text-[11px] font-semibold uppercase tracking-wide">
-                <span className="flex items-center justify-between">
-                  {label}
-                  <span className="font-mono text-[12px] tabular-nums" style={{ color: 'var(--muted)' }}>
-                    {value}%
-                  </span>
-                </span>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={value}
-                  disabled={!prefs.on}
-                  onChange={(event) => setLevel(key, Number(event.target.value))}
-                  aria-label={`${label} volume`}
-                  data-testid={`sound-${key}`}
-                  className="mt-1 w-full cursor-pointer"
-                  style={{ accentColor: 'var(--accent)' }}
-                />
-              </label>
-            );
-          })}
-          <p className="mt-2 text-[11px] leading-snug" style={{ color: 'var(--dim)' }}>
-            Nothing autoplays. Room is the rain, the floor and the city; Cues is every click and
-            verdict. Focus quiets both, and a run leans on the bench until the checks finish.
-          </p>
-        </div>
+          prefs={prefs}
+          armed={armed}
+          onToggle={toggle}
+          onLevel={setLevel}
+          onClicks={(on) => change({ clicks: on })}
+          onBeds={(beds) => change({ beds })}
+          onPreview={preview}
+          onReset={reset}
+        />
       )}
     </div>
   );

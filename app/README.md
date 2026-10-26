@@ -479,11 +479,13 @@ It is empty.
 **`npm run check:weight`** gzips the built shell (`dist/assets/**` plus `dist/index.html`) and compares
 it against [`docs/weight-budget.json`](../docs/weight-budget.json): `js_gzip`, `css_gzip`, `fonts` (raw,
 because woff2 is already compressed — the two UI faces and KaTeX's 19 maths faces), `largest_js_gzip`,
-`prose_gzip`, `reader_gzip`, `audio` and `total`. Today that is **1.56 MB across 74 files** — the shape
-CI builds, with the account library; a local-only clone is about 60 kB smaller because that library
-folds away — with the budgets a few percent above. **`audio` is the room's one recorded loop**
-(`rain-loop.m4a`, 127 kB, measured at its own bytes because AAC is already compressed): inside `total`,
-nothing to do with a first paint, since it is fetched only after sound is turned on. A breach fails with the overshoot named, and
+`prose_gzip`, `reader_gzip`, `audio`, `music` and `total`. Today that is **2.39 MB across 79 files** —
+the shape CI builds, with the account library; a local-only clone is about 60 kB smaller because that
+library folds away — with the budgets a few percent above. **`audio` is the room's one recorded loop**
+(`rain-loop.m4a`, 127 kB) and **`music` is the two lo-fi beds** (434 kB each), both measured at their
+own bytes because AAC is already compressed, and kept apart so a track cannot hide in a room-tone
+ceiling. Both are inside `total` and neither is on a first paint: they are fetched only after sound is
+turned on, and the beds only when the learner chose them over the drone. A breach fails with the overshoot named, and
 so does a budget with nothing measured behind it — a metric the build stopped emitting would otherwise
 pass forever. The rules are pure ([`../scripts/weight_budget.mjs`](../scripts/weight_budget.mjs)) and
 `npm run test:weight` pins the boundary at exactly-on-budget and one-byte-over, because that is where a
@@ -1171,11 +1173,15 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/timeline.ts`](src/timeline.ts) | The log and the sittings as days of work: the fold that drops repeat rows, local days, and the caps. |
 | [`src/trailReading.ts`](src/trailReading.ts) | The same days read for advice: a resisting lesson, a quiet review deck, days that were only opens — at most three, each behind its own floor. |
 | [`../scripts/weight_budget.mjs`](../scripts/weight_budget.mjs) | The weight rules: what counts, what a breach is, and why an unmeasured budget fails too. |
+| [`../scripts/build_music.mjs`](../scripts/build_music.mjs) | Cuts the two CC0 lo-fi beds into seamless 60-second loops: a fixed window, a two-second equal-power fold, a common peak, stereo AAC. |
 | [`src/components/TrailCard.tsx`](src/components/TrailCard.tsx) | The roadmap's trail: a day's time and work, a row per event, and rows that open their lesson. |
 | [`src/focusMode.ts`](src/focusMode.ts) | Focus mode's stored choice and the event the header, the pill and the page share. |
 | [`src/audio/prefs.ts`](src/audio/prefs.ts) | Sound's stored choice (`mechalab_sound_v1`), its clamping, the subscribers both controls read, and the labels. Off by default. |
 | [`src/audio/facade.ts`](src/audio/facade.ts) | The two functions the runner and focus mode call — `playCue`, `setSoundScene` — as one window event, so no audio code reaches the entry chunk. |
-| [`src/audio/engine.ts`](src/audio/engine.ts) | The only AudioContext: the mixer graph, synthesised cues, two beds, the limiter, the duck and the focus scene, the seven interface ticks, and the one recorded loop with its synthesised fallback. A lazy chunk, fetched after first paint. |
+| [`src/audio/engine.ts`](src/audio/engine.ts) | The only AudioContext: the mixer graph, synthesised cues, the two recorded beds with the drone as their fallback, the limiter, the duck and the focus scene, the seven interface ticks, and the recorded rain. A lazy chunk, fetched after first paint. |
+| [`src/audio/musicCatalogue.ts`](src/audio/musicCatalogue.ts) | The two beds as facts — title, artist, album, licence, source page — and no audio imports, so the panel and a Node test can read them. |
+| [`src/audio/musicBeds.ts`](src/audio/musicBeds.ts) | The beds' URLs, their fetch and their decode; reached only through a dynamic import inside the engine, and `null` for every way it can fail. |
+| [`src/components/SoundSettingsPanel.tsx`](src/components/SoundSettingsPanel.tsx) | The audio settings panel: master and armed state, Music with its source choice, Room, Cues, the Interface switch and previews, the credit line and Reset. Not a dialog: no focus trap, closes on Escape. |
 | [`src/audio/clickMap.ts`](src/audio/clickMap.ts) | What a control is, from what it already says about itself (`data-sound`, role, `aria-pressed`, a close word), and the pan a pointer's position asks for. |
 | [`src/audio/ambience.ts`](src/audio/ambience.ts) | The room as a table: rain, floor, city and bench, per state — and why the bench is the one layer that rises during a run. |
 | [`src/audio/rainAsset.ts`](src/audio/rainAsset.ts) | The recorded loop's URL, in its own module, so a Node test can import the engine without meeting an `.m4a`. |

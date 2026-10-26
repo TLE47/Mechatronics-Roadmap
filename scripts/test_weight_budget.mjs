@@ -54,6 +54,7 @@ const budget = {
   prose_gzip: 300,
   reader_gzip: 400,
   audio: 500,
+  music: 600,
   total: 2000,
 };
 const fits = {
@@ -65,6 +66,7 @@ const fits = {
   prose_gzip: 250,
   reader_gzip: 350,
   audio: 400,
+  music: 300,
   total: 1800,
 };
 
@@ -205,6 +207,8 @@ const FILES = [
   // The room's loop: already compressed, so its own bytes are the number (a gzip of AAC is a few
   // bytes smaller and would under-report what a visit costs by hiding an incompressible file).
   { name: 'assets/rain-loop-abc.m4a', size: 400, gzip: 400 },
+  // One of the two beds: same treatment, and its own metric, so a track cannot hide in the room's.
+  { name: 'assets/lab-night-def.m4a', size: 300, gzip: 300 },
   { name: 'index.html', size: 500, gzip: 60 },
 ];
 
@@ -214,13 +218,22 @@ check('js, css, fonts and the largest chunk are measured from the files', () => 
   assert.equal(measurement.css_gzip, 90);
   assert.equal(measurement.fonts, 450, 'expected the font counted at its own size, not gzipped twice');
   assert.equal(measurement.largest_js_gzip, 900, 'expected the biggest chunk, not the sum');
-  assert.equal(measurement.audio, 400, 'expected the media file counted at its own size');
-  assert.equal(measurement.total, 2330, 'expected everything measured to be in the total, audio included');
+  assert.equal(measurement.audio, 400, 'expected the room counted at its own size, and only the room');
+  assert.equal(measurement.music, 300, 'expected the bed counted on its own, not folded into the room');
+  assert.equal(measurement.total, 2630, 'expected everything measured to be in the total, media included');
 });
 
 check('a build with no recorded room is unmeasured, not free', () => {
   const silent = measurementFrom([{ name: 'assets/index-abc.js', size: 3000, gzip: 900 }]);
   assert.equal(Number.isNaN(silent.audio), true, 'removing the loop must fail the gate, not shrink it');
+  assert.equal(Number.isNaN(silent.music), true, 'and a build with no beds must not read as zero music');
+});
+
+check('the beds are counted apart from the room, both in total', () => {
+  const musicOnly = measurementFrom([{ name: 'assets/focus-current-xyz.m4a', size: 250, gzip: 250 }]);
+  assert.equal(Number.isNaN(musicOnly.audio), true, 'a bed is not room tone');
+  assert.equal(musicOnly.music, 250);
+  assert.equal(musicOnly.total, 250);
 });
 
 // The split's own metric: the document plus what it names is a first paint, and a chunk nobody opens

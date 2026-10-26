@@ -39,6 +39,7 @@ import type { SoundCue, SoundMessage, SoundScene, UiRole } from './facade.ts';
 import { clampPan } from './facade.ts';
 import { DEFAULT_SOUND_PREFS, type SoundPrefs } from './prefs.ts';
 import { ROOM_TRIM, roomMix, type RoomLayer } from './ambience.ts';
+import { bedFor } from './musicCatalogue.ts';
 
 /** Music and room level while a run is active: about −10 dB, enough to get out of the way. */
 export const DUCK_GAIN = 0.32;
@@ -61,8 +62,16 @@ export const SCENE_SECONDS = 1.2;
 /** The rain's swell after a failed run: one breath in, half a second out. */
 export const GUST_SECONDS = 0.5;
 export const GUST_GAIN = 1.55;
+/**
+ * The recorded beds are peak-normalised to 0.8 by `scripts/build_music.mjs`; this is where they sit
+ * under the learner's Music fader, chosen so a bed change is not a jump in loudness from the drone.
+ * The faders do the rest, and the cues are never touched.
+ */
+export const BED_TRIM = 0.22;
 
 export type RainSource = 'none' | 'file' | 'synth';
+/** Which music is audible: the recorded beds, the drone, or nothing loaded yet. */
+export type MusicSource = 'none' | 'file' | 'synth';
 
 export interface SoundDebug {
   running: boolean;
@@ -76,6 +85,17 @@ export interface SoundDebug {
   room: number;
   /** Where the rain came from: the recorded loop, the fallback, or nothing yet. */
   rain: RainSource;
+  /** Where the music came from: the lo-fi beds, the drone, or nothing loaded yet. */
+  musicSource: MusicSource;
+  /**
+   * The last twenty duck transitions, oldest first. A run can finish in less time than a browser
+   * suite polls, so the *history* is what a test can assert without racing the machine.
+   */
+  duckHistory: boolean[];
+  /** Whether the interface ticks are on at all. */
+  clicks: boolean;
+  /** Which music the learner asked for. */
+  beds: 'lofi' | 'synth';
 }
 
 export interface EngineOptions {
@@ -84,6 +104,8 @@ export interface EngineOptions {
   now?: () => number;
   /** Injected by the tests: `null` exercises the synthesised-rain fallback. */
   loadRain?: () => Promise<AudioBuffer | null>;
+  /** Injected by the tests: `null` exercises the drone fallback for the beds. */
+  loadMusic?: () => Promise<{ home: AudioBuffer | null; focus: AudioBuffer | null }>;
 }
 
 function defaultContext(): AudioContext {
@@ -238,10 +260,17 @@ export class SoundEngine {
   private gustGain: GainNode | null = null;
   private rain: RainSource = 'none';
   private rainLoading: Promise<void> | null = null;
+  private fileBeds: Partial<Record<SoundScene, GainNode>> = {};
+  private musicLoaded = false;
+  private musicFailed = false;
+  private musicLoading: Promise<void> | null = null;
+  private beds: 'lofi' | 'synth' = DEFAULT_SOUND_PREFS.beds;
+  private clicks = DEFAULT_SOUND_PREFS.clicks;
   private noiseBuffer: AudioBuffer | null = null;
   private levels: SoundPrefs = { ...DEFAULT_SOUND_PREFS };
   private scene: SoundScene = 'home';
   private ducked = false;
+  private duckHistory: boolean[] = [];
   private lastCueAt = -Infinity;
   private lastUiAt = -Infinity;
   private voices: number[] = [];
@@ -251,11 +280,20 @@ export class SoundEngine {
   private readonly createContext: () => AudioContext;
   private readonly now: () => number;
   private readonly loadRain?: () => Promise<AudioBuffer | null>;
+  private readonly loadMusic?: () => Promise<{ home: AudioBuffer | null; focus: AudioBuffer | null }>;
 
   constructor(options: EngineOptions = {}) {
     this.createContext = options.createContext ?? defaultContext;
     this.now = options.now ?? (() => (typeof performance !== 'undefined' ? performance.now() : Date.now()));
     this.loadRain = options.loadRain;
+    this.loadMusic = options.loadMusic;
+  }
+
+  /** Which music is audible right now: the beds only once they are decoded and asked for. */
+  get musicSource(): MusicSource {
+    if (this.beds === 'synth') return 'synth';
+    if (this.musicLoaded) return 'file';
+    return this.musicFailed ? 'synth' : 'none';
   }
 
   get running(): boolean {
@@ -269,11 +307,15 @@ export class SoundEngine {
   /** Called from the toggle (a gesture). Idempotent: the graph is built once. */
   async enable(prefs: SoundPrefs): Promise<void> {
     this.levels = normalise(prefs, true);
+    this.beds = this.levels.beds;
+    this.clicks = this.levels.clicks;
     const ctx = this.ensureContext();
     await ctx.resume().catch(() => undefined);
     this.applyLevels(0);
-    // The room arrives when it arrives: a slow fetch must never delay the boot cue or the gesture.
+    // The room and the beds arrive when they arrive: a slow fetch must never delay the boot cue or
+    // the gesture. Until a bed lands, the drone is what plays — music from the first moment.
     void this.ensureRain();
+    void this.ensureMusic();
     if (!this.booted) {
       this.booted = true;
       this.cue('boot');
@@ -291,8 +333,16 @@ export class SoundEngine {
   /** Apply a preference change while enabled (a level, or the master toggle). */
   apply(prefs: SoundPrefs): void {
     const wasOn = this.levels.on;
+    const wasBeds = this.beds;
     this.levels = normalise(prefs, prefs.on === true);
+    this.beds = this.levels.beds;
+    this.clicks = this.levels.clicks;
     if (!this.ctx) return;
+    // Turning the beds on mid-session, or raising Music from zero, starts the fetch then and there;
+    // turning them off is immediate and needs no network at all.
+    if (this.levels.on && this.beds === 'lofi' && (wasBeds !== 'lofi' || !this.musicLoaded)) {
+      void this.ensureMusic();
+    }
     this.applyLevels();
     if (wasOn && !this.levels.on) {
       // A fade is enough; suspending immediately would cut the fade off.
@@ -327,14 +377,16 @@ export class SoundEngine {
    * Separate from `cue` in every way that matters: its own gap, its own peak, and a cap on how many
    * may overlap, so holding down a key on a focused button cannot turn the mix into a rattle.
    */
-  playUi(role: UiRole, pan = 0): void {
+  playUi(role: UiRole, pan = 0, preview = false): void {
     const ctx = this.ctx;
     const spec = CLICK_SPECS[role];
-    if (!ctx || !this.levels.on || !this.sfxBus || !spec) return;
+    if (!ctx || !this.levels.on || (!this.clicks && !preview) || !this.sfxBus || !spec) return;
     const at = this.now();
-    if (at - this.lastUiAt < UI_GAP_MS) return;
-    // The gap is the normal pacing; the cap is the backstop for anything that ignores it (a slider
-    // drag, several listeners on one press), and it is a rate over a second, not a session budget.
+    // The gap is the normal pacing, and a preview is exempt: the press that opened the panel has just
+    // sounded, and a preview swallowed by it would be a button that does nothing.
+    if (!preview && at - this.lastUiAt < UI_GAP_MS) return;
+    // The cap is the backstop for anything that ignores the gap (a slider drag, several listeners on
+    // one press), and it is a rate over a second, not a session budget.
     this.voices = this.voices.filter((shown) => at - shown < VOICE_WINDOW_MS);
     if (this.voices.length >= MAX_VOICES) return;
     this.lastUiAt = at;
@@ -352,6 +404,8 @@ export class SoundEngine {
   setDucked(on: boolean): void {
     if (this.ducked === on) return;
     this.ducked = on;
+    this.duckHistory.push(on);
+    if (this.duckHistory.length > 20) this.duckHistory.shift();
     this.applyLevels();
   }
 
@@ -387,6 +441,10 @@ export class SoundEngine {
       muted: !this.levels.on,
       room: this.levels.room,
       rain: this.rain,
+      duckHistory: [...this.duckHistory],
+      musicSource: this.musicSource,
+      clicks: this.clicks,
+      beds: this.beds,
     };
   }
 
@@ -562,8 +620,15 @@ export class SoundEngine {
     ramp(this.duck.gain, duckFactor, at, seconds);
     ramp(this.musicBus.gain, this.levels.music * sceneFactor * 0.9, at, seconds);
     ramp(this.sfxBus.gain, this.levels.sfx, at, seconds);
-    if (this.labBed) ramp(this.labBed.gain, this.scene === 'focus' ? 0 : 1, at, seconds);
-    if (this.focusBed) ramp(this.focusBed.gain, this.scene === 'focus' ? 1 : 0, at, seconds);
+    // The drone plays until a recorded bed is actually decoded and asked for, then steps aside; the
+    // two are never both audible, so a scene change is one crossfade either way.
+    const bedsOn = this.beds === 'lofi' && this.musicLoaded;
+    if (this.labBed) ramp(this.labBed.gain, this.scene === 'focus' || bedsOn ? 0 : 1, at, seconds);
+    if (this.focusBed) ramp(this.focusBed.gain, this.scene === 'focus' && !bedsOn ? 1 : 0, at, seconds);
+    for (const scene of ['home', 'focus'] as const) {
+      const bed = this.fileBeds[scene];
+      if (bed) ramp(bed.gain, bedsOn && this.scene === scene ? BED_TRIM : 0, at, seconds);
+    }
     if (this.roomBus) ramp(this.roomBus.gain, this.levels.room * sceneFactor, at, seconds);
     this.rampRoom(this.rainGain, mix.rain, 'rain', at, seconds);
     this.rampRoom(this.floorGain, mix.floor, 'floor', at, seconds);
@@ -657,6 +722,68 @@ export class SoundEngine {
     source.start();
   }
 
+  /** Resolves when the beds are decided: the recorded loops, or the drone. */
+  whenMusicReady(): Promise<void> {
+    return this.musicLoading ?? Promise.resolve();
+  }
+
+  /**
+   * Fetch and start the two recorded beds, once.
+   *
+   * Two files arrive together because a scene change must not wait for a download, and the pair is
+   * only requested when the learner has sound on, Music above zero, and the lo-fi beds selected. A
+   * refusal at any step (offline, a 404, a browser without AAC) leaves `musicFailed` and the drone
+   * playing: a missed fetch is a different texture, never silence.
+   */
+  private ensureMusic(): Promise<void> {
+    if (this.musicLoading) return this.musicLoading;
+    if (this.beds !== 'lofi' || !this.levels.on || this.levels.music <= 0) return Promise.resolve();
+    this.musicLoading = (async () => {
+      let beds: { home: AudioBuffer | null; focus: AudioBuffer | null } | null = null;
+      try {
+        beds = this.loadMusic ? await this.loadMusic() : await this.fetchMusic();
+      } catch {
+        beds = null;
+      }
+      const ctx = this.ctx;
+      if (!ctx || !this.musicBus) return;
+      if (!beds || !beds.home || !beds.focus) {
+        this.musicFailed = true;
+        this.applyLevels();
+        return;
+      }
+      for (const scene of ['home', 'focus'] as const) {
+        const buffer = beds[scene];
+        if (!buffer) continue;
+        const gain = ctx.createGain();
+        gain.gain.value = 0;
+        gain.connect(this.musicBus);
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
+        source.connect(gain);
+        source.start();
+        this.fileBeds[scene] = gain;
+      }
+      this.musicLoaded = true;
+      this.musicFailed = false;
+      this.applyLevels();
+    })();
+    return this.musicLoading;
+  }
+
+  /** The beds' URLs live in their own module, so this engine is importable under Node. */
+  private async fetchMusic(): Promise<{ home: AudioBuffer | null; focus: AudioBuffer | null }> {
+    const ctx = this.ctx;
+    if (!ctx) return { home: null, focus: null };
+    const { loadBed } = await import('./musicBeds.ts');
+    const [home, focus] = await Promise.all([
+      loadBed(bedFor('home'), ctx),
+      loadBed(bedFor('focus'), ctx),
+    ]);
+    return { home, focus };
+  }
+
   /** One second of deterministic noise, shared by every layer and click that needs a texture. */
   private noiseFor(ctx: AudioContext): AudioBuffer {
     if (this.noiseBuffer) return this.noiseBuffer;
@@ -731,6 +858,8 @@ function normalise(prefs: Partial<SoundPrefs>, on: boolean): SoundPrefs {
     music: typeof prefs.music === 'number' ? prefs.music : DEFAULT_SOUND_PREFS.music,
     sfx: typeof prefs.sfx === 'number' ? prefs.sfx : DEFAULT_SOUND_PREFS.sfx,
     room: typeof prefs.room === 'number' ? prefs.room : DEFAULT_SOUND_PREFS.room,
+    clicks: typeof prefs.clicks === 'boolean' ? prefs.clicks : DEFAULT_SOUND_PREFS.clicks,
+    beds: prefs.beds === 'synth' || prefs.beds === 'lofi' ? prefs.beds : DEFAULT_SOUND_PREFS.beds,
   };
 }
 
@@ -741,6 +870,12 @@ function normalise(prefs: Partial<SoundPrefs>, on: boolean): SoundPrefs {
 export function handleSoundMessage(engine: SoundEngine, message: SoundMessage): void {
   if (message.kind === 'ui') {
     engine.playUi(message.role, message.pan ?? 0);
+    return;
+  }
+  if (message.kind === 'preview') {
+    // The panel's preview buttons: the same tick a real control would make, at the centre of the
+    // room, and even with interface clicks switched off — asking to hear one is not chatter.
+    engine.playUi(message.role, 0, true);
     return;
   }
   if (message.kind === 'scene') {

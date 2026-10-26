@@ -16,6 +16,47 @@ flowchart LR
 
 ---
 
+## [2026-10-26] — Run 252: real lo-fi, and a panel to set it by
+
+Sound v2 gave the workbench an interface and a room; the music was still two oscillator drones. This
+run makes it music, and gives the learner a settings panel to shape all of it.
+
+**Two CC0 beds, cut rather than composed.** *Snow Drift* and *Fire Place* by holiznacc0 (*Winter
+Lofi*, Free Music Archive, CC0 1.0 Universal) are the plan's named beds: **Lab Night** at the bench,
+**Focus Current** in focus. `scripts/build_music.mjs` cuts a 60-second window at a fixed start, folds
+the two seconds after it back over the head with an equal-power crossfade, peak-normalises both to the
+same level, and encodes stereo AAC at 56 kbps — 434 kB each. The 7 MB sources are not committed
+(`.cache/music/` is ignored); the provenance, the windows and the licence are in
+[`app/src/audio/assets/music/NOTICE.md`](app/src/audio/assets/music/NOTICE.md). The drone is now the
+**fallback** and a choice: a browser without AAC, an offline visit, or a learner who picked **Drone**
+hears the drones, and the debug snapshot says which (`musicSource`).
+
+**The panel.** `components/SoundSettingsPanel.tsx` replaces three sliders in a popover: Sound (master
+and whether a remembered "on" is armed), Music (fader and *which* music), Room, Cues, Interface (a
+switch for the ticks plus three previews), and a credit line with Reset. Two new prefs — `clicks` and
+`beds` — join the store, with old records migrated; Reset restores the levels and switches but never
+switches the learner's sound off or changes the music mid-phrase.
+
+**Three bugs, found by the tests rather than by luck.** A press is dispatched on `pointerdown` and the
+control's handler runs after it, so an async hop to the engine let the *press that switches the
+clicks off* swallow its own sound — the handler is now kept beside the engine and called inside the
+event. A preview was being eaten by the same press under the 35 ms click gap, so previews are exempt
+from the gap (and from the switch: asking to hear a tick is not chatter). And the browser suite's duck
+check raced a fast run; the engine now keeps a bounded `duckHistory`, so the assertion is about what
+happened rather than about catching it.
+
+**Weight.** The beds are a new **`music`** metric at their own bytes — 867.7 kB against 1.00 MB — kept
+apart from `audio` so a track cannot hide in a room-tone ceiling. `total` moved by hand to 2.40 MB
+local and 2.46 MB signed-in; `entry_gzip` and `largest_js_gzip` did not, because nothing musical is on
+a first paint.
+
+**Verified.** `test:audio` **32 checks**; `test:e2e:game` **16** in Chromium (the panel's sections and
+faders, a preview named by its label, the Interface switch, the Music source reporting `file`);
+`test:weight` 27; `check:weight --record` clean (music 867.7/1000 kB, total 2.39/2.46 MB); `tsc`;
+`build`; `build_music --check`; the full workbench matrix, the snapshot surfaces and `check_all`.
+
+---
+
 ## [2026-10-26] — Run 250: the room you can hear
 
 Sound v1 was three cues and two beds; this run makes it a place. The bench now has an interface that

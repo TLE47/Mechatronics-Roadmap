@@ -10,23 +10,29 @@ MechaLab's sound is the plan's section 6. The plan's three rules are the design:
 3. **Nothing is required.** Every cue has a visual already on screen — the pips, the stamp, the award
    card, the failing line — so a muted learner loses no information. No setting here is a gate.
 
-Inside those rules there are two kinds of sound, with different jobs:
+Inside those rules there are three kinds of sound, with different jobs:
 
 * **The interface is furniture.** Seven short ticks (a tab, a Run, a latch, a row, a chip, a detent,
   a close) tell you that something happened without ever judging it. They have their own level, their
-  own pacing, and they are the only thing in the app that pans.
+  own pacing, a switch of their own, and they are the only thing in the app that pans.
 * **The room is a place.** Rain on the window, the electrical floor, the city beyond it, and the
   bench under load. Which of those you hear is a fact about what you are doing — never a random
   event — and a run is the one moment the machinery is the loudest thing in the mix.
+* **The music is a bed, not a score.** Two real lo-fi tracks — *Lab Night* at the bench, *Focus
+  Current* in focus — cut into seamless 60-second loops from CC0 sources. A learner who would rather
+  have a texture than a song picks the **Drone**, and the same drone covers a browser that cannot
+  decode AAC.
 
 ```mermaid
 flowchart LR
     R["Runner: run started / verdict"] --> B["audio/facade.ts: a window event"]
     C["SoundClicks.tsx: a control"] --> B
+    P["SoundSettingsPanel.tsx: a preview"] --> B
     F["Focus mode: FOCUS_EVENT"] --> B
     B --> E["audio/engine.ts (lazy chunk)"]
     A2["audio/ambience.ts: the room table"] --> E
-    E --> M["music bus"]
+    M2["audio/musicCatalogue.ts: the beds"] --> E
+    E --> M["music bus: beds + drone"]
     E --> S["sfx bus"]
     E --> RM["room bus"]
     M --> D["duck"]
@@ -53,7 +59,7 @@ room  = room  × scene factor × duck factor
 
 Focus and the duck are separate nodes, so they compose instead of overwriting each other — the one
 bug this shape exists to prevent. The **room bus** is its own bus under the duck, so the Room fader
-(rain, floor, city) is independent of the Music fader (the two beds). The **effects bus** carries the
+(rain, floor, city) is independent of the Music fader (the beds). The **effects bus** carries the
 cues, the interface ticks and the bench layer, and it **never** ducks: the relay click and the
 verification stinger are the point of the moment, and a run should make the machine louder, not
 quieter.
@@ -74,9 +80,6 @@ exactly the case a passive mixer gets wrong.
 
 A **watch run** — the machine repeating a check on the learner's behalf — is silent: it did not press
 Run, so it gets neither the click nor the duck.
-
-The beds are named in the plan and both exist: **Lab Night** (a low drone) at home, **Focus Current**
-(a quieter, higher shimmer) in focus mode. They crossfade over 1.2 s.
 
 ## The interface's seven ticks
 
@@ -107,7 +110,34 @@ Three budgets keep the ticks from becoming a noisemaker:
 
 Each tick is placed by the pointer's position (`panFromX`), clamped to ±0.35, so the rail leans left
 and the runner leans right. A keyboard activation is centred. `SoundClicks.tsx` is one delegated
-listener — `pointerdown` and Enter/Space — mounted once in `App`, in every branch.
+listener — `pointerdown` and Enter/Space — mounted once in `App`, in every branch. Once the engine is
+loaded the message is handled **inside the event**, not on a promise chain: a press is dispatched on
+`pointerdown` and the control's own handler runs after it, so an async hop would let a press that
+switches the clicks off swallow the sound of its own click.
+
+## The settings panel
+
+The header's sound button turns sound on and off; the `···` beside it opens the panel
+(`components/SoundSettingsPanel.tsx`), in the order a learner asks the questions:
+
+| Section | What it holds |
+| :--- | :--- |
+| Sound | the master, and whether a remembered "on" is armed or playing |
+| Music | the music fader, and the source: **Lo-fi tapes** or **Drone** |
+| Room | the room fader — rain, floor, city |
+| Cues | the effects fader — Run, the pips, the stamp |
+| Interface | a switch for whether the interface ticks at all, and three previews (a tab, Run, close) |
+| Credit | the track, the artist, the licence, a link to the source, and **Reset** |
+
+The switches are switches, not sliders at zero: a learner may want the verdicts and the room while
+finding a tick under every button distracting. **A preview plays even with the clicks switched off** —
+it is exempt from that switch and from the 35 ms gap, because asking to hear one is not the interface
+chattering; the mute still wins. **Reset** restores the levels and the switches but never switches the
+learner's sound off, and never changes the music source mid-phrase.
+
+It is not a dialog: no focus trap, no backdrop, no scroll lock. It draws under the button, closes on
+Escape or a press outside, and every control in it is a plain `<input type="range">` or `<button>`
+with a label, so the keyboard reaches it without special handling.
 
 ## The room's four layers
 
@@ -124,52 +154,68 @@ A run in focus is the run row with the rain and the city pulled back to 60%: foc
 the room and it holds even while the checks run. A failed run pulls one **gust** of rain (1.55×, half
 a second back down) — the room reacting to the machine, not a punishment sound.
 
-## One recorded file, and why
+## The two beds, and why they are real tracks
 
-Everything above is synthesised at the moment it plays, with one exception: the rain. It is a single
-24-second loop, `app/src/audio/assets/rain-loop.m4a` (mono AAC, 40 kbps, 127 kB), because a noise
-stack does not reach the texture of weather.
+The plan names two music beds. They are excerpts of real lo-fi, both **CC0 1.0 Universal** on Free
+Music Archive:
 
-* **It ships in the bundle, so it is budgeted.** `npm run check:weight` measures the emitted media
-  as `audio`, at its own bytes (not a gzip of an already-compressed file), against a 150 kB ceiling;
-  it is inside `total` and outside `entry_gzip`.
-* **It is fetched only after the gesture.** The engine's `ensureRain()` runs from `enable()`, so a
-  learner who never turns sound on downloads no audio at all, and the service worker caches the loop
-  on first success rather than precaching it.
-* **It has a fallback.** If the file cannot be fetched or decoded (a browser without AAC, an offline
-  first visit), the engine synthesises a looping filtered-noise rain instead. The debug snapshot says
-  which one is playing (`rain: 'file' | 'synth'`), and the sound panel never mentions it — the room is
-  the room either way.
-* **It is generated, not sampled.** `scripts/build_ambience.mjs` renders it from a seeded PRNG, so it
-  has no third-party rights attached and can be rebuilt byte-for-byte (see
-  [`app/src/audio/assets/README.md`](../app/src/audio/assets/README.md)).
+| Bed | Scene | Track | Artist | Licence |
+| :--- | :--- | :--- | :--- | :--- |
+| *Lab Night* | home | *Snow Drift* | holiznacc0 | CC0 1.0 |
+| *Focus Current* | focus | *Fire Place* | holiznacc0 | CC0 1.0 |
+
+`scripts/build_music.mjs` cuts a 60-second window at a fixed start, folds the two seconds after it
+back over the head with an equal-power crossfade (so the loop has no seam), peak-normalises both to
+the same level (so a scene change is a change of music, not of loudness), and encodes stereo AAC at
+56 kbps. Provenance and the exact windows: [`../app/src/audio/assets/music/NOTICE.md`](../app/src/audio/assets/music/NOTICE.md).
+
+* **Fetched after the gesture, and only if asked for.** The engine's `ensureMusic()` runs from
+  `enable()`, and only when the beds are the chosen source and Music is above zero: a learner who
+  never turns sound on, or who chose the drone, downloads no music at all.
+* **Both at once, so a scene change never waits.** Two buffers, two looping sources, and per-scene
+  gains — focus crossfades over 1.2 s exactly as the drone did.
+* **The drone is the fallback and the alternative.** A browser without AAC, an offline first visit, a
+  404: `musicFailed` leaves the synthesised bed playing and `musicSource` reports `synth`. The panel's
+  **Drone** button is the same path chosen on purpose.
+* **It is budgeted separately.** The two files are the `music` metric at their own bytes, 867.7 kB
+  against a 1.00 MB ceiling, inside `total` and outside `entry_gzip`.
+
+## The room's recorded loop
+
+The rain is one more file: `app/src/audio/assets/rain-loop.m4a` (24 s, mono AAC, 127 kB), generated
+by `scripts/build_ambience.mjs` from a seeded PRNG, so it has no third-party rights and rebuilds
+byte-for-byte. It is the `audio` metric (127 kB against 150 kB), fetched after the gesture, with a
+synthesised fallback when it cannot be had.
 
 ## Where the code is
 
 | File | Owns |
 | :--- | :--- |
-| `app/src/audio/prefs.ts` | the store (`mechalab_sound_v1`), clamping, subscribers, the labels |
-| `app/src/audio/facade.ts` | `playCue` / `playUi` / `setSoundScene` — three functions on one window event, no audio code |
+| `app/src/audio/prefs.ts` | the store (`mechalab_sound_v1`), clamping, subscribers, the labels; five levels-or-switches, with old records migrated |
+| `app/src/audio/facade.ts` | `playCue` / `playUi` / `previewUi` / `setSoundScene` — one window event, no audio code |
 | `app/src/audio/clickMap.ts` | what a control *is*, from what it already says; pan from a pointer |
 | `app/src/audio/ambience.ts` | the room table: four layers, per state |
-| `app/src/audio/engine.ts` | the AudioContext, graph, synthesis, limiter, ducking, scenes, the rain fetch (a lazy chunk) |
-| `app/src/audio/rainAsset.ts` | the loop's URL, and nothing else, so a Node test can import the engine |
+| `app/src/audio/musicCatalogue.ts` | the two beds as facts — title, artist, licence, page — with no audio imports, so the panel and the tests can read them |
+| `app/src/audio/musicBeds.ts` | the beds' URLs and decode, reached only through a dynamic import inside the engine |
+| `app/src/audio/engine.ts` | the AudioContext, graph, synthesis, limiter, ducking, scenes, the beds, the rain fetch (a lazy chunk) |
+| `app/src/audio/rainAsset.ts` | the rain loop's URL, and nothing else |
 | `app/src/components/SoundClicks.tsx` | one delegated listener; renders nothing |
-| `app/src/components/SoundControl.tsx` | the header button and panel, the focus pill, arming on a gesture |
-| `scripts/build_ambience.mjs` | renders the loop, and `--check` proves the committed file is current |
-| `scripts/test_audio.mjs` | the store, the graph, the automation, the room, the ticks — with a recording double |
+| `app/src/components/SoundControl.tsx` | the header button, the focus pill, arming on a gesture, and the engine's synchronous handler |
+| `app/src/components/SoundSettingsPanel.tsx` | the panel: sections, faders, the two switches, previews, credit, reset |
+| `scripts/build_ambience.mjs` / `scripts/build_music.mjs` | the three recorded files, and the `--check` that proves each is what its script makes |
+| `scripts/test_audio.mjs` | the store, the graph, the automation, the room, the ticks, the beds — with a recording double |
 
-The facade is why the runner can say "a run started" without importing the synthesiser: a learner
-who never enables sound downloads the button, the event name and the click classifier, not the
-engine.
+The facade is why the runner can say "a run started" without importing the synthesiser: a learner who
+never enables sound downloads the button, the event name and the click classifier, not the engine or
+a byte of music.
 
 ## Accessibility and the archive
 
-The toggle is a real `aria-pressed` button; the panel's sliders have labels and a visible percentage,
+The toggle is a real `aria-pressed` button; the panel's faders have labels and a visible percentage,
 and every level is rounded to what the slider can show. Cues are short (≤ 1.2 s), quiet, and never a
 buzzer — the plan's "failures are neutral". The interface's ticks are optional by construction: sound
-off is silence, and `data-sound="none"` can silence any subtree. Nothing in the app depends on hearing
-anything.
+off is silence, the Interface switch silences them without silencing the verdicts, and
+`data-sound="none"` can silence any subtree. Nothing in the app depends on hearing anything.
 
 The preference is a preference: like the palette, the layout and the fold keys, it is **not** carried
 in a backup, and `backupBundle.ts` says so in the archive's README.
@@ -177,19 +223,21 @@ in a backup, and `backupBundle.ts` says so in the archive's README.
 ## The gates
 
 ```bash
-npm run test:audio        # 27 checks: defaults, clamping, graph, limiter, ducking, focus,
-                          # the room table, the click vocabulary, pan, the cap, the rain fallback
-npm run test:e2e:game     # 13 checks in Chromium: off by default, one press on, the room arriving,
-                          # a click heard, the bed ducked on Run, the pill, a gesture after reload,
-                          # and one press back to a silent interface
-npm run check:weight      # the `audio` metric: the loop at its own bytes, under 150 kB
-node scripts/build_ambience.mjs --check   # locally, with ffmpeg or afconvert present: the committed
-                          # loop is still what the script makes byte for byte
+npm run test:audio        # 32 checks: defaults, clamping and migration, graph, limiter, ducking,
+                          # focus, the room table, the click vocabulary, pan, the cap, the preview,
+                          # the click switch, the beds and their fallback, both rain paths
+npm run test:e2e:game     # 16 checks in Chromium: off by default, one press on, the room arriving,
+                          # a click heard, the panel's sections and faders, a preview, the click
+                          # switch, the Music source, the duck history, the pill, a gesture after
+                          # reload, and one press back to a silent interface
+npm run check:weight      # `audio` (127 kB / 150 kB) and `music` (867.7 kB / 1.00 MB)
+node scripts/build_ambience.mjs --check   # locally, with ffmpeg or afconvert: the rain is current
+node scripts/build_music.mjs --check      # locally, with the CC0 sources in .cache/music: the beds are
 ```
 
-The `--check` is a local proof rather than a CI gate on purpose: it compares encoded bytes, and two
-`ffmpeg` builds can encode the same samples differently. What CI grades is the weight (`audio`, and
-`total`), and what it serves is the committed file.
+The `--check` commands are local proofs rather than CI gates on purpose: they compare encoded bytes,
+and two `ffmpeg` builds can encode the same samples differently. What CI grades is the weight, and
+what it serves is the committed files.
 
 `test:audio` runs in the workbench matrix (`npm run test:workbench`), so a change to the engine runs
 on the same dev server and the same built bundle as the rest of the app.

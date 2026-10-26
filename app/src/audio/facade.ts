@@ -41,7 +41,9 @@ export const UI_PAN_LIMIT = 0.35;
 export type SoundMessage =
   | { kind: 'cue'; cue: SoundCue }
   | { kind: 'scene'; scene: SoundScene }
-  | { kind: 'ui'; role: UiRole; pan: number };
+  | { kind: 'ui'; role: UiRole; pan: number }
+  /** A deliberate request to hear one tick — the settings panel's preview, not a press. */
+  | { kind: 'preview'; role: UiRole };
 
 export const SOUND_EVENT = 'mechalab:sound';
 
@@ -80,6 +82,17 @@ export function setSoundScene(scene: SoundScene): void {
   dispatch({ kind: 'scene', scene });
 }
 
+/**
+ * Play one tick as a demonstration, even when the learner has interface clicks switched off.
+ *
+ * The panel's preview is the one path that ignores that switch, because asking to hear a click is
+ * not the interface chattering: it is someone deciding whether they want it. Muting still wins — a
+ * paused engine plays nothing.
+ */
+export function previewUi(role: UiRole): void {
+  dispatch({ kind: 'preview', role });
+}
+
 /** Read a dispatched event back into the message, or null when it is not one of ours. */
 export function readSoundMessage(event: Event): SoundMessage | null {
   const detail = (event as CustomEvent<Partial<SoundMessage>>).detail;
@@ -90,6 +103,9 @@ export function readSoundMessage(event: Event): SoundMessage | null {
   }
   if (detail.kind === 'ui' && isUiRole(detail.role)) {
     return { kind: 'ui', role: detail.role, pan: clampPan(Number(detail.pan ?? 0)) };
+  }
+  if (detail.kind === 'preview' && isUiRole(detail.role)) {
+    return { kind: 'preview', role: detail.role };
   }
   return null;
 }

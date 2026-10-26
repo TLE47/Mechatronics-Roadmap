@@ -17,6 +17,7 @@
 import assert from 'node:assert/strict';
 import {
   CLICK_PEAK,
+  BED_TRIM,
   CLICK_SPECS,
   CUE_GAP_MS,
   CUE_TONES,
@@ -30,6 +31,7 @@ import {
   handleSoundMessage,
 } from '../app/src/audio/engine.ts';
 import { ROOM_LAYERS, ROOM_TRIM, RUN_IN_FOCUS, loudestLayer, roomMix } from '../app/src/audio/ambience.ts';
+import { MUSIC_BEDS, bedCredit, bedFor } from '../app/src/audio/musicCatalogue.ts';
 import { panFromX, roleForControl } from '../app/src/audio/clickMap.ts';
 import {
   DEFAULT_SOUND_PREFS,
@@ -47,6 +49,7 @@ import {
   UI_ROLES,
   playCue,
   playUi,
+  previewUi,
   readSoundMessage,
   setSoundScene,
 } from '../app/src/audio/facade.ts';
@@ -181,6 +184,8 @@ function engineFor(startAt = 0, options = {}) {
     // The recorded loop is injected, never fetched: these checks are about the graph, and a Node
     // test must never reach the network. `null` is the file that could not be had.
     loadRain: options.loadRain ?? (async () => null),
+    // The beds are injected too: `null` is the fallback the drone already covers.
+    loadMusic: options.loadMusic ?? (async () => ({ home: null, focus: null })),
   });
   return {
     context,
@@ -261,10 +266,23 @@ await check('levels are clamped to 0..1 and rounded to what the slider can show'
   assert.equal(clampLevel('0.237', 0.5), 0.24);
   assert.equal(clampLevel(Number.NaN, 0.5), 0.5);
   const parsed = parseSoundPrefs('{"on":true,"music":9,"sfx":-1}');
-  assert.deepEqual(parsed, { on: true, music: 1, room: DEFAULT_SOUND_PREFS.room, sfx: 0 });
+  assert.deepEqual(parsed, {
+    on: true,
+    music: 1,
+    room: DEFAULT_SOUND_PREFS.room,
+    sfx: 0,
+    clicks: true,
+    beds: 'lofi',
+  });
   // A record written before the Room fader existed keeps its choice and gains the default.
   const old = parseSoundPrefs('{"on":true,"music":0.3,"sfx":0.5}');
   assert.equal(old.room, DEFAULT_SOUND_PREFS.room, 'an old record must not lose sound over a new fader');
+  assert.equal(old.clicks, true, 'an old record keeps the interface clicks it always had');
+  assert.equal(old.beds, 'lofi', 'and gets today\'s music');
+  // A hostile choice of bed falls back rather than reaching the engine as an unknown string.
+  assert.equal(parseSoundPrefs('{"beds":"kazoo"}').beds, 'lofi');
+  assert.equal(parseSoundPrefs('{"clicks":"no"}').clicks, true, 'only the literal false switches clicks off');
+  assert.equal(parseSoundPrefs('{"clicks":false}').clicks, false);
 });
 
 await check('the choice round-trips and every control hears it', () => {
@@ -278,13 +296,29 @@ await check('the choice round-trips and every control hears it', () => {
     music: 0.4,
     room: DEFAULT_SOUND_PREFS.room,
     sfx: DEFAULT_SOUND_PREFS.sfx,
+    clicks: true,
+    beds: 'lofi',
   });
   assert.deepEqual(readSoundPrefs(), written, 'the store must hold what the control returned');
   assert.equal(seen.length, 1);
   assert.notEqual(seen[0], written, 'a listener must receive a copy, not the live record');
   const after = writeSoundPrefs({ sfx: 0.1 });
   assert.equal(seen.length, 1, 'an unsubscribed listener must not be called again');
-  assert.deepEqual(after, { on: true, music: 0.4, room: DEFAULT_SOUND_PREFS.room, sfx: 0.1 });
+  assert.deepEqual(after, {
+    on: true,
+    music: 0.4,
+    room: DEFAULT_SOUND_PREFS.room,
+    sfx: 0.1,
+    clicks: true,
+    beds: 'lofi',
+  });
+  // The two switches are part of the choice, and are never clamped or coerced by a level patch.
+  const switched = writeSoundPrefs({ clicks: false, beds: 'synth', music: 0.2 });
+  assert.equal(switched.clicks, false);
+  assert.equal(switched.beds, 'synth');
+  assert.equal(switched.music, 0.2);
+  // Back to the record the next assertion is about, so the switches are the only thing that moved.
+  writeSoundPrefs({ clicks: true, beds: 'lofi', music: 0.4 });
   assert.deepEqual(cachedSoundPrefs(), after);
 });
 
@@ -668,6 +702,129 @@ await check('the bus carries a click with its position, and clamps what it is gi
     assert.deepEqual(readSoundMessage(message), { kind: 'ui', role: 'slider', pan: -UI_PAN_LIMIT });
     const unknown = new CustomEvent(SOUND_EVENT, { detail: { kind: 'ui', role: 'kazoo', pan: 0 } });
     assert.equal(readSoundMessage(unknown), null, 'a role the engine does not know must not reach it');
+  } finally {
+    globalThis.window = previousWindow;
+  }
+});
+
+// ---- the music ------------------------------------------------------------------------------
+
+await check('the catalogue names two tracks, their scenes and their licence', () => {
+  assert.equal(MUSIC_BEDS.length, 2);
+  assert.deepEqual(
+    MUSIC_BEDS.map((bed) => [bed.id, bed.scene]),
+    [
+      ['lab-night', 'home'],
+      ['focus-current', 'focus'],
+    ]
+  );
+  for (const bed of MUSIC_BEDS) {
+    assert.match(bed.licence, /CC0 1\.0|public domain/i, `${bed.id} must be usable without permission`);
+    assert.match(bed.page, /^https:\/\//, `${bed.id} must point at the page that states the licence`);
+    assert.ok(bed.title && bed.artist, `${bed.id} must be creditable`);
+  }
+  assert.equal(bedFor('home').id, 'lab-night');
+  assert.equal(bedFor('focus').id, 'focus-current');
+  const credit = bedCredit(bedFor('home'));
+  assert.match(credit, /Snow Drift/);
+  assert.match(credit, /holiznacc0/);
+  assert.match(credit, /CC0/);
+});
+
+const BED_BUFFER = {
+  numberOfChannels: 2,
+  length: 48000,
+  sampleRate: 48000,
+  getChannelData: () => new Float32Array(48000),
+};
+
+await check('the lo-fi beds replace the drone once they decode', async () => {
+  const { context, engine } = engineFor(0, {
+    loadMusic: async () => ({ home: BED_BUFFER, focus: BED_BUFFER }),
+  });
+  await engine.enable({ on: true, music: 0.6, room: 0.5, sfx: 0.8, clicks: true, beds: 'lofi' });
+  await engine.whenMusicReady();
+  assert.equal(engine.debug().musicSource, 'file');
+  const { music, gains } = graph(context);
+  // The two drone beds are built first, the two recorded beds after them; both hang off the music bus.
+  const underMusic = gains.filter((node) => node.targets.includes(music));
+  assert.equal(underMusic.length, 4, 'two drone beds and two recorded beds');
+  const [droneHome, droneFocus, fileHome, fileFocus] = underMusic;
+  assert.equal(droneHome.gain.value, 0, 'the drone is silent once a bed is playing');
+  assert.equal(droneFocus.gain.value, 0);
+  assert.equal(fileHome.gain.value, BED_TRIM, 'and the home bed is at its trim');
+  assert.equal(fileFocus.gain.value, 0, 'only one bed is audible');
+  engine.setScene('focus');
+  assert.equal(fileHome.gain.value, 0);
+  assert.equal(fileFocus.gain.value, BED_TRIM);
+  // Both beds loop: a 60-second cut that stopped would be a minute of silence.
+  const looping = context.nodes.filter((node) => node.kind === 'buffer-source' && node.buffer === BED_BUFFER);
+  assert.equal(looping.length, 2);
+  assert.ok(looping.every((node) => node.loop === true));
+});
+
+await check('a bed that cannot be had leaves the drone playing', async () => {
+  const { context, engine } = engineFor();
+  await engine.enable({ on: true, music: 0.6, room: 0.5, sfx: 0.8 });
+  await engine.whenMusicReady();
+  assert.equal(engine.debug().musicSource, 'synth');
+  const { music, gains } = graph(context);
+  const [droneHome] = gains.filter((node) => node.targets.includes(music));
+  assert.equal(droneHome.gain.value, 1, 'the drone is what plays when the files cannot be had');
+  engine.setScene('focus');
+  assert.equal(droneHome.gain.value, 0);
+});
+
+await check('choosing the drone never fetches a bed', async () => {
+  let fetches = 0;
+  const { engine } = engineFor(0, {
+    loadMusic: async () => {
+      fetches += 1;
+      return { home: BED_BUFFER, focus: BED_BUFFER };
+    },
+  });
+  await engine.enable({ on: true, music: 0.6, room: 0.5, sfx: 0.8, clicks: true, beds: 'synth' });
+  await engine.whenMusicReady();
+  assert.equal(fetches, 0, 'a learner who chose the drone downloads no music');
+  assert.equal(engine.debug().musicSource, 'synth');
+  assert.equal(engine.debug().beds, 'synth');
+  // Switching back is when the fetch happens — not a page load earlier.
+  engine.apply({ on: true, music: 0.6, room: 0.5, sfx: 0.8, clicks: true, beds: 'lofi' });
+  await engine.whenMusicReady();
+  assert.equal(fetches, 1, 'choosing the beds fetches them once');
+  assert.equal(engine.debug().musicSource, 'file');
+});
+
+await check('the click switch silences the interface, and a preview still plays', async () => {
+  const { context, engine, advance } = engineFor(1000);
+  await engine.enable({ on: true, music: 0.6, room: 0.5, sfx: 0.8, clicks: false, beds: 'lofi' });
+  assert.equal(engine.debug().clicks, false);
+  const shown = tonesAfter(context, () => engine.playUi('nav', 0));
+  assert.equal(shown, 0, 'with clicks off, nothing is scheduled for a press');
+  const previewed = tonesAfter(context, () => engine.playUi('nav', 0, true));
+  assert.equal(previewed, CLICK_SPECS.nav.tones.length, 'but asking to hear one is not a press');
+  // A preview must not be swallowed by the press that opened the panel: it is exempt from the gap.
+  engine.apply({ on: true, music: 0.6, room: 0.5, sfx: 0.8, clicks: true, beds: 'lofi' });
+  advance(UI_GAP_MS + 1);
+  assert.ok(tonesAfter(context, () => engine.playUi('primary', 0)) > 0, 'the press itself sounds');
+  assert.ok(
+    tonesAfter(context, () => engine.playUi('nav', 0, true)) > 0,
+    'and the preview right after it still plays'
+  );
+  // The verdict is not the interface: a run still makes its sound with the clicks switched off.
+  const cue = tonesAfter(context, () => engine.cue('run-fail'));
+  assert.equal(cue, CUE_TONES['run-fail'].length);
+  // And the bus carries the preview the same way it carries a press.
+  const seen = [];
+  const target = new EventTarget();
+  const previousWindow = globalThis.window;
+  globalThis.window = target;
+  try {
+    target.addEventListener(SOUND_EVENT, (event) => seen.push(event.detail));
+    previewUi('primary');
+    assert.deepEqual(seen, [{ kind: 'preview', role: 'primary' }]);
+    const message = new CustomEvent(SOUND_EVENT, { detail: { kind: 'preview', role: 'primary' } });
+    assert.deepEqual(readSoundMessage(message), { kind: 'preview', role: 'primary' });
   } finally {
     globalThis.window = previousWindow;
   }

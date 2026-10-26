@@ -223,17 +223,84 @@ async function main() {
       // A click is heard, and it is the delegated listener that hears it: the classifier decides the
       // role, so the settings button (an `aria-expanded` latch) must arrive as a toggle.
       await page.getByTestId('btn-sound-settings').click();
-      await page.getByTestId('sound-room').fill('40');
-      await page.waitForFunction(() => window.__mechalabAudio?.().room === 0.4, undefined, {
-        timeout: 5000,
-      });
+      await page.getByTestId('sound-settings').waitFor({ timeout: 5000 });
       const uiCues = await page.evaluate(() => window.__mechalabAudio?.().uiCues);
       assert.ok(
         uiCues.includes('toggle'),
         `a latch must sound like a latch, got ${JSON.stringify(uiCues)}`
       );
+      console.log('  ok a control click is heard');
+
+      // ---- 3b. The audio settings panel: sections, levels, the two switches, previews, credit ----
+      for (const section of ['sound-section-master', 'sound-clicks', 'sound-credits']) {
+        assert.equal(
+          await page.getByTestId(section).count(),
+          1,
+          `the panel must carry ${section}`
+        );
+      }
+      const credits = (await page.getByTestId('sound-credits').textContent()) ?? '';
+      assert.match(credits, /Snow Drift/, 'the panel must credit the track by name');
+      assert.match(credits, /CC0/, 'and name the licence it is used under');
+      console.log('  ok the panel has its sections, its switches and the music credit');
+
+      await page.getByTestId('sound-music').fill('35');
+      await page.getByTestId('sound-room').fill('40');
+      await page.waitForFunction(() => window.__mechalabAudio?.().room === 0.4, undefined, {
+        timeout: 5000,
+      });
+      const storedLevels = await page.evaluate((key) => localStorage.getItem(key), SOUND_STORAGE_KEY);
+      assert.match(storedLevels ?? '', /"room":0.4/, 'the Room fader must be remembered');
+      assert.match(storedLevels ?? '', /"music":0.35/, 'and so must Music');
+      console.log('  ok the panel\'s faders reach the engine and the store');
+
+      // Previews are what makes the clicks decision audible rather than described.
+      const beforePreview = (await page.evaluate(() => window.__mechalabAudio?.().uiCues)).length;
+      await page.getByTestId('btn-sound-preview-nav').click();
+      await page.waitForFunction(
+        (before) => (window.__mechalabAudio?.().uiCues.length ?? 0) > before,
+        beforePreview,
+        { timeout: 5000 }
+      );
+      const previewed = await page.evaluate(() => window.__mechalabAudio?.().uiCues.at(-1));
+      assert.equal(previewed, 'nav', 'the preview must be the tick its label names');
+      console.log('  ok a preview plays the tick it names');
+
+      // Switching the interface clicks off must silence the interface — including the press that
+      // switches them back on, which arrives while they are still off.
+      const heard = () => page.evaluate(() => window.__mechalabAudio?.().uiCues.length ?? 0);
+      // The last preview was a moment ago; the press that follows it is subject to the 35 ms gap, so
+      // the measurement waits for the interface to be allowed to speak again.
+      await page.waitForTimeout(80);
+      const beforeSwitch = await heard();
+      await page.getByTestId('sound-clicks').click(); // heard, and now off
+      await page.waitForTimeout(80);
+      const afterOff = await heard();
+      assert.equal(afterOff, beforeSwitch + 1, 'the press that switches clicks off is still heard');
+      await page.getByTestId('sound-clicks').click(); // silent, and now on again
+      await page.waitForTimeout(80);
+      assert.equal(await heard(), afterOff, 'and the press that brings them back is not');
+      assert.equal(
+        await page.getByTestId('sound-clicks').getAttribute('aria-pressed'),
+        'true',
+        'the second press still did its job'
+      );
+      console.log('  ok the click switch silences the interface, and still works while silent');
+
+      // The music source is a choice: the drone never fetches a bed, and choosing the beds loads them.
+      await page.getByTestId('sound-bed-synth').click();
+      await page.waitForFunction(() => window.__mechalabAudio?.().musicSource === 'synth', undefined, {
+        timeout: 10000,
+      });
+      await page.getByTestId('sound-bed-lofi').click();
+      await page.waitForFunction(
+        () => ['file', 'synth'].includes(window.__mechalabAudio?.().musicSource ?? 'none'),
+        undefined,
+        { timeout: 20000 }
+      );
+      const bed = await page.evaluate(() => window.__mechalabAudio?.().musicSource);
+      console.log(`  ok the Music source is a choice (beds report ${bed})`);
       await page.keyboard.press('Escape');
-      console.log('  ok a control click is heard, and the Room fader reaches the engine');
 
       // Focus is a scene on the same bus: the bed crossfades quieter and the header's control goes
       // with the chrome, so the pill carries the one press from muted.
@@ -254,22 +321,23 @@ async function main() {
 
       await clickToolbar(page, 'btn-load-solution');
       await page.getByTestId('btn-run-verify').click();
-      // A run ducks the bed while it executes (the plan's "ducking while Run is active"). The poll is
-      // generous because a fast lesson can finish before a slow reader asks; the assertion is at the
-      // end state too, so a missed window fails rather than passes silently.
-      await page.waitForFunction(() => window.__mechalabAudio?.().ducked === true, undefined, {
-        timeout: 30000,
-      });
       await page.getByTestId('status-assert-passed').waitFor({ timeout: 90000 });
       const audio = await page.evaluate(() => window.__mechalabAudio?.());
       assert.ok(audio?.cues?.includes('verify'), `verify must make a sound, got ${audio?.cues}`);
       assert.equal(audio?.ducked, false, 'a finished run must lift the duck');
+      // The duck itself is proven by the transition history rather than by catching it in the act: a
+      // fast lesson can finish between two polls of a browser suite, and a race is not a check.
+      const history = audio?.duckHistory ?? [];
+      assert.ok(
+        history.includes(true) && history.at(-1) === false,
+        `a run must duck the bed and its verdict lift it, got ${JSON.stringify(history)}`
+      );
 
       const toast = page.getByTestId('award-toast');
       await toast.waitFor({ timeout: 15000 });
       const toastText = (await toast.textContent()) ?? '';
       assert.match(toastText, /Cold Boot/, `expected the first-checkpoint award, got: ${toastText}`);
-      console.log('  ok a passing run earns the first Scrap and says so');
+      console.log('  ok a run ducked the bed, its verdict lifted it, and the pass earned Scrap');
 
       const ledger = await page.evaluate((key) => localStorage.getItem(key), AWARDS_STORAGE_KEY);
       assert.ok(ledger, 'the award must be written to the ledger');
@@ -321,7 +389,7 @@ async function main() {
     await browser.close();
     if (ownServer) await ownServer.viteServer.close();
   }
-  console.log('[PASS] game: 13 browser checks');
+  console.log('[PASS] game: 16 browser checks');
 }
 
 main().catch((error) => {
