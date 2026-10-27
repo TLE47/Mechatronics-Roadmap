@@ -7,7 +7,7 @@
  * the editor and Run button stay clickable underneath it, whether the layout moves so the target is on
  * screen, and whether a phone gets a sheet instead of a card over the keyboard.
  *
- * Ten cases, each in a context of its own so `/` is somebody's first visit:
+ * Thirteen cases, each in a context of its own so `/` is somebody's first visit:
  *
  *   1. a first visit opens the tour, and the record says so;
  *   2. Next walks to the brief, and the ring covers that element with `pointer-events: none`;
@@ -20,7 +20,8 @@
  *   9. a deep link to a later lesson gets the chip, and the chip starts the tour;
  *  10. leaving mid-tour offers "Resume tour (step N of 6)", and Resume continues there;
  *  11. a phone gets the bottom sheet, 44 px buttons, no ring, and one region at a time;
- *  12. the palette replays it after it has been finished.
+ *  12. the palette replays it after it has been finished;
+ *  13. every step's card, and every button on it, fits a 1024×600 window.
  *
  * Usage:  node scripts/e2e_tour.mjs
  *         E2E_BASE_URL=<dev server> when a suite runner already has one (scripts/test_workbench.mjs).
@@ -289,6 +290,96 @@ async function main() {
       await page.locator('[role="option"]', { hasText: 'Replay the first-lesson tour' }).first().click();
       assert.ok(await waitForStep(page, 'welcome'), 'the palette command did not replay the tour');
       assert.ok(await waitForRecord(page, 'active'), 'the replay did not mark the tour active');
+    });
+    await ctx.context.close();
+
+    /* 13 — the card has to fit a short window, at every step
+     *
+     * The card is the only way to finish the tour, and its placement is computed from the anchor's
+     * rect: an anchor far down the page once produced a card `top` of 2760 px whose buttons were off
+     * screen, and no assertion here was looking. 1024×600 is the shape of a laptop with a browser bar
+     * and devtools open — short enough that "above the anchor" is the branch that gets taken.
+     *
+     * A context of its own, cold: a replay carries the earlier run's `runFinished` fact, so the run
+     * step would be skipped and the one card that sits beside the Run button would never be measured.
+     */
+    ctx = await fresh({ viewport: { width: 1024, height: 600 } });
+    page = ctx.page;
+    await check('every step fits a short window, with its buttons on screen', async () => {
+      /** Everything the card draws, against the window it was placed in. */
+      const fits = async (name) =>
+        page.evaluate(
+          ({ cardSel, stepName }) => {
+            const card = document.querySelector(cardSel);
+            if (!card) return [`${stepName}: no card`];
+            const view = { width: window.innerWidth, height: window.innerHeight };
+            const box = card.getBoundingClientRect();
+            const out = [];
+            if (box.top < -1) out.push(`${stepName}: card top ${box.top.toFixed(1)}`);
+            if (box.left < -1) out.push(`${stepName}: card left ${box.left.toFixed(1)}`);
+            if (box.bottom > view.height + 1) {
+              out.push(`${stepName}: card bottom ${box.bottom.toFixed(1)} > ${view.height}`);
+            }
+            if (box.right > view.width + 1) {
+              out.push(`${stepName}: card right ${box.right.toFixed(1)} > ${view.width}`);
+            }
+            for (const button of card.querySelectorAll('button')) {
+              const rect = button.getBoundingClientRect();
+              if (!rect.width && !rect.height) continue;
+              const label = button.getAttribute('data-testid') ?? button.textContent?.trim();
+              if (rect.bottom > view.height + 1) {
+                out.push(`${stepName}: ${label} bottom ${rect.bottom.toFixed(1)} is off screen`);
+              }
+              if (rect.right > view.width + 1) {
+                out.push(`${stepName}: ${label} right ${rect.right.toFixed(1)} is off screen`);
+              }
+            }
+            return out;
+          },
+          { cardSel: CARD, stepName: name }
+        );
+
+      const expectFits = async (name) => {
+        // The card re-measures when its anchor moves, so the box is read after that beat rather than on
+        // the frame the step changed.
+        await page.waitForTimeout(350);
+        assert.equal(await step(page), name, `the tour is not on ${name}`);
+        assert.deepEqual(await fits(name), [], `${name}: the card does not fit 1024×600`);
+      };
+
+      await go(page, baseUrl, '?lesson=P.1');
+      await expectFits('welcome');
+      await page.locator('[data-testid="btn-tour-next"]').click();
+      await expectFits('lesson');
+      await page.locator('[data-testid="btn-tour-next"]').click();
+      await expectFits('editor');
+
+      await page.locator('.cm-content').click();
+      await page.keyboard.type('# short window');
+      assert.ok(await waitForStep(page, 'run', 30000), 'the edit did not reach the run step');
+      await expectFits('run');
+
+      await page.locator('[data-testid="btn-run-verify"]').click();
+      const asked = await settled(
+        page,
+        () =>
+          Boolean(
+            document.querySelector('[data-testid="predict-gate"]') ||
+              document.querySelector('[data-testid="first-run-tour"][data-tour-step="results"]')
+          ),
+        120000
+      );
+      assert.ok(asked, 'neither the predict gate nor a finished run arrived');
+      if (await page.locator('[data-testid="predict-gate"]').count()) {
+        await skipPredictIfAsked(page);
+      }
+      assert.ok(await waitForStep(page, 'results', 120000), 'the run never produced a verdict');
+      await expectFits('results');
+
+      await page.locator('[data-testid="btn-tour-next"]').click();
+      await expectFits('hints');
+      await page.locator('[data-testid="btn-tour-next"]').click();
+      assert.ok(await waitForStep(page, null), 'Finish did not take the card down');
     });
     await ctx.context.close();
 
