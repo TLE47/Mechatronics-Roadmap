@@ -231,6 +231,48 @@ async function main() {
       assert.match(chrome.stat, /intro-edge-sweep/, 'the stat cards must carry their sweep');
       assert.match(chrome.closing, /intro-aurora/, 'the closing panel must move');
 
+      // Geometry, not vibes: a connector must be long enough to read as a direction, and a graph's
+      // edge label must sit in the gap between two boxes instead of over either of them. Both were
+      // complaints about the drawing itself, so both are measured off the rendered SVG.
+      const geometry = await page.evaluate(() => {
+        const figure = (id) =>
+          document.querySelector(`[data-testid="intro-figure-${id}"] .figure-art > svg`);
+        const chain = figure('signal-chain');
+        const arrows = [...chain.querySelectorAll('line[marker-end]')].map((line) =>
+          Math.abs(Number(line.getAttribute('x2')) - Number(line.getAttribute('x1')))
+        );
+        const graph = figure('ros-graph');
+        const boxes = [...graph.querySelectorAll('rect[rx="7"]')].map((rect) => ({
+          x: Number(rect.getAttribute('x')),
+          w: Number(rect.getAttribute('width')),
+        }));
+        const labels = [...graph.querySelectorAll('text')]
+          .filter((text) => (text.textContent ?? '').startsWith('/'))
+          .map((text) => {
+            const box = text.getBBox();
+            const left = boxes.filter((candidate) => candidate.x + candidate.w <= box.x + 1).at(-1);
+            const right = boxes.find((candidate) => candidate.x >= box.x + box.width - 1);
+            return {
+              text: text.textContent,
+              width: Math.round(box.width),
+              gap: left && right ? Math.round(right.x - (left.x + left.w)) : 0,
+            };
+          });
+        return { shortestArrow: Math.round(Math.min(...arrows)), labels };
+      });
+      assert.ok(
+        geometry.shortestArrow >= 26,
+        `a connector is ${geometry.shortestArrow} units long: too short to read as a direction`
+      );
+      assert.equal(geometry.labels.length, 3, 'the ROS graph must label all three of its edges');
+      for (const label of geometry.labels) {
+        assert.ok(label.gap > 0, `${label.text} does not sit between two boxes (gap ${label.gap})`);
+        assert.ok(
+          label.width < label.gap,
+          `${label.text} is ${label.width} units wide in a ${label.gap}-unit gap, so a box hides it`
+        );
+      }
+
       // One switch, two homes: the header's Motion button and this page's Play/Pause write the same
       // preference, so turning it off at the top of the page stills the figures below it — and the
       // pause is the same pause the lesson figures obey.

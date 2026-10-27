@@ -144,6 +144,11 @@ Three rules follow, and each is checked in `npm run test:e2e:pages`:
 - **No hard-coded colour.** Every stroke and fill is a CSS custom property the palettes define
   (`--ink`, `--body`, `--muted`, `--line`, `--line-soft`, `--accent`, `--canvas`), so dark, light, paper
   and high contrast need no special case.
+- **A connector is a run, and a label is never painted over.** A chain leaves a 30-unit shaft
+  between boxes (it was 14, which the arrowhead mostly filled); a graph's gap grows with the longest
+  edge label it carries, and those labels are drawn *after* the boxes, clear of their arrow and with
+  a canvas-coloured halo. That is the fix for `/target` disappearing under the box beside it, or
+  being cut in half by the wire it names.
 - **No unlabelled picture.** Each figure is `role="img"` with an `aria-label` built from its title and
   caption, and its caption is a `<figcaption>` — it belongs to the picture in the accessibility tree and
   cannot be mistaken for the next paragraph.

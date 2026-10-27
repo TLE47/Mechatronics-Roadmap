@@ -186,7 +186,9 @@ function Arrow({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2: num
 function Chain({ spec }: { spec: DiagramSpec }) {
   const stages = spec.stages ?? [];
   const n = Math.max(1, stages.length);
-  const gap = 20;
+  // A connector needs a run: at 20 units the arrowhead was most of it and the packet that rides the
+  // line in a live figure crossed it in a blink. 38 leaves a 30-unit shaft between the boxes.
+  const gap = 38;
   const w = Math.min(132, (W - 24 - gap * (n - 1)) / n);
   const h = 54;
   const total = w * n + gap * (n - 1);
@@ -199,9 +201,9 @@ function Chain({ spec }: { spec: DiagramSpec }) {
           <Box x={x0 + index * (w + gap)} y={y} w={w} h={h} {...stage} />
           {index < n - 1 && (
             <Arrow
-              x1={x0 + index * (w + gap) + w + 3}
+              x1={x0 + index * (w + gap) + w + 4}
               y1={y + h / 2}
-              x2={x0 + index * (w + gap) + w + gap - 3}
+              x2={x0 + index * (w + gap) + w + gap - 4}
               y2={y + h / 2}
             />
           )}
@@ -380,13 +382,34 @@ function wrap(text: string, perLine: number): string[] {
 }
 
 
+/**
+ * The room between a graph's boxes, from the labels its arrows carry.
+ *
+ * The gap used to be a constant (18 by 22), so an edge label — `/target`, `params` — was wider than
+ * the space it sat in and the boxes were painted over it. Here the gap grows with the longest label
+ * the figure actually has, and is capped by the width the boxes leave so a five-column graph still
+ * fits its canvas. `artHeight` reads the same function, so the drawing and its viewBox cannot
+ * disagree about how tall a vertical graph is.
+ */
+function graphSpacing(spec: DiagramSpec): { gapX: number; gapY: number } {
+  const { levels, rows } = graphLayers(spec);
+  const across = spec.direction === 'TD' ? rows : levels;
+  const longest = Math.max(0, ...(spec.edges ?? []).map((edge) => (edge.label ?? '').length));
+  // A 10.5-unit monospace glyph is about 6.3 units wide; a label at 8.8 is about 5.3. Half a label
+  // each side of the arrow's midpoint is what makes it readable without touching a box.
+  const wantedX = Math.min(96, Math.max(26, 18 + longest * 5.3));
+  const room = (W - 26 - 74 * across) / Math.max(1, across - 1);
+  const gapX = across < 2 ? wantedX : Math.max(20, Math.min(wantedX, room));
+  const gapY = Math.min(46, Math.max(22, 12 + longest * 4.6));
+  return { gapX, gapY };
+}
+
 /** A box per node, an arrow per edge: a graph that may fan out, unlike `chain`. */
 function Graph({ spec }: { spec: DiagramSpec }) {
   const { nodes, levels, rows } = graphLayers(spec);
   const across = spec.direction === 'TD' ? rows : levels;
   const down = spec.direction === 'TD' ? levels : rows;
-  const gapX = 18;
-  const gapY = 22;
+  const { gapX, gapY } = graphSpacing(spec);
   const boxW = Math.max(74, Math.min(138, (W - 26 - gapX * (across - 1)) / Math.max(1, across)));
   const boxH = 38;
   const at = (node: PlacedNode) => {
@@ -410,23 +433,7 @@ function Graph({ spec }: { spec: DiagramSpec }) {
         const y1 = horizontal ? a.y + a.h / 2 : a.y + a.h;
         const x2 = horizontal ? b.x - 2 : b.x + b.w / 2;
         const y2 = horizontal ? b.y + b.h / 2 : b.y - 2;
-        return (
-          <g key={`${edge.from}-${edge.to}-${index}`}>
-            <Arrow x1={x1} y1={y1} x2={x2} y2={y2} />
-            {edge.label && (
-              <text
-                x={(x1 + x2) / 2}
-                y={(y1 + y2) / 2 - 4}
-                textAnchor="middle"
-                fontSize={9.5}
-                fill={MUTED}
-                fontFamily={font}
-              >
-                {edge.label}
-              </text>
-            )}
-          </g>
-        );
+        return <Arrow key={`${edge.from}-${edge.to}-${index}`} x1={x1} y1={y1} x2={x2} y2={y2} />;
       })}
       {nodes.map((node) => {
         const box = at(node);
@@ -449,6 +456,43 @@ function Graph({ spec }: { spec: DiagramSpec }) {
               </text>
             ))}
           </g>
+        );
+      })}
+      {/* Labels last, so nothing is painted over them — and with a canvas-coloured halo, so an
+          arrow passing under its own label cannot cut the word in half. The font is one step below
+          the box labels: this is an annotation, not the name of a thing. */}
+      {(spec.edges ?? []).map((edge, index) => {
+        if (!edge.label) return null;
+        const from = byId.get(edge.from);
+        const to = byId.get(edge.to);
+        if (!from || !to) return null;
+        const a = at(from);
+        const b = at(to);
+        const horizontal = spec.direction !== 'TD';
+        const x1 = horizontal ? a.x + a.w : a.x + a.w / 2;
+        const y1 = horizontal ? a.y + a.h / 2 : a.y + a.h;
+        const x2 = horizontal ? b.x - 2 : b.x + b.w / 2;
+        const y2 = horizontal ? b.y + b.h / 2 : b.y - 2;
+        return (
+          <text
+            key={`l-${edge.from}-${edge.to}-${index}`}
+            x={(x1 + x2) / 2 + (horizontal ? 0 : 8)}
+            // Clear of its arrow — above it on a left-to-right graph, beside it top-to-bottom: a
+            // baseline on the arrow's own y read as an arrow through the word, not a name for the wire.
+            y={(y1 + y2) / 2 + (horizontal ? -8 : 3)}
+            textAnchor={horizontal ? 'middle' : 'start'}
+            fontSize={8.8}
+            // Body, not muted: an annotation this small needs the reading colour to stay legible,
+            // and the halo keeps it clear of the arrow's accent.
+            fill={BODY}
+            fontFamily={font}
+            stroke={CANVAS}
+            strokeWidth={2.8}
+            strokeLinejoin="round"
+            style={{ paintOrder: 'stroke' }}
+          >
+            {edge.label}
+          </text>
         );
       })}
     </g>
@@ -899,7 +943,8 @@ export function artHeight(spec: DiagramSpec): number {
     case 'graph': {
       const { levels, rows } = graphLayers(spec);
       const down = spec.direction === 'TD' ? levels : rows;
-      return 14 + down * 38 + Math.max(0, down - 1) * 22 + 14;
+      // The same gap the renderer uses: a taller row pitch must grow the viewBox with it.
+      return 14 + down * 38 + Math.max(0, down - 1) * graphSpacing(spec).gapY + 14;
     }
     case 'matrix':
       return 30 + (spec.matrix?.rows.length ?? 1) * 38 + (spec.matrix?.note ? 20 : 0) + 8;
