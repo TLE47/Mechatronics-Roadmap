@@ -152,6 +152,14 @@ import { isKnownLesson, lessonIdFromLocation } from './lessonRoute';
 import { readSharedAttempt, type SharedAttempt } from './shareLink';
 import { readTrySnippet } from './tryLink';
 import { readLastLessonId, lessonOffer } from './lastLesson';
+import {
+  hasLocalProgress,
+  landingPage,
+  noteVisit,
+  readLastVisit,
+  type HomePage,
+} from './homeLanding';
+import { readReadingPosition } from './readingPosition';
 import { editedLines, readDraft } from './lessonDraft';
 import { draftProgress } from './lessonCoach';
 import { lessonIdOf, type PaletteItem, type PaletteMode } from './palette';
@@ -195,21 +203,29 @@ import type { LucideIcon } from 'lucide-react';
  */
 const AccountPanel = React.lazy(() =>
   import('./components/AccountPanel').then((module) => ({ default: module.AccountPanel }))
+);const HomeDashboard = React.lazy(() =>
+  import('./components/home/HomeDashboard').then((module) => ({ default: module.HomeDashboard }))
 );
-const LearnerDashboard = React.lazy(() =>
-  import('./components/LearnerDashboard').then((module) => ({ default: module.LearnerDashboard }))
-);
+
 const AdminDashboard = React.lazy(() =>
   import('./components/AdminDashboard').then((module) => ({ default: module.AdminDashboard }))
 );
 
-type WholePage = 'workbench' | 'dashboard' | 'admin';
+/**
+ * The whole-screen pages. Home replaced the old `dashboard` route; `?view=dashboard` is kept as an
+ * alias so a bookmark, an account-mail link and `e2e_game.mjs` still land on the same page.
+ */
+type WholePage = HomePage;
 
-/** `?view=dashboard` and `?view=admin` are addresses, so a page survives a reload. */
 function pageFromLocation(): WholePage {
   if (typeof window === 'undefined' || !window.location) return 'workbench';
-  const view = new URLSearchParams(window.location.search || '').get('view');
-  return view === 'dashboard' || view === 'admin' ? view : 'workbench';
+  const params = new URLSearchParams(window.location.search || '');
+  return landingPage({
+    view: params.get('view'),
+    hasLesson: params.has('lesson'),
+    lastVisit: readLastVisit(),
+    hasProgress: hasLocalProgress(),
+  });
 }
 
 /** The sentence shown after a workspace merge: what arrived, and what was kept twice. */
@@ -433,6 +449,17 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
   },
 ];
 
+/**
+ * Home's launcher, built from the registry the rail renders (`components/home/LabsPanel.tsx`). A
+ * tab added to `WORKBENCH_TABS` is on Home with no second list to edit, icons included.
+ */
+export const HOME_LABS = WORKBENCH_TABS.map((tab) => ({
+  id: tab.id,
+  label: tab.beginnerLabel,
+  blurb: tab.beginnerSubtitle,
+  Icon: TAB_ICONS[tab.id] ?? Sparkles,
+}));
+
 // The document itself lives in its own module so a unit suite can pin it without React; this stays
 // exported because the smoke suite and the modal have always imported it from here.
 export { buildPortfolioMarkdown } from './portfolio';
@@ -561,6 +588,9 @@ export const App: React.FC = () => {
   // A reset link lands on `?type=recovery`: the panel then opens on "set a new password".
   const [recovery, setRecovery] = useState<boolean>(() => isRecoveryLink());
   const [wholePage, setWholePage] = useState<WholePage>(() => pageFromLocation());
+  // Bumped by Home's Review button. The deck lives in the runner's Study panel, which is the one
+  // review surface; the request only scrolls it into view, so there is no second schedule to keep.
+  const [reviewRequest, setReviewRequest] = useState<number>(0);
   // Workspace sync is opt-in per browser; its preview and last report are what the panel shows.
   const [workspaceSync, setWorkspaceSync] = useState<boolean>(() => workspaceSyncEnabled());
   const [workspacePreview, setWorkspacePreview] = useState<Awaited<
@@ -672,7 +702,7 @@ export const App: React.FC = () => {
     if (typeof window === 'undefined' || !window.location) return;
     const search = window.location.search || '';
     const target = parseReturnTarget(search, isKnownLesson);
-    if (target?.view) setWholePage(target.view);
+    if (target?.view) setWholePage(target.view === 'dashboard' ? 'home' : target.view);
     if (target?.lessonId) {
       setActiveTab('tab-pyodide');
       setLessonRequest({ id: target.lessonId, nonce: Date.now() });
@@ -998,9 +1028,10 @@ export const App: React.FC = () => {
     setWorkspaceReport(null);
   };
 
-  /** Move between the workbench, the dashboard and the admin area, and keep the address in step. */
+  /** Move between the workbench, Home and the admin area, and keep the address in step. */
   const openPage = (next: WholePage) => {
     setWholePage(next);
+    noteVisit(next);
     if (typeof window === 'undefined' || !window.location) return;
     const url = new URL(window.location.href);
     if (next === 'workbench') url.searchParams.delete('view');
@@ -1008,11 +1039,32 @@ export const App: React.FC = () => {
     window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
   };
 
-  const openLessonFromDashboard = (id: string) => {
+  const openLessonFromHome = (id: string) => {
     openPage('workbench');
     setActiveTab('tab-pyodide');
     setHighlightedId(null);
     setLessonRequest({ id, nonce: Date.now() });
+  };
+
+  /** A lab card is a door, not a detail panel: the workbench opens on that tab. */
+  const openTabFromHome = (id: TabId) => {
+    openPage('workbench');
+    setActiveTab(id);
+    setHighlightedId(null);
+  };
+
+  const openRouteFromHome = () => {
+    openPage('workbench');
+    setActiveTab('tab-arch');
+    setHighlightedId(null);
+  };
+
+  /** The deck is answered in the runner's Study panel; Home only says how many are waiting. */
+  const reviewFromHome = () => {
+    openPage('workbench');
+    setActiveTab('tab-pyodide');
+    setHighlightedId(null);
+    setReviewRequest((nonce) => nonce + 1);
   };
 
   const handleRestoreStartHere = () => {
@@ -1175,6 +1227,9 @@ export const App: React.FC = () => {
       case 'action-advanced-view':
         setViewMode('advanced');
         break;
+      case 'action-open-home':
+        openPage('home');
+        break;
       case 'action-open-cheatsheet':
         setIsCheatSheetOpen(true);
         break;
@@ -1286,6 +1341,25 @@ export const App: React.FC = () => {
 
   const toggleFocusMode = () => setFocusOn(setFocus(!focusRef.current));
 
+  // Arriving is a visit too: a reload inside the sitting returns to the page on screen, and the
+  // address names the page that is actually open — a learner who lands on Home can copy the URL, and
+  // a reload resumes the sitting rather than re-deciding from a bare `/`. `openPage` owns every other
+  // transition; this is the same write for the arrival it did not make.
+  useEffect(() => {
+    noteVisit(wholePage);
+    if (typeof window === 'undefined' || !window.location) return;
+    const url = new URL(window.location.href);
+    if (wholePage === 'workbench') {
+      if (!url.searchParams.has('view')) return;
+      url.searchParams.delete('view');
+    } else if (url.searchParams.get('view') !== wholePage) {
+      url.searchParams.set('view', wholePage);
+    } else {
+      return;
+    }
+    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+  }, [wholePage]);
+
   const allMilestoneIds = [
     ...LEVEL_0_STEPS,
     ...TIER_1_LINEAR_PASS,
@@ -1303,46 +1377,7 @@ export const App: React.FC = () => {
   // log on every keystroke in the editor.
   const lessonAttempts = useMemo(() => attemptsByLesson(readLearningLog()), [activeTab, storeNonce]);
 
-  // The roadmap leads with the lesson to do next, not with Step 1 of ten: the runner already
-  // remembers where the learner stopped (`src/lastLesson.ts`), and "continue" has to mean forward
-  // progress - the stopped-on lesson while it is unverified, the first unfinished one after it once
-  // it is not. Read at render rather than mirrored in state: the runner owns the id, and opening
-  // this tab re-renders, so there is no second copy to go stale.
-  const resumeLesson = (() => {
-    const offer = lessonOffer(
-      readLastLessonId(),
-      PYTHON_LESSONS.map((lesson) => lesson.id),
-      { verified: verifiedLessons, completed: completedLessons }
-    );
-    if (!offer) return null;
-    const entry = PYTHON_LESSONS.find((lesson) => lesson.id === offer.id);
-    if (!entry) return null;
-    // What the learner typed into that exercise and did not finish (`src/lessonDraft.ts`). The card
-    // prints it and the runner restores it, so "continue" hands back the work, not a fresh starter.
-    const draft = readDraft(entry.id);
-    const progress = draft === null ? null : draftProgress(draft, entry);
-    return {
-      id: entry.id,
-      title: entry.title,
-      track: entry.track,
-      verified: !!verifiedLessons[entry.id],
-      completed: !!completedLessons[entry.id],
-      reason: offer.reason,
-      edited: draft === null ? 0 : editedLines(draft, entry.starterCode),
-      // How many of the starter's marked steps the draft has written: the difference between "six
-      // lines changed" and "one of two steps done", which is what "close to passing" means here.
-      stepsFilled: progress?.filled ?? 0,
-      stepsTotal: progress?.total ?? 0,
-      stepsAreHoles: progress?.isExercise ?? false,
-      // How the lesson has actually been used, so the card can say "tried twice" rather than
-      // "opened", and "not opened yet" for a lesson it is offering further down the list.
-      opens: lessonAttempts[entry.id]?.opens ?? 0,
-      runs: lessonAttempts[entry.id]?.runs ?? 0,
-      lastOutcome: lessonAttempts[entry.id]?.lastOutcome ?? null,
-    };
-  })();
-
-  // A page's "Run this in the workbench" link arrives as `?lesson=<id>`; the runner opens on that
+  // A page's "Run this in the workbench" link arrives as `?lesson=<id>`: the runner opens on that
   // entry instead of making the reader find it in the search box again. An id the registry does not
   // list is ignored rather than shown as an empty editor. With no query string the workbench reopens
   // the lesson the learner was last on (`src/lastLesson.ts`), and only then falls back to P.1 - the
@@ -1496,7 +1531,7 @@ export const App: React.FC = () => {
         onDeleteAccount={handleDeleteAccount}
         onOpenDashboard={() => {
           setIsAccountOpen(false);
-          openPage('dashboard');
+          openPage('home');
         }}
         onOpenAdmin={() => {
           setIsAccountOpen(false);
@@ -1510,13 +1545,16 @@ export const App: React.FC = () => {
   // screen. `storeNonce` re-reads after a backup restore, so the counts match the files on disk.
   const dashboardData = useMemo(() => {
     if (wholePage === 'workbench') return null;
+    const lastId = readLastLessonId();
+    const position = lastId ? readReadingPosition(lastId) : null;
     return {
       drafts: readDrafts(),
-      // `LessonStudy` and `DashboardStudy` describe the same shape; the dashboard only needs note and
+      // `LessonStudy` and `DashboardStudy` describe the same shape; Home only needs note and
       // quote, so it cannot depend on the parts it does not render.
       study: readStudy() as unknown as DashboardStudy,
       events: readLearningLog() as unknown as DashboardEvent[],
       due: dueCards(syncCards()).length,
+      reading: lastId && position ? { [lastId]: position } : {},
     };
   }, [wholePage, storeNonce]);
 
@@ -1548,6 +1586,7 @@ export const App: React.FC = () => {
           accountEmail={accountEmail}
           onOpenAccount={() => setIsAccountOpen(true)}
           onOpenPalette={() => setIsPaletteOpen(true)}
+          onOpenHome={() => openPage('home')}
           focus={focus}
           onToggleFocus={toggleFocusMode}
         />
@@ -1569,8 +1608,8 @@ export const App: React.FC = () => {
               </p>
             }
           >
-            {wholePage === 'dashboard' ? (
-              <LearnerDashboard
+            {wholePage === 'home' ? (
+              <HomeDashboard
                 email={accountEmail}
                 role={accountRole}
                 lessons={PYTHON_LESSONS.map((lesson) => ({ id: lesson.id, title: lesson.title }))}
@@ -1586,10 +1625,20 @@ export const App: React.FC = () => {
                 workspaceSync={workspaceSync}
                 conflicts={workspaceConflicts}
                 syncNote={syncNote}
-                onOpenLesson={openLessonFromDashboard}
+                reading={dashboardData?.reading ?? {}}
+                labs={HOME_LABS}
+                focus={focus}
+                onOpenLesson={openLessonFromHome}
+                onOpenTab={openTabFromHome}
+                onOpenRoute={openRouteFromHome}
+                onReview={reviewFromHome}
                 onBack={() => openPage('workbench')}
                 onOpenAccount={() => setIsAccountOpen(true)}
                 onOpenAdmin={() => openPage('admin')}
+                onToggleFocus={toggleFocusMode}
+                onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
+                onExportPortfolio={() => setIsPortfolioModalOpen(true)}
+                onExportLog={downloadLearningLog}
               />
             ) : (
               <AdminDashboard
@@ -1631,6 +1680,7 @@ export const App: React.FC = () => {
           accountEmail={accountEmail}
           onOpenAccount={() => setIsAccountOpen(true)}
           onOpenPalette={() => setIsPaletteOpen(true)}
+          onOpenHome={() => openPage('home')}
         />
         <main
           id="main"
@@ -1677,6 +1727,7 @@ export const App: React.FC = () => {
         accountEmail={accountEmail}
         onOpenAccount={() => setIsAccountOpen(true)}
         onOpenPalette={() => setIsPaletteOpen(true)}
+        onOpenHome={() => openPage('home')}
         focus={focus}
         onToggleFocus={toggleFocusMode}
       />
@@ -1933,7 +1984,6 @@ export const App: React.FC = () => {
               startHereDismissed={startHereDismissed}
               onRestoreStartHere={handleRestoreStartHere}
               onOpenPyodideLesson={openLesson}
-              resumeLesson={resumeLesson}
               lessonAttempts={lessonAttempts}
             />
           )}
@@ -1959,6 +2009,7 @@ export const App: React.FC = () => {
                 runRequest={runRequest}
                 formatRequest={formatRequest}
                 tourRequest={tourRequest}
+                reviewRequest={reviewRequest}
                 lessonRequest={lessonRequest}
                 sharedAttempt={sharedAttempt}
                 onDismissShared={() => setSharedAttempt(null)}

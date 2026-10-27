@@ -9,15 +9,15 @@
  * Those are the failures a screenshot cannot show and a human reviewer stops noticing.
  *
  * The sweep walks the same tab list the theme suite uses (`app/src/data/workbenchTabs.json`), so a
- * new tab is swept without touching this file, and it runs each tab in every palette (dark, light,
- * paper, high contrast) because a violation can be theme-specific — an invisible focus ring, a disabled
- * colour that disappears.
+ * new tab is swept without touching this file, plus Home (`?view=home`), which is a whole page rather
+ * than a tab. It runs each surface in every palette (dark, light, paper, high contrast) because a
+ * violation can be theme-specific — an invisible focus ring, a disabled colour that disappears.
  *
  * Two deliberate choices about the ruleset:
  *
  * - **`color-contrast` is left to `e2e_theme.mjs`.** axe samples the rendered pixels with an
  *   approximation; that suite composites the actual ancestor stack and fails below 3:1 across 44
- *   tab/palette pairs. Two contrast gates that disagree would make the stricter one look wrong, and
+ *   tab/palette pair. Two contrast gates that disagree would make the stricter one look wrong, and
  *   the colour one is the more accurate measurement.
  * - **`serious` and `critical` fail; `minor` and `moderate` are reported.** A gate that fails on a
  *   `landmark-one-main` suggestion is a gate people switch off.
@@ -92,7 +92,10 @@ function readAllowlist() {
 }
 
 const tabNames = JSON.parse(fs.readFileSync(path.join(ROOT, 'app/src/data/workbenchTabs.json'), 'utf8'));
-const TAB_IDS = ONLY ? [ONLY] : Object.keys(tabNames.tabs);
+const TAB_IDS = Object.keys(tabNames.tabs);
+/** `home` is not a tab; it is the whole page a returning learner lands on (`homeLanding.ts`). */
+const HOME = 'home';
+const SURFACE_IDS = ONLY ? [ONLY] : [...TAB_IDS, HOME];
 
 async function runAxe(page) {
   return page.evaluate(async () => {
@@ -167,8 +170,16 @@ async function main() {
       if (await advanced.count()) await advanced.click();
       await page.addScriptTag({ content: axeSource });
 
-      for (const tabId of TAB_IDS) {
-        await page.click(`[data-testid="tab-btn-${tabId}"]`);
+      for (const tabId of SURFACE_IDS) {
+        if (tabId === HOME) {
+          // A navigation, so the injected axe build has to go back in afterwards.
+          await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });
+          await page.getByTestId('home-dashboard').waitFor({ timeout: 30000 });
+          await page.addScriptTag({ content: axeSource });
+          await page.waitForTimeout(300);
+        } else {
+          await page.click(`[data-testid="tab-btn-${tabId}"]`);
+        }
         // Eleven of the twelve tabs are lazy chunks (`React.lazy` in App.tsx): a click can land on the
         // Suspense panel, and auditing a panel that says "Loading this tab…" would pass every rule.
         // The editor is lazy for the same reason and shows its code as a placeholder
@@ -308,7 +319,7 @@ async function main() {
   }
 
   log(
-    `\n[PASS] axe: ${TAB_IDS.length} tabs × ${THEMES.length} themes clear every serious/critical rule ` +
+    `\n[PASS] axe: ${TAB_IDS.length} tabs and Home × ${THEMES.length} themes clear every serious/critical rule ` +
       `(${allowlist.entries.length} documented exception(s), none stale).`
   );
 }

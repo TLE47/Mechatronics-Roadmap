@@ -1602,104 +1602,38 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     console.log('  ok a plain visit reopens the lesson the learner was last on');
 
-    // 7c. And the roadmap says it out loud. Remembering the lesson only helped a learner who went
-    //     straight back to the runner; the tab that answers "what is next" still started at Step 1.
-    //     It now opens with the lesson they stopped on, named by id and title, and one click continues
-    //     it - P.4 has been opened but not verified, which is the case worth resuming. Step 7d then
-    //     proves the same card moves forward rather than repeating itself.
-    await page.getByTestId('tab-btn-tab-arch').click();
-    const resumeCard = page.getByTestId('resume-card');
-    await resumeCard.waitFor({ timeout: 5000 });
-    const resumeId = (await page.getByTestId('resume-lesson-id').textContent())?.trim();
-    assert.equal(
-      resumeId,
-      'P.4',
-      `the roadmap must open with the lesson the learner stopped on (P.4); it named: ${resumeId}`
-    );
-    assert.equal(
-      await resumeCard.getAttribute('data-resume-reason'),
-      'resume',
-      'an unfinished lesson is a resume, and the card must carry that reason for the assertions below'
-    );
-    const resumeCardText = (await resumeCard.textContent()) ?? '';
+    // 7c. Home is where the offer lives now. The roadmap's resume card was folded into Home's
+    //     Continue card (the page that answers "what is next"), so the return visit's promise is
+    //     judged there: the lesson last chosen is named, the reason is a resume, and one press
+    //     reopens it. P.4 has been opened but not verified, which is the case worth resuming.
+    await page.goto(`${baseUrl}?view=home`, { waitUntil: 'networkidle' });
+    await page.getByTestId('home-dashboard').waitFor({ timeout: 15000 });
+    const continueCard = page.getByTestId('home-continue');
+    const continueText = (await continueCard.textContent()) ?? '';
     assert(
-      resumeCardText.includes(resumedTitle),
-      `the resume card must name the lesson, not just its id; expected "${resumedTitle}" in: ${resumeCardText}`
+      continueText.includes(resumedTitle),
+      `Home's Continue must name the lesson last chosen ("${resumedTitle}"); got: ${continueText}`
     );
     assert(
-      resumeCardText.includes('opened, never run'),
-      `the card must tell a lesson read and left apart from one attempted; got: ${resumeCardText}`
+      continueText.includes('The lesson you stopped on.'),
+      `an unfinished lesson is a resume, and Home must say so; got: ${continueText}`
     );
-    await page.getByTestId('btn-resume-lesson').click();
+    await page.getByTestId('btn-home-continue').click();
     await waitForEditor(page, undefined, 15000);
-    const continuedMeta = (await page.getByTestId('lesson-meta').textContent()) ?? '';
     assert(
-      continuedMeta.includes('Lesson P.4'),
-      `the resume card must continue the lesson it names; the runner opened: ${continuedMeta}`
+      ((await page.getByTestId('lesson-meta').textContent()) ?? '').includes('Lesson P.4'),
+      'Home must reopen the lesson it just named'
     );
     assert.equal(
       (await page.getByTestId('lesson-title').textContent())?.trim(),
       resumedTitle,
-      'the resume card must open the very lesson whose title it printed'
+      'Home must open the very lesson whose title it printed'
     );
-    await page.getByTestId('tab-btn-tab-arch').click();
-    console.log('  ok the roadmap opens with the lesson the learner stopped on');
+    console.log('  ok Home names the lesson last chosen and reopens it in one press');
 
-    // 7c.5 And the offer folds, without losing the press that acts on it. The card carries a
-    //      sentence about the state and, later, a line about a half-written draft; a learner who
-    //      already knows what they were doing can fold both away. What must survive the fold is the
-    //      reason the card exists at all: the button that continues the lesson, and a short word
-    //      saying what state it is in. The fold is a preference, so it is judged by the reload it
-    //      has to survive - and it shares its store with the trail and the board card below.
-    assert.equal(
-      await resumeCard.getAttribute('data-collapsed'),
-      'false',
-      'the offer must open expanded'
-    );
-    await page.getByTestId('btn-resume-toggle').click();
-    await page.waitForFunction(
-      () =>
-        document.querySelector('[data-testid="resume-card"]')?.getAttribute('data-collapsed') ===
-        'true',
-      undefined,
-      { timeout: 5000 }
-    );
-    assert.equal(
-      await page.getByTestId('resume-lesson-state').count(),
-      0,
-      'a folded offer still printed its state sentence'
-    );
-    assert.equal(
-      await page.getByTestId('btn-resume-toggle').getAttribute('aria-expanded'),
-      'false',
-      'the toggle must say it is folded'
-    );
-    const foldedBadge = (await page.getByTestId('resume-badge').textContent())?.trim() ?? '';
-    assert.ok(
-      foldedBadge.length > 0,
-      'a folded offer must keep a word for the state; it printed an empty badge'
-    );
-    assert.equal(
-      await page.getByTestId('btn-resume-lesson').isVisible(),
-      true,
-      'folding the offer must not take away the button that continues the lesson'
-    );
-    await page.goto(baseUrl, { waitUntil: 'networkidle' });
-    await page.getByTestId('tab-btn-tab-arch').click();
-    await page.getByTestId('resume-card').waitFor({ timeout: 10000 });
-    assert.equal(
-      await page.getByTestId('resume-card').getAttribute('data-collapsed'),
-      'true',
-      'the fold must be remembered across a reload, like the trail’s'
-    );
-    // Unfolded again, so the steps after this one read the card the way a learner first sees it.
-    await page.getByTestId('btn-resume-toggle').click();
-    await page.getByTestId('resume-lesson-state').waitFor({ timeout: 5000 });
-    console.log(`  ok the offer folds to its heading (badge "${foldedBadge}") and stays folded`);
-
-    // 7d. And passing it hands the offer forward. A card that kept naming the lesson just verified
-    //     would ask for it twice, on the screen whose job is to say what is next - so with P.4
-    //     passed the card moves to P.5 and changes its words from "continue" to "next".
+    // 7d. And passing it hands the offer forward. Home's Continue must stop naming a lesson that is
+    //     already verified - that would ask for it twice, on the page whose job is what is next - and
+    //     name the first one still open instead, saying which of the two it is.
     const verifiedBefore = await page.evaluate(() =>
       localStorage.getItem('mechalab_pyodide_verified_v1')
     );
@@ -1709,34 +1643,23 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       flags['P.4'] = true;
       localStorage.setItem(key, JSON.stringify(flags));
     });
-    await page.goto(baseUrl, { waitUntil: 'networkidle' });
-    await page.getByTestId('tab-btn-tab-arch').click();
-    const nextCard = page.getByTestId('resume-card');
-    await nextCard.waitFor({ timeout: 5000 });
-    const nextId = (await page.getByTestId('resume-lesson-id').textContent())?.trim();
-    assert.equal(
-      nextId,
-      'P.5',
-      `a passed lesson must hand the offer forward to the next unverified one (P.5); the card named: ${nextId}`
-    );
-    assert.equal(
-      await nextCard.getAttribute('data-resume-reason'),
-      'next',
-      'a card pointing past a finished lesson must say so, not call it a resume'
-    );
-    const nextText = (await nextCard.textContent()) ?? '';
+    await page.goto(`${baseUrl}?view=home`, { waitUntil: 'networkidle' });
+    await page.getByTestId('home-dashboard').waitFor({ timeout: 15000 });
+    const nextText = (await page.getByTestId('home-continue').textContent()) ?? '';
     assert(
-      nextText.toLowerCase().includes('next unverified lesson'),
-      `the card must name what it is offering; got: ${nextText}`
+      nextText.includes('The first lesson still open on your route.'),
+      `a passed lesson must hand the offer forward, and the card must say which kind it is; got: ${nextText}`
     );
     assert(
-      !nextText.includes('executed and passed'),
-      `the card must not describe an unpassed lesson as passed; got: ${nextText}`
+      !nextText.includes(resumedTitle),
+      `the card must not keep offering the lesson just verified; got: ${nextText}`
     );
-    const nextButton = (await page.getByTestId('btn-resume-lesson').textContent())?.trim() ?? '';
+    await page.getByTestId('btn-home-continue').click();
+    await waitForEditor(page, undefined, 15000);
+    const nextMeta = (await page.getByTestId('lesson-meta').textContent()) ?? '';
     assert(
-      nextButton.includes('Start P.5'),
-      `a lesson not yet opened is started, not continued; the button said: ${nextButton}`
+      nextMeta.includes('Lesson P.5'),
+      `with P.4 passed, Home must open the next unverified lesson (P.5); the runner opened: ${nextMeta}`
     );
     // Put the progress back exactly as the scenarios before this one left it: the portfolio counts
     // in section 8 read one verified and one self-marked lesson.
@@ -1745,64 +1668,47 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       if (previous === null) localStorage.removeItem(key);
       else localStorage.setItem(key, previous);
     }, verifiedBefore);
-    await page.goto(baseUrl, { waitUntil: 'networkidle' });
-    console.log('  ok a passed lesson hands the roadmap card forward');
+    console.log('  ok a passed lesson hands Home’s offer forward to the next one');
 
     // 7e. And the card knows what is half-written, not just which lesson. The editor keeps the
-    //     unfinished program, the card says how far it has moved from the starter, and reopening it
-    //     from a plain visit hands the work back - a card naming an exercise whose typing it then
-    //     replaced with the starter would be the same loss in a new place.
-    await page.getByTestId('tab-btn-tab-pyodide').click();
+    //     unfinished program, Home says a draft is there and how large it is, and reopening it from
+    //     Home hands the work back - a card naming an exercise whose typing it then replaced with the
+    //     starter would be the same loss in a new place.
+    await page.goto(`${baseUrl}?lesson=P.4`, { waitUntil: 'networkidle' });
     await waitForEditor(page, undefined, 15000);
     const p4Starter = await getEditorCode(page);
     // A real half-finished attempt: P.4's one measurable step (`# TODO 1` over `safe_cmd = cmd`) is
-    // written, and nothing else is. The card has to say "1 of 1", not "2 lines changed".
-    const halfWritten = p4Starter.replace(
-      'safe_cmd = cmd',
-      'safe_cmd = min(max(cmd, 0), 255)'
-    );
+    // written, and nothing else is.
+    const halfWritten = p4Starter.replace('safe_cmd = cmd', 'safe_cmd = min(max(cmd, 0), 255)');
     assert.notEqual(halfWritten, p4Starter, 'P.4 starter must still carry the TODO 1 placeholder');
     await setEditorCode(page, halfWritten);
     // The draft is written on a pause, not on every keystroke, so wait for the store to have it
-    // rather than for a fixed number of milliseconds - a slower CI runner would otherwise reach the
-    // roadmap before the debounce fired and read an untouched starter.
+    // rather than for a fixed number of milliseconds - a slower CI runner would otherwise reach Home
+    // before the debounce fired and read an untouched starter.
     await waitForBulk(page, DRAFTS_KEY, (drafts) => (drafts['P.4'] ?? '').includes('min(max(cmd'));
-    await page.getByTestId('tab-btn-tab-arch').click();
-    const draftLine = page.getByTestId('resume-draft');
-    await draftLine.waitFor({ timeout: 15000 });
-    const draftText = (await draftLine.textContent()) ?? '';
-    const draftProgressText = (await page.getByTestId('resume-draft-progress').textContent())?.trim();
-    assert.equal(
-      draftProgressText,
-      '1 of 2 TODO lines written',
-      `the card must say how close the exercise is to done, not only how long the diff is; got: ${draftProgressText}`
+    await page.goto(`${baseUrl}?view=home`, { waitUntil: 'networkidle' });
+    await page.getByTestId('home-dashboard').waitFor({ timeout: 15000 });
+    const draftText = (await page.getByTestId('home-continue').textContent()) ?? '';
+    assert(
+      draftText.includes('Your draft is here'),
+      `Home must say the draft exists rather than only naming the lesson; got: ${draftText}`
     );
     assert(
-      draftText.includes('lines changed'),
-      `the card keeps the raw diff beside the step count; got: ${draftText}`
+      /\d[\d,]* characters/.test(draftText),
+      `the draft line must say how large the work is; got: ${draftText}`
     );
-    const draftState = (await page.getByTestId('resume-lesson-state').textContent()) ?? '';
-    assert(
-      draftState.includes('edited, never run'),
-      `typed-but-unrun is its own state, not "opened"; the state line said: ${draftState}`
-    );
-    const draftCard = (await page.getByTestId('resume-card').textContent()) ?? '';
-    assert(
-      draftCard.includes('resume'.toUpperCase()) === false && draftCard.includes('P.4'),
-      `the draft belongs to the lesson the learner stopped on; the card said: ${draftCard}`
-    );
-    await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    await page.getByTestId('btn-home-continue').click();
     await waitForEditor(page, undefined, 15000);
     assert.equal(
       await getEditorCode(page),
       halfWritten,
       'a plain visit must reopen the unfinished edit, not the starter it was written over'
     );
-    // 7f. Running it, even to a failure, is the next rung of that ladder: the card stops saying
-    //     "edited, never run" and starts counting attempts, which is the difference the log exists for.
+    // 7f. Running it, even to a failure, is the next rung of that ladder: the roadmap chips start
+    //     counting attempts, which is the difference the log exists for.
     await page.getByTestId('btn-run-verify').click();
     // Parsed, not substring-matched: `"kind":"run"` and `"lesson":"P.4"` can each come from a
-    // different event, so a raw search for both resolves on the previous lesson's run and the card is
+    // different event, so a raw search for both resolves on the previous lesson's run and the chip is
     // then read before this run has finished - which is exactly how this assertion failed on CI once.
     await waitForBulk(
       page,
@@ -1811,24 +1717,18 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       60000
     );
     await page.getByTestId('tab-btn-tab-arch').click();
-    await page.getByTestId('resume-card').waitFor({ timeout: 15000 });
-    // The card reads the log at render, so give that render a moment rather than reading the first
-    // frame after the click; a card that never says `tried` still fails here, with its own text below.
+    // The roadmap's step cards carry the same distinction, so the whole map can be read as
+    // "never opened / opened and left / tried and failed / passed" at a glance.
     await page
       .waitForFunction(
         () =>
-          (document.querySelector('[data-testid="resume-card"]')?.textContent ?? '').includes('tried'),
+          document
+            .querySelector('[data-testid="practice-entry-P.4"]')
+            ?.getAttribute('data-state') === 'tried',
         undefined,
         { timeout: 15000 }
       )
       .catch(() => {});
-    const triedText = (await page.getByTestId('resume-card').textContent()) ?? '';
-    assert(
-      triedText.includes('tried once, not passed yet'),
-      `a lesson run and not passed must say so; got: ${triedText}`
-    );
-    // The roadmap's step cards carry the same distinction, so the whole map can be read as
-    // "never opened / opened and left / tried and failed / passed" at a glance.
     assert.equal(
       await page.getByTestId('practice-entry-P.4').first().getAttribute('data-state'),
       'tried',
@@ -1863,17 +1763,20 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       (await page.getByTestId('btn-run-verify').textContent())?.includes('Run & Verify'),
       'the restored version must be ungraded until it is run again'
     );
-    // Reset Starter is the one edit that means "forget this one", so the card stops mentioning it.
+    // Reset Starter is the one edit that means "forget this one", so Home stops advertising it.
     await clickToolbar(page, 'btn-reset-starter');
     await page.waitForTimeout(200);
-    await page.getByTestId('tab-btn-tab-arch').click();
-    await page.getByTestId('resume-card').waitFor({ timeout: 5000 });
+    await page.goto(`${baseUrl}?view=home`, { waitUntil: 'networkidle' });
+    await page.getByTestId('home-dashboard').waitFor({ timeout: 15000 });
     assert.equal(
-      await page.getByTestId('resume-draft').count(),
-      0,
-      'resetting to the starter must clear the draft, or the card would keep advertising it'
+      ((await page.getByTestId('home-continue').textContent()) ?? '').includes('Your draft is here'),
+      false,
+      'resetting to the starter must clear the draft, or Home would keep advertising it'
     );
-    console.log('  ok the card shows the unfinished edit and reopening hands it back');
+    console.log('  ok Home shows the unfinished edit and reopening hands it back');
+    // Home has no tab rail; the blocks below address the workbench's, so walk back through its door.
+    await page.getByTestId('btn-home-workbench').click();
+    await waitForEditor(page, undefined, 15000);
 
     // 7g-i. The Diff panel says which lines moved, not only how many. It reads the editor against the
     //       starter by default, and against the solution only once that is earned: the view must not
@@ -3778,7 +3681,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     console.log('  ok a study note and a pinned highlight survive a reload');
 
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Diff panel lines & earned solution reference, share link copied, opened and loaded, a pair session over hand-carried codes, two editors co-editing one document with undo staying each person’s own, inline values drawn then cleared by an edit, F12/Ctrl-click go-to-definition across the lesson’s files, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, ⌘P quick-open over lessons only, ⌘⇧F inside-the-lesson search landing on the hit’s line and finding a course page at its section, the ? key sheet open and inert in the editor, a sheet row rebound to a new key, a clash refused and a reset, study note & pinned highlight across a reload, gutter breakpoints clicked, keyed and remembered, a dot following an edit, the Board card showing its own sketch, a prediction graded against the verified serial, and the sketch copied for the simulator).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, Home’s Continue & hand-off, draft restore & step count, run history restore, Diff panel lines & earned solution reference, share link copied, opened and loaded, a pair session over hand-carried codes, two editors co-editing one document with undo staying each person’s own, inline values drawn then cleared by an edit, F12/Ctrl-click go-to-definition across the lesson’s files, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, ⌘P quick-open over lessons only, ⌘⇧F inside-the-lesson search landing on the hit’s line and finding a course page at its section, the ? key sheet open and inert in the editor, a sheet row rebound to a new key, a clash refused and a reset, study note & pinned highlight across a reload, gutter breakpoints clicked, keyed and remembered, a dot following an edit, the Board card showing its own sketch, a prediction graded against the verified serial, and the sketch copied for the simulator).'
     );
   } finally {
     await browser.close();

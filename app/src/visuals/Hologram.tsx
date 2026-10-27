@@ -271,7 +271,7 @@ export const Hologram: React.FC<{
       </div>
 
       <div className="grid gap-1.5 sm:grid-cols-2">
-        <label className="flex items-center gap-2 text-[11px] text-muted">
+        <label className="flex items-center gap-2 text-xs text-muted">
           <span className="w-14 shrink-0 font-mono">q₁ {degrees.q1}°</span>
           <input
             type="range"
@@ -287,7 +287,7 @@ export const Hologram: React.FC<{
             className="w-full accent-[var(--accent)]"
           />
         </label>
-        <label className="flex items-center gap-2 text-[11px] text-muted">
+        <label className="flex items-center gap-2 text-xs text-muted">
           <span className="w-14 shrink-0 font-mono">q₂ {degrees.q2}°</span>
           <input
             type="range"
@@ -313,7 +313,7 @@ export const Hologram: React.FC<{
           disabled={reduced}
           title={reduced ? 'Your system asks for reduced motion, so the demo is off. Dragging still works.' : 'Trace the capstone figure-eight'}
           data-testid="btn-holo-demo"
-          className="rounded border border-line-soft bg-canvas px-2 py-1 text-[11.5px] font-mono text-body hover:text-ink disabled:opacity-50 cursor-pointer"
+          className="rounded border border-line-soft bg-canvas px-2 py-1 text-xs font-mono text-body hover:text-ink disabled:opacity-50 cursor-pointer"
         >
           {demo ? 'Pause demo' : 'Demo'}
         </button>
@@ -322,7 +322,7 @@ export const Hologram: React.FC<{
           onClick={() => setTrace((on) => !on)}
           aria-pressed={trace}
           data-testid="btn-holo-trace"
-          className="rounded border border-line-soft bg-canvas px-2 py-1 text-[11.5px] font-mono text-body hover:text-ink cursor-pointer"
+          className="rounded border border-line-soft bg-canvas px-2 py-1 text-xs font-mono text-body hover:text-ink cursor-pointer"
         >
           Trail
         </button>
@@ -334,11 +334,11 @@ export const Hologram: React.FC<{
             setState(HOME);
           }}
           data-testid="btn-holo-home"
-          className="rounded border border-line-soft bg-canvas px-2 py-1 text-[11.5px] font-mono text-body hover:text-ink cursor-pointer"
+          className="rounded border border-line-soft bg-canvas px-2 py-1 text-xs font-mono text-body hover:text-ink cursor-pointer"
         >
           Home pose
         </button>
-        <span className="ml-auto font-mono text-[10.5px] text-faint">
+        <span className="ml-auto font-mono text-[11px] text-faint">
           reach {reach().max.toFixed(2)} · yaw {Math.round(state.yaw * DEG)}°
         </span>
       </div>

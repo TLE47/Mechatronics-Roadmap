@@ -24,9 +24,6 @@ import {
 import { tabForPreset } from '../../demoPresets';
 import { TrailCard } from '../TrailCard';
 import { BoardBridge } from '../BoardBridge';
-import { FoldToggle } from '../FoldToggle';
-import { STORAGE_KEY_RESUME_COLLAPSED, useFold } from '../../fold';
-import { trackLabel } from '../../trackLabel';
 import type { LessonAttempt } from '../../learningLog';
 import { PYTHON_TAB_NAME, tabName } from '../../tabNames';
 import {
@@ -57,48 +54,8 @@ interface TabArchitectureProps {
   startHereDismissed?: boolean;
   onRestoreStartHere?: () => void;
   onOpenPyodideLesson?: (lessonId: string) => void;
-  /**
-   * The lesson the learner stopped on, when there is one worth resuming (`lastLesson.ts` decides).
-   * The roadmap leads with it: a return visit should be one click, not a search through ten steps.
-   */
-  resumeLesson?: {
-    id: string;
-    title: string;
-    track: string;
-    verified: boolean;
-    completed: boolean;
-    /** `resume` = the lesson they stopped on; `next` = the first one still to do. */
-    reason: 'resume' | 'next';
-    /** Lines the learner's unfinished draft differs from the lesson's starter by; 0 when untouched. */
-    edited: number;
-    /** Marked steps the draft has written, out of the ones the starter makes measurable. */
-    stepsFilled: number;
-    stepsTotal: number;
-    /** True for a graded exercise, whose marked steps are `raise NotImplementedError` holes. */
-    stepsAreHoles: boolean;
-    /** `lesson_open` events for the lesson, and executions the learner asked for. */
-    opens: number;
-    runs: number;
-    lastOutcome: string | null;
-  } | null;
   /** Opens and runs per lesson, from the log; absent means nothing recorded yet. */
   lessonAttempts?: Record<string, LessonAttempt>;
-}
-
-type ResumeLesson = NonNullable<TabArchitectureProps['resumeLesson']>;
-
-/**
- * The offer in two words, for the folded card.
- *
- * Deliberately beside the sentence it shortens, reading the same fields in the same order, so the
- * folded badge and the open sentence cannot describe one lesson two ways.
- */
-function resumeBadge(lesson: ResumeLesson): string {
-  if (lesson.verified) return 'passed';
-  if (lesson.completed) return 'marked complete';
-  if (lesson.runs > 0) return lesson.runs === 1 ? 'tried once' : `tried ${lesson.runs}×`;
-  if (lesson.edited > 0) return 'edited, not run';
-  return lesson.reason === 'next' ? 'not opened' : 'opened';
 }
 
 export const TabArchitecture: React.FC<TabArchitectureProps> = ({
@@ -112,7 +69,6 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
   startHereDismissed = false,
   onRestoreStartHere,
   onOpenPyodideLesson,
-  resumeLesson = null,
   lessonAttempts = {},
 }) => {
   const [viewMode, setViewMode] = useState<'linear' | 'matrix'>('linear');
@@ -121,10 +77,6 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
   // pass's first step does not unfold another pass's; completion stays the only auto-collapse.
   const [expandedFirstStep, setExpandedFirstStep] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState<string>('');
-  // Folded to its heading, or open. The card grows a line for the state and another for a
-  // half-written draft, and a learner who already knows what they were doing wants the map back
-  // without losing the one press that continues it. Same store as the trail and the board card.
-  const { folded: resumeFolded, toggle: toggleResume } = useFold(STORAGE_KEY_RESUME_COLLAPSED);
   // Advanced View always shows the full matrix. Beginner View shows only the Beginner column
   // until the learner asks for the deeper ones.
   const showAdvancedColumns = !beginnerView || advancedColumnsOpen;
@@ -169,113 +121,9 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
 
   return (
     <div className="space-y-5">
-      {/* 0. The lesson to do next. Above the pipeline, because a return visit is asking "what was I
-             doing?" before "what is the map?", and the runner already remembers the lesson. The
-             card answers for both cases that matter - an unfinished lesson to pick up, and a passed
-             one that should hand the offer forward - and says which one it is, because "continue"
-             on a lesson already passed would be a lie. Hidden on a first visit: the landing page's
-             Start here block names the first lesson already. */}
-      {resumeLesson && onOpenPyodideLesson && (
-        <div
-          data-testid="resume-card"
-          data-resume-lesson={resumeLesson.id}
-          data-resume-reason={resumeLesson.reason}
-          data-collapsed={resumeFolded ? 'true' : 'false'}
-          className="bg-panel border border-accent/40 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3"
-        >
-          <div className="min-w-0">
-            <div className="text-xs font-mono uppercase tracking-wider text-accent">
-              {resumeLesson.reason === 'next' ? 'Next unverified lesson' : 'Pick up where you stopped'}
-            </div>
-            <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span data-testid="resume-lesson-id" className="text-sm font-bold font-mono text-ink">
-                {resumeLesson.id}
-              </span>
-              <span className="text-sm font-semibold text-ink">{resumeLesson.title}</span>
-              {/* Folded, the badge keeps the answer the card exists to give — passed, half-written
-                  or never opened — without the sentence and the draft detail behind it. */}
-              {resumeFolded && (
-                <span
-                  data-testid="resume-badge"
-                  className="text-[11px] font-mono uppercase tracking-wider text-muted"
-                >
-                  {resumeBadge(resumeLesson)}
-                </span>
-              )}
-            </div>
-            {!resumeFolded && (
-              <div data-testid="resume-lesson-state" className="mt-0.5 text-xs text-muted">
-                {trackLabel(resumeLesson.track)} ·{' '}
-                {resumeLesson.verified
-                  ? 'executed and passed'
-                  : resumeLesson.completed
-                  ? 'marked complete by you'
-                  : resumeLesson.runs > 0
-                  ? `tried ${
-                      resumeLesson.runs === 1 ? 'once' : `${resumeLesson.runs} times`
-                    }, not passed yet`
-                  : resumeLesson.edited > 0
-                  ? 'edited, never run'
-                  : resumeLesson.reason === 'next'
-                  ? 'not opened yet'
-                  : 'opened, never run'}
-              </div>
-            )}
-            {/* The half-written exercise is the part of the work the lesson id cannot show: without
-                this the card would offer "a lesson" when what is waiting is a program. The step
-                count is the honest half of "how close is this to passing" - the starter marks the
-                steps, so the card can count the ones already written; whether they are *right* is
-                still the runner's job, and the card never claims otherwise. */}
-            {!resumeFolded && resumeLesson.edited > 0 && (
-              <div data-testid="resume-draft" className="mt-1 text-xs text-emerald">
-                Your unfinished edit is still here
-                {resumeLesson.stepsTotal > 0 && (
-                  <>
-                    {' · '}
-                    <span data-testid="resume-draft-progress">
-                      {resumeLesson.stepsFilled} of {resumeLesson.stepsTotal}{' '}
-                      {resumeLesson.stepsAreHoles
-                        ? `NotImplementedError ${resumeLesson.stepsTotal === 1 ? 'hole' : 'holes'} filled`
-                        : `TODO ${resumeLesson.stepsTotal === 1 ? 'line' : 'lines'} written`}
-                    </span>
-                  </>
-                )}
-                {' · '}
-                {resumeLesson.edited} {resumeLesson.edited === 1 ? 'line' : 'lines'} changed
-              </div>
-            )}
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              onClick={() => onOpenPyodideLesson(resumeLesson.id)}
-              data-testid="btn-resume-lesson"
-              className="px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 bg-accent/20 text-accent border border-accent/50 hover:bg-accent/30 cursor-pointer transition-colors"
-            >
-              <Play className="w-3.5 h-3.5" />
-              {/* The tab is named by the runner itself, so the button says what it does, not where. */}
-              <span>
-                {resumeLesson.reason === 'next'
-                  ? resumeLesson.edited > 0
-                    ? 'Resume'
-                    : 'Start'
-                  : 'Continue'}{' '}
-                {resumeLesson.id}
-              </span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-            <FoldToggle
-              folded={resumeFolded}
-              onToggle={toggleResume}
-              what="the lesson offer"
-              testId="btn-resume-toggle"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* 0b. What the learner actually did, across every lesson. Under the resume card because it
-             answers the same question one level up: the card says what to do next, the trail says
-             what the last fortnight was. It renders nothing on a first visit. */}
+      {/* 0b. What the learner actually did, across every lesson. Home owns the resume offer and the
+             overview now; the roadmap keeps the trail, the map and the practice. It renders nothing
+             on a first visit. */}
       <TrailCard onOpenLesson={onOpenPyodideLesson} />
 
       {/* 0c. The embedded C lessons, bridged to a simulator (`BoardBridge.tsx`). Here rather than

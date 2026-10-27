@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `3.2.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `3.3.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,54 @@ flowchart LR
 ```
 
 ---
+
+## [2026-10-26] — Run 257: Home, the page a return visit lands on
+
+A learner coming back had no front door: the workbench opened on Lesson 1 whether they had finished
+it or not, and the old `?view=dashboard` was a link rather than a place the app took you. This run adds
+**Home**, a whole page for the four questions a return visit actually has — what is next, where was I,
+which lab is which, and where is my work kept — and makes the rule that chooses it explicit.
+
+**The landing rule is a module, not a mood** ([`app/src/homeLanding.ts`](app/src/homeLanding.ts)).
+Precedence: an explicit `?view=admin|home|dashboard|workbench`; then `?lesson=`, which is a
+destination of its own; then a browser with no progress, which keeps the workbench and its Start Here
+card; then a reload inside the same 45-minute sitting, which returns to the page that was on screen;
+and otherwise Home. A store that throws and an absent store both cost the memory, never the page, and
+a clock that moved backwards is not a sitting. The address is kept in step on arrival, so a learner
+who lands on Home can copy the URL. `?view=dashboard` stays an alias: a bookmark, an account mail and
+`e2e_game.mjs` all still land on the same page.
+
+**One page, every door** ([`app/src/components/home/`](app/src/components/home)). Today names the
+first check the next mission still asks for; Continue opens the lesson the runner would reopen, with
+its draft size and the heading it was left at; Your labs renders the rail's own registry
+([`workbenchTabs.json`](app/src/data/workbenchTabs.json), twelve rooms, so a new tab needs no second
+list); and Your route counts the tier-1 checks the missions ask for, not a second denominator. Review
+says what is due and lists the newest notes one line each; Progress, the journey map and the Black Box
+bring the surfaces that already exist; Tools carries account, both exports, sound, focus and backup.
+Every card leaves the page and opens what owns the thing — nothing is rebuilt, nothing is modal, and
+no reading of Home can lock a lesson, a hint or a lab. The header gains a Home button on every screen
+and `⌘K` gains **Open Home**; a lesson link still goes straight to the editor.
+
+**It costs a first lesson nothing.** Home is a `React.lazy` chunk; `homeData.ts` and `homeLanding.ts`
+are pure (no React, no writes), so the joins and the rule are pinned without a browser. The old
+`LearnerDashboard.tsx` was deleted — Home is the dashboard, and its orphaned copy was the second place
+a "next" could be computed.
+
+**Verified.** `test:home` 12/12 (the five-step precedence, a hostile store, an empty notebook, a
+reading position as words, the route's denominators); `test:e2e:home` 11 checks in Chromium (a first
+visit stays on the workbench, a returning one lands on Home, all twelve labs are doors, Today's Start
+opens the entry it named, review opens the deck where the cards live, a reload stays, and `?lesson=`
+never lands on Home); `test:e2e:game` 16/16 after its dashboard block was retargeted to Home;
+`test:e2e`'s offer block (steps 7c–7g) now walks Home's Continue card — the resume, the hand-off to
+the next unverified lesson, a half-written draft that says how large it is and reopens intact, and a
+reset that stops the card advertising it — instead of the roadmap card it replaced;
+`check:axe` clean including Home in all four palettes; `check:snapshot` re-recorded for 52 surfaces
+(the new page, and the header's Home button on all twelve tabs); `check:labels` measures Home at the
+same 12 px / 11 px floors, which moved the hologram's two sliders and three buttons up to 12 px and
+exempted a drawing's own SVG labels (a figure's type is `test:visuals`' question, not this gate's);
+`check:weight` PASS (entry_gzip **523.3 of 530 kB**, tightest metric `css_gzip` 3.4 kB left — Home is a
+lazy chunk and the first lesson pays nothing for it); `check_doc_commands` 462 commands PASS;
+`check_consistency` PASS. Version **3.3.0**.
 
 ## [2026-10-26] — Run 256: every page gets its picture
 

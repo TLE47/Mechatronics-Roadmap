@@ -1,7 +1,7 @@
 {
   "name": "mechalab",
   "private": true,
-  "version": "3.2.0",
+  "version": "3.3.0",
   "type": "module",
   "scripts": {
     "predev": "python3 scripts/generate_python_lessons_data.py",
@@ -14,8 +14,10 @@
     "check:content": "python3 scripts/build_content.py --check",
     "test:content": "node --experimental-strip-types scripts/test_content.mjs",
     "test:game": "node --experimental-strip-types scripts/test_gamification.mjs",
+    "test:home": "node --experimental-strip-types scripts/test_home.mjs",
     "test:audio": "node --experimental-strip-types scripts/test_audio.mjs",
     "test:e2e:game": "node scripts/e2e_game.mjs",
+    "test:e2e:home": "node --experimental-strip-types scripts/e2e_home.mjs",
     "check:linkhistory": "python3 scripts/generate_link_history_data.py --check",
     "test:linkhistory": "python3 tests/test_link_history_data.py",
     "check:ramp": "python3 scripts/check_ramp_lessons.py --json",

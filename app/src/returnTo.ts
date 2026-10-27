@@ -61,8 +61,8 @@ export function buildReturnUrl(origin: string, base: string, target: string): st
 }
 
 export interface ReturnTarget {
-  /** A whole-screen view the link asked to open, if any. */
-  view: 'dashboard' | 'admin' | null;
+  /** A whole-screen view the link asked to open, if any. `dashboard` is Home's old alias. */
+  view: 'home' | 'dashboard' | 'admin' | null;
   /** A lesson the workbench should select, if the link named one the build lists. */
   lessonId: string | null;
 }
@@ -70,7 +70,7 @@ export interface ReturnTarget {
 /**
  * What a `?return=` destination asks the page to open.
  *
- * Only the two view modes and a lesson id are read; everything else in the destination is ignored, so
+ * Only a known whole page and a lesson id are read; everything else in the destination is ignored, so
  * a crafted query cannot make the page do more than it already does.
  */
 export function parseReturnTarget(
@@ -89,7 +89,8 @@ export function parseReturnTarget(
   const view = params.get('view');
   const lesson = params.get('lesson');
   const lessonId = lesson && isKnownLesson(lesson) ? lesson : null;
-  const knownView = view === 'dashboard' || view === 'admin' ? view : null;
+  // `dashboard` stays accepted: it is the address the account mail and older bookmarks carry.
+  const knownView = view === 'home' || view === 'dashboard' || view === 'admin' ? view : null;
   if (!knownView && !lessonId) return null;
   return { view: knownView, lessonId };
 }

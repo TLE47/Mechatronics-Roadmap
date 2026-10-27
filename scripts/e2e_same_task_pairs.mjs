@@ -126,12 +126,15 @@ window.__pairs = {
     const fields = Array.from(document.querySelectorAll('input, textarea, select'))
       .map((el) => (el.type || el.tagName) + '=' + (el.value || ''))
       .join('|');
-    // Every mechalab key except the three that carry a wall clock: the learning log's event stamps,
-    // the cloud-sync "last changed" stamp, and the sitting clock's measured sittings all differ
-    // between two runs of the same clicks by design - a sitting *is* a record of when the clicks
-    // happened - and nothing in this sweep is about any of them. Everything else is still compared.
+    // Every mechalab key except the four that carry a wall clock: the learning log's event stamps,
+    // the cloud-sync "last changed" stamp, the sitting clock's measured sittings, and the visit
+    // stamp the landing rule keeps (mechalab_last_visit_v1) all differ between two runs of the same
+    // clicks by design - a sitting and a visit *are* records of when they happened - and nothing in
+    // this sweep is about any of them. Everything else is still compared.
     const storage = Object.keys(localStorage)
-      .filter((k) => k.startsWith('mechalab') && !/learningLog|progress\.updatedAt|sittings/i.test(k))
+      .filter(
+        (k) => k.startsWith('mechalab') && !/learningLog|progress\.updatedAt|sittings|last_visit/i.test(k)
+      )
       .sort()
       .map((k) => k + '=' + localStorage.getItem(k))
       .join('|');

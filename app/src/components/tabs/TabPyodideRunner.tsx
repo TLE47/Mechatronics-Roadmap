@@ -260,6 +260,11 @@ interface TabPyodideRunnerProps {
    */
   tourRequest?: number;
   /**
+   * Bumped by Home's Review button. The deck is already here (the Study panel); this only brings it
+   * into view, because a review opened in a second surface would be a second schedule.
+   */
+  reviewRequest?: number;
+  /**
    * An explicit "open this entry" request. The id alone cannot express it: choosing the lesson a
    * deep link already named leaves `initialLessonId` unchanged, so nothing would fire.
    *
@@ -351,6 +356,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   runRequest,
   formatRequest,
   tourRequest,
+  reviewRequest,
   lessonRequest,
   sharedAttempt,
   onDismissShared,
@@ -681,11 +687,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // clean URL). A later pass is the learner picking a different entry in-app - from a roadmap step's
   // practice chip, say - and then the address has to follow, or it keeps naming the old lesson.
   const initialLessonApplied = useRef<boolean>(false);
+  // The id this effect has already honoured. A mount effect is replayed in development
+  // (`React.StrictMode`), and the replay used to re-select the mount default *after* an explicit
+  // request had landed — so Home's Continue, which names a lesson other than the one a plain visit
+  // would reopen, reopened the wrong one. The same prop is the same instruction; a changed one is
+  // a new pick and still applies.
+  const appliedInitialId = useRef<string | null>(null);
   useEffect(() => {
-    if (initialLessonId && PYTHON_LESSONS.some((l) => l.id === initialLessonId)) {
-      selectLesson(initialLessonId, initialLessonApplied.current);
-      initialLessonApplied.current = true;
-    }
+    if (!initialLessonId || !PYTHON_LESSONS.some((l) => l.id === initialLessonId)) return;
+    if (appliedInitialId.current === initialLessonId) return;
+    appliedInitialId.current = initialLessonId;
+    selectLesson(initialLessonId, initialLessonApplied.current);
+    initialLessonApplied.current = true;
   }, [initialLessonId]);
 
   // A try-it link lands *after* the draft has been loaded, so it wins: the page's snippet is what the
@@ -2794,6 +2807,19 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     // during the tour cannot close the tour it is part of.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
+
+  // Home's Review button asks the Study panel for attention with a nonce, the same way the palette
+  // asks for a run. The deck is already mounted; this scrolls it into view and puts the keyboard on
+  // its first control, and a mount never fires a request nobody made this visit.
+  const lastReviewRequestRef = useRef<number>(reviewRequest ?? 0);
+  useEffect(() => {
+    if ((reviewRequest ?? 0) === lastReviewRequestRef.current) return;
+    lastReviewRequestRef.current = reviewRequest ?? 0;
+    const deck = document.getElementById('study-deck');
+    if (!deck) return;
+    deck.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    deck.focus({ preventScroll: true });
+  }, [reviewRequest]);
 
   // The palette and the `?` sheet ask for a replay with a nonce, the same way they ask for a run.
   const lastTourRequestRef = useRef<number>(tourRequest ?? 0);

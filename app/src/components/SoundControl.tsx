@@ -60,7 +60,11 @@ export function loadSoundEngine(): Promise<Engine> {
  * never covers the work. In focus mode the header is hidden by CSS, so `App` renders the pill variant
  * next to the way out — one press from muted, without a panel in the way.
  */
-export const SoundControl: React.FC<{ variant?: 'header' | 'pill' }> = ({ variant = 'header' }) => {
+export const SoundControl: React.FC<{ variant?: 'header' | 'pill'; testIdSuffix?: string }> = ({
+  variant = 'header',
+  testIdSuffix,
+}) => {
+  const tid = (base: string) => (testIdSuffix ? `${base}-${testIdSuffix}` : base);
   const [prefs, setPrefs] = React.useState<SoundPrefs>(() => cachedSoundPrefs());
   const [open, setOpen] = React.useState(false);
   const [armed, setArmed] = React.useState(false);
@@ -189,11 +193,15 @@ export const SoundControl: React.FC<{ variant?: 'header' | 'pill' }> = ({ varian
     });
 
   return (
-    <div ref={wrapRef} data-testid={pill ? 'sound-control-pill' : 'sound-control'} className="relative flex items-center">
+    <div
+      ref={wrapRef}
+      data-testid={tid(pill ? 'sound-control-pill' : 'sound-control')}
+      className="relative flex items-center"
+    >
       <button
         type="button"
         onClick={toggle}
-        data-testid={pill ? 'btn-sound-toggle-pill' : 'btn-sound-toggle'}
+        data-testid={tid(pill ? 'btn-sound-toggle-pill' : 'btn-sound-toggle')}
         aria-label={soundLabel(prefs.on)}
         aria-pressed={prefs.on}
         title={soundLabel(prefs.on)}
@@ -226,7 +234,7 @@ export const SoundControl: React.FC<{ variant?: 'header' | 'pill' }> = ({ varian
           aria-expanded={open}
           aria-controls={panelId}
           aria-label="Sound settings"
-          data-testid="btn-sound-settings"
+          data-testid={tid('btn-sound-settings')}
           className="btn ml-1 px-1.5"
           style={{ color: 'var(--muted)' }}
         >
@@ -236,6 +244,7 @@ export const SoundControl: React.FC<{ variant?: 'header' | 'pill' }> = ({ varian
       {open && !pill && (
         <SoundSettingsPanel
           id={panelId}
+          testIdSuffix={testIdSuffix}
           prefs={prefs}
           armed={armed}
           onToggle={toggle}

@@ -19,7 +19,7 @@ flowchart LR
     Payload --> Reader["LessonReader.tsx"]
     Scenes["visuals/scenes.ts<br/>73 named scenes"] --> Reader
     Reader --> Diagram["visuals/Diagram.tsx<br/>chain · loop · timing · states · bars · plot<br/>graph · matrix · bits · reach · schematic · route"]
-    Hologram["visuals/Hologram.tsx<br/>the arm, draggable"] --> Dashboard["LearnerDashboard.tsx"]
+    Hologram["visuals/Hologram.tsx<br/>the arm, draggable"] --> Home["components/home/HomeDashboard.tsx"]
 ```
 
 ## Three kinds of picture

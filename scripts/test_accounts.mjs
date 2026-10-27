@@ -152,6 +152,8 @@ test('a return target opens only a known lesson or a known view', () => {
     view: 'dashboard',
     lessonId: null,
   });
+  // Home is what the app writes now; the alias above is kept for old links.
+  assert.deepEqual(parseReturnTarget('?return=%3Fview%3Dhome', known), { view: 'home', lessonId: null });
   assert.equal(parseReturnTarget('?return=%3Flesson%3Dnope', known), null);
   assert.equal(parseReturnTarget('?return=%3Fview%3Dsuperuser', known), null);
   assert.equal(parseReturnTarget('', known), null);

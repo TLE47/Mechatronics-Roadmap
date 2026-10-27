@@ -61,6 +61,13 @@ export const PALETTE_ACTIONS: PaletteItem[] = [
     keywords: 'advanced technical mode',
   },
   {
+    id: 'action-open-home',
+    kind: 'action',
+    label: 'Open Home',
+    detail: 'today · labs · progress',
+    keywords: 'dashboard start today overview resume home',
+  },
+  {
     id: 'action-open-cheatsheet',
     kind: 'action',
     label: 'Open the 1-page cheat sheet',

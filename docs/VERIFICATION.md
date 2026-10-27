@@ -33,6 +33,8 @@ flowchart LR
 | The bundle the app imports is what `content/` says, and it is usable: every mission joins to lessons, every recording exists, every level unlocks something | `app/src/data/contentBundle.ts`, `contentRecordings.ts` | `npm run test:content` |
 | The reward engine: a level from verified missions, an award granted once across a restore and a merge, no idle time, no randomness, a hint costs nothing, a missed week erases nothing, a changed grader asks for a re-verify | `app/src/gamification/*.ts`, rules from `content/rewards/rules.yaml` | `npm run test:game` |
 | The 3.0 surfaces in a browser: the prologue and its red-checks warning, LV 1 with Mission 2 in progress, the Perk panel, the Black Box's open and locked rows, and one real pass filing exactly one award | the app, driven as a learner drives it | `npm run test:e2e:game` |
+| Which page a visit opens: an explicit view, a lesson link, a first visit, a reload inside the sitting and a new sitting, plus a store that throws, an absent store and a clock that moved backwards; and Home's joins — today's first unverified check, the route's check counts, the newest notes one line each, and a reading position as words | `app/src/homeLanding.ts`, `app/src/homeData.ts` | `npm run test:home` |
+| Home in a browser: a first visit stays on the workbench, a returning one lands on Home with today's one check, all twelve labs are doors, the route and review buttons open what they name, a reload stays, and `?lesson=` never lands on Home | the app, driven in Chromium | `npm run test:e2e:home` |
 | Sound is off by default, one press starts it, the room arrives after the gesture, a control click is heard as its own kind, the panel's sections and faders reach the engine and the store, a preview plays the tick it names, the Interface switch silences presses and still works while silent, the Music source switches between the beds and the drone, a pass plays the verify cue, a run ducks the bed and its verdict lifts it, a mute silences the interface, and a reload arms rather than autoplays | `app/src/audio/*`, `SoundClicks.tsx`, `SoundSettingsPanel.tsx` and the header's control, driven in Chromium through the engine's debug snapshot | `npm run test:e2e:game` |
 | The sound engine without a browser: the store's defaults and clamps (including a record written before the Room fader and the two switches existed), no context before a gesture, the graph built once and the limiter last, cue lengths and peaks, the cue rate limit, ducking and its history, the focus factor, the room table and its bus, the seven click roles and their classifier, pan, the click cap, the click switch and the preview that survives it, the two beds, the drone fallback, a chosen drone that never fetches, the gust, and both rain paths | `app/src/audio/{prefs,facade,engine,clickMap,ambience,musicCatalogue}.ts`, with a recording AudioContext double | `npm run test:audio` |
 | The visual kit: every scene is drawable and honestly named in all twelve kinds (a graph's arrows land on boxes it has and no two of its boxes share a cell, a matrix's cells match its labels, a bitfield spans bits that exist, a plot's points stay inside its axes, a schematic's shunt hangs off a drawn part), an unknown id is refused rather than drawn blank, every figure, route and graph a committed page asks for exists and validates, and the arm's joints, reach, round trip, orbit, projection and trail obey their own limits | `app/src/visuals/{scenes,holoModel}.ts`, against the committed payloads | `npm run test:visuals` |
@@ -91,6 +93,7 @@ python3.12 scripts/generate_lesson_pages.py --check # the 92 reader payloads sti
 python3.12 scripts/check_all.py --full  # + the 48-package exercise sweep and the unittest discovery
 python3.12 scripts/run_all_labs.py      # the 13 reference simulations and labs
 npm run test:practice                   # roadmap <-> workbench join
+npm run test:home                       # the landing rule (explicit view, lesson link, first visit, sitting, new sitting) and Home's joins
 npm run test:levels                     # the course-level nav only where a pane reads the pass: the roadmap and every four-pass guide banner, never the runner, quiz, board, survey, dashboard or lesson page
 npm run test:firstrun                    # the first-run tour without a browser: the six steps, the edit and run gates, a first-try pass skipping the red-checks step, the stored record (junk, a future version, a blocked store), when it opens, the resume chip, a restore that never moves it backwards, and every data-tour anchor in the source
 npm run test:e2e:tour                   # …and in a browser: the ring on the brief with the brief still clickable through it, no Next on the action steps, typing alone advancing step 3, a failed run explained, Finish, no reopen, dismissal, the deep-link chip, the resume chip, the phone sheet, and the palette replay
@@ -98,8 +101,8 @@ npm run test:theme                      # palette rules: stored pick, OS default
 npm run test:theme:e2e                  # the three controls + contrast on all 12 tabs, in all four palettes
 npm run check:weight                    # the gzipped shell against docs/weight-budget.json in both build shapes: a local-only dist/ also builds the signed-in one into dist-signed-in/, grades it, and removes it
 npm run check:lighthouse                # Lighthouse on the built bundle: best-practices, SEO and accessibility against docs/lighthouse-allowlist.json (performance not run)
-npm run check:snapshot                  # the painted surface of all 48 tab/palette pairs against docs/surface-snapshot.json: geometry (2 px), control counts, resolved styles
-npm run check:labels                    # the first screen's type, rendered at 1280x800: seven controls at rest, thirteen behind More, primary 13 px, controls 12 px, metadata 11 px, lesson text 17-18 px
+npm run check:snapshot                  # the painted surface of all 52 surfaces (twelve tabs and Home, four palettes) against docs/surface-snapshot.json: geometry (2 px), control counts, resolved styles
+npm run check:labels                    # the first screen's type, rendered at 1280x800: seven controls at rest, thirteen behind More, primary 13 px, controls 12 px, metadata 11 px, lesson text 17-18 px — and Home's controls and metadata at the same floors
 npm run test:perf                       # the visit, timed: six moments on the built bundle, on a laptop and on a throttled phone, each against docs/perf-budget.json (add --record to write docs/PERF.md)
 npm run test:perf:unit                  # the perf page and the budget without a browser: six moments, two profiles, no recorded row above its ceiling (a CI step)
 npm run check:pilot                     # the sitting kit's six gates: the sitting record's rules, the export preflight, the transfer follow-up, the aggregate and the kit page's own commands
@@ -133,6 +136,7 @@ npm run test:portfolio                  # the export: a section only when it has
 npm run test:e2e:backup                 # the header buttons in Chromium: write a zip, wipe, restore to the store and to the screen
 npm run test:e2e:review                 # pin, comment, rate and reload in Chromium: the card is still scheduled after the reload
 npm run test:e2e:focus                  # focus in Chromium: the chrome hides, the work stays, all three exits work, and a sitting is measured
+npm run test:e2e:home                   # Home in Chromium: a returning visit lands there, every door opens, a reload stays, and a lesson link bypasses it
 npm run test:e2e:storage                # the migration in Chromium: a pre-IndexedDB bucket arrives whole, the screen shows it, new work stays in the database
 npm run test:palette                    # ⌘K, ⌘P and ⌘⇧F: the whole catalogue once, the ranking order, and that the sheet lists every key once
 npm run test:search                     # ⌘⇧F inside the lessons: a starter line is the editor's line, a hint is not, the solution is not searchable, and the caps hold
@@ -446,7 +450,7 @@ function of its contention, which is the same reason `check:lighthouse` does not
 What CI runs is `npm run test:perf:unit` — no browser, ~60 ms — which fails when the page, the budget
 and the walk stop describing the same six moments, or when a recorded row sits above its own ceiling.
 
-`npm run check:snapshot` records the **painted surface** of all 48 tab/palette combinations — header,
+`npm run check:snapshot` records the **painted surface** of all 52 surfaces — the twelve tabs and Home, in each of the four palettes — header,
 activity rail, main pane and first panel geometry, the count of buttons, inputs, links, headings,
 canvases and tables, and the colours, type and `--bg/--panel/--text/--accent` the browser resolved — and
 fails when any of it moves. It is deliberately **not a pixel diff**: a baseline captured on the Mac this
@@ -531,18 +535,18 @@ box. The card states the seam in its own words — the board runs elsewhere, it 
 nothing pasted there comes back — and the graded prediction is filed in the learning log as a run
 (`npm run test:board`, browser step 15).
 
-**The roadmap's three cards fold the same way (Run 244).** The resume card, the trail and the Board
-card each grow once a learner has done something, and all three now carry the same toggle in the
-header. Folded, each keeps the line that says what it is — the offer's `id · title` and a two-word
-badge (`passed`, `tried 3×`) with the button that continues the lesson still beside it, the trail's
-totals line, the Board card's heading and the lesson it holds — and the detail is behind one press.
-One implementation rather than three copies: `app/src/fold.ts` owns the store and the hook,
-`app/src/components/FoldToggle.tsx` the button, and the keys sit beside the palette and the layout in
-`localStorage` rather than in a backup, so an archive restored on another machine cannot decide which
-cards this one has open. `aria-expanded` carries the state, the accessible name begins with the
-visible word (WCAG 2.5.3), and each card carries `data-collapsed` so a test reads the state rather
-than a class. `npm run test:e2e:trail` folds the trail across a reload; the workbench suite does the
-same for the offer (step 7c.5) and the Board card (step 15b).
+**The roadmap's cards fold the same way (Run 244; the offer left for Home in Run 257).** The trail and
+the Board card each grow once a learner has done something, and both carry the same toggle in the
+header. Folded, each keeps the line that says what it is — the trail's totals line, the Board card's
+heading and the lesson it holds — and the detail is behind one press. One implementation rather than
+copies: `app/src/fold.ts` owns the store and the hook, `app/src/components/FoldToggle.tsx` the button,
+and the keys sit beside the palette and the layout in `localStorage` rather than in a backup, so an
+archive restored on another machine cannot decide which cards this one has open. `aria-expanded`
+carries the state, the accessible name begins with the visible word (WCAG 2.5.3), and each card
+carries `data-collapsed` so a test reads the state rather than a class. `npm run test:e2e:trail` folds
+the trail across a reload; the workbench suite does the same for the Board card (step 15b). The resume
+offer is no longer a folding card: it is Home's Continue section (`npm run test:e2e:home`), the page's
+first action, and it is always open.
 
 **The Board tab runs the compiled sketch (Run 202).** The gap the card points across is now closed on
 this side too: `scripts/extract_and_compile_sketches.py --write-firmware` compiles each `Full Solution`

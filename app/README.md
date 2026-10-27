@@ -317,7 +317,30 @@ The reading pace is a test, not a review note: `tests/test_lesson_pages.py` (`Re
 page has no figure, no map, or a teaching section with more than 1,400 characters of unbroken prose on
 the beginner track (2,500 in a module or chapter).
 
-**The arm you can grab** is the dashboard's top tile: [`src/visuals/Hologram.tsx`](src/visuals/Hologram.tsx)
+### Home
+
+Home is the page a returning learner lands on ([`src/components/home/HomeDashboard.tsx`](src/components/home/HomeDashboard.tsx)),
+and it is a destination rather than a gate. The rule lives in [`src/homeLanding.ts`](src/homeLanding.ts): an
+explicit `?view=admin|home|dashboard|workbench` wins, a `?lesson=` link is a destination of its own, a
+browser with no progress at all opens the workbench and its Start Here card, a reload inside the same
+sitting returns to the page that was on screen, and every other visit opens Home. The page is a lazy
+chunk, so a first lesson never downloads it, and every card on it is a real door:
+
+- **Today** — the first check the next mission still asks for, from the same join the journey map uses
+  ([`src/homeData.ts`](src/homeData.ts)), with the review count beside it.
+- **Continue** — the lesson the runner would reopen, its draft's size, and the heading the reader
+  stopped at.
+- **Your labs** — the rail's own registry ([`src/data/workbenchTabs.json`](src/data/workbenchTabs.json)),
+  so a new tab appears on Home with no second list to edit.
+- **Your route, review and notes, progress, the journey map, the Black Box, and the tools** (account,
+  exports, sound, focus, backup): each opens the surface that owns it instead of rebuilding it.
+
+`npm run test:home` pins the landing rule (including a store that throws and a clock that moved
+backwards) and the joins; `npm run test:e2e:home` walks it in Chromium: a first visit stays on the
+workbench, a returning one lands on Home, every door opens what it names, a reload stays, and a lesson
+link never lands on Home.
+
+**The arm you can grab** is Home's top tile: [`src/visuals/Hologram.tsx`](src/visuals/Hologram.tsx)
 projects a two-link arm from 3D, with a view to orbit and two joints to pose. Its geometry is
 [`src/visuals/holoModel.ts`](src/visuals/holoModel.ts) — pure functions, so joint stops, the reach, the
 IK/FK round trip, the projection and the trail are asserted under Node rather than eyeballed in a
@@ -427,7 +450,7 @@ Every other surface answers a question about *one* lesson. The roadmap's trail c
 self-paced course is asked by the person sitting it — "what did I do last Tuesday" — from the two
 stores that already held the answer: the learning log (what happened) and the sitting clock (how long
 it lasted). [`src/timeline.ts`](src/timeline.ts) is the reading, pure and given `now`, and
-[`src/components/TrailCard.tsx`](src/components/TrailCard.tsx) draws it under the resume card: days
+[`src/components/TrailCard.tsx`](src/components/TrailCard.tsx) draws it near the top of the roadmap: days
 newest first, each row a local time and a verb (`opened`, `run · checks failed`, `verified`, `read hint
 2`, `exported the portfolio`, with a failure's first line beside it).
 
@@ -578,7 +601,7 @@ built from this public repository, and maps would roughly double what Pages serv
 the same three-way ratchet as the accessibility one: unlisted fails, wider than recorded fails, and
 stale fails.
 
-**`npm run check:snapshot`** records the **painted surface** of all 48 tab/palette combinations: where
+**`npm run check:snapshot`** records the **painted surface** of all 52 surfaces — the twelve tabs and Home, in all four palettes: where
 the header, the activity rail, the main pane and its first panel sit, how many buttons, inputs, links,
 headings, canvases and tables the tab has, and the colours, type and palette tokens the browser
 resolved. Every other suite asks about a feature; this one is the only place that notices a panel that
@@ -1188,7 +1211,10 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/returnTo.ts`](src/returnTo.ts) | Where a sign-in round trip may return to: this origin and base path only, with the destination reduced to a known view or lesson. |
 | [`src/workspaceMerge.ts`](src/workspaceMerge.ts) | The keep-both merge for drafts, notes and highlights — pure, so the conflict rule is tested without storage. |
 | [`src/workspaceSync.ts`](src/workspaceSync.ts) | Opt-in draft/note sync: the local stores, the `mechalab_workspace` row, the pre-sync preview and the merge report. |
-| [`src/dashboardData.ts`](src/dashboardData.ts) | The learner dashboard's model: continue, progress counts, recent study, saved work and review. |
+| [`src/dashboardData.ts`](src/dashboardData.ts) | Home's returning-learner model: continue, progress counts, recent study, saved work and review. |
+| [`src/homeData.ts`](src/homeData.ts) | Home's joins: today's one check, the route's counts, the newest notes as one line each, and the heading a lesson was left at. |
+| [`src/homeLanding.ts`](src/homeLanding.ts) | Which page a visit opens, and the remembered last visit: a deep link and a first visit always win their own way. |
+| [`src/components/home/`](src/components/home) | The page itself: Today, Labs, Route, Review, Tools and the dashboard that lays them out. |
 | [`src/adminModel.ts`](src/adminModel.ts) | The admin capabilities, action names and the denial order the page shows; the server repeats every check. |
 | [`src/siteSettings.ts`](src/siteSettings.ts) | The public announcement and feature flags, read once per visit, with built-in defaults when no project is configured. |
 | [`src/lessonCoach.ts`](src/lessonCoach.ts) | The progressive hints and the stuck-state prompts. |
@@ -1202,7 +1228,7 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/visuals/scenes.ts`](src/visuals/scenes.ts) | The named figures, as data: 73 scenes in twelve kinds, and `sceneFor` refusing an id it does not draw. |
 | [`src/visuals/Diagram.tsx`](src/visuals/Diagram.tsx) | One SVG renderer per figure kind, all theme-token colours, `role="img"` and a `<figcaption>`; the route's vertical layout and its label wrapping. |
 | [`src/visuals/holoModel.ts`](src/visuals/holoModel.ts) | The arm as pure functions: forward and inverse kinematics, the orbit clamps, the projection, the bounded trail, the demo pose. |
-| [`src/visuals/Hologram.tsx`](src/visuals/Hologram.tsx) | The dashboard's hologram: the projection drawn, the view dragged, the joints posed, the readout. |
+| [`src/visuals/Hologram.tsx`](src/visuals/Hologram.tsx) | Home's hologram: the projection drawn, the view dragged, the joints posed, the readout. |
 | [`src/readingPosition.ts`](src/readingPosition.ts) | Where each lesson was left: a heading anchor plus an offset, kept apart from the draft store. |
 | [`src/components/LessonReader.tsx`](src/components/LessonReader.tsx) | The pane: blocks rendered as React, the position restored and flushed, Highlight, Top, and the source link. |
 | [`src/draftHistory.ts`](src/draftHistory.ts) | The versions behind the draft: what each run started from, with its verdict, bounded per lesson and in total, plus the merge a restore uses. |
@@ -1277,10 +1303,10 @@ npm run test:board           # the Board card: each lesson's sketch, a predictio
 npm run check:panel          # the card's generated data still matches the five Arduino lesson pages
 npm run test:avr             # every committed .hex runs in avr8js and prints its lesson's serial; corrupt records and wrong expectations refused
 npm run check:firmware       # each .hex was built from the sketch the page ships, and is the file the index hashes
-npm run check:axe            # axe over all 12 tabs in every palette; serious/critical fails, stale allowlists fail
+npm run check:axe            # axe over all twelve tabs and Home in every palette; serious/critical fails, stale allowlists fail
 npm run check:weight         # the gzipped shell against docs/weight-budget.json (run after npm run build)
 npm run check:lighthouse     # best-practices, SEO and accessibility audits on the built bundle; performance is not run
-npm run check:snapshot       # the painted structure of all 48 tab/palette surfaces against docs/surface-snapshot.json
+npm run check:snapshot       # the painted structure of all 52 surfaces against docs/surface-snapshot.json
 npm run test:perf            # the visit, timed: six moments on the built bundle, laptop and throttled phone, against docs/perf-budget.json (--record writes docs/PERF.md)
 npm run test:perf:unit       # the perf page and its ceilings without a browser; a CI step
 npm run test:e2e:backup      # the header buttons in Chromium: write a zip, wipe, restore to store and screen
