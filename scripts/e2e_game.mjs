@@ -3,7 +3,7 @@
  * MechaLab 3.0 in a real browser (`scripts/e2e_game.mjs`, `npm run test:e2e:game`).
  *
  * The unit suites prove the engine and the content; only a browser can answer whether the game is
- * actually *wired to the work*. Three scenarios, each the real one:
+ * actually *wired to the work*. Four scenarios, each the real one:
  *
  *  1. A first visit gets the four-line prologue and the warning that the starter is meant to fail;
  *     dismissing it is remembered, so the second visit is quiet.
@@ -14,6 +14,8 @@
  *     does not grant it a second time. Sound is exercised in the same scenario, because it hangs off
  *     the same run: off until asked for, the room arriving after the gesture, a click heard through
  *     the delegated listener, the bed ducked while the checks run, and one press back to silence.
+ *  4. The sound panel on a 360×640 phone: it opens, the whole card is inside the window, a fader
+ *     press does not close it, its last row is reachable by scrolling, and Escape gives focus back.
  *
  * The middle scenario seeds the verified flags on purpose — the engine's contract is that flags are
  * the only input, and re-running 21 lessons in a browser would test Pyodide, not the game.
@@ -402,11 +404,81 @@ async function main() {
       console.log('  ok one press mutes, and a muted interface schedules nothing');
       await context.close();
     }
+
+    // ---- 4. The sound panel on a phone: it opens, it fits, and its last row is reachable ----
+    //
+    // The tray row the button lives in scrolls sideways on a phone, and the panel used to be an
+    // `absolute` child of it: its left edge sat at -21 px and the row's clip box cut it off, so the
+    // panel was open and unusable. A 360×640 window is the short end of the same problem — the card
+    // was taller than the room under the header, and its credit and **Reset** were below the fold.
+    {
+      const context = await browser.newContext({
+        viewport: { width: 360, height: 640 },
+        isMobile: true,
+        hasTouch: true,
+      });
+      await seedTourSeen(context);
+      const page = await context.newPage();
+      await openWorkbench(page, baseUrl);
+      await page.getByTestId('btn-sound-settings').click();
+      const panel = page.getByTestId('sound-settings');
+      await panel.waitFor({ timeout: 5000 });
+
+      const fits = await page.evaluate(() => {
+        const card = document.querySelector('[data-testid="sound-settings"]');
+        if (!card) return { missing: true };
+        const box = card.getBoundingClientRect();
+        return {
+          view: { width: window.innerWidth, height: window.innerHeight },
+          box: { top: box.top, left: box.left, right: box.right, bottom: box.bottom },
+        };
+      });
+      assert.ok(!fits.missing, 'the panel did not open on a phone');
+      assert.ok(fits.box.left >= 0, `the panel starts at ${fits.box.left} px, off the left edge`);
+      assert.ok(
+        fits.box.right <= fits.view.width + 1,
+        `the panel ends at ${fits.box.right} px, past the ${fits.view.width} px window`
+      );
+      assert.ok(
+        fits.box.bottom <= fits.view.height + 1,
+        `the panel ends at ${fits.box.bottom} px, below the ${fits.view.height} px window`
+      );
+
+      // A press inside a portalled panel is not a press outside it: the panel must survive its own
+      // controls, or every fader drag would close it on the first touch.
+      await page.getByTestId('btn-sound-master').click();
+      await page.getByTestId('sound-music').fill('35');
+      assert.equal(await panel.count(), 1, 'a press inside the panel closed it');
+      const stored = await page.evaluate((key) => localStorage.getItem(key), SOUND_STORAGE_KEY);
+      assert.match(stored ?? '', /"music":0.35/, 'the phone\u2019s fader did not reach the store');
+
+      // The card scrolls inside itself, and the last row is where the reset lives.
+      const reset = page.getByTestId('btn-sound-reset');
+      await reset.scrollIntoViewIfNeeded({ timeout: 5000 });
+      const resetBox = await reset.boundingBox();
+      assert.ok(resetBox, 'the reset button is not in the panel');
+      assert.ok(
+        resetBox.y + resetBox.height <= 640 + 1,
+        `the reset button is at ${resetBox.y + resetBox.height} px, below the window`
+      );
+      await reset.click({ timeout: 5000 });
+
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(200);
+      assert.equal(await panel.count(), 0, 'Escape did not close the phone panel');
+      assert.equal(
+        await page.evaluate(() => document.activeElement?.getAttribute('data-testid')),
+        'btn-sound-settings',
+        'focus must go back to the button that opened the panel'
+      );
+      console.log('  ok the sound panel opens on a phone, fits 360×640, and keeps its controls usable');
+      await context.close();
+    }
   } finally {
     await browser.close();
     if (ownServer) await ownServer.viteServer.close();
   }
-  console.log('[PASS] game: 16 browser checks');
+  console.log('[PASS] game: 17 browser checks');
 }
 
 main().catch((error) => {

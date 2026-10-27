@@ -24,6 +24,13 @@ import type { UiRole } from '../audio/facade.ts';
  * header's button, closes on Escape or a press outside, and every control in it is a plain input, so
  * the keyboard reaches it without any special handling. A learner who never opens it loses nothing —
  * the defaults are the design.
+ *
+ * **Where it sits is not this component's business.** The card used to be `absolute right-0` inside
+ * the header's tray, which on a phone put its left edge at -21 px and let the tray's sideways scroller
+ * clip it — the panel was open and could not be used. `SoundControl` now portals it to `<body>` and
+ * hands it a width, a position and a `max-height` through the wrapper; the card fills that box and
+ * scrolls inside it, so a short screen loses a row to the scrollbar rather than the credit and the
+ * reset button.
  */
 interface Props {
   id: string;
@@ -71,8 +78,21 @@ export const SoundSettingsPanel: React.FC<Props> = ({
     role="group"
     aria-label="Audio settings"
     data-testid={tid('sound-settings')}
-    className="absolute right-0 z-50 mt-2 w-[19.5rem] rounded-lg border p-3 shadow-xl"
-    style={{ top: '100%', borderColor: 'var(--border-strong)', backgroundColor: 'var(--panel)', color: 'var(--text)' }}
+    className="w-full rounded-lg border p-3 shadow-xl"
+    style={{
+      // The wrapper owns the box: its width and its `max-height` (including the phone's clamped
+      // one). Inheriting it here is what makes the card scroll instead of running off the screen.
+      maxHeight: 'inherit',
+      overflowY: 'auto',
+      // And it must be allowed to be *narrower* than its own longest row: on a 320 px phone the
+      // credit line's min-content width is 312 px, and a flex item's default `min-width: auto`
+      // would keep the card that wide however small a width the wrapper asked for.
+      minWidth: 0,
+      overflowWrap: 'anywhere',
+      borderColor: 'var(--border-strong)',
+      backgroundColor: 'var(--panel)',
+      color: 'var(--text)',
+    }}
   >
     {/* ---- Sound: the master, and the one rule that shapes everything else ---- */}
     <section aria-label="Sound" data-testid={tid('sound-section-master')}>
