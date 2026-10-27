@@ -12,6 +12,24 @@ them. The rules live in [`app/src/progressReset.ts`](../app/src/progressReset.ts
 [`app/src/components/ResetProgressDialog.tsx`](../app/src/components/ResetProgressDialog.tsx), behind a
 lazy boundary so a learner who never opens it never downloads it.
 
+```mermaid
+flowchart TB
+    Door["Reset… in the Export and backup tray"] --> Panel["Eleven named parts, each printing what it holds now"]
+    Panel --> One["Reset this part"]
+    Panel --> All["Reset everything"]
+    One --> Armed["First press arms the button: Press again, 4 s"]
+    All --> Armed
+    Armed --> Erase["Erase, and count only what actually went"]
+    Erase --> Local["This browser's stores"]
+    Erase --> Row["Account progress row rewritten now, not at the 1.2 s debounce"]
+    Erase --> Watermark["mechalab.progress.resetAt.v1"]
+    Watermark --> Snapshot["The snapshot carries resetAt"]
+    Snapshot --> Newer{"Reset at least as new as\nthe other side's last change?"}
+    Newer -->|"yes"| Stands["Its maps and its log stand: the erase holds"]
+    Newer -->|"no"| Kept["The other device's newer work is kept"]
+    Erase --> Workspace["Drafts and notes: empty workspace doc, never a merge"]
+```
+
 ## The eleven parts
 
 | Part | What it erases | The copy it also clears |
