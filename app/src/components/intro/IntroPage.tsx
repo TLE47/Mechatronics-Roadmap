@@ -538,7 +538,7 @@ const LabSection: React.FC<{
       <Reveal>
         <Heading
           eyebrow="The labs"
-          title="Twelve benches, all running in this tab"
+          title={`${labs.length} benches, all running in this tab`}
           blurb="A vibration filter, a field-oriented motor drive, a pendulum with safety walls, a six-layer PCB stackup, an IMU fusion loop, an Arduino emulator. Pick one — it is already installed."
         />
       </Reveal>
