@@ -102,6 +102,20 @@ async function main() {
         1,
         'every lab on the rail needs its door on the introduction'
       );
+      assert.equal(
+        await page.locator('#intro-route a').count(),
+        0,
+        'a route row must open the roadmap, not scroll to itself'
+      );
+      await page.getByTestId('intro-step-1').click();
+      await page.getByTestId('tab-btn-tab-arch').waitFor({ timeout: 30000 });
+      assert.equal(
+        await page.getByTestId('tab-btn-tab-arch').getAttribute('aria-current'),
+        'page',
+        'a route row must land on the roadmap tab'
+      );
+      await page.goto(`${baseUrl}?view=intro`, { waitUntil: 'domcontentloaded' });
+      await page.getByTestId('intro-page').waitFor({ timeout: 30000 });
       // A reload is still the introduction: an explicit view is the learner's choice, not a guess.
       await page.reload({ waitUntil: 'domcontentloaded' });
       await page.getByTestId('intro-page').waitFor({ timeout: 30000 });

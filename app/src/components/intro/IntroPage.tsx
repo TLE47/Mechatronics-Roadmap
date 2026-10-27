@@ -91,7 +91,7 @@ export const IntroPage: React.FC<IntroPageProps> = ({
 
       <SectionNav />
 
-      <RouteSection maxStepHours={maxStepHours} onOpenWorkbench={onOpenWorkbench} />
+      <RouteSection maxStepHours={maxStepHours} onOpenRoute={() => onOpenTab('tab-arch')} />
 
       <LessonLoop onOpenLesson={startEntry ? () => onOpenLesson(startEntry.id) : undefined} />
 
@@ -315,8 +315,9 @@ const SectionNav: React.FC = () => (
  * The route
  * ---------------------------------------------------------------------------------------------- */
 
-const RouteSection: React.FC<{ maxStepHours: number; onOpenWorkbench: () => void }> = ({
+const RouteSection: React.FC<{ maxStepHours: number; onOpenRoute: () => void }> = ({
   maxStepHours,
+  onOpenRoute,
 }) => (
   <section id="intro-route" className="mx-auto max-w-[var(--shell-max)] scroll-mt-24 px-4 py-10 sm:px-6">
     <Reveal>
@@ -335,9 +336,14 @@ const RouteSection: React.FC<{ maxStepHours: number; onOpenWorkbench: () => void
         return (
           <li key={step.number}>
             <Reveal delay={Math.min(index * 30, 240)}>
-              <a
-                href={`#intro-step-${step.number}`}
-                className="group relative flex items-start gap-3 rounded-[var(--r-md)] border border-transparent px-2 py-2 no-underline transition-colors hover:border-[var(--border)] hover:bg-[color-mix(in_srgb,var(--panel)_60%,transparent)] sm:gap-4 sm:px-3"
+              {/* Every row is a door to the roadmap, not a self-anchor: a link that scrolls to itself
+                  looks like a destination and is not one. */}
+              <button
+                type="button"
+                onClick={onOpenRoute}
+                data-testid={`intro-step-${step.number}`}
+                title={`Open the roadmap at ${step.title}`}
+                className="group relative flex w-full items-start gap-3 rounded-[var(--r-md)] border border-transparent px-2 py-2 text-left transition-colors hover:border-[var(--border)] hover:bg-[color-mix(in_srgb,var(--panel)_60%,transparent)] sm:gap-4 sm:px-3"
               >
                 <span
                   className="relative z-10 mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full border font-mono text-[11px] font-bold sm:h-8 sm:w-8 sm:text-[12px]"
@@ -374,7 +380,7 @@ const RouteSection: React.FC<{ maxStepHours: number; onOpenWorkbench: () => void
                   </span>
                 </div>
                 <ChevronRight className="mt-2 h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" aria-hidden="true" />
-              </a>
+              </button>
             </Reveal>
           </li>
         );
@@ -734,6 +740,9 @@ const INTRO_CSS = `
 .intro-live { animation: intro-pulse 2.6s ease-in-out infinite; }
 @keyframes intro-sheen { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
 @keyframes intro-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+@media print {
+  .intro-reveal, .intro-reveal:not(.is-shown) { opacity: 1; transform: none; }
+}
 @media (prefers-reduced-motion: reduce) {
   .intro-reveal, .intro-reveal:not(.is-shown) { opacity: 1; transform: none; transition: none; }
   .intro-gradient-text { animation: none; background: var(--accent); -webkit-background-clip: text; background-clip: text; }
