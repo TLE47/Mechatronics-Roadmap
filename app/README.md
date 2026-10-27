@@ -604,7 +604,18 @@ the visible words rather than describing them). **A lesson card's heading was an
 only `h1`, skipping a level. **The docking control's `aria-label` described the move** without
 containing the words drawn on it — `List → Right` — which is WCAG 2.5.3. The axe gate had passed all
 three: its ruleset and Lighthouse's disagree about text hidden with `display:none`, which is exactly why
-the CI row wanted both. The fourth finding, `valid-source-maps`, is the one entry in
+the CI row wanted both.
+
+**The same hidden label is why the trays have tooltips.** A control whose words are `hidden` below
+1536 px still has to answer a hover with its name, and a native `title` is slow, unstyled, clipped by
+any scroller it sits in, and invisible to every suite. [`src/components/HeaderTips.tsx`](src/components/HeaderTips.tsx)
+is one delegated bubble for the whole tray row: hover or focus opens it, it leads with the control's
+name (`Theme — switch to light theme`), it is portalled to the body so a phone's sideways-scrolling
+tray cannot clip it, and it clamps its own width so a control at either edge still gets a whole bubble.
+It is decoration — `aria-hidden`, no `aria-describedby` — because the controls already have
+`aria-label`s, and above 1536 px it does not open at all: the label is written on the button there, and
+`npm run test:e2e` pins both halves (hover at 1280, nothing at 1600). The fourth finding,
+`valid-source-maps`, is the one entry in
 [`docs/lighthouse-allowlist.json`](../docs/lighthouse-allowlist.json) — every byte of this bundle is
 built from this public repository, and maps would roughly double what Pages serves. The allowlist is
 the same three-way ratchet as the accessibility one: unlisted fails, wider than recorded fails, and
@@ -808,14 +819,18 @@ view). Read meant *results only* before Run 229 and Split was this fourth preset
 choice is remembered. The shortcut reads `KeyboardEvent.code` because `⌥2` types `™` in `key` on a
 Mac, a stored value that is not one of the four reads as the default rather than blanking the page,
 and the two rules are kept apart on purpose: *which* regions a preset shows, and *how* the ones left
-are arranged (one column, or two at the `lg` breakpoint before a narrow window stacks them again)
-([`src/workspaceLayout.ts`](src/workspaceLayout.ts), `npm run test:layout`).
+are arranged (one column, or two from 1760 px up — the width at which the reading half still clears a
+figure's 640 units — before a narrower window stacks them again). Study splits the wider half to the
+lesson text, because a figure is drawn on a 640-unit canvas and 10 px labels at 44% are 4 px labels;
+below 1760 the two panels stack and the drawings get the full width — 728 px of figure at 1280, where
+the split used to leave 366 px ([`src/index.css`](src/index.css), [`src/workspaceLayout.ts`](src/workspaceLayout.ts),
+`npm run test:layout`).
 
 **Debug's divider is yours to move.** The handle between the columns is a `role="separator"`: drag
 it, or focus it and use `←`/`→` (2% a press, 10% with `Shift`), `Home`/`End` for the two ends, and
 double-click for an even split again. What is stored is the *share* of the work area the editor
 gets, not a pixel width, because the same learner moves between a laptop and a monitor; neither
-column may fall below 30%, which at 1440 px is a 345 px editor — still a line of Python without
+column may fall below 30%, which at 1760 px is a 385 px editor — still a line of Python without
 wrapping. The drag is captured by the handle itself, so letting go outside the window still ends it,
 and the number is written once at the end rather than on every pointer move
 ([`src/workspaceLayout.ts`](src/workspaceLayout.ts), `npm run test:layout` for the arithmetic,

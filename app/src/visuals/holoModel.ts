@@ -41,6 +41,14 @@ export const PITCH_RANGE: readonly [number, number] = [-0.35, 0.95];
 export const Q1_RANGE: readonly [number, number] = [-2.4, 2.4];
 export const Q2_RANGE: readonly [number, number] = [-2.6, 0.05];
 
+/** How far the view can be scaled. Below 55% the links are under the joints; past 220% a link leaves
+    the frame at the home pose. */
+export const ZOOM_RANGE: readonly [number, number] = [0.55, 2.2];
+/** One wheel notch, or one press of the zoom buttons. */
+export const ZOOM_STEP = 0.1;
+/** The scale a fresh figure is drawn at. */
+export const ZOOM_HOME = 1;
+
 export const LINK_1 = 1;
 export const LINK_2 = 0.82;
 
@@ -53,6 +61,13 @@ function clampTo(value: number, range: readonly [number, number]): number {
 }
 
 /** A state with every field inside its limit. Every entry point goes through this. */
+/** A zoom factor inside its range, on a two-decimal grid so a press of the button lands where the
+    readout says it did. A factor that is not a number is the default, not a figure drawn at nothing. */
+export function clampZoom(value: number): number {
+  if (!Number.isFinite(value)) return ZOOM_HOME;
+  return Math.round(Math.min(ZOOM_RANGE[1], Math.max(ZOOM_RANGE[0], value)) * 100) / 100;
+}
+
 export function clampHolo(state: HoloState): HoloState {
   return {
     yaw: clampTo(state.yaw, YAW_RANGE),

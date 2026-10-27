@@ -86,6 +86,34 @@ figure-eight never asks for a pose the hardware could not take, the projection i
 trail stops growing at its limit. The SVG view is a consumer of that model; a React Three Fiber view
 could be swapped in later without moving a single assertion.
 
+It zooms: the wheel over the figure, `+`/`-`, or the tray beside **Home pose** take it between 55% and
+220%, and the readout in the tray is also the way back to 100% (`0` on the keyboard). Zoom multiplies
+the projection's scale and nothing else — clamping lives in `clampZoom`, so a wild value or a `NaN`
+lands on a bound or on 100% rather than on a blank figure, and the joints, limits and readouts are the
+same instrument at every scale.
+
+## Reading one at its own size
+
+The scenes are laid out on a 640-unit canvas whose smallest labels are 9.5 units, so a figure is
+legible at roughly its own width and not much below it. A lesson column beside the code is narrower
+than that: the split reader gave a figure 366 px at 1280 (5.4 px type), which is a small drawing rather
+than a readable one, and a phone gives it 308 px. Scaling a diagram down scales its words down with it.
+
+So the reading column keeps the whole work area until both halves work: the two-column split waits
+until 1760 px, the width at which the reading half still clears 640 px, and below it the reader takes
+the full 790 px at 1280 — a 728 px figure, drawn at 1.14× its own units.
+
+Three rules follow, and each is checked in `npm run test:e2e:pages`:
+
+- **A figure can be expanded.** The header's **Expand** button, or the drawing itself, opens the same
+  SVG in a sheet over the page: `max(640 px, 90vw)` wide, 22 px type at 1440, Escape or a click on the
+  scrim to leave, focus back on the button that opened it.
+- **The sheet never shrinks the drawing.** Its art sits in a `min-width: 640px` strip inside a
+  horizontal scroller, so a phone pans across full-size labels instead of reading quarter-size ones.
+- **The inline figure does the same below 640 px.** `.figure-art` (`index.css`) keeps the 640 px width
+  and scrolls, which is the bargain a wide table already makes; the page itself must never gain a
+  horizontal scrollbar for it.
+
 ## What a figure may never do
 
 - **No motion.** A figure is a still, so `prefers-reduced-motion` has nothing to switch off.
@@ -102,6 +130,8 @@ could be swapped in later without moving a single assertion.
   dropped, and a graph past 14 boxes is left out rather than drawn as a hairball.
 - **No paragraph pretending to be a figure.** A scene's caption is one sentence; the page's caption is
   one sentence; the paragraph stays in the prose.
+- **No shrinking below its canvas.** A figure rendered narrower than 640 px without a way to pan or
+  expand it is a figure with unreadable labels; the sheet and the phone strip exist for that.
 
 ## Adding one
 

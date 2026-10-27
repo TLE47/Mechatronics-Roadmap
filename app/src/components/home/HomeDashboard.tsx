@@ -158,14 +158,17 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = (props) => {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+      {/* `items-start`: the two cards are as tall as their own content. Stretched, the short Today
+          card wore 230 px of empty panel under its button whenever the mission had no next check to
+          name, which read as a card that had failed to load. */}
+      <div className="grid items-start gap-4 lg:grid-cols-[1.1fr_0.9fr]">
         <TodayPanel
           today={home.today}
           due={model.review.due}
           onStart={startToday}
           onReview={props.onReview}
         />
-        <section className={`${card} p-3.5`} data-testid="dashboard-hologram">
+        <section className={`${card} self-start p-3.5`} data-testid="dashboard-hologram">
           <div className={sectionHeading}>
             <Wrench className="h-4 w-4 text-accent" aria-hidden="true" />
             Your arm

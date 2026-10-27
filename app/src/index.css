@@ -519,38 +519,57 @@ body {
 [data-focus='on'] [data-focus-expand] {
   grid-column: 1 / -1;
 }/* ----------------------------------------------------------------------------
-   The Debug preset: the editor in the first column, the results in the second.
+   Splitting the work area into two columns — Debug, and Study's text-beside-code.
 
-   The container is a two-column grid at the `lg` breakpoint (`lg:grid-cols-2` on the runner's work
-   area); every card in it describes both halves, so each one spans the row except the two that
-   are the halves. Pinning them by placement rather than by document order is what keeps the cards
-   between them — the predict gate, a share banner — from pushing the editor into the second
-   column. These rules are inert below `lg`, where there is no grid to place anything in.
+   The threshold is the figure, not a device class. A drawing is laid out on a 640-unit canvas, so
+   it needs roughly its own width to be legible; the split gives the reading column 55% of what is
+   left after the 196 px nav and the 224 px roadmap, which only clears 640 px at about 1760 px of
+   viewport. Below that the columns stack, the reader takes the whole work area (728 px of figure at
+   1280, where a split left it 366 px and its labels at 5.4 px), and a figure that is still too wide
+   can be expanded from its own header. `min-[1760px]` is not a Tailwind step, so the columns live
+   here rather than in utility classes.
    ---------------------------------------------------------------------------- */
-[data-layout='debug'] > * {
-  grid-column: 1 / -1;
-}
-[data-layout='debug'] > [data-testid='editor-panel'] {
-  grid-column: 1;
-}
-[data-layout='debug'] > [data-testid='results-column'] {
-  grid-column: 2;
-}
+@media (min-width: 1760px) {
+  /* Both presets become grids here; below it the runner's own classes say `grid-cols-1` or a flex
+     column, and a `grid-column` placement has nothing to place into. */
+  [data-layout='debug'],
+  [data-layout='study'] {
+    display: grid;
+    gap: 16px;
+    align-items: start;
+  }
+  /* Debug: the editor in the first column, the results in the second. Every card describes both
+     halves, so each one spans the row except the two that are the halves. Pinning them by placement
+     rather than by document order is what keeps the cards between them — the predict gate, a share
+     banner — from pushing the editor into the second column. The width arrives as `--split-cols`
+     because a drag cannot be written in a stylesheet (see the runner's `style`). */
+  [data-layout='debug'] {
+    grid-template-columns: var(--split-cols, minmax(0, 1fr) minmax(0, 1fr));
+  }
+  [data-layout='debug'] > * {
+    grid-column: 1 / -1;
+  }
+  [data-layout='debug'] > [data-testid='editor-panel'] {
+    grid-column: 1;
+  }
+  [data-layout='debug'] > [data-testid='results-column'] {
+    grid-column: 2;
+  }
 
-/* Docking: the results can take the first track and the editor the second, so the thing a learner
-   reads after typing sits on the side their eyes are already on. `dense` is what keeps the pair on
-   one row: without it the auto-placement cursor only walks forward, so an item placed at column 1
-   after one at column 2 is pushed to a row of its own. Every other child spans both tracks, so
-   there is no hole for dense packing to back-fill from a later row. */
-[data-layout='debug'][data-dock='left'] {
-  grid-auto-flow: row dense;
-}
-[data-layout='debug'][data-dock='left'] > [data-testid='editor-panel'] {
-  grid-column: 2;
-}
-[data-layout='debug'][data-dock='left'] > [data-testid='results-column'] {
-  grid-column: 1;
-}
+  /* Docking: the results can take the first track and the editor the second, so the thing a learner
+     reads after typing sits on the side their eyes are already on. `dense` is what keeps the pair on
+     one row: without it the auto-placement cursor only walks forward, so an item placed at column 1
+     after one at column 2 is pushed to a row of its own. Every other child spans both tracks, so
+     there is no hole for dense packing to back-fill from a later row. */
+  [data-layout='debug'][data-dock='left'] {
+    grid-auto-flow: row dense;
+  }
+  [data-layout='debug'][data-dock='left'] > [data-testid='editor-panel'] {
+    grid-column: 2;
+  }
+  [data-layout='debug'][data-dock='left'] > [data-testid='results-column'] {
+    grid-column: 1;
+  }
 
 /* ----------------------------------------------------------------------------
    The Study preset: the lesson text beside the code it is about.
@@ -561,12 +580,10 @@ body {
    make the reader's height follow the results' and leave a gap under the code while drafting.
    `items-start` keeps every card its own height instead of stretching to the row's tallest.
    ---------------------------------------------------------------------------- */
-@media (min-width: 1024px) {
+  /* Study: the lesson text takes the wider half, because a figure is drawn on a 640-unit canvas and
+     the editor does not get harder to type in at 45%. */
   [data-layout='study'] {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 16px;
-    align-items: start;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
   }
   [data-layout='study'] > [data-testid='lesson-reader'] {
     grid-column: 1;
@@ -610,9 +627,26 @@ body {
  * is why a pressed state reads as one surface changing rather than a second outline inside the
  * first. Appended after the layers so `.action-tray .btn` beats `.btn` without `!important`.
  */
+/* A figure is drawn on a 640-unit canvas whose smallest labels are 9.5 units. Squeezed into a phone's
+   308 px it renders them at 4.6 px: not a small drawing, an unreadable one. Below the drawing's own
+   width the art keeps that width and the reader swipes across it, the same bargain the tables make. */
+@media (max-width: 639px) {
+  .figure-art {
+    overflow-x: auto;
+  }
+  /* The art, not every child: the tap target over it is inset to the visible box and must not
+     stretch the scroller. */
+  .figure-art > svg {
+    min-width: 640px;
+  }
+}
+
 .action-tray {
   display: inline-flex;
   align-items: center;
+  /* A tray keeps its own width. On a phone the header's tray row scrolls instead of wrapping, and
+     a shrinking tray would put a two-word label in a 40 px pill rather than offer the swipe. */
+  flex: 0 0 auto;
   gap: 0.1rem;
   padding: 0.18rem;
   border-radius: 999px;
@@ -629,4 +663,43 @@ body {
 .action-tray .btn:hover {
   background: var(--panel-3);
   border-color: transparent;
+}
+
+/*
+ * The name of a tray control, on hover or focus (`components/HeaderTips.tsx`). Portalled to the body
+ * and positioned from the control's own rect, so the sideways-scrolling tray row on a phone cannot
+ * clip it. It never takes the pointer: a bubble that sat under the cursor would end the hover it
+ * describes.
+ */
+.header-tip {
+  position: fixed;
+  z-index: 70;
+  transform: translate(-50%, 0);
+  max-width: min(16rem, 84vw);
+  padding: 0.3rem 0.55rem;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  pointer-events: none;
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.3);
+}
+.header-tip-above {
+  transform: translate(-50%, -100%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .header-tip {
+    animation: header-tip-in 90ms ease-out both;
+  }
+}
+@keyframes header-tip-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

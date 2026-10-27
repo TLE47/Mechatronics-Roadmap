@@ -306,20 +306,29 @@ async function main() {
         // chart's first paint moves the page by a few pixels after that beat, and a snapshot taken
         // mid-shift is a claim about a frame nobody sees — `tab-links` read 2411 or 2414 px depending
         // on which side of a 3 px reflow the sweep landed, with nothing changed in the app.
+        // Two kinds of late arrival count as "still changing": a resize (the existing guard) and a
+        // node landing in the pane without moving it. The second one is what made `paper/tab-links`
+        // read 5 links on one run and 4 on the next: the lesson's reading link mounts after the
+        // lesson fetch resolves, inside a line whose height it does not change, so the resize observer
+        // never saw it and the counting pass sometimes ran before it.
         await page.evaluate(
           () =>
             new Promise((resolve) => {
               const target = document.querySelector('#main') ?? document.body;
               let quiet = setTimeout(done, 250);
-              const observer = new ResizeObserver(() => {
+              const bump = () => {
                 clearTimeout(quiet);
                 quiet = setTimeout(done, 250);
-              });
+              };
+              const resizes = new ResizeObserver(bump);
+              const mutations = new MutationObserver(bump);
               function done() {
-                observer.disconnect();
+                resizes.disconnect();
+                mutations.disconnect();
                 resolve(true);
               }
-              observer.observe(target);
+              resizes.observe(target);
+              mutations.observe(target, { childList: true, subtree: true, characterData: true });
               setTimeout(done, 5000);
             })
         );

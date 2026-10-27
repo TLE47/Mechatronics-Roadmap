@@ -162,7 +162,10 @@ export const BoardBridge: React.FC = () => {
             </a>
           </div>
 
-          <div className="grid gap-3 lg:grid-cols-2">
+          {/* `grid-cols-1`, not a bare `grid`: an auto column is sized by its widest child, so the
+              sketch's 60-character lines made this column 436 px inside a 318 px section and the
+              whole page scrolled sideways on a phone. `minmax(0, 1fr)` lets the `pre` scroll instead. */}
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             <div>
               <div className="flex justify-between items-center mb-1">
                 <h3 className="text-[0.75rem] font-semibold text-ink">The sketch (Full Solution)</h3>

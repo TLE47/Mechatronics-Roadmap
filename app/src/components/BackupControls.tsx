@@ -104,7 +104,8 @@ export const BackupControls: React.FC<{ testIdSuffix?: string }> = ({ testIdSuff
       <button
         onClick={handleBackup}
         data-testid={tid('btn-backup-download')}
-        title="Download everything in this browser — progress, drafts, saved versions, the learning log — as one .zip you can restore anywhere."
+        aria-label="Back Up (.zip)"
+        data-tip="Back up (.zip) — progress, drafts and the log, in one file"
         className="btn"
       >
         <Archive className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -114,7 +115,8 @@ export const BackupControls: React.FC<{ testIdSuffix?: string }> = ({ testIdSuff
         onClick={() => inputRef.current?.click()}
         data-testid={tid('btn-backup-restore')}
         disabled={busy}
-        title="Merge a MechaLab backup into this browser. Nothing here is deleted; the file is read once and reports what it added."
+        aria-label="Restore (.zip)"
+        data-tip="Restore (.zip) — merge a backup, nothing here is deleted"
         className="btn"
         style={{ opacity: busy ? 0.6 : 1 }}
       >

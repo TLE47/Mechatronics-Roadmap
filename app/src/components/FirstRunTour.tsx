@@ -75,17 +75,27 @@ function anchorElement(step: FirstRunStep): HTMLElement | null {
  *
  * Below the anchor when there is room, above when there is not, and clamped to the viewport: a card
  * half off the screen is a card whose buttons cannot be pressed.
+ *
+ * The clamp needs the card's own height, not an estimate. The reader below 1760 px stacks its text
+ * above the editor, so an anchor such as the checks panel sits far down the page; choosing "above the
+ * anchor" then produced a `top` of 2760 px that the old 120 px guess left alone, and the card's
+ * buttons — the only way to finish the tour — were off screen for good. `cardHeight` is measured by
+ * the caller, and a card taller than the window is pinned to the top edge, where its own
+ * `max-height` scrolls it.
  */
-function placeCard(rect: Rect, viewportWidth: number, viewportHeight: number) {
+function placeCard(rect: Rect, viewportWidth: number, viewportHeight: number, cardHeight = 0) {
   const width = Math.min(CARD_WIDTH, viewportWidth - EDGE * 2);
   const left = Math.min(Math.max(rect.left + rect.width / 2 - width / 2, EDGE), viewportWidth - width - EDGE);
   const below = rect.top + rect.height + GAP;
   const above = rect.top - GAP;
   const roomBelow = viewportHeight - below;
   const maxHeight = Math.max(160, Math.min(viewportHeight - EDGE * 2, 320));
-  const top = roomBelow >= Math.min(maxHeight, 240) || rect.top < maxHeight
-    ? Math.min(below, viewportHeight - EDGE - 120)
-    : Math.max(EDGE, above - Math.min(maxHeight, 240));
+  const wanted =
+    roomBelow >= Math.min(maxHeight, 240) || rect.top < maxHeight
+      ? below
+      : above - Math.min(maxHeight, 240);
+  const tallest = Math.min(cardHeight > 0 ? cardHeight : 120, viewportHeight - EDGE * 2);
+  const top = Math.max(EDGE, Math.min(wanted, viewportHeight - EDGE - tallest));
   return { width, left, top };
 }
 
@@ -98,6 +108,8 @@ export const FirstRunTour: React.FC<FirstRunTourProps> = ({
   onDismiss,
 }) => {
   const [rect, setRect] = useState<Rect | null>(null);
+  // The card's measured height, which is what keeps its last row of buttons on screen (`placeCard`).
+  const [cardHeight, setCardHeight] = useState(0);
   const [isPhone, setIsPhone] = useState<boolean>(() => {
     try {
       return window.matchMedia('(max-width: 767px)').matches;
@@ -228,10 +240,26 @@ export const FirstRunTour: React.FC<FirstRunTourProps> = ({
     []
   );
 
+  // Measure the card itself before paint, and again whenever its text or the step changes the height.
+  // A layout effect, so the first frame the learner sees is already clamped rather than jumping up.
+  useMeasuredLayoutEffect(() => {
+    const element = cardRef.current;
+    if (!element || isPhone) return;
+    const measure = () => {
+      const next = element.getBoundingClientRect().height;
+      setCardHeight((previous) => (Math.abs(previous - next) < 0.5 ? previous : next));
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [step, isPhone]);
+
   const placement = useMemo(() => {
     if (!rect || typeof window === 'undefined') return null;
-    return placeCard(rect, window.innerWidth, window.innerHeight);
-  }, [rect]);
+    return placeCard(rect, window.innerWidth, window.innerHeight, cardHeight);
+  }, [rect, cardHeight]);
 
   const card = (
     <div

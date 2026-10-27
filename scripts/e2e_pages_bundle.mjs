@@ -79,6 +79,8 @@ const RAMP_STARTER_MARKERS = {
   'R.6': 'phase_deg',
 };
 const TABLET_VIEWPORT = { width: 834, height: 1112 };
+/** The figure sheet and the phone's figure strip are checked once, not on every page. */
+let figureReadChecked = false;
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -739,9 +741,10 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     await gradeRampEntries(page, name);
 
     // Debug (⌥4) is the one preset that is an *arrangement* and not only a set of hidden regions:
-    // the editor on the left, the results on the right. Measured here, on the built bundle, because
-    // the two columns are Tailwind utilities and the dev server the workbench suites share resolves
-    // its config without the Tailwind plugin — there `display` reads `block` on the same container.
+    // the editor on the left, the results on the right, from the width where both halves work. The
+    // split is a media query in `index.css` (1760 px — the width at which the reading half of Study
+    // still clears a figure's 640 units), not a Tailwind step, so both sides of it are measured on
+    // the built bundle rather than matched as a class name.
     const wideContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     await wideContext.addInitScript(() => {
       window.__mechalabPredictFirst = false;
@@ -760,30 +763,45 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       undefined,
       { timeout: 5000 }
     );
-    const split = await wide.evaluate(() => {
-      const box = document.querySelector('[data-layout]');
-      const editor = document.querySelector('[data-testid="editor-panel"]').getBoundingClientRect();
-      const results = document.querySelector('[data-testid="results-panel"]').getBoundingClientRect();
-      return {
-        columns: getComputedStyle(box).gridTemplateColumns.split(' ').length,
-        editorWidth: Math.round(editor.width),
-        editorRight: Math.round(editor.right),
-        resultsLeft: Math.round(results.left),
-      };
-    });
-    assert.equal(split.columns, 2, `${name}: ⌥4 must lay the work area out in two columns`);
+    const split = () =>
+      wide.evaluate(() => {
+        const box = document.querySelector('[data-layout]');
+        const editor = document.querySelector('[data-testid="editor-panel"]').getBoundingClientRect();
+        // The column the CSS places, not the card inside it: the results card can sit below a predict
+        // gate or a share banner of its own.
+        const results = document.querySelector('[data-testid="results-column"]').getBoundingClientRect();
+        return {
+          columns: getComputedStyle(box).gridTemplateColumns.split(' ').length,
+          editorWidth: Math.round(editor.width),
+          editorRight: Math.round(editor.right),
+          resultsLeft: Math.round(results.left),
+        };
+      });
+    const stacked = await split();
+    assert.equal(
+      stacked.columns,
+      1,
+      `${name}: below the split width Debug must stack in one column, not squeeze two in`
+    );
+    await wide.setViewportSize({ width: 1800, height: 1100 });
+    await wide.waitForTimeout(250);
+    const split1800 = await split();
+    assert.equal(split1800.columns, 2, `${name}: from the split width up ⌥4 must lay the work area out in two columns`);
     assert.ok(
-      split.resultsLeft >= split.editorRight,
-      `${name}: Debug must put the results beside the editor, but the editor runs to ${split.editorRight}px ` +
-        `and the results start at ${split.resultsLeft}px`
+      split1800.resultsLeft >= split1800.editorRight,
+      `${name}: Debug must put the results beside the editor, but the editor runs to ${split1800.editorRight}px ` +
+        `and the results start at ${split1800.resultsLeft}px`
     );
     assert.ok(
-      split.editorWidth > 320,
-      `${name}: Debug's editor column is ${split.editorWidth}px, too narrow to type in at 1440px`
+      split1800.editorWidth > 320,
+      `${name}: Debug's editor column is ${split1800.editorWidth}px, too narrow to type in at 1800px`
     );
     console.log(
-      `  ok ${name}: ⌥4 puts the results beside the editor (editor ${split.editorWidth}px, results from ${split.resultsLeft}px)`
+      `  ok ${name}: ⌥4 stacks below 1760 px and puts the results beside the editor at 1800 ` +
+        `(editor ${split1800.editorWidth}px, results from ${split1800.resultsLeft}px)`
     );
+    await wide.setViewportSize({ width: 1440, height: 900 });
+    await wide.waitForTimeout(250);
 
     // The reading pane: Study renders the page itself (a heading, the lesson's own code, an
     // equation), the GitHub link is demoted to a source link, and the heading at the top of the
@@ -839,6 +857,76 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       reader.routeSteps >= 3,
       `${name}: the page's flowchart is drawn as ${reader.routeSteps} numbered steps; the route is missing or unnumbered`
     );
+
+    // ---- A drawing can be read at its own size ----
+    // The scenes are laid out on a 640-unit canvas, so a narrow column scales their labels down with
+    // them: a phone gives a figure 308 px (4.6 px type), and the split reader used to give it 366 px
+    // at 1280 (5.4 px). The sheet must therefore open, keep the drawing at no less than its design
+    // width, and close on Escape; below 640 px of room the inline figure keeps that width and pans.
+    if (!figureReadChecked) {
+      figureReadChecked = true;
+      const expandId = await wide.evaluate(
+        () =>
+          document
+            .querySelector('[data-testid="lesson-reader"] [data-testid^="fig-expand-"]')
+            ?.getAttribute('data-testid') ?? null
+      );
+      assert.ok(
+        expandId,
+        `${name}: the figure has no way out of a narrow column — no [data-testid^="fig-expand-"] in the reader`
+      );
+      await wide.getByTestId(expandId).click();
+      const sheet = await wide.evaluate((id) => {
+        const figId = id.replace('fig-expand-', '');
+        const panel = document.querySelector(`[data-testid="fig-sheet-${figId}"]`);
+        const art = panel?.querySelector('svg[role="img"]');
+        const box = panel?.getBoundingClientRect();
+        return {
+          present: Boolean(panel),
+          artWidth: art ? Math.round(art.getBoundingClientRect().width) : 0,
+          top: box ? Math.round(box.top) : -1,
+        };
+      }, expandId);
+      assert.ok(sheet.present, `${name}: pressing ${expandId} must open the figure's sheet`);
+      assert.ok(sheet.top >= 0, `${name}: the figure sheet opened above the viewport, at ${sheet.top}px`);
+      assert.ok(
+        sheet.artWidth >= 640,
+        `${name}: the expanded figure is ${sheet.artWidth}px wide; the drawing needs its own 640 units`
+      );
+      await wide.keyboard.press('Escape');
+      await wide
+        .getByTestId(expandId.replace('fig-expand-', 'fig-sheet-'))
+        .waitFor({ state: 'detached', timeout: 5000 });
+
+      await wide.setViewportSize({ width: 390, height: 844 });
+      await wide.waitForTimeout(350);
+      const phone = await wide.evaluate(() => {
+        const figure = document.querySelector('[data-testid="lesson-reader"] [data-testid^="diagram-"]');
+        const art = figure?.querySelector('svg[role="img"]');
+        const strip = figure?.querySelector('.figure-art');
+        return {
+          artWidth: art ? Math.round(art.getBoundingClientRect().width) : 0,
+          strip: strip ? [strip.clientWidth, strip.scrollWidth] : null,
+          overflow: document.documentElement.scrollWidth - window.innerWidth,
+        };
+      });
+      assert.ok(
+        phone.artWidth >= 640,
+        `${name}: a 390 px phone rendered the drawing at ${phone.artWidth}px instead of letting it pan at 640`
+      );
+      assert.ok(
+        phone.strip && phone.strip[1] - phone.strip[0] > 0,
+        `${name}: the phone must be able to swipe the figure, got ${JSON.stringify(phone.strip)}`
+      );
+      assert.ok(
+        phone.overflow <= 0,
+        `${name}: at 390 px the page scrolls sideways by ${phone.overflow}px; the figure must contain its own overflow`
+      );
+      await wide.setViewportSize({ width: 1440, height: 900 });
+      console.log(
+        `  ok ${name}: a figure expands to ${sheet.artWidth}px on Escape-close, and pans at 640 on a 390 px phone`
+      );
+    }
     assert.ok(reader.formulas > 0, `${name}: the pane must typeset the lesson's equations`);
     assert.ok(reader.code > 0, `${name}: the pane must render the lesson's own code fences`);
     assert.equal(
@@ -847,18 +935,44 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       `${name}: the GitHub link must be demoted to the source link`
     );
     assert.ok(
-      reader.readerRight <= reader.editorLeft,
-      `${name}: Study must put the lesson text beside the editor, but the text ends at ` +
-        `${reader.readerRight}px and the editor starts at ${reader.editorLeft}px`
+      reader.readerWidth > 640,
+      `${name}: Study's reading column is ${reader.readerWidth}px at 1440; it must keep the work area, ` +
+        `not share it with the code — a figure is drawn on 640 units`
     );
     assert.ok(
-      reader.readerWidth > 320 && reader.editorWidth > 320,
-      `${name}: Study's two columns are ${reader.readerWidth}px and ${reader.editorWidth}px, too narrow at 1440px`
+      Math.abs(reader.readerLeft - reader.editorLeft) < 40 && reader.editorLeft >= reader.readerLeft,
+      `${name}: below the split Study stacks, but the text starts at ${reader.readerLeft}px and the ` +
+        `editor at ${reader.editorLeft}px`
     );
     assert.equal(reader.scrollable, true, `${name}: a long lesson needs its own scroll container`);
+    // From the split width up they are columns again, and the reading side is the wider one.
+    await wide.setViewportSize({ width: 1800, height: 1100 });
+    await wide.waitForTimeout(300);
+    const beside = await wide.evaluate(() => {
+      const text = document.querySelector('[data-testid="lesson-reader"]').getBoundingClientRect();
+      const editor = document.querySelector('[data-testid="editor-panel"]').getBoundingClientRect();
+      return {
+        readerRight: Math.round(text.right),
+        readerWidth: Math.round(text.width),
+        editorLeft: Math.round(editor.left),
+        editorWidth: Math.round(editor.width),
+      };
+    });
+    assert.ok(
+      beside.readerRight <= beside.editorLeft,
+      `${name}: at 1800 px Study must put the lesson text beside the editor, but the text ends at ` +
+        `${beside.readerRight}px and the editor starts at ${beside.editorLeft}px`
+    );
+    assert.ok(
+      beside.readerWidth > beside.editorWidth,
+      `${name}: the reading column (${beside.readerWidth}px) must be the wider half at 1800, not the ` +
+        `editor's (${beside.editorWidth}px)`
+    );
+    await wide.setViewportSize({ width: 1440, height: 900 });
+    await wide.waitForTimeout(300);
     console.log(
-      `  ok ${name}: Study reads beside the code (${reader.headings.length} headings, ` +
-        `${reader.formulas} equations, text ${reader.readerWidth}px beside editor ${reader.editorWidth}px)`
+      `  ok ${name}: Study reads full width at 1440 (${reader.readerWidth}px, ${reader.headings.length} ` +
+        `headings, ${reader.formulas} equations) and beside the code at 1800 (text ${beside.readerWidth}px)`
     );
 
     // The reading position: scroll to a heading, reload, and find the same heading at the top of
@@ -937,7 +1051,11 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       `  ok ${name}: a branching page draws its map (${branchMap.boxes} boxes, ${branchMap.arrows} arrows)`
     );
 
-    // Back to Debug for the divider below: the reading checks left the screen in Study.
+    // Back to Debug for the divider below: the reading checks left the screen in Study. The split —
+    // and with it the divider — only exists from 1760 px, so the page is widened for this half of
+    // the suite and left wide: the dock checks below are about sides, which need the columns too.
+    await wide.setViewportSize({ width: 1800, height: 1100 });
+    await wide.waitForTimeout(300);
     await wide.keyboard.press('Alt+4');
     await wide.waitForFunction(
       () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'debug',
@@ -1139,7 +1257,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     assert.equal(
       activityBar.direction,
       'column',
-      `${name}: at 1440px the tab rail must be a vertical activity bar, got ${activityBar.direction}`
+      `${name}: at this width the tab rail must be a vertical activity bar, got ${activityBar.direction}`
     );
     assert.ok(
       activityBar.railLeft < activityBar.mainLeft,
@@ -1148,7 +1266,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     );
     assert.ok(
       activityBar.sideways <= 1,
-      `${name}: the activity bar must not need a sideways scroll at 1440px (${activityBar.sideways}px past)`
+      `${name}: the activity bar must not need a sideways scroll (${activityBar.sideways}px past)`
     );
     assert.ok(
       activityBar.count >= 5 && activityBar.narrowest > 120,
@@ -1156,7 +1274,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
         `(${activityBar.count} tabs, narrowest ${activityBar.narrowest}px)`
     );
     console.log(
-      `  ok ${name}: at 1440px the ${activityBar.count} tabs are an activity bar beside the workbench ` +
+      `  ok ${name}: at the split's width the ${activityBar.count} tabs are an activity bar beside the workbench ` +
         `(rail ends at ${activityBar.railRight}px, main starts at ${activityBar.mainLeft}px)`
     );
 
