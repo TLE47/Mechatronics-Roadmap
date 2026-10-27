@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-// Self-hosted, so the UI does not depend on a CDN or on the machine having Inter installed; the
+// Self-hosted, so the UI does not depend on a CDN or on the machine having the family installed; the
 // `@font-face` rules arrive with these imports and src/index.css names the two families. Weight-axis
 // variable woff2 with `font-display: swap`, one file per subset, and Latin is the only one a
-// Latin-script visit downloads (48 KB sans, 40 KB mono).
-import '@fontsource-variable/inter';
-import '@fontsource-variable/jetbrains-mono';
+// Latin-script visit downloads (29 KB sans, 23 KB mono).
+import '@fontsource-variable/geist';
+import '@fontsource-variable/geist-mono';
 // Maths, self-hosted. The stylesheet arrives with the main CSS instead of a jsdelivr request, and its
 // fonts are emitted into the same hashed `assets/` directory (woff2 only — see `vite.config.ts`); a
 // page with formulas therefore renders with no network beyond this origin. The JS half already came

@@ -54,6 +54,8 @@ export interface HomeDashboardProps {
   onOpenRoute: () => void;
   onReview: () => void;
   onBack: () => void;
+  /** The introduction, for the learner who wants to know what this place is before using it. */
+  onOpenIntro: () => void;
   onOpenAccount: () => void;
   onOpenAdmin: () => void;
   onToggleFocus: () => void;
@@ -120,14 +122,28 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = (props) => {
     <div className="mx-auto max-w-5xl px-4 py-6 space-y-5" data-testid="home-dashboard">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <button
-            onClick={props.onBack}
-            data-testid="btn-home-workbench"
-            className="flex items-center gap-1 text-xs text-muted hover:text-ink cursor-pointer"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-            Open the workbench
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={props.onBack}
+              data-testid="btn-home-workbench"
+              className="flex items-center gap-1 text-xs text-muted hover:text-ink cursor-pointer"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+              Open the workbench
+            </button>
+            {/* A door beside the door: the page that explains the course should not be reachable
+                only from the logo, which is already doing two other jobs on this screen. */}
+            <span aria-hidden className="text-[10px] text-faint">
+              ·
+            </span>
+            <button
+              onClick={props.onOpenIntro}
+              data-testid="btn-home-intro"
+              className="text-xs text-muted underline decoration-dotted underline-offset-2 hover:text-ink cursor-pointer"
+            >
+              What is this?
+            </button>
+          </div>
           <h1 className="mt-1 flex items-center gap-2 text-xl font-bold text-ink">
             <Sparkles className="h-5 w-5 text-accent" aria-hidden="true" />
             Home

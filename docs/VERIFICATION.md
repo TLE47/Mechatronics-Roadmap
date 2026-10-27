@@ -158,7 +158,7 @@ npm run test:announce                   # what a screen reader hears after a run
 npm run test:scope                      # the Scope: NaN dropped, t/y aligned, the cursor's interpolation, zoom/pan windows clamped to the data, readable tables
 npm run test:analysis                   # completions, hover, signatures and the formatter without a browser: where the insert starts, Jedi's cursor coordinates, the call under the cursor, note shape, request and timeout rules, and Formatter's three outcomes (tidied, the parser's sentence, an install that says so)
 npm run test:checkhints                 # a failing check names its own rung; rung 2 is earned by a run made after the nudge
-npm run test:fonts                      # the self-hosted faces — Inter, JetBrains Mono and KaTeX's 19 maths faces: imported, emitted, nothing remote
+npm run test:fonts                      # the self-hosted faces — Geist, Geist Mono and KaTeX's 19 maths faces: imported, emitted, nothing remote
 npm run test:smoke                      # needs `npm ci` first
 ```
 

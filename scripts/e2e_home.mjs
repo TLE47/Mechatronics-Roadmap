@@ -116,6 +116,52 @@ async function main() {
       );
       await page.goto(`${baseUrl}?view=intro`, { waitUntil: 'domcontentloaded' });
       await page.getByTestId('intro-page').waitFor({ timeout: 30000 });
+
+      // A phone is the common case, not an edge. Two things have to hold at 390 px: the page
+      // never scrolls sideways, and the account chip is on screen rather than the one control
+      // hidden behind the swipeable tray row.
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(300);
+      const narrow = await page.evaluate(() => {
+        const root = document.documentElement;
+        const chip = document.querySelector('[data-testid="btn-account"]')?.getBoundingClientRect();
+        const strip = document.querySelector('[data-testid="tray-strip"]');
+        return {
+          scrollWidth: root.scrollWidth,
+          clientWidth: root.clientWidth,
+          chipRight: chip ? Math.round(chip.right) : null,
+          stripScrollable: strip ? strip.scrollWidth > strip.clientWidth + 1 : false,
+        };
+      });
+      assert.equal(
+        narrow.scrollWidth,
+        narrow.clientWidth,
+        `the introduction must not scroll sideways at 390 px (${narrow.scrollWidth} > ${narrow.clientWidth})`
+      );
+      assert.ok(
+        narrow.chipRight !== null && narrow.chipRight <= 390,
+        `the account chip must be on screen at 390 px, not at ${narrow.chipRight} px`
+      );
+      assert.equal(narrow.stripScrollable, true, 'the tray row must still scroll, so every control is reachable');
+      console.log('  ok at 390 px the page does not scroll sideways and the account chip is visible');
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await page.waitForTimeout(200);
+
+      // Motion is part of the page, not decoration bolted on: the spine's marker moves as the
+      // route scrolls, and every gallery figure is a card that sweeps. Reduced motion removes both.
+      assert.equal(
+        await page.getByTestId('intro-route-traveller').count(),
+        1,
+        'the route must carry its position marker while motion is allowed'
+      );
+      const swept = await page.evaluate(() =>
+        [...document.querySelectorAll('[data-testid^="intro-figure-"]')].every((card) =>
+          card.classList.contains('intro-scan')
+        )
+      );
+      assert.equal(swept, true, 'every gallery figure must be a live card, not a still');
+      console.log('  ok the route marker and the figure sweeps are on the page');
+
       // A reload is still the introduction: an explicit view is the learner's choice, not a guess.
       await page.reload({ waitUntil: 'domcontentloaded' });
       await page.getByTestId('intro-page').waitFor({ timeout: 30000 });
@@ -147,6 +193,28 @@ async function main() {
       'Home must keep the address in step so the page can be shared and reloaded'
     );
     console.log('  ok a returning visit with no view lands on Home, and the address says so');
+
+    // ---- 2b. The introduction is reachable from Home and the footer too ----
+    assert.equal(
+      await page.getByTestId('btn-home-intro').count(),
+      1,
+      'Home needs a door to the introduction that is not the logo'
+    );
+    assert.equal(
+      await page.getByTestId('link-intro-footer').count(),
+      1,
+      'the footer is on every page, so it is the one place the door costs nothing'
+    );
+    await page.getByTestId('btn-home-intro').click();
+    await page.getByTestId('intro-page').waitFor({ timeout: 30000 });
+    assert.equal(
+      new URL(page.url()).searchParams.get('view'),
+      'intro',
+      'the Home door must land on the introduction, address and all'
+    );
+    await page.getByTestId('btn-intro-home').click();
+    await waitForHome(page);
+    console.log('  ok Home and the footer both open the introduction');
 
     // ---- 3. Today is one check, not a map ----
     assert.equal(await page.getByTestId('home-today').isVisible(), true);

@@ -157,6 +157,190 @@ const Reveal: React.FC<{ children: React.ReactNode; delay?: number; className?: 
   );
 };
 
+/** The visitor's motion preference, read once per mount; every live thing here asks this first. */
+function prefersStill(): boolean {
+  try {
+    return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * A number that counts up once, when it is seen.
+ *
+ * The values are the page's own arithmetic (SPINE's length, the registry's size), so the animation is
+ * never a number appearing before its source is ready: the target is fixed and the frames only
+ * approach it. Reduced motion jumps straight to the value rather than making the page wait 900 ms.
+ */
+const CountUp: React.FC<{ value: number; className?: string }> = ({ value, className }) => {
+  const ref = useRef<HTMLSpanElement | null>(null);
+  const [shown, setShown] = useState(() => (prefersStill() ? value : 0));
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    if (prefersStill() || typeof IntersectionObserver === 'undefined') {
+      setShown(value);
+      return;
+    }
+    let raf = 0;
+    let started = 0;
+    const tick = (now: number) => {
+      if (!started) started = now;
+      const progress = Math.min(1, (now - started) / 850);
+      setShown(Math.round(value * (1 - Math.pow(1 - progress, 3))));
+      if (progress < 1) raf = requestAnimationFrame(tick);
+    };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        observer.disconnect();
+        raf = requestAnimationFrame(tick);
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(raf);
+    };
+  }, [value]);
+
+  return (
+    <span ref={ref} className={className}>
+      {shown}
+    </span>
+  );
+};
+
+/**
+ * The step the workflow is pointing at, advanced on a clock while the section is on screen.
+ *
+ * A timer rather than a scroll listener: this is a teaching diagram, and the thing it teaches is that
+ * the six moves are a cycle. It stops when the section scrolls away or the tab is hidden, so a page
+ * left open in a background tab is not animating six nodes for nobody.
+ */
+function useCycle(length: number, ms: number, enabled: boolean): [number, (index: number) => void] {
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    if (!enabled || prefersStill() || length < 2) return;
+    const id = window.setInterval(() => setIndex((current) => (current + 1) % length), ms);
+    return () => window.clearInterval(id);
+  }, [length, ms, enabled]);
+  return [index, setIndex];
+}
+
+/** Whether an element is on screen, with one observer and no re-render per scroll event. */
+function useOnScreen<T extends HTMLElement>(
+  ref: React.RefObject<T | null>,
+  margin = '0px 0px -10% 0px'
+): boolean {
+  const [onScreen, setOnScreen] = useState(false);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || typeof IntersectionObserver === 'undefined') {
+      setOnScreen(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => setOnScreen(entries.some((entry) => entry.isIntersecting)),
+      { rootMargin: margin, threshold: 0.05 }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [ref, margin]);
+  return onScreen;
+}
+
+/**
+ * How far the route list has travelled through the viewport, 0..1.
+ *
+ * The dot on the spine is the page's one scroll-linked element: it says "you are here" on a ten-step
+ * path, which is the question the route is answering. Updated inside rAF so a scroll never paints
+ * twice, and only while the list is on screen. Reduced motion leaves it still.
+ */
+function useRouteProgress(ref: React.RefObject<HTMLOListElement | null>): number | null {
+  const [progress, setProgress] = useState<number | null>(null);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    if (prefersStill()) {
+      setProgress(null);
+      return;
+    }
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const rect = node.getBoundingClientRect();
+      const travel = rect.height + window.innerHeight * 0.5;
+      const passed = window.innerHeight * 0.55 - rect.top;
+      setProgress(Math.min(1, Math.max(0, passed / Math.max(1, travel))));
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, [ref]);
+
+  return progress;
+}
+
+/**
+ * A little pointer parallax, for a mouse and nothing else.
+ *
+ * It is the one interaction a touch screen cannot offer, so it is gated on `(pointer: fine)` and on
+ * reduced motion rather than being made to work everywhere. The card keeps its layout: only a 3D
+ * rotation rides on top, and it returns to flat the moment the pointer leaves.
+ */
+const Tilt: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [transform, setTransform] = useState('');
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    let fine = false;
+    try {
+      fine = window.matchMedia('(pointer: fine)').matches;
+    } catch {
+      fine = false;
+    }
+    if (!fine || prefersStill()) return;
+    const move = (event: PointerEvent) => {
+      const rect = node.getBoundingClientRect();
+      const x = (event.clientX - rect.left) / rect.width - 0.5;
+      const y = (event.clientY - rect.top) / rect.height - 0.5;
+      setTransform(`perspective(900px) rotateX(${(-y * 3.5).toFixed(2)}deg) rotateY(${(x * 4).toFixed(2)}deg) scale(1.012)`);
+    };
+    const leave = () => setTransform('');
+    node.addEventListener('pointermove', move);
+    node.addEventListener('pointerleave', leave);
+    return () => {
+      node.removeEventListener('pointermove', move);
+      node.removeEventListener('pointerleave', leave);
+    };
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={`intro-tilt ${className}`}
+      style={transform ? { transform } : undefined}
+    >
+      {children}
+    </div>
+  );
+};
+
 /* ------------------------------------------------------------------------------------------------
  * Hero
  * ---------------------------------------------------------------------------------------------- */
@@ -180,7 +364,10 @@ const Hero: React.FC<{
           {signedIn ? 'Welcome back to the bench' : 'An open workbench for mechatronics'}
         </p>
 
-        <h1 className="mt-4 max-w-[18ch] text-[clamp(2.15rem,5.6vw,3.9rem)] font-black leading-[0.98] tracking-[-0.03em]" style={{ color: 'var(--text)' }}>
+        <h1
+          className="font-display mt-4 max-w-[18ch] text-[clamp(2.15rem,5.6vw,4.05rem)] leading-[0.98]"
+          style={{ color: 'var(--text)' }}
+        >
           Learn the machine by{' '}
           <span className="intro-gradient-text">building the whole loop</span>.
         </h1>
@@ -233,8 +420,8 @@ const Hero: React.FC<{
               style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--panel) 70%, transparent)' }}
             >
               <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-              <dd className="mt-1.5 font-mono text-[22px] font-bold leading-none" style={{ color: 'var(--text)' }}>
-                {value}
+              <dd className="mt-1.5 font-mono text-[22px] font-bold leading-none tabular-nums" style={{ color: 'var(--text)' }}>
+                <CountUp value={Number(value)} />
               </dd>
               <dt className="mt-1 text-[10.5px] leading-tight" style={{ color: 'var(--muted)' }}>
                 {label}
@@ -258,7 +445,10 @@ const Hero: React.FC<{
               L1 0.34 · L2 0.82
             </span>
           </div>
-          <HeroArm className="h-[260px] w-full sm:h-[300px] lg:h-[330px]" />
+          {/* `clamp` on `dvh`, not a fixed height: a phone's address bar changes the viewport as it
+              retracts, and the arm should take the room it has rather than a number chosen on a
+              desktop. */}
+          <HeroArm className="h-[clamp(220px,38dvh,340px)] w-full" />
           <div className="grid grid-cols-3 divide-x border-t font-mono text-[10.5px]" style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}>
             {[
               ['target', 'figure-8'],
@@ -318,7 +508,11 @@ const SectionNav: React.FC = () => (
 const RouteSection: React.FC<{ maxStepHours: number; onOpenRoute: () => void }> = ({
   maxStepHours,
   onOpenRoute,
-}) => (
+}) => {
+  const listRef = useRef<HTMLOListElement | null>(null);
+  const progress = useRouteProgress(listRef);
+
+  return (
   <section id="intro-route" className="mx-auto max-w-[var(--shell-max)] scroll-mt-24 px-4 py-10 sm:px-6">
     <Reveal>
       <Heading
@@ -328,8 +522,16 @@ const RouteSection: React.FC<{ maxStepHours: number; onOpenRoute: () => void }> 
       />
     </Reveal>
 
-    <ol className="relative mt-6 space-y-1.5">
+    <ol ref={listRef} className="relative mt-6 space-y-1.5">
       <span aria-hidden className="intro-spine absolute left-[15px] top-2 bottom-2 w-px sm:left-[19px]" />
+      {progress !== null && (
+        <span
+          aria-hidden
+          data-testid="intro-route-traveller"
+          className="intro-traveller"
+          style={{ top: `calc(8px + ${(progress * 100).toFixed(1)}% * 0.94)` }}
+        />
+      )}
       {SPINE.map((step, index) => {
         const bar = Math.max(4, Math.round((step.hours.total.high / maxStepHours) * 100));
         const onRamp = step.number <= 2;
@@ -369,9 +571,10 @@ const RouteSection: React.FC<{ maxStepHours: number; onOpenRoute: () => void }> 
                   </p>
                   <span aria-hidden className="mt-1.5 block h-1 w-full max-w-[420px] overflow-hidden rounded-full" style={{ backgroundColor: 'var(--line-soft)' }}>
                     <span
-                      className="block h-full rounded-full"
+                      className="intro-bar block h-full rounded-full"
                       style={{
                         width: `${bar}%`,
+                        transitionDelay: `${Math.min(index * 40, 320)}ms`,
                         background: onRamp
                           ? 'var(--line)'
                           : 'linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 35%, transparent))',
@@ -391,7 +594,8 @@ const RouteSection: React.FC<{ maxStepHours: number; onOpenRoute: () => void }> 
       longest step, not to your pace.
     </p>
   </section>
-);
+  );
+};
 
 /* ------------------------------------------------------------------------------------------------
  * A lesson
@@ -513,8 +717,14 @@ const FigureGallery: React.FC = () => (
           <Reveal key={id} delay={Math.min(index * 40, 200)}>
             <div
               data-testid={`intro-figure-${id}`}
-              className="intro-lift flex h-full flex-col rounded-[var(--r-lg)] border p-3"
-              style={{ borderColor: 'var(--border)', backgroundColor: 'var(--canvas)' }}
+              className="intro-lift intro-scan flex h-full flex-col rounded-[var(--r-lg)] border p-3"
+              style={{
+                borderColor: 'var(--border)',
+                backgroundColor: 'var(--canvas)',
+                // Each card's sweep starts a beat after the one before, so the gallery reads as a
+                // row of instruments rather than six copies of one animation.
+                ['--scan-delay' as string]: `${(index % 3) * 0.9 + Math.floor(index / 3) * 0.35}s`,
+              }}
             >
               {/* No `id` on the figure itself: at 768 the header's own id label and the Expand
                   button together ran off the card. The anchor lives on the wrapper instead. */}
@@ -636,7 +846,10 @@ const Closing: React.FC<{ onOpenHome: () => void; onOpenWorkbench: () => void }>
         <p className="font-mono text-[10.5px] uppercase tracking-[0.2em]" style={{ color: 'var(--accent)' }}>
           Start with one page
         </p>
-        <h2 className="mx-auto mt-2 max-w-[26ch] text-[clamp(1.5rem,3.4vw,2.3rem)] font-black leading-tight tracking-[-0.02em]" style={{ color: 'var(--text)' }}>
+        <h2
+          className="font-display mx-auto mt-2 max-w-[26ch] text-[clamp(1.5rem,3.4vw,2.4rem)] leading-[1.05]"
+          style={{ color: 'var(--text)' }}
+        >
           The route is long. The next step is not.
         </h2>
         <p className="mx-auto mt-2 max-w-[58ch] text-[13px] leading-relaxed" style={{ color: 'var(--body)' }}>
@@ -677,7 +890,10 @@ const Heading: React.FC<{ eyebrow: string; title: string; blurb: string }> = ({ 
     <p className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--accent)' }}>
       {eyebrow}
     </p>
-    <h2 className="mt-1.5 max-w-[34ch] text-[clamp(1.35rem,3vw,2.05rem)] font-black leading-[1.1] tracking-[-0.02em]" style={{ color: 'var(--text)' }}>
+    <h2
+      className="font-display mt-1.5 max-w-[34ch] text-[clamp(1.35rem,3vw,2.1rem)] leading-[1.08]"
+      style={{ color: 'var(--text)' }}
+    >
       {title}
     </h2>
     <p className="mt-2 max-w-[70ch] text-[13px] leading-relaxed sm:text-[13.5px]" style={{ color: 'var(--muted)' }}>
@@ -709,6 +925,7 @@ const INTRO_CSS = `
     radial-gradient(40% 40% at 60% 100%, color-mix(in srgb, var(--amber) 8%, transparent) 0%, transparent 70%);
 }
 .intro-grid {
+  animation: intro-grid-pan 60s linear infinite;
   background-image:
     linear-gradient(to right, color-mix(in srgb, var(--border) 55%, transparent) 1px, transparent 1px),
     linear-gradient(to bottom, color-mix(in srgb, var(--border) 55%, transparent) 1px, transparent 1px);
@@ -718,6 +935,29 @@ const INTRO_CSS = `
 }
 .intro-spine {
   background: linear-gradient(to bottom, transparent, var(--border-strong) 8%, var(--border-strong) 92%, transparent);
+}
+.intro-traveller {
+  position: absolute;
+  left: 15px;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent), 0 0 12px 2px color-mix(in srgb, var(--accent) 45%, transparent);
+  transition: top 140ms linear;
+  animation: intro-pulse 3.2s ease-in-out infinite;
+}
+@media (min-width: 640px) {
+  .intro-traveller { left: 19px; }
+}
+.intro-bar {
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+.intro-reveal.is-shown .intro-bar {
+  transform: none;
+  transition: transform 720ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 .intro-lift { transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease; }
 .intro-lift:hover { transform: translateY(-2px); border-color: var(--border-strong); box-shadow: 0 10px 26px -18px color-mix(in srgb, #000 70%, transparent); }
@@ -738,13 +978,31 @@ const INTRO_CSS = `
     color-mix(in srgb, var(--panel) 85%, transparent);
 }
 .intro-live { animation: intro-pulse 2.6s ease-in-out infinite; }
+.intro-scan { position: relative; overflow: hidden; }
+.intro-scan::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(104deg, transparent 34%, color-mix(in srgb, var(--accent) 11%, transparent) 47%, transparent 60%);
+  transform: translateX(-130%);
+  animation: intro-scan 7.4s ease-in-out infinite;
+  animation-delay: var(--scan-delay, 0s);
+}
 @keyframes intro-sheen { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
 @keyframes intro-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+@keyframes intro-grid-pan { from { background-position: 0 0, 0 0; } to { background-position: 44px 44px, 44px 44px; } }
+@keyframes intro-scan { 0% { transform: translateX(-130%); } 52%, 100% { transform: translateX(130%); } }
 @media print {
   .intro-reveal, .intro-reveal:not(.is-shown) { opacity: 1; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .intro-reveal, .intro-reveal:not(.is-shown) { opacity: 1; transform: none; transition: none; }
+  .intro-bar, .intro-reveal.is-shown .intro-bar { transform: none; transition: none; }
+  .intro-traveller { animation: none; transition: none; }
+  .intro-scan::after { display: none; }
+  .intro-grid { animation: none; }
   .intro-gradient-text { animation: none; background: var(--accent); -webkit-background-clip: text; background-clip: text; }
   .intro-lift, .intro-cta { transition: none; }
   .intro-lift:hover, .intro-cta:hover { transform: none; }

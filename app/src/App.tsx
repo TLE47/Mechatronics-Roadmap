@@ -484,13 +484,28 @@ import { readSittings } from './sittingClock';
  * The one footer, so the palette page and the workbench cannot drift apart. The token reference is
  * linked rather than hidden behind a typed URL: a page nobody can find is a page nobody checks.
  */
-const SiteFooter: React.FC = () => (
+const SiteFooter: React.FC<{ onOpenIntro?: () => void }> = ({ onOpenIntro }) => (
   <footer
     data-chrome="footer"
     className="border-t border-line-soft bg-canvas px-4 py-3 text-center text-[11.5px] text-faint"
   >
     MechaLab <span data-testid="app-version">{APP_VERSION}</span> · Ten-Step Spiral Mechatronics
     Curriculum (Track P → Stage 0 → Depths 1–3) · Dual License: CC BY 4.0 (Docs) &amp; MIT (Code)
+    ·{' '}
+    {/* A real `href` with a click handler, the same shape as the wordmark: a modified click opens
+        the introduction in its own tab, a plain one stays in this one. */}
+    <a
+      href="?view=intro"
+      data-testid="link-intro-footer"
+      onClick={(event) => {
+        if (!onOpenIntro || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        onOpenIntro();
+      }}
+      className="underline decoration-dotted hover:text-muted"
+    >
+      What is this?
+    </a>{' '}
     ·{' '}
     <a
       href={themeViewSearch()}
@@ -1694,6 +1709,7 @@ export const App: React.FC = () => {
                 onBack={() => openPage('workbench')}
                 onOpenAccount={() => setIsAccountOpen(true)}
                 onOpenAdmin={() => openPage('admin')}
+                onOpenIntro={() => openPage('intro')}
                 onToggleFocus={toggleFocusMode}
                 onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
                 onExportPortfolio={() => setIsPortfolioModalOpen(true)}
@@ -1711,7 +1727,7 @@ export const App: React.FC = () => {
             )}
           </React.Suspense>
         </main>
-        <SiteFooter />
+        <SiteFooter onOpenIntro={() => openPage('intro')} />
         {accountPanel}
       </div>
     );
@@ -1755,7 +1771,7 @@ export const App: React.FC = () => {
             onTogglePaper={togglePaperMode}
           />
         </main>
-        <SiteFooter />
+        <SiteFooter onOpenIntro={() => openPage('intro')} />
       </div>
     );
   }
@@ -2214,7 +2230,7 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      <SiteFooter />
+      <SiteFooter onOpenIntro={() => openPage('intro')} />
     </div>
   );
 };
