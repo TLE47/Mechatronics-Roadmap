@@ -1,5 +1,5 @@
 import React from 'react';
-import { Printer, Download, FileJson, User, Compass, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, House } from 'lucide-react';
+import { Printer, Download, FileJson, User, ChevronRight, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, House } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
 import { downloadLearningLog } from '../learningLog';
 import { BackupControls } from './BackupControls';
@@ -103,6 +103,13 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'tier3', label: 'Advanced' },
   ];
 
+  /**
+   * A toggle that is on. The tray owns the frame, so the state is a wash inside it rather than a
+   * second outline: readable as "this is on" without competing with the group it sits in.
+   */
+  const pressed = (on: boolean): React.CSSProperties | undefined =>
+    on ? { color: 'var(--accent)', background: 'var(--accent-soft)' } : undefined;
+
   return (
     <header
       data-chrome="header"
@@ -171,112 +178,159 @@ export const Header: React.FC<HeaderProps> = ({
         </nav>
         )}
 
-        {/* Zone 3: actions. Secondary tools stay reachable but quiet; the account button is the
-            only one that shows state, so it keeps a border. */}
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
-          {/* Home is a page, not a menu: one press from every screen, including Home itself. */}
-          {onOpenHome && (
-            <button
-              onClick={onOpenHome}
-              data-testid="btn-home"
-              title="Home — today's step, your labs and your progress"
-              className="btn"
-            >
-              <House className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span className="hidden 2xl:inline">Home</span>
-            </button>
-          )}
-          {/* The palette is a shortcut first, but a shortcut nobody can see is a secret. */}
-          <button
-            onClick={onOpenPalette}
-            data-testid="btn-open-palette"
-            aria-keyshortcuts="Meta+K Control+K"
-            title="Jump to a lesson, tab or command (⌘K)"
-            className="btn"
-          >
-            <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span className="hidden 2xl:inline">Search</span>
-            <kbd
-              className="ml-0.5 hidden rounded border px-1 py-0.5 text-[9.5px] font-semibold sm:inline"
-              style={{ borderColor: 'var(--border)', color: 'var(--dim)' }}
-            >
-              ⌘K
-            </kbd>
-          </button>
-          {/* Two controls, because there are two questions. The flip answers "dark or light?" in one
-              press, and the contrast button is a real on/off (`aria-pressed`), which a three-state
-              cycle could not state honestly — a pressed cycle button means nothing. */}
-          <button
-            onClick={toggle}
-            data-testid="btn-theme-toggle"
-            aria-label={themeLabel(theme, fallback)}
-            title={themeLabel(theme, fallback)}
-            className="btn"
-          >
-            {themeShortLabel(theme, fallback) === 'Light' ? (
-              <Sun className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            ) : (
-              <Moon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        {/* Zone 3: actions, in three trays instead of thirteen peers. The frame belongs to the
+            group, so the children carry no border of their own; the account chip is the only filled
+            control in the header because it is the only one whose state a learner has to see. */}
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+          {/* Navigate: the two doors that are neither a lesson nor a setting. */}
+          <div className="action-tray" role="group" aria-label="Navigate">
+            {/* Home is a page, not a menu: one press from every screen, including Home itself. */}
+            {onOpenHome && (
+              <button
+                onClick={onOpenHome}
+                data-testid="btn-home"
+                title="Home — today's step, your labs and your progress"
+                className="btn"
+              >
+                <House className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span className="hidden 2xl:inline">Home</span>
+              </button>
             )}
-            <span className="hidden 2xl:inline">{themeShortLabel(theme, fallback)}</span>
-          </button>
-          <button
-            onClick={onToggleContrast}
-            data-testid="btn-contrast-toggle"
-            aria-label={CONTRAST_LABEL}
-            aria-pressed={theme === 'contrast'}
-            title={contrastHint(theme)}
-            className="btn"
-            style={theme === 'contrast' ? { color: 'var(--accent)' } : undefined}
-          >
-            <Contrast className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span className="hidden 2xl:inline">Contrast</span>
-          </button>
-          {/* Paper is the third question, not a step in a cycle: "is this reading or working?" A
-              pressed button on a cycle would mean nothing, which is why each palette that is not the
-              OS's own pair gets its own on/off. */}
-          <button
-            onClick={onTogglePaper}
-            data-testid="btn-paper-toggle"
-            aria-label={PAPER_LABEL}
-            aria-pressed={theme === 'paper'}
-            title={paperHint(theme)}
-            className="btn"
-            style={theme === 'paper' ? { color: 'var(--accent)' } : undefined}
-          >
-            <BookOpen className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span className="hidden 2xl:inline">Paper</span>
-          </button>
-          {/* Sound is a preference, so its control is on every screen — including this one, where
-              the switch is the first thing a learner reaches for after a loud surprise. The panel
-              next to it holds the two levels; the button alone is the mute. Behind a lazy boundary:
-              the entry chunk is a first paint, and sound is opt-in. */}
-          <React.Suspense
-            fallback={
-              <span aria-hidden="true" className="btn" style={{ visibility: 'hidden' }}>
-                Sound
-              </span>
-            }
-          >
-            <SoundControlLazy />
-          </React.Suspense>
-          {onToggleFocus && (
+            {/* The palette is a shortcut first, but a shortcut nobody can see is a secret. */}
             <button
-              onClick={onToggleFocus}
-              data-testid="btn-focus-toggle"
-              aria-pressed={focus}
-              aria-keyshortcuts="Meta+. Control+."
-              title={focusLabel(focus)}
+              onClick={onOpenPalette}
+              data-testid="btn-open-palette"
+              aria-keyshortcuts="Meta+K Control+K"
+              title="Jump to a lesson, tab or command (⌘K)"
               className="btn"
             >
-              {focus ? (
-                <Minimize2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              ) : (
-                <Maximize2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              )}
-              <span className="hidden 2xl:inline">Focus</span>
+              <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="hidden 2xl:inline">Search</span>
+              <kbd
+                className="ml-0.5 hidden rounded border px-1 py-0.5 text-[9.5px] font-semibold sm:inline"
+                style={{ borderColor: 'var(--border)', color: 'var(--dim)' }}
+              >
+                ⌘K
+              </kbd>
             </button>
-          )}
+          </div>
+
+          {/* Appearance and sound: five preferences on one surface. Each is its own on/off, so a
+              pressed button states a fact instead of standing for a step in a cycle. */}
+          <div className="action-tray" role="group" aria-label="Appearance and sound">
+            <button
+              onClick={toggle}
+              data-testid="btn-theme-toggle"
+              aria-label={themeLabel(theme, fallback)}
+              title={themeLabel(theme, fallback)}
+              className="btn"
+            >
+              {themeShortLabel(theme, fallback) === 'Light' ? (
+                <Sun className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              ) : (
+                <Moon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              )}
+              <span className="hidden 2xl:inline">{themeShortLabel(theme, fallback)}</span>
+            </button>
+            <button
+              onClick={onToggleContrast}
+              data-testid="btn-contrast-toggle"
+              aria-label={CONTRAST_LABEL}
+              aria-pressed={theme === 'contrast'}
+              title={contrastHint(theme)}
+              className="btn"
+              style={pressed(theme === 'contrast')}
+            >
+              <Contrast className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="hidden 2xl:inline">Contrast</span>
+            </button>
+            <button
+              onClick={onTogglePaper}
+              data-testid="btn-paper-toggle"
+              aria-label={PAPER_LABEL}
+              aria-pressed={theme === 'paper'}
+              title={paperHint(theme)}
+              className="btn"
+              style={pressed(theme === 'paper')}
+            >
+              <BookOpen className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="hidden 2xl:inline">Paper</span>
+            </button>
+            {/* Sound is a preference, so its control is on every screen — including this one, where
+                the switch is the first thing a learner reaches for after a loud surprise. Behind a
+                lazy boundary: the entry chunk is a first paint, and sound is opt-in. */}
+            <React.Suspense
+              fallback={
+                <span aria-hidden="true" className="btn" style={{ visibility: 'hidden' }}>
+                  Sound
+                </span>
+              }
+            >
+              <SoundControlLazy />
+            </React.Suspense>
+            {onToggleFocus && (
+              <button
+                onClick={onToggleFocus}
+                data-testid="btn-focus-toggle"
+                aria-pressed={focus}
+                aria-keyshortcuts="Meta+. Control+."
+                title={focusLabel(focus)}
+                className="btn"
+                style={pressed(focus)}
+              >
+                {focus ? (
+                  <Minimize2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                ) : (
+                  <Maximize2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                )}
+                <span className="hidden 2xl:inline">Focus</span>
+              </button>
+            )}
+          </div>
+
+          {/* Take it with you: four exports and the pair that puts it all back. */}
+          <div className="action-tray" role="group" aria-label="Export and backup">
+            <button
+              onClick={downloadLearningLog}
+              data-testid="btn-export-learning-log"
+              title="Download what you actually did — opens, runs, failed tests, hints — as JSON. It never leaves this browser unless you hand it over."
+              className="btn"
+            >
+              <FileJson className="h-3.5 w-3.5" aria-hidden="true" />
+              <span className="hidden 2xl:inline">Export Learning Log (.json)</span>
+            </button>
+            {/* Everything in this browser, out and back in: the two buttons report what they did. */}
+            <BackupControls />
+            <button
+              onClick={onExportPortfolio}
+              data-testid="btn-export-portfolio"
+              // The words are `hidden` below 1536 px, so the button is an icon with no name on most
+              // screens. The label repeats the visible text rather than describing it: a name that
+              // differs from what is drawn fails WCAG 2.5.3, and Lighthouse's `label-content-name-mismatch`
+              // found exactly that in the sibling buttons this fix matches.
+              aria-label="Export Progress (.md)"
+              className="btn"
+              style={{ color: 'var(--emerald)' }}
+            >
+              <Download className="h-3.5 w-3.5" aria-hidden="true" />
+              <span className="hidden 2xl:inline">Export Progress (.md)</span>
+            </button>
+            <button
+              onClick={onOpenCheatSheet}
+              data-testid="btn-open-cheatsheet"
+              aria-label="1-Page Cheat Sheet"
+              className="btn"
+              style={{ borderColor: 'var(--border-strong)', color: 'var(--accent)' }}
+            >
+              <Printer className="h-3.5 w-3.5" aria-hidden="true" />
+              <span className="hidden 2xl:inline">1-Page Cheat Sheet</span>
+            </button>
+          </div>
+
+          {/* Who you are here, and the only control in the header that says something about you: a
+              filled chip with the avatar disc, the email (or the words a newcomer needs), and the
+              chevron that says a panel opens. The visible text is the accessible name — an aria-label
+              that reworded it would fail WCAG 2.5.3, which this header has been caught by before. */}
           <button
             onClick={onOpenAccount}
             data-testid="btn-account"
@@ -285,53 +339,27 @@ export const Header: React.FC<HeaderProps> = ({
                 ? `Signed in as ${accountEmail} — progress syncs to your account`
                 : 'Sign in to keep your progress across browsers, or keep it in this one'
             }
-            className="btn max-w-[15rem]"
+            className="flex max-w-[16rem] shrink-0 cursor-pointer items-center gap-2 rounded-full py-1 pl-1 pr-2.5 text-[12.5px] font-semibold transition-colors hover:brightness-110"
+            style={{
+              border: '1px solid color-mix(in srgb, var(--accent) 40%, var(--border))',
+              background: 'color-mix(in srgb, var(--accent-soft) 80%, var(--panel-2))',
+              color: 'var(--accent)',
+            }}
           >
-            <User className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-full"
+              aria-hidden="true"
+              style={{ background: 'var(--accent)', color: 'var(--inverse)' }}
+            >
+              {accountEmail ? (
+                <span className="text-[10.5px] font-bold uppercase">{accountEmail.slice(0, 1)}</span>
+              ) : (
+                <User className="h-3.5 w-3.5" />
+              )}
+            </span>
             <span className="truncate">{accountEmail ?? 'Sign in'}</span>
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden="true" />
           </button>
-          <button
-            onClick={downloadLearningLog}
-            data-testid="btn-export-learning-log"
-            title="Download what you actually did — opens, runs, failed tests, hints — as JSON. It never leaves this browser unless you hand it over."
-            className="btn"
-          >
-            <FileJson className="h-3.5 w-3.5" aria-hidden="true" />
-            <span className="hidden 2xl:inline">Export Learning Log (.json)</span>
-          </button>
-          {/* Everything in this browser, out and back in: the two buttons report what they did. */}
-          <BackupControls />
-          <button
-            onClick={onExportPortfolio}
-            data-testid="btn-export-portfolio"
-            // The words are `hidden` below 1536 px, so the button is an icon with no name on most
-            // screens. The label repeats the visible text rather than describing it: a name that
-            // differs from what is drawn fails WCAG 2.5.3, and Lighthouse's `label-content-name-mismatch`
-            // found exactly that in the sibling buttons this fix matches.
-            aria-label="Export Progress (.md)"
-            className="btn"
-            style={{ color: 'var(--emerald)' }}
-          >
-            <Download className="h-3.5 w-3.5" aria-hidden="true" />
-            <span className="hidden 2xl:inline">Export Progress (.md)</span>
-          </button>
-          <button
-            onClick={onOpenCheatSheet}
-            data-testid="btn-open-cheatsheet"
-            aria-label="1-Page Cheat Sheet"
-            className="btn"
-            style={{ borderColor: 'var(--border-strong)', color: 'var(--accent)' }}
-          >
-            <Printer className="h-3.5 w-3.5" aria-hidden="true" />
-            <span className="hidden 2xl:inline">1-Page Cheat Sheet</span>
-          </button>
-          <span
-            className="hidden pl-1 xl:inline"
-            style={{ color: 'var(--dim)' }}
-            title="Keyboard-friendly: Tab to anything, Enter to open it, ⌘↵ to run a lesson."
-          >
-            <Compass className="h-3.5 w-3.5" aria-hidden="true" />
-          </span>
         </div>
       </div>
     </header>
