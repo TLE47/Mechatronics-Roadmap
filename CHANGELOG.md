@@ -16,6 +16,27 @@ flowchart LR
 
 ---
 
+## [2026-10-27] — Run 262: the sound panel on a phone
+
+The `···` beside the sound button opened a card that was an `absolute` child of the header's sound tray.
+On a phone that tray is a sideways scroller, and the card's left edge landed at **-21 px**: the panel was
+open and could not be used. On a short screen it was also taller than the room under the header, so the
+credit and **Reset** sat below the fold.
+
+[`app/src/components/SoundControl.tsx`](app/src/components/SoundControl.tsx) now portals the panel to
+`<body>` and places it from the button's own rect (`placePanel`): right-aligned to the button and pulled
+back inside the window, under it when there is room and above it when there is more, `min(312 px,
+window − 24 px)` wide, with a `max-height` of the room that side has. The card fills that box and
+scrolls inside itself ([`SoundSettingsPanel.tsx`](app/src/components/SoundSettingsPanel.tsx)), so a
+360×640 window scrolls the last row into view instead of losing it. A press inside the panel is no longer
+a press outside the control (the outside-click check names both), and focus lands on the panel's first
+control and returns to the button on close.
+
+`npm run test:e2e:game` grew a 360×640 case: the panel opens, its whole box is inside the window, a
+fader press does not close it, **Reset** is reachable, and Escape gives focus back.
+
+---
+
 ## [2026-10-27] — Run 260: figures you can read, names on the icons
 
 A lesson's diagram is drawn on a 640-unit canvas whose smallest labels are 9.5 units, and then it was
