@@ -326,11 +326,22 @@ The reading pace is a test, not a review note: `tests/test_lesson_pages.py` (`Re
 page has no figure, no map, or a teaching section with more than 1,400 characters of unbroken prose on
 the beginner track (2,500 in a module or chapter).
 
+### The introduction
+
+The page the wordmark opens ([`src/components/intro/IntroPage.tsx`](src/components/intro/IntroPage.tsx)),
+at `?view=intro`. It is the one screen written for a visitor with no progress to be shown, so every
+figure on it is the course's own: the hero runs the same two-link inverse-kinematics canvas as the
+capstone, the trail is `SPINE` (the ten steps the roadmap prints), and the gallery is six real
+`Diagram` specs in the palette the visitor chose. Its doors all lead somewhere real — Home, the
+workbench, lesson one, any lab on the rail — and the page is a lazy chunk, so a learner who never
+clicks the lockup never downloads it. The wordmark is a normal `href` with a click handler, so a
+middle-click opens the introduction in its own tab.
+
 ### Home
 
 Home is the page a returning learner lands on ([`src/components/home/HomeDashboard.tsx`](src/components/home/HomeDashboard.tsx)),
 and it is a destination rather than a gate. The rule lives in [`src/homeLanding.ts`](src/homeLanding.ts): an
-explicit `?view=admin|home|dashboard|workbench` wins, a `?lesson=` link is a destination of its own, a
+explicit `?view=intro|admin|home|dashboard|workbench` wins, a `?lesson=` link is a destination of its own, a
 browser with no progress at all opens the workbench and its Start Here card, a reload inside the same
 sitting returns to the page that was on screen, and every other visit opens Home. The page is a lazy
 chunk, so a first lesson never downloads it, and every card on it is a real door:
@@ -1236,6 +1247,7 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/workspaceMerge.ts`](src/workspaceMerge.ts) | The keep-both merge for drafts, notes and highlights — pure, so the conflict rule is tested without storage. |
 | [`src/workspaceSync.ts`](src/workspaceSync.ts) | Opt-in draft/note sync: the local stores, the `mechalab_workspace` row, the pre-sync preview and the merge report. |
 | [`src/dashboardData.ts`](src/dashboardData.ts) | Home's returning-learner model: continue, progress counts, recent study, saved work and review. |
+| [`src/resetItems.ts`](src/resetItems.ts) | One reset part, opened: its items (a lesson, an award, a card, a day of the log), each with its own erase and its own watermark rule. |
 | [`src/homeData.ts`](src/homeData.ts) | Home's joins: today's one check, the route's counts, the newest notes as one line each, and the heading a lesson was left at. |
 | [`src/homeLanding.ts`](src/homeLanding.ts) | Which page a visit opens, and the remembered last visit: a deep link and a first visit always win their own way. |
 | [`src/components/home/`](src/components/home) | The page itself: Today, Labs, Route, Review, Tools and the dashboard that lays them out. |
@@ -1310,8 +1322,8 @@ npm run test:e2e:pages       # built bundle at the Pages base path: every graded
 npm run test:offline         # the service worker: isolation without host headers, the take-offline button, offline reload, run + deep link, formulas from the cache
 npm run test:takealong       # the offline button's rules: URL list, size wording, what "ready" may claim
 npm run test:backup          # the archive: CRC, round trip, the three refusals, and a merge that never deletes
-npm run test:reset           # erasing progress: the eleven parts, one part vs the rest, and the cloud watermark
-npm run test:e2e:reset       # the same panel in Chromium: a backup first, one part, two parts, everything, preferences kept
+npm run test:reset           # erasing progress: the eleven parts, one part vs the rest, one item inside a part, and the cloud watermark
+npm run test:e2e:reset       # the same panel in Chromium: a backup first, a part opened to one lesson, one part, two parts, everything, preferences kept
 npm run test:study           # notes and highlights: what is kept, deduped, refused by the store, and what a restore merges
 npm run test:review          # FSRS: 0.9-at-stability, grade order, lapses, the year cap, and the card join
 npm run test:sitting         # the sitting clock's rules and focus mode's store, without a browser

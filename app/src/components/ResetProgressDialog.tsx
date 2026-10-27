@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Ban, RotateCcw, ShieldCheck, X } from 'lucide-react';
+import { Ban, ChevronDown, RotateCcw, ShieldCheck, X } from 'lucide-react';
 import { prepareBackup } from '../backupBundle';
 import {
   RESET_AREAS,
@@ -10,6 +10,7 @@ import {
   type ResetAreaId,
   type ResetReport,
 } from '../progressReset';
+import { areaItems, resetItem } from '../resetItems';
 
 interface ResetProgressDialogProps {
   isOpen: boolean;
@@ -20,7 +21,12 @@ interface ResetProgressDialogProps {
 const ARM_MS = 4000;
 
 /** A sentinel for the footer button, so one armed slot covers a row and "everything" alike. */
-type Armed = ResetAreaId | 'everything';
+type Armed = ResetAreaId | 'everything' | `item:${string}`;
+
+/** A test id from a store key, which can hold a slash, a colon or a space. */
+function testKey(id: string): string {
+  return id.replace(/[^a-zA-Z0-9_-]+/g, '-');
+}
 
 /** The backup handler, the same one the header's own button runs; a reset should offer it first. */
 function downloadBackup(): string {
@@ -62,8 +68,11 @@ export const ResetProgressDialog: React.FC<ResetProgressDialogProps> = ({ isOpen
   const [note, setNote] = useState<{ tone: 'ok' | 'warn'; text: string } | null>(null);
   /** Bumped after a reset so the counts below are re-read from the stores, not from this render. */
   const [nonce, setNonce] = useState(0);
+  /** The one part whose items are showing. One at a time keeps the panel short enough for a phone. */
+  const [openArea, setOpenArea] = useState<ResetAreaId | null>(null);
 
   const rows = useMemo(() => RESET_AREAS.map((area) => ({ area, state: area.count() })), [nonce]);
+  const openItems = useMemo(() => (openArea ? areaItems(openArea) : []), [openArea, nonce]);
 
   const disarm = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -110,6 +119,7 @@ export const ResetProgressDialog: React.FC<ResetProgressDialogProps> = ({ isOpen
     if (!isOpen) {
       setArmed(null);
       setNote(null);
+      setOpenArea(null);
     }
   }, [isOpen]);
 
@@ -119,6 +129,12 @@ export const ResetProgressDialog: React.FC<ResetProgressDialogProps> = ({ isOpen
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = null;
     setArmed(null);
+  };
+
+  const toggle = (id: ResetAreaId) => {
+    setOpenArea((current) => (current === id ? null : id));
+    disarm();
+    setNote(null);
   };
 
   const press = (target: Armed, run: () => ResetReport) => {
@@ -218,7 +234,27 @@ export const ResetProgressDialog: React.FC<ResetProgressDialogProps> = ({ isOpen
                     {area.hint}
                   </p>
                 </div>
-                <div className="mt-2 flex justify-end">
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-1">
+                  {/* The part's own list: one lesson, one award, one day. A part whose items the
+                      learner can see is a part they can fix in one press instead of ten. */}
+                  {state.n > 0 && (
+                    <button
+                      type="button"
+                      data-testid={`btn-expand-${area.id}`}
+                      aria-expanded={openArea === area.id}
+                      aria-controls={`reset-items-${area.id}`}
+                      onClick={() => toggle(area.id)}
+                      className="inline-flex cursor-pointer items-center gap-1 rounded border border-transparent px-1 py-1 text-[10.5px] font-medium"
+                      style={{ color: openArea === area.id ? 'var(--accent)' : 'var(--muted)' }}
+                    >
+                      <ChevronDown
+                        className="h-3 w-3 transition-transform"
+                        style={{ transform: openArea === area.id ? 'rotate(180deg)' : 'none' }}
+                        aria-hidden="true"
+                      />
+                      {openArea === area.id ? 'Hide' : 'Choose'}
+                    </button>
+                  )}
                   <button
                     type="button"
                     // A part with nothing in it keeps its button, disabled and named: a row that
@@ -227,7 +263,7 @@ export const ResetProgressDialog: React.FC<ResetProgressDialogProps> = ({ isOpen
                     data-testid={`btn-reset-${area.id}`}
                     aria-label={isArmed ? `Erase ${area.label} now` : `Reset ${area.label}`}
                     onClick={() => press(area.id, () => resetAreas([area.id]))}
-                    className="inline-flex cursor-pointer items-center gap-1 rounded border px-2 py-1 text-[10.5px] font-semibold"
+                    className="ml-auto inline-flex cursor-pointer items-center gap-1 rounded border px-2 py-1 text-[10.5px] font-semibold"
                     style={{
                       borderColor: isArmed ? 'var(--rose)' : 'var(--border)',
                       color: isArmed ? 'var(--rose)' : state.n ? 'var(--text)' : 'var(--dim)',
@@ -236,9 +272,69 @@ export const ResetProgressDialog: React.FC<ResetProgressDialogProps> = ({ isOpen
                     }}
                   >
                     <Ban className="h-3 w-3" aria-hidden="true" />
-                    {isArmed ? 'Press again' : state.n === 0 ? 'Nothing yet' : 'Reset'}
+                    {isArmed ? 'Press again' : state.n === 0 ? 'Nothing yet' : 'Reset all'}
                   </button>
                 </div>
+
+                {openArea === area.id && (
+                  <ul
+                    id={`reset-items-${area.id}`}
+                    data-testid={`reset-items-${area.id}`}
+                    className="mt-1.5 max-h-[30vh] space-y-0.5 overflow-y-auto border-t pt-1.5"
+                    style={{ borderColor: 'var(--border)' }}
+                  >
+                    {openItems.length === 0 && (
+                      <li className="px-1 py-1 text-[11px]" style={{ color: 'var(--dim)' }}>
+                        Nothing left in this part.
+                      </li>
+                    )}
+                    {openItems.map((item) => {
+                      const key = `item:${area.id}:${item.id}` as const;
+                      const armedItem = armed === key;
+                      return (
+                        <li
+                          key={item.id}
+                          data-testid={`reset-item-${area.id}-${testKey(item.id)}`}
+                          className="flex items-center justify-between gap-2 rounded px-1 py-0.5"
+                        >
+                          <span className="min-w-0">
+                            <span
+                              className="block truncate text-[11px] font-medium"
+                              title={item.label}
+                              style={{ color: 'var(--text)' }}
+                            >
+                              {item.label}
+                            </span>
+                            <span
+                              className="block truncate text-[10px]"
+                              title={item.detail}
+                              style={{ color: 'var(--muted)' }}
+                            >
+                              {item.detail}
+                            </span>
+                          </span>
+                          <button
+                            type="button"
+                            data-testid={`btn-reset-item-${area.id}-${testKey(item.id)}`}
+                            aria-label={armedItem ? `Erase ${item.label} now` : `Erase ${item.label}`}
+                            onClick={() => press(key, () => resetItem(area.id, item.id))}
+                            className="shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold"
+                            style={{
+                              borderColor: armedItem ? 'var(--rose)' : 'var(--border)',
+                              color: armedItem ? 'var(--rose)' : 'var(--muted)',
+                              backgroundColor: armedItem
+                                ? 'color-mix(in srgb, var(--rose) 12%, transparent)'
+                                : 'transparent',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {armedItem ? 'Again?' : 'Erase'}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
               </li>
             );
           })}

@@ -45,6 +45,11 @@ interface HeaderProps {
   /** Opens Home. Absent on the theme reference, which has no work to go back to. */
   onOpenHome?: () => void;
   /**
+   * The wordmark's destination: the introduction page. Optional in the same way `onOpenHome` is —
+   * the token page passes neither, and the lockup then falls back to its plain `href`.
+   */
+  onOpenIntro?: () => void;
+  /**
    * Focus mode, and its toggle. Optional because the token page renders this header too and has no
    * work to focus on: a button there would hide the page it is on and offer no way back.
    */
@@ -91,6 +96,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAccount,
   onOpenPalette,
   onOpenHome,
+  onOpenIntro,
   focus = false,
   onToggleFocus,
 }) => {
@@ -132,12 +138,23 @@ export const Header: React.FC<HeaderProps> = ({
     >
       <SoundClicks />
       <div className="mx-auto flex max-w-[var(--shell-max)] flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2.5 sm:px-6">
-        {/* Zone 1: brand lockup. The mark is the arm a learner is working towards. The link's name
-            is its own text plus a screen-reader-only tail: an `aria-label` that rewords it ("MechaLab
-            Workbench, back to top") does not *contain* what is drawn, which WCAG 2.5.3 fails — the
-            name has to be the visible words, with the purpose added to them, not written over them. */}
+        {/* Zone 1: brand lockup. The mark is the arm a learner is working towards, and the lockup is
+            the door to the introduction — the one page that explains the course before a learner has
+            any progress to explain it with. It stays a real `href` (so a middle-click opens the page
+            in a new tab) with an `onClick` that keeps the single-page navigation for a plain click.
+            The link's name is its own text plus a screen-reader-only tail: an `aria-label` that
+            rewords it does not *contain* what is drawn, which WCAG 2.5.3 fails — the name has to be
+            the visible words, with the purpose added to them, not written over them. */}
         <a
-          href="#top"
+          href="?view=intro"
+          onClick={(event) => {
+            if (!onOpenIntro) return;
+            // A modified click, a middle click or a download is the browser's, not ours.
+            if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+            event.preventDefault();
+            onOpenIntro();
+          }}
+          data-testid="link-brand"
           className="group flex shrink-0 items-center gap-2.5 whitespace-nowrap no-underline"
         >
           <ArmMark />
@@ -155,7 +172,7 @@ export const Header: React.FC<HeaderProps> = ({
               Workbench
             </span>
           </span>
-          <span className="sr-only">, back to top</span>
+          <span className="sr-only">, open the introduction</span>
         </a>
 
         {/* Zone 2: four course-level links, filled when active — but only on a view that reads the

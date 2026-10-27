@@ -72,6 +72,46 @@ async function main() {
       await context.close();
     }
 
+    // ---- 1b. The wordmark is the door to the introduction ----
+    {
+      const context = await browser.newContext();
+      await seedTourSeen(context);
+      const page = await context.newPage();
+      const pageErrors = [];
+      page.on('pageerror', (error) => pageErrors.push(error.message));
+      await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+      await page.getByTestId('link-brand').waitFor({ timeout: 30000 });
+      await page.getByTestId('link-brand').click();
+      await page.getByTestId('intro-page').waitFor({ timeout: 30000 });
+      assert.equal(
+        new URL(page.url()).searchParams.get('view'),
+        'intro',
+        'the introduction must own its address, so it can be shared, reloaded and gone back to'
+      );
+      assert.equal(
+        await page.locator('#intro-route li').count(),
+        SPINE.length,
+        `the introduction must show all ${SPINE.length} route steps the roadmap prints`
+      );
+      assert.ok(
+        (await page.locator('[data-testid^="intro-figure-"]').count()) >= 4,
+        'the introduction is a showcase: it needs real figures, not only words'
+      );
+      assert.equal(
+        await page.getByTestId(`intro-lab-${TAB_IDS[0]}`).count(),
+        1,
+        'every lab on the rail needs its door on the introduction'
+      );
+      // A reload is still the introduction: an explicit view is the learner's choice, not a guess.
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.getByTestId('intro-page').waitFor({ timeout: 30000 });
+      await page.getByTestId('btn-intro-home').click();
+      await waitForHome(page);
+      assert.deepEqual(pageErrors, [], `the introduction threw: ${pageErrors.join(' | ')}`);
+      console.log('  ok the wordmark opens the introduction, and its doors lead back in');
+      await context.close();
+    }
+
     // ---- 2. A returning visit lands on Home ----
     const context = await browser.newContext();
     await seedTourSeen(context);
@@ -160,6 +200,65 @@ async function main() {
       'the workbench must replace Home rather than sit under it'
     );
     console.log(`  ok Start opened ${TODAY_ENTRY?.id} in one click`);
+
+    // ---- 7b. Continue puts the reader back where it was left ----
+    {
+      const reader = page.getByTestId('reader-scroll');
+      await reader.waitFor({ timeout: 30000 });
+      const target = await reader.evaluate((pane) => {
+        const furthest = Math.max(0, pane.scrollHeight - pane.clientHeight);
+        pane.scrollTop = Math.min(900, furthest);
+        pane.dispatchEvent(new Event('scroll', { bubbles: true }));
+        return pane.scrollTop;
+      });
+      assert.ok(target > 120, `the pane must be long enough to scroll (moved ${target} px)`);
+      // The write is debounced; one pause longer than the debounce is the whole contract.
+      await page.waitForTimeout(700);
+      await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });
+      await waitForHome(page);
+      await page.getByTestId('btn-home-start').click();
+      await waitForEditor(page, undefined, 30000);
+      await page.getByTestId('reader-scroll').waitFor({ timeout: 30000 });
+      await page.waitForTimeout(1200);
+      const restored = await page.getByTestId('reader-scroll').evaluate((pane) => pane.scrollTop);
+      assert.ok(
+        Math.abs(restored - target) <= 24,
+        `Continue must reopen the lesson at ${Math.round(target)} px, not ${Math.round(restored)} px`
+      );
+      console.log(`  ok Continue reopened the lesson at ${Math.round(restored)} px (left at ${Math.round(target)})`);
+    }
+
+    // ---- 7c. A selected passage can become a sticky note, not only a highlight ----
+    {
+      const pane = page.getByTestId('reader-scroll');
+      const selected = await pane.evaluate((element) => {
+        const paragraph = element.querySelector('p');
+        if (!paragraph) return '';
+        const range = document.createRange();
+        range.selectNodeContents(paragraph);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        document.dispatchEvent(new Event('selectionchange'));
+        return selection?.toString() ?? '';
+      });
+      assert.ok(selected.trim().length > 20, 'the reader must have a paragraph to select');
+      await page.getByTestId('btn-sticky').click();
+      await page.getByTestId('sticky-note-popup').waitFor({ timeout: 10000 });
+      await page.getByTestId('sticky-note-text').fill('The sampling time is the thing I keep forgetting.');
+      await page.getByTestId('btn-sticky-save').click();
+      await page.waitForFunction(
+        () => /Sticky note saved/.test(document.querySelector('[data-testid="reader-status"]')?.textContent ?? ''),
+        undefined,
+        { timeout: 10000 }
+      );
+      assert.equal(
+        await page.getByTestId('sticky-note-popup').count(),
+        0,
+        'saving must close the popup rather than leave a stale selection in it'
+      );
+      console.log('  ok a selected passage opens a sticky-note popup and saves it to Notes');
+    }
 
     // ---- 8. Review opens the deck where the cards live ----
     await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });

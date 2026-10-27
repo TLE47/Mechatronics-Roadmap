@@ -72,6 +72,33 @@ part with nothing in it is skipped rather than written back as an empty store, s
 look like it did something, and the sentence afterwards counts only what was actually erased:
 `Reset 4 items · Lessons, Predictions`.
 
+## A part opens: one lesson, one award, one day
+
+A part is a door as well as a button. **Choose** opens the row into the items the store actually holds,
+and each item has its own erase — because erasing nine lessons to un-verify one is a bigger mistake
+than the one being fixed. [`app/src/resetItems.ts`](../app/src/resetItems.ts) answers each part with
+its items, and an item is the unit a learner would name:
+
+| Part | An item is |
+| :--- | :--- |
+| Lessons | one lesson id, with its verdict, its self-mark and its grader stamp |
+| Milestones | one roadmap tick |
+| XP and awards | one award in the ledger |
+| Practice cards | one review card, labelled with its quote |
+| Notes and highlights | one lesson's note and every highlight on it |
+| Drafts and versions | one lesson's draft and the versions each Run filed |
+| Learning log | **one day** of events — a list of five thousand rows is not a list |
+| Sittings | one stretch of work, with its length and run count |
+| Predictions | one lesson's commit |
+| Onboarding | one of the four marks (tour, prologue, Start Here, the editor's first guide) |
+| Where I was | the last lesson, the last page, or one lesson's reading place |
+
+The items always add up to the row: `scripts/test_reset.mjs` asserts, for every part, that the sum of
+its item counts is the number on the row, so a second counting model cannot drift from the first. One
+item still takes two presses, and an item the store does not have erases nothing and stays quiet. A
+single lesson or milestone still writes the watermark, because it is a part the account holds; a single
+note or draft reports the workspace copy instead.
+
 ## The watermark, and why an empty map is not enough
 
 Cloud sync's rule is "never lose work": a flag true on either side stays true. That is what makes two

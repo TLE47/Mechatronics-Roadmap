@@ -178,7 +178,7 @@ async function main() {
 
     await page.evaluate(
       ({ verifiedKey, themeKey, soundKey }) => {
-        localStorage.setItem(verifiedKey, JSON.stringify({ 'P.1': true }));
+        localStorage.setItem(verifiedKey, JSON.stringify({ 'P.1': true, 'P.2': true }));
         localStorage.setItem('mechalab_drafts_v1', JSON.stringify({ 'P.1': 'print("draft")\n' }));
         // Preferences: these must survive every reset, including "everything".
         localStorage.setItem(themeKey, 'paper');
@@ -205,7 +205,7 @@ async function main() {
       11,
       'the panel must offer every part'
     );
-    assert.match(await page.getByTestId('reset-count-lessons').textContent(), /1 verified/, 'lessons count');
+    assert.match(await page.getByTestId('reset-count-lessons').textContent(), /2 verified/, 'lessons count');
     assert.match(await page.getByTestId('reset-count-milestones').textContent(), /1 milestone/, 'milestone count');
     assert.match(await page.getByTestId('reset-count-drafts').textContent(), /1 draft/, 'draft count');
 
@@ -223,6 +223,42 @@ async function main() {
       /Backed up/,
       'the panel must say the archive was written'
     );
+
+    // ---- A part opens: one lesson, not the whole store ----
+    // The row is a door, not only a button: a learner who verified the wrong lesson must be able to
+    // erase that one without losing the lesson beside it.
+    await page.getByTestId('btn-expand-lessons').click();
+    await page.getByTestId('reset-items-lessons').waitFor({ timeout: 10000 });
+    assert.equal(
+      await page.locator('[data-testid^="reset-item-lessons-"]').count(),
+      2,
+      'Lessons must open into its two seeded lessons'
+    );
+    await page.getByTestId('btn-reset-item-lessons-P-2').click();
+    assert.match(
+      await page.getByTestId('reset-status').textContent(),
+      /Press the same button again/,
+      'one item still takes two presses'
+    );
+    await page.getByTestId('btn-reset-item-lessons-P-2').click();
+    await page.waitForFunction(
+      () => /Reset 1 item · Lessons/.test(document.querySelector('[data-testid="reset-status"]')?.textContent ?? ''),
+      undefined,
+      { timeout: 10000 }
+    );
+    assert.match(
+      await page.getByTestId('reset-count-lessons').textContent(),
+      /1 verified/,
+      'the part must recount what is left, not what was there'
+    );
+    const afterItem = await readStore(page);
+    assert.deepEqual(
+      Object.keys(JSON.parse(afterItem[VERIFIED_KEY] || '{}')),
+      ['P.1'],
+      'P.2 is gone and P.1 is untouched'
+    );
+    assert.ok(afterItem.resetAt, 'erasing one lesson still leaves the merge watermark');
+    await page.getByTestId('btn-expand-lessons').click();
 
     // ---- One part: Lessons. The store moves, and the milestone does not ----
     await pressTwice(page, 'btn-reset-lessons');

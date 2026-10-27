@@ -214,6 +214,14 @@ const AdminDashboard = React.lazy(() =>
 );
 
 /**
+ * The introduction, behind the wordmark. Its own chunk: a learner who never clicks the lockup does
+ * not download a page whose figures and route list are already emitted for the lessons and Home.
+ */
+const IntroPage = React.lazy(() =>
+  import('./components/intro/IntroPage').then((module) => ({ default: module.IntroPage }))
+);
+
+/**
  * The whole-screen pages. Home replaced the old `dashboard` route; `?view=dashboard` is kept as an
  * alias so a bookmark, an account-mail link and `e2e_game.mjs` still land on the same page.
  */
@@ -1628,6 +1636,7 @@ export const App: React.FC = () => {
           onOpenAccount={() => setIsAccountOpen(true)}
           onOpenPalette={() => setIsPaletteOpen(true)}
           onOpenHome={() => openPage('home')}
+          onOpenIntro={() => openPage('intro')}
           focus={focus}
           onToggleFocus={toggleFocusMode}
         />
@@ -1649,7 +1658,16 @@ export const App: React.FC = () => {
               </p>
             }
           >
-            {wholePage === 'home' ? (
+            {wholePage === 'intro' ? (
+              <IntroPage
+                labs={HOME_LABS}
+                signedIn={Boolean(accountEmail)}
+                onOpenHome={() => openPage('home')}
+                onOpenWorkbench={() => openPage('workbench')}
+                onOpenLesson={openLessonFromHome}
+                onOpenTab={openTabFromHome}
+              />
+            ) : wholePage === 'home' ? (
               <HomeDashboard
                 email={accountEmail}
                 role={accountRole}
@@ -1722,6 +1740,7 @@ export const App: React.FC = () => {
           onOpenAccount={() => setIsAccountOpen(true)}
           onOpenPalette={() => setIsPaletteOpen(true)}
           onOpenHome={() => openPage('home')}
+          onOpenIntro={() => openPage('intro')}
         />
         <main
           id="main"
@@ -1769,6 +1788,7 @@ export const App: React.FC = () => {
         onOpenAccount={() => setIsAccountOpen(true)}
         onOpenPalette={() => setIsPaletteOpen(true)}
         onOpenHome={() => openPage('home')}
+        onOpenIntro={() => openPage('intro')}
         focus={focus}
         onToggleFocus={toggleFocusMode}
       />
