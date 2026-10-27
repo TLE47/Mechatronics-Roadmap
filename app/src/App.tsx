@@ -118,6 +118,7 @@ import { loadPublicSettings } from './siteSettings';
 import {
   mergeAndApplyWorkspace,
   previewWorkspace,
+  resetWorkspace,
   setWorkspaceSyncEnabled,
   workspaceSyncEnabled,
   type WorkspaceSyncReport,
@@ -134,6 +135,7 @@ import {
   readFlagMap,
 } from './progressKeys';
 import { STORE_RESTORED_EVENT } from './backupBundle';
+import { RESET_EVENT, readResetAt, type ResetReport } from './resetEvent';
 import { FOCUS_EVENT, focusLabel, readFocus, setFocus } from './focusMode';
 import { SoundControlLazy } from './components/SoundControlLazy';
 import { SoundClicks } from './components/SoundClicks';
@@ -335,6 +337,8 @@ function localSnapshot(): ProgressSnapshot {
     completedLessons: readFlagMap(STORAGE_KEY_COMPLETED),
     completedMilestones: readFlagMap(STORAGE_KEY_MILESTONES),
     learningLog: readLearningLog(),
+    // Carried so a merge on this machine can tell "erased" from "nothing to say" (`progressReset.ts`).
+    resetAt: readResetAt(),
   };
 }
 
@@ -683,6 +687,39 @@ export const App: React.FC = () => {
     window.addEventListener(STORE_RESTORED_EVENT, onRestored);
     return () => window.removeEventListener(STORE_RESTORED_EVENT, onRestored);
   }, []);
+
+  // A reset writes the stores directly, and a restore's listener is the wrong shape for it: the erased
+  // part may also live on the account, and the row has to be rewritten now rather than at the 1.2 s
+  // debounce below — a tab closed inside that window would leave the old flags on the server, and the
+  // next sign-in would merge them back into the browser that just erased them.
+  useEffect(() => {
+    const onReset = (event: Event) => {
+      const detail = (event as CustomEvent<ResetReport>).detail;
+      setVerifiedLessons(readFlagMap(STORAGE_KEY_VERIFIED));
+      setCompletedLessons(readFlagMap(STORAGE_KEY_COMPLETED));
+      setCompletedMilestones(readFlagMap(STORAGE_KEY_MILESTONES));
+      setStoreNonce((nonce) => nonce + 1);
+      if (!accountsConfigured || !accountUserId) return;
+      if (detail?.progress) {
+        saveProgress(accountUserId, localSnapshot())
+          .then(() => setSyncNote('Reset saved to your account.'))
+          .catch((error) =>
+            setSyncNote(error instanceof Error ? `Sync failed: ${error.message}` : 'Sync failed.')
+          );
+      }
+      // Drafts and notes sync only when this browser opted in, and that row merges rather than
+      // replaces — so erasing the account's copy is a write, not a merge.
+      if (detail?.workspace && workspaceSyncEnabled()) {
+        resetWorkspace(accountUserId).catch((error) =>
+          setSyncNote(
+            error instanceof Error ? `Workspace reset failed: ${error.message}` : 'Workspace reset failed.'
+          )
+        );
+      }
+    };
+    window.addEventListener(RESET_EVENT, onReset);
+    return () => window.removeEventListener(RESET_EVENT, onReset);
+  }, [accountUserId]);
 
   // The account service is public: an announcement banner is not worth a sign-in.
   useEffect(() => {

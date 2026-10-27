@@ -16,6 +16,32 @@ flowchart LR
 
 ---
 
+## [2026-10-27] — Run 259: start over, part by part
+
+The workbench could add progress and merge it back in, but it could not forget any: a restore unions,
+a tick once set stays set, and the only way to begin again was the browser's "clear site data", which
+also took the theme, the sound choice and the layout. **Reset…** now sits at the end of the header's
+*Export and backup* tray and opens eleven named parts — Lessons, Milestones, XP and awards, Practice
+cards, Notes and highlights, Drafts and versions, Learning log, Sittings, Predictions, Onboarding,
+Where I was — each with the count it holds right now and each erasable on its own, plus **Reset
+everything** ([`app/src/progressReset.ts`](app/src/progressReset.ts),
+[`app/src/components/ResetProgressDialog.tsx`](app/src/components/ResetProgressDialog.tsx)). Two
+presses arm and erase; a browser `confirm()` was rejected because it cannot print the counts or offer
+the backup, and **Back up first** writes the same archive the header does before anything is lost.
+
+A reset of a part the account also holds leaves `mechalab.progress.resetAt.v1`, carried into the
+snapshot as `resetAt`: a reset newer than the other side's last change wins outright in
+[`app/src/progressMerge.ts`](app/src/progressMerge.ts), because an empty map would otherwise be read as
+"nothing to say" and the account's old flags would be unioned straight back at the next sign-in. `App`
+rewrites the row immediately rather than at the debounce, and drafts or notes reset with workspace sync
+on empties the account's copy too (`resetWorkspace`), which merges rather than replaces by rule.
+Preferences are deliberately absent; the suite seeds a theme and a sound choice and asserts they are
+untouched. Acceptance: `npm run test:reset` (14), `npm run test:merge` (13), `npm run test:e2e:reset`
+in Chromium (one part, two parts, everything, no reload, no page errors), and the full workbench
+matrix. Documented in [`docs/RESET.md`](docs/RESET.md).
+
+---
+
 ## [2026-10-27] — Run 258: the header, in three trays
 
 The action row had grown to thirteen identically bordered buttons — Home, Search, three palettes,
