@@ -302,6 +302,26 @@ async function main() {
       );
       console.log("  ok the header's Motion switch and the page's own control are one preference");
 
+      // The arm is a canvas, so nothing in the DOM reports its pose: compare the drawing itself. While
+      // the page plays, two frames must differ; a paused page must hold one frame.
+      const armCanvas = page.locator('.intro-arm-card canvas');
+      await armCanvas.scrollIntoViewIfNeeded();
+      await page.waitForTimeout(400);
+      const frameOf = () => armCanvas.evaluate((element) => element.toDataURL());
+      const firstFrame = await frameOf();
+      await page.waitForTimeout(220);
+      const secondFrame = await frameOf();
+      assert.notEqual(firstFrame, secondFrame, 'the arm must draw a new frame while the page is playing');
+      await page.getByTestId('btn-motion-toggle').click();
+      await page.waitForTimeout(250);
+      const stillFrame = await frameOf();
+      await page.waitForTimeout(300);
+      assert.equal(await frameOf(), stillFrame, 'the Motion switch must still the arm itself, not only the DOM figures');
+      await page.getByTestId('btn-motion-toggle').click();
+      await page.waitForTimeout(250);
+      assert.notEqual(await frameOf(), stillFrame, 'turning motion back on must restart the arm');
+      console.log('  ok the canvas arm moves, and the same switch stops it');
+
       // The nav is the page's own position indicator: nothing before the first section, then the
       // chip of the section under the reading line.
       await page.evaluate(() => window.scrollTo(0, 0));

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { advanceArm, armFrame, armGeometry, targetPath } from '../heroArmModel';
 
 /**
  * The arm the course builds, running on the landing screen before anyone signs up.
@@ -13,6 +14,10 @@ import React, { useEffect, useRef } from 'react';
  * - `prefers-reduced-motion` draws one still frame;
  * - the canvas never exceeds 2x device pixels and resizes from the container, so it is crisp on
  *   retina and cheap on a phone.
+ *
+ * The arm advances by **elapsed time**, not by a fixed step per frame: at a fixed 16 ms step a 120 Hz
+ * screen ran the loop twice as fast as a 60 Hz one, and a stalled frame jumped the target. The path
+ * and the kinematics live in `heroArmModel`, which the node suite also reads.
  */
 /**
  * `motion` overrides the system preference when a page has its own switch (the introduction does):
@@ -48,32 +53,25 @@ export const HeroArm: React.FC<{ className?: string; motion?: boolean }> = ({ cl
     };
     resize();
 
-    const trail: Array<[number, number]> = [];
+    // The trail is a window of *time*, so it covers the same arc on a 60 Hz and a 120 Hz screen.
+    const trail: Array<{ x: number; y: number; at: number }> = [];
+    const TRAIL_MS = 2200;
     let t = 0.9;
     let raf = 0;
+    let last = 0;
     let visible = true;
 
-    const drawFrame = () => {
-      const L1 = Math.min(width, height) * 0.34;
-      const L2 = L1 * 0.82;
-      const ox = width / 2;
-      const oy = height * 0.58;
+    const drawFrame = (now = performance.now()) => {
+      const geometry = armGeometry(width, height);
+      const { ox, oy } = geometry;
+      const { target, elbow, tip, q1, q2 } = armFrame(t, geometry);
 
-      // Target on a figure-8, scaled to the panel.
-      const spanX = Math.min(width * 0.3, L1 + L2 - 14);
-      const spanY = Math.min(height * 0.2, L1 + L2 - 14);
-      const tx = spanX * Math.sin(t);
-      const ty = spanY * Math.sin(2 * t);
-
-      // Two-link inverse kinematics (elbow up).
-      const clamped = Math.min(1, Math.max(-1, (tx * tx + ty * ty - L1 * L1 - L2 * L2) / (2 * L1 * L2)));
-      const q2 = -Math.acos(clamped);
-      const q1 = Math.atan2(ty, tx) - Math.atan2(L2 * Math.sin(q2), L1 + L2 * Math.cos(q2));
-      const elbow = { x: ox + L1 * Math.cos(q1), y: oy - L1 * Math.sin(q1) };
-      const tip = { x: elbow.x + L2 * Math.cos(q1 + q2), y: elbow.y - L2 * Math.sin(q1 + q2) };
-
-      trail.push([tip.x, tip.y]);
-      if (trail.length > 150) trail.shift();
+      const previous = trail[trail.length - 1];
+      if (!previous || Math.hypot(previous.x - tip.x, previous.y - tip.y) > 0.4) {
+        trail.push({ x: tip.x, y: tip.y, at: now });
+      }
+      while (trail.length > 1 && now - trail[0].at > TRAIL_MS) trail.shift();
+      if (trail.length > 600) trail.shift();
 
       const accent = css('--accent', '#38bdf8');
       const dimLine = css('--border-soft', '#182436');
@@ -98,24 +96,23 @@ export const HeroArm: React.FC<{ className?: string; motion?: boolean }> = ({ cl
         ctx.stroke();
       }
 
-      // The path the tip is tracing, plus where it has just been.
+      // The path the tip is tracing — the same function the target comes from, so they cannot drift.
+      const path = targetPath(geometry);
       ctx.setLineDash([4, 6]);
       ctx.strokeStyle = 'rgba(56,189,248,0.28)';
       ctx.beginPath();
-      for (let a = 0; a <= Math.PI * 2 + 0.01; a += 0.05) {
-        const px = ox + spanX * Math.sin(a);
-        const py = oy - spanY * Math.sin(2 * a);
-        if (a === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
+      path.forEach((point, index) => {
+        if (index === 0) ctx.moveTo(point.x, point.y);
+        else ctx.lineTo(point.x, point.y);
+      });
       ctx.stroke();
       ctx.setLineDash([]);
 
-      trail.forEach(([x, y], i) => {
-        ctx.globalAlpha = (i / trail.length) * 0.7;
+      trail.forEach((point, i) => {
+        ctx.globalAlpha = ((i + 1) / trail.length) * 0.7;
         ctx.fillStyle = accent;
         ctx.beginPath();
-        ctx.arc(x, y, 1.7, 0, Math.PI * 2);
+        ctx.arc(point.x, point.y, 1.7, 0, Math.PI * 2);
         ctx.fill();
       });
       ctx.globalAlpha = 1;
@@ -153,7 +150,14 @@ export const HeroArm: React.FC<{ className?: string; motion?: boolean }> = ({ cl
         ctx.stroke();
       }
 
-      // The tip, glowing: this is the point the whole course is about.
+      // The tip, glowing: this is the point the whole course is about. A faint ring on the target
+      // shows how little the tip lags it.
+      ctx.strokeStyle = 'rgba(56,189,248,0.35)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(target.x, target.y, 8, 0, Math.PI * 2);
+      ctx.stroke();
+
       ctx.shadowBlur = 18;
       ctx.shadowColor = accent;
       ctx.fillStyle = accent;
@@ -171,15 +175,20 @@ export const HeroArm: React.FC<{ className?: string; motion?: boolean }> = ({ cl
       ctx.textAlign = 'left';
     };
 
-    const tick = () => {
+    const tick = (now: number) => {
       if (!visible) return;
-      t += 0.016;
-      drawFrame();
+      // A capped elapsed step: a dropped frame advances the arm by at most 50 ms of travel instead of
+      // teleporting it, and a 120 Hz screen no longer runs the loop twice as fast as a 60 Hz one.
+      t = advanceArm(t, last ? (now - last) / 1000 : 1 / 60);
+      last = now;
+      drawFrame(now);
       raf = requestAnimationFrame(tick);
     };
 
     const start = () => {
       cancelAnimationFrame(raf);
+      // Resuming after a pause must not count the pause as travel.
+      last = 0;
       if (!animate()) {
         drawFrame();
         return;

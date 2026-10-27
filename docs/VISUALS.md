@@ -141,6 +141,14 @@ Three rules follow, and each is checked in `npm run test:e2e:pages`:
   one you are reading, the six lesson moves change state in order, each lab carries its ready
   beacon, and the stat cards, "your work" cards and closing panel sweep. Pause on the section row or
   the header stills every half at once. An off-screen figure stops its frame loop either way.
+- **A moving thing moves by the clock, not by the frame.** The launch arm (`components/HeroArm.tsx`)
+  advances by elapsed time — capped at 50 ms a step — so a 120 Hz screen runs the same loop as a 60 Hz
+  one and a stalled frame is one normal step instead of a jump. Its figure-eight is *lifted above the
+  base* (`heroArmModel.ts`): centred on the base it passed through it twice a loop, where a two-link
+  solution has no defined joint angle and the elbow whipped 359° in one frame, which reads as the arm
+  skipping between its left and right poses. Lifted, the target stays inside the reach and outside the
+  folded arm, every frame moves a joint under 3°, and the dashed preview is the same function the
+  target follows — so it cannot drift from the arm.
 - **No hard-coded colour.** Every stroke and fill is a CSS custom property the palettes define
   (`--ink`, `--body`, `--muted`, `--line`, `--line-soft`, `--accent`, `--canvas`), so dark, light, paper
   and high contrast need no special case.
@@ -193,6 +201,7 @@ hologram — is 11.7 kB gzipped on chunks that already existed.
 | Claim | Command |
 | :--- | :--- |
 | A scene is drawable, each kind's data is consistent, an unknown id is refused, the arm obeys its own limits, and every committed page's figures, routes and graphs validate | `npm run test:visuals` |
+| The landing arm is continuous (no frame moves a joint 3°), its target stays inside the workspace, its preview is the path the tip follows, and its loop advances by time at any frame rate | `npm run test:arm` |
 | The generator turns a single-chain flowchart into a route and a branching one into a graph, refuses a graph too large to read, and never copies Mermaid source into a payload | `python3 -m unittest tests.test_lesson_pages` |
 | Every page carries a figure and a map, and no teaching section is a wall of prose | `python3 -m unittest tests.test_lesson_pages` (`ReadingPace`) |
 | The built bundle draws a named figure, the page's route and a branching page's graph in the reading pane, each with a name and a caption | `npm run test:e2e:pages` |

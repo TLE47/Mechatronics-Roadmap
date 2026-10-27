@@ -99,6 +99,7 @@
     "test:layout": "node --experimental-strip-types scripts/test_layout.mjs",
     "test:reader": "node --experimental-strip-types scripts/test_reader.mjs",
     "test:visuals": "node --experimental-strip-types scripts/test_visuals.mjs",
+    "test:arm": "node --experimental-strip-types scripts/test_arm.mjs",
     "test:keymap": "node --experimental-strip-types scripts/test_keymap.mjs",
     "test:vim": "node --experimental-strip-types scripts/test_vim.mjs",
     "test:trace": "node --experimental-strip-types scripts/test_trace.mjs",
