@@ -133,7 +133,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = (props) => {
             </button>
             {/* A door beside the door: the page that explains the course should not be reachable
                 only from the logo, which is already doing two other jobs on this screen. */}
-            <span aria-hidden className="text-[10px] text-faint">
+            <span aria-hidden className="text-[11px] text-faint">
               ·
             </span>
             <button
