@@ -15,6 +15,7 @@ import {
 } from '../theme';
 import { focusLabel } from '../focusMode';
 import { SoundControlLazy } from './SoundControlLazy';
+import { HeaderTips } from './HeaderTips';
 // The interface's own ear: one delegated listener for every control's click, mounted once with the
 // header (which every screen renders). It renders nothing and holds no state.
 import { SoundClicks } from './SoundClicks';
@@ -107,6 +108,9 @@ export const Header: React.FC<HeaderProps> = ({
   // The reset panel is lazy and mounted only once it is opened, so this is one boolean and one icon
   // on the first paint; the eleven stores it counts for arrive with the chunk.
   const [resetOpen, setResetOpen] = React.useState(false);
+  // The tray row is the scope of the hover names (`HeaderTips`): one listener for the three trays,
+  // the account chip's neighbours and whatever a child component puts in them.
+  const actionsRef = React.useRef<HTMLDivElement | null>(null);
 
   /**
    * A toggle that is on. The tray owns the frame, so the state is a wash inside it rather than a
@@ -186,7 +190,15 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Zone 3: actions, in three trays instead of thirteen peers. The frame belongs to the
             group, so the children carry no border of their own; the account chip is the only filled
             control in the header because it is the only one whose state a learner has to see. */}
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+        {/* Below 640 px the three trays and the account chip become one swipeable row instead of
+            four stacked ones: wrapping them cost 184 px of a 360 px screen's height, which is a
+            fifth of the page before any lesson is read. `.action-tray` never shrinks (`index.css`),
+            so the row scrolls rather than squeezing a tray into two labels. */}
+        <div
+          ref={actionsRef}
+          className="ml-auto flex w-full flex-nowrap items-center gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] sm:w-auto sm:flex-wrap sm:justify-end sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
+        >
+          <HeaderTips scope={actionsRef} />
           {/* Navigate: the two doors that are neither a lesson nor a setting. */}
           <div className="action-tray" role="group" aria-label="Navigate">
             {/* Home is a page, not a menu: one press from every screen, including Home itself. */}
@@ -194,7 +206,10 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 onClick={onOpenHome}
                 data-testid="btn-home"
-                title="Home — today's step, your labs and your progress"
+                // The words are `hidden` below 1536 px; the name is the words, not a description of
+                // them, so the icon-only control still says what it is (and WCAG 2.5.3 holds).
+                aria-label="Home"
+                data-tip="Home — today's step, your labs and your progress"
                 className="btn"
               >
                 <House className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -206,7 +221,7 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={onOpenPalette}
               data-testid="btn-open-palette"
               aria-keyshortcuts="Meta+K Control+K"
-              title="Jump to a lesson, tab or command (⌘K)"
+              data-tip="Search — lessons, tabs and commands (⌘K)"
               className="btn"
             >
               <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -227,7 +242,7 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={toggle}
               data-testid="btn-theme-toggle"
               aria-label={themeLabel(theme, fallback)}
-              title={themeLabel(theme, fallback)}
+              data-tip={`Theme — ${themeLabel(theme, fallback).toLowerCase()}`}
               className="btn"
             >
               {themeShortLabel(theme, fallback) === 'Light' ? (
@@ -242,7 +257,7 @@ export const Header: React.FC<HeaderProps> = ({
               data-testid="btn-contrast-toggle"
               aria-label={CONTRAST_LABEL}
               aria-pressed={theme === 'contrast'}
-              title={contrastHint(theme)}
+              data-tip={`Contrast — ${contrastHint(theme)}`}
               className="btn"
               style={pressed(theme === 'contrast')}
             >
@@ -254,7 +269,7 @@ export const Header: React.FC<HeaderProps> = ({
               data-testid="btn-paper-toggle"
               aria-label={PAPER_LABEL}
               aria-pressed={theme === 'paper'}
-              title={paperHint(theme)}
+              data-tip={`Paper — ${paperHint(theme)}`}
               className="btn"
               style={pressed(theme === 'paper')}
             >
@@ -276,11 +291,11 @@ export const Header: React.FC<HeaderProps> = ({
             {onToggleFocus && (
               <button
                 onClick={onToggleFocus}
-                data-testid="btn-focus-toggle"
-                aria-pressed={focus}
+                data-testid="btn-focus-toggle"                aria-pressed={focus}
                 aria-keyshortcuts="Meta+. Control+."
-                title={focusLabel(focus)}
-                className="btn"
+                aria-label="Focus"
+                data-tip={`Focus — ${focusLabel(focus).toLowerCase()} (⌘.)`}
+              className="btn"
                 style={pressed(focus)}
               >
                 {focus ? (
@@ -298,7 +313,8 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={downloadLearningLog}
               data-testid="btn-export-learning-log"
-              title="Download what you actually did — opens, runs, failed tests, hints — as JSON. It never leaves this browser unless you hand it over."
+              aria-label="Export Learning Log (.json)"
+              data-tip="Export learning log (.json) — opens, runs, failures and hints. It never leaves this browser."
               className="btn"
             >
               <FileJson className="h-3.5 w-3.5" aria-hidden="true" />
@@ -312,7 +328,8 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setResetOpen(true)}
               data-testid="btn-open-reset"
               aria-haspopup="dialog"
-              title="Reset your progress — one part at a time, or all of it. Your theme, sound and layout stay."
+              aria-label="Reset…"
+              data-tip="Reset progress… — one part at a time, or all of it"
               className="btn"
             >
               <RotateCcw className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -329,6 +346,7 @@ export const Header: React.FC<HeaderProps> = ({
               // differs from what is drawn fails WCAG 2.5.3, and Lighthouse's `label-content-name-mismatch`
               // found exactly that in the sibling buttons this fix matches.
               aria-label="Export Progress (.md)"
+              data-tip="Export progress (.md)"
               className="btn"
               style={{ color: 'var(--emerald)' }}
             >
@@ -339,6 +357,7 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={onOpenCheatSheet}
               data-testid="btn-open-cheatsheet"
               aria-label="1-Page Cheat Sheet"
+              data-tip="1-page cheat sheet"
               className="btn"
               style={{ borderColor: 'var(--border-strong)', color: 'var(--accent)' }}
             >
@@ -354,7 +373,9 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={onOpenAccount}
             data-testid="btn-account"
-            title={
+            // The same bubble as the trays rather than a native `title`, which is slow, unstyled
+            // and would open a second tooltip beside this one.
+            data-tip={
               accountEmail
                 ? `Signed in as ${accountEmail} — progress syncs to your account`
                 : 'Sign in to keep your progress across browsers, or keep it in this one'

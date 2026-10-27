@@ -237,6 +237,68 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       "the runner's reading link must point at the selected lesson's own page"
     );
 
+    // 0b. The header's trays are icons below 1536 px, so a control's name arrives on hover — and on
+    //     focus, for a keyboard. One bubble, drawn only where the label is not written on the button,
+    //     kept on its control by a scroll, and not drawn at all above 1536 px.
+    const themeButton = page.getByTestId('btn-theme-toggle');
+    const themeTip = await themeButton.getAttribute('data-tip');
+    assert.match(themeTip ?? '', /^Theme\b/, 'the theme control must name itself in its tooltip');
+    await themeButton.hover();
+    await page.getByTestId('header-tip').waitFor({ state: 'visible', timeout: 3000 });
+    assert.equal(
+      (await page.getByTestId('header-tip').innerText()).trim(),
+      themeTip,
+      'hovering an icon-only control must show its name'
+    );
+    const [tipBox, buttonBox] = await Promise.all([
+      page.getByTestId('header-tip').boundingBox(),
+      themeButton.boundingBox(),
+    ]);
+    assert.ok(
+      tipBox && buttonBox && tipBox.y >= buttonBox.y + buttonBox.height - 1,
+      'the bubble must hang below the control it names, not over it'
+    );
+    assert.ok(
+      tipBox && buttonBox && Math.abs(tipBox.x + tipBox.width / 2 - (buttonBox.x + buttonBox.width / 2)) < 40,
+      'the bubble must be centred on its control'
+    );
+    await page.mouse.move(4, 420);
+    await page.getByTestId('header-tip').waitFor({ state: 'detached', timeout: 3000 });
+    // A scroll moves the bubble with its control rather than stranding it: the header is sticky, so
+    // the name stays under the button it belongs to.
+    await themeButton.hover();
+    await page.getByTestId('header-tip').waitFor({ state: 'visible', timeout: 3000 });
+    await page.mouse.wheel(0, 120);
+    await page.waitForTimeout(200);
+    const afterScroll = await page.getByTestId('header-tip').boundingBox();
+    assert.ok(
+      afterScroll && buttonBox && afterScroll.y >= buttonBox.y + buttonBox.height - 1,
+      'a scroll must leave the bubble on the control it names'
+    );
+    // A keyboard bubble belongs to the focus until the Escape ends it.
+    await themeButton.focus();
+    assert.equal(
+      (await page.getByTestId('header-tip').innerText()).trim(),
+      themeTip,
+      'focus must name the control too, not only the pointer'
+    );
+    await page.keyboard.press('Escape');
+    await page.getByTestId('header-tip').waitFor({ state: 'detached', timeout: 3000 });
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await page.waitForTimeout(250);
+    await themeButton.hover();
+    await page.waitForTimeout(250);
+    assert.equal(
+      await page.getByTestId('header-tip').count(),
+      0,
+      'a control whose label is written on it must not grow a bubble'
+    );
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.waitForTimeout(250);
+    // Leave the page where the rest of the suite expects it.
+    await page.evaluate(() => window.scrollTo(0, 0));
+    console.log('  ok an icon-only header control names itself on hover and on focus');
+
     // 0c. A page's callout links `?lesson=<id>`, so that address has to open the workbench on that
     //     entry. Without this the callout's link is only the workbench's front door again, and the
     //     reader is back to searching for the id the page just handed them.
@@ -841,6 +903,15 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await page.evaluate((line) => window.__mechalabEditors['editor-main'].revealLine(line), callLine);
     // The editor scrolled its own scroller; the page still has to put the panel under the pointer.
     await page.locator('[data-editor="editor-main"]').scrollIntoViewIfNeeded();
+    // Centred, not merely on screen: a line at the bottom edge of a 720 px viewport sits under the
+    // pass toast from the run before this one, and `elementFromPoint` then answers the toast — a
+    // click that never reaches the editor, which is a property of where the line is, not of the jump.
+    await page.evaluate(() => {
+      document
+        .querySelector('[data-editor="editor-main"] .cm-line.cm-activeLine')
+        ?.scrollIntoView({ block: 'center', inline: 'nearest' });
+    });
+    await page.waitForTimeout(150);
     // The mouse gesture: a Ctrl-mousedown on the name, aimed at the middle of the word's own glyphs
     // (a Range over the line's text node, which is the line `revealLine` just made active). Dispatched
     // in the page rather than replayed through the driver because only the page knows where a
@@ -990,10 +1061,10 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     assert.equal(await visible('lesson-list-card'), true, '⌥1 brings the chooser back');
     assert.equal(await visible('lesson-reader'), true, '⌥1 brings the lesson text back');
     assert.equal(await visible('results-panel'), true, '⌥1 brings the results back');
-    // Structure, not computed style: this dev server resolves the config without the Tailwind
-    // plugin, so utility classes have no rules here at all (`display` reads `block` even on a
-    // `grid` container). The built bundle, where the utilities exist, is where the columns are
-    // measured — `scripts/e2e_pages_bundle.mjs`.
+    // Utility classes have no rules in this dev server (it resolves the config without the Tailwind
+    // plugin), so anything asserted here is either markup or a rule from `index.css`. The split
+    // columns are the latter now, which is why they can be measured below; the utilities themselves
+    // are still only checked in the built bundle — `scripts/e2e_pages_bundle.mjs`.
     assert.equal(
       await page.getByTestId('layout-study').getAttribute('aria-pressed'),
       'true',
@@ -1009,31 +1080,41 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     assert.equal(await visible('lesson-reader'), false, '⌥4 hides the lesson text');
     assert.equal(await visible('editor-panel'), true, '⌥4 keeps the editor');
     assert.equal(await visible('results-panel'), true, '⌥4 keeps the results');
-    // Debug's two columns are a grid on this container; the editor must still come first in the
-    // DOM, so the second column is the results.
-    const arrangement = await page.evaluate(() => {
-      const box = document.querySelector('[data-layout]');
-      const editor = document.querySelector('[data-testid="editor-panel"]');
-      const results = document.querySelector('[data-testid="results-panel"]');
-      return {
-        layout: box.getAttribute('data-layout'),
-        className: box.className,
-        editorFirst:
-          !!(editor && results) &&
-          !!(editor.compareDocumentPosition(results) & Node.DOCUMENT_POSITION_FOLLOWING),
-      };
-    });
-    assert.equal(arrangement.layout, 'debug', 'the work area must report the Debug preset');
-    assert.match(
-      arrangement.className,
-      /\blg:grid-cols-2\b/,
-      'Debug must ask for two columns at the wide breakpoint'
-    );
-    assert.equal(
-      arrangement.editorFirst,
-      true,
-      'Debug must put the editor first, so the results land in the second column'
-    );
+    // Debug's two columns are a grid on this container, and the editor comes first in the DOM so the
+    // second column is the results. The columns are a media query in `index.css`, not a utility
+    // class (the split needs 1760 px, which is not a Tailwind step), so they are measured rather than
+    // matched as a string: that also pins the stacked case below the split, which is what a phone
+    // gets. The viewport is widened for the wide reading and put back immediately.
+    const arrangement = () =>
+      page.evaluate(() => {
+        const box = document.querySelector('[data-layout]');
+        const editor = document.querySelector('[data-testid="editor-panel"]');
+        // The column, not the results card: the CSS places the column, and the card inside it can sit
+        // below a predict gate or a share banner of its own.
+        const column = document.querySelector('[data-testid="results-column"]');
+        const e = editor.getBoundingClientRect();
+        const r = column.getBoundingClientRect();
+        return {
+          layout: box.getAttribute('data-layout'),
+          columns: getComputedStyle(box).gridTemplateColumns,
+          sideBySide: Math.abs(e.top - r.top) < 60 && r.left > e.left + 120,
+          stacked: r.top > e.bottom - 60 && Math.abs(r.left - e.left) < 40,
+          editorFirst: !!(editor.compareDocumentPosition(column) & Node.DOCUMENT_POSITION_FOLLOWING),
+        };
+      });
+
+    const narrow = await arrangement();
+    assert.equal(narrow.layout, 'debug', 'the work area must report the Debug preset');
+    assert.equal(narrow.stacked, true, 'below the split width the editor and the results stack, full width');
+    assert.equal(narrow.editorFirst, true, 'the editor comes first, so the results are read after it');
+
+    await page.setViewportSize({ width: 1800, height: 1100 });
+    await page.waitForTimeout(250);
+    const wide = await arrangement();
+    assert.equal(wide.sideBySide, true, 'from the split width up the editor and the results share a row');
+    assert.match(wide.columns, /^[\d.]+px [\d.]+px$/, 'the split must be two measured tracks');
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.waitForTimeout(250);
     await page.getByTestId('layout-study').click();
     assert.equal(await visible('lesson-list-card'), true, 'the Study button comes back');
     console.log('  ok ⌥1–⌥4 choose the regions and their arrangement, and the choice is remembered');

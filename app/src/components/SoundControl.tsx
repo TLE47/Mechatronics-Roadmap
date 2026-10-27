@@ -204,7 +204,7 @@ export const SoundControl: React.FC<{ variant?: 'header' | 'pill'; testIdSuffix?
         data-testid={tid(pill ? 'btn-sound-toggle-pill' : 'btn-sound-toggle')}
         aria-label={soundLabel(prefs.on)}
         aria-pressed={prefs.on}
-        title={soundLabel(prefs.on)}
+        data-tip={`Sound — ${soundLabel(prefs.on).toLowerCase()}`}
         className={
           pill
             ? 'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-semibold shadow-lg'
@@ -235,6 +235,7 @@ export const SoundControl: React.FC<{ variant?: 'header' | 'pill'; testIdSuffix?
           aria-controls={panelId}
           aria-label="Sound settings"
           data-testid={tid('btn-sound-settings')}
+          data-tip="Sound settings — volume, ambience and the click map"
           className="btn ml-1 px-1.5"
           style={{ color: 'var(--muted)' }}
         >

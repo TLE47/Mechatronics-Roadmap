@@ -4711,16 +4711,20 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             // the panels by column (`index.css`), because a dock is a side, not a visibility.
             data-dock={dock.results}
             data-lesson-dock={dock.lesson}
+            // The split ratio is a custom property, not a `grid-template-columns`, because the
+            // column layout only exists from `2xl` up: below it the two panels stack, which is what
+            // keeps a 390 px Debug preset from being two 170 px columns and keeps a lesson figure
+            // at its full width in Study. `index.css` reads the property inside its own query.
             style={
               layoutArrangement(shownLayout) === 'columns'
-                ? { gridTemplateColumns: splitGridTemplate(splitRatio, resultsSide) }
+                ? ({ '--split-cols': splitGridTemplate(splitRatio, resultsSide) } as React.CSSProperties)
                 : undefined
             }
             className={
               layoutArrangement(shownLayout) === 'columns'
-                ? 'grid gap-4 lg:grid-cols-2 items-start'
+                ? 'grid grid-cols-1 gap-4 2xl:grid-cols-2 items-start'
                 : layoutArrangement(shownLayout) === 'workbench'
-                  ? 'flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-start'
+                  ? 'flex flex-col gap-4 2xl:grid 2xl:grid-cols-2 2xl:items-start'
                   : 'space-y-4'
             }
           >

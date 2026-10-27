@@ -37,7 +37,11 @@ import {
   Q2_RANGE,
   TRAIL_LIMIT,
   YAW_RANGE,
+  ZOOM_HOME,
+  ZOOM_RANGE,
+  ZOOM_STEP,
   clampHolo,
+  clampZoom,
   demoPose,
   describe,
   floorLines,
@@ -319,6 +323,17 @@ check('joints and the view clamp to their own limits', () => {
   assert.equal(wild.q1, Q1_RANGE[1], 'the shoulder must not pass its mechanical stop');
   assert.equal(wild.q2, Q2_RANGE[0], 'the elbow must not pass its mechanical stop');
   assert.equal(clampHolo({ ...HOME, q1: Number.NaN }).q1, Q1_RANGE[0], 'NaN must fall back to the low limit, not draw nothing');
+});
+
+check('the view zooms between its limits and never to nothing', () => {
+  assert.equal(clampZoom(9), ZOOM_RANGE[1], 'a big zoom must stop at the top of its range');
+  assert.equal(clampZoom(0), ZOOM_RANGE[0], 'zooming out must stop while the arm still reads');
+  assert.equal(clampZoom(Number.NaN), ZOOM_HOME, 'a missing factor is the default, not a blank figure');
+  assert.equal(
+    clampZoom(ZOOM_HOME + ZOOM_STEP),
+    Math.round((ZOOM_HOME + ZOOM_STEP) * 100) / 100,
+    'a notch must land on the two-decimal value the readout shows'
+  );
 });
 
 check('a drag turns the view, and never past its stop', () => {

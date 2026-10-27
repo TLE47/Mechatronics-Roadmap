@@ -1,4 +1,6 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
+import { Maximize2, X } from 'lucide-react';
 import { graphLayers, type PlacedNode } from './graphLayout.ts';
 import type { DiagramSpec, Series } from './scenes.ts';
 
@@ -940,7 +942,93 @@ export function DiagramArt({ spec }: { spec: DiagramSpec }) {
  * The caption is `<figcaption>`, not a paragraph in the prose: it belongs to the picture, reads after
  * it in both the visual and the accessibility tree, and cannot be mistaken for the next section.
  */
+/**
+ * One figure, at whatever width the page can give it — plus the way out when that is too little.
+ *
+ * The drawings are laid out on a 640-unit canvas whose smallest labels are 9.5 units, so they are
+ * legible at roughly their own width and not much below it. The lesson pane is narrower than that on
+ * most screens: a phone gives the figure 328 px (5 px type), and the split reader gives it 312 px at
+ * 1024. Scaling a diagram down is scaling its words down.
+ *
+ * So a figure can be expanded: the same SVG, at no smaller than its design width, in a sheet over the
+ * page. The sheet keeps `min-width: 640px` inside a horizontal scroller, which is why a phone gets
+ * full-size type it can pan across instead of quarter-size type it cannot read.
+ */
 export function Diagram({ spec, id, className = '' }: { spec: DiagramSpec; id?: string; className?: string }) {
+  const [expanded, setExpanded] = React.useState(false);
+  const closeRef = React.useRef<HTMLButtonElement | null>(null);
+  const returnFocusRef = React.useRef<HTMLElement | null>(null);
+
+  React.useEffect(() => {
+    if (!expanded) return;
+    returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    closeRef.current?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setExpanded(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      returnFocusRef.current?.focus?.();
+    };
+  }, [expanded]);
+
+  const open = () => setExpanded(true);
+
+  const sheet = expanded
+    ? createPortal(
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/65 p-3 pt-[6vh]"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setExpanded(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={spec.title}
+            data-testid={id ? `fig-sheet-${id}` : 'fig-sheet'}
+            className="w-full max-w-[min(1500px,96vw)] overflow-hidden rounded-xl border bg-panel shadow-2xl"
+            style={{ borderColor: 'var(--border-strong)' }}
+          >
+            <div
+              className="flex items-center justify-between gap-2 border-b px-3 py-2"
+              style={{ borderColor: 'var(--border)' }}
+            >
+              <span className="eyebrow">{spec.title}</span>
+              <button
+                ref={closeRef}
+                type="button"
+                onClick={() => setExpanded(false)}
+                data-testid={id ? `fig-sheet-close-${id}` : 'fig-sheet-close'}
+                aria-label={`Close the expanded figure: ${spec.title}`}
+                className="btn shrink-0"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>Close</span>
+              </button>
+            </div>
+            {/* Never below the drawing's own 640 units: a phone pans, it does not squint. */}
+            <div className="overflow-x-auto px-3 py-3">
+              <div className="min-w-[640px]">
+                <DiagramArt spec={spec} />
+              </div>
+            </div>
+            <p
+              className="border-t px-3 py-2 text-[12.5px] leading-snug text-muted"
+              style={{ borderColor: 'var(--border)' }}
+            >
+              {spec.caption}
+            </p>
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
+
   return (
     <figure
       data-testid={id ? `diagram-${id}` : 'diagram'}
@@ -948,14 +1036,42 @@ export function Diagram({ spec, id, className = '' }: { spec: DiagramSpec; id?: 
     >
       <div className="flex items-center justify-between gap-2 border-b border-line-soft bg-canvas px-3 py-1.5">
         <span className="eyebrow">{spec.title}</span>
-        {id && <span className="font-mono text-[11px] text-faint">{id}</span>}
+        <span className="flex shrink-0 items-center gap-2">
+          {id && <span className="hidden font-mono text-[11px] text-faint sm:inline">{id}</span>}
+          <button
+            type="button"
+            onClick={open}
+            data-testid={id ? `fig-expand-${id}` : 'fig-expand'}
+            aria-haspopup="dialog"
+            title={`Expand this figure${id ? ` (${id})` : ''} — the same drawing at full size, with a phone able to pan across it.`}
+            className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded border border-line-soft px-1.5 py-1 text-[12px] font-semibold text-muted hover:text-ink"
+          >
+            <Maximize2 className="h-3 w-3" aria-hidden="true" />
+            <span className="hidden sm:inline">Expand</span>
+          </button>
+        </span>
       </div>
-      <div className="px-2 py-2">
+      <div className="figure-art relative px-2 py-2">
         <DiagramArt spec={spec} />
+        {/* The picture is the other door to the same sheet: on a phone a tap on the drawing is the
+            gesture a learner already makes, and the header button is small. The control is an empty
+            overlay rather than a wrapper around the art: a button around the drawing took its name
+            from an `aria-label` that could not contain the SVG's own text, which axe reports as
+            `label-content-name-mismatch`. Empty, it carries its own name and the drawing keeps its
+            `role="img"` description. */}
+        <button
+          type="button"
+          onClick={open}
+          aria-haspopup="dialog"
+          aria-label={`Expand this figure${id ? ` (${id})` : ''}: ${spec.title}`}
+          data-testid={id ? `fig-tap-${id}` : 'fig-tap'}
+          className="absolute inset-0 cursor-zoom-in rounded-lg bg-transparent"
+        />
       </div>
       <figcaption className="border-t border-line-soft px-3 py-2 text-[12.5px] leading-snug text-muted">
         {spec.caption}
       </figcaption>
+      {sheet}
     </figure>
   );
 }

@@ -16,6 +16,50 @@ flowchart LR
 
 ---
 
+## [2026-10-27] — Run 260: figures you can read, names on the icons
+
+A lesson's diagram is drawn on a 640-unit canvas whose smallest labels are 9.5 units, and then it was
+squeezed into whatever column was left: 366 px at 1280 in the split reader, so 5.4 px type — a small
+drawing rather than a readable one. Three changes, each pinned by a check:
+
+- **The reading column keeps the work area until both halves work.** The two-column split (Debug, and
+  Study's text-beside-code) now starts at **1760 px**, the width at which the reading half still clears
+  640 px, instead of 1024. At 1280 a figure is 730 px — drawn at 1.14x its own units — and the panels
+  stack below the split instead of halving each other ([`app/src/index.css`](app/src/index.css)). The
+  breakpoint lives in CSS because 1760 is not a Tailwind step, and `npm run test:e2e` measures both
+  sides of it (stacked at 1280, two tracks at 1800) rather than matching a class name.
+- **A figure can be opened.** The header's **Expand** button, or the drawing itself, opens the same SVG
+  in a sheet at no less than its design width; Escape or the scrim leaves it, and focus returns to the
+  button that opened it ([`app/src/visuals/Diagram.tsx`](app/src/visuals/Diagram.tsx)).
+- **Below 640 px it pans instead of shrinking.** `.figure-art` keeps the art's 640 px and scrolls, the
+  bargain a wide table already makes; the page itself never gains a horizontal scrollbar.
+
+The header's trays are icons below 1536 px, and a native `title` was the only thing naming them: slow,
+unstyled, clipped by the phone's sideways-scrolling tray row, and invisible to every suite.
+[`app/src/components/HeaderTips.tsx`](app/src/components/HeaderTips.tsx) is one delegated bubble for the
+row: hover or focus opens it, it leads with the name (`Theme — switch to light theme`), it is portalled
+to `<body>` and clamps its own width, it follows its control through a scroll and closes when that
+control leaves the window or on Escape, and above 1536 px it does not open at all — the label is written
+on the button there. The old `title` strings moved into `data-tip`, so nothing is said twice.
+
+The arm zooms: the wheel over the figure, `+`/`-`, or the tray beside **Home pose**, between 55% and
+220%, with the percentage as the way back to 100% (`0`). Zoom multiplies the projection's scale and
+nothing else — `clampZoom` in [`app/src/visuals/holoModel.ts`](app/src/visuals/holoModel.ts) keeps a wild
+value or a `NaN` from blanking the figure — so the joints, limits and readouts are the same instrument
+at every scale.
+
+Home's **Today** card is as tall as its own content now (`items-start` on the pair). Stretched to the
+hologram beside it, it wore ~230 px of empty panel under its button whenever the next mission had no
+check to name, which read as a card that had failed to load.
+
+Verified: `tsc --noEmit`; `npm run test:visuals` (16); `npm run test:layout`, `test:reader`, `test:home`
+and `check:labels`; `npm run test:e2e` in Chromium (the hover and focus names, both sides of the split,
+and the workbench matrix); `npm run test:e2e:home`; `npm run test:e2e:pages` for the sheet, the phone
+strip and the 640-unit floor. Documented in [`docs/VISUALS.md`](docs/VISUALS.md) and
+[`app/README.md`](app/README.md).
+
+---
+
 ## [2026-10-27] — Run 259: start over, part by part
 
 The workbench could add progress and merge it back in, but it could not forget any: a restore unions,

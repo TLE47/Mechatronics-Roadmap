@@ -1,11 +1,16 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ZoomIn, ZoomOut } from 'lucide-react';
 import {
   HOME,
   PITCH_RANGE,
   Q1_RANGE,
   Q2_RANGE,
   YAW_RANGE,
+  ZOOM_HOME,
+  ZOOM_RANGE,
+  ZOOM_STEP,
   clampHolo,
+  clampZoom,
   demoPose,
   describe,
   floorLines,
@@ -32,8 +37,11 @@ import {
  * - **Motion is asked for.** The demo does not start on its own, and with `prefers-reduced-motion` the
  *   button is disabled with the reason on it: a learner who asked their OS for less motion gets a
  *   still, draggable model rather than a compromise.
- * - **Keyboard-first.** The figure is focusable; arrows turn and tilt it, and both joints are real
- *   range inputs with names, so nothing about the pose needs a pointer.
+ * - **Keyboard-first.** The figure is focusable; arrows turn and tilt it, `+`/`-` zoom it and `0`
+ *   fits it again, and both joints are real range inputs with names, so nothing about the pose needs
+ *   a pointer. The wheel over the figure zooms it instead of scrolling the page.
+ * - **Zoom is a view, not a pose.** It multiplies the projection scale, so the arm's own lengths,
+ *   limits and readouts are untouched: 140% is the same arm, closer.
  * - **The model is elsewhere.** Every number drawn comes from `holoModel.ts`, which runs under Node in
  *   `scripts/test_visuals.mjs`; this file is strokes and buttons. A WebGL renderer can replace the
  *   bottom half of this file without touching the maths, which is the staged upgrade.
@@ -57,7 +65,9 @@ export const Hologram: React.FC<{
   const [trace, setTrace] = useState(true);
   const [trail, setTrail] = useState<Point2[]>([]);
   const [reduced, setReduced] = useState(false);
+  const [zoom, setZoom] = useState(ZOOM_HOME);
   const drag = useRef<{ x: number; y: number } | null>(null);
+  const svgRef = useRef<SVGSVGElement | null>(null);
   const phase = useRef(0);
 
   useEffect(() => {
@@ -94,6 +104,20 @@ export const Hologram: React.FC<{
     return () => cancelAnimationFrame(frame);
   }, [demo, reduced, trace]);
 
+  // The wheel is bound natively with `passive: false`: React's own handler is passive, so the page
+  // would scroll behind the arm as it zoomed. Over the figure the wheel belongs to the figure.
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      setDemo(false);
+      setZoom((current) => clampZoom(current - Math.sign(event.deltaY) * ZOOM_STEP));
+    };
+    svg.addEventListener('wheel', onWheel, { passive: false });
+    return () => svg.removeEventListener('wheel', onWheel);
+  }, []);
+
   const onPointerDown = useCallback((event: React.PointerEvent<SVGSVGElement>) => {
     drag.current = { x: event.clientX, y: event.clientY };
     event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -114,6 +138,20 @@ export const Hologram: React.FC<{
   }, []);
 
   const onKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    // Zoom first: `0` fits the arm again, and the two keys beside backspace move it one notch.
+    if (event.key === '0') {
+      event.preventDefault();
+      setZoom(ZOOM_HOME);
+      return;
+    }
+    const zoomKeys: Record<string, number> = { '+': ZOOM_STEP, '=': ZOOM_STEP, '-': -ZOOM_STEP, _: -ZOOM_STEP };
+    const notch = zoomKeys[event.key];
+    if (notch) {
+      event.preventDefault();
+      setDemo(false);
+      setZoom((current) => clampZoom(current + notch));
+      return;
+    }
     const step = event.shiftKey ? 0.16 : 0.06;
     const moves: Record<string, [number, number]> = {
       ArrowLeft: [-step * 60, 0],
@@ -129,12 +167,13 @@ export const Hologram: React.FC<{
   }, []);
 
   const pose = useMemo(() => fk(state), [state]);
+  const scale = VIEW.scale * zoom;
   const toPixels = useCallback(
     (point: { x: number; y: number; z: number }) => {
-      const projected = project(point, state, VIEW.scale);
+      const projected = project(point, state, scale);
       return { x: VIEW.cx + projected.x, y: VIEW.cy + projected.y, depth: projected.depth };
     },
-    [state]
+    [state, scale]
   );
 
   const base = toPixels(pose.base);
@@ -153,12 +192,13 @@ export const Hologram: React.FC<{
     <div className={`flex flex-col gap-2 ${className}`} data-testid="hologram">
       <div
         role="group"
-        aria-label={`${title}: drag to orbit the arm, or use the arrow keys; the two sliders pose its joints`}
+        aria-label={`${title}: drag to orbit the arm, scroll or press plus and minus to zoom, or use the arrow keys; the two sliders pose its joints`}
         tabIndex={0}
         onKeyDown={onKeyDown}
         className="rounded-xl border border-line bg-canvas outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
       >
         <svg
+          ref={svgRef}
           viewBox={`0 0 ${VIEW.w} ${compact ? 240 : VIEW.h}`}
           className="block w-full touch-none select-none"
           onPointerDown={onPointerDown}
@@ -196,7 +236,7 @@ export const Hologram: React.FC<{
           <circle
             cx={VIEW.cx}
             cy={VIEW.cy}
-            r={reach().max * VIEW.scale * 0.82}
+            r={reach().max * scale * 0.82}
             fill="none"
             stroke="var(--accent, #38bdf8)"
             strokeWidth="0.7"
@@ -338,8 +378,43 @@ export const Hologram: React.FC<{
         >
           Home pose
         </button>
+        {/* One tray for the scale: out, the readout (which is also the way back to 100%), in. */}
+        <span className="inline-flex items-center rounded border border-line-soft bg-canvas font-mono text-xs text-body">
+          <button
+            type="button"
+            onClick={() => setZoom((current) => clampZoom(current - ZOOM_STEP))}
+            disabled={zoom <= ZOOM_RANGE[0]}
+            aria-label="Zoom out"
+            title="Zoom out (-)"
+            data-testid="btn-holo-zoom-out"
+            className="px-1.5 py-1 hover:text-ink disabled:opacity-40 cursor-pointer"
+          >
+            <ZoomOut className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom(ZOOM_HOME)}
+            aria-label={`Reset zoom to ${Math.round(ZOOM_HOME * 100)} percent`}
+            title="Back to 100% (0)"
+            data-testid="btn-holo-zoom-reset"
+            className="border-x border-line-soft px-1.5 py-1 tabular-nums hover:text-ink cursor-pointer"
+          >
+            {Math.round(zoom * 100)}%
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom((current) => clampZoom(current + ZOOM_STEP))}
+            disabled={zoom >= ZOOM_RANGE[1]}
+            aria-label="Zoom in"
+            title="Zoom in (+)"
+            data-testid="btn-holo-zoom-in"
+            className="px-1.5 py-1 hover:text-ink disabled:opacity-40 cursor-pointer"
+          >
+            <ZoomIn className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        </span>
         <span className="ml-auto font-mono text-[11px] text-faint">
-          reach {reach().max.toFixed(2)} · yaw {Math.round(state.yaw * DEG)}°
+          reach {reach().max.toFixed(2)} · yaw {Math.round(state.yaw * DEG)}° · {Math.round(zoom * 100)}%
         </span>
       </div>
     </div>
