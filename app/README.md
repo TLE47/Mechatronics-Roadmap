@@ -151,6 +151,15 @@ wonder where their folded cards went, the archive's own `README.txt` says what i
 the three keys. The one carried exception is `tour.json` — that the tour was *shown* is a fact about
 the learner, not a preference about a screen.
 
+Erasing is the third half of the same conversation: **Reset…** in that tray opens eleven named parts
+(Lessons, Milestones, XP and awards, Practice cards, Notes and highlights, Drafts and versions, Learning
+log, Sittings, Predictions, Onboarding, Where I was), prints what each holds, and erases one or all of
+them after a second press — with **Back up first** beside it because there is no undo. A reset of a
+part the account also holds leaves a watermark the merge honours, so an empty snapshot is not mistaken
+for "nothing to say" and the old flags cannot be unioned back at the next sign-in. Preferences are
+deliberately outside it. `docs/RESET.md` is the page; `npm run test:reset` and `npm run test:e2e:reset`
+are the checks.
+
 A restore writes the stores, not React's copy of them, so the controls dispatch
 `mechalab:store-restored` and `App` re-reads the maps: the tick comes back without a reload, which keeps
 the learner's tab and unsaved editor text. `npm run test:backup` pins the format (CRC vector, a
@@ -1286,6 +1295,8 @@ npm run test:e2e:pages       # built bundle at the Pages base path: every graded
 npm run test:offline         # the service worker: isolation without host headers, the take-offline button, offline reload, run + deep link, formulas from the cache
 npm run test:takealong       # the offline button's rules: URL list, size wording, what "ready" may claim
 npm run test:backup          # the archive: CRC, round trip, the three refusals, and a merge that never deletes
+npm run test:reset           # erasing progress: the eleven parts, one part vs the rest, and the cloud watermark
+npm run test:e2e:reset       # the same panel in Chromium: a backup first, one part, two parts, everything, preferences kept
 npm run test:study           # notes and highlights: what is kept, deduped, refused by the store, and what a restore merges
 npm run test:review          # FSRS: 0.9-at-stability, grade order, lapses, the year cap, and the card join
 npm run test:sitting         # the sitting clock's rules and focus mode's store, without a browser

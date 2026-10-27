@@ -1,8 +1,9 @@
 import React from 'react';
-import { Printer, Download, FileJson, User, ChevronRight, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, House } from 'lucide-react';
+import { Printer, Download, FileJson, User, ChevronRight, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, House, RotateCcw } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
 import { downloadLearningLog } from '../learningLog';
 import { BackupControls } from './BackupControls';
+import { ResetProgressLazy } from './ResetProgressLazy';
 import {
   CONTRAST_LABEL,
   PAPER_LABEL,
@@ -102,6 +103,10 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'tier2', label: 'Applied' },
     { id: 'tier3', label: 'Advanced' },
   ];
+
+  // The reset panel is lazy and mounted only once it is opened, so this is one boolean and one icon
+  // on the first paint; the eleven stores it counts for arrive with the chunk.
+  const [resetOpen, setResetOpen] = React.useState(false);
 
   /**
    * A toggle that is on. The tray owns the frame, so the state is a wash inside it rather than a
@@ -301,6 +306,21 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
             {/* Everything in this browser, out and back in: the two buttons report what they did. */}
             <BackupControls />
+            {/* The third half of the same conversation. It opens a panel rather than erasing on the
+                press, because "which part?" is the whole question a reset has to ask. */}
+            <button
+              onClick={() => setResetOpen(true)}
+              data-testid="btn-open-reset"
+              aria-haspopup="dialog"
+              title="Reset your progress — one part at a time, or all of it. Your theme, sound and layout stay."
+              className="btn"
+            >
+              <RotateCcw className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="hidden 2xl:inline">Reset…</span>
+            </button>
+            <React.Suspense fallback={null}>
+              <ResetProgressLazy isOpen={resetOpen} onClose={() => setResetOpen(false)} />
+            </React.Suspense>
             <button
               onClick={onExportPortfolio}
               data-testid="btn-export-portfolio"

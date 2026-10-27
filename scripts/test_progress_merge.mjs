@@ -108,6 +108,48 @@ check('an empty log on either side is fine', () => {
   assert.deepEqual(mergeLearningLog([], []), []);
 });
 
+console.log('reset watermark');
+
+check('a newer reset drops the older side\'s flags and log', () => {
+  const remote = base({
+    updatedAt: 1000,
+    verifiedLessons: { '00.1': true },
+    completedMilestones: { m1: true },
+    learningLog: [{ t: 10, kind: 'run', lesson: '00.1' }],
+  });
+  const local = base({ updatedAt: 5000, resetAt: 5000 });
+  const merged = mergeProgress(local, remote);
+  assert.deepEqual(merged.verifiedLessons, {}, 'an erased lesson must not come back');
+  assert.deepEqual(merged.completedMilestones, {});
+  assert.deepEqual(merged.learningLog, [], 'the log was erased too');
+  assert.equal(merged.resetAt, 5000);
+});
+
+check('a reset older than the other side\'s change cannot erase newer work', () => {
+  const local = base({ updatedAt: 4000, resetAt: 4000 });
+  const remote = base({
+    updatedAt: 6000,
+    verifiedLessons: { '00.2': true },
+    learningLog: [{ t: 60, kind: 'run', lesson: '00.2' }],
+  });
+  const merged = mergeProgress(local, remote);
+  assert.equal(merged.verifiedLessons['00.2'], true, 'work done after the reset survives it');
+  assert.equal(merged.learningLog.length, 1);
+});
+
+check('the watermark survives a merge in either direction', () => {
+  const older = base({ updatedAt: 1000 });
+  const reset = base({ updatedAt: 2000, resetAt: 2000 });
+  assert.equal(mergeProgress(reset, older).resetAt, 2000);
+  assert.equal(mergeProgress(older, reset).resetAt, 2000);
+});
+
+check('resetAt 0 is an ordinary snapshot, not a reset', () => {
+  const local = base({ updatedAt: 2000, resetAt: 0 });
+  const remote = base({ updatedAt: 1000, verifiedLessons: { '00.1': true } });
+  assert.equal(mergeProgress(local, remote).verifiedLessons['00.1'], true);
+});
+
 console.log('snapshot shape');
 
 check('the current schema is accepted', () => {

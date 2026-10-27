@@ -15,6 +15,7 @@ import { getClient } from './accounts';
 import { readDrafts, replaceDrafts } from './lessonDraft';
 import { readStudy, replaceStudy } from './studyNotes';
 import {
+  emptyWorkspace,
   isWorkspaceDoc,
   mergeWorkspace,
   workspaceCounts,
@@ -157,6 +158,18 @@ export async function mergeAndApplyWorkspace(userId: string): Promise<WorkspaceS
     hadAccountCopy: remote !== null,
     stored,
   };
+}
+
+/**
+ * Erase the account's copy of drafts and notes (`progressReset.ts`).
+ *
+ * A merge cannot do this: `mergeWorkspace` keeps both sides by rule, which is the whole point of it. So
+ * a reset writes an empty document instead of merging one — otherwise the erased drafts would arrive
+ * back from the account at the next sync, and the learner would be told a reset happened when it had
+ * not. The browser's own stores are cleared before this is called; this is the other half.
+ */
+export async function resetWorkspace(userId: string): Promise<void> {
+  await saveWorkspace(userId, { ...emptyWorkspace(), updatedAt: Date.now() });
 }
 
 /**

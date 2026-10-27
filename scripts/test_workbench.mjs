@@ -201,6 +201,7 @@ async function main() {
     { label: 'hints', script: 'test_check_hints.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'takealong', script: 'test_offline_takealong.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'backup', script: 'test_backup.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'reset', script: 'test_reset.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'analysis', script: 'test_analysis.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'study', script: 'test_study.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'review', script: 'test_review.mjs', env: { NODE_OPTIONS: TYPES } },
@@ -228,6 +229,7 @@ async function main() {
     { label: 'focus2e', script: 'e2e_focus.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
     { label: 'store2e', script: 'e2e_storage.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
     { label: 'home2e', script: 'e2e_home.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
+    { label: 'reset2e', script: 'e2e_reset.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
   ];
   // Ctrl-C must not leave a Vite server or two Chromium runs behind.
   const stop = () => {
