@@ -320,7 +320,43 @@ async function main() {
       await page.getByTestId('btn-motion-toggle').click();
       await page.waitForTimeout(250);
       assert.notEqual(await frameOf(), stillFrame, 'turning motion back on must restart the arm');
-      console.log('  ok the canvas arm moves, and the same switch stops it');
+
+      // The page sizes the arm on `dvh`, and its box can change without a window `resize` (an address bar
+      // settling, a panel resizing after mount). While the backing store kept the old height the drawing
+      // was stretched — a round joint became an ellipse — so the canvas observes its own box now.
+      const lateBox = await armCanvas.evaluate(async (element) => {
+        const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const measure = () => {
+          const rect = element.getBoundingClientRect();
+          return {
+            css: Math.round(rect.height),
+            backing: Math.round(element.height / dpr),
+            cssWidth: Math.round(rect.width),
+            backingWidth: Math.round(element.width / dpr),
+          };
+        };
+        const original = element.style.height;
+        element.style.height = '264px';
+        await wait(250);
+        const stretched = measure();
+        element.style.height = original;
+        await wait(250);
+        return { stretched, restored: measure() };
+      });
+      assert.ok(
+        Math.abs(lateBox.stretched.backing - lateBox.stretched.css) <= 1,
+        `a 264 px box drew a ${lateBox.stretched.backing} px backing for ${lateBox.stretched.css} px of height, so the arm is stretched`
+      );
+      assert.ok(
+        Math.abs(lateBox.stretched.backingWidth - lateBox.stretched.cssWidth) <= 1,
+        'a late box change must keep the backing width in step too'
+      );
+      assert.ok(
+        Math.abs(lateBox.restored.backing - lateBox.restored.css) <= 1,
+        `restoring the box left a ${lateBox.restored.backing} px backing for ${lateBox.restored.css} px of height`
+      );
+      console.log('  ok a box change without a window resize re-measures the arm');
 
       // The nav is the page's own position indicator: nothing before the first section, then the
       // chip of the section under the reading line.
