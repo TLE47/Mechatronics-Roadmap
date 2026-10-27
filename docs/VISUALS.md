@@ -125,8 +125,11 @@ Three rules follow, and each is checked in `npm run test:e2e:pages`:
   it by annotating the emitted drawing, so there is no second copy to drift from the lesson's. The
   page's own chrome follows the same rule: the section chips light the one you are reading, the six
   lesson moves change state in order, each lab carries its ready beacon, and the stat cards, "your
-  work" cards and closing panel sweep. Every half is switched off for `prefers-reduced-motion`, and
-  an off-screen figure stops its frame loop.
+  work" cards and closing panel sweep. All of it plays by default, because movement is what that
+  page is for; **Pause** at the end of the section row stills every half at once — CSS and scripted
+  alike — and the choice is remembered. A reader whose OS asks for `prefers-reduced-motion` gets the
+  page playing and the control in front of them, rather than six static drawings. An off-screen
+  figure stops its frame loop either way.
 - **No hard-coded colour.** Every stroke and fill is a CSS custom property the palettes define
   (`--ink`, `--body`, `--muted`, `--line`, `--line-soft`, `--accent`, `--canvas`), so dark, light, paper
   and high contrast need no special case.

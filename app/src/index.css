@@ -643,9 +643,12 @@ body {
   html {
     scroll-behavior: auto;
   }
-  *,
-  *::before,
-  *::after {
+  /* Everything, except a page that has explicitly opted back in (the introduction's Play control,
+     `data-motion='on'`): the dampener is `!important`, so without this exclusion pressing Play on a
+     machine set to reduce motion would leave every figure still. */
+  *:not(:is(.intro-root[data-motion='on'], .intro-root[data-motion='on'] *)),
+  *:not(:is(.intro-root[data-motion='on'], .intro-root[data-motion='on'] *))::before,
+  *:not(:is(.intro-root[data-motion='on'], .intro-root[data-motion='on'] *))::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

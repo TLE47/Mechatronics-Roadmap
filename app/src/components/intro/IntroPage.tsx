@@ -14,6 +14,8 @@ import {
   HardDriveDownload,
   ListChecks,
   Lock,
+  Pause,
+  Play,
   RotateCcw,
   Sparkles,
   TerminalSquare,
@@ -77,20 +79,44 @@ export const IntroPage: React.FC<IntroPageProps> = ({
     { value: String(SCENE_IDS.length), label: 'drawn figures', Icon: GitBranch },
   ];
 
+  // Playing is the default, because movement is what this page is *for* — a still introduction is a
+  // wall of pictures. A press stills it and the next visit remembers, and the control stays on the
+  // section row where it is seen rather than buried. It deliberately does not start from
+  // `prefers-reduced-motion`: that setting would leave the one page made of moving diagrams frozen
+  // for every reader whose OS asks for less motion, and the Pause button is the better answer.
+  const [motion, setMotion] = useState<boolean>(() => readStoredMotion() ?? true);
+  const toggleMotion = () => {
+    setMotion((on) => {
+      const next = !on;
+      try {
+        window.localStorage.setItem(MOTION_KEY, next ? 'on' : 'off');
+      } catch {
+        // A browser that refuses storage still gets the switch for this visit.
+      }
+      return next;
+    });
+  };
+
   return (
-    <div data-testid="intro-page" className="intro-root relative overflow-hidden">
+    <MotionContext.Provider value={motion}>
+      <div
+        data-testid="intro-page"
+        data-motion={motion ? 'on' : 'off'}
+        className="intro-root relative overflow-hidden"
+      >
       <style>{INTRO_CSS}</style>
 
       <Hero
         signedIn={signedIn}
         stats={stats}
+        motion={motion}
         totalHours={totalHours}
         onOpenHome={onOpenHome}
         onOpenWorkbench={onOpenWorkbench}
         onOpenLesson={startEntry ? () => onOpenLesson(startEntry.id) : undefined}
       />
 
-      <SectionNav />
+      <SectionNav motion={motion} onToggleMotion={toggleMotion} />
 
       <RouteSection maxStepHours={maxStepHours} onOpenRoute={() => onOpenTab('tab-arch')} />
 
@@ -103,7 +129,8 @@ export const IntroPage: React.FC<IntroPageProps> = ({
       <KeptSection />
 
       <Closing onOpenHome={onOpenHome} onOpenWorkbench={onOpenWorkbench} />
-    </div>
+      </div>
+    </MotionContext.Provider>
   );
 };
 
@@ -158,14 +185,27 @@ const Reveal: React.FC<{ children: React.ReactNode; delay?: number; className?: 
   );
 };
 
-/** The visitor's motion preference, read once per mount; every live thing here asks this first. */
-function prefersStill(): boolean {
+/**
+ * Whether this page animates.
+ *
+ * The page plays unless the visitor has pressed Pause: a **play/pause** control sits at the end of
+ * the section row, the choice is remembered, and both halves obey it — the CSS half through the
+ * root's `data-motion` attribute (`INTRO_CSS`), every scripted half through this context. A reader
+ * who wants stillness gets one press, and it survives the next visit.
+ */
+const MOTION_KEY = 'mechalab_intro_motion_v1';
+const MotionContext = React.createContext(true);
+const useMotion = (): boolean => React.useContext(MotionContext);
+
+function readStoredMotion(): boolean | null {
   try {
-    return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const stored = window.localStorage.getItem(MOTION_KEY);
+    return stored === 'on' ? true : stored === 'off' ? false : null;
   } catch {
-    return false;
+    return null;
   }
 }
+
 
 /**
  * A number that counts up once, when it is seen.
@@ -175,13 +215,14 @@ function prefersStill(): boolean {
  * approach it. Reduced motion jumps straight to the value rather than making the page wait 900 ms.
  */
 const CountUp: React.FC<{ value: number; className?: string }> = ({ value, className }) => {
+  const motion = useMotion();
   const ref = useRef<HTMLSpanElement | null>(null);
-  const [shown, setShown] = useState(() => (prefersStill() ? value : 0));
+  const [shown, setShown] = useState(() => (motion ? 0 : value));
 
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
-    if (prefersStill() || typeof IntersectionObserver === 'undefined') {
+    if (!motion || typeof IntersectionObserver === 'undefined') {
       setShown(value);
       return;
     }
@@ -206,7 +247,7 @@ const CountUp: React.FC<{ value: number; className?: string }> = ({ value, class
       observer.disconnect();
       cancelAnimationFrame(raf);
     };
-  }, [value]);
+  }, [value, motion]);
 
   return (
     <span ref={ref} className={className}>
@@ -214,23 +255,6 @@ const CountUp: React.FC<{ value: number; className?: string }> = ({ value, class
     </span>
   );
 };
-
-/**
- * The step the workflow is pointing at, advanced on a clock while the section is on screen.
- *
- * A timer rather than a scroll listener: this is a teaching diagram, and the thing it teaches is that
- * the six moves are a cycle. It stops when the section scrolls away or the tab is hidden, so a page
- * left open in a background tab is not animating six nodes for nobody.
- */
-function useCycle(length: number, ms: number, enabled: boolean): [number, (index: number) => void] {
-  const [index, setIndex] = useState(0);
-  useEffect(() => {
-    if (!enabled || prefersStill() || length < 2) return;
-    const id = window.setInterval(() => setIndex((current) => (current + 1) % length), ms);
-    return () => window.clearInterval(id);
-  }, [length, ms, enabled]);
-  return [index, setIndex];
-}
 
 /** Whether an element is on screen, with one observer and no re-render per scroll event. */
 function useOnScreen<T extends HTMLElement>(
@@ -261,13 +285,13 @@ function useOnScreen<T extends HTMLElement>(
  * path, which is the question the route is answering. Updated inside rAF so a scroll never paints
  * twice, and only while the list is on screen. Reduced motion leaves it still.
  */
-function useRouteProgress(ref: React.RefObject<HTMLOListElement | null>): number | null {
+function useRouteProgress(ref: React.RefObject<HTMLOListElement | null>, motion: boolean): number | null {
   const [progress, setProgress] = useState<number | null>(null);
 
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
-    if (prefersStill()) {
+    if (!motion) {
       setProgress(null);
       return;
     }
@@ -290,7 +314,7 @@ function useRouteProgress(ref: React.RefObject<HTMLOListElement | null>): number
       window.removeEventListener('resize', onScroll);
       cancelAnimationFrame(raf);
     };
-  }, [ref]);
+  }, [ref, motion]);
 
   return progress;
 }
@@ -303,19 +327,20 @@ function useRouteProgress(ref: React.RefObject<HTMLOListElement | null>): number
  * rotation rides on top, and it returns to flat the moment the pointer leaves.
  */
 const Tilt: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => {
+  const motion = useMotion();
   const ref = useRef<HTMLDivElement | null>(null);
   const [transform, setTransform] = useState('');
 
   useEffect(() => {
     const node = ref.current;
-    if (!node) return;
+    if (!node || !motion) return;
     let fine = false;
     try {
       fine = window.matchMedia('(pointer: fine)').matches;
     } catch {
       fine = false;
     }
-    if (!fine || prefersStill()) return;
+    if (!fine) return;
     const move = (event: PointerEvent) => {
       const rect = node.getBoundingClientRect();
       const x = (event.clientX - rect.left) / rect.width - 0.5;
@@ -329,7 +354,7 @@ const Tilt: React.FC<{ children: React.ReactNode; className?: string }> = ({ chi
       node.removeEventListener('pointermove', move);
       node.removeEventListener('pointerleave', leave);
     };
-  }, []);
+  }, [motion]);
 
   return (
     <div
@@ -350,10 +375,11 @@ const Hero: React.FC<{
   signedIn: boolean;
   stats: { value: string; label: string; Icon: LucideIcon }[];
   totalHours: string;
+  motion: boolean;
   onOpenHome: () => void;
   onOpenWorkbench: () => void;
   onOpenLesson?: () => void;
-}> = ({ signedIn, stats, totalHours, onOpenHome, onOpenWorkbench, onOpenLesson }) => (
+}> = ({ signedIn, stats, totalHours, motion, onOpenHome, onOpenWorkbench, onOpenLesson }) => (
   <section className="relative isolate">
     <div aria-hidden className="intro-hero-glow pointer-events-none absolute inset-0 -z-10" />
     <div aria-hidden className="intro-grid pointer-events-none absolute inset-0 -z-10 opacity-[0.35]" />
@@ -453,7 +479,7 @@ const Hero: React.FC<{
           {/* `clamp` on `dvh`, not a fixed height: a phone's address bar changes the viewport as it
               retracts, and the arm should take the room it has rather than a number chosen on a
               desktop. */}
-          <HeroArm className="h-[clamp(220px,38dvh,340px)] w-full" />
+          <HeroArm motion={motion} className="h-[clamp(220px,38dvh,340px)] w-full" />
           <div className="grid grid-cols-3 divide-x border-t font-mono text-[10.5px]" style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}>
             {[
               ['target', 'figure-8'],
@@ -496,7 +522,10 @@ const SECTIONS = [
  * marker uses, so the two never disagree about which section you are in. rAF-throttled, one passive
  * scroll listener, and no observation of the sections themselves.
  */
-const SectionNav: React.FC = () => {
+const SectionNav: React.FC<{ motion: boolean; onToggleMotion: () => void }> = ({
+  motion,
+  onToggleMotion,
+}) => {
   // Nothing is active before the first section reaches the reading line: a chip lit while the
   // hero is still on screen would say the reader is somewhere they have not scrolled to.
   const [active, setActive] = useState<string>('');
@@ -531,10 +560,8 @@ const SectionNav: React.FC = () => {
   }, []);
 
   return (
-    <nav
-      aria-label="Introduction sections"
-      className="mx-auto flex max-w-[var(--shell-max)] flex-wrap items-center gap-1.5 px-4 pb-6 sm:px-6"
-    >
+    <div className="mx-auto flex max-w-[var(--shell-max)] flex-wrap items-center gap-2 px-4 pb-6 sm:px-6">
+    <nav aria-label="Introduction sections" className="flex flex-wrap items-center gap-1.5">
       {SECTIONS.map((section) => {
         const on = section.id === active;
         return (
@@ -555,6 +582,25 @@ const SectionNav: React.FC = () => {
         );
       })}
     </nav>
+    {/* The one control that explains a still page. It is here rather than in the header because
+        motion is this page's property, not the app's — a lesson should never animate its prose. */}
+    <button
+      type="button"
+      data-testid="btn-intro-motion"
+      aria-pressed={motion}
+      onClick={onToggleMotion}
+      title={motion ? 'Animations are playing on this page — press to still them' : 'Animations are paused on this page — press to play them'}
+      className="intro-nav-chip ml-auto inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] font-medium"
+      style={{
+        borderColor: motion ? 'color-mix(in srgb, var(--accent) 45%, var(--border))' : 'var(--border)',
+        backgroundColor: motion ? 'var(--accent-soft)' : 'transparent',
+        color: motion ? 'var(--accent)' : 'var(--muted)',
+      }}
+    >
+      {motion ? <Pause className="h-3 w-3" aria-hidden="true" /> : <Play className="h-3 w-3" aria-hidden="true" />}
+      {motion ? 'Motion on' : 'Play motion'}
+    </button>
+    </div>
   );
 };
 
@@ -566,8 +612,9 @@ const RouteSection: React.FC<{ maxStepHours: number; onOpenRoute: () => void }> 
   maxStepHours,
   onOpenRoute,
 }) => {
+  const motion = useMotion();
   const listRef = useRef<HTMLOListElement | null>(null);
-  const progress = useRouteProgress(listRef);
+  const progress = useRouteProgress(listRef, motion);
 
   return (
   <section id="intro-route" className="mx-auto max-w-[var(--shell-max)] scroll-mt-24 px-4 py-10 sm:px-6">
@@ -779,29 +826,83 @@ const LiveFigure: React.FC<{ spec: DiagramSpec; mode: LiveMode; className?: stri
   mode,
   className = '',
 }) => {
+  const motion = useMotion();
   const boxRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const box = boxRef.current;
-    if (!box || prefersStill()) return;
+    if (!box || !motion) return;
     // The drawing, not the Expand button's icon: both are `<svg>`, and annotating the icon would
     // quietly animate nothing.
     const svg = box.querySelector('.figure-art > svg') ?? box.querySelector('svg[role="img"]');
     if (!svg) return;
 
     if (mode === 'flow') {
-      const nodes = [...svg.querySelectorAll('g > rect[rx="8"]')]
+      // `rx` 8 is a `Box` (chain, loop); 7 is a `Graph` node. Both are drawn as a rect inside its
+      // own group, which is why the parent is what gets the state class.
+      const nodes = [...svg.querySelectorAll('g > rect[rx="8"], g > rect[rx="7"]')]
         .map((rect) => rect.parentElement)
         .filter((node): node is HTMLElement => !!node && node.tagName.toLowerCase() === 'g');
       nodes.forEach((node, index) => {
         node.classList.add('intro-step');
         node.style.setProperty('--i', String(index));
       });
-      const edges = [...svg.querySelectorAll('line[marker-end]')];
+      const edges = [...svg.querySelectorAll('line[marker-end]')] as SVGLineElement[];
       edges.forEach((edge) => edge.classList.add('intro-edge'));
+
+      // A packet per connector: the thing that makes a diagram look like it is running rather than
+      // drawn. It travels the line the figure already has, so the route it takes is the figure's
+      // own arrow, not a second path that could point somewhere else.
+      const ns = 'http://www.w3.org/2000/svg';
+      const packets = edges.map((edge, index) => {
+        const dot = document.createElementNS(ns, 'circle');
+        dot.setAttribute('r', '2.4');
+        dot.setAttribute('fill', 'var(--accent)');
+        dot.setAttribute('data-intro-packet', 'true');
+        svg.append(dot);
+        return {
+          dot,
+          x1: Number(edge.getAttribute('x1') ?? 0),
+          y1: Number(edge.getAttribute('y1') ?? 0),
+          x2: Number(edge.getAttribute('x2') ?? 0),
+          y2: Number(edge.getAttribute('y2') ?? 0),
+          offset: index * 0.23,
+        };
+      });
+
+      let raf = 0;
+      let visible = true;
+      const CYCLE = 1500;
+      const travel = (now: number) => {
+        raf = 0;
+        if (!visible) return;
+        packets.forEach((packet) => {
+          const fraction = ((now / CYCLE + packet.offset) % 1 + 1) % 1;
+          packet.dot.setAttribute('cx', (packet.x1 + (packet.x2 - packet.x1) * fraction).toFixed(2));
+          packet.dot.setAttribute('cy', (packet.y1 + (packet.y2 - packet.y1) * fraction).toFixed(2));
+          // Invisible at the ends, so a wrap does not read as a dot jumping backwards.
+          packet.dot.style.opacity = fraction < 0.08 || fraction > 0.92 ? '0' : '1';
+        });
+        raf = requestAnimationFrame(travel);
+      };
+      const observer =
+        typeof IntersectionObserver === 'undefined'
+          ? null
+          : new IntersectionObserver((entries) => {
+              const next = entries.some((entry) => entry.isIntersecting);
+              if (next === visible) return;
+              visible = next;
+              if (next && !raf) raf = requestAnimationFrame(travel);
+            });
+      observer?.observe(svg);
+      raf = requestAnimationFrame(travel);
+
       return () => {
+        observer?.disconnect();
+        if (raf) cancelAnimationFrame(raf);
         nodes.forEach((node) => node.classList.remove('intro-step'));
         edges.forEach((edge) => edge.classList.remove('intro-edge'));
+        packets.forEach((packet) => packet.dot.remove());
       };
     }
 
@@ -964,7 +1065,7 @@ const LiveFigure: React.FC<{ spec: DiagramSpec; mode: LiveMode; className?: stri
       tracer.remove();
       comet.remove();
     };
-  }, [spec, mode]);
+  }, [spec, mode, motion]);
 
   return (
     <div ref={boxRef} className={className}>
@@ -1365,19 +1466,27 @@ const INTRO_CSS = `
 @media print {
   .intro-reveal, .intro-reveal:not(.is-shown) { opacity: 1; transform: none; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .intro-reveal, .intro-reveal:not(.is-shown) { opacity: 1; transform: none; transition: none; }
-  .intro-bar, .intro-reveal.is-shown .intro-bar { transform: none; transition: none; }
-  .intro-traveller { animation: none; transition: none; }
-  .intro-scan::after { display: none; }
-  .intro-grid { animation: none; }
-  .intro-step rect, .intro-edge { animation: none; }
-  .intro-edge { stroke-dasharray: none; }
-  .intro-loop-step, .intro-beacon, .intro-closing { animation: none; }
-  .intro-stat::after, .intro-kept-card::after { display: none; }
-  .intro-gradient-text { animation: none; background: var(--accent); -webkit-background-clip: text; background-clip: text; }
-  .intro-lift, .intro-cta { transition: none; }
-  .intro-lift:hover, .intro-cta:hover { transform: none; }
-  .intro-live { animation: none; }
-}
+/* Paused: one attribute switches every decorative loop off, on any machine. Not a media query,
+   because Pause is a control on this page and must work whether or not the OS asked for stillness. */
+.intro-root[data-motion='off'] .intro-reveal,
+  .intro-root[data-motion='off'] .intro-reveal:not(.is-shown) { opacity: 1; transform: none; transition: none; }
+  .intro-root[data-motion='off'] .intro-bar,
+  .intro-root[data-motion='off'] .intro-reveal.is-shown .intro-bar { transform: none; transition: none; }
+  .intro-root[data-motion='off'] .intro-traveller { animation: none; transition: none; }
+  .intro-root[data-motion='off'] .intro-scan::after { display: none; }
+  .intro-root[data-motion='off'] .intro-grid { animation: none; }
+  .intro-root[data-motion='off'] .intro-step rect,
+  .intro-root[data-motion='off'] .intro-edge { animation: none; }
+  .intro-root[data-motion='off'] .intro-edge { stroke-dasharray: none; }
+  .intro-root[data-motion='off'] .intro-loop-step,
+  .intro-root[data-motion='off'] .intro-beacon,
+  .intro-root[data-motion='off'] .intro-closing { animation: none; }
+  .intro-root[data-motion='off'] .intro-stat::after,
+  .intro-root[data-motion='off'] .intro-kept-card::after { display: none; }
+  .intro-root[data-motion='off'] .intro-gradient-text { animation: none; background: var(--accent); -webkit-background-clip: text; background-clip: text; }
+  .intro-root[data-motion='off'] .intro-lift,
+  .intro-root[data-motion='off'] .intro-cta { transition: none; }
+  .intro-root[data-motion='off'] .intro-lift:hover,
+  .intro-root[data-motion='off'] .intro-cta:hover { transform: none; }
+.intro-root[data-motion='off'] .intro-live { animation: none; }
 `;

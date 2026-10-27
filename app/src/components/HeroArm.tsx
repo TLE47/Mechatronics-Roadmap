@@ -14,7 +14,12 @@ import React, { useEffect, useRef } from 'react';
  * - the canvas never exceeds 2x device pixels and resizes from the container, so it is crisp on
  *   retina and cheap on a phone.
  */
-export const HeroArm: React.FC<{ className?: string }> = ({ className }) => {
+/**
+ * `motion` overrides the system preference when a page has its own switch (the introduction does):
+ * the arm is the most obviously animated thing on the page, so it has to obey the same switch as
+ * everything else rather than the media query alone.
+ */
+export const HeroArm: React.FC<{ className?: string; motion?: boolean }> = ({ className, motion }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -28,6 +33,7 @@ export const HeroArm: React.FC<{ className?: string }> = ({ className }) => {
       return value || fallback;
     };
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const animate = () => (motion === undefined ? !reduced.matches : motion);
 
     let width = 0;
     let height = 0;
@@ -174,7 +180,7 @@ export const HeroArm: React.FC<{ className?: string }> = ({ className }) => {
 
     const start = () => {
       cancelAnimationFrame(raf);
-      if (reduced.matches) {
+      if (!animate()) {
         drawFrame();
         return;
       }
@@ -197,12 +203,13 @@ export const HeroArm: React.FC<{ className?: string }> = ({ className }) => {
     };
     const onResize = () => {
       resize();
-      if (reduced.matches) drawFrame();
+      if (!animate()) drawFrame();
     };
 
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('resize', onResize);
-    reduced.addEventListener('change', start);
+    // A page with its own switch passes `motion`, and the media query no longer decides for it.
+    if (motion === undefined) reduced.addEventListener('change', start);
     start();
 
     return () => {
@@ -210,9 +217,9 @@ export const HeroArm: React.FC<{ className?: string }> = ({ className }) => {
       observer.disconnect();
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('resize', onResize);
-      reduced.removeEventListener('change', start);
+      if (motion === undefined) reduced.removeEventListener('change', start);
     };
-  }, []);
+  }, [motion]);
 
   return (
     <canvas

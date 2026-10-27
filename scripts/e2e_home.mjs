@@ -251,6 +251,62 @@ async function main() {
         '  ok the route marker, the workflow states, the cursor, the wave, the loop, the labs, the stats, the closing panel and the nav are live'
       );
 
+      // The page plays even when the OS asks for less motion, because Play/Pause is the page's own
+      // control and its figures are the content. This is the regression that read as "nothing
+      // moves": the preference was seeding the page to still, so a reader whose Mac had "Reduce
+      // motion" on got six static drawings and no sign that they could be played.
+      const quiet = await browser.newContext({
+        viewport: { width: 1280, height: 900 },
+        reducedMotion: 'reduce',
+      });
+      const stillPage = await quiet.newPage();
+      await stillPage.goto(`${baseUrl}?view=intro`, { waitUntil: 'domcontentloaded' });
+      await stillPage.getByTestId('intro-page').waitFor({ timeout: 30000 });
+      await stillPage.locator('#intro-figures').scrollIntoViewIfNeeded();
+      await stillPage.waitForTimeout(800);
+      assert.equal(
+        await stillPage.getByTestId('intro-page').getAttribute('data-motion'),
+        'on',
+        'a machine set to reduce motion must still be offered the live page: Pause is the control'
+      );
+      const playing = await stillPage.evaluate(() =>
+        [...document.querySelectorAll('[data-testid^="intro-figure-"]')].filter(
+          (card) => card.querySelector('.intro-step, [data-intro-packet], [data-intro-tracer]')
+        ).length
+      );
+      assert.equal(
+        playing,
+        6,
+        `every one of the six figures must carry a motion source under reduced motion (${playing} did)`
+      );
+      // One press stills the page — the CSS loops and the scripted packets alike — and the choice is
+      // remembered, so the next visit does not undo a deliberate pause.
+      await stillPage.locator('button[aria-pressed]').filter({ hasText: /otion/i }).first().click();
+      await stillPage.waitForTimeout(350);
+      assert.equal(
+        await stillPage.getByTestId('intro-page').getAttribute('data-motion'),
+        'off',
+        'the play/pause control must still the page'
+      );
+      assert.equal(
+        await stillPage.locator('[data-intro-packet], [data-intro-tracer]').count(),
+        0,
+        'a paused page must remove the scripted motion, not only stop advancing it'
+      );
+      const pausedChrome = await stillPage.evaluate(() =>
+        getComputedStyle(document.querySelector('.intro-loop-step')).animationName
+      );
+      assert.equal(pausedChrome, 'none', 'a paused page must stop its CSS loops too');
+      await stillPage.reload({ waitUntil: 'domcontentloaded' });
+      await stillPage.getByTestId('intro-page').waitFor({ timeout: 30000 });
+      assert.equal(
+        await stillPage.getByTestId('intro-page').getAttribute('data-motion'),
+        'off',
+        'a pause must survive the reload, or the control is a one-visit gimmick'
+      );
+      await quiet.close();
+      console.log('  ok the page plays by default, pauses in one press, and remembers the pause');
+
       // A reload is still the introduction: an explicit view is the learner's choice, not a guess.
       await page.reload({ waitUntil: 'domcontentloaded' });
       await page.getByTestId('intro-page').waitFor({ timeout: 30000 });
