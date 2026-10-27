@@ -113,10 +113,17 @@ Three rules follow, and each is checked in `npm run test:e2e:pages`:
 - **The inline figure does the same below 640 px.** `.figure-art` (`index.css`) keeps the 640 px width
   and scrolls, which is the bargain a wide table already makes; the page itself must never gain a
   horizontal scrollbar for it.
+- **Except on the introduction**, which is a showcase rather than a lesson: `.intro-root .figure-art`
+  fits the column at every width, so nothing on `?view=intro` asks a phone to swipe a diagram. The
+  Expand sheet still offers the full 640 units when the labels need reading.
 
 ## What a figure may never do
 
-- **No motion.** A figure is a still, so `prefers-reduced-motion` has nothing to switch off.
+- **No motion in a lesson.** A figure beside prose is a still. The introduction is the one exception:
+  `LiveFigure` (`components/intro/IntroPage.tsx`) animates the *same* SVG after mount — boxes change
+  state in a workflow, a cursor rides a plot, a periodic wave rolls through its own period — and does
+  it by annotating the emitted drawing, so there is no second copy to drift from the lesson's. Every
+  half is switched off for `prefers-reduced-motion`, and an off-screen figure stops its frame loop.
 - **No hard-coded colour.** Every stroke and fill is a CSS custom property the palettes define
   (`--ink`, `--body`, `--muted`, `--line`, `--line-soft`, `--accent`, `--canvas`), so dark, light, paper
   and high contrast need no special case.

@@ -670,6 +670,15 @@ body {
   .figure-art > svg {
     min-width: 640px;
   }
+  /* Except on the introduction, which is a showcase rather than a lesson: its figures fit the
+     column, so nothing on that page asks a phone to swipe a diagram sideways. The Expand sheet
+     still hands over the full 640 units for a closer read. */
+  .intro-root .figure-art {
+    overflow-x: visible;
+  }
+  .intro-root .figure-art > svg {
+    min-width: 0;
+  }
 }
 
 /* The swipeable tray row on a phone. Its right edge fades instead of cutting a button in half:

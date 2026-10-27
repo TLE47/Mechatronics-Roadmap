@@ -23,6 +23,7 @@ import {
 import { HeroArm } from '../HeroArm';
 import { Diagram } from '../../visuals/Diagram';
 import { SCENE_IDS, sceneFor } from '../../visuals/scenes';
+import type { DiagramSpec } from '../../visuals/scenes';
 import { SPINE, hoursRange, sumHours } from '../../spine';
 import { PYTHON_LESSONS } from '../../data/pythonLessonsData';
 import type { TabId } from '../../types';
@@ -651,14 +652,14 @@ const LessonLoop: React.FC<{ onOpenLesson?: () => void }> = ({ onOpenLesson }) =
           {loop && (
             <Reveal delay={90}>
               <div className="rounded-[var(--r-lg)] border p-3" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--canvas)' }}>
-                <Diagram id="intro-debug-loop" spec={loop} />
+                <LiveFigure spec={loop} mode="flow" />
               </div>
             </Reveal>
           )}
           {timing && (
             <Reveal delay={140}>
               <div className="rounded-[var(--r-lg)] border p-3" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--canvas)' }}>
-                <Diagram id="intro-step-response" spec={timing} />
+                <LiveFigure spec={timing} mode="sweep" />
               </div>
             </Reveal>
           )}
@@ -690,13 +691,233 @@ const LessonLoop: React.FC<{ onOpenLesson?: () => void }> = ({ onOpenLesson }) =
  * Figures
  * ---------------------------------------------------------------------------------------------- */
 
-const GALLERY: { id: string; why: string; Icon: LucideIcon }[] = [
-  { id: 'signal-chain', why: 'Every stage in a sensor path, and the unit that leaves it.', Icon: Gauge },
-  { id: 'arm-kinematics', why: 'Two links, one target: the triangle the solver closes.', Icon: Boxes },
-  { id: 'kalman-step', why: 'Predict, measure, correct — the estimate moves, not the code.', Icon: BrainCircuit },
-  { id: 'bode-margins', why: 'Gain and phase, and where the loop stops being stable.', Icon: GitBranch },
-  { id: 'ros-graph', why: 'Nodes, topics and the wire between them.', Icon: Waypoints },
-  { id: 'three-phase', why: 'Three windings, one rotating field.', Icon: Cpu },
+type LiveMode = 'flow' | 'sweep' | 'wave';
+
+/**
+ * A figure that moves, using the real drawing rather than an illustration of one.
+ *
+ * The library's figures are stills because a lesson page should not animate beside prose. The
+ * introduction is the one place where the drawing has to demonstrate itself, so this wrapper
+ * animates the SVG the library already produced — no second copy of the picture, nothing that can
+ * drift from what a lesson shows:
+ *
+ * - **`flow`** walks a workflow: each box's border lights in turn (`.intro-step`, offset by
+ *   `--i`) while its connectors run marching dashes (`.intro-edge`), so a chain reads as signal
+ *   moving rather than a row of labels.
+ * - **`sweep`** draws a graph the way an oscilloscope writes it: every solid series is revealed
+ *   from left to right against its own length, a bright dot rides the leading edge, and a scan
+ *   line marks where the pen is. The data is untouched — the same points the lesson prints.
+ *
+ * Both are driven from the page's DOM, after mount, and stop when the figure leaves the screen.
+ * Reduced motion never reaches this code (and the CSS half is switched off in `INTRO_CSS`), so the
+ * figures stay still for a reader who asked for that.
+ */
+const LiveFigure: React.FC<{ spec: DiagramSpec; mode: LiveMode; className?: string }> = ({
+  spec,
+  mode,
+  className = '',
+}) => {
+  const boxRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const box = boxRef.current;
+    if (!box || prefersStill()) return;
+    // The drawing, not the Expand button's icon: both are `<svg>`, and annotating the icon would
+    // quietly animate nothing.
+    const svg = box.querySelector('.figure-art > svg') ?? box.querySelector('svg[role="img"]');
+    if (!svg) return;
+
+    if (mode === 'flow') {
+      const nodes = [...svg.querySelectorAll('g > rect[rx="8"]')]
+        .map((rect) => rect.parentElement)
+        .filter((node): node is HTMLElement => !!node && node.tagName.toLowerCase() === 'g');
+      nodes.forEach((node, index) => {
+        node.classList.add('intro-step');
+        node.style.setProperty('--i', String(index));
+      });
+      const edges = [...svg.querySelectorAll('line[marker-end]')];
+      edges.forEach((edge) => edge.classList.add('intro-edge'));
+      return () => {
+        nodes.forEach((node) => node.classList.remove('intro-step'));
+        edges.forEach((edge) => edge.classList.remove('intro-edge'));
+      };
+    }
+
+    // Wave. A periodic plot (three currents over one electrical revolution) is scrolled through
+    // its own period: every series is duplicated one plot-width to the right and both copies are
+    // clipped to the plot, so the animation wraps at the seam of a figure whose data wraps there
+    // too. No data is changed — it is the same drawing, moving.
+    if (mode === 'wave') {
+      const series = [...svg.querySelectorAll('path[fill="none"]')] as SVGPathElement[];
+      if (!series.length) return;
+      const boxes = series.map((path) => path.getBBox());
+      const bounds = {
+        x: Math.min(...boxes.map((box) => box.x)),
+        y: Math.min(...boxes.map((box) => box.y)),
+        right: Math.max(...boxes.map((box) => box.x + box.width)),
+        bottom: Math.max(...boxes.map((box) => box.y + box.height)),
+      };
+      const ns = 'http://www.w3.org/2000/svg';
+      const clipId = `intro-wave-${Math.random().toString(36).slice(2)}`;
+      const defs = document.createElementNS(ns, 'defs');
+      const clip = document.createElementNS(ns, 'clipPath');
+      clip.setAttribute('id', clipId);
+      const clipRect = document.createElementNS(ns, 'rect');
+      clipRect.setAttribute('x', String(bounds.x));
+      clipRect.setAttribute('y', String(bounds.y));
+      clipRect.setAttribute('width', String(bounds.right - bounds.x));
+      clipRect.setAttribute('height', String(bounds.bottom - bounds.y));
+      clip.append(clipRect);
+      defs.append(clip);
+      svg.prepend(defs);
+
+      const width = bounds.right - bounds.x;
+      const pairs = series.map((path) => {
+        path.setAttribute('clip-path', `url(#${clipId})`);
+        const clone = path.cloneNode() as SVGPathElement;
+        clone.setAttribute('clip-path', `url(#${clipId})`);
+        clone.setAttribute('data-intro-tracer', 'true');
+        path.after(clone);
+        return { path, clone };
+      });
+
+      let raf = 0;
+      let visible = true;
+      const CYCLE = 9000;
+      const roll = (now: number) => {
+        raf = 0;
+        if (!visible) return;
+        const shift = ((now % CYCLE) / CYCLE) * width;
+        pairs.forEach(({ path, clone }) => {
+          path.setAttribute('transform', `translate(${-shift.toFixed(2)} 0)`);
+          clone.setAttribute('transform', `translate(${(width - shift).toFixed(2)} 0)`);
+        });
+        raf = requestAnimationFrame(roll);
+      };
+      const observer =
+        typeof IntersectionObserver === 'undefined'
+          ? null
+          : new IntersectionObserver((entries) => {
+              const next = entries.some((entry) => entry.isIntersecting);
+              if (next === visible) return;
+              visible = next;
+              if (next && !raf) raf = requestAnimationFrame(roll);
+            });
+      observer?.observe(svg);
+      raf = requestAnimationFrame(roll);
+
+      return () => {
+        observer?.disconnect();
+        if (raf) cancelAnimationFrame(raf);
+        pairs.forEach(({ path, clone }) => {
+          path.removeAttribute('clip-path');
+          path.removeAttribute('transform');
+          clone.remove();
+        });
+        defs.remove();
+      };
+    }
+
+    // Sweep. The curves stay whole — a chart that is 60% drawn most of the time reads as broken,
+    // not live — and a bright segment rides the longest solid series instead, like a measurement
+    // cursor with a comet tail. Dashed series keep their dashes and are not traced.
+    const solid = ([...svg.querySelectorAll('path[fill="none"]')] as SVGPathElement[]).filter(
+      (path) => !path.getAttribute('stroke-dasharray')
+    );
+    if (!solid.length) return;
+    const lengths = solid.map((path) => path.getTotalLength());
+    const lead = solid.reduce((best, path, index) => (lengths[index] > lengths[best] ? index : best), 0);
+    const bounds = solid[lead].getBBox();
+    const ns = 'http://www.w3.org/2000/svg';
+    const comet = solid[lead].cloneNode() as SVGPathElement;
+    comet.setAttribute('fill', 'none');
+    comet.setAttribute('stroke', 'var(--accent)');
+    comet.setAttribute('stroke-width', '3.2');
+    comet.setAttribute('stroke-linecap', 'round');
+    comet.setAttribute('pathLength', '1');
+    comet.setAttribute('stroke-dasharray', '0.08 0.92');
+    comet.setAttribute('data-intro-tracer', 'true');
+    solid[lead].after(comet);
+
+    const tracer = document.createElementNS(ns, 'circle');
+    tracer.setAttribute('r', '3.4');
+    tracer.setAttribute('fill', 'var(--accent)');
+    tracer.setAttribute('data-intro-tracer', 'true');
+    const halo = document.createElementNS(ns, 'circle');
+    halo.setAttribute('r', '8');
+    halo.setAttribute('fill', 'color-mix(in srgb, var(--accent) 22%, transparent)');
+    halo.setAttribute('data-intro-tracer', 'true');
+    const scan = document.createElementNS(ns, 'line');
+    scan.setAttribute('y1', String(bounds.y));
+    scan.setAttribute('y2', String(bounds.y + bounds.height));
+    scan.setAttribute('stroke', 'color-mix(in srgb, var(--accent) 45%, transparent)');
+    scan.setAttribute('stroke-width', '1');
+    scan.setAttribute('data-intro-tracer', 'true');
+    svg.append(scan, halo, tracer);
+
+    let raf = 0;
+    let visible = true;
+    const CYCLE = 4400;
+    const drawAt = (now: number) => {
+      raf = 0;
+      if (!visible) return;
+      const fraction = (now % CYCLE) / CYCLE;
+      // The comet's dash pattern is one path long: shifting it by a path length walks the bright
+      // segment from the left edge to the right and back to the start on the next cycle.
+      comet.setAttribute('stroke-dashoffset', String(-fraction));
+      const point = solid[lead].getPointAtLength(lengths[lead] * fraction);
+      tracer.setAttribute('cx', point.x.toFixed(2));
+      tracer.setAttribute('cy', point.y.toFixed(2));
+      halo.setAttribute('cx', point.x.toFixed(2));
+      halo.setAttribute('cy', point.y.toFixed(2));
+      scan.setAttribute('x1', point.x.toFixed(2));
+      scan.setAttribute('x2', point.x.toFixed(2));
+      // The jump from the last point back to the first happens while nothing is painted, so the
+      // eye reads a refresh rather than a teleport.
+      const edge = fraction < 0.04 || fraction > 0.96;
+      const alpha = edge ? '0' : '1';
+      tracer.style.opacity = alpha;
+      halo.style.opacity = alpha;
+      comet.style.opacity = edge ? '0' : '1';
+      scan.style.opacity = edge ? '0' : '0.8';
+      raf = requestAnimationFrame(drawAt);
+    };
+    const observer =
+      typeof IntersectionObserver === 'undefined'
+        ? null
+        : new IntersectionObserver((entries) => {
+            const next = entries.some((entry) => entry.isIntersecting);
+            if (next === visible) return;
+            visible = next;
+            if (next && !raf) raf = requestAnimationFrame(drawAt);
+          });
+    observer?.observe(svg);
+    raf = requestAnimationFrame(drawAt);
+
+    return () => {
+      observer?.disconnect();
+      if (raf) cancelAnimationFrame(raf);
+      scan.remove();
+      halo.remove();
+      tracer.remove();
+      comet.remove();
+    };
+  }, [spec, mode]);
+
+  return (
+    <div ref={boxRef} className={className}>
+      <Diagram spec={spec} />
+    </div>
+  );
+};
+
+const GALLERY: { id: string; why: string; Icon: LucideIcon; live: LiveMode }[] = [
+  { id: 'signal-chain', why: 'Every stage in a sensor path, and the unit that leaves it.', Icon: Gauge, live: 'flow' },
+  { id: 'arm-kinematics', why: 'Two links, one target: the triangle the solver closes.', Icon: Boxes, live: 'flow' },
+  { id: 'kalman-step', why: 'Predict, measure, correct — the estimate moves, not the code.', Icon: BrainCircuit, live: 'flow' },
+  { id: 'bode-margins', why: 'Gain and phase, and where the loop stops being stable.', Icon: GitBranch, live: 'sweep' },
+  { id: 'ros-graph', why: 'Nodes, topics and the wire between them.', Icon: Waypoints, live: 'flow' },
+  { id: 'three-phase', why: 'Three windings, one rotating field.', Icon: Cpu, live: 'wave' },
 ];
 
 const FigureGallery: React.FC = () => (
@@ -710,7 +931,7 @@ const FigureGallery: React.FC = () => (
     </Reveal>
 
     <div className="mt-6 grid gap-3 md:grid-cols-2">
-      {GALLERY.map(({ id, why, Icon }, index) => {
+      {GALLERY.map(({ id, why, Icon, live }, index) => {
         const spec = sceneFor(id);
         if (!spec) return null;
         return (
@@ -728,7 +949,7 @@ const FigureGallery: React.FC = () => (
             >
               {/* No `id` on the figure itself: at 768 the header's own id label and the Expand
                   button together ran off the card. The anchor lives on the wrapper instead. */}
-              <Diagram spec={spec} />
+              <LiveFigure spec={spec} mode={live} />
               <p className="mt-2 flex items-start gap-1.5 text-[11.5px] leading-snug" style={{ color: 'var(--muted)' }}>
                 <Icon className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" style={{ color: 'var(--accent)' }} />
                 {why}
@@ -978,6 +1199,17 @@ const INTRO_CSS = `
     color-mix(in srgb, var(--panel) 85%, transparent);
 }
 .intro-live { animation: intro-pulse 2.6s ease-in-out infinite; }
+/* The flow half of a live figure: the box being crossed lights up while the arrows feed it.
+   Both are offsets of the same 4.6 s beat, so a five-box chain reads left to right rather than
+   every box pulsing at once. */
+.intro-step rect {
+  animation: intro-node-state 4.6s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * -0.46s);
+}
+.intro-edge {
+  stroke-dasharray: 5 6;
+  animation: intro-edge-flow 1.15s linear infinite;
+}
 .intro-scan { position: relative; overflow: hidden; }
 .intro-scan::after {
   content: '';
@@ -994,6 +1226,13 @@ const INTRO_CSS = `
 @keyframes intro-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 @keyframes intro-grid-pan { from { background-position: 0 0, 0 0; } to { background-position: 44px 44px, 44px 44px; } }
 @keyframes intro-scan { 0% { transform: translateX(-130%); } 52%, 100% { transform: translateX(130%); } }
+@keyframes intro-node-state {
+  0%, 100% { stroke: var(--line); filter: none; }
+  7% { stroke: var(--accent); filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 55%, transparent)); }
+  18% { stroke: var(--accent); filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 55%, transparent)); }
+  27% { stroke: var(--line); filter: none; }
+}
+@keyframes intro-edge-flow { to { stroke-dashoffset: -11; } }
 @media print {
   .intro-reveal, .intro-reveal:not(.is-shown) { opacity: 1; transform: none; }
 }
@@ -1003,6 +1242,8 @@ const INTRO_CSS = `
   .intro-traveller { animation: none; transition: none; }
   .intro-scan::after { display: none; }
   .intro-grid { animation: none; }
+  .intro-step rect, .intro-edge { animation: none; }
+  .intro-edge { stroke-dasharray: none; }
   .intro-gradient-text { animation: none; background: var(--accent); -webkit-background-clip: text; background-clip: text; }
   .intro-lift, .intro-cta { transition: none; }
   .intro-lift:hover, .intro-cta:hover { transform: none; }

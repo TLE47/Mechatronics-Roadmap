@@ -131,6 +131,9 @@ async function main() {
           clientWidth: root.clientWidth,
           chipRight: chip ? Math.round(chip.right) : null,
           stripScrollable: strip ? strip.scrollWidth > strip.clientWidth + 1 : false,
+          pannedFigures: [...document.querySelectorAll('.intro-root .figure-art')].filter(
+            (art) => art.scrollWidth > art.clientWidth + 1
+          ).length,
         };
       });
       assert.equal(
@@ -143,7 +146,12 @@ async function main() {
         `the account chip must be on screen at 390 px, not at ${narrow.chipRight} px`
       );
       assert.equal(narrow.stripScrollable, true, 'the tray row must still scroll, so every control is reachable');
-      console.log('  ok at 390 px the page does not scroll sideways and the account chip is visible');
+      assert.equal(
+        narrow.pannedFigures,
+        0,
+        `a phone must not have to swipe a figure sideways (${narrow.pannedFigures} still pan)`
+      );
+      console.log('  ok at 390 px the page does not scroll sideways, the chip is visible and no figure pans');
       await page.setViewportSize({ width: 1280, height: 900 });
       await page.waitForTimeout(200);
 
@@ -160,7 +168,48 @@ async function main() {
         )
       );
       assert.equal(swept, true, 'every gallery figure must be a live card, not a still');
-      console.log('  ok the route marker and the figure sweeps are on the page');
+
+      // The two motions a figure can carry: a workflow whose boxes change state, and a plot with a
+      // cursor that actually moves. Both are attached after mount, so this also proves the effect
+      // found the drawing rather than the Expand button's icon beside it.
+      await page.locator('#intro-figures').scrollIntoViewIfNeeded();
+      await page.waitForTimeout(900);
+      const flow = await page.evaluate(() => ({
+        steps: document.querySelectorAll('.intro-step').length,
+        edges: document.querySelectorAll('.intro-edge').length,
+      }));
+      assert.ok(flow.steps >= 5, `a workflow figure must carry its boxes (${flow.steps} found)`);
+      assert.ok(flow.edges >= 4, `a workflow figure must carry its connectors (${flow.edges} found)`);
+      // Scoped to the visible cards: an off-screen figure pauses itself, and a paused dot would make
+      // this pass or fail on the scroll position rather than on the animation.
+      const dot = () =>
+        page.evaluate(
+          () =>
+            document
+              .querySelector('[data-testid="intro-figure-bode-margins"] circle[data-intro-tracer="true"]')
+              ?.getAttribute('cx') ?? ''
+        );
+      const dotOne = await dot();
+      await page.waitForTimeout(600);
+      const dotTwo = await dot();
+      assert.ok(dotOne !== '', 'a graph figure must carry its cursor');
+      assert.notEqual(dotOne, dotTwo, 'the graph cursor must move while the figure is on screen');
+
+      // The periodic plot is scrolled through its own period, so the wave itself moves; the
+      // transform is the measurement, and the second reading must be a different one.
+      const wave = () =>
+        page.evaluate(
+          () =>
+            document
+              .querySelector('[data-testid="intro-figure-three-phase"] path[transform]')
+              ?.getAttribute('transform') ?? ''
+        );
+      const waveOne = await wave();
+      await page.waitForTimeout(500);
+      const waveTwo = await wave();
+      assert.ok(waveOne.startsWith('translate('), `a wave figure must roll its series (got "${waveOne}")`);
+      assert.notEqual(waveOne, waveTwo, 'the wave must move, not sit at its first frame');
+      console.log('  ok the route marker, the workflow states, the moving cursor and the rolling wave are live');
 
       // A reload is still the introduction: an explicit view is the learner's choice, not a guess.
       await page.reload({ waitUntil: 'domcontentloaded' });
