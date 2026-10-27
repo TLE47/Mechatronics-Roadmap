@@ -541,6 +541,7 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
                     <Diagram
                       key={index}
                       id={block.id}
+                      live
                       spec={block.caption ? { ...spec, caption: block.caption } : spec}
                     />
                   );
@@ -550,6 +551,7 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
                     <Diagram
                       key={index}
                       id="route"
+                      live
                       spec={{
                         kind: 'route',
                         title: 'Where this lesson goes',
@@ -563,6 +565,7 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
                     <Diagram
                       key={index}
                       id="graph"
+                      live
                       spec={{
                         kind: 'graph',
                         title: 'How this page fits together',

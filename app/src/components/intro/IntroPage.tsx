@@ -27,6 +27,7 @@ import { Diagram } from '../../visuals/Diagram';
 import { SCENE_IDS, sceneFor } from '../../visuals/scenes';
 import type { DiagramSpec } from '../../visuals/scenes';
 import { SPINE, hoursRange, sumHours } from '../../spine';
+import { useMotion as useMotionPref } from '../../useMotion';
 import { PYTHON_LESSONS } from '../../data/pythonLessonsData';
 import type { TabId } from '../../types';
 import type { LucideIcon } from 'lucide-react';
@@ -79,23 +80,13 @@ export const IntroPage: React.FC<IntroPageProps> = ({
     { value: String(SCENE_IDS.length), label: 'drawn figures', Icon: GitBranch },
   ];
 
-  // Playing is the default, because movement is what this page is *for* — a still introduction is a
-  // wall of pictures. A press stills it and the next visit remembers, and the control stays on the
-  // section row where it is seen rather than buried. It deliberately does not start from
-  // `prefers-reduced-motion`: that setting would leave the one page made of moving diagrams frozen
-  // for every reader whose OS asks for less motion, and the Pause button is the better answer.
-  const [motion, setMotion] = useState<boolean>(() => readStoredMotion() ?? true);
-  const toggleMotion = () => {
-    setMotion((on) => {
-      const next = !on;
-      try {
-        window.localStorage.setItem(MOTION_KEY, next ? 'on' : 'off');
-      } catch {
-        // A browser that refuses storage still gets the switch for this visit.
-      }
-      return next;
-    });
-  };
+  // The switch is the app's own (`motionPrefs.ts`), so the header's Motion button and this page's
+  // Play/Pause are the same fact: a press here stills the lesson figures too. Until the reader
+  // chooses, the OS setting decides — a reader who asked for less motion gets a still page and the
+  // Play control in front of them — and from the first press the choice is what plays, everywhere.
+  const motionController = useMotionPref();
+  const motion = motionController.on;
+  const toggleMotion = motionController.toggle;
 
   return (
     <MotionContext.Provider value={motion}>
@@ -189,22 +180,13 @@ const Reveal: React.FC<{ children: React.ReactNode; delay?: number; className?: 
  * Whether this page animates.
  *
  * The page plays unless the visitor has pressed Pause: a **play/pause** control sits at the end of
- * the section row, the choice is remembered, and both halves obey it — the CSS half through the
- * root's `data-motion` attribute (`INTRO_CSS`), every scripted half through this context. A reader
- * who wants stillness gets one press, and it survives the next visit.
+ * the section row (and the same switch lives in the header), the choice is remembered, and both
+ * halves obey it — the CSS half through the root's `data-motion` attribute (`INTRO_CSS`), every
+ * scripted half through this context. The context is the page's own because every child asks it
+ * during render; the truth behind it is `motionPrefs.ts`, shared with the lesson figures.
  */
-const MOTION_KEY = 'mechalab_intro_motion_v1';
 const MotionContext = React.createContext(true);
 const useMotion = (): boolean => React.useContext(MotionContext);
-
-function readStoredMotion(): boolean | null {
-  try {
-    const stored = window.localStorage.getItem(MOTION_KEY);
-    return stored === 'on' ? true : stored === 'off' ? false : null;
-  } catch {
-    return null;
-  }
-}
 
 
 /**
@@ -1467,7 +1449,8 @@ const INTRO_CSS = `
   .intro-reveal, .intro-reveal:not(.is-shown) { opacity: 1; transform: none; }
 }
 /* Paused: one attribute switches every decorative loop off, on any machine. Not a media query,
-   because Pause is a control on this page and must work whether or not the OS asked for stillness. */
+   because Pause is a control on this page and must work wherever the state came from — the OS
+   setting on a first visit, or the reader's own choice afterwards. */
 .intro-root[data-motion='off'] .intro-reveal,
   .intro-root[data-motion='off'] .intro-reveal:not(.is-shown) { opacity: 1; transform: none; transition: none; }
   .intro-root[data-motion='off'] .intro-bar,

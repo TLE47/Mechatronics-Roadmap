@@ -231,6 +231,35 @@ async function main() {
       assert.match(chrome.stat, /intro-edge-sweep/, 'the stat cards must carry their sweep');
       assert.match(chrome.closing, /intro-aurora/, 'the closing panel must move');
 
+      // One switch, two homes: the header's Motion button and this page's Play/Pause write the same
+      // preference, so turning it off at the top of the page stills the figures below it — and the
+      // pause is the same pause the lesson figures obey.
+      assert.equal(
+        await page.getByTestId('btn-motion-toggle').getAttribute('aria-pressed'),
+        'true',
+        'the header must show motion as on while the figures are playing'
+      );
+      await page.getByTestId('btn-motion-toggle').click();
+      await page.waitForTimeout(350);
+      assert.equal(
+        await page.getByTestId('intro-page').getAttribute('data-motion'),
+        'off',
+        "the header's Motion button must still the introduction, not only whatever page it is on"
+      );
+      assert.equal(
+        await page.locator('[data-intro-packet], [data-intro-tracer]').count(),
+        0,
+        'a paused introduction must remove its scripted motion from the header switch too'
+      );
+      await page.getByTestId('btn-motion-toggle').click();
+      await page.waitForTimeout(350);
+      assert.equal(
+        await page.getByTestId('intro-page').getAttribute('data-motion'),
+        'on',
+        'pressing the header switch again must restart the page'
+      );
+      console.log("  ok the header's Motion switch and the page's own control are one preference");
+
       // The nav is the page's own position indicator: nothing before the first section, then the
       // chip of the section under the reading line.
       await page.evaluate(() => window.scrollTo(0, 0));
@@ -251,10 +280,9 @@ async function main() {
         '  ok the route marker, the workflow states, the cursor, the wave, the loop, the labs, the stats, the closing panel and the nav are live'
       );
 
-      // The page plays even when the OS asks for less motion, because Play/Pause is the page's own
-      // control and its figures are the content. This is the regression that read as "nothing
-      // moves": the preference was seeding the page to still, so a reader whose Mac had "Reduce
-      // motion" on got six static drawings and no sign that they could be played.
+      // The OS setting is the default, not a verdict: a reader whose machine asks for less motion
+      // gets a still page, and the Play control in the header (and on the section row) is the way
+      // out. A fresh context has never chosen, which is exactly this case.
       const quiet = await browser.newContext({
         viewport: { width: 1280, height: 900 },
         reducedMotion: 'reduce',
@@ -266,22 +294,33 @@ async function main() {
       await stillPage.waitForTimeout(800);
       assert.equal(
         await stillPage.getByTestId('intro-page').getAttribute('data-motion'),
+        'off',
+        'a reader who never chose, on a machine set to reduce motion, must get a still page'
+      );
+      assert.equal(
+        await stillPage.locator('[data-intro-packet], [data-intro-tracer], .intro-step').count(),
+        0,
+        'a still page must not start any frame loops or annotate any figure'
+      );
+      // The header's switch, not only the page's: choosing motion is one press from any screen.
+      const headerMotion = stillPage.getByTestId('btn-motion-toggle');
+      assert.equal(await headerMotion.getAttribute('aria-pressed'), 'false', 'the header must show the OS default answer');
+      await headerMotion.click();
+      await stillPage.waitForTimeout(700);
+      assert.equal(
+        await stillPage.getByTestId('intro-page').getAttribute('data-motion'),
         'on',
-        'a machine set to reduce motion must still be offered the live page: Pause is the control'
+        "choosing motion in the header must play the introduction's own figures"
       );
       const playing = await stillPage.evaluate(() =>
         [...document.querySelectorAll('[data-testid^="intro-figure-"]')].filter(
           (card) => card.querySelector('.intro-step, [data-intro-packet], [data-intro-tracer]')
         ).length
       );
-      assert.equal(
-        playing,
-        6,
-        `every one of the six figures must carry a motion source under reduced motion (${playing} did)`
-      );
-      // One press stills the page — the CSS loops and the scripted packets alike — and the choice is
-      // remembered, so the next visit does not undo a deliberate pause.
-      await stillPage.locator('button[aria-pressed]').filter({ hasText: /otion/i }).first().click();
+      assert.equal(playing, 6, `every one of the six figures must carry a motion source once chosen (${playing} did)`);
+      // One press stills the page again — the CSS loops and the scripted packets alike — and the
+      // choice is remembered, so the next visit does not undo a deliberate pause.
+      await stillPage.locator('.intro-nav-chip[aria-pressed]').click();
       await stillPage.waitForTimeout(350);
       assert.equal(
         await stillPage.getByTestId('intro-page').getAttribute('data-motion'),
@@ -305,7 +344,7 @@ async function main() {
         'a pause must survive the reload, or the control is a one-visit gimmick'
       );
       await quiet.close();
-      console.log('  ok the page plays by default, pauses in one press, and remembers the pause');
+      console.log('  ok motion follows the OS until chosen, then a press stills it and the pause is remembered');
 
       // A reload is still the introduction: an explicit view is the learner's choice, not a guess.
       await page.reload({ waitUntil: 'domcontentloaded' });

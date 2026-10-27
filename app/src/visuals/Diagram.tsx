@@ -2,6 +2,8 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { Maximize2, X } from 'lucide-react';
 import { graphLayers, type PlacedNode } from './graphLayout.ts';
+import { attachQuietMotion } from './liveFigure.ts';
+import { useFigureMotion } from '../useMotion.ts';
 import type { DiagramSpec, Series } from './scenes.ts';
 
 /**
@@ -16,8 +18,9 @@ import type { DiagramSpec, Series } from './scenes.ts';
  *   screen-reader learner gets the same sentence a sighted one reads under the figure.
  * - **Fixed geometry.** The viewBox is a constant and the SVG scales to its container: no measuring, no
  *   resize listener, and nothing that can drift between the tabs that embed it.
- * - **No motion.** A figure is a still even when the page is not; nothing here animates, so
- *   `prefers-reduced-motion` has nothing to switch off.
+ * - **Still unless asked.** The drawing itself is static. A lesson passes `live`, which lets
+ *   `visuals/liveFigure.ts` add one moving mark while the figure is on screen — and only if the
+ *   reader has motion on. The expanded sheet never passes it: a close look at the labels is a still.
  */
 
 const W = 640;
@@ -954,10 +957,37 @@ export function DiagramArt({ spec }: { spec: DiagramSpec }) {
  * page. The sheet keeps `min-width: 640px` inside a horizontal scroller, which is why a phone gets
  * full-size type it can pan across instead of quarter-size type it cannot read.
  */
-export function Diagram({ spec, id, className = '' }: { spec: DiagramSpec; id?: string; className?: string }) {
+export function Diagram({
+  spec,
+  id,
+  className = '',
+  live = false,
+}: {
+  spec: DiagramSpec;
+  id?: string;
+  className?: string;
+  /**
+   * Let the figure run while it is on screen (a lesson page). Off by default so the introduction's
+   * own, louder `LiveFigure` is the only thing annotating its drawings, and the expanded sheet — the
+   * close look at the labels — is always a still.
+   */
+  live?: boolean;
+}) {
   const [expanded, setExpanded] = React.useState(false);
   const closeRef = React.useRef<HTMLButtonElement | null>(null);
   const returnFocusRef = React.useRef<HTMLElement | null>(null);
+  const artRef = React.useRef<HTMLDivElement | null>(null);
+  const motionOn = useFigureMotion();
+
+  // The figure's own drawing, annotated after mount: the same SVG the lesson would show still, so
+  // there is no second copy to drift. The observer, the preference and the cleanup all live in
+  // `visuals/liveFigure.ts`.
+  React.useEffect(() => {
+    if (!live || !motionOn) return undefined;
+    const svg = artRef.current?.querySelector('svg[role="img"]');
+    if (!svg) return undefined;
+    return attachQuietMotion(svg as SVGSVGElement, spec.kind);
+  }, [live, motionOn, spec]);
 
   React.useEffect(() => {
     if (!expanded) return;
@@ -1051,7 +1081,7 @@ export function Diagram({ spec, id, className = '' }: { spec: DiagramSpec; id?: 
           </button>
         </span>
       </div>
-      <div className="figure-art relative px-2 py-2">
+      <div ref={artRef} className="figure-art relative px-2 py-2">
         <DiagramArt spec={spec} />
         {/* The picture is the other door to the same sheet: on a phone a tap on the drawing is the
             gesture a learner already makes, and the header button is small. The control is an empty

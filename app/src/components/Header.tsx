@@ -1,5 +1,5 @@
 import React from 'react';
-import { Printer, Download, FileJson, User, ChevronRight, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, House, RotateCcw } from 'lucide-react';
+import { Printer, Download, FileJson, User, ChevronRight, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, House, Pause, Play, RotateCcw } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
 import { downloadLearningLog } from '../learningLog';
 import { BackupControls } from './BackupControls';
@@ -14,6 +14,8 @@ import {
   type Theme,
 } from '../theme';
 import { focusLabel } from '../focusMode';
+import { motionHint, motionLabel } from '../motionPrefs';
+import { useMotion } from '../useMotion';
 import { SoundControlLazy } from './SoundControlLazy';
 import { HeaderTips } from './HeaderTips';
 // The interface's own ear: one delegated listener for every control's click, mounted once with the
@@ -100,6 +102,9 @@ export const Header: React.FC<HeaderProps> = ({
   focus = false,
   onToggleFocus,
 }) => {
+  // The motion switch is the app's, not a copy: the header writes the same store the figures read,
+  // so a press here stops the introduction's loops and every lesson's frame loop in one go.
+  const motion = useMotion();
   // The theme is mounted once, in `App`, and handed down: the attribute on <html> and this button's
   // label are the same state, so the toggle can never claim a mode the page is not in.
   // The nav is on every screen, including a newcomer's first one. Keep the labels plain English:
@@ -264,8 +269,8 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </div>
 
-          {/* Appearance and sound: five preferences on one surface. Each is its own on/off, so a
-              pressed button states a fact instead of standing for a step in a cycle. */}
+          {/* Appearance, motion and sound: six preferences on one surface. Each is its own on/off,
+              so a pressed button states a fact instead of standing for a step in a cycle. */}
           <div className="action-tray" role="group" aria-label="Appearance and sound">
             <button
               onClick={toggle}
@@ -335,6 +340,25 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="hidden 2xl:inline">Focus</span>
               </button>
             )}
+            {/* One switch for the moving drawings, on every screen. Off is also the cheap setting:
+                each figure stops its frame loop instead of drawing frames nobody sees. */}
+            <button
+              onClick={motion.toggle}
+              data-testid="btn-motion-toggle"
+              aria-pressed={motion.on}
+              aria-label={motionLabel(motion.on)}
+              data-tip={motionLabel(motion.on)}
+              title={motionHint(motion.on)}
+              className="btn"
+              style={pressed(motion.on)}
+            >
+              {motion.on ? (
+                <Pause className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              ) : (
+                <Play className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              )}
+              <span className="hidden 2xl:inline">Motion</span>
+            </button>
           </div>
 
           {/* Take it with you: four exports and the pair that puts it all back. */}

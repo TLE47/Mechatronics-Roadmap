@@ -119,17 +119,28 @@ Three rules follow, and each is checked in `npm run test:e2e:pages`:
 
 ## What a figure may never do
 
-- **No motion in a lesson.** A figure beside prose is a still. The introduction is the one exception:
-  `LiveFigure` (`components/intro/IntroPage.tsx`) animates the *same* SVG after mount — boxes change
-  state in a workflow, a cursor rides a plot, a periodic wave rolls through its own period — and does
-  it by annotating the emitted drawing, so there is no second copy to drift from the lesson's. The
-  page's own chrome follows the same rule: the section chips light the one you are reading, the six
-  lesson moves change state in order, each lab carries its ready beacon, and the stat cards, "your
-  work" cards and closing panel sweep. All of it plays by default, because movement is what that
-  page is for; **Pause** at the end of the section row stills every half at once — CSS and scripted
-  alike — and the choice is remembered. A reader whose OS asks for `prefers-reduced-motion` gets the
-  page playing and the control in front of them, rather than six static drawings. An off-screen
-  figure stops its frame loop either way.
+- **A lesson figure moves only as much as it needs to, and only while it is read.** `Diagram` takes
+  `live`, which lets `visuals/liveFigure.ts` annotate the drawing it already emitted — one packet per
+  connector on a `chain`, `loop`, `graph` or `states`, one cursor on the longest solid curve of a
+  `timing` or `plot`. A reference figure (matrix, register, schematic, reach dial, the page's route)
+  never gains a mark: it is a table, not a process. There is no glow, no state cycling and no
+  chrome, so the paragraph beside the figure stays the loudest thing on the page. An
+  `IntersectionObserver` starts the frame loop when the figure comes on screen and removes the marks
+  when it leaves; nothing runs for a figure nobody is looking at. The expanded sheet is always a
+  still, because it exists to read the labels.
+- **One switch, and it is also the cheap setting.** The header's **Motion** button and the
+  introduction's Play/Pause are the same remembered preference (`motionPrefs.ts`), so the two can
+  never disagree. Until the reader chooses, the OS `prefers-reduced-motion` decides: a reader who
+  asked for stillness gets a still page and a visible Play control on every screen. Off stops every
+  frame loop — lesson and introduction alike — so turning it off is how a reader on a slow machine
+  makes the app do less work; on starts them again.
+- **The introduction is the show.** `LiveFigure` (`components/intro/IntroPage.tsx`) animates the
+  *same* SVGs after mount — boxes change state in a workflow, a cursor rides a plot, a periodic wave
+  rolls through its own period — by annotating the emitted drawing, so there is no second copy to
+  drift from the lesson's. The page's own chrome follows the same rule: the section chips light the
+  one you are reading, the six lesson moves change state in order, each lab carries its ready
+  beacon, and the stat cards, "your work" cards and closing panel sweep. Pause on the section row or
+  the header stills every half at once. An off-screen figure stops its frame loop either way.
 - **No hard-coded colour.** Every stroke and fill is a CSS custom property the palettes define
   (`--ink`, `--body`, `--muted`, `--line`, `--line-soft`, `--accent`, `--canvas`), so dark, light, paper
   and high contrast need no special case.
