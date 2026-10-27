@@ -192,6 +192,12 @@ export function readSittings(): Sitting[] {
   }
 }
 
+/** Drop one sitting by its start: the reset panel's per-sitting erase, and nothing else calls it. */
+export function forgetSitting(start: number): void {
+  const kept = readSittings().filter((sitting) => sitting.start !== Math.round(start));
+  writeSittings(kept);
+}
+
 function writeSittings(sittings: Sitting[]): void {
   const store = storage();
   if (!store) return;

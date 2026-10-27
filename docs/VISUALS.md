@@ -113,13 +113,50 @@ Three rules follow, and each is checked in `npm run test:e2e:pages`:
 - **The inline figure does the same below 640 px.** `.figure-art` (`index.css`) keeps the 640 px width
   and scrolls, which is the bargain a wide table already makes; the page itself must never gain a
   horizontal scrollbar for it.
+- **Except on the introduction**, which is a showcase rather than a lesson: `.intro-root .figure-art`
+  fits the column at every width, so nothing on `?view=intro` asks a phone to swipe a diagram. The
+  Expand sheet still offers the full 640 units when the labels need reading.
 
 ## What a figure may never do
 
-- **No motion.** A figure is a still, so `prefers-reduced-motion` has nothing to switch off.
+- **A lesson figure moves only as much as it needs to, and only while it is read.** `Diagram` takes
+  `live`, which lets `visuals/liveFigure.ts` annotate the drawing it already emitted — one packet per
+  connector on a `chain`, `loop`, `graph` or `states`, one cursor on the longest solid curve of a
+  `timing` or `plot`. A reference figure (matrix, register, schematic, reach dial, the page's route)
+  never gains a mark: it is a table, not a process. There is no glow, no state cycling and no
+  chrome, so the paragraph beside the figure stays the loudest thing on the page. An
+  `IntersectionObserver` starts the frame loop when the figure comes on screen and removes the marks
+  when it leaves; nothing runs for a figure nobody is looking at. The expanded sheet is always a
+  still, because it exists to read the labels.
+- **One switch, and it is also the cheap setting.** The header's **Motion** button and the
+  introduction's Play/Pause are the same remembered preference (`motionPrefs.ts`), so the two can
+  never disagree. Until the reader chooses, the OS `prefers-reduced-motion` decides: a reader who
+  asked for stillness gets a still page and a visible Play control on every screen. Off stops every
+  frame loop — lesson and introduction alike — so turning it off is how a reader on a slow machine
+  makes the app do less work; on starts them again.
+- **The introduction is the show.** `LiveFigure` (`components/intro/IntroPage.tsx`) animates the
+  *same* SVGs after mount — boxes change state in a workflow, a cursor rides a plot, a periodic wave
+  rolls through its own period — by annotating the emitted drawing, so there is no second copy to
+  drift from the lesson's. The page's own chrome follows the same rule: the section chips light the
+  one you are reading, the six lesson moves change state in order, each lab carries its ready
+  beacon, and the stat cards, "your work" cards and closing panel sweep. Pause on the section row or
+  the header stills every half at once. An off-screen figure stops its frame loop either way.
+- **A moving thing moves by the clock, not by the frame.** The launch arm (`components/HeroArm.tsx`)
+  advances by elapsed time — capped at 50 ms a step — so a 120 Hz screen runs the same loop as a 60 Hz
+  one and a stalled frame is one normal step instead of a jump. Its figure-eight is *lifted above the
+  base* (`heroArmModel.ts`): centred on the base it passed through it twice a loop, where a two-link
+  solution has no defined joint angle and the elbow whipped 359° in one frame, which reads as the arm
+  skipping between its left and right poses. Lifted, the target stays inside the reach and outside the
+  folded arm, every frame moves a joint under 3°, and the dashed preview is the same function the
+  target follows — so it cannot drift from the arm.
 - **No hard-coded colour.** Every stroke and fill is a CSS custom property the palettes define
   (`--ink`, `--body`, `--muted`, `--line`, `--line-soft`, `--accent`, `--canvas`), so dark, light, paper
   and high contrast need no special case.
+- **A connector is a run, and a label is never painted over.** A chain leaves a 30-unit shaft
+  between boxes (it was 14, which the arrowhead mostly filled); a graph's gap grows with the longest
+  edge label it carries, and those labels are drawn *after* the boxes, clear of their arrow and with
+  a canvas-coloured halo. That is the fix for `/target` disappearing under the box beside it, or
+  being cut in half by the wire it names.
 - **No unlabelled picture.** Each figure is `role="img"` with an `aria-label` built from its title and
   caption, and its caption is a `<figcaption>` — it belongs to the picture in the accessibility tree and
   cannot be mistaken for the next paragraph.
@@ -164,6 +201,7 @@ hologram — is 11.7 kB gzipped on chunks that already existed.
 | Claim | Command |
 | :--- | :--- |
 | A scene is drawable, each kind's data is consistent, an unknown id is refused, the arm obeys its own limits, and every committed page's figures, routes and graphs validate | `npm run test:visuals` |
+| The landing arm is continuous (no frame moves a joint 3°), its target stays inside the workspace, its preview is the path the tip follows, and its loop advances by time at any frame rate | `npm run test:arm` |
 | The generator turns a single-chain flowchart into a route and a branching one into a graph, refuses a graph too large to read, and never copies Mermaid source into a payload | `python3 -m unittest tests.test_lesson_pages` |
 | Every page carries a figure and a map, and no teaching section is a wall of prose | `python3 -m unittest tests.test_lesson_pages` (`ReadingPace`) |
 | The built bundle draws a named figure, the page's route and a branching page's graph in the reading pane, each with a name and a caption | `npm run test:e2e:pages` |

@@ -2,6 +2,8 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { Maximize2, X } from 'lucide-react';
 import { graphLayers, type PlacedNode } from './graphLayout.ts';
+import { attachQuietMotion } from './liveFigure.ts';
+import { useFigureMotion } from '../useMotion.ts';
 import type { DiagramSpec, Series } from './scenes.ts';
 
 /**
@@ -16,8 +18,9 @@ import type { DiagramSpec, Series } from './scenes.ts';
  *   screen-reader learner gets the same sentence a sighted one reads under the figure.
  * - **Fixed geometry.** The viewBox is a constant and the SVG scales to its container: no measuring, no
  *   resize listener, and nothing that can drift between the tabs that embed it.
- * - **No motion.** A figure is a still even when the page is not; nothing here animates, so
- *   `prefers-reduced-motion` has nothing to switch off.
+ * - **Still unless asked.** The drawing itself is static. A lesson passes `live`, which lets
+ *   `visuals/liveFigure.ts` add one moving mark while the figure is on screen — and only if the
+ *   reader has motion on. The expanded sheet never passes it: a close look at the labels is a still.
  */
 
 const W = 640;
@@ -183,7 +186,9 @@ function Arrow({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2: num
 function Chain({ spec }: { spec: DiagramSpec }) {
   const stages = spec.stages ?? [];
   const n = Math.max(1, stages.length);
-  const gap = 20;
+  // A connector needs a run: at 20 units the arrowhead was most of it and the packet that rides the
+  // line in a live figure crossed it in a blink. 38 leaves a 30-unit shaft between the boxes.
+  const gap = 38;
   const w = Math.min(132, (W - 24 - gap * (n - 1)) / n);
   const h = 54;
   const total = w * n + gap * (n - 1);
@@ -196,9 +201,9 @@ function Chain({ spec }: { spec: DiagramSpec }) {
           <Box x={x0 + index * (w + gap)} y={y} w={w} h={h} {...stage} />
           {index < n - 1 && (
             <Arrow
-              x1={x0 + index * (w + gap) + w + 3}
+              x1={x0 + index * (w + gap) + w + 4}
               y1={y + h / 2}
-              x2={x0 + index * (w + gap) + w + gap - 3}
+              x2={x0 + index * (w + gap) + w + gap - 4}
               y2={y + h / 2}
             />
           )}
@@ -377,13 +382,34 @@ function wrap(text: string, perLine: number): string[] {
 }
 
 
+/**
+ * The room between a graph's boxes, from the labels its arrows carry.
+ *
+ * The gap used to be a constant (18 by 22), so an edge label — `/target`, `params` — was wider than
+ * the space it sat in and the boxes were painted over it. Here the gap grows with the longest label
+ * the figure actually has, and is capped by the width the boxes leave so a five-column graph still
+ * fits its canvas. `artHeight` reads the same function, so the drawing and its viewBox cannot
+ * disagree about how tall a vertical graph is.
+ */
+function graphSpacing(spec: DiagramSpec): { gapX: number; gapY: number } {
+  const { levels, rows } = graphLayers(spec);
+  const across = spec.direction === 'TD' ? rows : levels;
+  const longest = Math.max(0, ...(spec.edges ?? []).map((edge) => (edge.label ?? '').length));
+  // A 10.5-unit monospace glyph is about 6.3 units wide; a label at 8.8 is about 5.3. Half a label
+  // each side of the arrow's midpoint is what makes it readable without touching a box.
+  const wantedX = Math.min(96, Math.max(26, 18 + longest * 5.3));
+  const room = (W - 26 - 74 * across) / Math.max(1, across - 1);
+  const gapX = across < 2 ? wantedX : Math.max(20, Math.min(wantedX, room));
+  const gapY = Math.min(46, Math.max(22, 12 + longest * 4.6));
+  return { gapX, gapY };
+}
+
 /** A box per node, an arrow per edge: a graph that may fan out, unlike `chain`. */
 function Graph({ spec }: { spec: DiagramSpec }) {
   const { nodes, levels, rows } = graphLayers(spec);
   const across = spec.direction === 'TD' ? rows : levels;
   const down = spec.direction === 'TD' ? levels : rows;
-  const gapX = 18;
-  const gapY = 22;
+  const { gapX, gapY } = graphSpacing(spec);
   const boxW = Math.max(74, Math.min(138, (W - 26 - gapX * (across - 1)) / Math.max(1, across)));
   const boxH = 38;
   const at = (node: PlacedNode) => {
@@ -407,23 +433,7 @@ function Graph({ spec }: { spec: DiagramSpec }) {
         const y1 = horizontal ? a.y + a.h / 2 : a.y + a.h;
         const x2 = horizontal ? b.x - 2 : b.x + b.w / 2;
         const y2 = horizontal ? b.y + b.h / 2 : b.y - 2;
-        return (
-          <g key={`${edge.from}-${edge.to}-${index}`}>
-            <Arrow x1={x1} y1={y1} x2={x2} y2={y2} />
-            {edge.label && (
-              <text
-                x={(x1 + x2) / 2}
-                y={(y1 + y2) / 2 - 4}
-                textAnchor="middle"
-                fontSize={9.5}
-                fill={MUTED}
-                fontFamily={font}
-              >
-                {edge.label}
-              </text>
-            )}
-          </g>
-        );
+        return <Arrow key={`${edge.from}-${edge.to}-${index}`} x1={x1} y1={y1} x2={x2} y2={y2} />;
       })}
       {nodes.map((node) => {
         const box = at(node);
@@ -446,6 +456,43 @@ function Graph({ spec }: { spec: DiagramSpec }) {
               </text>
             ))}
           </g>
+        );
+      })}
+      {/* Labels last, so nothing is painted over them — and with a canvas-coloured halo, so an
+          arrow passing under its own label cannot cut the word in half. The font is one step below
+          the box labels: this is an annotation, not the name of a thing. */}
+      {(spec.edges ?? []).map((edge, index) => {
+        if (!edge.label) return null;
+        const from = byId.get(edge.from);
+        const to = byId.get(edge.to);
+        if (!from || !to) return null;
+        const a = at(from);
+        const b = at(to);
+        const horizontal = spec.direction !== 'TD';
+        const x1 = horizontal ? a.x + a.w : a.x + a.w / 2;
+        const y1 = horizontal ? a.y + a.h / 2 : a.y + a.h;
+        const x2 = horizontal ? b.x - 2 : b.x + b.w / 2;
+        const y2 = horizontal ? b.y + b.h / 2 : b.y - 2;
+        return (
+          <text
+            key={`l-${edge.from}-${edge.to}-${index}`}
+            x={(x1 + x2) / 2 + (horizontal ? 0 : 8)}
+            // Clear of its arrow — above it on a left-to-right graph, beside it top-to-bottom: a
+            // baseline on the arrow's own y read as an arrow through the word, not a name for the wire.
+            y={(y1 + y2) / 2 + (horizontal ? -8 : 3)}
+            textAnchor={horizontal ? 'middle' : 'start'}
+            fontSize={8.8}
+            // Body, not muted: an annotation this small needs the reading colour to stay legible,
+            // and the halo keeps it clear of the arrow's accent.
+            fill={BODY}
+            fontFamily={font}
+            stroke={CANVAS}
+            strokeWidth={2.8}
+            strokeLinejoin="round"
+            style={{ paintOrder: 'stroke' }}
+          >
+            {edge.label}
+          </text>
         );
       })}
     </g>
@@ -896,7 +943,8 @@ export function artHeight(spec: DiagramSpec): number {
     case 'graph': {
       const { levels, rows } = graphLayers(spec);
       const down = spec.direction === 'TD' ? levels : rows;
-      return 14 + down * 38 + Math.max(0, down - 1) * 22 + 14;
+      // The same gap the renderer uses: a taller row pitch must grow the viewBox with it.
+      return 14 + down * 38 + Math.max(0, down - 1) * graphSpacing(spec).gapY + 14;
     }
     case 'matrix':
       return 30 + (spec.matrix?.rows.length ?? 1) * 38 + (spec.matrix?.note ? 20 : 0) + 8;
@@ -954,10 +1002,37 @@ export function DiagramArt({ spec }: { spec: DiagramSpec }) {
  * page. The sheet keeps `min-width: 640px` inside a horizontal scroller, which is why a phone gets
  * full-size type it can pan across instead of quarter-size type it cannot read.
  */
-export function Diagram({ spec, id, className = '' }: { spec: DiagramSpec; id?: string; className?: string }) {
+export function Diagram({
+  spec,
+  id,
+  className = '',
+  live = false,
+}: {
+  spec: DiagramSpec;
+  id?: string;
+  className?: string;
+  /**
+   * Let the figure run while it is on screen (a lesson page). Off by default so the introduction's
+   * own, louder `LiveFigure` is the only thing annotating its drawings, and the expanded sheet — the
+   * close look at the labels — is always a still.
+   */
+  live?: boolean;
+}) {
   const [expanded, setExpanded] = React.useState(false);
   const closeRef = React.useRef<HTMLButtonElement | null>(null);
   const returnFocusRef = React.useRef<HTMLElement | null>(null);
+  const artRef = React.useRef<HTMLDivElement | null>(null);
+  const motionOn = useFigureMotion();
+
+  // The figure's own drawing, annotated after mount: the same SVG the lesson would show still, so
+  // there is no second copy to drift. The observer, the preference and the cleanup all live in
+  // `visuals/liveFigure.ts`.
+  React.useEffect(() => {
+    if (!live || !motionOn) return undefined;
+    const svg = artRef.current?.querySelector('svg[role="img"]');
+    if (!svg) return undefined;
+    return attachQuietMotion(svg as SVGSVGElement, spec.kind);
+  }, [live, motionOn, spec]);
 
   React.useEffect(() => {
     if (!expanded) return;
@@ -1051,7 +1126,7 @@ export function Diagram({ spec, id, className = '' }: { spec: DiagramSpec; id?: 
           </button>
         </span>
       </div>
-      <div className="figure-art relative px-2 py-2">
+      <div ref={artRef} className="figure-art relative px-2 py-2">
         <DiagramArt spec={spec} />
         {/* The picture is the other door to the same sheet: on a phone a tap on the drawing is the
             gesture a learner already makes, and the header button is small. The control is an empty

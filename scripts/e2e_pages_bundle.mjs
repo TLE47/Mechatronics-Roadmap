@@ -1010,6 +1010,82 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       `  ok ${name}: the reading position comes back on its heading (${restored.top} at ${restored.at}px)`
     );
 
+    // A lesson's figures move while they are read, quietly and only then (`visuals/liveFigure.ts`):
+    // the timing figure gets one cursor on its curve, a reference figure (the page's own route) gets
+    // nothing, and an off-screen figure stops. The header's Motion switch is the same preference the
+    // introduction obeys, so one press must empty every figure and one more must refill them.
+    // Deliberately after the reading-position check above: this block scrolls the pane, and the
+    // position it restores is the one that check is about.
+    {
+      const marks = () =>
+        wide.evaluate(() => {
+          const reader = document.querySelector('[data-testid="lesson-reader"]');
+          return {
+            all: reader?.querySelectorAll('[data-figure-motion]').length ?? -1,
+            route: reader?.querySelectorAll('[data-testid="diagram-route"] [data-figure-motion]').length ?? -1,
+            cursorX:
+              reader?.querySelector('[data-figure-motion="cursor"]')?.getAttribute('cx') ?? '',
+          };
+        });
+      await wide.getByTestId('diagram-trajectory').scrollIntoViewIfNeeded();
+      await wide.waitForTimeout(900);
+      const moving = await marks();
+      assert.ok(moving.all >= 1, `${name}: a lesson figure must carry a moving mark on screen (${moving.all})`);
+      assert.equal(moving.route, 0, `${name}: a reference figure must stay still, not gain a mark`);
+      assert.ok(moving.cursorX !== '', `${name}: a timing figure must carry its cursor`);
+      await wide.waitForTimeout(700);
+      const movedAgain = await marks();
+      assert.notEqual(movedAgain.cursorX, moving.cursorX, `${name}: the figure cursor must move while it is read`);
+
+      await wide.getByTestId('reader-scroll').evaluate((node) => node.scrollTo(0, 0));
+      await wide.waitForTimeout(700);
+      assert.equal(
+        (await marks()).all,
+        0,
+        `${name}: an off-screen figure must stop and remove its marks, not keep a frame loop alive`
+      );
+      await wide.getByTestId('diagram-trajectory').scrollIntoViewIfNeeded();
+      await wide.waitForTimeout(500);
+
+      await wide.getByTestId('btn-motion-toggle').click();
+      await wide.waitForTimeout(450);
+      assert.equal((await marks()).all, 0, `${name}: turning motion off must stop the lesson figures`);
+      await wide.getByTestId('btn-motion-toggle').click();
+      await wide.waitForTimeout(500);
+      assert.ok((await marks()).all >= 1, `${name}: turning motion back on must restart the figure`);
+      console.log(`  ok ${name}: a lesson figure moves while read, stops off screen, and follows the header switch`);
+    }
+
+    // The OS setting is the default for a figure, and the header's switch overrides it: a reader who
+    // asked for less motion gets a still drawing until they choose otherwise, on any machine.
+    {
+      const quietContext = await browser.newContext({
+        viewport: { width: 1440, height: 900 },
+        reducedMotion: 'reduce',
+      });
+      await seedTourSeen(quietContext);
+      const quiet = await quietContext.newPage();
+      await quiet.goto(`${baseUrl}?view=study`, { waitUntil: 'domcontentloaded' });
+      await quiet.getByTestId('tab-btn-tab-pyodide').click();
+      await quiet.getByTestId('lesson-item-06.1').click();
+      await quiet.getByTestId('reader-loading').waitFor({ state: 'detached', timeout: 30000 });
+      await quiet.getByTestId('diagram-trajectory').scrollIntoViewIfNeeded();
+      await quiet.waitForTimeout(800);
+      assert.equal(
+        await quiet.locator('[data-testid="lesson-reader"] [data-figure-motion]').count(),
+        0,
+        `${name}: a reduce-motion reader who never chose must get a still figure`
+      );
+      await quiet.getByTestId('btn-motion-toggle').click();
+      await quiet.waitForTimeout(500);
+      assert.ok(
+        (await quiet.locator('[data-testid="lesson-reader"] [data-figure-motion]').count()) >= 1,
+        `${name}: choosing motion on must override the OS preference`
+      );
+      await quietContext.close();
+      console.log(`  ok ${name}: reduced motion keeps a lesson still until the reader chooses motion`);
+    }
+
     // ...and the next lesson starts at its own top, not at the previous lesson's offset.
     await wide.getByTestId('lesson-item-05.1').click();
     await wide.getByTestId('reader-loading').waitFor({ state: 'detached', timeout: 20000 });

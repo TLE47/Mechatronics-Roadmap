@@ -8,7 +8,8 @@
  * The editor carried its own hard-coded mono stack besides, so the code face and the table face were
  * two different families chosen in two different files.
  *
- * Both faces are now self-hosted from `@fontsource-variable` and named once, in `src/index.css`, as
+ * Both faces are now self-hosted from `@fontsource-variable` (Geist and Geist Mono) and named once,
+ * in `src/index.css`, as
  * `--font-sans` and `--font-mono`. That is easy to lose without a symptom: drop one import and the
  * page still renders - in the fallback - and no other test notices. So this suite pins:
  *
@@ -43,7 +44,7 @@ const html = read('app/index.html');
 const editorTheme = read('app/src/editor/theme.ts');
 
 // 1. The imports that bring the @font-face rules in.
-for (const pkg of ['@fontsource-variable/inter', '@fontsource-variable/jetbrains-mono']) {
+for (const pkg of ['@fontsource-variable/geist', '@fontsource-variable/geist-mono']) {
   assert.ok(
     main.includes(`import '${pkg}'`),
     `expected src/main.tsx to import ${pkg}; without it the family is named but never loaded, and the page falls back to the system face`
@@ -53,13 +54,13 @@ for (const pkg of ['@fontsource-variable/inter', '@fontsource-variable/jetbrains
 // 2. One name per face, and body reading the token.
 assert.match(
   css,
-  /--font-sans:\s*'Inter Variable'/,
-  "expected --font-sans to name 'Inter Variable', the family the fontsource package declares"
+  /--font-sans:\s*'Geist Variable'/,
+  "expected --font-sans to name 'Geist Variable', the family the fontsource package declares"
 );
 assert.match(
   css,
-  /--font-mono:\s*'JetBrains Mono Variable'/,
-  "expected --font-mono to name 'JetBrains Mono Variable', the family the fontsource package declares"
+  /--font-mono:\s*'Geist Mono Variable'/,
+  "expected --font-mono to name 'Geist Mono Variable', the family the fontsource package declares"
 );
 assert.match(
   css,
@@ -99,8 +100,8 @@ const distAssets = path.join(repoRoot, 'dist', 'assets');
 if (fs.existsSync(distAssets)) {
   const files = fs.readdirSync(distAssets);
   for (const [family, pattern] of [
-    ['Inter', /^inter-latin-wght-normal-[\w-]+\.woff2$/],
-    ['JetBrains Mono', /^jetbrains-mono-latin-wght-normal-[\w-]+\.woff2$/],
+    ['Geist', /^geist-latin-wght-normal-[\w-]+\.woff2$/],
+    ['Geist Mono', /^geist-mono-latin-wght-normal-[\w-]+\.woff2$/],
   ]) {
     assert.ok(
       files.some((file) => pattern.test(file)),

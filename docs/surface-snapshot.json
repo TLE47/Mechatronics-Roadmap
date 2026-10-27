@@ -25,17 +25,17 @@
           196,
           199,
           1244,
-          8638
+          8581
         ],
         "panel": [
           216,
           219,
           1204,
-          8598
+          8541
         ],
         "footer": [
           0,
-          8837,
+          8781,
           1440,
           43
         ],
@@ -43,13 +43,13 @@
           0,
           0,
           1440,
-          8880
+          8824
         ]
       },
       "counts": {
-        "buttons": 125,
+        "buttons": 126,
         "inputs": 4,
-        "links": 30,
+        "links": 31,
         "headings": 16,
         "canvases": 0,
         "tables": 0
@@ -59,21 +59,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -105,7 +105,7 @@
           196,
           119,
           1244,
-          3331
+          3298
         ],
         "panel": [
           216,
@@ -115,7 +115,7 @@
         ],
         "footer": [
           0,
-          3450,
+          3417,
           1440,
           43
         ],
@@ -123,13 +123,13 @@
           0,
           0,
           1440,
-          3493
+          3460
         ]
       },
       "counts": {
-        "buttons": 162,
+        "buttons": 163,
         "inputs": 3,
-        "links": 12,
+        "links": 13,
         "headings": 18,
         "canvases": 1,
         "tables": 0
@@ -139,21 +139,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -207,9 +207,9 @@
         ]
       },
       "counts": {
-        "buttons": 61,
+        "buttons": 62,
         "inputs": 1,
-        "links": 3,
+        "links": 4,
         "headings": 9,
         "canvases": 0,
         "tables": 0
@@ -219,21 +219,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -287,9 +287,9 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 6,
-        "links": 3,
+        "links": 4,
         "headings": 3,
         "canvases": 1,
         "tables": 0
@@ -299,21 +299,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -367,9 +367,9 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
-        "links": 3,
+        "links": 4,
         "headings": 3,
         "canvases": 1,
         "tables": 0
@@ -379,21 +379,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -447,9 +447,9 @@
         ]
       },
       "counts": {
-        "buttons": 43,
+        "buttons": 44,
         "inputs": 4,
-        "links": 3,
+        "links": 4,
         "headings": 3,
         "canvases": 1,
         "tables": 0
@@ -459,21 +459,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -505,7 +505,7 @@
           196,
           199,
           1244,
-          1032
+          1031
         ],
         "panel": [
           216,
@@ -515,7 +515,7 @@
         ],
         "footer": [
           0,
-          1232,
+          1231,
           1440,
           43
         ],
@@ -523,13 +523,13 @@
           0,
           0,
           1440,
-          1275
+          1274
         ]
       },
       "counts": {
-        "buttons": 47,
+        "buttons": 48,
         "inputs": 4,
-        "links": 3,
+        "links": 4,
         "headings": 4,
         "canvases": 1,
         "tables": 0
@@ -539,21 +539,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -585,7 +585,7 @@
           196,
           199,
           1244,
-          1381
+          1363
         ],
         "panel": [
           216,
@@ -595,7 +595,7 @@
         ],
         "footer": [
           0,
-          1581,
+          1562,
           1440,
           43
         ],
@@ -603,13 +603,13 @@
           0,
           0,
           1440,
-          1624
+          1606
         ]
       },
       "counts": {
-        "buttons": 43,
+        "buttons": 44,
         "inputs": 6,
-        "links": 3,
+        "links": 4,
         "headings": 4,
         "canvases": 1,
         "tables": 1
@@ -619,21 +619,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -665,7 +665,7 @@
           196,
           199,
           1244,
-          997
+          998
         ],
         "panel": [
           216,
@@ -675,7 +675,7 @@
         ],
         "footer": [
           0,
-          1197,
+          1198,
           1440,
           43
         ],
@@ -683,13 +683,13 @@
           0,
           0,
           1440,
-          1240
+          1241
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
-        "links": 3,
+        "links": 4,
         "headings": 3,
         "canvases": 1,
         "tables": 0
@@ -699,21 +699,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -745,7 +745,7 @@
           196,
           199,
           1244,
-          1053
+          1051
         ],
         "panel": [
           216,
@@ -755,7 +755,7 @@
         ],
         "footer": [
           0,
-          1252,
+          1250,
           1440,
           43
         ],
@@ -763,13 +763,13 @@
           0,
           0,
           1440,
-          1295
+          1293
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
-        "links": 3,
+        "links": 4,
         "headings": 3,
         "canvases": 1,
         "tables": 0
@@ -779,21 +779,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -831,7 +831,7 @@
           216,
           219,
           1204,
-          459
+          440
         ],
         "footer": [
           0,
@@ -847,9 +847,9 @@
         ]
       },
       "counts": {
-        "buttons": 35,
+        "buttons": 36,
         "inputs": 3,
-        "links": 4,
+        "links": 5,
         "headings": 3,
         "canvases": 0,
         "tables": 0
@@ -859,21 +859,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -905,17 +905,17 @@
           196,
           152,
           1244,
-          2289
+          2269
         ],
         "panel": [
           216,
           172,
           1204,
-          2249
+          2229
         ],
         "footer": [
           0,
-          2441,
+          2422,
           1440,
           43
         ],
@@ -923,13 +923,13 @@
           0,
           0,
           1440,
-          2531
+          2512
         ]
       },
       "counts": {
-        "buttons": 32,
+        "buttons": 33,
         "inputs": 1,
-        "links": 5,
+        "links": 6,
         "headings": 4,
         "canvases": 0,
         "tables": 2
@@ -939,21 +939,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -980,17 +980,17 @@
           0,
           61,
           1440,
-          3496
+          3495
         ],
         "panel": [
           208,
           61,
           1024,
-          3496
+          3495
         ],
         "footer": [
           0,
-          3557,
+          3556,
           1440,
           43
         ],
@@ -998,13 +998,13 @@
           0,
           0,
           1440,
-          3600
+          3599
         ]
       },
       "counts": {
-        "buttons": 70,
+        "buttons": 72,
         "inputs": 4,
-        "links": 2,
+        "links": 3,
         "headings": 11,
         "canvases": 0,
         "tables": 0
@@ -1014,21 +1014,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -1060,17 +1060,17 @@
           196,
           199,
           1244,
-          8638
+          8581
         ],
         "panel": [
           216,
           219,
           1204,
-          8598
+          8541
         ],
         "footer": [
           0,
-          8837,
+          8781,
           1440,
           43
         ],
@@ -1078,13 +1078,13 @@
           0,
           0,
           1440,
-          8880
+          8824
         ]
       },
       "counts": {
-        "buttons": 125,
+        "buttons": 126,
         "inputs": 4,
-        "links": 30,
+        "links": 31,
         "headings": 16,
         "canvases": 0,
         "tables": 0
@@ -1094,21 +1094,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -1140,7 +1140,7 @@
           196,
           119,
           1244,
-          3331
+          3298
         ],
         "panel": [
           216,
@@ -1150,7 +1150,7 @@
         ],
         "footer": [
           0,
-          3450,
+          3417,
           1440,
           43
         ],
@@ -1158,13 +1158,13 @@
           0,
           0,
           1440,
-          3493
+          3460
         ]
       },
       "counts": {
-        "buttons": 162,
+        "buttons": 163,
         "inputs": 3,
-        "links": 12,
+        "links": 13,
         "headings": 18,
         "canvases": 1,
         "tables": 0
@@ -1174,21 +1174,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -1242,9 +1242,9 @@
         ]
       },
       "counts": {
-        "buttons": 61,
+        "buttons": 62,
         "inputs": 1,
-        "links": 3,
+        "links": 4,
         "headings": 9,
         "canvases": 0,
         "tables": 0
@@ -1254,21 +1254,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -1322,9 +1322,9 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 6,
-        "links": 3,
+        "links": 4,
         "headings": 3,
         "canvases": 1,
         "tables": 0
@@ -1334,21 +1334,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -1402,9 +1402,9 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
-        "links": 3,
+        "links": 4,
         "headings": 3,
         "canvases": 1,
         "tables": 0
@@ -1414,21 +1414,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -1482,9 +1482,9 @@
         ]
       },
       "counts": {
-        "buttons": 43,
+        "buttons": 44,
         "inputs": 4,
-        "links": 3,
+        "links": 4,
         "headings": 3,
         "canvases": 1,
         "tables": 0
@@ -1494,21 +1494,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -1540,7 +1540,7 @@
           196,
           199,
           1244,
-          1032
+          1031
         ],
         "panel": [
           216,
@@ -1550,7 +1550,7 @@
         ],
         "footer": [
           0,
-          1232,
+          1231,
           1440,
           43
         ],
@@ -1558,13 +1558,13 @@
           0,
           0,
           1440,
-          1275
+          1274
         ]
       },
       "counts": {
-        "buttons": 47,
+        "buttons": 48,
         "inputs": 4,
-        "links": 3,
+        "links": 4,
         "headings": 4,
         "canvases": 1,
         "tables": 0
@@ -1574,21 +1574,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -1620,7 +1620,7 @@
           196,
           199,
           1244,
-          1381
+          1363
         ],
         "panel": [
           216,
@@ -1630,7 +1630,7 @@
         ],
         "footer": [
           0,
-          1581,
+          1562,
           1440,
           43
         ],
@@ -1638,13 +1638,13 @@
           0,
           0,
           1440,
-          1624
+          1606
         ]
       },
       "counts": {
-        "buttons": 43,
+        "buttons": 44,
         "inputs": 6,
-        "links": 3,
+        "links": 4,
         "headings": 4,
         "canvases": 1,
         "tables": 1
@@ -1654,21 +1654,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -1700,7 +1700,7 @@
           196,
           199,
           1244,
-          997
+          998
         ],
         "panel": [
           216,
@@ -1710,7 +1710,7 @@
         ],
         "footer": [
           0,
-          1197,
+          1198,
           1440,
           43
         ],
@@ -1718,13 +1718,13 @@
           0,
           0,
           1440,
-          1240
+          1241
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
-        "links": 3,
+        "links": 4,
         "headings": 3,
         "canvases": 1,
         "tables": 0
@@ -1734,21 +1734,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -1780,7 +1780,7 @@
           196,
           199,
           1244,
-          1053
+          1051
         ],
         "panel": [
           216,
@@ -1790,7 +1790,7 @@
         ],
         "footer": [
           0,
-          1252,
+          1250,
           1440,
           43
         ],
@@ -1798,13 +1798,13 @@
           0,
           0,
           1440,
-          1295
+          1293
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
-        "links": 3,
+        "links": 4,
         "headings": 3,
         "canvases": 1,
         "tables": 0
@@ -1814,21 +1814,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -1866,7 +1866,7 @@
           216,
           219,
           1204,
-          459
+          440
         ],
         "footer": [
           0,
@@ -1882,9 +1882,9 @@
         ]
       },
       "counts": {
-        "buttons": 35,
+        "buttons": 36,
         "inputs": 3,
-        "links": 4,
+        "links": 5,
         "headings": 3,
         "canvases": 0,
         "tables": 0
@@ -1894,21 +1894,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -1940,17 +1940,17 @@
           196,
           152,
           1244,
-          2289
+          2269
         ],
         "panel": [
           216,
           172,
           1204,
-          2249
+          2229
         ],
         "footer": [
           0,
-          2441,
+          2422,
           1440,
           43
         ],
@@ -1958,13 +1958,13 @@
           0,
           0,
           1440,
-          2531
+          2512
         ]
       },
       "counts": {
-        "buttons": 32,
+        "buttons": 33,
         "inputs": 1,
-        "links": 5,
+        "links": 6,
         "headings": 4,
         "canvases": 0,
         "tables": 2
@@ -1974,21 +1974,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -2015,17 +2015,17 @@
           0,
           61,
           1440,
-          3496
+          3495
         ],
         "panel": [
           208,
           61,
           1024,
-          3496
+          3495
         ],
         "footer": [
           0,
-          3557,
+          3556,
           1440,
           43
         ],
@@ -2033,13 +2033,13 @@
           0,
           0,
           1440,
-          3600
+          3599
         ]
       },
       "counts": {
-        "buttons": 70,
+        "buttons": 72,
         "inputs": 4,
-        "links": 2,
+        "links": 3,
         "headings": 11,
         "canvases": 0,
         "tables": 0
@@ -2049,21 +2049,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -2095,17 +2095,17 @@
           196,
           199,
           1244,
-          8638
+          8581
         ],
         "panel": [
           216,
           219,
           1204,
-          8598
+          8541
         ],
         "footer": [
           0,
-          8837,
+          8781,
           1440,
           43
         ],
@@ -2113,13 +2113,13 @@
           0,
           0,
           1440,
-          8880
+          8824
         ]
       },
       "counts": {
-        "buttons": 125,
+        "buttons": 126,
         "inputs": 4,
-        "links": 30,
+        "links": 31,
         "headings": 16,
         "canvases": 0,
         "tables": 0
@@ -2129,21 +2129,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -2175,7 +2175,7 @@
           196,
           119,
           1244,
-          3331
+          3298
         ],
         "panel": [
           216,
@@ -2185,7 +2185,7 @@
         ],
         "footer": [
           0,
-          3450,
+          3417,
           1440,
           43
         ],
@@ -2193,13 +2193,13 @@
           0,
           0,
           1440,
-          3493
+          3460
         ]
       },
       "counts": {
-        "buttons": 162,
+        "buttons": 163,
         "inputs": 3,
-        "links": 12,
+        "links": 13,
         "headings": 18,
         "canvases": 1,
         "tables": 0
@@ -2209,21 +2209,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -2277,9 +2277,9 @@
         ]
       },
       "counts": {
-        "buttons": 61,
+        "buttons": 62,
         "inputs": 1,
-        "links": 3,
+        "links": 4,
         "headings": 9,
         "canvases": 0,
         "tables": 0
@@ -2289,21 +2289,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -2357,9 +2357,9 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 6,
-        "links": 3,
+        "links": 4,
         "headings": 3,
         "canvases": 1,
         "tables": 0
@@ -2369,21 +2369,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(249, 241, 226)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -2437,9 +2437,9 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
-        "links": 3,
+        "links": 4,
         "headings": 3,
         "canvases": 1,
         "tables": 0
@@ -2449,21 +2449,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(249, 241, 226)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -2517,9 +2517,9 @@
         ]
       },
       "counts": {
-        "buttons": 43,
+        "buttons": 44,
         "inputs": 4,
-        "links": 3,
+        "links": 4,
         "headings": 3,
         "canvases": 1,
         "tables": 0
@@ -2529,21 +2529,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(249, 241, 226)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -2575,7 +2575,7 @@
           196,
           199,
           1244,
-          1032
+          1031
         ],
         "panel": [
           216,
@@ -2585,7 +2585,7 @@
         ],
         "footer": [
           0,
-          1232,
+          1231,
           1440,
           43
         ],
@@ -2593,13 +2593,13 @@
           0,
           0,
           1440,
-          1275
+          1274
         ]
       },
       "counts": {
-        "buttons": 47,
+        "buttons": 48,
         "inputs": 4,
-        "links": 3,
+        "links": 4,
         "headings": 4,
         "canvases": 1,
         "tables": 0
@@ -2609,21 +2609,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(249, 241, 226)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -2655,7 +2655,7 @@
           196,
           199,
           1244,
-          1381
+          1363
         ],
         "panel": [
           216,
@@ -2665,7 +2665,7 @@
         ],
         "footer": [
           0,
-          1581,
+          1562,
           1440,
           43
         ],
@@ -2673,13 +2673,13 @@
           0,
           0,
           1440,
-          1624
+          1606
         ]
       },
       "counts": {
-        "buttons": 43,
+        "buttons": 44,
         "inputs": 6,
-        "links": 3,
+        "links": 4,
         "headings": 4,
         "canvases": 1,
         "tables": 1
@@ -2689,21 +2689,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(249, 241, 226)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -2735,7 +2735,7 @@
           196,
           199,
           1244,
-          997
+          998
         ],
         "panel": [
           216,
@@ -2745,7 +2745,7 @@
         ],
         "footer": [
           0,
-          1197,
+          1198,
           1440,
           43
         ],
@@ -2753,13 +2753,13 @@
           0,
           0,
           1440,
-          1240
+          1241
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
-        "links": 3,
+        "links": 4,
         "headings": 3,
         "canvases": 1,
         "tables": 0
@@ -2769,21 +2769,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(249, 241, 226)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -2815,7 +2815,7 @@
           196,
           199,
           1244,
-          1053
+          1051
         ],
         "panel": [
           216,
@@ -2825,7 +2825,7 @@
         ],
         "footer": [
           0,
-          1252,
+          1250,
           1440,
           43
         ],
@@ -2833,13 +2833,13 @@
           0,
           0,
           1440,
-          1295
+          1293
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
-        "links": 3,
+        "links": 4,
         "headings": 3,
         "canvases": 1,
         "tables": 0
@@ -2849,21 +2849,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(249, 241, 226)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -2901,7 +2901,7 @@
           216,
           219,
           1204,
-          459
+          440
         ],
         "footer": [
           0,
@@ -2917,9 +2917,9 @@
         ]
       },
       "counts": {
-        "buttons": 35,
+        "buttons": 36,
         "inputs": 3,
-        "links": 4,
+        "links": 5,
         "headings": 3,
         "canvases": 0,
         "tables": 0
@@ -2929,21 +2929,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -2975,17 +2975,17 @@
           196,
           152,
           1244,
-          2289
+          2269
         ],
         "panel": [
           216,
           172,
           1204,
-          2249
+          2229
         ],
         "footer": [
           0,
-          2441,
+          2422,
           1440,
           43
         ],
@@ -2993,13 +2993,13 @@
           0,
           0,
           1440,
-          2531
+          2512
         ]
       },
       "counts": {
-        "buttons": 32,
+        "buttons": 33,
         "inputs": 1,
-        "links": 5,
+        "links": 6,
         "headings": 4,
         "canvases": 0,
         "tables": 2
@@ -3009,21 +3009,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -3050,17 +3050,17 @@
           0,
           61,
           1440,
-          3496
+          3495
         ],
         "panel": [
           208,
           61,
           1024,
-          3496
+          3495
         ],
         "footer": [
           0,
-          3557,
+          3556,
           1440,
           43
         ],
@@ -3068,13 +3068,13 @@
           0,
           0,
           1440,
-          3600
+          3599
         ]
       },
       "counts": {
-        "buttons": 70,
+        "buttons": 72,
         "inputs": 4,
-        "links": 2,
+        "links": 3,
         "headings": 11,
         "canvases": 0,
         "tables": 0
@@ -3084,21 +3084,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -3130,17 +3130,17 @@
           196,
           199,
           1244,
-          8638
+          8581
         ],
         "panel": [
           216,
           219,
           1204,
-          8598
+          8541
         ],
         "footer": [
           0,
-          8837,
+          8781,
           1440,
           43
         ],
@@ -3148,13 +3148,13 @@
           0,
           0,
           1440,
-          8880
+          8824
         ]
       },
       "counts": {
-        "buttons": 125,
+        "buttons": 126,
         "inputs": 4,
-        "links": 30,
+        "links": 31,
         "headings": 16,
         "canvases": 0,
         "tables": 0
@@ -3164,21 +3164,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -3210,7 +3210,7 @@
           196,
           119,
           1244,
-          3331
+          3298
         ],
         "panel": [
           216,
@@ -3220,7 +3220,7 @@
         ],
         "footer": [
           0,
-          3450,
+          3417,
           1440,
           43
         ],
@@ -3228,13 +3228,13 @@
           0,
           0,
           1440,
-          3493
+          3460
         ]
       },
       "counts": {
-        "buttons": 162,
+        "buttons": 163,
         "inputs": 3,
-        "links": 12,
+        "links": 13,
         "headings": 18,
         "canvases": 1,
         "tables": 0
@@ -3244,21 +3244,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -3312,9 +3312,9 @@
         ]
       },
       "counts": {
-        "buttons": 61,
+        "buttons": 62,
         "inputs": 1,
-        "links": 3,
+        "links": 4,
         "headings": 9,
         "canvases": 0,
         "tables": 0
@@ -3324,21 +3324,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -3392,9 +3392,9 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 6,
-        "links": 3,
+        "links": 4,
         "headings": 3,
         "canvases": 1,
         "tables": 0
@@ -3404,21 +3404,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -3472,9 +3472,9 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
-        "links": 3,
+        "links": 4,
         "headings": 3,
         "canvases": 1,
         "tables": 0
@@ -3484,21 +3484,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -3552,9 +3552,9 @@
         ]
       },
       "counts": {
-        "buttons": 43,
+        "buttons": 44,
         "inputs": 4,
-        "links": 3,
+        "links": 4,
         "headings": 3,
         "canvases": 1,
         "tables": 0
@@ -3564,21 +3564,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -3610,7 +3610,7 @@
           196,
           199,
           1244,
-          1032
+          1031
         ],
         "panel": [
           216,
@@ -3620,7 +3620,7 @@
         ],
         "footer": [
           0,
-          1232,
+          1231,
           1440,
           43
         ],
@@ -3628,13 +3628,13 @@
           0,
           0,
           1440,
-          1275
+          1274
         ]
       },
       "counts": {
-        "buttons": 47,
+        "buttons": 48,
         "inputs": 4,
-        "links": 3,
+        "links": 4,
         "headings": 4,
         "canvases": 1,
         "tables": 0
@@ -3644,21 +3644,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -3690,7 +3690,7 @@
           196,
           199,
           1244,
-          1381
+          1363
         ],
         "panel": [
           216,
@@ -3700,7 +3700,7 @@
         ],
         "footer": [
           0,
-          1581,
+          1562,
           1440,
           43
         ],
@@ -3708,13 +3708,13 @@
           0,
           0,
           1440,
-          1624
+          1606
         ]
       },
       "counts": {
-        "buttons": 43,
+        "buttons": 44,
         "inputs": 6,
-        "links": 3,
+        "links": 4,
         "headings": 4,
         "canvases": 1,
         "tables": 1
@@ -3724,21 +3724,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -3770,7 +3770,7 @@
           196,
           199,
           1244,
-          997
+          998
         ],
         "panel": [
           216,
@@ -3780,7 +3780,7 @@
         ],
         "footer": [
           0,
-          1197,
+          1198,
           1440,
           43
         ],
@@ -3788,13 +3788,13 @@
           0,
           0,
           1440,
-          1240
+          1241
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
-        "links": 3,
+        "links": 4,
         "headings": 3,
         "canvases": 1,
         "tables": 0
@@ -3804,21 +3804,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -3850,7 +3850,7 @@
           196,
           199,
           1244,
-          1053
+          1051
         ],
         "panel": [
           216,
@@ -3860,7 +3860,7 @@
         ],
         "footer": [
           0,
-          1252,
+          1250,
           1440,
           43
         ],
@@ -3868,13 +3868,13 @@
           0,
           0,
           1440,
-          1295
+          1293
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
-        "links": 3,
+        "links": 4,
         "headings": 3,
         "canvases": 1,
         "tables": 0
@@ -3884,21 +3884,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -3936,7 +3936,7 @@
           216,
           219,
           1204,
-          459
+          440
         ],
         "footer": [
           0,
@@ -3952,9 +3952,9 @@
         ]
       },
       "counts": {
-        "buttons": 35,
+        "buttons": 36,
         "inputs": 3,
-        "links": 4,
+        "links": 5,
         "headings": 3,
         "canvases": 0,
         "tables": 0
@@ -3964,21 +3964,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -4010,17 +4010,17 @@
           196,
           152,
           1244,
-          2289
+          2269
         ],
         "panel": [
           216,
           172,
           1204,
-          2249
+          2229
         ],
         "footer": [
           0,
-          2441,
+          2422,
           1440,
           43
         ],
@@ -4028,13 +4028,13 @@
           0,
           0,
           1440,
-          2531
+          2512
         ]
       },
       "counts": {
-        "buttons": 32,
+        "buttons": 33,
         "inputs": 1,
-        "links": 5,
+        "links": 6,
         "headings": 4,
         "canvases": 0,
         "tables": 2
@@ -4044,21 +4044,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -4085,17 +4085,17 @@
           0,
           61,
           1440,
-          3496
+          3495
         ],
         "panel": [
           208,
           61,
           1024,
-          3496
+          3495
         ],
         "footer": [
           0,
-          3557,
+          3556,
           1440,
           43
         ],
@@ -4103,13 +4103,13 @@
           0,
           0,
           1440,
-          3600
+          3599
         ]
       },
       "counts": {
-        "buttons": 70,
+        "buttons": 72,
         "inputs": 4,
-        "links": 2,
+        "links": 3,
         "headings": 11,
         "canvases": 0,
         "tables": 0
@@ -4119,21 +4119,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {

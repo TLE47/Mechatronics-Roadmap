@@ -1,5 +1,5 @@
 import React from 'react';
-import { Printer, Download, FileJson, User, ChevronRight, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, House, RotateCcw } from 'lucide-react';
+import { Printer, Download, FileJson, User, ChevronRight, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, House, Pause, Play, RotateCcw } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
 import { downloadLearningLog } from '../learningLog';
 import { BackupControls } from './BackupControls';
@@ -14,6 +14,8 @@ import {
   type Theme,
 } from '../theme';
 import { focusLabel } from '../focusMode';
+import { motionHint, motionLabel } from '../motionPrefs';
+import { useMotion } from '../useMotion';
 import { SoundControlLazy } from './SoundControlLazy';
 import { HeaderTips } from './HeaderTips';
 // The interface's own ear: one delegated listener for every control's click, mounted once with the
@@ -44,6 +46,11 @@ interface HeaderProps {
   onOpenPalette: () => void;
   /** Opens Home. Absent on the theme reference, which has no work to go back to. */
   onOpenHome?: () => void;
+  /**
+   * The wordmark's destination: the introduction page. Optional in the same way `onOpenHome` is —
+   * the token page passes neither, and the lockup then falls back to its plain `href`.
+   */
+  onOpenIntro?: () => void;
   /**
    * Focus mode, and its toggle. Optional because the token page renders this header too and has no
    * work to focus on: a button there would hide the page it is on and offer no way back.
@@ -91,9 +98,13 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAccount,
   onOpenPalette,
   onOpenHome,
+  onOpenIntro,
   focus = false,
   onToggleFocus,
 }) => {
+  // The motion switch is the app's, not a copy: the header writes the same store the figures read,
+  // so a press here stops the introduction's loops and every lesson's frame loop in one go.
+  const motion = useMotion();
   // The theme is mounted once, in `App`, and handed down: the attribute on <html> and this button's
   // label are the same state, so the toggle can never claim a mode the page is not in.
   // The nav is on every screen, including a newcomer's first one. Keep the labels plain English:
@@ -132,18 +143,29 @@ export const Header: React.FC<HeaderProps> = ({
     >
       <SoundClicks />
       <div className="mx-auto flex max-w-[var(--shell-max)] flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2.5 sm:px-6">
-        {/* Zone 1: brand lockup. The mark is the arm a learner is working towards. The link's name
-            is its own text plus a screen-reader-only tail: an `aria-label` that rewords it ("MechaLab
-            Workbench, back to top") does not *contain* what is drawn, which WCAG 2.5.3 fails — the
-            name has to be the visible words, with the purpose added to them, not written over them. */}
+        {/* Zone 1: brand lockup. The mark is the arm a learner is working towards, and the lockup is
+            the door to the introduction — the one page that explains the course before a learner has
+            any progress to explain it with. It stays a real `href` (so a middle-click opens the page
+            in a new tab) with an `onClick` that keeps the single-page navigation for a plain click.
+            The link's name is its own text plus a screen-reader-only tail: an `aria-label` that
+            rewords it does not *contain* what is drawn, which WCAG 2.5.3 fails — the name has to be
+            the visible words, with the purpose added to them, not written over them. */}
         <a
-          href="#top"
+          href="?view=intro"
+          onClick={(event) => {
+            if (!onOpenIntro) return;
+            // A modified click, a middle click or a download is the browser's, not ours.
+            if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+            event.preventDefault();
+            onOpenIntro();
+          }}
+          data-testid="link-brand"
           className="group flex shrink-0 items-center gap-2.5 whitespace-nowrap no-underline"
         >
           <ArmMark />
           <span className="flex flex-col leading-none">
             <span
-              className="text-[15px] font-bold tracking-tight"
+              className="font-display text-[15px]"
               style={{ color: 'var(--text)' }}
             >
               MechaLab
@@ -155,7 +177,7 @@ export const Header: React.FC<HeaderProps> = ({
               Workbench
             </span>
           </span>
-          <span className="sr-only">, back to top</span>
+          <span className="sr-only">, open the introduction</span>
         </a>
 
         {/* Zone 2: four course-level links, filled when active — but only on a view that reads the
@@ -196,9 +218,21 @@ export const Header: React.FC<HeaderProps> = ({
             so the row scrolls rather than squeezing a tray into two labels. */}
         <div
           ref={actionsRef}
-          className="ml-auto flex w-full flex-nowrap items-center gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] sm:w-auto sm:flex-wrap sm:justify-end sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
+          className="ml-auto flex w-full min-w-0 items-center gap-2 sm:w-auto sm:flex-wrap sm:justify-end"
         >
           <HeaderTips scope={actionsRef} />
+          {/* The swipeable half. The account chip is deliberately outside it: on a phone the row is
+              wider than the screen, and the one control that says who you are should not be the one
+              a learner has to discover by swiping. At `sm` this wrapper becomes `display: contents`,
+              so the trays are direct children of the row again and the desktop layout is the one it
+              always was. */}
+          <div
+            data-testid="tray-strip"
+            // `contain: paint` is what keeps the strip's own overflow out of the page's: with a
+            // `backdrop-filter` header above it, Chromium leaked 19 px of the hidden trays into the
+            // document's scroll width, so a 320 px phone could swipe the whole page sideways.
+            className="tray-strip flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-0.5 [contain:paint] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:contents"
+          >
           {/* Navigate: the two doors that are neither a lesson nor a setting. */}
           <div className="action-tray" role="group" aria-label="Navigate">
             {/* Home is a page, not a menu: one press from every screen, including Home itself. */}
@@ -235,8 +269,8 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </div>
 
-          {/* Appearance and sound: five preferences on one surface. Each is its own on/off, so a
-              pressed button states a fact instead of standing for a step in a cycle. */}
+          {/* Appearance, motion and sound: six preferences on one surface. Each is its own on/off,
+              so a pressed button states a fact instead of standing for a step in a cycle. */}
           <div className="action-tray" role="group" aria-label="Appearance and sound">
             <button
               onClick={toggle}
@@ -306,6 +340,25 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="hidden 2xl:inline">Focus</span>
               </button>
             )}
+            {/* One switch for the moving drawings, on every screen. Off is also the cheap setting:
+                each figure stops its frame loop instead of drawing frames nobody sees. */}
+            <button
+              onClick={motion.toggle}
+              data-testid="btn-motion-toggle"
+              aria-pressed={motion.on}
+              aria-label={motionLabel(motion.on)}
+              data-tip={motionLabel(motion.on)}
+              title={motionHint(motion.on)}
+              className="btn"
+              style={pressed(motion.on)}
+            >
+              {motion.on ? (
+                <Pause className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              ) : (
+                <Play className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              )}
+              <span className="hidden 2xl:inline">Motion</span>
+            </button>
           </div>
 
           {/* Take it with you: four exports and the pair that puts it all back. */}
@@ -364,6 +417,8 @@ export const Header: React.FC<HeaderProps> = ({
               <Printer className="h-3.5 w-3.5" aria-hidden="true" />
               <span className="hidden 2xl:inline">1-Page Cheat Sheet</span>
             </button>
+          </div>
+
           </div>
 
           {/* Who you are here, and the only control in the header that says something about you: a

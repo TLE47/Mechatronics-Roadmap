@@ -45,6 +45,7 @@ import { markStorySeen } from '../app/src/story.ts';
 import { rememberLastLesson } from '../app/src/lastLesson.ts';
 import { noteVisit } from '../app/src/homeLanding.ts';
 import { writeReadingPosition } from '../app/src/readingPosition.ts';
+import { areaItemCount, areaItems, resetItem } from '../app/src/resetItems.ts';
 
 let passed = 0;
 let failed = 0;
@@ -289,6 +290,86 @@ check('the sentence names the parts it erased, and says so when there was nothin
   assert.equal(resetSummary(report), 'Reset 4 items · Lessons, Predictions');
   const empty = resetAreas(['lessons', 'predictions']);
   assert.match(resetSummary(empty), /Nothing to reset/);
+});
+
+console.log('\nopening a part');
+
+check("every part's items add up to the count its row shows", () => {
+  freshBrowser();
+  seedEverything();
+  for (const entry of RESET_AREAS) {
+    const items = areaItems(entry.id);
+    const counted = items.reduce((total, item) => total + item.n, 0);
+    assert.equal(
+      counted,
+      entry.count().n,
+      `${entry.id}: its ${items.length} item(s) carry ${counted}, the row says ${entry.count().n}`
+    );
+    assert.equal(areaItemCount(entry.id), entry.count().n, `${entry.id} cheap count`);
+    for (const item of items) {
+      assert.ok(item.id.length > 0, `${entry.id} item without an id`);
+      assert.ok(item.label.length > 0, `${entry.id}/${item.id} needs a label`);
+      assert.ok(item.n > 0, `${entry.id}/${item.id} should erase something or not be listed`);
+    }
+  }
+});
+
+check('one lesson is erased without the lesson beside it', () => {
+  freshBrowser();
+  seedEverything();
+  const report = resetItem('lessons', 'P.1', 11_000);
+  assert.deepEqual(report.areas, ['lessons']);
+  assert.equal(report.items, 1);
+  assert.equal(report.progress, true, 'a lesson flag lives in the account row');
+  assert.equal(report.resetAt, 11_000);
+  assert.equal(readResetAt(), 11_000);
+  assert.equal(area('lessons').count().n, 2, 'P.2 verified and P.3 self-marked are untouched');
+  assert.deepEqual(
+    Object.keys(JSON.parse(localStorage.getItem(STORAGE_KEY_VERIFIED) ?? '{}')),
+    ['P.2'],
+    'the verified map keeps its other lesson'
+  );
+});
+
+check('a note item takes its highlights with it, and leaves the rest of the store', () => {
+  freshBrowser();
+  seedEverything();
+  saveNote('P.2', 'another note');
+  assert.equal(area('notes').count().n, 3, 'one lesson with a note and a highlight, one with a note');
+  const report = resetItem('notes', 'P.1', 12_000);
+  assert.equal(report.items, 2);
+  assert.equal(report.resetAt, null, 'notes live in the workspace row, not the progress one');
+  assert.equal(report.workspace, true);
+  assert.equal(studyCounts().notes, 1, 'P.2\'s note survived');
+  assert.equal(studyCounts().highlights, 0);
+});
+
+check('the log lists days, and one press erases that day only', () => {
+  freshBrowser();
+  logEvent({ kind: 'run', lesson: 'P.1', outcome: 'verified', t: 1_700_000_000_000 });
+  logEvent({ kind: 'hint', lesson: 'P.1', level: 1, t: 1_700_000_100_000 });
+  logEvent({ kind: 'run', lesson: 'P.2', outcome: 'mismatch', t: 1_700_200_000_000 });
+  const items = areaItems('log');
+  assert.equal(items.length, 2, 'three events on two days are two items');
+  const older = items.find((item) => item.n === 2);
+  assert.ok(older, 'the day with two events should carry both');
+  const report = resetItem('log', older.id);
+  assert.equal(report.items, 2);
+  assert.equal(readLearningLog().length, 1, 'the other day is still there');
+});
+
+check('an id the part never had erases nothing and stays quiet', () => {
+  freshBrowser();
+  seedEverything();
+  let heard = null;
+  window.addEventListener(RESET_EVENT, (event) => {
+    heard = event.detail;
+  });
+  const report = resetItem('lessons', 'P.99');
+  assert.deepEqual(report.areas, []);
+  assert.equal(report.items, 0);
+  assert.equal(heard, null);
+  assert.equal(area('lessons').count().n, 3, 'nothing was touched');
 });
 
 console.log('\nthe event');

@@ -16,6 +16,62 @@ flowchart LR
 
 ---
 
+## [2026-10-27] — Run 263: an introduction worth coming back to
+
+The wordmark used to jump to `#top`. It now opens **`?view=intro`**, a page built for the visitor who has
+no progress to be shown: [`app/src/components/intro/IntroPage.tsx`](app/src/components/intro/IntroPage.tsx).
+It is a showcase, not a brochure — the hero is the same live 2-DOF inverse-kinematics canvas the capstone
+tracks (`HeroArm`, pausing off screen and under reduced motion), the ten-step trail is `SPINE`, the
+gallery is six real `Diagram` figures from the lesson library in the palette the visitor chose, and the
+lab grid is the rail's own registry, so a tab added there needs no second list. Every door leads
+somewhere real: Home, the workbench, lesson one, any lab. It is a lazy chunk (7.0 kB gzipped), and the
+lockup stays a normal `href`, so a modified click opens the page in its own tab. `homeLanding.ts` owns
+the route (`intro` joins `home`, `admin` and `workbench`), so the address is shareable and a reload
+stays; a deep link to a lesson still never lands on it.
+
+**The reset panel opens.** **Choose** on a row lists that part's own items — one lesson, one award, one
+card, one day of the log — and each can be erased alone
+([`app/src/resetItems.ts`](app/src/resetItems.ts), [`docs/RESET.md`](docs/RESET.md)). An item still
+takes two presses, a single lesson or milestone still leaves the merge watermark, and the item counts
+add up to the row (`scripts/test_reset.mjs` asserts it for all eleven parts). `scripts/e2e_reset.mjs`
+seeds two lessons, erases one of them, and checks the other is byte-for-byte untouched.
+
+**Continue puts you back where you were.** The saved reading place now carries the heading's own offset
+(`anchorAt` in [`app/src/readingPosition.ts`](app/src/readingPosition.ts)), so a learner who stopped
+900 px into a section returns there instead of at its first line. `scripts/e2e_home.mjs` measures it in
+Chromium: scroll the lesson, open Home, press Start, and the pane is within 24 px of where it was left.
+
+**A sticky note beside a highlight.** Selecting a passage offers **Sticky** next to **Highlight**; the
+popup takes a thought and pins the passage with it ([`LessonReader.tsx`](app/src/components/LessonReader.tsx)),
+which is also what turns the passage into a review card. The quote is captured when the popup opens, so
+the selection collapsing under the click cannot pin an empty string.
+
+`npm run check:weight` moved four ceilings by hand for the new page and the reset model: entry 545 kB,
+js 860/920 kB, largest 355 kB, with the reasoning in `docs/weight-budget.json`.
+
+---
+
+## [2026-10-27] — Run 262: the sound panel on a phone
+
+The `···` beside the sound button opened a card that was an `absolute` child of the header's sound tray.
+On a phone that tray is a sideways scroller, and the card's left edge landed at **-21 px**: the panel was
+open and could not be used. On a short screen it was also taller than the room under the header, so the
+credit and **Reset** sat below the fold.
+
+[`app/src/components/SoundControl.tsx`](app/src/components/SoundControl.tsx) now portals the panel to
+`<body>` and places it from the button's own rect (`placePanel`): right-aligned to the button and pulled
+back inside the window, under it when there is room and above it when there is more, `min(312 px,
+window − 24 px)` wide, with a `max-height` of the room that side has. The card fills that box and
+scrolls inside itself ([`SoundSettingsPanel.tsx`](app/src/components/SoundSettingsPanel.tsx)), so a
+360×640 window scrolls the last row into view instead of losing it. A press inside the panel is no longer
+a press outside the control (the outside-click check names both), and focus lands on the panel's first
+control and returns to the button on close.
+
+`npm run test:e2e:game` grew a 360×640 case: the panel opens, its whole box is inside the window, a
+fader press does not close it, **Reset** is reachable, and Escape gives focus back.
+
+---
+
 ## [2026-10-27] — Run 260: figures you can read, names on the icons
 
 A lesson's diagram is drawn on a 640-unit canvas whose smallest labels are 9.5 units, and then it was

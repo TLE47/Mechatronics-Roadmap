@@ -139,6 +139,17 @@ It is not a dialog: no focus trap, no backdrop, no scroll lock. It draws under t
 Escape or a press outside, and every control in it is a plain `<input type="range">` or `<button>`
 with a label, so the keyboard reaches it without special handling.
 
+**It lives in a portal, and it is clamped.** The card used to be an `absolute` child of the header's
+sound tray, which on a phone meant a left edge at -21 px and a lower half inside the tray row's
+sideways scroller — open, and impossible to use. `SoundControl` now portals it to `<body>` and places
+it from the button's own rect (`placePanel`): right-aligned to the button and pulled back inside the
+window, under it when there is room and above it when there is more, with a width of
+`min(312 px, window − 24 px)` and a `max-height` of the room that side actually has. The card fills
+that box and scrolls inside it, so a 360×640 phone scrolls the credit and **Reset** into view instead of
+losing them below the fold. A press inside the panel is not a press outside it (the outside-click check
+names both the control and the portal), and focus lands on the panel's first control and returns to the
+button on close.
+
 ## The room's four layers
 
 `audio/ambience.ts` is a table, and the engine only ramps the numbers it is given:
@@ -201,7 +212,7 @@ synthesised fallback when it cannot be had.
 | `app/src/audio/rainAsset.ts` | the rain loop's URL, and nothing else |
 | `app/src/components/SoundClicks.tsx` | one delegated listener; renders nothing |
 | `app/src/components/SoundControl.tsx` | the header button, the focus pill, arming on a gesture, and the engine's synchronous handler |
-| `app/src/components/SoundSettingsPanel.tsx` | the panel: sections, faders, the two switches, previews, credit, reset |
+| `app/src/components/SoundSettingsPanel.tsx` | the panel: sections, faders, the two switches, previews, credit, reset — a card that fills the box `SoundControl` gives it |
 | `scripts/build_ambience.mjs` / `scripts/build_music.mjs` | the three recorded files, and the `--check` that proves each is what its script makes |
 | `scripts/test_audio.mjs` | the store, the graph, the automation, the room, the ticks, the beds — with a recording double |
 

@@ -12,7 +12,7 @@
  *
  * Precedence, highest first:
  *
- * 1. an explicit `?view=admin` / `home` / `dashboard` / `workbench`;
+ * 1. an explicit `?view=intro` / `admin` / `home` / `dashboard` / `workbench`;
  * 2. `?lesson=` — a link to a lesson is a destination, not a homepage;
  * 3. no progress in this browser — the first visit belongs to the Start Here card;
  * 4. a visit inside `SITTING_MS` — the page they were on (Home stays Home, the workbench stays);
@@ -33,7 +33,7 @@ export const STORAGE_KEY_LAST_VISIT = 'mechalab_last_visit_v1';
 /** A reload inside this window returns to the page on screen; past it, Home. */
 export const SITTING_MS = 45 * 60 * 1000;
 
-export type HomePage = 'workbench' | 'home' | 'admin';
+export type HomePage = 'workbench' | 'home' | 'admin' | 'intro';
 
 export interface LastVisit {
   at: number;
@@ -69,7 +69,13 @@ export function readLastVisit(): LastVisit | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<LastVisit> | null;
     if (!parsed || typeof parsed !== 'object') return null;
-    if (parsed.page !== 'workbench' && parsed.page !== 'home' && parsed.page !== 'admin') return null;
+    if (
+      parsed.page !== 'workbench' &&
+      parsed.page !== 'home' &&
+      parsed.page !== 'admin' &&
+      parsed.page !== 'intro'
+    )
+      return null;
     if (typeof parsed.at !== 'number' || !Number.isFinite(parsed.at)) return null;
     return { at: Math.max(0, Math.round(parsed.at)), page: parsed.page };
   } catch {
@@ -105,6 +111,7 @@ export function hasLocalProgress(): boolean {
 /** The page a visit opens, by the precedence above. Pure: the caller supplies the clock and store. */
 export function landingPage(input: LandingInput): HomePage {
   const view = (input.view ?? '').trim().toLowerCase();
+  if (view === 'intro') return 'intro';
   if (view === 'admin') return 'admin';
   if (view === 'home' || view === 'dashboard') return 'home';
   if (view === 'workbench') return 'workbench';

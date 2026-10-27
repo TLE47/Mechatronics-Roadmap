@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, Highlighter, Loader2, RotateCcw } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { BookOpen, Highlighter, Loader2, RotateCcw, StickyNote, X } from 'lucide-react';
 import { MathView } from './MathView';
 import { Diagram } from '../visuals/Diagram';
 import { sceneFor } from '../visuals/scenes';
@@ -13,6 +14,7 @@ import {
   clearReadingPosition,
   readReadingPosition,
   writeReadingPosition,
+  type ReadingPosition,
 } from '../readingPosition';
 import { addHighlight, cleanQuote } from '../studyNotes';
 import { lessonPageUrl as sourceUrl } from '../startHere';
@@ -171,9 +173,20 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
   const [attempt, setAttempt] = useState(0);
   const [selection, setSelection] = useState('');
   const [status, setStatus] = useState('');
+  /** The sticky-note popup: what the learner is writing about the passage they selected. */
+  const [stickyOpen, setStickyOpen] = useState(false);
+  const [stickyText, setStickyText] = useState('');
+  /**
+   * The passage itself, taken when the popup opens.
+   *
+   * The live `selection` cannot be the quote: clicking the button (or the textarea) collapses the
+   * document selection, and `saveSticky` would then be asked to pin an empty string. Capturing it at
+   * the moment the learner asked for the note is also what the popup shows back to them.
+   */
+  const [stickyQuote, setStickyQuote] = useState('');
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const lastSaveRef = useRef(0);
-  const pendingRef = useRef<{ anchor: string; at: number } | null>(null);
+  const pendingRef = useRef<ReadingPosition | null>(null);
   const anchors = useMemo(() => (page ? headingAnchors(page.blocks) : []), [page]);
 
   useEffect(() => {
@@ -182,6 +195,9 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
     setError('');
     setStatus('');
     setSelection('');
+    setStickyOpen(false);
+    setStickyText('');
+    setStickyQuote('');
     if (!path) {
       setError('This entry has no reading page of its own.');
       return;
@@ -202,6 +218,8 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
 
   // Restore where this lesson was left. The anchor is tried first: a page regenerated after the
   // sentence changed still has its headings, and a raw offset would land in a paragraph that moved.
+  // The distance read *into* that heading is added back on top (`anchorAt`), so a learner who stopped
+  // mid-section returns mid-section rather than at its first line.
   useEffect(() => {
     const container = scrollRef.current;
     if (!container || !page) return;
@@ -214,11 +232,13 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
       const target = saved.anchor
         ? container.querySelector<HTMLElement>(`[data-reader-anchor="${saved.anchor}"]`)
         : null;
+      const furthest = Math.max(0, container.scrollHeight - container.clientHeight);
       if (target) {
         const top = target.getBoundingClientRect().top - container.getBoundingClientRect().top;
-        container.scrollTop = container.scrollTop + top - 8;
+        const into = typeof saved.anchorAt === 'number' ? Math.max(0, saved.at - saved.anchorAt) : 0;
+        container.scrollTop = Math.min(furthest, Math.max(0, container.scrollTop + top - 8 + into));
       } else {
-        container.scrollTop = saved.at;
+        container.scrollTop = Math.min(furthest, saved.at);
       }
     });
     return () => cancelAnimationFrame(frame);
@@ -260,12 +280,16 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
     const container = scrollRef.current;
     if (!container || !page) return;
     let anchor = '';
+    let anchorAt: number | undefined;
     const top = container.scrollTop + 8;
     for (const heading of container.querySelectorAll<HTMLElement>('[data-reader-anchor]')) {
-      if (heading.offsetTop <= top) anchor = heading.dataset.readerAnchor ?? '';
-      else break;
+      if (heading.offsetTop <= top) {
+        anchor = heading.dataset.readerAnchor ?? '';
+        anchorAt = heading.offsetTop;
+      } else break;
     }
-    const position = { anchor, at: container.scrollTop };
+    const position: ReadingPosition = { anchor, at: container.scrollTop };
+    if (typeof anchorAt === 'number') position.anchorAt = anchorAt;
     pendingRef.current = position;
     const now = Date.now();
     if (now - lastSaveRef.current < SAVE_AFTER_MS) return;
@@ -283,6 +307,29 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
     window.getSelection()?.removeAllRanges();
     setSelection('');
     setStatus('Highlight pinned to Notes.');
+  };
+
+  /**
+   * A sticky note: the same pinned passage as a highlight, with the learner's thought attached.
+   *
+   * The word matters. A highlight is for a passage worth finding again; a sticky is for the sentence
+   * that needs one — "this is the gain I keep forgetting", "recompute with the new dt". The comment
+   * is also what makes the passage a review card (`studyCards.ts`), so the thought comes back on the
+   * day it is due instead of staying on the page it was written on.
+   */
+  const saveSticky = () => {
+    if (!stickyQuote) return;
+    const saved = addHighlight(lessonId, stickyQuote, stickyText);
+    if (!saved) {
+      setStatus('Not saved — storage is blocked or full.');
+      return;
+    }
+    window.getSelection()?.removeAllRanges();
+    setSelection('');
+    setStickyOpen(false);
+    setStickyText('');
+    setStickyQuote('');
+    setStatus(stickyText.trim() ? 'Sticky note saved to Notes.' : 'Passage pinned to Notes.');
   };
 
   const scrollToTop = () => {
@@ -310,6 +357,21 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
+          {selection && (
+            <button
+              type="button"
+              onClick={() => {
+                setStickyText('');
+                setStickyQuote(selection);
+                setStickyOpen(true);
+              }}
+              data-testid="btn-sticky"
+              title="Write a note on the selected passage — it comes back as a review card"
+              className="flex items-center gap-1 rounded border border-amber/50 bg-amber/10 px-2 py-1 text-[13px] font-mono text-amber hover:bg-amber/20 cursor-pointer"
+            >
+              <StickyNote className="h-3 w-3" /> Sticky
+            </button>
+          )}
           {selection && (
             <button
               type="button"
@@ -479,6 +541,7 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
                     <Diagram
                       key={index}
                       id={block.id}
+                      live
                       spec={block.caption ? { ...spec, caption: block.caption } : spec}
                     />
                   );
@@ -488,6 +551,7 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
                     <Diagram
                       key={index}
                       id="route"
+                      live
                       spec={{
                         kind: 'route',
                         title: 'Where this lesson goes',
@@ -501,6 +565,7 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
                     <Diagram
                       key={index}
                       id="graph"
+                      live
                       spec={{
                         kind: 'graph',
                         title: 'How this page fits together',
@@ -549,6 +614,94 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
           View source on GitHub ↗
         </a>
       </div>
+
+      {/* A portal to <body>: the pane is an overflow-hidden card in a scrolling runner, and a popup
+          mounted inside it would be clipped by the very box it is about. */}
+      {stickyOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[60] flex items-end justify-center p-3 sm:items-center"
+            style={{ backgroundColor: 'color-mix(in srgb, #04060a 62%, transparent)' }}
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) setStickyOpen(false);
+            }}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="sticky-note-title"
+              data-testid="sticky-note-popup"
+              className="w-full max-w-[26rem] rounded-xl border bg-panel shadow-2xl"
+              style={{ borderColor: 'var(--border-strong)' }}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') {
+                  event.stopPropagation();
+                  setStickyOpen(false);
+                }
+              }}
+            >
+              <div
+                className="flex items-center justify-between gap-2 border-b px-3 py-2"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                <p
+                  id="sticky-note-title"
+                  className="flex items-center gap-1.5 text-[12.5px] font-bold"
+                  style={{ color: 'var(--text)' }}
+                >
+                  <StickyNote className="h-3.5 w-3.5" style={{ color: 'var(--amber)' }} aria-hidden="true" />
+                  Sticky note
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setStickyOpen(false)}
+                  data-testid="btn-sticky-cancel"
+                  aria-label="Close the sticky note"
+                  className="btn px-2 py-1"
+                >
+                  <X className="h-3 w-3" aria-hidden="true" />
+                </button>
+              </div>
+              <div className="space-y-2 px-3 py-2">
+                <p
+                  data-testid="sticky-note-quote"
+                  className="max-h-20 overflow-y-auto rounded border-l-2 bg-canvas px-2 py-1 text-[12px] leading-snug text-muted"
+                  style={{ borderColor: 'var(--amber)' }}
+                >
+                  {stickyQuote}
+                </p>
+                <textarea
+                  autoFocus
+                  value={stickyText}
+                  onChange={(event) => setStickyText(event.target.value)}
+                  maxLength={400}
+                  rows={4}
+                  data-testid="sticky-note-text"
+                  aria-label="What you want to remember about this passage"
+                  placeholder="What do you want to remember? It comes back as a review card."
+                  className="w-full resize-y rounded border bg-canvas px-2 py-1.5 text-[13px] leading-snug text-ink"
+                  style={{ borderColor: 'var(--border)' }}
+                />
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10.5px]" style={{ color: 'var(--dim)' }}>
+                    {stickyText.length}/400 · saved in Notes
+                  </span>
+                  <button
+                    type="button"
+                    onClick={saveSticky}
+                    disabled={!stickyQuote}
+                    data-testid="btn-sticky-save"
+                    className="btn btn-primary px-2.5 py-1 text-[12px]"
+                  >
+                    Save sticky
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </section>
   );
 }

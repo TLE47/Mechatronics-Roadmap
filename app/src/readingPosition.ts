@@ -11,6 +11,12 @@
  * survives a reload: a page generated after the sentence changed keeps its headings, while a raw
  * scroll offset would land in a paragraph that moved. The offset is the fallback when the heading is
  * gone (a lesson rearranged between visits) and the precision when the anchor is the page's top.
+ *
+ * `anchorAt` is where that heading sat when the position was taken, and it is what makes the return
+ * exact rather than approximate: restoring to the heading's top alone read a learner who had stopped
+ * 900 px into a section back at its first line (the pages suite measured 900 px in, 464 px back). The
+ * distance *into* the section — `at - anchorAt` — is the part that belongs to the reader rather than
+ * to the page, so it is carried across a reflow that moved the heading.
  */
 
 export const STORAGE_KEY_READING = 'mechalab_reading_position_v1';
@@ -24,6 +30,11 @@ export interface ReadingPosition {
   anchor: string;
   /** The pane's `scrollTop` when it was read, in pixels. */
   at: number;
+  /**
+   * That heading's own offset when the position was taken. Absent in positions written before it
+   * existed, which restore to the heading as they always did.
+   */
+  anchorAt?: number;
 }
 
 function storage(): Storage | null {
@@ -41,7 +52,9 @@ function sanitize(position: unknown): ReadingPosition | null {
   if (typeof record.at !== 'number' || !Number.isFinite(record.at)) return null;
   const at = Math.min(MAX_READING_OFFSET, Math.max(0, Math.round(record.at)));
   const anchor = typeof record.anchor === 'string' ? record.anchor.slice(0, MAX_ANCHOR_CHARS) : '';
-  return { anchor, at };
+  const raw = record.anchorAt;
+  if (typeof raw !== 'number' || !Number.isFinite(raw)) return { anchor, at };
+  return { anchor, at, anchorAt: Math.min(MAX_READING_OFFSET, Math.max(0, Math.round(raw))) };
 }
 
 /** The whole store, or an empty object when nothing is stored or the value is not an object. */
@@ -62,6 +75,11 @@ function readAll(): Record<string, ReadingPosition> {
   } catch {
     return {};
   }
+}
+
+/** Every lesson's reading place, for the reset panel's "Where I was" list. */
+export function readReadingPositions(): Record<string, ReadingPosition> {
+  return readAll();
 }
 
 /** Where this lesson was left, or null when it has never been read here. */
