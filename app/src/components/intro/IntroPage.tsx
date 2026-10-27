@@ -414,11 +414,15 @@ const Hero: React.FC<{
         </div>
 
         <dl className="mt-8 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {stats.map(({ value, label, Icon }) => (
+          {stats.map(({ value, label, Icon }, index) => (
             <div
               key={label}
-              className="rounded-[var(--r-md)] border px-3 py-2.5"
-              style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--panel) 70%, transparent)' }}
+              className="intro-stat rounded-[var(--r-md)] border px-3 py-2.5"
+              style={{
+                borderColor: 'var(--border)',
+                backgroundColor: 'color-mix(in srgb, var(--panel) 70%, transparent)',
+                ['--stat-delay' as string]: `${index * 0.55}s`,
+              }}
             >
               <Icon className="h-3.5 w-3.5" aria-hidden="true" />
               <dd className="mt-1.5 font-mono text-[22px] font-bold leading-none tabular-nums" style={{ color: 'var(--text)' }}>
@@ -484,23 +488,75 @@ const SECTIONS = [
   { id: 'intro-kept', label: 'Your work' },
 ];
 
-const SectionNav: React.FC = () => (
-  <nav
-    aria-label="Introduction sections"
-    className="mx-auto flex max-w-[var(--shell-max)] flex-wrap items-center gap-1.5 px-4 pb-6 sm:px-6"
-  >
-    {SECTIONS.map((section) => (
-      <a
-        key={section.id}
-        href={`#${section.id}`}
-        className="rounded-full border px-2.5 py-1 text-[11.5px] font-medium no-underline transition-colors"
-        style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}
-      >
-        {section.label}
-      </a>
-    ))}
-  </nav>
-);
+/**
+ * The five chips, with the one you are reading filled in.
+ *
+ * A list of anchors is a table of contents; a list that updates is an instrument showing where the
+ * page is. The reading line is a third of the way down the viewport, the same anchor the route's
+ * marker uses, so the two never disagree about which section you are in. rAF-throttled, one passive
+ * scroll listener, and no observation of the sections themselves.
+ */
+const SectionNav: React.FC = () => {
+  // Nothing is active before the first section reaches the reading line: a chip lit while the
+  // hero is still on screen would say the reader is somewhere they have not scrolled to.
+  const [active, setActive] = useState<string>('');
+
+  useEffect(() => {
+    const nodes = SECTIONS.map((section) => document.getElementById(section.id)).filter(
+      (node): node is HTMLElement => !!node
+    );
+    if (!nodes.length) return;
+    let frame = 0;
+    const pick = () => {
+      frame = 0;
+      const line = window.innerHeight * 0.34;
+      let next = '';
+      for (const node of nodes) {
+        if (node.getBoundingClientRect().top <= line) next = node.id;
+      }
+      setActive(next);
+    };
+    const schedule = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(pick);
+    };
+    pick();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    return () => {
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  return (
+    <nav
+      aria-label="Introduction sections"
+      className="mx-auto flex max-w-[var(--shell-max)] flex-wrap items-center gap-1.5 px-4 pb-6 sm:px-6"
+    >
+      {SECTIONS.map((section) => {
+        const on = section.id === active;
+        return (
+          <a
+            key={section.id}
+            href={`#${section.id}`}
+            data-testid={`intro-nav-${section.id}`}
+            aria-current={on ? 'location' : undefined}
+            className="intro-nav-chip rounded-full border px-2.5 py-1 text-[11.5px] font-medium no-underline transition-colors"
+            style={{
+              borderColor: on ? 'color-mix(in srgb, var(--accent) 45%, var(--border))' : 'var(--border)',
+              backgroundColor: on ? 'var(--accent-soft)' : 'transparent',
+              color: on ? 'var(--accent)' : 'var(--muted)',
+            }}
+          >
+            {section.label}
+          </a>
+        );
+      })}
+    </nav>
+  );
+};
 
 /* ------------------------------------------------------------------------------------------------
  * The route
@@ -630,8 +686,14 @@ const LessonLoop: React.FC<{ onOpenLesson?: () => void }> = ({ onOpenLesson }) =
             {LESSON_STEPS.map(({ label, blurb, Icon }, index) => (
               <li
                 key={label}
-                className="intro-lift relative rounded-[var(--r-md)] border px-3 py-3"
-                style={{ borderColor: 'var(--border)', backgroundColor: 'var(--panel)' }}
+                className="intro-lift intro-loop-step relative rounded-[var(--r-md)] border px-3 py-3"
+                style={{
+                  borderColor: 'var(--border)',
+                  backgroundColor: 'var(--panel)',
+                  // The six moves are one cycle, so the six cards light on the same beat the debug
+                  // loop below them runs: a step every 1.15 s, then back to the first.
+                  ['--i' as string]: String(index),
+                }}
               >
                 <span className="absolute right-2.5 top-2 font-mono text-[10px]" style={{ color: 'var(--dim)' }}>
                   0{index + 1}
@@ -990,8 +1052,14 @@ const LabSection: React.FC<{
               className="intro-lift group flex h-full w-full items-start gap-2.5 rounded-[var(--r-md)] border px-3 py-2.5 text-left"
               style={{ borderColor: 'var(--border)', backgroundColor: 'var(--canvas)' }}
             >
-              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded border" style={{ borderColor: 'var(--border)', color: 'var(--accent)' }}>
+              <span className="relative mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded border" style={{ borderColor: 'var(--border)', color: 'var(--accent)' }}>
                 <FlaskConical className="h-3 w-3" aria-hidden="true" />
+                {/* A bench that is installed and ready, not a screenshot of one. */}
+                <span
+                  aria-hidden
+                  className="intro-beacon"
+                  style={{ ['--i' as string]: String(index) }}
+                />
               </span>
               <span className="min-w-0">
                 <span className="block truncate text-[12.5px] font-semibold" style={{ color: 'var(--text)' }} title={lab.label}>
@@ -1034,7 +1102,7 @@ const KeptSection: React.FC = () => (
       {KEPT.map(({ title, blurb, Icon }, index) => (
         <Reveal key={title} delay={index * 40}>
           <div
-            className="flex h-full items-start gap-2.5 rounded-[var(--r-md)] border px-3 py-3"
+            className="intro-kept-card relative flex h-full items-start gap-2.5 overflow-hidden rounded-[var(--r-md)] border px-3 py-3"
             style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--panel) 70%, transparent)' }}
           >
             <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" style={{ color: 'var(--emerald)' }} />
@@ -1157,6 +1225,47 @@ const INTRO_CSS = `
 .intro-spine {
   background: linear-gradient(to bottom, transparent, var(--border-strong) 8%, var(--border-strong) 92%, transparent);
 }
+.intro-nav-chip { transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease; }
+/* The six moves in the lesson loop are one cycle, so they light in order on the same beat. */
+.intro-loop-step {
+  animation: intro-loop-state 6.9s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * -1.15s);
+}
+.intro-beacon {
+  position: absolute;
+  right: -2px;
+  top: -2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--emerald, #34d399);
+  animation: intro-beacon 3.4s ease-out infinite;
+  animation-delay: calc(var(--i, 0) * -0.42s);
+}
+/* A card's edge is where a still card and a live one look identical: the sweep is a hairline, not
+   a glow, so the row reads as powered without competing with the content. */
+.intro-stat { position: relative; overflow: hidden; }
+.intro-stat::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 1px;
+  width: 42%;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: intro-edge-sweep 7s ease-in-out infinite;
+  animation-delay: var(--stat-delay, 0s);
+}
+.intro-kept-card::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 1px;
+  width: 55%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--emerald, #34d399) 75%, transparent), transparent);
+  animation: intro-edge-sweep 9s ease-in-out infinite;
+}
 .intro-traveller {
   position: absolute;
   left: 15px;
@@ -1194,6 +1303,8 @@ const INTRO_CSS = `
 .intro-cta:active { transform: translateY(0); }
 .intro-arm-card { box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 6%, transparent), 0 28px 60px -40px color-mix(in srgb, var(--accent) 60%, #000); }
 .intro-closing {
+  background-size: 180% 180%;
+  animation: intro-aurora 22s ease-in-out infinite;
   background:
     radial-gradient(75% 120% at 50% 0%, color-mix(in srgb, var(--accent) 14%, transparent) 0%, transparent 70%),
     color-mix(in srgb, var(--panel) 85%, transparent);
@@ -1233,6 +1344,24 @@ const INTRO_CSS = `
   27% { stroke: var(--line); filter: none; }
 }
 @keyframes intro-edge-flow { to { stroke-dashoffset: -11; } }
+@keyframes intro-loop-state {
+  0%, 100% { box-shadow: inset 0 0 0 1px transparent, 0 0 0 0 transparent; }
+  2% { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 20px -10px color-mix(in srgb, var(--accent) 90%, transparent); }
+  13% { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 20px -10px color-mix(in srgb, var(--accent) 90%, transparent); }
+  22% { box-shadow: inset 0 0 0 1px transparent, 0 0 0 0 transparent; }
+}
+@keyframes intro-beacon {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--emerald, #34d399) 55%, transparent); opacity: 1; }
+  55%, 100% { box-shadow: 0 0 0 5px transparent; opacity: 0.55; }
+}
+@keyframes intro-edge-sweep {
+  0% { transform: translateX(-120%); }
+  55%, 100% { transform: translateX(240%); }
+}
+@keyframes intro-aurora {
+  0%, 100% { background-position: 18% 0%; }
+  50% { background-position: 82% 100%; }
+}
 @media print {
   .intro-reveal, .intro-reveal:not(.is-shown) { opacity: 1; transform: none; }
 }
@@ -1244,6 +1373,8 @@ const INTRO_CSS = `
   .intro-grid { animation: none; }
   .intro-step rect, .intro-edge { animation: none; }
   .intro-edge { stroke-dasharray: none; }
+  .intro-loop-step, .intro-beacon, .intro-closing { animation: none; }
+  .intro-stat::after, .intro-kept-card::after { display: none; }
   .intro-gradient-text { animation: none; background: var(--accent); -webkit-background-clip: text; background-clip: text; }
   .intro-lift, .intro-cta { transition: none; }
   .intro-lift:hover, .intro-cta:hover { transform: none; }

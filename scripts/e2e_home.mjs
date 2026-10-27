@@ -209,7 +209,47 @@ async function main() {
       const waveTwo = await wave();
       assert.ok(waveOne.startsWith('translate('), `a wave figure must roll its series (got "${waveOne}")`);
       assert.notEqual(waveOne, waveTwo, 'the wave must move, not sit at its first frame');
-      console.log('  ok the route marker, the workflow states, the moving cursor and the rolling wave are live');
+
+      // The rest of the page moves too: the six lesson moves light in sequence, every lab carries
+      // its ready beacon, the stat cards and the closing panel sweep.
+      const chrome = await page.evaluate(() => {
+        const name = (selector, pseudo) => {
+          const node = document.querySelector(selector);
+          return node ? getComputedStyle(node, pseudo).animationName : 'missing';
+        };
+        return {
+          loop: name('.intro-loop-step'),
+          beacon: name('.intro-beacon'),
+          stat: name('.intro-stat', '::after'),
+          closing: name('.intro-closing'),
+          loops: document.querySelectorAll('.intro-loop-step').length,
+        };
+      });
+      assert.equal(chrome.loops, 6, `the lesson loop must light all six moves (found ${chrome.loops})`);
+      assert.match(chrome.loop, /intro-loop-state/, 'the six moves must change state in order');
+      assert.match(chrome.beacon, /intro-beacon/, 'each lab bench must show its ready beacon');
+      assert.match(chrome.stat, /intro-edge-sweep/, 'the stat cards must carry their sweep');
+      assert.match(chrome.closing, /intro-aurora/, 'the closing panel must move');
+
+      // The nav is the page's own position indicator: nothing before the first section, then the
+      // chip of the section under the reading line.
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.waitForTimeout(300);
+      assert.equal(
+        await page.locator('.intro-nav-chip[aria-current]').count(),
+        0,
+        'no chip may claim a section while the hero is the thing on screen'
+      );
+      await page.locator('#intro-figures').scrollIntoViewIfNeeded();
+      await page.waitForTimeout(500);
+      assert.equal(
+        await page.getByTestId('intro-nav-intro-figures').getAttribute('aria-current'),
+        'location',
+        'the chip for the section under the reading line must be the current one'
+      );
+      console.log(
+        '  ok the route marker, the workflow states, the cursor, the wave, the loop, the labs, the stats, the closing panel and the nav are live'
+      );
 
       // A reload is still the introduction: an explicit view is the learner's choice, not a guess.
       await page.reload({ waitUntil: 'domcontentloaded' });

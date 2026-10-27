@@ -122,8 +122,11 @@ Three rules follow, and each is checked in `npm run test:e2e:pages`:
 - **No motion in a lesson.** A figure beside prose is a still. The introduction is the one exception:
   `LiveFigure` (`components/intro/IntroPage.tsx`) animates the *same* SVG after mount — boxes change
   state in a workflow, a cursor rides a plot, a periodic wave rolls through its own period — and does
-  it by annotating the emitted drawing, so there is no second copy to drift from the lesson's. Every
-  half is switched off for `prefers-reduced-motion`, and an off-screen figure stops its frame loop.
+  it by annotating the emitted drawing, so there is no second copy to drift from the lesson's. The
+  page's own chrome follows the same rule: the section chips light the one you are reading, the six
+  lesson moves change state in order, each lab carries its ready beacon, and the stat cards, "your
+  work" cards and closing panel sweep. Every half is switched off for `prefers-reduced-motion`, and
+  an off-screen figure stops its frame loop.
 - **No hard-coded colour.** Every stroke and fill is a CSS custom property the palettes define
   (`--ink`, `--body`, `--muted`, `--line`, `--line-soft`, `--accent`, `--canvas`), so dark, light, paper
   and high contrast need no special case.
