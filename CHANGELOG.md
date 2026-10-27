@@ -34,6 +34,12 @@ drawing rather than a readable one. Three changes, each pinned by a check:
 - **Below 640 px it pans instead of shrinking.** `.figure-art` keeps the art's 640 px and scrolls, the
   bargain a wide table already makes; the page itself never gains a horizontal scrollbar.
 
+The stacking is also why the first-lesson coach mark moved: with the reader's text above the editor, the
+checks panel it points at sits far down the page, and `placeCard`'s "above the anchor" branch produced a
+card `top` of 2760 px — its buttons, the only way to finish the tour, off screen. The card now measures
+itself and clamps its own box into the window ([`app/src/components/FirstRunTour.tsx`](app/src/components/FirstRunTour.tsx));
+`npm run test:e2e:tour` is the check that caught it, and passes once the clamp is real.
+
 The header's trays are icons below 1536 px, and a native `title` was the only thing naming them: slow,
 unstyled, clipped by the phone's sideways-scrolling tray row, and invisible to every suite.
 [`app/src/components/HeaderTips.tsx`](app/src/components/HeaderTips.tsx) is one delegated bubble for the
