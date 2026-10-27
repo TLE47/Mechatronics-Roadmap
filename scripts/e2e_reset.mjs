@@ -107,6 +107,29 @@ async function openRoadmap(page) {
 async function openReset(page) {
   await page.getByTestId('btn-open-reset').click();
   await page.getByTestId('reset-dialog').waitFor({ timeout: 15000 });
+  // The button lives in the header, which paints a backdrop blur — and a filter makes its element the
+  // containing block for `position: fixed` children. Mounted in that tree the panel anchored to the
+  // 88 px tray and opened at a negative top: visible to `waitFor`, useless to a learner. So the panel
+  // is checked against the viewport, not merely for existence.
+  const box = await page.evaluate(() => {
+    const dialog = document.querySelector('[data-testid="reset-dialog"]');
+    const scrim = dialog?.parentElement;
+    const panel = dialog?.getBoundingClientRect();
+    const cover = scrim?.getBoundingClientRect();
+    return {
+      top: panel?.top ?? -1,
+      left: panel?.left ?? -1,
+      coverTop: cover?.top ?? -1,
+      coverHeight: cover?.height ?? -1,
+      viewport: window.innerHeight,
+    };
+  });
+  assert.ok(box.top >= 0, `the panel must open inside the viewport, got top=${box.top}`);
+  assert.ok(box.left >= 0, `the panel must open inside the viewport, got left=${box.left}`);
+  assert.ok(
+    Math.abs(box.coverTop) < 1 && box.coverHeight >= box.viewport - 1,
+    `the scrim must cover the viewport, got ${JSON.stringify(box)}`
+  );
 }
 
 async function pressTwice(page, testId) {
@@ -254,6 +277,31 @@ async function main() {
     assert.equal(stored[THEME_KEY], 'paper', 'the theme is a choice about a screen, not progress');
     assert.equal(stored[SOUND_KEY], '{"master":0.4,"music":0.1}', 'sound levels must survive the reset');
     assert.ok(stored.resetAt, 'the watermark stays');
+
+    // ---- A phone: one column, and a footer whose sentence gets a line of its own ----
+    // With `flex-1` and no basis the sentence was given the ~70 px the two buttons left over, which
+    // stacked it one word per line and made a 250 px footer sit on top of the list.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openReset(page);
+    const narrow = await page.evaluate(() => {
+      const status = document.querySelector('[data-testid="reset-status"]')?.getBoundingClientRect();
+      const panel = document.querySelector('[data-testid="reset-dialog"]')?.getBoundingClientRect();
+      const parts = document.querySelector('[data-testid="reset-parts"]');
+      return {
+        statusWidth: status?.width ?? 0,
+        statusHeight: status?.height ?? 0,
+        panelWidth: panel?.width ?? 0,
+        columns: parts ? getComputedStyle(parts).gridTemplateColumns.split(' ').length : 0,
+        viewport: window.innerWidth,
+      };
+    });
+    assert.ok(narrow.panelWidth <= narrow.viewport, `the panel must fit a 390 px screen: ${narrow.panelWidth}`);
+    assert.ok(narrow.statusWidth > 200, `the status needs a line of its own, got ${narrow.statusWidth} px`);
+    assert.ok(narrow.statusHeight <= 40, `the status must not stack word by word: ${narrow.statusHeight} px`);
+    assert.equal(narrow.columns, 1, 'the parts are one column on a phone');
+    await page.keyboard.press('Escape');
+    await page.getByTestId('reset-dialog').waitFor({ state: 'detached', timeout: 10000 });
+    await page.setViewportSize({ width: 1280, height: 720 });
 
     // ---- The dialog is closed on the key every other modal uses, and nothing threw ----
     assert.equal(await page.getByTestId('reset-dialog').count(), 0, 'Escape must close the panel');

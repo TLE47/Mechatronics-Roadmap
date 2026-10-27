@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Ban, RotateCcw, ShieldCheck, X } from 'lucide-react';
 import { prepareBackup } from '../backupBundle';
 import {
@@ -138,7 +139,7 @@ export const ResetProgressDialog: React.FC<ResetProgressDialogProps> = ({ isOpen
 
   const empty = rows.every((row) => row.state.n === 0);
 
-  return (
+  const panel = (
     <div
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 pt-[8vh]"
       style={{ backgroundColor: 'color-mix(in srgb, #04060a 72%, transparent)' }}
@@ -247,11 +248,14 @@ export const ResetProgressDialog: React.FC<ResetProgressDialogProps> = ({ isOpen
           className="flex flex-wrap items-center justify-between gap-2 border-t px-3 py-2.5"
           style={{ borderColor: 'var(--border)' }}
         >
+          {/* Its own line below 640 px: with `flex-1` alone the sentence got whatever the two buttons
+              left over — about 70 px on a phone, which stacked it one word per line and pushed a
+              250 px footer over the list. */}
           <p
             role="status"
             aria-live="polite"
             data-testid="reset-status"
-            className="min-w-0 flex-1 text-[11px] leading-snug"
+            className="min-w-0 basis-full text-[11px] leading-snug sm:flex-1 sm:basis-auto"
             style={{ color: note ? (note.tone === 'warn' ? 'var(--rose)' : 'var(--emerald)') : 'var(--dim)' }}
           >
             {note
@@ -310,4 +314,12 @@ export const ResetProgressDialog: React.FC<ResetProgressDialogProps> = ({ isOpen
       </div>
     </div>
   );
+
+  // The header paints a backdrop blur, and a `filter` makes that element the containing block for
+  // `position: fixed` descendants — mounting this panel inside the header's tree anchored it to the
+  // 88 px tray instead of the viewport, so the panel opened with its top at -486 px: only the last
+  // row showed under the bar and the scrim covered nothing. A portal to <body> is the smallest
+  // escape, and it is where the header's other surfaces are mounted anyway (`App` renders the cheat
+  // sheet and the shortcut sheet at the root).
+  return typeof document === 'undefined' ? null : createPortal(panel, document.body);
 };
