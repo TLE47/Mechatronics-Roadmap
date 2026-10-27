@@ -1348,6 +1348,10 @@ export const App: React.FC = () => {
   useEffect(() => {
     noteVisit(wholePage);
     if (typeof window === 'undefined' || !window.location) return;
+    // `?view=theme` is a page of its own, and its address is the only thing that keeps it open: the
+    // rewrite below deletes a view the whole-page rule does not own, and doing so made the next
+    // reload open the workbench instead of the palette reference. Leave that address as it arrived.
+    if (themeView) return;
     const url = new URL(window.location.href);
     if (wholePage === 'workbench') {
       if (!url.searchParams.has('view')) return;
@@ -1358,7 +1362,7 @@ export const App: React.FC = () => {
       return;
     }
     window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
-  }, [wholePage]);
+  }, [wholePage, themeView]);
 
   const allMilestoneIds = [
     ...LEVEL_0_STEPS,
