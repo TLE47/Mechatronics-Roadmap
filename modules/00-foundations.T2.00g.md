@@ -35,6 +35,9 @@ plant: tier1_arm_motor
 The backward difference from `00-foundations.T2.00a` turns a sequence of samples into a velocity. This page turns that velocity into a **state**: one column that holds everything the next tick needs, advanced by one matrix-vector product. Writing the update as $\vec{x}_{k+1} = A_d\vec{x}_k + B_d u_k$ is not notation for its own sake - a two-mass drivetrain has four states, a Kalman filter nine, and the same six lines of code advance all of them. Already know this? Take the Skip test in section 7 first.
 
 ## 2. Intuition first
+
+<!-- figure: state-update | One product advances the state by one tick. -->
+
 Picture a spreadsheet. Column A is the cart's position and column B is its velocity. The next row follows two fixed recipes: "new position $= 1 \times$ old position $+ \Delta t \times$ old velocity," and "new velocity $= -\frac{k}{m}\Delta t \times$ old position $+ (1 - \frac{b}{m}\Delta t) \times$ old velocity $+ \frac{\Delta t}{m} \times$ force." Those four multipliers are the whole model. Put them in a $2\times2$ grid and the two force weights in a $2\times1$ column, and you never write the recipes again: each row of the grid is dotted with the state column, which is exactly what the spreadsheet row did by hand.
 
 ## 3. Formalization

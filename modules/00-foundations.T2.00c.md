@@ -37,6 +37,8 @@ plant: tier1_arm_motor
 Every motor winding, thermal heatsink, and RC filter obeys a first-order differential equation governed by a time constant $\tau$, while every compliant robot joint and closed-loop PID servo obeys a second-order differential equation governed by natural frequency $\omega_n$ and damping ratio $\zeta$. Knowing how $\omega_n$ and $\zeta$ determine overshoot and settling time lets you compute exact controller gains instead of guessing by trial and error. Already know this? Take the Skip test in section 7 first.
 
 ## 2. Intuition first
+<!-- figure: step-response | Damping ratio is not a tuning choice here, it is the shape of the answer: the same step, three responses. -->
+
 Push open a heavy glass office door equipped with an overhead hydraulic closer. If the closer valve is wide open (underdamped), the door swings fast, slams past the frame, and rings back and forth several times before stopping. If a mechanic tightens the hydraulic valve way too far (overdamped), the door creeps shut painfully slowly without ever overshooting. Right on the boundary between those two regimes sits a sweet spot (critical damping) where the door snaps shut as fast as physically possible with zero rebound.
 
 ## 3. Formalization

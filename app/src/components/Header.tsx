@@ -1,5 +1,5 @@
 import React from 'react';
-import { Printer, Download, FileJson, User, Compass, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2 } from 'lucide-react';
+import { Printer, Download, FileJson, User, Compass, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, House } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
 import { downloadLearningLog } from '../learningLog';
 import { BackupControls } from './BackupControls';
@@ -40,6 +40,8 @@ interface HeaderProps {
   onOpenAccount: () => void;
   /** Opens the `⌘K` palette: the header's door to the same dialog the shortcut opens. */
   onOpenPalette: () => void;
+  /** Opens Home. Absent on the theme reference, which has no work to go back to. */
+  onOpenHome?: () => void;
   /**
    * Focus mode, and its toggle. Optional because the token page renders this header too and has no
    * work to focus on: a button there would hide the page it is on and offer no way back.
@@ -86,6 +88,7 @@ export const Header: React.FC<HeaderProps> = ({
   accountEmail,
   onOpenAccount,
   onOpenPalette,
+  onOpenHome,
   focus = false,
   onToggleFocus,
 }) => {
@@ -171,6 +174,18 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Zone 3: actions. Secondary tools stay reachable but quiet; the account button is the
             only one that shows state, so it keeps a border. */}
         <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+          {/* Home is a page, not a menu: one press from every screen, including Home itself. */}
+          {onOpenHome && (
+            <button
+              onClick={onOpenHome}
+              data-testid="btn-home"
+              title="Home — today's step, your labs and your progress"
+              className="btn"
+            >
+              <House className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="hidden 2xl:inline">Home</span>
+            </button>
+          )}
           {/* The palette is a shortcut first, but a shortcut nobody can see is a secret. */}
           <button
             onClick={onOpenPalette}

@@ -36,6 +36,9 @@ plant: tier1_arm_motor
 Real motors and power stages fail violently when units are mixed up: plugging a $1\text{ ms}$ sample period into a derivative formula as `dt = 1` instead of `dt = 0.001` multiplies motor torque commands by $1,000\times$, and confusing RPM with radians per second ruins back-EMF calculations. Dimensional analysis lets you catch wrong equations before running code by checking that units cancel cleanly on both sides of `=`. Already know this? Take the Skip test in section 7 first.
 
 ## 2. Intuition first
+
+<!-- figure: unit-cancellation | Carry the units through the arithmetic; they cancel or the equation is wrong. -->
+
 Imagine building a table where one blueprint sheet gives leg lengths in millimeters, another gives the tabletop in meters, and a third lists weight in grams. If you add the raw numbers $500$ and $1.2$ without converting them to the same ruler first, the table collapses. In engineering code, we adopt one universal rule: convert every incoming number at the boundary of your program into standard base SI units (meters, kilograms, seconds, amperes, volts, radians), tag variable names with their unit suffix (`omega_rad_s`, `tau_nm`, `dt_s`), and treat unit labels like fractions where matching top and bottom labels cancel out.
 
 ## 3. Formalization

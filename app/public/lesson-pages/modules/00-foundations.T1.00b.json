@@ -1,7 +1,8 @@
-{"v":1,"path":"modules/00-foundations.T1.00b.md","title":"Lists, Dictionaries, NumPy Arrays, Plotting & Git/Terminal Basics","blocks":[
+{"v":4,"path":"modules/00-foundations.T1.00b.md","title":"Lists, Dictionaries, NumPy Arrays, Plotting & Git/Terminal Basics","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"A 5-second test of a robot joint at $1\\text{ kHz}$ records $5,000$ samples each of timestamp, angle, velocity, and motor current. You need lists, dictionaries, and vectorized arrays to compute tracking errors across thousands of samples at once, time-series plots to spot oscillations visually, and Git commits to roll back safely when a tuning change breaks your code. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
+{"t":"figure","id":"array-shape","caption":"An array is a grid with a shape, and the shape is checked before the maths."},
 {"t":"p","x":"Think of a Python `list` as a numbered row of pigeonholes starting at slot `0` where each slot holds one timestamp reading in order, and a `dict` (dictionary) as a labeled parts cabinet where you look up a controller setting by name (`\"slope\"` or `\"offset\"`) instead of memorizing slot numbers. When you want to scale all $5,000$ pigeonholes from volts to amperes at once, a NumPy array acts like a synchronized conveyor belt that multiplies every slot simultaneously without stepping through them one by one. Finally, Git acts like a laboratory notebook with permanent ink snapshots: `git status` shows which pages changed today, and `git commit` seals a working checkpoint you can always restore."},
 {"t":"h","l":2,"x":"3. Formalization"},
 {"t":"ol","items":[{"x":"**Zero-Indexed Lists and Key-Value Dictionaries:** A sequence of $N$ timestamps $t_0, t_1, \\dots, t_{N-1}$ with uniform spacing $\\Delta t$ in seconds ($\\text{s}$) satisfies:","d":0}]},
@@ -43,6 +44,7 @@
 {"t":"p","x":"No hardware required for this module (`hardware_required: false`). When you stream binary telemetry from a microcontroller in Track 04, incoming serial packets unpack directly into these timestamp and measurement arrays:"},
 {"t":"code","lang":"text","text":"[MCU 1 kHz Telemetry] ===(USB UART)===> [Python List/Array Buffer: t_s[], y_v[]] ===> [Time-Series Plot]"},
 {"t":"p","x":"Pass/fail verification in simulation: `mean_v == 1.10 V` and `span_v == 1.20 V`."},
+{"t":"route","steps":["00-foundations.T1.00b: lists dicts and numpy arrays","matplotlib time series plotting","terminal and git basics","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: run the worked example and exercise RMSE check with zero assertion failures, or score $\\ge 80\\%$ ($4/5$) on the Skip test below."},
 {"t":"h","l":3,"x":"Skip test"},

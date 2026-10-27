@@ -37,6 +37,9 @@ plant: tier1_arm_motor
 This is the final bridge module in the entire repository before Step 3.8 (`08-capstones.T3.08`: **Capstone 1** High-Speed Precision Motion Stage, **Capstone 2** Balancing Mobility Robot, or **Capstone 3** 6-DOF Force-Controlled Tele-Impedance Manipulator — the **Graduate Goal**). Why do so many student and startup robot builds fail during final integration even when the CAD, PCB, firmware, and ROS 2 nodes each worked on their own benches? Because nobody added up the **end-to-end spatial error budget** ($\sigma_{\text{total}} = \sqrt{\sum \sigma_i^2}$), the **end-to-end latency & phase-margin erosion budget** ($\Delta\phi = \omega_{gc}\sum \tau_i$), or verified a formal **Cross-Domain Interface Contract (ICD) & Pre-Bring-Up Safety Sign-Off** before energizing the $48\text{ V}$ bus! Already know this? Read `### Safety notes` first, then take the Skip test or the Ladder Gate test in section 7.
 
 ## 2. Intuition first
+
+<!-- figure: latency-budget | Every stage spends part of the period, and the unmeasured one overruns it. -->
+
 When you bolt six joints, six encoders, a camera, a CAN-FD bus, a $1\text{ kHz}$ `ros2_control` loop, and a $50\text{ Hz}$ learned policy together, errors and delays accumulate across every domain boundary:
 1. **Spatial Error Budgeting (RSS vs. Worst-Case):** Deterministic systematic offsets $b_i$ (like uncalibrated thermal expansion) add linearly ($\sum |b_i|$), whereas independent random errors $\sigma_i$ (encoder noise, bearing runout, structural deflection, calibration residual) add in **Root-Sum-Square (RSS)**: $\sigma_{\text{rss}} = \sqrt{\sum \sigma_i^2}$. Looking at the RSS breakdown tells you immediately which single subsystem dominates $80\%$ of your error so you don't waste \$1,000 on an ultra-precise encoder when link deflection is $10\times$ larger!
 2. **End-to-End Latency & Phase-Margin Budget:** Every microsecond of sensor readout delay ($\tau_{\text{enc}}$), CAN-FD wire transport ($\tau_{\text{can}}$), digital filtering ($\tau_{\text{filt}}$), and zero-order hold ($\frac{1}{2}T_s$) adds up to total loop delay $\tau_{\text{total}} = \sum \tau_k$, which steals $\Delta\phi = \omega_{gc}\tau_{\text{total}}\frac{180^\circ}{\pi}$ degrees of Phase Margin from your servo loop (`05-control.T2.05a`).
@@ -407,6 +410,9 @@ print("one count=%.4f mm | tick=%.1f us | PM=%.4f deg" % (one_count_mm, plant.DT
 ```
 
 ### Break it on purpose
+
+<!-- figure: fault-cost | A budget that has never been measured is a wish; the fault is where it shows. -->
+
 Inject the `latency_forgets_zoh` fault and diagnose it from the budget alone, keeping $T_s = 1000\ \mu\text{s}$ and $\omega_{gc} = 150\text{ rad/s}$:
 - **Inject:** sum the four measured delays and drop the zero-order hold term, i.e. `tau_total_s = (tau_sens_us + tau_bus_us + tau_filt_us + tau_comp_us) * 1e-6` instead of adding `0.5 * ts_us`.
 - **Symptom:** the worked case reports $0.60\text{ ms}$ and $56.84^\circ$ instead of $1.10\text{ ms}$ and $52.55^\circ$, so it still says GO and a smoke test passes; the exercise's $3.40\text{ ms}$ becomes $2.90\text{ ms}$ and $37.08^\circ$ instead of $32.78^\circ$ (still NO-GO, but $4.3^\circ$ of margin that no longer exists), and the transfer suite's one-plant-tick erosion halves from $8.59^\circ$ to $4.30^\circ$. The error is always exactly $0.5\text{ ms}$ of delay, regardless of which filter is installed.

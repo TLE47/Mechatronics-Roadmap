@@ -41,6 +41,9 @@ flowchart LR
 
 ## Learn
 
+<!-- figure: torque-vs-lever | Doubling the lever doubles the torque without changing the force. -->
+
+
 ### Idea 1: Linear force ($F = ma$) and gravitational weight ($W = mg$)
 - **Primary resource:** [The Physics Classroom — Newton's Second Law](https://www.physicsclassroom.com/class/newtlaws/Lesson-3/Newton-s-Second-Law) `[HTTP 200 — Verified by scripts/check_links.py]`
   - **What to read:** Read exact headings **`Newton's Second Law`** and **`The BIG Equation`** ($F_{\text{net}} = m \cdot a$).

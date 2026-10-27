@@ -27,6 +27,8 @@ import type { UiRole } from '../audio/facade.ts';
  */
 interface Props {
   id: string;
+  /** Distinguishes Home's copy from the header's when both are mounted; absent keeps today's ids. */
+  testIdSuffix?: string;
   prefs: SoundPrefs;
   /** True once the engine has actually started in this session (a remembered "on" is armed, not on). */
   armed: boolean;
@@ -52,6 +54,7 @@ const PREVIEWS = [
 
 export const SoundSettingsPanel: React.FC<Props> = ({
   id,
+  testIdSuffix,
   prefs,
   armed,
   onToggle,
@@ -60,17 +63,19 @@ export const SoundSettingsPanel: React.FC<Props> = ({
   onBeds,
   onPreview,
   onReset,
-}) => (
+}) => {
+  const tid = (base: string) => (testIdSuffix ? `${base}-${testIdSuffix}` : base);
+  return (
   <div
     id={id}
     role="group"
     aria-label="Audio settings"
-    data-testid="sound-settings"
+    data-testid={tid('sound-settings')}
     className="absolute right-0 z-50 mt-2 w-[19.5rem] rounded-lg border p-3 shadow-xl"
     style={{ top: '100%', borderColor: 'var(--border-strong)', backgroundColor: 'var(--panel)', color: 'var(--text)' }}
   >
     {/* ---- Sound: the master, and the one rule that shapes everything else ---- */}
-    <section aria-label="Sound" data-testid="sound-section-master">
+    <section aria-label="Sound" data-testid={tid('sound-section-master')}>
       <div className="flex items-center justify-between gap-2">
         <span className="text-[12px] font-semibold">Sound</span>
         <button
@@ -78,7 +83,7 @@ export const SoundSettingsPanel: React.FC<Props> = ({
           onClick={onToggle}
           aria-pressed={prefs.on}
           aria-label={prefs.on ? 'Turn sound off' : 'Turn sound on'}
-          data-testid="btn-sound-master"
+          data-testid={tid('btn-sound-master')}
           className="rounded-full border px-2.5 py-1 text-[11px] font-semibold"
           style={{
             borderColor: 'var(--border-strong)',
@@ -89,7 +94,7 @@ export const SoundSettingsPanel: React.FC<Props> = ({
           {prefs.on ? 'On' : 'Off'}
         </button>
       </div>
-      <p className="mt-1 text-[11px] leading-snug" style={{ color: 'var(--dim)' }} data-testid="sound-hint">
+      <p className="mt-1 text-[11px] leading-snug" style={{ color: 'var(--dim)' }}          data-testid={tid('sound-hint')}>
         {prefs.on
           ? armed
             ? 'On. Focus quiets it, a run ducks it, and this button is the only mute you need.'
@@ -115,7 +120,7 @@ export const SoundSettingsPanel: React.FC<Props> = ({
         disabled={!prefs.on}
         onChange={(event) => onLevel('music', Number(event.target.value))}
         aria-label="Music volume"
-        data-testid="sound-music"
+        data-testid={tid('sound-music')}
         className="mt-1 w-full cursor-pointer"
         style={{ accentColor: 'var(--accent)' }}
       />
@@ -129,7 +134,7 @@ export const SoundSettingsPanel: React.FC<Props> = ({
               disabled={!prefs.on}
               aria-pressed={active}
               onClick={() => onBeds(choice)}
-              data-testid={`sound-bed-${choice}`}
+              data-testid={tid(`sound-bed-${choice}`)}
               className="flex-1 rounded-md border px-2 py-1 text-[11px] font-semibold disabled:opacity-50"
               style={{
                 borderColor: active ? 'var(--accent)' : 'var(--border)',
@@ -175,7 +180,7 @@ export const SoundSettingsPanel: React.FC<Props> = ({
           disabled={!prefs.on}
           onChange={(event) => onLevel(key, Number(event.target.value))}
           aria-label={`${label} volume`}
-          data-testid={`sound-${key}`}
+          data-testid={tid(`sound-${key}`)}
           className="mt-1 w-full cursor-pointer"
           style={{ accentColor: 'var(--accent)' }}
         />
@@ -192,7 +197,7 @@ export const SoundSettingsPanel: React.FC<Props> = ({
         onClick={() => onClicks(!prefs.clicks)}
         aria-pressed={prefs.clicks}
         disabled={!prefs.on}
-        data-testid="sound-clicks"
+        data-testid={tid('sound-clicks')}
         className="flex w-full items-center justify-between rounded-md border px-2 py-1.5 text-[11px] font-semibold disabled:opacity-50"
         style={{
           borderColor: 'var(--border)',
@@ -210,7 +215,7 @@ export const SoundSettingsPanel: React.FC<Props> = ({
             type="button"
             onClick={() => onPreview(role)}
             disabled={!prefs.on}
-            data-testid={`btn-sound-preview-${role}`}
+            data-testid={tid(`btn-sound-preview-${role}`)}
             className="flex-1 rounded-md border px-1.5 py-1 text-[11px] disabled:opacity-50"
             style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}
           >
@@ -222,7 +227,7 @@ export const SoundSettingsPanel: React.FC<Props> = ({
 
     {/* ---- Whose music this is ---- */}
     <section aria-label="Credits" className="mt-3 border-t pt-2" style={{ borderColor: 'var(--border)' }}>
-      <p className="text-[10.5px] leading-snug" style={{ color: 'var(--dim)' }} data-testid="sound-credits">
+      <p className="text-[10.5px] leading-snug" style={{ color: 'var(--dim)' }}        data-testid={tid('sound-credits')}>
         {bedCredit()} · public domain, cut into 60-second loops by this repository.
       </p>
       <div className="mt-2 flex items-center justify-between">
@@ -238,7 +243,7 @@ export const SoundSettingsPanel: React.FC<Props> = ({
         <button
           type="button"
           onClick={onReset}
-          data-testid="btn-sound-reset"
+          data-testid={tid('btn-sound-reset')}
           className="flex items-center gap-1 text-[10.5px]"
           style={{ color: 'var(--muted)' }}
         >
@@ -248,4 +253,5 @@ export const SoundSettingsPanel: React.FC<Props> = ({
       </div>
     </section>
   </div>
-);
+  );
+};

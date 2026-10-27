@@ -41,6 +41,9 @@ flowchart LR
 
 ## Learn
 
+<!-- figure: unit-circle-trig | The two shadows of one angle are the cosine and the sine. -->
+
+
 ### Idea 1: Measuring angles in radians and rotational speed (`rad/s`)
 - **Primary resource:** [MathsIsFun — Radians](https://www.mathsisfun.com/geometry/radians.html) `[HTTP 200 — Verified by scripts/check_links.py]`
   - **What to read:** Read exact headings **`Radians`** and **`Radians and Degrees`**.

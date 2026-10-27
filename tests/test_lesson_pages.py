@@ -83,6 +83,53 @@ Still read.
 """
 
 
+class FigureDirectives(unittest.TestCase):
+    """A figure is a comment on GitHub and a diagram in the workbench, so the parse is the contract."""
+
+    def test_a_figure_comment_becomes_a_block(self):
+        blocks = pages.parse_blocks("## Learn\n\n<!-- figure: control-loop | The loop you tune. -->\n\nText.\n")
+        figures = [block for block in blocks if block["t"] == "figure"]
+        self.assertEqual(
+            len(figures),
+            1,
+            "expected the directive to become exactly one figure block; check that figures are lifted out before comments are stripped",
+        )
+        self.assertEqual(figures[0]["id"], "control-loop", "expected the id to be the scene name, lowercased")
+        self.assertEqual(figures[0]["caption"], "The loop you tune.", "expected the caption to survive as the sentence under the figure")
+
+    def test_a_figure_without_a_caption_still_parses(self):
+        blocks = pages.parse_blocks("## Learn\n\n<!-- figure: bring-up -->\n")
+        figure = next(block for block in blocks if block["t"] == "figure")
+        self.assertEqual(
+            figure["caption"],
+            "",
+            "expected an empty caption rather than the id doubling as one: the renderer falls back to the scene's own caption",
+        )
+
+    def test_a_malformed_id_is_not_a_figure(self):
+        blocks = pages.parse_blocks("## Learn\n\n<!-- figure: Not A Scene! | nope -->\n\nText.\n")
+        self.assertEqual(
+            [block for block in blocks if block["t"] == "figure"],
+            [],
+            "expected an id that is not kebab-case to be refused, not silently rendered as a missing figure",
+        )
+        self.assertNotIn(
+            "nope",
+            json.dumps(blocks),
+            "expected the whole comment to be dropped: it is hidden on GitHub too, so a typo must not leak its caption into the page",
+        )
+
+    def test_a_figure_inside_the_solution_is_dropped_with_it(self):
+        blocks = pages.parse_blocks(
+            "## Learn\n\nText.\n\n### Full Solution\n\n<!-- figure: fault-cost | hidden -->\n"
+        )
+        self.assertEqual(
+            [block for block in blocks if block["t"] == "figure"],
+            [],
+            "expected the answer's section to keep its figures: the reader does not print that section at all",
+        )
+
+
 class ParseBlocks(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -172,11 +219,93 @@ class ParseBlocks(unittest.TestCase):
             "check that a code fence keeps its bytes exactly, without the fence lines or a trailing newline",
         )
 
-    def test_mermaid_is_dropped_rather_than_shown_as_source(self):
+    def test_a_linear_flowchart_becomes_a_route_not_source_text(self):
+        routes = [block for block in self.blocks if block["t"] == "route"]
+        self.assertEqual(
+            len(routes),
+            1,
+            "expected the page's single-chain flowchart to become one route block: 170 pages carry one, and dropping it left the reader with prose and no map",
+        )
+        self.assertEqual(
+            routes[0]["steps"],
+            ["A", "B"],
+            "expected the chain's nodes in order, labelled from the Mermaid node text",
+        )
         self.assertNotIn(
             "flowchart",
             json.dumps(self.blocks),
-            "expected no mermaid source in the payload: the app has no renderer, so it would read as noise",
+            "expected no mermaid source in the payload: source is noise in a reading pane, and the picture is the block",
+        )
+
+    def test_a_branching_flowchart_becomes_a_graph_not_a_route(self):
+        blocks = pages.parse_blocks(
+            "## Learn\n\n```mermaid\nflowchart LR\n  A['start'] --> B['one']\n  A --> C['two']\n```\n"
+        )
+        self.assertEqual(
+            [block for block in blocks if block["t"] == "route"],
+            [],
+            "expected no route for a flowchart that branches: a fan-out flattened into a list is a different diagram",
+        )
+        graphs = [block for block in blocks if block["t"] == "graph"]
+        self.assertEqual(len(graphs), 1, "expected the branching flowchart to be drawn as a graph, not dropped")
+        graph = graphs[0]
+        self.assertEqual(
+            [node["id"] for node in graph["nodes"]],
+            ["A", "B", "C"],
+            "expected one box per node in the page's own order",
+        )
+        self.assertEqual(
+            [(edge["from"], edge["to"]) for edge in graph["edges"]],
+            [("A", "B"), ("A", "C")],
+            "expected both arrows kept: the fan-out is the shape the page wrote",
+        )
+        self.assertNotIn("flowchart", json.dumps(blocks), "expected no Mermaid source in the payload")
+
+    def test_graph_arrow_labels_and_direction_survive(self):
+        graph = pages.flow_graph(
+            "flowchart TD\n  A['launch'] -->|params| B['sensors']\n  A -->|urdf| C['model']\n"
+        )
+        self.assertEqual(graph["direction"], "TD", "expected the header's direction to decide the layout")
+        self.assertEqual(
+            [(edge["from"], edge["to"], edge.get("label")) for edge in graph["edges"]],
+            [("A", "B", "params"), ("A", "C", "urdf")],
+            "expected the arrow labels kept: on a graph they are the message a page names",
+        )
+
+    def test_a_cycle_is_still_a_graph(self):
+        graph = pages.flow_graph(
+            "flowchart LR\n  A['read'] --> B['clamp']\n  B --> C['command']\n  C --> A\n"
+        )
+        self.assertIsNotNone(graph, "expected a loop back to the first node to stay drawable: a state machine is a graph")
+        self.assertEqual(
+            len(graph["edges"]),
+            3,
+            "expected every arrow of the three-node cycle kept, including the one that closes it",
+        )
+
+    def test_a_graph_too_large_to_read_is_refused(self):
+        nodes = "\n".join(f"  N{index}['node {index}']" for index in range(pages.GRAPH_MAX_NODES + 1))
+        edges = "\n".join(f"  N{index} --> N{index + 1}" for index in range(pages.GRAPH_MAX_NODES))
+        graph = pages.flow_graph("flowchart LR\n" + nodes + "\n" + edges + "\n")
+        self.assertIsNone(
+            graph,
+            "expected a graph past the node ceiling to be left out: crossing arrows hide the boxes they join",
+        )
+
+    def test_a_sequence_diagram_is_not_a_graph(self):
+        self.assertIsNone(
+            pages.flow_graph("sequenceDiagram\n  A->>B: hello\n"),
+            "expected a diagram that is not a flowchart to be refused, not drawn as boxes",
+        )
+
+    def test_a_repeated_node_keeps_the_label_it_was_given(self):
+        route = pages.flow_route(
+            "flowchart LR\n  A[\"first_link\"] --> B[\"second_link\"]\n  B --> C[\"third_link\"]\n"
+        )
+        self.assertEqual(
+            route,
+            ["first link", "second link", "third link"],
+            "expected every label to survive: a later mention of a node names it again without repeating its text",
         )
 
     def test_a_table_keeps_escaped_pipes_inside_its_cell(self):
@@ -232,6 +361,127 @@ class ParseBlocks(unittest.TestCase):
             "After the solution",
             flat,
             "check that the section after the skipped solution still arrives: the skip must end at the next heading",
+        )
+
+
+EXAM_SECTION = (
+    "skip test",
+    "gate test",
+    "graded package",
+    "self-check",
+    "self check",
+)
+# A single paragraph of prose is where a beginner stops reading. The numbers are per page type: the
+# beginner track is read on a phone and gets the tighter budget, while a module carries formal
+# derivations a chapter does not.
+PROSE_LIMIT = {"beginner": 1400, "module": 2500, "chapter": 2500}
+
+
+def reading_runs(blocks):
+    """The page's walls: each run of consecutive paragraphs, split by anything that is not prose.
+
+    A heading, a list, a table, a formula, a code fence, an image or a picture all end a run. That is
+    the point of the rule: a list is already scannable and a formula is already a pause, but twelve
+    paragraphs in a row are a page a beginner closes.
+    """
+    sections = []
+    section = ""
+    run = 0
+    for block in blocks:
+        if block["t"] == "h":
+            section = block["x"]
+        if block["t"] in ("p", "quote"):
+            run += len(block["x"])
+        else:
+            if run:
+                sections.append((run, section))
+            run = 0
+    if run:
+        sections.append((run, section))
+    return sections
+
+
+def page_kind(path):
+    """Which budget a page is read under: the beginner track, a module, or a chapter."""
+    if path.startswith(("track-p/", "stage-0/")):
+        return "beginner"
+    if path.startswith(("modules/", "ramp/")):
+        return "module"
+    return "chapter"
+
+
+class ReadingPace(unittest.TestCase):
+    """The page a beginner actually reads: every page carries a picture, and none is a wall of prose."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.produced = pages.files()
+        cls.payloads = {
+            path[: -len(".md")] + ".json": json.loads(text) for path, text in cls.produced.items()
+        }
+
+    def test_every_page_carries_a_named_figure(self):
+        missing = [
+            payload["path"]
+            for payload in self.payloads.values()
+            if not any(block["t"] == "figure" for block in payload["blocks"])
+        ]
+        self.assertEqual(
+            missing,
+            [],
+            "expected every page to show at least one named scene: the figures are what breaks the prose, and a page with none is the wall this gate exists to remove",
+        )
+
+    def test_every_page_carries_a_map(self):
+        missing = [
+            payload["path"]
+            for payload in self.payloads.values()
+            if not any(block["t"] in ("route", "graph") for block in payload["blocks"])
+        ]
+        self.assertEqual(
+            missing,
+            [],
+            "expected every page's own Mermaid flowchart to reach the reader as a route or a graph: the map is the page's own words, not a new claim",
+        )
+
+    def test_no_page_is_a_wall_of_prose(self):
+        offenders = []
+        for payload in self.payloads.values():
+            limit = PROSE_LIMIT[page_kind(payload["path"])]
+            for size, section in reading_runs(payload["blocks"]):
+                if section.lower().startswith(EXAM_SECTION):
+                    # The exam is a paper, not a lesson: its questions are read one at a time and a
+                    # picture between them would be a hint.
+                    continue
+                if size > limit:
+                    offenders.append(
+                        f"{payload['path']} §{section or '(no heading)'}: {size} chars of unbroken prose, limit {limit}"
+                    )
+        if offenders:
+            self.fail("the walls to break: " + "; ".join(offenders[:6]))
+        self.assertEqual(
+            len(offenders),
+            0,
+            "expected every teaching run of prose to be broken by a picture, a list or a formula; "
+            "add a `<!-- figure: id | caption -->` where the wall is",
+        )
+
+    def test_the_pace_gate_can_fail(self):
+        wall = {"path": "track-p/fixture.md", "blocks": [{"t": "p", "x": "x" * 2000}]}
+        self.assertEqual(
+            page_kind(wall["path"]),
+            "beginner",
+            "expected the beginner track to be the tightest budget; check the prefix list",
+        )
+        self.assertEqual(
+            [size for size, _section in reading_runs(wall["blocks"])],
+            [2000],
+            "expected one run for a page of paragraphs and nothing else",
+        )
+        self.assertGreater(
+            reading_runs(wall["blocks"])[0][0],
+            PROSE_LIMIT["beginner"],
+            "expected a 2,000-character paragraph to breach the beginner limit, so the gate is not vacuous",
         )
 
 

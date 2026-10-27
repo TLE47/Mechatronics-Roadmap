@@ -37,6 +37,9 @@ plant: tier1_arm_motor
 Transfer functions $G(s)$ are great for single-input single-output filters, but modern control algorithms (LQR, Kalman filters, and Model Predictive Control in Track 05) operate on multi-variable **state-space models** $\dot{x} = Ax + Bu$ discretized into $x_{k+1} = A_d x_k + B_d u_k$. Connecting transfer-function poles and zeros to the eigenvalues of the state matrix $A$ is the direct foundation for Step 2.1 (`00-foundations.T2.01`). Already know this? Take the Skip test in section 7 first.
 
 ## 2. Intuition first
+
+<!-- figure: pole-zero | Poles on the left settle, poles on the right grow. -->
+
 Think of a second-order differential equation ($\ddot{q} = \dots$) as a two-story building, whereas a microcontroller prefers a ground-floor warehouse where every variable updates by a single first-order step ($\dot{x} = \dots$). By stacking position $q$ and velocity $\dot{q}$ into a column vector $x = [q, \dot{q}]^\top$, any $n$-th order differential equation flattens into a single matrix equation $\dot{x} = Ax + Bu$. The **poles** of the system (the eigenvalues of $A$) are the system's natural ringing modes—if their real parts are negative, disturbances die out; if positive, the system explodes. And **zeros** are specific frequencies where two internal pathways cancel each other out so the sensor sees almost zero motion even while the actuator is shaking hard (anti-resonance).
 
 ## 3. Formalization

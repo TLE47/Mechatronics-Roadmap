@@ -1,11 +1,20 @@
 name: Mechatronics Roadmap & Reference Labs CI
 
+# One run per push. `main` is the only branch that starts a run from a push; a feature branch is
+# graded by its pull request, so `"**"` here used to start two identical runs for one push (the
+# `push` event and the pull request's `synchronize` event) and pay for both.
 on:
   push:
-    branches: ["main", "master", "**"]
+    branches: ["main", "master"]
   pull_request:
     branches: ["main", "master"]
   workflow_dispatch:
+
+# A newer push to the same pull request cancels the run it supersedes: that run's verdict is about a
+# commit nobody is waiting for. `main` is never cancelled, because its run is the one that publishes.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -206,60 +215,6 @@ jobs:
       - name: "Check the weight budget: gzipped shell, largest chunk, and no metric left unmeasured"
         run: npm run check:weight
 
-      - name: Install Playwright Chromium & Firefox (once, for both browser suites)
-        run: npx playwright-core install --with-deps chromium firefox
-
-      # One dev server, one built bundle, four suites side by side: the SSR smoke test, the dev-server
-      # E2E run, the built-bundle E2E run and the same-task control-pair sweep. Before, each of them
-      # booted its own server (and the bundle suite rebuilt when dist/ was absent), one after another.
-      # `npm run test:smoke`, `test:e2e`, `test:e2e:pages` and `test:pairs` still run standalone.
-      - name: Run the Workbench suites (SSR smoke, dev-server E2E, built-bundle E2E, control pairs) on one server pair
-        run: npm run test:workbench
-
-      # The 3.0 game, driven as a learner drives it: the prologue and its red-checks warning, Mission
-      # Control at LV 1 with Mission 2 in progress, the Black Box opening what was earned, and one real
-      # passing run filing exactly one award. Its own step for the same reason as the theme sweep — it
-      # boots Pyodide once, and it should fail on the game, not on a loaded runner's click timeout.
-      - name: "Check the 3.0 game: prologue, Mission Control, journey map, Black Box, award ledger"
-        run: npm run test:e2e:game
-
-      # Its own step, not a seventh suite in the parallel run above: it drives a browser through all
-      # eleven tabs twice, and under that much contention the older suites start missing their 30 s
-      # click timeouts. Alone it takes ~35 s and fails on a contrast regression, not on a slow runner.
-      # A colon inside a step name has to be quoted: unquoted, YAML reads the second `: ` as another
-      # mapping and the whole workflow fails to parse, which GitHub reports as a run that fails in 0 s.
-      - name: "Check light/dark: toggle contract, and WCAG contrast on all 11 tabs in both modes"
-        run: npm run test:theme:e2e
-
-      # axe, not contrast: unnamed controls, roles nested where they may not be, a scroll region no
-      # keyboard can reach. It walks the same eleven tabs in both palettes and fails on any
-      # serious/critical finding that docs/a11y-allowlist.json does not explain.
-      - name: "Check accessibility: axe over all 11 tabs in both themes"
-        run: npm run check:axe
-
-      # Lighthouse's own three categories—best-practices, SEO and accessibility—on the built bundle,
-      # against docs/lighthouse-allowlist.json. Both default palettes are audited, each pinned with a
-      # launch flag and verified in the browser first: a runner with no prefers-color-scheme preference
-      # used to be graded in light while a developer's Mac was graded in dark. Performance is
-      # deliberately not run: a score that moves with the runner is not a gate this repository keeps
-      # (the script's header says so, and the row in docs/PLAN-2.0-GAP.md records the decision).
-      - name: "Check Lighthouse: best-practices, SEO and accessibility on the built bundle"
-        run: npm run check:lighthouse
-
-      # The painted surface of all 44 tab/palette combinations against docs/surface-snapshot.json:
-      # where the header, rail, main pane and panel sit, how many controls the tab has, and the resolved
-      # colours and type. Not a pixel diff, because antialiasing does not survive macOS -> Linux; the
-      # script's header explains, and geometry is compared with a 2 px tolerance.
-      - name: "Check the surface snapshot: every tab in every palette is still shaped the same"
-        run: npm run check:snapshot
-
-      # The first screen's type, measured rather than read off a class list: the runner's row at rest
-      # carries at most seven controls, More still reveals all thirteen folded ones, and every control
-      # (12 px), primary action (13 px), metadata line (11 px) and lesson paragraph (17-18 px) meets
-      # §3 of docs/PLAN-2.1a.md at 1280x800 in a real Chromium.
-      - name: "Check label sizes: the quiet row, the folded toolbar, and reading text at 17-18 px"
-        run: npm run check:labels
-
       # The other half of §4 of docs/PLAN-2.1a.md: the walk itself is deliberately not a CI step
       # (its six moments would be a function of the runner's contention, the same reason
       # check:lighthouse does not score performance), so what CI holds is the page: docs/PERF.md and
@@ -268,18 +223,15 @@ jobs:
       - name: "Check the perf page: six moments, both profiles, no row above its ceiling"
         run: npm run test:perf:unit
 
-      # The interrupt path needs cross-origin isolation and a real SharedArrayBuffer, which no unit
-      # test can provide: this suite stops a `while True:` in place, proves the interpreter survived
-      # it, and answers an `input()` mid-run. It downloads Pyodide once, so it is its own step rather
-      # than a fifth suite competing for the same machine.
-      - name: "Check the Python worker: in-place Stop, input(), isolation, and the no-buffer fallback"
-        run: npm run test:runtime
-
-      # A third step of its own, for the same reason: this one serves the built bundle WITHOUT the
-      # isolation headers, the way GitHub Pages does, so the service worker has to supply them - and then
-      # takes the browser offline. Nothing in the other suites runs with the network off.
-      - name: "Check the offline workbench: worker-supplied isolation, cached shell, offline reload"
-        run: npm run test:offline
+      # The bundle every browser job tests. This is what lets the browser work leave this job at
+      # all: one build is shared by three lanes, and no lane has to remake the bytes it grades.
+      - name: Publish the built bundle for the browser jobs
+        uses: actions/upload-artifact@v4
+        with:
+          name: workbench-dist
+          path: dist
+          retention-days: 1
+          if-no-files-found: error
 
       - name: Configure Pages
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -291,9 +243,184 @@ jobs:
         with:
           path: ./dist
 
+  workbench-suites:
+    name: Browser suites — smoke, dev-server E2E, the built bundle, control pairs, the game
+    needs: build-workbench
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Set up Python 3.12 (a rebuild, if one is needed, runs the generator)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the locked dependencies
+        run: npm ci
+
+      # The bundle was built once, in build-workbench. Its archive is older than this checkout's
+      # files, so the next step stamps it; from there every suite's `ensureBuilt` reuses it.
+      - name: Fetch the bundle the build job produced
+        uses: actions/download-artifact@v4
+        with:
+          name: workbench-dist
+          path: dist
+
+      # The archive carries the build job's timestamps, and this checkout's files are newer than that
+      # clock — so every suite's `ensureBuilt` would read the handed-over bundle as stale and build it
+      # again, in three lanes at once. Stamping it to now is the same statement the mtime comparison is
+      # trying to make: these bytes were built from this commit, earlier in this same run.
+      - name: Stamp the restored bundle as newer than this checkout
+        run: find dist -exec touch {} +
+
+      - name: Restore the Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      # A hit skips the browser download, not the OS libraries a fresh runner still needs, so this
+      # runs either way: `playwright install` is a no-op for a browser the cache already restored.
+      - name: Install Playwright Chromium & Firefox (from the cache when it hits)
+        run: npx playwright-core install --with-deps chromium firefox
+
+      - name: Run the Workbench suites (SSR smoke, dev-server E2E, built-bundle E2E, control pairs) on one server pair
+        run: npm run test:workbench
+
+      - name: "Check the 3.0 game: prologue, Mission Control, journey map, Black Box, award ledger"
+        run: npm run test:e2e:game
+
+  audit-suites:
+    name: Audits — theme, axe, Lighthouse, the surface snapshot, label sizes
+    needs: build-workbench
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Set up Python 3.12 (a rebuild, if one is needed, runs the generator)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the locked dependencies
+        run: npm ci
+
+      # The bundle was built once, in build-workbench. Its archive is older than this checkout's
+      # files, so the next step stamps it; from there every suite's `ensureBuilt` reuses it.
+      - name: Fetch the bundle the build job produced
+        uses: actions/download-artifact@v4
+        with:
+          name: workbench-dist
+          path: dist
+
+      # The archive carries the build job's timestamps, and this checkout's files are newer than that
+      # clock — so every suite's `ensureBuilt` would read the handed-over bundle as stale and build it
+      # again, in three lanes at once. Stamping it to now is the same statement the mtime comparison is
+      # trying to make: these bytes were built from this commit, earlier in this same run.
+      - name: Stamp the restored bundle as newer than this checkout
+        run: find dist -exec touch {} +
+
+      - name: Restore the Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      # A hit skips the browser download, not the OS libraries a fresh runner still needs, so this
+      # runs either way: `playwright install` is a no-op for a browser the cache already restored.
+      - name: Install Playwright Chromium & Firefox (from the cache when it hits)
+        run: npx playwright-core install --with-deps chromium firefox
+
+      - name: "Check light/dark: toggle contract, and WCAG contrast on all 11 tabs in both modes"
+        run: npm run test:theme:e2e
+
+      - name: "Check accessibility: axe over all 11 tabs in both themes"
+        run: npm run check:axe
+
+      - name: "Check Lighthouse: best-practices, SEO and accessibility on the built bundle"
+        run: npm run check:lighthouse
+
+      - name: "Check the surface snapshot: every tab in every palette is still shaped the same"
+        run: npm run check:snapshot
+
+      - name: "Check label sizes: the quiet row, the folded toolbar, and reading text at 17-18 px"
+        run: npm run check:labels
+
+  runtime-suites:
+    name: Runtime suites — the Python worker under isolation, and the offline workbench
+    needs: build-workbench
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Set up Python 3.12 (a rebuild, if one is needed, runs the generator)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the locked dependencies
+        run: npm ci
+
+      # The bundle was built once, in build-workbench. Its archive is older than this checkout's
+      # files, so the next step stamps it; from there every suite's `ensureBuilt` reuses it.
+      - name: Fetch the bundle the build job produced
+        uses: actions/download-artifact@v4
+        with:
+          name: workbench-dist
+          path: dist
+
+      # The archive carries the build job's timestamps, and this checkout's files are newer than that
+      # clock — so every suite's `ensureBuilt` would read the handed-over bundle as stale and build it
+      # again, in three lanes at once. Stamping it to now is the same statement the mtime comparison is
+      # trying to make: these bytes were built from this commit, earlier in this same run.
+      - name: Stamp the restored bundle as newer than this checkout
+        run: find dist -exec touch {} +
+
+      - name: Restore the Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      # A hit skips the browser download, not the OS libraries a fresh runner still needs, so this
+      # runs either way: `playwright install` is a no-op for a browser the cache already restored.
+      - name: Install Playwright Chromium & Firefox (from the cache when it hits)
+        run: npx playwright-core install --with-deps chromium firefox
+
+      - name: "Check the Python worker: in-place Stop, input(), isolation, and the no-buffer fallback"
+        run: npm run test:runtime
+
+      - name: "Check the offline workbench: worker-supplied isolation, cached shell, offline reload"
+        run: npm run test:offline
+
   deploy-pages:
     name: Deploy MechaLab Workbench to GitHub Pages
-    needs: build-workbench
+    # Every browser suite, not only the build: a red audit cannot publish the bundle it graded.
+    needs: [build-workbench, workbench-suites, audit-suites, runtime-suites]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment:

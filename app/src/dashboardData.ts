@@ -14,6 +14,8 @@ export interface DashboardLessonRef {
 export interface DashboardStudyLesson {
   note: string;
   highlights: { quote: string }[];
+  /** Last write, when the caller has it (`studyNotes.ts` does): Home orders the notebook by it. */
+  updatedAt?: number;
 }
 
 export type DashboardStudy = Record<string, DashboardStudyLesson>;

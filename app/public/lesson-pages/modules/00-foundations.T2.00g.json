@@ -1,7 +1,8 @@
-{"v":1,"path":"modules/00-foundations.T2.00g.md","title":"Matrix-Vector Multiplication & the One-Step State Update","blocks":[
+{"v":4,"path":"modules/00-foundations.T2.00g.md","title":"Matrix-Vector Multiplication & the One-Step State Update","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"The backward difference from `00-foundations.T2.00a` turns a sequence of samples into a velocity. This page turns that velocity into a **state**: one column that holds everything the next tick needs, advanced by one matrix-vector product. Writing the update as $\\vec{x}_{k+1} = A_d\\vec{x}_k + B_d u_k$ is not notation for its own sake - a two-mass drivetrain has four states, a Kalman filter nine, and the same six lines of code advance all of them. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
+{"t":"figure","id":"state-update","caption":"One product advances the state by one tick."},
 {"t":"p","x":"Picture a spreadsheet. Column A is the cart's position and column B is its velocity. The next row follows two fixed recipes: \"new position $= 1 \\times$ old position $+ \\Delta t \\times$ old velocity,\" and \"new velocity $= -\\frac{k}{m}\\Delta t \\times$ old position $+ (1 - \\frac{b}{m}\\Delta t) \\times$ old velocity $+ \\frac{\\Delta t}{m} \\times$ force.\" Those four multipliers are the whole model. Put them in a $2\\times2$ grid and the two force weights in a $2\\times1$ column, and you never write the recipes again: each row of the grid is dotted with the state column, which is exactly what the spreadsheet row did by hand."},
 {"t":"h","l":2,"x":"3. Formalization"},
 {"t":"ol","items":[{"x":"**Matrix-Vector Multiplication ($\\vec{y} = A\\vec{x}$):** for an $m\\times n$ matrix $A$ and a column $\\vec{x}$ of length $n$, the output has one entry per **row**: $y_i = \\sum_{j=1}^{n} A_{ij}x_j$. The shape rule is the operation: the column length must equal the row width, and the result's length equals the row count. A $2\\times2$ times a length-2 column gives a length-2 column, never a $2\\times2$ matrix.","d":0},{"x":"**Discrete State-Vector One-Step Update ($\\vec{x}_{k+1} = A_d\\vec{x}_k + B_d u_k$):** for a mass $m$ (kg), stiffness $k$ (N/m), damping $b$ (N$\\cdot$s/m), state $\\vec{x}_k = [x_k,\\; v_k]^\\top$, and force $u_k$ (N):","d":0}]},
@@ -37,6 +38,7 @@
 {"t":"p","x":"No hardware required for this module (`hardware_required: false`). On the STM32/ESP32 in Pass 2 (`Track 05`), this exact matrix-vector product executes inside the $1\\,\\text{kHz}$ Kalman filter prediction step:"},
 {"t":"code","lang":"text","text":"[State Vector x_k] ---> [Matrix Multiply: x_{k+1} = Ad * x_k + Bd * u_k] ---> [Predicted State x_{k+1}]"},
 {"t":"p","x":"Pass/fail verification in simulation: `x1 == 0.1020 m`, `v1 == 0.0800 m/s`, and the 500-step equilibrium at `0.0500 m`."},
+{"t":"route","steps":["00-foundations.T2.00g: matrix vector multiplication","state vector one step update","simulate: the same step, repeated","4-state two-mass drivetrain on the arm","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: run the worked example and the 500-step equilibrium exercise with zero assertion errors, or score $\\ge 80\\%$ ($4/5$) on the Skip test below."},
 {"t":"h","l":3,"x":"Skip test"},

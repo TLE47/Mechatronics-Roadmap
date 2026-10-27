@@ -41,6 +41,9 @@ flowchart LR
 
 ## Learn
 
+<!-- figure: counts-to-degrees | A linear map is one straight line from the counts to the degrees. -->
+
+
 ### Idea 1: Rearranging three-variable physics formulas
 - **Primary resource:** [MathsIsFun — Algebra: Balance when Adding and Subtracting / Multiplying](https://www.mathsisfun.com/algebra/introduction-multiply.html) `[HTTP 200 — Verified by scripts/check_links.py]`
   - **What to read:** Read exact headings **`Solve It`** and **`Balance`** (applying the opposite operation to both sides of `=`).

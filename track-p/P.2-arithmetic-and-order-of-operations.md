@@ -40,6 +40,9 @@ flowchart LR
 
 ## Learn
 
+<!-- figure: parse-tree | The order of operations is a shape: the multiplication is a branch, so it finishes first. -->
+
+
 ### Idea 1: Computer arithmetic operators
 - **Primary resource:** [Official Python 3 Tutorial — Section 3.1: Using Python as a Calculator](https://docs.python.org/3/tutorial/introduction.html) `[HTTP 200 — Verified by scripts/check_links.py]`
   - **What to read:** Read exact headings **`3.1. Using Python as a Calculator`** and **`3.1.1. Numbers`**.

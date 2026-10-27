@@ -41,6 +41,9 @@ flowchart LR
 
 ## Learn
 
+<!-- figure: prefix-ladder | Each rung is a thousand; converting a value is moving one step along the ladder. -->
+
+
 ### Idea 1: Base SI units for mechatronics
 - **Primary resource:** [MathsIsFun — Metric System of Measurement](https://www.mathsisfun.com/measure/metric-system.html) `[HTTP 200 — Verified by scripts/check_links.py]`
   - **What to read:** Read exact headings **`Metric System of Measurement`**, **`Meter`**, **`Kilogram`**, and **`Second`**.
@@ -55,6 +58,9 @@ flowchart LR
 
 ### Bridge Notes
 Mixing un-converted prefixes into an equation is the #1 calculation error in beginner robotics. Every formula you will meet in this roadmap—such as distance ($d = s \cdot t$) and kinetic energy ($E_k = \frac{1}{2} m s^2$)—strictly expects **un-prefixed base SI units**: meters (`m`), kilograms (`kg`), seconds (`s`), Amperes (`A`), Volts (`V`), and Ohms (`Ω`).
+
+
+<!-- figure: unit-cancellation | Carry the units through the arithmetic and the equation checks itself. -->
 
 For example, if a datasheet says a sensor is $15\text{ mm}$ (millimeters) wide or a pulse lasts $500\ \mu\text{s}$ (microseconds) and you forget to convert to meters or seconds before multiplying, your answer will be off by a factor of **$1{,}000\times$** or **$1{,}000{,}000\times$**! Follow a two-step habit on every problem:
 1. **Convert all inputs to base SI units on the very first line of code** (so $15\text{ mA} \rightarrow 0.015\text{ A}$, $0.22\text{ k}\Omega \rightarrow 220\ \Omega$, and $250\text{ mm} \rightarrow 0.25\text{ m}$).

@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen, Highlighter, Loader2, RotateCcw } from 'lucide-react';
 import { MathView } from './MathView';
+import { Diagram } from '../visuals/Diagram';
+import { sceneFor } from '../visuals/scenes';
 import {
   loadLessonPage,
   type LessonPage,
@@ -23,10 +25,25 @@ import { lessonPageUrl as sourceUrl } from '../startHere';
  * payload is fetched per lesson, the heading at the top of the pane is remembered per lesson, and a
  * selection can be pinned to the notes without leaving the screen that made it.
  *
+ * A page can also carry a **figure**: a line `<!-- figure: id | caption -->` in its Markdown becomes
+ * a `figure` block, and the picture is drawn from the app's own scene library (`visuals/scenes.ts`).
+ * That is the answer to a wall of paragraphs — the chain, the loop or the timing a section describes,
+ * drawn above it — and it costs the payload a dozen bytes instead of an image. An id this build does
+ * not know is stated in the pane, because a diagram that silently vanishes reads as a page that never
+ * had one.
+ *
+ * The other picture is the page's own: a single-chain Mermaid `flowchart` becomes a `route` block, so
+ * the "where this lesson goes" map every module already writes is drawn as numbered steps instead of
+ * being dropped, and a flowchart that branches becomes a `graph` block with the same nodes and
+ * arrows. Redrawing a graph as a list would be a different diagram; drawing it as a graph is not.
+ *
  * It is deliberately *read-only*. The full solution is not in the payload
  * (`scripts/generate_lesson_pages.py` skips it), the code in the editor is the code that runs, and
  * the one link out is the source page, kept for copying, printing and filing an issue.
  */
+/** What a route block says when the page gives no caption of its own. */
+const ROUTE_CAPTION = 'Each box is a checkpoint in order; the last one is the verified pass this page ends on.';
+
 interface LessonReaderProps {
   /** The registry id: the reading position and highlights are keyed by it, not by the page. */
   lessonId: string;
@@ -443,6 +460,56 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
                     <div key={index} className="my-3 overflow-x-auto">
                       <MathView math={block.tex} block />
                     </div>
+                  );
+                case 'figure': {
+                  const spec = sceneFor(block.id);
+                  if (!spec) {
+                    return (
+                      <p
+                        key={index}
+                        data-testid="reader-figure-missing"
+                        className="my-3 rounded-lg border border-amber/40 bg-amber/5 px-3 py-2 text-[13px] text-body"
+                      >
+                        This build has no figure called <code className="font-mono text-ink">{block.id}</code>.
+                        The page asks for one; the picture is missing rather than the paragraph that explains it.
+                      </p>
+                    );
+                  }
+                  return (
+                    <Diagram
+                      key={index}
+                      id={block.id}
+                      spec={block.caption ? { ...spec, caption: block.caption } : spec}
+                    />
+                  );
+                }
+                case 'route':
+                  return (
+                    <Diagram
+                      key={index}
+                      id="route"
+                      spec={{
+                        kind: 'route',
+                        title: 'Where this lesson goes',
+                        caption: block.caption ?? ROUTE_CAPTION,
+                        steps: block.steps,
+                      }}
+                    />
+                  );
+                case 'graph':
+                  return (
+                    <Diagram
+                      key={index}
+                      id="graph"
+                      spec={{
+                        kind: 'graph',
+                        title: 'How this page fits together',
+                        caption: block.caption ?? '',
+                        direction: block.direction,
+                        nodes: block.nodes.map((node) => ({ id: node.id, label: node.label })),
+                        edges: block.edges,
+                      }}
+                    />
                   );
                 case 'img':
                   return (

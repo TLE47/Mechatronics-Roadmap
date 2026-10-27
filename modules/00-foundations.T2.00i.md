@@ -37,6 +37,9 @@ plant: tier1_arm_motor
 `00-foundations.T2.00e` turned a continuous transfer function into a difference equation with the Tustin substitution. That substitution is not free: it bends the frequency axis, so a filter designed for $850\,\text{Hz}$ in the analog domain lands at $749\,\text{Hz}$ in code - and a resonance at the frequency you meant to kill survives untouched. This page is the correction, and the five coefficients it produces are the ones a microcontroller runs on every ADC sample in Tier 2. Sampling that decides which frequencies exist at all is `00-foundations.T2.00f`; the uncertainty that survives the filter is `00-foundations.T2.00j`.
 
 ## 2. Intuition first
+
+<!-- figure: notch-response | A notch is a hole in the gain, and pre-warping puts the hole on the frequency you named. -->
+
 Picture a fisheye lens pointed at a ruler. The middle of the ruler maps almost one-to-one, but the marks near the edge get squeezed together, so an object you place at the $850\,\text{mm}$ mark photographs at $749\,\text{mm}$. The lens is the Tustin map; the squeezing near the edge is frequency warping, and it is worst close to Nyquist.
 
 Pre-warping is the fix you already know from moving furniture: measure where the lens *puts* things, then place the object further out so it photographs where you wanted. You do not change the lens - you change the analog target you hand it. That is why the pre-warped analog frequency $6306.69\,\text{rad/s}$ is *higher* than $2\pi \cdot 850$: it compensates for the squeeze.

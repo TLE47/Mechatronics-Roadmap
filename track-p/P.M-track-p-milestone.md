@@ -39,6 +39,9 @@ flowchart LR
 
 ## Learn
 
+<!-- figure: signal-chain | The milestone is the whole chain: sensor reads, code decides, actuator moves. -->
+
+
 ### Idea 1: End-to-end sense-compute-simulate loop
 - **Primary resource:** [The Physics Classroom — Determining the Area on a v-t Graph](https://www.physicsclassroom.com/class/1DKin/Lesson-4/Determining-the-Area-on-a-v-t-Graph) `[HTTP 200 — Verified by scripts/check_links.py]`
   - **What to read:** Review exact heading **`Calculating the Area of a Rectangle`**.

@@ -44,6 +44,9 @@ flowchart LR
 
 ## Learn
 
+<!-- figure: state-vector | Position and velocity are one state that moves together. -->
+
+
 ### Idea 1: A state is a fixed-length list whose slots keep their meaning, and one tick advances all of its slots together
 - **Primary resource:** [Wikipedia — State-space representation](https://en.wikipedia.org/wiki/State-space_representation)
   - **What to read:** The lead section and the sentence that defines the **state vector** as the smallest set of numbers that, together with the input, fixes the next moment of the system.

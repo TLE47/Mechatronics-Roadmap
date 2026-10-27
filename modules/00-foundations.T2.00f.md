@@ -34,6 +34,8 @@ plant: tier1_arm_motor
 A digital controller sees the world only at its sample instants. Anything faster than half the sample rate does not disappear - it comes back as a **slower frequency that was never there**, and no amount of digital filtering can tell the two apart afterwards. At the capstone's $1\,\text{kHz}$ tick a $1.8\,\text{kHz}$ vibration reads as $200\,\text{Hz}$, and a controller tuned to reject $200\,\text{Hz}$ will happily reject a resonance it never had. This page is the one place that arithmetic is taught; the notch filter that removes an in-band tone is `00-foundations.T2.00i`, and the uncertainty that survives sampling is `00-foundations.T2.00j`. Already know this? Take the Skip test in section 7 first.
 
 ## 2. Intuition first
+<!-- figure: aliasing | The anti-alias filter exists because every sampled wave has a slower twin at the sample rate. -->
+
 Think of a film of a wagon wheel. The camera takes 24 pictures a second, the wheel turns faster than 12 revolutions a second, and the spokes appear to crawl backwards. Nothing is wrong with the wheel or the camera - the sampling grid is simply too coarse to represent the motion, so it reports the nearest motion it *can* represent. The alias frequency is that nearest motion, and it always lands between zero and half the frame rate.
 
 The second half of the idea is the seam. Half the sample rate is called the **Nyquist frequency**, and it is a mirror: $3.9\,\text{kHz}$ sampled at $4\,\text{kHz}$ and $100\,\text{Hz}$ sampled at $4\,\text{kHz}$ produce exactly the same numbers. Once both are inside the same samples, only the analog filter that ran *before* the ADC can separate them.

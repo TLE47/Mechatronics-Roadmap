@@ -9,7 +9,7 @@
  * token stopped applying: each of those leaves every test green, because every test asks about a
  * feature and none asks what the screen is shaped like.
  *
- * This gate asks that, for **48 surfaces**: the twelve tabs in all four palettes.
+ * This gate asks that, for **52 surfaces**: the twelve tabs and Home, in all four palettes.
  *
  * **It is not a pixel diff, and that is a decision rather than a shortcut.** A screenshot baseline is
  * taken on one machine, and its antialiasing does not exist on the next: the runner that builds this
@@ -60,6 +60,12 @@ const SCHEME = { dark: 'dark', light: 'light', paper: 'light', contrast: 'dark' 
 
 const tabNames = JSON.parse(fs.readFileSync(path.join(ROOT, 'app/src/data/workbenchTabs.json'), 'utf8'));
 const ALL_TABS = Object.keys(tabNames.tabs);
+/**
+ * Whole pages that are not a tab (`?view=home`). They are measured with the same ruler as the tabs:
+ * Home is a destination with its own layout, and a card that collapses there is exactly the drift a
+ * feature suite does not see. The admin area is not here: it only renders for a signed-in admin.
+ */
+const PAGES = ['home'];
 
 const argv = process.argv.slice(2);
 const RECORD = argv.includes('--record');
@@ -71,7 +77,7 @@ const only = (flag) => {
 };
 const ONLY_TAB = only('--tab');
 const ONLY_PALETTE = only('--palette');
-const TAB_IDS = ONLY_TAB ? [ONLY_TAB] : ALL_TABS;
+const SURFACE_IDS = ONLY_TAB ? [ONLY_TAB] : [...ALL_TABS, ...PAGES];
 const THEMES = ONLY_PALETTE ? [ONLY_PALETTE] : PALETTES;
 const FILTERED = Boolean(ONLY_TAB || ONLY_PALETTE);
 
@@ -209,8 +215,8 @@ function compareSurfaces(name, expected, actual) {
 }
 
 async function main() {
-  if (ONLY_TAB && !ALL_TABS.includes(ONLY_TAB)) {
-    console.error(`[FAIL] unknown tab ${ONLY_TAB}; the workbench has ${ALL_TABS.join(', ')}`);
+  if (ONLY_TAB && ![...ALL_TABS, ...PAGES].includes(ONLY_TAB)) {
+    console.error(`[FAIL] unknown surface ${ONLY_TAB}; use ${[...ALL_TABS, ...PAGES].join(', ')}`);
     process.exit(2);
   }
   if (ONLY_PALETTE && !PALETTES.includes(ONLY_PALETTE)) {
@@ -266,8 +272,15 @@ async function main() {
       const advanced = page.locator('[data-testid="btn-mode-advanced"]');
       if (await advanced.count()) await advanced.click();
 
-      for (const tabId of TAB_IDS) {
-        await page.click(`[data-testid="tab-btn-${tabId}"]`);
+      for (const surface of SURFACE_IDS) {
+        if (surface === 'home') {
+          // Home is the whole page the landing rule opens (`homeLanding.ts`); the query makes the
+          // visit deterministic instead of depending on a stored last visit.
+          await page.goto(`${baseUrl}?view=home`, { waitUntil: 'load' });
+          await page.getByTestId('home-dashboard').waitFor({ timeout: 30000 });
+        } else {
+          await page.click(`[data-testid="tab-btn-${surface}"]`);
+        }
         // Eleven of the twelve tabs are lazy chunks, and the editor is a lazy boundary of its own: a
         // measurement taken during either placeholder would describe a panel that says "Loading".
         // The lesson pane fetches its page too (Run 229): a surface measured while it says "Loading the
@@ -310,12 +323,12 @@ async function main() {
               setTimeout(done, 5000);
             })
         );
-        const name = `${palette}/${tabId}`;
+        const name = `${palette}/${surface}`;
         surfaces[name] = await page.evaluate(measure);
         if (PNG) {
-          await page.screenshot({ path: path.join(PNG_DIR, `${palette}--${tabId}.png`) });
+          await page.screenshot({ path: path.join(PNG_DIR, `${palette}--${surface}.png`) });
         }
-        log(`  ${palette.padEnd(8)} ${tabId}`);
+        log(`  ${palette.padEnd(8)} ${surface}`);
       }
       await context.close();
     }
@@ -336,10 +349,10 @@ async function main() {
     const merged = FILTERED ? { ...(previous?.surfaces ?? {}), ...surfaces } : surfaces;
     const document = {
       _why:
-        'The painted surface of all 48 tab/palette combinations, read by `npm run check:snapshot` ' +
-        '(`scripts/snapshot_surfaces.mjs`). Each entry records where the header, activity rail, main pane ' +
-        'and its first panel sit, how many buttons, inputs, links, headings, canvases and tables the tab ' +
-        'has, and the resolved colours, type and palette tokens. It is **not a pixel diff**: the runner is ' +
+        'The painted surface of all 52 surfaces — the twelve tabs and Home, in four palettes — read by ' +
+        '`npm run check:snapshot` (`scripts/snapshot_surfaces.mjs`). Each entry records where the header, ' +
+        'activity rail, main pane and its first panel sit, how many buttons, inputs, links, headings, ' +
+        'canvases and tables the surface has, and the resolved colours, type and palette tokens. It is **not a pixel diff**: the runner is ' +
         'Linux and the person writing this is on a Mac, and a baseline whose antialiasing does not survive ' +
         'the trip is a gate people learn to skip. Box numbers are compared with a 2 px tolerance, so ' +
         'subpixel rounding is not a finding; counts and resolved styles are exact. Re-record with ' +

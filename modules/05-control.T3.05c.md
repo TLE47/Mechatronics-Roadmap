@@ -36,6 +36,9 @@ plant: tier1_arm_motor
 A controller that is fast and correct in free space can still drive a joint through its hard stop, because nothing in an LQR cost knows where the stop is. A **Control Barrier Function** turns "stay inside the safe set" into one linear inequality on the command, and the **CBF-QP** projects the nominal command onto it - minimally, so tracking is untouched until the constraint actually binds. This is the last of the three Track 05 Tier 3 bridges: `05-control.T3.05a` fixed the covariance, `05-control.T3.05b` fixed the injection, and this module adds the safety layer that runs between the nominal controller and the torque loop. Already know this? Take the Skip test in section 7 first.
 
 ## 2. Intuition first
+
+<!-- figure: safety-filter | The filter returns the largest command that stays inside the safe set. -->
+
 A guardrail at the edge of a road does not steer the car all the time; it only matters when you drift into it, and then it pushes exactly as hard as needed and no harder. That "only as hard as needed" is what **minimally invasive** means: when the nominal command already stays clear of the rail, the filter hands it back unchanged. The second half of the idea is **braking distance**: a heavy joint that is already moving cannot stop instantly, so the barrier must be applied to the margin you still have, not to zero.
 
 ## 3. Formalization

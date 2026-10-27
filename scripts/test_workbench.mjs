@@ -39,6 +39,8 @@
  *   test:trailreading the same trail read for advice: a resisting lesson, a quiet deck, days that were only opens
  *   test:paint       the first paint as a reading: one sample per visit, the newest flush wins, medians, the export
  *   test:weight      the weight budget's rules: the boundary, an unmeasured metric, the tightest one
+ *   test:home        the landing rule (view, lesson link, first visit, sitting, new sitting) and Home's joins
+ *   test:e2e:home    the same page in Chromium: a first visit stays on the workbench, a returning one lands on Home, every door opens, a reload stays, and a lesson link bypasses it
  *   test:e2e:storage the same move in Chromium: a bucket full of a pre-IndexedDB visit, migrated, then written to
  *   test:e2e:backup  the header buttons in Chromium: write a zip, wipe, restore to store *and* screen
  *   test:e2e:review  pin, comment, review, reload in Chromium: a card asked, answered, and still scheduled tomorrow
@@ -185,6 +187,7 @@ async function main() {
     { label: 'firstrun', script: 'test_tour.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'layout', script: 'test_layout.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'reader', script: 'test_reader.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'visuals', script: 'test_visuals.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'keymap', script: 'test_keymap.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'vim', script: 'test_vim.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'trace', script: 'test_trace.mjs', env: { NODE_OPTIONS: TYPES } },
@@ -208,6 +211,7 @@ async function main() {
     { label: 'trail', script: 'test_timeline.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'reading', script: 'test_trail_reading.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'paint', script: 'test_paint_timing.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'home', script: 'test_home.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'weight', script: 'test_weight_budget.mjs' },
     { label: 'audio', script: 'test_audio.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'fonts', script: 'test_fonts.mjs' },
@@ -223,6 +227,7 @@ async function main() {
     { label: 'predict2e', script: 'e2e_predict_gate.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
     { label: 'focus2e', script: 'e2e_focus.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
     { label: 'store2e', script: 'e2e_storage.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
+    { label: 'home2e', script: 'e2e_home.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
   ];
   // Ctrl-C must not leave a Vite server or two Chromium runs behind.
   const stop = () => {

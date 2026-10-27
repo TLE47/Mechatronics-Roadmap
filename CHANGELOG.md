@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `3.2.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `3.3.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -13,6 +13,221 @@ flowchart LR
     S0 --> B1["Pass 1 Tier 1 (23 Files: 00.1–08.1 across Tracks 00–08)"]
     B1 --> QA["Automated CI: verify_repo + validate_modules + lint_lessons + lint_modules + check_term_order + clean_tex + audit_math + test_exercises + run_all_labs + smoke & browser E2E (dev server and built Pages bundle)"]
 ```
+
+---
+
+## [2026-10-26] — Run 257: Home, the page a return visit lands on
+
+A learner coming back had no front door: the workbench opened on Lesson 1 whether they had finished
+it or not, and the old `?view=dashboard` was a link rather than a place the app took you. This run adds
+**Home**, a whole page for the four questions a return visit actually has — what is next, where was I,
+which lab is which, and where is my work kept — and makes the rule that chooses it explicit.
+
+**The landing rule is a module, not a mood** ([`app/src/homeLanding.ts`](app/src/homeLanding.ts)).
+Precedence: an explicit `?view=admin|home|dashboard|workbench`; then `?lesson=`, which is a
+destination of its own; then a browser with no progress, which keeps the workbench and its Start Here
+card; then a reload inside the same 45-minute sitting, which returns to the page that was on screen;
+and otherwise Home. A store that throws and an absent store both cost the memory, never the page, and
+a clock that moved backwards is not a sitting. The address is kept in step on arrival, so a learner
+who lands on Home can copy the URL. `?view=dashboard` stays an alias: a bookmark, an account mail and
+`e2e_game.mjs` all still land on the same page.
+
+**One page, every door** ([`app/src/components/home/`](app/src/components/home)). Today names the
+first check the next mission still asks for; Continue opens the lesson the runner would reopen, with
+its draft size and the heading it was left at; Your labs renders the rail's own registry
+([`workbenchTabs.json`](app/src/data/workbenchTabs.json), twelve rooms, so a new tab needs no second
+list); and Your route counts the tier-1 checks the missions ask for, not a second denominator. Review
+says what is due and lists the newest notes one line each; Progress, the journey map and the Black Box
+bring the surfaces that already exist; Tools carries account, both exports, sound, focus and backup.
+Every card leaves the page and opens what owns the thing — nothing is rebuilt, nothing is modal, and
+no reading of Home can lock a lesson, a hint or a lab. The header gains a Home button on every screen
+and `⌘K` gains **Open Home**; a lesson link still goes straight to the editor.
+
+**It costs a first lesson nothing.** Home is a `React.lazy` chunk; `homeData.ts` and `homeLanding.ts`
+are pure (no React, no writes), so the joins and the rule are pinned without a browser. The old
+`LearnerDashboard.tsx` was deleted — Home is the dashboard, and its orphaned copy was the second place
+a "next" could be computed.
+
+**Verified.** `test:home` 12/12 (the five-step precedence, a hostile store, an empty notebook, a
+reading position as words, the route's denominators); `test:e2e:home` 11 checks in Chromium (a first
+visit stays on the workbench, a returning one lands on Home, all twelve labs are doors, Today's Start
+opens the entry it named, review opens the deck where the cards live, a reload stays, and `?lesson=`
+never lands on Home); `test:e2e:game` 16/16 after its dashboard block was retargeted to Home;
+`test:e2e`'s offer block (steps 7c–7g) now walks Home's Continue card — the resume, the hand-off to
+the next unverified lesson, a half-written draft that says how large it is and reopens intact, and a
+reset that stops the card advertising it — instead of the roadmap card it replaced;
+`check:axe` clean including Home in all four palettes; `check:snapshot` re-recorded for 52 surfaces
+(the new page, and the header's Home button on all twelve tabs); `check:labels` measures Home at the
+same 12 px / 11 px floors, which moved the hologram's two sliders and three buttons up to 12 px and
+exempted a drawing's own SVG labels (a figure's type is `test:visuals`' question, not this gate's);
+`check:weight` PASS (entry_gzip **523.3 of 530 kB**, tightest metric `css_gzip` 3.4 kB left — Home is a
+lazy chunk and the first lesson pays nothing for it); `check_doc_commands` 462 commands PASS;
+`check_consistency` PASS. Version **3.3.0**.
+
+## [2026-10-26] — Run 256: every page gets its picture
+
+Run 254 gave the reader its first figures and its map: 21 named scenes, 39 pages, and the page's own
+single-chain flowchart drawn as numbered steps. A beginner page still opened on a wall of prose — 53 of
+the 92 pages had no named figure at all — and a branching flowchart was dropped. This run closes both.
+
+**Six new kinds of picture.** `app/src/visuals/Diagram.tsx` gains a renderer for each, and
+`scenes.ts` gives each one real data: `plot` (two labelled axes with units and shaded windows —
+efficiency, three-phase currents, pole-zero maps, a notch, the loop-inductance spike), `matrix` (a 4×4
+transform, a state update, a stackup, a byte frame, a struct's field map), `bits` (a register, high bit
+left, fields bracketed above), `reach` (a ring with its two limits and marked radii — the arm's
+workspace, a datasheet's min/typ/max), `schematic` (parts on a wire with a shunt to ground — the RC
+charge and the brake chopper) and `graph` (boxes and labelled arrows, layered from the edges — ROS 2,
+a devicetree, a launch tree, an autograd chain, an asset tree). The scene library went from 21 to 72.
+
+**A branching page keeps its map.** The generator's `flow_graph` parses a Mermaid `flowchart` that fans
+out into `nodes` and `edges`, including the label on an arrow, and the payload format moved to v4 to
+carry it. Ten pages now draw their graph instead of dropping it. Two things are still refused: a
+diagram that is not a flowchart, and a graph past 14 boxes or 24 arrows — a hairball is not a picture.
+A quoted node label may now contain brackets (`R3["state = [q, qd]"]`): the old token pattern stopped
+at the inner `]` and silently lost the graph.
+
+**Every page carries one.** 63 figure directives were placed at the section they illustrate — the
+beginner track's `Learn`, a module's `2. Intuition first` — taking the payloads from 39 figures on 39
+pages to **106 on 92** — 107 after the walkthrough below. The pages that were still a wall of prose got a second: the capstone's build
+order, the ROS 2 executor's deadline, the six-layer worked example's loop-inductance spike (which also
+split one 2,614-character paragraph into the four questions it was hiding).
+
+**The pace is a gate.** `tests/test_lesson_pages.py`'s `ReadingPace` reads the committed payloads and
+fails when a page has no named figure, no map (route or graph), or a teaching run of consecutive
+paragraphs over **1,400 characters on the beginner track** and **2,500 in a module, ramp page or
+chapter** — exam sections exempt, because a paper is read one question at a time. Paragraph runs only:
+a heading, list, table, formula, code fence or picture already ends one. The test also shows itself
+failing on a 2,000-character paragraph, so the number is not vacuous.
+
+**Five fans drew one box on top of another.** Walking the pages found `parse-tree` (P.2),
+`decision-fork` (P.3), `devicetree`, `launch-tree` and `autograd-graph` each handing two nodes the same
+`(level, row)` cell — in `TD` the row *is* the column, so two siblings both given `row: 1` drew in one
+place and the fan the figure existed for was gone, with no broken link and no missing scene to notice.
+Each scene now names one lane per box, and `graphLayers` moved out of `Diagram.tsx` into
+`app/src/visuals/graphLayout.ts` so `test:visuals` calls the same layout the renderer does and fails a
+scene whose boxes collide (`collidingCells`). Two data gaps closed on the walk: the reach dial — the one
+kind no page used — now sits under 02.3's reachability idea, and P.11, a page about reading graphs, had a
+chain where it needed a graph; it now carries a position trace with a tangent (`slope-is-velocity`), so
+every one of the twelve kinds is drawn in the reader and the beginner page opens on the thing it teaches.
+The scene library is 73, and the page count of figures stays 107: a picture replaced, not added.
+
+**Verified.** `npm run test:visuals` 15/15 (each kind checked against its own data: a graph's arrows land
+on boxes it has and no two boxes share a cell, a matrix's cells match its labels, a bitfield spans bits
+that exist, a plot's points stay inside its axes, a schematic's shunt hangs off a drawn part);
+`python3 -m unittest tests.test_lesson_pages` **28/28** (route and graph parsing, the cycle case, the
+size ceiling, the pace gate); `npm run test:reader` 21/21; `npm run test:e2e:pages` green in Chromium
+and Firefox, including a new assertion that R.1's branched map draws **5 boxes and 4 arrows** with a
+name and a caption; `check:snapshot` 48 surfaces, `check:axe` clean, `check:weight` re-recorded with
+two ceilings moved by hand (entry 522.3 of 530 kB, largest 338.5 of 344 kB — 11.7 kB of new renderers and
+scenes on the first-screen chunk; the reader's payloads are 685.8 of 720 kB, 107 figures).
+
+**Decisions.** A picture is placed at the section it illustrates, never dropped into a paragraph at
+random; the renderers share the seven theme variables, so no palette needed a special case; nothing
+animates, so `prefers-reduced-motion` has nothing to switch off; and the pace gate measures paragraphs,
+not lists — a bulleted list is already scannable, a twelve-paragraph block is not.
+
+---
+
+## [2026-10-26] — Run 255: the same gates, in four lanes
+
+The run had grown into one long job: a Python matrix, a macOS install check, then a single
+`build-workbench` that built the bundle and went on to run fourteen browser suites one after another.
+A push to a branch with an open pull request started *two* of those. Nothing here removes a gate; the
+shape around the gates changed.
+
+**One run per push.** `on.push.branches` was `["main", "master", "**"]`, so a branch push started a
+run of its own and the pull request's `synchronize` event started a second, identical one. A push now
+starts a run on the deployed branches only; a feature branch is graded by its pull request. A
+`concurrency` group keyed on the pull request number (the ref elsewhere) cancels the run a newer push
+supersedes — on pull requests only, because a cancelled `main` run is the publish that never happened.
+
+**Four lanes instead of one queue.** `build-workbench` now ends at the gates that need no browser
+(typecheck, build, the unit suites, the weight budget and the perf page) and publishes `dist/` once as
+the `workbench-dist` artifact. Three jobs fetch it and run side by side:
+
+| Job | Suites |
+| :--- | :--- |
+| `workbench-suites` | `test:workbench` (smoke, dev-server E2E, built bundle, control pairs) and `test:e2e:game` |
+| `audit-suites` | `test:theme:e2e`, `check:axe`, `check:lighthouse`, `check:snapshot`, `check:labels` |
+| `runtime-suites` | `test:runtime` and `test:offline` |
+
+None of them builds: the bundle arrives newer than the checkout, so each suite's `ensureBuilt` reuses
+it — and a lane that remade it would be a second copy of the same commit's bytes. That last sentence
+needed a step rather than a hope: an archive keeps the build job's timestamps, and a fresh checkout is
+newer than that clock, so each lane stamped the restored `dist/` to now (`find dist -exec touch {} +`)
+before asking. Measured locally on the real tree: an archived bundle with old mtimes reads as **308
+stale source files** and would rebuild; one `touch` later it reads as **0** and every suite reuses it. `deploy-pages` now `needs` all four, so a red audit
+cannot publish the bundle it graded — before, the browser suites ran inside the job that uploaded the
+Pages artifact.
+
+**The browser download is cached.** Each suite job restores `~/.cache/ms-playwright` under a key that
+follows `package-lock.json`, so an upgraded Playwright cannot be handed the old browser build. The
+install step still runs on a hit, because the OS libraries are not in that cache and a cached browser
+is a no-op to `playwright install`.
+
+**The shape is guarded, not just written.** `tests/test_workflows.py` grows `WorkflowSpeedTests`: a
+branch push must start one run, the concurrency block must cancel a superseded pull-request run (and
+must not cancel `main`), every one of the nine browser commands must appear exactly once, each suite
+job must depend on the build and download `workbench-dist` and must contain no `npm run build`, every
+suite job must cache the browsers by lockfile hash, and the deploy must wait for all four jobs.
+`python3 scripts/check_workflows.py` still gates the file itself, and now also validates an
+`on:`/`concurrency:` pair that actionlint is happy with.
+
+**Verified.** `python3 scripts/check_workflows.py` — 3 workflows, built-in scan clean, **actionlint
+clean**; `python3 -m unittest tests.test_workflows` **9/9** (six new); `python3 scripts/check_all.py`
+**36/36**; the artifact stamping measured against `buildFreshness.staleBuild` (308 stale → 0). Wall-clock is not measured here: it is a property of the runner, and the honest claim is the
+shape — one run instead of two per branch push, a cached browser, one build shared by the lanes rather
+than three rebuilds, and the browser work in three lanes instead of in sequence behind the build.
+
+---
+
+## [2026-10-26] — Run 254: the pages get their pictures
+
+Ninety-two reading pages, most of them fifteen to twenty-nine thousand characters of prose, and eleven
+of them carried a diagram. The complaint was fair: the course explained chains, loops, timings and
+routes in words while the site showed almost none of them. This run makes the pictures part of the
+water rather than an occasional flourish, and it does it without an image file or a renderer dependency.
+
+**A named scene library.** [`app/src/visuals/scenes.ts`](app/src/visuals/scenes.ts) is 21 scenes as
+data — chains, loops, timings, state gates, bars — and one renderer per kind in
+[`Diagram.tsx`](app/src/visuals/Diagram.tsx). A page asks for one with a comment
+(`<!-- figure: control-loop | … -->`), which GitHub hides and the workbench draws. 39 pages now carry a
+figure, up from 11: the control loop in Tier 1 control, encoder edges in the sensor module, aliasing in
+the sampling lesson, Bode margins, a Kalman step, the ISR-to-output chain, the toolchain, the debug
+loop, the water analogy at the start of electricity, motion's three rates of change, and the trajectory
+in the robotics module.
+
+**The route the pages already wrote.** 170 pages contain a Mermaid `flowchart` and every one of them
+was dropped by the generator, because the app had no renderer. It has one now, for the shape nearly all
+of them have: a single chain. `generate_lesson_pages.py` parses ordered flowcharts into a `route` block
+(payload version **3**) and the reader draws numbered steps — 82 of the 92 pages show their own map, and
+the ten that branch (two prerequisites into one lesson, a Jacobian fan-out) are still left out rather
+than redrawn as a list. That is also why an assertion changed rather than being deleted: the suite that
+used to require Mermaid to be *absent* now requires its source to be absent and its picture present.
+
+**The arm you can grab.** [`visuals/Hologram.tsx`](app/src/visuals/Hologram.tsx) is the dashboard's top
+tile: a two-link arm projected from 3D, with a view you can orbit and two joints you can pose, and its
+geometry in [`holoModel.ts`](app/src/visuals/holoModel.ts) as pure functions. The suite proves what the
+component claims — the joints clamp at their stops, inverse kinematics round-trips forward kinematics
+inside the reach and refuses a target outside it, the demo's figure-eight never leaves the hardware's
+range, the projection is deterministic and the trail is bounded — so a future Three.js view inherits the
+assertions instead of starting over.
+
+**Three bugs the work found.** (1) A node named again later in a flowchart (`B --> C`) was overwriting
+the label the first line gave it, so every second step of a route read `B`; labels now survive a repeated
+mention, which is what `test_a_repeated_node_keeps_the_label_it_was_given` pins. (2) The old figure
+lookup in the browser probe matched the start-here card's own route before the lesson had fetched its
+page, so the suite could pass on the wrong picture — the wait is now for the lesson's route. (3) The
+reader's `route` figure needed a vertical layout, not the five-box chain: page titles are long and a row
+of them ran each label into its neighbour, so a route wraps to two lines and ellipsizes the third.
+
+**Verified.** `npm run test:visuals` **14/14**; `python3 -m unittest tests.test_lesson_pages` **20/20**;
+`npm run test:e2e:pages` (the reader block now asserts a named figure, the page's route with at least
+three numbered steps, a name and a caption on each); `npm run check:snapshot` **48 surfaces**;
+`npm run check:axe` **12 tabs × 4 themes**; `npm run check:weight` with the record refreshed — entry
+510.4 kB / 520, largest 326.5 / 335, reader 680.8 / 720, total 2.40 / 2.46 MB. A focused browser probe
+drove the built bundle: four chapters' figures painted with their captions, a module's flowchart drew
+four numbered steps with its own labels, and the dashboard hologram mounted and described itself.
 
 ---
 

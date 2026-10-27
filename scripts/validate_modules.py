@@ -383,8 +383,19 @@ for script_rel in (
 ci_wf_path = pathlib.Path(".github/workflows/ci.yml")
 if ci_wf_path.exists():
     citxt = ci_wf_path.read_text(encoding="utf-8")
-    if "test:smoke" not in citxt:
+    # The smoke test has to run in CI, not necessarily as a step of its own: it is one of the four
+    # suites `npm run test:workbench` starts on a shared server pair, which is what let the browser
+    # work move into its own job. Accepting the group is only honest while the group still runs it,
+    # so that half is checked too.
+    if "test:smoke" not in citxt and "test:workbench" not in citxt:
         bad.append(".github/workflows/ci.yml: missing 'npm run test:smoke' UI smoke test step")
+    elif "test:smoke" not in citxt:
+        harness = pathlib.Path("scripts/test_workbench.mjs")
+        if not harness.exists() or "smoke" not in harness.read_text(encoding="utf-8"):
+            bad.append(
+                "scripts/test_workbench.mjs: ci.yml relies on it for the UI smoke test, but it no "
+                "longer names the smoke suite"
+            )
 
 if bad:
     print("\n".join(bad))

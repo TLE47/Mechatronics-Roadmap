@@ -30,7 +30,8 @@ type Status = { tone: 'ok' | 'warn'; text: string };
 
 const STATUS_MS = 9000;
 
-export const BackupControls: React.FC = () => {
+export const BackupControls: React.FC<{ testIdSuffix?: string }> = ({ testIdSuffix }) => {
+  const tid = (base: string) => (testIdSuffix ? `${base}-${testIdSuffix}` : base);
   const [status, setStatus] = useState<Status | null>(null);
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -102,7 +103,7 @@ export const BackupControls: React.FC = () => {
     <>
       <button
         onClick={handleBackup}
-        data-testid="btn-backup-download"
+        data-testid={tid('btn-backup-download')}
         title="Download everything in this browser — progress, drafts, saved versions, the learning log — as one .zip you can restore anywhere."
         className="btn"
       >
@@ -111,7 +112,7 @@ export const BackupControls: React.FC = () => {
       </button>
       <button
         onClick={() => inputRef.current?.click()}
-        data-testid="btn-backup-restore"
+        data-testid={tid('btn-backup-restore')}
         disabled={busy}
         title="Merge a MechaLab backup into this browser. Nothing here is deleted; the file is read once and reports what it added."
         className="btn"
@@ -124,7 +125,7 @@ export const BackupControls: React.FC = () => {
         ref={inputRef}
         type="file"
         accept=".zip,application/zip"
-        data-testid="input-backup-file"
+        data-testid={tid('input-backup-file')}
         aria-label="Choose a MechaLab backup (.zip) to restore"
         className="sr-only"
         onChange={(event) => {
@@ -138,7 +139,7 @@ export const BackupControls: React.FC = () => {
         <div
           role="status"
           aria-live="polite"
-          data-testid="backup-status"
+          data-testid={tid('backup-status')}
           onClick={() => setStatus(null)}
           title="Dismiss"
           className="fixed bottom-4 right-4 z-50 max-w-[24rem] cursor-pointer rounded-[var(--r-md)] border bg-raise px-3 py-2 text-[11.5px] font-medium text-ink shadow-lg"

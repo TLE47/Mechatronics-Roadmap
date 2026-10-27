@@ -37,6 +37,8 @@ plant: tier1_arm_motor
 This is the final bridge module in the Track 04 Tier 1 ladder before Step 1.5 (`04-embedded.T1.05`). Calling `delay(100)` freezes the CPU for $100\text{ ms}$—during that time your robot is blind to encoder pulses, limit switches, and PID loops. Replacing `delay()` with a non-blocking tick scheduler (`now_us - last_us >= PERIOD_US`), an `enum` finite state machine, and a hardware timer **Interrupt Service Routine (ISR)** with `volatile` shared variables gives your robot deterministic $1\text{ kHz}$ reflexes. Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 
 ## 2. Intuition first
+<!-- figure: isr-layers | The interrupt captures and flags; the loop computes. Nothing slow is allowed between them. -->
+
 Imagine a chef cooking three dishes at once. A **`delay()` loop** is like staring at a pot of water for 10 minutes with your eyes glued to it while the toast burns and the doorbell goes unanswered. A **non-blocking tick scheduler** (`micros() - last_us >= 1000`) is glancing at the wall clock on every pass through the kitchen: if $1000\ \mu\text{s}$ has elapsed, you stir the pot for $5\ \mu\text{s}$ and immediately check the next station. A **hardware interrupt (ISR)** is a smoke alarm wired directly to your reflex nervous system—the instant the hardware timer hits zero, the CPU pauses whatever background line it was running, executes the short ISR function in a few microseconds, sets a flag on a shared whiteboard, and resumes the background loop. Marking that flag **`volatile`** tells the C++ compiler: *"Do not cache this variable in a register—another context (the ISR) can change it behind your back at any nanosecond!"*
 
 ## 3. Formalization

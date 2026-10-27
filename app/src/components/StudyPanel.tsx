@@ -286,7 +286,12 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
         )}
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-2.5" data-testid="study-deck">
+      <div
+        id="study-deck"
+        tabIndex={-1}
+        className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-2.5 outline-none"
+        data-testid="study-deck"
+      >
         <button
           type="button"
           data-testid="btn-review-deck"

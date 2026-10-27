@@ -1,7 +1,8 @@
-{"v":1,"path":"modules/00-foundations.T2.00a.md","title":"Numerical Derivatives & Integrals: Backward Difference and the Running Sum","blocks":[
+{"v":4,"path":"modules/00-foundations.T2.00a.md","title":"Numerical Derivatives & Integrals: Backward Difference and the Running Sum","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"Every controller you will write in Pass 2 runs on numbers that arrive once per tick, not on a formula. A joint's velocity exists only as the **difference between two encoder readings**, and a position integral exists only as a running sum of those readings. Get either wrong and a $1\\,\\text{kHz}$ loop is confidently wrong $1000$ times a second: a derivative that forgot $\\Delta t$ is off by $1000\\times$, and one that ignores the encoder's wrap reads $4095 \\to 0$ as a full backwards turn. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
+{"t":"figure","id":"motion-chain","caption":"A derivative is the slope between two samples; an integral is the area under them, and the same chain runs both ways."},
 {"t":"p","x":"Two columns in a spreadsheet. Column A holds encoder counts, one row per millisecond. A new column B is the **difference** between this row and the one above, divided by the time between rows - that is speed. A new column C is a running **sum** of column B times the time step, and it must hand you back column A's shape, because adding up all the little differences is the same as subtracting the endpoints. That round trip is the whole page: difference is the discrete derivative, running sum is its inverse, and both are one line of code."},
 {"t":"h","l":2,"x":"3. Formalization"},
 {"t":"ol","items":[{"x":"**Backward-Difference Derivative:** given samples $x_k$ in metres (or radians) every $\\Delta t$ seconds, the backward difference is","d":0}]},
@@ -39,6 +40,7 @@
 {"t":"p","x":"No hardware required for this module (`hardware_required: false`). On the STM32/ESP32 in Pass 2 (`Track 05`), this exact difference runs inside the $1\\,\\text{kHz}$ control loop:"},
 {"t":"code","lang":"text","text":"[Encoder counts x_k] ---> [Backward difference / dt] ---> [Velocity v_k] ---> [Running integral]"},
 {"t":"p","x":"Pass/fail verification in simulation: `v1 == 1.5340 rad/s` across the wrap, and a round trip within $10^{-6}\\,\\text{rad}$ of the encoder angle."},
+{"t":"route","steps":["00-foundations.T2.00a: finite difference derivative and integral","Backward difference, wrapped at the encoder zero","Running integral: the inverse operation","Arm figure-8 encoder round trip","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: run the worked example and the arm round trip with zero assertion errors, or score $\\ge 80\\%$ ($4/5$) on the Skip test below."},
 {"t":"h","l":3,"x":"Skip test"},

@@ -812,9 +812,33 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
         editorLeft: Math.round(editor.left),
         editorWidth: Math.round(editor.width),
         scrollable: scroll.scrollHeight > scroll.clientHeight,
+        // The figures: the lesson's own named scene and the page's flowchart drawn as numbered
+        // steps. Both are app-drawn, so "is it there" has to be asked of the built bundle.
+        figures: [...box.querySelectorAll('[data-testid^="diagram-"]')].map((figure) => ({
+          id: figure.dataset.testid,
+          labelled: Boolean(figure.querySelector('svg[role="img"]')?.getAttribute('aria-label')),
+          caption: (figure.querySelector('figcaption')?.textContent ?? '').trim(),
+        })),
+        routeSteps: [...box.querySelectorAll('[data-testid="diagram-route"] text')].filter((node) =>
+          /^\d+$/.test((node.textContent ?? '').trim())
+        ).length,
       };
     });
     assert.ok(reader.headings.length >= 3, `${name}: the pane rendered ${reader.headings.length} headings`);
+    assert.ok(
+      reader.figures.length >= 2,
+      `${name}: the page draws ${reader.figures.length} figure(s) (${reader.figures
+        .map((figure) => figure.id)
+        .join(', ')}): a named scene and the page's own route are both expected`
+    );
+    assert.ok(
+      reader.figures.every((figure) => figure.labelled && figure.caption.length > 10),
+      `${name}: every figure needs a role="img" name and a caption, got ${JSON.stringify(reader.figures)}`
+    );
+    assert.ok(
+      reader.routeSteps >= 3,
+      `${name}: the page's flowchart is drawn as ${reader.routeSteps} numbered steps; the route is missing or unnumbered`
+    );
     assert.ok(reader.formulas > 0, `${name}: the pane must typeset the lesson's equations`);
     assert.ok(reader.code > 0, `${name}: the pane must render the lesson's own code fences`);
     assert.equal(
@@ -880,6 +904,38 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     );
     assert.equal(nextLessonTop, 0, `${name}: a lesson never read here must start at the top`);
     console.log(`  ok ${name}: a lesson never read here starts at the top`);
+
+    // A page whose flowchart branches is drawn as the graph it is, not dropped for being
+    // un-chainable: R.1 has four lessons feeding one, and the pane must show them as boxes and
+    // arrows with a name, rather than the prose and no map.
+    await wide.getByTestId('lesson-item-R.1').click();
+    await wide.getByTestId('reader-loading').waitFor({ state: 'detached', timeout: 20000 });
+    const branchMap = await wide.evaluate(() => {
+      const figure = document.querySelector('[data-testid="diagram-graph"]');
+      if (!figure) return null;
+      const svg = figure.querySelector('svg[role="img"]');
+      return {
+        labelled: Boolean(svg?.getAttribute('aria-label')),
+        boxes: svg ? svg.querySelectorAll('rect').length : 0,
+        arrows: svg ? svg.querySelectorAll('line[marker-end]').length : 0,
+        caption: (figure.querySelector('figcaption')?.textContent ?? '').trim(),
+      };
+    });
+    assert.ok(
+      branchMap,
+      `${name}: R.1's flowchart branches, so the pane must draw a graph; it rendered no [data-testid="diagram-graph"]`
+    );
+    assert.ok(
+      branchMap.boxes >= 3 && branchMap.arrows >= 2,
+      `${name}: R.1's map drew ${branchMap.boxes} box(es) and ${branchMap.arrows} arrow(s); a branched page needs both`
+    );
+    assert.ok(
+      branchMap.labelled && branchMap.caption.length > 10,
+      `${name}: the graph needs a role="img" name and a caption, got ${JSON.stringify(branchMap)}`
+    );
+    console.log(
+      `  ok ${name}: a branching page draws its map (${branchMap.boxes} boxes, ${branchMap.arrows} arrows)`
+    );
 
     // Back to Debug for the divider below: the reading checks left the screen in Study.
     await wide.keyboard.press('Alt+4');

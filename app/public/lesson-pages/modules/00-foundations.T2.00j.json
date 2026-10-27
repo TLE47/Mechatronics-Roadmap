@@ -1,7 +1,8 @@
-{"v":1,"path":"modules/00-foundations.T2.00j.md","title":"Gaussian Variance, Covariance & the Predict Step","blocks":[
+{"v":4,"path":"modules/00-foundations.T2.00j.md","title":"Gaussian Variance, Covariance & the Predict Step","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"Every estimator in Tier 3 answers one question the model alone cannot: *how wrong am I, and in which direction?* A single number cannot hold that. A joint's position error and velocity error are coupled - if the position reads high, the velocity is probably reading high too - and a Kalman filter's predict step has to carry both the two spreads and that coupling forward through the same matrix that advances the state. This page is the last bridge module before Step 2.1 (`00-foundations.T2.01`). What sampling does to a signal is `00-foundations.T2.00f`; the filter that cleans it is `00-foundations.T2.00i`; this page is the uncertainty that survives both."},
 {"t":"h","l":2,"x":"2. Intuition first"},
+{"t":"figure","id":"kalman-step","caption":"Variance is the prediction's doubt, and the gain is how much of the measurement this step believes."},
 {"t":"p","x":"Picture a laser pointer held by a slightly shaky hand. The dot wanders, and if you mark where it lands a thousand times you get a blob, not a circle. The blob's width left-to-right is one variance and its height up-and-down is another; if the hand drifts diagonally, the blob is a tilted ellipse, and that tilt *is* the covariance."},
 {"t":"p","x":"Now push the pointer through a lens that stretches the horizontal axis. The blob stretches with it, and so does the tilt. The predict step is that lens, applied to the ellipse: propagate the state with $A$, and the ellipse with $A$ on both sides - because a matrix acting on a shape squeezes it along one axis and stretches it along another, the error has to be transformed on the way in *and* on the way out."},
 {"t":"h","l":2,"x":"3. Formalization"},
@@ -39,6 +40,7 @@
 {"t":"p","x":"No hardware required for this module (`hardware_required: false`). In Step 3.6 the same step runs inside the embedded ESKF's predict phase on every IMU sample:"},
 {"t":"code","lang":"text","text":"[x_k, P_k] ---> [A P A^T + Q] ---> [x_{k+1}, P_{k+1}]"},
 {"t":"p","x":"Pass/fail verification in simulation: the module example reproduces `[[0.0135, 0.025], [0.025, 0.252]]`, $\\Sigma_y$ is symmetric, and its determinant is positive."},
+{"t":"route","steps":["00-foundations.T2.00i: biquad","00-foundations.T2.00j: gaussian variance and covariance matrix","Step 2.1: 00-foundations.T2.01"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: run the worked example and the integration task with zero assertion errors, or score $\\ge 80\\%$ ($4/5$) on the Skip test below. The ladder's Gate paper is taken once, after this last Tier 2 page."},
 {"t":"h","l":3,"x":"Skip test"},

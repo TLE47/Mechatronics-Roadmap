@@ -1,7 +1,8 @@
-{"v":1,"path":"modules/01-electronics.T1.01d.md","title":"Capacitors, Inductors, RC Time Constants & Inductive Flyback","blocks":[
+{"v":4,"path":"modules/01-electronics.T1.01d.md","title":"Capacitors, Inductors, RC Time Constants & Inductive Flyback","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"Resistors respond instantaneously to voltage changes, but every real motor drive is dominated by two energy-storage components: **capacitors** (which store electric-field energy to stabilize power rails and filter noisy sensors) and **inductors** (the copper coils inside every motor, which store magnetic-field energy and unleash destructive high-voltage flyback spikes if switched off without a return path). Understanding $I_C = C\\frac{dV}{dt}$ and $V_L = L\\frac{dI}{dt}$ prepares you directly for PWM switching in `01-electronics.T1.01b` and Step 1.2 (`01-electronics.T1.02`). Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
+{"t":"figure","id":"rc-charge","caption":"RC is the time constant: 63% charged after one, within a percent after five."},
 {"t":"p","x":"Think of a **capacitor** as a rubber diaphragm stretched across a water pipe—or a tiny rechargeable pressure tank mounted right next to a thirsty valve. Voltage across a capacitor cannot jump instantaneously ($I_C = C\\frac{dV}{dt}$): when a microcontroller or H-bridge suddenly gulps a spike of current, a **decoupling capacitor** right next to its pins supplies that instant gulp before the long supply wires can droop. Conversely, think of an **inductor** (a motor coil) as a heavy paddlewheel spinning inside the pipe. Because of magnetic inertia, **current through an inductor cannot stop instantaneously** ($V_L = L\\frac{dI}{dt}$). If you slam a valve shut on a spinning paddlewheel, the water hammers against the closed valve with a massive pressure spike (**inductive flyback**) that bursts the pipe—unless you provide a **freewheeling diode** loop so the current can coast down smoothly through its own coil resistance."},
 {"t":"h","l":2,"x":"3. Formalization"},
 {"t":"ol","items":[{"x":"**Capacitor Law ($I_C = C\\frac{dV}{dt}$) and Stored Energy:** A capacitor of capacitance $C$ in farads ($\\text{F}$) stores charge $Q = C V$ ($\\text{C}$) and electric energy $E_C = \\frac{1}{2} C V^2$ ($\\text{J}$). To hold rail voltage droop $\\Delta V$ ($\\text{V}$) below a limit during a current pulse $\\Delta I$ ($\\text{A}$) lasting $\\Delta t$ ($\\text{s}$):","d":0}]},
@@ -43,6 +44,7 @@
 {"t":"p","x":"Pass/fail verification in simulation: `tau == 1.0 ms`, `fc == 159.15 Hz`, `v_flyback_unclamped == 12000 V`, and `v_flyback_clamped == 12.7 V`."},
 {"t":"h","l":3,"x":"Safety notes"},
 {"t":"quote","x":"**⚠️ Bench Safety Note (`safety_level: low`):** Always verify probe placement (`V/Ohm` voltage port, never the `10A` shunt port in parallel) and set your CC/CV bench power supply current limit ($\\le 0.5\\text{ A}$) before energizing any breadboard or sensor circuit."},
+{"t":"route","steps":["01-electronics.T1.01d: capacitor charge storage and decoupling","rc time constant and filtering","inductor flyback and freewheeling diode","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: run the worked example and exercise asserts with zero errors, or score $\\ge 80\\%$ ($4/5$) on the Skip test below."},
 {"t":"h","l":3,"x":"Skip test"},

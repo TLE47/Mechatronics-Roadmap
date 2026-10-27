@@ -1,7 +1,8 @@
-{"v":1,"path":"modules/00-foundations.T2.00h.md","title":"Winding Impedance, Transfer Functions, Decibels & the Resonance Peak","blocks":[
+{"v":4,"path":"modules/00-foundations.T2.00h.md","title":"Winding Impedance, Transfer Functions, Decibels & the Resonance Peak","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"A motor winding is a resistor and an inductor in series, and at $1\\,\\text{krad/s}$ the inductor's opposition is not a number you can add to the resistor's - it is $90^\\circ$ out of phase with it. Write both as one complex number and the arithmetic becomes trivial: magnitudes form a hypotenuse, angles add, and a current loop's PI gains have something to be tuned against. The same ratio, read across frequency, is the **Bode plot** that tells you where a joint resonates, how much it lags, and whether a filter will make it worse. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
+{"t":"figure","id":"bode-margins","caption":"Decibels are a ratio in a readable unit; the crossover and the phase there are what the rest of the page computes."},
 {"t":"p","x":"Tap a bell and it rings at its own frequency; tap it faster than it can respond and it barely moves. A transfer function is the ratio of how hard you tapped to how far it moved, at each frequency - and it is a complex number because the bell does not move in step with your hand. Plotted as magnitude in decibels on a log frequency axis, a joint's response is flat, then peaks sharply at its resonance, then rolls off; plotted as phase, it slides from $0^\\circ$ through $-90^\\circ$ to nearly $-180^\\circ$. The two curves are the same complex number read two ways, which is why one measurement gives both."},
 {"t":"h","l":2,"x":"3. Formalization"},
 {"t":"ol","items":[{"x":"**Substituting $j\\omega$ for the derivative:** a steady sinusoid $u(t) = e^{j\\omega t}$ has $\\frac{d}{dt}e^{j\\omega t} = j\\omega e^{j\\omega t}$, so every derivative becomes multiplication by $j\\omega$ and a differential equation becomes algebra. For the first-order filter $\\tau\\dot{y} + y = u$:","d":0}]},
@@ -42,6 +43,7 @@
 {"t":"p","x":"No hardware required for this module (`hardware_required: false`). In Track 01 and Track 07, the exact same complex ratio $H(j\\omega) = Y(j\\omega)/U(j\\omega)$ is measured on real actuators by injecting sinusoidal current commands and comparing encoder output amplitude and phase lag:"},
 {"t":"code","lang":"text","text":"[Sine Excitation u(t) = A sin(wt)] ---> [Motor + Gearbox] ---> [Encoder y(t) = B sin(wt + phi)]\n                                                                 |H(jw)|_dB = 20*log10(B/A), <H = phi"},
 {"t":"p","x":"Pass/fail verification in simulation: `|Z| == 5.0 ohm`, corner `== -3.0103 dB`, and the peak at `99.7497 rad/s`."},
+{"t":"route","steps":["00-foundations.T2.00h: complex impedance and transfer function","bode magnitude db and phase","First-order corner, second-order resonance","Measured on the arm's elbow by lock-in","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: run the worked example and exercise asserts with zero errors, or score $\\ge 80\\%$ on the Skip test below."},
 {"t":"h","l":3,"x":"Skip test"},

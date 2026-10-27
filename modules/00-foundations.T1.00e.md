@@ -37,6 +37,8 @@ plant: tier1_arm_motor
 Before Step 1.1 (`00-foundations.T1.01`) compares numerical integration stability on an oscillating joint, you must connect physical push (force and torque), inertia (mass and rotational inertia), and stored energy (kinetic and spring potential energy) inside a discrete time-stepping loop. This final Level -1 module turns Newton's Second Law and Hooke's spring law into a 15-line Python simulation whose energy balance you can audit at every step. Already know this? Take the Skip test or Gate test in section 7 first.
 
 ## 2. Intuition first
+<!-- figure: motion-chain | Position, velocity and acceleration are one quantity read at three rates of change. -->
+
 Attach a heavy wheeled cart to a wall with a coil spring, pull the cart back by $10\text{ cm}$, and let go. At the moment of release, the cart is motionless, so all the energy you put in is stored in the stretched spring coils. The spring pulls the cart toward the wall: force causes acceleration, acceleration builds up velocity, and velocity moves the cart's position. By the time the cart passes the unstretched center mark, the spring force is zero, yet the cart is moving at peak speed—all of the spring's stored energy has sloshed into the moving mass's momentum, which then compresses the spring on the other side.
 
 ## 3. Formalization

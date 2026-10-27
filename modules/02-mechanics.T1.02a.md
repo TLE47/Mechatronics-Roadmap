@@ -36,6 +36,9 @@ plant: tier1_arm_motor
 This is the bridge module before Step 1.3 (`02-mechanics.T1.03`). Before sizing a robot arm motor or computing $N^2$ reflected inertia in Step 1.3, you need to isolate a link in a **Free-Body Diagram (FBD)**, calculate how gravity torque varies with shoulder angle ($\tau_g = m g L_{\text{com}} \cos\theta$), and understand how a gearbox or timing belt trades speed for torque while conserving mechanical power ($P = \tau \omega$). Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 
 ## 2. Intuition first
+
+<!-- figure: torque-vs-angle | Gravity torque is a cosine: largest with the link horizontal, zero with it vertical. -->
+
 Hold a heavy dumbbell straight out at shoulder height ($\theta = 0\text{ rad}$ horizontal): your shoulder muscles burn because gravity acts at the full horizontal lever arm $L\cos(0) = L$. Now raise your arm straight overhead ($\theta = \pi/2\text{ rad}$ vertical): the dumbbell rests directly over your shoulder pivot with zero horizontal lever arm ($L\cos(\pi/2) = 0$), requiring zero holding torque! Drawing a **Free-Body Diagram (FBD)** means cutting the link free from the rest of the world and drawing arrows for every force and torque acting on it so nothing is forgotten. And a **gearbox** with ratio $N:1$ acts as a rotary lever: much like a $10\times$ crowbar moves your hand $10\times$ farther to multiply force by $10\times$, an $N:1$ gear reducer spins the motor shaft $N$ times faster than the output joint while multiplying output torque by $N\times$.
 
 ## 3. Formalization

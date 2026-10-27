@@ -37,6 +37,8 @@ plant: tier1_arm_motor
 A motor winding is a resistor and an inductor in series, and at $1\,\text{krad/s}$ the inductor's opposition is not a number you can add to the resistor's - it is $90^\circ$ out of phase with it. Write both as one complex number and the arithmetic becomes trivial: magnitudes form a hypotenuse, angles add, and a current loop's PI gains have something to be tuned against. The same ratio, read across frequency, is the **Bode plot** that tells you where a joint resonates, how much it lags, and whether a filter will make it worse. Already know this? Take the Skip test in section 7 first.
 
 ## 2. Intuition first
+<!-- figure: bode-margins | Decibels are a ratio in a readable unit; the crossover and the phase there are what the rest of the page computes. -->
+
 Tap a bell and it rings at its own frequency; tap it faster than it can respond and it barely moves. A transfer function is the ratio of how hard you tapped to how far it moved, at each frequency - and it is a complex number because the bell does not move in step with your hand. Plotted as magnitude in decibels on a log frequency axis, a joint's response is flat, then peaks sharply at its resonance, then rolls off; plotted as phase, it slides from $0^\circ$ through $-90^\circ$ to nearly $-180^\circ$. The two curves are the same complex number read two ways, which is why one measurement gives both.
 
 ## 3. Formalization

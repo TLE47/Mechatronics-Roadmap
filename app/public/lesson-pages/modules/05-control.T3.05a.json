@@ -1,7 +1,8 @@
-{"v":1,"path":"modules/05-control.T3.05a.md","title":"Joseph-Form Covariance Update, Suboptimal Kalman Gains & NEES Consistency","blocks":[
+{"v":4,"path":"modules/05-control.T3.05a.md","title":"Joseph-Form Covariance Update, Suboptimal Kalman Gains & NEES Consistency","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"A propagating covariance matrix decides how much a filter trusts its own model, and in 32-bit `float` the textbook update $P^+ = (I - KH)P^-$ can hand back a **negative variance** - a state no real sensor can produce. The Joseph form rewrites the same algebra as a sum of two squares, so symmetry and positive semi-definiteness survive roundoff and even a wrong gain. This is the first of the three Track 05 Tier 3 bridges: it fixes the covariance, Step `05-control.T3.05b` fixes the attitude injection, and `05-control.T3.05c` builds the safety filter. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
+{"t":"figure","id":"kalman-step","caption":"One update, in order: predict the state and its covariance, then correct both with the measurement."},
 {"t":"p","x":"A Kalman update is a weighted average: the prior says \"I think $4.0$\", the sensor says \"I measured $1.0$ with noise $1.0$\", and the gain decides how far to move. Subtract weighted numbers carelessly - especially with a gain someone else chose - and the \"uncertainty\" can come out below zero, which is like reporting a negative width for a ruler. The Joseph form avoids the subtraction entirely: it writes the answer as \"the part of the prior you kept, squared\" plus \"the part of the measurement you used, squared\". Squares cannot be negative, so the answer cannot either, no matter how bad the gain is."},
 {"t":"h","l":2,"x":"3. Formalization"},
 {"t":"ol","items":[{"x":"**Optimal Scalar Gain:** For prior variance $P^-$ (unit$^2$), measurement Jacobian $H$ (unitless for a direct measurement), and measurement noise variance $R$ (unit$^2$), the minimum-variance gain is:","d":0}]},
@@ -59,6 +60,7 @@
 {"t":"p","x":"Pass/fail verification in simulation: `P_plus == 0.80`, `joseph_bad == 3.25` where `naive_bad == -2.0`, and `NEES == 1.0`."},
 {"t":"h","l":3,"x":"Safety notes"},
 {"t":"quote","x":"**No hardware required (`safety_level: none`):** every number here is computed from the plant's model in the browser; nothing is energised."},
+{"t":"route","steps":["05-control.T3.05a: joseph stabilized covariance update","Suboptimal gain stays positive","NEES consistency","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: run the worked example and the exercise asserts clean, or score $\\ge 80\\%$ ($4/5$) on the Skip test below and $\\ge 80\\%$ ($5/6$) on the ladder's Gate test."},
 {"t":"h","l":3,"x":"Skip test"},

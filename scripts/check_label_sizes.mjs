@@ -22,12 +22,15 @@
  *    13 px or larger.
  * 4. **Reading text is reading size.** The lesson pane's paragraphs measure 17–18 px, and metadata
  *    (the status lines, counters and captions) is never smaller than 11 px.
+ * 5. **Home is measured too.** Home is a whole page rather than a tab, and it is where a returning
+ *    learner starts: its controls and metadata are held to the same 12 px / 11 px floors, while the
+ *    row, fold and lesson-paragraph rules stay the runner's own.
  *
  * The numbers are a floor, not a style guide: the gate fails a regression in legibility, and says
  * which testid and which computed size so the fix is a CSS change rather than an investigation.
  *
  * Usage
- *     npm run check:labels                 # the measurement; exit 1 on a violation
+ *     npm run check:labels                 # the measurement, runner then Home; exit 1 on a violation
  *     npm run check:labels -- --json        # machine-readable, stdout only
  *     npm run check:labels -- --verbose     # every measured control and metadata row
  *
@@ -146,6 +149,10 @@ function measure({ primary, folded }) {
     }
     if (element.matches(CONTROLS)) continue;
     if (['SCRIPT', 'STYLE', 'CODE', 'PRE', 'svg', 'SVG'].includes(element.tagName)) continue;
+    // Labels inside a drawing are part of the picture, not the page's type: their size is set in the
+    // figure's own viewBox and scales with it, and `test:visuals` is the gate that reads them. A
+    // lesson's plotted values are text at 10–10.5 px in SVG and are not a 10.5 px caption.
+    if (element.closest('svg')) continue;
     const own = [...element.childNodes]
       .filter((node) => node.nodeType === Node.TEXT_NODE)
       .map((node) => node.textContent ?? '')
@@ -291,7 +298,20 @@ async function main() {
       );
     }
 
-    const findings = [...violations(rest, false), ...violations(open, true)];
+    // Home is a whole page of its own: the row contract is the runner's, but the type floor is not.
+    // Home is where a returning learner starts, so its counters and buttons are measured here too —
+    // otherwise its 10.5 px labels would be the smallest type in the app with no gate looking at it.
+    await page.goto(`${baseUrl}?view=home`, { waitUntil: 'load' });
+    await page.getByTestId('home-dashboard').waitFor({ timeout: 30000 });
+    await page.evaluate(async () => {
+      await document.fonts?.ready;
+      return true;
+    });
+    await page.waitForTimeout(400);
+    const home = await page.evaluate(measure, { primary: [], folded: [] });
+    const homeFindings = violations(home, false).map((finding) => ({ ...finding, when: 'Home' }));
+
+    const findings = [...violations(rest, false), ...violations(open, true), ...homeFindings];
     const report = {
       viewport: VIEWPORT,
       palette: PALETTE,
@@ -304,6 +324,7 @@ async function main() {
       at_rest: { controls: rest.rowControls.length, max: ROW_MAX_CONTROLS },
       folded: { expected: FOLDED.length, revealed: open.foldedVisible.length },
       reading: open.reading,
+      home: { controls: home.controls.length, metadata: home.metadata.length },
       violations: findings,
       contract,
     };
@@ -314,7 +335,8 @@ async function main() {
       log(
         `  row at rest: ${rest.rowControls.length}/${ROW_MAX_CONTROLS} controls · More reveals ` +
           `${open.foldedVisible.length}/${FOLDED.length}` +
-          (open.reading ? ` · lesson text ${open.reading.size} px` : ' · lesson text missing')
+          (open.reading ? ` · lesson text ${open.reading.size} px` : ' · lesson text missing') +
+          ` · Home ${home.controls.length} controls, ${home.metadata.length} metadata rows`
       );
       if (VERBOSE) {
         for (const row of [...rest.rowControls, ...open.controls]) {
@@ -351,7 +373,8 @@ async function main() {
     } else if (!JSON_OUT) {
       log(
         `[PASS] Labels: ${rest.rowControls.length} controls at rest, ${open.foldedVisible.length} behind More, ` +
-          `${open.metadata.length} metadata rows; every size meets §3's floor at ` +
+          `${open.metadata.length} metadata rows, and Home's ${home.controls.length} controls and ` +
+          `${home.metadata.length} metadata rows; every size meets §3's floor at ` +
           `${VIEWPORT.width}×${VIEWPORT.height}.`
       );
     }

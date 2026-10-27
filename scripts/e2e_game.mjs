@@ -107,8 +107,25 @@ async function main() {
       const page = await context.newPage();
       const pageErrors = [];
       page.on('pageerror', (error) => pageErrors.push(error.message));
+      // Home replaced the old `dashboard` route; `?view=dashboard` stays an alias so this bookmark-shaped
+      // link still lands on the same page.
       await page.goto(`${baseUrl}?view=dashboard`, { waitUntil: 'domcontentloaded' });
-      await page.getByTestId('learner-dashboard').waitFor({ timeout: 30000 });
+      await page.getByTestId('home-dashboard').waitFor({ timeout: 30000 });
+      assert.equal(
+        await page.getByTestId('home-today').isVisible(),
+        true,
+        'Home must open with today’s one check on screen'
+      );
+      assert.match(
+        (await page.getByTestId('home-today-checks').textContent()) ?? '',
+        /\d+ of \d+ checks/,
+        'Today must count the checks of the mission it is measuring'
+      );
+      assert.equal(
+        await page.getByTestId('btn-home-start').isEnabled(),
+        true,
+        'the one next thing must always be a live door'
+      );
 
       const level = (await page.getByTestId('level-bar-level').textContent())?.trim();
       assert.equal(level, 'LV 1', `expected LV 1 after Mission 1, got ${level}`);
@@ -170,7 +187,7 @@ async function main() {
       );
       console.log('  ok the Black Box opens what was earned and says what unlocks the rest');
 
-      assert.deepEqual(pageErrors, [], `the dashboard must not throw: ${pageErrors.join('; ')}`);
+      assert.deepEqual(pageErrors, [], `Home must not throw: ${pageErrors.join('; ')}`);
       await context.close();
     }
 

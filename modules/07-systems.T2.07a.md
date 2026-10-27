@@ -39,6 +39,9 @@ plant: tier1_arm_motor
 This is the dedicated Track 07 Tier 2 bridge module before Step 2.8 (`07-systems.T2.08`, the Tier 2 Boss Capstone). When your custom 4-layer $24\text{ V}/15\text{ A}$ CAN-FD servo (`01-electronics.T2.02` + `04-embedded.T2.05`) decelerates a heavy link or Furuta pendulum arm rapidly (`06-robotics.T2.07`), the motor acts as a generator and pumps kinetic energy back into the DC bus. Because bench power supplies have series output protection diodes and cannot sink reverse current, an unclamped stop from $30\text{ rad/s}$ spikes a $24\text{ V}$ bus above $160\text{ V}$ in milliseconds! Before running the Tier 2 Boss Capstone, you must size an **active hysteretic shunt brake chopper** (`MOSFET + power resistor`), protect every CAN-FD command frame with a **CRC-16 checksum, 4-bit rolling counter, and hardware Window Watchdog (`WWDG`) timeout**, and verify fault recovery via **Software/Hardware-in-the-Loop (SIL/HIL) fault injection**. Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 
 ## 2. Intuition first
+
+<!-- figure: brake-chopper | The chopper burns what the supply cannot sink. -->
+
 Three systems-engineering barriers separate a benchtop demo from an industrial-grade custom servo drive:
 - **Regenerative Braking & Active Shunt Brake Chopper:** When torque $\tau$ and velocity $\omega$ have opposite signs ($P_{\text{mech}} = \tau\omega < 0$), the motor converts mechanical kinetic energy $E_k = \frac{1}{2}J\omega_0^2$ into electrical charge on the DC bus capacitor $C_{\text{bus}}$. Without a return path, capacitor energy $\frac{1}{2}C_{\text{bus}}(V_{\text{peak}}^2 - V_{\text{nom}}^2) = \eta E_k$ forces $V_{\text{peak}}$ to skyrocket. An **active shunt brake chopper** places a low-side MOSFET + power resistor $R_{\text{brake}}$ across the DC bus: a hardware comparator or ADC watchdog turns the MOSFET ON whenever $V_{\text{bus}} \ge V_{\text{on}}$ (e.g. $27.5\text{ V}$) and OFF when $V_{\text{bus}} \le V_{\text{off}}$ ($25.5\text{ V}$), burning the regenerated kinetic energy safely as heat in $R_{\text{brake}}$!
 - **CAN-FD End-to-End Integrity (`CRC-16` + `4-Bit Rolling Counter` + `Window Watchdog`):** What if a loose connector freezes the last `MIT Mode` torque packet in a buffer (`stale data`), or EMI flips bits on the bus? Every command frame adds an application-layer **4-bit rolling counter** (`0..15` incrementing by $+1 \pmod{16}$ each tick) plus a **16-bit CRC**, monitored by a hardware **Window Watchdog (`WWDG`)** that trips to zero-torque damping if $> N_{\text{miss}}$ consecutive frames arrive late or corrupted.
@@ -282,6 +285,9 @@ print("elbow=%.3f rad/s | E_regen=%.4f J | wdg=%.4f s" % (dq, energy, 3 * plant.
 ```
 
 ### Break it on purpose
+
+<!-- figure: bring-up | Each state is a gate: the next one is not entered until its proof is in. -->
+
 Inject the `counter_plain_delta` fault and diagnose it from the frame log alone, keeping the $1\text{ kHz}$ command cadence:
 - **Inject:** compute the counter step as plain signed subtraction, `delta = curr_c - prev_c`, instead of modulo-16 arithmetic `(curr_c - prev_c) % 16` (the wrap bug in `## 8. Common mistakes`).
 - **Symptom:** the clean wrap $15 \to 0$ yields $-15$, which is `<= max_drop` in a naive `delta - 1 <= max_drop` test, so a perfectly healthy frame stream is reported as `WARN_DROPPED_-16`; with the guard written the other way it is reported as `FAULT_SEQ_JUMP` instead. Either way the fault appears once every $16\text{ ms}$ at $1\text{ kHz}$, i.e. $62.5$ times per second, so a drive that latches on any non-`OK` verdict trips continuously while the transmitter is behaving correctly.

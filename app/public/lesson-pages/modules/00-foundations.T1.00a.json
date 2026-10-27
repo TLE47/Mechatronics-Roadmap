@@ -1,7 +1,8 @@
-{"v":1,"path":"modules/00-foundations.T1.00a.md","title":"Running Python, Variables, Loops, Functions & Tracebacks","blocks":[
+{"v":4,"path":"modules/00-foundations.T1.00a.md","title":"Running Python, Variables, Loops, Functions & Tracebacks","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"Every robot trajectory simulator, sensor parser, and motor controller test in this roadmap starts as a runnable Python script before touching microcontroller C++ or physical actuators. Learning how variables store physical measurements, how loops step time forward, and how error tracebacks pinpoint bugs lets you test control ideas safely on your computer. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
+{"t":"figure","id":"toolchain","caption":"Every exercise on this page is the same four steps, and the check is the one that counts."},
 {"t":"p","x":"Picture a clipboard checklist beside a linear slider track with a ruler taped along its edge. At the top of the page you write the starting slider position in a box labeled Position, the push speed in a box labeled Speed, and the stopwatch click interval in a box labeled Step. Each time the stopwatch clicks, you look at your checklist, multiply Speed by Step, add that distance to the number inside the Position box, erase the old Position number, and write the new one in its place. A Python script is that exact checklist executed automatically from top to bottom: variables are the labeled boxes, a `while` or `for` loop is the repeated stopwatch click, a `def` function is a reusable recipe card, and a traceback is the line-number pointer Python prints when an instruction asks for something impossible like dividing by zero."},
 {"t":"h","l":2,"x":"3. Formalization"},
 {"t":"ol","items":[{"x":"**Variables and Assignment (`=`):** In Python, `pos_m = 0.0` stores the floating-point number $0.0\\text{ m}$ (position in meters) inside the variable `pos_m`. An update statement evaluates the right-hand side first and writes the result into the left-hand name:","d":0}]},
@@ -39,6 +40,7 @@
 {"t":"p","x":"No hardware required for this module (`hardware_required: false`). In Stage 0 (`L0.3`) and Track 04, the exact same `while` loop structure maps directly onto a microcontroller firmware loop:"},
 {"t":"code","lang":"text","text":"[PC Python Script: while pos_m < 1.0] ---> (USB Serial) ---> [MCU Timer Loop: pos_m += vel * dt]"},
 {"t":"p","x":"Pass/fail verification in simulation: `steps == 8`, `pos_m == 1.000 m`, and `caught == ZeroDivisionError`."},
+{"t":"route","steps":["00-foundations.T1.00a: python variables and types","for while loops and functions","traceback error reading","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: run the worked example and exercise asserts with zero errors, or score $\\ge 80\\%$ ($4/4$) on the Skip test below."},
 {"t":"h","l":3,"x":"Skip test"},

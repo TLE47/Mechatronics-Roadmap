@@ -441,7 +441,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                   Sync drafts and notes with this account
                   <span className="block text-[11px] text-muted">
                     Off by default. When two devices hold different versions, both are kept and listed on
-                    your dashboard.
+                    your Home.
                   </span>
                 </span>
               </label>
@@ -470,7 +470,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
               className="w-full bg-raise hover:bg-elevate text-ink text-sm font-semibold px-3 py-2 rounded-lg border border-line flex items-center justify-center gap-2 transition-colors cursor-pointer"
             >
               <LayoutDashboard className="w-4 h-4" />
-              Open my dashboard
+              Open my Home
             </button>
 
             {role === 'admin' && (

@@ -33,6 +33,8 @@ plant: tier1_arm_motor
 A propagating covariance matrix decides how much a filter trusts its own model, and in 32-bit `float` the textbook update $P^+ = (I - KH)P^-$ can hand back a **negative variance** - a state no real sensor can produce. The Joseph form rewrites the same algebra as a sum of two squares, so symmetry and positive semi-definiteness survive roundoff and even a wrong gain. This is the first of the three Track 05 Tier 3 bridges: it fixes the covariance, Step `05-control.T3.05b` fixes the attitude injection, and `05-control.T3.05c` builds the safety filter. Already know this? Take the Skip test in section 7 first.
 
 ## 2. Intuition first
+<!-- figure: kalman-step | One update, in order: predict the state and its covariance, then correct both with the measurement. -->
+
 A Kalman update is a weighted average: the prior says "I think $4.0$", the sensor says "I measured $1.0$ with noise $1.0$", and the gain decides how far to move. Subtract weighted numbers carelessly - especially with a gain someone else chose - and the "uncertainty" can come out below zero, which is like reporting a negative width for a ruler. The Joseph form avoids the subtraction entirely: it writes the answer as "the part of the prior you kept, squared" plus "the part of the measurement you used, squared". Squares cannot be negative, so the answer cannot either, no matter how bad the gain is.
 
 ## 3. Formalization

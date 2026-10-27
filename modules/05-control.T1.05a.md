@@ -37,6 +37,8 @@ plant: tier1_arm_motor
 This is the bridge module before Step 1.6 (`05-control.T1.06`). If you command a robot arm joint with a fixed PWM duty cycle (open-loop), gravity, friction, or payload changes will leave it far from the target angle. Closing a feedback loop around encoder error $e(t) = r(t) - y(t)$ turns the motor into a programmable mechanical spring, shock absorber, and gravity compensator (**PID control**)—and understanding actuator saturation explains why an unclamped integral term causes violent overshoot (**integrator windup**). Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 
 ## 2. Intuition first
+<!-- figure: control-loop | The whole lesson tunes these four arrows: measure, compare, correct, act. -->
+
 Imagine steering a car toward the center of a lane. **Open-loop control** is closing your eyes and holding the steering wheel at a fixed angle based on a map—the first crosswind blows you off the road. **Closed-loop control** is looking at your distance from the lane center (the **error** $e = r - y$) every millisecond:
 - **Proportional ($P$, virtual spring):** Pulls harder the farther you are from the target ($K_p e$). Alone, a strong spring overshoots and oscillates, and sags slightly under a steady crosswind or gravity load.
 - **Derivative ($D$, virtual viscous damper):** Pushes *against* velocity ($-K_d \dot{y}$), acting like an oil-filled shock absorber that brakes the joint as it approaches the target so it doesn't overshoot.

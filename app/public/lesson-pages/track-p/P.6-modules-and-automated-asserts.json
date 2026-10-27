@@ -1,10 +1,12 @@
-{"v":1,"path":"track-p/P.6-modules-and-automated-asserts.md","title":"Loading Modules (import) and Automated Self-Checks (assert)","blocks":[
+{"v":4,"path":"track-p/P.6-modules-and-automated-asserts.md","title":"Loading Modules (import) and Automated Self-Checks (assert)","blocks":[
 {"t":"h","l":2,"x":"Goal"},
 {"t":"p","x":"Load built-in math tools (`math.sqrt`, `math.pi`) using `import math`, and write automated self-checks (`assert`) so your code verifies its own calculations automatically."},
 {"t":"ul","items":[{"x":"**New ideas (max 2):**","d":0},{"x":"**Loading standard-library modules with `import`**: Using `import math` at the top of a script to unlock square roots (`math.sqrt`), $\\pi$ (`math.pi`), and trigonometry.","d":1},{"x":"**Automated self-checks with `assert`**: Writing `assert condition` so Python immediately flags an `AssertionError` if a function returns the wrong number.","d":1},{"x":"**New syntax:** `import math`, `math.sqrt(x)`, `round(val, digits)`, `assert condition`.","d":0},{"x":"**Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–3.0 hours","d":0}]},
 {"t":"h","l":2,"x":"Prerequisites"},
 {"t":"ul","items":[{"x":"[Lesson P.5: Reusable Functions (`def`/`return`) & `while` Loops](P.5-functions-and-while-loops.md)","d":0}]},
+{"t":"route","steps":["P.5: Functions & While Loops","P.6: Modules (import) & Automated Asserts","P.7: SI Units & Metric Prefixes"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"Learn"},
+{"t":"figure","id":"debug-loop","caption":"The assert turns a wrong answer into an address: run, read, change one thing, run again."},
 {"t":"h","l":3,"x":"Idea 1: Loading standard-library modules with `import`"},
 {"t":"ul","items":[{"x":"**Primary resource:** [Harvard CS50P Lecture 4 Notes](https://cs50.harvard.edu/python/2022/notes/4/) `[HTTP 200 — Verified by scripts/check_links.py]`","d":0},{"x":"**What to read:** Read exact headings **`Libraries`** and **`Random`** (see how `import` loads a module at the top of a file and calls functions using dot notation `module.func()`).","d":1},{"x":"**What to skip:** Skip **`Command-Line Arguments`**, **`slice`**, **`Packages`**, and **`APIs`**.","d":1},{"x":"**Key takeaway:** Python keeps specialized tools organized inside built-in **modules** (libraries). Writing `import math` at the top of your script loads the `math` module so you can call `math.sqrt(25.0)` ($\\sqrt{25} = 5.0$) or use the constant `math.pi` ($\\pi \\approx 3.14159265$).","d":1}]},
 {"t":"h","l":3,"x":"Idea 2: Automated self-checks with `assert`"},

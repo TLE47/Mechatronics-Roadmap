@@ -44,6 +44,8 @@ flowchart LR
 
 ## Learn
 
+<!-- figure: motion-chain | Accumulating a rate recovers the quantity, one tick at a time, with the error accumulating too. -->
+
 ### Idea 1: Accumulation as area: adding each rate times its time step, and the starting value it needs
 - **Primary resource:** [Wikipedia — Integral](https://en.wikipedia.org/wiki/Integral)
   - **What to read:** The lead section and the `Riemann integral` subsection — the sum of rectangle areas as the number of rectangles grows.

@@ -34,6 +34,9 @@ plant: tier1_arm_motor
 To achieve the Graduate Goal—deploying a learned visuomotor or proprioceptive policy (`LeRobot`, `ACT`, `Diffusion Policy`, `π₀`) on your robot arm in Step 3.7 (`06-robotics.T3.07`)—you first need a crystal-clear understanding of how a neural policy maps robot observations $o_t = [q_t, \dot{q}_t, x_{\text{goal}}]^\top$ to action targets $a_t$, how **automatic differentiation (`autograd` / backpropagation)** computes the exact gradient $\nabla_\theta \mathcal{L}$ of a loss function using the chain rule, and how **Behavior Cloning (BC)** trains a policy by imitating expert demonstrations. Already know this? Take the Skip test in section 7 first.
 
 ## 2. Intuition first
+
+<!-- figure: autograd-graph | The forward pass builds the chain the backward pass walks. -->
+
 Think of a neural network policy $\pi_\theta(o_t)$ as a multi-stage signal conditioner made of tunable gain matrices $W_1, W_2$ and smooth nonlinear saturation curves ($\tanh$ or $\text{ReLU}$). In **Behavior Cloning (imitation learning)**, you teleoperate the robot arm (or run an expert trajectory generator) to record a dataset of $(o_t, a_t^{*})$ pairs: "When the arm was at state $o_t$, the expert commanded action $a_t^{*}$." Next, we feed $o_t$ through the network (**forward pass**), measure the squared discrepancy $\mathcal{L} = \frac{1}{N}\sum \|\pi_\theta(o_t) - a_t^*\|^2$ (**Mean-Squared Error loss**), and ask: "Which way should we nudge each weight in $W_1$ and $W_2$ to shrink $\mathcal{L}$?" **Backpropagation (`autograd`)** applies the calculus chain rule applied backward from the output error to each layer's weights, and **gradient descent** ($\theta \leftarrow \theta - \eta \nabla_\theta \mathcal{L}$) steps the weights downhill until the policy reproduces the expert's smooth motion!
 
 ## 3. Formalization

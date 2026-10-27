@@ -1,7 +1,8 @@
-{"v":1,"path":"modules/05-control.T3.05c.md","title":"Control Barrier Functions, Forward Invariance & the 1D CBF-QP Safety Filter","blocks":[
+{"v":4,"path":"modules/05-control.T3.05c.md","title":"Control Barrier Functions, Forward Invariance & the 1D CBF-QP Safety Filter","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"A controller that is fast and correct in free space can still drive a joint through its hard stop, because nothing in an LQR cost knows where the stop is. A **Control Barrier Function** turns \"stay inside the safe set\" into one linear inequality on the command, and the **CBF-QP** projects the nominal command onto it - minimally, so tracking is untouched until the constraint actually binds. This is the last of the three Track 05 Tier 3 bridges: `05-control.T3.05a` fixed the covariance, `05-control.T3.05b` fixed the injection, and this module adds the safety layer that runs between the nominal controller and the torque loop. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
+{"t":"figure","id":"safety-filter","caption":"The filter returns the largest command that stays inside the safe set."},
 {"t":"p","x":"A guardrail at the edge of a road does not steer the car all the time; it only matters when you drift into it, and then it pushes exactly as hard as needed and no harder. That \"only as hard as needed\" is what **minimally invasive** means: when the nominal command already stays clear of the rail, the filter hands it back unchanged. The second half of the idea is **braking distance**: a heavy joint that is already moving cannot stop instantly, so the barrier must be applied to the margin you still have, not to zero."},
 {"t":"h","l":2,"x":"3. Formalization"},
 {"t":"ol","items":[{"x":"**Safe Set and Barrier Function:** for a state $x$ and constraint $x \\le x_{\\max}$, define","d":0}]},
@@ -54,6 +55,7 @@
 {"t":"p","x":"Pass/fail verification in simulation: `u_safe == 0.20`, `u_ex == 0.80`, `retreat == -0.40`, and `h_min == 0.073576` at $0.50\\,\\text{s}$."},
 {"t":"h","l":3,"x":"Safety notes"},
 {"t":"quote","x":"**No hardware required (`safety_level: none`):** the filter is exercised on the plant's model in the browser. On a real joint the same inequality is the last software layer before the torque clamp, so it is never the only safeguard."},
+{"t":"route","steps":["05-control.T3.05c: control barrier forward invariance qp","Safe set h(x) >= 0","CBF condition hdot >= -alpha h","Projection onto the safe half-space","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: run the worked example and the exercise asserts clean, or score $\\ge 80\\%$ ($4/5$) on the Skip test below."},
 {"t":"h","l":3,"x":"Skip test"},

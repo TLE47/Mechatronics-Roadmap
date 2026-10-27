@@ -1,7 +1,8 @@
-{"v":1,"path":"modules/00-foundations.T1.00e.md","title":"Position, Velocity, Acceleration, Force, Mass, Energy & Torque in a Loop","blocks":[
+{"v":4,"path":"modules/00-foundations.T1.00e.md","title":"Position, Velocity, Acceleration, Force, Mass, Energy & Torque in a Loop","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"Before Step 1.1 (`00-foundations.T1.01`) compares numerical integration stability on an oscillating joint, you must connect physical push (force and torque), inertia (mass and rotational inertia), and stored energy (kinetic and spring potential energy) inside a discrete time-stepping loop. This final Level -1 module turns Newton's Second Law and Hooke's spring law into a 15-line Python simulation whose energy balance you can audit at every step. Already know this? Take the Skip test or Gate test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},
+{"t":"figure","id":"motion-chain","caption":"Position, velocity and acceleration are one quantity read at three rates of change."},
 {"t":"p","x":"Attach a heavy wheeled cart to a wall with a coil spring, pull the cart back by $10\\text{ cm}$, and let go. At the moment of release, the cart is motionless, so all the energy you put in is stored in the stretched spring coils. The spring pulls the cart toward the wall: force causes acceleration, acceleration builds up velocity, and velocity moves the cart's position. By the time the cart passes the unstretched center mark, the spring force is zero, yet the cart is moving at peak speed—all of the spring's stored energy has sloshed into the moving mass's momentum, which then compresses the spring on the other side."},
 {"t":"h","l":2,"x":"3. Formalization"},
 {"t":"ol","items":[{"x":"**Newton's Second Law and Hooke's Spring Law:** A cart of mass $m$ in kilograms ($\\text{kg}$) at displacement $x$ in meters ($\\text{m}$) pulled by a linear spring of stiffness $k$ in newtons per meter ($\\text{N/m}$) experiences net restoring force $F_{\\text{net}}$ in newtons ($\\text{N}$) and acceleration $a$ in $\\text{m/s}^2$:","d":0}]},
@@ -42,6 +43,7 @@
 {"t":"p","x":"No hardware required for this module (`hardware_required: false`). In Track 05 (`Step 1.6`), a closed-loop PD motor controller creates this exact spring-damper behavior electronically:"},
 {"t":"code","lang":"text","text":"[Encoder Angle x, Velocity v] ---> [MCU: tau = -Kp*x - Kd*v] ---> [Motor Torque = Virtual Spring + Damper]"},
 {"t":"p","x":"Pass/fail verification in simulation: `E_init == 0.2500 J`, `E_final == 0.2500 J`, and `v_peak == 0.5000 m/s`."},
+{"t":"route","steps":["00-foundations.T1.00e: discrete kinematics pos vel acc","newtons second law and torque","spring energy and power","Verified Simulation & Checkpoint Pass"],"caption":"Each box is a checkpoint in order; the last one is the verified pass this page ends on."},
 {"t":"h","l":2,"x":"7. Checkpoint"},
 {"t":"p","x":"Pass criteria: complete the Skip test ($\\ge 80\\%$) to pass this module, or pass the 8-question Gate test ($\\ge 80\\%$) to test out of the entire Level -1 ladder (`00a`–`00e`)."},
 {"t":"h","l":3,"x":"Skip test"},

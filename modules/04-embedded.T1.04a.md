@@ -37,6 +37,9 @@ plant: tier1_arm_motor
 Python integers grow arbitrarily large and never overflow, but microcontroller C/C++ variables occupy a fixed number of bits (`uint8_t`, `int16_t`, `uint32_t`, `float`) in hardware registers. Before writing real-time timer interrupts and binary serial telemetry in Step 1.5 (`04-embedded.T1.05`), you must know how fixed-width integers wrap around, how bitwise masks (`|`, `&`, `~`, `<<`) flip single register bits without corrupting neighbors, and how `struct` pointers pass data with zero copy overhead. Already know this? Take the Skip test in section 7 first.
 
 ## 2. Intuition first
+
+<!-- figure: uint8-wrap | Eight bits have no 256th state: the carry falls off the top. -->
+
 When you transition from desktop Python to microcontroller firmware, you first meet the **Arduino / Wiring execution model** (`void setup()` runs once at power-on to configure pins with `pinMode(pin, OUTPUT)`; `void loop()` repeats forever calling `digitalWrite(pin, HIGH)` or `analogWrite(pin, pwm)`). Imagine moving from an infinite notepad (Python) to a mechanical odometer with only four digit wheels (`uint16_t`, which holds `0` to `65535`). If your odometer is at `65535` and clicks forward by `1`, it doesn't add a fifth wheel—it wraps cleanly back to `0` (**integer wrap-around**). Next, when packing status flags or configuration bits into an 8-bit or 32-bit C integer, think of that integer as a row of individual toggle switches: you use a **bitwise stencil (mask)** `1U << n` with bitwise OR (`|`), AND (`&`), and NOT (`~`) to set, clear, or test one flag bit without disturbing its neighbors. Finally, a C **`struct`** is a molded tray that holds several related variables side-by-side in memory, and a **pointer** (`*`) passes the address of that tray on a sticky note instead of copying the entire tray on every function call.
 
 ## 3. Formalization
