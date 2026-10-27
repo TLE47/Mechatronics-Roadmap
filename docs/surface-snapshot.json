@@ -47,7 +47,7 @@
         ]
       },
       "counts": {
-        "buttons": 125,
+        "buttons": 126,
         "inputs": 4,
         "links": 31,
         "headings": 16,
@@ -127,7 +127,7 @@
         ]
       },
       "counts": {
-        "buttons": 162,
+        "buttons": 163,
         "inputs": 3,
         "links": 13,
         "headings": 18,
@@ -207,7 +207,7 @@
         ]
       },
       "counts": {
-        "buttons": 61,
+        "buttons": 62,
         "inputs": 1,
         "links": 4,
         "headings": 9,
@@ -287,7 +287,7 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 6,
         "links": 4,
         "headings": 3,
@@ -367,7 +367,7 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -447,7 +447,7 @@
         ]
       },
       "counts": {
-        "buttons": 43,
+        "buttons": 44,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -527,7 +527,7 @@
         ]
       },
       "counts": {
-        "buttons": 47,
+        "buttons": 48,
         "inputs": 4,
         "links": 4,
         "headings": 4,
@@ -607,7 +607,7 @@
         ]
       },
       "counts": {
-        "buttons": 43,
+        "buttons": 44,
         "inputs": 6,
         "links": 4,
         "headings": 4,
@@ -687,7 +687,7 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -767,7 +767,7 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -847,7 +847,7 @@
         ]
       },
       "counts": {
-        "buttons": 35,
+        "buttons": 36,
         "inputs": 3,
         "links": 5,
         "headings": 3,
@@ -927,7 +927,7 @@
         ]
       },
       "counts": {
-        "buttons": 32,
+        "buttons": 33,
         "inputs": 1,
         "links": 6,
         "headings": 4,
@@ -980,17 +980,17 @@
           0,
           61,
           1440,
-          3494
+          3495
         ],
         "panel": [
           208,
           61,
           1024,
-          3494
+          3495
         ],
         "footer": [
           0,
-          3554,
+          3556,
           1440,
           43
         ],
@@ -998,11 +998,11 @@
           0,
           0,
           1440,
-          3598
+          3599
         ]
       },
       "counts": {
-        "buttons": 71,
+        "buttons": 72,
         "inputs": 4,
         "links": 3,
         "headings": 11,
@@ -1082,7 +1082,7 @@
         ]
       },
       "counts": {
-        "buttons": 125,
+        "buttons": 126,
         "inputs": 4,
         "links": 31,
         "headings": 16,
@@ -1162,7 +1162,7 @@
         ]
       },
       "counts": {
-        "buttons": 162,
+        "buttons": 163,
         "inputs": 3,
         "links": 13,
         "headings": 18,
@@ -1242,7 +1242,7 @@
         ]
       },
       "counts": {
-        "buttons": 61,
+        "buttons": 62,
         "inputs": 1,
         "links": 4,
         "headings": 9,
@@ -1322,7 +1322,7 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 6,
         "links": 4,
         "headings": 3,
@@ -1402,7 +1402,7 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -1482,7 +1482,7 @@
         ]
       },
       "counts": {
-        "buttons": 43,
+        "buttons": 44,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -1562,7 +1562,7 @@
         ]
       },
       "counts": {
-        "buttons": 47,
+        "buttons": 48,
         "inputs": 4,
         "links": 4,
         "headings": 4,
@@ -1642,7 +1642,7 @@
         ]
       },
       "counts": {
-        "buttons": 43,
+        "buttons": 44,
         "inputs": 6,
         "links": 4,
         "headings": 4,
@@ -1722,7 +1722,7 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -1802,7 +1802,7 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -1882,7 +1882,7 @@
         ]
       },
       "counts": {
-        "buttons": 35,
+        "buttons": 36,
         "inputs": 3,
         "links": 5,
         "headings": 3,
@@ -1962,7 +1962,7 @@
         ]
       },
       "counts": {
-        "buttons": 32,
+        "buttons": 33,
         "inputs": 1,
         "links": 6,
         "headings": 4,
@@ -2015,17 +2015,17 @@
           0,
           61,
           1440,
-          3494
+          3495
         ],
         "panel": [
           208,
           61,
           1024,
-          3494
+          3495
         ],
         "footer": [
           0,
-          3554,
+          3556,
           1440,
           43
         ],
@@ -2033,11 +2033,11 @@
           0,
           0,
           1440,
-          3598
+          3599
         ]
       },
       "counts": {
-        "buttons": 71,
+        "buttons": 72,
         "inputs": 4,
         "links": 3,
         "headings": 11,
@@ -2117,7 +2117,7 @@
         ]
       },
       "counts": {
-        "buttons": 125,
+        "buttons": 126,
         "inputs": 4,
         "links": 31,
         "headings": 16,
@@ -2197,7 +2197,7 @@
         ]
       },
       "counts": {
-        "buttons": 162,
+        "buttons": 163,
         "inputs": 3,
         "links": 13,
         "headings": 18,
@@ -2277,7 +2277,7 @@
         ]
       },
       "counts": {
-        "buttons": 61,
+        "buttons": 62,
         "inputs": 1,
         "links": 4,
         "headings": 9,
@@ -2357,7 +2357,7 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 6,
         "links": 4,
         "headings": 3,
@@ -2437,7 +2437,7 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -2517,7 +2517,7 @@
         ]
       },
       "counts": {
-        "buttons": 43,
+        "buttons": 44,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -2597,7 +2597,7 @@
         ]
       },
       "counts": {
-        "buttons": 47,
+        "buttons": 48,
         "inputs": 4,
         "links": 4,
         "headings": 4,
@@ -2677,7 +2677,7 @@
         ]
       },
       "counts": {
-        "buttons": 43,
+        "buttons": 44,
         "inputs": 6,
         "links": 4,
         "headings": 4,
@@ -2757,7 +2757,7 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -2837,7 +2837,7 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -2917,7 +2917,7 @@
         ]
       },
       "counts": {
-        "buttons": 35,
+        "buttons": 36,
         "inputs": 3,
         "links": 5,
         "headings": 3,
@@ -2997,7 +2997,7 @@
         ]
       },
       "counts": {
-        "buttons": 32,
+        "buttons": 33,
         "inputs": 1,
         "links": 6,
         "headings": 4,
@@ -3050,17 +3050,17 @@
           0,
           61,
           1440,
-          3494
+          3495
         ],
         "panel": [
           208,
           61,
           1024,
-          3494
+          3495
         ],
         "footer": [
           0,
-          3554,
+          3556,
           1440,
           43
         ],
@@ -3068,11 +3068,11 @@
           0,
           0,
           1440,
-          3598
+          3599
         ]
       },
       "counts": {
-        "buttons": 71,
+        "buttons": 72,
         "inputs": 4,
         "links": 3,
         "headings": 11,
@@ -3152,7 +3152,7 @@
         ]
       },
       "counts": {
-        "buttons": 125,
+        "buttons": 126,
         "inputs": 4,
         "links": 31,
         "headings": 16,
@@ -3232,7 +3232,7 @@
         ]
       },
       "counts": {
-        "buttons": 162,
+        "buttons": 163,
         "inputs": 3,
         "links": 13,
         "headings": 18,
@@ -3312,7 +3312,7 @@
         ]
       },
       "counts": {
-        "buttons": 61,
+        "buttons": 62,
         "inputs": 1,
         "links": 4,
         "headings": 9,
@@ -3392,7 +3392,7 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 6,
         "links": 4,
         "headings": 3,
@@ -3472,7 +3472,7 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -3552,7 +3552,7 @@
         ]
       },
       "counts": {
-        "buttons": 43,
+        "buttons": 44,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -3632,7 +3632,7 @@
         ]
       },
       "counts": {
-        "buttons": 47,
+        "buttons": 48,
         "inputs": 4,
         "links": 4,
         "headings": 4,
@@ -3712,7 +3712,7 @@
         ]
       },
       "counts": {
-        "buttons": 43,
+        "buttons": 44,
         "inputs": 6,
         "links": 4,
         "headings": 4,
@@ -3792,7 +3792,7 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -3872,7 +3872,7 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 45,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -3952,7 +3952,7 @@
         ]
       },
       "counts": {
-        "buttons": 35,
+        "buttons": 36,
         "inputs": 3,
         "links": 5,
         "headings": 3,
@@ -4032,7 +4032,7 @@
         ]
       },
       "counts": {
-        "buttons": 32,
+        "buttons": 33,
         "inputs": 1,
         "links": 6,
         "headings": 4,
@@ -4085,17 +4085,17 @@
           0,
           61,
           1440,
-          3494
+          3495
         ],
         "panel": [
           208,
           61,
           1024,
-          3494
+          3495
         ],
         "footer": [
           0,
-          3554,
+          3556,
           1440,
           43
         ],
@@ -4103,11 +4103,11 @@
           0,
           0,
           1440,
-          3598
+          3599
         ]
       },
       "counts": {
-        "buttons": 71,
+        "buttons": 72,
         "inputs": 4,
         "links": 3,
         "headings": 11,
