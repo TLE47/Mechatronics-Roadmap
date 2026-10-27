@@ -16,6 +16,29 @@ flowchart LR
 
 ---
 
+## [2026-10-27] — Run 258: the header, in three trays
+
+The action row had grown to thirteen identically bordered buttons — Home, Search, three palettes,
+Sound, Focus, four exports, backup and restore, the cheat sheet, and a decorative compass — which
+made the one control that carries state, the account button, indistinguishable from the printer
+beside it. It is now three groups and one chip ([`app/src/components/Header.tsx`](app/src/components/Header.tsx)):
+**Navigate** (Home, and Search with its `⌘K`), **Appearance and sound** (the theme flip, contrast,
+paper, Sound and Focus — each a real on/off whose pressed state is an accent wash inside the tray),
+and **Export and backup** (the learning log, `BackupControls`' pair, Export Progress and the cheat
+sheet). The frame belongs to the tray — `.action-tray` in [`app/src/index.css`](app/src/index.css)
+strips its children's borders — so a group reads as one surface rather than five peers, and the
+account button became a filled chip: accent avatar disc (the email's first letter when signed in),
+the email or **Sign in**, and a chevron that says a panel opens. The compass hint, which had no name
+and no action, is gone.
+
+Every test id, `aria-label`, title and shortcut is unchanged, so the suites that click them did not
+move. Verified: `tsc -b`; `npm run check:labels` (Home still 55 controls; the runner row still seven
+at rest and thirteen behind More); `npm run test:theme:e2e` (52 tab/theme pairs, lowest 4.82:1);
+`npm run check:axe` (12 tabs and Home × 4 themes, no serious or critical finding);
+`npm run check:snapshot` re-recorded and stable at 52 surfaces; `npm run test:workbench` 67/67.
+
+---
+
 ## [2026-10-26] — Run 257: Home, the page a return visit lands on
 
 A learner coming back had no front door: the workbench opened on Lesson 1 whether they had finished

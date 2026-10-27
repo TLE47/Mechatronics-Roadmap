@@ -603,3 +603,30 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/*
+ * Header action trays. Thirteen controls in one row compete for the same attention, so the row is
+ * three groups instead: the frame belongs to the tray and its children drop their own border, which
+ * is why a pressed state reads as one surface changing rather than a second outline inside the
+ * first. Appended after the layers so `.action-tray .btn` beats `.btn` without `!important`.
+ */
+.action-tray {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.18rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel-2) 72%, transparent);
+}
+.action-tray .btn {
+  border-color: transparent;
+  border-radius: 999px;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.8rem;
+  background: transparent;
+}
+.action-tray .btn:hover {
+  background: var(--panel-3);
+  border-color: transparent;
+}
