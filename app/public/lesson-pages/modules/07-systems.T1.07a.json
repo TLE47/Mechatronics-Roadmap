@@ -1,4 +1,4 @@
-{"v":4,"path":"modules/07-systems.T1.07a.md","title":"Industrial State Machines, Cyclic PLC Scan, E-Stop Chains & Sine-Sweep Gain/Phase","blocks":[
+{"v":5,"path":"modules/07-systems.T1.07a.md","title":"Industrial State Machines, Cyclic PLC Scan, E-Stop Chains & Sine-Sweep Gain/Phase","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"This is the bridge module before the Tier 1 Boss Capstone (`07-systems.T1.08`, Step 1.8). Integrating a multi-DOF robot into a workcell requires three system-level skills: structuring supervisory logic around a deterministic **Read-Inputs $\\to$ Execute-Logic $\\to$ Write-Outputs cyclic PLC scan**, wiring a fail-safe **Normally-Closed (NC) hardware Emergency-Stop chain** that cuts motor power even if a wire breaks or the CPU freezes, and measuring your assembled robot's empirical bandwidth via a **single-tone sine sweep**. Already know this? Read `### Safety notes` first, then take the Skip test or the Ladder Gate test in section 7."},
 {"t":"h","l":2,"x":"2. Intuition first"},

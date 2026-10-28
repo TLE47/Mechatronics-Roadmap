@@ -180,17 +180,26 @@ export function inlinePlain(text: string): string {
 }
 
 /**
- * One anchor per block: the heading's GitHub anchor, or null for every other block.
+ * The heading anchor of every heading in the page, keyed by the block itself.
  *
- * Aligned to the block list rather than returned as a map, because the renderer walks the blocks
- * once and needs the anchor at the same index. Repeated headings get `-1`, `-2` from
- * `sectionAnchors`, exactly as GitHub numbers them.
+ * A map rather than an array aligned to the top-level list: a `reveal` block owns headings of its
+ * own, and an index into the flat array stops meaning the right block the moment one nests. Keying
+ * by the block object is stable for the life of a payload, because the renderer walks that same
+ * object. Repeated headings get `-1`, `-2` from `sectionAnchors`, exactly as GitHub numbers them.
  */
-export function headingAnchors(blocks: ReaderBlock[]): (string | null)[] {
-  const headings = blocks.filter((block) => block.t === 'h').map((block) => inlinePlain(block.x));
-  const anchors = sectionAnchors(headings.map((h) => ({ h })));
-  let next = 0;
-  return blocks.map((block) => (block.t === 'h' ? anchors[next++] : null));
+export function headingAnchors(blocks: ReaderBlock[]): Map<ReaderBlock, string> {
+  const headings: Extract<ReaderBlock, { t: 'h' }>[] = [];
+  const walk = (list: ReaderBlock[]) => {
+    for (const block of list) {
+      if (block.t === 'h') headings.push(block);
+      else if (block.t === 'reveal') walk(block.blocks);
+    }
+  };
+  walk(blocks);
+  const anchors = sectionAnchors(headings.map((block) => ({ h: inlinePlain(block.x) })));
+  const map = new Map<ReaderBlock, string>();
+  headings.forEach((block, index) => map.set(block, anchors[index]));
+  return map;
 }
 
 /** A heading's anchor from its own text, for a link that knows the heading but not its page. */

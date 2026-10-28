@@ -31,19 +31,58 @@ export interface MarkPiece {
  * to right and, at each position, tries the longest quote first, so `the gain` inside `the gain term`
  * marks the longer phrase and the shorter one never produces a second, overlapping button. A quote
  * not found in this run contributes nothing; the caller keeps looking at the other runs.
+ *
+ * `loose` compares words rather than characters, so any run of whitespace in the text matches the
+ * single space a stored quote has. A code block needs it: `cleanQuote` collapses the newlines of a
+ * selected snippet, and a highlight of three lines would otherwise be stored and never drawn.
  */
-export function markQuotes(text: string, quotes: readonly string[]): MarkPiece[] {
+export function markQuotes(
+  text: string,
+  quotes: readonly string[],
+  options: { loose?: boolean } = {}
+): MarkPiece[] {
   if (!text) return [];
   const unique = [...new Set(quotes.map((quote) => quote.trim()).filter(Boolean))].sort(
     (a, b) => b.length - a.length
   );
   if (unique.length === 0) return [{ text, quote: null }];
 
+  // A quote is a phrase, not a regex: escape it, then let any whitespace run stand in for the one
+  // space `cleanQuote` left in it. A newline in the code is the same passage as that space. Sticky
+  // (`y`) so a match is tried at the cursor and nowhere else: no slicing, no second scan.
+  const matchers = unique.map((quote) => ({
+    quote,
+    pattern: options.loose
+      ? new RegExp(
+          quote
+            .split(/\s+/)
+            .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+            .join('\\s+'),
+          'y'
+        )
+      : null,
+  }));
+
   const pieces: MarkPiece[] = [];
   let plain = '';
   let index = 0;
   while (index < text.length) {
-    const hit = unique.find((quote) => text.startsWith(quote, index));
+    // The stored quote names the mark; the drawn characters are what the page holds, which may be a
+    // newline where the quote has a space. The click handler looks the note up by the stored quote.
+    let hit: { text: string; quote: string } | null = null;
+    for (const matcher of matchers) {
+      if (matcher.pattern) {
+        matcher.pattern.lastIndex = index;
+        const match = matcher.pattern.exec(text);
+        if (match) {
+          hit = { text: match[0], quote: matcher.quote };
+          break;
+        }
+      } else if (text.startsWith(matcher.quote, index)) {
+        hit = { text: matcher.quote, quote: matcher.quote };
+        break;
+      }
+    }
     if (!hit) {
       plain += text[index];
       index += 1;
@@ -53,8 +92,8 @@ export function markQuotes(text: string, quotes: readonly string[]): MarkPiece[]
       pieces.push({ text: plain, quote: null });
       plain = '';
     }
-    pieces.push({ text: hit, quote: hit });
-    index += hit.length;
+    pieces.push(hit);
+    index += hit.text.length;
   }
   if (plain) pieces.push({ text: plain, quote: null });
   return pieces.length > 0 ? pieces : [{ text, quote: null }];

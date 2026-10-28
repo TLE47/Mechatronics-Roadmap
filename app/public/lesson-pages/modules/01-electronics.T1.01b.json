@@ -1,4 +1,4 @@
-{"v":4,"path":"modules/01-electronics.T1.01b.md","title":"Low-Side MOSFET Switching, PWM Duty Cycle & H-Bridge Polarity Reversal","blocks":[
+{"v":5,"path":"modules/01-electronics.T1.01b.md","title":"Low-Side MOSFET Switching, PWM Duty Cycle & H-Bridge Polarity Reversal","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"This is the final bridge module in the Track 01 Tier 1 ladder before Step 1.2 (`01-electronics.T1.02`). A microcontroller GPIO pin can only source $\\sim 20\\text{ mA}$ at $3.3\\text{ V}$—connecting a motor directly to it destroys the pin immediately. Power MOSFETs act as voltage-controlled electronic switches that let a tiny $3.3\\text{ V}$ logic signal throttle amperes of motor current via **Pulse-Width Modulation (PWM)** and reverse direction via a 4-switch **H-Bridge**. Already know this? Read `### Safety notes` first, then take the Skip test or the Ladder Gate test in section 7."},
 {"t":"h","l":2,"x":"2. Intuition first"},

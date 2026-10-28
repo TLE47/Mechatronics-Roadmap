@@ -130,6 +130,78 @@ class FigureDirectives(unittest.TestCase):
         )
 
 
+class Reveals(unittest.TestCase):
+    """A `<details>` on the page is a collapse in the reader, not a paragraph with its tags stripped."""
+
+    def test_a_details_block_becomes_a_labelled_reveal(self):
+        blocks = pages.parse_blocks(
+            "### Hint Ladder\n\n"
+            "Text before.\n\n"
+            "<details>\n<summary><strong>Hint 1 (Concept nudge)</strong></summary>\n\n"
+            "Read the value first.\n"
+            "</details>\n"
+        )
+        reveals = [block for block in blocks if block["t"] == "reveal"]
+        self.assertEqual(len(reveals), 1, "expected the collapse to survive as a reveal block")
+        self.assertEqual(
+            reveals[0]["label"],
+            "Hint 1 (Concept nudge)",
+            "expected the summary's words as the label, with its <strong> stripped",
+        )
+        self.assertEqual(
+            reveals[0]["blocks"],
+            [{"t": "p", "x": "Read the value first."}],
+            "expected the body to be parsed as blocks, not printed as raw HTML",
+        )
+
+    def test_a_fenced_code_sample_stays_a_code_block_inside_the_reveal(self):
+        blocks = pages.parse_blocks(
+            "<details>\n<summary><strong>Full Solution</strong></summary>\n\n"
+            "```python\nencoder_ticks = encoder_ticks + 25\n```\n"
+            "</details>\n"
+        )
+        reveal = next(block for block in blocks if block["t"] == "reveal")
+        self.assertEqual(reveal["label"], "Full Solution")
+        self.assertEqual(
+            [child["t"] for child in reveal["blocks"]],
+            ["code"],
+            "expected the hint's sample to be the same code block the page uses; a paragraph of backticks is not a hint",
+        )
+        self.assertEqual(reveal["blocks"][0]["lang"], "python")
+
+    def test_a_nested_details_is_a_reveal_inside_a_reveal(self):
+        blocks = pages.parse_blocks(
+            "<details>\n<summary>Outer</summary>\n\n"
+            "<details>\n<summary>Inner</summary>\n\nLow level.\n</details>\n"
+            "</details>\n"
+        )
+        outer = next(block for block in blocks if block["t"] == "reveal")
+        inner = [child for child in outer["blocks"] if child["t"] == "reveal"]
+        self.assertEqual(len(inner), 1, "expected the inner collapse to stay a collapse")
+        self.assertEqual(inner[0]["label"], "Inner")
+
+    def test_an_empty_details_leaves_nothing_on_the_page(self):
+        blocks = pages.parse_blocks("Text.\n\n<details>\n<summary>Nothing</summary>\n</details>\n")
+        self.assertEqual(
+            [block for block in blocks if block["t"] == "reveal"],
+            [],
+            "expected a toggle with nothing behind it to be dropped rather than drawn as an empty card",
+        )
+
+    def test_the_solution_is_behind_its_label_not_in_the_prose(self):
+        blocks = pages.parse_blocks(
+            "## Learn\n\nText.\n\n<details>\n<summary><strong>Full Solution</strong></summary>\n\n"
+            "```python\nprint(\"the answer\")\n```\n"
+            "</details>\n"
+        )
+        self.assertEqual(
+            [block["t"] for block in blocks],
+            ["h", "p", "reveal"],
+            "expected the solution as the last block and not as a run of open paragraphs",
+        )
+        self.assertEqual(blocks[-1]["label"], "Full Solution")
+
+
 class ParseBlocks(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

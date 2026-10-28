@@ -1,4 +1,4 @@
-{"v":4,"path":"modules/00-foundations.T1.00b.md","title":"Lists, Dictionaries, NumPy Arrays, Plotting & Git/Terminal Basics","blocks":[
+{"v":5,"path":"modules/00-foundations.T1.00b.md","title":"Lists, Dictionaries, NumPy Arrays, Plotting & Git/Terminal Basics","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"A 5-second test of a robot joint at $1\\text{ kHz}$ records $5,000$ samples each of timestamp, angle, velocity, and motor current. You need lists, dictionaries, and vectorized arrays to compute tracking errors across thousands of samples at once, time-series plots to spot oscillations visually, and Git commits to roll back safely when a tuning change breaks your code. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},

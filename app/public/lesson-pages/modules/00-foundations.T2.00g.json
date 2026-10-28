@@ -1,4 +1,4 @@
-{"v":4,"path":"modules/00-foundations.T2.00g.md","title":"Matrix-Vector Multiplication & the One-Step State Update","blocks":[
+{"v":5,"path":"modules/00-foundations.T2.00g.md","title":"Matrix-Vector Multiplication & the One-Step State Update","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"The backward difference from `00-foundations.T2.00a` turns a sequence of samples into a velocity. This page turns that velocity into a **state**: one column that holds everything the next tick needs, advanced by one matrix-vector product. Writing the update as $\\vec{x}_{k+1} = A_d\\vec{x}_k + B_d u_k$ is not notation for its own sake - a two-mass drivetrain has four states, a Kalman filter nine, and the same six lines of code advance all of them. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},

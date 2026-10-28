@@ -1,4 +1,4 @@
-{"v":4,"path":"modules/00-foundations.T2.00e.md","title":"Laplace Transform, Poles/Zeros, Continuous State-Space (x_dot = Ax + Bu) & Euler/Tustin Discretization","blocks":[
+{"v":5,"path":"modules/00-foundations.T2.00e.md","title":"Laplace Transform, Poles/Zeros, Continuous State-Space (x_dot = Ax + Bu) & Euler/Tustin Discretization","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"Transfer functions $G(s)$ are great for single-input single-output filters, but modern control algorithms (LQR, Kalman filters, and Model Predictive Control in Track 05) operate on multi-variable **state-space models** $\\dot{x} = Ax + Bu$ discretized into $x_{k+1} = A_d x_k + B_d u_k$. Connecting transfer-function poles and zeros to the eigenvalues of the state matrix $A$ is the direct foundation for Step 2.1 (`00-foundations.T2.01`). Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},

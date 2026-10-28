@@ -1,4 +1,4 @@
-{"v":4,"path":"modules/04-embedded.T2.04a.md","title":"Vendor HAL Drivers (SPI/I2C), Bare-Metal Register Basics (MMIO/BSRR) & Ping-Pong DMA Buffers","blocks":[
+{"v":5,"path":"modules/04-embedded.T2.04a.md","title":"Vendor HAL Drivers (SPI/I2C), Bare-Metal Register Basics (MMIO/BSRR) & Ping-Pong DMA Buffers","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"In Tier 1, reading a sensor or sending serial bytes inside a polling loop tied up the CPU for tens of microseconds per byte. When your motor loop speeds up to $20\\text{–}40\\text{ kHz}$ in Step 2.5 (`04-embedded.T2.05`), the CPU has only $25\\text{–}50\\ \\mu\\text{s}$ total per tick! Understanding full-duplex **SPI (`CPOL`/`CPHA`) framing**, offloading peripheral transfers to a hardware **Direct Memory Access (DMA)** controller, and processing streaming samples out of a **double-buffered (ping-pong) ring buffer** lets your microcontroller read encoders and stream telemetry with near-zero CPU overhead. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},

@@ -1,4 +1,4 @@
-{"v":4,"path":"modules/00-foundations.T1.00a.md","title":"Running Python, Variables, Loops, Functions & Tracebacks","blocks":[
+{"v":5,"path":"modules/00-foundations.T1.00a.md","title":"Running Python, Variables, Loops, Functions & Tracebacks","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"Every robot trajectory simulator, sensor parser, and motor controller test in this roadmap starts as a runnable Python script before touching microcontroller C++ or physical actuators. Learning how variables store physical measurements, how loops step time forward, and how error tracebacks pinpoint bugs lets you test control ideas safely on your computer. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},

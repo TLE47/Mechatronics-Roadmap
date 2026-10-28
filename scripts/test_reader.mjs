@@ -164,6 +164,23 @@ check('the longest quote wins where two overlap, and adjacent quotes are two pie
   ]);
 });
 
+check('a loose mark finds a code passage whose whitespace a quote collapsed', () => {
+  // `cleanQuote` turns a selected three-line snippet into one line. A strict scan would never find
+  // it in the `pre`, so the highlight would be stored and never drawn.
+  const code = 'battery_level = 12.60\nencoder_ticks = 400\nrobot_mode = "STANDBY"';
+  const quote = 'battery_level = 12.60 encoder_ticks = 400';
+  assert.deepEqual(markQuotes(code, [quote], { loose: true })[0], {
+    text: 'battery_level = 12.60\nencoder_ticks = 400',
+    quote,
+  });
+  assert.deepEqual(markQuotes(code, [quote]), [{ text: code, quote: null }], 'strict is unchanged');
+  // A regex metacharacter in the passage is a character, not a pattern.
+  assert.deepEqual(markQuotes('x = a[0] + 1', ['a[0] + 1'], { loose: true }), [
+    { text: 'x = ', quote: null },
+    { text: 'a[0] + 1', quote: 'a[0] + 1' },
+  ]);
+});
+
 check('duplicate and empty quotes do not draw two marks or an empty one', () => {
   assert.deepEqual(markQuotes('a word here', ['word', 'word', '  ']), [
     { text: 'a ', quote: null },
@@ -207,14 +224,17 @@ check('an anchor is GitHub\'s, punctuation and all', () => {
   assert.equal(anchorFor('**Bold** heading'), 'bold-heading');
 });
 
-check('a repeated heading gets the -1 suffix, aligned to its block', () => {
-  const anchors = headingAnchors([
-    { t: 'h', l: 2, x: 'Summary' },
-    { t: 'p', x: 'text' },
-    { t: 'h', l: 2, x: 'Summary' },
-    { t: 'h', l: 3, x: 'Detail' },
-  ]);
-  assert.deepEqual(anchors, ['summary', null, 'summary-1', 'detail']);
+check('a repeated heading gets the -1 suffix, keyed by the block it belongs to', () => {
+  const first = { t: 'h', l: 2, x: 'Summary' };
+  const text = { t: 'p', x: 'text' };
+  const second = { t: 'h', l: 2, x: 'Summary' };
+  const nested = { t: 'h', l: 3, x: 'Detail' };
+  const reveal = { t: 'reveal', label: 'Answer', blocks: [nested] };
+  const anchors = headingAnchors([first, text, second, reveal]);
+  assert.equal(anchors.get(first), 'summary');
+  assert.equal(anchors.get(second), 'summary-1');
+  assert.equal(anchors.get(nested), 'detail', 'a heading behind a reveal is still a heading');
+  assert.equal(anchors.has(text), false);
 });
 
 section('payloads');
@@ -229,10 +249,25 @@ const page = { v: LESSON_PAGE_VERSION, path: 'track-p/P.1-x.md', title: 'P.1', b
   { t: 'math', tex: 'x' },
   { t: 'img', src: 'a.png', alt: 'a' },
   { t: 'ol', items: [{ x: 'first', d: 0 }] },
+  { t: 'reveal', label: 'Full Solution', blocks: [{ t: 'code', lang: 'python', text: 'print(2)' }] },
 ] };
 
 check('a page this build knows passes the guard', () => {
   assert.equal(isLessonPage(page), true);
+});
+
+check('a reveal is a label with blocks behind it, and a nested one has a limit', () => {
+  const withReveal = (blocks) => isLessonPage({ ...page, blocks });
+  assert.equal(withReveal([{ t: 'reveal', label: 'Hint 1', blocks: [{ t: 'p', x: 'read it' }] }]), true);
+  assert.equal(withReveal([{ t: 'reveal', label: '', blocks: [{ t: 'p', x: 'x' }] }]), false, 'an unlabelled toggle');
+  assert.equal(withReveal([{ t: 'reveal', label: 'Empty', blocks: [] }]), false, 'a toggle with nothing behind it');
+  assert.equal(withReveal([{ t: 'reveal', label: 'x', blocks: [{ t: 'reveal', label: 'y', blocks: [] }] }]), false);
+  // The guard is not the place to discover how deep the renderer recurses.
+  let deep = { t: 'p', x: 'bottom' };
+  for (let level = 0; level < 4; level += 1) {
+    deep = { t: 'reveal', label: `level ${level}`, blocks: [deep] };
+  }
+  assert.equal(withReveal([deep]), false, 'four reveals deep is not a lesson page');
 });
 
 check('a stale version, an unknown block or a half-written one is refused', () => {

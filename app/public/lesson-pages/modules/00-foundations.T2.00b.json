@@ -1,4 +1,4 @@
-{"v":4,"path":"modules/00-foundations.T2.00b.md","title":"Vectors, Dot & Cross Products, Linear Independence & Change of Basis","blocks":[
+{"v":5,"path":"modules/00-foundations.T2.00b.md","title":"Vectors, Dot & Cross Products, Linear Independence & Change of Basis","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"In 3D robot manipulators and field-oriented brushless drives, forces and magnetic fields act along tilted 3D axes while joints rotate around specific hinge vectors. You need the dot product to project forces onto a link axis, the 3D cross product to compute the moment vector $\\vec{\\tau} = \\vec{r} \\times \\vec{F}$, and basis-change determinants to detect when a robot arm hits a kinematic singularity. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},

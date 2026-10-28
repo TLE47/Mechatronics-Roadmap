@@ -1,6 +1,17 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Bold, BookOpen, Highlighter, Italic, Loader2, RotateCcw, StickyNote, Underline, X } from 'lucide-react';
+import {
+  Bold,
+  BookOpen,
+  ChevronRight,
+  Highlighter,
+  Italic,
+  Loader2,
+  RotateCcw,
+  StickyNote,
+  Underline,
+  X,
+} from 'lucide-react';
 import { MathView } from './MathView';
 import { InlineMarkdown as Inline } from './InlineMarkdown';
 import { Diagram } from '../visuals/Diagram';
@@ -27,7 +38,7 @@ import {
 } from '../studyNotes';
 import { checkId, readTicks, toggleTicked } from '../lessonChecks';
 import { STORE_RESTORED_EVENT } from '../backupBundle';
-import { wrapSelection } from '../lessonMarks';
+import { markQuotes, wrapSelection } from '../lessonMarks';
 import { RESET_EVENT } from '../resetEvent';
 import { lessonPageUrl as sourceUrl } from '../startHere';
 
@@ -105,7 +116,25 @@ function repoUrl(path: string): string {
   return `https://github.com/TLE47/Mechatronics-Roadmap/blob/main/${path}`;
 }
 
-function CodeBlock({ block }: { block: Extract<ReaderBlock, { t: 'code' }> }) {
+/**
+ * A fenced code block, with its highlights drawn where they were taken.
+ *
+ * A learner highlighting the line that computes `battery_level` is marking the code, not the sentence
+ * about it, so the marks have to live inside the `<pre>`: this used to draw plain text, which stored
+ * the highlight and never showed it. The comparison is `loose` because a selected snippet keeps one
+ * space where the page has a newline.
+ */
+function CodeBlock({
+  block,
+  marks,
+  onMark,
+}: {
+  block: Extract<ReaderBlock, { t: 'code' }>;
+  marks: Highlight[];
+  onMark: (mark: Highlight, anchor?: HTMLElement) => void;
+}) {
+  const quotes = new Set(marks.map((mark) => mark.quote));
+  const pieces = quotes.size > 0 ? markQuotes(block.text, [...quotes], { loose: true }) : null;
   return (
     <div className="my-3 overflow-hidden rounded-lg border border-line-soft bg-canvas">
       <div className="border-b border-line-soft px-3 py-1 font-mono text-[12px] uppercase tracking-wider text-faint">
@@ -118,7 +147,34 @@ function CodeBlock({ block }: { block: Extract<ReaderBlock, { t: 'code' }> }) {
         aria-label={`${block.lang || 'text'} code`}
         className="overflow-x-auto p-3 font-mono text-[12.5px] leading-relaxed text-body"
       >
-        <code>{block.text}</code>
+        <code>
+          {pieces === null
+            ? block.text
+            : pieces.map((piece, index) => {
+                if (!piece.quote) return <React.Fragment key={index}>{piece.text}</React.Fragment>;
+                const mark = marks.find((entry) => entry.quote === piece.quote);
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    data-testid="sticky-mark"
+                    data-quote={piece.quote}
+                    title={
+                      mark?.comment
+                        ? `Open the note: ${inlinePlain(mark.comment)}`
+                        : 'Open this passage in Notes'
+                    }
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (mark) onMark(mark, event.currentTarget);
+                    }}
+                    className="inline cursor-pointer rounded-sm bg-amber/15 p-0 text-inherit underline decoration-amber decoration-dotted underline-offset-2 hover:bg-amber/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                  >
+                    {piece.text}
+                  </button>
+                );
+              })}
+        </code>
       </pre>
     </div>
   );
@@ -189,7 +245,7 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const lastSaveRef = useRef(0);
   const pendingRef = useRef<ReadingPosition | null>(null);
-  const anchors = useMemo(() => (page ? headingAnchors(page.blocks) : []), [page]);
+  const anchors = useMemo(() => headingAnchors(page?.blocks ?? []), [page]);
 
   useEffect(() => {
     let cancelled = false;
@@ -357,11 +413,21 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
       const rect = stickyAnchor?.element?.isConnected
         ? stickyAnchor.element.getBoundingClientRect()
         : stickyAnchor?.range?.getBoundingClientRect();
-      // The passage is gone (the page re-rendered under it, or the lesson changed): leave the card
-      // where it was rather than guess a new place for it.
-      if (!rect || (!rect.width && !rect.height)) return;
       const width = Math.min(STICKY_MAX_WIDTH, Math.max(240, window.innerWidth - STICKY_EDGE * 2));
       const height = stickyCardRef.current?.offsetHeight ?? 260;
+      // A note with no passage to hang from (nothing measurable was handed in) is centred rather than
+      // left invisible: an unplaced popover is hidden, and a hidden editor is a dead button.
+      if (!stickyAnchor || !rect || (!rect.width && !rect.height)) {
+        if (stickyAnchor) return; // the passage is gone: keep the card where it was
+        setStickyPlacement({
+          top: Math.max(STICKY_EDGE, (window.innerHeight - height) / 2),
+          left: Math.max(STICKY_EDGE, (window.innerWidth - width) / 2),
+          width,
+          side: 'below',
+          caret: width / 2,
+        });
+        return;
+      }
       const roomBelow = window.innerHeight - rect.bottom - STICKY_GAP - STICKY_EDGE;
       const roomAbove = rect.top - STICKY_GAP - STICKY_EDGE;
       // Below by default. Above only when the bottom edge is close and there is more room up there,
@@ -425,6 +491,9 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
     setStickyQuote(mark.quote);
     setStickyText(mark.comment);
     setStickyAnchor(anchor ? { element: anchor } : null);
+    // The previous card's place is not this card's place: the first frame stays hidden until this
+    // one has been measured, instead of flashing where the last note was.
+    setStickyPlacement(null);
     setStickyOpen(true);
   };
 
@@ -442,6 +511,7 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
     setStickyEditing(false);
     setStickyText('');
     setStickyQuote(selection);
+    setStickyPlacement(null);
     setStickyOpen(true);
   };
 
@@ -528,6 +598,243 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
     container.scrollTop = 0;
     pendingRef.current = { anchor: '', at: 0 };
     clearReadingPosition(lessonId);
+  };
+
+  /**
+   * One block of the page, and the same function again for a reveal's children.
+   *
+   * A `reveal` is the page's own `<details>`: hints, the answers under `Check yourself` and the full
+   * solution arrive closed, so the reader meets the question before the answer instead of the answer
+   * on the way past. Nested blocks are rendered by this function, not by a second renderer, so a
+   * hint's code block is the same code block as the page's.
+   *
+   * Every block carries `data-reader-block`: the reading position is a block plus the distance into
+   * it (`readingPosition.ts`), which is what keeps the paragraph a learner is on under their eyes
+   * when a split-view resize reflows the page under it.
+   */
+  const renderBlock = (block: ReaderBlock, key: React.Key): React.ReactNode => {
+    const blockKey = String(key);
+    switch (block.t) {
+      case 'h': {
+        const anchor = anchors.get(block) ?? '';
+        const Tag = (block.l === 2 ? 'h2' : block.l === 3 ? 'h3' : 'h4') as 'h2' | 'h3' | 'h4';
+        return (
+          <Tag
+            key={key}
+            id={anchor}
+            data-reader-anchor={anchor}
+            data-reader-block={blockKey}
+            className={`scroll-mt-3 font-bold text-ink ${
+              block.l === 2 ? 'mt-5 text-[22px]' : 'mt-4 text-[18px]'
+            }`}
+          >
+            <Inline text={block.x} marks={marks} onMark={openMark} />
+          </Tag>
+        );
+      }
+      case 'p':
+        return (
+          <p key={key} data-reader-block={blockKey} className="text-[17px] leading-[1.7] text-body">
+            <Inline text={block.x} marks={marks} onMark={openMark} />
+          </p>
+        );
+      case 'ul':
+      case 'ol': {
+        // A bullet list is a list of things to do, so each item is a checkbox that remembers its
+        // tick (`lessonChecks.ts`). Ordered lists keep their numbers: a sequence has an order, and a
+        // checklist of steps is still read in that order.
+        if (block.t === 'ol') {
+          return (
+            <ol
+              key={key}
+              data-reader-block={blockKey}
+              className="list-decimal space-y-1 pl-5 text-[17px] leading-[1.65] text-body"
+            >
+              {block.items.map((item, itemIndex) => (
+                <li
+                  key={itemIndex}
+                  style={{ marginLeft: `${item.d * 16}px` }}
+                  className={item.d > 0 ? 'list-[circle]' : undefined}
+                >
+                  <Inline text={item.x} marks={marks} onMark={openMark} />
+                </li>
+              ))}
+            </ol>
+          );
+        }
+        return (
+          <ul
+            key={key}
+            data-testid="reader-checklist"
+            data-reader-block={blockKey}
+            className="list-none space-y-1.5 pl-0 text-[17px] leading-[1.65] text-body"
+          >
+            {block.items.map((item, itemIndex) => {
+              const itemKey = checkId(item.x);
+              const checked = itemKey !== '' && ticks.includes(itemKey);
+              return (
+                <li
+                  key={itemIndex}
+                  style={{ marginLeft: `${item.d * 16}px` }}
+                  className="flex items-start gap-2.5"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleItem(item.x)}
+                    aria-label={inlinePlain(item.x).slice(0, 140)}
+                    data-testid={`reader-check-${blockKey}-${itemIndex}`}
+                    data-check-key={itemKey}
+                    title="Tick this when you have done it. Saved on this device."
+                    className="mt-[0.32rem] h-4 w-4 shrink-0 cursor-pointer accent-[var(--accent)]"
+                  />
+                  <span
+                    className={
+                      checked ? 'text-faint line-through decoration-line-strong' : undefined
+                    }
+                  >
+                    <Inline text={item.x} marks={marks} onMark={openMark} />
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        );
+      }
+      case 'code':
+        return (
+          <div key={key} data-reader-block={blockKey}>
+            <CodeBlock block={block} marks={marks} onMark={openMark} />
+          </div>
+        );
+      case 'table':
+        return (
+          <div key={key} data-reader-block={blockKey}>
+            <TableBlock block={block} />
+          </div>
+        );
+      case 'quote':
+        return (
+          <blockquote
+            key={key}
+            data-reader-block={blockKey}
+            className="my-3 rounded-r-lg border-l-2 border-amber/70 bg-amber/5 py-2 pl-3 pr-2 text-[15.5px] leading-relaxed text-body"
+          >
+            <Inline text={block.x} marks={marks} onMark={openMark} />
+          </blockquote>
+        );
+      case 'math':
+        return (
+          <div key={key} data-reader-block={blockKey} className="my-3 overflow-x-auto">
+            <MathView math={block.tex} block />
+          </div>
+        );
+      case 'figure': {
+        const spec = sceneFor(block.id);
+        if (!spec) {
+          return (
+            <p
+              key={key}
+              data-testid="reader-figure-missing"
+              data-reader-block={blockKey}
+              className="my-3 rounded-lg border border-amber/40 bg-amber/5 px-3 py-2 text-[13px] text-body"
+            >
+              This build has no figure called <code className="font-mono text-ink">{block.id}</code>.
+              The page asks for one; the picture is missing rather than the paragraph that explains it.
+            </p>
+          );
+        }
+        return (
+          <div key={key} data-reader-block={blockKey}>
+            <Diagram
+              id={block.id}
+              live
+              spec={block.caption ? { ...spec, caption: block.caption } : spec}
+            />
+          </div>
+        );
+      }
+      case 'route':
+        return (
+          <div key={key} data-reader-block={blockKey}>
+            <Diagram
+              id="route"
+              live
+              spec={{
+                kind: 'route',
+                title: 'Where this lesson goes',
+                caption: block.caption ?? ROUTE_CAPTION,
+                steps: block.steps,
+              }}
+            />
+          </div>
+        );
+      case 'graph':
+        return (
+          <div key={key} data-reader-block={blockKey}>
+            <Diagram
+              id="graph"
+              live
+              spec={{
+                kind: 'graph',
+                title: 'How this page fits together',
+                caption: block.caption ?? '',
+                direction: block.direction,
+                nodes: block.nodes.map((node) => ({ id: node.id, label: node.label })),
+                edges: block.edges,
+              }}
+            />
+          </div>
+        );
+      case 'img':
+        return (
+          <p key={key} data-reader-block={blockKey} className="my-3 text-[13px] text-muted">
+            Figure: {block.alt || 'image'} —{' '}
+            <a
+              href={repoUrl(block.src)}
+              target="_blank"
+              rel="noreferrer"
+              className="text-accent underline underline-offset-2"
+            >
+              open the source ↗
+            </a>
+          </p>
+        );
+      case 'reveal':
+        return (
+          <details
+            key={key}
+            data-testid="reader-reveal"
+            data-reader-block={blockKey}
+            className="group my-3 overflow-hidden rounded-lg border border-line-soft bg-canvas"
+          >
+            <summary
+              data-testid="reader-reveal-label"
+              className="flex cursor-pointer list-none items-center gap-1.5 px-3 py-2 text-[13px] font-mono text-muted hover:text-ink [&::-webkit-details-marker]:hidden"
+            >
+              <ChevronRight
+                className="h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-90"
+                aria-hidden="true"
+              />
+              <span className="min-w-0 truncate">
+                <Inline text={block.label} />
+              </span>
+              {/* Decoration, not the toggle's name: a screen reader should hear "Full Solution",
+                  not "Full Solution press to open" as if the two were one label. */}
+              <span aria-hidden="true" className="ml-auto shrink-0 text-[11px] text-faint">
+                press to open
+              </span>
+            </summary>
+            <div className="space-y-3 border-t border-line-soft px-3 py-3">
+              {block.blocks.map((child, childIndex) =>
+                renderBlock(child, `${blockKey}.${childIndex}`)
+              )}
+            </div>
+          </details>
+        );
+      default:
+        return null;
+    }
   };
 
   return (
@@ -641,184 +948,7 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
             data-testid="reader-prose"
             className={tall ? 'mx-auto max-w-[68ch] space-y-3' : 'space-y-3'}
           >
-            {page.blocks.map((block, index) => {
-              switch (block.t) {
-                case 'h': {
-                  const anchor = anchors[index] ?? '';
-                  const Tag = (block.l === 2 ? 'h2' : block.l === 3 ? 'h3' : 'h4') as
-                    | 'h2'
-                    | 'h3'
-                    | 'h4';
-                  return (
-                    <Tag
-                      key={index}
-                      id={anchor}
-                      data-reader-anchor={anchor}
-                      className={`scroll-mt-3 font-bold text-ink ${
-                        block.l === 2 ? 'mt-5 text-[22px]' : 'mt-4 text-[18px]'
-                      }`}
-                    >
-                      <Inline text={block.x} marks={marks} onMark={openMark} />
-                    </Tag>
-                  );
-                }
-                case 'p':
-                  return (
-                    <p key={index} className="text-[17px] leading-[1.7] text-body">
-                      <Inline text={block.x} marks={marks} onMark={openMark} />
-                    </p>
-                  );
-                case 'ul':
-                case 'ol': {
-                  // A bullet list is a list of things to do, so each item is a checkbox that
-                  // remembers its tick (`lessonChecks.ts`). Ordered lists keep their numbers: a
-                  // sequence has an order, and a checklist of steps is still read in that order.
-                  if (block.t === 'ol') {
-                    return (
-                      <ol
-                        key={index}
-                        className="list-decimal space-y-1 pl-5 text-[17px] leading-[1.65] text-body"
-                      >
-                        {block.items.map((item, itemIndex) => (
-                          <li
-                            key={itemIndex}
-                            style={{ marginLeft: `${item.d * 16}px` }}
-                            className={item.d > 0 ? 'list-[circle]' : undefined}
-                          >
-                            <Inline text={item.x} marks={marks} onMark={openMark} />
-                          </li>
-                        ))}
-                      </ol>
-                    );
-                  }
-                  return (
-                    <ul
-                      key={index}
-                      data-testid="reader-checklist"
-                      className="list-none space-y-1.5 pl-0 text-[17px] leading-[1.65] text-body"
-                    >
-                      {block.items.map((item, itemIndex) => {
-                        const key = checkId(item.x);
-                        const checked = key !== '' && ticks.includes(key);
-                        return (
-                          <li
-                            key={itemIndex}
-                            style={{ marginLeft: `${item.d * 16}px` }}
-                            className="flex items-start gap-2.5"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => toggleItem(item.x)}
-                              aria-label={inlinePlain(item.x).slice(0, 140)}
-                              data-testid={`reader-check-${index}-${itemIndex}`}
-                              data-check-key={key}
-                              title="Tick this when you have done it. Saved on this device."
-                              className="mt-[0.32rem] h-4 w-4 shrink-0 cursor-pointer accent-[var(--accent)]"
-                            />
-                            <span
-                              className={
-                                checked ? 'text-faint line-through decoration-line-strong' : undefined
-                              }
-                            >
-                              <Inline text={item.x} marks={marks} onMark={openMark} />
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  );
-                }
-                case 'code':
-                  return <CodeBlock key={index} block={block} />;
-                case 'table':
-                  return <TableBlock key={index} block={block} />;
-                case 'quote':
-                  return (
-                    <blockquote
-                      key={index}
-                      className="my-3 rounded-r-lg border-l-2 border-amber/70 bg-amber/5 py-2 pl-3 pr-2 text-[15.5px] leading-relaxed text-body"
-                    >
-                      <Inline text={block.x} marks={marks} onMark={openMark} />
-                    </blockquote>
-                  );
-                case 'math':
-                  return (
-                    <div key={index} className="my-3 overflow-x-auto">
-                      <MathView math={block.tex} block />
-                    </div>
-                  );
-                case 'figure': {
-                  const spec = sceneFor(block.id);
-                  if (!spec) {
-                    return (
-                      <p
-                        key={index}
-                        data-testid="reader-figure-missing"
-                        className="my-3 rounded-lg border border-amber/40 bg-amber/5 px-3 py-2 text-[13px] text-body"
-                      >
-                        This build has no figure called <code className="font-mono text-ink">{block.id}</code>.
-                        The page asks for one; the picture is missing rather than the paragraph that explains it.
-                      </p>
-                    );
-                  }
-                  return (
-                    <Diagram
-                      key={index}
-                      id={block.id}
-                      live
-                      spec={block.caption ? { ...spec, caption: block.caption } : spec}
-                    />
-                  );
-                }
-                case 'route':
-                  return (
-                    <Diagram
-                      key={index}
-                      id="route"
-                      live
-                      spec={{
-                        kind: 'route',
-                        title: 'Where this lesson goes',
-                        caption: block.caption ?? ROUTE_CAPTION,
-                        steps: block.steps,
-                      }}
-                    />
-                  );
-                case 'graph':
-                  return (
-                    <Diagram
-                      key={index}
-                      id="graph"
-                      live
-                      spec={{
-                        kind: 'graph',
-                        title: 'How this page fits together',
-                        caption: block.caption ?? '',
-                        direction: block.direction,
-                        nodes: block.nodes.map((node) => ({ id: node.id, label: node.label })),
-                        edges: block.edges,
-                      }}
-                    />
-                  );
-                case 'img':
-                  return (
-                    <p key={index} className="my-3 text-[13px] text-muted">
-                      Figure: {block.alt || 'image'} —{' '}
-                      <a
-                        href={repoUrl(block.src)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-accent underline underline-offset-2"
-                      >
-                        open the source ↗
-                      </a>
-                    </p>
-                  );
-                default:
-                  return null;
-              }
-            })}
+            {page.blocks.map((block, index) => renderBlock(block, `b${index}`))}
           </article>
         )}
       </div>
