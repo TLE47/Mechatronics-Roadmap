@@ -663,6 +663,18 @@ async function ensureBlack(py) {
       await py.loadPackage('micropip');
       const micropip = py.pyimport('micropip');
       await micropip.install('black');
+      // Black reads `platformdirs` for its cache directory, and platformdirs' Unix backend imports
+      // `geteuid` from `os` at module scope. A browser has no user id, so the import is what fails —
+      // Black 26.x on Pyodide 0.26 raises ImportError the moment `import black` runs, after a clean
+      // install. The value is only used to pick a cache path the formatter never writes in here, so
+      // a constant stands in for it. Measured against black 26.10.1, 2026-10-28.
+      py.runPython(
+        "import os\n" +
+          "if not hasattr(os, 'geteuid'):\n" +
+          "    os.geteuid = lambda: 0\n" +
+          "if not hasattr(os, 'getuid'):\n" +
+          "    os.getuid = lambda: 0\n"
+      );
       py.__mechalabBlackReady = true;
       return true;
     })().catch((error) => {

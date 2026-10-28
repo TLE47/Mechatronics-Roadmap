@@ -92,6 +92,14 @@ rather than an editor the deferral has not mounted (14.2 s and 7.8 s on the thro
 under their ceilings and recorded in [`docs/PERF.md`](docs/PERF.md)). The map is
 [`docs/MOBILE.md`](docs/MOBILE.md).
 
+**CI caught one thing the phone had nothing to do with.** The runtime lane went red on the formatter,
+not on a phone check: Black 26 on Pyodide 0.26 raises `ImportError` at `import black` because the
+`platformdirs` it pulled in does `from os import geteuid` — a browser has no user id, so a clean install
+installs fine and then cannot be imported, and Format reports the formatter as unavailable. The worker
+now supplies `geteuid`/`getuid` before the first import ([`app/src/runtime/pythonWorker.js`](app/src/runtime/pythonWorker.js)),
+and the lane's five format checks pass again. The cause was reproduced on a standalone Pyodide page
+before the fix, so the change is pinned to the error rather than to a guess.
+
 ---
 
 ## [2026-10-28] — Run 274: the lesson brief has a study clock

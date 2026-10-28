@@ -1113,7 +1113,11 @@ installed on the first press and remembered for the session; nothing is added to
 answer is applied as **one undo step** (the status line says so), and it is one of three sentences: the
 file was tidied, it was already tidy, or Black could not parse it — the last one quotes the parser's
 own position and leaves your file untouched. The button is disabled while a program runs or a park waits,
-because the worker is one thread.
+because the worker is one thread. The install has one browser-shaped seam: Black reads `platformdirs`
+for its cache directory, and platformdirs' Unix backend does `from os import geteuid` at import time —
+a page has no user id, so a fresh install would raise ImportError before Black ever formatted a line.
+The worker supplies the two id constants (`geteuid`/`getuid`) before the first import; the cache path
+they pick is never written in the browser.
 
 **Step out comes back.** **Step out** runs the rest of the frame that is parked and stops in its caller,
 on the line that made the call — even though a call is usually the last thing on its line and the caller
