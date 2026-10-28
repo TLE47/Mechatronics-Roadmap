@@ -161,13 +161,21 @@ class Reveals(unittest.TestCase):
             "</details>\n"
         )
         reveal = next(block for block in blocks if block["t"] == "reveal")
-        self.assertEqual(reveal["label"], "Full Solution")
+        self.assertEqual(
+            reveal["label"],
+            "Full Solution",
+            "expected the summary's bold text as the label; a label with asterisks in it is a hint rewritten by accident",
+        )
         self.assertEqual(
             [child["t"] for child in reveal["blocks"]],
             ["code"],
             "expected the hint's sample to be the same code block the page uses; a paragraph of backticks is not a hint",
         )
-        self.assertEqual(reveal["blocks"][0]["lang"], "python")
+        self.assertEqual(
+            reveal["blocks"][0]["lang"],
+            "python",
+            "expected the fence's language to survive the collapse; a code block that lost it is coloured as prose",
+        )
 
     def test_a_nested_details_is_a_reveal_inside_a_reveal(self):
         blocks = pages.parse_blocks(
@@ -178,7 +186,11 @@ class Reveals(unittest.TestCase):
         outer = next(block for block in blocks if block["t"] == "reveal")
         inner = [child for child in outer["blocks"] if child["t"] == "reveal"]
         self.assertEqual(len(inner), 1, "expected the inner collapse to stay a collapse")
-        self.assertEqual(inner[0]["label"], "Inner")
+        self.assertEqual(
+            inner[0]["label"],
+            "Inner",
+            "expected the inner summary as the inner label; two collapses sharing one label hide which is which",
+        )
 
     def test_an_empty_details_leaves_nothing_on_the_page(self):
         blocks = pages.parse_blocks("Text.\n\n<details>\n<summary>Nothing</summary>\n</details>\n")
@@ -199,7 +211,11 @@ class Reveals(unittest.TestCase):
             ["h", "p", "reveal"],
             "expected the solution as the last block and not as a run of open paragraphs",
         )
-        self.assertEqual(blocks[-1]["label"], "Full Solution")
+        self.assertEqual(
+            blocks[-1]["label"],
+            "Full Solution",
+            "expected the last block to carry the solution's label, not the paragraph before it",
+        )
 
 
 class ParseBlocks(unittest.TestCase):
