@@ -2865,10 +2865,32 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
   // Focus follows the kind of step: the editor for the typing one, Run for the press one. A card that
   // keeps focus while asking the learner to type is a card they have to fight.
+  //
+  // The editor is a deferred chunk (`PythonEditor` draws the starter text while CodeMirror loads), so
+  // the handle can still be null when this runs — on a loaded machine the tour asked for focus before
+  // there was anything to focus and the step sat there untyped. So the request is retried until the
+  // handle answers, bounded, and cancelled the moment the step changes or the tour closes.
   useEffect(() => {
     if (!tourActive) return;
-    if (tourStep.id === 'editor') guideEditorRef.current?.focus();
-    else if (tourStep.id === 'run') runButtonRef.current?.focus();
+    if (tourStep.id === 'run') {
+      runButtonRef.current?.focus();
+      return;
+    }
+    if (tourStep.id !== 'editor') return;
+    let timer = 0;
+    let waited = 0;
+    const ask = () => {
+      const editor = guideEditorRef.current;
+      if (editor) {
+        editor.focus();
+        return;
+      }
+      if (waited >= 5000) return;
+      waited += 100;
+      timer = window.setTimeout(ask, 100);
+    };
+    ask();
+    return () => window.clearTimeout(timer);
   }, [tourActive, tourStep.id]);
 
   // Esc closes the tour — unless a sheet is open, in which case that press was meant for the sheet.
