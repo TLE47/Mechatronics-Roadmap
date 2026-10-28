@@ -737,8 +737,34 @@ async function main() {
         `**++${note}++**`,
         'the mark must reopen the formatted note after a reload'
       );
-      await page.getByTestId('btn-sticky-cancel').click();
-      console.log('  ok the checklist tick and the formatted note both survive a reload');
+      // The edit popup is also the way out: deleting is an edit, not a trip to the Study panel.
+      assert.equal(
+        await page.getByTestId('btn-sticky-delete').count(),
+        1,
+        'the popup that edits a note must offer to remove it'
+      );
+      await page.getByTestId('btn-sticky-delete').click();
+      await page.waitForFunction(
+        () =>
+          /Sticky note removed/.test(
+            document.querySelector('[data-testid="reader-status"]')?.textContent ?? ''
+          ),
+        undefined,
+        { timeout: 10000 }
+      );
+      assert.equal(
+        await page.getByTestId('sticky-note-popup').count(),
+        0,
+        'removing must close the popup that did it'
+      );
+      assert.equal(
+        await page.locator('[data-testid="sticky-mark"]').count(),
+        0,
+        'removing the note must take its mark out of the page'
+      );
+      console.log(
+        '  ok the checklist tick and the formatted note survive a reload, and Remove deletes the note'
+      );
     }
 
     // ---- 7e. The note opens beside the words, above or below whichever has the room ----
@@ -997,8 +1023,50 @@ async function main() {
       );
       await inCode.first().click();
       await page.getByTestId('sticky-note-popup').waitFor({ timeout: 10000 });
-      await page.getByTestId('btn-sticky-cancel').click();
-      console.log('  ok a highlight inside a code block is drawn there and reopens its note');
+      // The code block carries a note, not only a pin: saving here is what the reader reported as
+      // missing, so the suite writes one and checks it stayed on the code.
+      await page.getByTestId('sticky-note-text').fill('check the units on this line');
+      await page.getByTestId('btn-sticky-save').click();
+      await page.waitForFunction(
+        () =>
+          /Sticky note updated/.test(
+            document.querySelector('[data-testid="reader-status"]')?.textContent ?? ''
+          ),
+        undefined,
+        { timeout: 10000 }
+      );
+      assert.ok(
+        (await pre.locator('[data-testid="sticky-mark"]').count()) >= 1,
+        'the note must still be marked on the code after it is saved'
+      );
+      console.log('  ok a highlight inside a code block is drawn there, and a note on it saves');
+
+      // Inline code is a run too: a note on `float` is drawn on the span, not only in Notes.
+      const inlinePicked = await page.evaluate(() => {
+        const code = [...document.querySelectorAll('[data-testid="reader-prose"] code')].find(
+          (node) => !node.closest('pre') && (node.textContent ?? '').trim().length > 3
+        );
+        if (!code?.firstChild) return '';
+        const node = code.firstChild;
+        const range = document.createRange();
+        range.setStart(node, 0);
+        range.setEnd(node, (node.textContent ?? '').length);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        document.dispatchEvent(new Event('selectionchange'));
+        return selection?.toString() ?? '';
+      });
+      assert.ok(inlinePicked.trim().length > 1, 'the page must have an inline code run to select');
+      await page.getByTestId('btn-highlight').click();
+      await page.waitForTimeout(250);
+      const inlineMark = await page.evaluate(() =>
+        [...document.querySelectorAll('[data-testid="reader-prose"] [data-testid="sticky-mark"]')].filter(
+          (node) => !node.closest('pre') && node.closest('code')
+        ).length
+      );
+      assert.ok(inlineMark >= 1, 'a highlight on inline code must be drawn on the code span');
+      console.log('  ok a highlight on inline code is drawn on the span');
 
       // The split-view tip, and the way to the editor when the layout has no room for two columns.
       await page.getByTestId('btn-split-tip').click();
@@ -1066,7 +1134,25 @@ async function main() {
       'page',
       'the deck lives in the runner, so Review must go there'
     );
-    console.log('  ok Review lands on the runner with the Study panel open');
+    // A card is a question first: the quote is the prompt, not the whole card. Without the question
+    // the front read as something to answer with nothing asking it.
+    await page.getByTestId('btn-review-deck').click();
+    await page.getByTestId('review-card').waitFor({ timeout: 10000 });
+    assert.match(
+      (await page.getByTestId('review-question').textContent()) ?? '',
+      /What did you write about this passage\?/,
+      'the card must ask the question its answer belongs to'
+    );
+    assert.ok(
+      ((await page.getByTestId('review-front').textContent()) ?? '').trim().length > 0,
+      'the passage is the prompt the question is about'
+    );
+    await page.getByTestId('btn-show-answer').click();
+    assert.ok(
+      await page.getByTestId('review-answer').isVisible(),
+      'Show answer must reveal the note the question asks for'
+    );
+    console.log('  ok Review lands on the runner with the Study panel open, and a card asks its question');
 
     // ---- 9. The route door opens the roadmap ----
     await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });

@@ -16,6 +16,43 @@ flowchart LR
 
 ---
 
+## [2026-10-27] — Run 271: the editor is tabs and panes
+
+**The output no longer pushes the code up.** Run output and Expected Output were two cards inside the
+editor card, under the code, with a single remembered **Split output** toggle; on a 1280 px window the
+block added 200 px and the toolbar sharing the tab row pushed that header to 175 px — more than the
+editor it sat above. The card now has a tab strip: `main.py`, each read-only helper, **Run output** and
+**Expected** are views of one body, and the output is a tab rather than furniture. **Split** shows two
+of them at once — side by side (`columns`) where the window is wide, one above the other (`rows`) on a
+press — the way a terminal multiplexer arranges panes. From the editor it opens on the run output; from
+an output it brings the editor back. Pressing a tab already open in the other pane focuses that pane
+instead of opening a second copy, and clicking a pane makes it the one the next tab press fills — so
+Expected beside Run output is two presses, with the focused pane outlined. Two panes is the cap. The arrangement is remembered; Write keeps
+no output tab, Read keeps no editor. Every view stays mounted and a hidden pane is `display:none`, so
+exactly one `pre-actual-stdout` exists and the last run is readable while the editor is on screen. The
+state machine is [`app/src/editorPanes.ts`](app/src/editorPanes.ts), pinned by `npm run test:panes`;
+the header was split into a tabs row and a toolbar row, which is what brings it back under the editor's
+own height. Three edges came with it: the dock control prints its arrow instead of its 127 px
+sentence below `2xl` and the four preset shortcut chips step aside below `xl`, which is what keeps
+**Predict** on the **Run** row from 768 px to 1280 (the toolbar is 37 px on one row, not 78 on two);
+and a 390 px window wraps the tab strip, with the split controls beside it rather than over a tab
+(they sit outside the tablist, so the strip is four tabs to a screen reader, not six).
+
+**A note can be removed where it is edited.** The popup that writes a sticky note now also deletes the
+highlight and its mark (`Remove`, beside Save). Deleting a note is an edit of that note, not a trip to
+the Study panel to find the quote in a list.
+
+**Inline code was the code a note could not mark.** Fenced blocks have drawn their marks since Run 270;
+a quote taken from a `code` span in prose, a table cell or a list was stored and never shown, because
+`InlineMarkdown` drew code as plain text and the table renderer passed no marks at all. Both render the
+same marked run now, so a note on `float` is underlined amber on the span.
+
+**A review card asks its question.** The front was the quote and nothing else, so a card read as a
+passage to look at rather than a question to answer. It now prints *What did you write about this
+passage?* above the quote, and **Show answer** reveals the note under **Your note**.
+
+---
+
 ## [2026-10-27] — Run 270: hints stay closed, and the checklist stops lying
 
 **A bullet that could not be ticked.** `checkId` capped a bullet at 160 characters and then trimmed it

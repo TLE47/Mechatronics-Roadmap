@@ -97,6 +97,7 @@
     "test:inline": "node --experimental-strip-types scripts/test_inline_values.mjs",
     "test:symbols": "node --experimental-strip-types scripts/test_symbols.mjs",
     "test:layout": "node --experimental-strip-types scripts/test_layout.mjs",
+    "test:panes": "node --experimental-strip-types scripts/test_editor_panes.mjs",
     "test:reader": "node --experimental-strip-types scripts/test_reader.mjs",
     "test:visuals": "node --experimental-strip-types scripts/test_visuals.mjs",
     "test:arm": "node --experimental-strip-types scripts/test_arm.mjs",
