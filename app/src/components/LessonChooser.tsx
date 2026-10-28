@@ -24,6 +24,14 @@ interface LessonChooserProps {
   verifiedLessons: Record<string, boolean>;
   completedLessons: Record<string, boolean>;
   onSelect: (id: string) => void;
+  /**
+   * Extra classes for the frame. The phone's lesson sheet passes `max-h-none` and drops the border:
+   * the sheet already owns the edge and the scroll, and a 760 px card inside a 90dvh sheet would
+   * leave the list its own scrollbar inside another one.
+   */
+  className?: string;
+  /** Inline max-height for the frame; `'none'` lets a sheet's body own the scroll. */
+  maxHeight?: string;
 }
 
 export function LessonChooser({
@@ -37,6 +45,8 @@ export function LessonChooser({
   verifiedLessons,
   completedLessons,
   onSelect,
+  className = '',
+  maxHeight,
 }: LessonChooserProps) {
   const tracks: { id: TrackFilter; label: string }[] = [
     { id: 'all', label: `All (${lessons.length})` },
@@ -65,7 +75,8 @@ export function LessonChooser({
     <div
       data-testid="lesson-list-card"
       data-chrome="lesson-list"
-      className="flex max-h-[760px] flex-col rounded-xl border border-line bg-panel px-3 py-3"
+      className={`flex max-h-[760px] flex-col rounded-xl border border-line bg-panel px-3 py-3 ${className}`}
+      style={maxHeight ? { maxHeight } : undefined}
     >
       <div className="relative mb-2">
         <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
@@ -102,7 +113,7 @@ export function LessonChooser({
         </div>
       </div>
 
-      <div className="flex-1 space-y-1.5 overflow-y-auto pr-1">
+      <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1">
         {filteredLessons.map((lesson) => {
           const isSelected = lesson.id === currentId;
           const isVerified = !!verifiedLessons[lesson.id];

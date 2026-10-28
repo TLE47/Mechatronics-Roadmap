@@ -1418,7 +1418,8 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
 
     // Tablet viewport: the tab bar, lesson list and editor must all stay reachable, and the layout
     // must fit the viewport - the header used to push a 249px horizontal overflow here, so a page
-    // that scrolls sideways is a failure, not a note.
+    // that scrolls sideways is a failure, not a note. The lesson list is a sheet at this width, so
+    // the tablet test opens the door rather than reaching for a rail that is not there.
     const tabletContext = await browser.newContext({ viewport: TABLET_VIEWPORT });
     await tabletContext.addInitScript(() => {
       window.__mechalabPredictFirst = false;
@@ -1428,10 +1429,16 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     await tablet.goto(baseUrl, { waitUntil: 'networkidle', timeout: 45000 });
     await tablet.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, { timeout: 20000 });
     await tablet.getByTestId('tab-btn-tab-pyodide').click();
-    const lesson = tablet.getByTestId('lesson-item-06.1');
+    // The lesson list is a sheet at this width: the 224 px rail needs `lg`, the phone's strip is
+    // gone by `md`, and the brief's Lessons button is the door between them.
+    await tablet.getByTestId('btn-lessons-tablet').click();
+    const lessonSheet = tablet.getByTestId('lesson-sheet');
+    await lessonSheet.waitFor({ state: 'visible', timeout: 10000 });
+    const lesson = lessonSheet.getByTestId('lesson-item-06.1');
     await lesson.scrollIntoViewIfNeeded();
     assert.ok(await lesson.isVisible(), `${name}: at ${TABLET_VIEWPORT.width}px the lesson list is not usable`);
     await lesson.click();
+    await lessonSheet.waitFor({ state: 'hidden', timeout: 10000 });
     await tablet.waitForSelector('[data-editor="editor-main"] .cm-content', { state: 'visible', timeout: 10000 });
 
     // The runner header must cost the step it names from the same generated spine the cards read:

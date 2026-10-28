@@ -26,6 +26,13 @@ import { FaultBench08 } from '../FaultBench08';
 import { StudyPanel } from '../StudyPanel';
 import { LessonReader } from '../LessonReader';
 import { LessonChooser, type TrackFilter } from '../LessonChooser';
+import { Sheet } from '../Sheet';
+import { PythonKeys } from '../PythonKeys';
+import {
+  readPhoneSurface,
+  writePhoneSurface,
+  type PhoneSurface,
+} from '../../phoneSurface';
 import { FirstRunTour } from '../FirstRunTour';
 import {
   layoutForStep,
@@ -94,6 +101,7 @@ import {
   type TraceSnapshot,
 } from '../../runTrace';
 import { TracePanel } from '../TracePanel';
+import { StudyTimerRow } from '../StudyTimerRow';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { findDefinition } from '../../symbolIndex';
 import { cellPrefix } from '../../editor/cells';
@@ -122,6 +130,7 @@ import {
 } from '../../workspaceLayout';
 import {
   closeSplit,
+  closeView,
   focusSlot,
   isSplit,
   readPanes,
@@ -409,6 +418,67 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       return false;
     }
   });
+  // The two halves of Study on a phone (`phoneSurface.ts`): the prose or the code, one at a time.
+  // The initial value is read per lesson, so a stored `code` for this entry reopens where the
+  // learner left it, and a stored `code` for a different entry does not hide an unread lesson.
+  const [phoneSurface, setPhoneSurface] = useState<PhoneSurface>(() =>
+    readPhoneSurface(initialLessonId || PYTHON_LESSONS[0].id)
+  );
+  // Once the phone has opened the editor it stays mounted behind the Lesson surface: switching back
+  // and forth should not re-fetch CodeMirror or lose the caret, and the first visit to a lesson's
+  // prose should not pay for the editor's chunk at all.
+  const [codeOpened, setCodeOpened] = useState<boolean>(
+    () => readPhoneSurface(initialLessonId || PYTHON_LESSONS[0].id) === 'code'
+  );
+  // The lesson chooser is a 760 px rail beside the work area on a desktop and a sheet on a phone;
+  // this is the sheet's own open state.
+  const [lessonSheetOpen, setLessonSheetOpen] = useState(false);
+  // The first-run guide is a page of three cards. On a phone it arrives collapsed behind one line,
+  // because the lesson text is what a returning learner came for and the guide is for the first
+  // visit only. On a desktop it opens as it always did.
+  const [guideOpen, setGuideOpen] = useState<boolean>(() => !isPhone);
+  // The full brief is a desktop card: metadata, the clock and the lesson's two new ideas. On a
+  // phone it is behind Details, because the paragraph a learner came to read must be the first
+  // thing under the strip rather than the fourth.
+  const [phoneBriefOpen, setPhoneBriefOpen] = useState(false);
+  // One warm-up per page, even if the effect below runs again when the phone opens the code.
+  const warmStartedRef = useRef(false);
+
+  /**
+   * Switch the phone's Study surface, and remember it for this lesson.
+   *
+   * Opening the code also sets `codeOpened`, which is what mounts the editor for the first time:
+   * the state is deliberately separate from the surface, because hiding the editor again must not
+   * throw away CodeMirror's document, caret or undo history.
+   */
+  const choosePhoneSurface = (surface: PhoneSurface) => {
+    setPhoneSurface(writePhoneSurface(selectedId, surface));
+    if (surface === 'code') setCodeOpened(true);
+    // The two surfaces are panels in one page, not two pages: move the page to the panel the
+    // learner just chose. The offset comes from `scroll-margin-top` in `index.css`, so the sticky
+    // header and tab picker do not cover its title.
+    if (isPhone && typeof window !== 'undefined') {
+      window.setTimeout(() => {
+        const target =
+          surface === 'code'
+            ? document.getElementById('python-runner-editor')
+            : document.querySelector<HTMLElement>('[data-testid="lesson-reader"]');
+        target?.scrollIntoView({ block: 'start' });
+      }, 80);
+    }
+  };
+
+  // A stored Code surface reopens on the editor, not on the top of the page above it. The delay is
+  // for the lazy editor's first mount, which is what gives the card its height.
+  useEffect(() => {
+    if (!isPhone || phoneSurface !== 'code') return;
+    const timer = window.setTimeout(() => {
+      document.getElementById('python-runner-editor')?.scrollIntoView({ block: 'start' });
+    }, 180);
+    return () => window.clearTimeout(timer);
+    // Mount only: a later switch is handled by `choosePhoneSurface`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [dismissedGuides, setDismissedGuides] = useState<string[]>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY_FIRST_GUIDE);
@@ -826,6 +896,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   /** The reader's "Go to the editor": the same landing the guide card's own button uses. */
   const jumpToEditor = () => {
     setOpenHelper(null);
+    // On a phone the editor is below the prose and can be a screen away; the jump switches the
+    // surface instead of scrolling to a hidden panel. The focus waits for the mount, which is why
+    // it is a timer rather than the same tick.
+    if (isPhone) {
+      choosePhoneSurface('code');
+      window.setTimeout(() => guideEditorRef.current?.focus(), 60);
+      return;
+    }
     editorPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     window.setTimeout(() => guideEditorRef.current?.focus(), 0);
   };
@@ -893,7 +971,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // Predict first (see `app/src/predictGate.ts`). The first Run of a lesson asks what it will print
   // and holds the run until the learner commits or skips; the record is per lesson and per store.
   const [predictRecord, setPredictRecord] = useState<PredictionRecord | null>(null);
-  const [predictOpen, setPredictOpen] = useState(false);
   const [predictText, setPredictText] = useState('');
   /** The run the gate is holding: set when Run was pressed before a prediction was made. */
   const [heldRun, setHeldRun] = useState<{ code: string; lesson: PythonLessonItem } | null>(null);
@@ -910,7 +987,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // read for the lesson now on screen rather than the one just left.
   useEffect(() => {
     setPredictRecord(predictionFor(selectedId));
-    setPredictOpen(false);
     setPredictText('');
     setHeldRun(null);
   }, [selectedId]);
@@ -1343,6 +1419,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     scratchRef.current = false;
     setSelectedId(id);
     lessonIdRef.current = id;
+    // A phone opens a newly chosen entry on its text unless this entry was left in the code. The
+    // record names the lesson, so "code" cannot follow the learner into prose they have not read.
+    const surface = readPhoneSurface(id);
+    setPhoneSurface(surface);
+    if (surface === 'code') setCodeOpened(true);
+    setLessonSheetOpen(false);
     // Always recorded, unlike the address bar: a plain visit keeps its clean URL and still reopens
     // here next time, which is the difference between a bookmark that resumes and one that resets.
     rememberLastLesson(id);
@@ -1752,6 +1834,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // On a metered or 2G connection the download waits until the learner actually asks to run: a
   // study site should not spend someone's data on a program they may never write.
   useEffect(() => {
+    // A phone reading the lesson has not asked for code yet: 10 MB of Pyodide and the editor's
+    // 149 kB are exactly what the one-surface Study loop exists to postpone. Opening Code (or a
+    // preset that shows the editor) flips this and the warm-up starts then.
+    if (isPhone && layout === 'study' && !codeOpened) return;
     const connection = (
       navigator as Navigator & {
         connection?: { saveData?: boolean; effectiveType?: string };
@@ -1764,7 +1850,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       (typeof window !== 'undefined' && window.__mechalabPyodideCdnUrl) || DEFAULT_PYODIDE_CDN;
     let cancelled = false;
     const warm = () => {
-      if (cancelled) return;
+      if (cancelled || warmStartedRef.current) return;
+      warmStartedRef.current = true;
       try {
         const worker = getOrCreateWorker();
         const previousHandler = worker.onmessage;
@@ -1796,7 +1883,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       cancelled = true;
       if (!idleCallback) window.clearTimeout(handle as number);
     };
-  }, []);
+  }, [codeOpened, isPhone, layout]);
 
   /** Re-arms the run's watchdog when a pause is answered: the clock belongs to execution. */
   const resumeWatchdogRef = useRef<(() => void) | null>(null);
@@ -2407,7 +2494,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     if (!existing) {
       setHeldRun({ code: sourceCode, lesson });
       setPredictText('');
-      setPredictOpen(true);
+      openPredictView();
       return;
     }
     void runPythonCode(sourceCode, lesson);
@@ -2579,9 +2666,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       enabled: watchOn,
       lastVerdict: passStatus as WatchVerdict,
       running: isRunning,
-      // The gate owns the next run while it waits on a guess: a re-run here would be the one path
-      // around it.
-      gateHolding: predictOpen && !predictRecord,
+      // The gate owns the next run while a run is actually held for a guess: a re-run here would be
+      // the one path around it. The test is `heldRun`, not the pane's existence — the Predict tab
+      // can be open before any run has asked, and `panes` used to make that state look like a hold
+      // forever (the watch loop then never fired again).
+      gateHolding: heldRun !== null,
       editedSinceRun: code !== runCodeRef.current,
     });
     if (decision !== 'run') return;
@@ -2596,7 +2685,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         watchTimerRef.current = null;
       }
     };
-  }, [watchOn, code, passStatus, isRunning, predictOpen, predictRecord, selectedId, currentLesson]);
+  }, [watchOn, code, passStatus, isRunning, heldRun, selectedId, currentLesson]);
 
   // A slider drag is a parameter change, so the answer is a fresh run - but one run per drag, not
   // one per pixel. The timer is cleared on unmount so a removed tab cannot run in the background.
@@ -2946,6 +3035,19 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   /** Write hides the last run's output: while drafting, it describes code that has changed. */
   const resultsAllowed = layoutShows(shownLayout, 'results');
   /**
+   * The phone's one-surface Study loop.
+   *
+   * `phoneStudy` is false on a desktop, in Read/Write/Debug, and during the tour's own preset, so
+   * every rule below falls back to the layout the learner chose. `deferPhoneEditor` is the gate
+   * that keeps CodeMirror and Pyodide off a first visit's prose: the editor is not merely hidden,
+   * its chunk is not requested until the learner asks for the code.
+   */
+  const phoneStudy = isPhone && shownLayout === 'study';
+  const phoneCode = phoneStudy && phoneSurface === 'code';
+  const phoneLessonVisible = !phoneStudy || phoneSurface === 'lesson';
+  const phoneEditorVisible = !phoneStudy || phoneSurface === 'code';
+  const deferPhoneEditor = phoneStudy && !codeOpened;
+  /**
    * What the editor body shows right now.
    *
    * The stored arrangement is the learner's, but a preset still owns the regions: Write has no
@@ -2958,6 +3060,54 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const paneSplit = resultsAllowed && isSplit(panes) && shownViews.size > 1;
   /** Slot order, so an arrangement opened on an output still reads left to right. */
   const paneOrder = (view: EditorView): number => slotFor(panes, view) ?? 0;
+  /**
+   * Open the prediction gate as a pane, beside the code when there is no split yet.
+   *
+   * A guess is read against the code that has to print it, so the first press splits rather than
+   * covering `main.py` with the question; once a split exists the focused pane takes the tab, the
+   * same rule every other tab follows. In a preset that hides the editor or its results the pane
+   * would be a door into a hidden room, so Study comes back first.
+   */
+  const openPredictView = () => {
+    if (!editorShown || !resultsAllowed) setLayout(writeLayout('study'));
+    if (slotFor(panes, 'predict') !== null) {
+      commitPanes(showView(panes, 'predict'));
+      return;
+    }
+    commitPanes(isSplit(panes) ? showView(panes, 'predict') : splitPane(panes, 'predict'));
+  };
+  // The phone bar's two actions both open the code first: a run's output and a prediction are
+  // about the editor, and starting one from the prose should land on the screen that shows it.
+  const phoneRun = () => {
+    choosePhoneSurface('code');
+    requestRun(codeRef.current, currentLesson);
+  };
+  const phonePredict = () => {
+    choosePhoneSurface('code');
+    openPredictView();
+  };
+  /**
+   * The chooser, rendered in the desktop rail or the phone sheet.
+   *
+   * One definition rather than two copies of twelve props: a filter or a count added later would
+   * otherwise have to be remembered in both, and the sheet is exactly the copy that gets forgotten.
+   */
+  const renderLessonChooser = (className?: string, maxHeight?: string) => (
+    <LessonChooser
+      lessons={PYTHON_LESSONS}
+      filteredLessons={filteredLessons}
+      trackFilter={trackFilter}
+      onTrackFilter={setTrackFilter}
+      searchQuery={searchQuery}
+      onSearchQuery={setSearchQuery}
+      currentId={selectedId}
+      verifiedLessons={verifiedLessons}
+      completedLessons={completedLessons}
+      onSelect={(id) => selectLesson(id)}
+      className={className}
+      maxHeight={maxHeight}
+    />
+  );
   /**
    * The rule between two side-by-side panes, on whichever one is second, plus a faint inset ring on
    * the focused one. A split is a keyboard-and-pointer workspace: the tab press fills the pane the
@@ -3055,6 +3205,143 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         )}
       </span>
     );
+
+  /**
+   * The prediction gate, as an editor pane (`predictGate.ts`).
+   *
+   * It is a view rather than a block above the code because a guess is read against the code
+   * that has to print it: side by side or stacked, like the run output and the expected text.
+   * Pressing Predict opens it; a first Run with no commit opens it and holds the run.
+   */
+  const predictPane = (
+    <div className="flex h-full min-h-0 flex-col bg-panel border border-line rounded-xl p-4">
+      <div
+        id="predict-gate"
+        data-testid="predict-gate"
+        data-predict-state={predictRecord ? (predictRecord.skipped ? 'skipped' : 'judged') : 'asking'}
+        className="rounded-lg border border-amber/40 bg-canvas p-3"
+      >
+        {predictRecord ? (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-[11px] font-mono text-amber">
+                PREDICT · {predictRecord.skipped ? 'skipped' : describeCheck(predictRecord)}
+              </span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  onClick={predictAgain}
+                  data-testid="btn-predict-again"
+                  className="px-2 py-0.5 rounded text-[11px] font-mono text-muted hover:text-accent border border-line cursor-pointer"
+                >
+                  Predict again
+                </button>
+                <button
+                  onClick={() => commitPanes(closeView(panes, 'predict'))}
+                  data-testid="btn-predict-close"
+                  className="px-2 py-0.5 rounded text-[11px] font-mono text-muted hover:text-body border border-line cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+            {predictRecord.skipped ? (
+              <p data-testid="predict-skipped-text" className="mt-2 text-xs text-muted">
+                You ran this one without predicting. The run went through; nothing was
+                blocked.
+              </p>
+            ) : (
+              <>
+                <p className="mt-2 text-[11px] font-mono text-faint">You wrote</p>
+                <pre
+                  data-testid="predict-recorded"
+                  className="mt-1 overflow-auto rounded border border-line-soft bg-panel p-2 font-mono text-[11.5px] text-body whitespace-pre-wrap"
+                >
+                  {predictRecord.text}
+                </pre>
+                <p
+                  data-testid="predict-verdict-text"
+                  className={`mt-1.5 text-xs ${
+                    predictRecord.verdict === 'match'
+                      ? 'text-emerald'
+                      : predictRecord.verdict === 'miss'
+                        ? 'text-rose'
+                        : 'text-amber'
+                  }`}
+                >
+                  {predictRecord.verdict === 'match'
+                    ? 'You called it: the output matched, line for line.'
+                    : predictRecord.verdict === 'reordered'
+                      ? 'The right lines, in a different order: the program prints them in its own sequence, and that sequence is the lesson.'
+                      : predictRecord.verdict === 'partial'
+                        ? `Your guess and the output share ${predictRecord.matchedLines} of ${predictRecord.predictedLines} lines. The rest are the ones worth reading twice.`
+                        : 'None of your lines are in the output. That is the useful part: the screen just told you something you did not expect.'}
+                </p>
+              </>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <span className="text-[11px] font-mono text-amber">
+                {gateAsksForFinish
+                  ? 'PREDICT FIRST · what will a finished run print?'
+                  : 'PREDICT FIRST · what will this print?'}
+              </span>
+              <span className="text-[11px] font-mono text-faint">
+                {heldRun ? 'before the run' : 'before you press Run'}
+              </span>
+            </div>
+            <label htmlFor="predict-input" className="mt-2 block text-xs text-body">
+              Type the output you expect, one line per line of output. It is checked against
+              the lesson&apos;s own expected output when you commit, and the run goes then.
+              {gateAsksForFinish && (
+                <>
+                  {' '}
+                  This starter stops at its first NotImplementedError, so predict the line a
+                  finished file prints — not the traceback.
+                </>
+              )}
+            </label>
+            <textarea
+              id="predict-input"
+              value={predictText}
+              onChange={(event) => setPredictText(event.target.value)}
+              rows={3}
+              spellCheck={false}
+              data-testid="predict-input"
+              // Shape, never content: the old example was P.1's own expected line repeated on
+              // every lesson, which was half the answer to P.1's gate and another lesson's
+              // output everywhere else.
+              placeholder={'one line per line the program prints, e.g.\nLabel: value | Label: value'}
+              className="mt-1.5 w-full rounded border border-line bg-panel p-2 font-mono text-[12px] text-body resize-y"
+            />
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                onClick={commitPrediction}
+                disabled={!predictText.trim() || isRunning}
+                data-testid="btn-predict-run"
+                className="btn btn-primary px-3 py-1.5 text-[12px] font-bold disabled:opacity-50"
+              >
+                {heldRun ? 'Predict & Run' : 'Save prediction'}
+              </button>
+              <button
+                onClick={skipPrediction}
+                disabled={isRunning}
+                data-testid="btn-predict-skip"
+                title="Run without predicting. The skip is recorded, so it is not counted as a prediction."
+                className="px-2.5 py-1.5 rounded-lg text-xs font-mono text-muted hover:text-body border border-line cursor-pointer disabled:opacity-50"
+              >
+                Skip and run
+              </button>
+              <span className="text-[11px] text-faint">
+                A missed guess is what makes the result stick.
+              </span>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
 
   const actualOutputPane = (
 <div data-testid="results-panel" className="flex h-full min-h-0 flex-col bg-panel border border-line rounded-xl p-4">
@@ -3156,11 +3443,29 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       header, and a control that disappears with the panel it governs is a trap. A
       shortcut with no control is a feature only its author knows, so the shortcut is
       printed on the button. */}
+  {/* A phone gets one native select instead of four preset buttons and a dock sentence: the
+      same four layouts, one row, and a 16 px control iOS will not zoom on. The buttons come back
+      at `md`, where there is room to print their shortcut keys. */}
+  <label className="mr-1 flex items-center md:hidden">
+    <span className="sr-only">Workspace layout</span>
+    <select
+      data-testid="layout-select"
+      value={layout}
+      onChange={(event) => setLayout(writeLayout(event.target.value as WorkspaceLayout))}
+      className="min-h-[40px] rounded-lg border border-line bg-canvas px-1.5 text-[13px] font-mono text-body"
+    >
+      {LAYOUTS.map((option) => (
+        <option key={option.id} value={option.id}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  </label>
   <div
     role="group"
     aria-label="Layout"
     data-testid="layout-presets"
-    className="flex items-center gap-1 mr-1"
+    className="mr-1 hidden items-center gap-1 md:flex"
   >
     {LAYOUTS.map((option) => (
       <button
@@ -3205,7 +3510,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       // The full sentence is a 127 px button. On a 1280 px window that was the width that pushed
       // Predict onto a second row, so the dock reads as its arrow until the card is wide enough
       // (2xl) to print the words beside it. The accessible name is the sentence either way.
-      className="px-2 py-1 rounded text-[13px] font-mono cursor-pointer border transition-colors bg-canvas text-muted hover:text-ink border-line-soft flex items-center gap-1.5"
+      className="hidden px-2 py-1 rounded text-[13px] font-mono cursor-pointer border transition-colors bg-canvas text-muted hover:text-ink border-line-soft md:flex items-center gap-1.5"
     >
       <ArrowLeftRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
       <span className="hidden 2xl:inline">{dockChoice.label}</span>
@@ -3243,6 +3548,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     aria-expanded={moreOpen}
     aria-controls="toolbar-more"
     data-testid="btn-more"
+    aria-label="More actions"
     title="Format with Black, history, diff, reset, sharing, pairing and editor preferences"
     className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono border flex items-center gap-1.5 cursor-pointer transition-colors ${
       moreOpen
@@ -3251,7 +3557,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     }`}
   >
     <MoreHorizontal className="w-3.5 h-3.5" />
-    <span>More ⋯</span>
+    <span className="hidden sm:inline">More ⋯</span>
   </button>
   <button
     onClick={() => {
@@ -3272,21 +3578,23 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     ) : (
       <Play className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
     )}
-    <span>{isRunning ? 'Running in Worker...' : 'Run & Verify Output'}</span>
-    {!isRunning && <span className="kbd ml-0.5">⌘↵</span>}
+    <span className="hidden sm:inline">{isRunning ? 'Running in Worker...' : 'Run & Verify Output'}</span>
+    <span className="sm:hidden">{isRunning ? 'Running…' : 'Run'}</span>
+    {!isRunning && <span className="kbd ml-0.5 hidden sm:inline-flex">⌘↵</span>}
   </button>
   {/* The gate's own door, beside Run: the question also opens by itself on a lesson's first Run,
       and this is how a learner rereads the verdict or commits a guess before pressing it. It used
       to be folded into More, which is the one place a convenience control is not convenient. */}
   <button
     onClick={() => {
-      const next = !predictOpen;
+      // The gate is a pane now, so the button opens and focuses it instead of toggling a block:
+      // a press with the tab already on screen is how a learner rereads the verdict.
       setPredictRecord(predictionFor(selectedId));
-      setPredictOpen(next);
-      if (next) setHeldRun(null);
+      setHeldRun(null);
+      openPredictView();
     }}
-    aria-expanded={predictOpen}
-    aria-controls="predict-gate"
+    aria-expanded={resultsAllowed && shownViews.has('predict')}
+    aria-controls="pane-predict"
     data-testid="btn-predict"
     // The label is the same width in every state on purpose. " · skipped" added 78 px, and at
     // 1280 the Study chooser leaves the card 800 px: that suffix was the difference between
@@ -3299,11 +3607,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     }
     aria-label={`Predict${predictRecord ? (predictRecord.skipped ? ' (skipped)' : ' (answered)') : ''}: commit to what the code will print, then run it`}
     className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-      predictOpen ? 'text-amber border-amber/60' : 'text-body border-line'
+      resultsAllowed && shownViews.has('predict') ? 'text-amber border-amber/60' : 'text-body border-line'
     }`}
   >
     <Sparkles className="w-3.5 h-3.5" />
-    <span>Predict</span>
+    <span className="hidden sm:inline">Predict</span>
   </button>
   <div
     id="toolbar-more"
@@ -3511,7 +3819,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   );
 
   return (
-    <div className="space-y-5">
+    <div
+      className={
+        phoneStudy
+          ? 'space-y-5 pb-[calc(4.75rem+env(safe-area-inset-bottom))]'
+          : 'space-y-5'
+      }
+    >
       {/* The coach mark, then the chip, before anything else on the page: the tour is about this
           screen, and a card that arrives below the fold is a card that arrives late. */}
       {tourActive && (
@@ -3595,13 +3909,16 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                       'Warming Python (once, ~10 MB)…'}
                 </span>
               </p>
-              <p className="mt-0.5 text-[12px]" style={{ color: 'var(--dim)' }}>
+              <p className="mt-0.5 hidden text-[12px] sm:block" style={{ color: 'var(--dim)' }}>
                 {PYTHON_LESSONS.length} entries · starter code, three hints, behavioural tests
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 font-mono tabular-nums">
+          {/* On a phone the three counters are a second screen of chrome before the lesson. The
+              status chip above already says whether Python is ready; the counts are here when
+              there is room for them. */}
+          <div className="hidden items-center gap-3 font-mono tabular-nums md:flex">
             <div className="text-right">
               <div className="text-[12px]" style={{ color: 'var(--dim)' }}>
                 Executed &amp; Passed (WASM)
@@ -3694,7 +4011,22 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         </div>
       </div>
 
-      {showFirstGuide && (
+      {showFirstGuide && isPhone && !guideOpen && (
+        <button
+          type="button"
+          onClick={() => setGuideOpen(true)}
+          data-testid="btn-guide-open"
+          className="flex w-full items-center gap-2 rounded-xl border border-emerald/50 bg-emerald/10 px-3 py-2.5 text-left text-[12.5px] text-body cursor-pointer"
+        >
+          <Sparkles className="h-3.5 w-3.5 shrink-0 text-emerald" aria-hidden="true" />
+          <span className="min-w-0 flex-1">
+            First time here? The loop in three steps — starter, predict, finish line.
+          </span>
+          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted" aria-hidden="true" />
+        </button>
+      )}
+
+      {showFirstGuide && (!isPhone || guideOpen) && (
         <section
           data-testid="first-lesson-guide"
           className="bg-emerald/10 border border-emerald/50 rounded-xl p-5"
@@ -3724,15 +4056,26 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   : `This brief is only for ${currentLesson.id}. It names the first hole, the first check, and what a finished run prints; the editor and the red line do the rest.`}
               </p>
             </div>
-            <button
-              onClick={dismissFirstGuide}
-              data-testid="btn-guide-dismiss"
-              className="px-2.5 py-1 rounded text-[12.5px] font-mono text-muted hover:text-ink border border-line cursor-pointer"
-            >
-              {currentLesson.id === 'P.1'
-                ? 'I have done this before — hide'
-                : "Hide this lesson's guide"}
-            </button>
+            <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+              {isPhone && (
+                <button
+                  onClick={() => setGuideOpen(false)}
+                  data-testid="btn-guide-collapse"
+                  className="px-2.5 py-1 rounded text-[12.5px] font-mono text-muted hover:text-ink border border-line cursor-pointer"
+                >
+                  Hide steps
+                </button>
+              )}
+              <button
+                onClick={dismissFirstGuide}
+                data-testid="btn-guide-dismiss"
+                className="px-2.5 py-1 rounded text-[12.5px] font-mono text-muted hover:text-ink border border-line cursor-pointer"
+              >
+                {currentLesson.id === 'P.1'
+                  ? 'I have done this before — hide'
+                  : "Hide this lesson's guide"}
+              </button>
+            </div>
           </div>
 
           <ol className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-3">
@@ -3897,29 +4240,122 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         }`}
       >
         {shownLayout === 'study' && (
-          <LessonChooser
-            lessons={PYTHON_LESSONS}
-            filteredLessons={filteredLessons}
-            trackFilter={trackFilter}
-            onTrackFilter={setTrackFilter}
-            searchQuery={searchQuery}
-            onSearchQuery={setSearchQuery}
-            currentId={selectedId}
-            verifiedLessons={verifiedLessons}
-            completedLessons={completedLessons}
-            onSelect={selectLesson}
-          />
+          <div className="hidden lg:block">
+            {renderLessonChooser()}
+          </div>
         )}
 
         <div ref={splitContainerRef} data-focus-expand className="space-y-4">
+          {/* The phone's lesson strip: the title, the two doors (Lessons, Details) and the study
+              clock, in about a tenth of the card the desktop brief takes. The full brief is still
+              one tap away; it is not the first thing between a learner and the paragraph. */}
+          {isPhone && !phoneCode && (
+            <div
+              data-tour="lesson-brief"
+              data-testid="phone-lesson-strip"
+              className="space-y-2 rounded-xl border border-line bg-panel p-2.5"
+            >
+              <div className="flex items-start gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="font-mono text-[11px] text-accent">Lesson {currentLesson.id}</div>
+                  <h2
+                    data-testid="lesson-title"
+                    className="truncate text-[14px] font-bold text-ink"
+                    title={currentLesson.title}
+                  >
+                    {currentLesson.title}
+                  </h2>
+                </div>
+                {currentSpineStep && (
+                  <span className="shrink-0 font-mono text-[10.5px] text-muted">
+                    {stepCostLabel(currentSpineStep)}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setLessonSheetOpen(true)}
+                  data-testid="btn-lessons"
+                  className="btn min-h-[44px] min-w-0 flex-1 justify-between gap-2 px-2.5 text-[12.5px]"
+                >
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <BookOpen className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
+                    <span className="truncate">Lessons</span>
+                    <span className="shrink-0 font-mono text-[11px] text-muted">
+                      {filteredLessons.length}
+                    </span>
+                  </span>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPhoneBriefOpen((open) => !open)}
+                  data-testid="btn-brief-toggle"
+                  aria-expanded={phoneBriefOpen}
+                  className="btn min-h-[44px] shrink-0 px-2.5 text-[12.5px]"
+                >
+                  {phoneBriefOpen ? 'Hide' : 'Details'}
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <StudyTimerRow lessonId={selectedId} compact />
+              </div>
+            </div>
+          )}
 
         {/* The lesson text, the editor and everything that reports on it. Only these three are the
             preset's grid: the lesson card above describes all of them, and the run banners
             between belong to the run, not to a column. */}
 
+          {/* The phone's Code surface has no room for the full brief above the editor. This strip
+              keeps the two things a coder needs there — the lesson chooser and the study clock —
+              and leaves the prose one tap away. */}
+          {phoneCode && (
+            <div data-testid="phone-code-strip" className="space-y-2">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setLessonSheetOpen(true)}
+                  data-testid="btn-lessons-code"
+                  className="btn min-h-[44px] min-w-0 flex-1 justify-between gap-2 px-3 text-[13px]"
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <BookOpen className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
+                    <span className="truncate">Lessons · {selectedId}</span>
+                  </span>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => choosePhoneSurface('lesson')}
+                  data-testid="btn-read-lesson"
+                  className="btn min-h-[44px] shrink-0 px-3 text-[13px]"
+                >
+                  Read lesson
+                </button>
+              </div>
+              <details
+                data-testid="phone-clock-details"
+                className="rounded-xl border border-line bg-panel px-3 py-2"
+              >
+                <summary className="cursor-pointer font-mono text-[12px] text-muted">
+                  Study clock &amp; hours
+                </summary>
+                <StudyTimerRow lessonId={selectedId} />
+              </details>
+            </div>
+          )}
+
           {/* Active Lesson Metadata Card. `data-tour` names it for the first-run tour's second step
               (`app/src/tour.ts`), and `scripts/test_tour.mjs` fails if the name goes away. */}
-          <div data-tour="lesson-brief" className="bg-panel border border-line rounded-xl p-4">
+          <div
+            data-tour={isPhone ? undefined : 'lesson-brief'}
+            data-testid="lesson-brief"
+            className={`bg-panel border border-line rounded-xl p-4 ${
+              phoneCode || (isPhone && !phoneBriefOpen) ? 'hidden' : ''
+            }`}
+          >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 {/* Whole items wrap; none of them breaks inside a word. Before this, the row was a
@@ -3934,7 +4370,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   <span className="text-accent font-bold whitespace-nowrap">
                     Lesson {currentLesson.id}
                   </span>
-                  <span className="truncate max-w-[16rem] sm:max-w-[22rem]" title={currentLesson.path}>
+                  <span
+                    className="hidden max-w-[16rem] truncate sm:inline sm:max-w-[22rem]"
+                    title={currentLesson.path}
+                  >
                     {currentLesson.path}
                   </span>
                   {currentRoadmapStep ? (
@@ -3971,7 +4410,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     target="_blank"
                     rel="noreferrer"
                     title="The lesson text is the pane on this screen. The GitHub page remains for copying, printing and filing an issue; nothing you type is saved there."
-                    className="text-muted hover:text-accent underline underline-offset-2 whitespace-nowrap"
+                    className="hidden whitespace-nowrap text-muted underline underline-offset-2 hover:text-accent sm:inline"
                   >
                     View source on GitHub ↗
                   </a>
@@ -3980,14 +4419,36 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                       Executed &amp; Passed (WASM)
                     </span>
                   )}
+                  {/* The 224 px chooser rail needs `lg`, and a phone's strip needs `md` to be
+                      absent: between them a tablet had no door to the lesson list at all. This is
+                      that door, and it opens the same sheet the phone uses. */}
+                  <button
+                    type="button"
+                    onClick={() => setLessonSheetOpen(true)}
+                    data-testid="btn-lessons-tablet"
+                    className="hidden items-center gap-1 whitespace-nowrap rounded border border-line bg-canvas px-2 py-0.5 text-[11px] font-semibold text-body hover:text-ink cursor-pointer md:inline-flex lg:hidden"
+                  >
+                    <BookOpen className="h-3 w-3" aria-hidden="true" />
+                    Lessons
+                  </button>
                 </div>
-                <h2 data-testid="lesson-title" className="text-base font-bold text-ink mt-1">
+                <h2
+                  data-testid={isPhone ? undefined : 'lesson-title'}
+                  className="text-base font-bold text-ink mt-1"
+                >
                   {currentLesson.title}
                 </h2>
               </div>
 
               {editorShown ? null : runnerToolbar}
             </div>
+
+            {/* The visible half of the sitting clock: Start/Resume and Log & reset, so an hour of
+                reading the lesson is something the learner can file on purpose instead of hoping
+                the automatic sitting caught it. The hours land in the same store Today reads. On a
+                phone the compact strip above this card already carries it, and two clocks on one
+                screen would count the same stretch twice. */}
+            {!isPhone && <StudyTimerRow lessonId={selectedId} />}
 
             {/* The Share button's answer. A polite status, not an alert: it is a confirmation of
                 something the learner just asked for, and pressing Share twice must not trap them. */}
@@ -4154,137 +4615,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     Keep mine
                   </button>
                 </div>
-              </div>
-            )}
-
-            {/* Predict first — the ladder's third move, and the one place the workbench could skip
-                it: press Run on the starter, read the answer off the screen, learn nothing. The run
-                is held until the guess is committed (or deliberately skipped and recorded). */}
-            {predictOpen && (
-              <div
-                id="predict-gate"
-                data-testid="predict-gate"
-                data-predict-state={predictRecord ? (predictRecord.skipped ? 'skipped' : 'judged') : 'asking'}
-                className="mt-3 rounded-lg border border-amber/40 bg-canvas p-3"
-              >
-                {predictRecord ? (
-                  <>
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="text-[11px] font-mono text-amber">
-                        PREDICT · {predictRecord.skipped ? 'skipped' : describeCheck(predictRecord)}
-                      </span>
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <button
-                          onClick={predictAgain}
-                          data-testid="btn-predict-again"
-                          className="px-2 py-0.5 rounded text-[11px] font-mono text-muted hover:text-accent border border-line cursor-pointer"
-                        >
-                          Predict again
-                        </button>
-                        <button
-                          onClick={() => setPredictOpen(false)}
-                          data-testid="btn-predict-close"
-                          className="px-2 py-0.5 rounded text-[11px] font-mono text-muted hover:text-body border border-line cursor-pointer"
-                        >
-                          Close
-                        </button>
-                      </div>
-                    </div>
-                    {predictRecord.skipped ? (
-                      <p data-testid="predict-skipped-text" className="mt-2 text-xs text-muted">
-                        You ran this one without predicting. The run went through; nothing was
-                        blocked.
-                      </p>
-                    ) : (
-                      <>
-                        <p className="mt-2 text-[11px] font-mono text-faint">You wrote</p>
-                        <pre
-                          data-testid="predict-recorded"
-                          className="mt-1 overflow-auto rounded border border-line-soft bg-panel p-2 font-mono text-[11.5px] text-body whitespace-pre-wrap"
-                        >
-                          {predictRecord.text}
-                        </pre>
-                        <p
-                          data-testid="predict-verdict-text"
-                          className={`mt-1.5 text-xs ${
-                            predictRecord.verdict === 'match'
-                              ? 'text-emerald'
-                              : predictRecord.verdict === 'miss'
-                                ? 'text-rose'
-                                : 'text-amber'
-                          }`}
-                        >
-                          {predictRecord.verdict === 'match'
-                            ? 'You called it: the output matched, line for line.'
-                            : predictRecord.verdict === 'reordered'
-                              ? 'The right lines, in a different order: the program prints them in its own sequence, and that sequence is the lesson.'
-                              : predictRecord.verdict === 'partial'
-                                ? `Your guess and the output share ${predictRecord.matchedLines} of ${predictRecord.predictedLines} lines. The rest are the ones worth reading twice.`
-                                : 'None of your lines are in the output. That is the useful part: the screen just told you something you did not expect.'}
-                        </p>
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <span className="text-[11px] font-mono text-amber">
-                        {gateAsksForFinish
-                          ? 'PREDICT FIRST · what will a finished run print?'
-                          : 'PREDICT FIRST · what will this print?'}
-                      </span>
-                      <span className="text-[11px] font-mono text-faint">
-                        {heldRun ? 'before the run' : 'before you press Run'}
-                      </span>
-                    </div>
-                    <label htmlFor="predict-input" className="mt-2 block text-xs text-body">
-                      Type the output you expect, one line per line of output. It is checked against
-                      the lesson&apos;s own expected output when you commit, and the run goes then.
-                      {gateAsksForFinish && (
-                        <>
-                          {' '}
-                          This starter stops at its first NotImplementedError, so predict the line a
-                          finished file prints — not the traceback.
-                        </>
-                      )}
-                    </label>
-                    <textarea
-                      id="predict-input"
-                      value={predictText}
-                      onChange={(event) => setPredictText(event.target.value)}
-                      rows={3}
-                      spellCheck={false}
-                      data-testid="predict-input"
-                      // Shape, never content: the old example was P.1's own expected line repeated on
-                      // every lesson, which was half the answer to P.1's gate and another lesson's
-                      // output everywhere else.
-                      placeholder={'one line per line the program prints, e.g.\nLabel: value | Label: value'}
-                      className="mt-1.5 w-full rounded border border-line bg-panel p-2 font-mono text-[12px] text-body resize-y"
-                    />
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <button
-                        onClick={commitPrediction}
-                        disabled={!predictText.trim() || isRunning}
-                        data-testid="btn-predict-run"
-                        className="btn btn-primary px-3 py-1.5 text-[12px] font-bold disabled:opacity-50"
-                      >
-                        {heldRun ? 'Predict & Run' : 'Save prediction'}
-                      </button>
-                      <button
-                        onClick={skipPrediction}
-                        disabled={isRunning}
-                        data-testid="btn-predict-skip"
-                        title="Run without predicting. The skip is recorded, so it is not counted as a prediction."
-                        className="px-2.5 py-1.5 rounded-lg text-xs font-mono text-muted hover:text-body border border-line cursor-pointer disabled:opacity-50"
-                      >
-                        Skip and run
-                      </button>
-                      <span className="text-[11px] text-faint">
-                        A missed guess is what makes the result stick.
-                      </span>
-                    </div>
-                  </>
-                )}
               </div>
             )}
 
@@ -5020,6 +5350,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 path={currentLesson.readerPath}
                 tall={shownLayout === 'read'}
                 onJumpToEditor={editorShown ? jumpToEditor : undefined}
+                // Hidden, not unmounted: the phone's Code surface must return to the paragraph the
+                // reader was on, and the page's own request is not free.
+                hidden={!phoneLessonVisible}
               />
             )}
 
@@ -5030,8 +5363,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             id="python-runner-editor"
             data-testid="editor-panel"
             data-tour="editor"
+            // The phone's Code surface is the one place the editor may take the theme's taller
+            // frame (`index.css`), and 16 px is the size a phone keyboard will not zoom on.
+            data-phone-code={phoneCode ? '1' : undefined}
             // Read hides the editor rather than shrinking it: a traceback is what that preset is for.
-            style={{ display: editorShown ? undefined : 'none' }}
+            // On a phone's Lesson surface it is hidden too, and kept mounted once opened so a
+            // switch back is instant.
+            style={{ display: editorShown && phoneEditorVisible ? undefined : 'none' }}
             className="bg-panel border border-line rounded-xl overflow-hidden scroll-mt-4"
           >
             <div className="bg-canvas border-b border-line-soft px-3 py-1.5">
@@ -5039,7 +5377,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               {/* The strip takes the row's spare width, wraps on a phone and scrolls on a wider
                   window: a strip that wrapped at 1280 px would be a header the code below pays for. */}
               <div
-                className="flex min-w-0 flex-1 flex-wrap items-center gap-1 sm:flex-nowrap sm:overflow-x-auto"
+                className="flex min-w-0 flex-1 flex-nowrap items-center gap-1 overflow-x-auto"
                 role="tablist"
                 aria-label="Editor tabs"
               >
@@ -5096,21 +5434,42 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                       aria-hidden="true"
                       className="mx-1 h-4 w-px shrink-0 self-center bg-line-soft"
                     />
-                    {(['actual', 'expected'] as const).map((view) => {
+                    {(['predict', 'actual', 'expected'] as const).map((view) => {
                       const selected = shownViews.has(view);
+                      const meta =
+                        view === 'predict'
+                          ? {
+                              label: 'Predict',
+                              title:
+                                'The prediction gate: commit to what this will print before the run — tab here, or split it beside the code',
+                              icon: <Sparkles className="h-3 w-3" aria-hidden="true" />,
+                            }
+                          : view === 'actual'
+                            ? {
+                                label: 'Run output',
+                                title:
+                                  'The last run’s stdout and verdict — tab here, or split it beside the code',
+                                icon: <Terminal className="h-3 w-3" aria-hidden="true" />,
+                              }
+                            : {
+                                label: 'Expected',
+                                title:
+                                  'The lesson’s Expected Output — tab here, or split it beside the code',
+                                icon: <CheckSquare className="h-3 w-3" aria-hidden="true" />,
+                              };
                       return (
                         <button
                           key={view}
                           role="tab"
                           aria-selected={selected}
                           data-testid={`editor-tab-${view}`}
-                          title={
-                            view === 'actual'
-                              ? 'The last run’s stdout and verdict — tab here, or split it beside the code'
-                              : 'The lesson’s Expected Output — tab here, or split it beside the code'
-                          }
+                          title={meta.title}
                           onClick={() => commitPanes(showView(panes, view))}
-                          className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t px-2.5 py-1.5 text-[12.5px] font-mono cursor-pointer"
+                          // Predict has its own fixed button in the phone bar; its tab would take
+                          // the width that keeps Run output and Expected on screen.
+                          className={`shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t px-2.5 py-1.5 text-[12.5px] font-mono cursor-pointer ${
+                            view === 'predict' ? 'hidden md:flex' : 'flex'
+                          }`}
                           style={{
                             color: selected ? 'var(--accent)' : 'var(--muted)',
                             borderBottom: selected
@@ -5118,12 +5477,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                               : '2px solid transparent',
                           }}
                         >
-                          {view === 'actual' ? (
-                            <Terminal className="h-3 w-3" aria-hidden="true" />
-                          ) : (
-                            <CheckSquare className="h-3 w-3" aria-hidden="true" />
-                          )}
-                          {view === 'actual' ? 'Run output' : 'Expected'}
+                          {meta.icon}
+                          {meta.label}
                         </button>
                       );
                     })}
@@ -5153,7 +5508,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                       className="flex items-center gap-1 rounded border border-line bg-canvas px-2 py-0.5 text-[12px] font-mono text-body hover:bg-raise cursor-pointer"
                     >
                       <Columns2 className="h-3 w-3" aria-hidden="true" />
-                      <span>Split</span>
+                      <span className="hidden sm:inline">Split</span>
                     </button>
                   ) : (
                     <>
@@ -5295,7 +5650,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 {collabNotice}
               </p>
             )}
-            {openHelperFile ? (
+            {/* The phone's punctuation strip: a phone keyboard has no colon, bracket or underscore
+                on its first pane, and every Python line has at least one of them. */}
+            {!deferPhoneEditor && isPhone && !openHelperFile && (
+              <PythonKeys onInsert={(text) => guideEditorRef.current?.insertText(text)} />
+            )}
+            {deferPhoneEditor ? null : openHelperFile ? (
               <>
                 <p
                   className="border-b px-3 py-1.5 text-[11px]"
@@ -5342,6 +5702,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               {editorShown && (
                 <>
                   <div
+                    data-testid="pane-predict"
+                    data-pane="predict"
+                    onClick={() => focusPane('predict')}
+                    style={{
+                      display: shownViews.has('predict') ? undefined : 'none',
+                      order: paneOrder('predict'),
+                    }}
+                    className={`min-w-0 flex-1 border-t border-line-soft ${paneBorder('predict')}`}
+                  >
+                    {predictPane}
+                  </div>
+                  <div
                     data-testid="pane-actual"
                     data-pane="actual"
                     onClick={() => focusPane('actual')}
@@ -5378,7 +5750,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               edge, which is the boundary itself. Dragging it moves the boundary, and the share it
               leaves behind is remembered. Hidden below `lg`, where the two halves stack and there
               is no boundary to drag. */}
-          <div className="space-y-4 relative" data-testid="results-column" data-side={resultsSide}>
+          <div
+            className="space-y-4 relative"
+            data-testid="results-column"
+            data-side={resultsSide}
+            // The phone's Lesson surface is one task: the checks, the trace and the study panel
+            // come back with the code, not before it.
+            style={{ display: phoneEditorVisible ? undefined : 'none' }}
+          >
           {layoutArrangement(layout) === 'columns' && (
             <div
               role="separator"
@@ -5632,7 +6011,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
       {showPassToast && passStatus === 'passed' && (
         <div
-          className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4"
+          className="pointer-events-none fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 flex justify-center px-4 sm:bottom-6"
           data-testid="pass-toast"
         >
           <div
@@ -5667,6 +6046,93 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           </div>
         </div>
       )}
+      {/* The phone's one row of Study controls. Fixed, because the Run button being a scroll away
+          is the bug the whole surface split exists to fix; hidden while a sheet is open, because
+          the sheet owns the screen (`index.css`). */}
+      {phoneStudy && (
+        <div
+          data-testid="phone-bar"
+          data-phone-bar="1"
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-panel/95 shadow-[var(--shadow-lg)] backdrop-blur md:hidden"
+        >
+          <div className="mx-auto flex max-w-[640px] items-center gap-1.5 px-2 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))]">
+            <div
+              role="group"
+              aria-label="Study surface"
+              className="flex shrink-0 rounded-lg border border-line bg-canvas p-0.5"
+            >
+              <button
+                type="button"
+                data-testid="phone-surface-lesson"
+                aria-pressed={phoneSurface === 'lesson'}
+                onClick={() => choosePhoneSurface('lesson')}
+                className={`min-h-[40px] rounded-md px-2.5 text-[12.5px] font-semibold cursor-pointer ${
+                  phoneSurface === 'lesson'
+                    ? 'bg-accent/15 text-accent'
+                    : 'text-muted hover:text-ink'
+                }`}
+              >
+                Lesson
+              </button>
+              <button
+                type="button"
+                data-testid="phone-surface-code"
+                aria-pressed={phoneSurface === 'code'}
+                onClick={() => choosePhoneSurface('code')}
+                className={`min-h-[40px] rounded-md px-2.5 text-[12.5px] font-semibold cursor-pointer ${
+                  phoneSurface === 'code' ? 'bg-accent/15 text-accent' : 'text-muted hover:text-ink'
+                }`}
+              >
+                Code
+              </button>
+            </div>
+            {isRunning ? (
+              <button
+                type="button"
+                data-testid="btn-phone-stop"
+                onClick={() => stopExecution()}
+                className="btn min-h-[44px] flex-1 gap-1.5 border-rose/60 bg-rose/15 px-3 text-[13px] font-bold text-rose"
+              >
+                <OctagonX className="h-4 w-4" aria-hidden="true" />
+                Stop
+              </button>
+            ) : (
+              <button
+                type="button"
+                data-testid="btn-phone-run"
+                onClick={phoneRun}
+                className="btn btn-primary min-h-[44px] flex-1 gap-1.5 px-3 text-[13px] font-bold"
+              >
+                <Play className="h-4 w-4" aria-hidden="true" />
+                Run
+              </button>
+            )}
+            <button
+              type="button"
+              data-testid="btn-phone-predict"
+              onClick={phonePredict}
+              disabled={isRunning}
+              aria-label="Predict what this program prints"
+              title="Predict first: commit to what this will print, then run it"
+              className="btn min-h-[44px] min-w-[44px] shrink-0 gap-1.5 px-2.5 text-[12.5px]"
+            >
+              <Sparkles className="h-4 w-4 text-accent" aria-hidden="true" />
+              <span className="hidden min-[380px]:inline">Predict</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      <Sheet
+        open={lessonSheetOpen}
+        onClose={() => setLessonSheetOpen(false)}
+        title="Lessons & exercises"
+        testId="lesson-sheet"
+        size="lg"
+      >
+        <div className="p-2">{renderLessonChooser(undefined, 'none')}</div>
+      </Sheet>
+
       {helpOpen && <HelpSheet input={helpInput} onClose={() => setHelpOpen(false)} />}
       {pairOpen && (
         <PairSheet

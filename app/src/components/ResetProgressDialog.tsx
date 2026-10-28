@@ -157,7 +157,7 @@ export const ResetProgressDialog: React.FC<ResetProgressDialogProps> = ({ isOpen
 
   const panel = (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 pt-[8vh]"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 pt-[8vh] max-sm:items-end max-sm:p-0 max-sm:pt-0"
       style={{ backgroundColor: 'color-mix(in srgb, #04060a 72%, transparent)' }}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
@@ -170,7 +170,7 @@ export const ResetProgressDialog: React.FC<ResetProgressDialogProps> = ({ isOpen
         aria-labelledby="reset-progress-title"
         aria-describedby="reset-progress-lead"
         data-testid="reset-dialog"
-        className="w-full max-w-[46rem] rounded-[var(--r-lg)] border bg-panel shadow-2xl"
+        className="w-full max-w-[46rem] rounded-[var(--r-lg)] border bg-panel shadow-2xl max-sm:max-h-[92dvh] max-sm:overflow-y-auto max-sm:rounded-b-none max-sm:rounded-t-2xl max-sm:border-x-0 max-sm:border-b-0 max-sm:pb-[env(safe-area-inset-bottom)]"
         style={{ borderColor: 'var(--border-strong)' }}
       >
         <div

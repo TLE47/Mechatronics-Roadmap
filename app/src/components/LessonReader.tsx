@@ -114,6 +114,12 @@ interface LessonReaderProps {
    * preset), which is what keeps the jump link from promising a door that is not there.
    */
   onJumpToEditor?: () => void;
+  /**
+   * The phone's Code surface: the pane keeps its scroll and its mounted page, and is only taken off
+   * screen. Unmounting it would fetch the page again and lose the reading position the reader has
+   * just carried across a rotation (`readingPosition.ts`).
+   */
+  hidden?: boolean;
 }
 
 /** How long a scroll must be still before the position is written: one write per pause, not per pixel. */
@@ -236,6 +242,7 @@ export function LessonReader({
   toolbar,
   panel,
   onJumpToEditor,
+  hidden = false,
 }: LessonReaderProps) {
   /** Whether the reader is showing its one-line split-view suggestion. */
   const [splitTip, setSplitTip] = useState(false);
@@ -965,9 +972,11 @@ export function LessonReader({
     <section
       data-testid="lesson-reader"
       data-reader-path={path}
+      data-reader-hidden={hidden || undefined}
       // `min-w-0` is what keeps a long code line inside the pane's own scroller: as a flex child
       // the default `min-width: auto` lets its widest `<pre>` widen the whole work area instead.
       className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-line bg-panel"
+      style={{ display: hidden ? 'none' : undefined }}
     >
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line-soft bg-canvas px-3 py-1.5">
         <div className="flex min-w-0 items-center gap-1.5">

@@ -47,7 +47,7 @@
         ]
       },
       "counts": {
-        "buttons": 126,
+        "buttons": 127,
         "inputs": 4,
         "links": 31,
         "headings": 16,
@@ -105,7 +105,7 @@
           196,
           119,
           1244,
-          3119
+          3169
         ],
         "panel": [
           216,
@@ -115,7 +115,7 @@
         ],
         "footer": [
           0,
-          3238,
+          3288,
           1440,
           43
         ],
@@ -123,12 +123,12 @@
           0,
           0,
           1440,
-          3281
+          3332
         ]
       },
       "counts": {
-        "buttons": 168,
-        "inputs": 34,
+        "buttons": 175,
+        "inputs": 36,
         "links": 13,
         "headings": 18,
         "canvases": 1,
@@ -207,7 +207,7 @@
         ]
       },
       "counts": {
-        "buttons": 62,
+        "buttons": 63,
         "inputs": 1,
         "links": 4,
         "headings": 9,
@@ -287,7 +287,7 @@
         ]
       },
       "counts": {
-        "buttons": 45,
+        "buttons": 47,
         "inputs": 6,
         "links": 4,
         "headings": 3,
@@ -367,7 +367,7 @@
         ]
       },
       "counts": {
-        "buttons": 45,
+        "buttons": 47,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -425,7 +425,7 @@
           196,
           199,
           1244,
-          952
+          996
         ],
         "panel": [
           216,
@@ -435,7 +435,7 @@
         ],
         "footer": [
           0,
-          1151,
+          1195,
           1440,
           43
         ],
@@ -443,11 +443,11 @@
           0,
           0,
           1440,
-          1195
+          1239
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 46,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -527,7 +527,7 @@
         ]
       },
       "counts": {
-        "buttons": 48,
+        "buttons": 50,
         "inputs": 4,
         "links": 4,
         "headings": 4,
@@ -607,7 +607,7 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 46,
         "inputs": 6,
         "links": 4,
         "headings": 4,
@@ -687,7 +687,7 @@
         ]
       },
       "counts": {
-        "buttons": 45,
+        "buttons": 47,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -767,7 +767,7 @@
         ]
       },
       "counts": {
-        "buttons": 45,
+        "buttons": 47,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -847,7 +847,7 @@
         ]
       },
       "counts": {
-        "buttons": 36,
+        "buttons": 37,
         "inputs": 3,
         "links": 5,
         "headings": 3,
@@ -927,7 +927,7 @@
         ]
       },
       "counts": {
-        "buttons": 33,
+        "buttons": 34,
         "inputs": 1,
         "links": 6,
         "headings": 4,
@@ -1082,7 +1082,7 @@
         ]
       },
       "counts": {
-        "buttons": 126,
+        "buttons": 127,
         "inputs": 4,
         "links": 31,
         "headings": 16,
@@ -1140,7 +1140,7 @@
           196,
           119,
           1244,
-          3119
+          3169
         ],
         "panel": [
           216,
@@ -1150,7 +1150,7 @@
         ],
         "footer": [
           0,
-          3238,
+          3288,
           1440,
           43
         ],
@@ -1158,12 +1158,12 @@
           0,
           0,
           1440,
-          3281
+          3332
         ]
       },
       "counts": {
-        "buttons": 168,
-        "inputs": 34,
+        "buttons": 175,
+        "inputs": 36,
         "links": 13,
         "headings": 18,
         "canvases": 1,
@@ -1242,7 +1242,7 @@
         ]
       },
       "counts": {
-        "buttons": 62,
+        "buttons": 63,
         "inputs": 1,
         "links": 4,
         "headings": 9,
@@ -1322,7 +1322,7 @@
         ]
       },
       "counts": {
-        "buttons": 45,
+        "buttons": 47,
         "inputs": 6,
         "links": 4,
         "headings": 3,
@@ -1402,7 +1402,7 @@
         ]
       },
       "counts": {
-        "buttons": 45,
+        "buttons": 47,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -1460,7 +1460,7 @@
           196,
           199,
           1244,
-          952
+          996
         ],
         "panel": [
           216,
@@ -1470,7 +1470,7 @@
         ],
         "footer": [
           0,
-          1151,
+          1195,
           1440,
           43
         ],
@@ -1478,11 +1478,11 @@
           0,
           0,
           1440,
-          1195
+          1239
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 46,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -1562,7 +1562,7 @@
         ]
       },
       "counts": {
-        "buttons": 48,
+        "buttons": 50,
         "inputs": 4,
         "links": 4,
         "headings": 4,
@@ -1642,7 +1642,7 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 46,
         "inputs": 6,
         "links": 4,
         "headings": 4,
@@ -1722,7 +1722,7 @@
         ]
       },
       "counts": {
-        "buttons": 45,
+        "buttons": 47,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -1802,7 +1802,7 @@
         ]
       },
       "counts": {
-        "buttons": 45,
+        "buttons": 47,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -1882,7 +1882,7 @@
         ]
       },
       "counts": {
-        "buttons": 36,
+        "buttons": 37,
         "inputs": 3,
         "links": 5,
         "headings": 3,
@@ -1962,7 +1962,7 @@
         ]
       },
       "counts": {
-        "buttons": 33,
+        "buttons": 34,
         "inputs": 1,
         "links": 6,
         "headings": 4,
@@ -2117,7 +2117,7 @@
         ]
       },
       "counts": {
-        "buttons": 126,
+        "buttons": 127,
         "inputs": 4,
         "links": 31,
         "headings": 16,
@@ -2175,7 +2175,7 @@
           196,
           119,
           1244,
-          3119
+          3169
         ],
         "panel": [
           216,
@@ -2185,7 +2185,7 @@
         ],
         "footer": [
           0,
-          3238,
+          3288,
           1440,
           43
         ],
@@ -2193,12 +2193,12 @@
           0,
           0,
           1440,
-          3281
+          3332
         ]
       },
       "counts": {
-        "buttons": 168,
-        "inputs": 34,
+        "buttons": 175,
+        "inputs": 36,
         "links": 13,
         "headings": 18,
         "canvases": 1,
@@ -2277,7 +2277,7 @@
         ]
       },
       "counts": {
-        "buttons": 62,
+        "buttons": 63,
         "inputs": 1,
         "links": 4,
         "headings": 9,
@@ -2357,7 +2357,7 @@
         ]
       },
       "counts": {
-        "buttons": 45,
+        "buttons": 47,
         "inputs": 6,
         "links": 4,
         "headings": 3,
@@ -2437,7 +2437,7 @@
         ]
       },
       "counts": {
-        "buttons": 45,
+        "buttons": 47,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -2495,7 +2495,7 @@
           196,
           199,
           1244,
-          952
+          996
         ],
         "panel": [
           216,
@@ -2505,7 +2505,7 @@
         ],
         "footer": [
           0,
-          1151,
+          1195,
           1440,
           43
         ],
@@ -2513,11 +2513,11 @@
           0,
           0,
           1440,
-          1195
+          1239
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 46,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -2597,7 +2597,7 @@
         ]
       },
       "counts": {
-        "buttons": 48,
+        "buttons": 50,
         "inputs": 4,
         "links": 4,
         "headings": 4,
@@ -2677,7 +2677,7 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 46,
         "inputs": 6,
         "links": 4,
         "headings": 4,
@@ -2757,7 +2757,7 @@
         ]
       },
       "counts": {
-        "buttons": 45,
+        "buttons": 47,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -2837,7 +2837,7 @@
         ]
       },
       "counts": {
-        "buttons": 45,
+        "buttons": 47,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -2917,7 +2917,7 @@
         ]
       },
       "counts": {
-        "buttons": 36,
+        "buttons": 37,
         "inputs": 3,
         "links": 5,
         "headings": 3,
@@ -2997,7 +2997,7 @@
         ]
       },
       "counts": {
-        "buttons": 33,
+        "buttons": 34,
         "inputs": 1,
         "links": 6,
         "headings": 4,
@@ -3152,7 +3152,7 @@
         ]
       },
       "counts": {
-        "buttons": 126,
+        "buttons": 127,
         "inputs": 4,
         "links": 31,
         "headings": 16,
@@ -3210,7 +3210,7 @@
           196,
           119,
           1244,
-          3119
+          3169
         ],
         "panel": [
           216,
@@ -3220,7 +3220,7 @@
         ],
         "footer": [
           0,
-          3238,
+          3288,
           1440,
           43
         ],
@@ -3228,12 +3228,12 @@
           0,
           0,
           1440,
-          3281
+          3332
         ]
       },
       "counts": {
-        "buttons": 168,
-        "inputs": 34,
+        "buttons": 175,
+        "inputs": 36,
         "links": 13,
         "headings": 18,
         "canvases": 1,
@@ -3312,7 +3312,7 @@
         ]
       },
       "counts": {
-        "buttons": 62,
+        "buttons": 63,
         "inputs": 1,
         "links": 4,
         "headings": 9,
@@ -3392,7 +3392,7 @@
         ]
       },
       "counts": {
-        "buttons": 45,
+        "buttons": 47,
         "inputs": 6,
         "links": 4,
         "headings": 3,
@@ -3472,7 +3472,7 @@
         ]
       },
       "counts": {
-        "buttons": 45,
+        "buttons": 47,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -3530,7 +3530,7 @@
           196,
           199,
           1244,
-          952
+          996
         ],
         "panel": [
           216,
@@ -3540,7 +3540,7 @@
         ],
         "footer": [
           0,
-          1151,
+          1195,
           1440,
           43
         ],
@@ -3548,11 +3548,11 @@
           0,
           0,
           1440,
-          1195
+          1239
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 46,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -3632,7 +3632,7 @@
         ]
       },
       "counts": {
-        "buttons": 48,
+        "buttons": 50,
         "inputs": 4,
         "links": 4,
         "headings": 4,
@@ -3712,7 +3712,7 @@
         ]
       },
       "counts": {
-        "buttons": 44,
+        "buttons": 46,
         "inputs": 6,
         "links": 4,
         "headings": 4,
@@ -3792,7 +3792,7 @@
         ]
       },
       "counts": {
-        "buttons": 45,
+        "buttons": 47,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -3872,7 +3872,7 @@
         ]
       },
       "counts": {
-        "buttons": 45,
+        "buttons": 47,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -3952,7 +3952,7 @@
         ]
       },
       "counts": {
-        "buttons": 36,
+        "buttons": 37,
         "inputs": 3,
         "links": 5,
         "headings": 3,
@@ -4032,7 +4032,7 @@
         ]
       },
       "counts": {
-        "buttons": 33,
+        "buttons": 34,
         "inputs": 1,
         "links": 6,
         "headings": 4,

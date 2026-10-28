@@ -30,8 +30,11 @@ export const pythonTheme = EditorView.theme(
     '&': {
       color: 'var(--text)',
       backgroundColor: 'var(--bg)',
-      fontSize: '12.5px',
-      minHeight: '288px',
+      // The phone Study surface raises these two through `--editor-font-size` and
+      // `--editor-min-h` (`index.css`): 12.5 px is right beside a lesson on a desk, but a phone
+      // keyboard and a 390 px line want 16 px, which is also the size iOS refuses to zoom on focus.
+      fontSize: 'var(--editor-font-size, 12.5px)',
+      minHeight: 'var(--editor-min-h, 288px)',
     },
     '&.cm-focused': { outline: 'none' },
     '.cm-scroller': {
@@ -40,7 +43,7 @@ export const pythonTheme = EditorView.theme(
       // hard-coded stack.
       fontFamily: 'var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace)',
       lineHeight: '1.6',
-      maxHeight: '360px',
+      maxHeight: 'var(--editor-max-h, 360px)',
       overflow: 'auto',
     },
     '.cm-content': { padding: '12px 0', caretColor: 'var(--accent)' },

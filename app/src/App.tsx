@@ -7,6 +7,7 @@ import { ShortcutsModal } from './components/ShortcutsModal';
 import { lessonSearchItems } from './lessonSearch';
 import { loadProseIndex, proseSearchItems, type ProsePage } from './proseSearch';
 import { SimulatorTierBanner } from './components/SimulatorTierBanner';
+import { PhoneTabPicker } from './components/PhoneTabPicker';
 import { StartHereCard } from './components/StartHereCard';
 import { StoryCard } from './components/game/StoryCard';
 import { markStorySeen, readStorySeen } from './story';
@@ -226,6 +227,14 @@ const IntroPage = React.lazy(() =>
  * alias so a bookmark, an account-mail link and `e2e_game.mjs` still land on the same page.
  */
 type WholePage = HomePage;
+
+function isPhoneViewport(): boolean {
+  try {
+    return typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
+  } catch {
+    return false;
+  }
+}
 
 function pageFromLocation(): WholePage {
   if (typeof window === 'undefined' || !window.location) return 'workbench';
@@ -1249,7 +1258,12 @@ export const App: React.FC = () => {
     }));
     setActiveTab('tab-pyodide');
     setHighlightedId(null);
-    document.getElementById('python-runner')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // On a phone this would scroll past the tab picker, the mode switch and the lesson strip, so
+    // a chosen lesson would open with its own title off-screen. The runner's surface switch is the
+    // phone's navigation; the desktop keeps the scroll that puts the editor under the header.
+    if (!isPhoneViewport()) {
+      document.getElementById('python-runner')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   const handlePaletteSelect = (item: PaletteItem) => {
@@ -1477,7 +1491,7 @@ export const App: React.FC = () => {
   // A deep link is a promise about the editor being on screen, so land on it rather than on the
   // hero above it. Only on arrival, and only when the address named a lesson.
   useEffect(() => {
-    if (!lessonIdFromLocation()) return;
+    if (!lessonIdFromLocation() || isPhoneViewport()) return;
     document.getElementById('python-runner')?.scrollIntoView({ block: 'start' });
   }, []);
 
@@ -1485,6 +1499,20 @@ export const App: React.FC = () => {
     viewMode === 'beginner'
       ? WORKBENCH_TABS.filter((t) => t.isBeginnerCore || t.id === activeTab)
       : WORKBENCH_TABS;
+
+  // The phone picker lists every tab, not the rail's filtered subset: on a 390 px screen the rail
+  // is one row and a beginner's five-tab view would leave seven labs with no way in. The mode still
+  // decides the words, which is the promise the mode switch makes.
+  const phoneTabItems = useMemo(
+    () =>
+      WORKBENCH_TABS.map((tab) => ({
+        id: tab.id,
+        label: viewMode === 'beginner' ? tab.beginnerLabel : tab.technicalLabel,
+        subtitle: viewMode === 'beginner' ? tab.beginnerSubtitle : tab.technicalSubtitle,
+        Icon: TAB_ICONS[tab.id] ?? Sparkles,
+      })),
+    [viewMode]
+  );
 
   // The tour's own index is what its three buttons *step from*, so it is read at click time rather
   // than from the render the button was drawn with: two tour clicks queued in one task (or a click
@@ -1842,7 +1870,10 @@ export const App: React.FC = () => {
                 }
               >
                 <GraduationCap className="h-3.5 w-3.5" aria-hidden="true" />
-                Beginner View (Plain-English Path)
+                {/* The long label is the desktop promise; on a phone two of them do not fit in
+                    one row, and a mode switch that scrolls is a mode switch a newcomer misses. */}
+                <span className="sm:hidden">Beginner</span>
+                <span className="hidden sm:inline">Beginner View (Plain-English Path)</span>
               </button>
               <button
                 onClick={() => setViewMode('advanced')}
@@ -1856,7 +1887,8 @@ export const App: React.FC = () => {
                 }
               >
                 <FlaskConical className="h-3.5 w-3.5" aria-hidden="true" />
-                {labsSwitchLabel(WORKBENCH_TABS.length)}
+                <span className="sm:hidden">All labs</span>
+                <span className="hidden sm:inline">{labsSwitchLabel(WORKBENCH_TABS.length)}</span>
               </button>
             </div>
 
@@ -1867,8 +1899,11 @@ export const App: React.FC = () => {
             </span>
           </div>
 
+          {/* The three counters are a second row on a phone and a second screen before the
+              lesson. The dashboard and the runner's own header carry the same numbers; the mode
+              switch is the one thing this bar exists for at 390 px. */}
           <div
-            className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] font-medium tnum"
+            className="hidden flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] font-medium tnum sm:flex"
             aria-label="Progress in this browser"
           >
             <span data-testid="progress-verified-count" style={{ color: 'var(--emerald)' }}>
@@ -1929,9 +1964,19 @@ export const App: React.FC = () => {
           style={{ backgroundColor: 'var(--panel)', borderColor: 'var(--border)' }}
         >
           <div className="relative mx-auto max-w-[var(--shell-max)] xl:sticky xl:top-0 xl:max-h-screen xl:max-w-none xl:overflow-y-auto">
+            {/* One row on a phone instead of a twelve-tab sideways scroller. It sits where the
+                rail sat, so the page below starts in the same place; the rail returns at `md`. */}
+            <PhoneTabPicker
+              items={phoneTabItems}
+              activeId={activeTab}
+              onSelect={(id) => {
+                setActiveTab(id);
+                setHighlightedId(null);
+              }}
+            />
             <div
               data-testid="tab-rail"
-              className="flex gap-2 overflow-x-auto px-3 py-2 sm:px-5 xl:flex-col xl:gap-1 xl:overflow-visible xl:px-2 xl:py-3"
+              className="hidden gap-2 overflow-x-auto px-3 py-2 sm:px-5 md:flex xl:flex-col xl:gap-1 xl:overflow-visible xl:px-2 xl:py-3"
               style={{ scrollbarWidth: 'thin', scrollSnapType: 'x proximity' }}
             >
             {visibleTabs.map((tab) => {
@@ -1992,7 +2037,7 @@ export const App: React.FC = () => {
             {/* The rail scrolls; the fade says so without a scrollbar squatting under it. */}
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute inset-y-0 right-0 w-10 xl:hidden"
+              className="pointer-events-none absolute inset-y-0 right-0 hidden w-10 md:block xl:hidden"
               style={{ background: 'linear-gradient(90deg, transparent, var(--panel))' }}
             />
           </div>
@@ -2016,32 +2061,39 @@ export const App: React.FC = () => {
           {/* The landing screen is where a newcomer arrives, so it opens with the README's own
               "Start here" block: one heading, one Lesson 1 link, one plain-English line. Once Lesson 1
               is verified the same block closes to a single line. */}
+          {/* Both intro cards are a desktop landing: on a phone they are a screen and a half of
+              reading before the paragraph a learner opened the lesson for. The tour still greets a
+              first-time phone visitor inside the runner, and Home keeps the same doors. */}
           {activeTab === 'tab-pyodide' && !startHereDismissed && (
-            <StartHereCard
-              lessonOneVerified={!!verifiedLessons['P.1']}
-              onDismiss={() => setStartHereDismissed(true)}
-              onStartLesson={() => {
-                // The reading link leaves for GitHub; this button stays and puts Lesson 1 under the
-                // cursor, so the two doors are never confused for each other. `openLesson` also
-                // handles the case where P.1 was already the prop but the reader had browsed away.
-                openLesson('P.1');
-              }}
-            />
+            <div className="hidden md:block">
+              <StartHereCard
+                lessonOneVerified={!!verifiedLessons['P.1']}
+                onDismiss={() => setStartHereDismissed(true)}
+                onStartLesson={() => {
+                  // The reading link leaves for GitHub; this button stays and puts Lesson 1 under the
+                  // cursor, so the two doors are never confused for each other. `openLesson` also
+                  // handles the case where P.1 was already the prop but the reader had browsed away.
+                  openLesson('P.1');
+                }}
+              />
+            </div>
           )}
           {/* The story, once, on the landing screen and never over the editor. It carries the one
               sentence a first-timer needs before their first Run: the red is the starter, not them. */}
           {activeTab === 'tab-pyodide' && !storySeen && !verifiedLessons['P.1'] && (
-            <StoryCard
-              onStartLesson={() => {
-                markStorySeen();
-                setStorySeen(true);
-                openLesson('P.1');
-              }}
-              onDismiss={() => {
-                markStorySeen();
-                setStorySeen(true);
-              }}
-            />
+            <div className="hidden md:block">
+              <StoryCard
+                onStartLesson={() => {
+                  markStorySeen();
+                  setStorySeen(true);
+                  openLesson('P.1');
+                }}
+                onDismiss={() => {
+                  markStorySeen();
+                  setStorySeen(true);
+                }}
+              />
+            </div>
           )}
           {activeTab !== 'tab-arch' &&
             activeTab !== 'tab-pyodide' &&

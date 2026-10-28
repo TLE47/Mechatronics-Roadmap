@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MathView, MathPanel } from '../MathView';
 import { Sparkles, RefreshCw, Zap } from 'lucide-react';
 import { PresetRequest, claimPreset } from '../../demoPresets';
+import { PlotExpander } from '../PlotExpander';
 
 interface TabPendulumProps {
   onLoadPreset: (presetId: string) => void;
@@ -228,7 +229,7 @@ export const TabPendulum: React.FC<TabPendulumProps> = ({ onLoadPreset, highligh
 
       {/* Controls and Canvas */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-5 bg-panel border border-line rounded-xl p-4 space-y-3.5">
+        <div className="order-2 lg:order-none lg:col-span-5 bg-panel border border-line rounded-xl p-4 space-y-3.5">
           <h2 className="text-sm font-bold text-accent">Nonlinear Swing-Up, LQR & CBF Controls</h2>
           <p className="text-xs text-muted">
             Real-time 60 FPS RK4 simulation switching from energy pumping to LQR at <MathView math="|\theta| < 22^\circ" /> while enforcing hard cart walls <MathView math="\pm x_{\max}" /> via a Control Barrier Function QP.
@@ -314,11 +315,14 @@ export const TabPendulum: React.FC<TabPendulumProps> = ({ onLoadPreset, highligh
         </div>
 
         {/* Right: 60 FPS Visual Canvas & KPIs */}
-        <div className="lg:col-span-7 bg-panel border border-line rounded-xl p-4 flex flex-col justify-between">
+        <div className="order-1 lg:order-none lg:col-span-7 bg-panel border border-line rounded-xl p-4 flex flex-col justify-between">
           <div>
             <h2 className="text-sm font-bold text-accent mb-3 flex items-center justify-between flex-wrap gap-2">
               <span>Live Inverted Pendulum Kinematics & CBF Wall Enforcement</span>
-              <span className="text-xs text-muted font-mono">Dashed Rose Lines = CBF Limits</span>
+              <span className="flex flex-wrap items-center gap-2 text-xs text-muted font-mono">
+                Dashed Rose Lines = CBF Limits
+                <PlotExpander canvasRef={canvasRef} title="Inverted pendulum kinematics" slug="pendulum" />
+              </span>
             </h2>
 
             {/* KPIs */}

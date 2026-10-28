@@ -141,9 +141,11 @@ export async function runPredictGateSuite({ baseUrl: externalBaseUrl } = {}) {
     // be waiting on an answer, so "stdout arrived" plus "no gate on screen" is the claim. Reading the
     // count 400 ms after the click could pass while a card was still on its way in.
     await waitForStdout(page, 'Encoder Ticks: 400');
+    // The gate is a pane, so it is always mounted and hidden when its tab is closed: what must not
+    // happen is the question being on screen again.
     assert.equal(
-      await page.getByTestId('predict-gate').count(),
-      0,
+      await page.getByTestId('predict-gate').isVisible(),
+      false,
       'a lesson that has been answered must not be asked again'
     );
     console.log('  ok a lesson already answered runs without asking again');
@@ -256,8 +258,10 @@ export async function runPredictGateSuite({ baseUrl: externalBaseUrl } = {}) {
     const beforeFix = (await page.getByTestId('guide-what-to-fix').innerText()).replace(/\s+/g, ' ');
     assert.match(beforeFix, /TODO 1/, 'the untouched starter must fail first at hole 1');
     const starter = await getEditorCode(page);
+    // The hole's wording is content, not the fixture: match whichever sentence TODO 1 now carries,
+    // so a prompt rewritten for a learner cannot fail this suite.
     const fixed = starter.replace(
-      'raise NotImplementedError("TODO 1: multiply the speed by the time step, then add the position")',
+      /raise NotImplementedError\("TODO 1:[^"]*"\)/,
       'return pos_m + vel_m_s * dt_s'
     );
     assert.notEqual(fixed, starter, 'this fixture must still contain the TODO 1 raise it replaces');
@@ -283,15 +287,19 @@ export async function runPredictGateSuite({ baseUrl: externalBaseUrl } = {}) {
       guideAfter.indexOf('1 · THE STARTER'),
       guideAfter.indexOf('Show me the editor')
     );
-    assert.match(stepOne, /while pos_m < target/, 'the card must point at the hole that is still open');
+    assert.match(
+      stepOne,
+      /while loop that stops at the target/,
+      'the card must point at the hole that is still open'
+    );
     assert.doesNotMatch(
       stepOne,
-      /multiply the speed by the time step/,
+      /distance is speed times the time step/,
       'and never at the hole just filled'
     );
     assert.match(
       guideAfter,
-      /which stops at a while pos_m < target/,
+      /which stops at a while loop that stops at the target/,
       'the first-check line must name the same hole the pointer does'
     );
     console.log('  ok filling hole 1 moves the red line to hole 2, which still reads as a marker');

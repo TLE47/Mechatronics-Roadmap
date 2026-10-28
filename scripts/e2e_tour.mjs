@@ -237,15 +237,18 @@ async function main() {
       // and nothing is skipped, leaving the tour unable to advance for two minutes.
       const asked = await settled(
         page,
-        () =>
-          Boolean(
-            document.querySelector('[data-testid="predict-gate"]') ||
+        () => {
+          // The gate is a pane and stays mounted: "arrived" means on screen, not in the DOM.
+          const gate = document.querySelector('[data-testid="predict-gate"]');
+          return Boolean(
+            (gate && gate.getClientRects().length > 0) ||
               document.querySelector('[data-testid="first-run-tour"][data-tour-step="results"]')
-          ),
+          );
+        },
         120000
       );
       assert.ok(asked, 'neither the predict gate nor a finished run arrived');
-      if (await page.locator('[data-testid="predict-gate"]').count()) {
+      if (await page.locator('[data-testid="predict-gate"]').isVisible().catch(() => false)) {
         await skipPredictIfAsked(page);
         assert.ok(await waitForStep(page, 'results', 120000), 'the run never produced a verdict');
       }

@@ -3,6 +3,7 @@ import { MathView, MathPanel } from '../MathView';
 import { Sparkles } from 'lucide-react';
 import { BomItem } from '../../types';
 import { PresetRequest, claimPreset } from '../../demoPresets';
+import { PlotExpander } from '../PlotExpander';
 
 interface TabCadPcbProps {
   onLoadPreset: (presetId: string) => void;
@@ -201,7 +202,7 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
 
       {/* Controls and Canvas */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-5 bg-panel border border-line rounded-xl p-4 space-y-3.5">
+        <div className="order-2 lg:order-none lg:col-span-5 bg-panel border border-line rounded-xl p-4 space-y-3.5">
           <h2 className="text-sm font-bold text-accent">3D CAD & 48V/30A PCB Thermal Controls</h2>
           <div className="flex flex-wrap gap-2">
             <button
@@ -347,10 +348,11 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
         </div>
 
         {/* Right: 3D Wireframe & Loss Chart */}
-        <div className="lg:col-span-7 bg-panel border border-line rounded-xl p-4 flex flex-col justify-between">
+        <div className="order-1 lg:order-none lg:col-span-7 bg-panel border border-line rounded-xl p-4 flex flex-col justify-between">
           <div>
             <h2 className="text-sm font-bold text-accent mb-3 flex items-center justify-between flex-wrap gap-2">
               <span>3D CAD Projection & Coupled PCB Thermal Budget</span>
+              <PlotExpander canvasRef={canvasRef} title="CAD projection and thermal budget" slug="cadpcb" />
             </h2>
 
             {/* KPIs */}
