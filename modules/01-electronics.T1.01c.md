@@ -120,7 +120,7 @@ import mechalab_plant as plant  # noqa: F401  (the shared arm, as every graded p
 
 def psu_output(v_set, i_limit, r_load):
     """(v_out, i_out, p_out, mode) for a CV/CC bench supply."""
-    # TODO 1: compare V_set / R_load with the limit; above it, fold back to I_limit * R_load
+    # TODO 1: compare the demanded current with the limit; above it, fold back to the limit's voltage
     ...
 
 
@@ -132,7 +132,7 @@ def critical_resistance(v_set, i_limit):
 
 def dmm_voltage_loading_current(v_rail, r_in=10_000_000.0):
     """Current a voltmeter steals from the rail it probes."""
-    # TODO 3: V / R_in - the 10 Mohm input barely loads anything
+    # TODO 3: the voltage over the input resistance: the 10 Mohm input barely loads anything
     ...
 
 
@@ -156,7 +156,7 @@ def led_current_ma(v_supply, v_f, resistance):
 
 def is_short(resistance, threshold=10.0):
     """True when the power-off resistance check reads below the threshold."""
-    # TODO 7: BELOW the threshold is a short - do not power on
+    # TODO 7: BELOW the threshold is a short: do not power on
     ...
 
 

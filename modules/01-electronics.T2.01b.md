@@ -119,19 +119,19 @@ EXERCISE_TARGET=exercises/01-electronics.T2.01b/starter.py \
 
 def v_peak_turnoff(v_bus, l_loop_nh, di_amp, dt_ns):
     """The peak drain-source voltage at turn-off: V_bus + L dI/dt."""
-    # TODO 1: nH/ns is already 1 ohm, so L[nH] * dI[A] / dt[ns] is already a volt
+    # TODO 1: nanohenries over nanoseconds is already an ohm, so the product is already volts
     ...
 
 
 def max_loop_inductance_nh(v_bus, v_peak_max, di_amp, dt_ns):
     """The largest loop inductance that keeps the spike under a ceiling."""
-    # TODO 2: only the HEADROOM (ceiling minus bus) drives the overshoot - rearrange TODO 1
+    # TODO 2: only the HEADROOM — the ceiling above the bus — drives the overshoot; reuse the first result
     ...
 
 
 def gate_drive_current_a(qg_nc, tr_ns):
     """The average gate drive current: I_G = Q_g / t_r."""
-    # TODO 3: nC/ns = A already; no 1e-9 factors anywhere in this one
+    # TODO 3: nanocoulombs over nanoseconds is already an ampere; no nano factors belong here
     ...
 
 
@@ -155,7 +155,7 @@ def precharge_time_s(r_pre, c_bus, taus=5.0):
 
 def bus_energy_j(c_bus, v_bus):
     """The energy stored in the capacitor bank."""
-    # TODO 7: 1/2 C V^2 - the half is not optional
+    # TODO 7: half the capacitance times the square of the voltage — the half is not optional
     ...
 
 

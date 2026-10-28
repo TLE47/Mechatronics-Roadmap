@@ -20,7 +20,7 @@ def companion_state_matrices(j, k, b):
     [0.0, 1.0/J] comes back as "'float' object is not subscriptable".
     """
     raise NotImplementedError(
-        "TODO 1: rows [0, 1] and [-k/J, -b/J]; B is the column [[0.0], [1.0/J]]"
+        "TODO 1: row one copies the angular velocity; row two is the stiffness and damping terms over the inertia"
     )
 
 

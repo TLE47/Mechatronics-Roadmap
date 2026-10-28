@@ -131,13 +131,13 @@ def spi_frame_us(n_bits, f_sclk_hz, t_cs_us=DEFAULT_CS_US):
 
 def uart_poll_us(n_bits, baud):
     """The CPU time a blocking polled write wastes, in microseconds."""
-    # TODO 3: every bit stalls the loop - no division by 8
+    # TODO 3: every bit stalls the loop — there is no packing into bytes
     ...
 
 
 def cpu_load_fraction(t_busy_us, t_loop_us):
     """Busy time as a fraction of the loop period."""
-    # TODO 4: busy over period, so 322 us in a 50 us loop is 6.44x
+    # TODO 4: busy time over the loop period — the worst case stalls several loops over
     ...
 
 
@@ -149,13 +149,13 @@ def ping_pong_window_us(n_half, f_adc_hz):
 
 def ht_frequency_hz(f_sample_hz, n_half):
     """How often the Half-Transfer interrupt fires."""
-    # TODO 6: one interrupt per N samples, so f_sample / N
+    # TODO 6: one interrupt per N samples, so the interrupt rate splits the sample rate N ways
     ...
 
 
 def buffer_slice_for_position(write_pos, n_half):
     """Return (start, stop) of the readable half, or None mid-half."""
-    # TODO 7: HT at write_pos == N-1 reads Ping [0, N); TC at 2N-1 reads Pong [N, 2N)
+    # TODO 7: the half-transfer reads the buffer that was just filled; the transfer-complete reads the other
     ...
 
 

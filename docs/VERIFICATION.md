@@ -526,7 +526,7 @@ repository's own page, so the gate is green on the real file and not only on syn
 
 **The page's numbers are measured, not remembered (Run 206).** Run 204 swept every count on the page by
 hand and found eight stale; a sweep that has to be repeated is not a gate. So a number whose owner is a
-file or a generated artifact is now written with a marker after it — `36<!-- plan-fact:gates_total -->`,
+file or a generated artifact is now written with a marker after it — `39<!-- plan-fact:gates_total -->`,
 which Markdown renders as nothing — and [`docs/plan-facts.json`](plan-facts.json) names what owns each
 one: the gate list in `check_all.py` (all of it, and the subset every push runs), the tab registry, the
 surface snapshot, the prose index split into reading pages and arm modules, the error index, the

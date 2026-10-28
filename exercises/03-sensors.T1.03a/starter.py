@@ -29,7 +29,7 @@ def motor_torque(kt_nm_a, current_a):
 
 def pole_pairs(n_poles):
     """Number of North-South magnet pairs."""
-    raise NotImplementedError("TODO 4: 14P is 14 MAGNETS, so p = 14 / 2 = 7")
+    raise NotImplementedError("TODO 4: 14P means fourteen MAGNETS — pole pairs are half the magnets, so seven")
 
 
 def electrical_angle(theta_m_rad, p):
@@ -44,7 +44,7 @@ def quadrature_cpr(n_lines):
 
 def angle_resolution(counts_per_rev):
     """(radians, degrees) per count."""
-    raise NotImplementedError("TODO 7: 2*pi / CPR radians, 360 / CPR degrees")
+    raise NotImplementedError("TODO 7: one full turn divided by the counts per revolution, in radians and in degrees")
 
 
 def quad_step(prev_ab, curr_ab):

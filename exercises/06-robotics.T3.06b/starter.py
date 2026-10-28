@@ -14,7 +14,9 @@ import mechalab_plant as plant
 
 def discounted_returns(rewards, gamma=0.9):
     """G_t for every step, by the backward recursion."""
-    raise NotImplementedError("TODO 1: walk BACKWARDS; G_t = r_t + gamma * G_{t+1}")
+    raise NotImplementedError(
+        "TODO 1: walk BACKWARDS; each return is that step's reward plus the discounted return of the next step"
+    )
 
 
 def advantages(returns, values):
@@ -34,7 +36,9 @@ def ppo_loss(ratios, advantages_, eps=0.2):
 
 def temporal_ensemble(predictions, decay=0.5):
     """Exponentially weighted blend; index 0 is the newest prediction."""
-    raise NotImplementedError("TODO 5: weights exp(-decay * i), normalised by their sum")
+    raise NotImplementedError(
+        "TODO 5: blend the predictions with weights that decay exponentially by age, normalised by their sum"
+    )
 
 
 def safety_shield(a_policy, q, dq_max=0.08, q_min=-1.5, q_max=1.5):

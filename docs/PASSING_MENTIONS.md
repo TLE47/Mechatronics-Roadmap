@@ -65,14 +65,14 @@ flowchart LR
 | `02-mechanics.T3.02a` | `rodrigues_so3_se3_exp_log_maps` | 1 | 5. Exercise |
 | `02-mechanics.T3.02a` | `parallel_axis_urdf_inertia_tensor` | 4 | 1. Why it matters, 2. Intuition first, 5. Exercise |
 | `03-sensors.T2.03a` | `electrical_vs_mechanical_pole_pairs` | 4 | 2. Intuition first, 5. Exercise, 7. Checkpoint, 8. Common mistakes |
-| `03-sensors.T2.03a` | `open_loop_three_phase_sine_modulation` | 12 | 1. Why it matters, 2. Intuition first, 3. Formalization, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes |
+| `03-sensors.T2.03a` | `open_loop_three_phase_sine_modulation` | 13 | 1. Why it matters, 2. Intuition first, 3. Formalization, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes |
 | `03-sensors.T3.03a` | `synchronous_dq_foc_current_loop` | 7 | 1. Why it matters, 3. Formalization, 5. Exercise, 7. Checkpoint, 9. Resources |
 | `03-sensors.T3.03a` | `amplitude_invariant_clarke_park_transform` | 3 | 3. Formalization, 5. Exercise |
 | `04-embedded.T2.04a` | `spi_magnetic_encoder_readout` | 6 | 1. Why it matters, 3. Formalization, 5. Exercise, 7. Checkpoint, 8. Common mistakes |
 | `04-embedded.T3.04a` | `dma_double_buffered_ping_pong_isr` | 7 | 2. Intuition first, 3. Formalization, 6. Simulation path, 7. Checkpoint, 8. Common mistakes |
 | `04-embedded.T3.04a` | `rate_monotonic_response_time_analysis` | 1 | 5. Exercise |
 | `04-embedded.T3.04a` | `minmax_zero_sequence_svpwm_injection` | 2 | 1. Why it matters, 5. Exercise |
-| `05-control.T3.05b` | `rodrigues_so3_se3_exp_log_maps` | 20 | 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint |
+| `05-control.T3.05b` | `rodrigues_so3_se3_exp_log_maps` | 19 | 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint |
 | `05-control.T3.05c` | `discrete_infinite_horizon_lqr` | 2 | 3. Formalization, 5. Exercise |
 | `06-robotics.T2.06a` | `parallel_axis_urdf_inertia_tensor` | 2 | 2. Intuition first, 3. Formalization |
 | `06-robotics.T2.06a` | `can_fd_mit_impedance_packet_packing` | 2 | 3. Formalization, 7. Checkpoint |

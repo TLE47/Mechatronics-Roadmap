@@ -17,12 +17,12 @@ def align_stack(size_b, align=8):
 
 def static_ram_bytes(stacks, tcb_bytes=128, msgq=None):
     """Aligned stacks + one TCB per thread + every static queue's payload."""
-    raise NotImplementedError("TODO 2: every thread pays a TCB *and* its queue payload counts too")
+    raise NotImplementedError("TODO 2: every thread pays a TCB, and its queue payload counts too")
 
 
 def device_dt_ready(node, prj_conf):
     """True only when the node is `status = "okay"` and its Kconfig driver symbol is on."""
-    raise NotImplementedError("TODO 3: two independent conditions - the status string AND the "
+    raise NotImplementedError("TODO 3: two independent conditions: the status string AND the "
                               "Kconfig entry, defaulting to off when it is absent")
 
 
@@ -33,18 +33,18 @@ def binding_problems(nodes, prj_conf):
 
 def outranks(priority_a, priority_b):
     """True when thread A preempts thread B - Zephyr's number that wins is the smaller one."""
-    raise NotImplementedError("TODO 5: Zephyr is not FreeRTOS - compare with '<', not '>'")
+    raise NotImplementedError("TODO 5: Zephyr is not FreeRTOS: the smaller number wins")
 
 
 def effective_priority(priority_owner, priority_waiter):
     """The owner's priority while a more urgent thread waits on its `k_mutex`."""
-    raise NotImplementedError("TODO 6: min(), and a waiter that is not more urgent should have "
-                              "nothing to wait for")
+    raise NotImplementedError("TODO 6: the owner takes the waiter's priority, and a waiter that "
+                              "is not more urgent waits for nothing")
 
 
 def worst_case_response_us(c_high, b_holder, c_intermediate=0.0):
     """Worst-case response time in microseconds."""
-    raise NotImplementedError("TODO 7: add all three terms - the intermediate thread only runs "
+    raise NotImplementedError("TODO 7: add all three terms: the intermediate thread only runs "
                               "when the primitive does not inherit priority")
 
 

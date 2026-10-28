@@ -50,6 +50,9 @@ jobs:
           python3 scripts/validate_modules.py
           python3 scripts/lint_lessons.py
           python3 scripts/check_ramp_lessons.py
+          # A `TODO n:` that writes the expression can be answered by retyping it. Every marker has
+          # to name the quantity or the law, so the gate reads the markers instead of trusting them.
+          python3 scripts/check_todo_prompts.py
           python3 scripts/audit_step_size.py --check
           python3 scripts/legacy_crosswalk.py --check
           python3 scripts/mentions_audit.py --check

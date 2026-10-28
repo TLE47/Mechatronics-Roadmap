@@ -90,14 +90,14 @@ part_b = 10000
 cart_mass = 2.0
 cart_speed = 3.0
 
-# TODO 1: Compute new_pos_m = start_pos_m + (wheel_speed * elapsed_sec)
+# TODO 1: Where is the wheel after this tick? Its old position, plus the distance it rolled.
 new_pos_m = 0.0
 
-# TODO 2: Compute sensor_pin = supply_level * (part_b / (part_a + part_b))
-#         Keep parentheses around (part_a + part_b)!
+# TODO 2: The divider splits the supply between the two parts: the sensed signal is the
+#         part's share of the whole. Keep the sum of the two parts in parentheses!
 sensor_pin = 0.0
 
-# TODO 3: Compute kinetic_energy_j = 0.5 * cart_mass * (cart_speed ** 2)
+# TODO 3: The cart's motion energy: half the mass, and the speed squared.
 kinetic_energy_j = 0.0
 
 print(f"New Position: {new_pos_m:.4f} m")

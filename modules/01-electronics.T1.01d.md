@@ -139,13 +139,13 @@ def rc_time_constant(r_ohm, c_farad):
 
 def rc_voltage(t_s, v_in, r_ohm, c_farad):
     """V_C(t) for a capacitor charging from zero."""
-    # TODO 2: 1 - exp(-t / tau) - a straight ramp is the classic wrong answer
+    # TODO 2: the capacitor approaches the supply along an exponential, never a straight ramp
     ...
 
 
 def rc_cutoff_hz(r_ohm, c_farad):
     """fc = 1 / (2 pi R C): the -3 dB corner."""
-    # TODO 3: the 2 pi belongs in the denominator, with tau = R C
+    # TODO 3: the two pi belongs in the denominator, with the resistance-times-capacitance constant
     ...
 
 
@@ -169,7 +169,8 @@ def inductor_energy(inductance_h, current):
 
 def flyback_voltage(inductance_h, current, dt_open_s):
     """The unclamped spike when the coil's current is interrupted."""
-    # TODO 7: L * I / dt, with dt in SECONDS - 0.5 us is 0.5e-6, not 0.5
+    # TODO 7: the coil opposes the break: inductance times current over the opening time,
+    #         with that time in SECONDS; half a microsecond is half a millionth, not 0.5
     ...
 
 

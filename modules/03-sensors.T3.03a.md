@@ -165,13 +165,13 @@ import math
 
 def dq_feedforward(omega_e_rad_s, ld_h, lq_h, id_a, iq_a, psi_m_wb):
     """Return (v_d_ff, v_q_ff) in V."""
-    # TODO 1: v_d = -omega_e * L_q * i_q (the OTHER axis's inductance); v_q = +omega_e (L_d i_d + psi_m)
+    # TODO 1: the cross-coupling term uses the OTHER axis's inductance, and the q axis adds the magnet's flux
     ...
 
 
 def svpwm_offset(va_v, vb_v, vc_v):
     """Return the Min-Max zero-sequence voltage v_0 in V."""
-    # TODO 2: minus HALF the sum of the extremes - not the mean
+    # TODO 2: minus HALF the sum of the extremes — not the mean
     ...
 
 
@@ -183,19 +183,19 @@ def svpwm_duties(va_v, vb_v, vc_v, vbus_v):
 
 def hexagon_limit(vbus_v):
     """Return the largest unclipped fundamental phase peak for Min-Max SVPWM, in V."""
-    # TODO 4: V_bus / sqrt(3), not V_bus / 2
+    # TODO 4: the bus shared out by the square root of three, not by two
     ...
 
 
 def hexagon_gain():
     """Return SVPWM's linear-range gain over sine PWM."""
-    # TODO 5: 2 / sqrt(3); the quoted percentage boost is 100 * (gain - 1)
+    # TODO 5: two over the square root of three; the quoted percentage boost is a hundred times the gain less one
     ...
 
 
 def harmonic_coefficients(errors_rad, harmonic):
     """Return (a_h, b_h) for one harmonic, from samples spread evenly over one mechanical turn."""
-    # TODO 6: a_h = 2/N sum e cos(h theta), b_h = 2/N sum e sin(h theta) - two separate sums
+    # TODO 6: two separate correlated sums — the cosine coefficient and the sine coefficient of that harmonic
     ...
 
 

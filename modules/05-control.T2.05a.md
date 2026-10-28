@@ -159,17 +159,17 @@ import mechalab_plant as plant
 
 def phase_margin_deg(loop):
     """Phase margin at a gain crossover, with the loop's lag unwrapped into (-360, 0]."""
-    raise NotImplementedError("TODO 1: 180 + the phase in degrees, after unwrapping a positive angle")
+    raise NotImplementedError("TODO 1: one hundred and eighty degrees plus the phase, after unwrapping")
 
 
 def phase_loss_deg(omega_gc, tau_d):
     """Degrees of phase a transport delay eats at the gain crossover."""
-    raise NotImplementedError("TODO 2: the delay angle is omega * tau, in radians -> degrees")
+    raise NotImplementedError("TODO 2: the delay angle is the crossover frequency times the delay, in degrees")
 
 
 def st(loop):
     """`S = 1/(1+L)` and `T = L/(1+L)`; their sum is one at every frequency."""
-    raise NotImplementedError("TODO 3: both share the denominator; T is not 1/S")
+    raise NotImplementedError("TODO 3: both share the denominator; the sample time is not the rate's reciprocal")
 
 
 def gain_crossover(loop_fn, w_lo=1e-3, w_hi=1e4, iterations=200):
@@ -179,17 +179,17 @@ def gain_crossover(loop_fn, w_lo=1e-3, w_hi=1e4, iterations=200):
 
 def bryson_weights(x_max, u_max):
     """Bryson's rule: `Q_ii = 1/x_max_i^2`, `R = 1/u_max^2`."""
-    raise NotImplementedError("TODO 5: squared, not linear - the units have to cancel")
+    raise NotImplementedError("TODO 5: squared, not linear — the units have to cancel")
 
 
 def observer_spectral_radius(ad, c, l):
     """Spectral radius of `Ad - L C` (two states, one measurement)."""
-    raise NotImplementedError("TODO 6: build Ad - L C, then its eigenvalues from trace and determinant")
+    raise NotImplementedError("TODO 6: form the corrected dynamics matrix, then its eigenvalues from its trace")
 
 
 def lqr_gain(ad, bd, q_diag, r):
     """Discrete LQR gain for `u = -K x`, from the Riccati fixed point."""
-    raise NotImplementedError("TODO 7: iterate P <- A'PA - A'PB (R + B'PB)^-1 B'PA + Q to its fixed point")
+    raise NotImplementedError("TODO 7: iterate the Riccati update to its fixed point — predict, then correct")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

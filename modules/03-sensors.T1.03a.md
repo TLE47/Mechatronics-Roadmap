@@ -150,7 +150,7 @@ def motor_torque(kt_nm_a, current_a):
 
 def pole_pairs(n_poles):
     """Number of North-South magnet pairs."""
-    # TODO 4: 14P is 14 MAGNETS, so p = 14 / 2 = 7
+    # TODO 4: 14P means 14 MAGNETS, so the pole pairs are half of that, seven
     ...
 
 
@@ -168,7 +168,7 @@ def quadrature_cpr(n_lines):
 
 def angle_resolution(counts_per_rev):
     """(radians, degrees) per count."""
-    # TODO 7: 2*pi / CPR radians, 360 / CPR degrees
+    # TODO 7: one count is a full turn divided by the counts per revolution, in radians or in degrees
     ...
 
 

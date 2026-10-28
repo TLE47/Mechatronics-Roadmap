@@ -14,17 +14,17 @@ import mechalab_plant as plant
 
 def v_peak_turnoff(v_bus, l_loop_nh, di_amp, dt_ns):
     """V_peak = V_bus + L_loop dI/dt."""
-    raise NotImplementedError("TODO 1: L[nH]/dt[ns] is already an ohm - multiply, do not rescale")
+    raise NotImplementedError("TODO 1: nanohenries over nanoseconds is already an ohm — multiply, do not rescale")
 
 
 def max_loop_inductance_nh(v_bus, v_peak_max, di_amp, dt_ns):
     """The largest loop inductance that stays under a ceiling."""
-    raise NotImplementedError("TODO 2: only the HEADROOM (ceiling minus bus) drives the overshoot")
+    raise NotImplementedError("TODO 2: only the HEADROOM — the ceiling above the bus — drives the overshoot")
 
 
 def gate_drive_current_a(qg_nc, tr_ns):
     """I_G = Q_g / t_r."""
-    raise NotImplementedError("TODO 3: nC/ns = A already; no 1e-9 factors needed")
+    raise NotImplementedError("TODO 3: nanocoulombs over nanoseconds is already an ampere; no nano factors needed")
 
 
 def bootstrap_gate_v(v_sw, v_drv):
@@ -44,7 +44,7 @@ def precharge_time_s(r_pre, c_bus, taus=5.0):
 
 def bus_energy_j(c_bus, v_bus):
     """The energy stored in the capacitor bank."""
-    raise NotImplementedError("TODO 7: 1/2 C V^2 - the half is not optional")
+    raise NotImplementedError("TODO 7: half the capacitance times the square of the voltage — the half is not optional")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

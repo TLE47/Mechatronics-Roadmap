@@ -16,6 +16,26 @@ flowchart LR
 
 ---
 
+## [2026-10-28] — Run 275: a TODO asks, it does not answer
+
+**"I simply retype the TODO and it is the answer."** That was a learner's report, and the marker it
+named did write the whole expression: `TODO 1: Compute new_pos_m = start_pos_m + (wheel_speed *
+* elapsed_sec)` can be answered without understanding the kinematic update. All **685** numbered
+markers across the 72 module pages, the Track P and ramp lessons, Stage 0, the nine course folders and
+the 44 exercise starters now name the quantity, the law or the unit conversion and leave the
+arithmetic to the learner. Traps stay in words — *keep the sum in parentheses*, *the minus is the
+spring*, *convert RPM to rad/s first* — because the trap is the lesson.
+
+The guard is [`scripts/check_todo_prompts.py`](scripts/check_todo_prompts.py): it reads each marker
+**and its wrapped continuation lines** (the component-fusion page leaked the whole blend on line two)
+and fails on an assignment, comparison, call, power, product, matrix row, index or code span. Prose
+keeps its units (`rad/s`, `nH/ns`), its numeric ranges (`[0, 255]`) and its em dashes; a spaced slash
+is arithmetic, an attached one is a unit. The `raise NotImplementedError("TODO …")` wrapper is not the
+marker. `tests/test_check_todo_prompts.py` pins both sides of that line, the gate sits in the CI verify
+step, and `check_all.py` runs it locally. `CONTRIBUTING.md` §2 carries the rule for the next author.
+
+---
+
 ## [2026-10-28] — Run 272: the toolbar keeps its row after a prediction
 
 **Predict's state was the last thing that could wrap the Run row.** The button's label grew by

@@ -154,7 +154,7 @@ def unclamped_bus_v(v_nom, energy_j, c_bus_f):
 
 def brake_resistor_max_ohm(v_clamp, p_peak_w):
     """The largest resistor that can still dissipate `p_peak_w` at `v_clamp`."""
-    # TODO 3: P = V^2 / R solved for R - an upper bound, not a target
+    # TODO 3: the resistor that keeps the clamp's power inside the budget - an upper bound, not a target
     ...
 
 
@@ -166,7 +166,7 @@ def brake_peak_current_a(v_clamp, r_ohm):
 
 def rolling_counter_status(prev_count, curr_count, max_drop=2):
     """Classify a 4-bit rolling counter step."""
-    # TODO 5: the step is modular (mod 16); 0 is frozen, 1 is OK, 2..max_drop+1 is a drop
+    # TODO 5: the step is modular, sixteen states - frozen, then OK, then a drop for each step past the boundary
     ...
 
 

@@ -24,7 +24,9 @@ def unclamped_bus_v(v_nom, energy_j, c_bus_f):
 
 def brake_resistor_max_ohm(v_clamp, p_peak_w):
     """The largest resistor that can still dissipate `p_peak_w` at `v_clamp`."""
-    raise NotImplementedError("TODO 3: P = V^2 / R, solved for R - an upper bound, not a target")
+    raise NotImplementedError(
+        "TODO 3: the resistor must still dissipate the peak power at the clamp voltage; solve the power law for resistance"
+    )
 
 
 def brake_peak_current_a(v_clamp, r_ohm):
@@ -34,7 +36,7 @@ def brake_peak_current_a(v_clamp, r_ohm):
 
 def rolling_counter_status(prev_count, curr_count, max_drop=2):
     """Classify a 4-bit rolling counter step."""
-    raise NotImplementedError("TODO 5: the step is modular (mod 16); 0 is frozen, 1 is OK")
+    raise NotImplementedError("TODO 5: classify the step modulo sixteen: no advance is frozen, one step is healthy")
 
 
 def watchdog_timeout_s(n_miss, t_cmd_s):
@@ -44,7 +46,9 @@ def watchdog_timeout_s(n_miss, t_cmd_s):
 
 def hil_coverage(passed, total):
     """Fraction of the required fault modes that were injected and passed."""
-    raise NotImplementedError("TODO 7: a ratio - and refuse an empty catalog")
+    raise NotImplementedError(
+        "TODO 7: the fraction of dangerous failure modes that were injected and passed, refusing an empty catalog"
+    )
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

@@ -86,22 +86,20 @@ DATASHEET_DRIVERS = {
 
 
 def is_within_recommended_bounds(val, min_val, max_val):
-    # TODO 1: Return True if min_val <= val <= max_val, else False
+    # TODO 1: True when the value sits inside the recommended band, inclusive at both ends.
     return False
 
 
 def select_safe_driver(supply_v):
-    # TODO 2: Return a list of driver names from ["DRV8833", "TB6612FNG"] whose
-    #         recommended operating range [vm_min_v, vm_max_v] safely covers supply_v
+    # TODO 2: The drivers whose recommended operating range covers the supply safely: their
+    #         names from the table above, in the order the table lists them.
     safe = []
     return safe
 
 
 def datasheet_val_to_base_si(value, unit_str):
-    # TODO 3: Convert datasheet value using unit_str:
-    #         "mA" or "mV" or "ms" -> value * 1e-3
-    #         "kHz" -> value * 1e3
-    #         "V" or "A" or "Hz" -> float(value)
+    # TODO 3: Read the unit column and convert the figure into base SI units: a milli-prefixed
+    #         unit is a thousandth, kilohertz is a thousand hertz, and the plain units are base.
     return 0.0
 
 

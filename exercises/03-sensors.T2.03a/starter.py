@@ -23,12 +23,12 @@ def third_phase(i_a, i_b):
 
 def clarke(i_a, i_b):
     """Amplitude-invariant Clarke: (i_alpha, i_beta) from two phase currents."""
-    raise NotImplementedError("TODO 3: i_alpha = i_a, i_beta = (i_a + 2 i_b)/sqrt(3)")
+    raise NotImplementedError("TODO 3: the first axis is one phase; the second is the two phases that straddle it, over the root of three")
 
 
 def park(i_alpha, i_beta, theta_e):
     """(i_d, i_q) in the rotor frame."""
-    raise NotImplementedError("TODO 4: rotate by -theta_e: [c, s; -s, c]")
+    raise NotImplementedError("TODO 4: rotate the stationary pair into the rotor frame by minus the rotor angle — the direct axis is the projection along it, quadrature across it")
 
 
 def inverse_park(i_d, i_q, theta_e):
@@ -43,7 +43,7 @@ def pll_step(theta_hat, omega_hat, theta_meas, kp, ki, dt):
 
 def allan_deviation(sigma_density, tau):
     """Rate standard deviation after averaging white noise for `tau` seconds."""
-    raise NotImplementedError("TODO 7: the law is sigma / sqrt(tau), not sigma / tau")
+    raise NotImplementedError("TODO 7: the law is the density over the square root of the averaging time, not over the time itself")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

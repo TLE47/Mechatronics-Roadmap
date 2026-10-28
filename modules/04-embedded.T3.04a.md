@@ -210,7 +210,7 @@ def q31_encode(x):
 
 def q31_decode(word):
     """x_hat = X / 2^31."""
-    # TODO 5: divide by the same 2^31 - by 2^30 would read every word at double its value
+    # TODO 5: divide by the same two-to-the-31 scale - halving that scale would read every word at double its value
     ...
 
 def angle_to_q31(theta_rad):
@@ -220,7 +220,7 @@ def angle_to_q31(theta_rad):
 
 def seqlock_valid(s1, s2):
     """Tear-free iff s1 is even and s1 == s2."""
-    # TODO 7: an odd s1 means a write was in flight, even when s1 == s2
+    # TODO 7: an odd sequence count means a write was in flight, even when both reads agree
     ...
 
 def isr_cpu_percent(wcet_us, period_us):

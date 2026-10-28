@@ -82,16 +82,16 @@ raw_cmd_low = -45
 raw_cmd_normal = 180
 is_estop_pressed = True
 
-# TODO 1: Clamp raw_cmd_high into [0, 255] using if / elif:
-#         if raw_cmd_high > 255, set clamped_high = 255;
-#         elif raw_cmd_high < 0, set clamped_high = 0; else set clamped_high = raw_cmd_high.
+# TODO 1: Clamp raw_cmd_high into the 0 to 255 range with a chain of ifs:
+#         above the top goes to the top, below zero goes to zero,
+#         and anything inside is passed through unchanged.
 clamped_high = raw_cmd_high
 
 # Clamp raw_cmd_low into [0, 255] the same way:
 clamped_low = raw_cmd_low
 
-# TODO 2: If is_estop_pressed is True, set safe_output = 0;
-#         else set safe_output = raw_cmd_normal.
+# TODO 2: If the E-stop is pressed, the safe output is zero;
+#         otherwise it is the normal command.
 safe_output = raw_cmd_normal
 
 print(f"310 clamped -> {clamped_high} | -45 clamped -> {clamped_low}")

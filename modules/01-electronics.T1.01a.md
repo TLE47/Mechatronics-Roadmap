@@ -121,13 +121,13 @@ import mechalab_plant as plant  # noqa: F401  (the shared arm, as every graded p
 
 def stall_current(v_supply, r_winding):
     """I = V / R for a stalled winding; refuse a zero winding."""
-    # TODO 1: divide the supply by the winding resistance, and raise ValueError for R <= 0
+    # TODO 1: divide the supply by the winding resistance, and refuse a resistance that is not positive
     ...
 
 
 def divider_unloaded(v_in, r1, r2):
     """The midpoint of an unloaded divider."""
-    # TODO 2: the BOTTOM leg sets the fraction: v_in * r2 / (r1 + r2)
+    # TODO 2: the BOTTOM leg sets the fraction - that leg over the whole stack of the two
     ...
 
 
@@ -157,7 +157,7 @@ def led_current(v_supply, v_led, resistance):
 
 def within_derating(p_dissipated, p_rated, derating=0.5):
     """True when the part runs at or below `derating` of its rating."""
-    # TODO 7: compare against derating * p_rated, not against the full rating
+    # TODO 7: compare against the rating the derating leaves, not against the full rating
     ...
 
 

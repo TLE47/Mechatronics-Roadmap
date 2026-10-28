@@ -172,12 +172,12 @@ import math
 
 def rss(sigmas):
     """The root-sum-square of independent 1-sigma contributions."""
-    raise NotImplementedError("TODO 1: square, sum, then ONE square root - not the sum itself")
+    raise NotImplementedError("TODO 1: square each term, sum them, then ONE square root: not the sum itself")
 
 
 def systematic_sum(biases):
     """Deterministic offsets add linearly."""
-    raise NotImplementedError("TODO 2: abs() first, either - a bias on the other side is not a credit")
+    raise NotImplementedError("TODO 2: take the magnitude of each bias first, whichever side: a bias the other way is not a credit")
 
 
 def error_budget_3sigma(biases, sigmas, sensitivities=None, nsig=3.0):
@@ -189,7 +189,7 @@ def error_budget_3sigma(biases, sigmas, sensitivities=None, nsig=3.0):
 
 def variance_fraction(index, sigmas, sensitivities=None):
     """w_i = (s_i sigma_i)^2 / sum_j (s_j sigma_j)^2."""
-    raise NotImplementedError("TODO 4: variance, not sigma - the squares are what add to one")
+    raise NotImplementedError("TODO 4: variance, not sigma: the squares are what add to one")
 
 
 def zoh_delay_us(ts_us):
@@ -204,7 +204,7 @@ def total_latency_s(tau_sens_us, tau_bus_us, tau_filt_us, tau_comp_us, ts_us):
 
 def net_phase_margin_deg(pm0_deg, w_gc_rad_s, tau_total_s):
     """PM_net = PM_0 - omega_gc * tau_total, in degrees."""
-    raise NotImplementedError("TODO 7: the product is in RADIANS - multiply by 180/pi")
+    raise NotImplementedError("TODO 7: the product is in RADIANS; convert it to degrees")
 
 
 def max_allowable_delay_ms(dphi_max_rad, w_gc_rad_s):
@@ -217,7 +217,7 @@ def capstone_signoff(e_3sig_mm, pm_net_deg, cpu_u, can_ohm, sto_cat3_ok,
                      can_min_ohm=55.0, can_max_ohm=65.0):
     """GO only when every one of the five domains passes."""
     raise NotImplementedError(
-        "TODO 9: four gates AND the STO - and the limits are inclusive at their own boundary"
+        "TODO 9: four gates AND the STO, and the limits are inclusive at their own boundary"
     )
 
 

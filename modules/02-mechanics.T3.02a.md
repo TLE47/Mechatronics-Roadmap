@@ -174,37 +174,37 @@ import math
 
 def screw_axis(omega, q):
     """The unit screw axis S = [omega, -omega x q] of a joint through the point q."""
-    # TODO 1: cross omega with q and NEGATE it - v = -omega x q, sign included
+    # TODO 1: cross omega with q and NEGATE it — the velocity carries that sign
     ...
 
 
 def spatial_power(twist, wrench):
     """P = V^T F, in watts."""
-    # TODO 2: both halves of the dot product - omega . m AND v . f
+    # TODO 2: both halves of the dot product — the angular pair AND the linear pair
     ...
 
 
 def flexure_stiffness(e_pa, b_m, t_m, r_m):
     """Paros-Weisbord K_theta = 2 E b t^(5/2) / (9 pi sqrt(R)), in N*m/rad."""
-    # TODO 3: t to the power 2.5, and 9*pi*sqrt(R) underneath
+    # TODO 3: t to the five-halves power, with nine pi and the square root of R underneath
     ...
 
 
 def flexure_stress(k_theta, theta_rad, b_m, t_m, r_m):
     """Peak surface bending stress in Pa, with Kt = 1 + t/(2R)."""
-    # TODO 4: M_b = K_theta * theta, then sigma = 6 Kt M_b / (b t^2)
+    # TODO 4: the bending moment from the stiffness and the angle, then the surface stress that follows
     ...
 
 
 def thickness_scale(factor):
     """How K_theta scales when the web thickness is multiplied by `factor`."""
-    # TODO 5: the exponent is 5/2
+    # TODO 5: the exponent is five halves, not two
     ...
 
 
 def rnea_2link(i1, i2, ddq1, ddq2):
     """Two-pass RNEA: (tau_1, tau_2) for the joint accelerations."""
-    # TODO 6: link 2's absolute acceleration is ddq1 + ddq2; the inward pass adds the outboard torque
+    # TODO 6: link 2's absolute acceleration carries the first joint's as well; the inward pass adds the outboard torque
     ...
 
 

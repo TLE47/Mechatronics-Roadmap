@@ -12,12 +12,12 @@ import math
 
 def timestamps(t0_s, dt_s, n):
     """t_i = t0 + i*dt for i = 0 .. n-1."""
-    raise NotImplementedError("TODO 1: start at i = 0, so the last index is n - 1")
+    raise NotImplementedError("TODO 1: start at zero, so the last index is one less than the count")
 
 
 def scaled_readings(values, config):
     """y_i = slope * x_i + offset, both constants looked up by name."""
-    raise NotImplementedError("TODO 2: read config['slope'] and config['offset'], then m*x + b")
+    raise NotImplementedError("TODO 2: look up the slope and offset by name, then apply the line they define")
 
 
 def mean_of(values):
@@ -37,7 +37,7 @@ def errors(target, measured):
 
 def rmse(target, measured):
     """sqrt(mean(e_i^2))."""
-    raise NotImplementedError("TODO 6: SQUARE each error before averaging - signed errors cancel")
+    raise NotImplementedError("TODO 6: SQUARE each error before averaging — signed errors cancel")
 
 
 def git_command(task):

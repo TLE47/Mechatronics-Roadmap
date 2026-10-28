@@ -14,7 +14,7 @@ def nyquist_hz(fs):
     Refuse (ValueError) a rate that is zero or negative: a converter that never samples has no
     representable band.
     """
-    raise NotImplementedError("TODO 1: fs / 2, after refusing a non-positive rate")
+    raise NotImplementedError("TODO 1: half the sample rate, after refusing a non-positive rate")
 
 
 def alias_hz(f_sig, fs):

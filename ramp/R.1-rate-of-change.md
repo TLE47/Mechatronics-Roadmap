@@ -85,22 +85,22 @@ COUNTS = [0, 120, 235, 330, 400, 440, 450, 425, 370, 290]
 
 
 def counts_to_rad(counts):
-    # TODO 1: one count is 2*pi / 4096 rad; multiply, do not divide by counts
+    # TODO 1: one count is a four-thousand-and-ninety-sixth of a turn in radians; multiply by it
     return 0.0
 
 
 def rate_rad_s(now_counts, prev_counts, dt_s=DT_S):
-    # TODO 2: (rad_now - rad_prev) / dt_s - divide by the TIME, not by the sample index
+    # TODO 2: the change in angle over the time between samples; divide by the TIME, not the sample index
     return 0.0
 
 
 def average_rate_rad_s(samples, dt_s=DT_S):
-    # TODO 3: the whole trace in one quotient: (q_last - q_first) / ((n - 1) * dt_s)
+    # TODO 3: the whole trace as one quotient: the total angle change over the span the samples cover
     return 0.0
 
 
 def central_rate_rad_s(samples, i, dt_s=DT_S):
-    # TODO 4: the neighbours on both sides: (q[i+1] - q[i-1]) / (2 * dt_s)
+    # TODO 4: look at the neighbours on both sides: the change across them, over twice the sample spacing
     return 0.0
 
 

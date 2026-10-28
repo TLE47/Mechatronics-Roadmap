@@ -34,7 +34,7 @@ def transform_point(t, p):
 
 def invert_rigid(t):
     """Inverse of a rigid transform."""
-    raise NotImplementedError("TODO 5: R^T for the rotation, -R^T p for the offset")
+    raise NotImplementedError("TODO 5: the transpose of the rotation for the inverse, and its negated offset")
 
 
 def interpolate(t_a, value_a, t_b, value_b, t_query):

@@ -24,7 +24,7 @@ def flux_cancelled_nh(l1_nh, l2_nh, m_nh):
 
 def turn_off_peak_v(v_bus, l_loop_nh, di_dt_a_per_ns):
     """V_DS,peak = V_bus + L_loop di/dt."""
-    raise NotImplementedError("TODO 3: nH times A/ns is already volts - no 1e-9 or 1e9 here")
+    raise NotImplementedError("TODO 3: nanohenries against amps per nanosecond already give volts - no prefixes to add")
 
 
 def bessel_group_delay_us(f0_hz):
@@ -34,7 +34,7 @@ def bessel_group_delay_us(f0_hz):
 
 def bessel_q():
     """The Q of a 2nd-order Bessel filter."""
-    raise NotImplementedError("TODO 5: 1 / sqrt(3), about 0.577 - not 1/sqrt(2)")
+    raise NotImplementedError("TODO 5: one over the square root of three, about 0.577 - not the half-power point")
 
 
 def charge_droop_fraction(c_sample_f, c_filt_f):
@@ -45,13 +45,13 @@ def charge_droop_fraction(c_sample_f, c_filt_f):
 def charge_settling_lsb(bits, c_sample_f, c_filt_f, r_filt_ohm, t_acq_s):
     """Residual settling error in LSBs after t_acq."""
     raise NotImplementedError(
-        "TODO 7: 2**bits times the droop, decayed by exp(-t / (R_filt C_filt)) - C_filt, not the sum"
+        "TODO 7: the full-scale step times the droop, decayed over the acquisition time - the filter capacitor only"
     )
 
 
 def cauer_junction_c(t_amb_c, p_loss_w, stages, t_s):
     """Junction temperature of a Cauer ladder under a rectangular pulse."""
-    raise NotImplementedError("TODO 8: each stage is R (1 - exp(-t / tau)); add the rises")
+    raise NotImplementedError("TODO 8: each stage rises towards its own limit with its own time constant - add the rises")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

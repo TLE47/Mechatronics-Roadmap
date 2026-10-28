@@ -14,7 +14,7 @@ import mechalab_plant as plant
 
 def spring_force(k_nm, x_m):
     """Hooke's law."""
-    raise NotImplementedError("TODO 1: F = -k*x - the MINUS is the whole spring")
+    raise NotImplementedError("TODO 1: the spring pushes back against displacement - the minus is the whole spring")
 
 
 def acceleration(force_n, mass_kg):
@@ -25,7 +25,7 @@ def acceleration(force_n, mass_kg):
 def euler_step(x_m, v_ms, k_nm, b_nsm, m_kg, dt_s):
     """One symplectic Euler tick of the damped spring: return (x_new, v_new)."""
     raise NotImplementedError(
-        "TODO 3: update v first (v += a*dt), then move x with the NEW v - the order is the point"
+        "TODO 3: update the speed first, then move the position with that NEW speed - the order is the point"
     )
 
 
@@ -36,7 +36,7 @@ def mechanical_energy(m_kg, v_ms, k_nm, x_m):
 
 def peak_speed(energy_j, m_kg):
     """The speed at the unstretched centre."""
-    raise NotImplementedError("TODO 5: v = sqrt(2*E/m) - do not lose the 2")
+    raise NotImplementedError("TODO 5: the speed at the centre, from the stored energy - a square root, and do not lose its factor of two")
 
 
 def torque(force_n, r_m, phi_rad):
@@ -46,7 +46,7 @@ def torque(force_n, r_m, phi_rad):
 
 def angular_acceleration(torque_nm, inertia_kg_m2):
     """tau = J alpha."""
-    raise NotImplementedError("TODO 7: alpha = tau / J, not J / tau")
+    raise NotImplementedError("TODO 7: torque over inertia, never the other way round")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

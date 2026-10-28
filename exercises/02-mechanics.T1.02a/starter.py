@@ -34,7 +34,7 @@ def gear_output_speed(omega_motor, ratio):
 
 def gear_output_torque(tau_motor, ratio, eta=1.0):
     """A reducer multiplies torque."""
-    raise NotImplementedError("TODO 5: eta * N * tau_motor - the efficiency is part of it")
+    raise NotImplementedError("TODO 5: motor torque times the ratio times the efficiency — the efficiency is part of it")
 
 
 def mechanical_power(torque, omega):

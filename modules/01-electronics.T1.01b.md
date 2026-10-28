@@ -136,7 +136,7 @@ import mechalab_plant as plant  # noqa: F401  (the shared arm, as every graded p
 
 def conduction_loss(current, rds_on, duty=1.0):
     """P = I^2 R_DS(on) D over one PWM period."""
-    # TODO 1: square the current, then scale by the duty - the average, not the peak
+    # TODO 1: square the current, then scale by the duty — the average, not the peak
     ...
 
 
@@ -148,7 +148,7 @@ def pwm_effective_voltage(v_bus, duty):
 
 def shoot_through_current(v_bus, rds_on):
     """The leg's short-circuit current with both switches on."""
-    # TODO 3: TWO switches in series, so divide by 2 * rds_on
+    # TODO 3: TWO switches in series, so the path carries twice one switch's resistance
     ...
 
 
@@ -160,7 +160,7 @@ def h_bridge_voltage(v_bus, duty_a, duty_b):
 
 def bridge_conduction_loss(current, r_high, r_low, duty=1.0):
     """Motor current crosses two switches."""
-    # TODO 5: add BOTH on-resistances - a single switch reads half the real loss
+    # TODO 5: add BOTH on-resistances — a single switch reads half the real loss
     ...
 
 

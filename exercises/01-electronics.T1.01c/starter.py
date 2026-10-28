@@ -12,7 +12,9 @@ import mechalab_plant as plant
 
 def psu_output(v_set, i_limit, r_load):
     """(v_out, i_out, p_out, mode) for a CV/CC bench supply."""
-    raise NotImplementedError("TODO 1: fold back when V_set / R_load exceeds the limit")
+    raise NotImplementedError(
+        "TODO 1: fold back into constant current as soon as the load would draw more than the limit at the set voltage"
+    )
 
 
 def critical_resistance(v_set, i_limit):
@@ -22,7 +24,7 @@ def critical_resistance(v_set, i_limit):
 
 def dmm_voltage_loading_current(v_rail, r_in=10_000_000.0):
     """Current a voltmeter steals from the rail."""
-    raise NotImplementedError("TODO 3: 10 Mohm barely loads anything - divide, do not multiply")
+    raise NotImplementedError("TODO 3: a ten-megaohm meter barely loads the rail, so the stolen current is tiny: divide")
 
 
 def dmm_short_current(v_rail, r_shunt=0.010, r_leads=0.0):

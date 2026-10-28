@@ -155,12 +155,12 @@ import math
 
 def wire_time_us(payload_bytes, xrce_bytes, bits_per_byte, bit_rate):
     """Wire time for one message, in microseconds, framing included."""
-    # TODO 1: 10 bits/byte on 8N1 and 8 on CAN-FD, and the XRCE header rides along
+    # TODO 1: bits per byte on 8N1 and on CAN-FD, and the XRCE header rides along
     ...
 
 def link_utilization(streams, bits_per_byte, bit_rate):
     """Sum of `frequency * wire_time` over `(frequency, payload, xrce)` streams, as a fraction."""
-    # TODO 2: weight every stream by its frequency - a mean of the wire times is not a load
+    # TODO 2: weight every stream by its frequency — a mean of the wire times is not a load
     ...
 
 def handle_total(n_timers, n_subs, n_srvs, n_clients):
@@ -170,22 +170,22 @@ def handle_total(n_timers, n_subs, n_srvs, n_clients):
 
 def spin_wcet_us(t_io_us, callbacks_us):
     """Worst-case time for one `rclc_executor_spin_some`."""
-    # TODO 4: transport I/O plus EVERY registered callback
+    # TODO 4: transport input and output plus EVERY registered callback
     ...
 
 def ntp_rtt_us(t1_mcu, t2_host, t3_host, t4_mcu):
     """Round-trip delay from the four timestamps."""
-    # TODO 5: subtract the host's own processing time (t3 - t2) from the elapsed time
+    # TODO 5: subtract the host's own processing time — the middle leg of the round trip
     ...
 
 def ntp_offset_us(t1_mcu, t2_host, t3_host, t4_mcu):
     """Clock offset `t_ros2 - t_mcu` from the NTP midpoint."""
-    # TODO 6: average the forward leg (t2 - t1) and the backward leg (t3 - t4)
+    # TODO 6: average the forward leg and the backward leg of the round trip
     ...
 
 def rtos_utilization(tasks):
     """`sum(C_i / T_i)` over `(execution_us, period_us)` tasks."""
-    # TODO 7: execution over period, summed - never the mean across tasks
+    # TODO 7: execution over period, summed — never the mean across tasks
     ...
 
 print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")

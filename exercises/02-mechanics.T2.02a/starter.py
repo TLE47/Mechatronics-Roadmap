@@ -30,7 +30,7 @@ def jacobian(q1, q2, l1=plant.L1, l2=plant.L2):
 def joint_torques(J, force):
     """Joint torques (tau1, tau2) that a Cartesian tip force produces.
 
-    TODO 2: the transpose is the whole point - do not multiply J by F.
+    TODO 2: the transpose is the whole point: do not multiply J by F.
     """
     raise NotImplementedError("TODO 2: map a tip force into joint torques")
 
@@ -39,7 +39,7 @@ def gravity_from_com_jacobians(q1, q2):
     """Gravity holding torques, built as sum_i J_com,i(q)^T (0, m_i g).
 
     TODO 3: two links, two CoM Jacobians. The elbow's CoM hangs off the shoulder, so it is
-    rotated by q1 + q2 - its own joint angle is not its world angle.
+    rotated by the shoulder angle plus the elbow angle: its own joint angle is not its world angle.
     """
     raise NotImplementedError("TODO 3: sum the two CoM Jacobians")
 
@@ -47,7 +47,8 @@ def gravity_from_com_jacobians(q1, q2):
 def singular_elbow_angles():
     """The elbow angles in [0, pi] where det J = l1 * l2 * sin(q2) is zero.
 
-    TODO 4: solve sin(q2) = 0 on the closed interval. Return a tuple of floats.
+    TODO 4: the elbow angles where the arm straightens out or folds back on itself, on the
+    closed interval. Return a tuple of floats.
     """
     raise NotImplementedError("TODO 4: where is the arm singular?")
 

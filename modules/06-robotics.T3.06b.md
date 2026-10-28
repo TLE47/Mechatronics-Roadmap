@@ -173,7 +173,7 @@ import math
 
 def discounted_returns(rewards, gamma=0.9):
     """G_t for every step, by the backward recursion."""
-    # TODO 1: walk BACKWARDS from the last reward: G_t = r_t + gamma * G_{t+1}
+    # TODO 1: walk BACKWARDS from the last reward, adding each discounted future return
     ...
 
 
@@ -185,7 +185,7 @@ def advantages(returns, values):
 
 def ppo_clip_term(rho, advantage, eps=0.2):
     """The clipped surrogate term for one step."""
-    # TODO 3: clip rho to [1 - eps, 1 + eps], then take the PESSIMISTIC min of the two products
+    # TODO 3: clip the ratio to the band around one, then take the PESSIMISTIC smaller product
     ...
 
 
@@ -197,7 +197,7 @@ def ppo_loss(ratios, advantages_, eps=0.2):
 
 def temporal_ensemble(predictions, decay=0.5):
     """Exponentially weighted blend; index 0 is the newest prediction."""
-    # TODO 5: weights exp(-decay * i), normalised by their sum
+    # TODO 5: weights that fall off with age, normalised by their total
     ...
 
 

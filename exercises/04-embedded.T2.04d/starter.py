@@ -14,12 +14,12 @@ import mechalab_plant as plant
 
 def wire_time_us(payload_bytes, xrce_bytes, bits_per_byte, bit_rate):
     """Wire time for one message, in microseconds, framing included."""
-    raise NotImplementedError("TODO 1: 8 bits/byte on CAN, 10 on 8N1 - plus the XRCE header")
+    raise NotImplementedError("TODO 1: eight bits per byte on CAN, ten on 8N1 — plus the XRCE header")
 
 
 def link_utilization(streams, bits_per_byte, bit_rate):
     """Sum of `frequency * wire_time` over the streams, as a fraction of the link."""
-    raise NotImplementedError("TODO 2: the streams must be weighted by their frequency")
+    raise NotImplementedError("TODO 2: weight every stream by its own frequency before adding the shares up")
 
 
 def handle_total(n_timers, n_subs, n_srvs, n_clients):
@@ -44,7 +44,7 @@ def ntp_offset_us(t1_mcu, t2_host, t3_host, t4_mcu):
 
 def rtos_utilization(tasks):
     """`sum(C_i / T_i)` over `(execution_us, period_us)` tasks."""
-    raise NotImplementedError("TODO 7: execution over period, summed - not the mean")
+    raise NotImplementedError("TODO 7: each task's execution share, added across tasks — not their mean")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

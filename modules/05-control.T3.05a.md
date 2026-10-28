@@ -166,7 +166,7 @@ def optimal_gain(p_minus, h, r):
 
 def joseph_variance(p_minus, h, r, k):
     """P^+ = (1 - K H) P^- (1 - K H) + K R K: a sum of squares, never a subtraction."""
-    # TODO 2: square the (1 - k * h) factor and add k^2 * r
+    # TODO 2: square the factor that shrinks the prior each update, then add the process noise scaled by the gain
     ...
 
 

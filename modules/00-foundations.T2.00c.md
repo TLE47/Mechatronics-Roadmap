@@ -124,26 +124,28 @@ import math
 
 def first_order_response(t, tau):
     """Unit-step response; at t = tau it must read 0.6321."""
-    # TODO 1: 1 - exp(-t/tau)
+    # TODO 1: the exponential step response that starts at zero and settles, not a straight ramp
     ...
 
 
 def second_order_params(j, k, b):
     """{"wn", "zeta", "wd", "mp"} for J theta'' + b theta' + k theta = k u."""
-    # TODO 2: wn = sqrt(k/J); zeta = b/(2 sqrt(J k)); wd = wn sqrt(1-zeta^2);
-    #         mp = exp(-pi zeta / sqrt(1-zeta^2)); at zeta >= 1, mp = 0 and wd = 0
+    # TODO 2: the four numbers that describe a second-order system - natural frequency, damping ratio,
+    #         damped frequency, and their relation
+    #         (above critical damping there is no overshoot: the damped frequency and the peak
+    #         fraction both read zero)
     ...
 
 
 def critical_damping(j, k):
     """The b that makes zeta exactly 1.0."""
-    # TODO 3: 2 sqrt(J k) - a square root, not 2 J k
+    # TODO 3: twice the square root of stiffness times inertia - a root, not a product
     ...
 
 
 def settling_time(wn, zeta, tolerance=0.02):
     """The 2% settling time, and a ValueError when the system never settles."""
-    # TODO 4: 4/(zeta wn), refusing zeta <= 0
+    # TODO 4: four over the decay rate, and refuse a damping ratio that is not positive
     ...
 
 
@@ -155,7 +157,7 @@ def simulate_step(j, k, b, dt, steps, theta0=0.0, omega0=0.0):
 
 def max_stable_dt(j, k):
     """Largest dt the semi-implicit scheme tolerates for an undamped joint."""
-    # TODO 6: 2/wn - the integrator's limit, not a guess
+    # TODO 6: twice over the natural frequency - the integrator's own limit, not a guess
     ...
 
 

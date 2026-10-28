@@ -159,7 +159,7 @@ def diagnostic_coverage_pct(lambda_dd, lambda_du):
 
 def pfh_common_cause(lambda_du, beta):
     """beta * lambda_du, in failures per hour."""
-    # TODO 3: the CCF term is per channel - do not double it for two channels
+    # TODO 3: the common-cause term is counted once per channel, so do not double it for a two-channel setup
     ...
 
 
@@ -177,7 +177,7 @@ def sto_evaluate(ch_a_safe, ch_b_safe, discrepancy_ms, t_disc_max_ms=20.0):
 
 def aas_opcua_nodes(shell):
     """Every SubmodelElement's NodeId, validated."""
-    # TODO 6: check `ns=<n>;` then `i=`, `s=` or `g=` for every element
+    # TODO 6: validate each NodeId: the namespace index first, then the identifier kind and its value
     ...
 
 

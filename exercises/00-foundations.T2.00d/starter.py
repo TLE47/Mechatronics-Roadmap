@@ -18,7 +18,7 @@ import mechalab_plant as plant
 def to_polar(z):
     """(magnitude, phase_rad) of a complex number - Euler's formula, read backwards.
 
-    TODO 1: `abs(z)` and `cmath.phase(z)`, with no quadrant fix-ups - the phase function already
+    TODO 1: the magnitude and the phase, with no quadrant fix-ups - the phase function already
     knows which quadrant it is in.
     """
     raise NotImplementedError("TODO 1: abs and cmath.phase")
@@ -29,7 +29,7 @@ def to_rect(magnitude, phase_rad):
 
     TODO 2: Euler's formula, in radians.
     """
-    raise NotImplementedError("TODO 2: cmath.rect, or magnitude * (cos + j sin)")
+    raise NotImplementedError("TODO 2: build the complex number from its magnitude and its angle, in radians")
 
 
 def add_phasors(z1, z2):

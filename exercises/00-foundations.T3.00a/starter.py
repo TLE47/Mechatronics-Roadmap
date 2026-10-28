@@ -13,7 +13,7 @@ import mechalab_plant as plant
 
 def hat(w):
     """The 3x3 skew matrix with `[w]_x v == w x v`."""
-    raise NotImplementedError("TODO 1: rows [0, -wz, wy], [wz, 0, -wx], [-wy, wx, 0]")
+    raise NotImplementedError("TODO 1: the skew matrix of w: zero diagonal, and each off-diagonal pair is one component with the signs a cross product needs")
 
 
 def vee(m):
@@ -23,7 +23,7 @@ def vee(m):
 
 def mat3_mul(a, b):
     """Row-by-column product of two 3x3 matrices."""
-    raise NotImplementedError("TODO 3: `a[i][k] * b[k][j]` summed over k, not a Hadamard product")
+    raise NotImplementedError("TODO 3: every row of the first taken against every column of the second, summed, not a Hadamard product")
 
 
 def mat3_vec(a, v):
@@ -33,8 +33,8 @@ def mat3_vec(a, v):
 
 def exp_so3(phi):
     """`exp([phi]_x)` by Rodrigues' formula, for a rotation vector of any length."""
-    raise NotImplementedError("TODO 5: I + (sin t / t) K + ((1 - cos t) / t^2) K^2, "
-                              "with a Taylor branch below t = 1e-7")
+    raise NotImplementedError("TODO 5: Rodrigues' formula in its sine and cosine form, "
+                              "with the small-angle series below a tiny rotation")
 
 
 def energy_rate(h_grad, x_dot, dissipation=0.0):

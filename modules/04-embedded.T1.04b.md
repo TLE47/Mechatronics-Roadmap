@@ -132,49 +132,49 @@ HOMING_PWM = 0.2
 
 def elapsed_us(now_us, last_us, bits=32):
     """Unsigned elapsed ticks between two timer readings `bits` wide, wrap included."""
-    # TODO 1: subtract first, then mask to (1 << bits) - 1
+    # TODO 1: take the difference first, then keep it inside the counter's own width
     ...
 
 
 def tick_due(now_us, last_us, period_us):
     """True when another whole period has elapsed."""
-    # TODO 2: at exactly one period the answer is already True - compare with >=
+    # TODO 2: at exactly one period the answer is already True — compare inclusively
     ...
 
 
 def next_deadline_us(last_us, period_us):
     """Advance the deadline on its own grid, so a late check never accumulates drift."""
-    # TODO 3: add the period to the old deadline, then mask - never resynchronise to now
+    # TODO 3: move the deadline on by one period, then wrap it — never resynchronise to now
     ...
 
 
 def isr_utilization_pct(t_exec_us, f_isr_hz):
     """The CPU fraction an ISR costs, in percent."""
-    # TODO 4: microseconds are 1e-6 seconds - forgetting that reports 4.5 million percent
+    # TODO 4: microseconds are millionths of a second — forgetting that reports millions of percent
     ...
 
 
 def max_isr_exec_us(u_max_pct, f_isr_hz):
     """The longest an ISR may run inside its budget."""
-    # TODO 5: the budget arrives as a percentage, so divide it by 100 before using it
+    # TODO 5: the budget arrives as a percentage, so scale it down before comparing
     ...
 
 
 def fault_latency_us(n_debounce, f_isr_hz):
     """How long N consecutive samples take at the ISR rate."""
-    # TODO 6: seconds to microseconds is 1e6, not 1e3
+    # TODO 6: seconds become microseconds by a factor of a million, not a thousand
     ...
 
 
 def ticks_in(duration_us, period_us):
     """Complete ticks of `period_us` inside `duration_us`."""
-    # TODO 7: integer division - a partial tick has not run
+    # TODO 7: whole ticks only — a partial tick has not run yet
     ...
 
 
 def fsm_step(state, current_a, i_max_a, pos_rad, pwm_cmd):
     """One control tick of the actuator FSM: (next_state, pwm)."""
-    # TODO 8: FAULT is a latch, not a measurement - it must survive a current that has recovered
+    # TODO 8: FAULT is a latch, not a measurement — it must survive a recovered current
     ...
 
 

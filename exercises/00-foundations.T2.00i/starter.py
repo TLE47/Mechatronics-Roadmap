@@ -13,7 +13,7 @@ def tustin_hz(omega_rad_s, fs):
 
     Refuse (ValueError) a non-positive sample rate.
     """
-    raise NotImplementedError("TODO 1: digital angle 2 atan(omega Ts / 2), then divide by 2 pi Ts")
+    raise NotImplementedError("TODO 1: take the unwarped digital angle, then turn it into hertz for one sample")
 
 
 def prewarp_omega(f0_hz, fs):
@@ -21,7 +21,7 @@ def prewarp_omega(f0_hz, fs):
 
     Refuse (ValueError) a non-positive rate, or a target at or above fs/2.
     """
-    raise NotImplementedError("TODO 2: (2 / Ts) tan(pi f0 / fs)")
+    raise NotImplementedError("TODO 2: twice the sample rate times the tangent of the normalised target")
 
 
 def notch_coeffs(f0_hz, fs, q):
@@ -29,7 +29,7 @@ def notch_coeffs(f0_hz, fs, q):
 
     Refuse (ValueError) a target outside (0, fs/2) or a non-positive quality factor.
     """
-    raise NotImplementedError("TODO 3: alpha = sin(w0) / (2 q); b0 = b2 = 1 / (1 + alpha)")
+    raise NotImplementedError("TODO 3: the notch width comes from the centre angle and the quality factor")
 
 
 def apply_biquad(coeffs, samples):
