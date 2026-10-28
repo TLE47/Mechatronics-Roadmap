@@ -378,9 +378,9 @@ async function main() {
         '  ok the route marker, the workflow states, the cursor, the wave, the loop, the labs, the stats, the closing panel and the nav are live'
       );
 
-      // The OS setting is the default, not a verdict: a reader whose machine asks for less motion
-      // gets a still page, and the Play control in the header (and on the section row) is the way
-      // out. A fresh context has never chosen, which is exactly this case.
+      // A first visit is on, even on a machine that asks for less motion: the owner's rule is that
+      // the page opens on its drawings, and the header switch is one press away for a reader who
+      // wants stillness. A fresh context has never chosen, which is exactly this case.
       const quiet = await browser.newContext({
         viewport: { width: 1280, height: 900 },
         reducedMotion: 'reduce',
@@ -392,38 +392,24 @@ async function main() {
       await stillPage.waitForTimeout(800);
       assert.equal(
         await stillPage.getByTestId('intro-page').getAttribute('data-motion'),
-        'off',
-        'a reader who never chose, on a machine set to reduce motion, must get a still page'
-      );
-      assert.equal(
-        await stillPage.locator('[data-intro-packet], [data-intro-tracer], .intro-step').count(),
-        0,
-        'a still page must not start any frame loops or annotate any figure'
-      );
-      // The header's switch, not only the page's: choosing motion is one press from any screen.
-      const headerMotion = stillPage.getByTestId('btn-motion-toggle');
-      assert.equal(await headerMotion.getAttribute('aria-pressed'), 'false', 'the header must show the OS default answer');
-      await headerMotion.click();
-      await stillPage.waitForTimeout(700);
-      assert.equal(
-        await stillPage.getByTestId('intro-page').getAttribute('data-motion'),
         'on',
-        "choosing motion in the header must play the introduction's own figures"
+        'a reader who has never chosen must open on moving figures'
       );
       const playing = await stillPage.evaluate(() =>
         [...document.querySelectorAll('[data-testid^="intro-figure-"]')].filter(
           (card) => card.querySelector('.intro-step, [data-intro-packet], [data-intro-tracer]')
         ).length
       );
-      assert.equal(playing, 6, `every one of the six figures must carry a motion source once chosen (${playing} did)`);
-      // One press stills the page again — the CSS loops and the scripted packets alike — and the
-      // choice is remembered, so the next visit does not undo a deliberate pause.
-      await stillPage.locator('.intro-nav-chip[aria-pressed]').click();
+      assert.equal(playing, 6, `every one of the six figures must carry a motion source by default (${playing} did)`);
+      // The header's switch, not only the page's: stilling the page is one press from any screen.
+      const headerMotion = stillPage.getByTestId('btn-motion-toggle');
+      assert.equal(await headerMotion.getAttribute('aria-pressed'), 'true', 'the header must report motion on');
+      await headerMotion.click();
       await stillPage.waitForTimeout(350);
       assert.equal(
         await stillPage.getByTestId('intro-page').getAttribute('data-motion'),
         'off',
-        'the play/pause control must still the page'
+        'the header switch must still the page'
       );
       assert.equal(
         await stillPage.locator('[data-intro-packet], [data-intro-tracer]').count(),
@@ -434,6 +420,7 @@ async function main() {
         getComputedStyle(document.querySelector('.intro-loop-step')).animationName
       );
       assert.equal(pausedChrome, 'none', 'a paused page must stop its CSS loops too');
+      // The choice is remembered, so the next visit does not undo a deliberate pause.
       await stillPage.reload({ waitUntil: 'domcontentloaded' });
       await stillPage.getByTestId('intro-page').waitFor({ timeout: 30000 });
       assert.equal(
@@ -441,8 +428,13 @@ async function main() {
         'off',
         'a pause must survive the reload, or the control is a one-visit gimmick'
       );
+      assert.equal(
+        await stillPage.getByTestId('btn-motion-toggle').getAttribute('aria-pressed'),
+        'false',
+        'the header must still report the remembered pause after a reload'
+      );
       await quiet.close();
-      console.log('  ok motion follows the OS until chosen, then a press stills it and the pause is remembered');
+      console.log('  ok motion is on by default, one press stills it, and the pause is remembered');
 
       // A reload is still the introduction: an explicit view is the learner's choice, not a guess.
       await page.reload({ waitUntil: 'domcontentloaded' });
@@ -913,6 +905,121 @@ async function main() {
         `  ok a passage at the bottom edge opens its note above the words (card ends ${Math.round(
           atEdge.box.y + atEdge.box.height
         )}px, words start ${Math.round(atEdge.passage.top)}px)`
+      );
+    }
+
+    // ---- 7f. A hint stays closed, and code can carry a highlight ----
+    {
+      // P.1 is the page the checklist bug was reported on, and it has both a hint ladder and the
+      // full solution written as `<details>` in its own Markdown.
+      await page.goto(`${baseUrl}?lesson=P.1`, { waitUntil: 'domcontentloaded' });
+      await waitForEditor(page, undefined, 30000);
+      await page.getByTestId('reader-scroll').waitFor({ timeout: 30000 });
+      await page.waitForTimeout(600);
+
+      // Every checkbox id is the id the store keeps: a trailing space would come back trimmed and
+      // the box could never tick (`lessonChecks.ts`).
+      const keys = await page
+        .locator('[data-testid^="reader-check-"]')
+        .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-check-key') ?? ''));
+      assert.ok(keys.length > 0, 'P.1 must still draw its bullets as checkboxes');
+      assert.equal(
+        keys.filter((key) => key !== key.trimEnd()).length,
+        0,
+        'a checkbox identity must be clean, or the tick it stores cannot be read back'
+      );
+
+      const reveals = page.getByTestId('reader-reveal');
+      const revealCount = await reveals.count();
+      assert.ok(revealCount >= 3, 'the hint ladder, the solution and the answers are all reveals');
+      const solution = reveals.filter({ hasText: 'Full Solution' }).first();
+      assert.equal(
+        await solution.evaluate((node) => node.open),
+        false,
+        'the full solution must start closed rather than print itself in the prose'
+      );
+      const code = solution.locator('code');
+      assert.equal(await code.isVisible().catch(() => false), false, 'a closed solution shows no code');
+      await solution.locator('summary').click();
+      assert.equal(
+        await code.isVisible().catch(() => false),
+        true,
+        'a press on the label must open the solution it names'
+      );
+      await solution.locator('summary').click();
+      console.log(`  ok ${revealCount} hints and answers arrive closed; the solution opens on a press`);
+
+      // A highlight inside a code block is drawn on the code, not only listed in Notes.
+      const pre = page.getByTestId('reader-prose').locator('pre').first();
+      const picked = await pre.evaluate((element) => {
+        const node = element.querySelector('code')?.firstChild;
+        if (!node) return '';
+        const text = node.textContent ?? '';
+        const start = text.search(/\S/);
+        if (start < 0) return '';
+        const range = document.createRange();
+        range.setStart(node, start);
+        range.setEnd(node, Math.min(text.length, start + 24));
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        document.dispatchEvent(new Event('selectionchange'));
+        return selection?.toString() ?? '';
+      });
+      assert.ok(picked.trim().length > 3, 'the page must have a line of code to select');
+      await page.getByTestId('btn-highlight').click();
+      await page.waitForTimeout(250);
+      const inCode = pre.locator('[data-testid="sticky-mark"]');
+      assert.ok(
+        (await inCode.count()) >= 1,
+        'a highlight taken inside a code block must be drawn there, not only stored in Notes'
+      );
+      await inCode.first().click();
+      await page.getByTestId('sticky-note-popup').waitFor({ timeout: 10000 });
+      await page.getByTestId('btn-sticky-cancel').click();
+      console.log('  ok a highlight inside a code block is drawn there and reopens its note');
+
+      // The split-view tip, and the way to the editor when the layout has no room for two columns.
+      await page.getByTestId('btn-split-tip').click();
+      const tip = page.getByTestId('reader-split-tip');
+      await tip.waitFor({ timeout: 10000 });
+      assert.ok(/Study tip/.test((await tip.textContent()) ?? ''), 'the tip must say what it is for');
+      assert.equal(
+        await page.getByTestId('btn-do-it-yourself').count(),
+        1,
+        'the Do it yourself heading must offer the jump to the editor'
+      );
+      console.log('  ok the header offers the split-view tip, and Do it yourself jumps to the editor');
+
+      // A split-view resize holds the block the reader is on at the top of the pane.
+      const held = await page.getByTestId('reader-scroll').evaluate((element) => {
+        element.scrollTop = 1200;
+        const nodes = [...element.querySelectorAll('[data-reader-block]')].filter(
+          (node) => node.getClientRects().length > 0
+        );
+        const hit = nodes.filter((node) => node.offsetTop <= element.scrollTop + 8).pop();
+        return { key: hit?.dataset.readerBlock ?? '', into: element.scrollTop + 8 - (hit?.offsetTop ?? 0) };
+      });
+      assert.ok(held.key, 'the pane must have a block at the top of a scrolled page');
+      const original = page.viewportSize() ?? { width: 1440, height: 900 };
+      await page.setViewportSize({ width: 1024, height: original.height });
+      await page.waitForTimeout(700);
+      const kept = await page.getByTestId('reader-scroll').evaluate((element, key) => {
+        const node = element.querySelector(`[data-reader-block="${key}"]`);
+        return { key, into: element.scrollTop + 8 - (node?.offsetTop ?? 0), exists: Boolean(node) };
+      }, held.key);
+      await page.setViewportSize(original);
+      assert.equal(kept.exists, true, 'the block must still be on the page after the resize');
+      assert.ok(
+        Math.abs(kept.into - held.into) <= 48,
+        `the block must stay at the top of the pane across a resize (${Math.round(
+          held.into
+        )} px in, ${Math.round(kept.into)} px after)`
+      );
+      console.log(
+        `  ok a split-view resize holds block ${held.key} at the top of the pane (${Math.round(
+          held.into
+        )} px in, ${Math.round(kept.into)} px after)`
       );
     }
 

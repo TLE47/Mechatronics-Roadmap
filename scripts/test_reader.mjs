@@ -371,6 +371,18 @@ check('a stored position is validated, not trusted', () => {
     writeReadingPosition('P.1', { anchor: 'goal', at: Number.NaN });
     assert.deepEqual(readReadingPosition('P.1'), { anchor: '', at: 0 }, 'NaN is the top, not nowhere');
 
+    // The block is what a split-view resize re-anchors on: it has to survive the same round trip.
+    writeReadingPosition('P.1', { anchor: 'goal', at: 900, block: 'b7', blockAt: 820 });
+    assert.deepEqual(readReadingPosition('P.1'), {
+      anchor: 'goal',
+      at: 900,
+      block: 'b7',
+      blockAt: 820,
+    });
+    writeReadingPosition('P.1', { anchor: 'goal', at: 900, block: 'x'.repeat(200), blockAt: -4 });
+    assert.equal(readReadingPosition('P.1').block?.length, 64, 'a block key is a page key, not a note');
+    assert.equal(readReadingPosition('P.1').blockAt, 0, 'a negative offset is the top of the block');
+
     globalThis.localStorage.data.set(
       STORAGE_KEY_READING,
       JSON.stringify({ 'P.1': { anchor: 'goal', at: 'far' }, 'P.2': { anchor: 'x', at: 5 } })

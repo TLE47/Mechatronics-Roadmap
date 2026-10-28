@@ -109,6 +109,7 @@ import {
   layoutShows,
   readDock,
   readLayout,
+  readResultsSplit,
   readSplitRatio,
   splitGridTemplate,
   splitRatioAfterKey,
@@ -116,6 +117,7 @@ import {
   splitRatioPercent,
   writeDock,
   writeLayout,
+  writeResultsSplit,
   writeSplitRatio,
   type WorkspaceDock,
   type WorkspaceLayout,
@@ -181,6 +183,7 @@ import {
   CircleDot,
   Wand2,
   MoreHorizontal,
+  Columns2,
 } from 'lucide-react';
 
 declare global {
@@ -427,6 +430,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // Split's divider, as the share of the work area the editor gets (`workspaceLayout.ts`). Read once
   // at mount like the preset itself: a drag is the only thing that changes it from outside storage.
   const [splitRatio, setSplitRatio] = useState<number>(() => readSplitRatio());
+  // Whether the run's output sits beside the code or under it, inside the editor's own card. Read
+  // once at mount for the same reason the preset is: this screen is the only one that changes it.
+  const [resultsSplit, setResultsSplit] = useState<boolean>(() => readResultsSplit());
   const splitRatioRef = useRef<number>(splitRatio);
   splitRatioRef.current = splitRatio;
   const [draggingSplit, setDraggingSplit] = useState(false);
@@ -800,6 +806,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
    * The same two paths `goToDefinition` uses: already open, so the mounted editor can take a jump right
    * now; or the helper tab is open, so `main.py` has to mount first and the line goes with the mount.
    */
+  /** The reader's "Go to the editor": the same landing the guide card's own button uses. */
+  const jumpToEditor = () => {
+    setOpenHelper(null);
+    editorPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.setTimeout(() => guideEditorRef.current?.focus(), 0);
+  };
+
   const showMainLine = (line: number) => {
     if (openHelper === null && guideEditorRef.current) {
       guideEditorRef.current.revealLine(line);
@@ -2889,6 +2902,531 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // The preset the tour needs, without touching the learner's remembered one: `writeLayout` is only
   // ever called by the layout buttons, so finishing the tour restores their own choice by itself.
   const shownLayout = tourActive ? layoutForStep(tourState.stepIndex, isPhone) : layout;
+  /** Read hides the editor: the run controls and the output fall back to the page in that preset. */
+  const editorShown = layoutShows(shownLayout, 'editor');
+  /** Debug already puts the editor and the results side by side; it needs no second split. */
+  const columnsArrangement = layoutArrangement(shownLayout) === 'columns';
+
+  const resultsPanel = (
+<div
+  data-testid="results-panel"
+  // Write hides the last run's output: while drafting, it describes code that has changed.
+  style={{ display: layoutShows(shownLayout, 'results') ? undefined : 'none' }}
+  // Split already spends half the screen on this block: two cards inside one column of it
+  // would be two 20-character panels. They stack there and sit side by side everywhere else.
+  className={
+    columnsArrangement || (resultsSplit && !columnsArrangement)
+      ? 'grid grid-cols-1 gap-4'
+      : 'grid grid-cols-1 md:grid-cols-2 gap-4'
+  }
+>
+  <div className="bg-panel border border-line rounded-xl p-4">
+    <div className="flex items-center justify-between mb-2">
+      <span className="text-xs font-mono text-muted">
+        Actual Python Output (`stdout` / `assert`)
+      </span>
+      {passStatus === 'passed' && (
+        <span
+          data-testid="status-assert-passed"
+          className="text-xs font-mono font-bold text-emerald flex items-center gap-1"
+        >
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          <span>PASS · Behavior &amp; Output Verified</span>
+        </span>
+      )}
+      {passStatus === 'harness_failed' && (
+        <span
+          data-testid="status-harness-failed"
+          className="text-xs font-mono font-bold text-rose flex items-center gap-1"
+        >
+          <AlertTriangle className="w-3.5 h-3.5" />
+          <span>
+            HARNESS FAILED · {harnessResult?.met ?? 0} / {harnessResult?.total ?? 0}{' '}
+            Metrics At Target
+          </span>
+        </span>
+      )}
+      {passStatus === 'behavior_failed' && (
+        <span
+          data-testid="status-behavior-failed"
+          className="text-xs font-mono font-bold text-rose flex items-center gap-1"
+        >
+          <AlertTriangle className="w-3.5 h-3.5" />
+          <span>BEHAVIOR FAILED · Instructor Tests Failed</span>
+        </span>
+      )}
+      {passStatus === 'mismatch' && (
+        <span
+          data-testid="status-output-mismatch"
+          className="text-xs font-mono font-bold text-amber flex items-center gap-1"
+        >
+          <AlertTriangle className="w-3.5 h-3.5" />
+          <span>BEHAVIOR PASSED · Output Format Differs</span>
+        </span>
+      )}
+      {passStatus === 'stopped' && (
+        <span
+          data-testid="status-execution-stopped"
+          className="text-xs font-mono font-bold text-amber flex items-center gap-1"
+        >
+          <OctagonX className="w-3.5 h-3.5" />
+          <span>STOPPED · Loop Limit / Cancelled</span>
+        </span>
+      )}
+      {passStatus === 'error' && (
+        <span
+          data-testid="status-execution-error"
+          className="text-xs font-mono font-bold text-rose flex items-center gap-1"
+        >
+          <AlertTriangle className="w-3.5 h-3.5" />
+          <span>ERROR · Syntax / Runtime Error</span>
+        </span>
+      )}
+    </div>
+    {/* The one affordance for a learner who is stuck rather than wrong yet: a failed run
+        becomes a message a person can answer. It sits under the verdict, because that is
+        the moment it is needed, and it is absent after a pass — a report about a run that
+        worked is not a question. */}
+    {passStatus !== 'untested' && passStatus !== 'passed' && (
+      <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-mono">
+        <span style={{ color: 'var(--dim)' }}>
+          Stuck on this one? Turn the run into a message you can send.
+        </span>
+        <button
+          onClick={() => setHelpOpen(true)}
+          data-testid="btn-ask-help"
+          title="Build a report of this run — the lesson, your code, what the check said and the error — to copy or file as an issue"
+          className="px-2 py-1 rounded-lg bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
+        >
+          <LifeBuoy className="w-3.5 h-3.5" />
+          <span>Ask for help</span>
+        </button>
+      </div>
+    )}
+    <pre
+      data-testid="pre-actual-stdout"
+      className="p-3 rounded-lg bg-canvas border border-line-soft font-mono text-xs text-ink whitespace-pre-wrap min-h-[120px]"
+    >
+      {stdout || (stderr ? '' : 'Click "Run & Verify Output" to execute this lesson.')}
+      {stderr && <span className="text-rose block mt-1">{stderr}</span>}
+    </pre>
+    {parsedFailure && (
+      <TracebackCard
+        failure={parsedFailure}
+        entry={errorEntry}
+        onRevealLine={(line) => guideEditorRef.current?.revealLine(line)}
+      />
+    )}
+  </div>
+
+  <div className="bg-panel border border-line rounded-xl p-4">
+    <div className="flex items-center justify-between mb-2">
+      <span className="text-xs font-mono text-muted">
+        Expected Output (Presentation Check)
+      </span>
+      {passStatus === 'passed' && nextLesson && (
+        <button
+          onClick={() => selectLesson(nextLesson.id)}
+          className="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-accent text-inverse flex items-center gap-1 cursor-pointer"
+        >
+          <Sparkles className="w-3 h-3" />
+          <span>Next: Lesson {nextLesson.id} →</span>
+        </button>
+      )}
+    </div>
+    <pre
+      data-testid="pre-expected-stdout"
+      className="p-3 rounded-lg bg-canvas border border-line-soft font-mono text-xs text-emerald whitespace-pre-wrap min-h-[120px]"
+    >
+      {currentLesson.expectedOutput}
+    </pre>
+    {outputCheck === 'matched' && outputComparison.formattingDiffers && (
+      <p
+        data-testid="note-formatting-normalized"
+        className="mt-2 text-[11px] font-mono text-emerald"
+      >
+        Matched with formatting ignored — your numbers and words are identical to the
+        Expected Output; only whitespace differs, and this lesson does not grade it.
+      </p>
+    )}
+    {outputCheck === 'differs' && outputComparison.firstDiffLine !== null && (
+      <p
+        data-testid="note-output-diff-line"
+        className="mt-2 text-[11px] font-mono text-amber"
+      >
+        First difference: line {outputComparison.firstDiffLine}
+        {lessonDowngradesFormatting
+          ? ' (words and numbers are compared here, not spacing)'
+          : ' (this lesson also compares spacing exactly)'}
+      </p>
+    )}
+  </div>
+</div>
+  );
+
+  const runnerToolbar = (
+<div data-testid="runner-toolbar" className="flex flex-wrap items-center gap-2">
+  {/* The presets live on this card, not in the editor's own header: Read hides that
+      header, and a control that disappears with the panel it governs is a trap. A
+      shortcut with no control is a feature only its author knows, so the shortcut is
+      printed on the button. */}
+  <div
+    role="group"
+    aria-label="Layout"
+    data-testid="layout-presets"
+    className="flex items-center gap-1 mr-1"
+  >
+    {LAYOUTS.map((option) => (
+      <button
+        key={option.id}
+        type="button"
+        aria-pressed={layout === option.id}
+        title={option.title}
+        data-testid={`layout-${option.id}`}
+        onClick={() => setLayout(writeLayout(option.id))}
+        className={`px-2 py-1 rounded text-[13px] font-mono cursor-pointer border transition-colors ${
+          layout === option.id
+            ? 'bg-accent text-inverse border-accent font-bold'
+            : 'bg-canvas text-muted hover:text-ink border-line-soft'
+        }`}
+      >
+        {option.label}
+        {/* 90%, not 70%: at 70% the shortcut measured 3.28:1 on the light canvas and
+            4.0:1 on the pressed accent, so the de-emphasis broke the 4.5:1 floor. */}
+        <span className="ml-1 opacity-90">{option.shortcut}</span>
+      </button>
+    ))}
+  </div>
+  {/* Docking's one control, named for the panel it moves in the preset in force:
+      "List → Right" in Study, "Results → Left" in Split. Write and Read show no
+      button, because neither has a panel beside anything to move. */}
+  {dockChoice && (
+    <button
+      type="button"
+      data-testid="btn-dock-toggle"
+      onClick={() => setDock(writeDock(flippedDock(dock, layout)))}
+      title={dockChoice.title}
+      // The visible words come first, then the sentence: a name that only describes what
+      // is drawn fails WCAG 2.5.3, which is what Lighthouse's
+      // `label-content-name-mismatch` audit named here.
+      aria-label={`${dockChoice.label}: ${dockChoice.title}`}
+      className="px-2 py-1 rounded text-[13px] font-mono cursor-pointer border transition-colors bg-canvas text-muted hover:text-ink border-line-soft"
+    >
+      {dockChoice.label}
+    </button>
+  )}
+  {/* The first screen keeps only what a learner does next: Pause and Stop while a
+      program runs, More for the rest, and Run as the single primary action. §3 of
+      `docs/PLAN-2.1a.md` is the list; `scripts/check_label_sizes.mjs` is the gate
+      that keeps the folded controls legible once they are open. */}
+  {isRunning && pauseCapable && !pausedStep && (
+    <button
+      onClick={() => pauseExecution()}
+      data-testid="btn-pause-execution"
+      title="Stop at the next line of your file, without losing the session"
+      className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
+    >
+      <Pause className="w-3.5 h-3.5" />
+      <span>Pause</span>
+    </button>
+  )}
+  {isRunning && (
+    <button
+      onClick={() => stopExecution()}
+      data-testid="btn-stop-execution"
+      className="px-3 py-1.5 rounded-lg text-[13px] font-mono font-bold bg-rose hover:bg-rose-strong text-inverse flex items-center gap-1.5 cursor-pointer"
+    >
+      <OctagonX className="w-3.5 h-3.5" />
+      <span>Stop</span>
+    </button>
+  )}
+  <button
+    type="button"
+    ref={moreButtonRef}
+    onClick={() => setMoreOpen((open) => !open)}
+    aria-expanded={moreOpen}
+    aria-controls="toolbar-more"
+    data-testid="btn-more"
+    title="Format with Black, history, diff, reset, sharing, pairing and editor preferences"
+    className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono border flex items-center gap-1.5 cursor-pointer transition-colors ${
+      moreOpen
+        ? 'text-accent border-accent/60 bg-canvas'
+        : 'text-body border-line bg-canvas hover:bg-raise'
+    }`}
+  >
+    <MoreHorizontal className="w-3.5 h-3.5" />
+    <span>More ⋯</span>
+  </button>
+  {/* The terminal split, beside the code it splits: output under the editor by default, beside it
+      when the learner asks. A narrow window keeps one column and the button says so. */}
+  {editorShown && !columnsArrangement && (
+    <button
+      type="button"
+      data-testid="btn-results-split"
+      aria-pressed={resultsSplit}
+      onClick={() => setResultsSplit(writeResultsSplit(!resultsSplit))}
+      title={
+        resultsSplit
+          ? 'Put the run output back under the code'
+          : 'Split the run output beside the code, like a terminal'
+      }
+      className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono border flex items-center gap-1.5 cursor-pointer ${
+        resultsSplit ? 'text-accent border-accent/60 bg-canvas' : 'text-body border-line bg-canvas hover:bg-raise'
+      }`}
+    >
+      <Columns2 className="w-3.5 h-3.5" />
+      <span>{resultsSplit ? 'Stack output' : 'Split output'}</span>
+    </button>
+  )}
+  <button
+    onClick={() => {
+      const lesson =
+        PYTHON_LESSONS.find((l) => l.id === lessonIdRef.current) || PYTHON_LESSONS[0];
+      requestRun(codeRef.current, lesson);
+    }}
+    disabled={isRunning}
+    ref={runButtonRef}
+    data-testid="btn-run-verify"
+    data-sound="primary"
+    data-tour="run-button"
+    title="Run & Verify Output — ⌘↵ / Ctrl+↵ runs from anywhere on this screen"
+    className="btn btn-primary ml-1 px-3.5 py-2 text-[13px] font-bold"
+  >
+    {isRunning ? (
+      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+    ) : (
+      <Play className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
+    )}
+    <span>{isRunning ? 'Running in Worker...' : 'Run & Verify Output'}</span>
+    {!isRunning && <span className="kbd ml-0.5">⌘↵</span>}
+  </button>
+  <div
+    id="toolbar-more"
+    role="group"
+    aria-label="More actions"
+    data-testid="toolbar-more"
+    hidden={!moreOpen}
+    onKeyDown={(event) => {
+      if (event.key !== 'Escape') return;
+      setMoreOpen(false);
+      // `preventScroll`: a control that folds itself away must not scroll the page
+      // back to the toolbar when the learner had scrolled down to read a result.
+      moreButtonRef.current?.focus({ preventScroll: true });
+    }}
+    // One press is one action, so the panel folds itself away: leaving it open would
+    // shift the editor down while the learner is reading the answer to what they
+    // pressed, and would hide the row they came from. Focus goes back to More, so a
+    // keyboard user is never dropped into the document.
+    onClick={(event) => {
+      if (!(event.target as HTMLElement).closest('button')) return;
+      setMoreOpen(false);
+      moreButtonRef.current?.focus({ preventScroll: true });
+    }}
+    className="order-last w-full rounded-xl border border-line bg-panel p-2.5"
+  >
+    <p className="px-1 pb-2 text-[11px] font-mono uppercase tracking-[0.08em] text-faint">
+      More actions
+    </p>
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        onClick={() => toggleLessonSelfMarked(currentLesson.id)}
+        data-testid="btn-toggle-lesson-complete"
+        className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono border flex items-center gap-1.5 cursor-pointer ${
+          isCurrentSelfMarked
+            ? 'bg-accent/20 border-accent text-accent'
+            : 'bg-canvas border-line text-body hover:border-accent'
+        }`}
+      >
+        {isCurrentSelfMarked ? (
+          <CheckSquare className="w-3.5 h-3.5" />
+        ) : (
+          <Square className="w-3.5 h-3.5" />
+        )}
+        <span>{isCurrentSelfMarked ? 'Self-Marked Complete' : 'Self-Mark Complete'}</span>
+      </button>
+      <button
+        onClick={() => {
+          commitCode(currentLesson.starterCode);
+          // Back on the starter is the one edit that means "forget this one".
+          saveDraft(currentLesson.id, currentLesson.starterCode);
+          setPassStatus('untested');
+          setBehaviorCheck('untested');
+          setOutputCheck('untested');
+          setInstructorError('');
+        }}
+        data-testid="btn-reset-starter"
+        className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
+      >
+        <RotateCcw className="w-3.5 h-3.5" />
+        <span>Reset Starter</span>
+      </button>
+      <button
+        onClick={resetRuntime}
+        data-testid="btn-reset-runtime"
+        title="Terminate and restart the background Python Web Worker without losing editor code"
+        className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-accent border border-accent/40 flex items-center gap-1.5 cursor-pointer"
+      >
+        <RefreshCw className="w-3.5 h-3.5" />
+        <span>Reset Runtime</span>
+      </button>
+      <button
+        onClick={() => {
+          commitCode(currentLesson.fullSolution);
+          logEvent({ kind: 'solution_open', lesson: selectedId });
+          // The diff's solution reference is earned by opening it (or by passing), so this
+          // is the moment it becomes reachable for this lesson.
+          setSolutionUsed((used) => ({ ...used, [selectedId]: true }));
+        }}
+        data-testid="btn-load-solution"
+        className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-amber border border-amber/40 flex items-center gap-1.5 cursor-pointer"
+      >
+        <Eye className="w-3.5 h-3.5" />
+        <span>Load Solution</span>
+      </button>
+      {/* Format is a text action, not a run one: it tidies the file in place, and the
+          interpreter installs the formatter on the first press. Disabled while a program
+          is running or parked, because the worker is one thread. */}
+      <button
+        onClick={() => void formatCode()}
+        disabled={isRunning || Boolean(pausedStep)}
+        data-testid="btn-format"
+        title="Re-indent and tidy this file with Black (installs on the first press, then stays in this session)"
+        className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        <Wand2 className="w-3.5 h-3.5" />
+        <span>Format</span>
+      </button>
+      <button
+        onClick={() => setHistoryOpen((open) => !open)}
+        aria-expanded={historyOpen}
+        aria-controls="draft-history"
+        data-testid="btn-draft-history"
+        title="Every run files the code it started from, with its verdict, so a version that worked is one click away"
+        className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+          historyOpen ? 'text-accent border-accent/60' : 'text-body border-line'
+        }`}
+      >
+        <History className="w-3.5 h-3.5" />
+        <span>History{draftHistory.length ? ` (${draftHistory.length})` : ''}</span>
+      </button>
+      {/* The dots the gutter is drawing, and the condition each one waits for. Always
+          present, not only once something is armed: a learner who has never clicked the
+          gutter has no other way to find out that a breakpoint can be narrowed. */}
+      <button
+        onClick={() => setBreakpointsOpen((open) => !open)}
+        aria-expanded={breakpointsOpen}
+        aria-controls="breakpoint-panel"
+        data-testid="btn-breakpoints"
+        title="Every dot on the gutter, with the condition that lets the run stop on it"
+        className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+          breakpointsOpen ? 'text-accent border-accent/60' : 'text-body border-line'
+        }`}
+      >
+        <CircleDot className="w-3.5 h-3.5" />
+        <span>
+          Breakpoints{breakpoints.length ? ` (${breakpoints.length})` : ''}
+        </span>
+      </button>
+      <button
+        onClick={() => setDiffOpen((open) => !open)}
+        aria-expanded={diffOpen}
+        aria-controls="code-diff"
+        data-testid="btn-diff"
+        title="What you changed: your code against the starter, line by line"
+        className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+          diffOpen ? 'text-accent border-accent/60' : 'text-body border-line'
+        }`}
+      >
+        <GitCompare className="w-3.5 h-3.5" />
+        <span>Diff</span>
+      </button>
+      {/* The one thing a stuck learner can send a person: this lesson and this code. The
+          code rides in the URL fragment, so it never reaches the host — and it is base64,
+          not encryption, which the title says rather than implying a privacy it lacks. */}
+      <button
+        onClick={() => void shareAttempt()}
+        data-testid="btn-share-attempt"
+        title={`Copy a link to this lesson with your code in it (${MAX_SHARE_URL} characters max). The code rides in the link's fragment, encoded — not encrypted — so send it only where you would send the file.`}
+        className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
+      >
+        <Share2 className="w-3.5 h-3.5" />
+        <span>Share</span>
+      </button>
+      {/* Pair study, beside the send: one session, two people, no server — the attempt
+          travels over a direct channel and arrives as a card, not as an edit. */}
+      <button
+        onClick={() => setPairOpen(true)}
+        data-testid="btn-pair-open"
+        title="Pair study: connect to another workbench directly and pass attempts back and forth"
+        className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+          pair.state === 'connected' ? 'text-emerald border-emerald/60' : 'text-body border-line'
+        }`}
+      >
+        <Users className="w-3.5 h-3.5" />
+        <span>
+          {coEdit
+            ? 'Pair · co-editing'
+            : `Pair${pair.state === 'connected' && pair.peer ? ` · ${pair.peer}` : ''}`}
+        </span>
+      </button>
+      {/* The gate's own door. The question also opens by itself on a lesson's first Run;
+          this is how a learner rereads the verdict, or predicts before pressing Run. */}
+      <button
+        onClick={() => {
+          const next = !predictOpen;
+          setPredictRecord(predictionFor(selectedId));
+          setPredictOpen(next);
+          if (next) setHeldRun(null);
+        }}
+        aria-expanded={predictOpen}
+        aria-controls="predict-gate"
+        data-testid="btn-predict"
+        title="Predict first: commit to what the code will print, then run it"
+        className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+          predictOpen ? 'text-amber border-amber/60' : 'text-body border-line'
+        }`}
+      >
+        <Sparkles className="w-3.5 h-3.5" />
+        <span>
+          Predict
+          {predictRecord ? (predictRecord.skipped ? ' · skipped' : ' · answered') : ''}
+        </span>
+      </button>
+      {/* Vim keys: a reading preference like watch mode, remembered the same way. Off by
+          default, because normal mode reads a beginner's first `i` as a command and the
+          editor would look broken rather than unusual (`app/src/vimMode.ts`). */}
+      <button
+        onClick={() => {
+          const next = writeVim(!vimOn);
+          setVimOn(next);
+          setVimMode('normal');
+        }}
+        aria-pressed={vimOn}
+        data-testid="btn-vim"
+        title={vimHint(vimOn)}
+        className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+          vimOn ? 'text-accent border-accent/60' : 'text-body border-line'
+        }`}
+      >
+        <Keyboard className="w-3.5 h-3.5" />
+        <span>{VIM_LABEL}</span>
+      </button>
+      <button
+        onClick={() => setWatchOn(setWatch(!watchOn))}
+        aria-pressed={watchOn}
+        data-testid="btn-watch"
+        title="Watch mode: after a failed check, re-run 1.5 s after you stop typing"
+        className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+          watchOn ? 'text-emerald border-emerald/60' : 'text-body border-line'
+        }`}
+      >
+        <Activity className="w-3.5 h-3.5" />
+        <span>{watchOn ? 'Watching' : 'Watch'}</span>
+      </button>
+    </div>
+  </div>
+</div>
+  );
 
   return (
     <div className="space-y-5">
@@ -3366,346 +3904,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 </h2>
               </div>
 
-              <div data-testid="runner-toolbar" className="flex flex-wrap items-center gap-2">
-                {/* The presets live on this card, not in the editor's own header: Read hides that
-                    header, and a control that disappears with the panel it governs is a trap. A
-                    shortcut with no control is a feature only its author knows, so the shortcut is
-                    printed on the button. */}
-                <div
-                  role="group"
-                  aria-label="Layout"
-                  data-testid="layout-presets"
-                  className="flex items-center gap-1 mr-1"
-                >
-                  {LAYOUTS.map((option) => (
-                    <button
-                      key={option.id}
-                      type="button"
-                      aria-pressed={layout === option.id}
-                      title={option.title}
-                      data-testid={`layout-${option.id}`}
-                      onClick={() => setLayout(writeLayout(option.id))}
-                      className={`px-2 py-1 rounded text-[13px] font-mono cursor-pointer border transition-colors ${
-                        layout === option.id
-                          ? 'bg-accent text-inverse border-accent font-bold'
-                          : 'bg-canvas text-muted hover:text-ink border-line-soft'
-                      }`}
-                    >
-                      {option.label}
-                      {/* 90%, not 70%: at 70% the shortcut measured 3.28:1 on the light canvas and
-                          4.0:1 on the pressed accent, so the de-emphasis broke the 4.5:1 floor. */}
-                      <span className="ml-1 opacity-90">{option.shortcut}</span>
-                    </button>
-                  ))}
-                </div>
-                {/* Docking's one control, named for the panel it moves in the preset in force:
-                    "List → Right" in Study, "Results → Left" in Split. Write and Read show no
-                    button, because neither has a panel beside anything to move. */}
-                {dockChoice && (
-                  <button
-                    type="button"
-                    data-testid="btn-dock-toggle"
-                    onClick={() => setDock(writeDock(flippedDock(dock, layout)))}
-                    title={dockChoice.title}
-                    // The visible words come first, then the sentence: a name that only describes what
-                    // is drawn fails WCAG 2.5.3, which is what Lighthouse's
-                    // `label-content-name-mismatch` audit named here.
-                    aria-label={`${dockChoice.label}: ${dockChoice.title}`}
-                    className="px-2 py-1 rounded text-[13px] font-mono cursor-pointer border transition-colors bg-canvas text-muted hover:text-ink border-line-soft"
-                  >
-                    {dockChoice.label}
-                  </button>
-                )}
-                {/* The first screen keeps only what a learner does next: Pause and Stop while a
-                    program runs, More for the rest, and Run as the single primary action. §3 of
-                    `docs/PLAN-2.1a.md` is the list; `scripts/check_label_sizes.mjs` is the gate
-                    that keeps the folded controls legible once they are open. */}
-                {isRunning && pauseCapable && !pausedStep && (
-                  <button
-                    onClick={() => pauseExecution()}
-                    data-testid="btn-pause-execution"
-                    title="Stop at the next line of your file, without losing the session"
-                    className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Pause className="w-3.5 h-3.5" />
-                    <span>Pause</span>
-                  </button>
-                )}
-                {isRunning && (
-                  <button
-                    onClick={() => stopExecution()}
-                    data-testid="btn-stop-execution"
-                    className="px-3 py-1.5 rounded-lg text-[13px] font-mono font-bold bg-rose hover:bg-rose-strong text-inverse flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <OctagonX className="w-3.5 h-3.5" />
-                    <span>Stop</span>
-                  </button>
-                )}
-                <button
-                  type="button"
-                  ref={moreButtonRef}
-                  onClick={() => setMoreOpen((open) => !open)}
-                  aria-expanded={moreOpen}
-                  aria-controls="toolbar-more"
-                  data-testid="btn-more"
-                  title="Format with Black, history, diff, reset, sharing, pairing and editor preferences"
-                  className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono border flex items-center gap-1.5 cursor-pointer transition-colors ${
-                    moreOpen
-                      ? 'text-accent border-accent/60 bg-canvas'
-                      : 'text-body border-line bg-canvas hover:bg-raise'
-                  }`}
-                >
-                  <MoreHorizontal className="w-3.5 h-3.5" />
-                  <span>More ⋯</span>
-                </button>
-                <button
-                  onClick={() => {
-                    const lesson =
-                      PYTHON_LESSONS.find((l) => l.id === lessonIdRef.current) || PYTHON_LESSONS[0];
-                    requestRun(codeRef.current, lesson);
-                  }}
-                  disabled={isRunning}
-                  ref={runButtonRef}
-                  data-testid="btn-run-verify"
-                  data-sound="primary"
-                  data-tour="run-button"
-                  title="Run & Verify Output — ⌘↵ / Ctrl+↵ runs from anywhere on this screen"
-                  className="btn btn-primary ml-1 px-3.5 py-2 text-[13px] font-bold"
-                >
-                  {isRunning ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-                  ) : (
-                    <Play className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
-                  )}
-                  <span>{isRunning ? 'Running in Worker...' : 'Run & Verify Output'}</span>
-                  {!isRunning && <span className="kbd ml-0.5">⌘↵</span>}
-                </button>
-                <div
-                  id="toolbar-more"
-                  role="group"
-                  aria-label="More actions"
-                  data-testid="toolbar-more"
-                  hidden={!moreOpen}
-                  onKeyDown={(event) => {
-                    if (event.key !== 'Escape') return;
-                    setMoreOpen(false);
-                    // `preventScroll`: a control that folds itself away must not scroll the page
-                    // back to the toolbar when the learner had scrolled down to read a result.
-                    moreButtonRef.current?.focus({ preventScroll: true });
-                  }}
-                  // One press is one action, so the panel folds itself away: leaving it open would
-                  // shift the editor down while the learner is reading the answer to what they
-                  // pressed, and would hide the row they came from. Focus goes back to More, so a
-                  // keyboard user is never dropped into the document.
-                  onClick={(event) => {
-                    if (!(event.target as HTMLElement).closest('button')) return;
-                    setMoreOpen(false);
-                    moreButtonRef.current?.focus({ preventScroll: true });
-                  }}
-                  className="order-last w-full rounded-xl border border-line bg-panel p-2.5"
-                >
-                  <p className="px-1 pb-2 text-[11px] font-mono uppercase tracking-[0.08em] text-faint">
-                    More actions
-                  </p>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      onClick={() => toggleLessonSelfMarked(currentLesson.id)}
-                      data-testid="btn-toggle-lesson-complete"
-                      className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono border flex items-center gap-1.5 cursor-pointer ${
-                        isCurrentSelfMarked
-                          ? 'bg-accent/20 border-accent text-accent'
-                          : 'bg-canvas border-line text-body hover:border-accent'
-                      }`}
-                    >
-                      {isCurrentSelfMarked ? (
-                        <CheckSquare className="w-3.5 h-3.5" />
-                      ) : (
-                        <Square className="w-3.5 h-3.5" />
-                      )}
-                      <span>{isCurrentSelfMarked ? 'Self-Marked Complete' : 'Self-Mark Complete'}</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        commitCode(currentLesson.starterCode);
-                        // Back on the starter is the one edit that means "forget this one".
-                        saveDraft(currentLesson.id, currentLesson.starterCode);
-                        setPassStatus('untested');
-                        setBehaviorCheck('untested');
-                        setOutputCheck('untested');
-                        setInstructorError('');
-                      }}
-                      data-testid="btn-reset-starter"
-                      className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      <span>Reset Starter</span>
-                    </button>
-                    <button
-                      onClick={resetRuntime}
-                      data-testid="btn-reset-runtime"
-                      title="Terminate and restart the background Python Web Worker without losing editor code"
-                      className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-accent border border-accent/40 flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" />
-                      <span>Reset Runtime</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        commitCode(currentLesson.fullSolution);
-                        logEvent({ kind: 'solution_open', lesson: selectedId });
-                        // The diff's solution reference is earned by opening it (or by passing), so this
-                        // is the moment it becomes reachable for this lesson.
-                        setSolutionUsed((used) => ({ ...used, [selectedId]: true }));
-                      }}
-                      data-testid="btn-load-solution"
-                      className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-amber border border-amber/40 flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>Load Solution</span>
-                    </button>
-                    {/* Format is a text action, not a run one: it tidies the file in place, and the
-                        interpreter installs the formatter on the first press. Disabled while a program
-                        is running or parked, because the worker is one thread. */}
-                    <button
-                      onClick={() => void formatCode()}
-                      disabled={isRunning || Boolean(pausedStep)}
-                      data-testid="btn-format"
-                      title="Re-indent and tidy this file with Black (installs on the first press, then stays in this session)"
-                      className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      <Wand2 className="w-3.5 h-3.5" />
-                      <span>Format</span>
-                    </button>
-                    <button
-                      onClick={() => setHistoryOpen((open) => !open)}
-                      aria-expanded={historyOpen}
-                      aria-controls="draft-history"
-                      data-testid="btn-draft-history"
-                      title="Every run files the code it started from, with its verdict, so a version that worked is one click away"
-                      className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-                        historyOpen ? 'text-accent border-accent/60' : 'text-body border-line'
-                      }`}
-                    >
-                      <History className="w-3.5 h-3.5" />
-                      <span>History{draftHistory.length ? ` (${draftHistory.length})` : ''}</span>
-                    </button>
-                    {/* The dots the gutter is drawing, and the condition each one waits for. Always
-                        present, not only once something is armed: a learner who has never clicked the
-                        gutter has no other way to find out that a breakpoint can be narrowed. */}
-                    <button
-                      onClick={() => setBreakpointsOpen((open) => !open)}
-                      aria-expanded={breakpointsOpen}
-                      aria-controls="breakpoint-panel"
-                      data-testid="btn-breakpoints"
-                      title="Every dot on the gutter, with the condition that lets the run stop on it"
-                      className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-                        breakpointsOpen ? 'text-accent border-accent/60' : 'text-body border-line'
-                      }`}
-                    >
-                      <CircleDot className="w-3.5 h-3.5" />
-                      <span>
-                        Breakpoints{breakpoints.length ? ` (${breakpoints.length})` : ''}
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => setDiffOpen((open) => !open)}
-                      aria-expanded={diffOpen}
-                      aria-controls="code-diff"
-                      data-testid="btn-diff"
-                      title="What you changed: your code against the starter, line by line"
-                      className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-                        diffOpen ? 'text-accent border-accent/60' : 'text-body border-line'
-                      }`}
-                    >
-                      <GitCompare className="w-3.5 h-3.5" />
-                      <span>Diff</span>
-                    </button>
-                    {/* The one thing a stuck learner can send a person: this lesson and this code. The
-                        code rides in the URL fragment, so it never reaches the host — and it is base64,
-                        not encryption, which the title says rather than implying a privacy it lacks. */}
-                    <button
-                      onClick={() => void shareAttempt()}
-                      data-testid="btn-share-attempt"
-                      title={`Copy a link to this lesson with your code in it (${MAX_SHARE_URL} characters max). The code rides in the link's fragment, encoded — not encrypted — so send it only where you would send the file.`}
-                      className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Share2 className="w-3.5 h-3.5" />
-                      <span>Share</span>
-                    </button>
-                    {/* Pair study, beside the send: one session, two people, no server — the attempt
-                        travels over a direct channel and arrives as a card, not as an edit. */}
-                    <button
-                      onClick={() => setPairOpen(true)}
-                      data-testid="btn-pair-open"
-                      title="Pair study: connect to another workbench directly and pass attempts back and forth"
-                      className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-                        pair.state === 'connected' ? 'text-emerald border-emerald/60' : 'text-body border-line'
-                      }`}
-                    >
-                      <Users className="w-3.5 h-3.5" />
-                      <span>
-                        {coEdit
-                          ? 'Pair · co-editing'
-                          : `Pair${pair.state === 'connected' && pair.peer ? ` · ${pair.peer}` : ''}`}
-                      </span>
-                    </button>
-                    {/* The gate's own door. The question also opens by itself on a lesson's first Run;
-                        this is how a learner rereads the verdict, or predicts before pressing Run. */}
-                    <button
-                      onClick={() => {
-                        const next = !predictOpen;
-                        setPredictRecord(predictionFor(selectedId));
-                        setPredictOpen(next);
-                        if (next) setHeldRun(null);
-                      }}
-                      aria-expanded={predictOpen}
-                      aria-controls="predict-gate"
-                      data-testid="btn-predict"
-                      title="Predict first: commit to what the code will print, then run it"
-                      className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-                        predictOpen ? 'text-amber border-amber/60' : 'text-body border-line'
-                      }`}
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>
-                        Predict
-                        {predictRecord ? (predictRecord.skipped ? ' · skipped' : ' · answered') : ''}
-                      </span>
-                    </button>
-                    {/* Vim keys: a reading preference like watch mode, remembered the same way. Off by
-                        default, because normal mode reads a beginner's first `i` as a command and the
-                        editor would look broken rather than unusual (`app/src/vimMode.ts`). */}
-                    <button
-                      onClick={() => {
-                        const next = writeVim(!vimOn);
-                        setVimOn(next);
-                        setVimMode('normal');
-                      }}
-                      aria-pressed={vimOn}
-                      data-testid="btn-vim"
-                      title={vimHint(vimOn)}
-                      className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-                        vimOn ? 'text-accent border-accent/60' : 'text-body border-line'
-                      }`}
-                    >
-                      <Keyboard className="w-3.5 h-3.5" />
-                      <span>{VIM_LABEL}</span>
-                    </button>
-                    <button
-                      onClick={() => setWatchOn(setWatch(!watchOn))}
-                      aria-pressed={watchOn}
-                      data-testid="btn-watch"
-                      title="Watch mode: after a failed check, re-run 1.5 s after you stop typing"
-                      className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-                        watchOn ? 'text-emerald border-emerald/60' : 'text-body border-line'
-                      }`}
-                    >
-                      <Activity className="w-3.5 h-3.5" />
-                      <span>{watchOn ? 'Watching' : 'Watch'}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
+              {editorShown ? null : runnerToolbar}
             </div>
 
             {/* The Share button's answer. A polite status, not an alert: it is a confirmation of
@@ -4738,6 +4937,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 // set an exercise. '' means the entry has no prose page, and the pane says so.
                 path={currentLesson.readerPath}
                 tall={shownLayout === 'read'}
+                onJumpToEditor={editorShown ? jumpToEditor : undefined}
               />
             )}
 
@@ -4749,7 +4949,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             data-testid="editor-panel"
             data-tour="editor"
             // Read hides the editor rather than shrinking it: a traceback is what that preset is for.
-            style={{ display: layoutShows(shownLayout, 'editor') ? undefined : 'none' }}
+            style={{ display: editorShown ? undefined : 'none' }}
             className="bg-panel border border-line rounded-xl overflow-hidden scroll-mt-4"
           >
             <div className="bg-canvas border-b border-line-soft flex flex-wrap items-center justify-between gap-2 px-3 py-1.5">
@@ -4819,7 +5019,26 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   </span>
                 )}
               </span>
+              {/* The run controls live in the editor's own header: a learner's eyes are in the code,
+                  and crossing the screen to press Run was the one trip this card can save. Read
+                  hides this header, so the toolbar falls back to the top of the page there. */}
+              {editorShown && (
+                <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2">
+                  {runnerToolbar}
+                </div>
+              )}
             </div>
+            {/* The code and the output are one card, and the run's output sits under the editor or
+                beside it (`workspaceLayout.ts` remembers which). Read has no editor, so the output
+                falls back to the results column there. */}
+            <div
+              className={
+                editorShown && resultsSplit && !columnsArrangement
+                  ? 'lg:flex lg:items-stretch'
+                  : undefined
+              }
+            >
+              <div className="min-w-0 flex-1">
             {coEdit && (
               <p
                 role="status"
@@ -4887,6 +5106,21 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 initialLine={pendingJump?.file === MAIN_FILE_NAME ? pendingJump.line : undefined}
               />
             )}
+              </div>
+              {editorShown && (
+                <div
+                  data-testid="editor-results"
+                  style={{ display: layoutShows(shownLayout, 'results') ? undefined : 'none' }}
+                  className={
+                    resultsSplit && !columnsArrangement
+                      ? 'border-t border-line-soft lg:w-[46%] lg:border-l lg:border-t-0'
+                      : 'border-t border-line-soft'
+                  }
+                >
+                  {resultsPanel}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Everything that reports on the editor. One wrapper, because Split's second column is
@@ -5125,161 +5359,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             onUnpin={() => setPinnedScope(null)}
           />
 
-          {/* Output & Expected Output Side-by-Side Diff */}
-          <div
-            data-testid="results-panel"
-            // Write hides the last run's output: while drafting, it describes code that has changed.
-            style={{ display: layoutShows(shownLayout, 'results') ? undefined : 'none' }}
-            // Split already spends half the screen on this block: two cards inside one column of it
-            // would be two 20-character panels. They stack there and sit side by side everywhere else.
-            className={
-              layoutArrangement(shownLayout) === 'columns'
-                ? 'grid grid-cols-1 gap-4'
-                : 'grid grid-cols-1 md:grid-cols-2 gap-4'
-            }
-          >
-            <div className="bg-panel border border-line rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-mono text-muted">
-                  Actual Python Output (`stdout` / `assert`)
-                </span>
-                {passStatus === 'passed' && (
-                  <span
-                    data-testid="status-assert-passed"
-                    className="text-xs font-mono font-bold text-emerald flex items-center gap-1"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>PASS · Behavior &amp; Output Verified</span>
-                  </span>
-                )}
-                {passStatus === 'harness_failed' && (
-                  <span
-                    data-testid="status-harness-failed"
-                    className="text-xs font-mono font-bold text-rose flex items-center gap-1"
-                  >
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                    <span>
-                      HARNESS FAILED · {harnessResult?.met ?? 0} / {harnessResult?.total ?? 0}{' '}
-                      Metrics At Target
-                    </span>
-                  </span>
-                )}
-                {passStatus === 'behavior_failed' && (
-                  <span
-                    data-testid="status-behavior-failed"
-                    className="text-xs font-mono font-bold text-rose flex items-center gap-1"
-                  >
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                    <span>BEHAVIOR FAILED · Instructor Tests Failed</span>
-                  </span>
-                )}
-                {passStatus === 'mismatch' && (
-                  <span
-                    data-testid="status-output-mismatch"
-                    className="text-xs font-mono font-bold text-amber flex items-center gap-1"
-                  >
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                    <span>BEHAVIOR PASSED · Output Format Differs</span>
-                  </span>
-                )}
-                {passStatus === 'stopped' && (
-                  <span
-                    data-testid="status-execution-stopped"
-                    className="text-xs font-mono font-bold text-amber flex items-center gap-1"
-                  >
-                    <OctagonX className="w-3.5 h-3.5" />
-                    <span>STOPPED · Loop Limit / Cancelled</span>
-                  </span>
-                )}
-                {passStatus === 'error' && (
-                  <span
-                    data-testid="status-execution-error"
-                    className="text-xs font-mono font-bold text-rose flex items-center gap-1"
-                  >
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                    <span>ERROR · Syntax / Runtime Error</span>
-                  </span>
-                )}
-              </div>
-              {/* The one affordance for a learner who is stuck rather than wrong yet: a failed run
-                  becomes a message a person can answer. It sits under the verdict, because that is
-                  the moment it is needed, and it is absent after a pass — a report about a run that
-                  worked is not a question. */}
-              {passStatus !== 'untested' && passStatus !== 'passed' && (
-                <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-mono">
-                  <span style={{ color: 'var(--dim)' }}>
-                    Stuck on this one? Turn the run into a message you can send.
-                  </span>
-                  <button
-                    onClick={() => setHelpOpen(true)}
-                    data-testid="btn-ask-help"
-                    title="Build a report of this run — the lesson, your code, what the check said and the error — to copy or file as an issue"
-                    className="px-2 py-1 rounded-lg bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <LifeBuoy className="w-3.5 h-3.5" />
-                    <span>Ask for help</span>
-                  </button>
-                </div>
-              )}
-              <pre
-                data-testid="pre-actual-stdout"
-                className="p-3 rounded-lg bg-canvas border border-line-soft font-mono text-xs text-ink whitespace-pre-wrap min-h-[120px]"
-              >
-                {stdout || (stderr ? '' : 'Click "Run & Verify Output" to execute this lesson.')}
-                {stderr && <span className="text-rose block mt-1">{stderr}</span>}
-              </pre>
-              {parsedFailure && (
-                <TracebackCard
-                  failure={parsedFailure}
-                  entry={errorEntry}
-                  onRevealLine={(line) => guideEditorRef.current?.revealLine(line)}
-                />
-              )}
-            </div>
-
-            <div className="bg-panel border border-line rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-mono text-muted">
-                  Expected Output (Presentation Check)
-                </span>
-                {passStatus === 'passed' && nextLesson && (
-                  <button
-                    onClick={() => selectLesson(nextLesson.id)}
-                    className="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-accent text-inverse flex items-center gap-1 cursor-pointer"
-                  >
-                    <Sparkles className="w-3 h-3" />
-                    <span>Next: Lesson {nextLesson.id} →</span>
-                  </button>
-                )}
-              </div>
-              <pre
-                data-testid="pre-expected-stdout"
-                className="p-3 rounded-lg bg-canvas border border-line-soft font-mono text-xs text-emerald whitespace-pre-wrap min-h-[120px]"
-              >
-                {currentLesson.expectedOutput}
-              </pre>
-              {outputCheck === 'matched' && outputComparison.formattingDiffers && (
-                <p
-                  data-testid="note-formatting-normalized"
-                  className="mt-2 text-[11px] font-mono text-emerald"
-                >
-                  Matched with formatting ignored — your numbers and words are identical to the
-                  Expected Output; only whitespace differs, and this lesson does not grade it.
-                </p>
-              )}
-              {outputCheck === 'differs' && outputComparison.firstDiffLine !== null && (
-                <p
-                  data-testid="note-output-diff-line"
-                  className="mt-2 text-[11px] font-mono text-amber"
-                >
-                  First difference: line {outputComparison.firstDiffLine}
-                  {lessonDowngradesFormatting
-                    ? ' (words and numbers are compared here, not spacing)'
-                    : ' (this lesson also compares spacing exactly)'}
-                </p>
-              )}
-            </div>
-          </div>
+          {/* The output lives in the editor's own card (`editor-results`), under the header of the
+              code that produced it. There is no results-only preset any more — Read keeps the
+              lesson text and Write keeps the editor — so there is no second home for it here. */}
           </div>
         </div>
         </div>

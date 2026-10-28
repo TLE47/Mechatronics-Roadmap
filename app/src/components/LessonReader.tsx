@@ -7,6 +7,7 @@ import {
   Highlighter,
   Italic,
   Loader2,
+  PanelsTopLeft,
   RotateCcw,
   StickyNote,
   Underline,
@@ -106,6 +107,11 @@ interface LessonReaderProps {
   toolbar?: React.ReactNode;
   /** The lesson chooser, when the runner has it open; between the header and the text. */
   panel?: React.ReactNode;
+  /**
+   * Scrolls the workbench to its code editor. Absent when there is no editor on screen (the Read
+   * preset), which is what keeps the jump link from promising a door that is not there.
+   */
+  onJumpToEditor?: () => void;
 }
 
 /** How long a scroll must be still before the position is written: one write per pause, not per pixel. */
@@ -213,7 +219,16 @@ function TableBlock({ block }: { block: Extract<ReaderBlock, { t: 'table' }> }) 
   );
 }
 
-export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: LessonReaderProps) {
+export function LessonReader({
+  lessonId,
+  path,
+  tall = false,
+  toolbar,
+  panel,
+  onJumpToEditor,
+}: LessonReaderProps) {
+  /** Whether the reader is showing its one-line split-view suggestion. */
+  const [splitTip, setSplitTip] = useState(false);
   const [page, setPage] = useState<LessonPage | null>(null);
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -305,6 +320,9 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
       container.scrollTop = 0;
       return;
     }
+    // A resize before the next scroll still has a place to hold: the restored position is the
+    // learner's place until they move it.
+    pendingRef.current = saved;
     const frame = requestAnimationFrame(() => {
       const target = saved.anchor
         ? container.querySelector<HTMLElement>(`[data-reader-anchor="${saved.anchor}"]`)
@@ -319,6 +337,46 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
       }
     });
     return () => cancelAnimationFrame(frame);
+  }, [page, lessonId]);
+
+  // A split-view resize reflows the page under the reader: the paragraph they were reading has to
+  // stay under their eyes. The old pixel offset means nothing after a reflow (lines wrap, a reveal
+  // can close), so the recorded block is looked up in the new layout and the distance into it is
+  // added back on top - which is the same rule the restore uses, applied to a resize instead of a
+  // reload.
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container || !page || typeof ResizeObserver === 'undefined') return undefined;
+    let frame = 0;
+    const holdPlace = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const saved = pendingRef.current;
+        if (!saved) return;
+        const furthest = Math.max(0, container.scrollHeight - container.clientHeight);
+        const block = saved.block
+          ? container.querySelector<HTMLElement>(`[data-reader-block="${saved.block}"]`)
+          : null;
+        if (block && block.getClientRects().length) {
+          const into = typeof saved.blockAt === 'number' ? Math.max(0, saved.at - saved.blockAt) : 0;
+          const ceiling = Math.max(0, block.offsetHeight - 8);
+          container.scrollTop = Math.min(furthest, Math.max(0, block.offsetTop + Math.min(into, ceiling)));
+          return;
+        }
+        const heading = saved.anchor
+          ? container.querySelector<HTMLElement>(`[data-reader-anchor="${saved.anchor}"]`)
+          : null;
+        if (!heading) return;
+        const into = typeof saved.anchorAt === 'number' ? Math.max(0, saved.at - saved.anchorAt) : 0;
+        container.scrollTop = Math.min(furthest, Math.max(0, heading.offsetTop + into));
+      });
+    };
+    const observer = new ResizeObserver(holdPlace);
+    observer.observe(container);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
   }, [page, lessonId]);
 
   // The last position is flushed when the pane goes away: switching lessons mid-page must not lose
@@ -353,20 +411,47 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
     return () => document.removeEventListener('selectionchange', read);
   }, [page]);
 
-  const remember = () => {
-    const container = scrollRef.current;
-    if (!container || !page) return;
+  /**
+   * Where the top of the pane is, as a heading *and* as a block.
+   *
+   * The block is what a split-view resize needs: the heading survives a reflow, but a narrow column
+   * moves the paragraph under it, so the place is recorded as the block at the top plus the
+   * distance into it. Closed reveals are skipped - their boxes measure zero and would claim the top
+   * of every page.
+   */
+  const currentPosition = (container: HTMLDivElement): ReadingPosition => {
+    const top = container.scrollTop + 8;
     let anchor = '';
     let anchorAt: number | undefined;
-    const top = container.scrollTop + 8;
     for (const heading of container.querySelectorAll<HTMLElement>('[data-reader-anchor]')) {
+      if (!heading.getClientRects().length) continue;
       if (heading.offsetTop <= top) {
         anchor = heading.dataset.readerAnchor ?? '';
         anchorAt = heading.offsetTop;
       } else break;
     }
+    let block = '';
+    let blockAt: number | undefined;
+    for (const node of container.querySelectorAll<HTMLElement>('[data-reader-block]')) {
+      if (!node.getClientRects().length) continue;
+      if (node.offsetTop <= top) {
+        block = node.dataset.readerBlock ?? '';
+        blockAt = node.offsetTop;
+      } else break;
+    }
     const position: ReadingPosition = { anchor, at: container.scrollTop };
     if (typeof anchorAt === 'number') position.anchorAt = anchorAt;
+    if (block) {
+      position.block = block;
+      if (typeof blockAt === 'number') position.blockAt = blockAt;
+    }
+    return position;
+  };
+
+  const remember = () => {
+    const container = scrollRef.current;
+    if (!container || !page) return;
+    const position = currentPosition(container);
     pendingRef.current = position;
     const now = Date.now();
     if (now - lastSaveRef.current < SAVE_AFTER_MS) return;
@@ -629,6 +714,17 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
             }`}
           >
             <Inline text={block.x} marks={marks} onMark={openMark} />
+            {onJumpToEditor && /^do it yourself\b/i.test(inlinePlain(block.x)) && (
+              <button
+                type="button"
+                onClick={onJumpToEditor}
+                data-testid="btn-do-it-yourself"
+                title="Go straight to the code this section is asking you to write"
+                className="ml-2 align-middle text-[12px] font-mono font-normal text-accent underline decoration-dotted underline-offset-2 cursor-pointer"
+              >
+                Go to the editor ↓
+              </button>
+            )}
           </Tag>
         );
       }
@@ -878,6 +974,16 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
           )}
           <button
             type="button"
+            onClick={() => setSplitTip((open) => !open)}
+            aria-expanded={splitTip}
+            data-testid="btn-split-tip"
+            title="Study tip: put this page beside the editor in split view, so the code and the explanation stay in sight together"
+            className="flex items-center gap-1 rounded border border-line-soft bg-canvas px-2 py-1 text-[13px] font-mono text-muted hover:text-ink cursor-pointer"
+          >
+            <PanelsTopLeft className="h-3 w-3" /> Split view
+          </button>
+          <button
+            type="button"
             onClick={scrollToTop}
             data-testid="btn-reader-top"
             title="Back to the top of the lesson text"
@@ -890,6 +996,33 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
       </div>
 
       {panel}
+
+      {splitTip && (
+        <p
+          data-testid="reader-split-tip"
+          className="border-b border-line-soft bg-canvas px-3 py-1.5 text-[12px] leading-snug text-muted"
+        >
+          Study tip: on a wide window, put this page beside the editor — the{' '}
+          <span className="font-mono text-body">Study</span> preset does it, and dragging two windows
+          side by side works too — so the code and the explanation stay in sight together.
+          {onJumpToEditor && (
+            <>
+              {' '}
+              No room to split?{' '}
+              <button
+                type="button"
+                onClick={onJumpToEditor}
+                data-testid="btn-split-tip-jump"
+                className="font-mono text-accent underline underline-offset-2 cursor-pointer"
+              >
+                Jump to the editor ↓
+              </button>
+              {' '}
+              — the text keeps its place when you come back.
+            </>
+          )}
+        </p>
+      )}
 
       {status && (
         <p

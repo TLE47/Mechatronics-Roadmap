@@ -16,6 +16,45 @@ flowchart LR
 
 ---
 
+## [2026-10-27] — Run 270: hints stay closed, and the checklist stops lying
+
+**A bullet that could not be ticked.** `checkId` capped a bullet at 160 characters and then trimmed it
+again on every read. When the 160th character happened to be a space, the stored id came back one
+character shorter than the id the box was drawing, so P.1's *Storing values in named variables* — and
+every bullet whose cut landed on a space — could be pressed forever and never tick. The cap is now
+cleaned after the cut as well, so `checkId(checkId(x)) === checkId(x)`; the checklist suite pins the
+rule and the browser suite ticks that exact bullet.
+
+**The solution was printed on the way past the question.** The pages write their hints, every `Check
+yourself` answer and the full solution as an HTML `<details>`, and the reader's generator stripped the
+tags and flattened the bodies into the prose — an open answer under every question. A `<details>` is
+now a `reveal` block (payload version 5): a label and the blocks behind it, drawn as a native
+`<details>` with the page's own label, nested one level when a hint holds its own collapse. The hints
+are two presses away and the solution is one, which is the shape the page already had on GitHub.
+
+**A highlight inside a code block was stored and never drawn.** `CodeBlock` rendered plain text, so
+selecting a line of starter code and pressing Highlight wrote the note and showed nothing. The block
+now draws its marks, matched **loosely**: `cleanQuote` collapses a snippet's newlines to one space, and
+a strict scan could never find that quote in the `<pre>`.
+
+**The run controls live with the code.** Run & Verify, Predict, Pause/Stop, More and the new **Split
+output** toggle sit in the editor's own header, and the run's output — actual beside expected — is in
+the same card, under that header (or beside the code, one press on **Split output**, a `localStorage`
+preference like the split ratio). Read still has no editor, so nothing is drawn there; Debug already
+puts the two columns side by side and hides the extra split.
+
+**A first visit opens on moving figures.** The motion preference used to fall back to the OS
+`prefers-reduced-motion`; a new reader now gets motion until they press the header switch, which is
+remembered on every surface. Off still stops every frame loop rather than drawing hidden frames.
+
+**The reading place survives a split-view resize.** The position now records the block at the top of
+the pane and the distance into it, and a `ResizeObserver` puts that block back at the top after a
+reflow — a pixel offset means nothing once the column narrows and the paragraphs rewrap. The reader's
+header also carries the **Split view** study tip, and its **Go to the editor ↓** link (under *Do it
+yourself*) scrolls the stacked layout to the code when there is no room for two columns.
+
+---
+
 ## [2026-10-27] — Run 269: the sticky note opens beside the words
 
 **A modal for a margin note.** The editor that writes a sticky note was a centred dialog over a dimming

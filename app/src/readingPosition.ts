@@ -35,6 +35,15 @@ export interface ReadingPosition {
    * existed, which restore to the heading as they always did.
    */
   anchorAt?: number;
+  /**
+   * The block that was at the top of the pane (`data-reader-block`), and its offset then.
+   *
+   * A heading is too coarse for a split-view resize: a section can be several screens, and the
+   * paragraph a learner was on has to stay under their eyes when the column narrows and everything
+   * reflows. The block is the finest thing the page has, and the distance into it is what survives.
+   */
+  block?: string;
+  blockAt?: number;
 }
 
 function storage(): Storage | null {
@@ -52,9 +61,19 @@ function sanitize(position: unknown): ReadingPosition | null {
   if (typeof record.at !== 'number' || !Number.isFinite(record.at)) return null;
   const at = Math.min(MAX_READING_OFFSET, Math.max(0, Math.round(record.at)));
   const anchor = typeof record.anchor === 'string' ? record.anchor.slice(0, MAX_ANCHOR_CHARS) : '';
+  const clean: ReadingPosition = { anchor, at };
   const raw = record.anchorAt;
-  if (typeof raw !== 'number' || !Number.isFinite(raw)) return { anchor, at };
-  return { anchor, at, anchorAt: Math.min(MAX_READING_OFFSET, Math.max(0, Math.round(raw))) };
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    clean.anchorAt = Math.min(MAX_READING_OFFSET, Math.max(0, Math.round(raw)));
+  }
+  if (typeof record.block === 'string' && record.block) {
+    clean.block = record.block.slice(0, 64);
+    const blockAt = record.blockAt;
+    if (typeof blockAt === 'number' && Number.isFinite(blockAt)) {
+      clean.blockAt = Math.min(MAX_READING_OFFSET, Math.max(0, Math.round(blockAt)));
+    }
+  }
+  return clean;
 }
 
 /** The whole store, or an empty object when nothing is stored or the value is not an object. */
