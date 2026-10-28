@@ -219,15 +219,83 @@ class WorkflowSpeedTests(unittest.TestCase):
                     "not be handed the old browser build",
                 )
 
+    def test_the_build_does_not_wait_on_the_python_gate(self):
+        """The gate blocks the merge, not the machine.
+
+        `build-workbench` used to carry `needs: verify-and-test`, so nothing browser-shaped started
+        until the slowest leg of the Python sweep finished - the macOS one, 1m57s on run
+        40616101620 - and the run paid 2m40s before its first browser test. A run is green only when
+        every job passed, so the gate still holds without the handoff.
+        """
+        build = job_block(ci_text(), "build-workbench")
+        self.assertTrue(build, msg="expected a `build-workbench` job in ci.yml")
+        # The job's own comment names the shape it replaced, so only real lines are asked.
+        active = "\n".join(
+            line for line in build.splitlines() if not line.strip().startswith("#")
+        )
+        self.assertNotIn(
+            "needs:",
+            active,
+            msg="expected the build to start on its own: a `needs:` here is a runner handoff, and "
+            "`needs: verify-and-test` kept the browser lane parked behind the Python sweep for "
+            "2m40s",
+        )
+
+    def test_the_browser_libraries_ride_a_cache_miss_only(self):
+        """The one measured outlier: `--with-deps` on a cache miss took 17m31s.
+
+        The browsers are cached, but that step re-ran the apt half on every job; on run 40559024836
+        it pulled ~30 packages from a throttled mirror and held the whole run for seventeen minutes.
+        The libraries belong to the miss that needs them, and both steps are bounded so a slow
+        mirror fails the run in minutes instead of stalling it.
+        """
+        ci = ci_text()
+        for name in SUITE_JOBS:
+            block = job_block(ci, name)
+            with self.subTest(job=name):
+                self.assertIn(
+                    "id: playwright-cache",
+                    block,
+                    msg="expected the cache step to have an id: the library step reads its outcome",
+                )
+                self.assertNotIn(
+                    "--with-deps",
+                    block,
+                    msg="expected no `--with-deps`: it re-runs apt on a cache hit and spent 17m31s "
+                    "on the one miss measured",
+                )
+                self.assertIn(
+                    "npx playwright-core install chromium firefox",
+                    block,
+                    msg="expected the browsers installed on their own",
+                )
+                self.assertIn(
+                    "npx playwright-core install-deps chromium firefox",
+                    block,
+                    msg="expected the OS libraries installed on their own, so they can be conditional",
+                )
+                self.assertIn(
+                    "if: steps.playwright-cache.outputs.cache-hit != 'true'",
+                    block,
+                    msg="expected the library step to run only on a cache miss",
+                )
+                self.assertEqual(
+                    block.count("timeout-minutes:"),
+                    2,
+                    msg="expected both Playwright steps bounded: a throttled mirror must fail the "
+                    "run in minutes, not hold it for seventeen",
+                )
+
     def test_publishing_waits_for_every_browser_suite(self):
         ci = ci_text()
         deploy = job_block(ci, "deploy-pages")
         self.assertTrue(deploy, msg="expected a deploy-pages job: without it a green run would never publish the site")
         self.assertIn(
-            "needs: [build-workbench, %s]" % ", ".join(SUITE_JOBS),
+            "needs: [verify-and-test, build-workbench, %s]" % ", ".join(SUITE_JOBS),
             deploy,
-            msg="expected the deploy to depend on every suite job: a red audit must not publish "
-            "the bundle it graded",
+            msg="expected the deploy to depend on every suite job and on the Python sweep: the "
+            "sweep used to ride along inside the build's `needs:`, so a red sweep that no longer "
+            "delays the browser lane must still stop the publish",
         )
 
 

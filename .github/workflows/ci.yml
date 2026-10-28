@@ -158,7 +158,12 @@ jobs:
 
   build-workbench:
     name: Typecheck & build the Vite workbench bundle
-    needs: verify-and-test
+    # No `needs:` on purpose. A needs chain is a runner handoff, and this one waited for the
+    # slowest leg of verify-and-test - the macOS Python sweep, 1m57s measured on run 40616101620 -
+    # so the first browser test could not start before 2m40s and every one of those minutes bought
+    # nothing. The gate still holds: a run is green only when every job passed, so the Python sweep
+    # blocks the merge exactly as it did, it no longer blocks the machine. The property is pinned by
+    # `tests/test_workflows.py` (`test_the_build_does_not_wait_on_the_python_gate`).
     runs-on: ubuntu-latest
 
     steps:
@@ -282,15 +287,26 @@ jobs:
         run: find dist -exec touch {} +
 
       - name: Restore the Playwright browsers
+        id: playwright-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
-      # A hit skips the browser download, not the OS libraries a fresh runner still needs, so this
-      # runs either way: `playwright install` is a no-op for a browser the cache already restored.
-      - name: Install Playwright Chromium & Firefox (from the cache when it hits)
-        run: npx playwright-core install --with-deps chromium firefox
+      # Two steps, because the old single one did two jobs: fetch the browsers, which the cache has
+      # already done on a hit, and apt-install the OS libraries, which the runner image already
+      # carries. Measured 2026-10-28: that step took 7-23s on a hit and 17m31s on a miss (run
+      # 40559024836), the miss being ~30 packages from a throttled mirror. So the libraries ride on
+      # the miss that actually needs them, and both steps are bounded - a throttled mirror now fails
+      # the run in ten minutes instead of stalling it for seventeen.
+      - name: Install the Playwright browsers (a no-op when the cache hit)
+        run: npx playwright-core install chromium firefox
+        timeout-minutes: 8
+
+      - name: Install the Playwright OS libraries (only a cache miss needs them)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright-core install-deps chromium firefox
+        timeout-minutes: 10
 
       - name: Run the Workbench suites (SSR smoke, dev-server E2E, built-bundle E2E, control pairs) on one server pair
         run: npm run test:workbench
@@ -337,15 +353,26 @@ jobs:
         run: find dist -exec touch {} +
 
       - name: Restore the Playwright browsers
+        id: playwright-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
-      # A hit skips the browser download, not the OS libraries a fresh runner still needs, so this
-      # runs either way: `playwright install` is a no-op for a browser the cache already restored.
-      - name: Install Playwright Chromium & Firefox (from the cache when it hits)
-        run: npx playwright-core install --with-deps chromium firefox
+      # Two steps, because the old single one did two jobs: fetch the browsers, which the cache has
+      # already done on a hit, and apt-install the OS libraries, which the runner image already
+      # carries. Measured 2026-10-28: that step took 7-23s on a hit and 17m31s on a miss (run
+      # 40559024836), the miss being ~30 packages from a throttled mirror. So the libraries ride on
+      # the miss that actually needs them, and both steps are bounded - a throttled mirror now fails
+      # the run in ten minutes instead of stalling it for seventeen.
+      - name: Install the Playwright browsers (a no-op when the cache hit)
+        run: npx playwright-core install chromium firefox
+        timeout-minutes: 8
+
+      - name: Install the Playwright OS libraries (only a cache miss needs them)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright-core install-deps chromium firefox
+        timeout-minutes: 10
 
       - name: "Check light/dark: toggle contract, and WCAG contrast on all 11 tabs in both modes"
         run: npm run test:theme:e2e
@@ -401,15 +428,26 @@ jobs:
         run: find dist -exec touch {} +
 
       - name: Restore the Playwright browsers
+        id: playwright-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
-      # A hit skips the browser download, not the OS libraries a fresh runner still needs, so this
-      # runs either way: `playwright install` is a no-op for a browser the cache already restored.
-      - name: Install Playwright Chromium & Firefox (from the cache when it hits)
-        run: npx playwright-core install --with-deps chromium firefox
+      # Two steps, because the old single one did two jobs: fetch the browsers, which the cache has
+      # already done on a hit, and apt-install the OS libraries, which the runner image already
+      # carries. Measured 2026-10-28: that step took 7-23s on a hit and 17m31s on a miss (run
+      # 40559024836), the miss being ~30 packages from a throttled mirror. So the libraries ride on
+      # the miss that actually needs them, and both steps are bounded - a throttled mirror now fails
+      # the run in ten minutes instead of stalling it for seventeen.
+      - name: Install the Playwright browsers (a no-op when the cache hit)
+        run: npx playwright-core install chromium firefox
+        timeout-minutes: 8
+
+      - name: Install the Playwright OS libraries (only a cache miss needs them)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright-core install-deps chromium firefox
+        timeout-minutes: 10
 
       - name: "Check the Python worker: in-place Stop, input(), isolation, and the no-buffer fallback"
         run: npm run test:runtime
@@ -420,7 +458,10 @@ jobs:
   deploy-pages:
     name: Deploy MechaLab Workbench to GitHub Pages
     # Every browser suite, not only the build: a red audit cannot publish the bundle it graded.
-    needs: [build-workbench, workbench-suites, audit-suites, runtime-suites]
+    # `verify-and-test` is named here in its own right now that the build no longer waits for it;
+    # before that the build's `needs:` carried the dependency, and dropping it there would have let a
+    # red Python sweep publish a site whose own run was red.
+    needs: [verify-and-test, build-workbench, workbench-suites, audit-suites, runtime-suites]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment:
