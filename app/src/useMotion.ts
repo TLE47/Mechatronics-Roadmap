@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { motionChoice, subscribeMotion, writeMotion } from './motionPrefs';
+import { motionChoice, motionDefault, subscribeMotion, writeMotion } from './motionPrefs';
 
 export interface MotionController {
   /** What the figures are doing right now. */
@@ -15,8 +15,8 @@ export interface MotionController {
  *
  * Mounted once in the header, where the control lives, and once in each surface that draws motion —
  * a hook is cheap and a context would put the header above the router for one boolean. A reader who
- * has never chosen gets motion: a first visit opens on the drawings, not on their still frames. After
- * that the choice wins on every surface, because that is what one switch means.
+ * has never chosen gets `motionDefault()`: on for a first visit, still for one whose OS asks for less
+ * motion. After that the choice wins on every surface, because that is what one switch means.
  */
 export function useMotion(): MotionController {
   const [choice, setChoice] = useState<boolean | null>(() => motionChoice());
@@ -30,7 +30,7 @@ export function useMotion(): MotionController {
     []
   );
 
-  const on = choice ?? true;
+  const on = choice ?? motionDefault();
   const set = useCallback((next: boolean) => {
     setChoice(writeMotion(next));
   }, []);

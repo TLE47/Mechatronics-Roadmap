@@ -4,9 +4,10 @@
  * One switch for the moving drawings, on every screen. Three rules:
  *
  * 1. **A choice is a fact, not a guess.** The header's Motion button writes exactly the value the
- *    figures read, so the button and the page cannot disagree. `null` means "never chose", and a
- *    first visit is on: the first press replaces that for every surface. There is one rule, not a
- *    different one per page, because one switch that means two things is not a switch.
+ *    figures read, so the button and the page cannot disagree. `null` means "never chose": a first
+ *    visit is on, and an OS asking for less motion is still until the first press replaces it for
+ *    every surface. There is one rule, not a different one per page, because one switch that means
+ *    two things is not a switch.
  * 2. **Off means off, and cheaper.** Every moving figure stops its frame loop rather than drawing
  *    invisible frames, and an off-screen figure never starts one: turning motion off is also how a
  *    reader on a slow machine makes the app do less work.
@@ -47,17 +48,30 @@ export function motionChoice(): boolean | null {
   return null;
 }
 
+/** Whether the OS asks for less motion. Read per call: a reader can change it mid-visit. */
+export function prefersStill(): boolean {
+  try {
+    return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch {
+    return false;
+  }
+}
+
 /**
- * Whether figures move: the reader's choice, or **on** for a first visit.
+ * What a reader who has never pressed the control gets.
  *
- * A first visit is on. The owner's call is that a page opens on its drawings rather than on the
- * still frames of something a reader has to discover a switch to start; `prefers-reduced-motion` is
- * honoured on the surfaces that animate CSS (`HeroArm`, the tour) and by the switch itself, which is
- * one press away at the top of the header and remembered. Off is still the cheap setting: every
- * frame loop stops instead of drawing frames nobody sees.
+ * A first visit is **on** — a page opens on its drawings, not on the still frames of something a
+ * reader has to find a switch for. The one exception is the reader whose OS already asks for less
+ * motion: that is a standing request for stillness, and a page that ignores it is the page that
+ * hurts. The header switch overrides it in one press and the choice is remembered.
  */
+export function motionDefault(): boolean {
+  return !prefersStill();
+}
+
+/** Whether figures move: the reader's choice, or the default above. */
 export function motionEnabled(): boolean {
-  return motionChoice() ?? true;
+  return motionChoice() ?? motionDefault();
 }
 
 type Listener = (on: boolean) => void;

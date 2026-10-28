@@ -1130,7 +1130,11 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         }, testId);
       assert.equal(await inEditor('btn-run-verify'), true, 'Run must sit in the editor header');
       assert.equal(await inEditor('btn-predict'), true, 'Predict must sit beside Run for convenience');
-      assert.equal(await inEditor('btn-results-split'), true, 'the output split must be in that header');
+      assert.equal(
+        await inEditor('btn-results-split'),
+        true,
+        'the output split must live in the card, with the output it splits'
+      );
       assert.equal(
         await inEditor('editor-results'),
         true,

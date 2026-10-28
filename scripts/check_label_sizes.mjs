@@ -12,11 +12,11 @@
  *
  * The contract is §3 of `docs/PLAN-2.1a.md`, and it has four parts:
  *
- * 1. **The row is quiet.** At rest the runner shows at most seven controls: the four layout presets,
- *    the dock toggle, More and Run. Pause and Stop join only while a program runs, and everything
- *    else lives behind More — asserted by id, so a control cannot be hidden by accident or promoted
- *    back into the row without this file saying so.
- * 2. **Folded is still legible.** Opening More must reveal all thirteen secondary controls, every one
+ * 1. **The row is quiet.** At rest the runner shows at most eight controls: the four layout presets,
+ *    the dock toggle, More, Run and Predict. Pause and Stop join only while a program runs, and
+ *    everything else lives behind More — asserted by id, so a control cannot be hidden by accident
+ *    or promoted back into the row without this file saying so.
+ * 2. **Folded is still legible.** Opening More must reveal all twelve secondary controls, every one
  *    of them at 12 px or larger. `hidden` is a visual fold, never a smaller type size.
  * 3. **Primary actions lead.** Run, Stop, Pause, More, the layout presets and the dock toggle are
  *    13 px or larger.
@@ -73,6 +73,7 @@ const PRIMARY = [
   'layout-write',
   'layout-debug',
   'btn-dock-toggle',
+  'btn-predict',
 ];
 
 /** Everything behind More: present in the DOM, revealed in one press, and no smaller for it. */
@@ -87,13 +88,12 @@ const FOLDED = [
   'btn-diff',
   'btn-share-attempt',
   'btn-pair-open',
-  'btn-predict',
   'btn-vim',
   'btn-watch',
 ];
 
-/** At rest, in Study: four presets, the dock, More and Run. Pause/Stop are conditional, not extra. */
-const ROW_MAX_CONTROLS = 7;
+/** At rest, in Study: four presets, the dock, More, Run and Predict. Pause/Stop are conditional. */
+const ROW_MAX_CONTROLS = 8;
 
 const argv = process.argv.slice(2);
 const JSON_OUT = argv.includes('--json');

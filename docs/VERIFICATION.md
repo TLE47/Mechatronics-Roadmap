@@ -125,7 +125,7 @@ npm run test:theme:e2e                  # the three controls + contrast on all 1
 npm run check:weight                    # the gzipped shell against docs/weight-budget.json in both build shapes: a local-only dist/ also builds the signed-in one into dist-signed-in/, grades it, and removes it
 npm run check:lighthouse                # Lighthouse on the built bundle: best-practices, SEO and accessibility against docs/lighthouse-allowlist.json (performance not run)
 npm run check:snapshot                  # the painted surface of all 52 surfaces (twelve tabs and Home, four palettes) against docs/surface-snapshot.json: geometry (2 px), control counts, resolved styles
-npm run check:labels                    # the first screen's type, rendered at 1280x800: seven controls at rest, thirteen behind More, primary 13 px, controls 12 px, metadata 11 px, lesson text 17-18 px — and Home's controls and metadata at the same floors
+npm run check:labels                    # the first screen's type, rendered at 1280x800: eight controls at rest, twelve behind More, primary 13 px, controls 12 px, metadata 11 px, lesson text 17-18 px — and Home's controls and metadata at the same floors
 npm run test:perf                       # the visit, timed: six moments on the built bundle, on a laptop and on a throttled phone, each against docs/perf-budget.json (add --record to write docs/PERF.md)
 npm run test:perf:unit                  # the perf page and the budget without a browser: six moments, two profiles, no recorded row above its ceiling (a CI step)
 npm run check:pilot                     # the sitting kit's six gates: the sitting record's rules, the export preflight, the transfer follow-up, the aggregate and the kit page's own commands
@@ -421,8 +421,8 @@ measure them per palette.
 size. It opens the built bundle in Chromium at 1280×800, reads the computed size of every control and
 every line of metadata on the first screen, and fails below **12 px for a control, 13 px for a primary
 action, 11 px for metadata, 17–18 px for a lesson paragraph**. It also holds the row itself: at rest
-the runner's toolbar carries at most seven controls by id (four presets, the dock toggle, More, Run),
-More must reveal all thirteen folded ids, and none of them may be visible before it is opened. That is
+the runner's toolbar carries at most eight controls by id (four presets, the dock toggle, More, Run,
+Predict), More must reveal all twelve folded ids, and none of them may be visible before it is opened. That is
 what makes "quieter" a check rather than a opinion — and it is why the folded controls are still
 measured rather than assumed: `hidden` is a visual fold, never a smaller type size.
 

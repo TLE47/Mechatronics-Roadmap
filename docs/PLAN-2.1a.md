@@ -155,9 +155,9 @@ instead of rendering a blank card, and a lesson with no Markdown page says that 
 
 ## §3 — A quiet first screen (done in Run 230)
 
-The row at rest is four layout presets, the dock toggle, **More ⋯** and **Run & Verify** — seven
-controls, measured. **Pause** and **Stop** join while a program runs, **Next lesson** is in the passed
-card, and everything else is one press away behind More:
+The row at rest is four layout presets, the dock toggle, **More ⋯**, **Run & Verify** and **Predict**
+— eight controls, measured. **Pause** and **Stop** join while a program runs, **Next lesson** is in
+the passed card, and everything else is one press away behind More:
 
 | Context | Appears |
 | --- | --- |
@@ -165,7 +165,7 @@ card, and everything else is one press away behind More:
 | Paused at a breakpoint | Continue, Step, Stop (in the park bar) |
 | Failed run | Explain this error, the check's own hint rung |
 | Passed | Next lesson, review card if a comment exists |
-| Under More | Format with Black, History, Diff, Load Solution, Reset Starter, Reset Runtime, Breakpoints, Share, Pair, Predict, Vim keys, Watch, Self-Mark |
+| Under More | Format with Black, History, Diff, Load Solution, Reset Starter, Reset Runtime, Breakpoints, Share, Pair, Vim keys, Watch, Self-Mark |
 
 More is a disclosure, not a menu: `aria-expanded` / `aria-controls`, a `role="group"` panel, and
 `Escape` closes it and puts focus back on the button. Every folded control keeps its testid and its
@@ -182,7 +182,7 @@ bundle in Chromium at 1280×800 and reads computed sizes:
 | Metadata (counters, statuses, captions) | 11 px | secondary, never tiny |
 | Lesson paragraphs | 17–18 px | reading text, h2 22 px, h3/h4 18 px, quotes 15.5 px |
 
-The gate also holds the row itself: at most seven controls at rest, by id; More must reveal all
+The gate also holds the row itself: at most eight controls at rest, by id; More must reveal all
 thirteen folded ids; and none of them may be visible before it is opened. That is what keeps
 "quieter" from quietly becoming "hidden".
 
@@ -192,7 +192,7 @@ visibility moved.
 Acceptance, all run in this slice (green):
 
 ```bash
-npm run check:labels    # PASS: 7 controls at rest, 13 behind More, lesson text 17 px at 1280x800
+npm run check:labels    # PASS: 8 controls at rest, 12 behind More, lesson text 17 px at 1280x800
 npm run test:e2e        # PASS: every moved action is still reached through More
 npm run test:e2e:pages  # PASS on the built bundle, chromium and firefox
 npm run test:runtime    # PASS: Breakpoints and Format with Black, now via More

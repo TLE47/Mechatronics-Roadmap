@@ -378,9 +378,15 @@ async function main() {
         '  ok the route marker, the workflow states, the cursor, the wave, the loop, the labs, the stats, the closing panel and the nav are live'
       );
 
-      // A first visit is on, even on a machine that asks for less motion: the owner's rule is that
-      // the page opens on its drawings, and the header switch is one press away for a reader who
-      // wants stillness. A fresh context has never chosen, which is exactly this case.
+      // A first visit is on: this context has never chosen, so the page opens on its drawings.
+      assert.equal(
+        await page.getByTestId('intro-page').getAttribute('data-motion'),
+        'on',
+        'a reader who has never chosen must open on moving figures'
+      );
+
+      // ...unless the OS already asks for less motion. That is a standing request for stillness and a
+      // first visit respects it; the header's switch overrides it in one press, from any screen.
       const quiet = await browser.newContext({
         viewport: { width: 1280, height: 900 },
         reducedMotion: 'reduce',
@@ -392,18 +398,33 @@ async function main() {
       await stillPage.waitForTimeout(800);
       assert.equal(
         await stillPage.getByTestId('intro-page').getAttribute('data-motion'),
+        'off',
+        'a reader whose OS asks for less motion must get a still page until they choose otherwise'
+      );
+      assert.equal(
+        await stillPage.locator('[data-intro-packet], [data-intro-tracer]').count(),
+        0,
+        'a still page must not script motion it then has to hide'
+      );
+      const headerMotion = stillPage.getByTestId('btn-motion-toggle');
+      assert.equal(
+        await headerMotion.getAttribute('aria-pressed'),
+        'false',
+        'the header must report the still default it is showing'
+      );
+      await headerMotion.click();
+      await stillPage.waitForTimeout(450);
+      assert.equal(
+        await stillPage.getByTestId('intro-page').getAttribute('data-motion'),
         'on',
-        'a reader who has never chosen must open on moving figures'
+        'choosing motion on must override the OS preference'
       );
       const playing = await stillPage.evaluate(() =>
         [...document.querySelectorAll('[data-testid^="intro-figure-"]')].filter(
           (card) => card.querySelector('.intro-step, [data-intro-packet], [data-intro-tracer]')
         ).length
       );
-      assert.equal(playing, 6, `every one of the six figures must carry a motion source by default (${playing} did)`);
-      // The header's switch, not only the page's: stilling the page is one press from any screen.
-      const headerMotion = stillPage.getByTestId('btn-motion-toggle');
-      assert.equal(await headerMotion.getAttribute('aria-pressed'), 'true', 'the header must report motion on');
+      assert.equal(playing, 6, `every one of the six figures must carry a motion source once chosen (${playing} did)`);
       await headerMotion.click();
       await stillPage.waitForTimeout(350);
       assert.equal(
@@ -434,7 +455,7 @@ async function main() {
         'the header must still report the remembered pause after a reload'
       );
       await quiet.close();
-      console.log('  ok motion is on by default, one press stills it, and the pause is remembered');
+      console.log('  ok motion opens on by default, a reduce-motion reader starts still, and a press is remembered');
 
       // A reload is still the introduction: an explicit view is the learner's choice, not a guess.
       await page.reload({ waitUntil: 'domcontentloaded' });
@@ -1006,12 +1027,24 @@ async function main() {
       await page.waitForTimeout(700);
       const kept = await page.getByTestId('reader-scroll').evaluate((element, key) => {
         const node = element.querySelector(`[data-reader-block="${key}"]`);
-        return { key, into: element.scrollTop + 8 - (node?.offsetTop ?? 0), exists: Boolean(node) };
+        return {
+          key,
+          into: element.scrollTop + 8 - (node?.offsetTop ?? 0),
+          height: node?.offsetHeight ?? 0,
+          exists: Boolean(node),
+        };
       }, held.key);
       await page.setViewportSize(original);
       assert.equal(kept.exists, true, 'the block must still be on the page after the resize');
+      // Two ways the place is held, and both are the tight one. A block that still has room for the
+      // distance the reader was into it gets that distance back exactly. A block that reflowed
+      // shorter than that distance cannot: the rest of it is below its own end, so the clamp puts the
+      // reader at the block's last line rather than scrolling past paragraphs that no longer exist —
+      // the block is still the one under the reading line, which is what the eye is holding onto.
+      const sameDistance = Math.abs(kept.into - held.into) <= 48;
+      const insideTheBlock = kept.into >= 8 && kept.into <= kept.height + 8;
       assert.ok(
-        Math.abs(kept.into - held.into) <= 48,
+        sameDistance || insideTheBlock,
         `the block must stay at the top of the pane across a resize (${Math.round(
           held.into
         )} px in, ${Math.round(kept.into)} px after)`

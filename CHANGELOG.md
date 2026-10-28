@@ -43,9 +43,10 @@ the same card, under that header (or beside the code, one press on **Split outpu
 preference like the split ratio). Read still has no editor, so nothing is drawn there; Debug already
 puts the two columns side by side and hides the extra split.
 
-**A first visit opens on moving figures.** The motion preference used to fall back to the OS
-`prefers-reduced-motion`; a new reader now gets motion until they press the header switch, which is
-remembered on every surface. Off still stops every frame loop rather than drawing hidden frames.
+**A first visit opens on moving figures.** A new reader now gets motion until they press the header
+switch, which is remembered on every surface. The one exception is a reader whose OS already asks for
+less motion: that is a standing request for stillness, so a first visit starts still and the same
+switch overrides it. Off still stops every frame loop rather than drawing hidden frames.
 
 **The reading place survives a split-view resize.** The position now records the block at the top of
 the pane and the distance into it, and a `ResizeObserver` puts that block back at the top after a

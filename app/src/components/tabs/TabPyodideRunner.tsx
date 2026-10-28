@@ -3157,27 +3157,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     <MoreHorizontal className="w-3.5 h-3.5" />
     <span>More ⋯</span>
   </button>
-  {/* The terminal split, beside the code it splits: output under the editor by default, beside it
-      when the learner asks. A narrow window keeps one column and the button says so. */}
-  {editorShown && !columnsArrangement && (
-    <button
-      type="button"
-      data-testid="btn-results-split"
-      aria-pressed={resultsSplit}
-      onClick={() => setResultsSplit(writeResultsSplit(!resultsSplit))}
-      title={
-        resultsSplit
-          ? 'Put the run output back under the code'
-          : 'Split the run output beside the code, like a terminal'
-      }
-      className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono border flex items-center gap-1.5 cursor-pointer ${
-        resultsSplit ? 'text-accent border-accent/60 bg-canvas' : 'text-body border-line bg-canvas hover:bg-raise'
-      }`}
-    >
-      <Columns2 className="w-3.5 h-3.5" />
-      <span>{resultsSplit ? 'Stack output' : 'Split output'}</span>
-    </button>
-  )}
   <button
     onClick={() => {
       const lesson =
@@ -3199,6 +3178,30 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     )}
     <span>{isRunning ? 'Running in Worker...' : 'Run & Verify Output'}</span>
     {!isRunning && <span className="kbd ml-0.5">⌘↵</span>}
+  </button>
+  {/* The gate's own door, beside Run: the question also opens by itself on a lesson's first Run,
+      and this is how a learner rereads the verdict or commits a guess before pressing it. It used
+      to be folded into More, which is the one place a convenience control is not convenient. */}
+  <button
+    onClick={() => {
+      const next = !predictOpen;
+      setPredictRecord(predictionFor(selectedId));
+      setPredictOpen(next);
+      if (next) setHeldRun(null);
+    }}
+    aria-expanded={predictOpen}
+    aria-controls="predict-gate"
+    data-testid="btn-predict"
+    title="Predict first: commit to what the code will print, then run it"
+    className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+      predictOpen ? 'text-amber border-amber/60' : 'text-body border-line'
+    }`}
+  >
+    <Sparkles className="w-3.5 h-3.5" />
+    <span>
+      Predict
+      {predictRecord ? (predictRecord.skipped ? ' · skipped' : ' · answered') : ''}
+    </span>
   </button>
   <div
     id="toolbar-more"
@@ -3367,29 +3370,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           {coEdit
             ? 'Pair · co-editing'
             : `Pair${pair.state === 'connected' && pair.peer ? ` · ${pair.peer}` : ''}`}
-        </span>
-      </button>
-      {/* The gate's own door. The question also opens by itself on a lesson's first Run;
-          this is how a learner rereads the verdict, or predicts before pressing Run. */}
-      <button
-        onClick={() => {
-          const next = !predictOpen;
-          setPredictRecord(predictionFor(selectedId));
-          setPredictOpen(next);
-          if (next) setHeldRun(null);
-        }}
-        aria-expanded={predictOpen}
-        aria-controls="predict-gate"
-        data-testid="btn-predict"
-        title="Predict first: commit to what the code will print, then run it"
-        className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-          predictOpen ? 'text-amber border-amber/60' : 'text-body border-line'
-        }`}
-      >
-        <Sparkles className="w-3.5 h-3.5" />
-        <span>
-          Predict
-          {predictRecord ? (predictRecord.skipped ? ' · skipped' : ' · answered') : ''}
         </span>
       </button>
       {/* Vim keys: a reading preference like watch mode, remembered the same way. Off by
@@ -5117,6 +5097,36 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                       : 'border-t border-line-soft'
                   }
                 >
+                  {/* The terminal split belongs to the output it splits, not to the run row: §3 caps
+                      that row at eight controls (`docs/PLAN-2.1a.md`), and this is a preference of
+                      the panel rather than an action of the run. Debug's preset is already two
+                      columns, so it needs no second split and shows no button. */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1">
+                    <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
+                      Run output
+                    </span>
+                    {!columnsArrangement && (
+                      <button
+                        type="button"
+                        data-testid="btn-results-split"
+                        aria-pressed={resultsSplit}
+                        onClick={() => setResultsSplit(writeResultsSplit(!resultsSplit))}
+                        title={
+                          resultsSplit
+                            ? 'Put the run output back under the code'
+                            : 'Split the run output beside the code, like a terminal'
+                        }
+                        className={`flex items-center gap-1 rounded border px-2 py-0.5 text-[12px] font-mono cursor-pointer ${
+                          resultsSplit
+                            ? 'text-accent border-accent/60 bg-canvas'
+                            : 'text-body border-line bg-canvas hover:bg-raise'
+                        }`}
+                      >
+                        <Columns2 className="h-3 w-3" />
+                        <span>{resultsSplit ? 'Stack output' : 'Split output'}</span>
+                      </button>
+                    )}
+                  </div>
                   {resultsPanel}
                 </div>
               )}
