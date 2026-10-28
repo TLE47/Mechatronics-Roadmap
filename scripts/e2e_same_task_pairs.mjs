@@ -373,13 +373,16 @@ async function runCase(page, baseUrl, testCase) {
     };
     await stage('load', async () => {
       await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-      await page.waitForSelector('button', { timeout: 15000 });
+      // 30s, not 15s: two workers load two pages at once and the matrix runs three other suites beside
+      // them, so this is a readiness gate on a busy machine, not a claim about the app. It was 15s on
+      // run 40623116000, where the second worker's page did not paint a button in time.
+      await page.waitForSelector('button', { timeout: 30000 });
       await page.evaluate(() => localStorage.clear());
       // Both stores: the work these pairs produce is in IndexedDB now, and a variant that inherited
       // the previous arm's drafts would be comparing two different starting points.
       await clearBulk(page);
       await page.reload({ waitUntil: 'load' });
-      await page.waitForSelector('button', { timeout: 15000 });
+      await page.waitForSelector('button', { timeout: 30000 });
     });
     for (const spec of testCase.setup ?? []) {
       await stage(`setup ${JSON.stringify(spec)}`, async () => {
@@ -419,28 +422,43 @@ export async function runSameTaskPairSweep({ baseUrl: externalBaseUrl, only = pr
   assert.ok(cases.length > 0, `no pair case matches ${only}`);
 
   const failures = [];
+  // Two workers, because a case is independent of every other one: it loads the page, clears its own
+  // bucket and IndexedDB, drives two arms and fingerprints. Each worker gets its own context, so the
+  // isolation the suite already relied on (a clear before every arm) is now also a context boundary,
+  // and the sweep's wall clock is half the list rather than all of it - 179.7s sequential on run
+  // 40623055372, which made this suite the floor of the lane it landed in.
+  // `PAIRS_WORKERS=1` restores the old shape for a machine that cannot carry two pages.
+  const workers = Math.min(cases.length, Math.max(1, Number(process.env.PAIRS_WORKERS ?? 2) || 1));
   try {
-    const context = await browser.newContext();
-    // Seeded on the context, so it survives the per-case `localStorage.clear()`: an init script runs
-    // again on the reload that follows, and the coach mark never appears over the controls.
-    await seedTourSeen(context);
-    const page = await context.newPage();
-    await page.addInitScript({ content: HELPERS });
-    let index = 0;
-    for (const testCase of cases) {
-      index += 1;
-      const { task, separated } = await runCase(page, baseUrl, testCase);
-      const inert = task.after === task.before && separated.after === separated.before;
-      if (task.after === separated.after && (testCase.netZero || !inert)) {
-        console.log(`  ok ${index}/${cases.length} ${testCase.name}`);
-        continue;
-      }
-      const why = inert
-        ? 'neither click changed the page - the case is not driving the app any more'
-        : diffHint(task.after, separated.after);
-      console.log(`  FAIL ${index}/${cases.length} ${testCase.name}\n    ${why}`);
-      failures.push({ name: testCase.name, why });
-    }
+    await Promise.all(
+      Array.from({ length: workers }, async (_, worker) => {
+        const context = await browser.newContext();
+        // Seeded on the context, so it survives the per-case `localStorage.clear()`: an init script
+        // runs again on the reload that follows, and the coach mark never appears over the controls.
+        await seedTourSeen(context);
+        const page = await context.newPage();
+        await page.addInitScript({ content: HELPERS });
+        try {
+          const mine = cases.filter((_, index) => index % workers === worker);
+          for (const testCase of mine) {
+            const ordinal = cases.indexOf(testCase) + 1;
+            const { task, separated } = await runCase(page, baseUrl, testCase);
+            const inert = task.after === task.before && separated.after === separated.before;
+            if (task.after === separated.after && (testCase.netZero || !inert)) {
+              console.log(`  ok ${ordinal}/${cases.length} ${testCase.name}`);
+              continue;
+            }
+            const why = inert
+              ? 'neither click changed the page - the case is not driving the app any more'
+              : diffHint(task.after, separated.after);
+            console.log(`  FAIL ${ordinal}/${cases.length} ${testCase.name}\n    ${why}`);
+            failures.push({ name: testCase.name, why });
+          }
+        } finally {
+          await context.close();
+        }
+      })
+    );
   } finally {
     await browser.close();
     if (own) await own.viteServer.close();
@@ -453,7 +471,8 @@ export async function runSameTaskPairSweep({ baseUrl: externalBaseUrl, only = pr
       failures.map((f) => `  - ${f.name}\n    ${f.why}`).join('\n')
   );
   console.log(
-    `  ok ${cases.length} control pairs behave identically when clicked in one task and at human pace`
+    `  ok ${cases.length} control pairs behave identically when clicked in one task and at human pace ` +
+      `(${workers} worker${workers === 1 ? '' : 's'})`
   );
   return cases.length;
 }

@@ -248,16 +248,19 @@ jobs:
         with:
           path: ./dist
 
-  # The browser matrix in two jobs, split by cost rather than by subject. `e2e` is the one suite that
-  # runs longer than five minutes on its own (327s on run 40617696276, a slow runner; ~250s warm), so it
-  # travels with the six light flows and keeps four slots to itself instead of sharing a dev server with
-  # the built-bundle sweep and the control pairs. The cheap suites — the unit batch and the SSR smoke —
-  # ride with `e2e`, because a second copy in the other job would be the same checks twice. Each job
-  # still fetches the one build and starts its own server pair, so a partition passes exactly when the
-  # whole matrix would: partitioning changes only which suites are started.
+  # The browser matrix in three lanes, split by cost rather than by subject. Every lane's floor is the
+  # longest suite it carries, so the suites that are minutes on their own get a lane whose floor is not
+  # another suite's sum: `e2e` (158s warm) with the control pairs (180s sequential, ~95s on two
+  # workers) and the light flows; `pages` in Chromium (164s for both engines in one process, split so
+  # each engine pays only its own paint) with the tour and the reading flows; and `pages` in Firefox
+  # with the three small suites that read `dist/` (the SSR smoke, the weight budget, the fonts).
+  #
+  # This lane reads no `dist/` at all, so it has no `needs:` and no artifact step: it starts at t=0 and
+  # its first browser test is not behind the build job's handoff (42s on run 40623055372). Nothing it
+  # runs grades the built bundle — the three suites that do were moved to the lane that carries it — so
+  # the coverage is the same, only the wait is gone.
   e2e-suites:
-    name: Browser suites — the dev-server E2E sweep, the smoke, and the light flows
-    needs: build-workbench
+    name: Browser suites — the dev-server sweep, the control pairs, and the light flows
     runs-on: ubuntu-latest
 
     steps:
@@ -270,28 +273,8 @@ jobs:
           node-version: "22"
           cache: npm
 
-      - name: Set up Python 3.12 (a rebuild, if one is needed, runs the generator)
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
       - name: Install the locked dependencies
         run: npm ci
-
-      # The bundle was built once, in build-workbench. Its archive is older than this checkout's
-      # files, so the next step stamps it; from there every suite's `ensureBuilt` reuses it.
-      - name: Fetch the bundle the build job produced
-        uses: actions/download-artifact@v4
-        with:
-          name: workbench-dist
-          path: dist
-
-      # The archive carries the build job's timestamps, and this checkout's files are newer than that
-      # clock — so every suite's `ensureBuilt` would read the handed-over bundle as stale and build it
-      # again, in three lanes at once. Stamping it to now is the same statement the mtime comparison is
-      # trying to make: these bytes were built from this commit, earlier in this same run.
-      - name: Stamp the restored bundle as newer than this checkout
-        run: find dist -exec touch {} +
 
       - name: Restore the Playwright browsers
         id: playwright-cache
@@ -315,11 +298,11 @@ jobs:
         run: npx playwright-core install-deps chromium firefox
         timeout-minutes: 10
 
-      - name: Run the e2e partition (the SSR smoke, the unit batch, the dev-server E2E sweep, the light flows)
+      - name: Run the e2e partition (the unit batch, the dev-server E2E sweep, the control pairs, the light flows)
         run: npm run test:workbench -- --partition e2e
 
   bundle-suites:
-    name: Browser suites — the built bundle, control pairs, tour and home
+    name: Browser suites — the built bundle in Chromium, the tour and the reading flows
     needs: build-workbench
     runs-on: ubuntu-latest
 
@@ -366,14 +349,71 @@ jobs:
         run: npx playwright-core install-deps chromium firefox
         timeout-minutes: 10
 
-      - name: Run the bundle partition (built bundle, control pairs, the tour, home)
+      - name: Run the bundle partition (the built bundle in Chromium, the tour, the reading flows)
         run: npm run test:workbench -- --partition bundle
 
       - name: "Check the 3.0 game: prologue, Mission Control, journey map, Black Box, award ledger"
         run: npm run test:e2e:game
 
-  audit-suites:
-    name: Audits — theme, axe, Lighthouse, the surface snapshot, label sizes
+  # The second engine of the built bundle, plus the three small suites that read `dist/`. Firefox's
+  # pass is the sample (Chromium grades every entry), so the lane is one engine's path plus seconds.
+  bundle-firefox-suites:
+    name: Browser suites — the built bundle in Firefox, and the suites that read it
+    needs: build-workbench
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Set up Python 3.12 (a rebuild, if one is needed, runs the generator)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the locked dependencies
+        run: npm ci
+
+      - name: Fetch the bundle the build job produced
+        uses: actions/download-artifact@v4
+        with:
+          name: workbench-dist
+          path: dist
+
+      - name: Stamp the restored bundle as newer than this checkout
+        run: find dist -exec touch {} +
+
+      - name: Restore the Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install the Playwright browsers (a no-op when the cache hit)
+        run: npx playwright-core install chromium firefox
+        timeout-minutes: 8
+
+      - name: Install the Playwright OS libraries (only a cache miss needs them)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright-core install-deps chromium firefox
+        timeout-minutes: 10
+
+      - name: Run the bundle-firefox partition (the built bundle in Firefox, the SSR smoke, weight, fonts)
+        run: npm run test:workbench -- --partition bundle-firefox
+
+  # The audits in two jobs, split by what they measure and by cost. In one job the five checks were
+  # 3m54 of sequential steps (run 40623055372: 56s theme, 59s axe, 41s Lighthouse, 75s snapshot, 3s
+  # labels), which made this lane the second-longest thing in a run whose browser lanes were just
+  # split. Divided, each lane is about two minutes; every check still runs exactly once.
+  audit-theme:
+    name: Audits — the theme contract and axe
     needs: build-workbench
     runs-on: ubuntu-latest
 
@@ -437,6 +477,54 @@ jobs:
 
       - name: "Check accessibility: axe over all 11 tabs in both themes"
         run: npm run check:axe
+
+  audit-visuals:
+    name: Audits — Lighthouse, the surface snapshot, and label sizes
+    needs: build-workbench
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Set up Python 3.12 (a rebuild, if one is needed, runs the generator)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the locked dependencies
+        run: npm ci
+
+      - name: Fetch the bundle the build job produced
+        uses: actions/download-artifact@v4
+        with:
+          name: workbench-dist
+          path: dist
+
+      - name: Stamp the restored bundle as newer than this checkout
+        run: find dist -exec touch {} +
+
+      - name: Restore the Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install the Playwright browsers (a no-op when the cache hit)
+        run: npx playwright-core install chromium firefox
+        timeout-minutes: 8
+
+      - name: Install the Playwright OS libraries (only a cache miss needs them)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright-core install-deps chromium firefox
+        timeout-minutes: 10
 
       - name: "Check Lighthouse: best-practices, SEO and accessibility on the built bundle"
         run: npm run check:lighthouse
@@ -519,7 +607,7 @@ jobs:
     # `verify-and-test` is named here in its own right now that the build no longer waits for it;
     # before that the build's `needs:` carried the dependency, and dropping it there would have let a
     # red Python sweep publish a site whose own run was red.
-    needs: [verify-and-test, build-workbench, e2e-suites, bundle-suites, audit-suites, runtime-suites]
+    needs: [verify-and-test, build-workbench, e2e-suites, bundle-suites, bundle-firefox-suites, audit-theme, audit-visuals, runtime-suites]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment:

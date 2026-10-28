@@ -98,12 +98,24 @@ BROWSER_SUITES = (
     "npm run test:runtime",
     "npm run test:offline",
 )
-SUITE_JOBS = ("e2e-suites", "bundle-suites", "audit-suites", "runtime-suites")
+# The lanes that carry a browser and its cache.
+LANE_JOBS = (
+    "e2e-suites",
+    "bundle-suites",
+    "bundle-firefox-suites",
+    "audit-theme",
+    "audit-visuals",
+    "runtime-suites",
+)
+# The lanes that grade `dist/`, so they wait for the one build and fetch its artifact. `e2e-suites`
+# deliberately does not: it drives the dev server, and everything that reads the built bundle was
+# moved to these lanes so that no browser test waits on the build handoff.
+DIST_JOBS = ("bundle-suites", "bundle-firefox-suites", "audit-theme", "audit-visuals", "runtime-suites")
 
-# The matrix runner and its two halves. A partition CI names and the runner does not have is a job
-# that dies on its first command; a browser suite in neither partition is a gate nobody runs.
+# The matrix runner and its three lanes. A partition CI names and the runner does not have is a job
+# that dies on its first command; a browser suite in no partition is a gate nobody runs.
 MATRIX_RUNNER = os.path.join(ROOT, "scripts", "test_workbench.mjs")
-PARTITIONS = ("e2e", "bundle")
+PARTITIONS = ("e2e", "bundle", "bundle-firefox")
 
 
 def ci_text():
@@ -176,7 +188,7 @@ class WorkflowSpeedTests(unittest.TestCase):
             msg="expected the build job to publish the bundle exactly once for the suite jobs",
         )
         self.assertIn("name: workbench-dist", build, msg="expected the published artifact to carry the name the suite jobs download")
-        for name in SUITE_JOBS:
+        for name in DIST_JOBS:
             block = job_block(ci, name)
             with self.subTest(job=name):
                 self.assertTrue(block, msg=f"expected a `{name}` job in ci.yml; check the job was not renamed or folded back into the build")
@@ -205,9 +217,70 @@ class WorkflowSpeedTests(unittest.TestCase):
                     "read it as stale and rebuild it",
                 )
 
+    def test_the_dev_server_lane_does_not_wait_for_the_build(self):
+        """The dev-server lane reads no `dist/`, so it must not sit behind the build.
+
+        That handoff was 42s of a run whose browser lanes are already the floor (run 40623055372:
+        build started at 02:48:14, suites at 02:48:55). The coverage does not move with it: the three
+        suites that read the built bundle (the SSR smoke, the weight budget, the fonts) are declared
+        in the lane that carries it, and `test_the_build_does_not_wait_on_the_python_gate` keeps the
+        gate itself green.
+        """
+        build_lane = job_block(ci_text(), "e2e-suites")
+        self.assertTrue(build_lane, msg="expected an `e2e-suites` job in ci.yml")
+        active = "\n".join(
+            line for line in build_lane.splitlines() if not line.strip().startswith("#")
+        )
+        self.assertNotIn(
+            "needs:",
+            active,
+            msg="expected the dev-server lane to start at t=0: a `needs:` here is the build "
+            "handoff this lane exists to skip",
+        )
+        self.assertNotIn(
+            "actions/download-artifact@v4",
+            active,
+            msg="expected no artifact in the dev-server lane: it would be a download for a bundle "
+            "none of its suites read",
+        )
+        self.assertNotIn(
+            "npm run build",
+            active,
+            msg="expected the dev-server lane to build nothing either: `--partition e2e` carries no "
+            "`dist/` reader, and a build here is the same bytes a second time",
+        )
+
+    def test_every_button_that_reads_dist_rides_with_the_artifact(self):
+        """A suite that grades the built bundle may only live in a lane that fetches the build.
+
+        The dev-server lane lost its `needs:` and its artifact step, so a `dist/` reader put there
+        would fail on a missing bundle - or, worse, build one of its own and hide that the lane is no
+        longer artifact-free. The runner says which suites read the bundle (`needsBundle`); this asks
+        CI whether the lane it names carries one.
+        """
+        with open(MATRIX_RUNNER, encoding="utf-8") as handle:
+            runner = handle.read()
+        lanes = {partition: lane for partition, lane in zip(PARTITIONS, DIST_JOBS)}
+        readers = [line for line in runner.splitlines() if "needsBundle: true" in line]
+        self.assertTrue(readers, msg="expected the runner to declare which suites read `dist/`")
+        ci = ci_text()
+        for line in readers:
+            match = re.search(r"partition: '([\w-]+)'", line)
+            with self.subTest(suite=line.strip()[:60]):
+                self.assertIsNotNone(
+                    match,
+                    msg="expected every `dist/` reader to name the lane that carries the build",
+                )
+                job = lanes[match.group(1)]
+                self.assertIn(
+                    "actions/download-artifact@v4",
+                    job_block(ci, job),
+                    msg=f"expected `{job}` to fetch the build: it carries a suite that reads `dist/`",
+                )
+
     def test_the_playwright_download_is_cached(self):
         ci = ci_text()
-        for name in SUITE_JOBS:
+        for name in LANE_JOBS:
             block = job_block(ci, name)
             with self.subTest(job=name):
                 self.assertIn("actions/cache@v4", block, msg="expected a cache step for the Playwright browsers in every suite job")
@@ -223,28 +296,98 @@ class WorkflowSpeedTests(unittest.TestCase):
                     "not be handed the old browser build",
                 )
 
+    def test_the_audits_are_two_jobs_not_one_queue(self):
+        """Five checks in one job were 3m54 of steps that never overlapped.
+
+        Measured on run 40623055372: theme 56s, axe 59s, Lighthouse 41s, snapshot 75s, labels 3s. Split
+        by what they measure, each lane is about two minutes; merged back into one, this lane is again
+        the second-longest thing in a run whose browser lanes are already two.
+        """
+        ci = ci_text()
+        self.assertNotIn(
+            "audit-suites:",
+            ci,
+            msg="expected the single audit job to be gone: five sequential checks in one job were "
+            "4m14 end to end",
+        )
+        theme = job_block(ci, "audit-theme")
+        visuals = job_block(ci, "audit-visuals")
+        self.assertTrue(theme and visuals, msg="expected `audit-theme` and `audit-visuals` jobs")
+        for command in ("npm run test:theme:e2e", "npm run check:axe"):
+            with self.subTest(job="audit-theme", command=command):
+                self.assertIn(command, theme)
+                self.assertNotIn(command, visuals, msg="expected each check in exactly one audit job")
+        for command in ("npm run check:lighthouse", "npm run check:snapshot", "npm run check:labels"):
+            with self.subTest(job="audit-visuals", command=command):
+                self.assertIn(command, visuals)
+                self.assertNotIn(command, theme, msg="expected each check in exactly one audit job")
+
     def test_the_matrix_runs_as_two_partitions_once_each(self):
         """Two jobs, each naming one half of the matrix, and no half run twice.
 
         The split exists because `e2e` alone is longer than five minutes: it travels with the light
-        flows while the built-bundle sweep and the control pairs get their own four slots. A job
+        flows and the control pairs, the built bundle in Chromium gets the tour and the reading
+        flows, and the built bundle in Firefox gets the three suites that read it. A job
         that named a partition the runner does not know would die on its first command, and a
         suite in neither half would silently stop being a gate - so both are checked here.
         """
         ci = ci_text()
         self.assertEqual(
             ci.count("npm run test:workbench"),
-            2,
-            msg="expected the matrix exactly twice, once per partition; a third call is the same "
-            "matrix again, and one call is a half that lost its job",
+            3,
+            msg="expected the matrix exactly three times, once per lane; a fourth call is the same "
+            "matrix again, and two calls is a lane that lost its job",
         )
         for partition in PARTITIONS:
             with self.subTest(partition=partition):
+                # Not a substring: `--partition bundle` is a prefix of `--partition bundle-firefox`,
+                # and a plain count would read one lane as two.
                 self.assertEqual(
-                    ci.count("-- --partition %s" % partition),
+                    len(re.findall(r"-- --partition %s(?![\w-])" % re.escape(partition), ci)),
                     1,
                     msg=f"expected exactly one job to run the `{partition}` partition",
                 )
+
+    def test_the_pages_sweep_runs_both_engines_in_separate_lanes(self):
+        """One engine per process, both engines in CI.
+
+        Two headless browsers in one process were paying for each other's paint: 164.2s on run
+        40623055372, and that suite alone was the lane's floor. Split, each lane is one engine's
+        path; the coverage is the same, because Chromium still grades every exercise entry and
+        Firefox the sample, and neither lane may quietly drop its engine.
+        """
+        with open(MATRIX_RUNNER, encoding="utf-8") as handle:
+            runner = handle.read()
+        for engine in ("chromium", "firefox"):
+            with self.subTest(engine=engine):
+                self.assertIn(
+                    "PLAYWRIGHT_BROWSERS: '%s'" % engine,
+                    runner,
+                    msg=f"expected a `pages` entry that runs the built bundle in {engine} alone",
+                )
+        lanes = [
+            line
+            for line in runner.splitlines()
+            if "e2e_pages_bundle.mjs" in line and "browser: true" in line
+        ]
+        self.assertEqual(
+            len(lanes),
+            2,
+            msg="expected the Pages sweep exactly twice, one engine per lane",
+        )
+        self.assertNotEqual(
+            lanes[0].split("partition:")[1].split(",")[0],
+            lanes[1].split("partition:")[1].split(",")[0],
+            msg="expected the two engines in different lanes: in one lane they contend for the same "
+            "cores again, which is the 164s this split removed",
+        )
+        self.assertIn(
+            "PAGES_GRADING: 'sample'",
+            runner,
+            msg="expected the second engine's lane to grade the sample: the exhaustive pass belongs to "
+            "the Chromium lane, and grading all 50 entries again is the twice-the-interpreter-runs "
+            "cost this suite already removed once",
+        )
 
     def test_every_browser_suite_names_a_partition(self):
         with open(MATRIX_RUNNER, encoding="utf-8") as handle:
@@ -303,7 +446,7 @@ class WorkflowSpeedTests(unittest.TestCase):
         mirror fails the run in minutes instead of stalling it.
         """
         ci = ci_text()
-        for name in SUITE_JOBS:
+        for name in LANE_JOBS:
             block = job_block(ci, name)
             with self.subTest(job=name):
                 self.assertIn(
@@ -344,7 +487,7 @@ class WorkflowSpeedTests(unittest.TestCase):
         deploy = job_block(ci, "deploy-pages")
         self.assertTrue(deploy, msg="expected a deploy-pages job: without it a green run would never publish the site")
         self.assertIn(
-            "needs: [verify-and-test, build-workbench, %s]" % ", ".join(SUITE_JOBS),
+            "needs: [verify-and-test, build-workbench, %s]" % ", ".join(LANE_JOBS),
             deploy,
             msg="expected the deploy to depend on every suite job and on the Python sweep: the "
             "sweep used to ride along inside the build's `needs:`, so a red sweep that no longer "

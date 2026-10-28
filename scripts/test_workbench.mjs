@@ -70,14 +70,19 @@
  * scripts cover when run alone. Each one still passes standalone: they create their own servers when
  * no URL is given.
  *
- * `--partition e2e|bundle` runs one half of that matrix, which is how CI carries it in two jobs. The
- * split is by cost, not by subject: the dev-server sweep (`e2e`) is the one suite longer than five
- * minutes on its own, so it travels with the six light flows and keeps four dedicated slots instead
- * of sharing them with the built-bundle sweep and the control pairs. The cheap suites (the unit
- * batch and the SSR smoke) ride with `e2e`, because a second copy of them in the other job would be
- * the same checks twice on the same servers. Partitioning changes only which suites are started; the
- * servers, the bundle and each suite's own setup are identical, so a partition passes exactly when
- * the whole matrix would.
+ * `--partition e2e|bundle|bundle-firefox` runs one lane of that matrix, which is how CI carries it in
+ * three jobs. The split is by cost: the suites that are minutes on their own (`e2e`, the dev-server
+ * sweep; `pairs`, the control-pair sweep; `pages`, which grades the built bundle in two engines) each
+ * get a lane whose floor is not another suite's sum, and the light flows fill the slots beside them.
+ * `pages` runs twice, once per engine (`PLAYWRIGHT_BROWSERS`), because two headless browsers in one
+ * process were paying for each other's paint on a four-core runner.
+ *
+ * The `e2e` lane reads no `dist/` at all: its suites drive the dev server, and the suites that do read
+ * the built bundle (the Pages sweep, the SSR smoke, the weight budget, the fonts) live in the two
+ * bundle lanes. That is what lets CI start this lane at t=0 instead of behind the build job's
+ * artifact handoff, which was 42s of the run's wall clock. Partitioning changes only which suites are
+ * started; the servers, the bundle and each suite's own setup are identical, so a partition passes
+ * exactly when the whole matrix would.
  */
 
 import { spawn } from 'node:child_process';
@@ -88,8 +93,8 @@ import { runSmokeTests } from './smoke_test_workbench.mjs';
 
 const repoRoot = process.cwd();
 
-/** The halves CI runs. Every browser suite must name one; `main` fails loudly if one does not. */
-const PARTITIONS = ['e2e', 'bundle'];
+/** The lanes CI runs. Every browser suite must name one; `main` fails loudly if one does not. */
+const PARTITIONS = ['e2e', 'bundle', 'bundle-firefox'];
 
 /** Stream a child's output line by line, prefixed, so two suites' logs stay readable. */
 function pipe(stream, prefix) {
@@ -162,9 +167,9 @@ function runSmoke(viteServer) {
 }
 
 async function main() {
-  // `--partition e2e|bundle` is how CI carries this matrix in two jobs (see the header). A partition
-  // that names nothing is a gate that quietly stopped running, so it is an error rather than a
-  // default - the same reason a browser suite with no partition fails below.
+  // `--partition e2e|bundle|bundle-firefox` is how CI carries this matrix in three jobs (see the
+  // header). A partition that names nothing is a gate that quietly stopped running, so it is an error
+  // rather than a default - the same reason a browser suite with no partition fails below.
   const flag = process.argv.indexOf('--partition');
   const partition = flag === -1 ? null : process.argv[flag + 1];
   if (flag !== -1 && !PARTITIONS.includes(partition)) {
@@ -173,21 +178,14 @@ async function main() {
     );
   }
 
-  // Build when the bundle is missing *or older than its sources*: the Pages sweep grades `dist/`, and
-  // a stale one there grades code the source no longer has (the weight gate's Run 166 hole).
-  ensureBuilt();
-
   const { viteServer, baseUrl: devUrl } = await startDevServer(repoRoot);
-  const { server: distServer, port } = await startStaticServer();
-  const pagesUrl = `http://127.0.0.1:${port}${BASE}`;
-  console.log(`[setup] dev server ${devUrl}`);
-  console.log(`[setup] built bundle ${pagesUrl}`);
-  console.log(`[setup] partition ${partition ?? 'all'}`);
 
   // The suites, as data: `browser` marks the ones that launch Chromium and drive pages, and those run
-  // in waves rather than all at once (`runWaves` below).
+  // in waves rather than all at once (`runWaves` below). It is a function because each entry's env
+  // carries the served bundle's URL, and the decision below has to ask the same table - with a
+  // placeholder URL, since nothing is spawned here - before that server exists.
   const TYPES = `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim();
-  const SUITES = [
+  const suiteTable = ({ pagesUrl }) => [
     { label: 'links', script: 'test_practice_links.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'theme', script: 'test_theme.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'tokens', script: 'test_theme_tokens.mjs', env: { NODE_OPTIONS: TYPES } },
@@ -240,12 +238,23 @@ async function main() {
     { label: 'reading', script: 'test_trail_reading.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'paint', script: 'test_paint_timing.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'home', script: 'test_home.mjs', env: { NODE_OPTIONS: TYPES } },
-    { label: 'weight', script: 'test_weight_budget.mjs' },
+    // Reads `dist/`: it rides with a lane that carries the build, never with the dev-server lane.
+    { label: 'weight', script: 'test_weight_budget.mjs', needsBundle: true, partition: 'bundle-firefox' },
     { label: 'audio', script: 'test_audio.mjs', env: { NODE_OPTIONS: TYPES } },
-    { label: 'fonts', script: 'test_fonts.mjs' },
+    { label: 'fonts', script: 'test_fonts.mjs', needsBundle: true, partition: 'bundle-firefox' },
+    // The SSR smoke is a suite like the rest: it runs in this process against the dev server, and it
+    // reads the built bundle, so it travels with the lane that carries the build.
+    { label: 'smoke', smoke: true, needsBundle: true, partition: 'bundle-firefox' },
     { label: 'e2e', script: 'e2e_browser_workbench.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'e2e', browser: true },
-    { label: 'pages', script: 'e2e_pages_bundle.mjs', env: { PAGES_SERVER_URL: pagesUrl }, partition: 'bundle', browser: true },
-    { label: 'pairs', script: 'e2e_same_task_pairs.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'bundle', browser: true },
+    // The Pages sweep in two processes, one engine each: two headless browsers driving the same
+    // static server in one process were paying for each other's paint (164.2s on run 40623055372),
+    // and each engine's path is what the lane's floor was made of. Coverage is unchanged - Chromium
+    // still grades every exercise entry, Firefox the sample - and CI runs both lanes.
+    { label: 'pages', script: 'e2e_pages_bundle.mjs', env: { PAGES_SERVER_URL: pagesUrl, PLAYWRIGHT_BROWSERS: 'chromium' }, partition: 'bundle', needsBundle: true, browser: true },
+    // The sample, not the exhaustive pass: the Chromium lane grades every entry, and grading the same
+    // 50 a second time in Firefox is the twice-the-interpreter-runs cost Run 176 already removed.
+    { label: 'pages-firefox', script: 'e2e_pages_bundle.mjs', env: { PAGES_SERVER_URL: pagesUrl, PLAYWRIGHT_BROWSERS: 'firefox', PAGES_GRADING: 'sample' }, partition: 'bundle-firefox', needsBundle: true, browser: true },
+    { label: 'pairs', script: 'e2e_same_task_pairs.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'e2e', browser: true },
     { label: 'firstrun-e2e', script: 'e2e_tour.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'bundle', browser: true },
     { label: 'tour', script: 'e2e_tour_presets.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'bundle', browser: true },
     { label: 'defer', script: 'e2e_editor_deferred.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
@@ -258,6 +267,30 @@ async function main() {
     { label: 'home2e', script: 'e2e_home.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'bundle', browser: true },
     { label: 'reset2e', script: 'e2e_reset.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
   ];
+
+  // A partition that carries no reader of `dist/` does not wait for the build at all. The dev-server
+  // lane runs with no artifact, so its first browser test is not behind the build job's handoff (42s
+  // on run 40623055372); the bundle lanes ask for it, and `ensureBuilt` still rebuilds a stale one.
+  const needsBundle =
+    partition === null ||
+    suiteTable({ pagesUrl: '' }).some(
+      (suite) => suite.partition === partition && suite.needsBundle
+    );
+  let distServer = null;
+  let pagesUrl = '';
+  if (needsBundle) {
+    // Build when the bundle is missing *or older than its sources*: the Pages sweep grades `dist/`, and
+    // a stale one there grades code the source no longer has (the weight gate's Run 166 hole).
+    ensureBuilt();
+    const { server, port } = await startStaticServer();
+    distServer = server;
+    pagesUrl = `http://127.0.0.1:${port}${BASE}`;
+  }
+  const SUITES = suiteTable({ pagesUrl });
+  console.log(`[setup] dev server ${devUrl}`);
+  console.log(`[setup] built bundle ${needsBundle ? pagesUrl : 'not read by this partition'}`);
+  console.log(`[setup] partition ${partition ?? 'all'}`);
+
   const unassigned = SUITES.filter((suite) => suite.browser && !PARTITIONS.includes(suite.partition));
   if (unassigned.length) {
     throw new Error(
@@ -268,7 +301,7 @@ async function main() {
   // Ctrl-C must not leave a Vite server or two Chromium runs behind.
   const stop = () => {
     viteServer.close();
-    distServer.close();
+    distServer?.close();
     process.exit(130);
   };
   process.once('SIGINT', stop);
@@ -284,23 +317,27 @@ async function main() {
     // The browser suites are started as thunks so a wave decides when a Chromium is opened at all;
     // the rest are cheap and go in one batch.
     const start = (suite) => () => runSuite(suite.label, suite.script, suite.env ?? {});
+    const inPartition = (suite) => partition === null || suite.partition === partition;
     // The unit batch and the SSR smoke ride with `e2e`: they are seconds, they share this job's dev
-    // server, and a copy in the other job would be the same checks twice on the same servers.
+    // server, and a copy in the other job would be the same checks twice on the same servers. The
+    // suites that read `dist/` (`fonts`, `weight`, the SSR smoke) instead ride with the lane that
+    // carries the build, because the dev-server lane no longer waits for it.
     const withCheap = partition === null || partition === 'e2e';
-    const unit = withCheap ? SUITES.filter((suite) => !suite.browser).map(start) : [];
-    const browser = SUITES.filter(
-      (suite) => suite.browser && (partition === null || suite.partition === partition)
+    const unit = withCheap ? SUITES.filter((suite) => !suite.browser && !suite.smoke && !suite.needsBundle).map(start) : [];
+    const distUnit = SUITES.filter(
+      (suite) => !suite.browser && !suite.smoke && suite.needsBundle && inPartition(suite)
     ).map(start);
-    const smoke = withCheap ? [runSmoke(viteServer)] : [];
+    const browser = SUITES.filter((suite) => suite.browser && inPartition(suite)).map(start);
+    const smoke = SUITES.some((suite) => suite.smoke && inPartition(suite)) ? [runSmoke(viteServer)] : [];
     results = [
-      ...(await Promise.all([...smoke, ...unit.map((begin) => begin())])),
+      ...(await Promise.all([...smoke, ...[...unit, ...distUnit].map((begin) => begin())])),
       ...(await runWaves(browser, 4)),
     ];
   } finally {
     process.off('SIGINT', stop);
     process.off('SIGTERM', stop);
     await viteServer.close();
-    distServer.close();
+    distServer?.close();
   }
 
   const failed = results.filter((result) => result.code !== 0);
@@ -315,7 +352,7 @@ async function main() {
     return;
   }
   console.log(
-    `[PASS] Workbench suites passed on one dev server and one built bundle: ${results
+    `[PASS] Workbench suites passed on one dev server${needsBundle ? ' and one built bundle' : ''}: ${results
       .map((result) => `${result.label} ${(result.ms / 1000).toFixed(1)}s`)
       .join(', ')}`
   );
