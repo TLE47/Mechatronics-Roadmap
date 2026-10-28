@@ -48,20 +48,50 @@ feature branch is graded by its pull request, so the old `"**"` filter's second,
 — and a `concurrency` group keyed on the pull request cancels the run a newer push supersedes (never on
 `main`, whose run is the one that publishes). The build and the browser work are separate jobs:
 `build-workbench` finishes at the gates that need no browser and publishes `dist/` as the
-`workbench-dist` artifact; `e2e-suites`, `bundle-suites`, `audit-suites` and `runtime-suites` fetch it
-(stamping the restored files newer than the checkout, because an archive keeps the build job's clock
-and every suite would otherwise read it as stale), restore `~/.cache/ms-playwright` under a key that
-follows `package-lock.json`, and run side by side; and
-`deploy-pages` needs all four, so a red audit cannot publish what it graded.
+`workbench-dist` artifact; `bundle-suites`, `bundle-firefox-suites`, `audit-theme`, `audit-visuals`
+and `runtime-suites` fetch it (stamping the restored files newer than the checkout, because an archive
+keeps the build job's clock and every suite would otherwise read it as stale), restore
+`~/.cache/ms-playwright` under a key that follows `package-lock.json`, and run side by side;
+`e2e-suites` runs beside the build with no artifact at all; and `deploy-pages` needs all six, so a red
+audit cannot publish what it graded.
 
-**The matrix is two jobs, split by cost.** `npm run test:workbench` carries fourteen browser suites;
-`e2e` alone is longer than five minutes (327s on run 40617696276, ~250s on a warm runner), so it rides
-with the six light flows in `e2e-suites` and keeps all four slots, while the built-bundle sweep, the
-control pairs, the tour and home run in `bundle-suites`. The unit batch and the SSR smoke travel with
-`e2e` rather than being run twice. `--partition e2e|bundle` is the switch; a browser suite that names
-no partition fails the runner at startup, and `tests/test_workflows.py` asks every browser suite line
-for one and CI for exactly one invocation of each half. Splitting changed no check: the servers, the
-bundle and each suite's setup are the same, so a partition passes exactly when the whole matrix would.
+**The browser matrix is three lanes, split by cost, and its floor is one suite rather than a sum.**
+`npm run test:workbench` carries fifteen browser-suite runs (fourteen suites, the Pages sweep in two
+engines). On run 40623055372 the per-suite numbers were `pairs` 179.7s, `pages` 164.2s, `e2e` 158.4s,
+`tour` 119.1s, `firstrun-e2e` 58.5s, `home2e` 50.3s, `trail2e` 39.7s, `predict2e` 24.8s — so whichever
+lane owned `pairs`, `pages` or `e2e` was that lane's floor. Divided:
+
+| lane | carries | floor |
+|---|---|---|
+| `e2e-suites` | the unit batch, `e2e`, `pairs` (two workers), and the six light flows | 158.4s |
+| `bundle-suites` | `pages` in Chromium, `tour`, `firstrun-e2e`, `trail2e`, `predict2e`, `home2e` | 164.2s |
+| `bundle-firefox-suites` | `pages` in Firefox, the SSR smoke, `weight`, `fonts` | 164.2s |
+
+The Pages sweep runs once per engine because its 164.2s was two headless browsers paying for each
+other's paint in one process; each engine's path is what the lane's floor is now. Coverage is
+unchanged — Chromium still grades all 50 exercise entries, Firefox the nine-entry sample — and
+`tests/test_workflows.py` asks for both engines, in different lanes.
+
+**The dev-server lane reads no `dist/`.** Everything that grades the built bundle — the Pages sweep,
+the SSR smoke, the weight budget, the fonts — was moved to the two bundle lanes, so `e2e-suites` has
+no `needs:`, no artifact download and no build. That is 42s of the run's wall clock (build started at
+02:48:14 and the suite jobs at 02:48:55 on run 40623055372) that no longer sits in front of a browser
+test, the same argument that removed the build's `needs: verify-and-test`. A test in
+`tests/test_workflows.py` fails if the lane grows a `needs:`, an artifact step or a build again, and
+another fails if a suite that reads `dist/` is put in a lane that does not fetch it.
+
+`--partition e2e|bundle|bundle-firefox` is the switch; a browser suite that names no partition fails
+the runner at startup, and `tests/test_workflows.py` asks every browser suite line for one and CI for
+exactly one invocation of each lane. Splitting changed no check: the servers, the bundle and each
+suite's setup are the same, so a partition passes exactly when the whole matrix would.
+
+**The audits are two jobs too, split by what they measure.** In one job the five checks were 3m54 of
+sequential steps (run 40623055372: 56s theme, 59s axe, 41s Lighthouse, 75s snapshot, 3s labels), which
+made that lane the second-longest thing in a run whose browser lanes had just been split. `audit-theme`
+keeps the light/dark toggle and contrast contract with axe, and `audit-visuals` keeps Lighthouse, the
+surface snapshot and the label sizes — two lanes of about two minutes each, every check still running
+exactly once, and the deploy gated on both. The split moved no assertion: same commands, same fixtures,
+same servers.
 
 **Nothing waits for the Python sweep any more, and the gate still holds.** `build-workbench` carried
 `needs: verify-and-test` until 2026-10-28, which made a runner handoff out of a check: the build could
@@ -77,8 +107,9 @@ The shape is guarded by
 `tests/test_workflows.py` (`WorkflowSpeedTests`): one run per branch push, cancellation on pull
 requests only, every browser command present exactly once, no suite job that rebuilds, the cache key,
 a build that does not wait on the Python gate, the libraries conditional on a cache miss with both
-Playwright steps bounded, the matrix in exactly two partitions with every browser suite assigned, and
-a deploy that waits for every lane.
+Playwright steps bounded, the matrix in exactly two partitions with every browser suite assigned, the
+five audit checks present exactly once across the two audit lanes, and a deploy that waits for every
+lane.
 
 `check_consistency.py` is the contradiction detector: it compares a quoted count with the count
 derived from the lesson files and `modules/_index.yaml`, and fails on a second name for a step

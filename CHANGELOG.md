@@ -16,6 +16,49 @@ flowchart LR
 
 ---
 
+## [2026-10-27] — Run 268: every lane under three minutes, and none of them waiting on the build
+
+**The audits were the longest thing in the run.** Five checks in one job as five sequential steps: on
+run 40623055372 they were **3m54** — 56s theme, 59s axe, 41s Lighthouse, 75s the surface snapshot, 3s
+label sizes. No single one of them is slow; their sum was.
+
+**What changed.** Five jobs became six, and the three browser lanes became four sources of truth about
+one matrix:
+
+| job | carries |
+|---|---|
+| `audit-theme` | the light/dark toggle and contrast contract, and axe over all 11 tabs in both themes |
+| `audit-visuals` | Lighthouse, the surface snapshot, and the label-size check |
+| `e2e-suites` | the unit batch, `e2e`, `pairs` on two workers, and the six light flows — **no artifact** |
+| `bundle-suites` | `pages` in Chromium, `tour`, `firstrun-e2e`, `trail2e`, `predict2e`, `home2e` |
+| `bundle-firefox-suites` | `pages` in Firefox, the SSR smoke, `weight`, `fonts` |
+
+Every check still runs exactly once, with the command it had; `deploy-pages` waits on all six.
+
+**Three numbers set the shape.** On run 40623055372 the suite times in the bundle lane were `pairs`
+**179.7s**, `pages` **164.2s**, `tour` 119.1s, `firstrun-e2e` 58.5s, `home2e` 50.3s, `trail2e` 39.7s,
+`predict2e` 24.8s; the `e2e` lane's floor was its own `e2e` at **158.4s**; and the suites of a lane
+wait for the build job, whose handoff put their first browser test at 42s. So:
+
+- `pairs` gets two workers (each case already resets its own storage, so the isolation it relied on is
+  now a context boundary) — 180s of one suite became ~95s, and it fits under `e2e` instead of setting
+  a lane's floor;
+- `pages` runs once per engine. Its 164.2s was two headless browsers in one process paying for each
+  other's paint on a four-core runner; split, each lane carries one engine's path. Chromium still
+  grades all 50 exercise entries, Firefox the nine-entry sample — the same coverage, one process each;
+- the dev-server lane reads no `dist/` at all. The three suites that do (the SSR smoke, the weight
+  budget, the fonts) moved to the lane that carries the build, so `e2e-suites` has no `needs:` and
+  starts at t=0 — the 42s the build handoff used to cost it.
+
+**Why the shape holds.** `tests/test_workflows.py` asserts that each of the five audit commands appears
+exactly once across the two audit lanes and neither repeats the other's; that the matrix runs exactly
+three times, once per lane, with a word boundary so `bundle` cannot match `bundle-firefox`; that the
+dev-server lane has no `needs:`, no artifact step and no build; that every suite declaring it reads
+`dist/` is in a lane that fetches the artifact; and that the Pages sweep appears once per engine, in
+different lanes. `scripts/test_workbench.mjs` still refuses to start a suite that names no partition.
+
+---
+
 ## [2026-10-27] — Run 267: the browser matrix in two lanes
 
 **One suite held the whole lane.** `npm run test:workbench` carries fourteen browser suites in four

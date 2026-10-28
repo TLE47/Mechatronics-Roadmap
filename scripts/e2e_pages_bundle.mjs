@@ -36,8 +36,10 @@
  *
  * Chromium always runs and carries the exhaustive pass; Firefox runs when its browser build is present
  * (`npx playwright-core install firefox`, which CI does) and grades the sample. A browser selected on
- * its own (`PLAYWRIGHT_BROWSERS=chromium|firefox`) still gets the exhaustive pass. A browser that is not
- * installed is reported as SKIP with the reason, never as a pass.
+ * its own (`PLAYWRIGHT_BROWSERS=chromium|firefox`) still gets the exhaustive pass — unless
+ * `PAGES_GRADING=sample` says another lane is doing it, which is how CI runs the two engines in two
+ * processes without grading the same 50 entries twice. A browser that is not installed is reported as
+ * SKIP with the reason, never as a pass.
  *
  * Usage:  PAGES_BASE=/Mechatronics-Roadmap/ node scripts/e2e_pages_bundle.mjs
  */
@@ -1559,13 +1561,19 @@ async function main() {
     if (!selected.length) throw new Error(`PLAYWRIGHT_BROWSERS=${wanted} selects no browser`);
     // The first selected browser (Chromium, unless it was not asked for) takes the exhaustive pass;
     // any browser after it grades the sample. So one browser always grades every package, and a
-    // single-browser run is still exhaustive.
+    // single-browser run is still exhaustive - unless the caller says another lane is doing that
+    // pass: CI runs each engine in its own process, and `PAGES_GRADING=sample` is how the Firefox
+    // lane keeps the sample instead of grading the same 50 entries a second time.
+    const sampleOnly = (process.env.PAGES_GRADING ?? '').toLowerCase() === 'sample';
     const allExerciseIds = discoverExerciseIds();
     const sample = sampleExerciseIds(allExerciseIds);
+    const graded = new Map();
     const settled = await Promise.all(
-      selected.map(([name, launcher], index) =>
-        checkInBrowser(name, launcher, baseUrl, index === 0 ? allExerciseIds : sample)
-      )
+      selected.map(([name, launcher], index) => {
+        const ids = index === 0 && !sampleOnly ? allExerciseIds : sample;
+        graded.set(name, ids);
+        return checkInBrowser(name, launcher, baseUrl, ids);
+      })
     );
     const results = Object.fromEntries(selected.map(([name], index) => [name, settled[index]]));
     if (Object.values(results).every((value) => value === 'skip')) {
@@ -1573,10 +1581,11 @@ async function main() {
     }
     const ran = Object.entries(results).filter(([, value]) => value === 'pass').map(([name]) => name);
     const skipped = Object.entries(results).filter(([, value]) => value === 'skip').map(([name]) => name);
-    const grading = selected.length > 1
-      ? `grades all ${allExerciseIds.length} exercise entries in ${selected[0][0]} and a ${sample.length}-entry sample in ` +
-        `${selected.slice(1).map(([name]) => name).join(', ')}`
-      : `grades all ${allExerciseIds.length} exercise entries in ${selected[0][0]}`;
+    const describe = ([name]) =>
+      graded.get(name).length === allExerciseIds.length
+        ? `all ${allExerciseIds.length} exercise entries in ${name}`
+        : `a ${graded.get(name).length}-entry sample of the ${allExerciseIds.length} in ${name}`;
+    const grading = `grades ${selected.map(describe).join(' and ')}`;
     console.log(        `[PASS] Built Pages bundle at ${BASE} mounts, serves every asset, loads later-track lessons ` +
         `${LATER_TRACK_LESSONS.join(', ')}, grades ramp ${RAMP_LESSONS[0]}..${RAMP_LESSONS[RAMP_LESSONS.length - 1]} ` +
         `(starter unverified, reference verified), ${grading}, ` +
