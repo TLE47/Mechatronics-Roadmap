@@ -287,19 +287,15 @@ export async function runPredictGateSuite({ baseUrl: externalBaseUrl } = {}) {
       guideAfter.indexOf('1 · THE STARTER'),
       guideAfter.indexOf('Show me the editor')
     );
-    assert.match(
-      stepOne,
-      /while loop that stops at the target/,
-      'the card must point at the hole that is still open'
-    );
+    assert.match(stepOne, /while pos_m < target/, 'the card must point at the hole that is still open');
     assert.doesNotMatch(
       stepOne,
-      /distance is speed times the time step/,
+      /multiply the speed by the time step/,
       'and never at the hole just filled'
     );
     assert.match(
       guideAfter,
-      /which stops at a while loop that stops at the target/,
+      /which stops at a while pos_m < target/,
       'the first-check line must name the same hole the pointer does'
     );
     console.log('  ok filling hole 1 moves the red line to hole 2, which still reads as a marker');

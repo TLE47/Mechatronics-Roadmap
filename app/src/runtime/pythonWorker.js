@@ -833,7 +833,13 @@ const handleSignature = (msg) =>
   });
 
 async function ensurePyodideLoaded(cdnUrl) {
-  if (pyodideInstance && loadedCdnUrl === cdnUrl) {
+  // A completion, hover, signature or lint request does not carry the CDN: the page warms this
+  // worker with it on mount, and only the run and format paths repeat it because they can be the
+  // first message a worker ever sees. Falling back to the URL this worker already loaded keeps an
+  // analysis request from starting a second load of `undefinedpyodide.mjs` — which is what a tab
+  // switch that keeps the worker alive used to do, because there was no in-flight warm to ride.
+  const url = cdnUrl || loadedCdnUrl;
+  if (pyodideInstance && loadedCdnUrl === url) {
     return pyodideInstance;
   }
   // Any in-flight load is the load: Pyodide comes from one CDN, and two importScripts calls in one
@@ -841,7 +847,7 @@ async function ensurePyodideLoaded(cdnUrl) {
   if (loadPromise) {
     return loadPromise;
   }
-  loadedCdnUrl = cdnUrl;
+  loadedCdnUrl = url;
   self.postMessage({ type: 'status', status: 'loading' });
   loadPromise = (async () => {
     try {
@@ -849,12 +855,12 @@ async function ensurePyodideLoaded(cdnUrl) {
       // dynamic import is an ordinary network request of a controlled client, which is exactly what the
       // service worker caches for offline use. `@vite-ignore` keeps the bundler from trying to resolve a
       // CDN URL it will never see at build time.
-      const { loadPyodide } = await import(/* @vite-ignore */ cdnUrl + 'pyodide.mjs');
+      const { loadPyodide } = await import(/* @vite-ignore */ url + 'pyodide.mjs');
       if (typeof loadPyodide !== 'function') {
         throw new Error('loadPyodide not exported by pyodide.mjs');
       }
       const startedAt = performance.now();
-      pyodideInstance = await loadPyodide({ indexURL: cdnUrl });
+      pyodideInstance = await loadPyodide({ indexURL: url });
       if (interruptView) pyodideInstance.setInterruptBuffer(interruptView);
       installStdinBridge(pyodideInstance);
       installScopeBridge(pyodideInstance);

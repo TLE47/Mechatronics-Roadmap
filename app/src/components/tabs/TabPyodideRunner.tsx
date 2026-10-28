@@ -767,6 +767,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   useEffect(() => {
     return () => {
       destroyWorker();
+      // A tab can be taken off screen without this component losing its state (the phone shell and
+      // the tab panels keep views mounted), and the worker goes with the effects. Forgetting the
+      // warm guard is what lets the next activation warm a new one; forgetting the status is a chip
+      // that says "Python ready" about a worker that was terminated.
+      warmStartedRef.current = false;
+      pyodideStatusRef.current = 'idle';
+      setPyodideStatus('idle');
     };
   }, []);
 
@@ -1595,7 +1602,17 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const analysisSession = (): AnalysisSession => {
     if (!analysisRef.current) {
       analysisRef.current = new AnalysisSession((message) =>
-        getOrCreateWorker().postMessage(message)
+        getOrCreateWorker().postMessage({
+          // Every analysis request carries the CDN, like a run and a format do. The worker needs it
+          // to install Jedi on the first request of a worker that has not been warmed yet — a tab
+          // switch can keep this component while replacing its worker, and an analysis request may
+          // be the first message that worker ever sees. Without it the worker tried to import
+          // `undefinedpyodide.mjs` and every completion fell back to keywords silently.
+          cdnUrl:
+            (typeof window !== 'undefined' && window.__mechalabPyodideCdnUrl) ||
+            DEFAULT_PYODIDE_CDN,
+          ...message,
+        })
       );
     }
     return analysisRef.current;

@@ -71,6 +71,14 @@ preset, which hides the very gate and verdict that step waits for; it keeps the 
 The built-bundle suite's tablet check and the tour sweep each caught one of these; both are fixed and
 both suites re-run green.
 
+**A hidden tab is not a dead worker.** Keeping a view mounted lets its effects be torn down and re-run
+while the component's state survives. The runner destroys its worker on teardown, so after a detour
+through Bode the chip still said *Python ready* about a worker that no longer existed, and the first
+completion asked a cold worker for Jedi with no CDN to install it from (`undefinedpyodide.mjs`).
+Analysis requests now carry the CDN the way a run does, the worker falls back to the CDN it already
+loaded, and a teardown resets the warm guard and the status. The runtime suite's completion step is
+what found it.
+
 **The gate.** [`scripts/e2e_mobile.mjs`](scripts/e2e_mobile.mjs) (`npm run test:e2e:mobile`) is a real
 Chromium at **390 × 844**, `isMobile`, `hasTouch`, DPR 3: the manifest's icons against their PNG
 headers, the shell, all twelve picker rows, a lab's plot, both Study surfaces, a punctuation key at the
