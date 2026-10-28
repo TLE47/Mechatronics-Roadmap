@@ -774,6 +774,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       warmStartedRef.current = false;
       pyodideStatusRef.current = 'idle';
       setPyodideStatus('idle');
+      // A run cannot outlive the worker that was executing it: its promise was abandoned with the
+      // effects, so the Run button must not come back disabled as if the program were still going.
+      setIsRunning(false);
     };
   }, []);
 
