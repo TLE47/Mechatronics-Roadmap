@@ -94,6 +94,21 @@ check('the same sentence twice is one item, and the markdown that draws it is no
   assert.notEqual(checkId('Bold item'), checkId('**Bold** item'), 'a formatting change is a new item');
 });
 
+check('the cap is part of the identity, so cleaning it again changes nothing', () => {
+  // A 160th character that is a space used to be trimmed away by the *next* read: the box drew one
+  // id, the store kept another, and the box could never tick. P.1's "Storing values in named
+  // variables" cut exactly there.
+  const cutOnSpace = `${'a'.repeat(MAX_CHECK_ID_CHARS - 1)} tail`;
+  assert.equal(checkId(cutOnSpace).endsWith(' '), false, 'the id must not end on the cut space');
+  assert.equal(checkId(checkId(cutOnSpace)), checkId(cutOnSpace), 'the id is idempotent');
+  assert.equal(checkId(checkId(cutOnSpace)).length, MAX_CHECK_ID_CHARS - 1);
+
+  freshBrowser();
+  assert.equal(setTicked('P.1', cutOnSpace, true, 1000), true);
+  assert.equal(isTicked('P.1', cutOnSpace), true, 'the box can read back the tick it wrote');
+  assert.deepEqual(readTicks('P.1'), [checkId(cutOnSpace)]);
+});
+
 section('a fresh browser');
 
 check('nothing is ticked, and every read is empty rather than undefined', () => {

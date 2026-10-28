@@ -58,7 +58,12 @@ function storage(): Storage | null {
  */
 export function checkId(text: string): string {
   if (typeof text !== 'string') return '';
-  return text.replace(/\s+/g, ' ').trim().slice(0, MAX_CHECK_ID_CHARS);
+  const collapsed = text.replace(/\s+/g, ' ').trim();
+  // The cut has to be cleaned again: a 160th character that happens to be a space would be trimmed
+  // away the next time this function saw the stored id, so the id the box draws and the id the store
+  // keeps would differ by one character and the box could never tick ("Storing values in named
+  // variables" in P.1 was exactly that). `checkId(checkId(x)) === checkId(x)` is the rule.
+  return collapsed.slice(0, MAX_CHECK_ID_CHARS).trimEnd();
 }
 
 function asLesson(value: unknown): LessonChecks | null {
