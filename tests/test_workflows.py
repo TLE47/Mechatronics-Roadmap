@@ -227,7 +227,7 @@ class WorkflowSpeedTests(unittest.TestCase):
         gate itself green.
         """
         build_lane = job_block(ci_text(), "e2e-suites")
-        self.assertTrue(build_lane, msg="expected an `e2e-suites` job in ci.yml")
+        self.assertTrue(build_lane, msg="expected an `e2e-suites` job in ci.yml; check the job was not renamed")
         active = "\n".join(
             line for line in build_lane.splitlines() if not line.strip().startswith("#")
         )
@@ -315,15 +315,25 @@ class WorkflowSpeedTests(unittest.TestCase):
         self.assertTrue(theme and visuals, msg="expected `audit-theme` and `audit-visuals` jobs")
         for command in ("npm run test:theme:e2e", "npm run check:axe"):
             with self.subTest(job="audit-theme", command=command):
-                self.assertIn(command, theme)
+                self.assertIn(
+                    command,
+                    theme,
+                    msg="expected this check in `audit-theme`; a command that moved lanes without a "
+                    "test moving with it is a gate nobody is watching",
+                )
                 self.assertNotIn(command, visuals, msg="expected each check in exactly one audit job")
         for command in ("npm run check:lighthouse", "npm run check:snapshot", "npm run check:labels"):
             with self.subTest(job="audit-visuals", command=command):
-                self.assertIn(command, visuals)
+                self.assertIn(
+                    command,
+                    visuals,
+                    msg="expected this check in `audit-visuals`; a command that moved lanes without a "
+                    "test moving with it is a gate nobody is watching",
+                )
                 self.assertNotIn(command, theme, msg="expected each check in exactly one audit job")
 
-    def test_the_matrix_runs_as_two_partitions_once_each(self):
-        """Two jobs, each naming one half of the matrix, and no half run twice.
+    def test_the_matrix_runs_as_three_lanes_once_each(self):
+        """Three jobs, each naming one lane of the matrix, and no lane run twice.
 
         The split exists because `e2e` alone is longer than five minutes: it travels with the light
         flows and the control pairs, the built bundle in Chromium gets the tour and the reading
