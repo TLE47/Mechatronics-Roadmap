@@ -5029,13 +5029,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           >
             <div className="bg-canvas border-b border-line-soft px-3 py-1.5">
               <div className="flex min-w-0 items-center justify-between gap-2">
-              {/* One scrolling row, never a second line: the tabs are a strip in the manner of an
-                  editor, and a strip that wraps is a header the code below pays for. */}
+              {/* The strip takes the row's spare width, wraps on a phone and scrolls on a wider
+                  window: a strip that wrapped at 1280 px would be a header the code below pays for. */}
               <div
-                // Narrow windows wrap the strip instead of scrolling under the split control: a
-                // sticky group over a 291 px strip covered the Expected tab, which is exactly the
-                // tab a reader on a phone is looking for.
-                className="flex min-w-0 max-w-full flex-wrap items-center gap-1 sm:flex-nowrap sm:overflow-x-auto"
+                className="flex min-w-0 flex-1 flex-wrap items-center gap-1 sm:flex-nowrap sm:overflow-x-auto"
                 role="tablist"
                 aria-label="Editor tabs"
               >
@@ -5123,77 +5120,80 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                         </button>
                       );
                     })}
-                    {/* The terminal split, in the tab row rather than the run row: §3 caps the run
-                        controls at eight, and this is a property of the body instead of an action of
-                        the run. Side by side by default; the arrows choose a stacked split, which is
-                        the shape a narrow window gets anyway. */}
-                    <div
-                      role="group"
-                      aria-label="Editor panes"
-                      // Pinned to the strip's right edge while it scrolls: on a phone the tabs are
-                      // wider than the card, and the one control that arranges them must not be the
-                      // one that scrolls away first.
-                      className="ml-1 flex shrink-0 items-center gap-0.5 pl-1 sm:sticky sm:right-0 sm:z-10 sm:bg-canvas"
-                    >
-                      {!paneSplit ? (
-                        <button
-                          type="button"
-                          data-testid="btn-pane-split"
-                          onClick={() => commitPanes(splitPane(panes))}
-                          title="Split the editor: show two views, like a terminal"
-                          className="flex items-center gap-1 rounded border border-line bg-canvas px-2 py-0.5 text-[12px] font-mono text-body hover:bg-raise cursor-pointer"
-                        >
-                          <Columns2 className="h-3 w-3" aria-hidden="true" />
-                          <span>Split</span>
-                        </button>
-                      ) : (
-                        <>
-                          <button
-                            type="button"
-                            data-testid="btn-pane-columns"
-                            aria-pressed={panes.axis === 'columns'}
-                            onClick={() => commitPanes(setAxis(panes, 'columns'))}
-                            title="Divide the panes side by side"
-                            className={`rounded border px-1.5 py-0.5 cursor-pointer ${
-                              panes.axis === 'columns'
-                                ? 'border-accent/60 bg-accent/10 text-accent'
-                                : 'border-line bg-canvas text-muted hover:bg-raise'
-                            }`}
-                          >
-                            <Columns2 className="h-3 w-3" aria-hidden="true" />
-                            <span className="sr-only">Side by side</span>
-                          </button>
-                          <button
-                            type="button"
-                            data-testid="btn-pane-rows"
-                            aria-pressed={panes.axis === 'rows'}
-                            onClick={() => commitPanes(setAxis(panes, 'rows'))}
-                            title="Divide the panes one above the other"
-                            className={`rounded border px-1.5 py-0.5 cursor-pointer ${
-                              panes.axis === 'rows'
-                                ? 'border-accent/60 bg-accent/10 text-accent'
-                                : 'border-line bg-canvas text-muted hover:bg-raise'
-                            }`}
-                          >
-                            <Rows2 className="h-3 w-3" aria-hidden="true" />
-                            <span className="sr-only">One above the other</span>
-                          </button>
-                          <button
-                            type="button"
-                            data-testid="btn-pane-close"
-                            onClick={() => commitPanes(closeSplit(panes))}
-                            title="Close the second pane"
-                            aria-label="Close the second pane"
-                            className="rounded border border-line bg-canvas px-1.5 py-0.5 text-muted hover:bg-raise hover:text-body cursor-pointer"
-                          >
-                            <X className="h-3 w-3" aria-hidden="true" />
-                          </button>
-                        </>
-                      )}
-                    </div>
                   </>
                 )}
               </div>
+              {/* The terminal split, in the tab row rather than the run row: §3 caps the run
+                  controls at eight, and this is a property of the body instead of an action of
+                  the run. Side by side by default; the arrows choose a stacked split, which is
+                  the shape a narrow window gets anyway.
+
+                  A sibling of the tablist, not a child: a tablist may only own tabs, and axe
+                  reports any other child role inside it as an aria-required-children violation.
+                  Outside it the controls also stay put while the tabs scroll. */}
+              {resultsAllowed && (
+                <div
+                  role="group"
+                  aria-label="Editor panes"
+                  className="ml-1 flex shrink-0 items-center gap-0.5 pl-1"
+                >
+                  {!paneSplit ? (
+                    <button
+                      type="button"
+                      data-testid="btn-pane-split"
+                      onClick={() => commitPanes(splitPane(panes))}
+                      title="Split the editor: show two views, like a terminal"
+                      className="flex items-center gap-1 rounded border border-line bg-canvas px-2 py-0.5 text-[12px] font-mono text-body hover:bg-raise cursor-pointer"
+                    >
+                      <Columns2 className="h-3 w-3" aria-hidden="true" />
+                      <span>Split</span>
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        data-testid="btn-pane-columns"
+                        aria-pressed={panes.axis === 'columns'}
+                        onClick={() => commitPanes(setAxis(panes, 'columns'))}
+                        title="Divide the panes side by side"
+                        className={`rounded border px-1.5 py-0.5 cursor-pointer ${
+                          panes.axis === 'columns'
+                            ? 'border-accent/60 bg-accent/10 text-accent'
+                            : 'border-line bg-canvas text-muted hover:bg-raise'
+                        }`}
+                      >
+                        <Columns2 className="h-3 w-3" aria-hidden="true" />
+                        <span className="sr-only">Side by side</span>
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="btn-pane-rows"
+                        aria-pressed={panes.axis === 'rows'}
+                        onClick={() => commitPanes(setAxis(panes, 'rows'))}
+                        title="Divide the panes one above the other"
+                        className={`rounded border px-1.5 py-0.5 cursor-pointer ${
+                          panes.axis === 'rows'
+                            ? 'border-accent/60 bg-accent/10 text-accent'
+                            : 'border-line bg-canvas text-muted hover:bg-raise'
+                        }`}
+                      >
+                        <Rows2 className="h-3 w-3" aria-hidden="true" />
+                        <span className="sr-only">One above the other</span>
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="btn-pane-close"
+                        onClick={() => commitPanes(closeSplit(panes))}
+                        title="Close the second pane"
+                        aria-label="Close the second pane"
+                        className="rounded border border-line bg-canvas px-1.5 py-0.5 text-muted hover:bg-raise hover:text-body cursor-pointer"
+                      >
+                        <X className="h-3 w-3" aria-hidden="true" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
               <span className="shrink-0 whitespace-nowrap text-[11px] font-mono text-faint tabular-nums">
                 {symbolMiss ? (
                   <span role="status" data-testid="symbol-miss" style={{ color: 'var(--muted)' }}>
@@ -5202,7 +5202,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 ) : openHelperFile ? (
                   `${openHelperFile.content.split('\n').length} lines · read-only`
                 ) : (
-                  `${code.split('\n').length} lines${sliderCount ? ` · ${sliderCount} slider${sliderCount === 1 ? '' : 's'}` : ''}`
+                  // On a phone the count costs the strip the width of a tab, so it steps aside
+                  // there; a symbol miss and a read-only helper still say their piece.
+                  <span className="hidden sm:inline">
+                    {`${code.split('\n').length} lines${sliderCount ? ` · ${sliderCount} slider${sliderCount === 1 ? '' : 's'}` : ''}`}
+                  </span>
                 )}
                 {/* Which mode is reading the keys. A live region, not decoration: with Vim on, a
                     keystroke that does nothing is correct behaviour, and this is the only place the

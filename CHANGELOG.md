@@ -35,8 +35,8 @@ the header was split into a tabs row and a toolbar row, which is what brings it 
 own height. Three edges came with it: the dock control prints its arrow instead of its 127 px
 sentence below `2xl` and the four preset shortcut chips step aside below `xl`, which is what keeps
 **Predict** on the **Run** row from 768 px to 1280 (the toolbar is 37 px on one row, not 78 on two);
-and a 390 px window wraps the tab strip instead of scrolling **Expected** underneath the pinned
-split control.
+and a 390 px window wraps the tab strip, with the split controls beside it rather than over a tab
+(they sit outside the tablist, so the strip is four tabs to a screen reader, not six).
 
 **A note can be removed where it is edited.** The popup that writes a sticky note now also deletes the
 highlight and its mark (`Remove`, beside Save). Deleting a note is an edit of that note, not a trip to

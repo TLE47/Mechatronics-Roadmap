@@ -1331,8 +1331,8 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         'the preset shortcut chip must come back at 1280, where the toolbar has the room'
       );
 
-      // A phone has no room for five tabs beside the split control: the strip wraps rather than
-      // scrolling the Expected tab underneath a sticky group.
+      // A phone has no room for five tabs beside the split control. The split group sits outside
+      // the tablist, so the strip wraps and the Expected tab is never scrolled under a sticky group.
       await page.setViewportSize({ width: 390, height: 844 });
       await page.waitForTimeout(500);
       const phone = await page.evaluate(() => {
