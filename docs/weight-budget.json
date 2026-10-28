@@ -21,17 +21,17 @@
     "total": 2400000
   },
   "measured": {
-    "entry_gzip": 540655,
-    "js_gzip": 860203,
+    "entry_gzip": 542732,
+    "js_gzip": 920047,
     "css_gzip": 22307,
     "fonts": 425324,
-    "largest_js_gzip": 357061,
+    "largest_js_gzip": 357280,
     "prose_gzip": 206644,
     "reader_gzip": 689984,
     "audio": 126967,
     "music": 867740,
-    "total": 2262121,
-    "variant": "local_only",
+    "total": 2321964,
+    "variant": "signed_in",
     "recordedAt": "2026-10-28"
   }
 }
