@@ -4,9 +4,9 @@
  * One switch for the moving drawings, on every screen. Three rules:
  *
  * 1. **A choice is a fact, not a guess.** The header's Motion button writes exactly the value the
- *    figures read, so the button and the page cannot disagree. `null` means "never chose": the OS
- *    setting decides until then, and the first press replaces it for every surface. There is one
- *    rule, not a different one per page, because one switch that means two things is not a switch.
+ *    figures read, so the button and the page cannot disagree. `null` means "never chose", and a
+ *    first visit is on: the first press replaces that for every surface. There is one rule, not a
+ *    different one per page, because one switch that means two things is not a switch.
  * 2. **Off means off, and cheaper.** Every moving figure stops its frame loop rather than drawing
  *    invisible frames, and an off-screen figure never starts one: turning motion off is also how a
  *    reader on a slow machine makes the app do less work.
@@ -47,25 +47,17 @@ export function motionChoice(): boolean | null {
   return null;
 }
 
-/** Whether the OS asks for less motion. Read per call: a reader can change it mid-visit. */
-export function prefersStill(): boolean {
-  try {
-    return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  } catch {
-    return false;
-  }
-}
-
 /**
- * Whether figures move: the reader's choice, or the OS setting on a first visit.
+ * Whether figures move: the reader's choice, or **on** for a first visit.
  *
- * `prefers-reduced-motion` is a default, not a verdict — the header's switch overrides it in one
- * press and the choice is remembered. Following it until then is what makes the app polite to a
- * reader who asked for stillness; the visible switch is what makes it usable for a reader who did
- * not mean to ask for a still showcase.
+ * A first visit is on. The owner's call is that a page opens on its drawings rather than on the
+ * still frames of something a reader has to discover a switch to start; `prefers-reduced-motion` is
+ * honoured on the surfaces that animate CSS (`HeroArm`, the tour) and by the switch itself, which is
+ * one press away at the top of the header and remembered. Off is still the cheap setting: every
+ * frame loop stops instead of drawing frames nobody sees.
  */
 export function motionEnabled(): boolean {
-  return motionChoice() ?? !prefersStill();
+  return motionChoice() ?? true;
 }
 
 type Listener = (on: boolean) => void;
