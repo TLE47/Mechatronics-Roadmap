@@ -1304,6 +1304,9 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           gap: Math.round(Math.abs(run.top - predict.top)),
           inside: run.right <= card.right + 1 && predict.right <= card.right + 1,
           label: document.querySelector('[data-testid="btn-predict"]').textContent.trim(),
+          keysVisible: [...document.querySelectorAll('[data-testid="layout-presets"] button > span')].some(
+            (span) => getComputedStyle(span).display !== 'none'
+          ),
         };
       });
       assert.equal(runRow.label, 'Predict', 'the label must not grow with the state');
@@ -1312,6 +1315,14 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         `Predict must sit on the Run row at 1280, but its top is ${runRow.gap}px away`
       );
       assert.equal(runRow.inside, true, 'the run controls must stay inside the editor card');
+      // A real browser's classic scrollbar leaves the card 10 px narrower than this suite's
+      // overlay-scrollbar Chromium, which was exactly the width that put Predict on its own row.
+      // The keycaps are what step aside at this width; the preset chips themselves stay.
+      assert.equal(
+        runRow.keysVisible,
+        false,
+        'at 1280 the four preset keys must step aside so Predict keeps the Run row'
+      );
 
       // The same row at the widths where the preset keys are too expensive: 768-1024 is the band
       // the toolbar used to spend on a second row for Predict.
@@ -1332,15 +1343,26 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         assert.equal(mid.inside, true, `the run controls must stay inside the card at ${width}px`);
         assert.equal(mid.overflow, 0, `${width}px must not scroll sideways`);
       }
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.waitForTimeout(400);
+      const wideRow = await page.evaluate(() => {
+        const run = document.querySelector('[data-testid="btn-run-verify"]').getBoundingClientRect();
+        const predict = document.querySelector('[data-testid="btn-predict"]').getBoundingClientRect();
+        return {
+          gap: Math.round(Math.abs(run.top - predict.top)),
+          keys: [...document.querySelectorAll('[data-testid="layout-presets"] button > span')]
+            .filter((span) => getComputedStyle(span).display !== 'none')
+            .map((span) => span.textContent.trim()),
+        };
+      });
+      assert.ok(wideRow.gap <= 4, 'Predict must still share the Run row at 1440');
+      assert.deepEqual(
+        wideRow.keys,
+        ['⌥1', '⌥2', '⌥3', '⌥4'],
+        'the preset keys must print from 1360 px, where the card holds them'
+      );
       await page.setViewportSize({ width: 1280, height: 720 });
       await page.waitForTimeout(350);
-      assert.equal(
-        await page.evaluate(() =>
-          document.querySelector('[data-testid="layout-study"] span').getBoundingClientRect().width > 0
-        ),
-        true,
-        'the preset shortcut key must print again at 1280, where the toolbar has the room'
-      );
 
       // A phone has no room for five tabs beside the split control. The split group sits outside
       // the tablist, so the strip wraps and the Expected tab is never scrolled under a sticky group.
