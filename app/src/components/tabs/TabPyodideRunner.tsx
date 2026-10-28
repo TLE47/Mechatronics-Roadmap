@@ -3180,11 +3180,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         {/* 90%, not 70%: at 70% the shortcut measured 3.28:1 on the light canvas and
             4.0:1 on the pressed accent, so the de-emphasis broke the 4.5:1 floor.
 
-            Below xl the key is hidden: at 768-1024 px the work area is narrower than this
-            toolbar's four presets + dock + More + Run + Predict, and the 80 px the four keys
-            cost was what pushed Predict onto a second row. The title still names the key, and
-            the sheet prints it, so the shortcut is never learned only by its chip. */}
-        <span className="ml-1 hidden opacity-90 xl:inline">{option.shortcut}</span>
+            The key prints from 1360 px, where the editor card can hold the four keys plus dock,
+            More, Run and Predict with room to spare. Below that they live in the titles and the
+            `?` sheet: the 79 px the four keys cost is what pushed Predict onto a second row at
+            1280 in a real browser, where a classic scrollbar leaves the card 10 px narrower than
+            the overlay-scrollbar Chromium the suite runs in. */}
+        <span className="ml-1 hidden opacity-90 min-[1360px]:inline">{option.shortcut}</span>
       </button>
     ))}
   </div>

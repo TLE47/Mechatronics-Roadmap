@@ -22,8 +22,11 @@ flowchart LR
 `· skipped` (or `· answered`) — 78 px — once a lesson had a recorded prediction, and at 1280 the Study
 chooser leaves the editor card 800 px, so Predict dropped onto a row of its own after a skip while a
 fresh visit (label `Predict`) measured one row. The label is `Predict` in every state now: the state
-rides in the button's `aria-label` and title, and the gate prints it in full when opened. The preset
-chips and their `⌥1`–`⌥4` keys stay where they were, and step aside below `xl` as before.
+rides in the button's `aria-label` and title, and the gate prints it in full when opened. The four
+preset chips stay; their `⌥1`–`⌥4` keys print from **1360 px** instead of `xl`, because the 79 px
+the keys cost still wrapped the row at 1280 once a real browser's classic scrollbar narrowed the card
+by the 10 px the overlay-scrollbar test browser does not show. Below 1360 the keys live in each
+button's title and in the `?` sheet.
 
 The workbench suite now records a skip *before* it measures the row, so the state, not just a fresh
 visit, is what it tests. The predict-gate suite reads the name for the state and asserts the visible
@@ -53,9 +56,9 @@ exactly one `pre-actual-stdout` exists and the last run is readable while the ed
 state machine is [`app/src/editorPanes.ts`](app/src/editorPanes.ts), pinned by `npm run test:panes`;
 the header was split into a tabs row and a toolbar row, which is what brings it back under the editor's
 own height. Three edges came with it: the dock control prints its arrow instead of its 127 px
-sentence below `2xl`, the four preset keys step aside below `xl`, and Predict's recorded state
-rides in its name rather than its label (Run 272), which keeps **Predict** on the **Run** row from
-768 px through 1280 (the toolbar is 37 px on one row, not 78 on two);
+sentence below `2xl`, the four preset keys print from 1360 px, and Predict's recorded state rides in
+its name rather than its label (Run 272), which keeps **Predict** on the **Run** row from 768 px
+through 1280 (the toolbar is 37 px on one row, not 78 on two);
 and a 390 px window wraps the tab strip, with the split controls beside it rather than over a tab
 (they sit outside the tablist, so the strip is four tabs to a screen reader, not six).
 
