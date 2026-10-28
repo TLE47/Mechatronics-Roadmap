@@ -728,6 +728,194 @@ async function main() {
       console.log('  ok the checklist tick and the formatted note both survive a reload');
     }
 
+    // ---- 7e. The note opens beside the words, above or below whichever has the room ----
+    {
+      const original = page.viewportSize() ?? { width: 1280, height: 900 };
+      const pane = page.getByTestId('reader-scroll');
+
+      /** Select a passage, and report where its words are, in viewport coordinates. */
+      const selectPassage = async (where) =>
+        pane.evaluate((element, placement) => {
+          const prose = element.querySelector('[data-testid="reader-prose"]');
+          if (!prose) return null;
+          const paneBox = element.getBoundingClientRect();
+          const walker = document.createTreeWalker(prose, NodeFilter.SHOW_TEXT);
+          let chosen = null;
+          while (walker.nextNode()) {
+            const node = walker.currentNode;
+            const value = node.textContent ?? '';
+            if (value.trim().length < 80) continue;
+            if (node.parentElement?.closest('a, code, pre, [data-testid="sticky-mark"]')) continue;
+            const probe = document.createRange();
+            probe.setStart(node, 0);
+            probe.setEnd(node, Math.min(value.length, 8));
+            const box = probe.getBoundingClientRect();
+            if (box.height === 0 || box.bottom < paneBox.top || box.top > paneBox.bottom) continue;
+            // Both passes look only at text the pane is showing; one takes the last such line, the
+            // other the first, so `where` picks the edge of the pane rather than a fixed paragraph.
+            if (!chosen || (placement === 'bottom' ? box.bottom > chosen.box.bottom : box.top < chosen.box.top)) {
+              chosen = { node, box };
+            }
+          }
+          if (!chosen) return null;
+          const value = chosen.node.textContent ?? '';
+          const lead = value.length - value.trimStart().length;
+          const range = document.createRange();
+          range.setStart(chosen.node, lead);
+          range.setEnd(chosen.node, Math.min(value.length, lead + 48));
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+          document.dispatchEvent(new Event('selectionchange'));
+          const rect = range.getBoundingClientRect();
+          return {
+            text: selection?.toString() ?? '',
+            top: rect.top,
+            bottom: rect.bottom,
+            left: rect.left,
+            right: rect.right,
+          };
+        }, where);
+
+      /** Open the note on a passage at one edge of the pane, and report where everything landed. */
+      const openOn = async (placement) => {
+        await pane.evaluate((element, where) => {
+          element.scrollTop = where === 'bottom' ? element.scrollHeight : 0;
+        }, placement);
+        await page.waitForTimeout(400);
+        // For the bottom case, put the pane's own bottom edge near the window's, which is what makes the
+        // last visible line a passage with no room under it. The page scrolls, not the pane.
+        if (placement === 'bottom') {
+          await page.evaluate(() => {
+            const element = document.querySelector('[data-testid="reader-scroll"]');
+            if (!element) return;
+            const box = element.getBoundingClientRect();
+            window.scrollBy(0, box.bottom - window.innerHeight + 40);
+          });
+          await page.waitForTimeout(400);
+        }
+        const passage = await selectPassage(placement);
+        assert.ok(
+          passage && passage.text.trim().length > 20,
+          `the ${placement} of the pane must have a passage to select`
+        );
+        await page.getByTestId('btn-sticky').click();
+        const popup = page.getByTestId('sticky-note-popup');
+        await popup.waitFor({ timeout: 10000 });
+        // Pressing the button is allowed to scroll the pane (the toolbar has to be in view), so the
+        // passage is measured again *now*: the popover is placed against where the words are after
+        // that scroll, and a comparison with the box from before it would be a different passage.
+        const words = await page.evaluate((quote) => {
+          const pane = document.querySelector('[data-testid="reader-scroll"]');
+          if (!pane) return null;
+          const needle = quote.trim().slice(0, 24);
+          const walker = document.createTreeWalker(pane, NodeFilter.SHOW_TEXT);
+          while (walker.nextNode()) {
+            const node = walker.currentNode;
+            const value = node.textContent ?? '';
+            const at = value.indexOf(needle);
+            if (at === -1) continue;
+            const range = document.createRange();
+            range.setStart(node, at);
+            range.setEnd(node, Math.min(value.length, at + quote.trim().length));
+            const box = range.getBoundingClientRect();
+            if (!box.width && !box.height) continue;
+            return { top: box.top, bottom: box.bottom, left: box.left, right: box.right };
+          }
+          return null;
+        }, passage.text);
+        return {
+          passage: { ...passage, ...(words ?? {}) },
+          popup,
+          box: await popup.boundingBox(),
+          side: await popup.getAttribute('data-anchor-side'),
+        };
+      };
+
+      /** The card must sit clear of the words - above or below, never over them. */
+      const clearance = ({ box, passage, side }) => {
+        assert.ok(box, 'the note must have a measured box once it is placed');
+        const above = box.y + box.height <= passage.top + 1;
+        const below = box.y >= passage.bottom - 1;
+        assert.ok(
+          above || below,
+          `the note must sit clear of the words, above or below them (card ${Math.round(
+            box.y
+          )}..${Math.round(box.y + box.height)}, words ${Math.round(passage.top)}..${Math.round(
+            passage.bottom
+          )})`
+        );
+        assert.equal(
+          side,
+          above ? 'above' : 'below',
+          'the side the note reports must be the side it was actually placed on'
+        );
+        assert.ok(
+          box.x < passage.right && box.x + box.width > passage.left,
+          'the note must hang over the words it is about, not off in a corner'
+        );
+        assert.ok(
+          box.width <= 417,
+          `the note is a popover, so it must not stretch past its own width (it is ${Math.round(
+            box.width
+          )}px)`
+        );
+        return { above, below };
+      };
+
+      // At the top of the pane there is room underneath: the card goes below the words.
+      const atTop = await openOn('top');
+      const topClear = clearance(atTop);
+      assert.equal(
+        atTop.side,
+        'below',
+        'a passage with room underneath must open its note below the words'
+      );
+      // A window would dim or cover the page behind it; a popover must not.
+      const covered = await page.evaluate(() =>
+        [...document.querySelectorAll('body *')].some((element) => {
+          const style = getComputedStyle(element);
+          if (style.position !== 'fixed' || style.visibility === 'hidden' || style.opacity === '0') {
+            return false;
+          }
+          const box = element.getBoundingClientRect();
+          return box.width >= window.innerWidth * 0.9 && box.height >= window.innerHeight * 0.9;
+        })
+      );
+      assert.equal(covered, false, 'an open note must not put a full-window overlay over the lesson');
+      // A press anywhere else closes it, because it is not modal and owns no backdrop.
+      await page.getByTestId('lesson-reader').getByText('Lesson text', { exact: true }).click();
+      assert.equal(
+        await page.getByTestId('sticky-note-popup').count(),
+        0,
+        'a press outside the card must close it, the way a popover does'
+      );
+      console.log(
+        `  ok a passage with room opens its note below the words (${Math.round(
+          atTop.box.y
+        )}px against words ending ${Math.round(atTop.passage.bottom)}px), with no overlay`
+      );
+
+      // At the pane's bottom edge there is no room underneath: the card goes above the words instead.
+      const atEdge = await openOn('bottom');
+      const edgeClear = clearance(atEdge);
+      assert.equal(
+        atEdge.side,
+        'above',
+        `a passage at the bottom edge must open its note above the words, not over them (words at ${Math.round(
+          atEdge.passage.bottom
+        )}px of a ${original.height}px window)`
+      );
+      await page.getByTestId('btn-sticky-cancel').click();
+      await page.setViewportSize(original);
+      assert.ok(topClear.below && edgeClear.above, 'both placements must have cleared the words');
+      console.log(
+        `  ok a passage at the bottom edge opens its note above the words (card ends ${Math.round(
+          atEdge.box.y + atEdge.box.height
+        )}px, words start ${Math.round(atEdge.passage.top)}px)`
+      );
+    }
+
     // ---- 8. Review opens the deck where the cards live ----
     await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });
     await waitForHome(page);

@@ -16,6 +16,36 @@ flowchart LR
 
 ---
 
+## [2026-10-27] — Run 269: the sticky note opens beside the words
+
+**A modal for a margin note.** The editor that writes a sticky note was a centred dialog over a dimming
+backdrop: it covered the paragraph it was about, and the whole page went dim while the learner tried to
+remember what that paragraph said. That is the wrong shape for a note on a passage — the words are the
+reason the note exists.
+
+**It is a popover now.** The card is placed against the passage's own box in viewport coordinates:
+under the words when there is room there, and above them when the passage is close to the bottom of the
+window and the room above is the larger of the two, so the card covers neither the words nor the status
+bar. A small notch on the card's edge points back at the words, the card is centred on them and then
+pulled back inside the window instead of being pushed off it, and it is capped at `min(70vh, 34rem)`
+with its own scroll so a long note cannot grow past the screen. There is no backdrop and nothing dims:
+a press anywhere else closes it, Escape closes it, and the page behind stays readable and clickable.
+
+**What it hangs from.** Pressing **Sticky** on a selection clones the selection's `Range` before the
+textarea takes focus — focusing it collapses the document selection, so a live selection cannot be
+asked where the words are afterwards, but a clone keeps measuring. Pressing a marked passage passes the
+mark's own element instead. The placement is re-measured on scroll, on resize and on every keystroke
+(the preview makes the card taller), which is why the card follows the words when the reading pane
+moves rather than drifting away from them.
+
+**Verified.** `npx tsc --noEmit`; `npm run test:e2e:home` now selects a passage at the top of the pane
+and asserts the card lands *below* it, then scrolls the pane to its end and asserts the same card lands
+*above* a passage at the bottom edge — both clear of the words, overlapping them horizontally, no wider
+than the card's own 416 px, and with no full-window fixed element anywhere over the lesson while it is
+open, then presses the pane's header and asserts the card closed. `app/README.md` describes the shape.
+
+---
+
 ## [2026-10-27] — Run 267: the browser matrix in two lanes
 
 **One suite held the whole lane.** `npm run test:workbench` carries fourteen browser suites in four

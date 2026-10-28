@@ -58,6 +58,32 @@ import { lessonPageUrl as sourceUrl } from '../startHere';
 /** What a route block says when the page gives no caption of its own. */
 const ROUTE_CAPTION = 'Each box is a checkpoint in order; the last one is the verified pass this page ends on.';
 
+/**
+ * The passage a sticky note is written about.
+ *
+ * A **cloned range** is the point: pressing the button collapses the document selection (the textarea
+ * takes focus), so `window.getSelection()` cannot be asked where the words are afterwards. A clone
+ * keeps its position in the DOM and still measures, which is what lets the popup hang off the words
+ * and follow them when the reading pane scrolls. A marked passage needs no clone - its own element is
+ * the anchor.
+ */
+type StickyAnchor = { range?: Range; element?: HTMLElement };
+
+/** Where the sticky popover sits, in viewport coordinates, and which side of the passage it hangs from. */
+interface StickyPlacement {
+  top: number;
+  left: number;
+  width: number;
+  side: 'above' | 'below';
+  /** The notch's distance from the popover's left edge, so it points at the words. */
+  caret: number;
+}
+
+/** The gap between the words and the popover, and the least margin kept from the window's edges. */
+const STICKY_GAP = 10;
+const STICKY_EDGE = 8;
+const STICKY_MAX_WIDTH = 416;
+
 interface LessonReaderProps {
   /** The registry id: the reading position and highlights are keyed by it, not by the page. */
   lessonId: string;
@@ -153,7 +179,11 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
   /** The lesson's ticks, and the highlights drawn into the prose; both are re-read after a write. */
   const [ticks, setTicks] = useState<string[]>([]);
   const [marks, setMarks] = useState<Highlight[]>([]);
+  /** The passage the popover points at, and where the popover ended up after measuring itself. */
+  const [stickyAnchor, setStickyAnchor] = useState<StickyAnchor | null>(null);
+  const [stickyPlacement, setStickyPlacement] = useState<StickyPlacement | null>(null);
   const stickyRef = useRef<HTMLTextAreaElement | null>(null);
+  const stickyCardRef = useRef<HTMLDivElement | null>(null);
   /** Where the caret goes when the next render commits, because a controlled box forgets it. */
   const stickyCaretRef = useRef<{ start: number; end: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -312,7 +342,69 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
     setStickyText('');
     setStickyQuote('');
     setStickyEditing(false);
+    setStickyAnchor(null);
+    setStickyPlacement(null);
   };
+
+  // The note hangs off the passage it is about: below it when there is room, above it when the
+  // passage is near the bottom of the window and the room above is the larger of the two. It is a
+  // popover, not a window - the page stays readable and clickable behind it - so it is placed in
+  // viewport coordinates and re-measured on scroll and on every keystroke (the preview makes the
+  // card taller).
+  useLayoutEffect(() => {
+    if (!stickyOpen) return;
+    const place = () => {
+      const rect = stickyAnchor?.element?.isConnected
+        ? stickyAnchor.element.getBoundingClientRect()
+        : stickyAnchor?.range?.getBoundingClientRect();
+      // The passage is gone (the page re-rendered under it, or the lesson changed): leave the card
+      // where it was rather than guess a new place for it.
+      if (!rect || (!rect.width && !rect.height)) return;
+      const width = Math.min(STICKY_MAX_WIDTH, Math.max(240, window.innerWidth - STICKY_EDGE * 2));
+      const height = stickyCardRef.current?.offsetHeight ?? 260;
+      const roomBelow = window.innerHeight - rect.bottom - STICKY_GAP - STICKY_EDGE;
+      const roomAbove = rect.top - STICKY_GAP - STICKY_EDGE;
+      // Below by default. Above only when the bottom edge is close and there is more room up there,
+      // which is the sentence at the end of a scroll rather than the popup covering the words.
+      const side: 'above' | 'below' =
+        roomBelow < Math.min(height, 200) && roomAbove > roomBelow ? 'above' : 'below';
+      const wanted = side === 'above' ? rect.top - STICKY_GAP - height : rect.bottom + STICKY_GAP;
+      const top = Math.max(
+        STICKY_EDGE,
+        Math.min(window.innerHeight - height - STICKY_EDGE, wanted)
+      );
+      // Centre on the words, then pull back inside the window instead of letting a passage near an
+      // edge push the card off it.
+      const left = Math.max(
+        STICKY_EDGE,
+        Math.min(window.innerWidth - width - STICKY_EDGE, rect.left + rect.width / 2 - width / 2)
+      );
+      const caret = Math.max(18, Math.min(width - 18, rect.left + rect.width / 2 - left));
+      setStickyPlacement({ top, left, width, side, caret });
+    };
+    place();
+    window.addEventListener('scroll', place, true);
+    window.addEventListener('resize', place);
+    return () => {
+      window.removeEventListener('scroll', place, true);
+      window.removeEventListener('resize', place);
+    };
+  }, [stickyOpen, stickyAnchor, stickyText, stickyQuote, stickyEditing]);
+
+  // Not modal: a press anywhere but the card closes it. A press on another marked passage is left
+  // alone - that press opens that passage's own note.
+  useEffect(() => {
+    if (!stickyOpen) return;
+    const onPress = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (stickyCardRef.current?.contains(target)) return;
+      if (target instanceof Element && target.closest('[data-testid="sticky-mark"]')) return;
+      closeSticky();
+    };
+    document.addEventListener('mousedown', onPress, true);
+    return () => document.removeEventListener('mousedown', onPress, true);
+  }, [stickyOpen]);
 
   const pinSelection = () => {
     if (!selection) return;
@@ -328,10 +420,28 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
   };
 
   /** Open the note a marked passage carries; Save then updates that highlight rather than adding. */
-  const openMark = (mark: Highlight) => {
+  const openMark = (mark: Highlight, anchor?: HTMLElement) => {
     setStickyEditing(true);
     setStickyQuote(mark.quote);
     setStickyText(mark.comment);
+    setStickyAnchor(anchor ? { element: anchor } : null);
+    setStickyOpen(true);
+  };
+
+  /**
+   * Open the popover on the passage that is selected right now.
+   *
+   * The selection is cloned before the textarea takes focus, because focusing it collapses the
+   * document selection and there is nothing left to measure. `fallback` is the button's own box, for
+   * the one case a range cannot be had (a synthetic selection that never reached the document).
+   */
+  const openStickyOnSelection = (fallback?: HTMLElement) => {
+    const chosen = typeof window.getSelection === 'function' ? window.getSelection() : null;
+    const range = chosen && chosen.rangeCount > 0 ? chosen.getRangeAt(0).cloneRange() : null;
+    setStickyAnchor(range ? { range } : fallback ? { element: fallback } : null);
+    setStickyEditing(false);
+    setStickyText('');
+    setStickyQuote(selection);
     setStickyOpen(true);
   };
 
@@ -440,12 +550,7 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
           {selection && (
             <button
               type="button"
-              onClick={() => {
-                setStickyEditing(false);
-                setStickyText('');
-                setStickyQuote(selection);
-                setStickyOpen(true);
-              }}
+              onClick={(event) => openStickyOnSelection(event.currentTarget)}
               data-testid="btn-sticky"
               title="Write a note on the selected passage — it comes back as a review card"
               className="flex items-center gap-1 rounded border border-amber/50 bg-amber/10 px-2 py-1 text-[13px] font-mono text-amber hover:bg-amber/20 cursor-pointer"
@@ -735,24 +840,46 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
         </a>
       </div>
 
-      {/* A portal to <body>: the pane is an overflow-hidden card in a scrolling runner, and a popup
-          mounted inside it would be clipped by the very box it is about. */}
+      {/* A portal to <body>: the pane is an overflow-hidden card in a scrolling runner, and a popover
+          mounted inside it would be clipped by the very box it is about. It is placed against the
+          passage's own rect (the effect above), not centred in the window - and it is not modal, so
+          the page behind it stays readable while the note is written. */}
       {stickyOpen &&
         typeof document !== 'undefined' &&
         createPortal(
           <div
-            className="fixed inset-0 z-[60] flex items-end justify-center p-3 sm:items-center"
-            style={{ backgroundColor: 'color-mix(in srgb, #04060a 62%, transparent)' }}
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) closeSticky();
+            data-testid="sticky-note-anchor-box"
+            className="fixed z-[60]"
+            style={{
+              top: stickyPlacement?.top ?? 0,
+              left: stickyPlacement?.left ?? 0,
+              width: stickyPlacement?.width ?? STICKY_MAX_WIDTH,
+              // The first layout pass only measures the card. Painting it at the top-left corner and
+              // then jumping into place is worse than not painting it for that one frame.
+              visibility: stickyPlacement ? 'visible' : 'hidden',
             }}
           >
+            {stickyPlacement && (
+              <span
+                aria-hidden="true"
+                data-testid="sticky-note-caret"
+                className="pointer-events-none absolute h-2.5 w-2.5 rotate-45 border bg-panel"
+                style={{
+                  left: stickyPlacement.caret - 5,
+                  borderColor: 'var(--border-strong)',
+                  ...(stickyPlacement.side === 'above'
+                    ? { bottom: -5, borderTop: 'none', borderLeft: 'none' }
+                    : { top: -5, borderBottom: 'none', borderRight: 'none' }),
+                }}
+              />
+            )}
             <div
+              ref={stickyCardRef}
               role="dialog"
-              aria-modal="true"
               aria-labelledby="sticky-note-title"
               data-testid="sticky-note-popup"
-              className="w-full max-w-[26rem] rounded-xl border bg-panel shadow-2xl"
+              data-anchor-side={stickyPlacement?.side ?? 'below'}
+              className="max-h-[min(70vh,34rem)] w-full overflow-y-auto rounded-xl border bg-panel shadow-2xl"
               style={{ borderColor: 'var(--border-strong)' }}
               onKeyDown={(event) => {
                 if (event.key === 'Escape') {

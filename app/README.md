@@ -427,7 +427,12 @@ pressing it reopens the note in place, prefilled, and Save updates that highligh
 second one for the same passage. The note editor stores Markdown — `**bold**`, `*italic*`, and
 `++underline++` for the mark Markdown does not have — so the toolbar's Bold, Italic and Underline act on
 the selection, `⌘B` / `⌘I` / `⌘U` (Ctrl on Linux and Windows) do the same from the keyboard, and a live
-preview under the box shows what the note will read as. The same renderer draws a review card's answer
+preview under the box shows what the note will read as. The editor is a **popover beside the words**, not
+a window: it hangs under the passage it is about, and flips above it when the passage is close to the
+bottom of the window and there is more room there, the way a tooltip does. It dims nothing and owns no
+backdrop, so the lesson stays readable while the note is written; a press anywhere else closes it, and a
+passage near an edge pulls the card back inside the window instead of pushing it off. The same renderer
+draws a review card's answer
 ([`src/components/InlineMarkdown.tsx`](src/components/InlineMarkdown.tsx)), so a formatted note is not
 asterisks on the day it comes back. A quote that spans two inline runs (half a sentence in bold) is not
 marked rather than marked wrongly; it is still in Notes. `npm run test:reader` pins the mark split and
