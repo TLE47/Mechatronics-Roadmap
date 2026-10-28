@@ -87,18 +87,18 @@ import math
 
 
 def rpm_to_rad_s(rpm):
-    # TODO 1: Convert RPM to rad/s by multiplying rpm by ((2.0 * math.pi) / 60.0)
+    # TODO 1: Convert RPM to rad/s: one revolution is a full turn of radians, one minute sixty seconds
     return 0.0
 
 
 def arm_tip_xy(length_m, angle_deg):
-    # TODO 2: Convert angle_deg to radians using math.radians(angle_deg),
-    #         then return [length_m * math.cos(rad), length_m * math.sin(rad)]
+    # TODO 2: Convert the angle to radians first, then take its cosine and sine
+    #         and scale each by the link length — that pair is the tip
     return [0.0, 0.0]
 
 
 def target_angle_deg(x_m, y_m):
-    # TODO 3: Use math.atan2(y_m, x_m) (note: y_m first!) and convert to degrees with math.degrees(...)
+    # TODO 3: The angle comes from the two-argument inverse tangent — height first — then degrees
     return 0.0
 
 

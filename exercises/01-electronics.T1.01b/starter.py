@@ -23,7 +23,7 @@ def pwm_effective_voltage(v_bus, duty):
 
 def shoot_through_current(v_bus, rds_on):
     """The leg's short-circuit current."""
-    raise NotImplementedError("TODO 3: TWO switches in series, so 2 R_DS(on)")
+    raise NotImplementedError("TODO 3: TWO switches in series, so twice the on-resistance")
 
 
 def h_bridge_voltage(v_bus, duty_a, duty_b):

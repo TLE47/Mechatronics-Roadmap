@@ -80,7 +80,8 @@ import math
 
 
 def distance_2d(x_m, y_m):
-    # TODO 1: Return math.sqrt((x_m ** 2) + (y_m ** 2))
+    # TODO 1: Return the straight-line distance from the origin to the point: Pythagoras on the
+    #         two sides (the math module has the square root you need).
     return 5.0
 
 

@@ -29,8 +29,8 @@ def joint_velocity(counts, dt, cpr=plant.ENCODER_CPR):
 def running_integral(values, dt):
     """Rectangular running integral: out[0] = values[0] * dt, out[k] = out[k-1] + values[k] * dt.
 
-    TODO 3: one accumulator, same length as the input (the first entry already carries the first
-    sample). This is the inverse of `joint_velocity`, whose own first entry is 0.0.
+    TODO 3: one accumulator, the same length as the input — the first entry already carries the
+    first sample. This is the inverse of `joint_velocity`, whose own first entry is 0.0.
     """
     raise NotImplementedError("TODO 3: accumulate, do not re-integrate from scratch each step")
 

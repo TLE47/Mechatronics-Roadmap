@@ -84,20 +84,20 @@ Complete `solve_for_speed` (`TODO 1`), `scale10_to_five` (`TODO 2`), and `scale1
 
 ```python
 def solve_for_speed(x_final, x_start, time_s):
-    # TODO 1: Rearrange x_final = (speed * time_s) + x_start to solve for speed:
-    #         speed = (x_final - x_start) / time_s
+    # TODO 1: Rearrange the distance equation to solve for speed:
+    #         the distance covered, divided by the time it took
     return 0.0
 
 
 def scale10_to_five(raw_10bit):
-    # TODO 2: Scale raw_10bit from [0, 1023] to [0.0, 5.0]:
-    #         (raw_10bit / 1023.0) * 5.0
+    # TODO 2: Scale a ten-bit reading onto the five-volt range:
+    #         the fraction of full scale, times five volts
     return 0.0
 
 
 def scale10_to_cmd8(raw_10bit):
-    # TODO 3: Scale raw_10bit from [0, 1023] to [0.0, 255.0]:
-    #         (raw_10bit / 1023.0) * 255.0
+    # TODO 3: Scale a ten-bit reading onto the eight-bit command range:
+    #         the same fraction of full scale, times two hundred and fifty-five
     return 0.0
 
 
@@ -231,7 +231,7 @@ def microsteps_for_mm(travel_mm):
 
 
 def speed_mm_s(travel_mm, time_s):
-    # TODO 3: no gearbox needed here - say why in the docstring
+    # TODO 3: no gearbox needed here — say why in the docstring
     ...
 
 

@@ -42,12 +42,12 @@ def q31_decode(word):
 
 def angle_to_q31(theta_rad):
     """x = theta / pi, then encoded."""
-    raise NotImplementedError("TODO 6: divide by PI first - the format is the normalised angle")
+    raise NotImplementedError("TODO 6: normalise by PI first — the format stores the angle as a fraction of half a turn")
 
 
 def seqlock_valid(s1, s2):
     """Tear-free iff s1 is even and s1 == s2."""
-    raise NotImplementedError("TODO 7: an odd s1 means a write was in flight, even if s1 == s2")
+    raise NotImplementedError("TODO 7: an odd first sequence means a write was in flight, even when the two copies agree")
 
 
 def isr_cpu_percent(wcet_us, period_us):

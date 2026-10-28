@@ -138,7 +138,7 @@ def gear_output_speed(omega_motor, ratio):
 
 def gear_output_torque(tau_motor, ratio, eta=1.0):
     """The joint torque behind a reducer."""
-    # TODO 5: eta * N * tau_motor - the efficiency is part of the lever
+    # TODO 5: motor torque times ratio times efficiency — the efficiency is part of the lever
     ...
 
 

@@ -87,12 +87,12 @@ B_IN = [[0.0], [1.0 / J]]
 
 
 def mat_vec(matrix, vector):
-    # TODO 1: row i of the answer is sum(matrix[i][j] * vector[j] for each j)
+    # TODO 1: One output slot per row: that row's coefficients applied to every slot of the vector.
     return [0.0 for _ in matrix]
 
 
 def step_matrix(state, dt_s=DT_S, tau=TAU):
-    # TODO 2: x + dt * (A x + B u) - keep dt OUTSIDE the bracket
+    # TODO 2: The tick as one multiply: the state plus dt times the summed rates, with dt outside.
     return list(state)
 
 

@@ -86,17 +86,18 @@ SETTLE_S = 1.0
 
 
 def gain(omega, tau=TAU):
-    # TODO 1: 1 / sqrt(1 + (omega * tau) ** 2)
+    # TODO 1: the amplitude ratio falls as one over the square root of one plus the squared
+    #         normalised frequency
     return 1.0
 
 
 def phase_deg(omega, tau=TAU):
-    # TODO 2: -atan(omega * tau), converted to DEGREES
+    # TODO 2: the phase lags by the arctangent of the normalised frequency, reported in DEGREES
     return 0.0
 
 
 def simulate(omega, tau=TAU, dt_s=DT_S, settle_s=SETTLE_S):
-    # TODO 3: hold a sine for settle_s, then return one steady period of (t, u, y)
+    # TODO 3: hold the sine long enough to settle, then return one steady period of time, command and response
     return []
 
 

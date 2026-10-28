@@ -19,7 +19,7 @@ def scan_frequency_hz(t_read_ms, t_exec_ms, t_write_ms):
 
 def safety_chain_ok(*contacts):
     """True only when every series NC contact is closed."""
-    raise NotImplementedError("TODO 2: ONE open contact must drop the enable (all, not any)")
+    raise NotImplementedError("TODO 2: ONE open contact must drop the enable — every contact closed, not any")
 
 
 def plc_scan_step(state, estop1_nc, estop2_nc, door_nc, start_btn_no, reset_btn_no):
@@ -39,12 +39,12 @@ def phase_lag_deg(f_hz, delay_s):
 
 def sine_amplitude(samples, f_hz, dt_s):
     """Lock-in amplitude at one frequency."""
-    raise NotImplementedError("TODO 6: correlate with sin and cos, then 2 * hypot of the means")
+    raise NotImplementedError("TODO 6: correlate the samples against a sine and a cosine, then combine the two means into a magnitude")
 
 
 def db_to_ratio(db):
     """Invert the decibel scale."""
-    raise NotImplementedError("TODO 7: 10 ** (dB / 20)")
+    raise NotImplementedError("TODO 7: the decibel scale solved backwards, for amplitude rather than power")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

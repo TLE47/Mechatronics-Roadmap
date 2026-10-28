@@ -131,7 +131,7 @@ import math
 
 def spring_force(k_nm, x_m):
     """Hooke's law: the force that always pulls the cart back toward x = 0."""
-    # TODO 1: F = -k*x - the minus sign is the whole spring
+    # TODO 1: Hooke's law: the spring pushes back, and the minus sign is the whole spring
     ...
 
 
@@ -143,7 +143,7 @@ def acceleration(force_n, mass_kg):
 
 def euler_step(x_m, v_ms, k_nm, b_nsm, m_kg, dt_s):
     """One symplectic Euler tick of the damped spring: return (x_new, v_new)."""
-    # TODO 3: build a = (-k*x - b*v)/m, update v with it, then move x with the NEW v
+    # TODO 3: build the acceleration from the net force, update v with it, then move x with the NEW v
     ...
 
 
@@ -155,7 +155,7 @@ def mechanical_energy(m_kg, v_ms, k_nm, x_m):
 
 def peak_speed(energy_j, m_kg):
     """The speed at the unstretched centre."""
-    # TODO 5: v = sqrt(2E/m) - do not lose the 2
+    # TODO 5: solve the energy relation for the speed: do not lose the 2 in the bracket
     ...
 
 

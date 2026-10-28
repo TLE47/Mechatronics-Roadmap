@@ -123,13 +123,13 @@ import math
 
 def dot3(a, b):
     """The 3D dot product."""
-    # TODO 1: a_x b_x + a_y b_y + a_z b_z
+    # TODO 1: the dot product — multiply matching components, then add the three results
     ...
 
 
 def cross3(a, b):
     """The 3D cross product a x b, right-handed."""
-    # TODO 2: three components, each a 2x2 difference
+    # TODO 2: three components, each a small two-by-two determinant
     ...
 
 
@@ -141,25 +141,25 @@ def axial_force(force, lever):
 
 def moment(lever, force):
     """The moment vector r x F in N*m."""
-    # TODO 4: order matters - r x F is not F x r
+    # TODO 4: order matters — the position crosses the force, never the other way round
     ...
 
 
 def det2(b1, b2):
     """Determinant of the matrix whose columns are b1 = [a, c] and b2 = [b, d]."""
-    # TODO 5: ad - bc; zero means the two directions are collinear
+    # TODO 5: cross-multiply and subtract; zero means the two directions are collinear
     ...
 
 
 def coordinates_in_basis(vector, b1, b2):
     """(c1, c2) with c1*b1 + c2*b2 == vector; ValueError when the basis is singular."""
-    # TODO 6: Cramer's rule, and refuse |det| < 1e-12 instead of returning inf or nan
+    # TODO 6: Cramer's rule, and refuse a near-zero determinant rather than infinity
     ...
 
 
 def in_basis(vector, b1, b2):
     """Rebuild the vector from its coordinates."""
-    # TODO 7: c1*b1 + c2*b2
+    # TODO 7: recombine the two basis directions with their coefficients
     ...
 
 

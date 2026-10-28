@@ -138,13 +138,13 @@ def third_phase(i_a, i_b):
 
 def clarke(i_a, i_b):
     """Amplitude-invariant Clarke: (i_alpha, i_beta) from two phase currents."""
-    # TODO 3: i_alpha = i_a, i_beta = (i_a + 2 i_b)/sqrt(3)
+    # TODO 3: the first axis is phase A; the second is A plus twice B, over root three
     ...
 
 
 def park(i_alpha, i_beta, theta_e):
     """(i_d, i_q) in the rotor frame."""
-    # TODO 4: rotate by -theta_e: [c, s; -s, c]
+    # TODO 4: rotate by the negative electrical angle — cosine and sine, opposite signs
     ...
 
 
@@ -162,7 +162,7 @@ def pll_step(theta_hat, omega_hat, theta_meas, kp, ki, dt):
 
 def allan_deviation(sigma_density, tau):
     """Rate standard deviation after averaging white noise for `tau` seconds."""
-    # TODO 7: the law is sigma / sqrt(tau), not sigma / tau
+    # TODO 7: divide by the square root of the time constant, not by the constant itself
     ...
 
 

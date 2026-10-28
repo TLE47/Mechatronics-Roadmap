@@ -141,7 +141,7 @@ def scan_frequency_hz(t_read_ms, t_exec_ms, t_write_ms):
 
 def safety_chain_ok(*contacts):
     """True only when every series NC contact is closed."""
-    # TODO 2: ONE open contact must drop the enable (all, not any)
+    # TODO 2: ONE open contact must drop the enable — every contact closed, not any
     ...
 
 
@@ -159,19 +159,19 @@ def gain_db(amplitude_out, amplitude_in):
 
 def phase_lag_deg(f_hz, delay_s):
     """Phase lag in degrees for a peak delayed by `delay_s`."""
-    # TODO 5: a LAG is negative - the output peaks after the input
+    # TODO 5: a LAG is negative — the output peaks after the input
     ...
 
 
 def sine_amplitude(samples, f_hz, dt_s):
     """Lock-in amplitude at one frequency."""
-    # TODO 6: correlate with sin and cos, take the mean of each, then 2 * hypot
+    # TODO 6: correlate against a sine and a cosine, mean each, then combine the two as a magnitude
     ...
 
 
 def db_to_ratio(db):
     """Invert the decibel scale."""
-    # TODO 7: B/A = 10 ** (dB / 20)
+    # TODO 7: the decibel scale solved backwards, for amplitude rather than power
     ...
 
 

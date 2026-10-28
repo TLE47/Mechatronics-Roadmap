@@ -150,44 +150,45 @@ import struct
 
 def int_range(bits, signed=False):
     """The (low, high) a fixed-width C integer holds - `int16_t` is (-32768, 32767)."""
-    # TODO 1: unsigned is 0..2**bits - 1; signed is -2**(bits-1)..2**(bits-1) - 1
+    # TODO 1: unsigned runs from zero to every bit set; signed spends its top bit on the sign,
+    #         so its range sits one lower at both ends
     ...
 
 
 def wrap_uint(value, bits):
     """What a `uintN_t` keeps when it is assigned `value`."""
-    # TODO 2: mask with 2**bits - 1 - the mask is the width, not always 0xFF
+    # TODO 2: the mask is all ones for the width you were given; never always the same 0xFF
     ...
 
 
 def elapsed_unsigned(now, prev, bits):
     """`(uintN_t)(now - prev)` - the tick difference that survives a counter rollover."""
-    # TODO 3: subtract first, then mask - the raw difference across the wrap is negative
+    # TODO 3: subtract as signed numbers first, then mask: the raw difference across a wrap is negative
     ...
 
 
 def apply_bits(reg, set_mask=0, clear_mask=0):
     """`(reg | set_mask) & ~clear_mask`."""
-    # TODO 4: `|` the set mask on, then `& ~` the clear mask off - forgetting the `~` wipes
-    #         every neighbouring bit
+    # TODO 4: set bits with a bitwise OR and clear them with the complement of the mask, or
+    #         every neighbouring bit goes with them
     ...
 
 
 def bit_is_set(reg, bit):
     """One flag read as 0 or 1."""
-    # TODO 5: shift the bit down to position 0, then `& 1`
+    # TODO 5: shift the bit down to position zero, then keep only the lowest bit with a bitwise AND
     ...
 
 
 def pack_telemetry(tick, count, vel):
     """The MCU's 8-byte `<Hhf` frame: uint16 tick, int16 count, float velocity."""
-    # TODO 6: struct.pack('<Hhf', ...) - `<` is little-endian, the UART's byte order
+    # TODO 6: pack the frame little-endian, the byte order the UART speaks
     ...
 
 
 def unpack_telemetry(raw):
     """The same frame read back as (tick, count, vel)."""
-    # TODO 7: refuse anything that is not exactly 8 bytes, then struct.unpack('<Hhf', raw)
+    # TODO 7: refuse anything that is not exactly eight bytes, then unpack the same little-endian frame
     ...
 
 

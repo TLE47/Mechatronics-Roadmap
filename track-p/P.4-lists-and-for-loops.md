@@ -81,11 +81,11 @@ clamped_commands = []
 total_cmd = 0
 
 for cmd in raw_commands:
-    # TODO 1: Clamp cmd into [0, 255] using if / elif / else,
+    # TODO 1: Clamp cmd into the byte range using if, elif and else,
     #         storing the result in safe_cmd.
     safe_cmd = cmd
 
-    # TODO 2: Append safe_cmd to clamped_commands using clamped_commands.append(safe_cmd)
+    # TODO 2: Append the safe command to the list, in order
     #         and add safe_cmd to total_cmd.
 
 mean_cmd = total_cmd / len(raw_commands)

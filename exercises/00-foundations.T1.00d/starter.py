@@ -27,7 +27,7 @@ def polar_to_cartesian(length_m, theta_rad):
 
 def link_length(x_m, y_m):
     """r = sqrt(x^2 + y^2)."""
-    raise NotImplementedError("TODO 4: the diagonal, not the taxi ride x + y")
+    raise NotImplementedError("TODO 4: the straight-line distance, not the taxi ride that adds the two legs")
 
 
 def heading_rad(x_m, y_m):

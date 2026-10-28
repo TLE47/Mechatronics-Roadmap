@@ -130,32 +130,33 @@ EXERCISE_TARGET=exercises/05-control.T1.05a/starter.py \
 
 def tracking_error(r, y):
     """e = r - y."""
-    # TODO 1: the reference minus the measurement - the sign is what makes the loop stable
+    # TODO 1: the reference minus the measurement, and that sign is what makes the loop stable
     ...
 
 def control_effort(r, y, dy, i_term, kp, kd):
     """u_raw = Kp (r - y) - Kd dy + I."""
-    # TODO 2: the damper SUBTRACTS Kd dy - it opposes velocity, not error
+    # TODO 2: the damper opposes velocity, so its term is subtracted from the effort, not added
     ...
 
 def integral_step(i_prev, ki, e, dt):
     """I_k = I_{k-1} + Ki e dt."""
-    # TODO 3: the tick includes dt - without it the bias grows a thousandfold at 1 kHz
+    # TODO 3: the tick has to include the timestep, or the bias grows a thousandfold at a kilohertz
     ...
 
 def anti_windup_integral(i_prev, ki, e, dt, u_raw, u_max, i_max=None):
     """The integral this tick may keep, frozen while the demand is past a rail."""
-    # TODO 4: freeze only when |u_raw| > u_max AND e pushes the same way as u_raw
+    # TODO 4: the freeze needs both a raw effort past a rail and an error pushing the same way
     ...
 
 def saturate(u_raw, u_max):
     """clip(u_raw, -u_max, +u_max)."""
-    # TODO 5: both rails - a one-sided clip lets a large negative demand through
+    # TODO 5: clip at both rails: a one-sided clip lets a large negative demand straight through
     ...
 
 def steady_state_sag(tau_g, kp):
     """e_ss = tau_g / Kp."""
-    # TODO 6: at rest the spring supplies all of tau_g, so the sag is tau_g / Kp
+    # TODO 6: at rest the spring supplies the whole gravity torque, so the sag is that torque over the
+    #         proportional gain
     ...
 
 def arm_acceleration(torque, dq, tau_g, j, b):

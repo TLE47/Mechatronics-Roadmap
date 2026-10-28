@@ -101,7 +101,7 @@ def accumulate_rad(v, q0=0.0, dt_s=DT_S):
 
 
 def drift_rad(bias_rad_s, seconds):
-    # TODO 5: a constant bias accumulates linearly: bias * seconds
+    # TODO 5: a constant bias accumulates in a straight line — rate times time
     return 0.0
 
 

@@ -14,12 +14,12 @@ import mechalab_plant as plant
 
 def cubic_rest_to_rest(t, q0, qf, T):
     """(q, qd, qdd) at time t for a rest-to-rest cubic."""
-    raise NotImplementedError("TODO 1: 3s^2 - 2s^3; hold the final pose, still, once t >= T")
+    raise NotImplementedError("TODO 1: the smooth ease that starts and ends at rest; hold the final pose once the time is up")
 
 
 def cubic_coefficients(q0, qf, T):
     """(a0, a1, a2, a3) with zero endpoint velocities."""
-    raise NotImplementedError("TODO 2: a2 = 3dq/T^2, a3 = -2dq/T^3, and a1 = 0")
+    raise NotImplementedError("TODO 2: the cubic's three coefficients - the travel and the duration set two, the third is zero")
 
 
 def peak_velocity(dq, T):
@@ -29,12 +29,12 @@ def peak_velocity(dq, T):
 
 def min_duration_s(dq, qd_max):
     """Shortest move inside a speed limit."""
-    raise NotImplementedError("TODO 4: solve 1.5|dq|/T = qd_max for T")
+    raise NotImplementedError("TODO 4: solve the cubic's peak speed for the shortest duration that stays under the limit")
 
 
 def min_duration_for_acceleration(dq, qdd_max):
     """Shortest move inside an acceleration limit."""
-    raise NotImplementedError("TODO 5: peak acceleration is 6|dq|/T^2")
+    raise NotImplementedError("TODO 5: the cubic's peak acceleration, from its coefficients - six times the travel over the duration cubed")
 
 
 def spring_damper_torque(q_d, q, dq_d, dq, kp, kd, tau_g=0.0):

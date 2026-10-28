@@ -20,20 +20,20 @@ import mechalab_plant as plant
 def impedance_rl(r_ohm, l_h, omega):
     """Series R-L impedance, as a complex number in ohms.
 
-    TODO 1: the resistor is the real part, the inductor is j*omega*L - add the hypotenuse, not
-    R + omega*L.
+    TODO 1: the resistor is the real part, the inductor the imaginary one, scaled by angular
+    frequency — add them as one two-part number, not as magnitudes.
     """
-    raise NotImplementedError("TODO 1: R + j*w*L")
+    raise NotImplementedError("TODO 1: one real part and one imaginary part, not a sum of magnitudes")
 
 
 def first_order_response(tau, omega):
     """H(jw) of tau y' + y = u, evaluated at omega."""
-    raise NotImplementedError("TODO 2: d/dt becomes j*omega")
+    raise NotImplementedError("TODO 2: a time derivative becomes an imaginary factor of omega")
 
 
 def second_order_response(wn, zeta, omega):
     """G(jw) = wn^2 / ((jw)^2 + 2 zeta wn (jw) + wn^2)."""
-    raise NotImplementedError("TODO 3: substitute s = j*omega and keep it complex")
+    raise NotImplementedError("TODO 3: put the imaginary frequency in for the Laplace variable, stay complex")
 
 
 def magnitude_db(h):
@@ -49,8 +49,9 @@ def phase_deg(h):
 def resonance_peak(wn, zeta):
     """(omega_r, peak_magnitude) of the second-order magnitude.
 
-    TODO 6: differentiate |G| and solve - omega_r = wn sqrt(1 - 2 zeta^2), peak =
-    1 / (2 zeta sqrt(1 - zeta^2)) when zeta < 1/sqrt(2). Otherwise there is no peak: (0.0, 1.0).
+    TODO 6: differentiate the magnitude and solve — the peak sits below the natural frequency and
+    is taller the lighter the damping, until the curve stops turning. Past that damping there is no
+    peak: report zero for its place and unity for its height.
     """
     raise NotImplementedError("TODO 6: where the peak is, and how tall")
 

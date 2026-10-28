@@ -123,7 +123,7 @@ tone really lands. Fill the two TODOs:
 
 def nyquist_hz(fs):
     """The highest frequency a sample rate `fs` can represent, in Hz."""
-    raise NotImplementedError("TODO 1: fs / 2")
+    raise NotImplementedError("TODO 1: half the sampling rate: the highest frequency the samples can tell apart")
 
 
 def alias_hz(f_sig, fs):

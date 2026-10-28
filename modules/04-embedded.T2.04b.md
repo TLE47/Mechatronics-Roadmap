@@ -140,7 +140,7 @@ def cpu_utilization(tasks):
 
 def liu_layland_bound(n):
     """The sufficient Rate-Monotonic bound U <= n (2^(1/n) - 1)."""
-    # TODO 2: the exponent is 1/n, and for one task the bound is 1.0
+    # TODO 2: the exponent is one over the task count, and for one task the bound is 1.0
     ...
 
 
@@ -152,25 +152,25 @@ def response_time_us(c_h_us, b_i_us, c_m_us=0.0, inheritance=True):
 
 def can_winner(ids):
     """The identifier that wins CAN bitwise arbitration."""
-    # TODO 4: bit 0 is dominant, so the lowest number wins - not the first frame sent
+    # TODO 4: bit 0 is dominant, so the lowest number wins; not the first frame sent
     ...
 
 
 def encode_fixed(x, x_min, x_max, bits):
     """u = round((x - x_min) / (x_max - x_min) * (2^bits - 1))."""
-    # TODO 5: the scale is 2^bits - 1, the number of intervals, not 2^bits
+    # TODO 5: the scale is the number of intervals, one below the level count, not the level count
     ...
 
 
 def decode_fixed(u, x_min, x_max, bits):
     """The inverse pack."""
-    # TODO 6: the offset goes back on after the scale, and the divisor is 2^bits - 1 again
+    # TODO 6: the offset goes back on after the scale, and the divisor is that same interval count
     ...
 
 
 def quantization_step(x_min, x_max, bits):
     """One count of the packed field, in the field's own units."""
-    # TODO 7: span over 2^bits - 1, so a 12-bit 36 N*m field steps by 8.79 mN*m
+    # TODO 7: the span over that interval count, so a 12-bit 36 newton-metre field steps by 8.79 millinewton-metres
     ...
 
 

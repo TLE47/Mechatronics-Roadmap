@@ -137,22 +137,22 @@ coefficients run. Fill the four TODOs:
 
 def tustin_hz(omega_rad_s, fs):
     """Where unwarped Tustin actually places an analog frequency, in Hz."""
-    raise NotImplementedError("TODO 1: digital angle 2 atan(omega Ts / 2), then divide by 2 pi Ts")
+    raise NotImplementedError("TODO 1: twice the arc tangent of half the radian step, then over two pi times the period")
 
 
 def prewarp_omega(f0_hz, fs):
     """Analog prototype frequency that lands a Tustin filter exactly on f0_hz."""
-    raise NotImplementedError("TODO 2: (2 / Ts) tan(pi f0 / fs)")
+    raise NotImplementedError("TODO 2: twice the sample rate times the tangent of pi times the target over the sample rate")
 
 
 def notch_coeffs(f0_hz, fs, q):
     """(b0, b1, b2, a1, a2) for a unity-gain notch at f0_hz with quality factor q; a0 is 1."""
-    raise NotImplementedError("TODO 3: alpha = sin(w0) / (2 q); b0 = b2 = 1 / (1 + alpha)")
+    raise NotImplementedError("TODO 3: the prewarp factor, then the two end coefficients from one over one plus it")
 
 
 def apply_biquad(coeffs, samples):
     """Run the TDF-II biquad over `samples` and return one output sample per input."""
-    raise NotImplementedError("TODO 4: two delay states, w1 and w2, updated in that order")
+    raise NotImplementedError("TODO 4: two delay states, updated in the order the filter reads them")
 ```
 
 **Expected numbers (the answer):** $\omega_a(600\,\text{Hz} @ 2000\,\text{Hz}) = 5505.5277\,\text{rad/s}$, and the round trip through `tustin_hz` returns $600.0\,\text{Hz}$ to $10^{-9}$.

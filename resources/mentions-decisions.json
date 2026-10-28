@@ -67,7 +67,7 @@
       "concept": "open_loop_three_phase_sine_modulation",
       "decision": "keep",
       "core": "modulation",
-      "lines": 12,
+      "lines": 13,
       "sections": [
         "1. Why it matters",
         "2. Intuition first",
@@ -157,7 +157,7 @@
       "concept": "rodrigues_so3_se3_exp_log_maps",
       "decision": "keep",
       "core": "so3",
-      "lines": 20,
+      "lines": 19,
       "sections": [
         "3. Formalization",
         "4. Worked example",

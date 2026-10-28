@@ -84,7 +84,7 @@ TAU = 0.40  # constant commanded torque, N m
 
 
 def accel_rad_s2(state, tau=TAU, j=J, b=B):
-    # TODO 1: (tau - b * state[1]) / j - read the speed from slot 1
+    # TODO 1: The net torque over the inertia — read the speed from slot 1
     return 0.0
 
 
@@ -94,7 +94,7 @@ def step(state, dt_s=DT_S, tau=TAU, j=J, b=B):
 
 
 def run(state, ticks, dt_s=DT_S, tau=TAU, j=J, b=B):
-    # TODO 3: replace the state with step(state) once per tick
+    # TODO 3: replace the state with one step's result, once per tick
     return state
 
 

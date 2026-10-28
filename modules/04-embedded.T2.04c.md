@@ -162,7 +162,7 @@ def align_stack(size_b, align=8):
 
 def static_ram_bytes(stacks, tcb_bytes=128, msgq=None):
     """Aligned stacks + one TCB per thread + every static queue's payload."""
-    # TODO 2: every thread pays a TCB *and* its queue's M x B payload counts too
+    # TODO 2: every thread pays a TCB, and its queue's payload counts as well
     ...
 
 def device_dt_ready(node, prj_conf):
@@ -183,7 +183,7 @@ def outranks(priority_a, priority_b):
 
 def effective_priority(priority_owner, priority_waiter):
     """The owner's priority while a more urgent thread waits on its `k_mutex`."""
-    # TODO 6: min(owner, waiter) - a waiter that is not more urgent never raises the owner
+    # TODO 6: the smaller of the two priorities wins - a waiter that is not more urgent never raises the owner
     ...
 
 def worst_case_response_us(c_high, b_holder, c_intermediate=0.0):

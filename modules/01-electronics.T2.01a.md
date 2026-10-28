@@ -112,43 +112,43 @@ EXERCISE_TARGET=exercises/01-electronics.T2.01a/starter.py \
 
 def shunt_adc_voltage(i_amp, r_shunt, gain=20.0, v_ref=1.65):
     """The ADC voltage for a phase current: V_ref + G I R_shunt."""
-    # TODO 1: the reference is an offset, not a divisor - and the sign of I must survive
+    # TODO 1: the reference is an offset, not a divisor, and the sign of the current must survive
     ...
 
 
 def shunt_current_from_adc(v_adc, r_shunt, gain=20.0, v_ref=1.65):
     """The current the ADC voltage reports: the inverse of the stage above."""
-    # TODO 2: subtract the reference FIRST, then divide by G * R_shunt
+    # TODO 2: subtract the reference FIRST, then divide by the gain and the shunt together
     ...
 
 
 def max_measurable_current(v_ref, v_rail, gain, r_shunt):
     """The positive current at which the output just reaches the rail."""
-    # TODO 3: the half-scale swing is V_rail - V_ref, not the whole rail
+    # TODO 3: the half-scale swing is the rail above the reference, not the whole rail
     ...
 
 
 def kelvin_gain_error_pct(r_shunt, r_trace):
     """The percentage gain error a 2-terminal (non-Kelvin) layout adds."""
-    # TODO 4: both pads carry copper - the factor of 2 - and the answer is a percentage
+    # TODO 4: both pads carry copper, so count two of them, and the answer is a percentage
     ...
 
 
 def cmrr_input_error_v(delta_v_cm, cmrr_db):
     """A common-mode step, referred back to the amplifier input."""
-    # TODO 5: dB is a power ratio, so 10^(-CMRR/20) - not 10^(-CMRR)
+    # TODO 5: dB is a power ratio, so convert the decibels back as a power, not as an amplitude
     ...
 
 
 def cmrr_current_error_a(delta_v_cm, cmrr_db, r_shunt):
     """The same residue expressed as a misread current."""
-    # TODO 6: an INPUT-referred volt is divided by R_shunt, not by G * R_shunt
+    # TODO 6: an INPUT-referred volt is divided by the shunt alone, not by gain times shunt
     ...
 
 
 def adc_code(v_adc, v_rail=3.3, bits=12):
     """The unipolar ADC code, rounded and clamped to full scale."""
-    # TODO 7: full scale is 2**bits - 1, and a negative input clips to code 0
+    # TODO 7: full scale is the highest code the word can hold, and a negative input clips to zero
     ...
 
 

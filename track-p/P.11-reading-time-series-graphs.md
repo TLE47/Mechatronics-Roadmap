@@ -82,7 +82,7 @@ Complete `slope_velocity` (`TODO 1`) and `accumulate_positions` (`TODO 2`) to co
 
 ```python
 def slope_velocity(pos_prev_m, pos_now_m, dt_s):
-    # TODO 1: Return the slope (pos_now_m - pos_prev_m) / dt_s
+    # TODO 1: Return the slope — how far it moved, over how long it took
     return 0.0
 
 
@@ -90,8 +90,8 @@ def accumulate_positions(velocities_m_s, dt_s):
     pos_m = 0.0
     history = []
     for v in velocities_m_s:
-        # TODO 2: Add the rectangle area (v * dt_s) to pos_m,
-        #         then append round(pos_m, 2) to history.
+        # TODO 2: Add this step's rectangle — the speed times the step — to the
+        #         running position, then append the rounded value to the history.
         history.append(round(pos_m, 2))
     return history
 

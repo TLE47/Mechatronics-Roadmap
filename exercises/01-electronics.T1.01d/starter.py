@@ -19,7 +19,7 @@ def rc_time_constant(r_ohm, c_farad):
 
 def rc_voltage(t_s, v_in, r_ohm, c_farad):
     """V_C(t) for a capacitor charging from zero."""
-    raise NotImplementedError("TODO 2: 1 - exp(-t/tau), never a straight ramp")
+    raise NotImplementedError("TODO 2: an exponential approach to the supply, never a straight ramp")
 
 
 def rc_cutoff_hz(r_ohm, c_farad):
@@ -44,7 +44,7 @@ def inductor_energy(inductance_h, current):
 
 def flyback_voltage(inductance_h, current, dt_open_s):
     """The unclamped spike when the current is interrupted."""
-    raise NotImplementedError("TODO 7: L * I / dt, with dt in SECONDS - 0.5 us is 0.5e-6")
+    raise NotImplementedError("TODO 7: inductance times current over the open time in SECONDS — half a microsecond")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

@@ -39,7 +39,7 @@ def sto_evaluate(ch_a_safe, ch_b_safe, discrepancy_ms, t_disc_max_ms=20.0):
 
 def aas_opcua_nodes(shell):
     """Every SubmodelElement's NodeId, validated."""
-    raise NotImplementedError("TODO 6: check `ns=<n>;` then `i=`, `s=` or `g=`")
+    raise NotImplementedError("TODO 6: validate the namespace prefix first, then the identifier type the NodeId names")
 
 
 def reset_interlock(ch_a_safe, ch_b_safe, fault_latched, reset_pressed):

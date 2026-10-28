@@ -89,15 +89,16 @@ import math
 
 
 def weight_newtons(mass_kg):
-    # TODO 1: Return downward gravitational force W = mass_kg * 9.81 (in Newtons)
+    # TODO 1: Return the downward weight force in newtons — mass times gravity
     return 0.0
 
 
 def gravity_torque_nm(mass_kg, length_m, angle_from_horiz_deg):
     # TODO 2:
-    # 1. Compute w_n = weight_newtons(mass_kg)
-    # 2. Compute perpendicular horizontal lever arm: r_perp_m = length_m * math.cos(math.radians(angle_from_horiz_deg))
-    # 3. Return w_n * r_perp_m
+    # 1. The weight of the mass, from its mass
+    # 2. The perpendicular lever arm: the link length times the cosine of the
+    #    angle from horizontal
+    # 3. The torque: the weight times that perpendicular arm
     return 0.0
 
 

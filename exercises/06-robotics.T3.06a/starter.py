@@ -20,12 +20,14 @@ def mse_loss(y_hat, y_true):
 
 def forward(X, params):
     """(H, Y_hat): tanh hidden layer, linear output layer."""
-    raise NotImplementedError("TODO 2: tanh(X W1 + b1), then H W2 + b2")
+    raise NotImplementedError("TODO 2: the hidden layer applies tanh to its affine combination; the output layer is linear")
 
 
 def backward(X, Y, params, H, Y_hat):
     """The chain rule, as a dict of dW1, db1, dW2, db2."""
-    raise NotImplementedError("TODO 3: dY = 2/N (Y_hat - Y); dH carries the (1 - H^2) factor")
+    raise NotImplementedError(
+        "TODO 3: start from the output error scaled by its mean-squared factor, then carry the tanh derivative back through the hidden layer"
+    )
 
 
 def apply_gradients(params, grads, lr):
@@ -35,12 +37,16 @@ def apply_gradients(params, grads, lr):
 
 def z_score(values):
     """(normalised, mean, sigma) for one column; a constant column is refused."""
-    raise NotImplementedError("TODO 5: sigma = sqrt(mean((v - mean)^2)); sigma == 0 raises")
+    raise NotImplementedError(
+        "TODO 5: the standard score subtracts the mean and divides by the standard deviation; a constant column raises"
+    )
 
 
 def train_bc(X, Y, hidden=8, lr=0.05, steps=200, seed=0):
     """Fit a policy to demonstrations; returns (params, loss per step)."""
-    raise NotImplementedError("TODO 6: normalise, seed the weights, forward/backward/step each loop")
+    raise NotImplementedError(
+        "TODO 6: normalise the inputs, seed the weights, then do one forward pass, backward pass and step per loop"
+    )
 
 
 def predict(params, X):

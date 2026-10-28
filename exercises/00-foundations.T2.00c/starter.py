@@ -22,20 +22,23 @@ def first_order_response(t, tau):
 def second_order_params(j, k, b):
     """{"wn", "zeta", "wd", "mp"} for J theta'' + b theta' + k theta = k u.
 
-    TODO 2: wn = sqrt(k/J); zeta = b / (2 sqrt(J k)); wd = wn sqrt(1 - zeta^2);
-    mp = exp(-pi zeta / sqrt(1 - zeta^2)). At zeta >= 1 there is no overshoot: mp = 0, wd = 0.
+    TODO 2: the four numbers of a second-order system: its natural frequency, the damping
+    ratio, the damped frequency, and the overshoot each one predicts. At or past critical
+    damping nothing rings, so there is no overshoot and no damped frequency.
     """
     raise NotImplementedError("TODO 2: the four numbers that describe a second-order system")
 
 
 def critical_damping(j, k):
     """The b that makes zeta exactly 1.0."""
-    raise NotImplementedError("TODO 3: zeta = 1, not b = 2 J k")
+    raise NotImplementedError(
+        "TODO 3: the damping that makes the ratio exactly one, not the value that makes the numerator one"
+    )
 
 
 def settling_time(wn, zeta, tolerance=0.02):
     """The 2% settling time, 4 / (zeta * wn) - and refuse zeta <= 0 (it never settles)."""
-    raise NotImplementedError("TODO 4: the envelope decays as exp(-zeta wn t)")
+    raise NotImplementedError("TODO 4: the envelope's exponential decay is what sets the time")
 
 
 def simulate_step(j, k, b, dt, steps, theta0=0.0, omega0=0.0):
