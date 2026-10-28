@@ -43,6 +43,15 @@ changes only which suites are started. `deploy-pages` waits on both jobs.
 runner at startup, and `tests/test_workflows.py` asks every browser-suite line in the runner for one,
 CI for exactly one invocation of each half, and the deploy for both jobs.
 
+**And a flake the split exposed, fixed at its source.** The built-bundle sweep graded a reference with
+the app's 6 s runaway guard in place, and on a contended runner that guard ended `06-robotics.T3.06a`
+with the runner's STOPPED verdict — a reference that takes **0.03 s on CPython**. It happened twice in
+three runs (#59's attempt 1 and main's post-merge run 40620886361), always in that sweep and never
+standalone. The sweep now grades its contexts with a 20 s budget, the way `e2e_browser_workbench.mjs`
+already raises it for its own heavy run: the assertion is about what a reference prints, not how fast.
+Nothing in the app changed and no assertion moved — the step cap is still the infinite-loop gate, and
+the PASS line is still required verbatim.
+
 **Verified.** `node --check scripts/test_workbench.mjs` clean; `python3 tests/test_workflows.py`
 **13/13** (two new); `python3 scripts/check_workflows.py` — 3 workflows, built-in scan clean,
 **actionlint clean**; `--partition nope` exits 1 with `--partition needs one of e2e, bundle, got

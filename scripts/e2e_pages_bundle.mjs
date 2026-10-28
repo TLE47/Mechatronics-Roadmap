@@ -598,8 +598,17 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     const context = await browser.newContext();
     // The predict-first gate is its own suite (`test:e2e:predict`); this sweep grades 44 started
     // runs on the built bundle and must not answer a prompt between each one.
+    //
+    // The execution budget is raised for the same reason it is raised in `e2e_browser_workbench.mjs`:
+    // this sweep asserts what each reference *prints*, not how fast it prints it. The app's learner
+    // budget (6 s) is a runaway guard, and on a contended runner it ended a reference run with the
+    // runner's STOPPED verdict - 06-robotics.T3.06a, whose reference takes 0.03 s on CPython - in
+    // two separate runs (40617696276 attempt 1 and 40620886361). The step cap is still the
+    // infinite-loop gate, so a runaway reference still fails here; the wall clock is only generous
+    // enough that a busy runner cannot turn a correct reference into a failure.
     await context.addInitScript(() => {
       window.__mechalabPredictFirst = false;
+      window.__mechalabExecutionTimeoutMs = 20000;
     });
     // The built bundle is graded as a returning learner's workbench: a first-run coach mark over it
     // would be measured as part of the page.
