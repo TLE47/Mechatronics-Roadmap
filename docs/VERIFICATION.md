@@ -52,10 +52,23 @@ feature branch is graded by its pull request, so the old `"**"` filter's second,
 than the checkout, because an archive keeps the build job's clock and every suite would otherwise read
 it as stale), restore `~/.cache/ms-playwright` under a key that follows `package-lock.json`, and run
 side by side; and
-`deploy-pages` needs all four, so a red audit cannot publish what it graded. The shape is guarded by
+`deploy-pages` needs all four, so a red audit cannot publish what it graded.
+
+**Nothing waits for the Python sweep any more, and the gate still holds.** `build-workbench` carried
+`needs: verify-and-test` until 2026-10-28, which made a runner handoff out of a check: the build could
+not start until the sweep's slowest leg finished (macOS, 1m57s on run 40616101620), so the first
+browser test began at 2m40s and the whole run took 8m. A run is green only when every job passed, so
+the sweep blocks a merge exactly as it did — it just no longer blocks the machine, and the lanes now
+overlap. The Playwright step is split for the same reason: the browsers come from the cache and the
+OS libraries from a separate step that runs only on a miss, because the combined `--with-deps` form
+took 7-23s on a hit and **17m31s** on the one miss measured (run 40559024836, ~30 packages from a
+throttled mirror), and both steps are bounded so a slow mirror fails the run in minutes.
+
+The shape is guarded by
 `tests/test_workflows.py` (`WorkflowSpeedTests`): one run per branch push, cancellation on pull
 requests only, every browser command present exactly once, no suite job that rebuilds, the cache key,
-and a deploy that waits for every lane.
+a build that does not wait on the Python gate, the libraries conditional on a cache miss with both
+Playwright steps bounded, and a deploy that waits for every lane.
 
 `check_consistency.py` is the contradiction detector: it compares a quoted count with the count
 derived from the lesson files and `modules/_index.yaml`, and fails on a second name for a step

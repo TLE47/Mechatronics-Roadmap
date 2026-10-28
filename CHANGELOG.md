@@ -16,6 +16,52 @@ flowchart LR
 
 ---
 
+## [2026-10-27] — Run 266: the gate stops holding the machine
+
+**Two of a run's eight minutes were spent waiting for a check, not doing work.** The post-merge run
+40616101620 is the measurement: created at 01:36:59, `verify-and-test`'s slowest leg (macOS) finished
+at 01:38:58, the build ran 01:39:01 → 01:39:37, and the first browser test began at 01:39:39 — **2m40s
+in, with the browser lane idle the whole time**. The cause was one line: `build-workbench` carried
+`needs: verify-and-test`. A `needs:` chain is a runner handoff, and a run is green only when every job
+passed, so that line bought no gate the sweep did not already hold. It only made the check block the
+machine as well as the merge.
+
+**The Playwright step was paying for its worst day every day.** It ran
+`npx playwright-core install --with-deps chromium firefox` in every suite job, so a cache hit re-ran
+apt for libraries the runner image already had (7-23s), and a miss fetched the browsers *and* ~30 OS
+packages from a throttled mirror: run 40559024836 spent **17m31s** in that one step and finished in
+21m18s.
+
+**The rest of the outliers were the queue, not the tests.** Runs 40594376850 (16m49s) and 40607195583
+(15m17s) had every other job done by ~3m; their browser jobs sat **7m28s** and **7m15s** after the
+build finished, waiting for a runner. Fewer stages means fewer handoffs to wait in, which is the other
+half of dropping the gate.
+
+**What changed.** `build-workbench` has no `needs:` any more, so it and the Python sweep start
+together and the three browser lanes start as soon as the one build exists. The Playwright step is now
+two: the browsers (`install chromium firefox`, a no-op once the cache restored them) and the OS
+libraries (`install-deps chromium firefox`) **only when the browser cache missed**, both bounded —
+8 and 10 minutes — so a throttled mirror fails the run in minutes instead of stalling it for
+seventeen. `deploy-pages` names `verify-and-test` itself, because the build no longer carries that
+dependency: without it a red Python sweep could publish a site whose own run was red.
+
+**The shape is guarded.** `tests/test_workflows.py` grows two tests —
+`test_the_build_does_not_wait_on_the_python_gate` and
+`test_the_browser_libraries_ride_a_cache_miss_only` — and its deploy assertion now demands
+`verify-and-test` in the `needs:` list.
+
+**Verified.** `python3 scripts/check_workflows.py` — 3 workflows, built-in scan clean, **actionlint
+clean**; `python3 tests/test_workflows.py` **11/11** (two new); `python3 -m unittest tests.test_doc_commands`
+**9/9**.
+
+**The honest number.** The gate's 2m40s is the part this run removes outright; the Playwright split
+removes ~15s per suite job (off the critical path) and turns the 17-minute spike into a hit that never
+runs apt. That is **about two minutes off a typical eight**, not three. The remaining minute is
+`test:workbench`'s own 4m10s matrix, which is the browser lane's critical path — splitting it across
+two jobs is the next lever, and it is not taken here.
+
+---
+
 ## [2026-10-27] — Run 265: ticks that survive a new machine
 
 **The checklist leaves the browser it was ticked in.** A lesson's ticks now travel two ways: the backup
