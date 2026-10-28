@@ -900,11 +900,13 @@ wide) or a horizontal one (`rows`, like stacked panes in a terminal multiplexer)
 a view already open in the other pane focuses that pane instead of opening a second copy, and
 clicking a pane makes it the one the next tab press fills — the focused pane carries a faint inset
 ring, so Expected beside Run output is a click and a tab rather than a guess. Two panes is the cap,
-because three 380 px columns of Python is narrower than the code's own line.The strip wraps on a phone, and the split controls sit beside it rather than over a tab: they are
-outside the tablist, so the strip is four tabs to a screen reader and no tab is scrolled under a
-sticky group. The dock's sentence becomes its
-arrow below `2xl`, and the four preset shortcut chips step aside below `xl`: that is what keeps
-**Predict** on the **Run** row from 768 px up, with the chips returning at 1280. Every view stays
+because three 380 px columns of Python is narrower than the code's own line. The strip wraps on a
+phone, and the split controls sit beside it rather than over a tab: they are outside the tablist, so
+the strip is four tabs to a screen reader and no tab is scrolled under a sticky group. The dock's
+sentence becomes its arrow below `2xl`, and the four preset keys step aside below `xl`: that is what
+keeps **Predict** on the **Run** row from 768 px up. Predict's own state lives in its name rather
+than its label — `· skipped` and `· answered` were 78 px that wrapped the row at 1280 after a
+recorded prediction. Every view stays
 mounted and a pane that is not showing is `display:none`, so the last run is still readable (and
 greppable by the suite) while the editor is on screen, and the arrangement is remembered. **Write**
 keeps no output tab at all, and **Read** keeps no editor. The state machine is pure and validated at

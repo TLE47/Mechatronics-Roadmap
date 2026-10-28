@@ -192,11 +192,17 @@ export async function runPredictGateSuite({ baseUrl: externalBaseUrl } = {}) {
       /You called it/,
       'the expected output, typed back, must be the one exact match'
     );
-    // The toolbar carries the state, so a closed card is still legible at a glance.
+    // The toolbar carries the state in its name, not in its width: " · answered" was 78 px that
+    // pushed Predict onto a second row at 1280, so the visible label stays "Predict".
     assert.match(
-      (await page.getByTestId('btn-predict').textContent()) ?? '',
+      (await page.getByTestId('btn-predict').getAttribute('aria-label')) ?? '',
       /answered/,
       'the Predict button must say the lesson has an answer'
+    );
+    assert.equal(
+      (await page.getByTestId('btn-predict').textContent())?.trim(),
+      'Predict',
+      'the label must stay one width so the run row cannot wrap with the state'
     );
     console.log('  ok Predict again asks a second time, and the right answer is called exactly');
 

@@ -1285,8 +1285,17 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       await page.waitForTimeout(250);
       assert.equal(await page.getByTestId('editor-main').isVisible(), true, 'the main tab returns the code');
 
-      // The run controls share one row at 1280: the dock's full sentence is what used to push
-      // Predict onto a second row, so the compact dock is measured here rather than trusted.
+      // The run controls share one row at 1280, even after a prediction was skipped: the state
+      // must live in the button's name, not in 78 px of label that pushed Predict onto a row of
+      // its own while a fresh visit (label "Predict") measured one row.
+      await page.getByTestId('btn-predict').click();
+      await page.getByTestId('btn-predict-skip').click();
+      await page.waitForTimeout(800);
+      assert.match(
+        (await page.getByTestId('btn-predict').getAttribute('aria-label')) ?? '',
+        /skipped/,
+        'the skip must be carried in the Predict button’s name'
+      );
       const runRow = await page.evaluate(() => {
         const run = document.querySelector('[data-testid="btn-run-verify"]').getBoundingClientRect();
         const predict = document.querySelector('[data-testid="btn-predict"]').getBoundingClientRect();
@@ -1294,16 +1303,18 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         return {
           gap: Math.round(Math.abs(run.top - predict.top)),
           inside: run.right <= card.right + 1 && predict.right <= card.right + 1,
+          label: document.querySelector('[data-testid="btn-predict"]').textContent.trim(),
         };
       });
+      assert.equal(runRow.label, 'Predict', 'the label must not grow with the state');
       assert.ok(
         runRow.gap <= 4,
         `Predict must sit on the Run row at 1280, but its top is ${runRow.gap}px away`
       );
       assert.equal(runRow.inside, true, 'the run controls must stay inside the editor card');
 
-      // The same row at the widths where the preset shortcut chips are too expensive: 768-1024 is
-      // the band the toolbar used to spend on a second row for Predict.
+      // The same row at the widths where the preset keys are too expensive: 768-1024 is the band
+      // the toolbar used to spend on a second row for Predict.
       for (const width of [768, 900, 1024]) {
         await page.setViewportSize({ width, height: 900 });
         await page.waitForTimeout(350);
@@ -1328,7 +1339,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           document.querySelector('[data-testid="layout-study"] span').getBoundingClientRect().width > 0
         ),
         true,
-        'the preset shortcut chip must come back at 1280, where the toolbar has the room'
+        'the preset shortcut key must print again at 1280, where the toolbar has the room'
       );
 
       // A phone has no room for five tabs beside the split control. The split group sits outside
