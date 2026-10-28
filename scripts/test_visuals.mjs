@@ -28,6 +28,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { collidingCells } from '../app/src/visuals/graphLayout.ts';
 import { SCENES, SCENE_IDS, sceneFor } from '../app/src/visuals/scenes.ts';
+import { LESSON_PAGE_VERSION } from '../app/src/lessonPage.ts';
 import {
   HOME,
   LINK_1,
@@ -264,7 +265,13 @@ check('every committed payload is the version this build reads', () => {
       }
       if (!name.endsWith('.json')) continue;
       const payload = JSON.parse(fs.readFileSync(full, 'utf8'));
-      assert.equal(payload.v, 4, `${path.relative(PAGES, full)} is payload v${payload.v}; re-run the generator`);
+      // The reader's own constant, not a copy: a generator bump that forgot this test would ship
+      // pages the app refuses, and the assertion should say so rather than drift.
+      assert.equal(
+        payload.v,
+        LESSON_PAGE_VERSION,
+        `${path.relative(PAGES, full)} is payload v${payload.v}; re-run the generator`
+      );
       for (const block of payload.blocks ?? []) {
         if (block.t === 'figure') assert.equal(typeof block.caption, 'string', `${full} has a figure with no caption field`);
         if (block.t === 'route') {

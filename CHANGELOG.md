@@ -16,6 +16,76 @@ flowchart LR
 
 ---
 
+## [2026-10-27] — Run 270: hints stay closed, and the checklist stops lying
+
+**A bullet that could not be ticked.** `checkId` capped a bullet at 160 characters and then trimmed it
+again on every read. When the 160th character happened to be a space, the stored id came back one
+character shorter than the id the box was drawing, so P.1's *Storing values in named variables* — and
+every bullet whose cut landed on a space — could be pressed forever and never tick. The cap is now
+cleaned after the cut as well, so `checkId(checkId(x)) === checkId(x)`; the checklist suite pins the
+rule and the browser suite ticks that exact bullet.
+
+**The solution was printed on the way past the question.** The pages write their hints, every `Check
+yourself` answer and the full solution as an HTML `<details>`, and the reader's generator stripped the
+tags and flattened the bodies into the prose — an open answer under every question. A `<details>` is
+now a `reveal` block (payload version 5): a label and the blocks behind it, drawn as a native
+`<details>` with the page's own label, nested one level when a hint holds its own collapse. The hints
+are two presses away and the solution is one, which is the shape the page already had on GitHub.
+
+**A highlight inside a code block was stored and never drawn.** `CodeBlock` rendered plain text, so
+selecting a line of starter code and pressing Highlight wrote the note and showed nothing. The block
+now draws its marks, matched **loosely**: `cleanQuote` collapses a snippet's newlines to one space, and
+a strict scan could never find that quote in the `<pre>`.
+
+**The run controls live with the code.** Run & Verify, Predict, Pause/Stop, More and the new **Split
+output** toggle sit in the editor's own header, and the run's output — actual beside expected — is in
+the same card, under that header (or beside the code, one press on **Split output**, a `localStorage`
+preference like the split ratio). Read still has no editor, so nothing is drawn there; Debug already
+puts the two columns side by side and hides the extra split.
+
+**A first visit opens on moving figures.** A new reader now gets motion until they press the header
+switch, which is remembered on every surface. The one exception is a reader whose OS already asks for
+less motion: that is a standing request for stillness, so a first visit starts still and the same
+switch overrides it. Off still stops every frame loop rather than drawing hidden frames.
+
+**The reading place survives a split-view resize.** The position now records the block at the top of
+the pane and the distance into it, and a `ResizeObserver` puts that block back at the top after a
+reflow — a pixel offset means nothing once the column narrows and the paragraphs rewrap. The reader's
+header also carries the **Split view** study tip, and its **Go to the editor ↓** link (under *Do it
+yourself*) scrolls the stacked layout to the code when there is no room for two columns.
+
+---
+
+## [2026-10-27] — Run 269: the sticky note opens beside the words
+
+**A modal for a margin note.** The editor that writes a sticky note was a centred dialog over a dimming
+backdrop: it covered the paragraph it was about, and the whole page went dim while the learner tried to
+remember what that paragraph said. That is the wrong shape for a note on a passage — the words are the
+reason the note exists.
+
+**It is a popover now.** The card is placed against the passage's own box in viewport coordinates:
+under the words when there is room there, and above them when the passage is close to the bottom of the
+window and the room above is the larger of the two, so the card covers neither the words nor the status
+bar. A small notch on the card's edge points back at the words, the card is centred on them and then
+pulled back inside the window instead of being pushed off it, and it is capped at `min(70vh, 34rem)`
+with its own scroll so a long note cannot grow past the screen. There is no backdrop and nothing dims:
+a press anywhere else closes it, Escape closes it, and the page behind stays readable and clickable.
+
+**What it hangs from.** Pressing **Sticky** on a selection clones the selection's `Range` before the
+textarea takes focus — focusing it collapses the document selection, so a live selection cannot be
+asked where the words are afterwards, but a clone keeps measuring. Pressing a marked passage passes the
+mark's own element instead. The placement is re-measured on scroll, on resize and on every keystroke
+(the preview makes the card taller), which is why the card follows the words when the reading pane
+moves rather than drifting away from them.
+
+**Verified.** `npx tsc --noEmit`; `npm run test:e2e:home` now selects a passage at the top of the pane
+and asserts the card lands *below* it, then scrolls the pane to its end and asserts the same card lands
+*above* a passage at the bottom edge — both clear of the words, overlapping them horizontally, no wider
+than the card's own 416 px, and with no full-window fixed element anywhere over the lesson while it is
+open, then presses the pane's header and asserts the card closed. `app/README.md` describes the shape.
+
+---
+
 ## [2026-10-27] — Run 267: the browser matrix in two lanes
 
 **One suite held the whole lane.** `npm run test:workbench` carries fourteen browser suites in four

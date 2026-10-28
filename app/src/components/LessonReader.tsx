@@ -1,6 +1,18 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Bold, BookOpen, Highlighter, Italic, Loader2, RotateCcw, StickyNote, Underline, X } from 'lucide-react';
+import {
+  Bold,
+  BookOpen,
+  ChevronRight,
+  Highlighter,
+  Italic,
+  Loader2,
+  PanelsTopLeft,
+  RotateCcw,
+  StickyNote,
+  Underline,
+  X,
+} from 'lucide-react';
 import { MathView } from './MathView';
 import { InlineMarkdown as Inline } from './InlineMarkdown';
 import { Diagram } from '../visuals/Diagram';
@@ -27,7 +39,7 @@ import {
 } from '../studyNotes';
 import { checkId, readTicks, toggleTicked } from '../lessonChecks';
 import { STORE_RESTORED_EVENT } from '../backupBundle';
-import { wrapSelection } from '../lessonMarks';
+import { markQuotes, wrapSelection } from '../lessonMarks';
 import { RESET_EVENT } from '../resetEvent';
 import { lessonPageUrl as sourceUrl } from '../startHere';
 
@@ -58,6 +70,32 @@ import { lessonPageUrl as sourceUrl } from '../startHere';
 /** What a route block says when the page gives no caption of its own. */
 const ROUTE_CAPTION = 'Each box is a checkpoint in order; the last one is the verified pass this page ends on.';
 
+/**
+ * The passage a sticky note is written about.
+ *
+ * A **cloned range** is the point: pressing the button collapses the document selection (the textarea
+ * takes focus), so `window.getSelection()` cannot be asked where the words are afterwards. A clone
+ * keeps its position in the DOM and still measures, which is what lets the popup hang off the words
+ * and follow them when the reading pane scrolls. A marked passage needs no clone - its own element is
+ * the anchor.
+ */
+type StickyAnchor = { range?: Range; element?: HTMLElement };
+
+/** Where the sticky popover sits, in viewport coordinates, and which side of the passage it hangs from. */
+interface StickyPlacement {
+  top: number;
+  left: number;
+  width: number;
+  side: 'above' | 'below';
+  /** The notch's distance from the popover's left edge, so it points at the words. */
+  caret: number;
+}
+
+/** The gap between the words and the popover, and the least margin kept from the window's edges. */
+const STICKY_GAP = 10;
+const STICKY_EDGE = 8;
+const STICKY_MAX_WIDTH = 416;
+
 interface LessonReaderProps {
   /** The registry id: the reading position and highlights are keyed by it, not by the page. */
   lessonId: string;
@@ -69,6 +107,11 @@ interface LessonReaderProps {
   toolbar?: React.ReactNode;
   /** The lesson chooser, when the runner has it open; between the header and the text. */
   panel?: React.ReactNode;
+  /**
+   * Scrolls the workbench to its code editor. Absent when there is no editor on screen (the Read
+   * preset), which is what keeps the jump link from promising a door that is not there.
+   */
+  onJumpToEditor?: () => void;
 }
 
 /** How long a scroll must be still before the position is written: one write per pause, not per pixel. */
@@ -79,7 +122,25 @@ function repoUrl(path: string): string {
   return `https://github.com/TLE47/Mechatronics-Roadmap/blob/main/${path}`;
 }
 
-function CodeBlock({ block }: { block: Extract<ReaderBlock, { t: 'code' }> }) {
+/**
+ * A fenced code block, with its highlights drawn where they were taken.
+ *
+ * A learner highlighting the line that computes `battery_level` is marking the code, not the sentence
+ * about it, so the marks have to live inside the `<pre>`: this used to draw plain text, which stored
+ * the highlight and never showed it. The comparison is `loose` because a selected snippet keeps one
+ * space where the page has a newline.
+ */
+function CodeBlock({
+  block,
+  marks,
+  onMark,
+}: {
+  block: Extract<ReaderBlock, { t: 'code' }>;
+  marks: Highlight[];
+  onMark: (mark: Highlight, anchor?: HTMLElement) => void;
+}) {
+  const quotes = new Set(marks.map((mark) => mark.quote));
+  const pieces = quotes.size > 0 ? markQuotes(block.text, [...quotes], { loose: true }) : null;
   return (
     <div className="my-3 overflow-hidden rounded-lg border border-line-soft bg-canvas">
       <div className="border-b border-line-soft px-3 py-1 font-mono text-[12px] uppercase tracking-wider text-faint">
@@ -92,7 +153,34 @@ function CodeBlock({ block }: { block: Extract<ReaderBlock, { t: 'code' }> }) {
         aria-label={`${block.lang || 'text'} code`}
         className="overflow-x-auto p-3 font-mono text-[12.5px] leading-relaxed text-body"
       >
-        <code>{block.text}</code>
+        <code>
+          {pieces === null
+            ? block.text
+            : pieces.map((piece, index) => {
+                if (!piece.quote) return <React.Fragment key={index}>{piece.text}</React.Fragment>;
+                const mark = marks.find((entry) => entry.quote === piece.quote);
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    data-testid="sticky-mark"
+                    data-quote={piece.quote}
+                    title={
+                      mark?.comment
+                        ? `Open the note: ${inlinePlain(mark.comment)}`
+                        : 'Open this passage in Notes'
+                    }
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (mark) onMark(mark, event.currentTarget);
+                    }}
+                    className="inline cursor-pointer rounded-sm bg-amber/15 p-0 text-inherit underline decoration-amber decoration-dotted underline-offset-2 hover:bg-amber/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                  >
+                    {piece.text}
+                  </button>
+                );
+              })}
+        </code>
       </pre>
     </div>
   );
@@ -131,7 +219,16 @@ function TableBlock({ block }: { block: Extract<ReaderBlock, { t: 'table' }> }) 
   );
 }
 
-export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: LessonReaderProps) {
+export function LessonReader({
+  lessonId,
+  path,
+  tall = false,
+  toolbar,
+  panel,
+  onJumpToEditor,
+}: LessonReaderProps) {
+  /** Whether the reader is showing its one-line split-view suggestion. */
+  const [splitTip, setSplitTip] = useState(false);
   const [page, setPage] = useState<LessonPage | null>(null);
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -153,13 +250,17 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
   /** The lesson's ticks, and the highlights drawn into the prose; both are re-read after a write. */
   const [ticks, setTicks] = useState<string[]>([]);
   const [marks, setMarks] = useState<Highlight[]>([]);
+  /** The passage the popover points at, and where the popover ended up after measuring itself. */
+  const [stickyAnchor, setStickyAnchor] = useState<StickyAnchor | null>(null);
+  const [stickyPlacement, setStickyPlacement] = useState<StickyPlacement | null>(null);
   const stickyRef = useRef<HTMLTextAreaElement | null>(null);
+  const stickyCardRef = useRef<HTMLDivElement | null>(null);
   /** Where the caret goes when the next render commits, because a controlled box forgets it. */
   const stickyCaretRef = useRef<{ start: number; end: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const lastSaveRef = useRef(0);
   const pendingRef = useRef<ReadingPosition | null>(null);
-  const anchors = useMemo(() => (page ? headingAnchors(page.blocks) : []), [page]);
+  const anchors = useMemo(() => headingAnchors(page?.blocks ?? []), [page]);
 
   useEffect(() => {
     let cancelled = false;
@@ -219,6 +320,9 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
       container.scrollTop = 0;
       return;
     }
+    // A resize before the next scroll still has a place to hold: the restored position is the
+    // learner's place until they move it.
+    pendingRef.current = saved;
     const frame = requestAnimationFrame(() => {
       const target = saved.anchor
         ? container.querySelector<HTMLElement>(`[data-reader-anchor="${saved.anchor}"]`)
@@ -233,6 +337,46 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
       }
     });
     return () => cancelAnimationFrame(frame);
+  }, [page, lessonId]);
+
+  // A split-view resize reflows the page under the reader: the paragraph they were reading has to
+  // stay under their eyes. The old pixel offset means nothing after a reflow (lines wrap, a reveal
+  // can close), so the recorded block is looked up in the new layout and the distance into it is
+  // added back on top - which is the same rule the restore uses, applied to a resize instead of a
+  // reload.
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container || !page || typeof ResizeObserver === 'undefined') return undefined;
+    let frame = 0;
+    const holdPlace = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const saved = pendingRef.current;
+        if (!saved) return;
+        const furthest = Math.max(0, container.scrollHeight - container.clientHeight);
+        const block = saved.block
+          ? container.querySelector<HTMLElement>(`[data-reader-block="${saved.block}"]`)
+          : null;
+        if (block && block.getClientRects().length) {
+          const into = typeof saved.blockAt === 'number' ? Math.max(0, saved.at - saved.blockAt) : 0;
+          const ceiling = Math.max(0, block.offsetHeight - 8);
+          container.scrollTop = Math.min(furthest, Math.max(0, block.offsetTop + Math.min(into, ceiling)));
+          return;
+        }
+        const heading = saved.anchor
+          ? container.querySelector<HTMLElement>(`[data-reader-anchor="${saved.anchor}"]`)
+          : null;
+        if (!heading) return;
+        const into = typeof saved.anchorAt === 'number' ? Math.max(0, saved.at - saved.anchorAt) : 0;
+        container.scrollTop = Math.min(furthest, Math.max(0, heading.offsetTop + into));
+      });
+    };
+    const observer = new ResizeObserver(holdPlace);
+    observer.observe(container);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
   }, [page, lessonId]);
 
   // The last position is flushed when the pane goes away: switching lessons mid-page must not lose
@@ -267,20 +411,47 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
     return () => document.removeEventListener('selectionchange', read);
   }, [page]);
 
-  const remember = () => {
-    const container = scrollRef.current;
-    if (!container || !page) return;
+  /**
+   * Where the top of the pane is, as a heading *and* as a block.
+   *
+   * The block is what a split-view resize needs: the heading survives a reflow, but a narrow column
+   * moves the paragraph under it, so the place is recorded as the block at the top plus the
+   * distance into it. Closed reveals are skipped - their boxes measure zero and would claim the top
+   * of every page.
+   */
+  const currentPosition = (container: HTMLDivElement): ReadingPosition => {
+    const top = container.scrollTop + 8;
     let anchor = '';
     let anchorAt: number | undefined;
-    const top = container.scrollTop + 8;
     for (const heading of container.querySelectorAll<HTMLElement>('[data-reader-anchor]')) {
+      if (!heading.getClientRects().length) continue;
       if (heading.offsetTop <= top) {
         anchor = heading.dataset.readerAnchor ?? '';
         anchorAt = heading.offsetTop;
       } else break;
     }
+    let block = '';
+    let blockAt: number | undefined;
+    for (const node of container.querySelectorAll<HTMLElement>('[data-reader-block]')) {
+      if (!node.getClientRects().length) continue;
+      if (node.offsetTop <= top) {
+        block = node.dataset.readerBlock ?? '';
+        blockAt = node.offsetTop;
+      } else break;
+    }
     const position: ReadingPosition = { anchor, at: container.scrollTop };
     if (typeof anchorAt === 'number') position.anchorAt = anchorAt;
+    if (block) {
+      position.block = block;
+      if (typeof blockAt === 'number') position.blockAt = blockAt;
+    }
+    return position;
+  };
+
+  const remember = () => {
+    const container = scrollRef.current;
+    if (!container || !page) return;
+    const position = currentPosition(container);
     pendingRef.current = position;
     const now = Date.now();
     if (now - lastSaveRef.current < SAVE_AFTER_MS) return;
@@ -312,7 +483,79 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
     setStickyText('');
     setStickyQuote('');
     setStickyEditing(false);
+    setStickyAnchor(null);
+    setStickyPlacement(null);
   };
+
+  // The note hangs off the passage it is about: below it when there is room, above it when the
+  // passage is near the bottom of the window and the room above is the larger of the two. It is a
+  // popover, not a window - the page stays readable and clickable behind it - so it is placed in
+  // viewport coordinates and re-measured on scroll and on every keystroke (the preview makes the
+  // card taller).
+  useLayoutEffect(() => {
+    if (!stickyOpen) return;
+    const place = () => {
+      const rect = stickyAnchor?.element?.isConnected
+        ? stickyAnchor.element.getBoundingClientRect()
+        : stickyAnchor?.range?.getBoundingClientRect();
+      const width = Math.min(STICKY_MAX_WIDTH, Math.max(240, window.innerWidth - STICKY_EDGE * 2));
+      const height = stickyCardRef.current?.offsetHeight ?? 260;
+      // A note with no passage to hang from (nothing measurable was handed in) is centred rather than
+      // left invisible: an unplaced popover is hidden, and a hidden editor is a dead button.
+      if (!stickyAnchor || !rect || (!rect.width && !rect.height)) {
+        if (stickyAnchor) return; // the passage is gone: keep the card where it was
+        setStickyPlacement({
+          top: Math.max(STICKY_EDGE, (window.innerHeight - height) / 2),
+          left: Math.max(STICKY_EDGE, (window.innerWidth - width) / 2),
+          width,
+          side: 'below',
+          caret: width / 2,
+        });
+        return;
+      }
+      const roomBelow = window.innerHeight - rect.bottom - STICKY_GAP - STICKY_EDGE;
+      const roomAbove = rect.top - STICKY_GAP - STICKY_EDGE;
+      // Below by default. Above only when the bottom edge is close and there is more room up there,
+      // which is the sentence at the end of a scroll rather than the popup covering the words.
+      const side: 'above' | 'below' =
+        roomBelow < Math.min(height, 200) && roomAbove > roomBelow ? 'above' : 'below';
+      const wanted = side === 'above' ? rect.top - STICKY_GAP - height : rect.bottom + STICKY_GAP;
+      const top = Math.max(
+        STICKY_EDGE,
+        Math.min(window.innerHeight - height - STICKY_EDGE, wanted)
+      );
+      // Centre on the words, then pull back inside the window instead of letting a passage near an
+      // edge push the card off it.
+      const left = Math.max(
+        STICKY_EDGE,
+        Math.min(window.innerWidth - width - STICKY_EDGE, rect.left + rect.width / 2 - width / 2)
+      );
+      const caret = Math.max(18, Math.min(width - 18, rect.left + rect.width / 2 - left));
+      setStickyPlacement({ top, left, width, side, caret });
+    };
+    place();
+    window.addEventListener('scroll', place, true);
+    window.addEventListener('resize', place);
+    return () => {
+      window.removeEventListener('scroll', place, true);
+      window.removeEventListener('resize', place);
+    };
+  }, [stickyOpen, stickyAnchor, stickyText, stickyQuote, stickyEditing]);
+
+  // Not modal: a press anywhere but the card closes it. A press on another marked passage is left
+  // alone - that press opens that passage's own note.
+  useEffect(() => {
+    if (!stickyOpen) return;
+    const onPress = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (stickyCardRef.current?.contains(target)) return;
+      if (target instanceof Element && target.closest('[data-testid="sticky-mark"]')) return;
+      closeSticky();
+    };
+    document.addEventListener('mousedown', onPress, true);
+    return () => document.removeEventListener('mousedown', onPress, true);
+  }, [stickyOpen]);
 
   const pinSelection = () => {
     if (!selection) return;
@@ -328,10 +571,32 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
   };
 
   /** Open the note a marked passage carries; Save then updates that highlight rather than adding. */
-  const openMark = (mark: Highlight) => {
+  const openMark = (mark: Highlight, anchor?: HTMLElement) => {
     setStickyEditing(true);
     setStickyQuote(mark.quote);
     setStickyText(mark.comment);
+    setStickyAnchor(anchor ? { element: anchor } : null);
+    // The previous card's place is not this card's place: the first frame stays hidden until this
+    // one has been measured, instead of flashing where the last note was.
+    setStickyPlacement(null);
+    setStickyOpen(true);
+  };
+
+  /**
+   * Open the popover on the passage that is selected right now.
+   *
+   * The selection is cloned before the textarea takes focus, because focusing it collapses the
+   * document selection and there is nothing left to measure. `fallback` is the button's own box, for
+   * the one case a range cannot be had (a synthetic selection that never reached the document).
+   */
+  const openStickyOnSelection = (fallback?: HTMLElement) => {
+    const chosen = typeof window.getSelection === 'function' ? window.getSelection() : null;
+    const range = chosen && chosen.rangeCount > 0 ? chosen.getRangeAt(0).cloneRange() : null;
+    setStickyAnchor(range ? { range } : fallback ? { element: fallback } : null);
+    setStickyEditing(false);
+    setStickyText('');
+    setStickyQuote(selection);
+    setStickyPlacement(null);
     setStickyOpen(true);
   };
 
@@ -420,6 +685,254 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
     clearReadingPosition(lessonId);
   };
 
+  /**
+   * One block of the page, and the same function again for a reveal's children.
+   *
+   * A `reveal` is the page's own `<details>`: hints, the answers under `Check yourself` and the full
+   * solution arrive closed, so the reader meets the question before the answer instead of the answer
+   * on the way past. Nested blocks are rendered by this function, not by a second renderer, so a
+   * hint's code block is the same code block as the page's.
+   *
+   * Every block carries `data-reader-block`: the reading position is a block plus the distance into
+   * it (`readingPosition.ts`), which is what keeps the paragraph a learner is on under their eyes
+   * when a split-view resize reflows the page under it.
+   */
+  const renderBlock = (block: ReaderBlock, key: React.Key): React.ReactNode => {
+    const blockKey = String(key);
+    switch (block.t) {
+      case 'h': {
+        const anchor = anchors.get(block) ?? '';
+        const Tag = (block.l === 2 ? 'h2' : block.l === 3 ? 'h3' : 'h4') as 'h2' | 'h3' | 'h4';
+        return (
+          <Tag
+            key={key}
+            id={anchor}
+            data-reader-anchor={anchor}
+            data-reader-block={blockKey}
+            className={`scroll-mt-3 font-bold text-ink ${
+              block.l === 2 ? 'mt-5 text-[22px]' : 'mt-4 text-[18px]'
+            }`}
+          >
+            <Inline text={block.x} marks={marks} onMark={openMark} />
+            {onJumpToEditor && /^do it yourself\b/i.test(inlinePlain(block.x)) && (
+              <button
+                type="button"
+                onClick={onJumpToEditor}
+                data-testid="btn-do-it-yourself"
+                title="Go straight to the code this section is asking you to write"
+                className="ml-2 align-middle text-[12px] font-mono font-normal text-accent underline decoration-dotted underline-offset-2 cursor-pointer"
+              >
+                Go to the editor ↓
+              </button>
+            )}
+          </Tag>
+        );
+      }
+      case 'p':
+        return (
+          <p key={key} data-reader-block={blockKey} className="text-[17px] leading-[1.7] text-body">
+            <Inline text={block.x} marks={marks} onMark={openMark} />
+          </p>
+        );
+      case 'ul':
+      case 'ol': {
+        // A bullet list is a list of things to do, so each item is a checkbox that remembers its
+        // tick (`lessonChecks.ts`). Ordered lists keep their numbers: a sequence has an order, and a
+        // checklist of steps is still read in that order.
+        if (block.t === 'ol') {
+          return (
+            <ol
+              key={key}
+              data-reader-block={blockKey}
+              className="list-decimal space-y-1 pl-5 text-[17px] leading-[1.65] text-body"
+            >
+              {block.items.map((item, itemIndex) => (
+                <li
+                  key={itemIndex}
+                  style={{ marginLeft: `${item.d * 16}px` }}
+                  className={item.d > 0 ? 'list-[circle]' : undefined}
+                >
+                  <Inline text={item.x} marks={marks} onMark={openMark} />
+                </li>
+              ))}
+            </ol>
+          );
+        }
+        return (
+          <ul
+            key={key}
+            data-testid="reader-checklist"
+            data-reader-block={blockKey}
+            className="list-none space-y-1.5 pl-0 text-[17px] leading-[1.65] text-body"
+          >
+            {block.items.map((item, itemIndex) => {
+              const itemKey = checkId(item.x);
+              const checked = itemKey !== '' && ticks.includes(itemKey);
+              return (
+                <li
+                  key={itemIndex}
+                  style={{ marginLeft: `${item.d * 16}px` }}
+                  className="flex items-start gap-2.5"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleItem(item.x)}
+                    aria-label={inlinePlain(item.x).slice(0, 140)}
+                    data-testid={`reader-check-${blockKey}-${itemIndex}`}
+                    data-check-key={itemKey}
+                    title="Tick this when you have done it. Saved on this device."
+                    className="mt-[0.32rem] h-4 w-4 shrink-0 cursor-pointer accent-[var(--accent)]"
+                  />
+                  <span
+                    className={
+                      checked ? 'text-faint line-through decoration-line-strong' : undefined
+                    }
+                  >
+                    <Inline text={item.x} marks={marks} onMark={openMark} />
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        );
+      }
+      case 'code':
+        return (
+          <div key={key} data-reader-block={blockKey}>
+            <CodeBlock block={block} marks={marks} onMark={openMark} />
+          </div>
+        );
+      case 'table':
+        return (
+          <div key={key} data-reader-block={blockKey}>
+            <TableBlock block={block} />
+          </div>
+        );
+      case 'quote':
+        return (
+          <blockquote
+            key={key}
+            data-reader-block={blockKey}
+            className="my-3 rounded-r-lg border-l-2 border-amber/70 bg-amber/5 py-2 pl-3 pr-2 text-[15.5px] leading-relaxed text-body"
+          >
+            <Inline text={block.x} marks={marks} onMark={openMark} />
+          </blockquote>
+        );
+      case 'math':
+        return (
+          <div key={key} data-reader-block={blockKey} className="my-3 overflow-x-auto">
+            <MathView math={block.tex} block />
+          </div>
+        );
+      case 'figure': {
+        const spec = sceneFor(block.id);
+        if (!spec) {
+          return (
+            <p
+              key={key}
+              data-testid="reader-figure-missing"
+              data-reader-block={blockKey}
+              className="my-3 rounded-lg border border-amber/40 bg-amber/5 px-3 py-2 text-[13px] text-body"
+            >
+              This build has no figure called <code className="font-mono text-ink">{block.id}</code>.
+              The page asks for one; the picture is missing rather than the paragraph that explains it.
+            </p>
+          );
+        }
+        return (
+          <div key={key} data-reader-block={blockKey}>
+            <Diagram
+              id={block.id}
+              live
+              spec={block.caption ? { ...spec, caption: block.caption } : spec}
+            />
+          </div>
+        );
+      }
+      case 'route':
+        return (
+          <div key={key} data-reader-block={blockKey}>
+            <Diagram
+              id="route"
+              live
+              spec={{
+                kind: 'route',
+                title: 'Where this lesson goes',
+                caption: block.caption ?? ROUTE_CAPTION,
+                steps: block.steps,
+              }}
+            />
+          </div>
+        );
+      case 'graph':
+        return (
+          <div key={key} data-reader-block={blockKey}>
+            <Diagram
+              id="graph"
+              live
+              spec={{
+                kind: 'graph',
+                title: 'How this page fits together',
+                caption: block.caption ?? '',
+                direction: block.direction,
+                nodes: block.nodes.map((node) => ({ id: node.id, label: node.label })),
+                edges: block.edges,
+              }}
+            />
+          </div>
+        );
+      case 'img':
+        return (
+          <p key={key} data-reader-block={blockKey} className="my-3 text-[13px] text-muted">
+            Figure: {block.alt || 'image'} —{' '}
+            <a
+              href={repoUrl(block.src)}
+              target="_blank"
+              rel="noreferrer"
+              className="text-accent underline underline-offset-2"
+            >
+              open the source ↗
+            </a>
+          </p>
+        );
+      case 'reveal':
+        return (
+          <details
+            key={key}
+            data-testid="reader-reveal"
+            data-reader-block={blockKey}
+            className="group my-3 overflow-hidden rounded-lg border border-line-soft bg-canvas"
+          >
+            <summary
+              data-testid="reader-reveal-label"
+              className="flex cursor-pointer list-none items-center gap-1.5 px-3 py-2 text-[13px] font-mono text-muted hover:text-ink [&::-webkit-details-marker]:hidden"
+            >
+              <ChevronRight
+                className="h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-90"
+                aria-hidden="true"
+              />
+              <span className="min-w-0 truncate">
+                <Inline text={block.label} />
+              </span>
+              {/* Decoration, not the toggle's name: a screen reader should hear "Full Solution",
+                  not "Full Solution press to open" as if the two were one label. */}
+              <span aria-hidden="true" className="ml-auto shrink-0 text-[11px] text-faint">
+                press to open
+              </span>
+            </summary>
+            <div className="space-y-3 border-t border-line-soft px-3 py-3">
+              {block.blocks.map((child, childIndex) =>
+                renderBlock(child, `${blockKey}.${childIndex}`)
+              )}
+            </div>
+          </details>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <section
       data-testid="lesson-reader"
@@ -440,12 +953,7 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
           {selection && (
             <button
               type="button"
-              onClick={() => {
-                setStickyEditing(false);
-                setStickyText('');
-                setStickyQuote(selection);
-                setStickyOpen(true);
-              }}
+              onClick={(event) => openStickyOnSelection(event.currentTarget)}
               data-testid="btn-sticky"
               title="Write a note on the selected passage — it comes back as a review card"
               className="flex items-center gap-1 rounded border border-amber/50 bg-amber/10 px-2 py-1 text-[13px] font-mono text-amber hover:bg-amber/20 cursor-pointer"
@@ -466,6 +974,16 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
           )}
           <button
             type="button"
+            onClick={() => setSplitTip((open) => !open)}
+            aria-expanded={splitTip}
+            data-testid="btn-split-tip"
+            title="Study tip: put this page beside the editor in split view, so the code and the explanation stay in sight together"
+            className="flex items-center gap-1 rounded border border-line-soft bg-canvas px-2 py-1 text-[13px] font-mono text-muted hover:text-ink cursor-pointer"
+          >
+            <PanelsTopLeft className="h-3 w-3" /> Split view
+          </button>
+          <button
+            type="button"
             onClick={scrollToTop}
             data-testid="btn-reader-top"
             title="Back to the top of the lesson text"
@@ -478,6 +996,33 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
       </div>
 
       {panel}
+
+      {splitTip && (
+        <p
+          data-testid="reader-split-tip"
+          className="border-b border-line-soft bg-canvas px-3 py-1.5 text-[12px] leading-snug text-muted"
+        >
+          Study tip: on a wide window, put this page beside the editor — the{' '}
+          <span className="font-mono text-body">Study</span> preset does it, and dragging two windows
+          side by side works too — so the code and the explanation stay in sight together.
+          {onJumpToEditor && (
+            <>
+              {' '}
+              No room to split?{' '}
+              <button
+                type="button"
+                onClick={onJumpToEditor}
+                data-testid="btn-split-tip-jump"
+                className="font-mono text-accent underline underline-offset-2 cursor-pointer"
+              >
+                Jump to the editor ↓
+              </button>
+              {' '}
+              — the text keeps its place when you come back.
+            </>
+          )}
+        </p>
+      )}
 
       {status && (
         <p
@@ -536,184 +1081,7 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
             data-testid="reader-prose"
             className={tall ? 'mx-auto max-w-[68ch] space-y-3' : 'space-y-3'}
           >
-            {page.blocks.map((block, index) => {
-              switch (block.t) {
-                case 'h': {
-                  const anchor = anchors[index] ?? '';
-                  const Tag = (block.l === 2 ? 'h2' : block.l === 3 ? 'h3' : 'h4') as
-                    | 'h2'
-                    | 'h3'
-                    | 'h4';
-                  return (
-                    <Tag
-                      key={index}
-                      id={anchor}
-                      data-reader-anchor={anchor}
-                      className={`scroll-mt-3 font-bold text-ink ${
-                        block.l === 2 ? 'mt-5 text-[22px]' : 'mt-4 text-[18px]'
-                      }`}
-                    >
-                      <Inline text={block.x} marks={marks} onMark={openMark} />
-                    </Tag>
-                  );
-                }
-                case 'p':
-                  return (
-                    <p key={index} className="text-[17px] leading-[1.7] text-body">
-                      <Inline text={block.x} marks={marks} onMark={openMark} />
-                    </p>
-                  );
-                case 'ul':
-                case 'ol': {
-                  // A bullet list is a list of things to do, so each item is a checkbox that
-                  // remembers its tick (`lessonChecks.ts`). Ordered lists keep their numbers: a
-                  // sequence has an order, and a checklist of steps is still read in that order.
-                  if (block.t === 'ol') {
-                    return (
-                      <ol
-                        key={index}
-                        className="list-decimal space-y-1 pl-5 text-[17px] leading-[1.65] text-body"
-                      >
-                        {block.items.map((item, itemIndex) => (
-                          <li
-                            key={itemIndex}
-                            style={{ marginLeft: `${item.d * 16}px` }}
-                            className={item.d > 0 ? 'list-[circle]' : undefined}
-                          >
-                            <Inline text={item.x} marks={marks} onMark={openMark} />
-                          </li>
-                        ))}
-                      </ol>
-                    );
-                  }
-                  return (
-                    <ul
-                      key={index}
-                      data-testid="reader-checklist"
-                      className="list-none space-y-1.5 pl-0 text-[17px] leading-[1.65] text-body"
-                    >
-                      {block.items.map((item, itemIndex) => {
-                        const key = checkId(item.x);
-                        const checked = key !== '' && ticks.includes(key);
-                        return (
-                          <li
-                            key={itemIndex}
-                            style={{ marginLeft: `${item.d * 16}px` }}
-                            className="flex items-start gap-2.5"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => toggleItem(item.x)}
-                              aria-label={inlinePlain(item.x).slice(0, 140)}
-                              data-testid={`reader-check-${index}-${itemIndex}`}
-                              data-check-key={key}
-                              title="Tick this when you have done it. Saved on this device."
-                              className="mt-[0.32rem] h-4 w-4 shrink-0 cursor-pointer accent-[var(--accent)]"
-                            />
-                            <span
-                              className={
-                                checked ? 'text-faint line-through decoration-line-strong' : undefined
-                              }
-                            >
-                              <Inline text={item.x} marks={marks} onMark={openMark} />
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  );
-                }
-                case 'code':
-                  return <CodeBlock key={index} block={block} />;
-                case 'table':
-                  return <TableBlock key={index} block={block} />;
-                case 'quote':
-                  return (
-                    <blockquote
-                      key={index}
-                      className="my-3 rounded-r-lg border-l-2 border-amber/70 bg-amber/5 py-2 pl-3 pr-2 text-[15.5px] leading-relaxed text-body"
-                    >
-                      <Inline text={block.x} marks={marks} onMark={openMark} />
-                    </blockquote>
-                  );
-                case 'math':
-                  return (
-                    <div key={index} className="my-3 overflow-x-auto">
-                      <MathView math={block.tex} block />
-                    </div>
-                  );
-                case 'figure': {
-                  const spec = sceneFor(block.id);
-                  if (!spec) {
-                    return (
-                      <p
-                        key={index}
-                        data-testid="reader-figure-missing"
-                        className="my-3 rounded-lg border border-amber/40 bg-amber/5 px-3 py-2 text-[13px] text-body"
-                      >
-                        This build has no figure called <code className="font-mono text-ink">{block.id}</code>.
-                        The page asks for one; the picture is missing rather than the paragraph that explains it.
-                      </p>
-                    );
-                  }
-                  return (
-                    <Diagram
-                      key={index}
-                      id={block.id}
-                      live
-                      spec={block.caption ? { ...spec, caption: block.caption } : spec}
-                    />
-                  );
-                }
-                case 'route':
-                  return (
-                    <Diagram
-                      key={index}
-                      id="route"
-                      live
-                      spec={{
-                        kind: 'route',
-                        title: 'Where this lesson goes',
-                        caption: block.caption ?? ROUTE_CAPTION,
-                        steps: block.steps,
-                      }}
-                    />
-                  );
-                case 'graph':
-                  return (
-                    <Diagram
-                      key={index}
-                      id="graph"
-                      live
-                      spec={{
-                        kind: 'graph',
-                        title: 'How this page fits together',
-                        caption: block.caption ?? '',
-                        direction: block.direction,
-                        nodes: block.nodes.map((node) => ({ id: node.id, label: node.label })),
-                        edges: block.edges,
-                      }}
-                    />
-                  );
-                case 'img':
-                  return (
-                    <p key={index} className="my-3 text-[13px] text-muted">
-                      Figure: {block.alt || 'image'} —{' '}
-                      <a
-                        href={repoUrl(block.src)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-accent underline underline-offset-2"
-                      >
-                        open the source ↗
-                      </a>
-                    </p>
-                  );
-                default:
-                  return null;
-              }
-            })}
+            {page.blocks.map((block, index) => renderBlock(block, `b${index}`))}
           </article>
         )}
       </div>
@@ -735,24 +1103,46 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
         </a>
       </div>
 
-      {/* A portal to <body>: the pane is an overflow-hidden card in a scrolling runner, and a popup
-          mounted inside it would be clipped by the very box it is about. */}
+      {/* A portal to <body>: the pane is an overflow-hidden card in a scrolling runner, and a popover
+          mounted inside it would be clipped by the very box it is about. It is placed against the
+          passage's own rect (the effect above), not centred in the window - and it is not modal, so
+          the page behind it stays readable while the note is written. */}
       {stickyOpen &&
         typeof document !== 'undefined' &&
         createPortal(
           <div
-            className="fixed inset-0 z-[60] flex items-end justify-center p-3 sm:items-center"
-            style={{ backgroundColor: 'color-mix(in srgb, #04060a 62%, transparent)' }}
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) closeSticky();
+            data-testid="sticky-note-anchor-box"
+            className="fixed z-[60]"
+            style={{
+              top: stickyPlacement?.top ?? 0,
+              left: stickyPlacement?.left ?? 0,
+              width: stickyPlacement?.width ?? STICKY_MAX_WIDTH,
+              // The first layout pass only measures the card. Painting it at the top-left corner and
+              // then jumping into place is worse than not painting it for that one frame.
+              visibility: stickyPlacement ? 'visible' : 'hidden',
             }}
           >
+            {stickyPlacement && (
+              <span
+                aria-hidden="true"
+                data-testid="sticky-note-caret"
+                className="pointer-events-none absolute h-2.5 w-2.5 rotate-45 border bg-panel"
+                style={{
+                  left: stickyPlacement.caret - 5,
+                  borderColor: 'var(--border-strong)',
+                  ...(stickyPlacement.side === 'above'
+                    ? { bottom: -5, borderTop: 'none', borderLeft: 'none' }
+                    : { top: -5, borderBottom: 'none', borderRight: 'none' }),
+                }}
+              />
+            )}
             <div
+              ref={stickyCardRef}
               role="dialog"
-              aria-modal="true"
               aria-labelledby="sticky-note-title"
               data-testid="sticky-note-popup"
-              className="w-full max-w-[26rem] rounded-xl border bg-panel shadow-2xl"
+              data-anchor-side={stickyPlacement?.side ?? 'below'}
+              className="max-h-[min(70vh,34rem)] w-full overflow-y-auto rounded-xl border bg-panel shadow-2xl"
               style={{ borderColor: 'var(--border-strong)' }}
               onKeyDown={(event) => {
                 if (event.key === 'Escape') {

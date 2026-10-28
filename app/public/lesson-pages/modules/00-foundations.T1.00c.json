@@ -1,4 +1,4 @@
-{"v":4,"path":"modules/00-foundations.T1.00c.md","title":"SI Units, Engineering Prefixes & Dimensional Analysis","blocks":[
+{"v":5,"path":"modules/00-foundations.T1.00c.md","title":"SI Units, Engineering Prefixes & Dimensional Analysis","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"Real motors and power stages fail violently when units are mixed up: plugging a $1\\text{ ms}$ sample period into a derivative formula as `dt = 1` instead of `dt = 0.001` multiplies motor torque commands by $1,000\\times$, and confusing RPM with radians per second ruins back-EMF calculations. Dimensional analysis lets you catch wrong equations before running code by checking that units cancel cleanly on both sides of `=`. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},

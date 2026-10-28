@@ -277,9 +277,11 @@ Markdown page — the file the repository ships, not a second copy in TypeScript
 [`app/public/lesson-pages/`](public/lesson-pages): h2–h4 headings with GitHub's anchors, paragraphs,
 nested lists, tables, fenced code, the safety-note blockquotes, display maths and images. It deliberately
 leaves out the generated callouts ("Run this in the workbench" is a link to where the learner is already
-standing), the ladder-gate exam (one paper reprinted on every page of a ladder) and the **Full
-Solution** — Load Solution keeps the answer behind one door, and a reading pane that printed it would
-open the same door quietly. Mermaid is not copied either, but a single-chain `flowchart` is *drawn*: the
+standing) and the ladder-gate exam (one paper reprinted on every page of a ladder). The page's own
+`<details>` — every hint, every `Check yourself` answer and the **Full Solution** — becomes a `reveal`
+block: the label is the toggle and the blocks behind it stay closed until the reader presses it, which is
+the collapse GitHub already gives the page instead of a solution printed on the way past the question.
+Mermaid is not copied either, but a single-chain `flowchart` is *drawn*: the
 generator parses it into a `route` block and the reader lays it out as numbered steps, which is how 82
 of the 92 pages show the map they already wrote. A flowchart that branches stays in the Markdown untold
 rather than being redrawn as a line. Inline emphasis,
@@ -294,11 +296,17 @@ payload from a newer build is refused by version.
 
 **Where you stopped is remembered per lesson.** [`src/readingPosition.ts`](src/readingPosition.ts) stores
 the heading at the top of the pane plus the pixel offset, so a page regenerated after a sentence changed
-still lands on its heading. It lives in `localStorage` and is deliberately **not** a draft: opening a
+still lands on its heading. It also stores the block at the top and the distance into it, which is what
+holds the reader's place when a split-view drag reflows the column under them: an offset means nothing
+after a reflow, a block does. It lives in `localStorage` and is deliberately **not** a draft: opening a
 lesson must not make the list call it edited, and clearing a draft must not send the reader back to the
 top. The pane's **Highlight** button pins the selection to the lesson's notes, so *pin selected text*
-means the lesson rather than the brief. GitHub is demoted to a **View source** link in the footer, where
-it belongs: copying, printing, filing an issue — not the reading copy.
+means the lesson rather than the brief — and it works inside a fenced code block too, where the mark is
+drawn on the code itself (`lessonMarks.ts` compares words, so a multi-line snippet survives the quote's
+collapsed whitespace). The header's **Split view** chip is the study tip — put the page beside the
+code, and **Go to the editor ↓** (under *Do it yourself*) scrolls the stacked layout's code into
+view when there is no room for two columns. GitHub is demoted to a **View source** link in the footer,
+where it belongs: copying, printing, filing an issue — not the reading copy.
 
 `npm run test:reader` pins the inline parser, the payload guard and the position store;
 `python3 scripts/generate_lesson_pages.py --check` is the drift gate (a page edited without its payload
@@ -427,7 +435,12 @@ pressing it reopens the note in place, prefilled, and Save updates that highligh
 second one for the same passage. The note editor stores Markdown — `**bold**`, `*italic*`, and
 `++underline++` for the mark Markdown does not have — so the toolbar's Bold, Italic and Underline act on
 the selection, `⌘B` / `⌘I` / `⌘U` (Ctrl on Linux and Windows) do the same from the keyboard, and a live
-preview under the box shows what the note will read as. The same renderer draws a review card's answer
+preview under the box shows what the note will read as. The editor is a **popover beside the words**, not
+a window: it hangs under the passage it is about, and flips above it when the passage is close to the
+bottom of the window and there is more room there, the way a tooltip does. It dims nothing and owns no
+backdrop, so the lesson stays readable while the note is written; a press anywhere else closes it, and a
+passage near an edge pulls the card back inside the window instead of pushing it off. The same renderer
+draws a review card's answer
 ([`src/components/InlineMarkdown.tsx`](src/components/InlineMarkdown.tsx)), so a formatted note is not
 asterisks on the day it comes back. A quote that spans two inline runs (half a sentence in bold) is not
 marked rather than marked wrongly; it is still in Notes. `npm run test:reader` pins the mark split and

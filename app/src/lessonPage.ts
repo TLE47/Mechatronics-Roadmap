@@ -27,8 +27,12 @@
  * Bumped to 4 when `graph` blocks arrived: a branching flowchart is now drawn as the graph it is,
  * not dropped for being un-chainable. A version 3 payload has no graphs, and a page whose graphs
  * were dropped looks the same as one that never had a branching map.
+ *
+ * Bumped to 5 when `reveal` blocks arrived: the page's own `<details>` (every hint, every answer and
+ * the full solution) became a label plus the blocks behind it, instead of being flattened into the
+ * prose where a scrolling reader met the solution before the question.
  */
-export const LESSON_PAGE_VERSION = 4;
+export const LESSON_PAGE_VERSION = 5;
 
 export type ReaderCodeLanguage = string;
 
@@ -37,6 +41,12 @@ export type ReaderBlock =
   | { t: 'p'; x: string }
   | { t: 'ul' | 'ol'; items: { x: string; d: number }[] }
   | { t: 'code'; lang: ReaderCodeLanguage; text: string }
+  /**
+   * The page's own `<details>`: a label and the blocks that stay closed until it is pressed. Hints,
+   * the answers under `Check yourself`, and the full solution all arrive this way, because a reader
+   * who scrolls past an open solution has been given the answer without asking for it.
+   */
+  | { t: 'reveal'; label: string; blocks: ReaderBlock[] }
   | { t: 'table'; head: string[]; rows: string[][] }
   | { t: 'quote'; x: string }
   | { t: 'math'; tex: string }
@@ -77,10 +87,23 @@ function isText(value: unknown): value is string {
   return typeof value === 'string';
 }
 
-function isBlock(value: unknown): value is ReaderBlock {
+function isBlock(value: unknown, depth = 0): value is ReaderBlock {
   if (!value || typeof value !== 'object') return false;
   const block = value as Record<string, unknown>;
   switch (block.t) {
+    case 'reveal':
+      return (
+        // A payload is data from the network: a reveal inside a reveal inside a reveal is not a page,
+        // and the validator is not the place to find out how deep the renderer can recurse.
+        depth < 3 &&
+        isText(block.label) &&
+        block.label.trim().length > 0 &&
+        block.label.length <= 200 &&
+        Array.isArray(block.blocks) &&
+        block.blocks.length > 0 &&
+        block.blocks.length <= 60 &&
+        block.blocks.every((child) => isBlock(child, depth + 1))
+      );
     case 'h':
       return Number.isInteger(block.l) && Number(block.l) >= 1 && Number(block.l) <= 6 && isText(block.x);
     case 'p':
@@ -154,7 +177,8 @@ export function isLessonPage(value: unknown): value is LessonPage {
     isText(page.path) &&
     isText(page.title) &&
     Array.isArray(page.blocks) &&
-    page.blocks.every(isBlock)
+    // Not `every(isBlock)`: that hands the index over as the nesting depth.
+    page.blocks.every((block) => isBlock(block, 0))
   );
 }
 

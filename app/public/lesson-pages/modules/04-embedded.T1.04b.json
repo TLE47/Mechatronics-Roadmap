@@ -1,4 +1,4 @@
-{"v":4,"path":"modules/04-embedded.T1.04b.md","title":"Non-Blocking millis()/micros() State Machines, Hardware Interrupts (ISRs) & volatile","blocks":[
+{"v":5,"path":"modules/04-embedded.T1.04b.md","title":"Non-Blocking millis()/micros() State Machines, Hardware Interrupts (ISRs) & volatile","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"This is the final bridge module in the Track 04 Tier 1 ladder before Step 1.5 (`04-embedded.T1.05`). Calling `delay(100)` freezes the CPU for $100\\text{ ms}$—during that time your robot is blind to encoder pulses, limit switches, and PID loops. Replacing `delay()` with a non-blocking tick scheduler (`now_us - last_us >= PERIOD_US`), an `enum` finite state machine, and a hardware timer **Interrupt Service Routine (ISR)** with `volatile` shared variables gives your robot deterministic $1\\text{ kHz}$ reflexes. Already know this? Take the Skip test or the Ladder Gate test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},

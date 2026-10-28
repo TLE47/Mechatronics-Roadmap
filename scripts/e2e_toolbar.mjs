@@ -22,7 +22,6 @@ export const FOLDED_TOOLBAR = new Set([
   'btn-diff',
   'btn-share-attempt',
   'btn-pair-open',
-  'btn-predict',
   'btn-vim',
   'btn-watch',
 ]);

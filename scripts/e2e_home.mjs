@@ -378,9 +378,15 @@ async function main() {
         '  ok the route marker, the workflow states, the cursor, the wave, the loop, the labs, the stats, the closing panel and the nav are live'
       );
 
-      // The OS setting is the default, not a verdict: a reader whose machine asks for less motion
-      // gets a still page, and the Play control in the header (and on the section row) is the way
-      // out. A fresh context has never chosen, which is exactly this case.
+      // A first visit is on: this context has never chosen, so the page opens on its drawings.
+      assert.equal(
+        await page.getByTestId('intro-page').getAttribute('data-motion'),
+        'on',
+        'a reader who has never chosen must open on moving figures'
+      );
+
+      // ...unless the OS already asks for less motion. That is a standing request for stillness and a
+      // first visit respects it; the header's switch overrides it in one press, from any screen.
       const quiet = await browser.newContext({
         viewport: { width: 1280, height: 900 },
         reducedMotion: 'reduce',
@@ -393,22 +399,25 @@ async function main() {
       assert.equal(
         await stillPage.getByTestId('intro-page').getAttribute('data-motion'),
         'off',
-        'a reader who never chose, on a machine set to reduce motion, must get a still page'
+        'a reader whose OS asks for less motion must get a still page until they choose otherwise'
       );
       assert.equal(
-        await stillPage.locator('[data-intro-packet], [data-intro-tracer], .intro-step').count(),
+        await stillPage.locator('[data-intro-packet], [data-intro-tracer]').count(),
         0,
-        'a still page must not start any frame loops or annotate any figure'
+        'a still page must not script motion it then has to hide'
       );
-      // The header's switch, not only the page's: choosing motion is one press from any screen.
       const headerMotion = stillPage.getByTestId('btn-motion-toggle');
-      assert.equal(await headerMotion.getAttribute('aria-pressed'), 'false', 'the header must show the OS default answer');
+      assert.equal(
+        await headerMotion.getAttribute('aria-pressed'),
+        'false',
+        'the header must report the still default it is showing'
+      );
       await headerMotion.click();
-      await stillPage.waitForTimeout(700);
+      await stillPage.waitForTimeout(450);
       assert.equal(
         await stillPage.getByTestId('intro-page').getAttribute('data-motion'),
         'on',
-        "choosing motion in the header must play the introduction's own figures"
+        'choosing motion on must override the OS preference'
       );
       const playing = await stillPage.evaluate(() =>
         [...document.querySelectorAll('[data-testid^="intro-figure-"]')].filter(
@@ -416,14 +425,12 @@ async function main() {
         ).length
       );
       assert.equal(playing, 6, `every one of the six figures must carry a motion source once chosen (${playing} did)`);
-      // One press stills the page again — the CSS loops and the scripted packets alike — and the
-      // choice is remembered, so the next visit does not undo a deliberate pause.
-      await stillPage.locator('.intro-nav-chip[aria-pressed]').click();
+      await headerMotion.click();
       await stillPage.waitForTimeout(350);
       assert.equal(
         await stillPage.getByTestId('intro-page').getAttribute('data-motion'),
         'off',
-        'the play/pause control must still the page'
+        'the header switch must still the page'
       );
       assert.equal(
         await stillPage.locator('[data-intro-packet], [data-intro-tracer]').count(),
@@ -434,6 +441,7 @@ async function main() {
         getComputedStyle(document.querySelector('.intro-loop-step')).animationName
       );
       assert.equal(pausedChrome, 'none', 'a paused page must stop its CSS loops too');
+      // The choice is remembered, so the next visit does not undo a deliberate pause.
       await stillPage.reload({ waitUntil: 'domcontentloaded' });
       await stillPage.getByTestId('intro-page').waitFor({ timeout: 30000 });
       assert.equal(
@@ -441,8 +449,13 @@ async function main() {
         'off',
         'a pause must survive the reload, or the control is a one-visit gimmick'
       );
+      assert.equal(
+        await stillPage.getByTestId('btn-motion-toggle').getAttribute('aria-pressed'),
+        'false',
+        'the header must still report the remembered pause after a reload'
+      );
       await quiet.close();
-      console.log('  ok motion follows the OS until chosen, then a press stills it and the pause is remembered');
+      console.log('  ok motion opens on by default, a reduce-motion reader starts still, and a press is remembered');
 
       // A reload is still the introduction: an explicit view is the learner's choice, not a guess.
       await page.reload({ waitUntil: 'domcontentloaded' });
@@ -726,6 +739,321 @@ async function main() {
       );
       await page.getByTestId('btn-sticky-cancel').click();
       console.log('  ok the checklist tick and the formatted note both survive a reload');
+    }
+
+    // ---- 7e. The note opens beside the words, above or below whichever has the room ----
+    {
+      const original = page.viewportSize() ?? { width: 1280, height: 900 };
+      const pane = page.getByTestId('reader-scroll');
+
+      /** Select a passage, and report where its words are, in viewport coordinates. */
+      const selectPassage = async (where) =>
+        pane.evaluate((element, placement) => {
+          const prose = element.querySelector('[data-testid="reader-prose"]');
+          if (!prose) return null;
+          const paneBox = element.getBoundingClientRect();
+          const walker = document.createTreeWalker(prose, NodeFilter.SHOW_TEXT);
+          let chosen = null;
+          while (walker.nextNode()) {
+            const node = walker.currentNode;
+            const value = node.textContent ?? '';
+            if (value.trim().length < 80) continue;
+            if (node.parentElement?.closest('a, code, pre, [data-testid="sticky-mark"]')) continue;
+            const probe = document.createRange();
+            probe.setStart(node, 0);
+            probe.setEnd(node, Math.min(value.length, 8));
+            const box = probe.getBoundingClientRect();
+            if (box.height === 0 || box.bottom < paneBox.top || box.top > paneBox.bottom) continue;
+            // Both passes look only at text the pane is showing; one takes the last such line, the
+            // other the first, so `where` picks the edge of the pane rather than a fixed paragraph.
+            if (!chosen || (placement === 'bottom' ? box.bottom > chosen.box.bottom : box.top < chosen.box.top)) {
+              chosen = { node, box };
+            }
+          }
+          if (!chosen) return null;
+          const value = chosen.node.textContent ?? '';
+          const lead = value.length - value.trimStart().length;
+          const range = document.createRange();
+          range.setStart(chosen.node, lead);
+          range.setEnd(chosen.node, Math.min(value.length, lead + 48));
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+          document.dispatchEvent(new Event('selectionchange'));
+          const rect = range.getBoundingClientRect();
+          return {
+            text: selection?.toString() ?? '',
+            top: rect.top,
+            bottom: rect.bottom,
+            left: rect.left,
+            right: rect.right,
+          };
+        }, where);
+
+      /** Open the note on a passage at one edge of the pane, and report where everything landed. */
+      const openOn = async (placement) => {
+        await pane.evaluate((element, where) => {
+          element.scrollTop = where === 'bottom' ? element.scrollHeight : 0;
+        }, placement);
+        await page.waitForTimeout(400);
+        // For the bottom case, put the pane's own bottom edge near the window's, which is what makes the
+        // last visible line a passage with no room under it. The page scrolls, not the pane.
+        if (placement === 'bottom') {
+          await page.evaluate(() => {
+            const element = document.querySelector('[data-testid="reader-scroll"]');
+            if (!element) return;
+            const box = element.getBoundingClientRect();
+            window.scrollBy(0, box.bottom - window.innerHeight + 40);
+          });
+          await page.waitForTimeout(400);
+        }
+        const passage = await selectPassage(placement);
+        assert.ok(
+          passage && passage.text.trim().length > 20,
+          `the ${placement} of the pane must have a passage to select`
+        );
+        await page.getByTestId('btn-sticky').click();
+        const popup = page.getByTestId('sticky-note-popup');
+        await popup.waitFor({ timeout: 10000 });
+        // Pressing the button is allowed to scroll the pane (the toolbar has to be in view), so the
+        // passage is measured again *now*: the popover is placed against where the words are after
+        // that scroll, and a comparison with the box from before it would be a different passage.
+        const words = await page.evaluate((quote) => {
+          const pane = document.querySelector('[data-testid="reader-scroll"]');
+          if (!pane) return null;
+          const needle = quote.trim().slice(0, 24);
+          const walker = document.createTreeWalker(pane, NodeFilter.SHOW_TEXT);
+          while (walker.nextNode()) {
+            const node = walker.currentNode;
+            const value = node.textContent ?? '';
+            const at = value.indexOf(needle);
+            if (at === -1) continue;
+            const range = document.createRange();
+            range.setStart(node, at);
+            range.setEnd(node, Math.min(value.length, at + quote.trim().length));
+            const box = range.getBoundingClientRect();
+            if (!box.width && !box.height) continue;
+            return { top: box.top, bottom: box.bottom, left: box.left, right: box.right };
+          }
+          return null;
+        }, passage.text);
+        return {
+          passage: { ...passage, ...(words ?? {}) },
+          popup,
+          box: await popup.boundingBox(),
+          side: await popup.getAttribute('data-anchor-side'),
+        };
+      };
+
+      /** The card must sit clear of the words - above or below, never over them. */
+      const clearance = ({ box, passage, side }) => {
+        assert.ok(box, 'the note must have a measured box once it is placed');
+        const above = box.y + box.height <= passage.top + 1;
+        const below = box.y >= passage.bottom - 1;
+        assert.ok(
+          above || below,
+          `the note must sit clear of the words, above or below them (card ${Math.round(
+            box.y
+          )}..${Math.round(box.y + box.height)}, words ${Math.round(passage.top)}..${Math.round(
+            passage.bottom
+          )})`
+        );
+        assert.equal(
+          side,
+          above ? 'above' : 'below',
+          'the side the note reports must be the side it was actually placed on'
+        );
+        assert.ok(
+          box.x < passage.right && box.x + box.width > passage.left,
+          'the note must hang over the words it is about, not off in a corner'
+        );
+        assert.ok(
+          box.width <= 417,
+          `the note is a popover, so it must not stretch past its own width (it is ${Math.round(
+            box.width
+          )}px)`
+        );
+        return { above, below };
+      };
+
+      // At the top of the pane there is room underneath: the card goes below the words.
+      const atTop = await openOn('top');
+      const topClear = clearance(atTop);
+      assert.equal(
+        atTop.side,
+        'below',
+        'a passage with room underneath must open its note below the words'
+      );
+      // A window would dim or cover the page behind it; a popover must not.
+      const covered = await page.evaluate(() =>
+        [...document.querySelectorAll('body *')].some((element) => {
+          const style = getComputedStyle(element);
+          if (style.position !== 'fixed' || style.visibility === 'hidden' || style.opacity === '0') {
+            return false;
+          }
+          const box = element.getBoundingClientRect();
+          return box.width >= window.innerWidth * 0.9 && box.height >= window.innerHeight * 0.9;
+        })
+      );
+      assert.equal(covered, false, 'an open note must not put a full-window overlay over the lesson');
+      // A press anywhere else closes it, because it is not modal and owns no backdrop.
+      await page.getByTestId('lesson-reader').getByText('Lesson text', { exact: true }).click();
+      assert.equal(
+        await page.getByTestId('sticky-note-popup').count(),
+        0,
+        'a press outside the card must close it, the way a popover does'
+      );
+      console.log(
+        `  ok a passage with room opens its note below the words (${Math.round(
+          atTop.box.y
+        )}px against words ending ${Math.round(atTop.passage.bottom)}px), with no overlay`
+      );
+
+      // At the pane's bottom edge there is no room underneath: the card goes above the words instead.
+      const atEdge = await openOn('bottom');
+      const edgeClear = clearance(atEdge);
+      assert.equal(
+        atEdge.side,
+        'above',
+        `a passage at the bottom edge must open its note above the words, not over them (words at ${Math.round(
+          atEdge.passage.bottom
+        )}px of a ${original.height}px window)`
+      );
+      await page.getByTestId('btn-sticky-cancel').click();
+      await page.setViewportSize(original);
+      assert.ok(topClear.below && edgeClear.above, 'both placements must have cleared the words');
+      console.log(
+        `  ok a passage at the bottom edge opens its note above the words (card ends ${Math.round(
+          atEdge.box.y + atEdge.box.height
+        )}px, words start ${Math.round(atEdge.passage.top)}px)`
+      );
+    }
+
+    // ---- 7f. A hint stays closed, and code can carry a highlight ----
+    {
+      // P.1 is the page the checklist bug was reported on, and it has both a hint ladder and the
+      // full solution written as `<details>` in its own Markdown.
+      await page.goto(`${baseUrl}?lesson=P.1`, { waitUntil: 'domcontentloaded' });
+      await waitForEditor(page, undefined, 30000);
+      await page.getByTestId('reader-scroll').waitFor({ timeout: 30000 });
+      await page.waitForTimeout(600);
+
+      // Every checkbox id is the id the store keeps: a trailing space would come back trimmed and
+      // the box could never tick (`lessonChecks.ts`).
+      const keys = await page
+        .locator('[data-testid^="reader-check-"]')
+        .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-check-key') ?? ''));
+      assert.ok(keys.length > 0, 'P.1 must still draw its bullets as checkboxes');
+      assert.equal(
+        keys.filter((key) => key !== key.trimEnd()).length,
+        0,
+        'a checkbox identity must be clean, or the tick it stores cannot be read back'
+      );
+
+      const reveals = page.getByTestId('reader-reveal');
+      const revealCount = await reveals.count();
+      assert.ok(revealCount >= 3, 'the hint ladder, the solution and the answers are all reveals');
+      const solution = reveals.filter({ hasText: 'Full Solution' }).first();
+      assert.equal(
+        await solution.evaluate((node) => node.open),
+        false,
+        'the full solution must start closed rather than print itself in the prose'
+      );
+      const code = solution.locator('code');
+      assert.equal(await code.isVisible().catch(() => false), false, 'a closed solution shows no code');
+      await solution.locator('summary').click();
+      assert.equal(
+        await code.isVisible().catch(() => false),
+        true,
+        'a press on the label must open the solution it names'
+      );
+      await solution.locator('summary').click();
+      console.log(`  ok ${revealCount} hints and answers arrive closed; the solution opens on a press`);
+
+      // A highlight inside a code block is drawn on the code, not only listed in Notes.
+      const pre = page.getByTestId('reader-prose').locator('pre').first();
+      const picked = await pre.evaluate((element) => {
+        const node = element.querySelector('code')?.firstChild;
+        if (!node) return '';
+        const text = node.textContent ?? '';
+        const start = text.search(/\S/);
+        if (start < 0) return '';
+        const range = document.createRange();
+        range.setStart(node, start);
+        range.setEnd(node, Math.min(text.length, start + 24));
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        document.dispatchEvent(new Event('selectionchange'));
+        return selection?.toString() ?? '';
+      });
+      assert.ok(picked.trim().length > 3, 'the page must have a line of code to select');
+      await page.getByTestId('btn-highlight').click();
+      await page.waitForTimeout(250);
+      const inCode = pre.locator('[data-testid="sticky-mark"]');
+      assert.ok(
+        (await inCode.count()) >= 1,
+        'a highlight taken inside a code block must be drawn there, not only stored in Notes'
+      );
+      await inCode.first().click();
+      await page.getByTestId('sticky-note-popup').waitFor({ timeout: 10000 });
+      await page.getByTestId('btn-sticky-cancel').click();
+      console.log('  ok a highlight inside a code block is drawn there and reopens its note');
+
+      // The split-view tip, and the way to the editor when the layout has no room for two columns.
+      await page.getByTestId('btn-split-tip').click();
+      const tip = page.getByTestId('reader-split-tip');
+      await tip.waitFor({ timeout: 10000 });
+      assert.ok(/Study tip/.test((await tip.textContent()) ?? ''), 'the tip must say what it is for');
+      assert.equal(
+        await page.getByTestId('btn-do-it-yourself').count(),
+        1,
+        'the Do it yourself heading must offer the jump to the editor'
+      );
+      console.log('  ok the header offers the split-view tip, and Do it yourself jumps to the editor');
+
+      // A split-view resize holds the block the reader is on at the top of the pane.
+      const held = await page.getByTestId('reader-scroll').evaluate((element) => {
+        element.scrollTop = 1200;
+        const nodes = [...element.querySelectorAll('[data-reader-block]')].filter(
+          (node) => node.getClientRects().length > 0
+        );
+        const hit = nodes.filter((node) => node.offsetTop <= element.scrollTop + 8).pop();
+        return { key: hit?.dataset.readerBlock ?? '', into: element.scrollTop + 8 - (hit?.offsetTop ?? 0) };
+      });
+      assert.ok(held.key, 'the pane must have a block at the top of a scrolled page');
+      const original = page.viewportSize() ?? { width: 1440, height: 900 };
+      await page.setViewportSize({ width: 1024, height: original.height });
+      await page.waitForTimeout(700);
+      const kept = await page.getByTestId('reader-scroll').evaluate((element, key) => {
+        const node = element.querySelector(`[data-reader-block="${key}"]`);
+        return {
+          key,
+          into: element.scrollTop + 8 - (node?.offsetTop ?? 0),
+          height: node?.offsetHeight ?? 0,
+          exists: Boolean(node),
+        };
+      }, held.key);
+      await page.setViewportSize(original);
+      assert.equal(kept.exists, true, 'the block must still be on the page after the resize');
+      // Two ways the place is held, and both are the tight one. A block that still has room for the
+      // distance the reader was into it gets that distance back exactly. A block that reflowed
+      // shorter than that distance cannot: the rest of it is below its own end, so the clamp puts the
+      // reader at the block's last line rather than scrolling past paragraphs that no longer exist —
+      // the block is still the one under the reading line, which is what the eye is holding onto.
+      const sameDistance = Math.abs(kept.into - held.into) <= 48;
+      const insideTheBlock = kept.into >= 8 && kept.into <= kept.height + 8;
+      assert.ok(
+        sameDistance || insideTheBlock,
+        `the block must stay at the top of the pane across a resize (${Math.round(
+          held.into
+        )} px in, ${Math.round(kept.into)} px after)`
+      );
+      console.log(
+        `  ok a split-view resize holds block ${held.key} at the top of the pane (${Math.round(
+          held.into
+        )} px in, ${Math.round(kept.into)} px after)`
+      );
     }
 
     // ---- 8. Review opens the deck where the cards live ----

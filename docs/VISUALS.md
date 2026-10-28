@@ -130,10 +130,12 @@ Three rules follow, and each is checked in `npm run test:e2e:pages`:
   still, because it exists to read the labels.
 - **One switch, and it is also the cheap setting.** The header's **Motion** button and the
   introduction's Play/Pause are the same remembered preference (`motionPrefs.ts`), so the two can
-  never disagree. Until the reader chooses, the OS `prefers-reduced-motion` decides: a reader who
-  asked for stillness gets a still page and a visible Play control on every screen. Off stops every
-  frame loop — lesson and introduction alike — so turning it off is how a reader on a slow machine
-  makes the app do less work; on starts them again.
+  never disagree. A first visit is **on** for a reader who has not asked otherwise: the page opens on
+  its drawings. The exception is `prefers-reduced-motion`, which is a standing request for stillness,
+  so a first visit on such a machine starts still until the header switch overrides it — the choice
+  is then remembered on every surface. Off stops every frame loop — lesson and introduction alike —
+  so turning it off is how a reader on a slow machine makes the app do less work; on starts them
+  again.
 - **The introduction is the show.** `LiveFigure` (`components/intro/IntroPage.tsx`) animates the
   *same* SVGs after mount — boxes change state in a workflow, a cursor rides a plot, a periodic wave
   rolls through its own period — by annotating the emitted drawing, so there is no second copy to

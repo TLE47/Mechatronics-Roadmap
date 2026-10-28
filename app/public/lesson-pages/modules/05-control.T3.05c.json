@@ -1,4 +1,4 @@
-{"v":4,"path":"modules/05-control.T3.05c.md","title":"Control Barrier Functions, Forward Invariance & the 1D CBF-QP Safety Filter","blocks":[
+{"v":5,"path":"modules/05-control.T3.05c.md","title":"Control Barrier Functions, Forward Invariance & the 1D CBF-QP Safety Filter","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"A controller that is fast and correct in free space can still drive a joint through its hard stop, because nothing in an LQR cost knows where the stop is. A **Control Barrier Function** turns \"stay inside the safe set\" into one linear inequality on the command, and the **CBF-QP** projects the nominal command onto it - minimally, so tracking is untouched until the constraint actually binds. This is the last of the three Track 05 Tier 3 bridges: `05-control.T3.05a` fixed the covariance, `05-control.T3.05b` fixed the injection, and this module adds the safety layer that runs between the nominal controller and the torque loop. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},

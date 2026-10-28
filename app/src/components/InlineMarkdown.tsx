@@ -14,6 +14,9 @@ import type { Highlight } from '../studyNotes';
  *
  * A quote that spans two inline runs (half a sentence in bold, say) is not marked: the note is still
  * in Notes, and a mark on the wrong words would be worse than no mark at all.
+ *
+ * The handler is handed the pressed element as well as the note: the reader opens the note *beside the
+ * words* it is about, and the mark's own box is what tells it where the words are.
  */
 export function InlineMarkdown({
   text,
@@ -22,7 +25,7 @@ export function InlineMarkdown({
 }: {
   text: string;
   marks?: Highlight[];
-  onMark?: (mark: Highlight) => void;
+  onMark?: (mark: Highlight, anchor?: HTMLElement) => void;
 }) {
   const quotes = onMark ? marks.map((mark) => mark.quote) : [];
   return (
@@ -92,7 +95,7 @@ export function InlineMarkdown({
                       }
                       onClick={(event) => {
                         event.stopPropagation();
-                        if (mark && onMark) onMark(mark);
+                        if (mark && onMark) onMark(mark, event.currentTarget);
                       }}
                       className="inline cursor-pointer rounded-sm bg-amber/15 px-0.5 text-inherit underline decoration-amber decoration-dotted underline-offset-2 hover:bg-amber/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
                     >

@@ -1,4 +1,4 @@
-{"v":4,"path":"modules/04-embedded.T1.04a.md","title":"From Python to C/Arduino: Fixed-Width Types, Bitwise Masks, Structs & Pointers","blocks":[
+{"v":5,"path":"modules/04-embedded.T1.04a.md","title":"From Python to C/Arduino: Fixed-Width Types, Bitwise Masks, Structs & Pointers","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"Python integers grow arbitrarily large and never overflow, but microcontroller C/C++ variables occupy a fixed number of bits (`uint8_t`, `int16_t`, `uint32_t`, `float`) in hardware registers. Before writing real-time timer interrupts and binary serial telemetry in Step 1.5 (`04-embedded.T1.05`), you must know how fixed-width integers wrap around, how bitwise masks (`|`, `&`, `~`, `<<`) flip single register bits without corrupting neighbors, and how `struct` pointers pass data with zero copy overhead. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},

@@ -209,7 +209,15 @@ async function main() {
         'write',
         'the preset did not make room for the editor'
       );
-      const focused = await page.evaluate(() => document.activeElement?.classList.contains('cm-content'));
+      // The editor is a deferred chunk: the starter text is on screen before CodeMirror is, so the tour
+      // asks for focus as soon as the editor answers rather than at a fixed instant. Waiting for the
+      // end state is the claim; an editor that never takes focus still fails here.
+      const focused = await page
+        .waitForFunction(() => document.activeElement?.classList.contains('cm-content'), undefined, {
+          timeout: 8000,
+        })
+        .then(() => true)
+        .catch(() => false);
       assert.equal(focused, true, 'focus did not move into the editor');
       await page.locator('.cm-content').click();
       await page.keyboard.type('# tour edit');

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { motionChoice, prefersStill, subscribeMotion, writeMotion } from './motionPrefs';
+import { motionChoice, motionDefault, subscribeMotion, writeMotion } from './motionPrefs';
 
 export interface MotionController {
   /** What the figures are doing right now. */
@@ -14,23 +14,12 @@ export interface MotionController {
  * The shared motion switch (`app/src/useMotion.ts`).
  *
  * Mounted once in the header, where the control lives, and once in each surface that draws motion —
- * a hook is cheap and a context would put the header above the router for one boolean. Until the
- * reader chooses, the OS setting decides; after that the choice wins on every surface, because that
- * is what one switch means.
+ * a hook is cheap and a context would put the header above the router for one boolean. A reader who
+ * has never chosen gets `motionDefault()`: on for a first visit, still for one whose OS asks for less
+ * motion. After that the choice wins on every surface, because that is what one switch means.
  */
 export function useMotion(): MotionController {
   const [choice, setChoice] = useState<boolean | null>(() => motionChoice());
-  const [still, setStill] = useState<boolean>(() => prefersStill());
-
-  // The OS setting can change while the page is open, and a reader who has not chosen should follow
-  // it. One listener, removed with the component.
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return undefined;
-    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setStill(query.matches);
-    query.addEventListener('change', update);
-    return () => query.removeEventListener('change', update);
-  }, []);
 
   useEffect(
     () =>
@@ -41,7 +30,7 @@ export function useMotion(): MotionController {
     []
   );
 
-  const on = choice ?? !still;
+  const on = choice ?? motionDefault();
   const set = useCallback((next: boolean) => {
     setChoice(writeMotion(next));
   }, []);

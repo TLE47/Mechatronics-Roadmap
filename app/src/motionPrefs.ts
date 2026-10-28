@@ -4,9 +4,10 @@
  * One switch for the moving drawings, on every screen. Three rules:
  *
  * 1. **A choice is a fact, not a guess.** The header's Motion button writes exactly the value the
- *    figures read, so the button and the page cannot disagree. `null` means "never chose": the OS
- *    setting decides until then, and the first press replaces it for every surface. There is one
- *    rule, not a different one per page, because one switch that means two things is not a switch.
+ *    figures read, so the button and the page cannot disagree. `null` means "never chose": a first
+ *    visit is on, and an OS asking for less motion is still until the first press replaces it for
+ *    every surface. There is one rule, not a different one per page, because one switch that means
+ *    two things is not a switch.
  * 2. **Off means off, and cheaper.** Every moving figure stops its frame loop rather than drawing
  *    invisible frames, and an off-screen figure never starts one: turning motion off is also how a
  *    reader on a slow machine makes the app do less work.
@@ -57,15 +58,20 @@ export function prefersStill(): boolean {
 }
 
 /**
- * Whether figures move: the reader's choice, or the OS setting on a first visit.
+ * What a reader who has never pressed the control gets.
  *
- * `prefers-reduced-motion` is a default, not a verdict — the header's switch overrides it in one
- * press and the choice is remembered. Following it until then is what makes the app polite to a
- * reader who asked for stillness; the visible switch is what makes it usable for a reader who did
- * not mean to ask for a still showcase.
+ * A first visit is **on** — a page opens on its drawings, not on the still frames of something a
+ * reader has to find a switch for. The one exception is the reader whose OS already asks for less
+ * motion: that is a standing request for stillness, and a page that ignores it is the page that
+ * hurts. The header switch overrides it in one press and the choice is remembered.
  */
+export function motionDefault(): boolean {
+  return !prefersStill();
+}
+
+/** Whether figures move: the reader's choice, or the default above. */
 export function motionEnabled(): boolean {
-  return motionChoice() ?? !prefersStill();
+  return motionChoice() ?? motionDefault();
 }
 
 type Listener = (on: boolean) => void;

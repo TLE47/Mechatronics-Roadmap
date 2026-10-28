@@ -1,4 +1,4 @@
-{"v":4,"path":"modules/00-foundations.T2.00c.md","title":"First- & Second-Order ODEs, Characteristic Roots, Natural Frequency & Damping Ratio","blocks":[
+{"v":5,"path":"modules/00-foundations.T2.00c.md","title":"First- & Second-Order ODEs, Characteristic Roots, Natural Frequency & Damping Ratio","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"Every motor winding, thermal heatsink, and RC filter obeys a first-order differential equation governed by a time constant $\\tau$, while every compliant robot joint and closed-loop PID servo obeys a second-order differential equation governed by natural frequency $\\omega_n$ and damping ratio $\\zeta$. Knowing how $\\omega_n$ and $\\zeta$ determine overshoot and settling time lets you compute exact controller gains instead of guessing by trial and error. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},

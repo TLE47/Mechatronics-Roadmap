@@ -15,9 +15,11 @@ What it copies, and what it deliberately does not:
   "Next:" line and the ladder-gate exam are written into every page by other scripts. The reader is
   already the workbench, so the callout would be a link to where the learner is standing; the exam is
   one paper on every page of a ladder and would dwarf the lesson.
-- **Not the full solution.** The workbench locks the answer behind Load Solution on purpose, and a
-  reading pane that printed it in an open `<details>` would unlock it through another door. The
-  section is skipped, and the reader's footer says where the answer lives.
+- **A hint, an answer and the full solution stay closed.** The pages already write them as an HTML
+  `<details>` block, which GitHub collapses, and the payload keeps that shape: a `reveal` block is a
+  label and the blocks behind it, drawn as a real `<details>` in the reader. A Markdown `## Full
+  Solution` heading is still skipped outright, because that form has no label to put on a toggle;
+  the workbench's Load Solution remains the door the checks read.
 - **Figures, by name.** A line `<!-- figure: signal-chain | One line about it -->` becomes a
   `figure` block: the app draws it from `app/src/visuals/scenes.ts`, so the picture is app code and
   the Markdown stays readable. The comment form is deliberate — GitHub hides it, so the page reads
@@ -44,10 +46,10 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(ROOT, "app", "public", "lesson-pages")
-# 4 with `graph` blocks (3 was `route`, 2 was `figure`): the reader's validator refuses a version it
-# does not know rather than guessing at a shape that changed, and a lesson written before any of them
-# reads the same.
-PAYLOAD_VERSION = 4
+# 5 with `reveal` blocks (4 was `graph`, 3 `route`, 2 `figure`): the reader's validator refuses a
+# version it does not know rather than guessing at a shape that changed, and a lesson written before
+# any of them reads the same.
+PAYLOAD_VERSION = 5
 
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 import generate_python_lessons_data as registry  # noqa: E402
@@ -74,6 +76,18 @@ HTML_IMG_ALT_AFTER = re.compile(
     r"^\s*<img\s+[^>]*src=\"([^\"]+)\"[^>]*>$", re.I
 )
 DETAILS_LINE = re.compile(r"^\s*</?(?:details|summary)(?:\s[^>]*)?>\s*$", re.I)
+# `<details>` is the page's own collapse: the hints, every `Check yourself` answer and the full
+# solution are written that way so GitHub hides them until pressed. The reader keeps the shape.
+DETAILS_OPEN = re.compile(r"^\s*<details\b[^>]*>(?:\s*<summary>(.*?)</summary>)?\s*$", re.I)
+DETAILS_CLOSE = re.compile(r"^\s*</details>\s*$", re.I)
+SUMMARY_LINE = re.compile(r"^\s*<summary>(.*?)</summary>\s*$", re.I)
+REVEAL_MARK = re.compile(r"^@@reveal (\d+)@@$")
+# One nested level is enough for this corpus (a hint that holds a code sample), and a reveal is a
+# label, not a page: the reader draws it in a card, so a second page inside it would be a scroll
+# inside a scroll.
+REVEAL_MAX_DEPTH = 2
+REVEAL_MAX_BLOCKS = 60
+REVEAL_MAX_LABEL = 120
 # HTML the pages actually use, and only that: `<https://…>` is an autolink to the renderer, and a
 # blanket tag strip would delete the URL. `<details>` and `<summary>` are dropped by line below.
 KNOWN_TAG = (
@@ -325,12 +339,69 @@ def split_row(line):
     return cells
 
 
-def parse_blocks(raw):
+def lift_reveals(lines, depth):
+    """Replace each `<details>` region with an `@@reveal N@@` line and return the blocks it holds.
+
+    A region is lifted whole, label and body, before the block parser walks the page: the body is a
+    page fragment of its own (a paragraph, a code sample, sometimes a list) and parsing it with the
+    same function is what keeps a hint's code a `code` block instead of a paragraph of backticks.
+    Nesting is preserved up to `REVEAL_MAX_DEPTH`; deeper regions are left to the tag stripper, which
+    keeps their text and loses only the extra toggle.
+    """
+    if depth >= REVEAL_MAX_DEPTH:
+        return lines, []
+    out, reveals = [], []
+    index = 0
+    while index < len(lines):
+        opening = DETAILS_OPEN.match(lines[index])
+        if not opening:
+            out.append(lines[index])
+            index += 1
+            continue
+        nest = 0
+        body, label = [], clean_inline(opening.group(1) or "")
+        index += 1
+        while index < len(lines):
+            line = lines[index]
+            if DETAILS_OPEN.match(line):
+                nest += 1
+            elif DETAILS_CLOSE.match(line):
+                if nest == 0:
+                    break
+                nest -= 1
+            if nest == 0 and not label:
+                summary = SUMMARY_LINE.match(line)
+                if summary:
+                    label = clean_inline(summary.group(1))
+                    index += 1
+                    continue
+            body.append(line)
+            index += 1
+        index += 1  # the closing tag, or the end of the page
+        has_content = any(line.strip() for line in body)
+        blocks = parse_blocks("\n".join(body), depth + 1) if has_content else []
+        if not blocks:
+            continue
+        reveals.append(
+            {
+                "t": "reveal",
+                "label": (label or "Show")[:REVEAL_MAX_LABEL],
+                "blocks": blocks[:REVEAL_MAX_BLOCKS],
+            }
+        )
+        out.append(f"@@reveal {len(reveals) - 1}@@")
+    return out, reveals
+
+
+def parse_blocks(raw, depth=0):
     """The page as reader blocks, in order.
 
     Block types are deliberately few: what a lesson page actually uses. Each one is pinned by a
     fixture in `tests/test_lesson_pages.py`, so a construct the renderer does not know fails there
     rather than appearing as raw Markdown in the pane.
+
+    `depth` is the reveal nesting: the top call is 0, and the body of a `<details>` is parsed one
+    level in so a hint's own collapse stays a collapse.
     """
     for pattern in GENERATED_BLOCKS:
         raw = pattern.sub("", raw)
@@ -344,7 +415,7 @@ def parse_blocks(raw):
 
     raw = FIGURE_COMMENT.sub(stash, raw)
     raw = COMMENT.sub("", raw)
-    lines = body_of(raw).split("\n")
+    lines, reveals = lift_reveals(body_of(raw).split("\n"), depth)
 
     blocks = []
     paragraph = []
@@ -372,6 +443,14 @@ def parse_blocks(raw):
     while index < len(lines):
         line = lines[index]
         stripped = line.strip()
+
+        reveal = REVEAL_MARK.match(line)
+        if reveal:
+            flush_paragraph()
+            if not skip_level:
+                blocks.append(reveals[int(reveal.group(1))])
+            index += 1
+            continue
 
         figure = FIGURE_MARK.match(line)
         if figure:

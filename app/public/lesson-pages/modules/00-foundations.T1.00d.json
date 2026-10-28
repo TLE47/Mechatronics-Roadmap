@@ -1,4 +1,4 @@
-{"v":4,"path":"modules/00-foundations.T1.00d.md","title":"Linear Equations, Unit-Circle Trig, Radians, atan2 & 2D Vectors","blocks":[
+{"v":5,"path":"modules/00-foundations.T1.00d.md","title":"Linear Equations, Unit-Circle Trig, Radians, atan2 & 2D Vectors","blocks":[
 {"t":"h","l":2,"x":"1. Why it matters"},
 {"t":"p","x":"Robot joints rotate in angles while cameras and workpieces sit at Cartesian $(x, y)$ coordinates, and analog sensors output voltages that scale linearly with current or angle. Mastering linear calibration lines, radian angles on the unit circle, 2D vector projections, and four-quadrant `atan2(y, x)` prevents your robot arm from snapping $180^\\circ$ into the wrong quadrant when crossing the negative $x$-axis. Already know this? Take the Skip test in section 7 first."},
 {"t":"h","l":2,"x":"2. Intuition first"},

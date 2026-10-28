@@ -435,6 +435,39 @@ export function writeSplitRatio(ratio: number): number {
   return clamped;
 }
 
+/**
+ * Whether the output sits beside the code or under it (`mechalab_results_split_v1`).
+ *
+ * One boolean, and a layout preference rather than a preset: the editor and the run's output are the
+ * two things a reader moves their eyes between, so the split is a property of that card instead of
+ * a fifth preset. Under the editor by default — a narrow window has no side to put it on — and
+ * remembered, because a learner who asked for the terminal beside the code asked once.
+ */
+export const STORAGE_KEY_RESULTS_SPLIT = 'mechalab_results_split_v1';
+
+export function readResultsSplit(): boolean {
+  const store = storage();
+  if (!store) return false;
+  try {
+    return store.getItem(STORAGE_KEY_RESULTS_SPLIT) === 'split';
+  } catch {
+    return false;
+  }
+}
+
+/** Remember the choice and return the value to render; a blocked store costs the memory only. */
+export function writeResultsSplit(split: boolean): boolean {
+  const store = storage();
+  if (store) {
+    try {
+      store.setItem(STORAGE_KEY_RESULTS_SPLIT, split ? 'split' : 'stacked');
+    } catch {
+      // Blocked or full: the choice lasts this visit only.
+    }
+  }
+  return split;
+}
+
 export function writeLayout(layout: WorkspaceLayout): WorkspaceLayout {
   const store = storage();
   if (store) {

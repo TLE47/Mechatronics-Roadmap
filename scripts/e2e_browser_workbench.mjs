@@ -1119,6 +1119,71 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     assert.equal(await visible('lesson-list-card'), true, 'the Study button comes back');
     console.log('  ok ⌥1–⌥4 choose the regions and their arrangement, and the choice is remembered');
 
+    // 5d-i. The run controls live in the editor's own header, and the run's output in the same card:
+    //       under the code by default, beside it on a press. The split is a remembered preference,
+    //       like the divider's share.
+    {
+      const inEditor = (testId) =>
+        page.evaluate((id) => {
+          const panel = document.querySelector('[data-testid="editor-panel"]');
+          return !!panel?.querySelector(`[data-testid="${id}"]`);
+        }, testId);
+      assert.equal(await inEditor('btn-run-verify'), true, 'Run must sit in the editor header');
+      assert.equal(await inEditor('btn-predict'), true, 'Predict must sit beside Run for convenience');
+      assert.equal(
+        await inEditor('btn-results-split'),
+        true,
+        'the output split must live in the card, with the output it splits'
+      );
+      assert.equal(
+        await inEditor('editor-results'),
+        true,
+        'the output must be in the same card as the code it came from'
+      );
+      const box = () =>
+        page.evaluate(() => {
+          const editor = document.querySelector('[data-testid="editor-main"]')?.getBoundingClientRect();
+          const results = document
+            .querySelector('[data-testid="editor-results"]')
+            ?.getBoundingClientRect();
+          const header = document
+            .querySelector('[data-testid="editor-panel"] > div')
+            ?.getBoundingClientRect();
+          return {
+            resultsInCard: !!document.querySelector('[data-testid="editor-panel"] [data-testid="editor-results"]'),
+            below: !!editor && !!results && results.top >= editor.bottom - 24,
+            beside: !!editor && !!results && results.left >= editor.right - 8 && results.top < editor.bottom - 24,
+            underHeader: !!header && !!results && results.top >= header.bottom - 1,
+          };
+        });
+      const stacked = await box();
+      assert.equal(stacked.resultsInCard, true, 'the output must be inside the editor card');
+      assert.equal(stacked.underHeader, true, 'the output must start under the editor header');
+      assert.equal(stacked.below, true, 'by default the output sits under the code');
+      const split = page.getByTestId('btn-results-split');
+      await split.click();
+      await page.waitForTimeout(350);
+      assert.equal(await split.getAttribute('aria-pressed'), 'true', 'the split must report itself on');
+      const side = await box();
+      assert.equal(side.beside, true, 'a press must put the output beside the code, not under it');
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await waitForEditor(page, undefined, 30000);
+      await page.waitForTimeout(600);
+      assert.equal(
+        await page.getByTestId('btn-results-split').getAttribute('aria-pressed'),
+        'true',
+        'the split is a preference: it must survive a reload'
+      );
+      await page.getByTestId('btn-results-split').click();
+      await page.waitForTimeout(300);
+      assert.equal(
+        await page.getByTestId('btn-results-split').getAttribute('aria-pressed'),
+        'false',
+        'pressing again puts the output back under the code'
+      );
+      console.log('  ok Run and Predict sit in the editor header, and the output splits beside the code');
+    }
+
     // 5d-ii. Docking: one button, and it names the panel this preset can move. Debug moves the
     //        results to the other side of the editor; Study moves the lesson text to the other side
     //        of the work area; Write and Read have nothing beside anything, so they show no button.
