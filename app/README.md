@@ -128,15 +128,17 @@ wording, and the rule that only the interpreter's own files let the button call 
 
 ### Backup
 
-Six stores hold the work, so getting it out is one file, not six: **Back Up (.zip)** in the header
-writes a small archive — `manifest.json`, `progress.json`, `drafts.json`, `history.json`, `study.json`,
-`learning-log.json`, `README.txt` — with the counts and date in the manifest, and a README that still
-explains the file if it is opened years later. [`src/backupZip.ts`](src/backupZip.ts) is a stored-method
+The work lives in several stores, so getting it out is one file, not a pile: **Back Up (.zip)** in the
+header writes a small archive — `manifest.json`, `progress.json`, `drafts.json`, `history.json`,
+`study.json`, `checks.json`, `study-cards.json`, `learning-log.json`, `tour.json`, `README.txt` — with
+the counts and date in the manifest, and a README that still explains the file if it is opened years
+later. [`src/backupZip.ts`](src/backupZip.ts) is a stored-method
 zip writer and reader (CRC-32, central directory, end record) rather than a dependency: the payload is
 JSON and code text, and a stored archive needs no decompressor.
 
 **Restore (.zip)** merges, and never deletes. Flags union, drafts and notes only fill lessons this
-browser has nothing for, highlights union by the passage they quote (the newer comment wins), versions
+browser has nothing for, highlights union by the passage they quote (the newer comment wins), checklist
+ticks union by item — a tick made on another machine arrives and a restore never removes one — versions
 union by the timestamp they were filed at, and log events dedupe by identity the same way cloud sync
 does. The toast reports what actually changed (`Restored · 4 lessons verified · 2
 drafts · 11 log events`), or says the file has nothing new; a refusal says which refusal it was — not a
@@ -151,10 +153,10 @@ wonder where their folded cards went, the archive's own `README.txt` says what i
 the three keys. The one carried exception is `tour.json` — that the tour was *shown* is a fact about
 the learner, not a preference about a screen.
 
-Erasing is the third half of the same conversation: **Reset…** in that tray opens eleven named parts
-(Lessons, Milestones, XP and awards, Practice cards, Notes and highlights, Drafts and versions, Learning
-log, Sittings, Predictions, Onboarding, Where I was), prints what each holds, and erases one or all of
-them after a second press — with **Back up first** beside it because there is no undo. A reset of a
+Erasing is the third half of the same conversation: **Reset…** in that tray opens twelve named parts
+(Lessons, Lesson checklists, Milestones, XP and awards, Practice cards, Notes and highlights, Drafts and
+versions, Learning log, Sittings, Predictions, Onboarding, Where I was), prints what each holds, and
+erases one or all of them after a second press — with **Back up first** beside it because there is no undo. A reset of a
 part the account also holds leaves a watermark the merge honours, so an empty snapshot is not mistaken
 for "nothing to say" and the old flags cannot be unioned back at the next sign-in. Preferences are
 deliberately outside it. `docs/RESET.md` is the page; `npm run test:reset` and `npm run test:e2e:reset`
@@ -413,9 +415,11 @@ moment a page is regenerated, so a position would tick the wrong line after the 
 same sentence twice in one lesson is one item, a reworded item starts unticked, and the store is
 bounded per lesson rather than by lesson count. Ordered lists keep their numbers: a sequence has an
 order whether or not its steps can be ticked. The tick is progress rather than authored work, so it has
-its own row in Reset (**Lesson checklists**, local to this browser) and does not ride in the backup.
-`npm run test:checklists` pins the store; `npm run test:e2e:home` ticks a bullet, reloads, and finds it
-still ticked.
+its own row in Reset (**Lesson checklists**) and is never folded into a note; it travels in the backup's
+`checks.json` and in the opt-in workspace row, both unioned by item so a tick made on another machine is
+added and never taken away. `npm run test:checklists` pins the store and that union;
+`npm run test:e2e:home` ticks a bullet, reloads, and finds it still ticked; `npm run test:e2e:backup`
+wipes a tick and restores it.
 
 **A sticky note is marked where it was written.** A highlight stores its quote, and the reader cuts that
 quote out of the prose ([`src/lessonMarks.ts`](src/lessonMarks.ts)) and draws it as a pressable mark;

@@ -34,7 +34,7 @@ export interface ResetReport {
   items: number;
   /** True when the cloud progress document has to be rewritten. */
   progress: boolean;
-  /** True when the account's workspace row (drafts and notes) has to be emptied. */
+  /** True when the account's workspace row (drafts, notes, ticks) has to be emptied. */
   workspace: boolean;
   /** The watermark written, or null when no cloud-synced part was reset. */
   resetAt: number | null;

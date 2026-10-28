@@ -74,8 +74,8 @@ export function isAdminRole(role: unknown): boolean {
 export function syncScopeLine(options: { signedIn: boolean; workspace: boolean }): string {
   if (!options.signedIn) return 'This build keeps your work in this browser only.';
   return options.workspace
-    ? 'Your account syncs progress, drafts and notes.'
-    : 'Your account syncs progress. Drafts and notes stay in this browser.';
+    ? 'Your account syncs progress, drafts, notes and checklists.'
+    : 'Your account syncs progress. Drafts, notes and checklists stay in this browser.';
 }
 
 /**

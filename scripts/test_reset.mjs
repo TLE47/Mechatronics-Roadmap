@@ -202,8 +202,9 @@ check('resetting checklists erases the ticks, and leaves the notes and verdicts'
   const report = resetAreas(['checks'], 9_500);
   assert.deepEqual(report.areas, ['checks']);
   assert.equal(report.items, 2);
-  assert.equal(report.progress, false, 'ticks never leave this browser');
-  assert.equal(report.resetAt, null, 'a local part must not move the cloud watermark');
+  assert.equal(report.progress, false, 'ticks ride the workspace row, not the progress one');
+  assert.equal(report.workspace, true, 'the account copy has to be cleared too, or the merge brings them back');
+  assert.equal(report.resetAt, null, 'a workspace part must not move the progress watermark');
   assert.deepEqual(readTicks('P.1'), []);
   assert.deepEqual(tickCounts(), { lessons: 0, ticks: 0 });
   assert.equal(area('lessons').count().n, 3, 'the verdicts are untouched');
@@ -362,7 +363,8 @@ check('one lesson\'s checklist is erased without the other ticks or the notes', 
   assert.match(item.detail, /2 ticked items/);
   const report = resetItem('checks', item.id, 12_500);
   assert.equal(report.items, 2);
-  assert.equal(report.resetAt, null, 'a local part leaves no watermark');
+  assert.equal(report.workspace, true, 'one lesson\'s ticks also leave the account copy');
+  assert.equal(report.resetAt, null, 'a workspace item leaves no progress watermark');
   assert.deepEqual(readTicks('P.1'), []);
   assert.deepEqual(readTicks('P.2'), ['Open the REPL'], 'the other lesson keeps its tick');
   assert.equal(area('notes').count().n, 2);

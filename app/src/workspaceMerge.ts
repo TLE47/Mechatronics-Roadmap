@@ -1,6 +1,6 @@
 /**
- * Merging this browser's drafts and notes with the account's copy — the rule that makes opt-in
- * workspace sync safe enough to switch on.
+ * Merging this browser's drafts, notes and checklist ticks with the account's copy — the rule that
+ * makes opt-in workspace sync safe enough to switch on.
  *
  * Progress sync can be one sentence ("a completion is never lost"). Workspace sync is harder: two
  * devices can hold two genuinely different drafts of the same lesson, and neither is wrong. So the
@@ -14,12 +14,17 @@
  *    (newer wins the slot, older is kept).
  *  - **Highlights** — union by quote, because a highlight is identified by its quote. Two comments on
  *    the same quote: the newer `at` wins, the older is preserved as a conflict entry.
+ *  - **Checklist ticks** — union by item, exactly as a backup merges them: a tick added on either
+ *    device arrives, and neither side can take one away. The merge is shared with the backup path
+ *    (`mergeChecks`), so the two cannot drift into different answers.
  *  - The learning-log-style clocks are not invented: `updatedAt` is the later of the two, and a
  *    conflict records the time it came from.
  *
  * Pure: no storage, no network, no `StudyStore` import (that module touches `localStorage`).
  * `scripts/test_accounts.mjs` imports this file directly.
  */
+
+import { mergeChecks, parseCheckStore, type CheckStore } from './lessonChecks.ts';
 
 export const WORKSPACE_SCHEMA = 'mechalab.workspace/1';
 
@@ -50,6 +55,11 @@ export interface WorkspaceDoc {
   updatedAt: number;
   drafts: Record<string, string>;
   study: StudySnapshot;
+  /**
+   * The reading checklists, per lesson. Optional because a row written before checklists existed has
+   * no such field: it is an older document, not a corrupt one, so it is read as having no ticks.
+   */
+  checks?: CheckStore;
   /** Newest first, capped by `MAX_CONFLICTS`. */
   conflicts: WorkspaceConflict[];
 }
@@ -57,7 +67,7 @@ export interface WorkspaceDoc {
 export const MAX_CONFLICTS = 50;
 
 export function emptyWorkspace(): WorkspaceDoc {
-  return { schema: WORKSPACE_SCHEMA, updatedAt: 0, drafts: {}, study: {}, conflicts: [] };
+  return { schema: WORKSPACE_SCHEMA, updatedAt: 0, drafts: {}, study: {}, checks: {}, conflicts: [] };
 }
 
 /**
@@ -83,6 +93,7 @@ export interface WorkspaceMergeResult {
   addedDrafts: number;
   addedNotes: number;
   addedHighlights: number;
+  addedChecks: number;
   conflicts: number;
 }
 
@@ -167,12 +178,18 @@ export function mergeWorkspace(local: WorkspaceDoc, remote: WorkspaceDoc): Works
     here.updatedAt = Math.max(here.updatedAt, lesson.updatedAt);
   }
 
+  // The same union the backup uses, so the two routes cannot disagree about what a tick is.
+  const remoteChecks = parseCheckStore(remote.checks ?? {});
+  const mergedChecks = mergeChecks(remoteChecks, parseCheckStore(local.checks ?? {}));
+  const checks: CheckStore = mergedChecks.store;
+
   return {
     doc: {
       schema: WORKSPACE_SCHEMA,
       updatedAt: at,
       drafts,
       study,
+      checks,
       // Newest conflicts first; the cap is about the size of one row, not about losing the newest.
       conflicts: [...conflicts, ...remote.conflicts, ...local.conflicts]
         .sort((a, b) => b.at - a.at)
@@ -181,6 +198,7 @@ export function mergeWorkspace(local: WorkspaceDoc, remote: WorkspaceDoc): Works
     addedDrafts,
     addedNotes,
     addedHighlights,
+    addedChecks: mergedChecks.added,
     conflicts: conflicts.length,
   };
 }
@@ -196,6 +214,9 @@ export function isWorkspaceDoc(value: unknown): value is WorkspaceDoc {
     candidate.drafts !== null &&
     typeof candidate.study === 'object' &&
     candidate.study !== null &&
+    // Absent on a row written before checklists; present, it must at least be a plain object.
+    (candidate.checks === undefined ||
+      (typeof candidate.checks === 'object' && candidate.checks !== null && !Array.isArray(candidate.checks))) &&
     Array.isArray(candidate.conflicts)
   );
 }
@@ -204,6 +225,7 @@ export interface WorkspaceCounts {
   drafts: number;
   notes: number;
   highlights: number;
+  checks: number;
   conflicts: number;
 }
 
@@ -213,6 +235,7 @@ export function workspaceCounts(doc: WorkspaceDoc): WorkspaceCounts {
     drafts: Object.values(doc.drafts).filter((text) => text.trim().length > 0).length,
     notes: lessons.filter((lesson) => lesson.note.trim().length > 0).length,
     highlights: lessons.reduce((total, lesson) => total + lesson.highlights.length, 0),
+    checks: Object.values(doc.checks ?? {}).reduce((total, lesson) => total + lesson.done.length, 0),
     conflicts: doc.conflicts.length,
   };
 }

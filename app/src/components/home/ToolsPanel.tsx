@@ -39,7 +39,7 @@ export const ToolsPanel: React.FC<ToolsPanelProps> = ({
     </h2>
     <p className="text-[11.5px] text-muted">
       {email ? `Signed in as ${email}. ` : 'Everything here is in this browser. '}
-      {syncNote || 'An account is optional — progress, drafts and notes never leave unless you ask.'}
+      {syncNote || 'An account is optional — progress, drafts, notes and checklists never leave unless you ask.'}
     </p>
     <div className="flex flex-wrap items-center gap-1.5">
       <button

@@ -51,7 +51,7 @@ export const ADMIN_CAPABILITIES: readonly AdminCapability[] = [
   {
     id: 'users',
     title: 'Roles',
-    detail: 'Grant or revoke the admin role. Learners’ code, drafts and notes are not visible here.',
+    detail: 'Grant or revoke the admin role. Learners’ code, drafts, notes and checklist ticks are not visible here.',
     actions: ['role.assign'],
   },
   {

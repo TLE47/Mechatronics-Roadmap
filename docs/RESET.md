@@ -27,7 +27,7 @@ flowchart TB
     Snapshot --> Newer{"Reset at least as new as\nthe other side's last change?"}
     Newer -->|"yes"| Stands["Its maps and its log stand: the erase holds"]
     Newer -->|"no"| Kept["The other device's newer work is kept"]
-    Erase --> Workspace["Drafts and notes: empty workspace doc, never a merge"]
+    Erase --> Workspace["Drafts, notes, ticks: named parts cleared, never a merge"]
 ```
 
 ## The twelve parts
@@ -35,7 +35,7 @@ flowchart TB
 | Part | What it erases | The copy it also clears |
 | :--- | :--- | :--- |
 | Lessons | the verdicts, the self-marked ticks, the grader stamps | the account's progress row |
-| Lesson checklists | the ticks made in a lesson's bullet checklists; the lesson text and notes stay | this browser only |
+| Lesson checklists | the ticks made in a lesson's bullet checklists; the lesson text and notes stay | the account's workspace row (opt-in) |
 | Milestones | the roadmap ticks; the roadmap and the lessons stay | the account's progress row |
 | XP and awards | the ledger: levels, proof marks, the Scrap they paid for | this browser only |
 | Practice cards | the review schedule and its history; the cards return from your highlights | this browser only |
@@ -98,7 +98,7 @@ The items always add up to the row: `scripts/test_reset.mjs` asserts, for every 
 its item counts is the number on the row, so a second counting model cannot drift from the first. One
 item still takes two presses, and an item the store does not have erases nothing and stays quiet. A
 single lesson or milestone still writes the watermark, because it is a part the account holds; a single
-note or draft reports the workspace copy instead.
+note, draft or checklist reports the workspace copy instead.
 
 ## The watermark, and why an empty map is not enough
 
@@ -115,10 +115,11 @@ to keep a second device's newer work alive.
 
 `App` rewrites the account's row immediately on a reset rather than waiting for the 1.2 s debounce
 ([`app/src/App.tsx`](../app/src/App.tsx)), because a tab closed inside that window would leave the old
-flags on the server and meet them again at the next sign-in. Drafts and notes are the opt-in workspace
-row, and that row merges by rule — so a reset of either writes an empty document instead
+flags on the server and meet them again at the next sign-in. Drafts, notes and checklist ticks are the
+opt-in workspace row, and that row merges by rule — so a reset writes the named parts away instead
 (`resetWorkspace` in [`app/src/workspaceSync.ts`](../app/src/workspaceSync.ts)); otherwise the erased
-work would arrive back from the account at the next sync.
+work would arrive back from the account at the next sync. It clears only what was reset: erasing drafts
+must not take the account's notes or its ticks with it.
 
 ## What it cannot do
 

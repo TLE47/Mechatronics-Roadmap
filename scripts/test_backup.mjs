@@ -51,6 +51,7 @@ import {
 } from '../app/src/draftHistory.ts';
 import { LOG_STORAGE_KEY, MAX_EVENTS, readLearningLog } from '../app/src/learningLog.ts';
 import { STORAGE_KEY_TOUR } from '../app/src/tourState.ts';
+import { readTicks, setTicked } from '../app/src/lessonChecks.ts';
 import {
   MAX_COMMENT_CHARS,
   MAX_HIGHLIGHT_CHARS,
@@ -194,6 +195,7 @@ check('the bundle names its files, its schema and its date', () => {
       'drafts.json',
       'history.json',
       'study.json',
+      'checks.json',
       'study-cards.json',
       'learning-log.json',
       // Whether the first-run tour has been seen: a fact about the learner, not a preference, so a
@@ -237,6 +239,8 @@ check('the archive carries every store, and the manifest counts them', () => {
   seedHistory({ [OTHER.id]: [{ code: 'print(1)', at: 5, outcome: 'verified' }] });
   saveNote(LESSON.id, 'The tolerance is on the angle.');
   addHighlight(OTHER.id, 'tolerance is on the angle', 'that is why 5 mm passed');
+  setTicked(LESSON.id, 'wire the divider', true, 10);
+  setTicked(OTHER.id, 'open the REPL', true, 11);
   seedLog([{ t: 1, kind: 'lesson_open', lesson: LESSON.id }]);
 
   const read = readZip(createBackupZip(1_700_000_000_000));
@@ -251,6 +255,7 @@ check('the archive carries every store, and the manifest counts them', () => {
     snapshots: 1,
     notes: 1,
     highlights: 1,
+    checks: 2,
     cards: 1,
     events: 1,
   });
@@ -272,6 +277,7 @@ check('a restore into an empty browser brings back exactly what was backed up', 
   const draft = `${LESSON.starterCode}\nprint("keep me")\n`;
   saveDraft(LESSON.id, draft);
   seedHistory({ [LESSON.id]: [{ code: 'print(2)', at: 11, outcome: 'mismatch' }] });
+  setTicked(LESSON.id, 'wire the divider', true, 12);
   seedLog([{ t: 7, kind: 'run', lesson: LESSON.id, outcome: 'verified' }]);
 
   const bytes = backupAndWipe();
@@ -282,10 +288,11 @@ check('a restore into an empty browser brings back exactly what was backed up', 
   assert.deepEqual(readHistory()[LESSON.id].map((version) => version.code), ['print(2)']);
   assert.deepEqual(readLearningLog().map((event) => event.t), [7]);
   assert.equal(globalThis.localStorage.getItem(STORAGE_KEY_MILESTONES), JSON.stringify({ 'm01-level0': true }));
+  assert.deepEqual(readTicks(LESSON.id), ['wire the divider']);
   const report = result.report;
   assert.deepEqual(
-    [report.verified, report.completed, report.milestones, report.drafts, report.snapshots, report.events],
-    [1, 1, 1, 1, 1, 1],
+    [report.verified, report.completed, report.milestones, report.drafts, report.snapshots, report.checks, report.events],
+    [1, 1, 1, 1, 1, 1, 1],
     'every restored item should be counted once'
   );
   assert.deepEqual(report.skipped, []);
@@ -431,6 +438,47 @@ check("a restore brings a card's schedule in, and never sends a studied card bac
   assert.equal(again.report.cards, 0, 'nothing changed, so nothing is reported as restored');
 });
 
+check('checklist ticks travel in the archive, and a restore can never un-tick one', () => {
+  freshBrowser();
+  setTicked(LESSON.id, 'wire the divider', true, 10);
+  setTicked(OTHER.id, 'open the REPL', true, 11);
+  const bytes = backupAndWipe();
+  assert.deepEqual(readTicks(LESSON.id), [], 'the wipe should have left no tick behind');
+
+  const result = restoreBackupZip(bytes);
+  assert.equal(result.ok, true, `restore failed: ${result.message}`);
+  assert.deepEqual(readTicks(LESSON.id), ['wire the divider']);
+  assert.deepEqual(readTicks(OTHER.id), ['open the REPL']);
+  assert.equal(result.report.checks, 2);
+
+  const again = restoreBackupZip(bytes);
+  assert.equal(again.ok, true, `restore failed: ${again.message}`);
+  assert.equal(again.report.checks, 0, 'a restore is repeatable and adds each tick once');
+
+  // A tick made here after the archive was taken is not in the file; restoring must leave it alone.
+  setTicked(LESSON.id, 'made after the backup', true, 12);
+  const later = restoreBackupZip(bytes);
+  assert.equal(later.ok, true, `restore failed: ${later.message}`);
+  assert.deepEqual(readTicks(LESSON.id), ['wire the divider', 'made after the backup']);
+  assert.equal(later.report.checks, 0, 'a restore never takes a tick away');
+});
+
+check('a backup taken before checklists existed still restores, silently', () => {
+  freshBrowser();
+  saveNote(LESSON.id, 'a note');
+  const files = collectBackup(0).filter((file) => file.name !== 'checks.json');
+  const bytes = createZip(
+    files.map((file) => ({ name: file.name, data: utf8(file.text) })),
+    new Date(0)
+  );
+  freshBrowser();
+  const result = restoreBackupZip(bytes);
+  assert.equal(result.ok, true, `restore failed: ${result.message}`);
+  assert.deepEqual(result.report.skipped, [], 'a missing checklist file is an older backup, not a bad one');
+  assert.equal(result.report.notes, 1);
+  assert.equal(result.report.checks, 0);
+});
+
 check('a backup taken before cards existed still restores', () => {
   freshBrowser();
   saveNote(LESSON.id, 'a note');
@@ -567,21 +615,21 @@ check('an oversized file is refused before it is parsed', () => {
 check('the summaries say what happened, and say "nothing new" when nothing was', () => {
   freshBrowser();
   assert.equal(
-    backupSummary({ verified: 0, completed: 0, milestones: 0, drafts: 0, snapshots: 0, events: 0 }, 0),
+    backupSummary({ verified: 0, completed: 0, milestones: 0, drafts: 0, snapshots: 0, checks: 0, events: 0 }, 0),
     'Backed up · 0 B'
   );
   assert.equal(
-    backupSummary({ verified: 3, completed: 1, milestones: 0, drafts: 2, snapshots: 9, events: 12 }, 48_000),
-    'Backed up · 3 verified · 1 self-marked · 2 drafts · 12 log events · 48 kB'
+    backupSummary({ verified: 3, completed: 1, milestones: 0, drafts: 2, snapshots: 9, checks: 4, events: 12 }, 48_000),
+    'Backed up · 3 verified · 1 self-marked · 2 drafts · 4 checklist ticks · 12 log events · 48 kB'
   );
   assert.equal(formatBackupSize(1_700_000), '1.7 MB');
   assert.equal(
-    restoreSummary({ verified: 0, completed: 0, milestones: 0, drafts: 0, snapshots: 0, events: 0, skipped: [], files: 6 }),
+    restoreSummary({ verified: 0, completed: 0, milestones: 0, drafts: 0, snapshots: 0, checks: 0, events: 0, skipped: [], files: 6 }),
     'Nothing new in that backup — this browser already has it all'
   );
   assert.equal(
-    restoreSummary({ verified: 1, completed: 0, milestones: 0, drafts: 2, snapshots: 0, events: 4, skipped: ['history.json'], files: 6 }),
-    'Restored · 1 lesson verified · 2 drafts · 4 log events · skipped history.json'
+    restoreSummary({ verified: 1, completed: 0, milestones: 0, drafts: 2, snapshots: 0, checks: 1, events: 4, skipped: ['history.json'], files: 6 }),
+    'Restored · 1 lesson verified · 2 drafts · 1 checklist tick merged · 4 log events · skipped history.json'
   );
 });
 

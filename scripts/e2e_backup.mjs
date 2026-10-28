@@ -123,6 +123,18 @@ async function main() {
       'the milestone click must tick the button before anything is backed up'
     );
 
+    // A checklist tick, from the store the reading page writes. The reader's own click is covered by
+    // the home suite; what this suite proves is that the tick is in the archive and comes back.
+    const CHECK = 'a bullet this suite ticked';
+    await page.evaluate(
+      ({ id, item }) =>
+        localStorage.setItem(
+          'mechalab_lesson_checks_v1',
+          JSON.stringify({ [id]: { done: [item], updatedAt: 1_700_000_000_000 } })
+        ),
+      { id: DRAFT_LESSON, item: CHECK }
+    );
+
 
     // ---- One press: a zip the browser saves ----
     const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
@@ -141,7 +153,7 @@ async function main() {
     const read = readZip(bytes);
     assert.equal(read.ok, true, `the app must write an archive it can read back (${read.reason})`);
     const files = new Map(read.entries.map((entry) => [entry.name, fromUtf8(entry.data)]));
-    for (const name of ['manifest.json', 'progress.json', 'drafts.json', 'history.json', 'learning-log.json', 'README.txt']) {
+    for (const name of ['manifest.json', 'progress.json', 'drafts.json', 'history.json', 'checks.json', 'learning-log.json', 'README.txt']) {
       assert.ok(files.has(name), `the archive must carry ${name}`);
     }
     const manifest = JSON.parse(files.get('manifest.json'));
@@ -149,6 +161,7 @@ async function main() {
     assert.equal(progress.completedMilestones[milestoneId], true, 'the clicked milestone must be in the archive');
     assert.ok(manifest.counts.milestones >= 1, `expected the manifest to count the milestone: ${JSON.stringify(manifest.counts)}`);
     assert.ok(manifest.counts.drafts >= 1, 'the seeded draft must be in the archive');
+    assert.equal(manifest.counts.checks, 1, 'the checklist tick must be counted in the archive');
     assert.ok(manifest.counts.events >= 1, 'the seeded log event must be in the archive');
     assert.match(await page.getByTestId('backup-status').textContent(), /^Backed up · /);
     console.log(
@@ -178,6 +191,15 @@ async function main() {
     const statusText = (await status.textContent()).trim();
     assert.match(statusText, /^Restored · /, `the restore must report what it added; got: ${statusText}`);
     assert.match(statusText, /milestone/, `the milestone must be named in the report; got: ${statusText}`);
+    assert.match(statusText, /checklist tick/, `the tick must be named in the report; got: ${statusText}`);
+    const restoredChecks = await page.evaluate(
+      () => JSON.parse(localStorage.getItem('mechalab_lesson_checks_v1') ?? '{}')
+    );
+    assert.deepEqual(
+      restoredChecks[DRAFT_LESSON]?.done,
+      [CHECK],
+      'the checklist tick must be back in the store, not only in the sentence'
+    );
     assert.match(
       await waitForMilestone(page, `btn-milestone-${milestoneId}`, /Marked done/),
       /Marked done/,

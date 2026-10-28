@@ -6,14 +6,14 @@ for one reason: carrying that work to another device.
 
 | build / state | what happens |
 | :--- | :--- |
-| **No Supabase variables** (default, and this repository's CI) | Everything works as before. Progress, drafts, notes and the log live in this browser. The header button reads **Sign in** and the panel says cloud sync is not configured. |
+| **No Supabase variables** (default, and this repository's CI) | Everything works as before. Progress, drafts, notes, checklist ticks and the log live in this browser. The header button reads **Sign in** and the panel says cloud sync is not configured. |
 | **Configured, signed out** | The same local-only behaviour, plus a working **Continue with Google**, email + password and emailed-link form. Nothing is uploaded until a sign-in succeeds. |
-| **Configured, signed in** | The progress snapshot is merged with the account on sign-in and saved after each change. Drafts and notes stay local unless workspace sync is switched on. |
-| **Signed in, workspace sync on** | The merged workspace — drafts, lesson notes and highlights — is written to both the browser and the account. Conflicts keep both versions. |
+| **Configured, signed in** | The progress snapshot is merged with the account on sign-in and saved after each change. Drafts, notes and checklist ticks stay local unless workspace sync is switched on. |
+| **Signed in, workspace sync on** | The merged workspace — drafts, lesson notes and highlights, and the checklist ticks — is written to both the browser and the account. Conflicts keep both versions; ticks union. |
 
 ```mermaid
 flowchart LR
-    A["This browser<br/>progress · drafts · notes"] -->|"sign in"| B["Merge progress<br/>a completion is never lost"]
+    A["This browser<br/>progress · drafts · notes · ticks"] -->|"sign in"| B["Merge progress<br/>a completion is never lost"]
     B --> C["mechalab_progress"]
     A -->|"opt in to workspace sync"| D["Merge workspace<br/>both versions kept"]
     D --> E["mechalab_workspace"]
@@ -48,6 +48,7 @@ flowchart LR
 | Learning log (`mechalab.learningLog.v1`) | yes | yes |
 | Lesson drafts (`mechalab_drafts_v1`) | no | yes |
 | Lesson notes and highlights (`mechalab_study_notes_v1`) | no | yes |
+| Lesson checklist ticks (`mechalab_lesson_checks_v1`) | no | yes — unioned, so a tick is never removed |
 | Study-card schedule, pair sessions, layout, theme | no | no — device-local by design |
 
 **Progress merge** (`app/src/progressMerge.ts`, `npm run test:merge`): a flag true on either side stays
@@ -59,7 +60,9 @@ progress instead of replacing it.
 one side is kept; identical copies collapse to one; two different versions both survive — the newer
 snapshot owns the lesson's slot and the other version is stored in `conflicts` with its origin and time.
 Highlights union by quote; two different comments on one quote keep the newer in place and the older in
-the conflict list. Nothing is silently overwritten, and the dashboard counts the kept versions.
+the conflict list. Checklist ticks union by item, the same rule the backup uses: a tick added on either
+device is kept, and neither side can take one away. Nothing is silently overwritten, and the dashboard
+counts the kept versions.
 
 Switching workspace sync off stops uploads and deletes nothing, on either side.
 
@@ -68,8 +71,8 @@ Switching workspace sync off stops uploads and deletes nothing, on either side.
 - The email address and password (or the Google identity) you sign in with, held by Supabase Auth.
 - The progress snapshot: three flag maps and the learning log. No page views, no time-on-page, no keystroke
   data, no code you ran.
-- With workspace sync on, only: drafts for lessons you edited, lesson notes, and highlight quotes plus
-  their comments.
+- With workspace sync on, only: drafts for lessons you edited, lesson notes, highlight quotes plus
+  their comments, and the items you ticked in lesson checklists.
 - One row in `mechalab_roles` if you are an admin, and an audit entry naming the admin who changed a
   setting or a role.
 

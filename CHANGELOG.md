@@ -16,6 +16,32 @@ flowchart LR
 
 ---
 
+## [2026-10-27] — Run 265: ticks that survive a new machine
+
+**The checklist leaves the browser it was ticked in.** A lesson's ticks now travel two ways: the backup
+archive gains `checks.json`, and the opt-in workspace row gains a `checks` field. Both merge through the
+same `mergeChecks` in [`app/src/lessonChecks.ts`](app/src/lessonChecks.ts) — union by item, the rule the
+progress maps already use — so a tick made on a phone arrives on the laptop and no restore can take one
+away. The manifest counts them, the restore sentence names them (`1 checklist tick merged`), and the
+archive's own README lists the file and the rule.
+
+**Reset follows them.** The **Lesson checklists** row now lives in the workspace group, and
+`resetWorkspace` clears only the parts the learner actually reset
+(`resetWorkspace(accountUserId, { drafts, study, checks })`). Erasing drafts no longer takes the
+account's notes or its ticks with it;
+erasing one lesson's checklist still leaves the other ticks in place locally and unions them back.
+
+**An older row still reads.** `WorkspaceDoc.checks` is optional, so a document written before
+checklists existed is an older document rather than a corrupt one; it merges as having no ticks and
+cannot erase the ones this browser holds. The account panel's preview and the sync sentence now name
+checklists, and a restore refreshes the open lesson's boxes through `STORE_RESTORED_EVENT`.
+
+Checks: `npx tsc -b` clean; `npm run test:checklists` 19 passed; `npm run test:backup` 24 passed;
+`npm run test:accounts` 28 checks; `npm run test:reset` 21 passed; `npm run test:e2e:backup` PASS
+(the tick counted in the manifest, wiped, restored, reported and drawn again without a reload).
+
+---
+
 ## [2026-10-27] — Run 264: a lesson you can tick off, and a note you can press
 
 **The reading page is a checklist.** Every unordered bullet is a checkbox, its tick stored per lesson in

@@ -22,9 +22,9 @@
  *   reset on a signed-in learner would undo itself at the next sign-in, which is exactly what
  *   `mergeProgress`'s never-lose-work rule does to an empty map.
  * - **The parts say which side they live on.** Lessons, milestones and the log are the cloud progress
- *   document; drafts and notes are the opt-in workspace row; the rest never leave the browser. The
- *   report carries the two booleans the App uses to write the account's copy, so a reset on this
- *   machine is not resurrected by the next sync.
+ *   document; drafts, notes and checklist ticks are the opt-in workspace row; the rest never leave
+ *   the browser. The report carries the two booleans the App uses to write the account's copy, so a
+ *   reset on this machine is not resurrected by the next sync.
  * - **Nothing is cleared that is already empty.** The count is taken first, and a part with nothing in
  *   it is skipped rather than written back as an empty store — so the report's number is what was
  *   actually erased, and pressing Reset twice cannot make the second press look like it did something.
@@ -173,10 +173,9 @@ export const RESET_AREAS: readonly ResetArea[] = [
     id: 'checks',
     label: 'Lesson checklists',
     hint: 'The ticks you made while reading a lesson. The lesson text, your notes and every verdict stay.',
-    // Local, not cloud: the prose is the same on every device, but the store that remembers a tick
-    // is this browser's. Marking the cloud progress as reset here would discard an account's newer
-    // copy for a change it never held.
-    group: 'local',
+    // These ride the opt-in workspace row as well, so the reset has to clear that copy too: a local
+    // clear alone is unioned straight back in at the next sync.
+    group: 'workspace',
     count: () => {
       const counts = tickCounts();
       return {
