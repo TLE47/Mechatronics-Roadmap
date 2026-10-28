@@ -31,6 +31,7 @@ import {
   readReadingPosition,
   writeReadingPosition,
 } from '../app/src/readingPosition.ts';
+import { markQuotes, wrapSelection } from '../app/src/lessonMarks.ts';
 
 let passed = 0;
 let failed = 0;
@@ -130,6 +131,71 @@ check('an escape is the character, and an inline image falls back to its alt', (
 check('adjacent text is one run, so the DOM is not a span per character', () => {
   assert.deepEqual(parseInline('plain words'), [{ k: 'text', v: 'plain words' }]);
   assert.deepEqual(kinds('a `b` c **d** e'), ['text', 'code', 'text', 'strong', 'text']);
+});
+
+check('underline is its own run, because Markdown has none and `_` is an identifier', () => {
+  assert.deepEqual(parseInline('++keep this++'), [{ k: 'u', v: 'keep this' }]);
+  assert.equal(inlinePlain('a ++marked++ word'), 'a marked word', 'a plain reading drops the marks');
+  assert.deepEqual(parseInline('**++both++**'), [{ k: 'strong', v: '++both++' }]);
+  assert.deepEqual(parseInline('2 ++ 3'), [{ k: 'text', v: '2 ++ 3' }], 'an unclosed pair stays text');
+});
+
+section('marks and wrapping');
+
+check('a saved quote is cut out of a run in reading order', () => {
+  assert.deepEqual(markQuotes('the gain is the loop', ['the gain']), [
+    { text: 'the gain', quote: 'the gain' },
+    { text: ' is the loop', quote: null },
+  ]);
+  assert.deepEqual(markQuotes('nothing here', ['other']), [{ text: 'nothing here', quote: null }]);
+  assert.deepEqual(markQuotes('', ['anything']), [], 'nothing to mark, nothing to draw');
+});
+
+check('the longest quote wins where two overlap, and adjacent quotes are two pieces', () => {
+  const overlapping = markQuotes('the gain term matters', ['the gain', 'the gain term']);
+  assert.deepEqual(overlapping.map((piece) => piece.text), ['the gain term', ' matters']);
+  assert.equal(overlapping[0].quote, 'the gain term', 'the longer phrase is the one marked');
+
+  const adjacent = markQuotes('one two', ['one', 'two']);
+  assert.deepEqual(adjacent, [
+    { text: 'one', quote: 'one' },
+    { text: ' ', quote: null },
+    { text: 'two', quote: 'two' },
+  ]);
+});
+
+check('duplicate and empty quotes do not draw two marks or an empty one', () => {
+  assert.deepEqual(markQuotes('a word here', ['word', 'word', '  ']), [
+    { text: 'a ', quote: null },
+    { text: 'word', quote: 'word' },
+    { text: ' here', quote: null },
+  ]);
+});
+
+check('wrapping keeps the selection inside the markers', () => {
+  assert.deepEqual(wrapSelection('a gain b', 2, 6, '**'), {
+    text: 'a **gain** b',
+    start: 4,
+    end: 8,
+  });
+  assert.deepEqual(wrapSelection('hello', 5, 5, '*'), {
+    text: 'hello*text*',
+    start: 6,
+    end: 10,
+  }, 'an empty selection gets a word to type over');
+});
+
+check('a stale or reversed range is clamped, not trusted', () => {
+  assert.deepEqual(wrapSelection('abc', 9, 12, '++'), {
+    text: 'abc++text++',
+    start: 5,
+    end: 9,
+  });
+  assert.deepEqual(wrapSelection('abc', 2, 1, '*'), {
+    text: 'ab*text*c',
+    start: 3,
+    end: 7,
+  }, 'an end before the start is the start');
 });
 
 section('heading anchors');

@@ -38,6 +38,7 @@ const WORK_KEYS = [
   'mechalab_awards_v1',
   'mechalab_study_cards_v1',
   'mechalab_study_notes_v1',
+  'mechalab_lesson_checks_v1',
   'mechalab_drafts_v1',
   'mechalab_draft_history_v1',
   'mechalab.learningLog.v1',
@@ -180,6 +181,10 @@ async function main() {
       ({ verifiedKey, themeKey, soundKey }) => {
         localStorage.setItem(verifiedKey, JSON.stringify({ 'P.1': true, 'P.2': true }));
         localStorage.setItem('mechalab_drafts_v1', JSON.stringify({ 'P.1': 'print("draft")\n' }));
+        localStorage.setItem(
+          'mechalab_lesson_checks_v1',
+          JSON.stringify({ 'P.1': { done: ['Run the sweep', 'Read the trace'], updatedAt: 1 } })
+        );
         // Preferences: these must survive every reset, including "everything".
         localStorage.setItem(themeKey, 'paper');
         localStorage.setItem(soundKey, JSON.stringify({ master: 0.4, music: 0.1 }));
@@ -198,14 +203,15 @@ async function main() {
       'the seeded milestone must still read as ticked before the reset'
     );
 
-    // ---- The panel: eleven parts, with the counts the stores actually hold ----
+    // ---- The panel: twelve parts, with the counts the stores actually hold ----
     await openReset(page);
     assert.equal(
       await page.locator('[data-testid^="reset-row-"]').count(),
-      11,
+      12,
       'the panel must offer every part'
     );
     assert.match(await page.getByTestId('reset-count-lessons').textContent(), /2 verified/, 'lessons count');
+    assert.match(await page.getByTestId('reset-count-checks').textContent(), /2 ticks in 1 lesson/, 'checklist count');
     assert.match(await page.getByTestId('reset-count-milestones').textContent(), /1 milestone/, 'milestone count');
     assert.match(await page.getByTestId('reset-count-drafts').textContent(), /1 draft/, 'draft count');
 

@@ -36,6 +36,7 @@ import { STORAGE_KEY_HISTORY } from '../app/src/draftHistory.ts';
 import { LOG_STORAGE_KEY, logEvent, readLearningLog } from '../app/src/learningLog.ts';
 import { readDrafts, saveDraft } from '../app/src/lessonDraft.ts';
 import { addHighlight, saveNote, studyCounts } from '../app/src/studyNotes.ts';
+import { readTicks, setTicked, tickCounts } from '../app/src/lessonChecks.ts';
 import { readCardList, syncCards } from '../app/src/studyCards.ts';
 import { readSittings, recordSittingEvent } from '../app/src/sittingClock.ts';
 import { readPredictions, savePrediction } from '../app/src/predictGate.ts';
@@ -89,6 +90,8 @@ function seedEverything() {
   saveDraft('P.1', 'print("hi")');
   saveNote('P.1', 'a note');
   addHighlight('P.1', 'the passage', 'why it matters');
+  setTicked('P.1', 'Run the sweep', true, 900);
+  setTicked('P.1', 'Read the trace', true, 901);
   syncCards(1_700_000_000_000);
   logEvent({ kind: 'run', lesson: 'P.1', outcome: 'verified' });
   recordSittingEvent({ at: 1_700_000_000_000, kind: 'run', lesson: 'P.1' });
@@ -111,11 +114,12 @@ function seedEverything() {
 
 console.log('reset registry');
 
-check('eleven parts, each with a label, a hint and one group', () => {
-  assert.equal(RESET_AREAS.length, 11);
+check('twelve parts, each with a label, a hint and one group', () => {
+  assert.equal(RESET_AREAS.length, 12);
   const ids = RESET_AREAS.map((entry) => entry.id);
   assert.deepEqual(ids, [
     'lessons',
+    'checks',
     'milestones',
     'awards',
     'cards',
@@ -151,6 +155,7 @@ check('every part counts what its own store holds', () => {
   seedEverything();
   const expected = {
     lessons: 3,
+    checks: 2,
     milestones: 2,
     awards: 1,
     cards: 1,
@@ -167,6 +172,7 @@ check('every part counts what its own store holds', () => {
     assert.equal(state.n, n, `${id} should count ${n}, counted ${state.n} (${state.text})`);
   }
   assert.match(area('lessons').count().text, /2 verified · 1 self-marked/);
+  assert.match(area('checks').count().text, /2 ticks in 1 lesson/);
   assert.match(area('notes').count().text, /1 note · 1 highlight/);
   assert.match(area('drafts').count().text, /1 draft · 1 version/);
 });
@@ -187,6 +193,20 @@ check('resetting lessons erases the flags and the stamps, and nothing else', () 
   assert.equal(area('milestones').count().n, 2);
   assert.equal(area('log').count().n, 1);
   assert.equal(area('drafts').count().n, 2);
+  assert.equal(area('notes').count().n, 2);
+});
+
+check('resetting checklists erases the ticks, and leaves the notes and verdicts', () => {
+  freshBrowser();
+  seedEverything();
+  const report = resetAreas(['checks'], 9_500);
+  assert.deepEqual(report.areas, ['checks']);
+  assert.equal(report.items, 2);
+  assert.equal(report.progress, false, 'ticks never leave this browser');
+  assert.equal(report.resetAt, null, 'a local part must not move the cloud watermark');
+  assert.deepEqual(readTicks('P.1'), []);
+  assert.deepEqual(tickCounts(), { lessons: 0, ticks: 0 });
+  assert.equal(area('lessons').count().n, 3, 'the verdicts are untouched');
   assert.equal(area('notes').count().n, 2);
 });
 
@@ -267,7 +287,7 @@ check('reset everything empties every part and leaves the preferences alone', ()
   localStorage.setItem('mechalab_theme_v1', 'paper');
   localStorage.setItem('mechalab_sound_v1', '{"master":0.4}');
   const report = resetEverything(10_000);
-  assert.equal(report.areas.length, 11);
+  assert.equal(report.areas.length, 12);
   for (const entry of RESET_AREAS) {
     assert.equal(entry.count().n, 0, `${entry.id} should be empty after everything`);
   }
@@ -329,6 +349,23 @@ check('one lesson is erased without the lesson beside it', () => {
     ['P.2'],
     'the verified map keeps its other lesson'
   );
+});
+
+check('one lesson\'s checklist is erased without the other ticks or the notes', () => {
+  freshBrowser();
+  seedEverything();
+  setTicked('P.2', 'Open the REPL', true, 902);
+  assert.equal(area('checks').count().n, 3);
+  const item = areaItems('checks').find((entry) => entry.id === 'checks:P.1');
+  assert.ok(item, 'P.1 should be listed as its own checklist');
+  assert.equal(item.n, 2);
+  assert.match(item.detail, /2 ticked items/);
+  const report = resetItem('checks', item.id, 12_500);
+  assert.equal(report.items, 2);
+  assert.equal(report.resetAt, null, 'a local part leaves no watermark');
+  assert.deepEqual(readTicks('P.1'), []);
+  assert.deepEqual(readTicks('P.2'), ['Open the REPL'], 'the other lesson keeps its tick');
+  assert.equal(area('notes').count().n, 2);
 });
 
 check('a note item takes its highlights with it, and leaves the rest of the store', () => {

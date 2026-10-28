@@ -21,6 +21,7 @@ export type InlineRun =
   | { k: 'code'; v: string }
   | { k: 'strong'; v: string }
   | { k: 'em'; v: string }
+  | { k: 'u'; v: string }
   | { k: 'link'; href: string; v: string }
   | { k: 'math'; v: string };
 
@@ -135,6 +136,16 @@ export function parseInline(text: string): InlineRun[] {
       flush();
       runs.push({ k: 'em', v: emphasis[1] });
       index += emphasis[0].length;
+      continue;
+    }
+
+    // Markdown has no underline, and `_` is already an identifier character in this corpus
+    // (`K_p`), so the note editor writes `++…++` and this is the one reader that renders it.
+    const underline = /^\+\+([^+\n]+?)\+\+/.exec(rest);
+    if (underline && !/^\s|\s$/.test(underline[1])) {
+      flush();
+      runs.push({ k: 'u', v: underline[1] });
+      index += underline[0].length;
       continue;
     }
 

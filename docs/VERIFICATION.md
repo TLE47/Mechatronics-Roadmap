@@ -129,9 +129,10 @@ npm run test:cells                      # # %% cells: the boundaries, the preamb
 npm run test:breakpoints                # the gutter's list: a toggle, a condition and the dot it belongs to, per lesson, capped and evicted, an older store read back, lines that can run, and a dot that follows its statement through an edit
 npm run test:try                        # try-it blocks: the marker rule, the lesson a page opens, the generated link read back by the app's own codec, and that every page is up to date
 npm run test:backup                     # the archive: CRC vector, byte-for-byte round trip, the three refusals, and a merge that never deletes
-npm run test:reset                      # erasing progress: eleven parts, one part vs its neighbours, the empty part skipped, the watermark, and the event
+npm run test:reset                      # erasing progress: twelve parts, one part vs its neighbours, the empty part skipped, the watermark, and the event
 npm run test:merge                      # cloud sync: the merge rule, plus a reset newer than the other side (wins) and one older (loses)
 npm run test:study                      # notes and highlights: kept per lesson, deduped by quote, capped per lesson and never evicted by count, merged on restore
+npm run test:checklists                 # a lesson's bullet ticks: identified by their words, per lesson, bounded, clearable, refused by a blocked store
 npm run test:review                     # FSRS-5: the 0.9-at-stability identity, grade order, lapses, the year cap, and the card join
 npm run test:sitting                    # the sitting clock: idle cutoff, three-hour cap, backwards clock, totals, and focus's store
 npm run test:portfolio                  # the export: a section only when it has content, quoting, the twenty-card cap, the time table

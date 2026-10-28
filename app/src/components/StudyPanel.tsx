@@ -21,6 +21,7 @@ import {
   sittingSummary,
 } from '../sittingClock';
 import { DAY_MS, type Grade } from '../fsrs';
+import { InlineMarkdown } from './InlineMarkdown';
 
 /**
  * The lesson's study panel: what the learner wrote down, and the passages they kept.
@@ -338,7 +339,11 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
           </p>
           {revealed ? (
             <div data-testid="review-answer" className="mt-2 border-t border-line pt-2">
-              <p className="text-[12.5px] text-body break-words">{reviewing.comment}</p>
+              {/* The same renderer the lesson uses: a note formatted with Bold or Underline reads
+                  formatted on the card, not as asterisks. */}
+              <p className="text-[12.5px] text-body break-words">
+                <InlineMarkdown text={reviewing.comment} />
+              </p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {RATINGS.map((rating) => (
                   <button

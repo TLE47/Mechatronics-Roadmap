@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { BookOpen, Highlighter, Loader2, RotateCcw, StickyNote, X } from 'lucide-react';
+import { Bold, BookOpen, Highlighter, Italic, Loader2, RotateCcw, StickyNote, Underline, X } from 'lucide-react';
 import { MathView } from './MathView';
+import { InlineMarkdown as Inline } from './InlineMarkdown';
 import { Diagram } from '../visuals/Diagram';
 import { sceneFor } from '../visuals/scenes';
 import {
@@ -9,14 +10,24 @@ import {
   type LessonPage,
   type ReaderBlock,
 } from '../lessonPage';
-import { headingAnchors, parseInline } from '../readerMarkdown';
+import { headingAnchors, inlinePlain } from '../readerMarkdown';
 import {
   clearReadingPosition,
   readReadingPosition,
   writeReadingPosition,
   type ReadingPosition,
 } from '../readingPosition';
-import { addHighlight, cleanQuote } from '../studyNotes';
+import {
+  MAX_COMMENT_CHARS,
+  addHighlight,
+  cleanQuote,
+  readLessonStudy,
+  setComment,
+  type Highlight,
+} from '../studyNotes';
+import { checkId, readTicks, toggleTicked } from '../lessonChecks';
+import { wrapSelection } from '../lessonMarks';
+import { RESET_EVENT } from '../resetEvent';
 import { lessonPageUrl as sourceUrl } from '../startHere';
 
 /**
@@ -61,54 +72,6 @@ interface LessonReaderProps {
 
 /** How long a scroll must be still before the position is written: one write per pause, not per pixel. */
 const SAVE_AFTER_MS = 350;
-
-function Inline({ text }: { text: string }) {
-  return (
-    <>
-      {parseInline(text).map((run, index) => {
-        switch (run.k) {
-          case 'code':
-            return (
-              <code
-                key={index}
-                className="rounded bg-canvas border border-line-soft px-1 py-0.5 font-mono text-[0.87em] text-ink"
-              >
-                {run.v}
-              </code>
-            );
-          case 'strong':
-            return (
-              <strong key={index} className="font-bold text-ink">
-                <Inline text={run.v} />
-              </strong>
-            );
-          case 'em':
-            return (
-              <em key={index} className="italic">
-                <Inline text={run.v} />
-              </em>
-            );
-          case 'link':
-            return (
-              <a
-                key={index}
-                href={run.href}
-                target="_blank"
-                rel="noreferrer"
-                className="text-accent underline underline-offset-2 hover:text-accent-strong"
-              >
-                <Inline text={run.v} />
-              </a>
-            );
-          case 'math':
-            return <MathView key={index} math={run.v} />;
-          default:
-            return <React.Fragment key={index}>{run.v}</React.Fragment>;
-        }
-      })}
-    </>
-  );
-}
 
 /** The page's absolute URL, for the source link a heading or a figure points back to. */
 function repoUrl(path: string): string {
@@ -184,6 +147,14 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
    * the moment the learner asked for the note is also what the popup shows back to them.
    */
   const [stickyQuote, setStickyQuote] = useState('');
+  /** True when the popup was opened by pressing a marked passage, so Save updates instead of adds. */
+  const [stickyEditing, setStickyEditing] = useState(false);
+  /** The lesson's ticks, and the highlights drawn into the prose; both are re-read after a write. */
+  const [ticks, setTicks] = useState<string[]>([]);
+  const [marks, setMarks] = useState<Highlight[]>([]);
+  const stickyRef = useRef<HTMLTextAreaElement | null>(null);
+  /** Where the caret goes when the next render commits, because a controlled box forgets it. */
+  const stickyCaretRef = useRef<{ start: number; end: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const lastSaveRef = useRef(0);
   const pendingRef = useRef<ReadingPosition | null>(null);
@@ -198,6 +169,7 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
     setStickyOpen(false);
     setStickyText('');
     setStickyQuote('');
+    setStickyEditing(false);
     if (!path) {
       setError('This entry has no reading page of its own.');
       return;
@@ -215,6 +187,19 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
       cancelled = true;
     };
   }, [path, attempt]);
+
+  // The ticks and the marked passages belong to the lesson, not to the page load: switching to the
+  // next lesson and back must show what was done, and a reset elsewhere on screen must clear them
+  // here too rather than leave a checkbox that reloads unticked.
+  useEffect(() => {
+    const reread = () => {
+      setTicks(readTicks(lessonId));
+      setMarks(readLessonStudy(lessonId)?.highlights ?? []);
+    };
+    reread();
+    window.addEventListener(RESET_EVENT, reread);
+    return () => window.removeEventListener(RESET_EVENT, reread);
+  }, [lessonId]);
 
   // Restore where this lesson was left. The anchor is tried first: a page regenerated after the
   // sentence changed still has its headings, and a raw offset would land in a paragraph that moved.
@@ -297,6 +282,32 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
     writeReadingPosition(lessonId, position);
   };
 
+  // A controlled textarea loses its selection when React writes the value back. Restoring it in a
+  // layout effect (after the commit, before paint) is what lets Bold then Underline nest: the second
+  // press has to see the selection the first one left, not a whole box selected from before.
+  useLayoutEffect(() => {
+    const box = stickyRef.current;
+    const caret = stickyCaretRef.current;
+    if (!box || !caret) return;
+    stickyCaretRef.current = null;
+    box.focus();
+    try {
+      box.setSelectionRange(caret.start, caret.end);
+    } catch {
+      // A box that went away between the press and the commit has nothing to restore.
+    }
+  }, [stickyText]);
+
+  /** Re-read the lesson's highlights after a write, so the marks in the prose match the store. */
+  const syncMarks = () => setMarks(readLessonStudy(lessonId)?.highlights ?? []);
+
+  const closeSticky = () => {
+    setStickyOpen(false);
+    setStickyText('');
+    setStickyQuote('');
+    setStickyEditing(false);
+  };
+
   const pinSelection = () => {
     if (!selection) return;
     const saved = addHighlight(lessonId, selection);
@@ -306,7 +317,58 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
     }
     window.getSelection()?.removeAllRanges();
     setSelection('');
+    syncMarks();
     setStatus('Highlight pinned to Notes.');
+  };
+
+  /** Open the note a marked passage carries; Save then updates that highlight rather than adding. */
+  const openMark = (mark: Highlight) => {
+    setStickyEditing(true);
+    setStickyQuote(mark.quote);
+    setStickyText(mark.comment);
+    setStickyOpen(true);
+  };
+
+  /** Wrap the textarea's selection in a Markdown marker, keeping the selection inside the pair. */
+  const applyMarker = (marker: string) => {
+    const box = stickyRef.current;
+    const start = box?.selectionStart ?? stickyText.length;
+    const end = box?.selectionEnd ?? start;
+    const wrapped = wrapSelection(stickyText, start, end, marker);
+    // The store's comment cap includes the markers: a box that could wrap 400 characters into 404
+    // would save 400 and silently lose the closing pair on reload.
+    const next = wrapped.text.slice(0, MAX_COMMENT_CHARS);
+    // Bold then Underline nests: the layout effect below puts the selection back inside the markers
+    // this press wrote, so the next press wraps that range rather than the whole box.
+    stickyCaretRef.current = {
+      start: Math.min(wrapped.start, next.length),
+      end: Math.min(wrapped.end, next.length),
+    };
+    setStickyText(next);
+  };
+
+  const onStickyKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      closeSticky();
+      return;
+    }
+    if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
+    const key = event.key.toLowerCase();
+    const marker = key === 'b' ? '**' : key === 'i' ? '*' : key === 'u' ? '++' : '';
+    if (!marker) return;
+    event.preventDefault();
+    applyMarker(marker);
+  };
+
+  /** Tick or untick one bullet. The box is only redrawn from the store after the write lands. */
+  const toggleItem = (text: string) => {
+    const result = toggleTicked(lessonId, text);
+    if (!result.saved) {
+      setStatus('Not saved — storage is blocked or full.');
+      return;
+    }
+    setTicks(readTicks(lessonId));
   };
 
   /**
@@ -316,20 +378,32 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
    * that needs one — "this is the gain I keep forgetting", "recompute with the new dt". The comment
    * is also what makes the passage a review card (`studyCards.ts`), so the thought comes back on the
    * day it is due instead of staying on the page it was written on.
+   *
+   * Opened from a mark in the prose (`openMark`), the same popup edits what is already there and
+   * leaves the passage's comment in place of adding a second highlight for the same quote.
    */
   const saveSticky = () => {
     if (!stickyQuote) return;
-    const saved = addHighlight(lessonId, stickyQuote, stickyText);
+    const saved = stickyEditing
+      ? setComment(lessonId, stickyQuote, stickyText)
+      : addHighlight(lessonId, stickyQuote, stickyText);
     if (!saved) {
       setStatus('Not saved — storage is blocked or full.');
       return;
     }
     window.getSelection()?.removeAllRanges();
     setSelection('');
-    setStickyOpen(false);
-    setStickyText('');
-    setStickyQuote('');
-    setStatus(stickyText.trim() ? 'Sticky note saved to Notes.' : 'Passage pinned to Notes.');
+    syncMarks();
+    setStatus(
+      stickyEditing
+        ? stickyText.trim()
+          ? 'Sticky note updated.'
+          : 'Sticky note cleared; the passage is still pinned.'
+        : stickyText.trim()
+          ? 'Sticky note saved to Notes.'
+          : 'Passage pinned to Notes.'
+    );
+    closeSticky();
   };
 
   const scrollToTop = () => {
@@ -361,6 +435,7 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
             <button
               type="button"
               onClick={() => {
+                setStickyEditing(false);
                 setStickyText('');
                 setStickyQuote(selection);
                 setStickyOpen(true);
@@ -472,36 +547,75 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
                         block.l === 2 ? 'mt-5 text-[22px]' : 'mt-4 text-[18px]'
                       }`}
                     >
-                      <Inline text={block.x} />
+                      <Inline text={block.x} marks={marks} onMark={openMark} />
                     </Tag>
                   );
                 }
                 case 'p':
                   return (
                     <p key={index} className="text-[17px] leading-[1.7] text-body">
-                      <Inline text={block.x} />
+                      <Inline text={block.x} marks={marks} onMark={openMark} />
                     </p>
                   );
                 case 'ul':
                 case 'ol': {
-                  const List = block.t === 'ul' ? 'ul' : 'ol';
+                  // A bullet list is a list of things to do, so each item is a checkbox that
+                  // remembers its tick (`lessonChecks.ts`). Ordered lists keep their numbers: a
+                  // sequence has an order, and a checklist of steps is still read in that order.
+                  if (block.t === 'ol') {
+                    return (
+                      <ol
+                        key={index}
+                        className="list-decimal space-y-1 pl-5 text-[17px] leading-[1.65] text-body"
+                      >
+                        {block.items.map((item, itemIndex) => (
+                          <li
+                            key={itemIndex}
+                            style={{ marginLeft: `${item.d * 16}px` }}
+                            className={item.d > 0 ? 'list-[circle]' : undefined}
+                          >
+                            <Inline text={item.x} marks={marks} onMark={openMark} />
+                          </li>
+                        ))}
+                      </ol>
+                    );
+                  }
                   return (
-                    <List
+                    <ul
                       key={index}
-                      className={`space-y-1 text-[17px] leading-[1.65] text-body ${
-                        block.t === 'ul' ? 'list-disc' : 'list-decimal'
-                      } pl-5`}
+                      data-testid="reader-checklist"
+                      className="list-none space-y-1.5 pl-0 text-[17px] leading-[1.65] text-body"
                     >
-                      {block.items.map((item, itemIndex) => (
-                        <li
-                          key={itemIndex}
-                          style={{ marginLeft: `${item.d * 16}px` }}
-                          className={item.d > 0 ? 'list-[circle]' : undefined}
-                        >
-                          <Inline text={item.x} />
-                        </li>
-                      ))}
-                    </List>
+                      {block.items.map((item, itemIndex) => {
+                        const key = checkId(item.x);
+                        const checked = key !== '' && ticks.includes(key);
+                        return (
+                          <li
+                            key={itemIndex}
+                            style={{ marginLeft: `${item.d * 16}px` }}
+                            className="flex items-start gap-2.5"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleItem(item.x)}
+                              aria-label={inlinePlain(item.x).slice(0, 140)}
+                              data-testid={`reader-check-${index}-${itemIndex}`}
+                              data-check-key={key}
+                              title="Tick this when you have done it. Saved on this device."
+                              className="mt-[0.32rem] h-4 w-4 shrink-0 cursor-pointer accent-[var(--accent)]"
+                            />
+                            <span
+                              className={
+                                checked ? 'text-faint line-through decoration-line-strong' : undefined
+                              }
+                            >
+                              <Inline text={item.x} marks={marks} onMark={openMark} />
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   );
                 }
                 case 'code':
@@ -514,7 +628,7 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
                       key={index}
                       className="my-3 rounded-r-lg border-l-2 border-amber/70 bg-amber/5 py-2 pl-3 pr-2 text-[15.5px] leading-relaxed text-body"
                     >
-                      <Inline text={block.x} />
+                      <Inline text={block.x} marks={marks} onMark={openMark} />
                     </blockquote>
                   );
                 case 'math':
@@ -624,7 +738,7 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
             className="fixed inset-0 z-[60] flex items-end justify-center p-3 sm:items-center"
             style={{ backgroundColor: 'color-mix(in srgb, #04060a 62%, transparent)' }}
             onMouseDown={(event) => {
-              if (event.target === event.currentTarget) setStickyOpen(false);
+              if (event.target === event.currentTarget) closeSticky();
             }}
           >
             <div
@@ -637,7 +751,7 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
               onKeyDown={(event) => {
                 if (event.key === 'Escape') {
                   event.stopPropagation();
-                  setStickyOpen(false);
+                  closeSticky();
                 }
               }}
             >
@@ -651,11 +765,11 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
                   style={{ color: 'var(--text)' }}
                 >
                   <StickyNote className="h-3.5 w-3.5" style={{ color: 'var(--amber)' }} aria-hidden="true" />
-                  Sticky note
+                  {stickyEditing ? 'Edit sticky note' : 'Sticky note'}
                 </p>
                 <button
                   type="button"
-                  onClick={() => setStickyOpen(false)}
+                  onClick={closeSticky}
                   data-testid="btn-sticky-cancel"
                   aria-label="Close the sticky note"
                   className="btn px-2 py-1"
@@ -671,11 +785,40 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
                 >
                   {stickyQuote}
                 </p>
+                {/* The editor stores Markdown, so the shortcuts are the familiar ones and the
+                    preview shows what a reader of the note (the review card, the export) sees. */}
+                <div className="flex items-center gap-1" data-testid="sticky-format-bar">
+                  {[
+                    { marker: '**', label: 'Bold', hint: 'Bold (⌘B / Ctrl+B)', id: 'btn-sticky-bold', Icon: Bold },
+                    { marker: '*', label: 'Italic', hint: 'Italic (⌘I / Ctrl+I)', id: 'btn-sticky-italic', Icon: Italic },
+                    { marker: '++', label: 'Underline', hint: 'Underline (⌘U / Ctrl+U)', id: 'btn-sticky-underline', Icon: Underline },
+                  ].map(({ marker, label, hint, id, Icon }) => (
+                    <button
+                      key={id}
+                      type="button"
+                      data-testid={id}
+                      aria-label={label}
+                      title={hint}
+                      // Keep the selection in the box: a press that moves focus first would wrap
+                      // nothing, which is the one way a Bold button can look broken.
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => applyMarker(marker)}
+                      className="btn px-1.5 py-1"
+                    >
+                      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                  ))}
+                  <span className="ml-1 font-mono text-[10.5px]" style={{ color: 'var(--dim)' }}>
+                    Markdown · ⌘B / ⌘I / ⌘U
+                  </span>
+                </div>
                 <textarea
+                  ref={stickyRef}
                   autoFocus
                   value={stickyText}
                   onChange={(event) => setStickyText(event.target.value)}
-                  maxLength={400}
+                  onKeyDown={onStickyKeyDown}
+                  maxLength={MAX_COMMENT_CHARS}
                   rows={4}
                   data-testid="sticky-note-text"
                   aria-label="What you want to remember about this passage"
@@ -683,9 +826,17 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
                   className="w-full resize-y rounded border bg-canvas px-2 py-1.5 text-[13px] leading-snug text-ink"
                   style={{ borderColor: 'var(--border)' }}
                 />
+                {stickyText.trim() && (
+                  <p
+                    data-testid="sticky-note-preview"
+                    className="max-h-24 overflow-y-auto rounded border border-line-soft bg-canvas px-2 py-1 text-[12.5px] leading-snug text-body"
+                  >
+                    <Inline text={stickyText} />
+                  </p>
+                )}
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[10.5px]" style={{ color: 'var(--dim)' }}>
-                    {stickyText.length}/400 · saved in Notes
+                    {stickyText.length}/{MAX_COMMENT_CHARS} · saved in Notes
                   </span>
                   <button
                     type="button"
@@ -694,7 +845,7 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
                     data-testid="btn-sticky-save"
                     className="btn btn-primary px-2.5 py-1 text-[12px]"
                   >
-                    Save sticky
+                    {stickyEditing ? 'Save changes' : 'Save sticky'}
                   </button>
                 </div>
               </div>

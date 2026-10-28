@@ -12,8 +12,9 @@ import { advanceArm, armFrame, armGeometry, targetPath } from '../heroArmModel';
  * Three constraints keep it from costing what it looks like:
  * - it pauses when scrolled out of view (IntersectionObserver) and when the tab is hidden;
  * - `prefers-reduced-motion` draws one still frame;
- * - the canvas never exceeds 2x device pixels and resizes from the container, so it is crisp on
- *   retina and cheap on a phone.
+ * - the canvas never exceeds 2x device pixels, and its backing store follows its own box
+ *   (ResizeObserver) rather than only the window — so it is crisp on retina, cheap on a phone, and
+ *   never stretched by a layout change that arrives without a `resize` event.
  *
  * The arm advances by **elapsed time**, not by a fixed step per frame: at a fixed 16 ms step a 120 Hz
  * screen ran the loop twice as fast as a 60 Hz one, and a stalled frame jumped the target. The path
@@ -40,21 +41,38 @@ export const HeroArm: React.FC<{ className?: string; motion?: boolean }> = ({ cl
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     const animate = () => (motion === undefined ? !reduced.matches : motion);
 
-    let width = 0;
-    let height = 0;
-    const resize = () => {
-      const rect = canvas.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      width = Math.max(240, Math.round(rect.width));
-      height = Math.max(180, Math.round(rect.height));
-      canvas.width = Math.round(width * dpr);
-      canvas.height = Math.round(height * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-    resize();
-
     // The trail is a window of *time*, so it covers the same arc on a 60 Hz and a 120 Hz screen.
     const trail: Array<{ x: number; y: number; at: number }> = [];
+    let width = 0;
+    let height = 0;
+    let pixelRatio = 1;
+
+    /**
+     * Match the backing store to the canvas's own box.
+     *
+     * The box can change without a window `resize`: the introduction sizes the arm on `dvh`, and an
+     * address bar settling or a panel resizing right after mount moves it on its own. While the backing
+     * store kept the old height the drawing was stretched — a round joint became an ellipse — which is
+     * why a ResizeObserver watches the element rather than the window. Points in the old space are not
+     * meaningful in the new one, so a size change drops the trail instead of drawing it in the wrong place.
+     */
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      const nextWidth = Math.max(1, Math.round(rect.width));
+      const nextHeight = Math.max(1, Math.round(rect.height));
+      // Re-observing can report the same box: assigning again would clear a frame for nothing. The pixel
+      // ratio is part of the answer, because moving to a different monitor changes it without the box.
+      if (nextWidth === width && nextHeight === height && ratio === pixelRatio) return;
+      if (width && height && (nextWidth !== width || nextHeight !== height)) trail.length = 0;
+      width = nextWidth;
+      height = nextHeight;
+      pixelRatio = ratio;
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    };
+    resize();
     const TRAIL_MS = 2200;
     let t = 0.9;
     let raf = 0;
@@ -210,13 +228,24 @@ export const HeroArm: React.FC<{ className?: string; motion?: boolean }> = ({ cl
       if (document.hidden) cancelAnimationFrame(raf);
       else if (visible) start();
     };
-    const onResize = () => {
+    // One path for both size sources: the element's own box (ResizeObserver) and a device-pixel-ratio
+    // change, which the box does not report (window `resize`).
+    const remeasure = () => {
+      const before = `${width}x${height}`;
       resize();
-      if (!animate()) drawFrame();
+      if (!animate()) {
+        drawFrame();
+        return;
+      }
+      // Only an on-screen canvas may restart a loop; a resized one below the fold stays paused.
+      if (visible && before !== `${width}x${height}`) start();
     };
 
+    const sizeObserver = new ResizeObserver(remeasure);
+    sizeObserver.observe(canvas);
+
     document.addEventListener('visibilitychange', onVisibility);
-    window.addEventListener('resize', onResize);
+    window.addEventListener('resize', remeasure);
     // A page with its own switch passes `motion`, and the media query no longer decides for it.
     if (motion === undefined) reduced.addEventListener('change', start);
     start();
@@ -224,8 +253,9 @@ export const HeroArm: React.FC<{ className?: string; motion?: boolean }> = ({ cl
     return () => {
       cancelAnimationFrame(raf);
       observer.disconnect();
+      sizeObserver.disconnect();
       document.removeEventListener('visibilitychange', onVisibility);
-      window.removeEventListener('resize', onResize);
+      window.removeEventListener('resize', remeasure);
       if (motion === undefined) reduced.removeEventListener('change', start);
     };
   }, [motion]);

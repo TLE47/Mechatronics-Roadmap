@@ -148,7 +148,11 @@ Three rules follow, and each is checked in `npm run test:e2e:pages`:
   solution has no defined joint angle and the elbow whipped 359° in one frame, which reads as the arm
   skipping between its left and right poses. Lifted, the target stays inside the reach and outside the
   folded arm, every frame moves a joint under 3°, and the dashed preview is the same function the
-  target follows — so it cannot drift from the arm.
+  target follows — so it cannot drift from the arm. The canvas also measures **its own box** with a
+  `ResizeObserver`, not only the window: the introduction sizes it on `dvh`, so a late box change that
+  arrives with no `resize` event used to leave the backing store at the old height and stretch the
+  drawing (round joints became ellipses). A size change drops the trail rather than drawing points from
+  the old space, and `e2e_home` sets a late 264 px box and insists the backing follows, then restores it.
 - **No hard-coded colour.** Every stroke and fill is a CSS custom property the palettes define
   (`--ink`, `--body`, `--muted`, `--line`, `--line-soft`, `--accent`, `--canvas`), so dark, light, paper
   and high contrast need no special case.
