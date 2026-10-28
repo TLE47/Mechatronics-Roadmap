@@ -229,7 +229,7 @@ jobs:
         run: npm run test:perf:unit
 
       # The bundle every browser job tests. This is what lets the browser work leave this job at
-      # all: one build is shared by three lanes, and no lane has to remake the bytes it grades.
+      # all: one build is shared by four lanes, and no lane has to remake the bytes it grades.
       - name: Publish the built bundle for the browser jobs
         uses: actions/upload-artifact@v4
         with:
@@ -248,8 +248,15 @@ jobs:
         with:
           path: ./dist
 
-  workbench-suites:
-    name: Browser suites — smoke, dev-server E2E, the built bundle, control pairs, the game
+  # The browser matrix in two jobs, split by cost rather than by subject. `e2e` is the one suite that
+  # runs longer than five minutes on its own (327s on run 40617696276, a slow runner; ~250s warm), so it
+  # travels with the six light flows and keeps four slots to itself instead of sharing a dev server with
+  # the built-bundle sweep and the control pairs. The cheap suites — the unit batch and the SSR smoke —
+  # ride with `e2e`, because a second copy in the other job would be the same checks twice. Each job
+  # still fetches the one build and starts its own server pair, so a partition passes exactly when the
+  # whole matrix would: partitioning changes only which suites are started.
+  e2e-suites:
+    name: Browser suites — the dev-server E2E sweep, the smoke, and the light flows
     needs: build-workbench
     runs-on: ubuntu-latest
 
@@ -308,8 +315,59 @@ jobs:
         run: npx playwright-core install-deps chromium firefox
         timeout-minutes: 10
 
-      - name: Run the Workbench suites (SSR smoke, dev-server E2E, built-bundle E2E, control pairs) on one server pair
-        run: npm run test:workbench
+      - name: Run the e2e partition (the SSR smoke, the unit batch, the dev-server E2E sweep, the light flows)
+        run: npm run test:workbench -- --partition e2e
+
+  bundle-suites:
+    name: Browser suites — the built bundle, control pairs, tour and home
+    needs: build-workbench
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Set up Python 3.12 (a rebuild, if one is needed, runs the generator)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the locked dependencies
+        run: npm ci
+
+      - name: Fetch the bundle the build job produced
+        uses: actions/download-artifact@v4
+        with:
+          name: workbench-dist
+          path: dist
+
+      - name: Stamp the restored bundle as newer than this checkout
+        run: find dist -exec touch {} +
+
+      - name: Restore the Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install the Playwright browsers (a no-op when the cache hit)
+        run: npx playwright-core install chromium firefox
+        timeout-minutes: 8
+
+      - name: Install the Playwright OS libraries (only a cache miss needs them)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright-core install-deps chromium firefox
+        timeout-minutes: 10
+
+      - name: Run the bundle partition (built bundle, control pairs, the tour, home)
+        run: npm run test:workbench -- --partition bundle
 
       - name: "Check the 3.0 game: prologue, Mission Control, journey map, Black Box, award ledger"
         run: npm run test:e2e:game
@@ -461,7 +519,7 @@ jobs:
     # `verify-and-test` is named here in its own right now that the build no longer waits for it;
     # before that the build's `needs:` carried the dependency, and dropping it there would have let a
     # red Python sweep publish a site whose own run was red.
-    needs: [verify-and-test, build-workbench, workbench-suites, audit-suites, runtime-suites]
+    needs: [verify-and-test, build-workbench, e2e-suites, bundle-suites, audit-suites, runtime-suites]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment:

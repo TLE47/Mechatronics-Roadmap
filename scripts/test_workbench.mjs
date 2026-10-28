@@ -69,6 +69,15 @@
  * Wall clock is the slowest suite rather than their sum, and the coverage is exactly what the separate
  * scripts cover when run alone. Each one still passes standalone: they create their own servers when
  * no URL is given.
+ *
+ * `--partition e2e|bundle` runs one half of that matrix, which is how CI carries it in two jobs. The
+ * split is by cost, not by subject: the dev-server sweep (`e2e`) is the one suite longer than five
+ * minutes on its own, so it travels with the six light flows and keeps four dedicated slots instead
+ * of sharing them with the built-bundle sweep and the control pairs. The cheap suites (the unit
+ * batch and the SSR smoke) ride with `e2e`, because a second copy of them in the other job would be
+ * the same checks twice on the same servers. Partitioning changes only which suites are started; the
+ * servers, the bundle and each suite's own setup are identical, so a partition passes exactly when
+ * the whole matrix would.
  */
 
 import { spawn } from 'node:child_process';
@@ -78,6 +87,9 @@ import { BASE, ensureBuilt, startStaticServer } from './e2e_pages_bundle.mjs';
 import { runSmokeTests } from './smoke_test_workbench.mjs';
 
 const repoRoot = process.cwd();
+
+/** The halves CI runs. Every browser suite must name one; `main` fails loudly if one does not. */
+const PARTITIONS = ['e2e', 'bundle'];
 
 /** Stream a child's output line by line, prefixed, so two suites' logs stay readable. */
 function pipe(stream, prefix) {
@@ -150,6 +162,17 @@ function runSmoke(viteServer) {
 }
 
 async function main() {
+  // `--partition e2e|bundle` is how CI carries this matrix in two jobs (see the header). A partition
+  // that names nothing is a gate that quietly stopped running, so it is an error rather than a
+  // default - the same reason a browser suite with no partition fails below.
+  const flag = process.argv.indexOf('--partition');
+  const partition = flag === -1 ? null : process.argv[flag + 1];
+  if (flag !== -1 && !PARTITIONS.includes(partition)) {
+    throw new Error(
+      `--partition needs one of ${PARTITIONS.join(', ')}, got ${JSON.stringify(partition)}`
+    );
+  }
+
   // Build when the bundle is missing *or older than its sources*: the Pages sweep grades `dist/`, and
   // a stale one there grades code the source no longer has (the weight gate's Run 166 hole).
   ensureBuilt();
@@ -159,6 +182,7 @@ async function main() {
   const pagesUrl = `http://127.0.0.1:${port}${BASE}`;
   console.log(`[setup] dev server ${devUrl}`);
   console.log(`[setup] built bundle ${pagesUrl}`);
+  console.log(`[setup] partition ${partition ?? 'all'}`);
 
   // The suites, as data: `browser` marks the ones that launch Chromium and drive pages, and those run
   // in waves rather than all at once (`runWaves` below).
@@ -219,21 +243,28 @@ async function main() {
     { label: 'weight', script: 'test_weight_budget.mjs' },
     { label: 'audio', script: 'test_audio.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'fonts', script: 'test_fonts.mjs' },
-    { label: 'e2e', script: 'e2e_browser_workbench.mjs', env: { E2E_BASE_URL: devUrl }, browser: true },
-    { label: 'pages', script: 'e2e_pages_bundle.mjs', env: { PAGES_SERVER_URL: pagesUrl }, browser: true },
-    { label: 'pairs', script: 'e2e_same_task_pairs.mjs', env: { E2E_BASE_URL: devUrl }, browser: true },
-    { label: 'firstrun-e2e', script: 'e2e_tour.mjs', env: { E2E_BASE_URL: devUrl }, browser: true },
-    { label: 'tour', script: 'e2e_tour_presets.mjs', env: { E2E_BASE_URL: devUrl }, browser: true },
-    { label: 'defer', script: 'e2e_editor_deferred.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
-    { label: 'bak2e', script: 'e2e_backup.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
-    { label: 'rev2e', script: 'e2e_review.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
-    { label: 'trail2e', script: 'e2e_trail.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
-    { label: 'predict2e', script: 'e2e_predict_gate.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
-    { label: 'focus2e', script: 'e2e_focus.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
-    { label: 'store2e', script: 'e2e_storage.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
-    { label: 'home2e', script: 'e2e_home.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
-    { label: 'reset2e', script: 'e2e_reset.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
+    { label: 'e2e', script: 'e2e_browser_workbench.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'e2e', browser: true },
+    { label: 'pages', script: 'e2e_pages_bundle.mjs', env: { PAGES_SERVER_URL: pagesUrl }, partition: 'bundle', browser: true },
+    { label: 'pairs', script: 'e2e_same_task_pairs.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'bundle', browser: true },
+    { label: 'firstrun-e2e', script: 'e2e_tour.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'bundle', browser: true },
+    { label: 'tour', script: 'e2e_tour_presets.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'bundle', browser: true },
+    { label: 'defer', script: 'e2e_editor_deferred.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
+    { label: 'bak2e', script: 'e2e_backup.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
+    { label: 'rev2e', script: 'e2e_review.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
+    { label: 'trail2e', script: 'e2e_trail.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'bundle', browser: true },
+    { label: 'predict2e', script: 'e2e_predict_gate.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'bundle', browser: true },
+    { label: 'focus2e', script: 'e2e_focus.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
+    { label: 'store2e', script: 'e2e_storage.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
+    { label: 'home2e', script: 'e2e_home.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'bundle', browser: true },
+    { label: 'reset2e', script: 'e2e_reset.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
   ];
+  const unassigned = SUITES.filter((suite) => suite.browser && !PARTITIONS.includes(suite.partition));
+  if (unassigned.length) {
+    throw new Error(
+      `every browser suite must name a partition (${PARTITIONS.join(', ')}): ` +
+        `${unassigned.map((suite) => suite.label).join(', ')} would never run in the split`
+    );
+  }
   // Ctrl-C must not leave a Vite server or two Chromium runs behind.
   const stop = () => {
     viteServer.close();
@@ -253,9 +284,18 @@ async function main() {
     // The browser suites are started as thunks so a wave decides when a Chromium is opened at all;
     // the rest are cheap and go in one batch.
     const start = (suite) => () => runSuite(suite.label, suite.script, suite.env ?? {});
-    const unit = SUITES.filter((suite) => !suite.browser).map(start);
-    const browser = SUITES.filter((suite) => suite.browser).map(start);
-    results = [...(await Promise.all([runSmoke(viteServer), ...unit.map((begin) => begin())])), ...(await runWaves(browser, 4))];
+    // The unit batch and the SSR smoke ride with `e2e`: they are seconds, they share this job's dev
+    // server, and a copy in the other job would be the same checks twice on the same servers.
+    const withCheap = partition === null || partition === 'e2e';
+    const unit = withCheap ? SUITES.filter((suite) => !suite.browser).map(start) : [];
+    const browser = SUITES.filter(
+      (suite) => suite.browser && (partition === null || suite.partition === partition)
+    ).map(start);
+    const smoke = withCheap ? [runSmoke(viteServer)] : [];
+    results = [
+      ...(await Promise.all([...smoke, ...unit.map((begin) => begin())])),
+      ...(await runWaves(browser, 4)),
+    ];
   } finally {
     process.off('SIGINT', stop);
     process.off('SIGTERM', stop);

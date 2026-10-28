@@ -16,6 +16,42 @@ flowchart LR
 
 ---
 
+## [2026-10-27] — Run 267: the browser matrix in two lanes
+
+**One suite held the whole lane.** `npm run test:workbench` carries fourteen browser suites in four
+slots, and `e2e` alone ran **327.4s** on run 40617696276 — longer than most of the other thirteen put
+together. Two more are minutes each (`pairs` 241.2s, `pages` 199.4s); the rest are seconds to a
+minute (`tour` 90.8s, `firstrun-e2e` 73.6s, `home2e` 51.2s, `trail2e` 35.4s, `predict2e` 29.7s). So
+the lane's wall clock was that suite plus whatever shared its slots, and no scheduling inside one job
+could start it sooner.
+
+**What changed.** The runner takes `--partition e2e|bundle`, and CI carries the matrix as two jobs that
+start together after the one build:
+
+| job | carries |
+|---|---|
+| `e2e-suites` | the SSR smoke, the unit batch, `e2e`, and the six light flows (`defer`, `bak2e`, `rev2e`, `reset2e`, `store2e`, `focus2e`) |
+| `bundle-suites` | `pages`, `pairs`, `tour`, `firstrun-e2e`, `trail2e`, `predict2e`, `home2e`, and the game |
+
+The split is by cost, not by subject: the one suite longer than five minutes gets four slots to
+itself instead of sharing a dev server with the built-bundle sweep and the control pairs. The cheap
+suites ride with `e2e` rather than running twice. Each job still fetches the one build, stamps it and
+starts its own server pair, so a partition passes exactly when the whole matrix would — partitioning
+changes only which suites are started. `deploy-pages` waits on both jobs.
+
+**A suite cannot quietly fall out of the split.** A browser suite that names no partition fails the
+runner at startup, and `tests/test_workflows.py` asks every browser-suite line in the runner for one,
+CI for exactly one invocation of each half, and the deploy for both jobs.
+
+**Verified.** `node --check scripts/test_workbench.mjs` clean; `python3 tests/test_workflows.py`
+**13/13** (two new); `python3 scripts/check_workflows.py` — 3 workflows, built-in scan clean,
+**actionlint clean**; `--partition nope` exits 1 with `--partition needs one of e2e, bundle, got
+"nope"`; `--partition bundle` locally ran exactly its seven suites and started only its own server
+pair. `test:e2e:pages` PASS after a clean build (a first attempt failed on the motion toggle with a
+`dist/` a concurrent run had rebuilt underneath it — the suite is green on its own).
+
+---
+
 ## [2026-10-27] — Run 266: the gate stops holding the machine
 
 **Two of a run's eight minutes were spent waiting for a check, not doing work.** The post-merge run
