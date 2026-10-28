@@ -3180,8 +3180,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         {/* 90%, not 70%: at 70% the shortcut measured 3.28:1 on the light canvas and
             4.0:1 on the pressed accent, so the de-emphasis broke the 4.5:1 floor.
 
-            Below xl the chip is hidden: at 768-1024 px the work area is narrower than this
-            toolbar's four presets + dock + More + Run + Predict, and the 80 px the four chips
+            Below xl the key is hidden: at 768-1024 px the work area is narrower than this
+            toolbar's four presets + dock + More + Run + Predict, and the 80 px the four keys
             cost was what pushed Predict onto a second row. The title still names the key, and
             the sheet prints it, so the shortcut is never learned only by its chip. */}
         <span className="ml-1 hidden opacity-90 xl:inline">{option.shortcut}</span>
@@ -3287,16 +3287,22 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     aria-expanded={predictOpen}
     aria-controls="predict-gate"
     data-testid="btn-predict"
-    title="Predict first: commit to what the code will print, then run it"
+    // The label is the same width in every state on purpose. " · skipped" added 78 px, and at
+    // 1280 the Study chooser leaves the card 800 px: that suffix was the difference between
+    // Predict beside Run and Predict alone on a second row. The state lives in the name and the
+    // tooltip, and the gate prints it in full when opened.
+    title={
+      predictRecord
+        ? `Predict first: this lesson was ${predictRecord.skipped ? 'skipped' : 'answered'} — open it to change the call`
+        : 'Predict first: commit to what the code will print, then run it'
+    }
+    aria-label={`Predict${predictRecord ? (predictRecord.skipped ? ' (skipped)' : ' (answered)') : ''}: commit to what the code will print, then run it`}
     className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
       predictOpen ? 'text-amber border-amber/60' : 'text-body border-line'
     }`}
   >
     <Sparkles className="w-3.5 h-3.5" />
-    <span>
-      Predict
-      {predictRecord ? (predictRecord.skipped ? ' · skipped' : ' · answered') : ''}
-    </span>
+    <span>Predict</span>
   </button>
   <div
     id="toolbar-more"
