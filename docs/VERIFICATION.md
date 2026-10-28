@@ -48,11 +48,20 @@ feature branch is graded by its pull request, so the old `"**"` filter's second,
 — and a `concurrency` group keyed on the pull request cancels the run a newer push supersedes (never on
 `main`, whose run is the one that publishes). The build and the browser work are separate jobs:
 `build-workbench` finishes at the gates that need no browser and publishes `dist/` as the
-`workbench-dist` artifact; `workbench-suites`, `audit-suites` and `runtime-suites` fetch it (stamping the restored files newer
-than the checkout, because an archive keeps the build job's clock and every suite would otherwise read
-it as stale), restore `~/.cache/ms-playwright` under a key that follows `package-lock.json`, and run
-side by side; and
+`workbench-dist` artifact; `e2e-suites`, `bundle-suites`, `audit-suites` and `runtime-suites` fetch it
+(stamping the restored files newer than the checkout, because an archive keeps the build job's clock
+and every suite would otherwise read it as stale), restore `~/.cache/ms-playwright` under a key that
+follows `package-lock.json`, and run side by side; and
 `deploy-pages` needs all four, so a red audit cannot publish what it graded.
+
+**The matrix is two jobs, split by cost.** `npm run test:workbench` carries fourteen browser suites;
+`e2e` alone is longer than five minutes (327s on run 40617696276, ~250s on a warm runner), so it rides
+with the six light flows in `e2e-suites` and keeps all four slots, while the built-bundle sweep, the
+control pairs, the tour and home run in `bundle-suites`. The unit batch and the SSR smoke travel with
+`e2e` rather than being run twice. `--partition e2e|bundle` is the switch; a browser suite that names
+no partition fails the runner at startup, and `tests/test_workflows.py` asks every browser suite line
+for one and CI for exactly one invocation of each half. Splitting changed no check: the servers, the
+bundle and each suite's setup are the same, so a partition passes exactly when the whole matrix would.
 
 **Nothing waits for the Python sweep any more, and the gate still holds.** `build-workbench` carried
 `needs: verify-and-test` until 2026-10-28, which made a runner handoff out of a check: the build could
@@ -68,7 +77,8 @@ The shape is guarded by
 `tests/test_workflows.py` (`WorkflowSpeedTests`): one run per branch push, cancellation on pull
 requests only, every browser command present exactly once, no suite job that rebuilds, the cache key,
 a build that does not wait on the Python gate, the libraries conditional on a cache miss with both
-Playwright steps bounded, and a deploy that waits for every lane.
+Playwright steps bounded, the matrix in exactly two partitions with every browser suite assigned, and
+a deploy that waits for every lane.
 
 `check_consistency.py` is the contradiction detector: it compares a quoted count with the count
 derived from the lesson files and `modules/_index.yaml`, and fails on a second name for a step

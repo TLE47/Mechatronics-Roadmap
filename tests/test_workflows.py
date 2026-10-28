@@ -89,7 +89,6 @@ CI = os.path.join(ROOT, ".github", "workflows", "ci.yml")
 # The browser work, and the job it moved to. A suite that is listed in neither place is a gate that
 # silently stopped running, which is the failure a speedup invites.
 BROWSER_SUITES = (
-    "npm run test:workbench",
     "npm run test:e2e:game",
     "npm run test:theme:e2e",
     "npm run check:axe",
@@ -99,7 +98,12 @@ BROWSER_SUITES = (
     "npm run test:runtime",
     "npm run test:offline",
 )
-SUITE_JOBS = ("workbench-suites", "audit-suites", "runtime-suites")
+SUITE_JOBS = ("e2e-suites", "bundle-suites", "audit-suites", "runtime-suites")
+
+# The matrix runner and its two halves. A partition CI names and the runner does not have is a job
+# that dies on its first command; a browser suite in neither partition is a gate nobody runs.
+MATRIX_RUNNER = os.path.join(ROOT, "scripts", "test_workbench.mjs")
+PARTITIONS = ("e2e", "bundle")
 
 
 def ci_text():
@@ -217,6 +221,55 @@ class WorkflowSpeedTests(unittest.TestCase):
                     block,
                     msg="expected the cache key to follow the lockfile: an upgraded Playwright must "
                     "not be handed the old browser build",
+                )
+
+    def test_the_matrix_runs_as_two_partitions_once_each(self):
+        """Two jobs, each naming one half of the matrix, and no half run twice.
+
+        The split exists because `e2e` alone is longer than five minutes: it travels with the light
+        flows while the built-bundle sweep and the control pairs get their own four slots. A job
+        that named a partition the runner does not know would die on its first command, and a
+        suite in neither half would silently stop being a gate - so both are checked here.
+        """
+        ci = ci_text()
+        self.assertEqual(
+            ci.count("npm run test:workbench"),
+            2,
+            msg="expected the matrix exactly twice, once per partition; a third call is the same "
+            "matrix again, and one call is a half that lost its job",
+        )
+        for partition in PARTITIONS:
+            with self.subTest(partition=partition):
+                self.assertEqual(
+                    ci.count("-- --partition %s" % partition),
+                    1,
+                    msg=f"expected exactly one job to run the `{partition}` partition",
+                )
+
+    def test_every_browser_suite_names_a_partition(self):
+        with open(MATRIX_RUNNER, encoding="utf-8") as handle:
+            runner = handle.read()
+        browser_lines = [line for line in runner.splitlines() if "browser: true" in line]
+        self.assertGreaterEqual(
+            len(browser_lines),
+            14,
+            msg="expected the runner to list its browser suites as data; the partition check below "
+            "reads those lines",
+        )
+        for line in browser_lines:
+            with self.subTest(suite=line.strip()[:60]):
+                self.assertIn(
+                    "partition:",
+                    line,
+                    msg="expected every browser suite to name a partition: one with no partition "
+                    "is rejected at startup and, before that check existed, would have been a gate "
+                    "that stopped running in the split",
+                )
+        for partition in PARTITIONS:
+            with self.subTest(partition=partition):
+                self.assertTrue(
+                    any("partition: '%s'" % partition in line for line in browser_lines),
+                    msg=f"expected at least one browser suite in the `{partition}` partition",
                 )
 
     def test_the_build_does_not_wait_on_the_python_gate(self):
