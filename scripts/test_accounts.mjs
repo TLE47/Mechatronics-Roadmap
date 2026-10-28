@@ -86,8 +86,8 @@ test('only the exact admin role counts in the UI', () => {
 
 test('the sync line names what actually leaves the browser', () => {
   assert.match(syncScopeLine({ signedIn: false, workspace: false }), /browser only/);
-  assert.match(syncScopeLine({ signedIn: true, workspace: false }), /Drafts and notes stay/);
-  assert.match(syncScopeLine({ signedIn: true, workspace: true }), /drafts and notes/i);
+  assert.match(syncScopeLine({ signedIn: true, workspace: false }), /Drafts, notes and checklists stay/);
+  assert.match(syncScopeLine({ signedIn: true, workspace: true }), /drafts, notes and checklists/i);
 });
 
 test('sign-in callback errors become sentences', () => {
@@ -161,8 +161,8 @@ test('a return target opens only a known lesson or a known view', () => {
 });
 
 // ── Workspace merge: never choose silently ───────────────────────────────────────────────────────
-function workspace({ at = 1, drafts = {}, study = {}, conflicts = [] } = {}) {
-  return { schema: WORKSPACE_SCHEMA, updatedAt: at, drafts, study, conflicts };
+function workspace({ at = 1, drafts = {}, study = {}, checks = {}, conflicts = [] } = {}) {
+  return { schema: WORKSPACE_SCHEMA, updatedAt: at, drafts, study, checks, conflicts };
 }
 
 test('a draft present on one side only is kept', () => {
@@ -248,6 +248,38 @@ test('highlights union by quote, and a newer comment wins with the old one kept'
   assert.equal(result.doc.conflicts[0].text, 'older');
 });
 
+test('checklist ticks union across devices, and keep the newer stamp', () => {
+  const local = workspace({
+    at: 5,
+    checks: { 'P.1': { done: ['made here'], updatedAt: 5 } },
+  });
+  const remote = workspace({
+    at: 9,
+    checks: {
+      'P.1': { done: ['made there'], updatedAt: 9 },
+      'P.2': { done: ['elsewhere'], updatedAt: 2 },
+    },
+  });
+  const result = mergeWorkspace(local, remote);
+  assert.deepEqual(result.doc.checks['P.1'], {
+    done: ['made there', 'made here'],
+    updatedAt: 9,
+  });
+  assert.deepEqual(result.doc.checks['P.2'].done, ['elsewhere']);
+  assert.equal(result.addedChecks, 1, 'only the tick this side did not have is new');
+});
+
+test('a row written before checklists still merges, and its absence cannot erase a tick', () => {
+  const old = workspace({ at: 9, checks: undefined });
+  assert.equal(isWorkspaceDoc(old), true, 'an older row is readable, not corrupt');
+  const result = mergeWorkspace(
+    workspace({ at: 2, checks: { 'P.1': { done: ['kept'], updatedAt: 2 } } }),
+    old
+  );
+  assert.deepEqual(result.doc.checks['P.1'].done, ['kept']);
+  assert.equal(result.addedChecks, 1);
+});
+
 test('merging the merged document is stable', () => {
   const local = workspace({ at: 5, drafts: { 'P.1': 'mine' } });
   const remote = workspace({ at: 9, drafts: { 'P.1': 'theirs' } });
@@ -262,15 +294,23 @@ test('a workspace document is validated before it is trusted', () => {
   assert.equal(isWorkspaceDoc(null), false);
   assert.equal(isWorkspaceDoc({ ...workspace(), schema: 'other/1' }), false);
   assert.equal(isWorkspaceDoc({ ...workspace(), drafts: null }), false);
-  assert.deepEqual(workspaceCounts(emptyWorkspace()), { drafts: 0, notes: 0, highlights: 0, conflicts: 0 });
+  assert.equal(isWorkspaceDoc({ ...workspace(), checks: [] }), false, 'an array is not a check store');
+  assert.deepEqual(workspaceCounts(emptyWorkspace()), {
+    drafts: 0,
+    notes: 0,
+    highlights: 0,
+    checks: 0,
+    conflicts: 0,
+  });
   assert.deepEqual(
     workspaceCounts(
       workspace({
         drafts: { a: 'x', b: '  ' },
         study: { a: { note: 'n', highlights: [{ quote: 'q', comment: '', at: 1 }], updatedAt: 1 } },
+        checks: { a: { done: ['one', 'two'], updatedAt: 1 } },
       })
     ),
-    { drafts: 1, notes: 1, highlights: 1, conflicts: 0 }
+    { drafts: 1, notes: 1, highlights: 1, checks: 2, conflicts: 0 }
   );
 });
 

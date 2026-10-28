@@ -21,8 +21,10 @@ import {
   clearAllTicks,
   clearTicks,
   isTicked,
+  mergeChecks,
   parseChecks,
   readChecks,
+  replaceChecks,
   readTicks,
   setTicked,
   tickCounts,
@@ -203,6 +205,61 @@ check('everything can be cleared', () => {
   clearAllTicks();
   assert.deepEqual(readChecks(), {}, 'no lesson keeps a tick');
   assert.equal(localStorage.getItem(STORAGE_KEY_CHECKS), null);
+});
+
+section('merging');
+
+check('ticks union by lesson and item, and neither store is mutated', () => {
+  const local = { 'P.1': { done: ['one'], updatedAt: 10 } };
+  const incoming = {
+    'P.1': { done: ['two'], updatedAt: 20 },
+    'P.2': { done: ['three'], updatedAt: 30 },
+  };
+  const { store, added } = mergeChecks(local, incoming);
+  assert.deepEqual(store, {
+    'P.1': { done: ['one', 'two'], updatedAt: 20 },
+    'P.2': { done: ['three'], updatedAt: 30 },
+  });
+  assert.equal(added, 2);
+  assert.deepEqual(local, { 'P.1': { done: ['one'], updatedAt: 10 } }, 'the local store is not mutated');
+  assert.deepEqual(incoming['P.1'].done, ['two'], 'the incoming store is not mutated');
+});
+
+check('a tick already present is not counted twice, and its newer stamp is kept', () => {
+  const { store, added } = mergeChecks(
+    { 'P.1': { done: ['one'], updatedAt: 10 } },
+    { 'P.1': { done: ['one'], updatedAt: 5 } }
+  );
+  assert.deepEqual(store['P.1'], { done: ['one'], updatedAt: 10 });
+  assert.equal(added, 0);
+});
+
+check('entries that do not parse are dropped rather than merged in', () => {
+  const { store, added } = mergeChecks(
+    {},
+    {
+      'P.1': { done: [' kept ', 'kept', '', 7], updatedAt: 5 },
+      ' ': { done: ['x'] },
+      'P.2': { done: 'no' },
+    }
+  );
+  assert.deepEqual(store, { 'P.1': { done: ['kept'], updatedAt: 5 } });
+  assert.equal(added, 1);
+});
+
+section('replacing');
+
+check('a whole store can be written back, cleaned the same way', () => {
+  freshBrowser();
+  assert.equal(replaceChecks({ 'P.1': { done: [' one ', 'one', 'two'], updatedAt: 5 } }), true);
+  assert.deepEqual(readChecks(), { 'P.1': { done: ['one', 'two'], updatedAt: 5 } });
+  assert.equal(replaceChecks({}), true);
+  assert.equal(localStorage.getItem(STORAGE_KEY_CHECKS), null, 'an empty store removes the key');
+});
+
+check('a blocked store refuses the replace', () => {
+  freshBrowser({ store: 'throws' });
+  assert.equal(replaceChecks({ 'P.1': { done: ['one'], updatedAt: 5 } }), false);
 });
 
 section('the bucket');

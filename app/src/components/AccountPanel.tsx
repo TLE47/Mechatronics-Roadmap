@@ -392,7 +392,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
 
             <p className="text-[11px] text-muted leading-relaxed">
               No account is needed to read a lesson, run code or work offline. Signing in syncs progress;
-              drafts and notes only sync if you turn that on below.
+              drafts, notes and checklist ticks only sync if you turn that on below.
             </p>
           </div>
         )}
@@ -438,7 +438,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                   className="mt-0.5 accent-[var(--accent)]"
                 />
                 <span>
-                  Sync drafts and notes with this account
+                  Sync drafts, notes and checklists with this account
                   <span className="block text-[11px] text-muted">
                     Off by default. When two devices hold different versions, both are kept and listed on
                     your Home.
@@ -450,11 +450,13 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                 <div className="text-[11px] text-muted space-y-1" data-testid="workspace-preview">
                   <p>
                     This browser: {workspacePreview.local.drafts} draft(s), {workspacePreview.local.notes}{' '}
-                    note(s), {workspacePreview.local.highlights} highlight(s).
+                    note(s), {workspacePreview.local.highlights} highlight(s),{' '}
+                    {workspacePreview.local.checks} checklist tick(s).
                   </p>
                   <p>
                     Account: {workspacePreview.account.drafts} draft(s), {workspacePreview.account.notes}{' '}
-                    note(s), {workspacePreview.account.highlights} highlight(s).
+                    note(s), {workspacePreview.account.highlights} highlight(s),{' '}
+                    {workspacePreview.account.checks} checklist tick(s).
                   </p>
                   {workspacePreview.account.conflicts > 0 && (
                     <p>{workspacePreview.account.conflicts} earlier conflict(s) are also on the account.</p>

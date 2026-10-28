@@ -17,6 +17,10 @@
  * the reset sheet has to be able to clear it without touching what was written. The store is bounded
  * per lesson; the oldest tick goes when a page somehow grows past `MAX_TICKS_PER_LESSON` items.
  *
+ * It travels two ways: the backup archive's `checks.json`, and the opt-in workspace document. Both
+ * merge by union (`mergeChecks`) — a tick made on another machine is added, never taken away — which
+ * is the same rule the progress maps use, and the reason a restore cannot be used to un-tick work.
+ *
  * A write that cannot land says so (`false`), because private mode and a full bucket both refuse one
  * and the reader has to be able to say "not saved" instead of showing a tick that vanishes on reload.
  */
@@ -77,19 +81,29 @@ function asLesson(value: unknown): LessonChecks | null {
   };
 }
 
+/**
+ * A store out of anything JSON-shaped: the bucket, a workspace document, a backup file.
+ *
+ * Entries that do not parse are dropped rather than repaired by guessing, and a lesson key is
+ * trimmed the same way an item's identity is. The result is always usable by the reader.
+ */
+export function parseCheckStore(value: unknown): CheckStore {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const store: CheckStore = {};
+  for (const [id, entry] of Object.entries(value as Record<string, unknown>)) {
+    const key = id.trim();
+    if (!key) continue;
+    const lesson = asLesson(entry);
+    if (lesson) store[key] = lesson;
+  }
+  return store;
+}
+
 /** A store written by another version, or by hand, reads as the part of itself that still parses. */
 export function parseChecks(raw: string | null): CheckStore {
   if (!raw) return {};
   try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
-    const store: CheckStore = {};
-    for (const [id, value] of Object.entries(parsed as Record<string, unknown>)) {
-      if (!id) continue;
-      const lesson = asLesson(value);
-      if (lesson) store[id] = lesson;
-    }
-    return store;
+    return parseCheckStore(JSON.parse(raw));
   } catch {
     return {};
   }
@@ -110,6 +124,56 @@ function writeChecks(store: Storage, checks: CheckStore): boolean {
     // a line that says so, because throwing into a React render would take the lesson down with it.
     return false;
   }
+}
+
+/**
+ * Write a whole store, as a restore or a workspace merge hands one back.
+ *
+ * The store is normalized first, so a backup file or an account row cannot put an entry into the
+ * bucket that the reader would then refuse. An empty store removes the key, as every other write does.
+ */
+export function replaceChecks(checks: CheckStore): boolean {
+  const store = storage();
+  if (!store) return false;
+  return writeChecks(store, parseCheckStore(checks));
+}
+
+/**
+ * Merge a second store in — the rule the backup and the workspace document both promise: **a tick is
+ * added, never removed.** A learner who ticks `wire the divider` on a phone keeps it on the laptop;
+ * un-ticking is a local act until the list is cleared, which is what `clearTicks` is for.
+ *
+ * `added` counts the ticks the merged store holds that this one did not, which is what a restore
+ * report and a sync sentence print.
+ */
+export function mergeChecks(
+  local: CheckStore,
+  incoming: CheckStore
+): { store: CheckStore; added: number } {
+  const base = parseCheckStore(local);
+  const store = parseCheckStore(local);
+  let added = 0;
+  for (const [id, lesson] of Object.entries(parseCheckStore(incoming))) {
+    const here = store[id];
+    if (!here) {
+      const done = lesson.done.slice(-MAX_TICKS_PER_LESSON);
+      store[id] = { done, updatedAt: lesson.updatedAt };
+      added += done.length;
+      continue;
+    }
+    const before = new Set(base[id]?.done ?? []);
+    const kept = new Set(here.done);
+    for (const item of lesson.done) {
+      if (kept.has(item)) continue;
+      here.done.push(item);
+      kept.add(item);
+    }
+    here.done = here.done.slice(-MAX_TICKS_PER_LESSON);
+    here.updatedAt = Math.max(here.updatedAt, lesson.updatedAt);
+    const final = new Set(here.done);
+    added += lesson.done.filter((item) => !before.has(item) && final.has(item)).length;
+  }
+  return { store, added };
 }
 
 /** Every lesson with at least one tick. */

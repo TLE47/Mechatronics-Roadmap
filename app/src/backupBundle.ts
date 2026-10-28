@@ -1,10 +1,10 @@
 /**
  * The backup and its merge back in (`app/src/backupBundle.ts`).
  *
- * What is in a backup: the seven stores a learner's work actually lives in — the three progress maps,
- * the drafts, the versions filed by each Run, the study notes and highlights, the review cards'
- * schedules, and the learning log — plus a manifest and a README for whoever opens the zip in ten
- * years. Preferences are deliberately
+ * What is in a backup: the stores a learner's work actually lives in — the three progress maps, the
+ * lesson checklists, the drafts, the versions filed by each Run, the study notes and highlights, the
+ * review cards' schedules, and the learning log — plus a manifest and a README for whoever opens the
+ * zip in ten years. Preferences are deliberately
  * left out: a theme is a device choice, not work, and restoring one onto another machine would fight
  * the learner's own pick.
  *
@@ -16,9 +16,10 @@
  * laptop survives arriving on a desktop that has not seen it. Drafts fill gaps only — the text on this
  * machine is by definition the newer one, so it wins. Versions union and are deduped by the timestamp
  * they were filed at. Notes follow the same rule as drafts, and highlights union by the passage they
- * quote, the newer comment winning. Card schedules follow the more-reviewed copy, so restoring a
- * backup cannot un-learn a card. The log unions by event identity, the same rule cloud sync uses
- * (`mergeLearningLog`), because the two merges must not disagree about what one event is.
+ * quote, the newer comment winning. Checklist ticks union by item, so a tick made on another machine
+ * arrives and a restore can never un-tick one. Card schedules follow the more-reviewed copy, so
+ * restoring a backup cannot un-learn a card. The log unions by event identity, the same rule cloud
+ * sync uses (`mergeLearningLog`), because the two merges must not disagree about what one event is.
  *
  * Every write goes through the store's own writer (`saveDraft`, `recordSnapshot`, `replaceLearningLog`)
  * rather than a raw `setItem`: those functions carry each store's own caps and merge rules, and a
@@ -35,6 +36,13 @@ import { mergeHistory, readHistory } from './draftHistory.ts';
 import { readDraft, readDrafts, saveDraft } from './lessonDraft.ts';
 import { readLearningLog, replaceLearningLog, type LearningEvent } from './learningLog.ts';
 import { mergeStudy, parseStudy, readStudy, replaceStudy, studyCounts } from './studyNotes.ts';
+import {
+  mergeChecks,
+  parseCheckStore,
+  readChecks,
+  replaceChecks,
+  tickCounts,
+} from './lessonChecks.ts';
 import { mergeCards, parseCards, readCardList, readCards, replaceCards } from './studyCards.ts';
 import { mergeLearningLog } from './progressMerge.ts';
 import { mergeTourStates, readTour, writeTour } from './tourState.ts';
@@ -62,6 +70,8 @@ export interface BackupCounts {
   snapshots: number;
   notes: number;
   highlights: number;
+  /** Ticks in the lesson checklists, across every lesson. */
+  checks: number;
   /** Review cards that currently exist: a commented highlight is one, scheduled or not. */
   cards: number;
   events: number;
@@ -104,6 +114,7 @@ function currentCounts(): BackupCounts {
     snapshots: Object.values(history).reduce((total, versions) => total + versions.length, 0),
     notes: study.notes,
     highlights: study.highlights,
+    checks: tickCounts().ticks,
     cards: readCardList().length,
     events: readLearningLog().length,
   };
@@ -130,6 +141,7 @@ progress.json       Lessons you ran to a verdict, lessons you marked yourself, m
 drafts.json         The unfinished editor text for each lesson you were working on.
 history.json        The versions each Run filed, with the verdict that run got.
 study.json          Your notes and the passages you highlighted, per lesson.
+checks.json         The lesson bullets you ticked while reading, per lesson.
 study-cards.json    When each review card is due, and how many times you have answered it.
 learning-log.json   When you opened, ran, passed, and used a hint - the pilot record.
 tour.json           Whether the first-lesson tour has been seen, and the step it resumes at.
@@ -141,10 +153,11 @@ Open MechaLab, press "Restore (.zip)" in the header, and choose this file exactl
 it was downloaded. Do not unzip and re-zip it first: most tools switch the archive to
 deflate compression, which this app does not read (it says so rather than guessing).
 
-A restore merges. It never deletes: flags you have already set stay set, drafts and
-notes you have already written are kept, and versions, highlights and log events are
-added only once. A card schedule travels with the more-reviewed copy, so restoring a
-backup cannot send a card you have been practising backwards.
+A restore merges. It never deletes: flags you have already set stay set, checklists
+you have ticked stay ticked (a tick is added, never taken away), drafts and notes you
+have already written are kept, and versions, highlights and log events are added only
+once. A card schedule travels with the more-reviewed copy, so restoring a backup
+cannot send a card you have been practising backwards.
 
 What is not in this zip
 -----------------------
@@ -193,6 +206,10 @@ export function collectBackup(now: number = Date.now()): BackupFile[] {
     name: 'study.json',
     text: JSON.stringify({ schema: 'mechalab.backup.study/1', study: readStudy() }, null, 2),
   };
+  const checks: BackupFile = {
+    name: 'checks.json',
+    text: JSON.stringify({ schema: 'mechalab.backup.checks/1', checks: readChecks() }, null, 2),
+  };
   const cards: BackupFile = {
     name: 'study-cards.json',
     text: JSON.stringify({ schema: 'mechalab.backup.study-cards/1', cards: readCards() }, null, 2),
@@ -209,7 +226,7 @@ export function collectBackup(now: number = Date.now()): BackupFile[] {
     name: 'tour.json',
     text: JSON.stringify({ schema: 'mechalab.backup.tour/1', tour: readTour() }, null, 2),
   };
-  const data: BackupFile[] = [progress, drafts, history, study, cards, log, tour];
+  const data: BackupFile[] = [progress, drafts, history, study, checks, cards, log, tour];
   const manifest: BackupManifest = {
     schema: BACKUP_SCHEMA,
     app: 'MechaLab Workbench',
@@ -274,6 +291,7 @@ export function backupSummary(counts: BackupCounts, bytes: number): string {
     counts.drafts ? `${counts.drafts} draft${counts.drafts === 1 ? '' : 's'}` : '',
     counts.notes ? `${counts.notes} note${counts.notes === 1 ? '' : 's'}` : '',
     counts.highlights ? `${counts.highlights} highlight${counts.highlights === 1 ? '' : 's'}` : '',
+    counts.checks ? `${counts.checks} checklist tick${counts.checks === 1 ? '' : 's'}` : '',
     counts.cards ? `${counts.cards} card${counts.cards === 1 ? '' : 's'}` : '',
     counts.events ? `${counts.events} log event${counts.events === 1 ? '' : 's'}` : '',
   ].filter(Boolean);
@@ -290,6 +308,7 @@ export function restoreSummary(report: RestoreReport): string {
     report.snapshots ? `${report.snapshots} saved version${report.snapshots === 1 ? '' : 's'}` : '',
     report.notes ? `${report.notes} note${report.notes === 1 ? '' : 's'}` : '',
     report.highlights ? `${report.highlights} highlight${report.highlights === 1 ? '' : 's'}` : '',
+    report.checks ? `${report.checks} checklist tick${report.checks === 1 ? '' : 's'} merged` : '',
     report.cards ? `${report.cards} card ${report.cards === 1 ? 'schedule' : 'schedules'} merged` : '',
     report.events ? `${report.events} log event${report.events === 1 ? '' : 's'}` : '',
   ].filter(Boolean);
@@ -421,6 +440,31 @@ function restoreStudy(text: string | undefined, report: RestoreReport): void {
  * corrupt one, so the absence is silent. `mergeCards` keeps the more-reviewed schedule, which is
  * what makes a restore safe to repeat and impossible to use to send a card backwards.
  */
+/**
+ * Merge a restore's checklist ticks in.
+ *
+ * A backup taken before checklists existed has no such file: that is an older backup, not a corrupt
+ * one, so the absence is silent. `mergeChecks` adds ticks and never removes one, which is what makes
+ * a restore safe to repeat and impossible to use to un-tick work.
+ */
+function restoreChecks(text: string | undefined, report: RestoreReport): void {
+  if (text === undefined) return;
+  const file = asRecord(parseJson(text));
+  const raw = asRecord(file?.checks);
+  if (!raw) {
+    report.skipped.push('checks.json');
+    return;
+  }
+  const { store, added } = mergeChecks(readChecks(), parseCheckStore(raw));
+  if (!added) return;
+  // The report counts what actually landed; a bucket that refuses the write keeps nothing new.
+  if (!replaceChecks(store)) {
+    report.skipped.push('checks.json (the store refused the write)');
+    return;
+  }
+  report.checks += added;
+}
+
 function restoreCards(text: string | undefined, report: RestoreReport): void {
   if (text === undefined) return;
   const file = asRecord(parseJson(text));
@@ -523,6 +567,7 @@ export function restoreBackupZip(bytes: Uint8Array): RestoreResult {
     snapshots: 0,
     notes: 0,
     highlights: 0,
+    checks: 0,
     cards: 0,
     events: 0,
     skipped: [],
@@ -532,6 +577,7 @@ export function restoreBackupZip(bytes: Uint8Array): RestoreResult {
   restoreDrafts(contents.get('drafts.json'), report);
   restoreHistory(contents.get('history.json'), report);
   restoreStudy(contents.get('study.json'), report);
+  restoreChecks(contents.get('checks.json'), report);
   restoreCards(contents.get('study-cards.json'), report);
   restoreLog(contents.get('learning-log.json'), report);
   restoreTour(contents.get('tour.json'), report);

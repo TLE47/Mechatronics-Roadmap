@@ -26,6 +26,7 @@ import {
   type Highlight,
 } from '../studyNotes';
 import { checkId, readTicks, toggleTicked } from '../lessonChecks';
+import { STORE_RESTORED_EVENT } from '../backupBundle';
 import { wrapSelection } from '../lessonMarks';
 import { RESET_EVENT } from '../resetEvent';
 import { lessonPageUrl as sourceUrl } from '../startHere';
@@ -198,7 +199,12 @@ export function LessonReader({ lessonId, path, tall = false, toolbar, panel }: L
     };
     reread();
     window.addEventListener(RESET_EVENT, reread);
-    return () => window.removeEventListener(RESET_EVENT, reread);
+    // A backup restore writes the ticks store too; without this the open page keeps the old boxes.
+    window.addEventListener(STORE_RESTORED_EVENT, reread);
+    return () => {
+      window.removeEventListener(RESET_EVENT, reread);
+      window.removeEventListener(STORE_RESTORED_EVENT, reread);
+    };
   }, [lessonId]);
 
   // Restore where this lesson was left. The anchor is tried first: a page regenerated after the

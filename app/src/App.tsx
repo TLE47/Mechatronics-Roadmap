@@ -244,6 +244,7 @@ function workspaceReportLine(report: WorkspaceSyncReport): string {
   if (report.addedDrafts) parts.push(`${report.addedDrafts} draft(s)`);
   if (report.addedNotes) parts.push(`${report.addedNotes} note(s)`);
   if (report.addedHighlights) parts.push(`${report.addedHighlights} highlight(s)`);
+  if (report.addedChecks) parts.push(`${report.addedChecks} checklist tick(s)`);
   const arrived = parts.length
     ? `${parts.join(', ')} came in from your account.`
     : 'This browser and your account were already in step.';
@@ -730,10 +731,15 @@ export const App: React.FC = () => {
             setSyncNote(error instanceof Error ? `Sync failed: ${error.message}` : 'Sync failed.')
           );
       }
-      // Drafts and notes sync only when this browser opted in, and that row merges rather than
+      // Drafts, notes and ticks sync only when this browser opted in, and that row merges rather than
       // replaces — so erasing the account's copy is a write, not a merge.
       if (detail?.workspace && workspaceSyncEnabled()) {
-        resetWorkspace(accountUserId).catch((error) =>
+        // Name what was erased: resetting drafts must not take the account's notes or its ticks.
+        resetWorkspace(accountUserId, {
+          drafts: detail.areas.includes('drafts'),
+          study: detail.areas.includes('notes'),
+          checks: detail.areas.includes('checks'),
+        }).catch((error) =>
           setSyncNote(
             error instanceof Error ? `Workspace reset failed: ${error.message}` : 'Workspace reset failed.'
           )
@@ -1045,7 +1051,7 @@ export const App: React.FC = () => {
     if (!on) {
       setWorkspaceSyncEnabled(false);
       setWorkspaceSync(false);
-      setWorkspaceReport('Drafts and notes stay in this browser now. Nothing was deleted.');
+      setWorkspaceReport('Drafts, notes and checklists stay in this browser now. Nothing was deleted.');
       return;
     }
     if (!accountUserId) {

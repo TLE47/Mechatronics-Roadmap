@@ -1,9 +1,10 @@
 /**
- * Opt-in sync for drafts and notes: the storage and network halves.
+ * Opt-in sync for drafts, notes and lesson checklists: the storage and network halves.
  *
- * `workspaceMerge.ts` owns the rule (never choose silently; keep both versions). This module reads
- * the browser's stores, talks to the `mechalab_workspace` row, and writes the merged result back to
- * both sides. It is separate so the merge can be tested without IndexedDB, Supabase or a browser.
+ * `workspaceMerge.ts` owns the rule (never choose silently; keep both versions; ticks union). This
+ * module reads the browser's stores, talks to the `mechalab_workspace` row, and writes the merged
+ * result back to both sides. It is separate so the merge can be tested without IndexedDB, Supabase
+ * or a browser.
  *
  * Off by default. A learner who signs in gets progress sync as before; drafts cross devices only when
  * they switch workspace sync on, after the panel has shown what this browser and the account each
@@ -13,6 +14,7 @@
 
 import { getClient } from './accounts';
 import { readDrafts, replaceDrafts } from './lessonDraft';
+import { readChecks, replaceChecks } from './lessonChecks';
 import { readStudy, replaceStudy } from './studyNotes';
 import {
   emptyWorkspace,
@@ -45,13 +47,14 @@ export function setWorkspaceSyncEnabled(on: boolean): void {
   }
 }
 
-/** This browser's drafts and study notes as one document, ready to merge. */
+/** This browser's drafts, study notes and checklist ticks as one document, ready to merge. */
 export function localWorkspace(now = Date.now()): WorkspaceDoc {
   const study = readStudy();
   return {
     schema: 'mechalab.workspace/1',
     updatedAt: now,
     drafts: { ...readDrafts() },
+    checks: readChecks(),
     study: Object.fromEntries(
       Object.entries(study).map(([id, lesson]) => [
         id,
@@ -71,7 +74,7 @@ export function localWorkspaceCounts(): WorkspaceCounts {
   return workspaceCounts(localWorkspace());
 }
 
-/** Write a merged document back to the browser's stores. Returns false if either write failed. */
+/** Write a merged document back to the browser's stores. Returns false if any write failed. */
 export function applyWorkspace(doc: WorkspaceDoc): boolean {
   const draftsOk = replaceDrafts(doc.drafts);
   const study = Object.fromEntries(
@@ -85,7 +88,10 @@ export function applyWorkspace(doc: WorkspaceDoc): boolean {
     ])
   );
   replaceStudy(study);
-  return draftsOk;
+  // An older account row has no checks field at all. Applying it must leave this browser's ticks
+  // alone rather than answer "no ticks" for a store that was never asked about.
+  const checksOk = doc.checks === undefined ? true : replaceChecks(doc.checks);
+  return draftsOk && checksOk;
 }
 
 /** The account's copy, or null when there is none (or the row is a shape this build does not know). */
@@ -122,7 +128,7 @@ export async function previewWorkspace(userId: string): Promise<WorkspacePreview
   const remote = await loadWorkspace(userId);
   return {
     local: localWorkspaceCounts(),
-    account: workspaceCounts(remote ?? { schema: 'mechalab.workspace/1', updatedAt: 0, drafts: {}, study: {}, conflicts: [] }),
+    account: workspaceCounts(remote ?? emptyWorkspace()),
   };
 }
 
@@ -130,6 +136,7 @@ export interface WorkspaceSyncReport {
   addedDrafts: number;
   addedNotes: number;
   addedHighlights: number;
+  addedChecks: number;
   conflicts: number;
   /** Which side the account's copy came from, for the sentence shown afterwards. */
   hadAccountCopy: boolean;
@@ -147,29 +154,50 @@ export interface WorkspaceSyncReport {
 export async function mergeAndApplyWorkspace(userId: string): Promise<WorkspaceSyncReport> {
   const remote = await loadWorkspace(userId);
   const local = localWorkspace();
-  const result = mergeWorkspace(local, remote ?? { ...local, drafts: {}, study: {}, conflicts: [], updatedAt: 0 });
+  const result = mergeWorkspace(local, remote ?? { ...local, drafts: {}, study: {}, checks: {}, conflicts: [], updatedAt: 0 });
   const stored = applyWorkspace(result.doc);
   await saveWorkspace(userId, result.doc);
   return {
     addedDrafts: result.addedDrafts,
     addedNotes: result.addedNotes,
     addedHighlights: result.addedHighlights,
+    addedChecks: result.addedChecks,
     conflicts: result.conflicts,
     hadAccountCopy: remote !== null,
     stored,
   };
 }
 
+export interface WorkspaceResetParts {
+  drafts?: boolean;
+  study?: boolean;
+  checks?: boolean;
+}
+
 /**
- * Erase the account's copy of drafts and notes (`progressReset.ts`).
+ * Erase the account's copy of the named parts (`progressReset.ts`).
  *
  * A merge cannot do this: `mergeWorkspace` keeps both sides by rule, which is the whole point of it. So
- * a reset writes an empty document instead of merging one — otherwise the erased drafts would arrive
- * back from the account at the next sync, and the learner would be told a reset happened when it had
- * not. The browser's own stores are cleared before this is called; this is the other half.
+ * a reset writes the parts away instead of merging them — otherwise the erased work would arrive back
+ * from the account at the next sync, and the learner would be told a reset happened when it had not.
+ *
+ * One part at a time: resetting drafts must not take the account's notes or its checklist ticks with
+ * it, which is why the caller names what it cleared rather than this writing a wholly empty document.
+ * The browser's own stores are cleared before this is called; this is the other half.
  */
-export async function resetWorkspace(userId: string): Promise<void> {
-  await saveWorkspace(userId, { ...emptyWorkspace(), updatedAt: Date.now() });
+export async function resetWorkspace(
+  userId: string,
+  parts: WorkspaceResetParts = { drafts: true, study: true, checks: true }
+): Promise<void> {
+  const remote = await loadWorkspace(userId);
+  const doc = remote ?? emptyWorkspace();
+  await saveWorkspace(userId, {
+    ...doc,
+    updatedAt: Date.now(),
+    drafts: parts.drafts ? {} : doc.drafts,
+    study: parts.study ? {} : doc.study,
+    checks: parts.checks ? {} : doc.checks ?? {},
+  });
 }
 
 /**
