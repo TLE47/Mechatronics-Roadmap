@@ -10,6 +10,7 @@ import {
   PanelsTopLeft,
   RotateCcw,
   StickyNote,
+  Trash2,
   Underline,
   X,
 } from 'lucide-react';
@@ -34,6 +35,7 @@ import {
   addHighlight,
   cleanQuote,
   readLessonStudy,
+  removeHighlight,
   setComment,
   type Highlight,
 } from '../studyNotes';
@@ -186,7 +188,15 @@ function CodeBlock({
   );
 }
 
-function TableBlock({ block }: { block: Extract<ReaderBlock, { t: 'table' }> }) {
+function TableBlock({
+  block,
+  marks,
+  onMark,
+}: {
+  block: Extract<ReaderBlock, { t: 'table' }>;
+  marks: Highlight[];
+  onMark: (mark: Highlight, anchor?: HTMLElement) => void;
+}) {
   return (
     <div className="my-3 overflow-x-auto">
       <table className="w-full border-collapse text-[13px] leading-snug">
@@ -198,7 +208,7 @@ function TableBlock({ block }: { block: Extract<ReaderBlock, { t: 'table' }> }) 
                 scope="col"
                 className="border border-line-soft bg-canvas px-2 py-1.5 text-left font-mono text-[13px] text-ink"
               >
-                <Inline text={cell} />
+                <Inline text={cell} marks={marks} onMark={onMark} />
               </th>
             ))}
           </tr>
@@ -208,7 +218,7 @@ function TableBlock({ block }: { block: Extract<ReaderBlock, { t: 'table' }> }) 
             <tr key={rowIndex}>
               {row.map((cell, cellIndex) => (
                 <td key={cellIndex} className="border border-line-soft px-2 py-1.5 align-top text-body">
-                  <Inline text={cell} />
+                  <Inline text={cell} marks={marks} onMark={onMark} />
                 </td>
               ))}
             </tr>
@@ -570,6 +580,24 @@ export function LessonReader({
     setStatus('Highlight pinned to Notes.');
   };
 
+  /**
+   * Remove the note the popup is editing, and the passage with it.
+   *
+   * A highlight's identity is the quote, so deleting the note deletes its mark from the page and its
+   * card from the deck at once - there is no second copy to keep in step. The popup is the place a
+   * learner realises a note says the wrong thing; making them close it and find the quote in the
+   * Study panel to remove it was the one trip this adds no reason for.
+   */
+  const removeSticky = () => {
+    if (!stickyQuote) return;
+    removeHighlight(lessonId, stickyQuote);
+    window.getSelection()?.removeAllRanges();
+    setSelection('');
+    syncMarks();
+    setStatus('Sticky note removed.');
+    closeSticky();
+  };
+
   /** Open the note a marked passage carries; Save then updates that highlight rather than adding. */
   const openMark = (mark: Highlight, anchor?: HTMLElement) => {
     setStickyEditing(true);
@@ -806,7 +834,7 @@ export function LessonReader({
       case 'table':
         return (
           <div key={key} data-reader-block={blockKey}>
-            <TableBlock block={block} />
+            <TableBlock block={block} marks={marks} onMark={openMark} />
           </div>
         );
       case 'quote':
@@ -1234,15 +1262,28 @@ export function LessonReader({
                   <span className="text-[10.5px]" style={{ color: 'var(--dim)' }}>
                     {stickyText.length}/{MAX_COMMENT_CHARS} · saved in Notes
                   </span>
-                  <button
-                    type="button"
-                    onClick={saveSticky}
-                    disabled={!stickyQuote}
-                    data-testid="btn-sticky-save"
-                    className="btn btn-primary px-2.5 py-1 text-[12px]"
-                  >
-                    {stickyEditing ? 'Save changes' : 'Save sticky'}
-                  </button>
+                  <div className="flex items-center gap-1">
+                    {stickyEditing && (
+                      <button
+                        type="button"
+                        onClick={removeSticky}
+                        data-testid="btn-sticky-delete"
+                        title="Delete this note and its highlight"
+                        className="btn px-2 py-1 text-[12px] text-rose hover:text-rose"
+                      >
+                        <Trash2 className="h-3 w-3" aria-hidden="true" /> Remove
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={saveSticky}
+                      disabled={!stickyQuote}
+                      data-testid="btn-sticky-save"
+                      className="btn btn-primary px-2.5 py-1 text-[12px]"
+                    >
+                      {stickyEditing ? 'Save changes' : 'Save sticky'}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

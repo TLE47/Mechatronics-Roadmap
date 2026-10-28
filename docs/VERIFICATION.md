@@ -144,6 +144,7 @@ npm run check:firmware                  # each committed .hex was built from the
 npm run test:inline                     # inline values: which lines bind, which value belongs where, the payload's validation
 npm run test:symbols                    # go to definition: what counts as a def, the caret's word, the active file winning a tie
 npm run test:layout                     # layout presets: which regions each shows, a stored value validated, the ⌥ digits, docking (the panel a preset can move, one field at a time), and Debug's divider (clamped, remembered, arrow-keyed, and reversed with the results docked left)
+npm run test:panes                      # the editor's tabs and panes: one view is the floor and two the cap, a tab press never duplicates, a split opens on code-and-output, closing keeps slot 0, and the stored arrangement is validated
 npm run test:reader                     # the lesson pane without a browser: inline Markdown and GitHub's anchor rule, the payload guard, and the reading-position store (anchors, clamps, a blocked store)
 npm run test:keymap                     # the sheet's keys: the shipped six print as they always have, ⌘ and Ctrl are one chord, a character shortcut is the character, a rebind frees its old key, a clash or a browser key is refused with its sentence, a stored map is read field by field, and the sheet prints the map
 npm run test:vim                        # Vim keys: off until asked for, remembered, blocked storage, and the mode word the badge prints

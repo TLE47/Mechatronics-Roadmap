@@ -334,11 +334,20 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
             </span>
             <span>{reviewing.schedule.reps === 0 ? 'new card' : `seen ${reviewing.schedule.reps}x`}</span>
           </div>
-          <p data-testid="review-front" className="mt-1 font-mono text-[12.5px] text-body break-words">
+          {/* A card is a question before it is a passage. Without this line the front looked like
+              something to read rather than something to answer: the quote is the *prompt*, and the
+              note the learner wrote is the answer behind Show answer. */}
+          <p data-testid="review-question" className="mt-1 text-[12.5px] font-semibold text-ink">
+            What did you write about this passage?
+          </p>
+          <p data-testid="review-front" className="mt-0.5 font-mono text-[12.5px] text-body break-words">
             {reviewing.quote}
           </p>
           {revealed ? (
             <div data-testid="review-answer" className="mt-2 border-t border-line pt-2">
+              <p className="mb-1 font-mono text-[10.5px] uppercase tracking-[0.12em] text-faint">
+                Your note
+              </p>
               {/* The same renderer the lesson uses: a note formatted with Bold or Underline reads
                   formatted on the card, not as asterisks. */}
               <p className="text-[12.5px] text-body break-words">

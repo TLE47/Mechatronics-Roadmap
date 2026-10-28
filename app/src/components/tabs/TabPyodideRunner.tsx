@@ -109,7 +109,6 @@ import {
   layoutShows,
   readDock,
   readLayout,
-  readResultsSplit,
   readSplitRatio,
   splitGridTemplate,
   splitRatioAfterKey,
@@ -117,11 +116,24 @@ import {
   splitRatioPercent,
   writeDock,
   writeLayout,
-  writeResultsSplit,
   writeSplitRatio,
   type WorkspaceDock,
   type WorkspaceLayout,
 } from '../../workspaceLayout';
+import {
+  closeSplit,
+  focusSlot,
+  isSplit,
+  readPanes,
+  setAxis,
+  showView,
+  slotFor,
+  splitPane,
+  visibleViews,
+  writePanes,
+  type EditorPanes,
+  type EditorView,
+} from '../../editorPanes';
 import { actionForEvent, type Keymap } from '../../keymap';
 import { useKeymap } from '../../useKeymap';
 import { markPaintReady } from '../../paintTiming';
@@ -184,6 +196,9 @@ import {
   Wand2,
   MoreHorizontal,
   Columns2,
+  Rows2,
+  ArrowLeftRight,
+  X,
 } from 'lucide-react';
 
 declare global {
@@ -430,9 +445,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // Split's divider, as the share of the work area the editor gets (`workspaceLayout.ts`). Read once
   // at mount like the preset itself: a drag is the only thing that changes it from outside storage.
   const [splitRatio, setSplitRatio] = useState<number>(() => readSplitRatio());
-  // Whether the run's output sits beside the code or under it, inside the editor's own card. Read
-  // once at mount for the same reason the preset is: this screen is the only one that changes it.
-  const [resultsSplit, setResultsSplit] = useState<boolean>(() => readResultsSplit());
+  // Which views the editor's tabs show, and whether the body is split into two panes
+  // (`editorPanes.ts`). Read once at mount for the same reason the preset is: this screen is the
+  // only one that changes it, and the arrangement belongs to this browser.
+  const [panes, setPanes] = useState<EditorPanes>(() => readPanes());
+  const commitPanes = (next: EditorPanes) => setPanes(writePanes(next));
   const splitRatioRef = useRef<number>(splitRatio);
   splitRatioRef.current = splitRatio;
   const [draggingSplit, setDraggingSplit] = useState(false);
@@ -2926,105 +2943,126 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const shownLayout = tourActive ? layoutForStep(tourState.stepIndex, isPhone) : layout;
   /** Read hides the editor: the run controls and the output fall back to the page in that preset. */
   const editorShown = layoutShows(shownLayout, 'editor');
-  /** Debug already puts the editor and the results side by side; it needs no second split. */
-  const columnsArrangement = layoutArrangement(shownLayout) === 'columns';
+  /** Write hides the last run's output: while drafting, it describes code that has changed. */
+  const resultsAllowed = layoutShows(shownLayout, 'results');
+  /**
+   * What the editor body shows right now.
+   *
+   * The stored arrangement is the learner's, but a preset still owns the regions: Write has no
+   * results, so an output tab there would be a door into a hidden room. In that preset the body
+   * falls back to the editor and the stored tab comes back with Study, which is why this is derived
+   * here rather than written back to the store.
+   */
+  const shownViews = new Set<EditorView>(resultsAllowed ? visibleViews(panes) : ['main']);
+  /** Two panes only when two views are really on screen. */
+  const paneSplit = resultsAllowed && isSplit(panes) && shownViews.size > 1;
+  /** Slot order, so an arrangement opened on an output still reads left to right. */
+  const paneOrder = (view: EditorView): number => slotFor(panes, view) ?? 0;
+  /**
+   * The rule between two side-by-side panes, on whichever one is second, plus a faint inset ring on
+   * the focused one. A split is a keyboard-and-pointer workspace: the tab press fills the pane the
+   * learner last clicked, so which pane that is has to be visible rather than remembered.
+   */
+  const paneBorder = (view: EditorView): string => {
+    if (!paneSplit) return '';
+    const focused = panes.focus === paneOrder(view) ? 'ring-1 ring-inset ring-accent/20' : '';
+    if (panes.axis !== 'columns') return focused;
+    const rule =
+      paneOrder(view) === 0 ? 'lg:border-t-0' : 'lg:border-l lg:border-line-soft lg:border-t-0';
+    return `${rule} ${focused}`;
+  };
+  /**
+   * Clicking a pane makes it the one a tab press fills.
+   *
+   * Without this the focused slot was only ever the one last opened, so putting Run output and
+   * Expected side by side took a tab press nobody could be expected to guess: the first click
+   * replaces the pane that already has focus. Click the pane you want to change, then its tab - the
+   * way a terminal multiplexer's active pane owns the next command.
+   */
+  const focusPane = (view: EditorView) => {
+    if (!paneSplit) return;
+    const slot = slotFor(panes, view);
+    if (slot !== null && panes.focus !== slot) commitPanes(focusSlot(panes, slot));
+  };
 
-  const resultsPanel = (
-<div
-  data-testid="results-panel"
-  // Write hides the last run's output: while drafting, it describes code that has changed.
-  style={{ display: layoutShows(shownLayout, 'results') ? undefined : 'none' }}
-  // Split already spends half the screen on this block: two cards inside one column of it
-  // would be two 20-character panels. They stack there and sit side by side everywhere else.
-  className={
-    columnsArrangement || (resultsSplit && !columnsArrangement)
-      ? 'grid grid-cols-1 gap-4'
-      : 'grid grid-cols-1 md:grid-cols-2 gap-4'
-  }
->
-  <div className="bg-panel border border-line rounded-xl p-4">
-    <div className="flex items-center justify-between mb-2">
+  // The two outputs are panes now, not a block under the code: the tab strip decides whether one is
+  // on screen, and the body splits beside the editor when the learner asks for it. Each view is
+  // always mounted and a pane that is not showing is `display:none` - that is what keeps exactly one
+  // `pre-actual-stdout` in the page, readable by a test or a screen reader, without selecting the tab.
+  // The verdict belongs to the run, not to the output tab: it presses Run and needs to see what came
+  // back without opening a pane. The six states are the same spans that used to sit in the output
+  // card's header; they live beside the run controls now, where every preset that shows the editor
+  // can see them (Write included).
+  const runVerdict =
+    passStatus === 'untested' ? null : (
+      <span className="flex min-w-0 flex-wrap items-center gap-1 font-mono text-[11px] font-bold">
+        {passStatus === 'passed' && (
+          <span
+            data-testid="status-assert-passed"
+            className="flex items-center gap-1 text-emerald"
+          >
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            <span>PASS · Behavior &amp; Output Verified</span>
+          </span>
+        )}
+        {passStatus === 'harness_failed' && (
+          <span
+            data-testid="status-harness-failed"
+            className="flex items-center gap-1 text-rose"
+          >
+            <AlertTriangle className="h-3.5 w-3.5" />
+            <span>
+              HARNESS FAILED · {harnessResult?.met ?? 0} / {harnessResult?.total ?? 0}{' '}
+              Metrics At Target
+            </span>
+          </span>
+        )}
+        {passStatus === 'behavior_failed' && (
+          <span
+            data-testid="status-behavior-failed"
+            className="flex items-center gap-1 text-rose"
+          >
+            <AlertTriangle className="h-3.5 w-3.5" />
+            <span>BEHAVIOR FAILED · Instructor Tests Failed</span>
+          </span>
+        )}
+        {passStatus === 'mismatch' && (
+          <span
+            data-testid="status-output-mismatch"
+            className="flex items-center gap-1 text-amber"
+          >
+            <AlertTriangle className="h-3.5 w-3.5" />
+            <span>BEHAVIOR PASSED · Output Format Differs</span>
+          </span>
+        )}
+        {passStatus === 'stopped' && (
+          <span
+            data-testid="status-execution-stopped"
+            className="flex items-center gap-1 text-amber"
+          >
+            <OctagonX className="h-3.5 w-3.5" />
+            <span>STOPPED · Loop Limit / Cancelled</span>
+          </span>
+        )}
+        {passStatus === 'error' && (
+          <span
+            data-testid="status-execution-error"
+            className="flex items-center gap-1 text-rose"
+          >
+            <AlertTriangle className="h-3.5 w-3.5" />
+            <span>ERROR · Syntax / Runtime Error</span>
+          </span>
+        )}
+      </span>
+    );
+
+  const actualOutputPane = (
+<div data-testid="results-panel" className="flex h-full min-h-0 flex-col bg-panel border border-line rounded-xl p-4">
+    <div className="mb-2 flex items-center justify-between">
       <span className="text-xs font-mono text-muted">
         Actual Python Output (`stdout` / `assert`)
       </span>
-      {passStatus === 'passed' && (
-        <span
-          data-testid="status-assert-passed"
-          className="text-xs font-mono font-bold text-emerald flex items-center gap-1"
-        >
-          <CheckCircle2 className="w-3.5 h-3.5" />
-          <span>PASS · Behavior &amp; Output Verified</span>
-        </span>
-      )}
-      {passStatus === 'harness_failed' && (
-        <span
-          data-testid="status-harness-failed"
-          className="text-xs font-mono font-bold text-rose flex items-center gap-1"
-        >
-          <AlertTriangle className="w-3.5 h-3.5" />
-          <span>
-            HARNESS FAILED · {harnessResult?.met ?? 0} / {harnessResult?.total ?? 0}{' '}
-            Metrics At Target
-          </span>
-        </span>
-      )}
-      {passStatus === 'behavior_failed' && (
-        <span
-          data-testid="status-behavior-failed"
-          className="text-xs font-mono font-bold text-rose flex items-center gap-1"
-        >
-          <AlertTriangle className="w-3.5 h-3.5" />
-          <span>BEHAVIOR FAILED · Instructor Tests Failed</span>
-        </span>
-      )}
-      {passStatus === 'mismatch' && (
-        <span
-          data-testid="status-output-mismatch"
-          className="text-xs font-mono font-bold text-amber flex items-center gap-1"
-        >
-          <AlertTriangle className="w-3.5 h-3.5" />
-          <span>BEHAVIOR PASSED · Output Format Differs</span>
-        </span>
-      )}
-      {passStatus === 'stopped' && (
-        <span
-          data-testid="status-execution-stopped"
-          className="text-xs font-mono font-bold text-amber flex items-center gap-1"
-        >
-          <OctagonX className="w-3.5 h-3.5" />
-          <span>STOPPED · Loop Limit / Cancelled</span>
-        </span>
-      )}
-      {passStatus === 'error' && (
-        <span
-          data-testid="status-execution-error"
-          className="text-xs font-mono font-bold text-rose flex items-center gap-1"
-        >
-          <AlertTriangle className="w-3.5 h-3.5" />
-          <span>ERROR · Syntax / Runtime Error</span>
-        </span>
-      )}
     </div>
-    {/* The one affordance for a learner who is stuck rather than wrong yet: a failed run
-        becomes a message a person can answer. It sits under the verdict, because that is
-        the moment it is needed, and it is absent after a pass — a report about a run that
-        worked is not a question. */}
-    {passStatus !== 'untested' && passStatus !== 'passed' && (
-      <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-mono">
-        <span style={{ color: 'var(--dim)' }}>
-          Stuck on this one? Turn the run into a message you can send.
-        </span>
-        <button
-          onClick={() => setHelpOpen(true)}
-          data-testid="btn-ask-help"
-          title="Build a report of this run — the lesson, your code, what the check said and the error — to copy or file as an issue"
-          className="px-2 py-1 rounded-lg bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
-        >
-          <LifeBuoy className="w-3.5 h-3.5" />
-          <span>Ask for help</span>
-        </button>
-      </div>
-    )}
     <pre
       data-testid="pre-actual-stdout"
       className="p-3 rounded-lg bg-canvas border border-line-soft font-mono text-xs text-ink whitespace-pre-wrap min-h-[120px]"
@@ -3032,16 +3070,43 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       {stdout || (stderr ? '' : 'Click "Run & Verify Output" to execute this lesson.')}
       {stderr && <span className="text-rose block mt-1">{stderr}</span>}
     </pre>
-    {parsedFailure && (
-      <TracebackCard
-        failure={parsedFailure}
-        entry={errorEntry}
-        onRevealLine={(line) => guideEditorRef.current?.revealLine(line)}
-      />
-    )}
   </div>
+  );
 
-  <div className="bg-panel border border-line rounded-xl p-4">
+  // A failed run's diagnosis sits under the panes, not inside one: pressing Run should show why the
+  // program broke without a tab hunt, and the card pays for this height only when a run failed. The
+  // one affordance for a learner who is stuck rather than wrong yet is the same block — a message a
+  // person can answer — and it is absent after a pass, because a report about a run that worked is
+  // not a question.
+  const runFeedback =
+    passStatus !== 'untested' && passStatus !== 'passed' ? (
+      <div data-testid="run-feedback" className="space-y-2 border-t border-line-soft px-3 py-2">
+        <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+          <span style={{ color: 'var(--dim)' }}>
+            Stuck on this one? Turn the run into a message you can send.
+          </span>
+          <button
+            onClick={() => setHelpOpen(true)}
+            data-testid="btn-ask-help"
+            title="Build a report of this run — the lesson, your code, what the check said and the error — to copy or file as an issue"
+            className="flex items-center gap-1.5 rounded-lg border border-line bg-canvas px-2 py-1 text-body hover:bg-raise cursor-pointer"
+          >
+            <LifeBuoy className="h-3.5 w-3.5" />
+            <span>Ask for help</span>
+          </button>
+        </div>
+        {parsedFailure && (
+          <TracebackCard
+            failure={parsedFailure}
+            entry={errorEntry}
+            onRevealLine={(line) => guideEditorRef.current?.revealLine(line)}
+          />
+        )}
+      </div>
+    ) : null;
+
+  const expectedOutputPane = (
+<div data-testid="expected-panel" className="flex h-full min-h-0 flex-col bg-panel border border-line rounded-xl p-4">
     <div className="flex items-center justify-between mb-2">
       <span className="text-xs font-mono text-muted">
         Expected Output (Presentation Check)
@@ -3083,11 +3148,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       </p>
     )}
   </div>
-</div>
   );
 
   const runnerToolbar = (
-<div data-testid="runner-toolbar" className="flex flex-wrap items-center gap-2">
+<div data-testid="runner-toolbar" className="flex flex-wrap items-center gap-1.5">
   {/* The presets live on this card, not in the editor's own header: Read hides that
       header, and a control that disappears with the panel it governs is a trap. A
       shortcut with no control is a feature only its author knows, so the shortcut is
@@ -3114,8 +3178,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       >
         {option.label}
         {/* 90%, not 70%: at 70% the shortcut measured 3.28:1 on the light canvas and
-            4.0:1 on the pressed accent, so the de-emphasis broke the 4.5:1 floor. */}
-        <span className="ml-1 opacity-90">{option.shortcut}</span>
+            4.0:1 on the pressed accent, so the de-emphasis broke the 4.5:1 floor.
+
+            Below xl the chip is hidden: at 768-1024 px the work area is narrower than this
+            toolbar's four presets + dock + More + Run + Predict, and the 80 px the four chips
+            cost was what pushed Predict onto a second row. The title still names the key, and
+            the sheet prints it, so the shortcut is never learned only by its chip. */}
+        <span className="ml-1 hidden opacity-90 xl:inline">{option.shortcut}</span>
       </button>
     ))}
   </div>
@@ -3132,9 +3201,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       // is drawn fails WCAG 2.5.3, which is what Lighthouse's
       // `label-content-name-mismatch` audit named here.
       aria-label={`${dockChoice.label}: ${dockChoice.title}`}
-      className="px-2 py-1 rounded text-[13px] font-mono cursor-pointer border transition-colors bg-canvas text-muted hover:text-ink border-line-soft"
+      // The full sentence is a 127 px button. On a 1280 px window that was the width that pushed
+      // Predict onto a second row, so the dock reads as its arrow until the card is wide enough
+      // (2xl) to print the words beside it. The accessible name is the sentence either way.
+      className="px-2 py-1 rounded text-[13px] font-mono cursor-pointer border transition-colors bg-canvas text-muted hover:text-ink border-line-soft flex items-center gap-1.5"
     >
-      {dockChoice.label}
+      <ArrowLeftRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      <span className="hidden 2xl:inline">{dockChoice.label}</span>
     </button>
   )}
   {/* The first screen keeps only what a learner does next: Pause and Stop while a
@@ -4954,21 +5027,35 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             style={{ display: editorShown ? undefined : 'none' }}
             className="bg-panel border border-line rounded-xl overflow-hidden scroll-mt-4"
           >
-            <div className="bg-canvas border-b border-line-soft flex flex-wrap items-center justify-between gap-2 px-3 py-1.5">
-              <div className="flex items-center gap-1" role="tablist" aria-label="Lesson files">
+            <div className="bg-canvas border-b border-line-soft px-3 py-1.5">
+              <div className="flex min-w-0 items-center justify-between gap-2">
+              {/* One scrolling row, never a second line: the tabs are a strip in the manner of an
+                  editor, and a strip that wraps is a header the code below pays for. */}
+              <div
+                // Narrow windows wrap the strip instead of scrolling under the split control: a
+                // sticky group over a 291 px strip covered the Expected tab, which is exactly the
+                // tab a reader on a phone is looking for.
+                className="flex min-w-0 max-w-full flex-wrap items-center gap-1 sm:flex-nowrap sm:overflow-x-auto"
+                role="tablist"
+                aria-label="Editor tabs"
+              >
                 <button
                   role="tab"
-                  aria-selected={openHelper === null}
+                  aria-selected={openHelper === null && shownViews.has('main')}
                   data-testid="editor-tab-main"
                   title="main.py — F12 on a name jumps to the line that defines it"
                   onClick={() => {
                     setPendingJump(null);
                     setOpenHelper(null);
+                    commitPanes(showView(panes, 'main'));
                   }}
-                  className="flex items-center gap-1.5 rounded-t px-2.5 py-1.5 text-[12.5px] font-mono cursor-pointer"
+                  className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t px-2.5 py-1.5 text-[12.5px] font-mono cursor-pointer"
                   style={{
-                    color: openHelper === null ? 'var(--accent)' : 'var(--muted)',
-                    borderBottom: openHelper === null ? '2px solid var(--accent)' : '2px solid transparent',
+                    color: openHelper === null && shownViews.has('main') ? 'var(--accent)' : 'var(--muted)',
+                    borderBottom:
+                      openHelper === null && shownViews.has('main')
+                        ? '2px solid var(--accent)'
+                        : '2px solid transparent',
                   }}
                 >
                   <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
@@ -4978,25 +5065,136 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   <button
                     key={file.name}
                     role="tab"
-                    aria-selected={openHelper === file.name}
+                    aria-selected={openHelper === file.name && shownViews.has('main')}
                     data-testid={`editor-tab-${file.name}`}
                     onClick={() => {
                       setPendingJump(null);
                       setOpenHelper(file.name);
+                      commitPanes(showView(panes, 'main'));
                     }}
                     title={`${file.name} is read-only: it is the module the checks import. F12 on a name jumps to its definition.`}
-                    className="flex items-center gap-1.5 rounded-t px-2.5 py-1.5 text-[12.5px] font-mono cursor-pointer"
+                    className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t px-2.5 py-1.5 text-[12.5px] font-mono cursor-pointer"
                     style={{
-                      color: openHelper === file.name ? 'var(--accent)' : 'var(--muted)',
-                      borderBottom: openHelper === file.name ? '2px solid var(--accent)' : '2px solid transparent',
+                      color: openHelper === file.name && shownViews.has('main') ? 'var(--accent)' : 'var(--muted)',
+                      borderBottom:
+                        openHelper === file.name && shownViews.has('main')
+                          ? '2px solid var(--accent)'
+                          : '2px solid transparent',
                     }}
                   >
                     <Lock className="h-3 w-3" aria-hidden="true" />
                     {file.name}
                   </button>
                 ))}
+                {resultsAllowed && (
+                  <>
+                    <span
+                      aria-hidden="true"
+                      className="mx-1 h-4 w-px shrink-0 self-center bg-line-soft"
+                    />
+                    {(['actual', 'expected'] as const).map((view) => {
+                      const selected = shownViews.has(view);
+                      return (
+                        <button
+                          key={view}
+                          role="tab"
+                          aria-selected={selected}
+                          data-testid={`editor-tab-${view}`}
+                          title={
+                            view === 'actual'
+                              ? 'The last run’s stdout and verdict — tab here, or split it beside the code'
+                              : 'The lesson’s Expected Output — tab here, or split it beside the code'
+                          }
+                          onClick={() => commitPanes(showView(panes, view))}
+                          className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t px-2.5 py-1.5 text-[12.5px] font-mono cursor-pointer"
+                          style={{
+                            color: selected ? 'var(--accent)' : 'var(--muted)',
+                            borderBottom: selected
+                              ? '2px solid var(--accent)'
+                              : '2px solid transparent',
+                          }}
+                        >
+                          {view === 'actual' ? (
+                            <Terminal className="h-3 w-3" aria-hidden="true" />
+                          ) : (
+                            <CheckSquare className="h-3 w-3" aria-hidden="true" />
+                          )}
+                          {view === 'actual' ? 'Run output' : 'Expected'}
+                        </button>
+                      );
+                    })}
+                    {/* The terminal split, in the tab row rather than the run row: §3 caps the run
+                        controls at eight, and this is a property of the body instead of an action of
+                        the run. Side by side by default; the arrows choose a stacked split, which is
+                        the shape a narrow window gets anyway. */}
+                    <div
+                      role="group"
+                      aria-label="Editor panes"
+                      // Pinned to the strip's right edge while it scrolls: on a phone the tabs are
+                      // wider than the card, and the one control that arranges them must not be the
+                      // one that scrolls away first.
+                      className="ml-1 flex shrink-0 items-center gap-0.5 pl-1 sm:sticky sm:right-0 sm:z-10 sm:bg-canvas"
+                    >
+                      {!paneSplit ? (
+                        <button
+                          type="button"
+                          data-testid="btn-pane-split"
+                          onClick={() => commitPanes(splitPane(panes))}
+                          title="Split the editor: show two views, like a terminal"
+                          className="flex items-center gap-1 rounded border border-line bg-canvas px-2 py-0.5 text-[12px] font-mono text-body hover:bg-raise cursor-pointer"
+                        >
+                          <Columns2 className="h-3 w-3" aria-hidden="true" />
+                          <span>Split</span>
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            data-testid="btn-pane-columns"
+                            aria-pressed={panes.axis === 'columns'}
+                            onClick={() => commitPanes(setAxis(panes, 'columns'))}
+                            title="Divide the panes side by side"
+                            className={`rounded border px-1.5 py-0.5 cursor-pointer ${
+                              panes.axis === 'columns'
+                                ? 'border-accent/60 bg-accent/10 text-accent'
+                                : 'border-line bg-canvas text-muted hover:bg-raise'
+                            }`}
+                          >
+                            <Columns2 className="h-3 w-3" aria-hidden="true" />
+                            <span className="sr-only">Side by side</span>
+                          </button>
+                          <button
+                            type="button"
+                            data-testid="btn-pane-rows"
+                            aria-pressed={panes.axis === 'rows'}
+                            onClick={() => commitPanes(setAxis(panes, 'rows'))}
+                            title="Divide the panes one above the other"
+                            className={`rounded border px-1.5 py-0.5 cursor-pointer ${
+                              panes.axis === 'rows'
+                                ? 'border-accent/60 bg-accent/10 text-accent'
+                                : 'border-line bg-canvas text-muted hover:bg-raise'
+                            }`}
+                          >
+                            <Rows2 className="h-3 w-3" aria-hidden="true" />
+                            <span className="sr-only">One above the other</span>
+                          </button>
+                          <button
+                            type="button"
+                            data-testid="btn-pane-close"
+                            onClick={() => commitPanes(closeSplit(panes))}
+                            title="Close the second pane"
+                            aria-label="Close the second pane"
+                            className="rounded border border-line bg-canvas px-1.5 py-0.5 text-muted hover:bg-raise hover:text-body cursor-pointer"
+                          >
+                            <X className="h-3 w-3" aria-hidden="true" />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
-              <span className="text-[11px] font-mono text-faint tabular-nums">
+              <span className="shrink-0 whitespace-nowrap text-[11px] font-mono text-faint tabular-nums">
                 {symbolMiss ? (
                   <span role="status" data-testid="symbol-miss" style={{ color: 'var(--muted)' }}>
                     no definition for <code style={{ color: 'var(--accent)' }}>{symbolMiss}</code>
@@ -5021,26 +5219,47 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   </span>
                 )}
               </span>
+              </div>
               {/* The run controls live in the editor's own header: a learner's eyes are in the code,
                   and crossing the screen to press Run was the one trip this card can save. Read
-                  hides this header, so the toolbar falls back to the top of the page there. */}
+                  hides this header, so the toolbar falls back to the top of the page there. Its own
+                  row, because a toolbar sharing a row with four tabs was what pushed this header to
+                  175 px - more than the editor it sits above. */}
               {editorShown && (
-                <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2">
-                  {runnerToolbar}
+                <div className="mt-1 flex min-w-0 flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-1.5">
+                  {runVerdict}
+                  <div className="ml-auto flex min-w-0 items-center gap-2">{runnerToolbar}</div>
                 </div>
               )}
             </div>
-            {/* The code and the output are one card, and the run's output sits under the editor or
-                beside it (`workspaceLayout.ts` remembers which). Read has no editor, so the output
-                falls back to the results column there. */}
+            {/* One body, up to two panes (`editorPanes.ts`). Every view stays mounted and a pane that
+                is not showing is `display:none`: that is what keeps exactly one `pre-actual-stdout`
+                on the page, so the last run can be read without selecting its tab. `order` follows
+                the slots, which is what lets an arrangement opened on an output read left to right. */}
             <div
+              data-testid="editor-panes"
+              data-axis={panes.axis}
+              data-split={paneSplit ? 'split' : 'single'}
+              data-focus={paneSplit ? panes.focus : 0}
+              data-views={visibleViews(panes).join(',')}
+              role="group"
+              aria-label="Editor panes: a tab press fills the pane you last clicked"
               className={
-                editorShown && resultsSplit && !columnsArrangement
-                  ? 'lg:flex lg:items-stretch'
-                  : undefined
+                paneSplit && panes.axis === 'columns'
+                  ? 'flex flex-col lg:flex-row lg:items-start'
+                  : 'flex flex-col'
               }
             >
-              <div className="min-w-0 flex-1">
+              <div
+                data-testid="pane-main"
+                data-pane="main"
+                onClick={() => focusPane('main')}
+                style={{
+                  display: shownViews.has('main') ? undefined : 'none',
+                  order: paneOrder('main'),
+                }}
+                className={`min-w-0 flex-1 ${paneBorder('main')}`}
+              >
             {coEdit && (
               <p
                 role="status"
@@ -5110,49 +5329,35 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             )}
               </div>
               {editorShown && (
-                <div
-                  data-testid="editor-results"
-                  style={{ display: layoutShows(shownLayout, 'results') ? undefined : 'none' }}
-                  className={
-                    resultsSplit && !columnsArrangement
-                      ? 'border-t border-line-soft lg:w-[46%] lg:border-l lg:border-t-0'
-                      : 'border-t border-line-soft'
-                  }
-                >
-                  {/* The terminal split belongs to the output it splits, not to the run row: §3 caps
-                      that row at eight controls (`docs/PLAN-2.1a.md`), and this is a preference of
-                      the panel rather than an action of the run. Debug's preset is already two
-                      columns, so it needs no second split and shows no button. */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1">
-                    <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
-                      Run output
-                    </span>
-                    {!columnsArrangement && (
-                      <button
-                        type="button"
-                        data-testid="btn-results-split"
-                        aria-pressed={resultsSplit}
-                        onClick={() => setResultsSplit(writeResultsSplit(!resultsSplit))}
-                        title={
-                          resultsSplit
-                            ? 'Put the run output back under the code'
-                            : 'Split the run output beside the code, like a terminal'
-                        }
-                        className={`flex items-center gap-1 rounded border px-2 py-0.5 text-[12px] font-mono cursor-pointer ${
-                          resultsSplit
-                            ? 'text-accent border-accent/60 bg-canvas'
-                            : 'text-body border-line bg-canvas hover:bg-raise'
-                        }`}
-                      >
-                        <Columns2 className="h-3 w-3" />
-                        <span>{resultsSplit ? 'Stack output' : 'Split output'}</span>
-                      </button>
-                    )}
+                <>
+                  <div
+                    data-testid="pane-actual"
+                    data-pane="actual"
+                    onClick={() => focusPane('actual')}
+                    style={{
+                      display: shownViews.has('actual') ? undefined : 'none',
+                      order: paneOrder('actual'),
+                    }}
+                    className={`min-w-0 flex-1 border-t border-line-soft ${paneBorder('actual')}`}
+                  >
+                    {actualOutputPane}
                   </div>
-                  {resultsPanel}
-                </div>
+                  <div
+                    data-testid="pane-expected"
+                    data-pane="expected"
+                    onClick={() => focusPane('expected')}
+                    style={{
+                      display: shownViews.has('expected') ? undefined : 'none',
+                      order: paneOrder('expected'),
+                    }}
+                    className={`min-w-0 flex-1 border-t border-line-soft ${paneBorder('expected')}`}
+                  >
+                    {expectedOutputPane}
+                  </div>
+                </>
               )}
             </div>
+            {runFeedback}
           </div>
 
           {/* Everything that reports on the editor. One wrapper, because Split's second column is
@@ -5391,7 +5596,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             onUnpin={() => setPinnedScope(null)}
           />
 
-          {/* The output lives in the editor's own card (`editor-results`), under the header of the
+          {/* The output lives in the editor's own panes (`editorPanes.ts`), under the tabs of the
               code that produced it. There is no results-only preset any more — Read keeps the
               lesson text and Write keeps the editor — so there is no second home for it here. */}
           </div>

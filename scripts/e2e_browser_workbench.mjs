@@ -1009,7 +1009,16 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     assert.equal(await visible('lesson-list-card'), true, 'Study shows the chooser rail');
     assert.equal(await visible('lesson-reader'), true, 'Study shows the lesson text');
     assert.equal(await visible('editor-panel'), true, 'Study shows the editor');
-    assert.equal(await visible('results-panel'), true, 'Study shows the results');
+    assert.equal(
+      await visible('editor-tab-actual'),
+      true,
+      'Study offers the run output as a tab in the editor card'
+    );
+    assert.equal(
+      await visible('results-panel'),
+      false,
+      'the output is a tab until it is asked for, so it does not push the code down'
+    );
     // The pane's own start: the lesson text is fetched, and a heading from the page is in the DOM.
     await page.getByTestId('reader-loading').waitFor({ state: 'detached', timeout: 10000 });
     assert.ok(
@@ -1029,7 +1038,11 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await page.keyboard.press('Alt+2');
     assert.equal(await visible('lesson-list-card'), false, '⌥2 hides the chooser');
     assert.equal(await visible('lesson-reader'), false, '⌥2 hides the lesson text');
-    assert.equal(await visible('results-panel'), false, '⌥2 hides the last run’s output');
+    assert.equal(
+      await visible('editor-tab-actual'),
+      false,
+      '⌥2 hides the last run’s output, tab and all'
+    );
     assert.equal(await visible('editor-panel'), true, '⌥2 keeps the editor');
     assert.equal(
       await page.getByTestId('layout-write').getAttribute('aria-pressed'),
@@ -1038,7 +1051,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     await page.keyboard.press('Alt+3');
     assert.equal(await visible('editor-panel'), false, '⌥3 hides the editor');
-    assert.equal(await visible('results-panel'), false, '⌥3 hides the results');
+    assert.equal(await visible('editor-tab-actual'), false, '⌥3 hides the results with the editor');
     assert.equal(await visible('lesson-reader'), true, '⌥3 is the reading preset: the text stays');
     assert.equal(await visible('lesson-list-card'), false, '⌥3 keeps the chooser hidden');
     // Read is a click here, so the button path is pinned as well as the shortcut.
@@ -1060,7 +1073,8 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     assert.equal(await visible('editor-panel'), true, '⌥1 brings the editor back');
     assert.equal(await visible('lesson-list-card'), true, '⌥1 brings the chooser back');
     assert.equal(await visible('lesson-reader'), true, '⌥1 brings the lesson text back');
-    assert.equal(await visible('results-panel'), true, '⌥1 brings the results back');
+    assert.equal(await visible('editor-tab-actual'), true, '⌥1 brings the output tab back');
+    assert.equal(await visible('results-panel'), false, 'a tab is offered, not pushed open');
     // Utility classes have no rules in this dev server (it resolves the config without the Tailwind
     // plugin), so anything asserted here is either markup or a rule from `index.css`. The split
     // columns are the latter now, which is why they can be measured below; the utilities themselves
@@ -1079,7 +1093,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     assert.equal(await visible('lesson-list-card'), false, '⌥4 hides the chooser');
     assert.equal(await visible('lesson-reader'), false, '⌥4 hides the lesson text');
     assert.equal(await visible('editor-panel'), true, '⌥4 keeps the editor');
-    assert.equal(await visible('results-panel'), true, '⌥4 keeps the results');
+    assert.equal(await visible('editor-tab-actual'), true, '⌥4 keeps the output tab');
     // Debug's two columns are a grid on this container, and the editor comes first in the DOM so the
     // second column is the results. The columns are a media query in `index.css`, not a utility
     // class (the split needs 1760 px, which is not a Tailwind step), so they are measured rather than
@@ -1119,9 +1133,8 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     assert.equal(await visible('lesson-list-card'), true, 'the Study button comes back');
     console.log('  ok ⌥1–⌥4 choose the regions and their arrangement, and the choice is remembered');
 
-    // 5d-i. The run controls live in the editor's own header, and the run's output in the same card:
-    //       under the code by default, beside it on a press. The split is a remembered preference,
-    //       like the divider's share.
+    // 5d-i. The editor's tabs: the code and the two outputs are views of one card, the output is a tab
+    //       rather than a block that pushes the code up, and a split shows two views at once.
     {
       const inEditor = (testId) =>
         page.evaluate((id) => {
@@ -1130,58 +1143,225 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         }, testId);
       assert.equal(await inEditor('btn-run-verify'), true, 'Run must sit in the editor header');
       assert.equal(await inEditor('btn-predict'), true, 'Predict must sit beside Run for convenience');
+      assert.equal(await inEditor('editor-tab-actual'), true, 'the run output must be a tab of the card');
+      assert.equal(await inEditor('editor-tab-expected'), true, 'the expected output must be a tab too');
+      assert.equal(await inEditor('btn-pane-split'), true, 'the split control must live with the tabs');
       assert.equal(
-        await inEditor('btn-results-split'),
+        await inEditor('pre-actual-stdout'),
         true,
-        'the output split must live in the card, with the output it splits'
+        'the output stays mounted while its tab is closed, so a reader never loses the last run'
       );
       assert.equal(
-        await inEditor('editor-results'),
-        true,
-        'the output must be in the same card as the code it came from'
+        await page.getByTestId('pre-actual-stdout').isVisible(),
+        false,
+        'the code is what the card shows until a tab asks otherwise'
       );
-      const box = () =>
-        page.evaluate(() => {
-          const editor = document.querySelector('[data-testid="editor-main"]')?.getBoundingClientRect();
-          const results = document
-            .querySelector('[data-testid="editor-results"]')
-            ?.getBoundingClientRect();
-          const header = document
-            .querySelector('[data-testid="editor-panel"] > div')
-            ?.getBoundingClientRect();
-          return {
-            resultsInCard: !!document.querySelector('[data-testid="editor-panel"] [data-testid="editor-results"]'),
-            below: !!editor && !!results && results.top >= editor.bottom - 24,
-            beside: !!editor && !!results && results.left >= editor.right - 8 && results.top < editor.bottom - 24,
-            underHeader: !!header && !!results && results.top >= header.bottom - 1,
-          };
-        });
-      const stacked = await box();
-      assert.equal(stacked.resultsInCard, true, 'the output must be inside the editor card');
-      assert.equal(stacked.underHeader, true, 'the output must start under the editor header');
-      assert.equal(stacked.below, true, 'by default the output sits under the code');
-      const split = page.getByTestId('btn-results-split');
-      await split.click();
-      await page.waitForTimeout(350);
-      assert.equal(await split.getAttribute('aria-pressed'), 'true', 'the split must report itself on');
-      const side = await box();
-      assert.equal(side.beside, true, 'a press must put the output beside the code, not under it');
-      await page.reload({ waitUntil: 'domcontentloaded' });
-      await waitForEditor(page, undefined, 30000);
-      await page.waitForTimeout(600);
-      assert.equal(
-        await page.getByTestId('btn-results-split').getAttribute('aria-pressed'),
-        'true',
-        'the split is a preference: it must survive a reload'
-      );
-      await page.getByTestId('btn-results-split').click();
+
+      await page.getByTestId('editor-tab-actual').click();
       await page.waitForTimeout(300);
       assert.equal(
-        await page.getByTestId('btn-results-split').getAttribute('aria-pressed'),
-        'false',
-        'pressing again puts the output back under the code'
+        await page.getByTestId('pre-actual-stdout').isVisible(),
+        true,
+        'the Run output tab must show the run output'
       );
-      console.log('  ok Run and Predict sit in the editor header, and the output splits beside the code');
+      assert.equal(
+        await page.getByTestId('editor-main').isVisible(),
+        false,
+        'one pane: the tab replaces the code rather than stacking under it'
+      );
+      assert.equal(
+        await page.getByTestId('editor-tab-actual').getAttribute('aria-selected'),
+        'true',
+        'the tab must say it is the view on screen'
+      );
+
+      await page.getByTestId('btn-pane-split').click();
+      await page.waitForTimeout(400);
+      assert.equal(
+        await page.getByTestId('editor-main').isVisible(),
+        true,
+        'splitting from an output must bring the editor back beside it'
+      );
+      const panes = () =>
+        page.evaluate(() => {
+          const editor = document.querySelector('[data-testid="pane-main"]')?.getBoundingClientRect();
+          const actual = document.querySelector('[data-testid="pane-actual"]')?.getBoundingClientRect();
+          const box = document.querySelector('[data-testid="editor-panes"]');
+          return {
+            axis: box?.getAttribute('data-axis'),
+            split: box?.getAttribute('data-split'),
+            // From an output, Split puts the editor in the second slot, so "beside" is whichever way
+            // round the two panes were opened - not "editor on the left" every time.
+            beside:
+              !!editor &&
+              !!actual &&
+              (actual.left >= editor.right - 8 || editor.left >= actual.right - 8) &&
+              Math.abs(actual.top - editor.top) < 48,
+            stacked:
+              !!editor &&
+              !!actual &&
+              Math.abs(actual.left - editor.left) < 8 &&
+              (actual.bottom <= editor.top + 8 || editor.bottom <= actual.top + 8),
+          };
+        });
+      const side = await panes();
+      assert.equal(side.split, 'split', 'two views must be on screen');
+      assert.equal(side.axis, 'columns', 'a fresh split divides side by side');
+      assert.equal(side.beside, true, 'a column split puts the second pane beside the first');
+
+      // Splitting from an output puts the code in the second slot. Close it, return to the code and
+      // open the split again from main, so the arrangement the reload and the rows split below read
+      // is the code-then-output one the rest of this scenario is written against.
+      await page.getByTestId('btn-pane-close').click();
+      await page.waitForTimeout(250);
+      await page.getByTestId('editor-tab-main').click();
+      await page.waitForTimeout(250);
+      await page.getByTestId('btn-pane-split').click();
+      await page.waitForTimeout(300);
+
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await waitForEditor(page, undefined, 30000);
+      await page.waitForTimeout(700);
+      assert.equal(
+        await page.getByTestId('editor-main').isVisible(),
+        true,
+        'the split is a preference: it must survive a reload'
+      );
+      assert.equal(
+        await page.getByTestId('btn-pane-rows').count(),
+        1,
+        'the split controls must report the arrangement they are in'
+      );
+
+      await page.getByTestId('btn-pane-rows').click();
+      await page.waitForTimeout(350);
+      const stacked = await panes();
+      assert.equal(stacked.axis, 'rows');
+      assert.equal(stacked.stacked, true, 'the rows split stacks the second pane under the first');
+
+      // The pane a tab press fills is the one last clicked, so the two outputs can share the split:
+      // focus the code pane, then ask the Expected tab for it. Without this the first tab press
+      // always replaced the focused pane and Actual beside Expected was not reachable.
+      await page.getByTestId('editor-tab-main').click();
+      await page.waitForTimeout(200);
+      await page.getByTestId('pane-main').click();
+      await page.getByTestId('editor-tab-expected').click();
+      await page.waitForTimeout(300);
+      const outputs = await page.evaluate(() => {
+        const box = document.querySelector('[data-testid="editor-panes"]');
+        return {
+          focus: box?.getAttribute('data-focus'),
+          views: box?.getAttribute('data-views'),
+          visible: [...(box?.querySelectorAll('[data-pane]') ?? [])]
+            .filter((pane) => pane.getBoundingClientRect().height > 0)
+            .map((pane) => pane.getAttribute('data-pane'))
+            .sort(),
+        };
+      });
+      assert.deepEqual(
+        outputs.visible,
+        ['actual', 'expected'],
+        'clicking a pane then its tab must put Expected and Run output on screen together'
+      );
+      assert.equal(
+        outputs.views,
+        'expected,actual',
+        'the output the learner asked for goes into the pane they clicked, not the other one'
+      );
+
+      await page.getByTestId('btn-pane-close').click();
+      await page.waitForTimeout(300);
+      assert.equal(
+        await page.getByTestId('btn-pane-split').count(),
+        1,
+        'closing the split returns the one-pane control'
+      );
+      assert.equal(
+        await page.getByTestId('pane-main').isVisible() && await page.getByTestId('pane-actual').isVisible(),
+        false,
+        'one view stays on screen after the split closes'
+      );
+      await page.getByTestId('editor-tab-main').click();
+      await page.waitForTimeout(250);
+      assert.equal(await page.getByTestId('editor-main').isVisible(), true, 'the main tab returns the code');
+
+      // The run controls share one row at 1280: the dock's full sentence is what used to push
+      // Predict onto a second row, so the compact dock is measured here rather than trusted.
+      const runRow = await page.evaluate(() => {
+        const run = document.querySelector('[data-testid="btn-run-verify"]').getBoundingClientRect();
+        const predict = document.querySelector('[data-testid="btn-predict"]').getBoundingClientRect();
+        const card = document.querySelector('[data-testid="editor-panel"]').getBoundingClientRect();
+        return {
+          gap: Math.round(Math.abs(run.top - predict.top)),
+          inside: run.right <= card.right + 1 && predict.right <= card.right + 1,
+        };
+      });
+      assert.ok(
+        runRow.gap <= 4,
+        `Predict must sit on the Run row at 1280, but its top is ${runRow.gap}px away`
+      );
+      assert.equal(runRow.inside, true, 'the run controls must stay inside the editor card');
+
+      // The same row at the widths where the preset shortcut chips are too expensive: 768-1024 is
+      // the band the toolbar used to spend on a second row for Predict.
+      for (const width of [768, 900, 1024]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.waitForTimeout(350);
+        const mid = await page.evaluate(() => {
+          const run = document.querySelector('[data-testid="btn-run-verify"]').getBoundingClientRect();
+          const predict = document.querySelector('[data-testid="btn-predict"]').getBoundingClientRect();
+          const card = document.querySelector('[data-testid="editor-panel"]').getBoundingClientRect();
+          return {
+            gap: Math.round(Math.abs(run.top - predict.top)),
+            overflow: document.documentElement.scrollWidth - window.innerWidth,
+            inside: predict.right <= card.right + 1 && run.right <= card.right + 1,
+          };
+        });
+        assert.ok(mid.gap <= 4, `Predict must share the Run row at ${width}px, not ${mid.gap}px below`);
+        assert.equal(mid.inside, true, `the run controls must stay inside the card at ${width}px`);
+        assert.equal(mid.overflow, 0, `${width}px must not scroll sideways`);
+      }
+      await page.setViewportSize({ width: 1280, height: 720 });
+      await page.waitForTimeout(350);
+      assert.equal(
+        await page.evaluate(() =>
+          document.querySelector('[data-testid="layout-study"] span').getBoundingClientRect().width > 0
+        ),
+        true,
+        'the preset shortcut chip must come back at 1280, where the toolbar has the room'
+      );
+
+      // A phone has no room for five tabs beside the split control: the strip wraps rather than
+      // scrolling the Expected tab underneath a sticky group.
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(500);
+      const phone = await page.evaluate(() => {
+        const strip = document.querySelector('[role="tablist"]');
+        const tab = document.querySelector('[data-testid="editor-tab-expected"]').getBoundingClientRect();
+        const split = document.querySelector('[data-testid="btn-pane-split"]')?.parentElement;
+        const splitBox = split?.getBoundingClientRect();
+        return {
+          overflow: document.documentElement.scrollWidth - window.innerWidth,
+          stripOverflow: strip.scrollWidth - strip.clientWidth,
+          tabRight: Math.round(tab.right),
+          tabTop: Math.round(tab.top),
+          splitLeft: splitBox ? Math.round(splitBox.left) : null,
+          splitTop: splitBox ? Math.round(splitBox.top) : null,
+        };
+      });
+      assert.equal(phone.overflow, 0, '390 px must not scroll sideways');
+      assert.equal(phone.stripOverflow, 0, '390 px must wrap the tabs, not clip one');
+      if (phone.splitLeft !== null && Math.abs(phone.tabTop - phone.splitTop) < 8) {
+        assert.ok(
+          phone.tabRight <= phone.splitLeft + 1,
+          'the split control must not sit on top of the Expected tab'
+        );
+      }
+      await page.setViewportSize({ width: 1280, height: 720 });
+      await page.waitForTimeout(350);
+      console.log(
+        '  ok the editor tabs show one view, Split shows the code and the output together, Predict shares Run’s row, and a phone wraps the tabs clear of the split control'
+      );
     }
 
     // 5d-ii. Docking: one button, and it names the panel this preset can move. Debug moves the
@@ -2833,7 +3013,11 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       (await formattingPage.getByTestId('badge-output-check').textContent())?.includes('MATCHED'),
       'A whitespace-only difference must not fail a lesson that does not grade formatting'
     );
+    // The note belongs to the Expected Output pane, which is a tab now: open it, read the note, and
+    // return to the code so the next scenario's edit lands in a visible editor.
+    await formattingPage.getByTestId('editor-tab-expected').click();
     await formattingPage.getByTestId('note-formatting-normalized').waitFor({ timeout: 5000 });
+    await formattingPage.getByTestId('editor-tab-main').click();
     assert.equal(
       (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
       formatVerified(2),

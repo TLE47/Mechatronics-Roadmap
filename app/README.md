@@ -432,7 +432,10 @@ wipes a tick and restores it.
 **A sticky note is marked where it was written.** A highlight stores its quote, and the reader cuts that
 quote out of the prose ([`src/lessonMarks.ts`](src/lessonMarks.ts)) and draws it as a pressable mark;
 pressing it reopens the note in place, prefilled, and Save updates that highlight instead of adding a
-second one for the same passage. The note editor stores Markdown — `**bold**`, `*italic*`, and
+second one for the same passage. The mark is drawn on every run of text the reader renders: prose, a
+table cell, **inline code**, and the body of a fenced code block (matched loosely there, because a
+selected snippet's newlines collapse to one space). The same popup also **removes** the note and its
+mark, because deleting a note is an edit of that note rather than a trip to the Study panel. The note editor stores Markdown — `**bold**`, `*italic*`, and
 `++underline++` for the mark Markdown does not have — so the toolbar's Bold, Italic and Underline act on
 the selection, `⌘B` / `⌘I` / `⌘U` (Ctrl on Linux and Windows) do the same from the keyboard, and a live
 preview under the box shows what the note will read as. The editor is a **popover beside the words**, not
@@ -448,10 +451,10 @@ the wrapping, and the browser suite presses the mark, formats the note, and relo
 
 ### Review cards
 
-A highlight with a comment is a question with its answer: the quote asks *why did you keep this?*, the
-comment says. The Study panel asks it back on a schedule — **Review (N due)** draws on the whole
-course's deck, shows the quote, and only after **Show answer** offers the four answers FSRS schedules
-on (Again, Hard, Good, Easy). A highlight without a comment is a passage marked, not a question set, so
+A highlight with a comment is a question with its answer: *what did you write about this passage?*,
+the quote is the passage it asks about, and the comment is the note behind **Show answer**. The Study
+panel asks it back on a schedule — **Review (N due)** draws on the whole course's deck, and only
+after **Show answer** offers the four answers FSRS schedules on (Again, Hard, Good, Easy). A highlight without a comment is a passage marked, not a question set, so
 it never becomes a card: that one rule is what keeps the deck from filling with prompts nobody can
 answer.
 
@@ -860,8 +863,9 @@ renders the built bundle in Chromium rather than reading the class list). The pr
 the row, because they are navigation rather than an action.
 
 **The screen gives its width to one thing at a time, if you ask it to.** Four presets, in the
-editor's header or on `⌥1`–`⌥4`: **Study** (the chooser, the lesson text, the editor and the results —
-the default), **Write** (the editor alone; the results of a run describe code that has since changed),
+editor's header or on `⌥1`–`⌥4`: **Study** (the chooser, the lesson text, the editor and its output
+tabs — the default), **Write** (the editor alone; the results of a run describe code that has since
+changed),
 **Read** (the lesson text at the window's height, with the editor, chooser and results out of the way),
 and **Debug** (the editor on the left, the results on the right — the arrangement a 1440 px screen has
 been asking for, where the verdict used to be scrolled off the moment the line it was about came into
@@ -886,6 +890,25 @@ wrapping. The drag is captured by the handle itself, so letting go outside the w
 and the number is written once at the end rather than on every pointer move
 ([`src/workspaceLayout.ts`](src/workspaceLayout.ts), `npm run test:layout` for the arithmetic,
 `npm run test:e2e:pages` for the drag and the reload).
+
+**The code and its two outputs are tabs, not a stack.** `main.py`, each read-only helper, **Run
+output** and **Expected** are views of one editor card, and the output is a tab rather than a block
+under the code: the code keeps the card's height, and the last run is one press away. **Split** shows
+two views at once — from the editor it offers the run output, and from an output it brings the editor
+back beside it — and the arrows choose a vertical split (`columns`, side by side where the window is
+wide) or a horizontal one (`rows`, like stacked panes in a terminal multiplexer). Pressing the tab of
+a view already open in the other pane focuses that pane instead of opening a second copy, and
+clicking a pane makes it the one the next tab press fills — the focused pane carries a faint inset
+ring, so Expected beside Run output is a click and a tab rather than a guess. Two panes is the cap,
+because three 380 px columns of Python is narrower than the code's own line. The strip wraps on a
+phone rather than scrolling a tab under the pinned split control. The dock's sentence becomes its
+arrow below `2xl`, and the four preset shortcut chips step aside below `xl`: that is what keeps
+**Predict** on the **Run** row from 768 px up, with the chips returning at 1280. Every view stays
+mounted and a pane that is not showing is `display:none`, so the last run is still readable (and
+greppable by the suite) while the editor is on screen, and the arrangement is remembered. **Write**
+keeps no output tab at all, and **Read** keeps no editor. The state machine is pure and validated at
+its edge ([`src/editorPanes.ts`](src/editorPanes.ts), `npm run test:panes` for the rules, the browser
+suite for the side-by-side geometry and the reload).
 
 **A panel can sit on either edge.** The presets decide what is on screen; **docking** decides which
 side. Study's lesson text can move to the right of the work area, and Debug's results to the left of
