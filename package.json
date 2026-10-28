@@ -117,6 +117,7 @@
     "test:checklists": "node --experimental-strip-types scripts/test_checklists.mjs",
     "test:review": "node --experimental-strip-types scripts/test_review.mjs",
     "test:sitting": "node --experimental-strip-types scripts/test_sitting.mjs",
+    "test:studyclock": "node --experimental-strip-types scripts/test_study_timer.mjs",
     "test:portfolio": "node --experimental-strip-types scripts/test_portfolio.mjs",
     "test:storage": "node --experimental-strip-types scripts/test_storage.mjs",
     "test:traceback": "node --experimental-strip-types scripts/test_traceback.mjs",

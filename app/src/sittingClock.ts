@@ -52,7 +52,11 @@ export const MAX_SITTING_MS = 3 * 60 * 60_000;
 export const MAX_SITTINGS = 200;
 export const MAX_SITTING_LESSONS = 12;
 
-export type SittingKind = 'open' | 'run' | 'review';
+/**
+ * What extended a sitting. `study` is the lesson brief's clock (`studyTimer.ts`): a heartbeat while
+ * it runs, so an hour of reading the lesson counts as an hour even with no run in it.
+ */
+export type SittingKind = 'open' | 'run' | 'review' | 'study';
 
 export interface Sitting {
   /** When the sitting began, epoch milliseconds. */
