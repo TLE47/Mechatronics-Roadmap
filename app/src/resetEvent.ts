@@ -3,7 +3,7 @@
  *
  * `App` has to know three things about a reset — the event it listens for, the watermark its snapshot
  * carries, and the shape of the report — and nothing else. Importing `progressReset.ts` for them would
- * put all eleven stores in the first paint's chunk, which is precisely what the lazy dialog exists to
+ * put all twelve stores in the first paint's chunk, which is precisely what the lazy dialog exists to
  * avoid; the measured entry chunk said so (Run 259: +9.6 kB for a button). So the contract lives here,
  * the registry lives there, and this module imports nothing.
  */
@@ -15,6 +15,7 @@ export const STORAGE_KEY_RESET_AT = 'mechalab.progress.resetAt.v1';
 
 export type ResetAreaId =
   | 'lessons'
+  | 'checks'
   | 'milestones'
   | 'awards'
   | 'cards'

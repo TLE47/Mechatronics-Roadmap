@@ -47,6 +47,7 @@ import { clearLearningLog, readLearningLog } from './learningLog.ts';
 import { clearHistory, readHistory } from './draftHistory.ts';
 import { readDrafts, replaceDrafts } from './lessonDraft.ts';
 import { replaceStudy, studyCounts } from './studyNotes.ts';
+import { clearAllTicks, tickCounts } from './lessonChecks.ts';
 import { readCardList, replaceCards } from './studyCards.ts';
 import { RESET_EVENT, STORAGE_KEY_RESET_AT, announceReset, type ResetAreaId, type ResetReport } from './resetEvent.ts';
 import {
@@ -167,6 +168,25 @@ export const RESET_AREAS: readonly ResetArea[] = [
       removeKey(STORAGE_KEY_COMPLETED);
       removeKey(VERIFY_STAMPS_KEY);
     },
+  },
+  {
+    id: 'checks',
+    label: 'Lesson checklists',
+    hint: 'The ticks you made while reading a lesson. The lesson text, your notes and every verdict stay.',
+    // Local, not cloud: the prose is the same on every device, but the store that remembers a tick
+    // is this browser's. Marking the cloud progress as reset here would discard an account's newer
+    // copy for a change it never held.
+    group: 'local',
+    count: () => {
+      const counts = tickCounts();
+      return {
+        n: counts.ticks,
+        text: counts.ticks
+          ? `${plural(counts.ticks, 'tick')} in ${plural(counts.lessons, 'lesson')}`
+          : 'none yet',
+      };
+    },
+    clear: () => clearAllTicks(),
   },
   {
     id: 'milestones',

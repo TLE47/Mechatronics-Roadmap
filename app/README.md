@@ -406,6 +406,29 @@ as an edit — the panel writes only after a real keystroke, which is what kept 
 cleared on reload. `npm run test:study` pins the rules; `npm run test:e2e` types a note, pins a line,
 reloads, and finds both still there.
 
+**The reading page is also a checklist.** Every unordered bullet is drawn as a checkbox, and the tick
+lands in [`src/lessonChecks.ts`](src/lessonChecks.ts) under `mechalab_lesson_checks_v1`. The item's own
+words are its identity — whitespace collapsed, first 160 characters — because block indexes move the
+moment a page is regenerated, so a position would tick the wrong line after the next content build. The
+same sentence twice in one lesson is one item, a reworded item starts unticked, and the store is
+bounded per lesson rather than by lesson count. Ordered lists keep their numbers: a sequence has an
+order whether or not its steps can be ticked. The tick is progress rather than authored work, so it has
+its own row in Reset (**Lesson checklists**, local to this browser) and does not ride in the backup.
+`npm run test:checklists` pins the store; `npm run test:e2e:home` ticks a bullet, reloads, and finds it
+still ticked.
+
+**A sticky note is marked where it was written.** A highlight stores its quote, and the reader cuts that
+quote out of the prose ([`src/lessonMarks.ts`](src/lessonMarks.ts)) and draws it as a pressable mark;
+pressing it reopens the note in place, prefilled, and Save updates that highlight instead of adding a
+second one for the same passage. The note editor stores Markdown — `**bold**`, `*italic*`, and
+`++underline++` for the mark Markdown does not have — so the toolbar's Bold, Italic and Underline act on
+the selection, `⌘B` / `⌘I` / `⌘U` (Ctrl on Linux and Windows) do the same from the keyboard, and a live
+preview under the box shows what the note will read as. The same renderer draws a review card's answer
+([`src/components/InlineMarkdown.tsx`](src/components/InlineMarkdown.tsx)), so a formatted note is not
+asterisks on the day it comes back. A quote that spans two inline runs (half a sentence in bold) is not
+marked rather than marked wrongly; it is still in Notes. `npm run test:reader` pins the mark split and
+the wrapping, and the browser suite presses the mark, formats the note, and reloads.
+
 ### Review cards
 
 A highlight with a comment is a question with its answer: the quote asks *why did you keep this?*, the

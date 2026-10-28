@@ -16,6 +16,29 @@ flowchart LR
 
 ---
 
+## [2026-10-27] — Run 264: a lesson you can tick off, and a note you can press
+
+**The reading page is a checklist.** Every unordered bullet is a checkbox, its tick stored per lesson in
+`mechalab_lesson_checks_v1` ([`app/src/lessonChecks.ts`](app/src/lessonChecks.ts)). The item's words are
+its identity, not its index: a page is regenerated from Markdown, so an index would tick the wrong line
+as soon as a paragraph moved. The store is bounded per lesson, the same sentence twice is one item, and
+a refused write says *Not saved* instead of showing a tick that reloads unticked. Ordered lists keep
+their numbers. The new **Lesson checklists** row in Reset erases ticks alone — local to the browser,
+with no cloud watermark, because the account never held them. `npm run test:checklists` pins the store;
+`scripts/e2e_home.mjs` ticks a bullet, reloads, and finds it still ticked.
+
+**A sticky note is marked in the prose and opens where it sits.** The quote a note was written on is cut
+out of the text run it came from ([`app/src/lessonMarks.ts`](app/src/lessonMarks.ts)) and drawn as a
+pressable mark; pressing it reopens the popup prefilled, and **Save changes** updates that highlight
+instead of adding another for the same passage. The editor stores Markdown — toolbar **Bold**, **Italic**
+and **Underline**, the same on `⌘B` / `⌘I` / `⌘U`, and a live preview — with `++…++` as underline, the
+one mark Markdown has no syntax for. The shared inline renderer also draws a review card's answer, so
+the formatting survives the trip from the editor to the card. A quote spanning two inline runs is left
+unmarked rather than marked on the wrong words. `npm run test:reader` pins the split and the wrap; the browser suite presses a mark,
+formats the note, saves, and reloads.
+
+---
+
 ## [2026-10-27] — Run 263: an introduction worth coming back to
 
 The wordmark used to jump to `#top`. It now opens **`?view=intro`**, a page built for the visitor who has

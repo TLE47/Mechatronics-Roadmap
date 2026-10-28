@@ -14,7 +14,7 @@ lazy boundary so a learner who never opens it never downloads it.
 
 ```mermaid
 flowchart TB
-    Door["Reset… in the Export and backup tray"] --> Panel["Eleven named parts, each printing what it holds now"]
+    Door["Reset… in the Export and backup tray"] --> Panel["Twelve named parts, each printing what it holds now"]
     Panel --> One["Reset this part"]
     Panel --> All["Reset everything"]
     One --> Armed["First press arms the button: Press again, 4 s"]
@@ -30,11 +30,12 @@ flowchart TB
     Erase --> Workspace["Drafts and notes: empty workspace doc, never a merge"]
 ```
 
-## The eleven parts
+## The twelve parts
 
 | Part | What it erases | The copy it also clears |
 | :--- | :--- | :--- |
 | Lessons | the verdicts, the self-marked ticks, the grader stamps | the account's progress row |
+| Lesson checklists | the ticks made in a lesson's bullet checklists; the lesson text and notes stay | this browser only |
 | Milestones | the roadmap ticks; the roadmap and the lessons stay | the account's progress row |
 | XP and awards | the ledger: levels, proof marks, the Scrap they paid for | this browser only |
 | Practice cards | the review schedule and its history; the cards return from your highlights | this browser only |

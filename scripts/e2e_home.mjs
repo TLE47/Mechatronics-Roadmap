@@ -592,24 +592,54 @@ async function main() {
       console.log(`  ok Continue reopened the lesson at ${Math.round(restored)} px (left at ${Math.round(target)})`);
     }
 
-    // ---- 7c. A selected passage can become a sticky note, not only a highlight ----
+    // ---- 7c. A bullet is a checkbox, and a tick is remembered ----
+    let checklistKey = '';
+    {
+      const boxes = page.locator('[data-testid^="reader-check-"]');
+      const count = await boxes.count();
+      assert.ok(count > 0, 'the lesson text must draw its bullet lists as checkboxes');
+      const first = boxes.first();
+      checklistKey = (await first.getAttribute('data-check-key')) ?? '';
+      assert.ok(checklistKey.length > 0, 'a checkbox needs the item identity it stores');
+      assert.equal(await first.isChecked(), false, 'a fresh browser starts with nothing ticked');
+      await first.check();
+      assert.equal(await first.isChecked(), true, 'ticking must land, not merely look pressed');
+      console.log(`  ok ${count} bullets are checkboxes, and the first one ticks`);
+    }
+
+    // ---- 7d. A selected passage can become a sticky note, marked in the prose ----
     {
       const pane = page.getByTestId('reader-scroll');
+      // Select inside one prose text node, not the whole paragraph: a note's anchor is its quote,
+      // and a mark has to be able to find that quote inside the run it was taken from.
       const selected = await pane.evaluate((element) => {
-        const paragraph = element.querySelector('p');
-        if (!paragraph) return '';
+        const prose = element.querySelector('[data-testid="reader-prose"]');
+        if (!prose) return '';
+        const walker = document.createTreeWalker(prose, NodeFilter.SHOW_TEXT);
+        let node = walker.nextNode();
+        while (node) {
+          const value = node.textContent ?? '';
+          const blocked = node.parentElement?.closest('a, code, pre, [data-testid="sticky-mark"]');
+          if (!blocked && value.trim().length >= 80) break;
+          node = walker.nextNode();
+        }
+        if (!node) return '';
+        const value = node.textContent ?? '';
+        const lead = value.length - value.trimStart().length;
         const range = document.createRange();
-        range.selectNodeContents(paragraph);
+        range.setStart(node, lead);
+        range.setEnd(node, Math.min(value.length, lead + 48));
         const selection = window.getSelection();
         selection?.removeAllRanges();
         selection?.addRange(range);
         document.dispatchEvent(new Event('selectionchange'));
         return selection?.toString() ?? '';
       });
-      assert.ok(selected.trim().length > 20, 'the reader must have a paragraph to select');
+      assert.ok(selected.trim().length > 20, 'the reader must have a prose passage to select');
       await page.getByTestId('btn-sticky').click();
       await page.getByTestId('sticky-note-popup').waitFor({ timeout: 10000 });
-      await page.getByTestId('sticky-note-text').fill('The sampling time is the thing I keep forgetting.');
+      const note = 'The sampling time is the thing I keep forgetting.';
+      await page.getByTestId('sticky-note-text').fill(note);
       await page.getByTestId('btn-sticky-save').click();
       await page.waitForFunction(
         () => /Sticky note saved/.test(document.querySelector('[data-testid="reader-status"]')?.textContent ?? ''),
@@ -621,7 +651,81 @@ async function main() {
         0,
         'saving must close the popup rather than leave a stale selection in it'
       );
-      console.log('  ok a selected passage opens a sticky-note popup and saves it to Notes');
+
+      const mark = page.locator('[data-testid="sticky-mark"]').first();
+      await mark.waitFor({ timeout: 10000 });
+      assert.ok(
+        (await page.locator('[data-testid="sticky-mark"]').count()) >= 1,
+        'the saved quote must be marked in the lesson text, not only listed in Notes'
+      );
+      await mark.click();
+      await page.getByTestId('sticky-note-popup').waitFor({ timeout: 10000 });
+      assert.equal(
+        await page.getByTestId('sticky-note-text').inputValue(),
+        note,
+        'pressing a mark must reopen the note written for that passage'
+      );
+
+      // Bold by shortcut, underline from the bar: both are the same Markdown the note stores.
+      await page.getByTestId('sticky-note-text').press('ControlOrMeta+a');
+      await page.keyboard.press('ControlOrMeta+b');
+      assert.equal(
+        await page.getByTestId('sticky-note-text').inputValue(),
+        `**${note}**`,
+        '⌘B / Ctrl+B must wrap the selected note text'
+      );
+      assert.equal(
+        await page.getByTestId('sticky-note-preview').locator('strong').count(),
+        1,
+        'the preview must draw the bold run as bold, not as asterisks'
+      );
+      await page.getByTestId('btn-sticky-underline').click();
+      assert.equal(
+        await page.getByTestId('sticky-note-text').inputValue(),
+        `**++${note}++**`,
+        'the Underline button must wrap the text the shortcut left selected'
+      );
+      assert.equal(
+        await page.getByTestId('sticky-note-preview').locator('u').count(),
+        1,
+        'the preview must draw the underline'
+      );
+      await page.getByTestId('btn-sticky-save').click();
+      await page.waitForFunction(
+        () => /Sticky note updated/.test(document.querySelector('[data-testid="reader-status"]')?.textContent ?? ''),
+        undefined,
+        { timeout: 10000 }
+      );
+      assert.equal(await page.getByTestId('sticky-note-popup').count(), 0, 'an edit saves and closes');
+      console.log('  ok a mark reopens its note, B/Underline format it, and Save updates it in place');
+
+      // Both stores are per lesson and on this device; the page is the only thing that changes.
+      await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });
+      await waitForHome(page);
+      await page.getByTestId('btn-home-start').click();
+      await waitForEditor(page, undefined, 30000);
+      await page.getByTestId('reader-scroll').waitFor({ timeout: 30000 });
+      await page.waitForTimeout(800);
+      const reloaded = page.locator('[data-testid^="reader-check-"]').first();
+      assert.equal(
+        await reloaded.getAttribute('data-check-key'),
+        checklistKey,
+        'the reopened page must list the same first item'
+      );
+      assert.equal(await reloaded.isChecked(), true, 'a tick must survive a reload');
+      assert.ok(
+        (await page.locator('[data-testid="sticky-mark"]').count()) >= 1,
+        'a marked passage must survive a reload'
+      );
+      await page.locator('[data-testid="sticky-mark"]').first().click();
+      await page.getByTestId('sticky-note-popup').waitFor({ timeout: 10000 });
+      assert.equal(
+        await page.getByTestId('sticky-note-text').inputValue(),
+        `**++${note}++**`,
+        'the mark must reopen the formatted note after a reload'
+      );
+      await page.getByTestId('btn-sticky-cancel').click();
+      console.log('  ok the checklist tick and the formatted note both survive a reload');
     }
 
     // ---- 8. Review opens the deck where the cards live ----

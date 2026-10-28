@@ -29,6 +29,7 @@ import { LOG_STORAGE_KEY, readLearningLog, replaceLearningLog } from './learning
 import { clearHistory, readHistory } from './draftHistory.ts';
 import { readDrafts, replaceDrafts } from './lessonDraft.ts';
 import { readStudy, replaceStudy } from './studyNotes.ts';
+import { clearTicks, readChecks } from './lessonChecks.ts';
 import { cardId, readCardList, readCards, replaceCards } from './studyCards.ts';
 import { announceReset, STORAGE_KEY_RESET_AT, type ResetAreaId, type ResetReport } from './resetEvent.ts';
 import {
@@ -334,8 +335,21 @@ function resumeItems(): ResetItem[] {
   return items;
 }
 
+function checkItems(): ResetItem[] {
+  return Object.entries(readChecks())
+    .filter(([, lesson]) => lesson.done.length > 0)
+    .map(([id, lesson]) => ({
+      id: `checks:${id}`,
+      label: id,
+      detail: `${plural(lesson.done.length, 'ticked item')} in this lesson`,
+      n: lesson.done.length,
+      clear: () => clearTicks(id),
+    }));
+}
+
 const ITEM_READERS: Record<ResetAreaId, () => ResetItem[]> = {
   lessons: lessonItems,
+  checks: checkItems,
   milestones: milestoneItems,
   awards: awardItems,
   cards: cardItems,
