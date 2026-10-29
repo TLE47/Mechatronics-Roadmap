@@ -381,7 +381,11 @@ async function main() {
         'canvases and tables the surface has, and the resolved colours, type and palette tokens. It is **not a pixel diff**: the runner is ' +
         'Linux and the person writing this is on a Mac, and a baseline whose antialiasing does not survive ' +
         'the trip is a gate people learn to skip. Box numbers are compared with a 2 px tolerance, so ' +
-        'subpixel rounding is not a finding; counts and resolved styles are exact. Re-record with ' +
+        'subpixel rounding is not a finding; counts and resolved styles are exact. The Links tab is the ' +
+        'one surface whose height follows data rather than code: its tables render ' +
+        '`app/src/data/linkHistoryData.ts`, which the weekly sweep regenerates, so that workflow re-records ' +
+        'this one surface in the same commit (`scripts/record_links_surface.py` — on the runner, geometry ' +
+        'only, and it refuses anything else). Re-record with ' +
         '`npm run check:snapshot -- --record` when a change to the screen is intended, and read the diff: ' +
         'it is a list of what moved.',
       version: 1,

@@ -706,6 +706,12 @@ unfinished — a request in flight moves nothing, so silence alone once let `pap
 links on one run and 4 on the next. `npm run test:settle` drives that gate against pages whose count
 arrives late, with the old silence-only gate as the control it has to beat.
 
+One surface's geometry follows **data**, not code: the Links tab renders
+[`app/src/data/linkHistoryData.ts`](src/data/linkHistoryData.ts), which the weekly sweep regenerates, so
+that workflow re-records the tab in the same commit that lands the row —
+`scripts/record_links_surface.py`, on the runner, geometry only, refusing anything else (a count or a
+style moving, or another surface). Committing the row alone is what turned `main` red once (`a79e857`).
+
 ### One chunk became an entry, six vendors and twelve tabs
 
 The budget's first reading was a single 614 kB chunk, and turning the split into a gate is what made

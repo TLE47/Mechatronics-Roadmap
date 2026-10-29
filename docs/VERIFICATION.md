@@ -500,7 +500,12 @@ A surface is measured once it has stopped changing **what it counts**, not only 
 gate lives in [`scripts/surface_settle.mjs`](../scripts/surface_settle.mjs): it watches the pane's size,
 its nodes and the six counts the snapshot records, holds those counts still for a beat, and treats any
 `*-loading` panel as unfinished — a request in flight moves nothing at all, so silence alone once let
-`paper/tab-links` record 5 links on one run and 4 on the next. `npm run test:settle` drives that gate
+`paper/tab-links` record 5 links on one run and 4 on the next. One surface's geometry follows **data**
+rather than code: the Links tab renders `app/src/data/linkHistoryData.ts`, which the weekly sweep
+regenerates, so that workflow re-records it in the same commit that lands the row
+(`python3 scripts/record_links_surface.py` — on the runner, geometry only, and it refuses anything else).
+Before that, the row and the module shipped alone and turned `main` red on the Links tab (`a79e857`, +87
+px, counts and styles unchanged). `npm run test:settle` drives the settle gate
 against pages whose count arrives late, with a copy of the old silence-only gate as the failing control,
 and with a count that carries no loading marker; a page that never finishes must be measured anyway at
 the bound rather than hanging the sweep. Measured on the real page with a GitHub answer 1.2 s late, the

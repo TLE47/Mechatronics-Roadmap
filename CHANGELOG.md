@@ -16,6 +16,37 @@ flowchart LR
 
 ---
 
+## [2026-10-29] — Run 283: the data commit carries the surface it moves
+
+**The failure it closes.** The weekly sweep commits a history row and the module generated from it in
+one commit (`be434a0`'s lesson). That module also moves a *surface*: the Links tab renders its host and
+run tables, so the tab gets taller with no code change, and `docs/surface-snapshot.json` records those
+heights. `a79e857` shipped the row and the module alone and `main` went red on `tab-links` (+87 px,
+counts and styles unchanged), which took a hand re-record to clear (Run 282).
+
+**The automation.** `link-check.yml`'s record step now builds the workbench and re-records that one
+surface before it commits, through [`scripts/record_links_surface.py`](scripts/record_links_surface.py).
+It measures `tab-links` in all four palettes, and records only when every difference is **geometry on
+that surface**. A count moving, a resolved style moving, another surface moving, or a surface the sweep
+no longer produces fails the step with the rows instead — a weekly data commit must not paper over a
+code change. It re-runs the check after recording rather than trusting the record's exit code, and off
+the runner it refuses outright (`--allow-local` overrides): a macOS record writes the header wrap's
+47 px offset into a file the Linux runner reads.
+
+**Cost.** Measured locally: the recorder's sweep is 10 s on a warm build and 26 s when it must rebuild,
+and `npm run build` is 10 s (the runner's build job is 35 s from checkout). The weekly job pays that
+only on a run that wrote a row — the step exits before the build when the data did not move — so the
+pull-request critical path is untouched.
+
+**Guards.** [`tests/test_record_links_surface.py`](tests/test_record_links_surface.py) (15 tests) pins
+the decision — geometry on that surface only, each refusal, the three flow outcomes, the dry run and the
+off-runner refusal — against a fake sweep, so it never writes the real file.
+[`tests/test_link_history_data.py`](tests/test_link_history_data.py) (16) now also demands that the step
+re-records before staging and commits all three files together. The snapshot's own `_why` is written by
+the recorder again: a hand-added sentence in the file would have been dropped by the next record.
+
+---
+
 ## [2026-10-28] — Run 282: the surface sweep waits for the count, not for the silence
 
 **The failure.** The sweep's last wait before a measurement was silence: 250 ms with no resize and no
