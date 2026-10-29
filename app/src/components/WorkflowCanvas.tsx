@@ -6,7 +6,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Maximize2, Minimize2, Trash2 } from 'lucide-react';
 import {
   KIND_META,
   MAX_NODE_COORD,
@@ -62,6 +62,9 @@ const ANCHOR_Y = 26;
 const DRAG_STEP = 4;
 const NUDGE = 8;
 const NUDGE_FAST = 32;
+/** A 24-card column is ~4,100 px tall; the map view may shrink it to a sixth, not to a speck. */
+const FIT_MIN_SCALE = 0.1;
+const FIT_PAD = 16;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -108,6 +111,13 @@ export function WorkflowCanvas({
   onDisconnect,
 }: WorkflowCanvasProps) {
   const surfaceRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  /** View scale, not document data: a fit is a lens on the graph, never a coordinate written to it. */
+  const [scale, setScale] = useState(1);
+  const viewTarget = useRef<{ left: number; top: number } | null>(null);
+  const [viewSeq, setViewSeq] = useState(0);
+  const panStart = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
+  const [panning, setPanning] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
   const dragOffset = useRef({ dx: 0, dy: 0 });
   const dragged = useRef<{ x: number; y: number } | null>(null);
@@ -131,16 +141,121 @@ export function WorkflowCanvas({
     return { width, height };
   }, [doc.nodes]);
 
-  /** A screen point in canvas pixels, scroll offsets included. */
+  /** A screen point in canvas pixels, scroll offsets and the view scale included. */
   const toCanvas = (clientX: number, clientY: number) => {
     const surface = surfaceRef.current;
     if (!surface) return { x: 0, y: 0 };
     const rect = surface.getBoundingClientRect();
     return {
-      x: clientX - rect.left + surface.scrollLeft,
-      y: clientY - rect.top + surface.scrollTop,
+      x: (clientX - rect.left + surface.scrollLeft) / scale,
+      y: (clientY - rect.top + surface.scrollTop) / scale,
     };
   };
+
+  // A fit is applied after the scaled spacer has laid out, or the scroll would be clamped to the
+  // old size. One target, written by the press and consumed once.
+  useEffect(() => {
+    const target = viewTarget.current;
+    if (!target) return;
+    viewTarget.current = null;
+    const surface = surfaceRef.current;
+    if (!surface) return;
+    surface.scrollLeft = Math.max(0, target.left);
+    surface.scrollTop = Math.max(0, target.top);
+  }, [viewSeq, scale]);
+
+  /**
+   * Fit every card in the canvas, or return to 100%.
+   *
+   * One control rather than two: while the map is smaller than life it says 100%, and pressing it
+   * keeps the viewport's centre so the card being read does not jump away. The button is a lens, not
+   * a document edit — no position, zoom or lesson field is written.
+   */
+  const fitOrReset = () => {
+    const surface = surfaceRef.current;
+    if (!surface) return;
+    if (scale < 1) {
+      const centreX = (surface.scrollLeft + surface.clientWidth / 2) / scale;
+      const centreY = (surface.scrollTop + surface.clientHeight / 2) / scale;
+      setScale(1);
+      viewTarget.current = {
+        left: centreX - surface.clientWidth / 2,
+        top: centreY - surface.clientHeight / 2,
+      };
+      setViewSeq((seq) => seq + 1);
+      return;
+    }
+    const grid = gridRef.current;
+    if (!grid) return;
+    const cards = Array.from(grid.querySelectorAll<HTMLElement>('[data-node-id]'));
+    if (!cards.length) return;
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (const card of cards) {
+      minX = Math.min(minX, card.offsetLeft);
+      minY = Math.min(minY, card.offsetTop);
+      maxX = Math.max(maxX, card.offsetLeft + card.offsetWidth);
+      maxY = Math.max(maxY, card.offsetTop + card.offsetHeight);
+    }
+    const fit = Math.min(
+      (surface.clientWidth - FIT_PAD * 2) / Math.max(1, maxX - minX),
+      (surface.clientHeight - FIT_PAD * 2) / Math.max(1, maxY - minY)
+    );
+    const next = clamp(fit, FIT_MIN_SCALE, 1);
+    setScale(next);
+    viewTarget.current = {
+      left: ((minX + maxX) / 2) * next - surface.clientWidth / 2,
+      top: ((minY + maxY) / 2) * next - surface.clientHeight / 2,
+    };
+    setViewSeq((seq) => seq + 1);
+  };
+
+  /**
+   * Drag the empty paper to pan. Cards, fields and dots keep their own gestures; a finger keeps the
+   * native scroll, because hijacking touch here would take away the scrolling that already works.
+   */
+  const startPan = (event: ReactPointerEvent) => {
+    if (event.button !== 0 || event.pointerType === 'touch') return;
+    const target = event.target as HTMLElement;
+    if (target.closest('[data-node-id], button, input, textarea, select, a')) return;
+    const surface = surfaceRef.current;
+    if (!surface) return;
+    event.preventDefault();
+    onSelect(null);
+    panStart.current = {
+      x: event.clientX,
+      y: event.clientY,
+      left: surface.scrollLeft,
+      top: surface.scrollTop,
+    };
+    setPanning(true);
+  };
+
+  useEffect(() => {
+    if (!panning) return;
+    const surface = surfaceRef.current;
+    if (!surface) return;
+    const move = (event: PointerEvent) => {
+      const start = panStart.current;
+      if (!start) return;
+      surface.scrollLeft = Math.max(0, start.left - (event.clientX - start.x));
+      surface.scrollTop = Math.max(0, start.top - (event.clientY - start.y));
+    };
+    const finish = () => {
+      panStart.current = null;
+      setPanning(false);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', finish);
+    window.addEventListener('pointercancel', finish);
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', finish);
+      window.removeEventListener('pointercancel', finish);
+    };
+  }, [panning]);
 
   const startDrag = (event: ReactPointerEvent, node: WorkflowNode) => {
     if (event.button !== 0) return;
@@ -269,26 +384,40 @@ export function WorkflowCanvas({
   const linkSource = linking ? byId.get(linking) ?? null : null;
 
   return (
-    <div
-      ref={surfaceRef}
-      data-testid="workflow-canvas"
-      // The 70 vh cap is what makes this a canvas rather than a growing page: a 24-card flow on a
-      // phone scrolls inside the pane instead of turning the lesson into a four-thousand-pixel
-      // document.
-      className="relative mt-2 min-h-[280px] max-h-[70vh] flex-1 overflow-auto overscroll-contain rounded-lg border border-line-soft bg-canvas"
-      style={{
-        backgroundImage: 'radial-gradient(circle, var(--border) 1px, transparent 1px)',
-        backgroundSize: '16px 16px',
-      }}
-    >
+    <div className="relative mt-2 flex min-h-0 flex-1 flex-col">
       <div
-        data-testid="workflow-canvas-grid"
-        className="relative"
-        style={{ width: extents.width, height: extents.height }}
-        onPointerDown={(event) => {
-          if (event.target === event.currentTarget) onSelect(null);
+        ref={surfaceRef}
+        data-testid="workflow-canvas"
+        onPointerDown={startPan}
+        // The 70 vh cap is what makes this a canvas rather than a growing page: a 24-card flow on a
+        // phone scrolls inside the pane instead of turning the lesson into a four-thousand-pixel
+        // document.
+        className={`relative min-h-[280px] max-h-[70vh] flex-1 overflow-auto overscroll-contain rounded-lg border border-line-soft bg-canvas ${
+          panning ? 'cursor-grabbing select-none' : 'cursor-grab'
+        }`}
+        style={{
+          backgroundImage: 'radial-gradient(circle, var(--border) 1px, transparent 1px)',
+          backgroundSize: '16px 16px',
         }}
       >
+        {/* The spacer reserves the scaled grid's extent; the grid itself keeps canvas coordinates. */}
+        <div
+          style={{
+            width: Math.ceil(extents.width * scale),
+            height: Math.ceil(extents.height * scale),
+          }}
+        >
+          <div
+            ref={gridRef}
+            data-testid="workflow-canvas-grid"
+            className="relative"
+            style={{
+              width: extents.width,
+              height: extents.height,
+              transform: `scale(${scale})`,
+              transformOrigin: '0 0',
+            }}
+          >
         <svg
           className="pointer-events-none absolute inset-0"
           width={extents.width}
@@ -385,7 +514,7 @@ export function WorkflowCanvas({
               data-step={number}
               data-kind={node.kind}
               style={{ left: position.x, top: position.y, width: NODE_WIDTH }}
-              className={`absolute z-10 rounded-xl border bg-panel shadow-sm ${
+              className={`absolute z-10 cursor-default rounded-xl border bg-panel shadow-sm ${
                 selected ? 'border-accent ring-2 ring-accent/25' : issue ? 'border-amber/70' : 'border-line'
               } ${dragId === node.id ? 'z-20 shadow-lg' : ''}`}
               onPointerDown={(event) => {
@@ -407,7 +536,7 @@ export function WorkflowCanvas({
                 aria-label={`Card ${number}, ${KIND_META[node.kind].label}. Drag to move; arrow keys nudge it.`}
                 onPointerDown={(event) => startDrag(event, node)}
                 onKeyDown={(event) => nudge(event, node)}
-                className="flex touch-none items-center gap-1.5 rounded-t-xl border-b border-line-soft bg-canvas px-2 py-1.5 select-none focus-visible:outline-2 focus-visible:outline-accent"
+                className="flex cursor-grab touch-none items-center gap-1.5 rounded-t-xl border-b border-line-soft bg-canvas px-2 py-1.5 select-none focus-visible:outline-2 focus-visible:outline-accent"
               >
                 <Icon className="h-3 w-3 shrink-0 text-accent" aria-hidden="true" />
                 <span className="truncate font-mono text-[10px] uppercase tracking-[0.1em] text-accent">
@@ -511,7 +640,24 @@ export function WorkflowCanvas({
             </div>
           );
         })}
+          </div>
+        </div>
       </div>
+      <button
+        type="button"
+        data-testid="workflow-fit"
+        onClick={fitOrReset}
+        aria-label={scale < 1 ? 'Back to 100% zoom' : 'Fit the whole flow in the canvas'}
+        title={scale < 1 ? 'Back to 100%' : 'Fit the whole flow in the canvas'}
+        className="absolute right-2 top-2 z-30 flex min-h-9 items-center gap-1 rounded-md border border-line bg-panel/95 px-2 font-mono text-[10.5px] text-muted shadow-sm hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
+      >
+        {scale < 1 ? (
+          <Minimize2 className="h-3 w-3" aria-hidden="true" />
+        ) : (
+          <Maximize2 className="h-3 w-3" aria-hidden="true" />
+        )}
+        {scale < 1 ? '100%' : 'Fit'}
+      </button>
     </div>
   );
 }

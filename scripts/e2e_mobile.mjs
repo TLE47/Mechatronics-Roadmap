@@ -403,9 +403,48 @@ async function main() {
         /Step 1 needs a title/.test(await page.getByTestId('workflow-issues').innerText()),
         'the opened list must carry the blank card’s sentence'
       );
+      // Fit has to work where the canvas is narrow: six cards are taller than the phone pane, and
+      // one press must frame all of them without a sideways scroll.
+      for (let index = 0; index < 5; index += 1) await page.getByTestId('workflow-add-given').click();
+      await page.waitForTimeout(300);
+      const fitButton = page.getByTestId('workflow-fit');
+      await fitButton.scrollIntoViewIfNeeded();
+      const fitBox = await fitButton.boundingBox();
+      check(Boolean(fitBox) && fitBox.height >= 36, `the phone Fit control is only ${fitBox?.height}px tall`);
+      await fitButton.click();
+      await page.waitForTimeout(350);
+      const fitted = await page.evaluate(() => {
+        const canvas = document.querySelector('[data-testid="workflow-canvas"]');
+        const grid = document.querySelector('[data-testid="workflow-canvas-grid"]');
+        const box = canvas.getBoundingClientRect();
+        const cards = [...document.querySelectorAll('[data-node-id]')];
+        return {
+          scale: Number(grid.style.transform.match(/scale\(([\d.]+)\)/)?.[1]),
+          button: document.querySelector('[data-testid="workflow-fit"]').textContent.trim(),
+          inside: cards.every((card) => {
+            const rect = card.getBoundingClientRect();
+            return (
+              rect.left >= box.left - 1 &&
+              rect.right <= box.right + 1 &&
+              rect.top >= box.top - 1 &&
+              rect.bottom <= box.bottom + 1
+            );
+          }),
+        };
+      });
+      check(fitted.scale < 0.95, `Fit did not shrink the six-card flow: ${fitted.scale}`);
+      check(fitted.inside, 'Fit left a card outside the phone canvas');
+      check(fitted.button === '100%', `a fitted phone canvas still says ${fitted.button}`);
+      await assertNoSidewaysScroll(page, 'the fitted phone workflow canvas');
+      await fitButton.click();
+      await page.waitForTimeout(300);
+      check(
+        (await page.getByTestId('workflow-canvas-grid').evaluate((grid) => grid.style.transform)) === 'scale(1)',
+        'the phone 100% press must restore life size'
+      );
       await page.getByTestId('workflow-clear').click();
       await page.getByTestId('workflow-clear-yes').click();
-      ok('the phone checklist is a count, and the full list is one press away');
+      ok('the phone checklist is a count, the full list is one press away, and Fit frames the flow');
       await page.getByTestId('editor-tab-main').click();
       check(
         !(await page.getByTestId('lesson-reader').isVisible()),

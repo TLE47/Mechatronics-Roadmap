@@ -950,7 +950,10 @@ to the card it feeds (tap the dot, then the target, is the same gesture for a ph
 the same card, so it tabs and splits like the outputs and its arrangement is remembered; cards also
 nudge with the arrow keys, and the surface is capped at 70% of the viewport and scrolls inside that,
 so a 24-card flow neither widens the page nor turns a 390 px phone into a four-thousand-pixel
-document. Nothing about the run changes: the checklist names what a card is missing (`missing-unit`,
+document. The empty paper pans the view under the pointer (a finger keeps the native scroll), and the
+**Fit** control frames every card at once; it becomes **100%** while the map is shrunk, returning to
+life size around whatever was in the middle of the view. Zoom is a lens on the screen, never a field
+in the saved workflow. Nothing about the run changes: the checklist names what a card is missing (`missing-unit`,
 `no-answer`, `unconnected`, and five more) and never disables Run or a lesson. On a phone the list is
 folded to its count, one press from the sentences, so the canvas is what follows the palette rather
 than twenty-four wrapped lines of advice. A card's badge, the
@@ -1426,7 +1429,7 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/workflowStore.ts`](src/workflowStore.ts) | One workflow per lesson in the bulk bucket: the refused write, the backup entry, and the newer-wins merge a restore uses. |
 | [`src/workflowTemplates.ts`](src/workflowTemplates.ts) | Six seeded flows in both palettes, one blank, each laid out as a connected column with its arrows drawn, and the single lesson that opens on its own example. |
 | [`src/components/WorkflowPanel.tsx`](src/components/WorkflowPanel.tsx) | The Workflow tab's container: owns the document, its debounced save, the selected card and every mutation; validates once per document and composes the canvas, picker and guide. |
-| [`src/components/WorkflowCanvas.tsx`](src/components/WorkflowCanvas.tsx) | The node canvas: absolute cards on a dotted grid, header dragging with a keyboard nudge, inline fields, arrow handles, curved edges and their remove controls. |
+| [`src/components/WorkflowCanvas.tsx`](src/components/WorkflowCanvas.tsx) | The node canvas: absolute cards on a dotted grid, header dragging with a keyboard nudge, inline fields, arrow handles, curved edges and their remove controls, empty-paper panning and the Fit/100% view lens. |
 | [`src/components/TemplatePicker.tsx`](src/components/TemplatePicker.tsx) | The two palettes of seeded flows, as starting shapes to edit. |
 | [`src/components/HowToCard.tsx`](src/components/HowToCard.tsx) | The three-line guide to the tab; whether it is open is the container's policy. |
 | [`src/watchMode.ts`](src/watchMode.ts) | When the checks may re-run themselves — after a graded failure, on an edited buffer, never past the gate — and the remembered toggle. |

@@ -57,6 +57,16 @@ starts folded on a phone and the summary row carries a **Show N checks** press (
 `aria-controls`); a desktop keeps it open. `npm run test:e2e:mobile` starts a blank card at 390 and
 checks the folded count, the press and its one sentence.
 
+**The canvas is a map: Fit frames it, and empty paper pans it.** A 24-card flow is taller than the
+70 vh surface in every layout, and scrolling was the only way to move. A **Fit** control in the
+canvas's corner now frames every card — the view shrinks to the graph's own extent — and turns into
+**100%** while shrunk, returning to life size around the viewport's centre so the card being read
+does not jump. The scale is a lens on the screen, never a saved workflow field: the document still
+holds only node coordinates. Dragging empty paper pans the view with a mouse or pen; a finger keeps
+the native scroll, because hijacking touch here would take away the scrolling that already works.
+`npm run test:e2e` draws 24 cards, fits them all inside the canvas, returns to 100% and drags empty
+paper upward; `npm run test:e2e:mobile` gives six cards at 390 the same Fit/100% round trip.
+
 ---
 
 ## [2026-10-29] — The workflow becomes a canvas, the clock becomes a toggle

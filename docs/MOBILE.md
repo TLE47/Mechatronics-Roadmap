@@ -58,7 +58,9 @@ flowchart LR
 tabs of one card, and the Workflow canvas is born in one column: the same flow is legible in a 380 px
 split and at 390 px, the dotted paper is capped at 70% of the viewport and scrolls inside its own
 pane, and an arrow is drawn by tapping a card's dot and then the card it feeds — the drag gesture,
-for a finger that cannot hover. The checklist is a count one press from its sentences, so a card's
+for a finger that cannot hover. **Fit** frames a flow taller than the phone pane and turns into
+**100%** for the way back; a finger pans by scrolling the paper itself, so panning never fights the
+scroll a phone already does well. The checklist is a count one press from its sentences, so a card's
 warning cannot push the canvas down the page. Every control stays at the touch floor, and **Open workflow** in the
 study panel switches to the Code surface before scrolling the editor's tab strip into view, so the
 tab a learner asked for is never on a surface they cannot see. The editor's tab strip wraps whenever its tabs do not fit

@@ -1471,6 +1471,55 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           canvasBox.client <= canvasBox.viewport * 0.7 + 2,
           `the canvas must stay within 70% of the viewport, but it was ${canvasBox.client} of ${canvasBox.viewport}`
         );
+
+        // Fit is a lens on the graph, not a document edit: it frames every card in the canvas and
+        // 100% comes back to life size at the viewport's centre.
+        await page.getByTestId('workflow-fit').click();
+        await page.waitForTimeout(350);
+        const fitted = await page.evaluate(() => {
+          const canvas = document.querySelector('[data-testid="workflow-canvas"]');
+          const grid = document.querySelector('[data-testid="workflow-canvas-grid"]');
+          const box = canvas.getBoundingClientRect();
+          const cards = [...document.querySelectorAll('[data-node-id]')];
+          return {
+            scale: grid.style.transform,
+            button: document.querySelector('[data-testid="workflow-fit"]').textContent.trim(),
+            inside: cards.every((card) => {
+              const rect = card.getBoundingClientRect();
+              return (
+                rect.left >= box.left - 1 &&
+                rect.right <= box.right + 1 &&
+                rect.top >= box.top - 1 &&
+                rect.bottom <= box.bottom + 1
+              );
+            }),
+            cards: cards.length,
+          };
+        });
+        assert.match(fitted.scale, /^scale\(0\./, `Fit must shrink the graph, but it left ${fitted.scale}`);
+        assert.equal(fitted.inside, true, `Fit left a card outside the canvas (${fitted.cards} cards)`);
+        assert.equal(fitted.button, '100%', 'a fitted canvas must offer the way back to life size');
+        await page.getByTestId('workflow-fit').click();
+        await page.waitForTimeout(350);
+        assert.equal(
+          await page.getByTestId('workflow-canvas-grid').evaluate((grid) => grid.style.transform),
+          'scale(1)',
+          '100% must restore the canvas to life size'
+        );
+
+        // Drag empty paper to pan: 24 cards stand taller than the canvas, and the background is the
+        // handle that moves the view without moving a card.
+        await page.getByTestId('workflow-canvas').evaluate((canvas) => {
+          canvas.scrollTop = 0;
+        });
+        const panFrom = await page.getByTestId('workflow-canvas').boundingBox();
+        await page.mouse.move(panFrom.x + panFrom.width - 30, panFrom.y + 100);
+        await page.mouse.down();
+        await page.mouse.move(panFrom.x + panFrom.width - 30, panFrom.y - 60, { steps: 8 });
+        await page.mouse.up();
+        await page.waitForTimeout(300);
+        const panned = await page.getByTestId('workflow-canvas').evaluate((canvas) => canvas.scrollTop);
+        assert.ok(panned > 80, `dragging empty paper must pan the canvas, but it scrolled ${panned}px`);
         await page.getByTestId('workflow-clear').click();
         await page.getByTestId('workflow-clear-yes').click();
         await page.waitForTimeout(300);

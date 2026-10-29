@@ -461,9 +461,12 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
         </span>
         <span aria-hidden="true">·</span>
         <span>Drag the dot on a card’s right edge to another card to draw an arrow</span>
+        <span aria-hidden="true">·</span>
+        <span>Drag empty canvas to pan; Fit frames the flow</span>
       </div>
 
       <WorkflowCanvas
+        key={lessonId}
         doc={doc}
         numbers={numbers}
         issueByStep={issueByStep}
