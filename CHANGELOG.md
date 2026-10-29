@@ -39,6 +39,15 @@ gate read **5** links at 252 ms with the panel still loading; the new gate read 
 broken versions of the gate were run to prove the suite bites: resolving at the first sample fails the
 no-sentinel case, and a constant count vector fails both count cases.
 
+**The re-baseline the push uncovered.** The first push of this PR failed the snapshot on `tab-links` in
+all four palettes — 87 px taller, with counts and resolved styles identical. It was not the gate:
+`a79e857`, the weekly sweep's data commit, regenerated `app/src/data/linkHistoryData.ts`, and the Links
+tab draws its host and run tables from it, so the tab grew with no code change and no re-record. `main`
+at that commit was red for the same reason and had never run. The baseline now carries the runner's own
+numbers for that surface's four box fields (a local `--record` would have baked the macOS header wrap's
+47 px offset into a file the Linux runner reads), and the snapshot's `_why` names the trap: a link
+history refresh is a re-record too.
+
 ---
 
 ## [2026-10-28] — Run 281: the surface sweep measures the page, not GitHub's queue
