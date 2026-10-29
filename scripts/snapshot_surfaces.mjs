@@ -56,6 +56,29 @@ const TOLERANCE_PX = 2;
 
 /** Every palette a reader can be in, and the OS scheme each is reached through. */
 const PALETTES = ['dark', 'light', 'paper', 'contrast'];
+
+/**
+ * The one live request this sweep answers itself, and why.
+ *
+ * The Links tab renders the open `link-rise` issues it reads from the GitHub API
+ * (`app/src/components/RiseIssuesPanel.tsx`), one link per issue. That number belongs to the queue,
+ * not to the page: a weekly sweep files an issue, a later one closes it, and nothing in the app
+ * moved. It cost a red `main`: run 40820681859 measured 7 links against the recorded 6 with every
+ * box where the snapshot put it, because a dispatched sweep had filed #69 twenty minutes earlier;
+ * the `tab-links` surface is the only one that reads the network at all.
+ *
+ * The panel is still measured in full - the heading, the label link, the row, its link and its age -
+ * and the fixture is the issue the baseline was recorded with (#46, still open, same title and
+ * date), so the surface's shape does not move when the queue does.
+ */
+const RISE_ISSUE_FIXTURE = [
+  {
+    number: 46,
+    title: 'Link sweep rise: 5 newly unverified URLs',
+    html_url: 'https://github.com/TLE47/Mechatronics-Roadmap/issues/46',
+    created_at: '2026-10-26T11:37:35Z',
+  },
+];
 const SCHEME = { dark: 'dark', light: 'light', paper: 'light', contrast: 'dark' };
 
 const tabNames = JSON.parse(fs.readFileSync(path.join(ROOT, 'app/src/data/workbenchTabs.json'), 'utf8'));
@@ -264,6 +287,16 @@ async function main() {
       await seedTourSeen(context);
       const page = await context.newPage();
       page.on('pageerror', (error) => errors.push(`${palette}: ${error.message}`));
+      // Answer the one live request the app makes (see RISE_ISSUE_FIXTURE) before anything loads:
+      // a route installed after the first navigation would miss the panel's mount.
+      await page.route('https://api.github.com/**', (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          headers: { 'access-control-allow-origin': '*' },
+          body: JSON.stringify(RISE_ISSUE_FIXTURE),
+        })
+      );
       await page.goto(baseUrl, { waitUntil: 'load' });
       await page.waitForSelector('[data-testid="btn-theme-toggle"]');
       const painted = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));

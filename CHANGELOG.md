@@ -16,6 +16,34 @@ flowchart LR
 
 ---
 
+## [2026-10-28] — Run 281: the surface sweep measures the page, not GitHub's queue
+
+**The failure.** `main` went red right after #68 merged: `check:snapshot` read **7** links on
+`tab-links` against the recorded 6, with every box exactly where the baseline put it (run
+40820681859, and its `--failed` rerun failed the same way). It was not the merge and not a timing
+race. `RiseIssuesPanel` renders one link per open `link-rise` issue, fetched live from the GitHub
+API, and a dispatched sweep had filed #69 twenty minutes earlier: the recorded 6 was a queue of one,
+the run saw two. My first diagnosis named the late-reading-link race the script's own comment
+documents; a probe of the settled page disproved it — the count was stable at 7 and the extra link
+was #69 itself.
+
+**The fix.** `scripts/snapshot_surfaces.mjs` answers that single request with a fixed issue — the
+same #46 the baseline was recorded with — installed before the first navigation. The panel is still
+measured in full (heading, label link, row, its link, its age), and the count now means what every
+other count in the file means: how many links this surface renders. No re-record: the committed
+baseline already is the fixed state.
+
+**Verified.** On `origin/main`'s bytes with the live queue of two issues, the old sweep failed
+`counts.links — expected 6, got 7`; with the answer in place all four palettes measure 6 with no
+count drift (the remaining local box delta is a macOS header wrap that `tab-arch` does not show and
+CI never sees). The branch's CI audits job is the after-run.
+
+**Guard.** `tests/test_snapshot_stub.py` asserts the route exists and precedes the first navigation,
+that the fixture is exactly one issue with the fields the panel reads and no `pull_request`, and that
+the panel still asks `api.github.com`; removing the route fails it (1 of 4).
+
+---
+
 ## [2026-10-28] — Run 280: one verdict per push — the link sweep stops re-running ci.yml's gates
 
 **The request.** Implement the playbook's first candidate.
