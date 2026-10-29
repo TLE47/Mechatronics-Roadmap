@@ -65,6 +65,8 @@ const NUDGE_FAST = 32;
 /** A 24-card column is ~4,100 px tall; the map view may shrink it to a sixth, not to a speck. */
 const FIT_MIN_SCALE = 0.1;
 const FIT_PAD = 16;
+const PAN_STEP = 40;
+const PAN_STEP_FAST = 160;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -223,6 +225,8 @@ export function WorkflowCanvas({
     const surface = surfaceRef.current;
     if (!surface) return;
     event.preventDefault();
+    // A pan press arms the arrow keys too; the surface's own focus ring stays keyboard-only.
+    surface.focus({ preventScroll: true });
     onSelect(null);
     panStart.current = {
       x: event.clientX,
@@ -231,6 +235,25 @@ export function WorkflowCanvas({
       top: surface.scrollTop,
     };
     setPanning(true);
+  };
+
+  /**
+   * Arrow keys pan the focused paper, away from the cards' own nudge: the guard on `event.target`
+   * means a focused card header (or a field) never reaches this, so the same key still moves the
+   * card it belongs to.
+   */
+  const panWithKeys = (event: ReactKeyboardEvent) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    const step = event.shiftKey ? PAN_STEP_FAST : PAN_STEP;
+    const dx = event.key === 'ArrowLeft' ? -step : event.key === 'ArrowRight' ? step : 0;
+    const dy = event.key === 'ArrowUp' ? -step : event.key === 'ArrowDown' ? step : 0;
+    if (!dx && !dy) return;
+    const surface = surfaceRef.current;
+    if (!surface) return;
+    event.preventDefault();
+    surface.scrollLeft = Math.max(0, surface.scrollLeft + dx);
+    surface.scrollTop = Math.max(0, surface.scrollTop + dy);
   };
 
   useEffect(() => {
@@ -389,10 +412,15 @@ export function WorkflowCanvas({
         ref={surfaceRef}
         data-testid="workflow-canvas"
         onPointerDown={startPan}
+        onKeyDown={panWithKeys}
+        tabIndex={0}
+        role="group"
+        aria-label="Workflow canvas. Arrow keys pan it; drag a card by its header to move the card."
+        aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
         // The 70 vh cap is what makes this a canvas rather than a growing page: a 24-card flow on a
         // phone scrolls inside the pane instead of turning the lesson into a four-thousand-pixel
         // document.
-        className={`relative min-h-[280px] max-h-[70vh] flex-1 overflow-auto overscroll-contain rounded-lg border border-line-soft bg-canvas ${
+        className={`relative min-h-[280px] max-h-[70vh] flex-1 overflow-auto overscroll-contain rounded-lg border border-line-soft bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
           panning ? 'cursor-grabbing select-none' : 'cursor-grab'
         }`}
         style={{

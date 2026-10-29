@@ -950,8 +950,9 @@ to the card it feeds (tap the dot, then the target, is the same gesture for a ph
 the same card, so it tabs and splits like the outputs and its arrangement is remembered; cards also
 nudge with the arrow keys, and the surface is capped at 70% of the viewport and scrolls inside that,
 so a 24-card flow neither widens the page nor turns a 390 px phone into a four-thousand-pixel
-document. The empty paper pans the view under the pointer (a finger keeps the native scroll), and the
-**Fit** control frames every card at once; it becomes **100%** while the map is shrunk, returning to
+document. The empty paper pans the view under the pointer, or with the arrow keys once it has focus
+(Shift for a longer step; a finger keeps the native scroll), and the **Fit** control frames every
+card at once; it becomes **100%** while the map is shrunk, returning to
 life size around whatever was in the middle of the view. Zoom is a lens on the screen, never a field
 in the saved workflow. Nothing about the run changes: the checklist names what a card is missing (`missing-unit`,
 `no-answer`, `unconnected`, and five more) and never disables Run or a lesson. On a phone the list is

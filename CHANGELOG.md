@@ -64,8 +64,11 @@ canvas's corner now frames every card — the view shrinks to the graph's own ex
 does not jump. The scale is a lens on the screen, never a saved workflow field: the document still
 holds only node coordinates. Dragging empty paper pans the view with a mouse or pen; a finger keeps
 the native scroll, because hijacking touch here would take away the scrolling that already works.
-`npm run test:e2e` draws 24 cards, fits them all inside the canvas, returns to 100% and drags empty
-paper upward; `npm run test:e2e:mobile` gives six cards at 390 the same Fit/100% round trip.
+The paper is a tab stop too: arrow keys pan it 40 px (Shift 160), while a focused card header keeps
+its own 8 px nudge, so one arrow key never does both. `npm run test:e2e` draws 24 cards, fits them
+all inside the canvas, returns to 100%, drags empty paper upward, then proves ArrowDown pans the
+focused paper without moving a card and nudges a focused card without scrolling the paper;
+`npm run test:e2e:mobile` gives six cards at 390 the same Fit/100% round trip.
 
 ---
 

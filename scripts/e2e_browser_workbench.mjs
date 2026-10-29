@@ -1520,6 +1520,44 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.waitForTimeout(300);
         const panned = await page.getByTestId('workflow-canvas').evaluate((canvas) => canvas.scrollTop);
         assert.ok(panned > 80, `dragging empty paper must pan the canvas, but it scrolled ${panned}px`);
+
+        // Keyboard pan: the focused paper takes the arrows, and the card under focus keeps its own
+        // nudge — the same key must never do both.
+        await page.getByTestId('workflow-canvas').evaluate((canvas) => {
+          canvas.scrollTop = 0;
+        });
+        await page.getByTestId('workflow-canvas').focus();
+        const cardTopBeforePan = await page.getByTestId('workflow-node-0').evaluate((card) => parseFloat(card.style.top));
+        await page.keyboard.press('ArrowDown');
+        await page.waitForTimeout(200);
+        assert.equal(
+          await page.getByTestId('workflow-canvas').evaluate((canvas) => canvas.scrollTop),
+          40,
+          'one ArrowDown on the focused paper must pan 40 px'
+        );
+        assert.equal(
+          await page.getByTestId('workflow-node-0').evaluate((card) => parseFloat(card.style.top)),
+          cardTopBeforePan,
+          'panning the paper must not move a card'
+        );
+        await page.getByTestId('workflow-canvas').evaluate((canvas) => {
+          canvas.scrollTop = 0;
+        });
+        await page.getByTestId('workflow-node-drag-0').focus();
+        const scrollBeforeNudge = await page.getByTestId('workflow-canvas').evaluate((canvas) => canvas.scrollTop);
+        const topBeforeNudge = await page.getByTestId('workflow-node-0').evaluate((card) => parseFloat(card.style.top));
+        await page.keyboard.press('ArrowDown');
+        await page.waitForTimeout(250);
+        assert.equal(
+          await page.getByTestId('workflow-node-0').evaluate((card) => parseFloat(card.style.top)),
+          topBeforeNudge + 8,
+          'ArrowDown on a card header must nudge the card 8 px, not pan the paper'
+        );
+        assert.equal(
+          await page.getByTestId('workflow-canvas').evaluate((canvas) => canvas.scrollTop),
+          scrollBeforeNudge,
+          'a card nudge must not also pan the canvas'
+        );
         await page.getByTestId('workflow-clear').click();
         await page.getByTestId('workflow-clear-yes').click();
         await page.waitForTimeout(300);
