@@ -92,13 +92,18 @@ rather than an editor the deferral has not mounted (14.2 s and 7.8 s on the thro
 under their ceilings and recorded in [`docs/PERF.md`](docs/PERF.md)). The map is
 [`docs/MOBILE.md`](docs/MOBILE.md).
 
-**CI caught one thing the phone had nothing to do with.** The runtime lane went red on the formatter,
+**CI caught two things the phone had nothing to do with.** The runtime lane went red on the formatter,
 not on a phone check: Black 26 on Pyodide 0.26 raises `ImportError` at `import black` because the
 `platformdirs` it pulled in does `from os import geteuid` — a browser has no user id, so a clean install
 installs fine and then cannot be imported, and Format reports the formatter as unavailable. The worker
 now supplies `geteuid`/`getuid` before the first import ([`app/src/runtime/pythonWorker.js`](app/src/runtime/pythonWorker.js)),
 and the lane's five format checks pass again. The cause was reproduced on a standalone Pyodide page
-before the fix, so the change is pinned to the error rather than to a guess.
+before the fix, so the change is pinned to the error rather than to a guess. The trail lane failed at
+**00:00 UTC**, and it was the hour, not a flake: a sitting is filed on the day it started, so a stretch
+that crossed midnight gave the new day four run rows and no sitting of its own — its heading counted
+only the sitting and printed nothing above the runs. A day with no sitting now counts the runs it shows
+([`app/src/components/TrailCard.tsx`](app/src/components/TrailCard.tsx)), and a day that holds only an
+open says so instead of leaving the line blank.
 
 ---
 

@@ -60,8 +60,15 @@ function daySummary(day: Trail['days'][number]): string {
   const parts: string[] = [];
   if (day.measuredMs > 0) parts.push(formatDuration(day.measuredMs));
   if (day.sittings > 1) parts.push(plural(day.sittings, 'sitting'));
-  if (day.runs > 0) parts.push(plural(day.runs, 'run'));
+  // A sitting is filed on the day it started (`timeline.ts`), so a stretch that crossed midnight
+  // leaves the new day with its rows and none of its own sittings — the runs it ran are on screen
+  // under this heading, and counting only the sitting printed an empty line above them. A day with
+  // a sitting keeps the sitting's count, which is the one that also carries reviews.
+  const runs = day.sittings > 0 ? day.runs : day.entries.filter((entry) => entry.kind === 'run').length;
+  if (runs > 0) parts.push(plural(runs, 'run'));
   if (day.reviews > 0) parts.push(plural(day.reviews, 'review'));
+  // A day can still hold only context (an open that led nowhere); it is a row, so it gets a summary.
+  if (parts.length === 0) parts.push(plural(day.entries.length, 'entry', 'entries'));
   return parts.join(' · ');
 }
 
