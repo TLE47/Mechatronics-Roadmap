@@ -92,6 +92,40 @@ async function box(page, testId) {
   return found;
 }
 
+/**
+ * Wait, bounded, for two toolbar buttons to share a row, and answer the offset it settled at.
+ *
+ * A wrap is a layout, not a timing: it never resolves, so a row that is really two rows still
+ * fails. What this stops is reading the toolbar mid-swap — `main` failed this check at 1024 px with
+ * Predict 58 px above Run on the same tree that had passed on the pull request twice, then passed
+ * on a re-run (2026-10-29).
+ */
+async function rowOffset(page, firstId, secondId, timeout = 8000) {
+  const measure = () =>
+    page.evaluate(
+      ([a, b]) => {
+        const one = document.querySelector(`[data-testid="${a}"]`)?.getBoundingClientRect();
+        const two = document.querySelector(`[data-testid="${b}"]`)?.getBoundingClientRect();
+        return one && two ? Math.round(two.y - one.y) : null;
+      },
+      [firstId, secondId]
+    );
+  try {
+    await page.waitForFunction(
+      ([a, b]) => {
+        const one = document.querySelector(`[data-testid="${a}"]`)?.getBoundingClientRect();
+        const two = document.querySelector(`[data-testid="${b}"]`)?.getBoundingClientRect();
+        return Boolean(one && two) && Math.abs(one.y - two.y) <= 2;
+      },
+      [firstId, secondId],
+      { timeout, polling: 100 }
+    );
+    return 0;
+  } catch {
+    return measure();
+  }
+}
+
 async function waitForEditor(page) {
   await page.waitForFunction(
     () => Boolean(window.__mechalabEditors && window.__mechalabEditors['editor-main']),
@@ -449,14 +483,13 @@ async function main() {
         `the phone picker must be gone at ${size.width}px`
       );
       await assertNoSidewaysScroll(page, `the workbench at ${size.width}`);
-      const run = await page.getByTestId('btn-run-verify').boundingBox();
-      const predict = await page.getByTestId('btn-predict').boundingBox();
-      check(Boolean(run) && Boolean(predict), `the toolbar is missing at ${size.width}px`);
       // 2 px is subpixel rounding between a primary and a secondary button, not a second row: a
-      // wrap moves Predict down by its own 34 px height plus the row gap.
+      // wrap moves Predict down by its own 34 px height plus the row gap, and never resolves.
+      const offset = await rowOffset(page, 'btn-run-verify', 'btn-predict');
+      check(offset !== null, `the toolbar is missing at ${size.width}px`);
       check(
-        Math.abs(run.y - predict.y) <= 2,
-        `at ${size.width}px Predict is ${Math.round(predict.y - run.y)}px off Run's row`
+        offset !== null && Math.abs(offset) <= 2,
+        `at ${size.width}px Predict is ${offset}px off Run's row`
       );
       ok(`${size.width}px: the rail is back and Predict shares Run's row`);
       await context.close();
