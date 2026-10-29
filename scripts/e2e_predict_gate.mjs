@@ -44,6 +44,19 @@ const P1_EXPECTED = ['Mode: ACTIVE | E-Stop: False', 'Encoder Ticks: 425 | Batte
 // wrong code, is the case the copy has to handle honestly.
 const P1_STARTER_GUESS = ['Mode: STANDBY | E-Stop: False', 'Encoder Ticks: 400 | Battery: 12.60 V'];
 
+/**
+ * The words a `TODO n:` raise asks with, read from the fixture itself.
+ *
+ * The card quotes the hole's own sentence, and that sentence is lesson content a rewrite may change
+ * (Run 275 replaced every marker): the assertion has to follow the fixture rather than pin one
+ * revision's wording, or a better prompt fails the suite that describes it.
+ */
+function todoPrompt(code, number) {
+  const match = code.match(new RegExp(`raise NotImplementedError\\\("TODO ${number}: ([^"]*)"\\\)`));
+  assert.ok(match, `the fixture must still raise TODO ${number} with a message`);
+  return match[1];
+}
+
 const state = (page) =>
   page.evaluate(
     () => document.querySelector('[data-testid="predict-gate"]')?.getAttribute('data-predict-state') ?? null
@@ -287,15 +300,15 @@ export async function runPredictGateSuite({ baseUrl: externalBaseUrl } = {}) {
       guideAfter.indexOf('1 · THE STARTER'),
       guideAfter.indexOf('Show me the editor')
     );
-    assert.match(stepOne, /while pos_m < target/, 'the card must point at the hole that is still open');
-    assert.doesNotMatch(
-      stepOne,
-      /multiply the speed by the time step/,
-      'and never at the hole just filled'
+    const holeOne = todoPrompt(starter, 1);
+    const holeTwo = todoPrompt(starter, 2);
+    assert.ok(
+      stepOne.includes(holeTwo),
+      `the card must point at the hole that is still open (expected "${holeTwo}")`
     );
-    assert.match(
-      guideAfter,
-      /which stops at a while pos_m < target/,
+    assert.ok(!stepOne.includes(holeOne), 'and never at the hole just filled');
+    assert.ok(
+      guideAfter.includes(`which stops at ${holeTwo}`),
       'the first-check line must name the same hole the pointer does'
     );
     console.log('  ok filling hole 1 moves the red line to hole 2, which still reads as a marker');
