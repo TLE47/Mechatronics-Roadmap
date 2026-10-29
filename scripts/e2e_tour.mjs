@@ -72,6 +72,68 @@ async function settled(page, predicate, timeout = 5000) {
 }
 
 /**
+ * Wait, bounded, for the ring to sit on its anchor, and answer the geometry it settled at.
+ *
+ * The two-pass version — wait for "it looks settled", then measure — re-read the anchor after an
+ * extra round trip, so a font swap or a pane resize in that gap reported a miss on a ring that had
+ * landed: `main` went red on this check on the same tree the pull request had passed twice
+ * (2026-10-29). The poll now returns the numbers it judged, and the timeout path measures once to
+ * say by how much it missed. A ring that never lands still fails.
+ */
+async function ringGeometry(page, timeout = 15000) {
+  const measure = () =>
+    page.evaluate(() => {
+      const ring = document.querySelector('[data-testid="first-run-tour-ring"]');
+      const anchor = document.querySelector('[data-tour="lesson-brief"]');
+      if (!ring || !anchor) return null;
+      const r = ring.getBoundingClientRect();
+      const a = anchor.getBoundingClientRect();
+      const style = getComputedStyle(ring);
+      // What is under the middle of the brief: with the ring over it, this must still be the brief.
+      const under = document.elementFromPoint(a.left + a.width / 2, a.top + a.height / 2);
+      return {
+        dx: Math.abs(r.left - a.left),
+        dy: Math.abs(r.top - a.top),
+        dw: Math.abs(r.width - a.width),
+        pointer: style.pointerEvents,
+        underIsAnchor: Boolean(under?.closest('[data-tour="lesson-brief"]')),
+      };
+    });
+  try {
+    const handle = await page.waitForFunction(
+      () => {
+        const ring = document.querySelector('[data-testid="first-run-tour-ring"]');
+        const anchor = document.querySelector('[data-tour="lesson-brief"]');
+        if (!ring || !anchor) return null;
+        const r = ring.getBoundingClientRect();
+        const a = anchor.getBoundingClientRect();
+        if (
+          Math.abs(r.left - a.left) >= 12 ||
+          Math.abs(r.top - a.top) >= 13 ||
+          Math.abs(r.width - a.width) >= 16
+        ) {
+          return null;
+        }
+        const style = getComputedStyle(ring);
+        const under = document.elementFromPoint(a.left + a.width / 2, a.top + a.height / 2);
+        return {
+          dx: Math.abs(r.left - a.left),
+          dy: Math.abs(r.top - a.top),
+          dw: Math.abs(r.width - a.width),
+          pointer: style.pointerEvents,
+          underIsAnchor: Boolean(under?.closest('[data-tour="lesson-brief"]')),
+        };
+      },
+      null,
+      { timeout, polling: 100 }
+    );
+    return { landed: true, geometry: await handle.jsonValue() };
+  } catch {
+    return { landed: false, geometry: await measure() };
+  }
+}
+
+/**
  * Wait, bounded, for the coach mark to stand at `at` — or, with `null`, to be gone.
  *
  * Every assertion that follows the next used to be `click, waitForTimeout(300), assert`, which is a
@@ -164,36 +226,15 @@ async function main() {
 
     /* 2 — the brief, with the ring on it */
     await check('Next walks to the brief and the ring covers it', async () => {
+      // The click lands on a page whose faces may still be swapping; the ring's anchor moves with
+      // them. Wait for the layout before asking where it is.
+      await page.evaluate(() => document.fonts.ready);
       await page.locator('[data-testid="btn-tour-next"]').click();
       assert.equal(await step(page), 'lesson');
-      const landed = await settled(page, () => {
-        const ring = document.querySelector('[data-testid="first-run-tour-ring"]');
-        const anchor = document.querySelector('[data-tour="lesson-brief"]');
-        if (!ring || !anchor) return false;
-        const r = ring.getBoundingClientRect();
-        const a = anchor.getBoundingClientRect();
-        return Math.abs(r.left - a.left) < 12 && Math.abs(r.top - a.top) < 13;
-      });
-      const geometry = await page.evaluate(() => {
-        const ring = document.querySelector('[data-testid="first-run-tour-ring"]');
-        const anchor = document.querySelector('[data-tour="lesson-brief"]');
-        if (!ring || !anchor) return null;
-        const r = ring.getBoundingClientRect();
-        const a = anchor.getBoundingClientRect();
-        const style = getComputedStyle(ring);
-        // What is under the middle of the brief: with the ring over it, this must still be the brief.
-        const under = document.elementFromPoint(a.left + a.width / 2, a.top + a.height / 2);
-        return {
-          dx: Math.abs(r.left - a.left),
-          dy: Math.abs(r.top - a.top),
-          dw: Math.abs(r.width - a.width),
-          pointer: style.pointerEvents,
-          underIsAnchor: Boolean(under?.closest('[data-tour="lesson-brief"]')),
-        };
-      });
+      const { landed, geometry } = await ringGeometry(page);
       assert.ok(geometry, 'no ring on a words step with an anchor');
       assert.ok(landed, `the ring never settled on the brief (offset ${geometry.dx}/${geometry.dy})`);
-      assert.ok(geometry.dx < 12 && geometry.dy < 12 + 1, `ring offset ${geometry.dx}/${geometry.dy}`);
+      assert.ok(geometry.dx < 12 && geometry.dy < 13, `ring offset ${geometry.dx}/${geometry.dy}`);
       assert.ok(geometry.dw < 16, `ring width off by ${geometry.dw}`);
       assert.equal(geometry.pointer, 'none', 'the ring must not eat clicks');
       assert.equal(geometry.underIsAnchor, true, 'the highlighted card is not clickable through the ring');
