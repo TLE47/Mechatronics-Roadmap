@@ -16,6 +16,24 @@ flowchart LR
 
 ---
 
+## [2026-10-29] — The account chip is the avatar on touch
+
+**The report.** On a phone the header printed the whole email beside the avatar disc — 78 px of a 390 px
+header, taken from the action tray that has to stay swipeable.
+
+**The rule.** `components/Header.tsx` hides the name and the chevron below `sm` and keeps `aria-label`
+(`Account: <email>`, or `Sign in to your account`), so the disc is the control and the name is still
+announced. `app/src/index.css` hides both on `(pointer: coarse)` too, because a phone held sideways is
+844 px wide — wider than `sm` — and a width rule would hand the email back exactly where the disc
+matters. That rule is unlayered on purpose, for the reason the touch floors document: it has to outrank
+the `sm:` utilities.
+
+**The gate.** `scripts/e2e_mobile.mjs` measures the chip as a disc at 390 x 844 (empty `innerText`, a name
+in `aria-label`, width = height), repeats it at 844 x 390 with touch, and asserts the name comes back at
+768 and 1024 with a mouse, so the rule cannot hide it on a desktop.
+
+---
+
 ## [2026-10-28] — Run 282: the surface sweep waits for the count, not for the silence
 
 **The failure.** The sweep's last wait before a measurement was silence: 250 ms with no resize and no

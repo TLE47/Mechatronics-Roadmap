@@ -24,7 +24,10 @@ flowchart LR
    them. The header measures itself into `--header-h` (`components/Header.tsx`), because the picker is
    a second sticky row and a guessed offset puts it under the header the moment the action tray wraps.
    Two rows are the phone header's budget — brand, then the swipeable action strip — and 112 px is the
-   gate's ceiling.
+   gate's ceiling. The account chip is the **avatar disc alone** on a touch screen: the email is 78 px
+   of a 390 px header and the tray beside it needs that width, so the name moves to `aria-label` and
+   comes back with a mouse. The rule is `pointer: coarse`, not a width — a phone held sideways is
+   844 px wide and is still a phone, which a `sm`-only rule would have missed (`app/src/index.css`).
 2. **The lesson list has a door at every width.** The 224 px chooser rail needs `lg` and the phone's
    Lessons strip needs `md` to be absent, so between them the brief carries a Lessons button that
    opens the same sheet (`data-testid="btn-lessons-tablet"`). Without it a tablet could change tabs

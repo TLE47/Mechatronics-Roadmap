@@ -448,11 +448,15 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Who you are here, and the only control in the header that says something about you: a
               filled chip with the avatar disc, the email (or the words a newcomer needs), and the
-              chevron that says a panel opens. The visible text is the accessible name — an aria-label
-              that reworded it would fail WCAG 2.5.3, which this header has been caught by before. */}
+              chevron that says a panel opens. A touch screen gets the disc alone — the email is 78 px
+              of a 390 px header, and a phone in landscape is 844 px wide, so the rule is the pointer
+              rather than the width (`index.css`). The name then lives in `aria-label`, which still
+              contains the words drawn at every width: WCAG 2.5.3 wants the accessible name to start
+              with the visible label, and this header has been caught by a reworded name before. */}
           <button
             onClick={onOpenAccount}
             data-testid="btn-account"
+            aria-label={accountEmail ? `Account: ${accountEmail}` : 'Sign in to your account'}
             // The same bubble as the trays rather than a native `title`, which is slow, unstyled
             // and would open a second tooltip beside this one.
             data-tip={
@@ -460,7 +464,7 @@ export const Header: React.FC<HeaderProps> = ({
                 ? `Signed in as ${accountEmail} — progress syncs to your account`
                 : 'Sign in to keep your progress across browsers, or keep it in this one'
             }
-            className="flex max-w-[16rem] shrink-0 cursor-pointer items-center gap-2 rounded-full py-1 pl-1 pr-2.5 text-[12.5px] font-semibold transition-colors hover:brightness-110"
+            className="flex max-w-[16rem] shrink-0 cursor-pointer items-center gap-2 rounded-full p-1.5 text-[12.5px] font-semibold transition-colors hover:brightness-110 sm:py-1 sm:pl-1 sm:pr-2.5"
             style={{
               border: '1px solid color-mix(in srgb, var(--accent) 40%, var(--border))',
               background: 'color-mix(in srgb, var(--accent-soft) 80%, var(--panel-2))',
@@ -478,8 +482,11 @@ export const Header: React.FC<HeaderProps> = ({
                 <User className="h-3.5 w-3.5" />
               )}
             </span>
-            <span className="truncate">{accountEmail ?? 'Sign in'}</span>
-            <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden="true" />
+            <span className="account-name hidden truncate sm:inline">{accountEmail ?? 'Sign in'}</span>
+            <ChevronRight
+              className="account-chevron hidden h-3.5 w-3.5 shrink-0 opacity-70 sm:block"
+              aria-hidden="true"
+            />
           </button>
         </div>
       </div>

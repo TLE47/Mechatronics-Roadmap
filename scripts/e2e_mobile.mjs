@@ -212,6 +212,24 @@ async function main() {
       await assertNoSidewaysScroll(page, 'workbench at 390');
       ok('one navigation row, a measured header and no sideways scroll');
 
+      console.log('\nthe account chip');
+      const chip = page.getByTestId('btn-account');
+      const chipText = (await chip.innerText()).trim();
+      check(
+        chipText === '',
+        `the phone's account chip prints "${chipText}"; the avatar is the whole control, and the email is 78 px of a 390 px header`
+      );
+      check(
+        Boolean(await chip.getAttribute('aria-label')),
+        'an avatar-only chip still needs a name for a screen reader'
+      );
+      const chipBox = await box(page, 'btn-account');
+      check(
+        Math.abs(chipBox.width - chipBox.height) <= 2,
+        `the chip is ${Math.round(chipBox.width)} x ${Math.round(chipBox.height)}; the avatar alone is a disc`
+      );
+      ok('the chip is the avatar alone, round, and still named');
+
       console.log('\nthe tab picker');
       await openTabPicker(page);
       const rows = page.locator('[data-testid^="tab-picker-item-"]');
@@ -416,6 +434,34 @@ async function main() {
       await context.close();
     }
 
+    // ---- 7b. A phone held sideways is 844 px wide and still a phone ----
+    {
+      const landscape = { width: 844, height: 390 };
+      const context = await browser.newContext({
+        viewport: landscape,
+        screen: landscape,
+        isMobile: true,
+        hasTouch: true,
+        deviceScaleFactor: 3,
+      });
+      await seedTourSeen(context);
+      const page = await context.newPage();
+      await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+      await page.getByTestId('btn-account').waitFor({ state: 'visible', timeout: 30000 });
+      check(
+        await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches),
+        'the landscape phone must report a coarse pointer, or the chip rule below `sm` never applies'
+      );
+      const text = (await page.getByTestId('btn-account').innerText()).trim();
+      check(
+        text === '',
+        `a landscape phone is 844 px wide and the chip printed "${text}"; the rule is the pointer, not the width`
+      );
+      await assertNoSidewaysScroll(page, 'landscape at 844x390');
+      ok('844 x 390 with touch: the chip is still the disc alone');
+      await context.close();
+    }
+
     // ---- 8. The handover at 768 and 1024: rail back, picker gone, Predict beside Run ----
     for (const size of [TERMINAL, WIDE]) {
       const context = await browser.newContext({ viewport: size });
@@ -441,7 +487,14 @@ async function main() {
         Math.abs(run.y - predict.y) <= 2,
         `at ${size.width}px Predict is ${Math.round(predict.y - run.y)}px off Run's row`
       );
-      ok(`${size.width}px: the rail is back and Predict shares Run's row`);
+      // A mouse is not a thumb: the name has to come back, or the coarse-pointer rule is hiding the
+      // chip's label on every desktop in the building.
+      const name = (await page.getByTestId('btn-account').innerText()).trim();
+      check(
+        name.length > 0,
+        `at ${size.width}px with a mouse the chip printed nothing; its name must be visible again`
+      );
+      ok(`${size.width}px: the rail is back, Predict shares Run's row, and the chip names itself`);
       await context.close();
     }
 
