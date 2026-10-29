@@ -35,9 +35,10 @@ import {
  * a datasheet came back to digits that had not moved. The pause is explicit now, and the minute
  * heartbeat still means a reload keeps the stretch instead of losing the half hour before it.
  *
- * Beside it, **Time on this lesson** expands what the sittings say this lesson has cost — the total,
- * how many sittings, and today — because the one-line Today reading could not answer "how long have I
- * spent on *this* one".
+ * Beside it, **Time logged with this lesson** expands what the sittings say — the total, how many
+ * sittings, and today. It is labelled by what the store can actually answer: a sitting is a run of
+ * activity, and one that touched two lessons counts whole for both, so the panel says "in sittings
+ * with this lesson" and names that rule instead of claiming a per-lesson stopwatch it never kept.
  */
 const HEARTBEAT_MS = 60_000;
 
@@ -210,7 +211,7 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
         onClick={() => setLogOpen((open) => !open)}
         className={`${LINK_BUTTON} ${compact ? 'w-full' : ''}`}
       >
-        Time on this lesson
+        Time logged with this lesson
         <ChevronDown
           className={`h-3 w-3 transition-transform ${logOpen ? 'rotate-180' : ''}`}
           aria-hidden="true"
@@ -223,7 +224,7 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
           className="w-full rounded-lg border border-line bg-canvas px-2.5 py-2 font-mono text-[11.5px] text-muted"
         >
           <p data-testid="study-timer-lesson-total">
-            This lesson{' '}
+            In sittings with this lesson{' '}
             <span className="font-semibold text-body">
               {lesson.count > 0 ? formatDuration(lesson.totalMs) : 'nothing logged yet'}
             </span>
@@ -231,6 +232,9 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
               ` · ${lesson.count} sitting${lesson.count === 1 ? '' : 's'}${
                 lesson.todayMs > 0 ? ` · today ${formatDuration(lesson.todayMs)}` : ''
               }`}
+          </p>
+          <p data-testid="study-timer-scope" className="mt-0.5">
+            A sitting is one stretch of activity, so it counts whole for every lesson it touched.
           </p>
           <p className="mt-0.5">Today, all lessons: {todayMs > 0 ? today : 'nothing logged yet'}</p>
         </div>

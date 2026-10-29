@@ -1049,6 +1049,18 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'true',
       'the button must follow the shortcut'
     );
+    // The Write comment is the exercise's task, in plain text, under a visible "Question:" — not
+    // the lesson's Markdown goal and not a label only a screen reader hears.
+    const writeQuestion = ((await page.getByTestId('write-question').innerText()) ?? '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    assert.match(writeQuestion, /^# Question: Complete /, 'Write must ask the starter\u2019s task');
+    assert.match(
+      writeQuestion,
+      /7 marked functions in the starter/,
+      'and count the holes when the lesson (EX.05-control.T2.05a) marks more functions than a sentence can name'
+    );
+    assert.doesNotMatch(writeQuestion, /[`*]/, 'the question is plain text, not raw Markdown');
     await page.keyboard.press('Alt+3');
     assert.equal(await visible('editor-panel'), false, '⌥3 hides the editor');
     assert.equal(await visible('editor-tab-actual'), false, '⌥3 hides the results with the editor');
@@ -1444,6 +1456,21 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           /at most 24 cards/,
           'a refusal must say why, in the header the learner is looking at'
         );
+        // A canvas is a bounded surface: 24 cards scroll inside the pane instead of turning the
+        // lesson into a page four thousand pixels tall.
+        const canvasBox = await page.getByTestId('workflow-canvas').evaluate((canvas) => ({
+          client: canvas.clientHeight,
+          scroll: canvas.scrollHeight,
+          viewport: window.innerHeight,
+        }));
+        assert.ok(
+          canvasBox.scroll > canvasBox.client,
+          `24 cards must scroll inside the canvas, not grow it (${canvasBox.client} vs ${canvasBox.scroll})`
+        );
+        assert.ok(
+          canvasBox.client <= canvasBox.viewport * 0.7 + 2,
+          `the canvas must stay within 70% of the viewport, but it was ${canvasBox.client} of ${canvasBox.viewport}`
+        );
         await page.getByTestId('workflow-clear').click();
         await page.getByTestId('workflow-clear-yes').click();
         await page.waitForTimeout(300);
@@ -1452,6 +1479,38 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           true,
           'clearing must return the lesson to its empty state, not to a blank card'
         );
+
+        // The badge and the advice are one numbering. Point the first card at the newest one and
+        // the newcomer moves to second in reading order: it must wear 2, and the checklist must
+        // call it Step 2. Before this, the badge counted insertion order and said 3.
+        await page.getByTestId('workflow-start-blank').click();
+        await page.getByTestId('workflow-add-compute').click();
+        await page.getByTestId('workflow-add-answer').click();
+        await page.waitForTimeout(250);
+        const reorderOut = await page.getByTestId('workflow-node-out-0').boundingBox();
+        const reorderTarget = await page.getByTestId('workflow-node-2').boundingBox();
+        await page.mouse.move(reorderOut.x + reorderOut.width / 2, reorderOut.y + reorderOut.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(
+          reorderTarget.x + reorderTarget.width / 2,
+          reorderTarget.y + reorderTarget.height / 2,
+          { steps: 8 }
+        );
+        await page.mouse.up();
+        await page.waitForTimeout(350);
+        assert.equal(
+          (await page.getByTestId('workflow-node-number-2').textContent())?.trim(),
+          '2',
+          'the card the arrow moved into second place must wear 2'
+        );
+        assert.match(
+          await page.getByTestId('workflow-issues').innerText(),
+          /Step 2 needs a title/,
+          'and the checklist must call that same card Step 2'
+        );
+        await page.getByTestId('workflow-clear').click();
+        await page.getByTestId('workflow-clear-yes').click();
+        await page.waitForTimeout(250);
         await page.getByTestId('editor-tab-main').click();
         await page.waitForTimeout(250);
         console.log(

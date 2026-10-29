@@ -15,7 +15,7 @@
  *
  * Version 2 replaced the ordered list. Version 1 documents (a `steps` array with one optional
  * `branch` per step) are migrated on read rather than rejected: a learner who drew a flow before
- * this change keeps every card and every arrow, laid out in the two-column order the list implied.
+ * this change keeps every card and every arrow, laid out in the single-column order the list implied.
  *
  * `workflowOrder` is the one reading order: breadth-first from the start cards, so numbering,
  * validation messages, Markdown and Mermaid all agree on which card is "3". A canvas has no single
@@ -450,6 +450,18 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
  * begin a flow matches how a person reads a diagram left to right, and an unconnected card still
  * appears — at the end — so the checklist can talk about it instead of hiding it.
  */
+/**
+ * The number each card wears, read from the one order.
+ *
+ * The badge on a card, the "Step 3" in a checklist sentence and the "3." in the Markdown are the
+ * same fact, so they all come from `workflowOrder`. A canvas has no intrinsic order, and letting the
+ * badge count the insertion array while the advice counted the arrows is how a learner is sent to
+ * the wrong card.
+ */
+export function workflowNumbers(doc: WorkflowDoc): Map<string, number> {
+  return new Map(workflowOrder(doc).map((node, index) => [node.id, index + 1]));
+}
+
 export function workflowOrder(doc: WorkflowDoc): WorkflowNode[] {
   const byId = new Map(doc.nodes.map((node) => [node.id, node]));
   const outgoing = new Map<string, string[]>();

@@ -24,7 +24,7 @@ import {
   saveDraft,
 } from '../app/src/lessonDraft.ts';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
-import { coachForLesson, draftProgress } from '../app/src/lessonCoach.ts';
+import { coachForLesson, draftProgress, exerciseTask } from '../app/src/lessonCoach.ts';
 
 let passed = 0;
 let failed = 0;
@@ -296,6 +296,45 @@ check('a TODO lesson\'s pointer moves the same way', () => {
 check('a lesson whose starter marks nothing measurable says so instead of guessing', () => {
   const unmarked = { ...P1, starterCode: 'print("no markers here")' };
   assert.deepEqual(draftProgress('print(1)', unmarked), { filled: 0, total: 0, isExercise: false });
+});
+
+// The Write preset prints this above the editor: the task the file is waiting for, in plain text,
+// not the lesson's learning objective and not its Markdown (the audit's "question" defect).
+check('the Write question names the functions the starter marks', () => {
+  assert.equal(
+    exerciseTask(lessonById('P.6').starterCode, lessonById('P.6').goal),
+    'Complete distance_2d and clamp_cmd.'
+  );
+  assert.equal(
+    exerciseTask(lessonById('P.7').starterCode, lessonById('P.7').goal),
+    'Complete ma_to_amps, kohms_to_ohms and us_to_seconds.'
+  );
+});
+
+check('an exercise bundle\'s raise names its function too', () => {
+  const starter = 'def sensor_voltage(slope, current):\n    raise NotImplementedError("TODO 1: the voltage at this current")\n';
+  assert.equal(exerciseTask(starter, 'a goal'), 'Complete sensor_voltage.');
+});
+
+check('more names than fit are counted, not listed', () => {
+  const starter = Array.from(
+    { length: 5 },
+    (_, index) => `def step_${index}():\n    # TODO ${index + 1}: the thing\n    return 0`
+  ).join('\n\n');
+  assert.equal(exerciseTask(starter, 'a goal'), 'Complete the 5 marked functions in the starter.');
+});
+
+check('a TODO outside a function counts lines instead of borrowing the last name', () => {
+  const starter = '# TODO 1: read the number\nvalue = 0\n# TODO 2: print it\n';
+  assert.equal(exerciseTask(starter, 'a goal'), 'Complete the 2 marked TODO lines in the starter.');
+  assert.equal(exerciseTask('# TODO 1: read the number\nvalue = 0\n', 'a goal'), 'Complete the 1 marked TODO line in the starter.');
+});
+
+check('a starter with nothing marked falls back to the goal, with no Markdown left', () => {
+  assert.equal(
+    exerciseTask('print("done")', 'Use **math** and the `sqrt` function.'),
+    'Use math and the sqrt function.'
+  );
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

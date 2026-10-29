@@ -162,7 +162,7 @@ npm run test:study                      # notes and highlights: kept per lesson,
 npm run test:checklists                 # a lesson's bullet ticks: identified by their words, per lesson, bounded, clearable, refused by a blocked store, and merged by union for the backup and workspace
 npm run test:review                     # FSRS-5: the 0.9-at-stability identity, grade order, lapses, the year cap, and the card join
 npm run test:sitting                    # the sitting clock: idle cutoff, three-hour cap, backwards clock, totals, and focus's store
-npm run test:studyclock                 # the brief's clock: start/pause/resume arithmetic, a reload trusted only to its heartbeat, a hidden tab, and the study heartbeat that extends a sitting without a run
+npm run test:studyclock                 # the brief's clock: start/pause/resume arithmetic, a reload trusted only to its heartbeat, and the study heartbeat that extends a sitting without a run
 npm run test:phone                      # the phone's rules: the per-lesson Study surface, a junk record, blocked storage, and the install offer's platform and thirty-day snooze
 npm run test:portfolio                  # the export: a section only when it has content, quoting, the twenty-card cap, the time table
 npm run test:e2e:backup                 # the header buttons in Chromium: write a zip, wipe, restore a milestone, a draft and a checklist tick to the store and to the screen

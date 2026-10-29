@@ -16,6 +16,43 @@ flowchart LR
 
 ---
 
+## [2026-10-29] — One numbering, an honest clock label, and the task in Write
+
+**A card's badge and the checklist now agree.** The canvas numbered cards by their position in the
+`nodes` array while `validateWorkflow`, the Markdown and the Mermaid numbered them by the arrow
+order — after drawing `s1 → s6`, the card wore **6** and the warning named it **Step 3**. Both now
+read `workflowNumbers`/`workflowOrder` ([`app/src/workflow.ts`](app/src/workflow.ts)), so the badge,
+the aria label, "Step N" and the export are one fact. `npm run test:workflow` pins the reordered
+document and `npm run test:e2e` drags an arrow into second place and asserts the badge and the
+sentence say 2.
+
+**The logged-time panel says what it measures.** It is fed `lessonTotals`, which is the whole
+duration of every sitting that *included* the lesson — one sitting counts for each lesson it
+touched. Rather than invent a per-lesson stopwatch the store never kept, the panel is labelled
+honestly: **Time logged with this lesson** opens "In sittings with this lesson …" and a line saying
+a sitting counts whole for every lesson it touched ([`app/src/components/StudyTimerRow.tsx`](app/src/components/StudyTimerRow.tsx)).
+
+**Write asks the actual task, in plain text.** The line used to be the lesson's `goal` with its
+backticks and bold intact, prefixed by a screen-reader-only "Question:". `exerciseTask`
+([`app/src/lessonCoach.ts`](app/src/lessonCoach.ts)) now reads the functions the starter marks —
+"Complete distance_2d and clamp_cmd." — falls back to a count when the TODOs sit outside a function,
+and to the goal stripped of Markdown when nothing is marked. The word **Question:** is visible.
+
+**Template branches keep their condition.** `flow()` pushed the chain arrow before the branch, so a
+branch pointing at the next card was deduped away and the template opened without its label.
+Branches are emitted first now; `debug-failing-run` and `loop-accumulate` carry their conditions and
+the unit suite checks that the branch does not add a second arrow.
+
+**The canvas is a bounded surface, and the docs say so.** A 24-card flow measured 4,172 px tall at
+390 px, so the page grew with every card. The surface is capped at 70% of the viewport and scrolls
+inside that. `app/README.md`'s clock section no longer claims a hidden tab pauses the clock (the
+listener is gone) and now documents Pause/Resume and the disclosure; `docs/MOBILE.md` and
+`docs/VERIFICATION.md` were corrected the same way. `docs/weight-budget.json`'s `measured` block was
+refreshed with `--record` to 569.9 kB entry / 949.2 kB js / 381.9 kB largest, the numbers the gate
+actually measures.
+
+---
+
 ## [2026-10-29] — The workflow becomes a canvas, the clock becomes a toggle
 
 **The timeline is gone.** The Workflow tab drew an ordered column of cards because a 390 px screen

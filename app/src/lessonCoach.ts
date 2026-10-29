@@ -1,6 +1,7 @@
 // Type-only, and the `.ts` extension is for Node's type stripping (`scripts/test_lesson_draft.mjs`):
 // the hole parser and the draft-progress rule are tested as functions, not through a browser.
 import type { PythonLessonItem } from './data/pythonLessonsData.ts';
+import { inlinePlain } from './readerMarkdown.ts';
 
 /**
  * A short, lesson-specific first-run brief.
@@ -58,6 +59,7 @@ const CODE_LINE = /^[ \t]*\S/;
 const COMMENT_LINE = /^[ \t]*#/;
 const TODO_MARKER = /^[ \t]*#[ \t]*TODO\b(?:[ \t]*(\d+))?[ \t]*:?[ \t]*(.*)$/i;
 const RAISE_MARKER = /raise\s+NotImplementedError\(/;
+const DEF_LINE = /^[ \t]*def[ \t]+([A-Za-z_]\w*)[ \t]*\(/;
 
 function compact(text: string): string {
   return text.replace(/\s+/g, '');
@@ -148,6 +150,47 @@ export function starterHoles(starter: string, isExercise: boolean): HoleSpan[] {
     });
   });
   return spans;
+}
+
+/**
+ * What the Write tab prints above the editor as the question.
+ *
+ * The lesson's `goal` is a learning objective — "load built-in math tools and write self-checks" —
+ * not the job the starter is waiting for. The starter already names that job: each `# TODO n:` (or
+ * each `raise NotImplementedError`) sits inside the function it belongs to, so the functions that
+ * carry a marker are the actual task. Names are read in file order and never repeated, because a
+ * body with three TODOs is still one function to write.
+ *
+ * A starter with markers but no functions gets a count rather than a guessed name, and a starter
+ * with nothing marked (a lesson whose code is complete) falls back to the goal in plain text, so
+ * the line is never empty and never raw Markdown. Four names is the cut-off: past that the sentence
+ * stops being readable, and "the 7 marked functions" says the same thing in less width.
+ */
+export function exerciseTask(starter: string, goal: string): string {
+  const lines = starter.split('\n');
+  const names: string[] = [];
+  let current = '';
+  let holes = 0;
+  for (const line of lines) {
+    const def = line.match(DEF_LINE);
+    if (def) {
+      current = def[1];
+    } else if (line.trim() && !/^[ \t]/.test(line) && !COMMENT_LINE.test(line)) {
+      // Back at module level: a TODO in the script below a function is not that function's hole.
+      current = '';
+    }
+    if (!TODO_MARKER.test(line) && !RAISE_MARKER.test(line)) continue;
+    holes += 1;
+    if (current && !names.includes(current)) names.push(current);
+  }
+  if (names.length > 4) return `Complete the ${names.length} marked functions in the starter.`;
+  if (names.length > 0) {
+    const list =
+      names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+    return `Complete ${list}.`;
+  }
+  if (holes > 0) return `Complete the ${holes} marked TODO line${holes === 1 ? '' : 's'} in the starter.`;
+  return inlinePlain(goal).replace(/\s+/g, ' ').trim();
 }
 
 /** What the roadmap card says about a half-finished exercise. */

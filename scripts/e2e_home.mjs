@@ -634,8 +634,13 @@ async function main() {
       assert.equal(await logged.getAttribute('aria-expanded'), 'true');
       assert.match(
         (await page.getByTestId('study-timer-lesson-total').textContent()) ?? '',
-        /This lesson/,
-        'the opened log must name what it is measuring'
+        /sittings with this lesson/,
+        'the opened log must name what it is measuring: sittings, not a per-lesson stopwatch'
+      );
+      assert.match(
+        (await page.getByTestId('study-timer-scope').textContent()) ?? '',
+        /counts whole for every lesson it touched/,
+        'and it must say that one sitting is credited to every lesson it touched'
       );
       await logged.click();
       assert.equal(

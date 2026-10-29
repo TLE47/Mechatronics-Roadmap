@@ -39,6 +39,7 @@ import {
   nextStepId,
   normalizeWorkflow,
   validateWorkflow,
+  workflowNumbers,
   workflowOrder,
   workflowSummary,
   workflowToMarkdown,
@@ -566,6 +567,33 @@ check('the order starts at a start card, follows the arrows, and puts loose card
   );
 });
 
+check('the number a card wears is its place in the one reading order', () => {
+  // Insertion order is s1, s2, s3; the arrows read s1 → s3 → s2. The badge and the advice have to
+  // agree with the arrows, or "Step 3" names a different card on screen.
+  const doc = graph(
+    [
+      { id: 's1', kind: 'given', title: 'start' },
+      { id: 's2', kind: 'answer', title: '' },
+      { id: 's3', kind: 'compute', title: 'middle' },
+    ],
+    [
+      { from: 's1', to: 's3' },
+      { from: 's3', to: 's2' },
+    ]
+  );
+  const numbers = workflowNumbers(doc);
+  assert.deepEqual([...numbers.entries()], [
+    ['s1', 1],
+    ['s3', 2],
+    ['s2', 3],
+  ]);
+  const issue = validateWorkflow(doc).find((entry) => entry.code === 'empty-step');
+  assert.equal(issue.stepId, 's2');
+  assert.match(issue.message, /^Step 3 needs a title/);
+  assert.equal(numbers.get(issue.stepId), 3, 'the sentence and the badge name the same number');
+  assert.match(workflowToMarkdown(doc), /^3\. \*\*Answer\*\* — untitled$/m);
+});
+
 check('a branch is followed before a card no arrow reaches', () => {
   const doc = graph(
     [
@@ -688,6 +716,17 @@ check('every template but the blank one has its cards filled in, and no open iss
   }
   const blank = validateWorkflow(templateById('blank').build());
   assert.ok(blank.some((issue) => issue.code === 'empty-step'), 'the blank template is an invitation');
+});
+
+check('a template branch that points at the next card keeps its condition', () => {
+  const debug = templateById('debug-failing-run').build();
+  const labelled = debug.edges.filter((edge) => edge.label);
+  assert.equal(debug.edges.length, 4, 'the branch does not add a second arrow to the same card');
+  assert.equal(labelled.length, 1, `${templateById('debug-failing-run').id} lost its condition`);
+  assert.equal(labelled[0].from, 's3');
+  assert.equal(labelled[0].to, 's4');
+  assert.equal(labelled[0].label, 'reproduces every time');
+  assert.match(workflowToMarkdown(debug), /if reproduces every time → step 4/);
 });
 
 check('the templates open as a connected flow in one column that fits a split pane', () => {

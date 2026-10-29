@@ -2,7 +2,7 @@ import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 're
 import { PYTHON_LESSONS, PythonLessonItem } from '../../data/pythonLessonsData';
 import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabPlant';
 import { asOutputMatchMode, compareStdout, OutputMatchMode } from '../../outputMatch';
-import { coachForLesson, starterHoles } from '../../lessonCoach';
+import { coachForLesson, exerciseTask, starterHoles } from '../../lessonCoach';
 import { failingChecks, hintCountFor, hintLock, nextRung, rungAnswersCheck } from '../../checkHints';
 import { entryHeadline, matchError } from '../../errorIndex';
 import { failureSummary, isAssertionFailure, parseFailure } from '../../traceback';
@@ -892,6 +892,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
   const currentLesson: PythonLessonItem =
     PYTHON_LESSONS.find((l) => l.id === selectedId) || PYTHON_LESSONS[0];
+  // What the Write preset prints as the question: the functions the starter marks, not the lesson's
+  // learning objective and not its Markdown. Pure (`lessonCoach.ts`), so the draft suite pins it.
+  const writeQuestion = React.useMemo(
+    () => exerciseTask(currentLesson.starterCode, currentLesson.goal),
+    [currentLesson]
+  );
   // The lesson's read-only helpers. The plant is 400 lines a learner can read but not edit; the
   // worker writes the same text into Pyodide, so `from mechalab_plant import ...` works unchanged.
   const helperFiles = React.useMemo(
@@ -5692,15 +5698,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               )}
             </div>
             {/* Write hides the prose, so the question it asks is printed here as the one comment a
-                Python file would carry. Read-only: the draft and the grading stay untouched. */}
-            {shownLayout === 'write' && currentLesson.goal && (
+                Python file would carry. The task is read from the starter's marked functions, in
+                plain text, and the word "Question:" is visible: a beginner should not have to
+                decode backticks to know what the file is for. Read-only. */}
+            {shownLayout === 'write' && writeQuestion && (
               <p
                 data-testid="write-question"
                 className="border-b border-line-soft bg-canvas px-3 py-2 font-mono text-[11.5px] leading-relaxed text-muted"
               >
-                <span className="text-accent" aria-hidden="true"># </span>
-                <span className="sr-only">Question: </span>
-                {currentLesson.goal}
+                <span className="font-semibold text-accent"># Question:</span> {writeQuestion}
               </p>
             )}
             {/* One body, up to two panes (`editorPanes.ts`). Every view stays mounted and a pane that

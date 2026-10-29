@@ -44,6 +44,8 @@ import { iconForKind } from './workflowIcons.ts';
 
 export interface WorkflowCanvasProps {
   doc: WorkflowDoc;
+  /** Each card's place in the one reading order — the number the checklist also says. */
+  numbers: Map<string, number>;
   /** The first open issue per card, from the panel's single validation pass. */
   issueByStep: Map<string, WorkflowIssue>;
   selectedId: string | null;
@@ -95,6 +97,7 @@ function nodeIdAt(clientX: number, clientY: number): string | null {
 
 export function WorkflowCanvas({
   doc,
+  numbers,
   issueByStep,
   selectedId,
   onSelect,
@@ -269,7 +272,10 @@ export function WorkflowCanvas({
     <div
       ref={surfaceRef}
       data-testid="workflow-canvas"
-      className="relative mt-2 min-h-[280px] flex-1 overflow-auto overscroll-contain rounded-lg border border-line-soft bg-canvas"
+      // The 70 vh cap is what makes this a canvas rather than a growing page: a 24-card flow on a
+      // phone scrolls inside the pane instead of turning the lesson into a four-thousand-pixel
+      // document.
+      className="relative mt-2 min-h-[280px] max-h-[70vh] flex-1 overflow-auto overscroll-contain rounded-lg border border-line-soft bg-canvas"
       style={{
         backgroundImage: 'radial-gradient(circle, var(--border) 1px, transparent 1px)',
         backgroundSize: '16px 16px',
@@ -368,6 +374,7 @@ export function WorkflowCanvas({
         {doc.nodes.map((node, index) => {
           const Icon = iconForKind(node.kind);
           const issue = issueByStep.get(node.id);
+          const number = numbers.get(node.id) ?? index + 1;
           const position = dragId === node.id && livePosition ? livePosition : { x: node.x, y: node.y };
           const selected = selectedId === node.id;
           return (
@@ -375,6 +382,7 @@ export function WorkflowCanvas({
               key={node.id}
               data-node-id={node.id}
               data-testid={`workflow-node-${index}`}
+              data-step={number}
               data-kind={node.kind}
               style={{ left: position.x, top: position.y, width: NODE_WIDTH }}
               className={`absolute z-10 rounded-xl border bg-panel shadow-sm ${
@@ -396,7 +404,7 @@ export function WorkflowCanvas({
                 data-testid={`workflow-node-drag-${index}`}
                 role="group"
                 tabIndex={0}
-                aria-label={`Card ${index + 1}, ${KIND_META[node.kind].label}. Drag to move; arrow keys nudge it.`}
+                aria-label={`Card ${number}, ${KIND_META[node.kind].label}. Drag to move; arrow keys nudge it.`}
                 onPointerDown={(event) => startDrag(event, node)}
                 onKeyDown={(event) => nudge(event, node)}
                 className="flex touch-none items-center gap-1.5 rounded-t-xl border-b border-line-soft bg-canvas px-2 py-1.5 select-none focus-visible:outline-2 focus-visible:outline-accent"
@@ -405,11 +413,16 @@ export function WorkflowCanvas({
                 <span className="truncate font-mono text-[10px] uppercase tracking-[0.1em] text-accent">
                   {KIND_META[node.kind].label}
                 </span>
-                <span className="ml-auto font-mono text-[10px] tabular-nums text-faint">{index + 1}</span>
+                <span
+                  data-testid={`workflow-node-number-${index}`}
+                  className="ml-auto font-mono text-[10px] tabular-nums text-faint"
+                >
+                  {number}
+                </span>
                 <button
                   type="button"
                   data-testid={`workflow-node-delete-${index}`}
-                  aria-label={`Delete card ${index + 1}`}
+                  aria-label={`Delete card ${number}`}
                   title="Delete this card and its arrows"
                   onPointerDown={(event) => event.stopPropagation()}
                   onClick={() => onRemove(node.id)}

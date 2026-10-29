@@ -42,9 +42,13 @@ interface TemplateStep {
 }
 
 /**
- * A template as a canvas: the cards laid out two per row, and one arrow between each card and the
- * next, plus an arrow wherever the card names a branch. A template that opened as a pile of cards
- * with no arrows would teach the wrong thing about a graph.
+ * A template as a canvas: the cards in one column, one arrow between each card and the next, plus
+ * an arrow wherever the card names a branch. A template that opened as a pile of cards with no
+ * arrows would teach the wrong thing about a graph.
+ *
+ * Branches go in first. A branch that points at the next card is the same pair as the chain arrow,
+ * and the chain would otherwise win the duplicate check and drop the condition: the learner would
+ * see an unlabelled arrow where the template was written to say "if this holds".
  */
 function flow(
   mode: WorkflowMode,
@@ -61,20 +65,17 @@ function flow(
     ...autoNodePosition(index),
   }));
   const edges: WorkflowEdge[] = [];
+  const drawn = new Set<string>();
+  const connect = (from: string, to: string, label?: string) => {
+    if (from === to || !nodes.some((node) => node.id === to) || drawn.has(`${from}->${to}`)) return;
+    drawn.add(`${from}->${to}`);
+    edges.push({ id: `e${edges.length + 1}`, from, to, ...(label ? { label } : {}) });
+  };
   for (const [index, step] of steps.entries()) {
-    const from = `s${index + 1}`;
-    const next = nodes[index + 1];
-    if (next) edges.push({ id: `e${edges.length + 1}`, from, to: next.id });
-    const branch = step.branch;
-    if (!branch) continue;
-    const already = edges.some((edge) => edge.from === from && edge.to === branch.to);
-    if (branch.to === from || already || !nodes.some((node) => node.id === branch.to)) continue;
-    edges.push({
-      id: `e${edges.length + 1}`,
-      from,
-      to: branch.to,
-      ...(branch.when ? { label: branch.when } : {}),
-    });
+    if (step.branch) connect(`s${index + 1}`, step.branch.to, step.branch.when);
+  }
+  for (let index = 0; index < steps.length - 1; index += 1) {
+    connect(`s${index + 1}`, `s${index + 2}`);
   }
   return { version: WORKFLOW_VERSION, mode, title, nodes, edges, updatedAt: now };
 }

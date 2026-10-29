@@ -508,12 +508,17 @@ backup: it is a fact about one machine's clock, and merging two machines' sittin
 hour twice.
 
 The clock is also something a learner can start on purpose. The **lesson brief** carries it — `0:00:00`,
-**Start / Resume**, **Log & reset** — because "log your hour" used to mean hoping the automatic sitting
-had caught it. Start opens a stretch, the digits count while the tab is visible, and Log & reset files
-the stretch as a `study` heartbeat into the same store and puts the digits back to zero: one set of
-hours, the one **Today** already prints beside the trail and the portfolio. A hidden tab pauses the
-clock instead of paying for the hour spent elsewhere, a reload keeps the stretch to its last heartbeat,
-and the two buttons are deliberately the only two — Reset is already the way to end a stretch
+one **Start / Pause / Resume** toggle and **Log & reset** — because "log your hour" used to mean hoping
+the automatic sitting had caught it. Start opens a stretch, Pause stops the digits without filing
+them, and Resume carries on from where they stopped. The clock counts while the lesson is open until
+the learner pauses it: a background tab is still study time, and the visibility listener that used to
+stop it is gone. A reload keeps the stretch only as far as its last heartbeat, so a page that was
+closed overnight does not credit the night. Log & reset files the stretch as a `study` heartbeat into
+the same store and puts the digits back to zero: one set of hours, the one **Today** already prints
+beside the trail and the portfolio. **Time logged with this lesson** expands the sitting totals — the
+total, how many sittings and today — and says what they are: a sitting is one stretch of activity and
+is counted whole for every lesson it touched, so this is not a per-lesson stopwatch (the store never
+recorded one). The two controls are the only two; Reset is already the way to end a stretch
 ([`src/studyTimer.ts`](src/studyTimer.ts), [`src/components/StudyTimerRow.tsx`](src/components/StudyTimerRow.tsx),
 `npm run test:studyclock`).
 
@@ -943,11 +948,14 @@ Transform, Branch, Loop, Test, Output) — drawn as a node canvas: a palette pre
 drags by its header and edits in place, and a directed arrow is dragged from the dot on its right edge
 to the card it feeds (tap the dot, then the target, is the same gesture for a phone). It is a view of
 the same card, so it tabs and splits like the outputs and its arrangement is remembered; cards also
-nudge with the arrow keys, and the surface scrolls inside the pane, so a 380 px split or a 390 px
-phone never widens the page. Nothing about the run changes: the checklist names what a card is
-missing (`missing-unit`, `no-answer`, `unconnected`, and five more) and never disables Run or a
-lesson. A lesson opens on its own example, one of six templates, or a single Given card; the
-three-line how-to is always one press away; Copy Mermaid and Copy Markdown export the numbered flow,
+nudge with the arrow keys, and the surface is capped at 70% of the viewport and scrolls inside that,
+so a 24-card flow neither widens the page nor turns a 390 px phone into a four-thousand-pixel
+document. Nothing about the run changes: the checklist names what a card is missing (`missing-unit`,
+`no-answer`, `unconnected`, and five more) and never disables Run or a lesson. A card's badge, the
+checklist's "Step 3" and the Markdown numbering are one reading order, so advice always names the
+card it is about. P.15 opens on its own example; any lesson can start from one of six templates or a
+single Given card; the three-line how-to is always one press away; Copy Mermaid and Copy Markdown
+export the numbered flow,
 and a version-1 list is migrated on read, its branches becoming labelled arrows. The study panel
 summarises the flow and can append it to the note
 ([`src/workflow.ts`](src/workflow.ts), [`src/workflowStore.ts`](src/workflowStore.ts),
@@ -1479,7 +1487,7 @@ npm run test:e2e:reset       # the same panel in Chromium: a backup first, a par
 npm run test:study           # notes and highlights: what is kept, deduped, refused by the store, and what a restore merges
 npm run test:review          # FSRS: 0.9-at-stability, grade order, lapses, the year cap, and the card join
 npm run test:sitting         # the sitting clock's rules and focus mode's store, without a browser
-npm run test:studyclock      # the brief's clock: banked stretches, a reload trusted to its heartbeat, a hidden tab, Log & reset
+npm run test:studyclock      # the brief's clock: banked stretches, a reload trusted to its heartbeat, a background tab that keeps counting, Log & reset
 npm run test:portfolio       # the export: sections only when they have content, quoting, caps, the time table
 npm run test:storage         # IndexedDB: the bucket fallback, the migration order, the write queue, a refused write
 npm run test:traceback       # tracebacks as data: frames, chains, syntax shapes, and the index match

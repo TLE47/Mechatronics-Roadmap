@@ -11,6 +11,7 @@ import {
   emptyWorkflow,
   nextEdgeId,
   validateWorkflow,
+  workflowNumbers,
   workflowToMarkdown,
   workflowToMermaid,
   type StepKind,
@@ -239,7 +240,7 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
   };
 
   const lessonTemplate = templateForLesson(lessonId);
-  const { issues, issueByStep, open, hints } = useMemo(() => {
+  const { issues, issueByStep, numbers, open, hints } = useMemo(() => {
     const list = doc ? validateWorkflow(doc) : [];
     const byStep = new Map<string, WorkflowIssue>();
     for (const issue of list) {
@@ -250,6 +251,9 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
     return {
       issues: list,
       issueByStep: byStep,
+      // The badge and the advice read the same order: a card numbered 3 is the card "Step 3"
+      // names, however the array happens to be ordered after a drag or a new arrow.
+      numbers: doc ? workflowNumbers(doc) : new Map<string, number>(),
       open: list.filter((issue) => issue.severity === 'open').length,
       hints: list.filter((issue) => issue.severity === 'hint').length,
     };
@@ -434,6 +438,7 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
 
       <WorkflowCanvas
         doc={doc}
+        numbers={numbers}
         issueByStep={issueByStep}
         selectedId={selectedId}
         onSelect={setSelectedId}
