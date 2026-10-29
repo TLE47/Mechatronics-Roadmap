@@ -256,16 +256,17 @@ class LinkHistoryGeneratorTests(unittest.TestCase):
 
 
 class SweepWorkflowTests(unittest.TestCase):
-    """The commit that records a history row must carry everything generated from it.
+    """The commit that records a history row must carry the module generated from it.
 
-    `ci.yml` runs the generator with `--check`, so the row and the module disagreeing is a red build. The
-    weekly sweep is the only writer of the row, so it is the only place that can commit them apart: a
-    step that staged `docs/link-check-history.jsonl` alone turned `main` red (`be434a0`) and every PR
-    with it. The module is the second file, and `docs/surface-snapshot.json` is the third: the Links tab
-    draws its tables from that module, so a new row makes the tab taller, and `ci.yml` compares that
-    height against the snapshot — the row and module alone turned `main` red again (`a79e857`, +87 px on
-    `tab-links`). These assertions are that step's contract, not its wording: generate, re-record the one
-    surface the data moves, then stage all three, then one commit.
+    `ci.yml` runs the generator with `--check`, so the two files disagreeing is a red build. The weekly
+    sweep is the only writer of the row, so it is the only place that can commit them apart: a step
+    that staged `docs/link-check-history.jsonl` alone turned `main` red (`be434a0`) and every PR with
+    it. These assertions are that step's contract, not its wording: generate, then stage both, then
+    one commit.
+
+    The row also moves a *surface* (the Links tab renders that module), and that third file is
+    deliberately **not** here: `docs/surface-snapshot.json` records `ci.yml`'s own measurement, so the
+    audits job re-records it before it checks it (`tests/test_record_links_surface.py` pins that step).
     """
 
     WORKFLOW = ROOT / ".github" / "workflows" / "link-check.yml"
@@ -299,33 +300,14 @@ class SweepWorkflowTests(unittest.TestCase):
         for path in ("docs/link-check-history.jsonl", "app/src/data/linkHistoryData.ts"):
             self.assertIn(path, add, f"expected the record step to stage {path} in the same commit")
 
-    def test_the_surface_the_data_moves_is_re_recorded_before_the_commit(self):
+    def test_the_snapshot_is_not_committed_from_this_job(self):
         step = self.record_step()
-        re_record = step.find("python3 scripts/record_links_surface.py")
-        self.assertGreaterEqual(
-            re_record,
-            0,
-            "expected the step that commits the row to re-record the Links tab it moves, or main goes "
-            "red on the next push (a79e857)",
+        self.assertNotIn(
+            "docs/surface-snapshot.json",
+            step,
+            "expected the snapshot to be re-recorded by the job that measures it (ci.yml's audits), not "
+            "by this one: this job measured tab-links 47 px lower than that job on the same runner",
         )
-        add = step.find("git add")
-        self.assertLess(
-            re_record,
-            add,
-            "expected the re-record before staging: a commit that stages the file first pushes the old "
-            "numbers",
-        )
-        self.assertLess(
-            step.find("npm run build"),
-            re_record,
-            "expected a built workbench before the sweep measures one",
-        )
-
-    def test_the_three_generated_files_land_in_one_commit(self):
-        step = self.record_step()
-        add = next((line for line in step.splitlines() if "git add" in line), "")
-        for path in ("docs/link-check-history.jsonl", "app/src/data/linkHistoryData.ts", "docs/surface-snapshot.json"):
-            self.assertIn(path, add, f"expected the record step to stage {path} in the same commit")
 
     def test_the_module_is_generated_before_the_diff_is_read(self):
         step = self.record_step()

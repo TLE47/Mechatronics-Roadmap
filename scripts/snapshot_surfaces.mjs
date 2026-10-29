@@ -383,9 +383,10 @@ async function main() {
         'the trip is a gate people learn to skip. Box numbers are compared with a 2 px tolerance, so ' +
         'subpixel rounding is not a finding; counts and resolved styles are exact. The Links tab is the ' +
         'one surface whose height follows data rather than code: its tables render ' +
-        '`app/src/data/linkHistoryData.ts`, which the weekly sweep regenerates, so that workflow re-records ' +
-        'this one surface in the same commit (`scripts/record_links_surface.py` — on the runner, geometry ' +
-        'only, and it refuses anything else). Re-record with ' +
+        '`app/src/data/linkHistoryData.ts`, which the weekly sweep regenerates. When a push moves that ' +
+        'data, the audits job in `ci.yml` re-records this one surface before it checks it ' +
+        '(`scripts/record_links_surface.py` — geometry only, and it refuses anything else), because this ' +
+        'file is that job\'s own measurement and nothing else\'s. Re-record with ' +
         '`npm run check:snapshot -- --record` when a change to the screen is intended, and read the diff: ' +
         'it is a list of what moved.',
       version: 1,

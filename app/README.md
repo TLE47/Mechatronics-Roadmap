@@ -707,10 +707,11 @@ links on one run and 4 on the next. `npm run test:settle` drives that gate again
 arrives late, with the old silence-only gate as the control it has to beat.
 
 One surface's geometry follows **data**, not code: the Links tab renders
-[`app/src/data/linkHistoryData.ts`](src/data/linkHistoryData.ts), which the weekly sweep regenerates, so
-that workflow re-records the tab in the same commit that lands the row —
-`scripts/record_links_surface.py`, on the runner, geometry only, refusing anything else (a count or a
-style moving, or another surface). Committing the row alone is what turned `main` red once (`a79e857`).
+[`app/src/data/linkHistoryData.ts`](src/data/linkHistoryData.ts), which the weekly sweep regenerates. When
+a push moves that data, `ci.yml`'s audits job re-records the tab before it checks it —
+`scripts/record_links_surface.py`, geometry only, refusing a count, a style or another surface — because
+the file is that job's own measurement (a different job measured the tab 47 px lower on the same runner).
+Committing the row alone is what turned `main` red once (`a79e857`).
 
 ### One chunk became an entry, six vendors and twelve tabs
 

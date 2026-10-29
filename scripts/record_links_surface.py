@@ -18,8 +18,10 @@ This is the small program that closes the loop. It measures the one surface and 
   the rows. A code change must not be papered over by the weekly commit, and a count moving means the
   data changed the surface's *shape*, not just its height.
 
-The measurement runs on the runner, which is the platform the baseline is recorded for. A local macOS
-`--record` bakes the header wrap's 47 px offset into a file the Linux runner reads (Run 282).
+The measurement has to happen **in the job that defines the file**, which is `ci.yml`'s audits job: that
+is where `docs/surface-snapshot.json`'s numbers come from, and a different job measured the same surface
+47 px lower on the same runner and the same commit (Run 283). That is why the step lives there and not
+where the data is written, and why the record is refused when `CI` is not set.
 
 Usage
     python3 scripts/record_links_surface.py              # measure; record if only the data moved the tab
@@ -27,8 +29,8 @@ Usage
     python3 scripts/record_links_surface.py --json       # machine-readable, stdout only
     python3 scripts/record_links_surface.py --check      # a gate: fail if a re-record is needed
 
-The record itself is refused outside CI (`--allow-local` overrides): this file is read on Linux, and a macOS
-run writes the header wrap's 47 px into it.
+The record itself is refused outside CI (`--allow-local` overrides): the numbers belong to the job that
+checks them, and a run elsewhere writes its own chrome into the file.
 
 Exit-code family: typed
     0  nothing moved, or the surface was re-recorded and now checks clean
@@ -160,14 +162,14 @@ def entry(options: argparse.Namespace) -> int:
                 print(f"  {row['surface']} · {row['field']} → {json.dumps(row.get('actual'))}")
         return 0
 
-    # A local macOS run measures a header that wraps 47 px taller than the runner's, so recording here
-    # would put one platform's text metrics into a file the other platform reads (Run 282). The
+    # The file records one job's measurement. A run anywhere else — another CI job, a laptop — writes
+    # its own chrome into it (47 px between two jobs on the same runner and commit, Run 283). The
     # workflow sets `CI`, and this is the one place that can check it.
     if not options.allow_local and os.environ.get("CI", "").lower() not in {"true", "1"}:
         print(
-            "[FAIL] refusing to record off the runner: a macOS run writes the header wrap's extra 47 px "
-            "into docs/surface-snapshot.json, which the Linux runner reads. Re-record from the runner, or "
-            "pass --allow-local if that is genuinely what you want.",
+            "[FAIL] refusing to record off CI: docs/surface-snapshot.json is the audits job's own "
+            "measurement, and a run anywhere else writes a different chrome into it. Re-record from that "
+            "job, or pass --allow-local if that is genuinely what you want.",
             file=sys.stderr,
         )
         return 2

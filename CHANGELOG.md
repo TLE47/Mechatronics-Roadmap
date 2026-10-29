@@ -24,26 +24,35 @@ run tables, so the tab gets taller with no code change, and `docs/surface-snapsh
 heights. `a79e857` shipped the row and the module alone and `main` went red on `tab-links` (+87 px,
 counts and styles unchanged), which took a hand re-record to clear (Run 282).
 
-**The automation.** `link-check.yml`'s record step now builds the workbench and re-records that one
-surface before it commits, through [`scripts/record_links_surface.py`](scripts/record_links_surface.py).
-It measures `tab-links` in all four palettes, and records only when every difference is **geometry on
-that surface**. A count moving, a resolved style moving, another surface moving, or a surface the sweep
-no longer produces fails the step with the rows instead — a weekly data commit must not paper over a
-code change. It re-runs the check after recording rather than trusting the record's exit code, and off
-the runner it refuses outright (`--allow-local` overrides): a macOS record writes the header wrap's
-47 px offset into a file the Linux runner reads.
+**Where it runs, and the mistake that moved it.** The first attempt put the re-record in
+`link-check.yml`, in the step that commits the row: build the workbench, install Chromium, record, one
+commit for all three files. Dispatched on the branch it worked — 20 box fields, one commit — and it wrote
+numbers the gate then rejects: `tab-links`' rail at y **199** where the audits job measures **152**, on
+the same runner and the same commit. That 47 px is chrome above the rail, and it is not the platform: the
+weekly job reproduced on Linux what a Mac reproduces at home, so Run 282's "macOS header wrap" was the
+wrong explanation. `docs/surface-snapshot.json` is one job's measurement, which means the re-record has to
+happen in that job.
 
-**Cost.** Measured locally: the recorder's sweep is 10 s on a warm build and 26 s when it must rebuild,
-and `npm run build` is 10 s (the runner's build job is 35 s from checkout). The weekly job pays that
-only on a run that wrote a row — the step exits before the build when the data did not move — so the
-pull-request critical path is untouched.
+**The automation.** `ci.yml`'s audits job now follows the data before it checks it: on a push to `main`
+(or a dispatched run with `re-record-links-surface`), it runs
+[`scripts/record_links_surface.py`](scripts/record_links_surface.py) and commits
+`docs/surface-snapshot.json` when the file moved. The script measures `tab-links` in all four palettes
+and records only when every difference is **geometry on that surface**; a count moving, a resolved style
+moving, another surface moving, or a surface the sweep no longer produces fails the step with the rows,
+because a data commit must not paper over a code change. It re-runs the check after recording instead of
+trusting the record's exit code, and refuses to record outside CI. The weekly job keeps its old job — one
+commit for the row and the module — with a comment saying where the surface follows.
 
-**Guards.** [`tests/test_record_links_surface.py`](tests/test_record_links_surface.py) (15 tests) pins
-the decision — geometry on that surface only, each refusal, the three flow outcomes, the dry run and the
-off-runner refusal — against a fake sweep, so it never writes the real file.
-[`tests/test_link_history_data.py`](tests/test_link_history_data.py) (16) now also demands that the step
-re-records before staging and commits all three files together. The snapshot's own `_why` is written by
-the recorder again: a hand-added sentence in the file would have been dropped by the next record.
+**Cost.** The recorder is one four-palette sweep of one surface: 10 s on a warm build, measured locally.
+The audits job pays that on the runs it is allowed in; the weekly workflow pays nothing new, and a pull
+request never runs it.
+
+**Guards.** [`tests/test_record_links_surface.py`](tests/test_record_links_surface.py) (18) pins the
+decision and its home: geometry on that surface only, each refusal, the three flow outcomes, the dry run,
+the off-CI refusal, and the `ci.yml` step being main-only, staging one file, measuring before staging and
+sitting before the check it would otherwise fail on. `tests/test_link_history_data.py` (15) pins that the
+weekly commit stays two files. The snapshot's own `_why` is emitted by the recorder again — a hand-added
+sentence in the file would have been dropped by the next record.
 
 ---
 
@@ -75,9 +84,9 @@ all four palettes — 87 px taller, with counts and resolved styles identical. I
 `a79e857`, the weekly sweep's data commit, regenerated `app/src/data/linkHistoryData.ts`, and the Links
 tab draws its host and run tables from it, so the tab grew with no code change and no re-record. `main`
 at that commit was red for the same reason and had never run. The baseline now carries the runner's own
-numbers for that surface's four box fields (a local `--record` would have baked the macOS header wrap's
-47 px offset into a file the Linux runner reads), and the snapshot's `_why` names the trap: a link
-history refresh is a re-record too.
+numbers for that surface's four box fields (a local `--record` would have baked a different chrome's
+47 px offset into a file the Linux runner reads — Run 283 shows it is the job's chrome, not the platform),
+and the snapshot's `_why` names the trap: a link history refresh is a re-record too.
 
 ---
 

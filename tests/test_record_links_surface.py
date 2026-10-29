@@ -66,6 +66,64 @@ class RefusalTests(unittest.TestCase):
         self.assertEqual(len(bad), 1, msg="a surface the sweep did not produce is a tab that moved, not data")
 
 
+class WorkflowTests(unittest.TestCase):
+    """Where the re-record runs, and why it cannot run anywhere else.
+
+    `docs/surface-snapshot.json` is a record of one job's measurement. The workflow that writes the data
+    measured `tab-links` 47 px lower than `ci.yml`'s audits job did — same runner, same commit — so a
+    re-record written there would be numbers the check then rejects. The step therefore lives in the
+    audits job, on a push to `main` (or a dispatched run, which is how it is exercised off `main`), and
+    before the check it would otherwise fail on.
+    """
+
+    WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
+    STEP_PREFIX = "      - name: "
+
+    def workflow_text(self) -> str:
+        self.assertTrue(self.WORKFLOW.exists(), f"expected {self.WORKFLOW}")
+        return self.WORKFLOW.read_text(encoding="utf-8")
+
+    def step_body(self) -> str:
+        lines = self.workflow_text().splitlines()
+        start = next(
+            (i for i, line in enumerate(lines) if line.startswith(self.STEP_PREFIX) and "re-record the links tab" in line.lower()),
+            None,
+        )
+        self.assertIsNotNone(start, "expected a step that re-records the Links tab")
+        end = next(
+            (i for i, line in enumerate(lines[start + 1 :], start + 1) if line.startswith(self.STEP_PREFIX)),
+            len(lines),
+        )
+        return "\n".join(lines[start:end])
+
+    def test_the_step_runs_where_the_baseline_is_measured(self):
+        text = self.workflow_text()
+        step = self.step_body()
+        self.assertIn("refs/heads/main", step, msg="expected the step to be main-only")
+        self.assertIn("re-record-links-surface", step, msg="expected a dispatched run to be able to exercise it")
+        self.assertLess(
+            text.index("re-record the Links tab"),
+            text.index("Check the surface snapshot"),
+            msg="expected the re-record before the check that would fail on it",
+        )
+
+    def test_the_step_stages_only_the_snapshot(self):
+        step = self.step_body()
+        add = next((line for line in step.splitlines() if "git add" in line), "")
+        self.assertIn("docs/surface-snapshot.json", add)
+        self.assertEqual(step.count("git commit"), 1, msg="expected one commit for the one file")
+        self.assertLess(
+            step.find("python3 scripts/record_links_surface.py"),
+            step.find("git add"),
+            msg="expected the measurement before staging, or the commit carries the old numbers",
+        )
+
+    def test_the_job_may_push_the_commit_it_makes(self):
+        text = self.workflow_text()
+        job = text[text.index("  audit-suites:") : text.index("Check the settle gate")]
+        self.assertIn("contents: write", job, msg="a job that pushes needs contents: write")
+
+
 class ParseTests(unittest.TestCase):
     def test_the_sweeps_json_parses_when_it_is_the_whole_stream(self):
         body = {"drift": [], "stale": []}
