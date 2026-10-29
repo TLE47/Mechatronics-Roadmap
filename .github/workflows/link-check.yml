@@ -28,13 +28,23 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Lint all 48 beginner lessons (enforce YAML ideas <= 2 & template rules)
+      # These three gates were re-run here on every pull request, and `ci.yml` already runs all of
+      # them on the same bytes: the lesson lint, the generated lesson data and `tests/test_exercises`
+      # (through its discovery run in `verify-and-test`). A second workflow grading one commit is a
+      # verdict that can only disagree with the first, and it was measured at 4-8 s of runner time
+      # per push (runs 40791783568, 40784308531, 40745056287, 40742627152). They stay on the weekly
+      # and dispatched run, where no `ci.yml` run exists to inherit them from - and the sweep below
+      # still runs on every event, because that verdict is this workflow's own.
+      - name: Lint all 48 beginner lessons (weekly and dispatched runs only - ci.yml owns it)
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: python3 scripts/lint_lessons.py
 
-      - name: Verify in-browser Python lesson data is in sync with markdown lessons
+      - name: Verify in-browser Python lesson data is in sync (weekly and dispatched runs only)
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: python3 scripts/generate_python_lessons_data.py --check
 
-      - name: Run all Python & host C++ exercise unit tests
+      - name: Run all Python and host C++ exercise unit tests (weekly and dispatched runs only)
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: python3 tests/test_exercises.py
 
       # A week-old verdict for a page that still serves is worth reusing; the script keeps served

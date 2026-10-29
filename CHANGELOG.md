@@ -16,6 +16,32 @@ flowchart LR
 
 ---
 
+## [2026-10-28] — Run 280: one verdict per push — the link sweep stops re-running ci.yml's gates
+
+**The request.** Implement the playbook's first candidate.
+
+**Done.** `link-check.yml`'s `verify-lessons-and-links` job re-ran `lint_lessons.py`, the lesson-data
+`--check` and `tests/test_exercises.py` on every push and pull request. `ci.yml`'s `verify-and-test`
+already runs all three on the same bytes (the exercise file through its `unittest discover`). The
+three steps now carry `if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'`,
+so they still grade the weekly and dispatched runs — where no `ci.yml` run exists to inherit them
+from — and a PR pays only for the URL sweep. The sweep itself is deliberately unguarded: it is the
+verdict this workflow exists to give.
+
+**Measured.** Four pull requests before the change: runs 40791783568 (12 s job), 40784308531 (63 s),
+40745056287 (18 s) and 40742627152 (15 s); the three duplicated steps were 4, 5, 8 and 4 s of those.
+On three of those four runs the workflow's wall clock was already its Arduino compile (22–34 s), so
+this buys runner time and one fewer verdict rather than minutes; the slow-sweep run stays at ~58 s.
+Stated that way on purpose.
+
+**Guard.** `test_the_link_sweep_does_not_re_grade_what_ci_owns` reads the workflow's steps as data,
+asserts each gate's own `if:` is exactly the weekly condition, that `ci.yml` still owns each command,
+and that the sweep has no `if:`. It checks the step's property line, not the whole block: the sweep
+names the same condition inside its script as the `--fail-on-rise` flag, and my first version read
+that flag as a guard. Non-vacuous — deleting the three lines fails it 3/3.
+
+---
+
 ## [2026-10-28] — Run 276: the workbench fits a phone
 
 **A phone was a narrow desktop, and the narrow part was the navigation.** The twelve-tab rail was a
