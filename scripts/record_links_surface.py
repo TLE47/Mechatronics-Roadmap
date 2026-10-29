@@ -18,10 +18,12 @@ This is the small program that closes the loop. It measures the one surface and 
   the rows. A code change must not be papered over by the weekly commit, and a count moving means the
   data changed the surface's *shape*, not just its height.
 
-The measurement has to happen **in the job that defines the file**, which is `ci.yml`'s audits job: that
-is where `docs/surface-snapshot.json`'s numbers come from, and a different job measured the same surface
-47 px lower on the same runner and the same commit (Run 283). That is why the step lives there and not
-where the data is written, and why the record is refused when `CI` is not set.
+The measurement happens **in the job that defines the file**, `ci.yml`'s audits job: that is where every
+number in `docs/surface-snapshot.json` comes from, so a data push has to be followed by the same ruler in
+the same run. The first version recorded from the sweep's own job, wrote 199 where the gate then read
+152, and blamed the job. The job was not the difference: `getBoundingClientRect` is viewport-relative,
+and a window scrolled 47 px down records every box 47 px higher — which the sweep now rules out by
+starting each read from the top of the page (`scripts/snapshot_surfaces.mjs`).
 
 Usage
     python3 scripts/record_links_surface.py              # measure; record if only the data moved the tab
@@ -162,9 +164,9 @@ def entry(options: argparse.Namespace) -> int:
                 print(f"  {row['surface']} · {row['field']} → {json.dumps(row.get('actual'))}")
         return 0
 
-    # The file records one job's measurement. A run anywhere else — another CI job, a laptop — writes
-    # its own chrome into it (47 px between two jobs on the same runner and commit, Run 283). The
-    # workflow sets `CI`, and this is the one place that can check it.
+    # Recording is a decision the gate then has to live with, so it is made where the gate reads the
+    # file and nowhere a passing suite makes it feel incidental. The workflow sets `CI`; this is the
+    # one place that can check it.
     if not options.allow_local and os.environ.get("CI", "").lower() not in {"true", "1"}:
         print(
             "[FAIL] refusing to record off CI: docs/surface-snapshot.json is the audits job's own "
@@ -221,7 +223,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--allow-local",
         action="store_true",
-        help="allow a record outside CI, where the platform's own text metrics are what gets written",
+        help="allow a record outside CI, where nothing has checked the numbers before they are written",
     )
     parser.add_argument("--check", action="store_true", help="exit 1 when a re-record is needed")
     parser.add_argument("--json", action="store_true", help="machine-readable summary on stdout")

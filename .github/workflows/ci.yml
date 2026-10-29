@@ -456,11 +456,13 @@ jobs:
       - name: "Check the settle gate: a count that lands after the pane goes quiet is waited for"
         run: npm run test:settle
 
-      # The weekly sweep's data commit moves one surface, and only this job can say where it moved to:
-      # `docs/surface-snapshot.json` records *this job's* measurement, and the workflow that writes the
-      # data measured the same tab 47 px lower on the same runner and the same commit (199 vs 152), so
-      # recording it there pushed numbers this check then rejected. The commit that moves the data is
-      # therefore followed here, before the check that would otherwise fail on it.
+      # The weekly sweep's data commit moves one surface, and this is the job the file belongs to:
+      # `docs/surface-snapshot.json` records *this job's* measurement, so the commit that moves the data
+      # is followed here, before the check that would otherwise fail on it. (The first version of this
+      # recorded from the weekly workflow instead and wrote numbers this check rejected, 199 against
+      # 152. The cause was neither job's chrome nor the platform: the sweep's boxes are
+      # `getBoundingClientRect`s, and the window it measured was scrolled 47 px down. It now scrolls to
+      # the top before every read, so where the page is parked cannot decide what is recorded.)
       #
       # `scripts/record_links_surface.py` records only when every difference is geometry on `tab-links`
       # — a count, a resolved style or another surface fails the step, because a data commit must not

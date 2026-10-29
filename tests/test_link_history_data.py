@@ -305,8 +305,8 @@ class SweepWorkflowTests(unittest.TestCase):
         self.assertNotIn(
             "docs/surface-snapshot.json",
             step,
-            "expected the snapshot to be re-recorded by the job that measures it (ci.yml's audits), not "
-            "by this one: this job measured tab-links 47 px lower than that job on the same runner",
+            "expected the snapshot to be re-recorded by the job it belongs to (ci.yml's audits), not "
+            "by this one: one commit, one row and its module, and the surface follows in the audits job",
         )
 
     def test_the_module_is_generated_before_the_diff_is_read(self):

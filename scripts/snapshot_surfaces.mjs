@@ -23,6 +23,13 @@
  * between two builds of the same browser on the same bundle, and one pixel is not a regression. Counts
  * and resolved styles are exact.
  *
+ * Every box is a `getBoundingClientRect`, so every box is measured **from the window**, not from the
+ * document: a page scrolled 47 px down records the whole surface 47 px higher. The full sweep clicks
+ * eleven tabs before it reaches the Links tab, which is enough to leave the window down there, and the
+ * same commit then read 152 in the gate and 199 in a sweep that opened that tab first (Run 283). Each
+ * read therefore scrolls to the top and waits for `scrollY === 0` before measuring, and a number in
+ * this file means the page as it is seen from the top.
+ *
  * Usage
  *     node scripts/snapshot_surfaces.mjs              # compare against docs/surface-snapshot.json
  *     node scripts/snapshot_surfaces.mjs --record     # write today's surfaces into that file
@@ -349,6 +356,20 @@ async function main() {
             `  note ${palette}/${surface} still loading after ${settled.waitedMs} ms (counts ${settled.counts})`
           );
         }
+        // Every number below is a `getBoundingClientRect`, which is measured from the *viewport*, so a
+        // page scrolled by 47 px records all of its boxes 47 px higher. That is not hypothetical: the
+        // sweep that walked eleven tabs before the Links tab left the window 47 px down, and the same
+        // commit then measured `tab-links` at 152 in the gate and 199 in a sweep that opened that tab
+        // first (Run 283, and a dispatched weekly run before it). Neither number was wrong about the
+        // page; one was wrong about the window. The read starts from the top, always.
+        await page.evaluate(() => {
+          window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        });
+        await page.waitForFunction(() => window.scrollY === 0 && window.scrollX === 0, undefined, {
+          timeout: 5000,
+        });
+        // One frame, so the rects measured are the ones painted at the top of the page.
+        await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
         const name = `${palette}/${surface}`;
         surfaces[name] = await page.evaluate(measure, SURFACE_COUNTS);
         if (PNG) {

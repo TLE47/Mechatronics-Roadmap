@@ -24,14 +24,21 @@ run tables, so the tab gets taller with no code change, and `docs/surface-snapsh
 heights. `a79e857` shipped the row and the module alone and `main` went red on `tab-links` (+87 px,
 counts and styles unchanged), which took a hand re-record to clear (Run 282).
 
-**Where it runs, and the mistake that moved it.** The first attempt put the re-record in
+**Where it runs, and the two wrong explanations it cost.** The first attempt put the re-record in
 `link-check.yml`, in the step that commits the row: build the workbench, install Chromium, record, one
 commit for all three files. Dispatched on the branch it worked — 20 box fields, one commit — and it wrote
-numbers the gate then rejects: `tab-links`' rail at y **199** where the audits job measures **152**, on
-the same runner and the same commit. That 47 px is chrome above the rail, and it is not the platform: the
-weekly job reproduced on Linux what a Mac reproduces at home, so Run 282's "macOS header wrap" was the
-wrong explanation. `docs/surface-snapshot.json` is one job's measurement, which means the re-record has to
-happen in that job.
+numbers the gate then rejected: `tab-links`' rail at y **199** where the audits job read **152** minutes
+later, same runner, same commit. I blamed the job, then the platform ("a macOS header wrap"), and both
+were wrong. The sweep's geometry is `getBoundingClientRect`, which is measured from the viewport: the
+full sweep clicks eleven tabs before it reaches the Links tab and the window is left **47 px down**, so
+every box reads 47 px higher. The same sweep that measured 199 records 152 if you scroll first, on either
+operating system. `scripts/snapshot_surfaces.mjs` now scrolls to the top before each read and waits for
+`scrollY === 0`, and the "disagreement between jobs" disappeared without either workflow changing.
+
+That flakiness was worth finding on its own: a gate whose numbers depend on where the page happens to be
+parked fails a correct commit as readily as a wrong one. The step still lives in the audits job, for the
+reason it has to — `docs/surface-snapshot.json` is that job's measurement, and a data push should be
+followed by the ruler the check will use.
 
 **The automation.** `ci.yml`'s audits job now follows the data before it checks it: on a push to `main`
 (or a dispatched run with `re-record-links-surface`), it runs
@@ -47,11 +54,12 @@ commit for the row and the module — with a comment saying where the surface fo
 The audits job pays that on the runs it is allowed in; the weekly workflow pays nothing new, and a pull
 request never runs it.
 
-**Guards.** [`tests/test_record_links_surface.py`](tests/test_record_links_surface.py) (18) pins the
+**Guards.** [`tests/test_record_links_surface.py`](tests/test_record_links_surface.py) (20) pins the
 decision and its home: geometry on that surface only, each refusal, the three flow outcomes, the dry run,
-the off-CI refusal, and the `ci.yml` step being main-only, staging one file, measuring before staging and
-sitting before the check it would otherwise fail on. `tests/test_link_history_data.py` (15) pins that the
-weekly commit stays two files. The snapshot's own `_why` is emitted by the recorder again — a hand-added
+the off-CI refusal, the `ci.yml` step being main-only, staging one file, measuring before staging and
+sitting before the check it would otherwise fail on — and the sweep resetting the scroll before it
+measures, which is the bug the first attempt surfaced. `tests/test_link_history_data.py` (15) pins that
+the weekly commit stays two files. The snapshot's own `_why` is emitted by the recorder again — a hand-added
 sentence in the file would have been dropped by the next record.
 
 ---
@@ -84,8 +92,9 @@ all four palettes — 87 px taller, with counts and resolved styles identical. I
 `a79e857`, the weekly sweep's data commit, regenerated `app/src/data/linkHistoryData.ts`, and the Links
 tab draws its host and run tables from it, so the tab grew with no code change and no re-record. `main`
 at that commit was red for the same reason and had never run. The baseline now carries the runner's own
-numbers for that surface's four box fields (a local `--record` would have baked a different chrome's
-47 px offset into a file the Linux runner reads — Run 283 shows it is the job's chrome, not the platform),
+numbers for that surface's four box fields (a local `--record` would have baked a machine's own state into
+a file the Linux runner reads; the 47 px behind that was a scrolled window, not the platform — see the
+top entry),
 and the snapshot's `_why` names the trap: a link history refresh is a re-record too.
 
 ---
@@ -109,8 +118,8 @@ baseline already is the fixed state.
 
 **Verified.** On `origin/main`'s bytes with the live queue of two issues, the old sweep failed
 `counts.links — expected 6, got 7`; with the answer in place all four palettes measure 6 with no
-count drift (the remaining local box delta is a macOS header wrap that `tab-arch` does not show and
-CI never sees). The branch's CI audits job is the after-run.
+count drift (the remaining local box delta was a scroll offset, corrected at the top entry: the sweep now
+measures from the top of the page). The branch's CI audits job is the after-run.
 
 **Guard.** `tests/test_snapshot_stub.py` asserts the route exists and precedes the first navigation,
 that the fixture is exactly one issue with the fields the panel reads and no `pull_request`, and that

@@ -101,10 +101,9 @@ jobs:
       # The row also moves the Links tab's height: that tab draws its host and run tables from the
       # module this step regenerates, so `docs/surface-snapshot.json` no longer describes the page
       # (`a79e857` turned `main` red on exactly that, +87 px with counts and styles unchanged). The
-      # re-record is not done here, because this is not the environment the baseline is defined in: a
-      # run of this step measured `tab-links` 47 px lower than `ci.yml`'s audits job does, same runner,
-      # same commit. The audits job owns the numbers, so it follows the data before it checks it
-      # (`scripts/record_links_surface.py`, a main-only step there).
+      # re-record is not done here: the snapshot is `ci.yml`'s audits job's own measurement, so that job
+      # follows the data before it checks it (`scripts/record_links_surface.py`, a main-only step
+      # there), and this commit stays one row and one module.
       - name: Record the sweep's counts and regenerate the link history (scheduled runs only)
         if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         run: |
