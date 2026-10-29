@@ -9,13 +9,6 @@ on:
   pull_request:
     branches: ["main", "master"]
   workflow_dispatch:
-    inputs:
-      # The proof path for the step that follows the weekly sweep's data: it only ever runs on `main`, so
-      # a dispatched run on a branch is how that step is exercised without waiting for a Monday.
-      re-record-links-surface:
-        description: "Re-record the Links tab on this branch with this job's own numbers, and push the result"
-        type: boolean
-        default: false
 
 # A newer push to the same pull request cancels the run it supersedes: that run's verdict is about a
 # commit nobody is waiting for. `main` is never cancelled, because its run is the one that publishes.
@@ -383,11 +376,6 @@ jobs:
     name: Audits — theme, axe, Lighthouse, the surface snapshot, label sizes
     needs: build-workbench
     runs-on: ubuntu-latest
-    # One step here may commit the snapshot it just re-recorded (a push that moved the Links tab's
-    # data). Everything else in this job only reads; the workflow's `contents: read` is the default and
-    # a job-level block replaces it, so `write` is stated rather than inherited.
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout repository
@@ -455,31 +443,6 @@ jobs:
 
       - name: "Check the settle gate: a count that lands after the pane goes quiet is waited for"
         run: npm run test:settle
-
-      # The weekly sweep's data commit moves one surface, and this is the job the file belongs to:
-      # `docs/surface-snapshot.json` records *this job's* measurement, so the commit that moves the data
-      # is followed here, before the check that would otherwise fail on it. (The first version of this
-      # recorded from the weekly workflow instead and wrote numbers this check rejected, 199 against
-      # 152. The cause was neither job's chrome nor the platform: the sweep's boxes are
-      # `getBoundingClientRect`s, and the window it measured was scrolled 47 px down. It now scrolls to
-      # the top before every read, so where the page is parked cannot decide what is recorded.)
-      #
-      # `scripts/record_links_surface.py` records only when every difference is geometry on `tab-links`
-      # — a count, a resolved style or another surface fails the step, because a data commit must not
-      # paper over a code change. It never runs for a pull request: there the diff is the author's.
-      - name: "Follow the weekly sweep's data: re-record the Links tab it moved"
-        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.re-record-links-surface)
-        run: |
-          python3 scripts/record_links_surface.py
-          if git diff --quiet -- docs/surface-snapshot.json; then
-            echo "The snapshot already describes the page."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/surface-snapshot.json
-          git commit -m "Re-record the Links tab the sweep's data moved"
-          git push
 
       - name: "Check the surface snapshot: every tab in every palette is still shaped the same"
         run: npm run check:snapshot

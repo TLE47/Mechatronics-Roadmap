@@ -1,23 +1,26 @@
-"""The weekly data commit must carry the surface snapshot it moves — and nothing else.
+"""The weekly data commit must carry the surface snapshot it moves — in the same commit.
 
 `a79e857` appended a history row, regenerated `app/src/data/linkHistoryData.ts` and committed both,
 which is the contract `tests/test_link_history_data.py` pins. What it also did, silently, was make the
-Links tab 87 px taller: that tab draws its host and run tables from the module, so the committed
-`docs/surface-snapshot.json` no longer described the page, and `main` went red on a commit nobody had
-made by hand.
+Links tab 87 px taller: that tab draws its host and run tables from the module, so `docs/surface-snapshot.json`
+no longer described the page, and `main` went red on a commit nobody had made by hand. The push that
+commit was made with could not have caught it either: it used `GITHUB_TOKEN`, and an event that token
+triggers does not start another workflow run, so `ci.yml` never graded it.
 
-`scripts/record_links_surface.py` closes that loop, and its decision is the part worth pinning: a data
-refresh may move **boxes** on **that one surface**, and nothing else. A count moving, a resolved style
-moving, or another surface moving is a code change, and recording it in the weekly job would hide it.
+`scripts/record_links_surface.py` closes that loop inside the same job: measure the one surface, record
+it only if nothing but geometry on it moved, and let the one commit carry all three files. Its decision is
+the part worth pinning — a data refresh may move **boxes** on **that one surface**, and nothing else. A
+count moving, a resolved style moving, or another surface moving is a code change, and recording it in
+the weekly job would hide it.
 
 The second thing this file pins is the reason the first version of that step wrote numbers the gate
-rejected. It recorded from the weekly job and read `tab-links` at 199 where `ci.yml`'s audits job read
-152; the guess was a job's chrome, and it was wrong. `getBoundingClientRect` is viewport-relative and
-that sweep had clicked eleven tabs, leaving the window 47 px down. The sweep now starts every read from
-the top of the page, and the last class here is that contract.
+rejected. It recorded from `ci.yml`'s audits job instead and read `tab-links` at 199 where the gate read
+152; the guess was a job's chrome, then the platform, and both were wrong. `getBoundingClientRect` is
+viewport-relative and the sweep had clicked eleven tabs, leaving the window 47 px down. The sweep now
+starts every read from the top of the page, and the last class here is that contract.
 
 The record path is checked against a fake sweep — this file must never write the real snapshot, whose
-numbers belong to the Linux runner.
+numbers belong to the runner and to a job that has a data row to justify them.
 """
 
 import argparse
@@ -43,8 +46,8 @@ def rows(*surfaces, part="boxes", field="main"):
             "surface": surface,
             "part": part,
             "field": field,
-            "expected": [196, 152, 1244, 2269],
-            "actual": [196, 152, 1244, 2356],
+            "expected": [196, 199, 1244, 2269],
+            "actual": [196, 199, 1244, 2356],
         }
         for surface in surfaces
     ]
@@ -93,77 +96,94 @@ class RefusalTests(unittest.TestCase):
 
 
 class WorkflowTests(unittest.TestCase):
-    """Where the re-record runs, and what it may commit when it gets there.
+    """The record lives in the weekly job, before the staging, in the same commit as the data.
 
-    `docs/surface-snapshot.json` is the audits job's own measurement, so the step that follows the
-    data lives in that job, on a push to `main` (or a dispatched run, which is how it is exercised off
-    `main`), and before the check it would otherwise fail on.
+    It cannot live in `ci.yml` on the push that follows: the weekly job pushes with `GITHUB_TOKEN`, and
+    a push made with that token does not start another workflow run. Dispatching one instead would put a
+    red `main` between the two commits for no reason.
     """
 
-    WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
+    WORKFLOW = ROOT / ".github" / "workflows" / "link-check.yml"
+    CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
     STEP_PREFIX = "      - name: "
 
-    def workflow_text(self) -> str:
+    def record_step(self) -> str:
         self.assertTrue(
-            self.WORKFLOW.exists(), f"expected {self.WORKFLOW}; a moved workflow would stop this check"
+            self.WORKFLOW.exists(), f"expected the weekly sweep at {self.WORKFLOW}; a moved file hides this"
         )
-        return self.WORKFLOW.read_text(encoding="utf-8")
-
-    def step_body(self) -> str:
-        lines = self.workflow_text().splitlines()
+        lines = self.WORKFLOW.read_text(encoding="utf-8").splitlines()
         start = next(
-            (i for i, line in enumerate(lines) if line.startswith(self.STEP_PREFIX) and "re-record the links tab" in line.lower()),
+            (i for i, line in enumerate(lines) if line.startswith(self.STEP_PREFIX) and "Record the sweep" in line),
             None,
         )
-        self.assertIsNotNone(start, "expected a step that re-records the Links tab, and it is missing")
+        self.assertIsNotNone(start, "expected a step that records the sweep's counts, and it is missing")
         end = next(
             (i for i, line in enumerate(lines[start + 1 :], start + 1) if line.startswith(self.STEP_PREFIX)),
             len(lines),
         )
         return "\n".join(lines[start:end])
 
-    def test_the_step_runs_where_the_baseline_is_measured(self):
-        text = self.workflow_text()
-        step = self.step_body()
-        self.assertIn(
-            "refs/heads/main", step, msg="expected the step to be main-only, or a PR would record its own drift"
-        )
-        self.assertIn(
-            "re-record-links-surface",
-            step,
-            msg="expected a dispatch input so the step can be exercised off main",
-        )
-        self.assertLess(
-            text.index("re-record the Links tab"),
-            text.index("Check the surface snapshot"),
-            msg="expected the re-record before the check that would fail on it",
+    def test_the_pair_and_the_snapshot_land_in_one_commit(self):
+        step = self.record_step()
+        add = next((line for line in step.splitlines() if "git add" in line), "")
+        self.assertTrue(add, msg="expected the record step to stage the files it committed")
+        for path in (
+            "docs/link-check-history.jsonl",
+            "app/src/data/linkHistoryData.ts",
+            "docs/surface-snapshot.json",
+        ):
+            self.assertIn(
+                path, add, msg=f"expected {path} to ride in the same commit as the row that moved it"
+            )
+        self.assertEqual(
+            step.count("git commit"), 1, msg="expected one commit for the three files, not one per file"
         )
 
-    def test_the_step_stages_only_the_snapshot(self):
-        step = self.step_body()
-        add = next((line for line in step.splitlines() if "git add" in line), "")
-        self.assertIn(
-            "docs/surface-snapshot.json", add, msg="expected the step to stage the snapshot it re-recorded"
-        )
-        self.assertNotIn(
-            "linkHistoryData",
-            add,
-            msg="expected the data files to be the weekly job's commit, so this one stages one file",
-        )
-        self.assertEqual(
-            step.count("git commit"), 1, msg="expected one commit for one file, not a commit per step"
-        )
+    def test_the_record_runs_after_a_row_exists_and_before_staging(self):
+        step = self.record_step()
+        generate = step.find("python3 scripts/generate_link_history_data.py")
+        gate = step.find("git diff --quiet")
+        record = step.find("python3 scripts/record_links_surface.py")
+        add = step.find("git add")
+        self.assertGreaterEqual(generate, 0, msg="expected the step to regenerate the module first")
+        self.assertLess(gate, record, msg="expected no record on a run that wrote no row: the early exit is before it")
         self.assertLess(
-            step.find("python3 scripts/record_links_surface.py"),
-            step.find("git add"),
+            record,
+            add,
             msg="expected the measurement before staging, or the commit carries the old numbers",
         )
 
-    def test_the_job_may_push_the_commit_it_makes(self):
-        text = self.workflow_text()
-        job = text[text.index("  audit-suites:") : text.index("Check the settle gate")]
+    def test_the_workbench_is_built_for_the_record(self):
+        step = self.record_step()
         self.assertIn(
-            "contents: write", job, msg="expected the pushing job to hold contents: write, or its push fails"
+            "npm run build", step, msg="expected a build before the record, or the sweep measures nothing"
+        )
+        self.assertIn(
+            "install chromium",
+            step,
+            msg="expected a browser for the sweep, since the weekly job does not otherwise need one",
+        )
+        workflow = self.WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn(
+            "actions/setup-node",
+            workflow,
+            msg="expected Node to be set up, or npm ci and the build fail on the runner",
+        )
+
+    def test_the_gate_job_no_longer_claims_the_record(self):
+        text = self.CI_WORKFLOW.read_text(encoding="utf-8")
+        self.assertNotIn(
+            "record_links_surface.py",
+            text,
+            msg="expected one owner for the record: the job that writes the data, not the gate job",
+        )
+
+    def test_the_job_may_push_the_commit_it_makes(self):
+        workflow = self.WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn(
+            "contents: write",
+            workflow[: workflow.index("jobs:")],
+            msg="expected write permission at the workflow level, or the push fails silently",
         )
 
 
@@ -259,7 +279,6 @@ class FlowTests(unittest.TestCase):
         self.assertEqual(
             status, 0, msg="expected a still surface to exit 0 so the data commit can go on its own"
         )
-        record.assert_not_called()
         self.assertFalse(
             record.called, msg="expected no re-record when the sweep found nothing to record"
         )

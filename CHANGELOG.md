@@ -24,42 +24,46 @@ run tables, so the tab gets taller with no code change, and `docs/surface-snapsh
 heights. `a79e857` shipped the row and the module alone and `main` went red on `tab-links` (+87 px,
 counts and styles unchanged), which took a hand re-record to clear (Run 282).
 
-**Where it runs, and the two wrong explanations it cost.** The first attempt put the re-record in
-`link-check.yml`, in the step that commits the row: build the workbench, install Chromium, record, one
-commit for all three files. Dispatched on the branch it worked — 20 box fields, one commit — and it wrote
-numbers the gate then rejected: `tab-links`' rail at y **199** where the audits job read **152** minutes
-later, same runner, same commit. I blamed the job, then the platform ("a macOS header wrap"), and both
-were wrong. The sweep's geometry is `getBoundingClientRect`, which is measured from the viewport: the
-full sweep clicks eleven tabs before it reaches the Links tab and the window is left **47 px down**, so
-every box reads 47 px higher. The same sweep that measured 199 records 152 if you scroll first, on either
-operating system. `scripts/snapshot_surfaces.mjs` now scrolls to the top before each read and waits for
-`scrollY === 0`, and the "disagreement between jobs" disappeared without either workflow changing.
+**Where it runs, and the two wrong explanations it cost.** The re-record lives in `link-check.yml`, in the
+step that commits the row: build the workbench, install Chromium, measure, and one commit for all three
+files. Two detours were needed to get there. The first put the record in `ci.yml`'s audits job instead,
+on the theory that a file belongs to the job that checks it; dispatched on a branch it recorded 20 box
+fields and the gate then rejected them — `tab-links`' rail at y **199** where the audits job read **152**
+minutes later, same runner, same commit. I blamed the job, then the platform ("a macOS header wrap"),
+and both were wrong: the sweep's geometry is `getBoundingClientRect`, measured from the viewport, and the
+full sweep clicks eleven tabs before it reaches the Links tab, leaving the window **47 px down** — so
+every box reads 47 px higher. Scroll first and the same sweep reads 152 on either operating system.
 
-That flakiness was worth finding on its own: a gate whose numbers depend on where the page happens to be
-parked fails a correct commit as readily as a wrong one. The step still lives in the audits job, for the
-reason it has to — `docs/surface-snapshot.json` is that job's measurement, and a data push should be
-followed by the ruler the check will use.
+That scroll dependence was a bug in the gate, not just in the plan: a number that moves with where the
+page happens to be parked fails a correct commit as readily as a wrong one. `scripts/snapshot_surfaces.mjs`
+now scrolls to the top before every read and waits for `scrollY === 0`, and the "disagreement between
+jobs" vanished without either workflow changing.
 
-**The automation.** `ci.yml`'s audits job now follows the data before it checks it: on a push to `main`
-(or a dispatched run with `re-record-links-surface`), it runs
-[`scripts/record_links_surface.py`](scripts/record_links_surface.py) and commits
-`docs/surface-snapshot.json` when the file moved. The script measures `tab-links` in all four palettes
-and records only when every difference is **geometry on that surface**; a count moving, a resolved style
-moving, another surface moving, or a surface the sweep no longer produces fails the step with the rows,
-because a data commit must not paper over a code change. It re-runs the check after recording instead of
-trusting the record's exit code, and refuses to record outside CI. The weekly job keeps its old job — one
-commit for the row and the module — with a comment saying where the surface follows.
+The second detour is why the record cannot be left to the gate's job at all, which is the fact that
+settled the design: **the push that carries the data is made with `GITHUB_TOKEN`, and an event that token
+triggers does not start another workflow run.** A follow-the-data step in `ci.yml` would never fire for
+the commit it exists for; dispatching that run from the weekly job instead would put a red `main` between
+two commits and lean on a second run to clear it. So the job that writes the data measures the surface it
+moved, in the same commit.
 
-**Cost.** The recorder is one four-palette sweep of one surface: 10 s on a warm build, measured locally.
-The audits job pays that on the runs it is allowed in; the weekly workflow pays nothing new, and a pull
-request never runs it.
+**The automation.** `link-check.yml`'s record step runs
+[`scripts/record_links_surface.py`](scripts/record_links_surface.py) after the row and the module are
+written and before anything is staged. The script measures `tab-links` in all four palettes and records
+only when every difference is **geometry on that surface**; a count moving, a resolved style moving,
+another surface moving, or a surface the sweep no longer produces fails the step with the rows, because a
+data commit must not paper over a code change. It re-runs the check after recording instead of trusting
+the record's exit code, and refuses to run outside CI, where a "record" is an acceptance nobody asked for. One commit carries the row, the module and the snapshot.
 
-**Guards.** [`tests/test_record_links_surface.py`](tests/test_record_links_surface.py) (20) pins the
+**Cost.** The recorder is one four-palette sweep of one surface: 10 s on a warm build, measured locally,
+on top of the `npm ci`, `npm run build` and chromium install the weekly job now does only on the runs it
+can write (the browser comes from a cache keyed on the lockfile). A pull request never pays any of it.
+
+**Guards.** [`tests/test_record_links_surface.py`](tests/test_record_links_surface.py) (22) pins the
 decision and its home: geometry on that surface only, each refusal, the three flow outcomes, the dry run,
-the off-CI refusal, the `ci.yml` step being main-only, staging one file, measuring before staging and
-sitting before the check it would otherwise fail on — and the sweep resetting the scroll before it
-measures, which is the bug the first attempt surfaced. `tests/test_link_history_data.py` (15) pins that
-the weekly commit stays two files. The snapshot's own `_why` is emitted by the recorder again — a hand-added
+the off-CI refusal, the record sitting after the row and before the staging in one commit, the build and
+browser it needs, the gate job no longer claiming it — and the sweep resetting the scroll before it
+measures, which is the bug the first detour surfaced. `tests/test_link_history_data.py` (14) pins that
+the weekly commit carries three files. The snapshot's own `_why` is emitted by the recorder again — a hand-added
 sentence in the file would have been dropped by the next record.
 
 ---

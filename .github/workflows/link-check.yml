@@ -8,9 +8,9 @@ on:
     - cron: "0 6 * * 1"
   workflow_dispatch:
 
-# Only the scheduled/dispatch run pushes (one history row and the dashboard module regenerated from
-# it); the scope is declared here because the default token is read-only in some repository settings
-# and the push step would fail silently there.
+# Only the scheduled/dispatch run pushes (one history row, the dashboard module regenerated from it,
+# and the one surface snapshot that module moves); the scope is declared here because the default
+# token is read-only in some repository settings and the push step would fail silently there.
 permissions:
   contents: write
   # The rise gate files an issue naming the URLs a scheduled run could not verify.
@@ -27,6 +27,22 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      # The record step below re-records the Links tab, which means building the workbench the same
+      # way `ci.yml` does. Node is set up for every event (it is free when the step that uses it is
+      # skipped); the browser cache is only restored on the runs that can write.
+      - name: Set up Node 22 (the re-record builds the workbench)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Restore the Playwright browser cache (runs that can write only)
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       # These three gates were re-run here on every pull request, and `ci.yml` already runs all of
       # them on the same bytes: the lesson lint, the generated lesson data and `tests/test_exercises`
@@ -98,23 +114,40 @@ jobs:
       # runs before the diff check so a row that somehow wrote nothing still repairs a stale module,
       # and a failing generator fails this step rather than pushing half a record.
       #
-      # The row also moves the Links tab's height: that tab draws its host and run tables from the
-      # module this step regenerates, so `docs/surface-snapshot.json` no longer describes the page
-      # (`a79e857` turned `main` red on exactly that, +87 px with counts and styles unchanged). The
-      # re-record is not done here: the snapshot is `ci.yml`'s audits job's own measurement, so that job
-      # follows the data before it checks it (`scripts/record_links_surface.py`, a main-only step
-      # there), and this commit stays one row and one module.
+      # The surface snapshot rides in the same commit, for the same reason one step further out. The
+      # Links tab draws its host and run tables from the module this step regenerates, so a new row
+      # changes the tab's height with no code change — and `ci.yml` compares that height against
+      # `docs/surface-snapshot.json`. `a79e857` committed the row and the module alone and turned `main`
+      # red on `tab-links` (+87 px, counts and styles unchanged). The re-record goes through
+      # `scripts/record_links_surface.py`, which records only geometry on that one surface and fails the
+      # step if a count, a resolved style or another surface moved — a data commit must not paper over
+      # a code change.
+      #
+      # Why not leave the record to `ci.yml`'s audits job, which owns the gate? Because this push is
+      # made with `GITHUB_TOKEN`, and an event it triggers does not start another workflow run: a
+      # follow-the-data step there would never fire, and dispatching that run from here instead would
+      # leave `main` red until a second run landed. One commit, one job, one verdict.
+      #
+      # The sweep is scroll-independent (`scripts/snapshot_surfaces.mjs` reads from the top of the
+      # page), so this runner's numbers are the gate's numbers. The first attempt at this recorded from
+      # the audits job and the two read 199 and 152 for one commit; the difference was a window left
+      # 47 px down by the tab clicks before it, not the job and not the platform.
       - name: Record the sweep's counts and regenerate the link history (scheduled runs only)
         if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        timeout-minutes: 20
         run: |
           python3 scripts/generate_link_history_data.py
           if git diff --quiet -- docs/link-check-history.jsonl app/src/data/linkHistoryData.ts; then
             echo "No new history row."
             exit 0
           fi
+          npm ci --no-audit --no-fund
+          npm run build
+          npx playwright-core install chromium
+          python3 scripts/record_links_surface.py
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/link-check-history.jsonl app/src/data/linkHistoryData.ts
+          git add docs/link-check-history.jsonl app/src/data/linkHistoryData.ts docs/surface-snapshot.json
           git commit -m "Record the link sweep's counts and regenerate its history data"
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Re-record the one surface the sweep's own data moves
-(`scripts/record_links_surface.py`, run by `.github/workflows/link-check.yml`)
+(`scripts/record_links_surface.py`, run by `.github/workflows/link-check.yml` in the step that
+commits the data)
 
 The weekly sweep appends a row to `docs/link-check-history.jsonl` and regenerates
 `app/src/data/linkHistoryData.ts`. The Links tab draws its host and run tables from that module, so the
@@ -18,12 +19,16 @@ This is the small program that closes the loop. It measures the one surface and 
   the rows. A code change must not be papered over by the weekly commit, and a count moving means the
   data changed the surface's *shape*, not just its height.
 
-The measurement happens **in the job that defines the file**, `ci.yml`'s audits job: that is where every
-number in `docs/surface-snapshot.json` comes from, so a data push has to be followed by the same ruler in
-the same run. The first version recorded from the sweep's own job, wrote 199 where the gate then read
-152, and blamed the job. The job was not the difference: `getBoundingClientRect` is viewport-relative,
-and a window scrolled 47 px down records every box 47 px higher — which the sweep now rules out by
-starting each read from the top of the page (`scripts/snapshot_surfaces.mjs`).
+It runs **in the job that writes the data**, before that job stages anything, so the row, the module and
+the snapshot land in one commit and `main` never has a moment where the gate is red. It cannot be left to
+`ci.yml`'s audits job on the push that follows: that push is made with `GITHUB_TOKEN`, and an event it
+triggers does not start another workflow run, so a step waiting there would never fire.
+
+The first version of this did run from that other job, and wrote 199 where the gate then read 152. The
+difference was not the job and not the platform: `getBoundingClientRect` is viewport-relative, and a
+window scrolled 47 px down records every box 47 px higher. The sweep now starts each read from the top of
+the page (`scripts/snapshot_surfaces.mjs`), so the same commit reads the same numbers in every job —
+which is why one job can write the file the other checks.
 
 Usage
     python3 scripts/record_links_surface.py              # measure; record if only the data moved the tab
@@ -31,8 +36,8 @@ Usage
     python3 scripts/record_links_surface.py --json       # machine-readable, stdout only
     python3 scripts/record_links_surface.py --check      # a gate: fail if a re-record is needed
 
-The record itself is refused outside CI (`--allow-local` overrides): the numbers belong to the job that
-checks them, and a run elsewhere writes its own chrome into the file.
+The record is refused outside CI (`--allow-local` overrides it): it accepts a drift on the file's behalf,
+so it belongs in the job whose commit is the record, not in any run that happens to have a browser.
 
 Exit-code family: typed
     0  nothing moved, or the surface was re-recorded and now checks clean
@@ -164,13 +169,13 @@ def entry(options: argparse.Namespace) -> int:
                 print(f"  {row['surface']} · {row['field']} → {json.dumps(row.get('actual'))}")
         return 0
 
-    # Recording is a decision the gate then has to live with, so it is made where the gate reads the
-    # file and nowhere a passing suite makes it feel incidental. The workflow sets `CI`; this is the
-    # one place that can check it.
+    # Recording is a decision the gate then has to live with, so it is made in the job that commits it
+    # and nowhere a passing suite makes it feel incidental. The workflow sets `CI`; this is the one place
+    # that can check it.
     if not options.allow_local and os.environ.get("CI", "").lower() not in {"true", "1"}:
         print(
-            "[FAIL] refusing to record off CI: docs/surface-snapshot.json is the audits job's own "
-            "measurement, and a run anywhere else writes a different chrome into it. Re-record from that "
+            "[FAIL] refusing to record off CI: this accepts a drift in docs/surface-snapshot.json on the "
+            "file's behalf, and the job that commits the data is where that belongs. Re-record from that "
             "job, or pass --allow-local if that is genuinely what you want.",
             file=sys.stderr,
         )

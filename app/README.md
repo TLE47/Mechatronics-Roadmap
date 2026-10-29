@@ -707,12 +707,13 @@ links on one run and 4 on the next. `npm run test:settle` drives that gate again
 arrives late, with the old silence-only gate as the control it has to beat.
 
 One surface's geometry follows **data**, not code: the Links tab renders
-[`app/src/data/linkHistoryData.ts`](src/data/linkHistoryData.ts), which the weekly sweep regenerates. When
-a push moves that data, `ci.yml`'s audits job re-records the tab before it checks it —
-`scripts/record_links_surface.py`, geometry only, refusing a count, a style or another surface — because
-the file is that job's own measurement. Committing the row alone is what turned `main` red once
-(`a79e857`). The sweep also starts every read from the top of the page: its boxes are viewport-relative,
-and a window left 47 px down by the tab clicks before it made two runs of one commit disagree.
+[`app/src/data/linkHistoryData.ts`](src/data/linkHistoryData.ts), which the weekly sweep regenerates. The
+step that commits that module re-records the tab in the same commit — `scripts/record_links_surface.py`,
+geometry only, refusing a count, a style or another surface — because the push it makes with
+`GITHUB_TOKEN` starts no further workflow run, so no later gate job would ever see the drift. Committing
+the row alone is what turned `main` red once (`a79e857`). The sweep also starts every read from the top of
+the page: its boxes are viewport-relative, and a window left 47 px down by the tab clicks before it made
+two runs of one commit disagree.
 
 ### One chunk became an entry, six vendors and twelve tabs
 

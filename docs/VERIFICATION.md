@@ -502,14 +502,15 @@ its nodes and the six counts the snapshot records, holds those counts still for 
 `*-loading` panel as unfinished — a request in flight moves nothing at all, so silence alone once let
 `paper/tab-links` record 5 links on one run and 4 on the next. One surface's geometry follows **data**
 rather than code: the Links tab renders `app/src/data/linkHistoryData.ts`, which the weekly sweep
-regenerates. When a push moves that data, the audits job in `ci.yml` re-records that one surface before it
-checks it (`python3 scripts/record_links_surface.py` — geometry only, and it refuses a count, a style or
-another surface), because the file is that job's own measurement. The sweep also scrolls to the top of the
-page before every read (`window.scrollTo` then `scrollY === 0`): its boxes are viewport-relative, and a
-window left 47 px down by the eleven tab clicks before the Links tab recorded that whole tab 47 px high —
-which is what made two runs of the same commit disagree. Before the data-follow step, the row and the
-module shipped alone and turned `main` red on the Links tab (`a79e857`, +87 px, counts and styles
-unchanged). `npm run test:settle` drives the settle gate
+regenerates. The step that commits that module therefore re-records the one surface it moves, in the same
+commit (`python3 scripts/record_links_surface.py` — geometry only, and it refuses a count, a style or
+another surface). It has to be that job: the push is made with `GITHUB_TOKEN`, and an event that token
+triggers starts no workflow run, so a gate job waiting on the push would never grade it. Before the
+recorder, the row and the module shipped alone and turned `main` red on the Links tab (`a79e857`, +87 px,
+counts and styles unchanged). The sweep also scrolls to the top of the page before every read
+(`window.scrollTo` then `scrollY === 0`): its boxes are viewport-relative, and a window left 47 px down by
+the eleven tab clicks before the Links tab recorded that whole tab 47 px high — which is what made two
+runs of the same commit disagree. `npm run test:settle` drives the settle gate
 against pages whose count arrives late, with a copy of the old silence-only gate as the failing control,
 and with a count that carries no loading marker; a page that never finishes must be measured anyway at
 the bound rather than hanging the sweep. Measured on the real page with a GitHub answer 1.2 s late, the

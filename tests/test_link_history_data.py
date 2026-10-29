@@ -256,17 +256,18 @@ class LinkHistoryGeneratorTests(unittest.TestCase):
 
 
 class SweepWorkflowTests(unittest.TestCase):
-    """The commit that records a history row must carry the module generated from it.
+    """The commit that records a history row must carry everything generated from it.
 
     `ci.yml` runs the generator with `--check`, so the two files disagreeing is a red build. The weekly
     sweep is the only writer of the row, so it is the only place that can commit them apart: a step
     that staged `docs/link-check-history.jsonl` alone turned `main` red (`be434a0`) and every PR with
-    it. These assertions are that step's contract, not its wording: generate, then stage both, then
-    one commit.
+    it. These assertions are that step's contract, not its wording: generate, then stage all three,
+    then one commit.
 
-    The row also moves a *surface* (the Links tab renders that module), and that third file is
-    deliberately **not** here: `docs/surface-snapshot.json` records `ci.yml`'s own measurement, so the
-    audits job re-records it before it checks it (`tests/test_record_links_surface.py` pins that step).
+    The third file is the *surface* the row moves — the Links tab renders that module, so its height in
+    `docs/surface-snapshot.json` follows the data (`a79e857`, +87 px). It rides in the same commit
+    because the push that follows cannot be graded: it is made with `GITHUB_TOKEN`, and an event that
+    token triggers does not start another workflow run, so no later job would ever see the drift.
     """
 
     WORKFLOW = ROOT / ".github" / "workflows" / "link-check.yml"
@@ -289,25 +290,22 @@ class SweepWorkflowTests(unittest.TestCase):
         )
         return "\n".join(lines[start:end])
 
-    def test_the_row_and_the_module_land_in_one_commit(self):
+    def test_the_row_the_module_and_the_snapshot_land_in_one_commit(self):
         step = self.record_step()
         self.assertEqual(
             step.count("git commit"),
             1,
-            "expected one commit for the pair; two commits leave main red in between",
+            "expected one commit for the row and everything generated from it, or main is red between",
         )
         add = next((line for line in step.splitlines() if "git add" in line), "")
-        for path in ("docs/link-check-history.jsonl", "app/src/data/linkHistoryData.ts"):
-            self.assertIn(path, add, f"expected the record step to stage {path} in the same commit")
-
-    def test_the_snapshot_is_not_committed_from_this_job(self):
-        step = self.record_step()
-        self.assertNotIn(
+        for path in (
+            "docs/link-check-history.jsonl",
+            "app/src/data/linkHistoryData.ts",
             "docs/surface-snapshot.json",
-            step,
-            "expected the snapshot to be re-recorded by the job it belongs to (ci.yml's audits), not "
-            "by this one: one commit, one row and its module, and the surface follows in the audits job",
-        )
+        ):
+            self.assertIn(
+                path, add, f"expected the record step to stage {path} in the same commit as the row"
+            )
 
     def test_the_module_is_generated_before_the_diff_is_read(self):
         step = self.record_step()
