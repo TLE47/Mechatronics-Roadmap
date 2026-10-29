@@ -758,6 +758,22 @@ body {
   }
 }
 
+/*
+ * The account chip is the disc alone on a touch screen (`components/Header.tsx`).
+ *
+ * Below `sm` the utilities already hide the name and the chevron; the reason this rule exists is the
+ * phone held sideways — 844 x 390 is wider than `sm` and it is still a phone, so a width rule would
+ * hand it back the 78 px of email the disc exists to save. Unlayered on purpose: it has to outrank
+ * the `sm:` utilities whatever their specificity, the same trade the floors below document. The name
+ * stays in the button's `aria-label`, and every control here is a label for a screen reader.
+ */
+@media (pointer: coarse) {
+  .account-name,
+  .account-chevron {
+    display: none;
+  }
+}
+
 /* ============================================================================
    Phone floors — one place, because every tab uses the same `.btn`, `.chip`
    and native input. A coarse pointer is the rule, not a viewport width: a
