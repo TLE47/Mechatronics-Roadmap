@@ -16,6 +16,20 @@ flowchart LR
 
 ---
 
+## [2026-10-29] — The phone's account chip is an avatar, not an address
+
+**The gap.** The header chip prints the signed-in email, and at 390 px an address is wider than the
+swipeable action strip beside it: the chip either pushed the tray's last control off screen or wrapped
+the two-row header past its 112 px budget.
+
+**The fix.** Below `md` the chip is the avatar disc alone — a 32 px circle — with the email (or
+"Sign in") kept as screen-reader-only text so the button still has a name, and the chevron hidden
+with it. From `md` up the words and chevron return unchanged. `scripts/e2e_mobile.mjs` now measures
+the chip at 390 px (square, at most 40 px wide, still named "Sign in") and at 768/1024 (wider than
+the avatar), so a regression lands in the phone gate instead of on someone's phone.
+
+---
+
 ## [2026-10-29] — Eight tapes, six categories: the music is a picker
 
 **The gap.** Sound v2 shipped two beds and a drone, chosen by a two-way switch. That is enough to

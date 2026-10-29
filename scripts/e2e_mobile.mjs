@@ -209,6 +209,18 @@ async function main() {
         published === `${Math.round(header.height)}px`,
         `--header-h is ${published || 'unset'}, but the header is ${Math.round(header.height)}px tall`
       );
+      // The account chip is the one header control that grows with the learner's identity: an email
+      // is longer than the tray it sits beside. Below md it is the avatar alone — a 32 px disc, not a
+      // 90 px pill — and the words stay in the accessible name for a screen reader.
+      const account = await box(page, 'btn-account');
+      check(
+        account.width <= 40 && Math.abs(account.width - account.height) <= 2,
+        `the account chip is ${Math.round(account.width)}x${Math.round(account.height)} at 390 px; the avatar must stand alone`
+      );
+      check(
+        (await page.getByRole('button', { name: 'Sign in', exact: true }).count()) >= 1,
+        'the avatar-only account chip lost its accessible name'
+      );
       await assertNoSidewaysScroll(page, 'workbench at 390');
       ok('one navigation row, a measured header and no sideways scroll');
 
@@ -427,6 +439,11 @@ async function main() {
       // whole toolbar, and a cold dev server served the swap late enough to fail this once. Waiting
       // for the faces is waiting for the layout the learner sees.
       await page.evaluate(() => document.fonts.ready);
+      const account = await box(page, 'btn-account');
+      check(
+        account.width > 40,
+        `at ${size.width}px the account chip hides its words (${Math.round(account.width)}px wide)`
+      );
       check(
         !(await page.getByTestId('phone-tab-nav').isVisible()),
         `the phone picker must be gone at ${size.width}px`

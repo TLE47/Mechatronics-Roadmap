@@ -24,7 +24,8 @@ flowchart LR
    them. The header measures itself into `--header-h` (`components/Header.tsx`), because the picker is
    a second sticky row and a guessed offset puts it under the header the moment the action tray wraps.
    Two rows are the phone header's budget — brand, then the swipeable action strip — and 112 px is the
-   gate's ceiling.
+   gate's ceiling. The account chip is the avatar alone below `md`: an email is longer than the strip
+   beside it, and the words stay as its accessible name so the disc is not an unnamed button.
 2. **The lesson list has a door at every width.** The 224 px chooser rail needs `lg` and the phone's
    Lessons strip needs `md` to be absent, so between them the brief carries a Lessons button that
    opens the same sheet (`data-testid="btn-lessons-tablet"`). Without it a tablet could change tabs
