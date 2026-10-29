@@ -51,6 +51,9 @@ GATES: list[tuple[str, list[str], bool]] = [
     ("modules", ["scripts/validate_modules.py"], False),
     ("lessons", ["scripts/lint_lessons.py"], False),
     ("ramp_lessons", ["scripts/check_ramp_lessons.py"], False),
+    # A `TODO n:` that writes the expression can be answered by retyping it, so every marker has to
+    # name the quantity or the law. Reads the pages and the starters the learner copies.
+    ("todo_prompts", ["scripts/check_todo_prompts.py"], False),
     ("step_size", ["scripts/audit_step_size.py", "--check"], False),
     ("legacy_crosswalk", ["scripts/legacy_crosswalk.py", "--check"], False),
     ("mentions", ["scripts/mentions_audit.py", "--check"], False),

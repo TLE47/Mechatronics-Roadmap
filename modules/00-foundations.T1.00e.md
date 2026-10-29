@@ -131,43 +131,43 @@ import math
 
 def spring_force(k_nm, x_m):
     """Hooke's law: the force that always pulls the cart back toward x = 0."""
-    # TODO 1: F = -k*x - the minus sign is the whole spring
+    # TODO 1: the force the spring exerts at this displacement — it always points back toward the centre
     ...
 
 
 def acceleration(force_n, mass_kg):
     """Newton's second law."""
-    # TODO 2: divide the net force by the mass
+    # TODO 2: the acceleration this force produces
     ...
 
 
 def euler_step(x_m, v_ms, k_nm, b_nsm, m_kg, dt_s):
-    """One symplectic Euler tick of the damped spring: return (x_new, v_new)."""
-    # TODO 3: build a = (-k*x - b*v)/m, update v with it, then move x with the NEW v
+    """One tick of the damped spring: return the new position and speed."""
+    # TODO 3: one tick of the damped spring, returning the new position and speed
     ...
 
 
 def mechanical_energy(m_kg, v_ms, k_nm, x_m):
     """Kinetic plus spring potential energy, in joules."""
-    # TODO 4: half the mass times v squared PLUS half the stiffness times x squared
+    # TODO 4: the total mechanical energy at this position and speed
     ...
 
 
 def peak_speed(energy_j, m_kg):
     """The speed at the unstretched centre."""
-    # TODO 5: v = sqrt(2E/m) - do not lose the 2
+    # TODO 5: the speed at the unstretched centre, from the energy the spring released
     ...
 
 
 def torque(force_n, r_m, phi_rad):
     """Lever torque, with phi the angle between the arm and the force."""
-    # TODO 6: sine, not cosine
+    # TODO 6: the torque this force produces at this lever arm and angle
     ...
 
 
 def angular_acceleration(torque_nm, inertia_kg_m2):
-    """tau = J alpha, so alpha = tau / J."""
-    # TODO 7: divide by the inertia; do not invert the fraction
+    """The angular acceleration this torque produces, in rad/s^2."""
+    # TODO 7: the angular acceleration this torque produces
     ...
 
 

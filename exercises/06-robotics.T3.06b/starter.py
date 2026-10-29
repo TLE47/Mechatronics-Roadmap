@@ -13,38 +13,42 @@ import mechalab_plant as plant
 
 
 def discounted_returns(rewards, gamma=0.9):
-    """G_t for every step, by the backward recursion."""
-    raise NotImplementedError("TODO 1: walk BACKWARDS; G_t = r_t + gamma * G_{t+1}")
+    """The return from each step onward."""
+    raise NotImplementedError(
+        "TODO 1: the return from each step onward, with later rewards counting for less"
+    )
 
 
 def advantages(returns, values):
-    """A_hat_t = G_t - V(s_t)."""
-    raise NotImplementedError("TODO 2: subtract the value estimate from the return")
+    """How much better each step's return was than its value estimate."""
+    raise NotImplementedError("TODO 2: how much each return beat the value estimate")
 
 
 def ppo_clip_term(rho, advantage, eps=0.2):
     """The clipped surrogate term for one step."""
-    raise NotImplementedError("TODO 3: min of the raw and clipped products, not the max")
+    raise NotImplementedError("TODO 3: the clipped surrogate term for this ratio and advantage")
 
 
 def ppo_loss(ratios, advantages_, eps=0.2):
     """Mean clipped surrogate term over a batch."""
-    raise NotImplementedError("TODO 4: average the terms")
+    raise NotImplementedError("TODO 4: the batch's clipped surrogate score")
 
 
 def temporal_ensemble(predictions, decay=0.5):
     """Exponentially weighted blend; index 0 is the newest prediction."""
-    raise NotImplementedError("TODO 5: weights exp(-decay * i), normalised by their sum")
+    raise NotImplementedError(
+        "TODO 5: the blended prediction, with older predictions counting for less"
+    )
 
 
 def safety_shield(a_policy, q, dq_max=0.08, q_min=-1.5, q_max=1.5):
-    """Rate-limit around q, then clamp to the joint limits."""
-    raise NotImplementedError("TODO 6: step clamp first, then the hard joint limits")
+    """A command that respects the joint's rate and position limits."""
+    raise NotImplementedError("TODO 6: the command the shield allows at this position")
 
 
 def watchdog_trip(last_chunk_s, now_s, timeout_s=0.1):
     """True when the policy has been silent for longer than the timeout."""
-    raise NotImplementedError("TODO 7: strictly longer; exactly at the timeout is still alive")
+    raise NotImplementedError("TODO 7: whether the policy has gone silent past the timeout")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

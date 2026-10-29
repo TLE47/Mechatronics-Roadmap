@@ -13,40 +13,38 @@ import mechalab_plant as plant
 
 
 def spring_force(k_nm, x_m):
-    """Hooke's law."""
-    raise NotImplementedError("TODO 1: F = -k*x - the MINUS is the whole spring")
+    """The force the spring exerts at this displacement."""
+    raise NotImplementedError("TODO 1: the force the spring exerts at this displacement — it always points back toward the centre")
 
 
 def acceleration(force_n, mass_kg):
-    """Newton's second law."""
-    raise NotImplementedError("TODO 2: divide the net force by the mass")
+    """The acceleration this net force produces, in m/s^2."""
+    raise NotImplementedError("TODO 2: the acceleration this force produces")
 
 
 def euler_step(x_m, v_ms, k_nm, b_nsm, m_kg, dt_s):
-    """One symplectic Euler tick of the damped spring: return (x_new, v_new)."""
-    raise NotImplementedError(
-        "TODO 3: update v first (v += a*dt), then move x with the NEW v - the order is the point"
-    )
+    """One tick of the damped spring: return the new position and speed."""
+    raise NotImplementedError("TODO 3: one tick of the damped spring, returning the new position and speed")
 
 
 def mechanical_energy(m_kg, v_ms, k_nm, x_m):
-    """Kinetic plus spring potential energy."""
-    raise NotImplementedError("TODO 4: half the mass times v^2 PLUS half the stiffness times x^2")
+    """The total mechanical energy at this position and speed, in joules."""
+    raise NotImplementedError("TODO 4: the total mechanical energy at this position and speed")
 
 
 def peak_speed(energy_j, m_kg):
     """The speed at the unstretched centre."""
-    raise NotImplementedError("TODO 5: v = sqrt(2*E/m) - do not lose the 2")
+    raise NotImplementedError("TODO 5: the speed at the unstretched centre, from the energy the spring released")
 
 
 def torque(force_n, r_m, phi_rad):
-    """Lever torque."""
-    raise NotImplementedError("TODO 6: Sine, because phi is the angle between arm and force")
+    """The torque this force produces at this lever arm and angle, in N*m."""
+    raise NotImplementedError("TODO 6: the torque this force produces at this lever arm and angle")
 
 
 def angular_acceleration(torque_nm, inertia_kg_m2):
-    """tau = J alpha."""
-    raise NotImplementedError("TODO 7: alpha = tau / J, not J / tau")
+    """The angular acceleration this torque produces, in rad/s^2."""
+    raise NotImplementedError("TODO 7: the angular acceleration this torque produces")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

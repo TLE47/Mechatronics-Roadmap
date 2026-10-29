@@ -191,44 +191,44 @@ import random
 
 
 def mse_loss(y_hat, y_true):
-    """Mean squared error over samples: (1/N) sum ||y_hat_i - y_i||^2."""
-    # TODO: divide by the number of SAMPLES, not by the number of elements
+    """One loss value for the batch, averaged per sample."""
+    # TODO: the mean loss over the batch, with one score per sample
     ...
 
 
 def forward(X, params):
-    """(H, Y_hat): tanh hidden layer, linear output layer."""
-    # TODO: tanh(X W1 + b1), then H W2 + b2 - the output layer has no activation
+    """The hidden activations and the output the policy predicts."""
+    # TODO: the hidden activations and the policy's output for these observations
     ...
 
 
 def backward(X, Y, params, H, Y_hat):
-    """The chain rule, as a dict of dW1, db1, dW2, db2."""
-    # TODO: dY = (2/N)(Y_hat - Y); dH = (dY W2^T) * (1 - H^2); then X^T dH and H^T dY
+    """The loss gradients for W1, b1, W2 and b2."""
+    # TODO: the loss gradients for all four parameter arrays, shaped like the parameters
     ...
 
 
 def apply_gradients(params, grads, lr):
-    """One descent step: theta <- theta - lr * grad, as a new dict."""
-    # TODO: subtract (adding is ascent, and the loss grows); do not mutate the input dict
+    """The parameters after one learning-rate step, as a new dict."""
+    # TODO: the parameters after one learning-rate step, as a new dict
     ...
 
 
 def z_score(values):
     """(normalised, mean, sigma) for one column; a constant column is refused."""
-    # TODO: sigma = sqrt(mean((v - mean)^2)); raise when sigma == 0, and return the mean and sigma
+    # TODO: the standardised column with its mean and spread; a constant column is refused
     ...
 
 
 def train_bc(X, Y, hidden=8, lr=0.05, steps=200, seed=0):
     """Fit a policy to demonstrations; returns (params, loss per step)."""
-    # TODO: normalise X and Y, seed the weights, then loop forward -> mse_loss -> backward -> apply_gradients
+    # TODO: a policy fitted to the demonstrations, with the loss after every step
     ...
 
 
 def predict(params, X):
     """Policy output in the units the demonstrations used."""
-    # TODO: normalise the observation with mu_x/sigma_x, then undo the action's z-score
+    # TODO: the policy's action in the demonstrations' own units
     ...
 
 

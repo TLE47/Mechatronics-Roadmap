@@ -86,22 +86,22 @@ SETTLE_S = 1.0
 
 
 def gain(omega, tau=TAU):
-    # TODO 1: 1 / sqrt(1 + (omega * tau) ** 2)
+    # TODO 1: the gain of this lag at the given frequency
     return 1.0
 
 
 def phase_deg(omega, tau=TAU):
-    # TODO 2: -atan(omega * tau), converted to DEGREES
+    # TODO 2: the phase delay of this lag at the given frequency, in degrees
     return 0.0
 
 
 def simulate(omega, tau=TAU, dt_s=DT_S, settle_s=SETTLE_S):
-    # TODO 3: hold a sine for settle_s, then return one steady period of (t, u, y)
+    # TODO 3: one settled period of the command and the response
     return []
 
 
 def measure(samples, omega):
-    # TODO 4: RMS gain, and the response's phase relative to the command
+    # TODO 4: the gain and phase the recorded period shows
     return 0.0, 0.0
 
 

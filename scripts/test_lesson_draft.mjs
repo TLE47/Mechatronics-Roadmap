@@ -235,9 +235,18 @@ check('unrelated typing does not read as progress', () => {
 check('a TODO with no placeholder is written by typing under it', () => {
   // P.4's second step is an insertion point: the starter leaves nothing to replace, so the only
   // evidence is code appearing where the marker points.
+  // Anchored on the marker rather than on its sentence: the words after `TODO 2:` are lesson
+  // content a rewrite may change (Run 275 replaced every marker), while the marker is the shape
+  // this case is about. A fixture that silently matches nothing is the failure the assert below
+  // exists to prevent.
   const withStep = P4.starterCode.replace(
-    '    #         and add safe_cmd to total_cmd.',
-    '    #         and add safe_cmd to total_cmd.\n    clamped_commands.append(safe_cmd)\n    total_cmd = total_cmd + safe_cmd'
+    /(^[ \t]*#\s*TODO 2:[^\n]*\n)/m,
+    '$1    clamped_commands.append(safe_cmd)\n    total_cmd = total_cmd + safe_cmd\n'
+  );
+  assert.notEqual(
+    withStep,
+    P4.starterCode,
+    'the fixture must still find the TODO 2 marker it writes under'
   );
   const progress = draftProgress(withStep, P4);
   assert.equal(progress.total, draftProgress(P4.starterCode, P4).total, 'expected the same denominator');

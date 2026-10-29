@@ -14,23 +14,21 @@ import math
 
 
 def exp_so3(rotvec):
-    """Rodrigues' formula for exp([rotvec]_x), returning a 3x3 list of lists."""
-    raise NotImplementedError(
-        "exp_so3: build the skew matrix of rotvec, then I + (sin t / t) K + ((1 - cos t) / t^2) K^2"
-    )
+    """The rotation matrix this rotation vector describes, as a 3x3 list of lists."""
+    raise NotImplementedError("exp_so3: the rotation matrix this rotation vector describes")
 
 
 def inject_rotation(r_nominal, d_theta):
-    """R^+ = R^- exp([d_theta]_x): matrix-multiply the nominal rotation by the correction."""
-    raise NotImplementedError("inject_rotation: r_nominal @ exp_so3(d_theta)")
+    """The nominal rotation with this small correction applied on its right."""
+    raise NotImplementedError("inject_rotation: the nominal rotation with this small correction applied")
 
 
 def eskf_rotation_update(r_nominal, d_theta, innovation):
-    """Inject d_theta, reset the error-state mean to zero, then apply the next innovation.
+    """The corrected rotation after this innovation, with the error-state mean reset to zero.
 
     Hint: the reset is what makes the second step safe. Without it the correction just applied is
     still sitting in the mean and goes in again, even when the next innovation is exactly zero.
     """
     raise NotImplementedError(
-        "eskf_rotation_update: inject d_theta, set the mean to [0, 0, 0], then inject innovation"
+        "eskf_rotation_update: the corrected rotation after this innovation, with the error-state mean reset"
     )

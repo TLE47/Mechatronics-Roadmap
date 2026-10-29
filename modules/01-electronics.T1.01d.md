@@ -132,44 +132,45 @@ import mechalab_plant as plant  # noqa: F401  (the shared arm, as every graded p
 
 
 def rc_time_constant(r_ohm, c_farad):
-    """tau = R C, in seconds."""
-    # TODO 1: multiply resistance by capacitance; the farads are already farads
+    """How long this resistor-capacitor pair takes to respond, in seconds."""
+    # TODO 1: the pair's time constant, in seconds
     ...
 
 
 def rc_voltage(t_s, v_in, r_ohm, c_farad):
     """V_C(t) for a capacitor charging from zero."""
-    # TODO 2: 1 - exp(-t / tau) - a straight ramp is the classic wrong answer
+    # TODO 2: the capacitor's voltage at this time after the supply is connected
     ...
 
 
 def rc_cutoff_hz(r_ohm, c_farad):
-    """fc = 1 / (2 pi R C): the -3 dB corner."""
-    # TODO 3: the 2 pi belongs in the denominator, with tau = R C
+    """The corner frequency of this RC filter, in hertz."""
+    # TODO 3: the corner frequency this filter turns over at
     ...
 
 
 def bulk_capacitance_f(delta_i, delta_t, delta_v):
-    """C >= delta_I * delta_t / delta_V, in farads."""
-    # TODO 4: the transient TIME is in the numerator, not the droop budget
+    """The smallest reservoir that holds the rail within this droop budget, in farads."""
+    # TODO 4: the capacitance that keeps the rail inside the droop budget during this transient
     ...
 
 
 def capacitor_energy(v_cap, c_farad):
-    """E_C = 1/2 C V^2, in joules."""
-    # TODO 5: the half, and the voltage squared
+    """The energy stored at this voltage, in joules."""
+    # TODO 5: the energy stored at this voltage
     ...
 
 
 def inductor_energy(inductance_h, current):
-    """E_L = 1/2 L I^2, in joules."""
-    # TODO 6: the half, and the current squared
+    """The energy stored at this current, in joules."""
+    # TODO 6: the energy stored at this current
     ...
 
 
 def flyback_voltage(inductance_h, current, dt_open_s):
     """The unclamped spike when the coil's current is interrupted."""
-    # TODO 7: L * I / dt, with dt in SECONDS - 0.5 us is 0.5e-6, not 0.5
+    # TODO 7: the unclamped spike when this current is interrupted, with the opening time
+    #         in seconds; a microsecond is a millionth of a second, not a thousandth
     ...
 
 

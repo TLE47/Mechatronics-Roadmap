@@ -120,44 +120,44 @@ import mechalab_plant as plant  # noqa: F401  (the shared arm, as every graded p
 
 
 def stall_current(v_supply, r_winding):
-    """I = V / R for a stalled winding; refuse a zero winding."""
-    # TODO 1: divide the supply by the winding resistance, and raise ValueError for R <= 0
+    """The current a stalled winding draws from this supply."""
+    # TODO 1: the current a stalled winding draws, and a zero winding is an error
     ...
 
 
 def divider_unloaded(v_in, r1, r2):
     """The midpoint of an unloaded divider."""
-    # TODO 2: the BOTTOM leg sets the fraction: v_in * r2 / (r1 + r2)
+    # TODO 2: the midpoint voltage of the unloaded divider
     ...
 
 
 def divider_loaded(v_in, r1, r2, r_load):
-    """The midpoint with r_load in parallel with the bottom leg."""
-    # TODO 3: parallel r_load with r2 first, then reuse the unloaded formula
+    """The midpoint once the load draws current from it."""
+    # TODO 3: the midpoint once the load is connected
     ...
 
 
 def joule_power(current, resistance):
-    """P = I^2 R."""
-    # TODO 4: square the current, then multiply by the resistance
+    """The heat this current dissipates in the resistance."""
+    # TODO 4: the heat this current dissipates every second
     ...
 
 
 def led_series_resistor(v_supply, v_led, i_target):
-    """KVL first: R = (V_supply - V_LED) / I_target."""
-    # TODO 5: subtract the LED's forward drop before dividing by the target current
+    """The resistor that sets the wanted LED current from this supply."""
+    # TODO 5: the resistor that gives the LED its target current from this supply
     ...
 
 
 def led_current(v_supply, v_led, resistance):
     """The current an already-chosen series resistor allows."""
-    # TODO 6: the same KVL, solved for current, and never negative
+    # TODO 6: the current this resistor allows
     ...
 
 
 def within_derating(p_dissipated, p_rated, derating=0.5):
     """True when the part runs at or below `derating` of its rating."""
-    # TODO 7: compare against derating * p_rated, not against the full rating
+    # TODO 7: whether the part stays inside its derated budget
     ...
 
 

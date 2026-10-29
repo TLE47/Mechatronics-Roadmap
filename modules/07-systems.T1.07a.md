@@ -135,43 +135,43 @@ import math
 
 def scan_frequency_hz(t_read_ms, t_exec_ms, t_write_ms):
     """The scan rate a Read -> Execute -> Write budget allows."""
-    # TODO 1: sum the three phases in ms, then convert the period to Hz
+    # TODO 1: the scan rate this total budget supports
     ...
 
 
 def safety_chain_ok(*contacts):
     """True only when every series NC contact is closed."""
-    # TODO 2: ONE open contact must drop the enable (all, not any)
+    # TODO 2: whether the chain still enables with these contacts
     ...
 
 
 def plc_scan_step(state, estop1_nc, estop2_nc, door_nc, start_btn_no, reset_btn_no):
     """One cyclic scan: (next state, power enable)."""
-    # TODO 3: a trip latches; it clears only on a reset while Start is released
+    # TODO 3: the next state and whether power stays enabled after this scan
     ...
 
 
 def gain_db(amplitude_out, amplitude_in):
     """Empirical magnitude in decibels."""
-    # TODO 4: amplitude ratios are 20 log10, not 10 log10
+    # TODO 4: the gain on the amplitude decibel scale
     ...
 
 
 def phase_lag_deg(f_hz, delay_s):
     """Phase lag in degrees for a peak delayed by `delay_s`."""
-    # TODO 5: a LAG is negative - the output peaks after the input
+    # TODO 5: the phase delay in degrees at this frequency
     ...
 
 
 def sine_amplitude(samples, f_hz, dt_s):
     """Lock-in amplitude at one frequency."""
-    # TODO 6: correlate with sin and cos, take the mean of each, then 2 * hypot
+    # TODO 6: the amplitude of this frequency in the samples
     ...
 
 
 def db_to_ratio(db):
     """Invert the decibel scale."""
-    # TODO 7: B/A = 10 ** (dB / 20)
+    # TODO 7: the amplitude ratio a decibel reading represents
     ...
 
 

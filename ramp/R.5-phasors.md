@@ -80,22 +80,22 @@ import math
 
 
 def arrow(magnitude, angle_rad):
-    # TODO 1: cmath.rect turns a length and an angle into one two-part number
+    # TODO 1: the arrow this length and angle describe
     return 0j
 
 
 def rotate(z, angle_rad):
-    # TODO 2: multiply by a UNIT arrow at angle_rad - length stays, angle adds
+    # TODO 2: the same arrow turned by this angle
     return z
 
 
 def sum_arrows(arrows):
-    # TODO 3: add real parts and imaginary parts - plain + on the numbers does it
+    # TODO 3: the resultant arrow of the list
     return 0j
 
 
 def report(name, z):
-    # TODO 4: real, imag, length (abs) and angle (cmath.phase, in DEGREES)
+    # TODO 4: the real part, the imaginary part, the length and the angle, as the report prints them
     return name
 
 

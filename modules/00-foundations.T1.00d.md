@@ -124,38 +124,38 @@ import math
 
 
 def sensor_voltage(slope_v_per_a, current_a, offset_v=0.0):
-    """y = m x + b."""
-    raise NotImplementedError("TODO 1: multiply, then add the zero-current offset")
+    """The sensor's output voltage at this current."""
+    raise NotImplementedError("TODO 1: the voltage the sensor reports at this current")
 
 
 def sensor_current(slope_v_per_a, voltage_v, offset_v=0.0):
-    """x = (y - b) / m."""
-    raise NotImplementedError("TODO 2: subtract the offset BEFORE dividing by the slope")
+    """The current a voltage reading corresponds to."""
+    raise NotImplementedError("TODO 2: the current behind this voltage reading")
 
 
 def polar_to_cartesian(length_m, theta_rad):
-    """(L cos t, L sin t)."""
-    raise NotImplementedError("TODO 3: cosine for x, sine for y, and theta is in RADIANS")
+    """The x and y components of a vector at this length and angle."""
+    raise NotImplementedError("TODO 3: the two components, with the angle in radians")
 
 
 def link_length(x_m, y_m):
-    """r = sqrt(x^2 + y^2)."""
-    raise NotImplementedError("TODO 4: the diagonal, not the taxi ride x + y")
+    """The length of the link from the origin to this point."""
+    raise NotImplementedError("TODO 4: the straight-line distance to this point")
 
 
 def heading_rad(x_m, y_m):
-    """Four-quadrant atan2(y, x) in (-pi, pi]."""
-    raise NotImplementedError("TODO 5: atan2 takes y FIRST; plain atan cannot see the quadrant")
+    """The heading of this point, in radians over the full turn."""
+    raise NotImplementedError("TODO 5: the heading in radians, correct in every quadrant")
 
 
 def heading_deg(x_m, y_m):
     """The same heading in degrees."""
-    raise NotImplementedError("TODO 6: reuse heading_rad, then convert")
+    raise NotImplementedError("TODO 6: the same heading in degrees")
 
 
 def degrees_to_radians(deg):
-    """theta_rad = theta_deg * pi / 180."""
-    raise NotImplementedError("TODO 7: 180 degrees is pi, not 180")
+    """The same angle in radians."""
+    raise NotImplementedError("TODO 7: the radian measure of this angle")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

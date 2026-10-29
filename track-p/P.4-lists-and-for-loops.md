@@ -81,12 +81,10 @@ clamped_commands = []
 total_cmd = 0
 
 for cmd in raw_commands:
-    # TODO 1: Clamp cmd into [0, 255] using if / elif / else,
-    #         storing the result in safe_cmd.
+    # TODO 1: the command held inside the byte range
     safe_cmd = cmd
 
-    # TODO 2: Append safe_cmd to clamped_commands using clamped_commands.append(safe_cmd)
-    #         and add safe_cmd to total_cmd.
+    # TODO 2: the running list and total this loop keeps
 
 mean_cmd = total_cmd / len(raw_commands)
 print(f"Clamped list: {clamped_commands}")

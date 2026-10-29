@@ -118,44 +118,44 @@ EXERCISE_TARGET=exercises/01-electronics.T2.01b/starter.py \
 
 
 def v_peak_turnoff(v_bus, l_loop_nh, di_amp, dt_ns):
-    """The peak drain-source voltage at turn-off: V_bus + L dI/dt."""
-    # TODO 1: nH/ns is already 1 ohm, so L[nH] * dI[A] / dt[ns] is already a volt
+    """The peak drain-source voltage at turn-off."""
+    # TODO 1: the peak the bus sees when this loop interrupts this current
     ...
 
 
 def max_loop_inductance_nh(v_bus, v_peak_max, di_amp, dt_ns):
     """The largest loop inductance that keeps the spike under a ceiling."""
-    # TODO 2: only the HEADROOM (ceiling minus bus) drives the overshoot - rearrange TODO 1
+    # TODO 2: the largest loop that keeps the peak inside this ceiling
     ...
 
 
 def gate_drive_current_a(qg_nc, tr_ns):
-    """The average gate drive current: I_G = Q_g / t_r."""
-    # TODO 3: nC/ns = A already; no 1e-9 factors anywhere in this one
+    """The average gate drive current."""
+    # TODO 3: the current the gate needs to make this transition
     ...
 
 
 def bootstrap_gate_v(v_sw, v_drv):
     """The absolute gate voltage of a high-side N-MOSFET."""
-    # TODO 4: the bootstrap capacitor rides ON TOP of the phase node
+    # TODO 4: the gate voltage the high-side device sees
     ...
 
 
 def precharge_peak_a(v_bus, r_pre):
     """The t = 0 inrush into an uncharged bank."""
-    # TODO 5: an uncharged bank is a short, so Ohm's law is the whole answer
+    # TODO 5: the inrush at the instant the pre-charge starts
     ...
 
 
 def precharge_time_s(r_pre, c_bus, taus=5.0):
     """The pre-charge settle time."""
-    # TODO 6: five time constants, not one
+    # TODO 6: the time the bank takes to settle
     ...
 
 
 def bus_energy_j(c_bus, v_bus):
     """The energy stored in the capacitor bank."""
-    # TODO 7: 1/2 C V^2 - the half is not optional
+    # TODO 7: the energy the bank stores at this voltage
     ...
 
 

@@ -10,38 +10,38 @@ TODOs:
 
 
 def tracking_error(r, y):
-    """e = r - y."""
-    raise NotImplementedError("TODO 1: the reference minus the measurement - get the SIGN right")
+    """The error the loop acts on, with the sign that pulls toward the target."""
+    raise NotImplementedError("TODO 1: the error the loop acts on, with the sign that pulls toward the target")
 
 
 def control_effort(r, y, dy, i_term, kp, kd):
-    """u_raw = Kp (r - y) - Kd dy + I."""
-    raise NotImplementedError("TODO 2: the damper SUBTRACTS Kd dy; it opposes velocity, not error")
+    """The raw effort from the spring, damper and integral."""
+    raise NotImplementedError("TODO 2: the raw effort from the spring, the damper and the integral")
 
 
 def integral_step(i_prev, ki, e, dt):
-    """I_k = I_{k-1} + Ki e dt."""
-    raise NotImplementedError("TODO 3: the tick includes dt - forgetting it grows the bias 1000x")
+    """The integral after one tick, in effort units."""
+    raise NotImplementedError("TODO 3: the integral after this tick, in effort units")
 
 
 def anti_windup_integral(i_prev, ki, e, dt, u_raw, u_max, i_max=None):
     """The integral this tick may keep, frozen while the demand is past a rail."""
-    raise NotImplementedError("TODO 4: freeze only when |u_raw| > u_max AND e has u_raw's sign")
+    raise NotImplementedError("TODO 4: the integral this tick may keep while the actuator is saturated")
 
 
 def saturate(u_raw, u_max):
-    """clip(u_raw, -u_max, +u_max)."""
-    raise NotImplementedError("TODO 5: both rails - a one-sided clip lets a negative demand through")
+    """The command, held inside both rails."""
+    raise NotImplementedError("TODO 5: the command, held inside both rails")
 
 
 def steady_state_sag(tau_g, kp):
-    """e_ss = tau_g / Kp."""
-    raise NotImplementedError("TODO 6: the spring must supply tau_g, so the sag is tau_g / Kp")
+    """The angle the joint settles below its target under gravity."""
+    raise NotImplementedError("TODO 6: the angle the joint settles below its target under gravity")
 
 
 def arm_acceleration(torque, dq, tau_g, j, b):
-    """ddq = (u - b dq - tau_g) / J."""
-    raise NotImplementedError("TODO 7: damping and gravity come OFF the torque before dividing by J")
+    """The joint's acceleration from the applied torque."""
+    raise NotImplementedError("TODO 7: the joint's acceleration from the applied torque")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

@@ -18,41 +18,33 @@ import mechalab_plant as plant
 
 
 def impedance_rl(r_ohm, l_h, omega):
-    """Series R-L impedance, as a complex number in ohms.
-
-    TODO 1: the resistor is the real part, the inductor is j*omega*L - add the hypotenuse, not
-    R + omega*L.
-    """
-    raise NotImplementedError("TODO 1: R + j*w*L")
+    """Series R-L impedance, as a complex number in ohms."""
+    raise NotImplementedError("TODO 1: the impedance of this resistor and inductor at this frequency")
 
 
 def first_order_response(tau, omega):
-    """H(jw) of tau y' + y = u, evaluated at omega."""
-    raise NotImplementedError("TODO 2: d/dt becomes j*omega")
+    """The frequency response of the first-order lag at this frequency."""
+    raise NotImplementedError("TODO 2: what the lag does to a sine at this frequency, as a complex ratio")
 
 
 def second_order_response(wn, zeta, omega):
-    """G(jw) = wn^2 / ((jw)^2 + 2 zeta wn (jw) + wn^2)."""
-    raise NotImplementedError("TODO 3: substitute s = j*omega and keep it complex")
+    """The frequency response of the second-order system at this frequency."""
+    raise NotImplementedError("TODO 3: the second-order response at this frequency, as a complex ratio")
 
 
 def magnitude_db(h):
-    """Amplitude in decibels: 20 log10 |h| - not 10 log10."""
-    raise NotImplementedError("TODO 4: amplitude decibels")
+    """The amplitude in decibels, as a Bode plot's vertical axis shows it."""
+    raise NotImplementedError("TODO 4: the amplitude on the decibel scale a Bode plot uses")
 
 
 def phase_deg(h):
     """Phase of h in degrees, in (-180, 180]."""
-    raise NotImplementedError("TODO 5: degrees, not radians")
+    raise NotImplementedError("TODO 5: the angle of this response in degrees")
 
 
 def resonance_peak(wn, zeta):
-    """(omega_r, peak_magnitude) of the second-order magnitude.
-
-    TODO 6: differentiate |G| and solve - omega_r = wn sqrt(1 - 2 zeta^2), peak =
-    1 / (2 zeta sqrt(1 - zeta^2)) when zeta < 1/sqrt(2). Otherwise there is no peak: (0.0, 1.0).
-    """
-    raise NotImplementedError("TODO 6: where the peak is, and how tall")
+    """Where the second-order response peaks, and how tall the peak gets."""
+    raise NotImplementedError("TODO 6: where the response peaks, and how tall the peak is; no peak reports zero and one")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

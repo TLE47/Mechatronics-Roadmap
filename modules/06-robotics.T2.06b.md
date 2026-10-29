@@ -165,43 +165,43 @@ import math
 
 def timer_steps(t_timer_s, dt_sim_s):
     """Simulation steps between timer firings."""
-    # TODO: a ceiling, not a rounded quotient - a 2.5-step period must wait 3 steps
+    # TODO: how many simulation steps a timer period needs, never early
     ...
 
 
 def intra_process_saving_mb_s(n_subs, msg_bytes, rate_hz):
     """Bandwidth not copied by composable subscribers, in MB/s."""
-    # TODO: multiply by the subscriber count, not by one
+    # TODO: the bandwidth the subscriber group avoids copying, for all its members
     ...
 
 
 def disk_rate_mb_s(topics, meta_bytes=32, compression=1.0):
     """Sustained write rate for `(name, frequency, payload_bytes)` topics."""
-    # TODO: add the per-message metadata BEFORE summing, then scale the total by the compression
+    # TODO: the sustained write rate with every message's index overhead and the recording's compression
     ...
 
 
 def bag_size_mb(disk_rate, duration_s):
     """File size of a recording."""
-    # TODO: rate times duration
+    # TODO: the file size this recording reaches over the duration
     ...
 
 
 def replay_derivative(t_a, value_a, t_b, value_b):
     """Derivative from the message's own timestamps."""
-    # TODO: divide by the MESSAGE gap t_b - t_a, never by the wall-clock gap
+    # TODO: the rate of change between the two samples, on the recording's own clock
     ...
 
 
 def wall_delay_s(t_a, t_b, rate):
     """Wall-clock delay a `--rate r` replay sleeps for a message gap."""
-    # TODO: the message gap divided by the rate
+    # TODO: the wall-clock wait a replay spends on that message gap at this rate
     ...
 
 
 def control_decimation(f_sim_hz, f_ctrl_hz):
-    """Integer decimation `D = f_sim / f_ctrl`."""
-    # TODO: refuse a ratio that is not a whole number instead of rounding it
+    """How many simulator steps each controller update spans."""
+    # TODO: the decimation, refusing a controller rate that does not fit the simulator evenly
     ...
 
 

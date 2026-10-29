@@ -132,32 +132,32 @@ import math
 
 def companion_state_matrices(j, k, b):
     """(A, B) for J theta'' + b theta' + k theta = u, state [theta, theta']."""
-    # TODO: rows [0, 1] and [-k/J, -b/J]; B is the column [[0.0], [1.0/J]]
+    # TODO: the state and input matrices for this spring-mass-damper
     ...
 
 def eigvals_2x2(a):
     """The two eigenvalues of a 2x2 matrix, as complex numbers."""
-    # TODO: trace and determinant from the entries, then cmath.sqrt of trace^2 - 4 det
+    # TODO: the two eigenvalues of this matrix
     ...
 
 def is_stable(a):
     """True only when both eigenvalues have strictly negative real parts."""
-    # TODO: a marginal pole (real part exactly 0) is not stable
+    # TODO: whether both poles are strictly stable
     ...
 
 def discretize_euler(a, b, ts):
-    """Ad = I + A Ts, Bd = B Ts."""
-    # TODO: the simplest map - and the one that can leave the unit circle
+    """The forward-Euler state and input matrices for this step size."""
+    # TODO: the forward-Euler matrices for this step size
     ...
 
 def discretize_tustin(a, b, ts):
-    """Ad = (I - Ts/2 A)^-1 (I + Ts/2 A), Bd = (I - Ts/2 A)^-1 B Ts."""
-    # TODO: a real 2x2 inverse (det, swap, negate), never an elementwise division
+    """The Tustin state and input matrices for this step size."""
+    # TODO: the Tustin matrices for this step size, with the two-by-two inverse
     ...
 
 def simulate_discrete(ad, bd, x0, u, steps):
-    """Iterate x_{k+1} = Ad x_k + Bd u with constant u; return the final state."""
-    # TODO: both rows must read the same old x, then the loop replaces it
+    """The final state after this many steps at a constant input."""
+    # TODO: the state the controller ends on after this many steps
     ...
 
 print("scaffold ready: 6 TODOs to fill, then compare against the numbers in the full solution")

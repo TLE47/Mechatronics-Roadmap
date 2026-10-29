@@ -189,43 +189,43 @@ Q31_MIN = -(1 << 31)
 Q31_MAX = (1 << 31) - 1
 
 def center_aligned_arr(f_tim_hz, f_pwm_hz):
-    """ARR = f_tim / (2 f_pwm)."""
-    # TODO 1: up-down mode spends TWO timer ticks per PWM period
+    """The auto-reload value that gives this PWM frequency in center-aligned mode."""
+    # TODO 1: the auto-reload value for this PWM frequency in center-aligned mode
     ...
 
 def pwm_frequency(f_tim_hz, arr):
-    """f_pwm = f_tim / (2 ARR)."""
-    # TODO 2: the same factor of two, solved for the frequency
+    """The PWM frequency this auto-reload value produces in center-aligned mode."""
+    # TODO 2: the PWM frequency this auto-reload value produces
     ...
 
 def low_side_window_ns(d_max, t_dead_ns, f_pwm_hz):
-    """t_low,min = (1 - d_max) T_pwm - 2 t_dead."""
-    # TODO 3: there is a dead time at BOTH switching edges, so subtract two of them
+    """The shortest low-side on-time this duty limit leaves, in nanoseconds."""
+    # TODO 3: the shortest low-side window this duty limit leaves, after both dead-time intervals
     ...
 
 def q31_encode(x):
-    """X = clamp(round(x * 2^31), -2^31, 2^31 - 1)."""
-    # TODO 4: the scale is 2 to the 31, and +1.0 clamps to 0x7FFFFFFF instead of wrapping
+    """The Q1.31 word for this value, clamped to the format's range."""
+    # TODO 4: the Q1.31 word for this value, with the format's full-scale limits
     ...
 
 def q31_decode(word):
-    """x_hat = X / 2^31."""
-    # TODO 5: divide by the same 2^31 - by 2^30 would read every word at double its value
+    """The real value this Q1.31 word represents."""
+    # TODO 5: the real value this Q1.31 word represents
     ...
 
 def angle_to_q31(theta_rad):
-    """x = theta / pi, then encoded."""
-    # TODO 6: divide by PI first; the CORDIC format is the normalised angle
+    """The Q1.31 word for this angle, carried relative to a straight angle."""
+    # TODO 6: the Q1.31 word for this angle; the format stores it relative to a straight angle
     ...
 
 def seqlock_valid(s1, s2):
-    """Tear-free iff s1 is even and s1 == s2."""
-    # TODO 7: an odd s1 means a write was in flight, even when s1 == s2
+    """Whether the two sequence copies describe a tear-free read."""
+    # TODO 7: whether the two sequence copies describe a tear-free read
     ...
 
 def isr_cpu_percent(wcet_us, period_us):
-    """100 * WCET / T_pwm."""
-    # TODO 8: a percentage needs the multiply by 100
+    """The ISR's share of the CPU, as a percentage."""
+    # TODO 8: the ISR's share of the CPU, as a percentage
     ...
 
 print("scaffold ready: 8 TODOs to fill, then compare against the numbers in the full solution")

@@ -210,57 +210,39 @@ import mechalab_plant as plant
 
 
 def jacobian(q1, q2, l1=plant.L1, l2=plant.L2):
-    """The 2x2 geometric Jacobian of the tip: [[dx/dq1, dx/dq2], [dy/dq1, dy/dq2]].
-
-    TODO 1: differentiate the planar forward kinematics.
-    Only the elbow differentiates l2, so both entries of the second column carry the world
-    angle q1 + q2.
-    """
-    raise NotImplementedError("TODO 1: build the Jacobian")
+    """The 2x2 matrix that turns a small change in each joint into the tip's small motion."""
+    raise NotImplementedError("TODO 1: the matrix that turns a small change in each joint into the tip's small motion")
 
 
 def joint_torques(J, force):
-    """Joint torques (tau1, tau2) that a Cartesian tip force produces.
-
-    TODO 2: the transpose is the whole point - do not multiply J by F.
-    """
-    raise NotImplementedError("TODO 2: map a tip force into joint torques")
+    """The joint torques a Cartesian tip force produces."""
+    raise NotImplementedError("TODO 2: the two joint torques this tip force produces")
 
 
 def gravity_from_com_jacobians(q1, q2):
-    """Gravity holding torques, built as sum_i J_com,i(q)^T (0, m_i g).
-
-    TODO 3: two links, two CoM Jacobians. The elbow's CoM hangs off the shoulder, so it is
-    rotated by q1 + q2 - its own joint angle is not its world angle.
-    """
-    raise NotImplementedError("TODO 3: sum the two CoM Jacobians")
+    """The joint torques that hold the arm against gravity."""
+    raise NotImplementedError("TODO 3: the joint torques that hold both links against gravity")
 
 
 def singular_elbow_angles():
-    """The elbow angles in [0, pi] where det J = l1 * l2 * sin(q2) is zero.
-
-    TODO 4: solve sin(q2) = 0 on the closed interval. Return a tuple of floats.
-    """
-    raise NotImplementedError("TODO 4: where is the arm singular?")
+    """The elbow angles in [0, pi] where the arm loses the ability to move the tip in some direction."""
+    raise NotImplementedError("TODO 4: the elbow angles over the closed interval where the arm is at full stretch or fully folded")
 
 
 def potential_gradient(q1, q2, m_p=0.05, h=1e-6):
-    """(dU/dq1, dU/dq2) of U = m_p * g * y_tip, by central differences.
-
-    TODO 5: perturb one angle at a time, divide by 2h, and use plant.fk for the height.
-    """
-    raise NotImplementedError("TODO 5: energy route to the same torque")
+    """How the payload's potential energy changes with each joint angle, by central differences."""
+    raise NotImplementedError("TODO 5: how the payload's potential energy changes with each joint angle")
 
 
 def payload_run(m_payload, compensate):
     """Run the capstone's figure-8 with a point mass at the tip.
 
     Returns {"rms_mm": float, "peak_mm": float}. The payload reaches the plant twice:
-      * as an external torque on `step_arm(dist=...)`, always;
-      * as a feedforward term J(q)^T (0, m g) in the controller, when `compensate` is True.
+      * as an external torque on the arm, always;
+      * as a feedforward term in the controller, when `compensate` is True.
     The controller is the capstone's PD + gravity law; keep it, do not retune it.
     """
-    raise NotImplementedError("TODO 6: run the payload scenario")
+    raise NotImplementedError("TODO 6: the figure-8's RMS and peak error, with and without the payload compensation")
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.
 ```

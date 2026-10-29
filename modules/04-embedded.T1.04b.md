@@ -132,49 +132,49 @@ HOMING_PWM = 0.2
 
 def elapsed_us(now_us, last_us, bits=32):
     """Unsigned elapsed ticks between two timer readings `bits` wide, wrap included."""
-    # TODO 1: subtract first, then mask to (1 << bits) - 1
+    # TODO 1: the ticks elapsed between the two readings, even across a rollover
     ...
 
 
 def tick_due(now_us, last_us, period_us):
     """True when another whole period has elapsed."""
-    # TODO 2: at exactly one period the answer is already True - compare with >=
+    # TODO 2: whether a whole period has elapsed, counting an exact period as due
     ...
 
 
 def next_deadline_us(last_us, period_us):
     """Advance the deadline on its own grid, so a late check never accumulates drift."""
-    # TODO 3: add the period to the old deadline, then mask - never resynchronise to now
+    # TODO 3: the next deadline on the same fixed grid
     ...
 
 
 def isr_utilization_pct(t_exec_us, f_isr_hz):
     """The CPU fraction an ISR costs, in percent."""
-    # TODO 4: microseconds are 1e-6 seconds - forgetting that reports 4.5 million percent
+    # TODO 4: the CPU share the ISR costs, as a percentage
     ...
 
 
 def max_isr_exec_us(u_max_pct, f_isr_hz):
     """The longest an ISR may run inside its budget."""
-    # TODO 5: the budget arrives as a percentage, so divide it by 100 before using it
+    # TODO 5: the longest the ISR may run inside this budget
     ...
 
 
 def fault_latency_us(n_debounce, f_isr_hz):
     """How long N consecutive samples take at the ISR rate."""
-    # TODO 6: seconds to microseconds is 1e6, not 1e3
+    # TODO 6: how long this many samples take at the ISR rate
     ...
 
 
 def ticks_in(duration_us, period_us):
     """Complete ticks of `period_us` inside `duration_us`."""
-    # TODO 7: integer division - a partial tick has not run
+    # TODO 7: how many complete periods fit in this duration
     ...
 
 
 def fsm_step(state, current_a, i_max_a, pos_rad, pwm_cmd):
     """One control tick of the actuator FSM: (next_state, pwm)."""
-    # TODO 8: FAULT is a latch, not a measurement - it must survive a current that has recovered
+    # TODO 8: the next state and command, with a fault staying latched
     ...
 
 

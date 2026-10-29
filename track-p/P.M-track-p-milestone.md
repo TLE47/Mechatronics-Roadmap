@@ -73,20 +73,17 @@ import math
 
 
 def cmd10_to_torque(cmd_10bit, max_torque_nm):
-    # TODO 1: Clamp cmd_10bit into [0, 1023], then scale linearly to [0.0, max_torque_nm]:
-    #         (clamped_cmd / 1023.0) * max_torque_nm
+    # TODO 1: the torque this ten-bit command asks for, held inside the command's own range
     return 0.0
 
 
 def holding_torque_nm(length_m, mass_kg, angle_from_horiz_rad):
-    # TODO 2: Gravity pulls straight down on the perpendicular horizontal lever arm (length_m * cos(angle)).
-    #         Return (mass_kg * 9.81) * length_m * math.cos(angle_from_horiz_rad)
+    # TODO 2: the torque gravity demands at this angle from horizontal
     return 0.0
 
 
-# Arm parameters (convert 250 mm and 100 ms to base SI units!)
-# TODO 3: Convert 250.0 mm to meters (length_m) and 100.0 ms to seconds (dt_s),
-#         and convert 30.0 RPM to rad/s: omega_rad_s = 30.0 * ((2.0 * math.pi) / 60.0)
+# Arm parameters (convert 250 mm and 100 ms to base SI units!)    # TODO 3: the arm's length in metres, the tick in seconds, and the joint
+    #         speed in radians per second
 length_m = 0.0
 dt_s = 0.0
 omega_rad_s = 0.0
@@ -99,7 +96,7 @@ print(f"Motor torque: {motor_tau:.2f} N*m | Gravity at 0 deg: {grav_tau_0:.4f} N
 
 angle_rad = 0.0
 for step in range(3):
-    # TODO 4: Advance angle_rad by (omega_rad_s * dt_s) using rectangle-area accumulation
+    # TODO 4: where the arm points after this tick at that angular speed
     angle_rad = angle_rad
     tip_x = length_m * math.cos(angle_rad)
     tip_y = length_m * math.sin(angle_rad)

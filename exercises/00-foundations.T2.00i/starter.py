@@ -13,7 +13,7 @@ def tustin_hz(omega_rad_s, fs):
 
     Refuse (ValueError) a non-positive sample rate.
     """
-    raise NotImplementedError("TODO 1: digital angle 2 atan(omega Ts / 2), then divide by 2 pi Ts")
+    raise NotImplementedError("TODO 1: the frequency the bilinear map actually places, in Hz")
 
 
 def prewarp_omega(f0_hz, fs):
@@ -21,7 +21,7 @@ def prewarp_omega(f0_hz, fs):
 
     Refuse (ValueError) a non-positive rate, or a target at or above fs/2.
     """
-    raise NotImplementedError("TODO 2: (2 / Ts) tan(pi f0 / fs)")
+    raise NotImplementedError("TODO 2: the analog frequency that lands exactly on the target after the map")
 
 
 def notch_coeffs(f0_hz, fs, q):
@@ -29,7 +29,7 @@ def notch_coeffs(f0_hz, fs, q):
 
     Refuse (ValueError) a target outside (0, fs/2) or a non-positive quality factor.
     """
-    raise NotImplementedError("TODO 3: alpha = sin(w0) / (2 q); b0 = b2 = 1 / (1 + alpha)")
+    raise NotImplementedError("TODO 3: the five coefficients of a unity-gain notch at the target with this quality factor")
 
 
 def apply_biquad(coeffs, samples):
@@ -37,7 +37,7 @@ def apply_biquad(coeffs, samples):
 
     Refuse (ValueError) a coefficient tuple that is not five numbers.
     """
-    raise NotImplementedError("TODO 4: two delay states, w1 and w2, updated in that order")
+    raise NotImplementedError("TODO 4: the filtered samples, one output for each input")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

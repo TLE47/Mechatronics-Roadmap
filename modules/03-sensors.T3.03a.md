@@ -165,43 +165,43 @@ import math
 
 def dq_feedforward(omega_e_rad_s, ld_h, lq_h, id_a, iq_a, psi_m_wb):
     """Return (v_d_ff, v_q_ff) in V."""
-    # TODO 1: v_d = -omega_e * L_q * i_q (the OTHER axis's inductance); v_q = +omega_e (L_d i_d + psi_m)
+    # TODO 1: the two decoupling feedforward voltages, each from the other axis
     ...
 
 
 def svpwm_offset(va_v, vb_v, vc_v):
     """Return the Min-Max zero-sequence voltage v_0 in V."""
-    # TODO 2: minus HALF the sum of the extremes - not the mean
+    # TODO 2: the zero-sequence offset that centres the three references
     ...
 
 
 def svpwm_duties(va_v, vb_v, vc_v, vbus_v):
     """Return the three leg duties (d_a, d_b, d_c), each in [0, 1]."""
-    # TODO 3: add the same v_0 to every leg, divide by V_bus; refuse a vector outside the circle
+    # TODO 3: the three leg duties, refusing a reference that leaves the inscribed circle
     ...
 
 
 def hexagon_limit(vbus_v):
     """Return the largest unclipped fundamental phase peak for Min-Max SVPWM, in V."""
-    # TODO 4: V_bus / sqrt(3), not V_bus / 2
+    # TODO 4: the largest unclipped fundamental phase peak this bus allows
     ...
 
 
 def hexagon_gain():
     """Return SVPWM's linear-range gain over sine PWM."""
-    # TODO 5: 2 / sqrt(3); the quoted percentage boost is 100 * (gain - 1)
+    # TODO 5: the linear-range gain over sine PWM, as a bare number
     ...
 
 
 def harmonic_coefficients(errors_rad, harmonic):
     """Return (a_h, b_h) for one harmonic, from samples spread evenly over one mechanical turn."""
-    # TODO 6: a_h = 2/N sum e cos(h theta), b_h = 2/N sum e sin(h theta) - two separate sums
+    # TODO 6: the cosine and sine coefficients of this harmonic
     ...
 
 
 def harmonic_amplitude(a_h, b_h):
     """Return the peak-to-zero amplitude of one harmonic, in rad."""
-    # TODO 7: amplitudes add in quadrature
+    # TODO 7: the peak amplitude of this harmonic, in rad
     ...
 
 

@@ -193,49 +193,49 @@ MU0 = 4.0 * math.pi * 1e-7  # H/m
 
 def loop_inductance_nh(h_m, w_m, length_m, mu0=MU0):
     """The parallel-plate commutation loop inductance of a plane pair, in nH."""
-    # TODO 1: height OVER width, then the length, then 1e9 for the nano prefix
+    # TODO 1: the inductance the plane pair presents over this length, in nanohenries
     ...
 
 
 def flux_cancelled_nh(l1_nh, l2_nh, m_nh):
     """The net loop inductance when supply and return carry anti-parallel currents."""
-    # TODO 2: the mutual term is counted TWICE and SUBTRACTED
+    # TODO 2: the net inductance once the two currents oppose each other
     ...
 
 
 def turn_off_peak_v(v_bus, l_loop_nh, di_dt_a_per_ns):
     """The peak drain-source voltage at turn-off."""
-    # TODO 3: nH times A/ns is already volts - no 1e-9 or 1e9 anywhere here
+    # TODO 3: the peak the drain sees as this loop interrupts this slew
     ...
 
 
 def bessel_group_delay_us(f0_hz):
     """The low-frequency group delay of a 2nd-order Bessel filter, in microseconds."""
-    # TODO 4: the 2 pi and the micro prefix are both easy to drop
+    # TODO 4: the low-frequency delay this corner sets, in microseconds
     ...
 
 
 def bessel_q():
     """The Q of a 2nd-order Bessel filter."""
-    # TODO 5: 1/sqrt(3), about 0.577 - not 1/sqrt(2)
+    # TODO 5: the quality factor that keeps this filter's delay flat
     ...
 
 
 def charge_droop_fraction(c_sample_f, c_filt_f):
     """The t = 0+ droop fraction when the SAR switch closes."""
-    # TODO 6: the bucket and the sampling capacitor SHARE the step
+    # TODO 6: how much of the step the sampling capacitor claims when the switch closes
     ...
 
 
 def charge_settling_lsb(bits, c_sample_f, c_filt_f, r_filt_ohm, t_acq_s):
     """The residual settling error at the end of acquisition, in LSBs."""
-    # TODO 7: 2**bits times the droop, decayed by exp(-t / (R_filt * C_filt))
+    # TODO 7: the residual error left at the end of the acquisition window, in LSBs
     ...
 
 
 def cauer_junction_c(t_amb_c, p_loss_w, stages, t_s):
     """The junction temperature of a Cauer ladder under a rectangular pulse."""
-    # TODO 8: each stage is R (1 - exp(-t / tau)); add the rises, then add T_amb
+    # TODO 8: the junction temperature the ladder reaches by the end of the pulse
     ...
 
 

@@ -42,7 +42,7 @@ published so a reader can reweigh them.
 
 | Page | Concepts | Bundled | New notation | Math | Δ | Prereqs | Legacy | Cross | TODOs | Step | Flag |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | :--- |
-| `00-foundations.T2.00a` | 1 | 1 | 11 | 3 | +0 | 1 | 0 | 0 | 6 | 10.0 | — |
+| `00-foundations.T2.00a` | 1 | 1 | 11 | 3 | +0 | 1 | 0 | 0 | 3 | 9.5 | — |
 | `00-foundations.T2.00g` | 2 | 0 | 7 | 3 | +0 | 1 | 0 | 0 | 6 | 8.0 | — |
 | `00-foundations.T2.00b` | 3 | 1 | 13 | 3 | +0 | 1 | 0 | 0 | 7 | 15.5 | **JUMP** |
 | `00-foundations.T2.00c` | 3 | 0 | 10 | 3 | +0 | 1 | 0 | 0 | 6 | 11.5 | — |
@@ -54,7 +54,7 @@ published so a reader can reweigh them.
 | `00-foundations.T2.00j` | 1 | 1 | 3 | 4 | +0 | 1 | 0 | 0 | 0 | 5.5 | — |
 | `01-electronics.T2.01a` | 3 | 1 | 2 | 3 | +0 | 2 | 0 | 1 | 7 | 10.0 | — |
 | `01-electronics.T2.01b` | 3 | 2 | 4 | 4 | +1 | 1 | 0 | 0 | 7 | 14.0 | **JUMP** |
-| `02-mechanics.T2.02a` | 3 | 1 | 3 | 4 | +2 | 2 | 0 | 1 | 5 | 11.5 | **JUMP** |
+| `02-mechanics.T2.02a` | 3 | 1 | 3 | 4 | +2 | 2 | 0 | 1 | 0 | 11.5 | **JUMP** |
 | `03-sensors.T2.03a` | 3 | 2 | 2 | 3 | +1 | 2 | 0 | 1 | 7 | 13.0 | — |
 | `04-embedded.T2.04a` | 3 | 0 | 1 | 4 | +1 | 2 | 0 | 1 | 7 | 8.5 | — |
 | `04-embedded.T2.04b` | 3 | 3 | 3 | 3 | -1 | 1 | 0 | 0 | 7 | 14.5 | **JUMP** |
@@ -120,7 +120,7 @@ published so a reader can reweigh them.
 
 **6-DOF Rigid-Body Degrees of Freedom, 3D Homogeneous Transforms (SE(3)), Velocity Jacobians & Parallel-Axis Inertia**
 
-- 3 declared concepts; bundles `geometric_jacobian_and_parallel_axis_theorem`; 3 first-use notation commands (`ne`, `partial`, `xrightarrow`…); math 2 → 4 (+2); 5 scaffold TODOs, 4.5 h.
+- 3 declared concepts; bundles `geometric_jacobian_and_parallel_axis_theorem`; 3 first-use notation commands (`ne`, `partial`, `xrightarrow`…); math 2 → 4 (+2); 0 scaffold TODOs, 4.5 h.
 - declares: `six_dof_gruebler_constraint_counting`, `se3_homogeneous_transformation_matrix`, `geometric_jacobian_and_parallel_axis_theorem`.
 
 ## Resolved prerequisites (19 legacy ids, 0 findings)

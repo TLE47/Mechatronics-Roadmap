@@ -84,27 +84,27 @@ TAU = 0.40  # constant commanded torque, N m
 
 
 def accel_rad_s2(state, tau=TAU, j=J, b=B):
-    # TODO 1: (tau - b * state[1]) / j - read the speed from slot 1
+    # TODO 1: The joint's angular acceleration at this state
     return 0.0
 
 
 def step(state, dt_s=DT_S, tau=TAU, j=J, b=B):
-    # TODO 2: unpack the old state, advance qd, then advance q with the OLD qd
+    # TODO 2: The next state after one tick
     return list(state)
 
 
 def run(state, ticks, dt_s=DT_S, tau=TAU, j=J, b=B):
-    # TODO 3: replace the state with step(state) once per tick
+    # TODO 3: The state after the requested number of ticks
     return state
 
 
 def add(a, b):
-    # TODO 4: add slot by slot, not with list concatenation
+    # TODO 4: The component-wise combination of the two states
     return list(a)
 
 
 def scale(a, k):
-    # TODO 5: multiply every slot by k
+    # TODO 5: The state with every component scaled by k
     return list(a)
 
 

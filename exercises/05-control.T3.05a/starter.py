@@ -13,15 +13,15 @@ Fill each one in, then run the tests the way CI does:
 
 
 def optimal_gain(p_minus, h, r):
-    """K = P^- H / (H P^- H + R). Hint: the denominator carries R, not just the prior."""
-    raise NotImplementedError("optimal_gain: K = p_minus * h / (h * p_minus * h + r)")
+    """The Kalman gain for one scalar measurement."""
+    raise NotImplementedError("optimal_gain: the gain that trusts the prior and the measurement in proportion to their uncertainties")
 
 
 def joseph_variance(p_minus, h, r, k):
-    """P^+ = (1 - K H) P^- (1 - K H) + K R K. Hint: both terms are squares, never a subtraction."""
-    raise NotImplementedError("joseph_variance: square the (1 - k * h) factor and add k^2 * r")
+    """The updated variance from the measurement, in a form that cannot go negative."""
+    raise NotImplementedError("joseph_variance: the updated variance, in a form that cannot go negative even with a corrupted gain")
 
 
 def nees_diagonal(error, variances):
-    """NEES = sum(e_i^2 / v_i) for a diagonal covariance. Hint: divide, do not subtract."""
-    raise NotImplementedError("nees_diagonal: sum(e * e / v for e, v in zip(error, variances))")
+    """The normalised error score for a diagonal covariance."""
+    raise NotImplementedError("nees_diagonal: the normalised error score for this diagonal covariance")

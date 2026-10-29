@@ -85,17 +85,17 @@ Complete `ma_to_amps` (`TODO 1`), `kohms_to_ohms` (`TODO 2`), and `us_to_seconds
 
 ```python
 def ma_to_amps(val_ma):
-    # TODO 1: Convert milliamps (mA) to Amperes (A) by dividing by 1000.0 (or * 1e-3)
+    # TODO 1: the same reading in amperes
     return 0.0
 
 
 def kohms_to_ohms(r_kohms):
-    # TODO 2: Convert kilo-ohms (kΩ) to Ohms (Ω) by multiplying by 1000.0 (or * 1e3)
+    # TODO 2: the same reading in ohms
     return 0.0
 
 
 def us_to_seconds(time_us):
-    # TODO 3: Convert microseconds (µs) to seconds (s) by dividing by 1_000_000.0 (or * 1e-6)
+    # TODO 3: the time in seconds
     return 0.0
 
 

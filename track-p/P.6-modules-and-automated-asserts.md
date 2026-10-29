@@ -73,19 +73,19 @@ runs an automatic safety check every time the script starts. When comparing deci
 - **What is real-hardware only:** Nothing in this lesson requires hardware.
 
 ### Starter Code (runs as-is — fill in the TODOs)
-Complete `distance_2d` (`TODO 1`) using `math.sqrt` and `clamp_cmd` (`TODO 2`), then uncomment or keep the `assert` self-checks in `TODO 3`:
+Complete `distance_2d` (`TODO 1`) and `clamp_cmd` (`TODO 2`), then uncomment or keep the `assert` self-checks in `TODO 3`:
 
 ```python
 import math
 
 
 def distance_2d(x_m, y_m):
-    # TODO 1: Return math.sqrt((x_m ** 2) + (y_m ** 2))
+    # TODO 1: the straight-line distance from the origin to this point
     return 5.0
 
 
 def clamp_cmd(cmd):
-    # TODO 2: Clamp cmd into [0, 255] and return the clamped integer
+    # TODO 2: the command, kept inside its eight-bit range
     return 255
 
 

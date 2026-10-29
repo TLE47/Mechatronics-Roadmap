@@ -87,17 +87,17 @@ B_IN = [[0.0], [1.0 / J]]
 
 
 def mat_vec(matrix, vector):
-    # TODO 1: row i of the answer is sum(matrix[i][j] * vector[j] for each j)
+    # TODO 1: the matrix applied to this vector
     return [0.0 for _ in matrix]
 
 
 def step_matrix(state, dt_s=DT_S, tau=TAU):
-    # TODO 2: x + dt * (A x + B u) - keep dt OUTSIDE the bracket
+    # TODO 2: the state after one tick, through the matrix
     return list(state)
 
 
 def step_two_lines(state, dt_s=DT_S, tau=TAU):
-    # TODO 3: the R.3 update, for comparison: qd first, then q with the OLD qd
+    # TODO 3: the same tick through the two line-by-line updates
     return list(state)
 
 

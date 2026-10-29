@@ -181,17 +181,19 @@ import math
 
 
 def cbf_command(u_nom, h_value, alpha, u_min=-2.0, u_max=2.0):
-    """Project u_nom onto `u <= alpha * h` and the actuator bounds, minimally.
+    """The command after the safety limit and the actuator bounds, as close to the request as both allow.
 
-    Hint: `hdot = -u`, so the CBF inequality `hdot + alpha h >= 0` caps the command, it does not
-    floor it. Refuse an empty admissible interval instead of clamping to nonsense.
+    The safety limit is an upper bound on the command. Refuse an empty admissible interval instead
+    of clamping to nonsense.
     """
-    raise NotImplementedError("cbf_command: upper = min(u_max, alpha * h_value), then clip")
+    raise NotImplementedError(
+        "cbf_command: the command after the safety limit and the actuator bounds, or a refusal when nothing is admissible"
+    )
 
 
 def barrier_lower_bound(h0, alpha, t):
-    """The guaranteed margin h0 exp(-alpha t). Hint: no alpha means a straight horizontal line."""
-    raise NotImplementedError("barrier_lower_bound: h0 * math.exp(-alpha * t)")
+    """The margin the barrier guarantees at this time; with no decay it stays at its starting value."""
+    raise NotImplementedError("barrier_lower_bound: the margin the barrier guarantees at this time")
 ```
 
 **Expected numbers (the answer):** $h = 0.10$, $\alpha = 8.0$ caps $1.20$ at $0.80\,\text{rad/s}$; $h = -0.05$ reverses the command to $-0.40$; $h = -0.50$ admits only $-4.0$ and is infeasible; $h_0 = 0.20$ at $\alpha = 2.0$ is $0.073576\,\text{m}$ after $0.50\,\text{s}$; one tick removes $0.3125\,\text{rad/s}$ over $1.5625\times10^{-4}\,\text{rad}$.

@@ -147,43 +147,43 @@ import math
 
 def opc_ua_pubsub_rate_bps(n_vars, f_pub, header_bytes=14, value_bytes=8):
     """Cyclic PubSub payload byte rate."""
-    # TODO 1: the 14-byte header is per FRAME, not per variable
+    # TODO 1: the byte rate the cyclic messages put on the wire
     ...
 
 
 def diagnostic_coverage_pct(lambda_dd, lambda_du):
     """DC_avg in percent."""
-    # TODO 2: a ratio of detected to total dangerous failures, times 100
+    # TODO 2: the share of dangerous failures the diagnostics catch, in percent
     ...
 
 
 def pfh_common_cause(lambda_du, beta):
-    """beta * lambda_du, in failures per hour."""
-    # TODO 3: the CCF term is per channel - do not double it for two channels
+    """The common-cause failure rate for one channel."""
+    # TODO 3: the common-cause failure rate for one channel
     ...
 
 
 def pld_ok(pfh_d):
     """True inside the PLd band [1e-7, 1e-6)."""
-    # TODO 4: the upper bound is exclusive
+    # TODO 4: whether the failure rate is inside the PLd band
     ...
 
 
 def sto_evaluate(ch_a_safe, ch_b_safe, discrepancy_ms, t_disc_max_ms=20.0):
     """The Category 3 STO decision for one sample."""
-    # TODO 5: either channel cuts torque; a skew under t_disc is bounce, not a fault
+    # TODO 5: whether the two channels still agree closely enough to stay safe
     ...
 
 
 def aas_opcua_nodes(shell):
     """Every SubmodelElement's NodeId, validated."""
-    # TODO 6: check `ns=<n>;` then `i=`, `s=` or `g=` for every element
+    # TODO 6: every NodeId in the shell, refusing one that is not well formed
     ...
 
 
 def reset_interlock(ch_a_safe, ch_b_safe, fault_latched, reset_pressed):
     """Whether a restart may be granted."""
-    # TODO 7: no automatic restart, and never past a latched fault
+    # TODO 7: whether a restart may be granted after this scan
     ...
 
 
