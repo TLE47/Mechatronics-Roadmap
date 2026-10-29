@@ -16,6 +16,31 @@ flowchart LR
 
 ---
 
+## [2026-10-28] — Run 282: the surface sweep waits for the count, not for the silence
+
+**The failure.** The sweep's last wait before a measurement was silence: 250 ms with no resize and no
+node landing. `paper/tab-links` still recorded 5 links on one run and 4 on the next, because the worst
+late arrival moves nothing — a request in flight is invisible to both observers, so the pane was
+perfectly quiet while the count had not arrived. The Links tab is the surface that reads the network,
+and it says so: `rise-issues-loading` is on screen from mount until the answer lands.
+
+**The fix.** [`scripts/surface_settle.mjs`](scripts/surface_settle.mjs) is now the gate, and the only
+one. It samples the six counts `measure()` records, holds them still for 400 ms, keeps the
+resize/mutation guards, and treats any `*-loading` panel as unfinished. The wait is bounded at 5 s: a
+surface that reaches the bound is reported as `settled: false` and measured anyway, which is what the
+sweep did before, said out loud. `scripts/snapshot_surfaces.mjs` imports it, and both the gate and the
+measurement take their selectors from one `SURFACE_COUNTS` table, so the gate cannot wait on a set of
+numbers the snapshot does not record.
+
+**Proved.** [`scripts/test_settle_counts.mjs`](scripts/test_settle_counts.mjs) (`npm run test:settle`, a
+step in the audits job) runs a copy of the previous gate as the **failing control** on the same fixture,
+where it returns at 250 ms with 0 links. On the real page, with the GitHub answer delayed 1.2 s, the old
+gate read **5** links at 252 ms with the panel still loading; the new gate read **6** at 1218 ms. Two
+broken versions of the gate were run to prove the suite bites: resolving at the first sample fails the
+no-sentinel case, and a constant count vector fails both count cases.
+
+---
+
 ## [2026-10-28] — Run 281: the surface sweep measures the page, not GitHub's queue
 
 **The failure.** `main` went red right after #68 merged: `check:snapshot` read **7** links on

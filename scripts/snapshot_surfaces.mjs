@@ -42,6 +42,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { resolveChromiumExecutable } from './e2e_browser_workbench.mjs';
 import { ensureBuilt, startStaticServer } from './e2e_pages_bundle.mjs';
+import { SETTLE, SURFACE_COUNTS, settleSurface } from './surface_settle.mjs';
 import { seedTourSeen } from './tour_seed.mjs';
 
 const ROOT = process.cwd();
@@ -111,10 +112,12 @@ function log(...args) {
 /**
  * What is measured on one surface.
  *
- * Runs in the page, so it may only use the DOM. Every value is rounded to a whole pixel before it
- * leaves: a snapshot is a claim about layout, not about the subpixel.
+ * Runs in the page, so it may only use the DOM, and takes the counts it reports as an argument because
+ * the settle gate waits on the same selectors (`scripts/surface_settle.mjs`): a gate watching a
+ * different set could hand back a surface whose recorded count was still moving. Every value is rounded
+ * to a whole pixel before it leaves: a snapshot is a claim about layout, not about the subpixel.
  */
-function measure() {
+function measure(selectors) {
   const box = (element) => {
     if (!element) return null;
     const rect = element.getBoundingClientRect();
@@ -150,7 +153,10 @@ function measure() {
   const main = document.querySelector('#main') ?? document.querySelector('main');
   const panel = main?.firstElementChild ?? null;
   const root = getComputedStyle(document.documentElement);
-  const count = (selector, scope) => (scope ?? document).querySelectorAll(selector).length;
+  const counts = {};
+  for (const [field, selector] of Object.entries(selectors)) {
+    counts[field] = document.querySelectorAll(selector).length;
+  }
 
   return {
     // Where the page's four regions are. A rail that moves to the other edge, a header that doubles in
@@ -166,14 +172,7 @@ function measure() {
     },
     // What the tab is made of. A card losing its buttons, a lab losing its canvas, or a table losing its
     // rows is the kind of drift no behavioural suite notices, because no suite ever asked.
-    counts: {
-      buttons: count('button'),
-      inputs: count('input, textarea, select'),
-      links: count('a[href]'),
-      headings: count('h1, h2, h3, h4'),
-      canvases: count('canvas'),
-      tables: count('table'),
-    },
+    counts,
     styles: {
       body: style(document.body),
       main: style(main),
@@ -335,38 +334,23 @@ async function main() {
           return true;
         });
         await page.waitForTimeout(400);
-        // And then wait until the pane has stopped *resizing*. A late font swap, a lazy image or a
-        // chart's first paint moves the page by a few pixels after that beat, and a snapshot taken
-        // mid-shift is a claim about a frame nobody sees — `tab-links` read 2411 or 2414 px depending
-        // on which side of a 3 px reflow the sweep landed, with nothing changed in the app.
-        // Two kinds of late arrival count as "still changing": a resize (the existing guard) and a
-        // node landing in the pane without moving it. The second one is what made `paper/tab-links`
-        // read 5 links on one run and 4 on the next: the lesson's reading link mounts after the
-        // lesson fetch resolves, inside a line whose height it does not change, so the resize observer
-        // never saw it and the counting pass sometimes ran before it.
-        await page.evaluate(
-          () =>
-            new Promise((resolve) => {
-              const target = document.querySelector('#main') ?? document.body;
-              let quiet = setTimeout(done, 250);
-              const bump = () => {
-                clearTimeout(quiet);
-                quiet = setTimeout(done, 250);
-              };
-              const resizes = new ResizeObserver(bump);
-              const mutations = new MutationObserver(bump);
-              function done() {
-                resizes.disconnect();
-                mutations.disconnect();
-                resolve(true);
-              }
-              resizes.observe(target);
-              mutations.observe(target, { childList: true, subtree: true, characterData: true });
-              setTimeout(done, 5000);
-            })
-        );
+        // And then wait until the surface has stopped changing what it *counts*, not only how big it is
+        // (`scripts/surface_settle.mjs`). Silence was the whole guard here and silence is not the same
+        // as finished: a late font swap or a chart's first paint moves the page by a few pixels after
+        // the beat above (`tab-links` read 2411 or 2414 px depending on which side of a 3 px reflow the
+        // sweep landed), and a node can mount inside a line whose height it does not change at all —
+        // which is what made `paper/tab-links` read 5 links on one run and 4 on the next. The worst case
+        // is not a movement at all: a request still in flight changes nothing, so a pane can be perfectly
+        // quiet while the count it is about to be measured by has not arrived. The gate therefore holds
+        // the counts still for a beat and treats a `*-loading` panel as unfinished.
+        const settled = await page.evaluate(settleSurface, { selectors: SURFACE_COUNTS, ...SETTLE });
+        if (!settled.settled) {
+          log(
+            `  note ${palette}/${surface} still loading after ${settled.waitedMs} ms (counts ${settled.counts})`
+          );
+        }
         const name = `${palette}/${surface}`;
-        surfaces[name] = await page.evaluate(measure);
+        surfaces[name] = await page.evaluate(measure, SURFACE_COUNTS);
         if (PNG) {
           await page.screenshot({ path: path.join(PNG_DIR, `${palette}--${surface}.png`) });
         }

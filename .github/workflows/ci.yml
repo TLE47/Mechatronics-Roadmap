@@ -441,6 +441,9 @@ jobs:
       - name: "Check Lighthouse: best-practices, SEO and accessibility on the built bundle"
         run: npm run check:lighthouse
 
+      - name: "Check the settle gate: a count that lands after the pane goes quiet is waited for"
+        run: npm run test:settle
+
       - name: "Check the surface snapshot: every tab in every palette is still shaped the same"
         run: npm run check:snapshot
 

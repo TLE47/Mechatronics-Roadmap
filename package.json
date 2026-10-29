@@ -142,6 +142,7 @@
     "check:axe": "node scripts/axe_tabs.mjs",
     "check:lighthouse": "node scripts/check_lighthouse.mjs",
     "check:snapshot": "node scripts/snapshot_surfaces.mjs",
+    "test:settle": "node scripts/test_settle_counts.mjs",
     "check:labels": "node scripts/check_label_sizes.mjs",
     "test:perf": "node scripts/perf_walk.mjs",
     "test:perf:unit": "node scripts/test_perf_walk.mjs",
