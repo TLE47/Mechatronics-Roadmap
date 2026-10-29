@@ -123,43 +123,43 @@ import math
 
 def dot3(a, b):
     """The 3D dot product."""
-    # TODO 1: a_x b_x + a_y b_y + a_z b_z
+    # TODO 1: how much of one vector points along the other
     ...
 
 
 def cross3(a, b):
     """The 3D cross product a x b, right-handed."""
-    # TODO 2: three components, each a 2x2 difference
+    # TODO 2: the moment vector, with the right-hand rule deciding its direction
     ...
 
 
 def axial_force(force, lever):
     """The component of `force` along the lever arm, in newtons."""
-    # TODO 3: project onto the lever's UNIT direction - a longer lever must not multiply the force
+    # TODO 3: the part of the force that acts along the lever, whatever the lever's length
     ...
 
 
 def moment(lever, force):
     """The moment vector r x F in N*m."""
-    # TODO 4: order matters - r x F is not F x r
+    # TODO 4: the moment this force produces about the lever's base
     ...
 
 
 def det2(b1, b2):
     """Determinant of the matrix whose columns are b1 = [a, c] and b2 = [b, d]."""
-    # TODO 5: ad - bc; zero means the two directions are collinear
+    # TODO 5: the signed area the two directions span; zero when they are collinear
     ...
 
 
 def coordinates_in_basis(vector, b1, b2):
-    """(c1, c2) with c1*b1 + c2*b2 == vector; ValueError when the basis is singular."""
-    # TODO 6: Cramer's rule, and refuse |det| < 1e-12 instead of returning inf or nan
+    """The two coordinates that rebuild the vector from this basis; ValueError when the basis is singular."""
+    # TODO 6: the two coordinates of the vector in this basis, refusing a basis that cannot span the plane
     ...
 
 
 def in_basis(vector, b1, b2):
     """Rebuild the vector from its coordinates."""
-    # TODO 7: c1*b1 + c2*b2
+    # TODO 7: the vector those coordinates describe in this basis
     ...
 
 

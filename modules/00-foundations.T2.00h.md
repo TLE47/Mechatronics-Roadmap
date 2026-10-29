@@ -124,37 +124,37 @@ import mechalab_plant as plant
 
 def impedance_rl(r_ohm, l_h, omega):
     """Series R-L impedance, as a complex number in ohms."""
-    # TODO: the resistor is the real part, the inductor is j*omega*L
+    # TODO: the impedance of this resistor and inductor at this frequency
     ...
 
 
 def first_order_response(tau, omega):
-    """H(jw) of tau y' + y = u, evaluated at omega."""
-    # TODO: d/dt becomes j*omega
+    """The frequency response of the first-order lag at this frequency."""
+    # TODO: what the lag does to a sine at this frequency, as a complex ratio
     ...
 
 
 def second_order_response(wn, zeta, omega):
-    """G(jw) = wn^2 / ((jw)^2 + 2 zeta wn (jw) + wn^2)."""
-    # TODO: substitute s = j*omega and keep it complex
+    """The frequency response of the second-order system at this frequency."""
+    # TODO: the second-order response at this frequency, as a complex ratio
     ...
 
 
 def magnitude_db(h):
-    """Amplitude in decibels: 20 log10 |h| - not 10 log10."""
-    # TODO: amplitude decibels
+    """The amplitude in decibels, as a Bode plot's vertical axis shows it."""
+    # TODO: the amplitude on the decibel scale a Bode plot uses
     ...
 
 
 def phase_deg(h):
     """Phase of h in degrees, in (-180, 180]."""
-    # TODO: degrees, not radians
+    # TODO: the angle of this response in degrees
     ...
 
 
 def resonance_peak(wn, zeta):
-    """(omega_r, peak_magnitude), or (0.0, 1.0) when there is no peak."""
-    # TODO: wn sqrt(1 - 2 zeta^2) and 1 / (2 zeta sqrt(1 - zeta^2))
+    """Where the second-order response peaks, and how tall the peak gets."""
+    # TODO: where the response peaks, and how tall the peak is; no peak reports zero and one
     ...
 
 

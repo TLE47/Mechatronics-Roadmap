@@ -157,39 +157,39 @@ import math
 
 def align_stack(size_b, align=8):
     """Round a requested `K_THREAD_DEFINE` stack size up to the next `align`-byte boundary."""
-    # TODO 1: round UP with ceil - never down, and never to the nearest multiple (1020 -> 1024)
+    # TODO 1: the stack size the linker reserves for this request, never below it
     ...
 
 def static_ram_bytes(stacks, tcb_bytes=128, msgq=None):
     """Aligned stacks + one TCB per thread + every static queue's payload."""
-    # TODO 2: every thread pays a TCB *and* its queue's M x B payload counts too
+    # TODO 2: the static RAM the kernel reserves before main runs
     ...
 
 def device_dt_ready(node, prj_conf):
     """True only when the node is `status = "okay"` and its Kconfig driver symbol is on."""
-    # TODO 3: two independent conditions - the status string AND the Kconfig entry,
-    #         which defaults to off when the node names a symbol prj.conf never sets
+    # TODO 3: whether the devicetree node and its Kconfig symbol are both ready,
+    #         with an absent entry reading as off
     ...
 
 def binding_problems(nodes, prj_conf):
     """Sorted labels of the devicetree nodes that would not come up."""
-    # TODO 4: filter the labels through device_dt_ready, then sort them
+    # TODO 4: the labels of the nodes that would not come up, in order
     ...
 
 def outranks(priority_a, priority_b):
-    """True when thread A preempts thread B."""
-    # TODO 5: Zephyr is not FreeRTOS - the winning number is the smaller one
+    """True when thread A preempts thread B under Zephyr's priority order."""
+    # TODO 5: whether thread A preempts thread B under Zephyr's priority order
     ...
 
 def effective_priority(priority_owner, priority_waiter):
     """The owner's priority while a more urgent thread waits on its `k_mutex`."""
-    # TODO 6: min(owner, waiter) - a waiter that is not more urgent never raises the owner
+    # TODO 6: the owner's priority while a more urgent thread waits on its mutex
     ...
 
 def worst_case_response_us(c_high, b_holder, c_intermediate=0.0):
     """Worst-case response time of the high-urgency thread, in microseconds."""
-    # TODO 7: add all three terms - the middle thread only runs when the primitive
-    #         does not inherit priority (k_sem), so it contributes 0 under k_mutex
+    # TODO 7: the worst-case response of the high-urgency thread, with and without
+    #         inheritance
     ...
 
 print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")

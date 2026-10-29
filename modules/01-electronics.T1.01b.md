@@ -135,44 +135,44 @@ import mechalab_plant as plant  # noqa: F401  (the shared arm, as every graded p
 
 
 def conduction_loss(current, rds_on, duty=1.0):
-    """P = I^2 R_DS(on) D over one PWM period."""
-    # TODO 1: square the current, then scale by the duty - the average, not the peak
+    """The conduction loss in this switch at this current and duty."""
+    # TODO 1: the heat the switch makes at this current and duty
     ...
 
 
 def pwm_effective_voltage(v_bus, duty):
-    """V_eff = D * V_bus."""
-    # TODO 2: duty is a fraction in [0, 1] - refuse a percentage such as 65
+    """The average voltage this duty gives from the bus."""
+    # TODO 2: the average voltage this duty gives; a percentage is not a duty
     ...
 
 
 def shoot_through_current(v_bus, rds_on):
     """The leg's short-circuit current with both switches on."""
-    # TODO 3: TWO switches in series, so divide by 2 * rds_on
+    # TODO 3: the current a straight-through leg would draw
     ...
 
 
 def h_bridge_voltage(v_bus, duty_a, duty_b):
     """The average signed terminal voltage."""
-    # TODO 4: subtract the two duties BEFORE scaling by the bus
+    # TODO 4: the average voltage across the motor, in the direction the sign names
     ...
 
 
 def bridge_conduction_loss(current, r_high, r_low, duty=1.0):
     """Motor current crosses two switches."""
-    # TODO 5: add BOTH on-resistances - a single switch reads half the real loss
+    # TODO 5: the heat both switches make while the motor current crosses the leg
     ...
 
 
 def within_recommended(v_supply, v_min=2.7, v_max=10.8):
     """True inside the datasheet's Recommended Operating Conditions."""
-    # TODO 6: inclusive at both ends, and 11.8 V is the absolute maximum, not this window
+    # TODO 6: whether the supply is inside the datasheet's recommended window, both ends included
     ...
 
 
 def duty_for_effective_voltage(v_eff, v_bus):
-    """D = V_eff / V_bus."""
-    # TODO 7: refuse a demand the bus cannot deliver instead of returning D > 1
+    """The duty that reaches this average voltage."""
+    # TODO 7: the duty that reaches this average voltage, and a demand the bus cannot meet is an error
     ...
 
 

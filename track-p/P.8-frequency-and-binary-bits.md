@@ -88,13 +88,12 @@ Complete `freq_to_period_ms` (`TODO 1`) and `max_unsigned_int` (`TODO 2`) to com
 
 ```python
 def freq_to_period_ms(freq_hz):
-    # TODO 1: Compute period_s = 1.0 / freq_hz in seconds,
-    #         then multiply by 1000.0 to return milliseconds (ms).
+    # TODO 1: the period this frequency gives, in milliseconds
     return 0.0
 
 
 def max_unsigned_int(n_bits):
-    # TODO 2: Return (2 ** n_bits) - 1
+    # TODO 2: the top count an n-bit unsigned register holds
     return 0
 
 

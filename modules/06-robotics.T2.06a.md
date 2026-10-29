@@ -183,43 +183,43 @@ import math
 
 def qos_compatible(pub_reliable, pub_transient_local, sub_reliable, sub_transient_local):
     """True when the publisher's offer satisfies the subscriber's request on both policies."""
-    # TODO: two independent inequalities (Reliable >= Best-Effort, TransientLocal >= Volatile), not a match
+    # TODO: whether this offer satisfies this request on both policies
     ...
 
 
 def urdf_revolute_z(xyz, q_rad):
-    """`[Rz(q), xyz; 0, 1]` for a revolute joint about +Z."""
-    # TODO: the rotation in the top-left 3x3, the offset in the last column, 1 in the corner
+    """The homogeneous transform of a revolute joint about +Z."""
+    # TODO: the pose this joint contributes
     ...
 
 
 def mat4_mul(a, b):
     """Product of two 4x4 homogeneous transforms."""
-    # TODO: row-by-column over four, in the order A then B
+    # TODO: the transform that applies A's pose before B's
     ...
 
 
 def transform_point(t, p):
     """Apply a homogeneous transform to a 3-vector."""
-    # TODO: rotate, then add the translation column
+    # TODO: where the point lands in the other frame
     ...
 
 
 def invert_rigid(t):
     """Inverse of a rigid transform."""
-    # TODO: R^T for the rotation and -R^T p for the offset - never a general 4x4 inverse
+    # TODO: the transform that undoes this one
     ...
 
 
 def interpolate(t_a, value_a, t_b, value_b, t_query):
     """Linear interpolation in time; raise ValueError outside the buffer."""
-    # TODO: compute alpha = (t_query - t_a) / (t_b - t_a), then refuse a query outside the two stamps
+    # TODO: the value at this time, or a ValueError outside the buffer
     ...
 
 
 def topic_bandwidth_mb_s(n_subs, size_bytes, rate_hz):
     """Unicast bandwidth to `n_subs` subscribers, in MB/s."""
-    # TODO: subscribers x bytes x hertz, over 1e6
+    # TODO: the bandwidth this fan-out needs, in MB/s
     ...
 
 

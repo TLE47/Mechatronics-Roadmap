@@ -13,38 +13,38 @@ import mechalab_plant as plant  # noqa: F401  (the plant is on the path for the 
 
 
 def shunt_adc_voltage(i_amp, r_shunt, gain=20.0, v_ref=1.65):
-    """V_ADC = V_ref + G * I * R_shunt."""
-    raise NotImplementedError("TODO 1: the reference is an offset, not a divisor - and the sign of I matters")
+    """The ADC voltage this current produces through the shunt, around the reference."""
+    raise NotImplementedError("TODO 1: the ADC voltage this current produces, around the reference")
 
 
 def shunt_current_from_adc(v_adc, r_shunt, gain=20.0, v_ref=1.65):
-    """I = (V_ADC - V_ref) / (G R_shunt)."""
-    raise NotImplementedError("TODO 2: subtract the reference FIRST, then divide by G * R")
+    """The current this ADC voltage represents."""
+    raise NotImplementedError("TODO 2: the current this ADC voltage represents")
 
 
 def max_measurable_current(v_ref, v_rail, gain, r_shunt):
     """The positive current that just reaches the rail."""
-    raise NotImplementedError("TODO 3: half-scale swing is V_rail - V_ref, not V_rail")
+    raise NotImplementedError("TODO 3: the largest positive current the output can still carry")
 
 
 def kelvin_gain_error_pct(r_shunt, r_trace):
-    """100 * 2 R_trace / R_shunt."""
-    raise NotImplementedError("TODO 4: both pads carry copper - the factor of 2, and percent")
+    """The gain error, as a percentage, that this much trace resistance adds."""
+    raise NotImplementedError("TODO 4: the gain error this trace resistance adds, as a percentage")
 
 
 def cmrr_input_error_v(delta_v_cm, cmrr_db):
     """The common-mode step, referred back to the amplifier input."""
-    raise NotImplementedError("TODO 5: dB is a power ratio - 10^(-CMRR/20), not 10^(-CMRR)")
+    raise NotImplementedError("TODO 5: the common-mode step referred back to the amplifier input")
 
 
 def cmrr_current_error_a(delta_v_cm, cmrr_db, r_shunt):
     """The same residue as a misread current."""
-    raise NotImplementedError("TODO 6: an INPUT-referred volt is divided by R_shunt, not by G * R")
+    raise NotImplementedError("TODO 6: that same residue as a misread current")
 
 
 def adc_code(v_adc, v_rail=3.3, bits=12):
     """The unipolar code, rounded and clamped to full scale."""
-    raise NotImplementedError("TODO 7: full scale is 2**bits - 1, and a negative input clips to 0")
+    raise NotImplementedError("TODO 7: the unipolar ADC code, rounded and held to full scale")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

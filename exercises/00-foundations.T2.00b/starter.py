@@ -18,48 +18,39 @@ import mechalab_plant as plant
 
 def dot3(a, b):
     """The 3D dot product, in whatever units the inputs carry."""
-    raise NotImplementedError("TODO 1: a_x b_x + a_y b_y + a_z b_z")
+    raise NotImplementedError("TODO 1: how much of a points along b, in the inputs' units")
 
 
 def cross3(a, b):
     """The 3D cross product a x b, right-handed."""
-    raise NotImplementedError("TODO 2: three components, each a 2x2 difference")
+    raise NotImplementedError("TODO 2: the moment vector whose direction follows the right-hand rule")
 
 
 def axial_force(force, lever):
-    """The component of `force` along the lever arm, in newtons.
-
-    TODO 3: project onto the UNIT direction of the lever - not onto the lever itself. A longer
-    lever must not multiply the axial force.
-    """
-    raise NotImplementedError("TODO 3: normalise before projecting")
+    """The component of the force along the lever arm, in newtons."""
+    raise NotImplementedError("TODO 3: the part of the force that acts along the lever, whatever the lever's length")
 
 
 def moment(lever, force):
-    """The moment vector r x F in N*m - the twist the force exerts about the lever's base."""
-    raise NotImplementedError("TODO 4: order matters, r x F is not F x r")
+    """The moment this force produces about the lever's base, in N*m."""
+    raise NotImplementedError("TODO 4: the moment this force produces about the lever's base")
 
 
 def det2(b1, b2):
-    """The determinant of the matrix whose columns are b1 and b2.
-
-    TODO 5: ad - bc, with b1 = [a, c] and b2 = [b, d]. Zero means the two directions are collinear.
-    """
-    raise NotImplementedError("TODO 5: the signed area of the two basis directions")
+    """The determinant of the matrix whose columns are b1 and b2."""
+    raise NotImplementedError("TODO 5: the signed area the two basis directions span; zero when they are collinear")
 
 
 def coordinates_in_basis(vector, b1, b2):
-    """The (c1, c2) with c1*b1 + c2*b2 == vector. Raise ValueError when the basis is singular.
-
-    TODO 6: solve the 2x2 system by Cramer's rule; if det2 is within 1e-12 of zero, the two
-    directions cannot span the plane - say so instead of returning inf or nan.
+    """The two coordinates that rebuild the vector from this basis. Raise ValueError when the
+    basis cannot span the plane.
     """
-    raise NotImplementedError("TODO 6: invert the basis, or refuse it")
+    raise NotImplementedError("TODO 6: the two coordinates of the vector in this basis, refusing a basis that cannot span the plane")
 
 
 def in_basis(vector, b1, b2):
-    """Rebuild the vector from its coordinates - the inverse of `coordinates_in_basis`."""
-    raise NotImplementedError("TODO 7: c1*b1 + c2*b2")
+    """Rebuild the vector from its coordinates in this basis."""
+    raise NotImplementedError("TODO 7: the vector those coordinates describe in this basis")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

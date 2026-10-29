@@ -171,20 +171,20 @@ import math
 
 
 def exp_so3(rotvec):
-    """Rodrigues' formula for exp([rotvec]_x), returning a 3x3 list of lists."""
-    # TODO 1: theta = |rotvec|; build the skew matrix K, then I + (sin t / t) K + ((1 - cos t) / t^2) K^2
+    """The rotation matrix this rotation vector describes, as a 3x3 list of lists."""
+    # TODO 1: the rotation matrix this rotation vector describes
     ...
 
 
 def inject_rotation(r_nominal, d_theta):
-    """R^+ = R^- exp([d_theta]_x): the correction multiplies the nominal rotation on the right."""
-    # TODO 2: matrix-multiply r_nominal by exp_so3(d_theta) - order matters
+    """The nominal rotation with this small correction applied on its right."""
+    # TODO 2: the nominal rotation with this small correction applied
     ...
 
 
 def eskf_rotation_update(r_nominal, d_theta, innovation):
-    """Inject d_theta, reset the error-state mean to zero, then apply the next innovation."""
-    # TODO 3: inject, reset the mean to [0, 0, 0], then inject `innovation` - not d_theta again
+    """The corrected rotation after this innovation, with the error-state mean reset to zero."""
+    # TODO 3: the corrected rotation after this innovation, with the error-state mean reset
     ...
 
 

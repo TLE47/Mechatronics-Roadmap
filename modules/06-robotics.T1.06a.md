@@ -119,43 +119,43 @@ import math
 
 def cubic_rest_to_rest(t, q0, qf, T):
     """(q, qd, qdd) at time t for a rest-to-rest cubic."""
-    # TODO: s = t/T clamped to [0, 1] through 3s^2 - 2s^3, and hold the final pose, still, once t > T (at exactly t = T the cubic still carries its terminal deceleration, -6 dq / T^2)
+    # TODO: the pose, speed and acceleration at this instant, holding the final pose after the move
     ...
 
 
 def cubic_coefficients(q0, qf, T):
     """(a0, a1, a2, a3) with zero endpoint velocities."""
-    # TODO: a0 = q0, a1 = 0, a2 = 3dq/T^2, a3 = -2dq/T^3
+    # TODO: the cubic's coefficients for this travel and duration
     ...
 
 
 def peak_velocity(dq, T):
     """Peak speed of a rest-to-rest cubic."""
-    # TODO: 1.5x the average speed dq/T, not the average itself
+    # TODO: the fastest speed the cubic reaches
     ...
 
 
 def min_duration_s(dq, qd_max):
     """Shortest move inside a speed limit."""
-    # TODO: solve 1.5|dq|/T = qd_max for T
+    # TODO: the shortest duration whose peak speed stays inside the limit
     ...
 
 
 def min_duration_for_acceleration(dq, qdd_max):
     """Shortest move inside an acceleration limit."""
-    # TODO: the peak acceleration is 6|dq|/T^2 at the endpoints; solve for T
+    # TODO: the shortest duration whose peak acceleration stays inside the limit
     ...
 
 
 def spring_damper_torque(q_d, q, dq_d, dq, kp, kd, tau_g=0.0):
-    """tau = kp (q_d - q) + kd (dq_d - dq) + tau_g."""
-    # TODO: stiffness multiplies the POSITION error, damping the VELOCITY error
+    """The torque the springs and dampers apply toward the target pose."""
+    # TODO: the torque the stiffness and damping apply toward the target pose and speed
     ...
 
 
 def compliance_deflection(tau_ext, kp):
     """Steady yield under a hand push."""
-    # TODO: a stiffer spring yields less, so divide
+    # TODO: the steady yield under a hand push at this stiffness
     ...
 
 

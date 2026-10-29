@@ -18,7 +18,7 @@ def elapsed_us(now_us, last_us, bits=32):
 
     Hint: subtract first, then mask - comparing the raw readings is what breaks at rollover.
     """
-    raise NotImplementedError("elapsed_us: subtract, then apply the (1 << bits) - 1 mask")
+    raise NotImplementedError("elapsed_us: the ticks elapsed between the two readings, even across a rollover")
 
 
 def tick_due(now_us, last_us, period_us):
@@ -26,7 +26,7 @@ def tick_due(now_us, last_us, period_us):
 
     Hint: at exactly one period the answer is already True.
     """
-    raise NotImplementedError("tick_due: compare the masked elapsed time with the period")
+    raise NotImplementedError("tick_due: whether a whole period has elapsed, counting an exact period as due")
 
 
 def next_deadline_us(last_us, period_us):
@@ -34,7 +34,7 @@ def next_deadline_us(last_us, period_us):
 
     Hint: add the period to the old deadline, do not resynchronise to the current reading.
     """
-    raise NotImplementedError("next_deadline_us: last + period, masked to 32 bits")
+    raise NotImplementedError("next_deadline_us: the next deadline on the same fixed grid")
 
 
 def isr_utilization_pct(t_exec_us, f_isr_hz):
@@ -42,7 +42,7 @@ def isr_utilization_pct(t_exec_us, f_isr_hz):
 
     Hint: microseconds are 1e-6 seconds; forgetting that factor reports 4.5 million percent.
     """
-    raise NotImplementedError("isr_utilization_pct: 100 * t_exec_us * 1e-6 * f_isr_hz")
+    raise NotImplementedError("isr_utilization_pct: the CPU share the ISR costs, as a percentage")
 
 
 def max_isr_exec_us(u_max_pct, f_isr_hz):
@@ -50,7 +50,7 @@ def max_isr_exec_us(u_max_pct, f_isr_hz):
 
     Hint: the budget arrives as a percentage, so divide it by 100 before using it.
     """
-    raise NotImplementedError("max_isr_exec_us: (u_max_pct / 100) * (1e6 / f_isr_hz)")
+    raise NotImplementedError("max_isr_exec_us: the longest the ISR may run inside this budget")
 
 
 def fault_latency_us(n_debounce, f_isr_hz):
@@ -58,7 +58,7 @@ def fault_latency_us(n_debounce, f_isr_hz):
 
     Hint: seconds to microseconds is 1e6, not 1e3.
     """
-    raise NotImplementedError("fault_latency_us: (n_debounce / f_isr_hz) * 1e6")
+    raise NotImplementedError("fault_latency_us: how long this many samples take at the ISR rate")
 
 
 def ticks_in(duration_us, period_us):
@@ -66,7 +66,7 @@ def ticks_in(duration_us, period_us):
 
     Hint: integer division - a partial tick has not run.
     """
-    raise NotImplementedError("ticks_in: duration_us // period_us")
+    raise NotImplementedError("ticks_in: how many complete periods fit in this duration")
 
 
 def fsm_step(state, current_a, i_max_a, pos_rad, pwm_cmd):
@@ -74,4 +74,4 @@ def fsm_step(state, current_a, i_max_a, pos_rad, pwm_cmd):
 
     Hint: FAULT is a latch, not a measurement - it must survive a current that has recovered.
     """
-    raise NotImplementedError("fsm_step: latch FAULT, force the PWM to zero, then advance the states")
+    raise NotImplementedError("fsm_step: the next state and command, with a fault staying latched")

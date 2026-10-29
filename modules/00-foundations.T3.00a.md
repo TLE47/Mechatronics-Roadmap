@@ -197,33 +197,33 @@ The tests are behavioural: `[w]_x v` must equal `w x v` on three pairs (a transp
 import math
 
 def hat(w):
-    """The 3x3 skew matrix with `[w]_x v == w x v`."""
-    # TODO: rows [0, -wz, wy], [wz, 0, -wx], [-wy, wx, 0] - the signs are the cross product
+    """The 3x3 matrix that turns this vector into the equivalent cross-product operator."""
+    # TODO: the matrix whose action on any vector is the same as crossing with this one
     ...
 
 def vee(m):
     """Inverse of `hat`; raise ValueError when `m` is not skew-symmetric."""
-    # TODO: check the three off-diagonal pairs and the zero diagonal first, then read the vector
+    # TODO: the vector that hat came from, refusing a matrix that is not skew-symmetric
     ...
 
 def mat3_mul(a, b):
-    """Row-by-column product of two 3x3 matrices."""
-    # TODO: a[i][k] * b[k][j] summed over k - never a Hadamard product
+    """The product of two 3x3 matrices."""
+    # TODO: the composition of the two matrices
     ...
 
 def mat3_vec(a, v):
     """Matrix times vector."""
-    # TODO: one row at a time
+    # TODO: the vector this matrix produces
     ...
 
 def exp_so3(phi):
-    """`exp([phi]_x)` by Rodrigues' formula, for a rotation vector of any length."""
-    # TODO: I + (sin t / t) K + ((1 - cos t) / t^2) K^2, with the Taylor branch below t = 1e-7
+    """The rotation matrix for this rotation vector, however large its angle."""
+    # TODO: the rotation matrix this rotation vector describes, with a stable small-angle path
     ...
 
 def energy_rate(h_grad, x_dot, dissipation=0.0):
-    """Power balance `dH/dt = grad(H) . x_dot - dissipation`."""
-    # TODO: a dot product, with the dissipation subtracted
+    """The rate at which the system's energy changes, with dissipation removed."""
+    # TODO: the rate the system's energy changes, with dissipation removed
     ...
 
 print("scaffold ready: 6 TODOs to fill, then compare against the numbers in the full solution")

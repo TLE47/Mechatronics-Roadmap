@@ -123,12 +123,12 @@ tone really lands. Fill the two TODOs:
 
 def nyquist_hz(fs):
     """The highest frequency a sample rate `fs` can represent, in Hz."""
-    raise NotImplementedError("TODO 1: fs / 2")
+    raise NotImplementedError("TODO 1: the highest frequency this sample rate can tell apart; a non-positive rate is refused")
 
 
 def alias_hz(f_sig, fs):
     """The frequency in [0, fs/2] that `f_sig` appears as after sampling at `fs`."""
-    raise NotImplementedError("TODO 2: fold with fmod and mirror the second half down")
+    raise NotImplementedError("TODO 2: the frequency this tone appears as after sampling; a non-positive rate is refused")
 ```
 
 **Expected numbers (the answer):** $f_{\text{alias}}(2700\,\text{Hz} @ 2000\,\text{Hz}) = 700.0\,\text{Hz}$ and $f_{\text{alias}}(3000\,\text{Hz} @ 4000\,\text{Hz}) = 1000.0\,\text{Hz}$.

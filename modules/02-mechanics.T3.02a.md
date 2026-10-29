@@ -173,44 +173,44 @@ import math
 
 
 def screw_axis(omega, q):
-    """The unit screw axis S = [omega, -omega x q] of a joint through the point q."""
-    # TODO 1: cross omega with q and NEGATE it - v = -omega x q, sign included
+    """The unit screw axis of a joint through the point q."""
+    # TODO 1: the linear motion a rotation about this point induces at the base
     ...
 
 
 def spatial_power(twist, wrench):
-    """P = V^T F, in watts."""
-    # TODO 2: both halves of the dot product - omega . m AND v . f
+    """The power the twist delivers through the wrench, in watts."""
+    # TODO 2: the power this twist delivers through this wrench
     ...
 
 
 def flexure_stiffness(e_pa, b_m, t_m, r_m):
-    """Paros-Weisbord K_theta = 2 E b t^(5/2) / (9 pi sqrt(R)), in N*m/rad."""
-    # TODO 3: t to the power 2.5, and 9*pi*sqrt(R) underneath
+    """The rotational stiffness of a Paros-Weisbord circular notch flexure, in N*m/rad."""
+    # TODO 3: the stiffness the notch gives at this web thickness and radius
     ...
 
 
 def flexure_stress(k_theta, theta_rad, b_m, t_m, r_m):
-    """Peak surface bending stress in Pa, with Kt = 1 + t/(2R)."""
-    # TODO 4: M_b = K_theta * theta, then sigma = 6 Kt M_b / (b t^2)
+    """Peak surface bending stress in the notch, in Pa."""
+    # TODO 4: the peak stress at this deflection, with the notch's own concentration factor
     ...
 
 
 def thickness_scale(factor):
-    """How K_theta scales when the web thickness is multiplied by `factor`."""
-    # TODO 5: the exponent is 5/2
+    """How the stiffness changes when the web thickness changes by this factor."""
+    # TODO 5: the stiffness ratio this thickness change gives
     ...
 
 
 def rnea_2link(i1, i2, ddq1, ddq2):
     """Two-pass RNEA: (tau_1, tau_2) for the joint accelerations."""
-    # TODO 6: link 2's absolute acceleration is ddq1 + ddq2; the inward pass adds the outboard torque
+    # TODO 6: the two joint torques this acceleration pair needs
     ...
 
 
 def passivity_quadratic_form(m_dot, c, dq):
-    """dq^T (Mdot - 2C) dq."""
-    # TODO 7: Mdot MINUS twice C, then the double sum over both indices
+    """The passivity quadratic form for this inertia rate, Coriolis matrix and velocity."""
+    # TODO 7: the scalar this form gives, which must vanish for any velocity
     ...
 
 

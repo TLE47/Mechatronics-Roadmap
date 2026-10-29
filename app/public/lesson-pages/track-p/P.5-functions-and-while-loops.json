@@ -20,7 +20,7 @@
 {"t":"ul","items":[{"x":"**What is simulated and in which tool:** Runs 100% in Python (zero-install in [futurecoder.io](https://futurecoder.io/course/) `[verify in-app]` or locally via `python3`).","d":0},{"x":"**What is real-hardware only:** Nothing in this lesson requires hardware.","d":0}]},
 {"t":"h","l":3,"x":"Starter Code (runs as-is — fill in the TODOs)"},
 {"t":"p","x":"Complete `step_position` (`TODO 1`) and the `while` loop (`TODO 2`) to step a robot forward 4 times with velocity `1.5 m/s` and time step `dt_s = 0.2 s`:"},
-{"t":"code","lang":"python","text":"def step_position(pos_m, vel_m_s, dt_s):\n    # TODO 1: Return the updated position: pos_m + (vel_m_s * dt_s)\n    return pos_m\n\n\npos_m = 0.0\nvel_m_s = 1.5\ndt_s = 0.2\nstep = 0\n\n# TODO 2: Inside the while loop, update pos_m by calling step_position(pos_m, vel_m_s, dt_s),\n#         and increment step by 1 so the loop runs exactly 4 times.\nwhile step < 4:\n    pos_m = step_position(pos_m, vel_m_s, dt_s)\n    step = 4\n\nprint(f\"After {step} steps: pos_m = {pos_m:.2f} m\")"},
+{"t":"code","lang":"python","text":"def step_position(pos_m, vel_m_s, dt_s):\n    # TODO 1: where the joint is after this time step\n    return pos_m\n\n\npos_m = 0.0\nvel_m_s = 1.5\ndt_s = 0.2\nstep = 0    # TODO 2: advance the joint once per pass and end after four passes\nwhile step < 4:\n    pos_m = step_position(pos_m, vel_m_s, dt_s)\n    step = 4\n\nprint(f\"After {step} steps: pos_m = {pos_m:.2f} m\")"},
 {"t":"h","l":3,"x":"Expected Output"},
 {"t":"p","x":"When `TODO 1` and `TODO 2` are completed, running the script prints:"},
 {"t":"code","lang":"text","text":"After 4 steps: pos_m = 1.20 m"},

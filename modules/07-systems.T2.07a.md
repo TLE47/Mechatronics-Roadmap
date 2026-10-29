@@ -142,43 +142,43 @@ import math
 
 def regen_energy_j(j_kg_m2, omega0_rad_s, efficiency):
     """Energy pushed back into the bus by a rotor slowing to rest."""
-    # TODO 1: one half J omega squared, times the efficiency
+    # TODO 1: the energy the slowing rotor can return to the bus
     ...
 
 
 def unclamped_bus_v(v_nom, energy_j, c_bus_f):
     """Bus voltage the same energy would reach with no chopper."""
-    # TODO 2: the capacitor energy is quadratic in voltage, so invert the square
+    # TODO 2: the bus voltage that energy would reach with no chopper
     ...
 
 
 def brake_resistor_max_ohm(v_clamp, p_peak_w):
     """The largest resistor that can still dissipate `p_peak_w` at `v_clamp`."""
-    # TODO 3: P = V^2 / R solved for R - an upper bound, not a target
+    # TODO 3: the largest brake resistor that still keeps the clamp's power within budget
     ...
 
 
 def brake_peak_current_a(v_clamp, r_ohm):
     """Peak chopper current into the brake resistor."""
-    # TODO 4: Ohm's law, at the full clamp voltage
+    # TODO 4: the current the clamp voltage drives into this resistor
     ...
 
 
 def rolling_counter_status(prev_count, curr_count, max_drop=2):
     """Classify a 4-bit rolling counter step."""
-    # TODO 5: the step is modular (mod 16); 0 is frozen, 1 is OK, 2..max_drop+1 is a drop
+    # TODO 5: the verdict for this counter step, including a wrap past fifteen
     ...
 
 
 def watchdog_timeout_s(n_miss, t_cmd_s):
     """The window after which missed frames must trip the watchdog."""
-    # TODO 6: the budget is frames times the frame period
+    # TODO 6: the window after which missed frames must trip the watchdog
     ...
 
 
 def hil_coverage(passed, total):
     """Fraction of the required fault modes that were injected and passed."""
-    # TODO 7: a ratio - and refuse an empty catalogue
+    # TODO 7: how much of the fault catalogue was injected and passed; an empty catalogue is refused
     ...
 
 

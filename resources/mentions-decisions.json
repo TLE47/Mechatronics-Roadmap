@@ -22,10 +22,8 @@
       "concept": "planar_2link_forward_kinematics",
       "decision": "keep",
       "core": "2link",
-      "lines": 1,
-      "sections": [
-        "5. Exercise"
-      ]
+      "lines": 0,
+      "sections": []
     },
     {
       "page": "02-mechanics.T3.02a",
@@ -67,7 +65,7 @@
       "concept": "open_loop_three_phase_sine_modulation",
       "decision": "keep",
       "core": "modulation",
-      "lines": 12,
+      "lines": 14,
       "sections": [
         "1. Why it matters",
         "2. Intuition first",
@@ -157,7 +155,7 @@
       "concept": "rodrigues_so3_se3_exp_log_maps",
       "decision": "keep",
       "core": "so3",
-      "lines": 20,
+      "lines": 18,
       "sections": [
         "3. Formalization",
         "4. Worked example",
@@ -171,10 +169,9 @@
       "concept": "discrete_infinite_horizon_lqr",
       "decision": "keep",
       "core": "horizon",
-      "lines": 2,
+      "lines": 1,
       "sections": [
-        "3. Formalization",
-        "5. Exercise"
+        "3. Formalization"
       ]
     },
     {
@@ -226,7 +223,7 @@
       "concept": "rc_cutoff_phase_lag",
       "decision": "keep",
       "core": "lag",
-      "lines": 17,
+      "lines": 16,
       "sections": [
         "2. Intuition first",
         "3. Formalization",
@@ -312,7 +309,7 @@
       "concept": "regenerative_braking_bus_voltage_surge",
       "decision": "own",
       "core": "regenerative",
-      "lines": 31,
+      "lines": 32,
       "sections": [
         "2. Intuition first",
         "3. Formalization",

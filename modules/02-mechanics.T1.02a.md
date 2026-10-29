@@ -33,7 +33,7 @@ plant: tier1_arm_motor
 <!-- run-callout:end -->
 
 ## 1. Why it matters
-This is the bridge module before Step 1.3 (`02-mechanics.T1.03`). Before sizing a robot arm motor or computing $N^2$ reflected inertia in Step 1.3, you need to isolate a link in a **Free-Body Diagram (FBD)**, calculate how gravity torque varies with shoulder angle ($\tau_g = m g L_{\text{com}} \cos\theta$), and understand how a gearbox or timing belt trades speed for torque while conserving mechanical power ($P = \tau \omega$). Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
+This is the bridge module before Step 1.3 (`02-mechanics.T1.03`). Before sizing a robot arm motor or computing the gear ratio squared ($N^2$) reflected inertia in Step 1.3, you need to isolate a link in a **Free-Body Diagram (FBD)**, calculate how gravity torque varies with shoulder angle ($\tau_g = m g L_{\text{com}} \cos\theta$), and understand how a gearbox or timing belt trades speed for torque while conserving mechanical power ($P = \tau \omega$). Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 
 ## 2. Intuition first
 
@@ -113,44 +113,44 @@ import math
 
 
 def gravity_torque(theta_rad, m_link, l_com, m_tip=0.0, l_total=0.0, g=9.81):
-    """The shoulder torque that holds a link plus a tip payload at angle theta."""
-    # TODO 1: the lever arm is the HORIZONTAL distance, so the angle factor is a cosine
+    """The shoulder torque that holds the link and its tip payload at this angle."""
+    # TODO 1: the shoulder torque gravity demands at this angle
     ...
 
 
 def balance_force(force_1, x_1, x_2):
     """The upward force at x_2 that balances F_1 at x_1 about the pivot."""
-    # TODO 2: a longer lever needs less force, so divide by x_2
+    # TODO 2: the force at the second point that holds the lever level
     ...
 
 
 def gear_ratio(z_driven, z_driver):
     """The reduction ratio N of two pulleys."""
-    # TODO 3: the DRIVEN pulley is on top of the fraction
+    # TODO 3: the ratio these two tooth counts give
     ...
 
 
 def gear_output_speed(omega_motor, ratio):
     """The joint speed behind a reducer."""
-    # TODO 4: a reducer divides the speed by N
+    # TODO 4: the joint speed this reducer gives from the motor speed
     ...
 
 
 def gear_output_torque(tau_motor, ratio, eta=1.0):
     """The joint torque behind a reducer."""
-    # TODO 5: eta * N * tau_motor - the efficiency is part of the lever
+    # TODO 5: the joint torque this reducer delivers, allowing for its efficiency
     ...
 
 
 def mechanical_power(torque, omega):
-    """P = tau * omega."""
-    # TODO 6: multiply them
+    """The mechanical power at this torque and speed."""
+    # TODO 6: the power this torque delivers at this speed
     ...
 
 
 def reflected_inertia(j_motor, ratio):
     """The motor inertia as the joint feels it."""
-    # TODO 7: the ratio is SQUARED
+    # TODO 7: the inertia the joint feels because of this motor inertia
     ...
 
 

@@ -14,37 +14,37 @@ import mechalab_plant as plant
 
 def cubic_rest_to_rest(t, q0, qf, T):
     """(q, qd, qdd) at time t for a rest-to-rest cubic."""
-    raise NotImplementedError("TODO 1: 3s^2 - 2s^3; hold the final pose, still, once t >= T")
+    raise NotImplementedError("TODO 1: the pose, speed and acceleration at this instant, holding the final pose after the move")
 
 
 def cubic_coefficients(q0, qf, T):
     """(a0, a1, a2, a3) with zero endpoint velocities."""
-    raise NotImplementedError("TODO 2: a2 = 3dq/T^2, a3 = -2dq/T^3, and a1 = 0")
+    raise NotImplementedError("TODO 2: the cubic's coefficients for this travel and duration")
 
 
 def peak_velocity(dq, T):
     """Peak speed of a rest-to-rest cubic."""
-    raise NotImplementedError("TODO 3: 1.5x the average, not 1x")
+    raise NotImplementedError("TODO 3: the fastest speed the cubic reaches")
 
 
 def min_duration_s(dq, qd_max):
     """Shortest move inside a speed limit."""
-    raise NotImplementedError("TODO 4: solve 1.5|dq|/T = qd_max for T")
+    raise NotImplementedError("TODO 4: the shortest duration whose peak speed stays inside the limit")
 
 
 def min_duration_for_acceleration(dq, qdd_max):
     """Shortest move inside an acceleration limit."""
-    raise NotImplementedError("TODO 5: peak acceleration is 6|dq|/T^2")
+    raise NotImplementedError("TODO 5: the shortest duration whose peak acceleration stays inside the limit")
 
 
 def spring_damper_torque(q_d, q, dq_d, dq, kp, kd, tau_g=0.0):
-    """tau = kp (q_d - q) + kd (dq_d - dq) + tau_g."""
-    raise NotImplementedError("TODO 6: stiffness multiplies position error, damping velocity error")
+    """The torque the springs and dampers apply toward the target pose."""
+    raise NotImplementedError("TODO 6: the torque the stiffness and damping apply toward the target pose and speed")
 
 
 def compliance_deflection(tau_ext, kp):
     """Steady yield under a hand push."""
-    raise NotImplementedError("TODO 7: a stiffer spring yields less, so divide")
+    raise NotImplementedError("TODO 7: the steady yield under a hand push at this stiffness")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

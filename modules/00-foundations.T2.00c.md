@@ -123,39 +123,41 @@ import math
 
 
 def first_order_response(t, tau):
-    """Unit-step response; at t = tau it must read 0.6321."""
-    # TODO 1: 1 - exp(-t/tau)
+    """The unit-step response at time t, for this time constant."""
+    # TODO 1: the fraction of the step the joint has reached by time t
     ...
 
 
 def second_order_params(j, k, b):
     """{"wn", "zeta", "wd", "mp"} for J theta'' + b theta' + k theta = k u."""
-    # TODO 2: wn = sqrt(k/J); zeta = b/(2 sqrt(J k)); wd = wn sqrt(1-zeta^2);
-    #         mp = exp(-pi zeta / sqrt(1-zeta^2)); at zeta >= 1, mp = 0 and wd = 0
+    # TODO 2: the four numbers that describe a second-order system - natural frequency, damping ratio,
+    #         damped frequency, and their relation
+    #         (above critical damping there is no overshoot: the damped frequency and the peak
+    #         fraction both read zero)
     ...
 
 
 def critical_damping(j, k):
     """The b that makes zeta exactly 1.0."""
-    # TODO 3: 2 sqrt(J k) - a square root, not 2 J k
+    # TODO 3: the damping at which the response stops ringing
     ...
 
 
 def settling_time(wn, zeta, tolerance=0.02):
     """The 2% settling time, and a ValueError when the system never settles."""
-    # TODO 4: 4/(zeta wn), refusing zeta <= 0
+    # TODO 4: how long the response takes to stay inside the tolerance band
     ...
 
 
 def simulate_step(j, k, b, dt, steps, theta0=0.0, omega0=0.0):
     """Semi-implicit Euler on J theta'' = k(1 - theta) - b theta'; return theta, max_theta, mp."""
-    # TODO 5: alpha from the current theta and omega, update omega, then theta with the NEW omega
+    # TODO 5: one step of the worked simulation
     ...
 
 
 def max_stable_dt(j, k):
     """Largest dt the semi-implicit scheme tolerates for an undamped joint."""
-    # TODO 6: 2/wn - the integrator's limit, not a guess
+    # TODO 6: the time step beyond which this integrator diverges
     ...
 
 

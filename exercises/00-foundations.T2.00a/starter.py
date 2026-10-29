@@ -19,29 +19,27 @@ import mechalab_plant as plant
 def joint_velocity(counts, dt, cpr=plant.ENCODER_CPR):
     """Joint speed in rad/s from a sequence of absolute encoder counts, one sample per `dt`.
 
-    TODO 1: difference consecutive samples, convert counts to radians, divide by dt.
-    TODO 2: a count that steps 4095 -> 0 is a small positive angle, not a full turn: wrap it.
     Return a list the same length as `counts`; the first entry has no previous sample, so 0.0.
     """
-    raise NotImplementedError("TODO 1/2: backward difference of encoder counts, wrapped")
+    raise NotImplementedError("TODO 1/2: the joint speed each sample implies, even where the encoder rolls over")
 
 
 def running_integral(values, dt):
-    """Rectangular running integral: out[0] = values[0] * dt, out[k] = out[k-1] + values[k] * dt.
+    """The running total of these samples, one per `dt`.
 
-    TODO 3: one accumulator, same length as the input (the first entry already carries the first
-    sample). This is the inverse of `joint_velocity`, whose own first entry is 0.0.
+    The result has the same length as the input, and its first entry is the first sample. This is
+    the inverse of `joint_velocity`, whose own first entry is 0.0.
     """
-    raise NotImplementedError("TODO 3: accumulate, do not re-integrate from scratch each step")
+    raise NotImplementedError("TODO 3: the running total of these samples, one entry per input")
 
 
 def encoder_trace_angle(counts, dt, cpr=plant.ENCODER_CPR):
-    """Integrate the velocity estimate back into an angle series, starting from the first count.
+    """The angle series this encoder trace implies, starting from the first count.
 
-    This is the round trip an encoder-based observer makes: counts -> velocity -> integral, and it
-    must land back on the encoder's own angle (to within quantisation).
+    This is the round trip an encoder-based observer makes, and it must land back on the
+    encoder's own angle (to within quantisation).
     """
-    raise NotImplementedError("TODO 4: velocity, then running_integral, then add the start angle")
+    raise NotImplementedError("TODO 4: the angle series, starting from the first count")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

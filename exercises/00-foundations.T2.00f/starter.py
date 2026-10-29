@@ -14,15 +14,15 @@ def nyquist_hz(fs):
     Refuse (ValueError) a rate that is zero or negative: a converter that never samples has no
     representable band.
     """
-    raise NotImplementedError("TODO 1: fs / 2, after refusing a non-positive rate")
+    raise NotImplementedError("TODO 1: the highest frequency this sample rate can tell apart; a non-positive rate is refused")
 
 
 def alias_hz(f_sig, fs):
     """The frequency in [0, fs/2] that `f_sig` appears as after sampling at `fs`.
 
-    Refuse (ValueError) a non-positive rate, then fold with fmod and mirror the second half down.
+    Refuse (ValueError) a non-positive rate.
     """
-    raise NotImplementedError("TODO 2: fold with fmod and mirror the second half down")
+    raise NotImplementedError("TODO 2: the frequency this tone appears as after sampling; a non-positive rate is refused")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

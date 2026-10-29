@@ -13,38 +13,38 @@ import mechalab_plant as plant
 
 
 def gravity_torque(theta_rad, m_link, l_com, m_tip=0.0, l_total=0.0, g=9.81):
-    """tau_g = (m_link l_com + m_tip l_total) g cos(theta)."""
-    raise NotImplementedError("TODO 1: COSINE, because theta is measured from horizontal")
+    """The shoulder torque that holds the link and its tip payload at this angle from horizontal."""
+    raise NotImplementedError("TODO 1: the shoulder torque gravity demands at this angle")
 
 
 def balance_force(force_1, x_1, x_2):
     """The upward force at x_2 that balances F_1 at x_1."""
-    raise NotImplementedError("TODO 2: a longer lever needs less force, so divide by x_2")
+    raise NotImplementedError("TODO 2: the force at the second point that holds the lever level")
 
 
 def gear_ratio(z_driven, z_driver):
-    """N = driven teeth / driver teeth."""
-    raise NotImplementedError("TODO 3: the DRIVEN pulley is on top of the fraction")
+    """The reduction ratio the two pulleys give."""
+    raise NotImplementedError("TODO 3: the ratio these two tooth counts give")
 
 
 def gear_output_speed(omega_motor, ratio):
-    """A reducer slows the output."""
-    raise NotImplementedError("TODO 4: a reducer divides the speed by N")
+    """The joint speed behind a reducer."""
+    raise NotImplementedError("TODO 4: the joint speed this reducer gives from the motor speed")
 
 
 def gear_output_torque(tau_motor, ratio, eta=1.0):
-    """A reducer multiplies torque."""
-    raise NotImplementedError("TODO 5: eta * N * tau_motor - the efficiency is part of it")
+    """The joint torque behind a reducer."""
+    raise NotImplementedError("TODO 5: the joint torque this reducer delivers, allowing for its efficiency")
 
 
 def mechanical_power(torque, omega):
-    """P = tau * omega."""
-    raise NotImplementedError("TODO 6: multiply")
+    """The mechanical power at this torque and speed."""
+    raise NotImplementedError("TODO 6: the power this torque delivers at this speed")
 
 
 def reflected_inertia(j_motor, ratio):
     """Inertia seen at the output."""
-    raise NotImplementedError("TODO 7: the ratio is SQUARED")
+    raise NotImplementedError("TODO 7: the inertia the joint feels because of this motor inertia")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

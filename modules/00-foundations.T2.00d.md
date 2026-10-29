@@ -105,20 +105,20 @@ import mechalab_plant as plant
 
 
 def to_polar(z):
-    """(magnitude, phase_rad) of a complex number - Euler's formula, read backwards."""
-    # TODO: abs(z) and cmath.phase(z), with no quadrant fix-ups
+    """The size and direction of a complex number, as a pair."""
+    # TODO: the size and the direction of this complex number
     ...
 
 
 def to_rect(magnitude, phase_rad):
-    """The complex number with that magnitude and phase, m e^{j phi}."""
-    # TODO: Euler's formula, in radians
+    """The complex number at this magnitude and angle."""
+    # TODO: the complex number at this magnitude and angle, in radians
     ...
 
 
 def add_phasors(z1, z2):
-    """The phasor of the sum of two same-frequency sinusoids."""
-    # TODO: complex addition, not a magnitude sum
+    """The phasor of the sinusoid the two components make together."""
+    # TODO: the combined phasor, as one complex number
     ...
 
 

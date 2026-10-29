@@ -82,12 +82,12 @@ encoder_ticks = 400          # int: wheel sensor pulse count
 robot_mode = "STANDBY"       # str: active status label
 is_estop_active = False      # bool: emergency stop switch state
 
-# TODO 1: Update encoder_ticks by adding 25 to its existing value,
-#         and update battery_level by subtracting 0.45 from its existing value.
+# TODO 1: Give encoder_ticks its reading after a 25-tick advance,
+#         and battery_level its reading after a 0.45 V drop.
 encoder_ticks = encoder_ticks
 battery_level = battery_level
 
-# TODO 2: Change robot_mode to "ACTIVE" (a string) and keep is_estop_active as False.
+# TODO 2: Set robot_mode to the active state (a string), leaving the E-stop flag alone.
 robot_mode = robot_mode
 
 print(f"Mode: {robot_mode} | E-Stop: {is_estop_active}")

@@ -53,7 +53,7 @@ flowchart LR
 | Page | Concept | Lines | Sections |
 | :--- | :--- | ---: | :--- |
 | `03-sensors.T2.03a` | `so2_rotation_matrix` | 4 | 3. Formalization, 5. Exercise, 7. Checkpoint |
-| `07-systems.T2.07a` | `regenerative_braking_bus_voltage_surge` | 31 | 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes, 9. Resources |
+| `07-systems.T2.07a` | `regenerative_braking_bus_voltage_surge` | 32 | 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes, 9. Resources |
 | `00-foundations.T3.00a` | `unit_quaternion_kinematics_slerp` | 6 | 3. Formalization, 7. Checkpoint |
 
 ## Kept (the claim is real)
@@ -61,24 +61,24 @@ flowchart LR
 | Page | Concept | Lines | Sections |
 | :--- | :--- | ---: | :--- |
 | `01-electronics.T3.01a` | `four_layer_pcb_ground_plane_stackup` | 11 | 1. Why it matters, 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 8. Common mistakes |
-| `02-mechanics.T2.02a` | `planar_2link_forward_kinematics` | 1 | 5. Exercise |
+| `02-mechanics.T2.02a` | `planar_2link_forward_kinematics` | 0 |  |
 | `02-mechanics.T3.02a` | `rodrigues_so3_se3_exp_log_maps` | 1 | 5. Exercise |
 | `02-mechanics.T3.02a` | `parallel_axis_urdf_inertia_tensor` | 4 | 1. Why it matters, 2. Intuition first, 5. Exercise |
 | `03-sensors.T2.03a` | `electrical_vs_mechanical_pole_pairs` | 4 | 2. Intuition first, 5. Exercise, 7. Checkpoint, 8. Common mistakes |
-| `03-sensors.T2.03a` | `open_loop_three_phase_sine_modulation` | 12 | 1. Why it matters, 2. Intuition first, 3. Formalization, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes |
+| `03-sensors.T2.03a` | `open_loop_three_phase_sine_modulation` | 14 | 1. Why it matters, 2. Intuition first, 3. Formalization, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes |
 | `03-sensors.T3.03a` | `synchronous_dq_foc_current_loop` | 7 | 1. Why it matters, 3. Formalization, 5. Exercise, 7. Checkpoint, 9. Resources |
 | `03-sensors.T3.03a` | `amplitude_invariant_clarke_park_transform` | 3 | 3. Formalization, 5. Exercise |
 | `04-embedded.T2.04a` | `spi_magnetic_encoder_readout` | 6 | 1. Why it matters, 3. Formalization, 5. Exercise, 7. Checkpoint, 8. Common mistakes |
 | `04-embedded.T3.04a` | `dma_double_buffered_ping_pong_isr` | 7 | 2. Intuition first, 3. Formalization, 6. Simulation path, 7. Checkpoint, 8. Common mistakes |
 | `04-embedded.T3.04a` | `rate_monotonic_response_time_analysis` | 1 | 5. Exercise |
 | `04-embedded.T3.04a` | `minmax_zero_sequence_svpwm_injection` | 2 | 1. Why it matters, 5. Exercise |
-| `05-control.T3.05b` | `rodrigues_so3_se3_exp_log_maps` | 20 | 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint |
-| `05-control.T3.05c` | `discrete_infinite_horizon_lqr` | 2 | 3. Formalization, 5. Exercise |
+| `05-control.T3.05b` | `rodrigues_so3_se3_exp_log_maps` | 18 | 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint |
+| `05-control.T3.05c` | `discrete_infinite_horizon_lqr` | 1 | 3. Formalization |
 | `06-robotics.T2.06a` | `parallel_axis_urdf_inertia_tensor` | 2 | 2. Intuition first, 3. Formalization |
 | `06-robotics.T2.06a` | `can_fd_mit_impedance_packet_packing` | 2 | 3. Formalization, 7. Checkpoint |
 | `06-robotics.T3.06a` | `jacobian_transpose_cartesian_impedance` | 2 | 5. Exercise, 8. Common mistakes |
 | `07-systems.T1.07a` | `ten_step_power_on_bringup` | 2 | 1. Why it matters, 5. Exercise |
-| `07-systems.T1.07a` | `rc_cutoff_phase_lag` | 17 | 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 7. Checkpoint |
+| `07-systems.T1.07a` | `rc_cutoff_phase_lag` | 16 | 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 7. Checkpoint |
 | `07-systems.T3.06a` | `opc_ua_industrial_telemetry` | 30 | 1. Why it matters, 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes, 9. Resources |
 
 ## What each decision changes

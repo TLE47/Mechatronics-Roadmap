@@ -132,30 +132,27 @@ import mechalab_plant as plant
 
 
 def mat_vec(A, x):
-    """A @ x: one dot product per row of `A`, returned as a list of `len(A)` numbers.
+    """The matrix-vector product, as a list of `len(A)` numbers.
 
     Refuse (ValueError) an empty matrix or one whose rows are not all `len(x)` long - the shape
     check is what turns a silent truncation into a message.
     """
-    # TODO: shape check, then one dot product per row
+    # TODO: the matrix-vector product, refusing a shape that does not line up
     ...
 
 
 def state_matrices(m, k, b, dt):
-    """(Ad, Bd) for the mass-spring-damper Euler update, state [position, velocity].
-
-    Ad = [[1, dt], [-k/m*dt, 1 - b/m*dt]],  Bd = [0, dt/m]
-    """
-    # TODO: build Ad and Bd from m, k, b, dt
+    """(Ad, Bd) for the mass-spring-damper Euler update, state [position, velocity]."""
+    # TODO: the state and input matrices for this mass-spring-damper at this step size
     ...
 
 
 def one_step(Ad, Bd, x, u):
-    """A_d x + B_d u for one step, with every component read from the OLD x.
+    """The state one step later, with every component read from the OLD x.
 
     Refuse (ValueError) a state or input column whose length disagrees with `Ad`.
     """
-    # TODO: dimension check, then both rows from the old state
+    # TODO: the state after one step, with every component read from the old state
     ...
 
 
@@ -164,23 +161,22 @@ def simulate(Ad, Bd, x0, u, steps):
 
     Refuse (ValueError) a negative `steps`.
     """
-    # TODO: copy x0, then loop
+    # TODO: the final state after this many steps, refusing a negative count
     ...
 
 
 def two_mass_matrices(m1, m2, k, b, dt):
     """(Ad, Bd) for a force on `m1` coupled to `m2` by spring `k` and damper `b`.
 
-    State order is [x1, v1, x2, v2]: the 2-state matrices along the diagonal, coupling off it.
-    The input pushes only `m1`, so `Bd` is zero everywhere except the v1 row.
+    State order is [x1, v1, x2, v2], and the force acts on the first mass.
     """
-    # TODO: fill the 4x4 with the two 2x2 blocks and their coupling
+    # TODO: the four-state matrices for the two-mass drivetrain
     ...
 
 
 def position_trace(Ad, Bd, x0, u, steps):
     """The first state component at every sample, starting with x0's: len == steps + 1."""
-    # TODO: record before the first step, then after each one
+    # TODO: the first state component at every sample, from the start through the last step
     ...
 
 

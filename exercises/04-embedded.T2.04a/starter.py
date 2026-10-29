@@ -12,39 +12,39 @@ DEFAULT_CS_US = 0.4
 
 
 def spi_shift_us(n_bits, f_sclk_hz):
-    """Clocks alone: B_bits / f_sclk, in microseconds."""
-    raise NotImplementedError("TODO 1: bits over clocks, then scale seconds to microseconds")
+    """The time the clock alone takes for this many bits, in microseconds."""
+    raise NotImplementedError("TODO 1: the clock time for this many bits, in microseconds")
 
 
 def spi_frame_us(n_bits, f_sclk_hz, t_cs_us=DEFAULT_CS_US):
-    """The whole frame: the shift time plus the chip-select overhead."""
-    raise NotImplementedError("TODO 2: the 0.4 us of chip-select is part of the frame")
+    """The whole frame, chip-select included, in microseconds."""
+    raise NotImplementedError("TODO 2: the whole frame, chip-select included, in microseconds")
 
 
 def uart_poll_us(n_bits, baud):
     """The CPU time a blocking polled write wastes, in microseconds."""
-    raise NotImplementedError("TODO 3: every bit stalls the loop - no division by 8")
+    raise NotImplementedError("TODO 3: the CPU time the blocking write costs, in microseconds")
 
 
 def cpu_load_fraction(t_busy_us, t_loop_us):
     """Busy time as a fraction of the loop period."""
-    raise NotImplementedError("TODO 4: busy over period, so 322 us in a 50 us loop is 6.44x")
+    raise NotImplementedError("TODO 4: the share of the loop period this busy time takes")
 
 
 def ping_pong_window_us(n_half, f_adc_hz):
-    """The time the CPU has to read one half of the buffer, in microseconds."""
-    raise NotImplementedError("TODO 5: N samples, not the 2N total")
+    """The time the CPU has to read one buffer slice, in microseconds."""
+    raise NotImplementedError("TODO 5: how long the CPU has to read one buffer slice, in microseconds")
 
 
 def ht_frequency_hz(f_sample_hz, n_half):
-    """How often the Half-Transfer interrupt fires."""
-    raise NotImplementedError("TODO 6: one interrupt per N samples, so f_sample / N")
+    """How often the buffer's mid-point interrupt fires."""
+    raise NotImplementedError("TODO 6: how often the buffer's mid-point interrupt fires")
 
 
 def buffer_slice_for_position(write_pos, n_half):
-    """Return (start, stop) of the readable half, or None mid-half."""
+    """The readable buffer slice, or None mid-slice."""
     raise NotImplementedError(
-        "TODO 7: HT at write_pos == N-1 reads Ping [0, N); TC at 2N-1 reads Pong [N, 2N)"
+        "TODO 7: the buffer slice the ISR may read at this position, or None while it is mid-slice"
     )
 
 

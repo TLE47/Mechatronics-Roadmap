@@ -868,8 +868,7 @@
         "commutation",
         "layer",
         "loop",
-        "six",
-        "sub"
+        "six"
       ]
     },
     "symplectic_euler_integration": {

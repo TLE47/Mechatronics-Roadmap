@@ -14,38 +14,38 @@ import mechalab_plant as plant
 
 
 def screw_axis(omega, q):
-    """The unit screw axis S = [omega, -omega x q] of a joint through q."""
-    raise NotImplementedError("TODO 1: v = MINUS omega cross q - the sign is the whole point")
+    """The unit screw axis of a joint through q."""
+    raise NotImplementedError("TODO 1: the linear motion a rotation about this point induces at the base")
 
 
 def spatial_power(twist, wrench):
-    """P = V^T F, in watts."""
-    raise NotImplementedError("TODO 2: the 6-vector dot product - omega.m AND v.f, both halves")
+    """The power the twist delivers through the wrench, in watts."""
+    raise NotImplementedError("TODO 2: the power this twist delivers through this wrench")
 
 
 def flexure_stiffness(e_pa, b_m, t_m, r_m):
-    """Paros-Weisbord K_theta = 2 E b t^(5/2) / (9 pi sqrt(R))."""
-    raise NotImplementedError("TODO 3: t to the power 2.5, and 9*pi*sqrt(R) underneath")
+    """The rotational stiffness of a Paros-Weisbord circular notch flexure, in N*m/rad."""
+    raise NotImplementedError("TODO 3: the stiffness the notch gives at this web thickness and radius")
 
 
 def flexure_stress(k_theta, theta_rad, b_m, t_m, r_m):
-    """Peak surface bending stress sigma = 6 Kt (K_theta theta) / (b t^2)."""
-    raise NotImplementedError("TODO 4: Kt = 1 + t/(2R), t SQUARED in the denominator")
+    """Peak surface bending stress in the notch, in Pa."""
+    raise NotImplementedError("TODO 4: the peak stress at this deflection, with the notch's own concentration factor")
 
 
 def thickness_scale(factor):
-    """How K_theta scales when t is multiplied by `factor`."""
-    raise NotImplementedError("TODO 5: the exponent is 5/2, not 2 and not 2.5 times something")
+    """How the stiffness changes when the web thickness changes by this factor."""
+    raise NotImplementedError("TODO 5: the stiffness ratio this thickness change gives")
 
 
 def rnea_2link(i1, i2, ddq1, ddq2):
     """Two-pass RNEA: (tau_1, tau_2) for the joint accelerations."""
-    raise NotImplementedError("TODO 6: link 2's absolute acceleration is ddq1 + ddq2")
+    raise NotImplementedError("TODO 6: the two joint torques this acceleration pair needs")
 
 
 def passivity_quadratic_form(m_dot, c, dq):
-    """dq^T (Mdot - 2C) dq."""
-    raise NotImplementedError("TODO 7: Mdot MINUS TWICE C, then the double sum")
+    """The passivity quadratic form for this inertia rate, Coriolis matrix and velocity."""
+    raise NotImplementedError("TODO 7: the scalar this form gives, which must vanish for any velocity")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

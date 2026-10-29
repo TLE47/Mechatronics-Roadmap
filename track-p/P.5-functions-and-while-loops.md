@@ -85,17 +85,14 @@ Complete `step_position` (`TODO 1`) and the `while` loop (`TODO 2`) to step a ro
 
 ```python
 def step_position(pos_m, vel_m_s, dt_s):
-    # TODO 1: Return the updated position: pos_m + (vel_m_s * dt_s)
+    # TODO 1: where the joint is after this time step
     return pos_m
 
 
 pos_m = 0.0
 vel_m_s = 1.5
 dt_s = 0.2
-step = 0
-
-# TODO 2: Inside the while loop, update pos_m by calling step_position(pos_m, vel_m_s, dt_s),
-#         and increment step by 1 so the loop runs exactly 4 times.
+step = 0    # TODO 2: advance the joint once per pass and end after four passes
 while step < 4:
     pos_m = step_position(pos_m, vel_m_s, dt_s)
     step = 4

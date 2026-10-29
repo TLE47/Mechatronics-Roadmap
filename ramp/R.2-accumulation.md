@@ -81,27 +81,27 @@ V_RAD_S = [0.0, 2.0, 4.0, 6.0, 6.0, 6.0, 4.0, 2.0, -2.0]
 
 
 def left_rule_rad(v, dt_s=DT_S):
-    # TODO 1: sum every rate EXCEPT the last, then multiply by dt_s
+    # TODO 1: the angle by the left-edge estimate over this trace
     return 0.0
 
 
 def right_rule_rad(v, dt_s=DT_S):
-    # TODO 2: sum every rate EXCEPT the first, then multiply by dt_s
+    # TODO 2: the angle by the right-edge estimate over this trace
     return 0.0
 
 
 def trapezoid_rad(v, dt_s=DT_S):
-    # TODO 3: for each pair, half the sum of the two rates, times dt_s
+    # TODO 3: the angle by the trapezoid estimate over this trace
     return 0.0
 
 
 def accumulate_rad(v, q0=0.0, dt_s=DT_S):
-    # TODO 4: start at q0 and add one trapezoid slice per sample after the first
+    # TODO 4: the running angle from q0, using the trapezoid estimate at each sample
     return 0.0
 
 
 def drift_rad(bias_rad_s, seconds):
-    # TODO 5: a constant bias accumulates linearly: bias * seconds
+    # TODO 5: the angle error a constant bias builds over this many seconds
     return 0.0
 
 

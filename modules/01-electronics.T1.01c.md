@@ -120,43 +120,43 @@ import mechalab_plant as plant  # noqa: F401  (the shared arm, as every graded p
 
 def psu_output(v_set, i_limit, r_load):
     """(v_out, i_out, p_out, mode) for a CV/CC bench supply."""
-    # TODO 1: compare V_set / R_load with the limit; above it, fold back to I_limit * R_load
+    # TODO 1: the output the supply settles into when the load asks for more current than the limit allows
     ...
 
 
 def critical_resistance(v_set, i_limit):
-    """R_crit = V_set / I_limit: below this the supply enters CC."""
-    # TODO 2: the limit is a current, so divide the voltage by it (do not multiply)
+    """The load resistance at which the supply leaves constant-voltage mode."""
+    # TODO 2: the load where the supply reaches its current limit
     ...
 
 
 def dmm_voltage_loading_current(v_rail, r_in=10_000_000.0):
     """Current a voltmeter steals from the rail it probes."""
-    # TODO 3: V / R_in - the 10 Mohm input barely loads anything
+    # TODO 3: the current the meter itself takes from the rail
     ...
 
 
 def dmm_short_current(v_rail, r_shunt=0.010, r_leads=0.0):
     """The surge from a lead left in the current jack."""
-    # TODO 4: the SHUNT is the resistance here, not the 10 Mohm voltmeter input
+    # TODO 4: the surge a lead left in the current jack draws
     ...
 
 
 def clip_power(current, r_clip):
-    """P = I^2 R in one breadboard spring clip."""
-    # TODO 5: square the current before scaling by the contact resistance
+    """The heat dissipated in one breadboard spring clip."""
+    # TODO 5: the heat in the clip at this current
     ...
 
 
 def led_current_ma(v_supply, v_f, resistance):
     """Series LED current in milliamps."""
-    # TODO 6: subtract the forward drop, divide by R, then scale to mA
+    # TODO 6: the current through the LED, in milliamps
     ...
 
 
 def is_short(resistance, threshold=10.0):
     """True when the power-off resistance check reads below the threshold."""
-    # TODO 7: BELOW the threshold is a short - do not power on
+    # TODO 7: whether the power-off check reads as a short
     ...
 
 

@@ -10,38 +10,38 @@ clamp, a division that reports the name of the exception it caught, and the thre
 
 
 def step_position(pos_m, vel_m_s, dt_s):
-    """x_next = x + v * dt."""
-    raise NotImplementedError("TODO 1: multiply the speed by the time step, then add the position")
+    """Where the position is after dt_s seconds."""
+    raise NotImplementedError("TODO 1: where the wheel is after this tick, starting from its current position")
 
 
 def steps_to_target(pos_0, vel_m_s, dt_s, target_m):
     """How many ticks of the loop the worked example takes to reach target_m."""
-    raise NotImplementedError("TODO 2: a `while pos_m < target` loop that COUNTS its own iterations")
+    raise NotImplementedError("TODO 2: how many ticks the wheel needs to reach the target")
 
 
 def battery_voltage_after_steps(v_start, drop_per_step, n_steps):
-    """Subtract drop_per_step from v_start n_steps times."""
-    raise NotImplementedError("TODO 3: range(n_steps) runs n times - range(1, n) only runs n-1")
+    """The battery voltage after that many steps."""
+    raise NotImplementedError("TODO 3: the voltage after that many steps of sag")
 
 
 def loop_total(n_steps):
-    """The Skip test's accumulator: sum of i*2 for i in range(n_steps)."""
-    raise NotImplementedError("TODO 4: start at 0 and add i * 2 inside the loop, not after it")
+    """The Skip test's accumulator after n_steps of its loop."""
+    raise NotImplementedError("TODO 4: the total the Skip test's loop accumulates")
 
 
 def clamp_pwm(u, u_max):
-    """One-sided ceiling: u_max when u is above it, u itself otherwise."""
-    raise NotImplementedError("TODO 5: return u_max only when u > u_max, otherwise u")
+    """The command, held to a one-sided ceiling."""
+    raise NotImplementedError("TODO 5: the command, held at the ceiling if it goes past it")
 
 
 def safe_divide(numerator, denominator):
     """Return (value, error_name)."""
-    raise NotImplementedError("TODO 6: try/except ZeroDivisionError, and report type(exc).__name__")
+    raise NotImplementedError("TODO 6: the value, or the error's own class name when the denominator is zero")
 
 
 def format_position(pos_m):
-    """The worked example's `{pos_m:.3f}` field, on its own."""
-    raise NotImplementedError("TODO 7: an f-string with the .3f format spec, not str()")
+    """The position as the worked example prints it."""
+    raise NotImplementedError("TODO 7: the position to three decimal places")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.

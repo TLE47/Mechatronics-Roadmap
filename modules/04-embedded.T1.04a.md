@@ -150,44 +150,43 @@ import struct
 
 def int_range(bits, signed=False):
     """The (low, high) a fixed-width C integer holds - `int16_t` is (-32768, 32767)."""
-    # TODO 1: unsigned is 0..2**bits - 1; signed is -2**(bits-1)..2**(bits-1) - 1
+    # TODO 1: the lowest and highest value this many bits hold, signed or unsigned
     ...
 
 
 def wrap_uint(value, bits):
     """What a `uintN_t` keeps when it is assigned `value`."""
-    # TODO 2: mask with 2**bits - 1 - the mask is the width, not always 0xFF
+    # TODO 2: the value this width keeps
     ...
 
 
 def elapsed_unsigned(now, prev, bits):
-    """`(uintN_t)(now - prev)` - the tick difference that survives a counter rollover."""
-    # TODO 3: subtract first, then mask - the raw difference across the wrap is negative
+    """The tick difference that survives a counter rollover."""
+    # TODO 3: the ticks since the previous reading, even across a rollover
     ...
 
 
 def apply_bits(reg, set_mask=0, clear_mask=0):
-    """`(reg | set_mask) & ~clear_mask`."""
-    # TODO 4: `|` the set mask on, then `& ~` the clear mask off - forgetting the `~` wipes
-    #         every neighbouring bit
+    """The register with the named bits set and the named bits cleared."""
+    # TODO 4: the register with those bits set and those bits cleared
     ...
 
 
 def bit_is_set(reg, bit):
     """One flag read as 0 or 1."""
-    # TODO 5: shift the bit down to position 0, then `& 1`
+    # TODO 5: whether that one bit is set
     ...
 
 
 def pack_telemetry(tick, count, vel):
     """The MCU's 8-byte `<Hhf` frame: uint16 tick, int16 count, float velocity."""
-    # TODO 6: struct.pack('<Hhf', ...) - `<` is little-endian, the UART's byte order
+    # TODO 6: the little-endian frame the UART sends
     ...
 
 
 def unpack_telemetry(raw):
     """The same frame read back as (tick, count, vel)."""
-    # TODO 7: refuse anything that is not exactly 8 bytes, then struct.unpack('<Hhf', raw)
+    # TODO 7: the three fields back, from exactly eight bytes
     ...
 
 

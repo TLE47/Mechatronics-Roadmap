@@ -12,38 +12,38 @@ import mechalab_plant as plant
 
 
 def conduction_loss(current, rds_on, duty=1.0):
-    """P = I^2 R_DS(on) D."""
-    raise NotImplementedError("TODO 1: the current is squared, and the duty scales the average")
+    """The conduction loss in this switch at this current and duty."""
+    raise NotImplementedError("TODO 1: the heat the switch makes at this current and duty")
 
 
 def pwm_effective_voltage(v_bus, duty):
-    """V_eff = D * V_bus."""
-    raise NotImplementedError("TODO 2: duty is a fraction in [0, 1] - refuse a percentage")
+    """The average voltage this duty gives from the bus."""
+    raise NotImplementedError("TODO 2: the average voltage this duty gives; a percentage is not a duty")
 
 
 def shoot_through_current(v_bus, rds_on):
     """The leg's short-circuit current."""
-    raise NotImplementedError("TODO 3: TWO switches in series, so 2 R_DS(on)")
+    raise NotImplementedError("TODO 3: the current a straight-through leg would draw")
 
 
 def h_bridge_voltage(v_bus, duty_a, duty_b):
     """The average signed terminal voltage."""
-    raise NotImplementedError("TODO 4: subtract the two duties before scaling")
+    raise NotImplementedError("TODO 4: the average voltage across the motor, in the direction the sign names")
 
 
 def bridge_conduction_loss(current, r_high, r_low, duty=1.0):
     """Motor current crosses two switches."""
-    raise NotImplementedError("TODO 5: add BOTH on-resistances")
+    raise NotImplementedError("TODO 5: the heat both switches make while the motor current crosses the leg")
 
 
 def within_recommended(v_supply, v_min=2.7, v_max=10.8):
     """True inside the recommended operating window."""
-    raise NotImplementedError("TODO 6: inclusive at both ends")
+    raise NotImplementedError("TODO 6: whether the supply is inside the datasheet's recommended window, both ends included")
 
 
 def duty_for_effective_voltage(v_eff, v_bus):
-    """D = V_eff / V_bus."""
-    raise NotImplementedError("TODO 7: refuse a demand above the bus")
+    """The duty that reaches this average voltage."""
+    raise NotImplementedError("TODO 7: the duty that reaches this average voltage, and a demand the bus cannot meet is an error")
 
 
 # The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.
