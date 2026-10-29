@@ -266,6 +266,9 @@ export function layoutForStep(
     if (step.mobileView === 'results') return 'study';
     return 'read';
   }
-  // Desktop has the width for two regions; a step about code takes the editor's whole share.
-  return step.id === 'editor' || step.id === 'run' ? 'write' : 'study';
+  // Desktop has the width for two regions. The editor step wants the editor's whole share; the run
+  // step wants the results beside it — the gate that asks what the code will print is a pane there,
+  // and so is the verdict the step waits for. Write hides both, which left the gate mounted but
+  // invisible and the held run never resolving (the tour sat on step 4 until it timed out).
+  return step.id === 'editor' ? 'write' : 'study';
 }

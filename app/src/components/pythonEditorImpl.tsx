@@ -319,6 +319,14 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           const view = viewRef.current;
           if (view) applyInlineValues(view, entries);
         },
+        insertText: (text: string) => {
+          const view = viewRef.current;
+          if (!view) return;
+          // `replaceSelection` keeps a selection replaceable — a learner who selected a word and
+          // tapped `(` gets a bracket around it rather than after it, which is what an editor does.
+          view.dispatch(view.state.replaceSelection(text));
+          view.focus();
+        },
       }),
       [value]
     );

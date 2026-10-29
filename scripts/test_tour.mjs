@@ -184,7 +184,9 @@ check('the announcement names the step and its number', () => {
 check('the preset follows the step, and a phone shows one region at a time', () => {
   assert.equal(layoutForStep(0, false), 'study');
   assert.equal(layoutForStep(2, false), 'write');
-  assert.equal(layoutForStep(3, false), 'write');
+  // The run step keeps the results region: the predict gate and the verdict the step waits for are
+  // panes there, and Write hides both (which deadlocked the step until the tour timed out).
+  assert.equal(layoutForStep(3, false), 'study');
   assert.equal(layoutForStep(4, false), 'study');
   assert.equal(layoutForStep(1, true), 'read');
   assert.equal(layoutForStep(2, true), 'write');

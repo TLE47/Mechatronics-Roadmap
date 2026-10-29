@@ -28,6 +28,7 @@ import {
   MAX_PANES,
   STORAGE_KEY_EDITOR_PANES,
   closeSplit,
+  closeView,
   focusSlot,
   isEditorView,
   isSplit,
@@ -114,8 +115,9 @@ check('the reported views are the slots that exist', () => {
   ]);
 });
 check('the view names are the only names', () => {
-  assert.deepEqual(EDITOR_VIEWS, ['main', 'actual', 'expected']);
+  assert.deepEqual(EDITOR_VIEWS, ['main', 'predict', 'actual', 'expected']);
   assert.equal(isEditorView('actual'), true);
+  assert.equal(isEditorView('predict'), true, 'the prediction gate is a view like any other');
   assert.equal(isEditorView('output'), false);
   assert.equal(isEditorView(null), false);
 });
@@ -169,12 +171,32 @@ check('splitting from an output brings the editor back beside it', () => {
     'actual',
     'main',
   ]);
-  assert.equal(nextView('main'), 'actual');
+  assert.equal(nextView('main'), 'predict', 'Predict sits between the code and its outputs');
+  assert.equal(nextView('expected'), 'main', 'the list wraps');
+});
+check('a split can open on the prediction gate', () => {
+  const panes = splitPane(DEFAULT_PANES, 'predict');
+  assert.deepEqual(panes.views, ['main', 'predict']);
+  assert.equal(panes.focus, 1);
 });
 check('closing the split keeps the editor where it was', () => {
   const split = splitPane({ views: ['actual', null], axis: 'rows', focus: 0 }, 'expected');
   assert.deepEqual(closeSplit(split).views, ['actual', null]);
   assert.equal(closeSplit(split).focus, 0);
+});
+check('closing one view keeps the other half of a split', () => {
+  const split = { views: ['main', 'predict'], axis: 'columns', focus: 1 };
+  assert.deepEqual(closeView(split, 'predict').views, ['main', null]);
+  assert.deepEqual(closeView(split, 'main').views, ['predict', null], 'the second slot is promoted');
+  assert.equal(closeView(split, 'main').focus, 0);
+  assert.deepEqual(closeView(split, 'expected').views, ['main', 'predict'], 'not open, not closed');
+});
+check('closing the only view falls back to the editor', () => {
+  assert.deepEqual(closeView({ views: ['predict', null], axis: 'rows', focus: 0 }, 'predict').views, [
+    'main',
+    null,
+  ]);
+  assert.equal(closeView({ views: ['predict', null], axis: 'rows', focus: 0 }, 'predict').axis, 'rows');
 });
 check('the axis survives, and only two axes exist', () => {
   assert.equal(setAxis(DEFAULT_PANES, 'rows').axis, 'rows');

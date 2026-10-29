@@ -190,13 +190,13 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 max-sm:items-end max-sm:p-0"
       role="dialog"
       aria-modal="true"
       aria-label="Account and progress sync"
       data-testid="account-panel"
     >
-      <div className="bg-canvas border border-line rounded-xl w-full max-w-md p-5 text-ink shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-canvas border border-line rounded-xl w-full max-w-md p-5 text-ink shadow-2xl max-h-[90vh] overflow-y-auto max-sm:max-h-[92dvh] max-sm:rounded-b-none max-sm:rounded-t-2xl max-sm:border-x-0 max-sm:border-b-0 max-sm:pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
         <div className="flex items-start justify-between gap-3 border-b border-line pb-3 mb-4">
           <div>
             <h2 className="text-base font-bold tracking-tight">Account &amp; progress sync</h2>

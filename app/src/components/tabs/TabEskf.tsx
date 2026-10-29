@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MathView, MathPanel } from '../MathView';
 import { Sparkles, ShieldCheck, AlertOctagon } from 'lucide-react';
 import { PresetRequest, claimPreset } from '../../demoPresets';
+import { PlotExpander } from '../PlotExpander';
 
 interface TabEskfProps {
   onLoadPreset: (presetId: string) => void;
@@ -194,7 +195,7 @@ export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId, p
 
       {/* Controls and Canvas */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-5 bg-panel border border-line rounded-xl p-4 space-y-3.5">
+        <div className="order-2 lg:order-none lg:col-span-5 bg-panel border border-line rounded-xl p-4 space-y-3.5">
           <h2 className="text-sm font-bold text-accent">6-DOF Attitude ESKF & SeqLock Controls</h2>
           <p className="text-xs text-muted">
             Adjust initial gyro bias <MathView math="b_{g,0}" />, accelerometer attitude noise <MathView math="\sigma_{\text{acc}}" />, and toggle <code className="text-accent">WaitFreeSeqLock</code> protection to observe corrupted torn-read spikes when lock-free synchronization is disabled.
@@ -292,10 +293,11 @@ export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId, p
         </div>
 
         {/* Right: ESKF Telemetry Canvas & KPIs */}
-        <div className="lg:col-span-7 bg-panel border border-line rounded-xl p-4 flex flex-col justify-between">
+        <div className="order-1 lg:order-none lg:col-span-7 bg-panel border border-line rounded-xl p-4 flex flex-col justify-between">
           <div>
             <h2 className="text-sm font-bold text-accent mb-3 flex items-center justify-between flex-wrap gap-2">
               <span>Top: Gyro Drift vs. Joseph ESKF · Bottom: Lock-Free Telemetry</span>
+              <PlotExpander canvasRef={canvasRef} title="ESKF drift correction" slug="eskf" />
             </h2>
 
             {/* KPIs */}

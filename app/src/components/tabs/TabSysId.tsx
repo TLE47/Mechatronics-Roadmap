@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MathView, MathPanel } from '../MathView';
 import { Sparkles } from 'lucide-react';
 import { PresetRequest, claimPreset } from '../../demoPresets';
+import { PlotExpander } from '../PlotExpander';
 
 interface TabSysIdProps {
   onLoadPreset: (presetId: string) => void;
@@ -182,7 +183,7 @@ export const TabSysId: React.FC<TabSysIdProps> = ({ onLoadPreset, highlightedId,
 
       {/* Controls and Canvas */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-5 bg-panel border border-line rounded-xl p-4 space-y-3.5">
+        <div className="order-2 lg:order-none lg:col-span-5 bg-panel border border-line rounded-xl p-4 space-y-3.5">
           <h2 className="text-sm font-bold text-accent">Schroeder Multisine & SysID Controls</h2>
           <p className="text-xs text-muted">
             Toggle between Schroeder quadratic phasing and naive zero-phase cosines (<MathView math="\phi_k = 0" />), adjust harmonic count <MathView math="M" /> and sensor noise <MathView math="\sigma_v" />, and observe the crest factor and identification accuracy.
@@ -279,10 +280,11 @@ export const TabSysId: React.FC<TabSysIdProps> = ({ onLoadPreset, highlightedId,
         </div>
 
         {/* Right: Waveform Canvas & KPIs */}
-        <div className="lg:col-span-7 bg-panel border border-line rounded-xl p-4 flex flex-col justify-between">
+        <div className="order-1 lg:order-none lg:col-span-7 bg-panel border border-line rounded-xl p-4 flex flex-col justify-between">
           <div>
             <h2 className="text-sm font-bold text-accent mb-3 flex items-center justify-between flex-wrap gap-2">
               <span>Top: Time-Domain Excitation · Bottom: True vs. Identified Plant Bode</span>
+              <PlotExpander canvasRef={canvasRef} title="Excitation and identified plant" slug="sysid" />
             </h2>
 
             {/* KPIs */}

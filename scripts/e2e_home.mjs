@@ -578,6 +578,50 @@ async function main() {
     );
     console.log(`  ok Start opened ${TODAY_ENTRY?.id} in one click`);
 
+    // ---- 7a. The study clock in the brief: Start, the digits move, Log & reset files them ----
+    {
+      const clock = page.getByTestId('study-timer');
+      await clock.waitFor({ timeout: 30000 });
+      const start = page.getByTestId('btn-study-timer');
+      const reset = page.getByTestId('btn-study-timer-reset');
+      assert.equal(
+        await clock.getAttribute('data-state'),
+        'idle',
+        'a fresh visit must open with the clock at zero'
+      );
+      assert.equal((await page.getByTestId('study-timer-elapsed').textContent())?.trim(), '0:00:00');
+      assert.equal(await reset.isDisabled(), true, 'a zero clock has nothing to log');
+      assert.equal(
+        (await start.textContent())?.trim(),
+        'Start',
+        'the first press is Start, not Resume'
+      );
+      await start.click();
+      await page.waitForTimeout(1500);
+      assert.equal(await clock.getAttribute('data-state'), 'running', 'Start must start the clock');
+      assert.notEqual(
+        (await page.getByTestId('study-timer-elapsed').textContent())?.trim(),
+        '0:00:00',
+        'the clock must show the seconds it has counted'
+      );
+      assert.equal(await start.isDisabled(), true, 'a running clock has nothing for Start to do');
+      await reset.click();
+      await page.waitForTimeout(350);
+      assert.equal(
+        await clock.getAttribute('data-state'),
+        'idle',
+        'Log & reset must put the clock back to zero'
+      );
+      assert.equal((await page.getByTestId('study-timer-elapsed').textContent())?.trim(), '0:00:00');
+      assert.match(
+        (await page.getByTestId('study-timer-logged').textContent()) ?? '',
+        /^Logged /,
+        'the reset must say what it kept'
+      );
+      assert.equal(await reset.isDisabled(), true, 'the zeroed clock has nothing more to log');
+      console.log('  ok the brief’s study clock starts, counts and files its stretch');
+    }
+
     // ---- 7b. Continue puts the reader back where it was left ----
     {
       const reader = page.getByTestId('reader-scroll');
@@ -1065,8 +1109,7 @@ async function main() {
           (node) => !node.closest('pre') && node.closest('code')
         ).length
       );
-      assert.ok(inlineMark >= 1, 'a highlight on inline code must be drawn on the code span');
-      console.log('  ok a highlight on inline code is drawn on the span');
+      assert.ok(inlineMark >= 1, 'a highlight on inline code must be drawn on the code span');      console.log('  ok a highlight on inline code is drawn on the span');
 
       // The split-view tip, and the way to the editor when the layout has no room for two columns.
       await page.getByTestId('btn-split-tip').click();

@@ -379,6 +379,23 @@ function waitForOutput(page, needle) {
  * what the previous moment left in storage, and the phone's service worker must not be inherited from
  * the laptop's run.
  */
+/**
+ * Take the phone's Code tap, if the editor is deferred.
+ *
+ * On a phone Study is one surface at a time and the editor mounts only when Code is chosen
+ * (`app/src/phoneSurface.ts`, `deferPhoneEditor`): that is the whole point of the deferral, and this
+ * walk has to take the same tap a learner takes or there is no editor to time. Returns whether it
+ * tapped, so the record can say the number includes the tap and the editor chunk.
+ */
+async function openCodeSurface(page) {
+  const code = page.getByTestId('phone-surface-code');
+  if (!(await code.count())) return false;
+  if (await page.locator(EDITOR).isVisible().catch(() => false)) return false;
+  await code.click({ timeout: NAVIGATION_TIMEOUT });
+  await waitForEditor(page);
+  return true;
+}
+
 async function measureProfile(browser, baseUrl, profile) {
   const context = await browser.newContext({
     viewport: profile.viewport,
@@ -434,7 +451,9 @@ async function measureProfile(browser, baseUrl, profile) {
     moments.nav_to_lesson = await now();
 
     // 2. Lesson text painted → CodeMirror echoes a character. The starter's last character is known
-    // (`getEditorCode`), so the echo is a change to that text, not a `#` that was already there.
+    // (`getEditorCode`), so the echo is a change to that text, not a `#` that was already there. On a
+    // phone the moment starts with the Code tap, because the editor is not on screen before it.
+    if (await openCodeSurface(page)) notes.opened_editor_by_tap = true;
     const starter = await getEditorCode(page);
     await waitForEditor(page);
     await page.evaluate(() => {
@@ -478,10 +497,34 @@ async function measureProfile(browser, baseUrl, profile) {
       nodes.map((node) => (node.getAttribute('data-testid') ?? '').replace('lesson-item-', ''))
     );
     const targetLesson = nextLessonId(chooserIds, currentLesson);
-    const card = page.locator(`[data-testid="lesson-item-${targetLesson}"]`);
-    await card.scrollIntoViewIfNeeded({ timeout: NAVIGATION_TIMEOUT });
-    const switchStarted = await now();
+    // Desktop has the chooser rail; a phone opens it as a sheet, so the clock starts once the entry is
+    // on screen and the press is the next thing. The desktop clock keeps its old starting point.
+    let switchStarted = await now();
+    let card;
+    if (profile.mobile) {
+      // The Code surface carries its own door (`btn-lessons-code`); the prose strip is not on screen
+      // once the editor is. Whichever is showing is the one a thumb would press.
+      const proseDoor = page.getByTestId('btn-lessons');
+      const door = (await proseDoor.isVisible().catch(() => false))
+        ? proseDoor
+        : page.getByTestId('btn-lessons-code');
+      await door.click({ timeout: NAVIGATION_TIMEOUT });
+      const sheet = page.getByTestId('lesson-sheet');
+      await sheet.waitFor({ state: 'visible', timeout: NAVIGATION_TIMEOUT });
+      card = sheet.locator(`[data-testid="lesson-item-${targetLesson}"]`);
+      await card.scrollIntoViewIfNeeded({ timeout: NAVIGATION_TIMEOUT });
+      switchStarted = await now();
+    } else {
+      card = page.locator(`[data-testid="lesson-item-${targetLesson}"]`);
+      await card.scrollIntoViewIfNeeded({ timeout: NAVIGATION_TIMEOUT });
+    }
     await card.click({ timeout: NAVIGATION_TIMEOUT });
+    if (profile.mobile) {
+      // A new lesson opens on its text, so the "usable editor" end of this moment includes the tap
+      // back to Code — the same one tap a learner makes.
+      await page.getByTestId('lesson-sheet').waitFor({ state: 'hidden', timeout: NAVIGATION_TIMEOUT });
+      await openCodeSurface(page);
+    }
     await page.waitForFunction(
       ({ id, meta, editorSelector }) => {
         const row = document.querySelector(meta);

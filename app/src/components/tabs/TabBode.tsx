@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useId } from 'react';
 import { MathView, MathPanel } from '../MathView';
 import { Sparkles } from 'lucide-react';
 import { PresetRequest, claimPreset } from '../../demoPresets';
+import { PlotExpander } from '../PlotExpander';
 
 interface TabBodeProps {
   onLoadPreset: (presetId: string) => void;
@@ -171,7 +172,7 @@ export const TabBode: React.FC<TabBodeProps> = ({ onLoadPreset, highlightedId, p
       {/* Controls and Canvas */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Left: Sliders & Presets */}
-        <div className="lg:col-span-5 bg-panel border border-line rounded-xl p-4 space-y-3.5">
+        <div className="order-2 lg:order-none lg:col-span-5 bg-panel border border-line rounded-xl p-4 space-y-3.5">
           <h2 className="text-sm font-bold text-accent flex justify-between items-center">
             <span>Plant & Digital Biquad Parameters</span>
           </h2>
@@ -297,14 +298,15 @@ export const TabBode: React.FC<TabBodeProps> = ({ onLoadPreset, highlightedId, p
         </div>
 
         {/* Right: Bode Magnitude Plot & KPIs */}
-        <div className="lg:col-span-7 bg-panel border border-line rounded-xl p-4 flex flex-col justify-between">
+        <div className="order-1 lg:order-none lg:col-span-7 bg-panel border border-line rounded-xl p-4 flex flex-col justify-between">
           <div>
             <h2 className="text-sm font-bold text-accent mb-3 flex items-center justify-between flex-wrap gap-2">
               <span>Bode Magnitude Frequency Response</span>
-              <div className="flex gap-3 text-xs font-normal">
+              <div className="flex flex-wrap items-center gap-3 text-xs font-normal">
                 <span className="flex items-center gap-1 text-accent"><span className="w-2.5 h-0.5 bg-accent"></span> Collocated <MathView math="\omega_m/\tau" /></span>
                 <span className="flex items-center gap-1 text-amber"><span className="w-2.5 h-0.5 bg-amber"></span> Load <MathView math="\omega_L/\tau" /></span>
                 <span className="flex items-center gap-1 text-emerald"><span className="w-2.5 h-0.5 bg-emerald"></span> Notch Filtered</span>
+                <PlotExpander canvasRef={canvasRef} title="Bode magnitude response" slug="bode" />
               </div>
             </h2>
 

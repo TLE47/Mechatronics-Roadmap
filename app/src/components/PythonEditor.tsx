@@ -46,6 +46,14 @@ export interface PythonEditorHandle {
    * them itself on the next edit, because a value describes one run of one document.
    */
   setInlineValues: (entries: InlineValueAt[]) => void;
+  /**
+   * Insert text at the caret and put the caret back in the document.
+   *
+   * The phone key strip (`PythonKeys.tsx`) is outside the editable surface, so a tap otherwise
+   * leaves focus on the button and the next keyboard press goes nowhere. Going through the view
+   * keeps React's `value` and the document in step, the same reason the suites use the bridge.
+   */
+  insertText: (text: string) => void;
 }
 
 export interface PythonEditorProps {
@@ -166,8 +174,8 @@ function EditorPlaceholder({
         data-testid={`${testId}-loading`}
         className="overflow-hidden"
         style={{
-          minHeight: 288,
-          maxHeight: 360,
+          minHeight: 'var(--editor-min-h, 288px)',
+          maxHeight: 'var(--editor-max-h, 360px)',
           // Clipped rather than scrollable: a scroll container that is not keyboard reachable is an
           // axe finding, and this one exists for one frame. The editor's own scroller takes the tab
           // stop when it mounts.
@@ -175,7 +183,7 @@ function EditorPlaceholder({
           backgroundColor: 'var(--bg)',
           color: 'var(--dim)',
           fontFamily: 'var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace)',
-          fontSize: '12.5px',
+          fontSize: 'var(--editor-font-size, 12.5px)',
           lineHeight: 1.6,
         }}
       >

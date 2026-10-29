@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MathView, MathPanel } from '../MathView';
 import { ShieldAlert, ShieldCheck, RefreshCw, Zap } from 'lucide-react';
 import { PresetRequest, claimPreset } from '../../demoPresets';
+import { PlotExpander } from '../PlotExpander';
 
 interface TabModelsProps {
   onLoadPreset: (presetId: string) => void;
@@ -170,7 +171,7 @@ export const TabModels: React.FC<TabModelsProps> = ({ onLoadPreset, highlightedI
 
       {/* Controls and Canvas */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-5 bg-panel border border-line rounded-xl p-4 space-y-3.5">
+        <div className="order-2 lg:order-none lg:col-span-5 bg-panel border border-line rounded-xl p-4 space-y-3.5">
           <h2 className="text-sm font-bold text-accent">Robot Articulation & Model Selection</h2>
           <div className="flex flex-wrap gap-2">
             <button
@@ -281,10 +282,11 @@ export const TabModels: React.FC<TabModelsProps> = ({ onLoadPreset, highlightedI
         </div>
 
         {/* Right: Kinematics Canvas & KPIs */}
-        <div className="lg:col-span-7 bg-panel border border-line rounded-xl p-4 flex flex-col justify-between">
+        <div className="order-1 lg:order-none lg:col-span-7 bg-panel border border-line rounded-xl p-4 flex flex-col justify-between">
           <div>
             <h2 className="text-sm font-bold text-accent mb-3 flex items-center justify-between flex-wrap gap-2">
               <span>Kinematic Chain Pose & Validated URDF/MJCF Telemetry</span>
+              <PlotExpander canvasRef={canvasRef} title="Kinematic chain pose" slug="models" />
             </h2>
 
             {/* KPIs */}

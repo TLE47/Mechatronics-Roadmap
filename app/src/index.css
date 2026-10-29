@@ -301,6 +301,9 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
+  /* The browser's own bars collapse as a phone scrolls; `dvh` keeps a full-height surface from
+     leaving a strip of background under it. `vh` stays as the fallback for an older WebView. */
+  min-height: 100dvh;
   background-color: var(--bg);
   background-image:
     radial-gradient(1100px 620px at 12% -10%, rgba(56, 189, 248, 0.09), transparent 65%),
@@ -752,5 +755,123 @@ body {
   }
   to {
     opacity: 1;
+  }
+}
+
+/* ============================================================================
+   Phone floors — one place, because every tab uses the same `.btn`, `.chip`
+   and native input. A coarse pointer is the rule, not a viewport width: a
+   touch laptop gets the larger targets and a 390 px browser with a mouse does
+   not, which is what a pointer query is for. 44 px is the floor for a primary
+   action, 28 px for the smallest secondary control; the gate in
+   `scripts/e2e_mobile.mjs` measures both.
+   ========================================================================== */
+@media (pointer: coarse) {
+  /* Element floors live in `base`, under every Tailwind utility. Unlayered rules outrank the
+     utilities layer whatever their specificity, and the first version of this block sat outside
+     the layers: its 28 px floor flattened a `min-h-[40px]` punctuation key back to 28. A control
+     that asks for more than the floor now keeps what it asked for. */
+  @layer base {
+    button,
+    [role='tab'],
+    [role='button'] {
+      min-height: 28px;
+      min-width: 28px;
+    }
+    input:not([type='checkbox']):not([type='radio']):not([type='range']),
+    select,
+    textarea {
+      /* 16 px is the size iOS will not zoom on focus. A 12 px field on a phone is a page that
+         jumps under the keyboard every time a learner taps it. */
+      font-size: 16px;
+    }
+    input[type='range'] {
+      min-height: 32px;
+    }
+    input[type='range']::-webkit-slider-thumb {
+      width: 22px;
+      height: 22px;
+    }
+    input[type='range']::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+    }
+  }
+
+  /* The app's own primitives sit in `components`, above `base` and below utilities: a `.btn` is
+     44 px unless the call site states a size, and the header's trays are navigation chrome rather
+     than the page's action, so 40 px keeps them one line high on a phone. */
+  @layer components {
+    .btn {
+      min-height: 44px;
+      padding: 0.66rem 0.95rem;
+    }
+    .action-tray .btn {
+      min-height: 40px;
+      padding: 0.5rem 0.62rem;
+    }
+    .chip {
+      min-height: 30px;
+    }
+  }
+}
+
+/* A sheet owns the screen while it is open: the phone's fixed Study bar must not sit under its
+   last row. The attribute is written by `components/Sheet.tsx`. */
+[data-sheet-open='1'] [data-phone-bar] {
+  display: none !important;
+}
+
+/* The phone's Study surface fills the editor with the space it has. The theme reads the three
+   variables, so the desktop editor keeps its 288/360 px frame and the phone's Code surface gets a
+   taller body and a 16 px line. */
+[data-phone-code='1'] {
+  --editor-font-size: 16px;
+  --editor-min-h: 45dvh;
+  --editor-max-h: none;
+}
+[data-phone-code='1'] .cm-editor {
+  height: 100%;
+}
+[data-phone-code='1'] .cm-scroller {
+  height: 100%;
+}
+
+/* A phone's native scrollbars are overlays, not a gutter; reserving 10 px for one cuts the plot's
+   last label off. The desktop keeps the instrument's own bar. */
+@media (pointer: coarse) {
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+}
+
+/* Installed on a phone, the app owns the screen edges: pad the body by the notch and the home
+   indicator instead of letting the header sit under a status bar. In a tab this rule does not
+   apply, because the browser has already done it. */
+@media (display-mode: standalone) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* The phone's tab picker is a second sticky row. It sits under the measured header rather than
+   under a guessed one: the header's action tray wraps on a narrow phone, so its height changes. */
+@media (max-width: 767px) {
+  [data-chrome='rail'] {
+    position: sticky;
+    top: var(--header-h, 57px);
+    z-index: 30;
+  }
+}
+
+/* Jumping between the phone's Lesson and Code surfaces lands on the panel, not under the two
+   sticky rows above it (the header and the tab picker). */
+@media (max-width: 767px) {
+  [data-testid='lesson-reader'],
+  [data-testid='editor-panel'] {
+    scroll-margin-top: calc(var(--header-h, 57px) + 3.6rem);
   }
 }

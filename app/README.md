@@ -507,6 +507,16 @@ and range `docs/PILOT.md` asks for instead of estimating them. A sitting is deli
 backup: it is a fact about one machine's clock, and merging two machines' sittings would count the same
 hour twice.
 
+The clock is also something a learner can start on purpose. The **lesson brief** carries it — `0:00:00`,
+**Start / Resume**, **Log & reset** — because "log your hour" used to mean hoping the automatic sitting
+had caught it. Start opens a stretch, the digits count while the tab is visible, and Log & reset files
+the stretch as a `study` heartbeat into the same store and puts the digits back to zero: one set of
+hours, the one **Today** already prints beside the trail and the portfolio. A hidden tab pauses the
+clock instead of paying for the hour spent elsewhere, a reload keeps the stretch to its last heartbeat,
+and the two buttons are deliberately the only two — Reset is already the way to end a stretch
+([`src/studyTimer.ts`](src/studyTimer.ts), [`src/components/StudyTimerRow.tsx`](src/components/StudyTimerRow.tsx),
+`npm run test:studyclock`).
+
 ### The trail
 
 Every other surface answers a question about *one* lesson. The roadmap's trail card answers the one a
@@ -891,9 +901,13 @@ and the number is written once at the end rather than on every pointer move
 ([`src/workspaceLayout.ts`](src/workspaceLayout.ts), `npm run test:layout` for the arithmetic,
 `npm run test:e2e:pages` for the drag and the reload).
 
-**The code and its two outputs are tabs, not a stack.** `main.py`, each read-only helper, **Run
-output** and **Expected** are views of one editor card, and the output is a tab rather than a block
-under the code: the code keeps the card's height, and the last run is one press away. **Split** shows
+**The code, its forecast and its two outputs are tabs, not a stack.** `main.py`, each read-only
+helper, **Predict**, **Run output** and **Expected** are views of one editor card, and the output is a
+tab rather than a block under the code: the code keeps the card's height, and the last run is one
+press away. **Predict is one of those views**: the button opens the gate as a pane — beside the code
+when there is no split yet, because a guess is read against the code that has to print it — and it
+stacks or splits like any other tab. It used to be a block in the lesson brief, which is the one
+place a learner could not see it beside the code it is about. **Split** shows
 two views at once — from the editor it offers the run output, and from an output it brings the editor
 back beside it — and the arrows choose a vertical split (`columns`, side by side where the window is
 wide) or a horizontal one (`rows`, like stacked panes in a terminal multiplexer). Pressing the tab of
@@ -902,7 +916,7 @@ clicking a pane makes it the one the next tab press fills — the focused pane c
 ring, so Expected beside Run output is a click and a tab rather than a guess. Two panes is the cap,
 because three 380 px columns of Python is narrower than the code's own line. The strip wraps on a
 phone, and the split controls sit beside it rather than over a tab: they are outside the tablist, so
-the strip is four tabs to a screen reader and no tab is scrolled under a sticky group. The dock's
+the strip is a tablist to a screen reader and no tab is scrolled under a sticky group. The dock's
 sentence becomes its arrow below `2xl`, and the four preset keys print from 1360 px, where the card
 can hold them: below that they live in the titles and the `?` sheet, which is what keeps **Predict**
 on the **Run** row from 768 px up. Predict's own state lives in its name rather than its label —
@@ -1099,7 +1113,11 @@ installed on the first press and remembered for the session; nothing is added to
 answer is applied as **one undo step** (the status line says so), and it is one of three sentences: the
 file was tidied, it was already tidy, or Black could not parse it — the last one quotes the parser's
 own position and leaves your file untouched. The button is disabled while a program runs or a park waits,
-because the worker is one thread.
+because the worker is one thread. The install has one browser-shaped seam: Black reads `platformdirs`
+for its cache directory, and platformdirs' Unix backend does `from os import geteuid` at import time —
+a page has no user id, so a fresh install would raise ImportError before Black ever formatted a line.
+The worker supplies the two id constants (`geteuid`/`getuid`) before the first import; the cache path
+they pick is never written in the browser.
 
 **Step out comes back.** **Step out** runs the rest of the frame that is parked and stops in its caller,
 on the line that made the call — even though a call is usually the last thing on its line and the caller
@@ -1278,6 +1296,30 @@ recording the hash of the sketch each was built from and of the file.
 | Inputs float at 0, deliberately | No ADC is attached, exactly like `--host-verify`'s host mock, which is why the lesson's expected serial is what the emulator prints. A real board differs in the numbers an unconnected pin reads, not in the code |
 | Stop, Reset, and a cycle clock | A run is chunked (40 000 instructions a tick) so the tab stays responsive; leaving the tab cancels it, and the clock says how much Arduino time the run was |
 
+## The phone shell
+
+Below 768 px the workbench is a different shell, not a narrower one. The twelve-tab rail becomes a
+picker row ([`src/components/PhoneTabPicker.tsx`](src/components/PhoneTabPicker.tsx)), Study becomes
+one surface at a time — the prose or the code, remembered per lesson in
+[`src/phoneSurface.ts`](src/phoneSurface.ts) — and Run sits on a fixed bar so it is never a scroll
+away. The editor mounts only when Code is opened, which is also when Pyodide's warm-up starts: a phone
+that only reads pays for neither. Every dialog is the one sheet
+([`src/components/Sheet.tsx`](src/components/Sheet.tsx)), a lab's plot opens at its own resolution
+([`src/components/PlotExpander.tsx`](src/components/PlotExpander.tsx)), and the punctuation strip
+([`src/components/PythonKeys.tsx`](src/components/PythonKeys.tsx)) supplies the colon a phone keyboard
+hides. The manifest is `standalone` with icons rendered from `favicon.svg` (`npm run icons`), so the
+installed app owns the whole display and `env(safe-area-inset-*)` keeps it clear of the notch. The
+map, the measured numbers and the deliberate limits are in
+[`../docs/MOBILE.md`](../docs/MOBILE.md).
+
+| Decision | Why |
+| :--- | :--- |
+| Touch floors key on `pointer: coarse`, not width | A touch laptop needs 44 px targets and a 390 px window driven by a mouse does not; the pointer is the fact, the width is a proxy |
+| Element floors live in `@layer base` | Unlayered CSS outranks every Tailwind utility, and the first version of the floor block flattened a 40 px punctuation key to 28 — the phone gate caught it |
+| The surface is remembered per lesson | A stored `code` for P.1 must not open P.2 in the editor; a new lesson starts on the text, the part the learner has not read |
+| The header publishes its measured height | The picker is a second sticky row; a guessed offset puts it under the header the moment the action tray wraps |
+| One sheet, seven overlays | Focus trap, Escape, focus restore, a locked page and a bottom safe-area inset are written once, not seven times with seven sets of rules |
+
 ## Stack
 
 Vite 6 · React 19 · TypeScript 5.7 · Tailwind 4 · KaTeX · Lucide. Tests drive the built bundle with
@@ -1334,6 +1376,12 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/visuals/Hologram.tsx`](src/visuals/Hologram.tsx) | Home's hologram: the projection drawn, the view dragged, the joints posed, the readout. |
 | [`src/readingPosition.ts`](src/readingPosition.ts) | Where each lesson was left: a heading anchor plus an offset, kept apart from the draft store. |
 | [`src/components/LessonReader.tsx`](src/components/LessonReader.tsx) | The pane: blocks rendered as React, the position restored and flushed, Highlight, Top, and the source link. |
+| [`src/phoneSurface.ts`](src/phoneSurface.ts) | Which half of Study a phone is showing, remembered for the lesson it belongs to. |
+| [`src/installOffer.ts`](src/installOffer.ts) | When the install row may appear: never installed, the browser's prompt, iOS's Share sheet, a thirty-day snooze. |
+| [`src/components/Sheet.tsx`](src/components/Sheet.tsx) | The one dialog: a bottom sheet on a phone, focus trap, Escape, focus restore, a locked page. |
+| [`src/components/PhoneTabPicker.tsx`](src/components/PhoneTabPicker.tsx) | The phone's one-row tab picker and the sheet that lists all twelve labs. |
+| [`src/components/PlotExpander.tsx`](src/components/PlotExpander.tsx) | A lab canvas at its own resolution, in a sheet that scrolls both ways. |
+| [`src/components/PythonKeys.tsx`](src/components/PythonKeys.tsx) | The punctuation a phone keyboard hides, inserted at the caret through the editor's own handle. |
 | [`src/draftHistory.ts`](src/draftHistory.ts) | The versions behind the draft: what each run started from, with its verdict, bounded per lesson and in total, plus the merge a restore uses. |
 | [`src/codeDiff.ts`](src/codeDiff.ts) | The Diff panel's engine: exact-line LCS, hunk windows with counted gaps, the coarse head/tail fallback, and the changed-line count the roadmap card reuses. |
 | [`src/predictGate.ts`](src/predictGate.ts) | Predict first: how a free-text guess is graded against the expected output (four verdicts, lines not substrings), and the bounded per-lesson store of guesses and skips. |
@@ -1378,6 +1426,9 @@ pages. A stale registry is a build failure, not a silent mismatch.
 npm run lint                 # types
 npm run test:workbench       # runner behaviour (happy-dom) + palette search + editor model
 npm run test:reader          # the lesson pane without a browser: inline parsing, heading anchors, the payload guard, the position store
+npm run test:phone           # the phone's pure rules: the per-lesson surface store and the install offer's platform and snooze rules
+npm run test:e2e:mobile      # the phone gate: 390x844 touch shell, picker, Study surfaces, sheets, install row, and the 768/1024 handover
+npm run icons                # render the manifest and iOS icons from favicon.svg
 npm run test:runtime         # the worker: in-place Stop, input(), isolation, Pages fallback
 npm run test:editor          # slider directives (parse/clamp/format) and helper-tab detection
 npm run test:history         # run history: filed on Run, deduped, capped per lesson and in total
@@ -1394,6 +1445,7 @@ npm run test:e2e:reset       # the same panel in Chromium: a backup first, a par
 npm run test:study           # notes and highlights: what is kept, deduped, refused by the store, and what a restore merges
 npm run test:review          # FSRS: 0.9-at-stability, grade order, lapses, the year cap, and the card join
 npm run test:sitting         # the sitting clock's rules and focus mode's store, without a browser
+npm run test:studyclock      # the brief's clock: banked stretches, a reload trusted to its heartbeat, a hidden tab, Log & reset
 npm run test:portfolio       # the export: sections only when they have content, quoting, caps, the time table
 npm run test:storage         # IndexedDB: the bucket fallback, the migration order, the write queue, a refused write
 npm run test:traceback       # tracebacks as data: frames, chains, syntax shapes, and the index match

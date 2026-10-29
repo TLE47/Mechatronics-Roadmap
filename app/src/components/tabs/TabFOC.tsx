@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MathView, MathPanel } from '../MathView';
 import { Sparkles, Check, AlertTriangle } from 'lucide-react';
 import { PresetRequest, claimPreset } from '../../demoPresets';
+import { PlotExpander } from '../PlotExpander';
 
 interface TabFOCProps {
   onLoadPreset: (presetId: string) => void;
@@ -198,7 +199,7 @@ export const TabFOC: React.FC<TabFOCProps> = ({ onLoadPreset, highlightedId, pre
 
       {/* Controls and Canvas */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-5 bg-panel border border-line rounded-xl p-4 space-y-3.5">
+        <div className="order-2 lg:order-none lg:col-span-5 bg-panel border border-line rounded-xl p-4 space-y-3.5">
           <h2 className="text-sm font-bold text-accent">25 kHz FOC Loop & SVPWM Controls</h2>
           <p className="text-xs text-muted">
             Toggle <MathView math="\omega_e L_{d,q}" /> cross-coupling decoupling to observe how rotor speed injects false d-axis flux current when feedforward decoupling is omitted.
@@ -296,10 +297,11 @@ export const TabFOC: React.FC<TabFOCProps> = ({ onLoadPreset, highlightedId, pre
         </div>
 
         {/* Right: Plots & KPIs */}
-        <div className="lg:col-span-7 bg-panel border border-line rounded-xl p-4 flex flex-col justify-between">
+        <div className="order-1 lg:order-none lg:col-span-7 bg-panel border border-line rounded-xl p-4 flex flex-col justify-between">
           <div>
             <h2 className="text-sm font-bold text-accent mb-3 flex items-center justify-between flex-wrap gap-2">
               <span>Top: i_q / i_d Current Dynamics · Bottom: 3-Phase SVPWM Waveforms</span>
+              <PlotExpander canvasRef={canvasRef} title="FOC current steps and SVPWM" slug="foc" />
             </h2>
 
             {/* KPIs */}

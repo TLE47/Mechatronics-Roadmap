@@ -35,6 +35,8 @@ flowchart LR
 | The 3.0 surfaces in a browser: the prologue and its red-checks warning, LV 1 with Mission 2 in progress, the Perk panel, the Black Box's open and locked rows, and one real pass filing exactly one award | the app, driven as a learner drives it | `npm run test:e2e:game` |
 | Which page a visit opens: an explicit view, a lesson link, a first visit, a reload inside the sitting and a new sitting, plus a store that throws, an absent store and a clock that moved backwards; and Home's joins — today's first unverified check, the route's check counts, the newest notes one line each, and a reading position as words | `app/src/homeLanding.ts`, `app/src/homeData.ts` | `npm run test:home` |
 | Home in a browser: a first visit stays on the workbench, a returning one lands on Home with today's one check, all twelve labs are doors, the route and review buttons open what they name, a reload stays, and `?lesson=` never lands on Home | the app, driven in Chromium | `npm run test:e2e:home` |
+| A phone at 390 px: the manifest's icons exist at the sizes it claims, the shell fits with one nav row and a measured header, the picker lists all twelve tabs with 44 px rows and restores focus on Escape, a lab's plot opens at its own resolution, Study opens on the text and Code mounts the editor with 40 px punctuation keys that insert at the caret, the Run bar sits on the bottom edge and a sheet hides it, Code survives a reload, the lesson sheet changes lessons, the install row obeys its platform, and at 768/1024 the rail returns with Predict beside Run | the app, driven in Chromium at 390x844 with touch | `npm run test:e2e:mobile` |
+| The phone's pure rules: a surface is remembered for its own lesson and never carried into one that was not read, a junk record reads as no record, blocked storage leaves the switch working; the install row is never offered inside the installed app, prefers the browser's prompt, falls back to iOS's Share words, refuses a desktop, and snoozes thirty days | `app/src/phoneSurface.ts`, `app/src/installOffer.ts` | `npm run test:phone` |
 | Sound is off by default, one press starts it, the room arrives after the gesture, a control click is heard as its own kind, the panel's sections and faders reach the engine and the store, a preview plays the tick it names, the Interface switch silences presses and still works while silent, the Music source switches between the beds and the drone, a pass plays the verify cue, a run ducks the bed and its verdict lifts it, a mute silences the interface, and a reload arms rather than autoplays | `app/src/audio/*`, `SoundClicks.tsx`, `SoundSettingsPanel.tsx` and the header's control, driven in Chromium through the engine's debug snapshot | `npm run test:e2e:game` |
 | The sound engine without a browser: the store's defaults and clamps (including a record written before the Room fader and the two switches existed), no context before a gesture, the graph built once and the limiter last, cue lengths and peaks, the cue rate limit, ducking and its history, the focus factor, the room table and its bus, the seven click roles and their classifier, pan, the click cap, the click switch and the preview that survives it, the two beds, the drone fallback, a chosen drone that never fetches, the gust, and both rain paths | `app/src/audio/{prefs,facade,engine,clickMap,ambience,musicCatalogue}.ts`, with a recording AudioContext double | `npm run test:audio` |
 | The visual kit: every scene is drawable and honestly named in all twelve kinds (a graph's arrows land on boxes it has and no two of its boxes share a cell, a matrix's cells match its labels, a bitfield spans bits that exist, a plot's points stay inside its axes, a schematic's shunt hangs off a drawn part), an unknown id is refused rather than drawn blank, every figure, route and graph a committed page asks for exists and validates, and the arm's joints, reach, round trip, orbit, projection and trail obey their own limits | `app/src/visuals/{scenes,holoModel}.ts`, against the committed payloads | `npm run test:visuals` |
@@ -54,7 +56,7 @@ and every suite would otherwise read it as stale), restore `~/.cache/ms-playwrig
 follows `package-lock.json`, and run side by side; and
 `deploy-pages` needs all four, so a red audit cannot publish what it graded.
 
-**The matrix is two jobs, split by cost.** `npm run test:workbench` carries fourteen browser suites;
+**The matrix is two jobs, split by cost.** `npm run test:workbench` carries fifteen browser suites;
 `e2e` alone is longer than five minutes (327s on run 40617696276, ~250s on a warm runner), so it rides
 with the six light flows in `e2e-suites` and keeps all four slots, while the built-bundle sweep, the
 control pairs, the tour and home run in `bundle-suites`. The unit batch and the SSR smoke travel with
@@ -159,12 +161,15 @@ npm run test:study                      # notes and highlights: kept per lesson,
 npm run test:checklists                 # a lesson's bullet ticks: identified by their words, per lesson, bounded, clearable, refused by a blocked store, and merged by union for the backup and workspace
 npm run test:review                     # FSRS-5: the 0.9-at-stability identity, grade order, lapses, the year cap, and the card join
 npm run test:sitting                    # the sitting clock: idle cutoff, three-hour cap, backwards clock, totals, and focus's store
+npm run test:studyclock                 # the brief's clock: start/pause/resume arithmetic, a reload trusted only to its heartbeat, a hidden tab, and the study heartbeat that extends a sitting without a run
+npm run test:phone                      # the phone's rules: the per-lesson Study surface, a junk record, blocked storage, and the install offer's platform and thirty-day snooze
 npm run test:portfolio                  # the export: a section only when it has content, quoting, the twenty-card cap, the time table
 npm run test:e2e:backup                 # the header buttons in Chromium: write a zip, wipe, restore a milestone, a draft and a checklist tick to the store and to the screen
 npm run test:e2e:reset                  # the reset panel in Chromium: a backup first, one part, two parts, everything, and preferences kept with no reload
 npm run test:e2e:review                 # pin, comment, rate and reload in Chromium: the card is still scheduled after the reload
 npm run test:e2e:focus                  # focus in Chromium: the chrome hides, the work stays, all three exits work, and a sitting is measured
 npm run test:e2e:home                   # Home in Chromium: a returning visit lands there, every door opens, a reload stays, and a lesson link bypasses it
+npm run test:e2e:mobile                 # the phone gate: 390x844 with touch — icons, shell, tab picker, plot sheet, Study surfaces, install row — then 768 and 1024
 npm run test:e2e:storage                # the migration in Chromium: a pre-IndexedDB bucket arrives whole, the screen shows it, new work stays in the database
 npm run test:palette                    # ⌘K, ⌘P and ⌘⇧F: the whole catalogue once, the ranking order, and that the sheet lists every key once
 npm run test:search                     # ⌘⇧F inside the lessons: a starter line is the editor's line, a hint is not, the solution is not searchable, and the caps hold
@@ -526,7 +531,7 @@ repository's own page, so the gate is green on the real file and not only on syn
 
 **The page's numbers are measured, not remembered (Run 206).** Run 204 swept every count on the page by
 hand and found eight stale; a sweep that has to be repeated is not a gate. So a number whose owner is a
-file or a generated artifact is now written with a marker after it — `36<!-- plan-fact:gates_total -->`,
+file or a generated artifact is now written with a marker after it — `39<!-- plan-fact:gates_total -->`,
 which Markdown renders as nothing — and [`docs/plan-facts.json`](plan-facts.json) names what owns each
 one: the gate list in `check_all.py` (all of it, and the subset every push runs), the tab registry, the
 surface snapshot, the prose index split into reading pages and arm modules, the error index, the

@@ -663,6 +663,18 @@ async function ensureBlack(py) {
       await py.loadPackage('micropip');
       const micropip = py.pyimport('micropip');
       await micropip.install('black');
+      // Black reads `platformdirs` for its cache directory, and platformdirs' Unix backend imports
+      // `geteuid` from `os` at module scope. A browser has no user id, so the import is what fails —
+      // Black 26.x on Pyodide 0.26 raises ImportError the moment `import black` runs, after a clean
+      // install. The value is only used to pick a cache path the formatter never writes in here, so
+      // a constant stands in for it. Measured against black 26.10.1, 2026-10-28.
+      py.runPython(
+        "import os\n" +
+          "if not hasattr(os, 'geteuid'):\n" +
+          "    os.geteuid = lambda: 0\n" +
+          "if not hasattr(os, 'getuid'):\n" +
+          "    os.getuid = lambda: 0\n"
+      );
       py.__mechalabBlackReady = true;
       return true;
     })().catch((error) => {
@@ -833,7 +845,13 @@ const handleSignature = (msg) =>
   });
 
 async function ensurePyodideLoaded(cdnUrl) {
-  if (pyodideInstance && loadedCdnUrl === cdnUrl) {
+  // A completion, hover, signature or lint request does not carry the CDN: the page warms this
+  // worker with it on mount, and only the run and format paths repeat it because they can be the
+  // first message a worker ever sees. Falling back to the URL this worker already loaded keeps an
+  // analysis request from starting a second load of `undefinedpyodide.mjs` — which is what a tab
+  // switch that keeps the worker alive used to do, because there was no in-flight warm to ride.
+  const url = cdnUrl || loadedCdnUrl;
+  if (pyodideInstance && loadedCdnUrl === url) {
     return pyodideInstance;
   }
   // Any in-flight load is the load: Pyodide comes from one CDN, and two importScripts calls in one
@@ -841,7 +859,7 @@ async function ensurePyodideLoaded(cdnUrl) {
   if (loadPromise) {
     return loadPromise;
   }
-  loadedCdnUrl = cdnUrl;
+  loadedCdnUrl = url;
   self.postMessage({ type: 'status', status: 'loading' });
   loadPromise = (async () => {
     try {
@@ -849,12 +867,12 @@ async function ensurePyodideLoaded(cdnUrl) {
       // dynamic import is an ordinary network request of a controlled client, which is exactly what the
       // service worker caches for offline use. `@vite-ignore` keeps the bundler from trying to resolve a
       // CDN URL it will never see at build time.
-      const { loadPyodide } = await import(/* @vite-ignore */ cdnUrl + 'pyodide.mjs');
+      const { loadPyodide } = await import(/* @vite-ignore */ url + 'pyodide.mjs');
       if (typeof loadPyodide !== 'function') {
         throw new Error('loadPyodide not exported by pyodide.mjs');
       }
       const startedAt = performance.now();
-      pyodideInstance = await loadPyodide({ indexURL: cdnUrl });
+      pyodideInstance = await loadPyodide({ indexURL: url });
       if (interruptView) pyodideInstance.setInterruptBuffer(interruptView);
       installStdinBridge(pyodideInstance);
       installScopeBridge(pyodideInstance);

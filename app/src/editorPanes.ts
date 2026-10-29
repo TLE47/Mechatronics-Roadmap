@@ -7,7 +7,8 @@
  * This module is the small state machine behind the tabs that replaced it:
  *
  *  - a **view** is what a pane can show: `main` (the lesson's Python, or its read-only helper),
- *    `actual` (the last run's stdout and verdict) and `expected` (the presentation check);
+ *    `predict` (the forecast gate: what the learner thinks it will print), `actual` (the last run's
+ *    stdout and verdict) and `expected` (the presentation check);
  *  - a **pane** is one slot of the editor body. One slot is the normal editor; a second slot makes
  *    the body a split, side by side (`columns`) or one above the other (`rows`), the way a terminal
  *    multiplexer is arranged;
@@ -26,13 +27,14 @@
  * go through, and `npm run test:panes` pins it.
  */
 
-export const EDITOR_VIEWS = ['main', 'actual', 'expected'] as const;
+export const EDITOR_VIEWS = ['main', 'predict', 'actual', 'expected'] as const;
 
 export type EditorView = (typeof EDITOR_VIEWS)[number];
 
 /** What each pane's tab says. `main` is the file's own name, added by the runner. */
 export const EDITOR_VIEW_LABELS: Record<EditorView, string> = {
   main: 'main.py',
+  predict: 'Predict',
   actual: 'Run output',
   expected: 'Expected',
 };
@@ -60,7 +62,7 @@ export const STORAGE_KEY_EDITOR_PANES = 'mechalab_editor_panes_v1';
 export const MAX_PANES = 2;
 
 export function isEditorView(value: unknown): value is EditorView {
-  return value === 'main' || value === 'actual' || value === 'expected';
+  return value === 'main' || value === 'predict' || value === 'actual' || value === 'expected';
 }
 
 export function isPaneAxis(value: unknown): value is PaneAxis {
@@ -159,6 +161,20 @@ export function splitPane(panes: EditorPanes, view?: EditorView): EditorPanes {
  */
 export function closeSplit(panes: EditorPanes): EditorPanes {
   return normalizePanes({ ...panes, views: [panes.views[0], null], focus: 0 });
+}
+
+/**
+ * Take one view off the screen, keeping the other half of a split.
+ *
+ * Closing a split and closing a tab are different intents: the first says "one pane", the second
+ * says "not this view". With two panes open, closing the first promotes the second rather than
+ * throwing away a split the learner asked for; closing the only view falls back to the editor,
+ * because a body with no view is a blank card.
+ */
+export function closeView(panes: EditorPanes, view: EditorView): EditorPanes {
+  const kept = visibleViews(panes).filter((entry) => entry !== view);
+  if (kept.length === 0) return { ...panes, views: ['main', null], focus: 0 };
+  return normalizePanes({ ...panes, views: [kept[0], kept[1] ?? null], focus: 0 });
 }
 
 /** Choose which way two panes divide. Remembered even while there is no split. */

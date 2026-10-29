@@ -16,6 +16,117 @@ flowchart LR
 
 ---
 
+## [2026-10-28] — Run 276: the workbench fits a phone
+
+**A phone was a narrow desktop, and the narrow part was the navigation.** The twelve-tab rail was a
+horizontal scroller whose last labs were off-screen with no sign they existed; Study put the prose and
+the editor in one column, so each was narrower than a Python line and the keyboard hid half of what was
+left; Run was a scroll away; and seven overlays were centred dialogs whose edges sat off a 390 px
+screen. This run makes the phone a shell of its own rather than a squeezed one.
+
+**The shell.** Below `md` the rail becomes one row that names the current lab and opens a sheet with
+all **twelve** tabs (`app/src/components/PhoneTabPicker.tsx`). The header measures itself into
+`--header-h`, because the picker is a second sticky row and a guessed offset puts it under the header
+the moment the action tray wraps — measured: **107.75 px** for two rows, budgeted at 112. The brand and
+story cards, the progress counters and the rail's long tab list are desktop furniture and stay there.
+
+**Study is one surface at a time.** The lesson text or the editor, switched from a fixed bar whose Run
+is 44 px and always on the bottom edge (`app/src/phoneSurface.ts`). The choice is stored **per lesson**:
+a stored `code` for P.1 must not open P.2 in the editor, because a lesson a learner has never read
+should start on its text. The editor mounts only when Code is opened — the same moment Pyodide's
+warm-up starts — so a phone that only reads pays for neither the 149 kB editor nor the 10 MB
+interpreter. A phone keyboard has no colon on its first pane, so
+[`PythonKeys.tsx`](app/src/components/PythonKeys.tsx) supplies the twelve characters Python needs,
+inserted at the caret, each **40 × 40 px**.
+
+**One sheet, seven overlays.** Help, Pair, Shortcuts, the palette, Account, Reset progress and the
+cheat sheet are now [`Sheet.tsx`](app/src/components/Sheet.tsx): a bottom sheet on a phone and the
+centred dialog desktop had, with `role=dialog`, `aria-modal`, a focus trap, Escape, focus restored to
+the control that opened it, a locked page, and `env(safe-area-inset-bottom)`. It writes
+`data-sheet-open` on the body, and the fixed Study bar steps aside from that attribute rather than from
+a boolean threaded through every caller. A lab's plot opens at its own resolution in a sheet that
+scrolls both ways ([`PlotExpander.tsx`](app/src/components/PlotExpander.tsx), all seven canvas labs),
+snapshotting the live canvas because it redraws every frame.
+
+**Installable, and honest about it.** The manifest is `standalone` with 192/512/maskable-512 icons and
+iOS's 180 px touch icon, all rendered from `favicon.svg` by `npm run icons`; `viewport-fit=cover` plus
+`env(safe-area-inset-*)` keeps an installed app off the notch, scoped to `display-mode: standalone`.
+The install row lives in the tab sheet and follows [`installOffer.ts`](app/src/installOffer.ts): never
+inside the installed app, the browser's own prompt when it exists, the Share-sheet words on iOS, nothing
+on a laptop, and a thirty-day snooze for "not now".
+
+**Two floors, one bug.** Touch targets key on `pointer: coarse`, not on width: `.btn` 44 px, the
+header's trays 40, punctuation keys 40, the app-wide minimum 28, and text fields 16 px so iOS does not
+zoom on focus. The first version of that block was unlayered CSS, which outranks every Tailwind
+utility whatever its specificity — its 28 px floor flattened the 40 px punctuation key back to 28. The
+new gate caught it on its first run; the floors live in `@layer base` and the primitives in
+`@layer components` now ([`app/src/index.css`](app/src/index.css)).
+
+**The gates also caught three dead doors.** The lesson chooser needs `lg` for its rail and the phone's
+strip goes at `md`, so **768–1023 px had no way to change lessons at all** — the brief now carries a
+Lessons button that opens the same sheet. Watch mode asked whether the Predict *pane* existed instead
+of whether a run was *held*, so once the pane was open with no prediction filed, the automatic loop
+never fired again (`heldRun !== null` is the honest test). And the tour's run step chose the Write
+preset, which hides the very gate and verdict that step waits for; it keeps the results region now.
+The built-bundle suite's tablet check and the tour sweep each caught one of these; both are fixed and
+both suites re-run green.
+
+**A hidden tab is not a dead worker.** Keeping a view mounted lets its effects be torn down and re-run
+while the component's state survives. The runner destroys its worker on teardown, so after a detour
+through Bode the chip still said *Python ready* about a worker that no longer existed, and the first
+completion asked a cold worker for Jedi with no CDN to install it from (`undefinedpyodide.mjs`).
+Analysis requests now carry the CDN the way a run does, the worker falls back to the CDN it already
+loaded, and a teardown resets the warm guard and the status. The runtime suite's completion step is
+what found it.
+
+**The gate.** [`scripts/e2e_mobile.mjs`](scripts/e2e_mobile.mjs) (`npm run test:e2e:mobile`) is a real
+Chromium at **390 × 844**, `isMobile`, `hasTouch`, DPR 3: the manifest's icons against their PNG
+headers, the shell, all twelve picker rows, a lab's plot, both Study surfaces, a punctuation key at the
+caret, the bar's bottom edge, a sheet hiding it, a reload inside Code, the lesson sheet, and the install
+row — then 768 and 1024 for the handover, where the rail returns and Predict shares Run's row. It
+launches no interpreter on purpose. [`scripts/test_phone_surface.mjs`](scripts/test_phone_surface.mjs)
+(`npm run test:phone`) pins the pure rules; the gate is a suite in `npm run test:workbench --partition
+e2e`, so CI runs it on every pull request. The perf walk now takes the phone's Code tap as well, so
+*lesson text → first keystroke* and *lesson switch → usable editor* measure the flow that exists
+rather than an editor the deferral has not mounted (14.2 s and 7.8 s on the throttled profile, both
+under their ceilings and recorded in [`docs/PERF.md`](docs/PERF.md)). The map is
+[`docs/MOBILE.md`](docs/MOBILE.md).
+
+**CI caught two things the phone had nothing to do with.** The runtime lane went red on the formatter,
+not on a phone check: Black 26 on Pyodide 0.26 raises `ImportError` at `import black` because the
+`platformdirs` it pulled in does `from os import geteuid` — a browser has no user id, so a clean install
+installs fine and then cannot be imported, and Format reports the formatter as unavailable. The worker
+now supplies `geteuid`/`getuid` before the first import ([`app/src/runtime/pythonWorker.js`](app/src/runtime/pythonWorker.js)),
+and the lane's five format checks pass again. The cause was reproduced on a standalone Pyodide page
+before the fix, so the change is pinned to the error rather than to a guess. The trail lane failed at
+**00:00 UTC**, and it was the hour, not a flake: a sitting is filed on the day it started, so a stretch
+that crossed midnight gave the new day four run rows and no sitting of its own — its heading counted
+only the sitting and printed nothing above the runs. A day with no sitting now counts the runs it shows
+([`app/src/components/TrailCard.tsx`](app/src/components/TrailCard.tsx)), and a day that holds only an
+open says so instead of leaving the line blank.
+
+---
+
+## [2026-10-28] — Run 274: the lesson brief has a study clock
+
+**"Log your hour" was a hope, not a control.** The sitting clock already measured study time from lesson
+opens, runs and reviews, but the only read-out was one small line in the Study panel — nothing let a
+learner say "this hour was study". The lesson brief now carries a clock with exactly two buttons:
+**Start / Resume** and **Log & reset**. It prints `h:mm:ss` plus **Today**'s hours from the store the
+trail and the portfolio already read, and Log & reset files the stretch as a `study` heartbeat into
+`sittingClock.ts` and sets the digits back to zero with a `Logged 32 min` line that says what it kept.
+
+Three rules make the number trustworthy, and each is in `app/src/studyTimer.ts` rather than in the
+component: a stretch banks when the tab is hidden or the page reloads, a hidden tab pauses instead of
+paying for the hour spent elsewhere, and a stored clock is trusted only to its last heartbeat — a page
+left running overnight is paused at the last minute it was seen, not credited with the night. The
+sitting gained a `study` kind that extends it without inventing a run or a review.
+
+**Verified.** `tsc -b`, `test:studyclock` 19/19, `test:sitting`, `test:backup`; the home browser suite
+now starts the clock, watches the digits move, logs the stretch and asserts the zeroed clock and the
+`Logged …` line on the dev page.
+
+
 ## [2026-10-28] — Run 272: the toolbar keeps its row after a prediction
 
 **Predict's state was the last thing that could wrap the Run row.** The button's label grew by

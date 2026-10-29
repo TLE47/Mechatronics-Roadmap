@@ -65,6 +65,8 @@ replaces its own row rather than contradicting it.
 | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
 | 2026-10-24 | Apple M1 · darwin 27.0.0 · 8 GB · Node v22.23.2 | laptop | 425 | 162 | 1536 | 86 | 177 | 230 |
 | 2026-10-24 | Apple M1 · darwin 27.0.0 · 8 GB · Node v22.23.2 | phone | 11239 | 6136 | 24855 | 139 | 244 | 13452 |
+| 2026-10-28 | Apple M1 · darwin 27.0.0 · 8 GB · Node v22.23.2 | laptop | 469 | 106 | 1208 | 65 | 221 | 207 |
+| 2026-10-28 | Apple M1 · darwin 27.0.0 · 8 GB · Node v22.23.2 | phone | 14224 | 7781 | 24779 | 194 | 311 | 16331 |
 
 ## What the walk grades
 
@@ -88,6 +90,11 @@ What fails here is a regression that would matter.
 | phone | warm run → first output | 3 000 ms |
 | phone | lesson switch → usable editor | 4 000 ms |
 | phone | reload → draft restored | 45 000 ms |
+
+On a phone the editor is deferred until Code is chosen (`app/src/phoneSurface.ts`), so *lesson text →
+first keystroke* and *lesson switch → usable editor* include the Code tap — the same tap a learner
+makes, not a state the walk could conjure. That is why the phone's two numbers are larger than they
+were before the phone shell: they now measure the flow that exists.
 
 Raising a ceiling is allowed, and it has to leave a trace: a fresh `--record` row, the reason the new
 number is acceptable, and — if the rise was not intended — the change that caused it. Lowering one is

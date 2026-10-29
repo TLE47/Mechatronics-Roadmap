@@ -122,6 +122,30 @@ export const Header: React.FC<HeaderProps> = ({
   // The tray row is the scope of the hover names (`HeaderTips`): one listener for the three trays,
   // the account chip's neighbours and whatever a child component puts in them.
   const actionsRef = React.useRef<HTMLDivElement | null>(null);
+  const headerRef = React.useRef<HTMLElement | null>(null);
+
+  /**
+   * Publish the header's measured height as `--header-h`.
+   *
+   * The phone's tab picker is a second sticky row, and `top-0` would put it under this header. A
+   * guessed constant would be wrong the moment the action tray wraps on a narrower phone, so the
+   * element measures itself and a ResizeObserver keeps the variable truthful through a rotation.
+   */
+  React.useEffect(() => {
+    const element = headerRef.current;
+    if (!element || typeof document === 'undefined') return;
+    const write = () => {
+      document.documentElement.style.setProperty('--header-h', `${Math.round(element.offsetHeight)}px`);
+    };
+    write();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(write);
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty('--header-h');
+    };
+  }, []);
 
   /**
    * A toggle that is on. The tray owns the frame, so the state is a wash inside it rather than a
@@ -132,6 +156,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header
+      ref={headerRef}
       data-chrome="header"
       className="sticky top-0 z-40 border-b backdrop-blur-md"
       style={{

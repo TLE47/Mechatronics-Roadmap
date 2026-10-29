@@ -132,7 +132,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/65 p-4 pt-[12vh]"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/65 p-4 pt-[12vh] max-sm:items-end max-sm:p-0 max-sm:pt-0"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -144,7 +144,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         data-testid="command-palette"
         data-palette-mode={mode}
         onKeyDown={onKeyDown}
-        className="w-full max-w-2xl overflow-hidden rounded-[var(--r-lg)] border shadow-2xl"
+        className="w-full max-w-2xl overflow-hidden rounded-[var(--r-lg)] border shadow-2xl max-sm:max-h-[92dvh] max-sm:rounded-b-none max-sm:rounded-t-2xl max-sm:border-x-0 max-sm:border-b-0 max-sm:pb-[env(safe-area-inset-bottom)]"
         style={{ backgroundColor: 'var(--panel)', borderColor: 'var(--border-strong)' }}
       >
         <div
