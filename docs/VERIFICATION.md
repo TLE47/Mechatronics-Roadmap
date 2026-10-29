@@ -127,6 +127,7 @@ npm run test:theme:e2e                  # the three controls + contrast on all 1
 npm run check:weight                    # the gzipped shell against docs/weight-budget.json in both build shapes: a local-only dist/ also builds the signed-in one into dist-signed-in/, grades it, and removes it
 npm run check:lighthouse                # Lighthouse on the built bundle: best-practices, SEO and accessibility against docs/lighthouse-allowlist.json (performance not run)
 npm run check:snapshot                  # the painted surface of all 52 surfaces (twelve tabs and Home, four palettes) against docs/surface-snapshot.json: geometry (2 px), control counts, resolved styles
+npm run test:settle                     # the gate that sweep waits on, driven against pages whose count arrives late: a copy of the previous silence-only gate is the failing control, and a count that lands with no loading marker plus one that never finishes pin the other two edges
 npm run check:labels                    # the first screen's type, rendered at 1280x800: eight controls at rest, twelve behind More, primary 13 px, controls 12 px, metadata 11 px, lesson text 17-18 px — and Home's controls and metadata at the same floors
 npm run test:perf                       # the visit, timed: six moments on the built bundle, on a laptop and on a throttled phone, each against docs/perf-budget.json (add --record to write docs/PERF.md)
 npm run test:perf:unit                  # the perf page and the budget without a browser: six moments, two profiles, no recorded row above its ceiling (a CI step)
@@ -494,6 +495,16 @@ rather than a screenshot library: two consecutive sweeps record byte-identical f
 perturbed baseline (a header 12 px taller, a button counted twice) fails with the field named, while a
 2 px nudge passes — both measured, not assumed. It is the only check in the repository that notices a
 panel that stopped being a panel.
+
+A surface is measured once it has stopped changing **what it counts**, not only where its boxes are. The
+gate lives in [`scripts/surface_settle.mjs`](../scripts/surface_settle.mjs): it watches the pane's size,
+its nodes and the six counts the snapshot records, holds those counts still for a beat, and treats any
+`*-loading` panel as unfinished — a request in flight moves nothing at all, so silence alone once let
+`paper/tab-links` record 5 links on one run and 4 on the next. `npm run test:settle` drives that gate
+against pages whose count arrives late, with a copy of the old silence-only gate as the failing control,
+and with a count that carries no loading marker; a page that never finishes must be measured anyway at
+the bound rather than hanging the sweep. Measured on the real page with a GitHub answer 1.2 s late, the
+old gate read 5 links at 252 ms with the panel still loading; the gate reads 6 at 1.2 s.
 
 `check_all.py --list` prints the gates it runs and which are heavy; `--only <gate>` re-runs one
 after you regenerate something, and `--json` reports them machine-readably. The list is not a

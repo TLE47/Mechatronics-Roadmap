@@ -16,6 +16,68 @@ flowchart LR
 
 ---
 
+## [2026-10-28] — Run 282: the surface sweep waits for the count, not for the silence
+
+**The failure.** The sweep's last wait before a measurement was silence: 250 ms with no resize and no
+node landing. `paper/tab-links` still recorded 5 links on one run and 4 on the next, because the worst
+late arrival moves nothing — a request in flight is invisible to both observers, so the pane was
+perfectly quiet while the count had not arrived. The Links tab is the surface that reads the network,
+and it says so: `rise-issues-loading` is on screen from mount until the answer lands.
+
+**The fix.** [`scripts/surface_settle.mjs`](scripts/surface_settle.mjs) is now the gate, and the only
+one. It samples the six counts `measure()` records, holds them still for 400 ms, keeps the
+resize/mutation guards, and treats any `*-loading` panel as unfinished. The wait is bounded at 5 s: a
+surface that reaches the bound is reported as `settled: false` and measured anyway, which is what the
+sweep did before, said out loud. `scripts/snapshot_surfaces.mjs` imports it, and both the gate and the
+measurement take their selectors from one `SURFACE_COUNTS` table, so the gate cannot wait on a set of
+numbers the snapshot does not record.
+
+**Proved.** [`scripts/test_settle_counts.mjs`](scripts/test_settle_counts.mjs) (`npm run test:settle`, a
+step in the audits job) runs a copy of the previous gate as the **failing control** on the same fixture,
+where it returns at 250 ms with 0 links. On the real page, with the GitHub answer delayed 1.2 s, the old
+gate read **5** links at 252 ms with the panel still loading; the new gate read **6** at 1218 ms. Two
+broken versions of the gate were run to prove the suite bites: resolving at the first sample fails the
+no-sentinel case, and a constant count vector fails both count cases.
+
+**The re-baseline the push uncovered.** The first push of this PR failed the snapshot on `tab-links` in
+all four palettes — 87 px taller, with counts and resolved styles identical. It was not the gate:
+`a79e857`, the weekly sweep's data commit, regenerated `app/src/data/linkHistoryData.ts`, and the Links
+tab draws its host and run tables from it, so the tab grew with no code change and no re-record. `main`
+at that commit was red for the same reason and had never run. The baseline now carries the runner's own
+numbers for that surface's four box fields (a local `--record` would have baked the macOS header wrap's
+47 px offset into a file the Linux runner reads), and the snapshot's `_why` names the trap: a link
+history refresh is a re-record too.
+
+---
+
+## [2026-10-28] — Run 281: the surface sweep measures the page, not GitHub's queue
+
+**The failure.** `main` went red right after #68 merged: `check:snapshot` read **7** links on
+`tab-links` against the recorded 6, with every box exactly where the baseline put it (run
+40820681859, and its `--failed` rerun failed the same way). It was not the merge and not a timing
+race. `RiseIssuesPanel` renders one link per open `link-rise` issue, fetched live from the GitHub
+API, and a dispatched sweep had filed #69 twenty minutes earlier: the recorded 6 was a queue of one,
+the run saw two. My first diagnosis named the late-reading-link race the script's own comment
+documents; a probe of the settled page disproved it — the count was stable at 7 and the extra link
+was #69 itself.
+
+**The fix.** `scripts/snapshot_surfaces.mjs` answers that single request with a fixed issue — the
+same #46 the baseline was recorded with — installed before the first navigation. The panel is still
+measured in full (heading, label link, row, its link, its age), and the count now means what every
+other count in the file means: how many links this surface renders. No re-record: the committed
+baseline already is the fixed state.
+
+**Verified.** On `origin/main`'s bytes with the live queue of two issues, the old sweep failed
+`counts.links — expected 6, got 7`; with the answer in place all four palettes measure 6 with no
+count drift (the remaining local box delta is a macOS header wrap that `tab-arch` does not show and
+CI never sees). The branch's CI audits job is the after-run.
+
+**Guard.** `tests/test_snapshot_stub.py` asserts the route exists and precedes the first navigation,
+that the fixture is exactly one issue with the fields the panel reads and no `pull_request`, and that
+the panel still asks `api.github.com`; removing the route fails it (1 of 4).
+
+---
+
 ## [2026-10-28] — Run 280: one verdict per push — the link sweep stops re-running ci.yml's gates
 
 **The request.** Implement the playbook's first candidate.

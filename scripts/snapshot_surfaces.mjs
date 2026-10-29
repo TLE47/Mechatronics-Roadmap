@@ -42,6 +42,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { resolveChromiumExecutable } from './e2e_browser_workbench.mjs';
 import { ensureBuilt, startStaticServer } from './e2e_pages_bundle.mjs';
+import { SETTLE, SURFACE_COUNTS, settleSurface } from './surface_settle.mjs';
 import { seedTourSeen } from './tour_seed.mjs';
 
 const ROOT = process.cwd();
@@ -56,6 +57,29 @@ const TOLERANCE_PX = 2;
 
 /** Every palette a reader can be in, and the OS scheme each is reached through. */
 const PALETTES = ['dark', 'light', 'paper', 'contrast'];
+
+/**
+ * The one live request this sweep answers itself, and why.
+ *
+ * The Links tab renders the open `link-rise` issues it reads from the GitHub API
+ * (`app/src/components/RiseIssuesPanel.tsx`), one link per issue. That number belongs to the queue,
+ * not to the page: a weekly sweep files an issue, a later one closes it, and nothing in the app
+ * moved. It cost a red `main`: run 40820681859 measured 7 links against the recorded 6 with every
+ * box where the snapshot put it, because a dispatched sweep had filed #69 twenty minutes earlier;
+ * the `tab-links` surface is the only one that reads the network at all.
+ *
+ * The panel is still measured in full - the heading, the label link, the row, its link and its age -
+ * and the fixture is the issue the baseline was recorded with (#46, still open, same title and
+ * date), so the surface's shape does not move when the queue does.
+ */
+const RISE_ISSUE_FIXTURE = [
+  {
+    number: 46,
+    title: 'Link sweep rise: 5 newly unverified URLs',
+    html_url: 'https://github.com/TLE47/Mechatronics-Roadmap/issues/46',
+    created_at: '2026-10-26T11:37:35Z',
+  },
+];
 const SCHEME = { dark: 'dark', light: 'light', paper: 'light', contrast: 'dark' };
 
 const tabNames = JSON.parse(fs.readFileSync(path.join(ROOT, 'app/src/data/workbenchTabs.json'), 'utf8'));
@@ -88,10 +112,12 @@ function log(...args) {
 /**
  * What is measured on one surface.
  *
- * Runs in the page, so it may only use the DOM. Every value is rounded to a whole pixel before it
- * leaves: a snapshot is a claim about layout, not about the subpixel.
+ * Runs in the page, so it may only use the DOM, and takes the counts it reports as an argument because
+ * the settle gate waits on the same selectors (`scripts/surface_settle.mjs`): a gate watching a
+ * different set could hand back a surface whose recorded count was still moving. Every value is rounded
+ * to a whole pixel before it leaves: a snapshot is a claim about layout, not about the subpixel.
  */
-function measure() {
+function measure(selectors) {
   const box = (element) => {
     if (!element) return null;
     const rect = element.getBoundingClientRect();
@@ -127,7 +153,10 @@ function measure() {
   const main = document.querySelector('#main') ?? document.querySelector('main');
   const panel = main?.firstElementChild ?? null;
   const root = getComputedStyle(document.documentElement);
-  const count = (selector, scope) => (scope ?? document).querySelectorAll(selector).length;
+  const counts = {};
+  for (const [field, selector] of Object.entries(selectors)) {
+    counts[field] = document.querySelectorAll(selector).length;
+  }
 
   return {
     // Where the page's four regions are. A rail that moves to the other edge, a header that doubles in
@@ -143,14 +172,7 @@ function measure() {
     },
     // What the tab is made of. A card losing its buttons, a lab losing its canvas, or a table losing its
     // rows is the kind of drift no behavioural suite notices, because no suite ever asked.
-    counts: {
-      buttons: count('button'),
-      inputs: count('input, textarea, select'),
-      links: count('a[href]'),
-      headings: count('h1, h2, h3, h4'),
-      canvases: count('canvas'),
-      tables: count('table'),
-    },
+    counts,
     styles: {
       body: style(document.body),
       main: style(main),
@@ -264,6 +286,16 @@ async function main() {
       await seedTourSeen(context);
       const page = await context.newPage();
       page.on('pageerror', (error) => errors.push(`${palette}: ${error.message}`));
+      // Answer the one live request the app makes (see RISE_ISSUE_FIXTURE) before anything loads:
+      // a route installed after the first navigation would miss the panel's mount.
+      await page.route('https://api.github.com/**', (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          headers: { 'access-control-allow-origin': '*' },
+          body: JSON.stringify(RISE_ISSUE_FIXTURE),
+        })
+      );
       await page.goto(baseUrl, { waitUntil: 'load' });
       await page.waitForSelector('[data-testid="btn-theme-toggle"]');
       const painted = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
@@ -302,38 +334,23 @@ async function main() {
           return true;
         });
         await page.waitForTimeout(400);
-        // And then wait until the pane has stopped *resizing*. A late font swap, a lazy image or a
-        // chart's first paint moves the page by a few pixels after that beat, and a snapshot taken
-        // mid-shift is a claim about a frame nobody sees — `tab-links` read 2411 or 2414 px depending
-        // on which side of a 3 px reflow the sweep landed, with nothing changed in the app.
-        // Two kinds of late arrival count as "still changing": a resize (the existing guard) and a
-        // node landing in the pane without moving it. The second one is what made `paper/tab-links`
-        // read 5 links on one run and 4 on the next: the lesson's reading link mounts after the
-        // lesson fetch resolves, inside a line whose height it does not change, so the resize observer
-        // never saw it and the counting pass sometimes ran before it.
-        await page.evaluate(
-          () =>
-            new Promise((resolve) => {
-              const target = document.querySelector('#main') ?? document.body;
-              let quiet = setTimeout(done, 250);
-              const bump = () => {
-                clearTimeout(quiet);
-                quiet = setTimeout(done, 250);
-              };
-              const resizes = new ResizeObserver(bump);
-              const mutations = new MutationObserver(bump);
-              function done() {
-                resizes.disconnect();
-                mutations.disconnect();
-                resolve(true);
-              }
-              resizes.observe(target);
-              mutations.observe(target, { childList: true, subtree: true, characterData: true });
-              setTimeout(done, 5000);
-            })
-        );
+        // And then wait until the surface has stopped changing what it *counts*, not only how big it is
+        // (`scripts/surface_settle.mjs`). Silence was the whole guard here and silence is not the same
+        // as finished: a late font swap or a chart's first paint moves the page by a few pixels after
+        // the beat above (`tab-links` read 2411 or 2414 px depending on which side of a 3 px reflow the
+        // sweep landed), and a node can mount inside a line whose height it does not change at all —
+        // which is what made `paper/tab-links` read 5 links on one run and 4 on the next. The worst case
+        // is not a movement at all: a request still in flight changes nothing, so a pane can be perfectly
+        // quiet while the count it is about to be measured by has not arrived. The gate therefore holds
+        // the counts still for a beat and treats a `*-loading` panel as unfinished.
+        const settled = await page.evaluate(settleSurface, { selectors: SURFACE_COUNTS, ...SETTLE });
+        if (!settled.settled) {
+          log(
+            `  note ${palette}/${surface} still loading after ${settled.waitedMs} ms (counts ${settled.counts})`
+          );
+        }
         const name = `${palette}/${surface}`;
-        surfaces[name] = await page.evaluate(measure);
+        surfaces[name] = await page.evaluate(measure, SURFACE_COUNTS);
         if (PNG) {
           await page.screenshot({ path: path.join(PNG_DIR, `${palette}--${surface}.png`) });
         }

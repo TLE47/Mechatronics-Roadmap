@@ -1,5 +1,5 @@
 {
-  "_why": "The painted surface of all 52 surfaces — the twelve tabs and Home, in four palettes — read by `npm run check:snapshot` (`scripts/snapshot_surfaces.mjs`). Each entry records where the header, activity rail, main pane and its first panel sit, how many buttons, inputs, links, headings, canvases and tables the surface has, and the resolved colours, type and palette tokens. It is **not a pixel diff**: the runner is Linux and the person writing this is on a Mac, and a baseline whose antialiasing does not survive the trip is a gate people learn to skip. Box numbers are compared with a 2 px tolerance, so subpixel rounding is not a finding; counts and resolved styles are exact. Re-record with `npm run check:snapshot -- --record` when a change to the screen is intended, and read the diff: it is a list of what moved.",
+  "_why": "The painted surface of all 52 surfaces — the twelve tabs and Home, in four palettes — read by `npm run check:snapshot` (`scripts/snapshot_surfaces.mjs`). Each entry records where the header, activity rail, main pane and its first panel sit, how many buttons, inputs, links, headings, canvases and tables the surface has, and the resolved colours, type and palette tokens. It is **not a pixel diff**: the runner is Linux and the person writing this is on a Mac, and a baseline whose antialiasing does not survive the trip is a gate people learn to skip. Box numbers are compared with a 2 px tolerance, so subpixel rounding is not a finding; counts and resolved styles are exact. The Links tab draws its tables from `app/src/data/linkHistoryData.ts`, which the weekly sweep regenerates: a data refresh that changes a host or run count moves that surface and is a re-record too (`--record --tab tab-links` records all four palettes). Re-record with `npm run check:snapshot -- --record` when a change to the screen is intended, and read the diff: it is a list of what moved.",
   "version": 1,
   "viewport": {
     "width": 1440,
@@ -905,17 +905,17 @@
           196,
           152,
           1244,
-          2269
+          2356
         ],
         "panel": [
           216,
           172,
           1204,
-          2229
+          2316
         ],
         "footer": [
           0,
-          2422,
+          2509,
           1440,
           43
         ],
@@ -923,7 +923,7 @@
           0,
           0,
           1440,
-          2512
+          2599
         ]
       },
       "counts": {
@@ -1940,17 +1940,17 @@
           196,
           152,
           1244,
-          2269
+          2356
         ],
         "panel": [
           216,
           172,
           1204,
-          2229
+          2316
         ],
         "footer": [
           0,
-          2422,
+          2509,
           1440,
           43
         ],
@@ -1958,7 +1958,7 @@
           0,
           0,
           1440,
-          2512
+          2599
         ]
       },
       "counts": {
@@ -2975,17 +2975,17 @@
           196,
           152,
           1244,
-          2269
+          2356
         ],
         "panel": [
           216,
           172,
           1204,
-          2229
+          2316
         ],
         "footer": [
           0,
-          2422,
+          2509,
           1440,
           43
         ],
@@ -2993,7 +2993,7 @@
           0,
           0,
           1440,
-          2512
+          2599
         ]
       },
       "counts": {
@@ -4010,17 +4010,17 @@
           196,
           152,
           1244,
-          2269
+          2356
         ],
         "panel": [
           216,
           172,
           1204,
-          2229
+          2316
         ],
         "footer": [
           0,
-          2422,
+          2509,
           1440,
           43
         ],
@@ -4028,7 +4028,7 @@
           0,
           0,
           1440,
-          2512
+          2599
         ]
       },
       "counts": {

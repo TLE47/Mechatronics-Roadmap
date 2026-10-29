@@ -699,6 +699,13 @@ part is recorded: geometry with a **2 px tolerance** per number, counts and reso
 list of what moved; `--png` writes a picture per surface to `.fb-scratch/surfaces/` for the review a
 number cannot do; `--tab`/`--palette` narrow a run while fixing one.
 
+A surface is measured only once it has stopped changing what it **counts**, not just where its boxes
+are: [`scripts/surface_settle.mjs`](../scripts/surface_settle.mjs) watches the pane's size, its nodes
+and the six counts the snapshot records, holds them still for a beat, and treats a `*-loading` panel as
+unfinished — a request in flight moves nothing, so silence alone once let `paper/tab-links` record 5
+links on one run and 4 on the next. `npm run test:settle` drives that gate against pages whose count
+arrives late, with the old silence-only gate as the control it has to beat.
+
 ### One chunk became an entry, six vendors and twelve tabs
 
 The budget's first reading was a single 614 kB chunk, and turning the split into a gate is what made
