@@ -306,19 +306,46 @@ async function main() {
       );
       console.log('  ok the click switch silences the interface, and still works while silent');
 
-      // The music source is a choice: the drone never fetches a bed, and choosing the beds loads them.
-      await page.getByTestId('sound-bed-synth').click();
+      // Six categories plus the drone, and the tapes inside the open one: choosing a category is a
+      // press, not a list the learner has to discover, so every chip must be present and reachable.
+      for (const category of ['lofi', 'jazz', 'instrumental', 'anime', 'pop', 'kpop']) {
+        assert.equal(
+          await page.getByTestId(`sound-category-${category}`).count(),
+          1,
+          `the picker must carry the ${category} category`
+        );
+      }
+      await page.getByTestId('sound-category-jazz').click();
+      await page.getByTestId('sound-tape-winter-blues').waitFor({ timeout: 5000 });
+      await page.waitForFunction(() => window.__mechalabAudio?.().tape === 'winter-blues', undefined, {
+        timeout: 5000,
+      });
+      await page.waitForFunction(() => window.__mechalabAudio?.().musicSource === 'file', undefined, {
+        timeout: 20000,
+      });
+      assert.match(
+        (await page.getByTestId('sound-credits').textContent()) ?? '',
+        /Winter Blues/,
+        'the credit must follow the chosen tape'
+      );
+      console.log('  ok a category opens its tape, and the tape really loads');
+
+      // The drone never fetches anything, and a composed tape says so in the credit.
+      await page.getByTestId('sound-tape-drone').click();
       await page.waitForFunction(() => window.__mechalabAudio?.().musicSource === 'synth', undefined, {
         timeout: 10000,
       });
-      await page.getByTestId('sound-bed-lofi').click();
-      await page.waitForFunction(
-        () => ['file', 'synth'].includes(window.__mechalabAudio?.().musicSource ?? 'none'),
-        undefined,
-        { timeout: 20000 }
+      await page.getByTestId('sound-category-kpop').click();
+      await page.getByTestId('sound-tape-neon-stage').click();
+      await page.waitForFunction(() => window.__mechalabAudio?.().musicSource === 'file', undefined, {
+        timeout: 20000,
+      });
+      assert.match(
+        (await page.getByTestId('sound-credits').textContent()) ?? '',
+        /composed by this repository/,
+        'a synthesised tape must not be credited as a licensed recording'
       );
-      const bed = await page.evaluate(() => window.__mechalabAudio?.().musicSource);
-      console.log(`  ok the Music source is a choice (beds report ${bed})`);
+      console.log('  ok the drone and a composed tape are both reachable and honest about it');
       await page.keyboard.press('Escape');
 
       // Focus is a scene on the same bus: the bed crossfades quieter and the header's control goes

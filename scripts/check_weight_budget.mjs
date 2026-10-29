@@ -281,9 +281,9 @@ function printBuild(heading, build) {
       '(fetched only after sound is turned on)'
   );
   log(
-    `  lofi beds (two loops)${' '.repeat(19)}` +
+    `  music tapes (all eight)${' '.repeat(15)}` +
       `${(Number.isFinite(build.measured.music) ? formatBytes(build.measured.music) : 'missing').padStart(8)}  ` +
-      '(fetched only when Music is on and the beds are chosen)'
+      '(fetched one at a time, after a gesture, when a tape is chosen)'
   );
   log('');
   log('  metric              measured     budget      used');

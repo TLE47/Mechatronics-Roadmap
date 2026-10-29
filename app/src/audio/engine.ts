@@ -12,7 +12,7 @@
  *     rain → gust ─┐
  *     floor ───────┴→ room bus ─┐
  *     city ─────────────────────┤
- *     beds ─────────→ music bus ┴→ duck → master → limiter → destination
+ *     tape ─────────→ music bus ┴→ duck → master → limiter → destination
  *     clicks + cues ─→ sfx bus ─────┘
  *     bench (a run) ─→ sfx bus
  *
@@ -39,7 +39,7 @@ import type { SoundCue, SoundMessage, SoundScene, UiRole } from './facade.ts';
 import { clampPan } from './facade.ts';
 import { DEFAULT_SOUND_PREFS, type SoundPrefs } from './prefs.ts';
 import { ROOM_TRIM, roomMix, type RoomLayer } from './ambience.ts';
-import { bedFor } from './musicCatalogue.ts';
+import { DRONE_ID, tapeById } from './musicCatalogue.ts';
 
 /** Music and room level while a run is active: about −10 dB, enough to get out of the way. */
 export const DUCK_GAIN = 0.32;
@@ -63,14 +63,22 @@ export const SCENE_SECONDS = 1.2;
 export const GUST_SECONDS = 0.5;
 export const GUST_GAIN = 1.55;
 /**
- * The recorded beds are peak-normalised to 0.8 by `scripts/build_music.mjs`; this is where they sit
- * under the learner's Music fader, chosen so a bed change is not a jump in loudness from the drone.
+ * The tapes are RMS-matched by `scripts/build_music.mjs`; this is where a tape sits
+ * under the learner's Music fader, chosen so a tape change is not a jump in loudness from the drone.
  * The faders do the rest, and the cues are never touched.
  */
 export const BED_TRIM = 0.22;
+/**
+ * How many decoded tapes the engine keeps alive.
+ *
+ * Every visited tape stays looping at zero gain, so switching back is instant instead of a second
+ * fetch-and-decode. Three is enough for A/B listening and small enough that hunting through all eight
+ * tapes cannot keep eight decoded buffers resident.
+ */
+export const MAX_TAPE_NODES = 3;
 
 export type RainSource = 'none' | 'file' | 'synth';
-/** Which music is audible: the recorded beds, the drone, or nothing loaded yet. */
+/** Which music is audible: the chosen tape, the drone, or nothing loaded yet. */
 export type MusicSource = 'none' | 'file' | 'synth';
 
 export interface SoundDebug {
@@ -85,7 +93,7 @@ export interface SoundDebug {
   room: number;
   /** Where the rain came from: the recorded loop, the fallback, or nothing yet. */
   rain: RainSource;
-  /** Where the music came from: the lo-fi beds, the drone, or nothing loaded yet. */
+  /** Where the music came from: the chosen tape, the drone, or nothing loaded yet. */
   musicSource: MusicSource;
   /**
    * The last twenty duck transitions, oldest first. A run can finish in less time than a browser
@@ -94,8 +102,8 @@ export interface SoundDebug {
   duckHistory: boolean[];
   /** Whether the interface ticks are on at all. */
   clicks: boolean;
-  /** Which music the learner asked for. */
-  beds: 'lofi' | 'synth';
+  /** Which tape the learner asked for: a catalogue id, or `drone`. */
+  tape: string;
 }
 
 export interface EngineOptions {
@@ -104,8 +112,8 @@ export interface EngineOptions {
   now?: () => number;
   /** Injected by the tests: `null` exercises the synthesised-rain fallback. */
   loadRain?: () => Promise<AudioBuffer | null>;
-  /** Injected by the tests: `null` exercises the drone fallback for the beds. */
-  loadMusic?: () => Promise<{ home: AudioBuffer | null; focus: AudioBuffer | null }>;
+  /** Injected by the tests: `null` exercises the drone fallback for a tape that will not load. */
+  loadTape?: (tapeId: string) => Promise<AudioBuffer | null>;
 }
 
 function defaultContext(): AudioContext {
@@ -260,11 +268,12 @@ export class SoundEngine {
   private gustGain: GainNode | null = null;
   private rain: RainSource = 'none';
   private rainLoading: Promise<void> | null = null;
-  private fileBeds: Partial<Record<SoundScene, GainNode>> = {};
-  private musicLoaded = false;
+  private tapeNodes: Map<string, { gain: GainNode; source: AudioBufferSourceNode }> = new Map();
+  private loadedTape: string | null = null;
   private musicFailed = false;
-  private musicLoading: Promise<void> | null = null;
-  private beds: 'lofi' | 'synth' = DEFAULT_SOUND_PREFS.beds;
+  private tapeLoading: Promise<void> | null = null;
+  private tapeLoadingId: string | null = null;
+  private tape: string = DEFAULT_SOUND_PREFS.tape;
   private clicks = DEFAULT_SOUND_PREFS.clicks;
   private noiseBuffer: AudioBuffer | null = null;
   private levels: SoundPrefs = { ...DEFAULT_SOUND_PREFS };
@@ -280,19 +289,25 @@ export class SoundEngine {
   private readonly createContext: () => AudioContext;
   private readonly now: () => number;
   private readonly loadRain?: () => Promise<AudioBuffer | null>;
-  private readonly loadMusic?: () => Promise<{ home: AudioBuffer | null; focus: AudioBuffer | null }>;
+  private readonly loadTape?: (tapeId: string) => Promise<AudioBuffer | null>;
 
   constructor(options: EngineOptions = {}) {
     this.createContext = options.createContext ?? defaultContext;
     this.now = options.now ?? (() => (typeof performance !== 'undefined' ? performance.now() : Date.now()));
     this.loadRain = options.loadRain;
-    this.loadMusic = options.loadMusic;
+    this.loadTape = options.loadTape;
   }
 
-  /** Which music is audible right now: the beds only once they are decoded and asked for. */
+  /**
+   * Which music is audible right now.
+   *
+   * `file` only for the tape the learner asked for *and* that is decoded: a tape that is still loading,
+   * or one whose fetch failed, leaves the drone playing, so this answers what is heard rather than what
+   * was requested.
+   */
   get musicSource(): MusicSource {
-    if (this.beds === 'synth') return 'synth';
-    if (this.musicLoaded) return 'file';
+    if (this.tape === DRONE_ID) return 'synth';
+    if (this.loadedTape === this.tape && this.tapeNodes.has(this.tape)) return 'file';
     return this.musicFailed ? 'synth' : 'none';
   }
 
@@ -307,15 +322,15 @@ export class SoundEngine {
   /** Called from the toggle (a gesture). Idempotent: the graph is built once. */
   async enable(prefs: SoundPrefs): Promise<void> {
     this.levels = normalise(prefs, true);
-    this.beds = this.levels.beds;
+    this.tape = this.levels.tape;
     this.clicks = this.levels.clicks;
     const ctx = this.ensureContext();
     await ctx.resume().catch(() => undefined);
     this.applyLevels(0);
-    // The room and the beds arrive when they arrive: a slow fetch must never delay the boot cue or
-    // the gesture. Until a bed lands, the drone is what plays — music from the first moment.
+    // The room and the tape arrive when they arrive: a slow fetch must never delay the boot cue or
+    // the gesture. Until the tape lands, the drone is what plays — music from the first moment.
     void this.ensureRain();
-    void this.ensureMusic();
+    void this.ensureTape();
     if (!this.booted) {
       this.booted = true;
       this.cue('boot');
@@ -333,17 +348,17 @@ export class SoundEngine {
   /** Apply a preference change while enabled (a level, or the master toggle). */
   apply(prefs: SoundPrefs): void {
     const wasOn = this.levels.on;
-    const wasBeds = this.beds;
+    const wasTape = this.tape;
     this.levels = normalise(prefs, prefs.on === true);
-    this.beds = this.levels.beds;
+    this.tape = this.levels.tape;
     this.clicks = this.levels.clicks;
     if (!this.ctx) return;
-    // Turning the beds on mid-session, or raising Music from zero, starts the fetch then and there;
-    // turning them off is immediate and needs no network at all.
-    if (this.levels.on && this.beds === 'lofi' && (wasBeds !== 'lofi' || !this.musicLoaded)) {
-      void this.ensureMusic();
-    }
-    this.applyLevels();
+    // Choosing a tape mid-session, or raising Music from zero, starts the fetch then and there;
+    // choosing the drone, or turning music off, needs no network at all.
+    const wanted = this.levels.on && this.tape !== DRONE_ID && this.levels.music > 0;
+    if (wanted && (wasTape !== this.tape || this.loadedTape !== this.tape)) void this.ensureTape();
+    // A tape change is a scene change, not a fader move: crossfade it over the same 1.2 s.
+    this.applyLevels(wasTape === this.tape ? RAMP_SECONDS : SCENE_SECONDS);
     if (wasOn && !this.levels.on) {
       // A fade is enough; suspending immediately would cut the fade off.
       const ctx = this.ctx;
@@ -444,7 +459,7 @@ export class SoundEngine {
       duckHistory: [...this.duckHistory],
       musicSource: this.musicSource,
       clicks: this.clicks,
-      beds: this.beds,
+      tape: this.tape,
     };
   }
 
@@ -620,14 +635,16 @@ export class SoundEngine {
     ramp(this.duck.gain, duckFactor, at, seconds);
     ramp(this.musicBus.gain, this.levels.music * sceneFactor * 0.9, at, seconds);
     ramp(this.sfxBus.gain, this.levels.sfx, at, seconds);
-    // The drone plays until a recorded bed is actually decoded and asked for, then steps aside; the
-    // two are never both audible, so a scene change is one crossfade either way.
-    const bedsOn = this.beds === 'lofi' && this.musicLoaded;
-    if (this.labBed) ramp(this.labBed.gain, this.scene === 'focus' || bedsOn ? 0 : 1, at, seconds);
-    if (this.focusBed) ramp(this.focusBed.gain, this.scene === 'focus' && !bedsOn ? 1 : 0, at, seconds);
-    for (const scene of ['home', 'focus'] as const) {
-      const bed = this.fileBeds[scene];
-      if (bed) ramp(bed.gain, bedsOn && this.scene === scene ? BED_TRIM : 0, at, seconds);
+    // The drone plays until the chosen tape is actually decoded, then steps aside; the two are never
+    // both audible, so a scene or tape change is one crossfade either way.
+    const tapeReady =
+      this.tape !== DRONE_ID && this.loadedTape === this.tape && this.tapeNodes.has(this.tape);
+    const droneOn = !tapeReady;
+    if (this.labBed) ramp(this.labBed.gain, this.scene === 'focus' || !droneOn ? 0 : 1, at, seconds);
+    if (this.focusBed) ramp(this.focusBed.gain, this.scene === 'focus' && droneOn ? 1 : 0, at, seconds);
+    // Only the chosen tape is audible: the retained ones sit at zero and cost no mix headroom.
+    for (const [id, node] of this.tapeNodes) {
+      ramp(node.gain.gain, tapeReady && id === this.tape ? BED_TRIM : 0, at, seconds);
     }
     if (this.roomBus) ramp(this.roomBus.gain, this.levels.room * sceneFactor, at, seconds);
     this.rampRoom(this.rainGain, mix.rain, 'rain', at, seconds);
@@ -722,66 +739,92 @@ export class SoundEngine {
     source.start();
   }
 
-  /** Resolves when the beds are decided: the recorded loops, or the drone. */
+  /** Resolves when the chosen tape is decided: the loop, or the drone that covers its absence. */
   whenMusicReady(): Promise<void> {
-    return this.musicLoading ?? Promise.resolve();
+    return this.tapeLoading ?? Promise.resolve();
   }
 
   /**
-   * Fetch and start the two recorded beds, once.
+   * Fetch and start the chosen tape, unless it is already here.
    *
-   * Two files arrive together because a scene change must not wait for a download, and the pair is
-   * only requested when the learner has sound on, Music above zero, and the lo-fi beds selected. A
-   * refusal at any step (offline, a 404, a browser without AAC) leaves `musicFailed` and the drone
-   * playing: a missed fetch is a different texture, never silence.
+   * One file, on demand: the learner chooses a category and a tape, and only that loop is requested.
+   * A refusal at any step (offline, a 404, a browser without AAC) leaves `musicFailed` and the drone
+   * playing: a missed fetch is a different texture, never silence. A tape that arrives after the
+   * learner has moved on is kept for an instant switch back, but never becomes the one that plays.
    */
-  private ensureMusic(): Promise<void> {
-    if (this.musicLoading) return this.musicLoading;
-    if (this.beds !== 'lofi' || !this.levels.on || this.levels.music <= 0) return Promise.resolve();
-    this.musicLoading = (async () => {
-      let beds: { home: AudioBuffer | null; focus: AudioBuffer | null } | null = null;
+  private ensureTape(): Promise<void> {
+    const id = this.tape;
+    if (id === DRONE_ID || !this.levels.on || this.levels.music <= 0) return Promise.resolve();
+    if (this.tapeNodes.has(id)) {
+      this.loadedTape = id;
+      this.musicFailed = false;
+      return this.tapeLoading ?? Promise.resolve();
+    }
+    if (this.tapeLoading && this.tapeLoadingId === id) return this.tapeLoading;
+    this.tapeLoadingId = id;
+    this.tapeLoading = (async () => {
+      let buffer: AudioBuffer | null = null;
       try {
-        beds = this.loadMusic ? await this.loadMusic() : await this.fetchMusic();
+        buffer = this.loadTape ? await this.loadTape(id) : await this.fetchTape(id);
       } catch {
-        beds = null;
+        buffer = null;
       }
-      const ctx = this.ctx;
-      if (!ctx || !this.musicBus) return;
-      if (!beds || !beds.home || !beds.focus) {
-        this.musicFailed = true;
-        this.applyLevels();
+      if (this.tapeLoadingId === id) this.tapeLoadingId = null;
+      if (!this.ctx || !this.musicBus) return;
+      if (!buffer) {
+        // Only the tape still being asked for may report a failure: a slow 404 for the one before it
+        // must not blank out the loop that has since taken over.
+        if (this.tape === id) {
+          this.musicFailed = true;
+          this.applyLevels();
+        }
         return;
       }
-      for (const scene of ['home', 'focus'] as const) {
-        const buffer = beds[scene];
-        if (!buffer) continue;
-        const gain = ctx.createGain();
-        gain.gain.value = 0;
-        gain.connect(this.musicBus);
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
-        source.loop = true;
-        source.connect(gain);
-        source.start();
-        this.fileBeds[scene] = gain;
+      this.startTape(id, buffer);
+      if (this.tape === id) {
+        this.loadedTape = id;
+        this.musicFailed = false;
+        this.applyLevels(SCENE_SECONDS);
       }
-      this.musicLoaded = true;
-      this.musicFailed = false;
-      this.applyLevels();
     })();
-    return this.musicLoading;
+    return this.tapeLoading;
   }
 
-  /** The beds' URLs live in their own module, so this engine is importable under Node. */
-  private async fetchMusic(): Promise<{ home: AudioBuffer | null; focus: AudioBuffer | null }> {
+  /** Start one tape's loop at zero gain, evicting the least recently used once `MAX_TAPE_NODES` is full. */
+  private startTape(id: string, buffer: AudioBuffer): void {
     const ctx = this.ctx;
-    if (!ctx) return { home: null, focus: null };
-    const { loadBed } = await import('./musicBeds.ts');
-    const [home, focus] = await Promise.all([
-      loadBed(bedFor('home'), ctx),
-      loadBed(bedFor('focus'), ctx),
-    ]);
-    return { home, focus };
+    const bus = this.musicBus;
+    if (!ctx || !bus || this.tapeNodes.has(id)) return;
+    while (this.tapeNodes.size >= MAX_TAPE_NODES) {
+      const oldest = this.tapeNodes.keys().next().value;
+      if (oldest === undefined) break;
+      const node = this.tapeNodes.get(oldest);
+      this.tapeNodes.delete(oldest);
+      try {
+        node?.source.stop();
+        node?.source.disconnect();
+        node?.gain.disconnect();
+      } catch {
+        // A node that never started cannot be stopped; dropping it is enough.
+      }
+    }
+    const gain = ctx.createGain();
+    gain.gain.value = 0;
+    gain.connect(bus);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+    source.connect(gain);
+    source.start();
+    this.tapeNodes.set(id, { gain, source });
+  }
+
+  /** The tapes' URLs live in their own module, so this engine is importable under Node. */
+  private async fetchTape(id: string): Promise<AudioBuffer | null> {
+    const ctx = this.ctx;
+    if (!ctx) return null;
+    const { loadTape } = await import('./musicBeds.ts');
+    return loadTape(tapeById(id), ctx);
   }
 
   /** One second of deterministic noise, shared by every layer and click that needs a texture. */
@@ -859,7 +902,7 @@ function normalise(prefs: Partial<SoundPrefs>, on: boolean): SoundPrefs {
     sfx: typeof prefs.sfx === 'number' ? prefs.sfx : DEFAULT_SOUND_PREFS.sfx,
     room: typeof prefs.room === 'number' ? prefs.room : DEFAULT_SOUND_PREFS.room,
     clicks: typeof prefs.clicks === 'boolean' ? prefs.clicks : DEFAULT_SOUND_PREFS.clicks,
-    beds: prefs.beds === 'synth' || prefs.beds === 'lofi' ? prefs.beds : DEFAULT_SOUND_PREFS.beds,
+    tape: typeof prefs.tape === 'string' && prefs.tape ? prefs.tape : DEFAULT_SOUND_PREFS.tape,
   };
 }
 

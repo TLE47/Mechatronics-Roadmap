@@ -25,11 +25,13 @@ import {
   formatBytes,
   formatHeadroom,
   formatUsed,
+  isMusicFile,
   measurementFrom,
   shapeToBuild,
   signedInEnv,
   staleSources,
 } from './weight_budget.mjs';
+import { MUSIC_TAPES } from '../app/src/audio/musicCatalogue.ts';
 
 let passed = 0;
 let failed = 0;
@@ -207,7 +209,8 @@ const FILES = [
   // The room's loop: already compressed, so its own bytes are the number (a gzip of AAC is a few
   // bytes smaller and would under-report what a visit costs by hiding an incompressible file).
   { name: 'assets/rain-loop-abc.m4a', size: 400, gzip: 400 },
-  // One of the two beds: same treatment, and its own metric, so a track cannot hide in the room's.
+  // One of the tapes, at its emitted name: same treatment, and its own metric, so a track cannot hide
+  // in the room's.
   { name: 'assets/lab-night-def.m4a', size: 300, gzip: 300 },
   { name: 'index.html', size: 500, gzip: 60 },
 ];
@@ -229,11 +232,22 @@ check('a build with no recorded room is unmeasured, not free', () => {
   assert.equal(Number.isNaN(silent.music), true, 'and a build with no beds must not read as zero music');
 });
 
-check('the beds are counted apart from the room, both in total', () => {
+check('the tapes are counted apart from the room, both in total', () => {
   const musicOnly = measurementFrom([{ name: 'assets/focus-current-xyz.m4a', size: 250, gzip: 250 }]);
-  assert.equal(Number.isNaN(musicOnly.audio), true, 'a bed is not room tone');
+  assert.equal(Number.isNaN(musicOnly.audio), true, 'a tape is not room tone');
   assert.equal(musicOnly.music, 250);
   assert.equal(musicOnly.total, 250);
+});
+
+check('every catalogue tape is recognised, under hashed and unhashed names', () => {
+  for (const tape of MUSIC_TAPES) {
+    assert.equal(isMusicFile(`assets/${tape.id}-B1c2D3e4.m4a`), true, `${tape.id} must be measured as music`);
+    assert.equal(isMusicFile(`assets/music/${tape.id}.m4a`), true, `${tape.id} must be music by source name too`);
+  }
+  // And nothing that merely starts with a tape id's letters.
+  assert.equal(isMusicFile('assets/lab-nightshift-abc.m4a'), false);
+  assert.equal(isMusicFile('assets/rain-loop-abc.m4a'), false);
+  assert.equal(isMusicFile('assets/index-abc.js'), false);
 });
 
 // The split's own metric: the document plus what it names is a first paint, and a chunk nobody opens

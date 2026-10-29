@@ -16,6 +16,57 @@ flowchart LR
 
 ---
 
+## [2026-10-29] — Eight tapes, six categories: the music is a picker
+
+**The gap.** Sound v2 shipped two beds and a drone, chosen by a two-way switch. That is enough to
+answer "music or texture" and not enough to answer the question a learner actually has at 11 pm:
+*what do I want to hear*. Two tracks is a demo, not a settings panel.
+
+**The library.** [`app/src/audio/musicCatalogue.ts`](app/src/audio/musicCatalogue.ts) now names eight
+tapes in six categories — Lo-fi, Jazz, Instrumental, Anime, Pop, K-pop — and the drone is the last
+chip, not a seventh category, because it is the one choice that is not a song. Four are real CC0
+recordings by HoliznaCC0 (*Snow Drift*, *Fire Place*, *Winter Blues*, *First Snow*, all from *Winter
+Lofi* on Free Music Archive); four are composed by this repository (*Bench Arpeggio*, *Paper
+Lanterns*, *City Lights*, *Neon Stage*), and the catalogue says so in the artist field rather than
+letting a synth loop borrow a band's name. The panel opens a category and shows the tapes inside it,
+with the credit line following the choice — recording and licence, or "composed by this repository".
+The rows are full-width 34 px targets and the chips wrap at 32 px: a 360 px phone cannot show six
+categories side by side, and a sideways scroller would hide half of them.
+
+**The engine.** One file, not two. `ensureTape()` fetches the chosen tape when sound is enabled, when
+the tape changes, or when Music is raised from zero; the drone covers the load and a failure. A tape
+change is a scene change — 1.2 s crossfade — and a scene change no longer switches music at all. Three
+decoded tapes stay looping at zero gain so switching back is instant, and the fourth evicts the oldest
+so hunting through all eight cannot keep eight buffers resident. A late 404 for a tape the learner
+already left is ignored rather than blanking the one now playing; the old code had one failure flag
+for the pair and no way to say which tape it was about.
+
+**The files.** [`scripts/build_music.mjs`](scripts/build_music.mjs) grew a second source: four fixed
+windows cut from the MP3s, four seeded scores rendered from an additive synth (bells, four-chord pads,
+a plucked arpeggio; tempos and bar counts chosen so the folded seam lands on a downbeat). Everything
+now goes through one loudness match — RMS ≈ −18.4 dBFS with a peak ceiling — because peak
+normalisation alone left a 6 dB spread between a dense synth loop and a sparse piano recording, which
+made choosing a category sound like choosing a volume. Measured after: eight tapes within 0.1 dB of
+each other.
+
+**Weight, moved by hand.** The set is 1.90 MB of AAC instead of 867.7 kB, so the `music` ceiling is
+2.10 MB (room for one more short tape or a higher bitrate, not a second library) and `total` moves by
+the same emitted megabytes: 3.55 MB local and 3.60 MB signed-in, above the measured 3.27 and 3.33.
+`entry_gzip` (549.5 kB) and `js_gzip` (929.2 kB, +2.1 kB of catalogue, engine and picker) stayed
+inside their numbers — every tape is fetched on its own, after the gesture, and only the chosen one.
+
+**Proved.** [`scripts/test_audio.mjs`](scripts/test_audio.mjs) is 35 checks: the catalogue and its
+eight files checked in both directions (a tape with no file is a drone the learner did not ask for; an
+orphan file is weight with no way to hear it), the legacy `beds` field migrating both ways, the chosen
+tape replacing the drone, the three-tape cache, a late failure for an abandoned tape, music at zero
+fetching nothing, and the drone staying free. [`scripts/e2e_game.mjs`](scripts/e2e_game.mjs) drives the
+real picker in Chromium — all six categories present, a category opening its tape, the tape really
+loading, the drone, and a composed tape credited honestly. `test:weight` pins every catalogue id
+against the metric, hashed and unhashed, so a ninth tape cannot be counted as room tone.
+`node scripts/build_music.mjs --check` re-cuts and re-renders all eight and finds them current.
+
+---
+
 ## [2026-10-28] — Run 282: the surface sweep waits for the count, not for the silence
 
 **The failure.** The sweep's last wait before a measurement was silence: 250 ms with no resize and no

@@ -1,6 +1,9 @@
 /**
  * The weight budget: what the built workbench is allowed to cost (`scripts/weight_budget.mjs`).
  *
+ * The music ids are read from the catalogue (`app/src/audio/musicCatalogue.ts`), so this file names no
+ * tape itself: adding one there is enough for `music` to know about it.
+ *
  * The Pages bundle is the whole product — there is no server to move work to — so a careless
  * dependency or an un-split import is a learner on a phone waiting for bytes. Nothing measured that
  * until now: `e2e_pages_bundle.mjs` proves the assets are *there*, not what they weigh.
@@ -34,10 +37,12 @@
  *   flatter the number, and the metric exists so a second room file cannot arrive unnoticed. It is in
  *   `total` because it ships in the bundle, but it is fetched only after sound is turned on — see
  *   `docs/AUDIO.md`.
- * - **`music`** — the two recorded beds (`app/src/audio/assets/music/*.m4a`), at their own size for
- *   the same reason, and split from `audio` so a 400 kB lo-fi track cannot hide inside a room-tone
- *   budget. Both are inside `total` and outside `entry_gzip`: a learner who leaves sound off fetches
- *   neither, and one who chooses the drone never fetches the beds.
+ * - **`music`** — the tapes (`app/src/audio/assets/music/*.m4a`, one file per entry in
+ *   `musicCatalogue.ts`), at their own size for the same reason, and split from `audio` so a 400 kB
+ *   lo-fi track cannot hide inside a room-tone budget. All eight are inside `total` and outside
+ *   `entry_gzip`: a learner who leaves sound off fetches none, and one who chooses the drone fetches
+ *   none either. The ids come from the catalogue rather than a second hand-written list, so a tape
+ *   added there is measured here without anyone remembering to edit this file.
  * - **`total`** — everything emitted (assets plus the document): a ceiling on the bundle as a whole,
  *     not the cost of a visit. A split raises this slightly (chunk headers) while lowering
  *     `entry_gzip`, which is exactly the trade the report is meant to show.
@@ -50,6 +55,8 @@
  * runner's variance is larger than any regression this app could plausibly ship, and a flaky gate is
  * a gate somebody turns off.
  */
+
+import { MUSIC_TAPES } from '../app/src/audio/musicCatalogue.ts';
 
 /** The metrics the budget covers, in the order the report prints them. */
 export const METRICS = [
@@ -67,11 +74,28 @@ export const METRICS = [
 
 /** The container formats the room may be recorded in. One file today; the list is the ceiling's. */
 const AUDIO_FILE = /\.(m4a|aac|mp3|ogg|opus|flac|wav|webm)$/i;
-/** The two beds, by their ids in `app/src/audio/musicCatalogue.ts`. */
-const MUSIC_FILE = /(?:^|\/)(lab-night|focus-current)[\w-]*\.(m4a|aac|mp3|ogg|opus|flac|wav)$/i;
+/**
+ * The music tapes, by the ids in `app/src/audio/musicCatalogue.ts`.
+ *
+ * Imported rather than copied: the catalogue has no imports of its own that Node cannot parse, and a
+ * second hand-written list is exactly the way a new tape ends up counted as room tone.
+ */
+const MUSIC_IDS = MUSIC_TAPES.map((tape) => tape.id);
 
 export const isMediaFile = (name) => AUDIO_FILE.test(name);
-export const isMusicFile = (name) => MUSIC_FILE.test(name);
+
+/**
+ * True for a tape, whatever Vite named the emitted file.
+ *
+ * A source path is `…/assets/music/winter-blues.m4a`, but the bundle emits
+ * `assets/winter-blues-B1c2D3e4.m4a`: the directory is gone and a hash is appended. Matching on the id
+ * prefix plus the separator is what survives both shapes without a regex per id.
+ */
+export const isMusicFile = (name) => {
+  if (!AUDIO_FILE.test(name)) return false;
+  const base = name.split('/').pop() ?? name;
+  return MUSIC_IDS.some((id) => base.startsWith(`${id}.`) || base.startsWith(`${id}-`));
+};
 
 /** `1234567` -> `1.18 MB`, `45678` -> `44.6 kB` — a size a person reads without arithmetic. */
 export function formatBytes(bytes) {
@@ -279,8 +303,8 @@ export function measurementFrom(files, entry = [], prose = null, reader = null) 
     reader_gzip: reader && Number.isFinite(reader.gzip) ? reader.gzip : Number.NaN,
     // Media is already compressed: its own bytes, not a gzip of them. A build with no media reads as
     // unmeasured, so removing the room's loop fails the gate instead of passing as zero bytes. The
-    // beds are the same kind of number, split out so a track cannot hide inside a room-tone ceiling;
-    // a build with no beds is unmeasured for `music` and does not fail the room's metric.
+    // tapes are the same kind of number, split out so a track cannot hide inside a room-tone ceiling;
+    // a build with no tapes is unmeasured for `music` and does not fail the room's metric.
     audio: files.some((file) => isMediaFile(file.name) && !isMusicFile(file.name))
       ? files
           .filter((file) => isMediaFile(file.name) && !isMusicFile(file.name))
