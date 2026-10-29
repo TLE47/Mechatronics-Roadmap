@@ -375,6 +375,37 @@ async function main() {
       await page.getByTestId('editor-tab-workflow').click();
       await page.getByTestId('panel-workflow').waitFor({ state: 'visible', timeout: 10000 });
       ok('every editor view is on screen at 390 px, Workflow included');
+      // The checklist is advice, not the canvas: on a phone it is a count with the full list one
+      // press away, so a warning cannot push the dotted paper a thousand pixels down the page.
+      await page.getByTestId('workflow-start-blank').click();
+      await page.getByTestId('workflow-checks-toggle').waitFor({ state: 'visible', timeout: 5000 });
+      const folded = await page.evaluate(() => {
+        const toggle = document.querySelector('[data-testid="workflow-checks-toggle"]');
+        const summary = document.querySelector('[data-testid="workflow-checks"]');
+        return {
+          open: toggle?.getAttribute('aria-expanded'),
+          label: toggle?.textContent?.replace(/\s+/g, ' ').trim(),
+          summary: summary?.textContent?.replace(/\s+/g, ' ').trim(),
+          list: Boolean(document.querySelector('[data-testid="workflow-issues"]')),
+        };
+      });
+      check(folded.open === 'false', `the phone checklist starts open (aria-expanded=${folded.open})`);
+      check(!folded.list, 'the full checklist is rendered on a phone before the learner asks for it');
+      await assertNoSidewaysScroll(page, 'the phone workflow checklist');
+      check(/\d+ open/.test(folded.summary ?? ''), `the compact summary lost its count: ${folded.summary}`);
+      const promised = Number((folded.label ?? '').match(/Show (\d+) check/)?.[1]);
+      check(promised > 0, `the press does not name what it opens: ${folded.label}`);
+      await page.getByTestId('workflow-checks-toggle').click();
+      await page.getByTestId('workflow-issues').waitFor({ state: 'visible', timeout: 5000 });
+      const listed = await page.locator('[data-testid^="workflow-issue-"]').count();
+      check(listed === promised, `the folded count promised ${promised} checks but the list showed ${listed}`);
+      check(
+        /Step 1 needs a title/.test(await page.getByTestId('workflow-issues').innerText()),
+        'the opened list must carry the blank card’s sentence'
+      );
+      await page.getByTestId('workflow-clear').click();
+      await page.getByTestId('workflow-clear-yes').click();
+      ok('the phone checklist is a count, and the full list is one press away');
       await page.getByTestId('editor-tab-main').click();
       check(
         !(await page.getByTestId('lesson-reader').isVisible()),

@@ -48,8 +48,14 @@ the unit suite checks that the branch does not add a second arrow.
 inside that. `app/README.md`'s clock section no longer claims a hidden tab pauses the clock (the
 listener is gone) and now documents Pause/Resume and the disclosure; `docs/MOBILE.md` and
 `docs/VERIFICATION.md` were corrected the same way. `docs/weight-budget.json`'s `measured` block was
-refreshed with `--record` to 569.9 kB entry / 949.2 kB js / 381.9 kB largest, the numbers the gate
+refreshed with `--record` to 570.2 kB entry / 949.4 kB js / 382.2 kB largest, the numbers the gate
 actually measures.
+
+**On a phone the checklist is a count.** At 390 px, 24 open cards were 24 wrapped sentences — 1,163 px
+of advice between the palette and the canvas, which started ~1,900 px down the page. The list now
+starts folded on a phone and the summary row carries a **Show N checks** press (`aria-expanded`,
+`aria-controls`); a desktop keeps it open. `npm run test:e2e:mobile` starts a blank card at 390 and
+checks the folded count, the press and its one sentence.
 
 ---
 

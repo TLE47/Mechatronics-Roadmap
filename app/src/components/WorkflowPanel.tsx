@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { GitBranch, MousePointerClick, Sparkles, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { ChevronDown, GitBranch, MousePointerClick, Sparkles, Trash2 } from 'lucide-react';
 import {
   KIND_META,
   MODE_LABEL,
@@ -31,6 +31,7 @@ import { HowToCard } from './HowToCard.tsx';
 import { TemplatePicker } from './TemplatePicker.tsx';
 import { WorkflowCanvas } from './WorkflowCanvas.tsx';
 import { iconForKind } from './workflowIcons.ts';
+import { useMediaQuery } from '../useMediaQuery.ts';
 
 /**
  * The workflow tab (`components/WorkflowPanel.tsx`).
@@ -75,6 +76,14 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [pendingTemplate, setPendingTemplate] = useState<WorkflowTemplate | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  // The checklist is advice, not the work. On a phone it is a count and one press away: 24 open
+  // cards are 24 wrapped lines, and the canvas below them started ~1,900 px down the page. A
+  // desktop has the room and opens the list. A press pins the learner's choice; until then the list
+  // follows the viewport, so a rotation does not leave it folded on a desktop or open on a phone.
+  const phone = useMediaQuery('(max-width: 767px)');
+  const [checksChoice, setChecksChoice] = useState<boolean | null>(null);
+  const checksOpen = checksChoice ?? !phone;
+  const checksId = useId();
 
   // The write that has not landed yet, and the timer that will land it. The lesson id is captured
   // beside the document: a flush that ran after a lesson switch would otherwise file P.1's work
@@ -403,10 +412,28 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
                 .join(' · ')}
         </span>
         <span className="font-mono text-[10.5px] text-faint">advice only — Run is never blocked</span>
+        {issues.length > 0 && (
+          <button
+            type="button"
+            data-testid="workflow-checks-toggle"
+            aria-expanded={checksOpen}
+            aria-controls={checksId}
+            onClick={() => setChecksChoice(!checksOpen)}
+            className="ml-auto flex min-h-9 cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[11.5px] text-accent hover:bg-raise"
+          >
+            {checksOpen
+              ? 'Hide checks'
+              : `Show ${issues.length} check${issues.length === 1 ? '' : 's'}`}
+            <ChevronDown
+              className={`h-3 w-3 transition-transform ${checksOpen ? 'rotate-180' : ''}`}
+              aria-hidden="true"
+            />
+          </button>
+        )}
       </div>
 
-      {issues.length > 0 && (
-        <ul data-testid="workflow-issues" className="mt-1 space-y-0.5">
+      {issues.length > 0 && checksOpen && (
+        <ul id={checksId} data-testid="workflow-issues" className="mt-1 space-y-0.5">
           {issues.map((issue, index) => (
             <li key={`${issue.code}-${issue.stepId ?? 'flow'}-${index}`}>
               <button

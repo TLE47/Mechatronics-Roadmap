@@ -951,7 +951,9 @@ the same card, so it tabs and splits like the outputs and its arrangement is rem
 nudge with the arrow keys, and the surface is capped at 70% of the viewport and scrolls inside that,
 so a 24-card flow neither widens the page nor turns a 390 px phone into a four-thousand-pixel
 document. Nothing about the run changes: the checklist names what a card is missing (`missing-unit`,
-`no-answer`, `unconnected`, and five more) and never disables Run or a lesson. A card's badge, the
+`no-answer`, `unconnected`, and five more) and never disables Run or a lesson. On a phone the list is
+folded to its count, one press from the sentences, so the canvas is what follows the palette rather
+than twenty-four wrapped lines of advice. A card's badge, the
 checklist's "Step 3" and the Markdown numbering are one reading order, so advice always names the
 card it is about. P.15 opens on its own example; any lesson can start from one of six templates or a
 single Given card; the three-line how-to is always one press away; Copy Mermaid and Copy Markdown
