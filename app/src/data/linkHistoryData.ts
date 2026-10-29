@@ -122,6 +122,23 @@ export const LINK_HISTORY: LinkHistoryPoint[] = [
       "SERVER_ERROR": 1,
       "UNREACHABLE": 15
     }
+  },
+  {
+    "date": "2026-10-29T06:41:43+00:00",
+    "urls": 603,
+    "served": 555,
+    "notChecked": 48,
+    "failed": 0,
+    "blocked": 32,
+    "unreachable": 15,
+    "serverError": 1,
+    "verdicts": {
+      "BLOCKED": 32,
+      "FAIL": 0,
+      "PASS": 555,
+      "SERVER_ERROR": 1,
+      "UNREACHABLE": 15
+    }
   }
 ];
 
@@ -140,164 +157,182 @@ export interface HostRecurrence {
 }
 
 /** Runs whose record carried its unverified URL list; older rows cannot contribute. */
-export const HOST_RECURRENCE_RUNS: number = 5;
+export const HOST_RECURRENCE_RUNS: number = 6;
 
 export const HOST_RECURRENCE: HostRecurrence[] = [
   {
     "host": "st.com",
-    "runs": 5,
+    "runs": 6,
     "urls": 5,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "sciencedirect.com",
-    "runs": 5,
+    "runs": 6,
     "urls": 4,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "analog.com",
-    "runs": 5,
+    "runs": 6,
     "urls": 3,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "cds.caltech.edu",
-    "runs": 5,
+    "runs": 6,
     "urls": 2,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "ctms.engin.umich.edu",
-    "runs": 5,
+    "runs": 6,
     "urls": 2,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "doi.org",
-    "runs": 5,
+    "runs": 6,
     "urls": 2,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "mathworks.com",
-    "runs": 5,
+    "runs": 6,
     "urls": 2,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "raspberrypi.com",
-    "runs": 5,
+    "runs": 6,
     "urls": 2,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "wiki.st.com",
-    "runs": 5,
+    "runs": 6,
     "urls": 2,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "advanced.onlinelibrary.wiley.com",
-    "runs": 5,
+    "runs": 6,
     "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "allaboutcircuits.com",
-    "runs": 5,
+    "runs": 6,
     "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "dl.acm.org",
-    "runs": 5,
+    "runs": 6,
     "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "elmerfem.org",
-    "runs": 5,
+    "runs": 6,
     "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "fbsbook.org",
-    "runs": 5,
+    "runs": 6,
     "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "iso.org",
-    "runs": 5,
+    "runs": 6,
     "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "journals.sagepub.com",
-    "runs": 5,
+    "runs": 6,
     "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "maxongroup.com",
-    "runs": 5,
+    "runs": 6,
     "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "mitpress.mit.edu",
-    "runs": 5,
+    "runs": 6,
     "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "ngspice.sourceforge.io",
-    "runs": 5,
+    "runs": 6,
     "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "onlinelibrary.wiley.com",
-    "runs": 5,
+    "runs": 6,
     "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "rug.nl",
-    "runs": 5,
+    "runs": 6,
     "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "sapien.ucsd.edu",
-    "runs": 5,
+    "runs": 6,
     "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "science.org",
-    "runs": 5,
+    "runs": 6,
     "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "w3.org",
-    "runs": 5,
+    "runs": 6,
     "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "wiki.linuxfoundation.org",
-    "runs": 5,
+    "runs": 6,
     "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "ww1.microchip.com",
-    "runs": 5,
+    "runs": 6,
     "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
+  },
+  {
+    "host": "reddit.com",
+    "runs": 3,
+    "urls": 3,
+    "lastSeen": "2026-10-29T06:41:43+00:00"
+  },
+  {
+    "host": "compliantmechanisms.byu.edu",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-29T06:41:43+00:00"
+  },
+  {
+    "host": "en.cppreference.com",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "learn.sparkfun.com",
@@ -324,33 +359,15 @@ export const HOST_RECURRENCE: HostRecurrence[] = [
     "lastSeen": "2026-10-19T22:24:26+00:00"
   },
   {
-    "host": "reddit.com",
-    "runs": 2,
-    "urls": 3,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
-  },
-  {
-    "host": "compliantmechanisms.byu.edu",
-    "runs": 2,
-    "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
-  },
-  {
-    "host": "en.cppreference.com",
-    "runs": 2,
-    "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
-  },
-  {
     "host": "cs.stanford.edu",
-    "runs": 1,
+    "runs": 2,
     "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   },
   {
     "host": "summerschool.stiff-project.org",
-    "runs": 1,
+    "runs": 2,
     "urls": 1,
-    "lastSeen": "2026-10-29T04:58:34+00:00"
+    "lastSeen": "2026-10-29T06:41:43+00:00"
   }
 ];
