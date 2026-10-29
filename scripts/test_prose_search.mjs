@@ -8,7 +8,7 @@
  *
  * 1. **The index is not the route.** The generator reads `scripts/route_model.py`; a page added to a
  *    step without the file regenerated would still "work", quietly missing the new page. The count
- *    (48 lessons + 17 arm modules), the ids and the route order are pinned here.
+ *    (49 lessons + 17 arm modules), the ids and the route order are pinned here.
  * 2. **Code or a generated callout is indexed.** Every page carries a "Run this in the workbench"
  *    block and a "Next:" line written by scripts; if they were indexed, every page would match the
  *    next page's title and the search would be a second copy of the route table. Fences and tables
@@ -81,7 +81,7 @@ console.log('search the course pages');
 
 check('the index is the route: 48 prose lessons, 17 arm modules, in course order', () => {
   assert.ok(pages, 'the committed prose index must parse');
-  assert.equal(pages.length, 65, `the route declares 65 pages, the index has ${pages.length}`);
+  assert.equal(pages.length, 66, `the route declares 66 pages, the index has ${pages.length}`);
   assert.equal(pages.filter((page) => !page.path.startsWith('modules/')).length, 48);
   assert.equal(pages.filter((page) => page.path.startsWith('modules/')).length, 17);
   assert.equal(new Set(pages.map((page) => page.id)).size, 65, 'two pages share an id');

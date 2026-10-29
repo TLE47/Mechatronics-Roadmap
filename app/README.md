@@ -909,7 +909,7 @@ and the number is written once at the end rather than on every pointer move
 `npm run test:e2e:pages` for the drag and the reload).
 
 **The code, its forecast and its two outputs are tabs, not a stack.** `main.py`, each read-only
-helper, **Predict**, **Run output** and **Expected** are views of one editor card, and the output is a
+helper, **Predict**, **Run output**, **Expected** and **Workflow** are views of one editor card, and the output is a
 tab rather than a block under the code: the code keeps the card's height, and the last run is one
 press away. **Predict is one of those views**: the button opens the gate as a pane — beside the code
 when there is no split yet, because a guess is read against the code that has to print it — and it
@@ -921,9 +921,11 @@ wide) or a horizontal one (`rows`, like stacked panes in a terminal multiplexer)
 a view already open in the other pane focuses that pane instead of opening a second copy, and
 clicking a pane makes it the one the next tab press fills — the focused pane carries a faint inset
 ring, so Expected beside Run output is a click and a tab rather than a guess. Two panes is the cap,
-because three 380 px columns of Python is narrower than the code's own line. The strip wraps on a
-phone, and the split controls sit beside it rather than over a tab: they are outside the tablist, so
-the strip is a tablist to a screen reader and no tab is scrolled under a sticky group. The dock's
+because three 380 px columns of Python is narrower than the code's own line. The strip wraps whenever its tabs do not fit — at 390 px into labelled rows with the icons hidden,
+and at a desktop width only when a lesson brings a helper file — so Workflow and every other view
+are on screen without a sideways scroll. A second header row costs less than a view nobody can see.
+The split controls sit beside it rather than over a tab: they are outside the tablist, so the strip
+is a tablist to a screen reader and no tab is scrolled under a sticky group. The dock's
 sentence becomes its arrow below `2xl`, and the four preset keys print from 1360 px, where the card
 can hold them: below that they live in the titles and the `?` sheet, which is what keeps **Predict**
 on the **Run** row from 768 px up. Predict's own state lives in its name rather than its label —
@@ -934,6 +936,24 @@ greppable by the suite) while the editor is on screen, and the arrangement is re
 keeps no output tab at all, and **Read** keeps no editor. The state machine is pure and validated at
 its edge ([`src/editorPanes.ts`](src/editorPanes.ts), `npm run test:panes` for the rules, the browser
 suite for the side-by-side geometry and the reload).
+
+**The method has a tab too.** **Workflow** is the learner's own plan for how the problem gets solved —
+the analysis palette (Given, Unknown, Model, Compute, Check, Answer) or the code one (Input,
+Transform, Branch, Loop, Test, Output) — drawn as a node canvas: a palette press spawns a card, a card
+drags by its header and edits in place, and a directed arrow is dragged from the dot on its right edge
+to the card it feeds (tap the dot, then the target, is the same gesture for a phone). It is a view of
+the same card, so it tabs and splits like the outputs and its arrangement is remembered; cards also
+nudge with the arrow keys, and the surface scrolls inside the pane, so a 380 px split or a 390 px
+phone never widens the page. Nothing about the run changes: the checklist names what a card is
+missing (`missing-unit`, `no-answer`, `unconnected`, and five more) and never disables Run or a
+lesson. A lesson opens on its own example, one of six templates, or a single Given card; the
+three-line how-to is always one press away; Copy Mermaid and Copy Markdown export the numbered flow,
+and a version-1 list is migrated on read, its branches becoming labelled arrows. The study panel
+summarises the flow and can append it to the note
+([`src/workflow.ts`](src/workflow.ts), [`src/workflowStore.ts`](src/workflowStore.ts),
+[`src/components/WorkflowPanel.tsx`](src/components/WorkflowPanel.tsx),
+[`src/components/WorkflowCanvas.tsx`](src/components/WorkflowCanvas.tsx), `npm run test:workflow`, and
+the browser suite for spawning, dragging, drawing an arrow, the unit item and the reload).
 
 **A panel can sit on either edge.** The presets decide what is on screen; **docking** decides which
 side. Study's lesson text can move to the right of the work area, and Debug's results to the left of
@@ -1392,6 +1412,13 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/draftHistory.ts`](src/draftHistory.ts) | The versions behind the draft: what each run started from, with its verdict, bounded per lesson and in total, plus the merge a restore uses. |
 | [`src/codeDiff.ts`](src/codeDiff.ts) | The Diff panel's engine: exact-line LCS, hunk windows with counted gaps, the coarse head/tail fallback, and the changed-line count the roadmap card reuses. |
 | [`src/predictGate.ts`](src/predictGate.ts) | Predict first: how a free-text guess is graded against the expected output (four verdicts, lines not substrings), and the bounded per-lesson store of guesses and skips. |
+| [`src/workflow.ts`](src/workflow.ts) | The learner's workflow as data: the two palettes, nodes and arrows, the one reading order, the eight advisory checks, the version-1 migration, and the Mermaid and Markdown exports. |
+| [`src/workflowStore.ts`](src/workflowStore.ts) | One workflow per lesson in the bulk bucket: the refused write, the backup entry, and the newer-wins merge a restore uses. |
+| [`src/workflowTemplates.ts`](src/workflowTemplates.ts) | Six seeded flows in both palettes, one blank, each laid out as a connected column with its arrows drawn, and the single lesson that opens on its own example. |
+| [`src/components/WorkflowPanel.tsx`](src/components/WorkflowPanel.tsx) | The Workflow tab's container: owns the document, its debounced save, the selected card and every mutation; validates once per document and composes the canvas, picker and guide. |
+| [`src/components/WorkflowCanvas.tsx`](src/components/WorkflowCanvas.tsx) | The node canvas: absolute cards on a dotted grid, header dragging with a keyboard nudge, inline fields, arrow handles, curved edges and their remove controls. |
+| [`src/components/TemplatePicker.tsx`](src/components/TemplatePicker.tsx) | The two palettes of seeded flows, as starting shapes to edit. |
+| [`src/components/HowToCard.tsx`](src/components/HowToCard.tsx) | The three-line guide to the tab; whether it is open is the container's policy. |
 | [`src/watchMode.ts`](src/watchMode.ts) | When the checks may re-run themselves — after a graded failure, on an edited buffer, never past the gate — and the remembered toggle. |
 | [`src/announce.ts`](src/announce.ts) | The sentence a screen reader hears after a run: verdict first, then the failing line, the metric or the exception — condensed to one interruption. |
 | [`src/backupZip.ts`](src/backupZip.ts) | The zip writer and reader a backup is made of: stored entries, CRC-32, and the four ways a chosen file can fail. |

@@ -694,7 +694,7 @@ def render():
         "[`DEPTH.md`](DEPTH.md). Take it after this route, in the same step order. Nothing on this",
         "  page depends on it.",
         f"- **The minimum finish** - {minimum['page_count']} pages, "
-        f"{fmt(minimum['low'], minimum['high'])} focused hours, in "
+        f"{fmt(round(minimum['low']), round(minimum['high']))} focused hours, in "
         "[`MINIMUM.md`](MINIMUM.md). A smaller finish that still builds the arm.",
         "- **The Extensions** - 10 optional modules, 47.5 focused hours, in",
         "  [`EXTENSIONS.md`](EXTENSIONS.md). A third layer, outside both routes.",

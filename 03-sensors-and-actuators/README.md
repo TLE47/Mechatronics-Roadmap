@@ -23,7 +23,7 @@
 | **3 · derive** | [after the practice pass](#tier-3-advanced--production), same step order | — | — |
 | **outside both routes** | [optional](#tier-3-advanced--production), graded, never required | [`03-sensors.T3.03a`](../modules/03-sensors.T3.03a.md) | 4.5 |
 
-**Step 6 costs 11.35-16 focused hours in total** - 3.35-8 of lessons, 3.5 of arm modules, 4.5 of Depth 2 practice - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
+**Step 6 costs 11.35-16 focused hours in total** - 3.35-8 of lessons, 3.5 of arm modules, 4.5 of Depth 2 practice - out of a **201.1-292 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
 **Next:** Step 7 · Run it in real time: embedded C → [Track 04](../04-embedded-and-realtime/README.md) (19-25 focused hours).
 <!-- /step-index -->

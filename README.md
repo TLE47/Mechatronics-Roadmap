@@ -58,7 +58,7 @@
 
 **What this is.** A free, browser-based course that starts from no coding, electronics, or maths past school arithmetic and ends with a working simulated two-joint robot arm. You read one small idea, write it in Python, and a lesson only counts when its checks pass.
 
-<!-- sim-route:hours -->**≈120–210 focused hours**<!-- /sim-route --> to the arm · <!-- sim-route:full-hours -->**≈200–290 with the optional depth pass**<!-- /sim-route --> · **\$0 in hardware** — everything runs in your browser; an optional bench starts at \$15.
+<!-- sim-route:hours -->**≈121–212 focused hours**<!-- /sim-route --> to the arm · <!-- sim-route:full-hours -->**≈201–292 with the optional depth pass**<!-- /sim-route --> · **\$0 in hardware** — everything runs in your browser; an optional bench starts at \$15.
 
 **Focused hours, not elapsed time.** The first count is the arm route: time with its lessons open, excluding setup, debugging and re-reading. At 6 hours a week, plan for **2–4 years** for the arm once that overhead is counted; the full course with the optional depth pass is **3–5 years**, and the minimum viable finish is about **1.5–2.5 years** at the same pace. [The arithmetic is below.](#how-long-this-really-takes)
 
@@ -84,7 +84,7 @@ Each step ends with something you can run and check yourself. Steps 3–10 each 
 <!-- route:table:start -->
 | Step | What you can do when it is done | Lessons | Modules (arm + depth) | Focused hours |
 | :--- | :--- | ---: | ---: | ---: |
-| **[1 · Python and the maths a robot needs](track-p/P.1-variables-and-data-types.md)** | Read a formula, write it in Python, and check your own answer. | 14 | — | ≈17–43 |
+| **[1 · Python and the maths a robot needs](track-p/P.1-variables-and-data-types.md)** | Read a formula, write it in Python, and check your own answer. | 15 | — | ≈18–45 |
 | **[2 · Circuits and your first microcontroller](stage-0/S0.0-why-electricity-is-like-flow.md)** | Light an LED, read a knob, and dim it with PWM without breaking anything. | 11 | — | ≈14–33 |
 | **[3 · Make a joint move: foundations](00-foundations/00.1-effort-flow-and-first-order-lag.md)** | Model a spring, a damper, and a motor as one joint that responds to torque. | 3 | 5 + 11 | ≈21–27 |
 | **[4 · Power the joint: electronics](01-electronics-and-power/01.1-mosfet-inductor-flyback.md)** | Switch a motor both ways, budget its current, and keep the switching noise out. | 4 | 4 + 2 | ≈18–26 |
@@ -94,19 +94,19 @@ Each step ends with something you can run and check yourself. Steps 3–10 each 
 | **[8 · Make it hold still: control](05-control-and-estimation/05.1-pid-virtual-spring-damper-and-anti-windup.md)** | Tune a PID that holds the arm against gravity without overshooting. | 2 | 1 + 4 | ≈6–10 |
 | **[9 · Plan motion and bring it up safely](06-robotics-and-autonomy/06.1-cubic-trajectories-and-compliant-joints.md)** | Smooth a path, identify the plant, and run a bring-up that fails safe. | 2 | 2 + 1 | ≈10–14 |
 | **[10 · Put it together: the 2-DOF arm](08-capstone-projects/08.1-tier1-2dof-compliant-arm-capstone.md)** | Run a figure-8 path on a simulated arm, then recover from four planted faults. | 1 | 1 | ≈6–9 |
-| **10 steps** | **A finished simulated arm, and the checks to prove it** | **48** | **17 + 23** | **≈120–210** |
+| **10 steps** | **A finished simulated arm, and the checks to prove it** | **49** | **17 + 23** | **≈121–212** |
 
 **Two passes, one order.** The hours column is the **arm route**. Take its arm module in Steps 3–10, then stop at the working arm. The **depth** modules are the optional second pass, with their own totals in [`docs/DEPTH.md`](docs/DEPTH.md).
 
-_Rounded to whole hours: the ten rows add to ≈120–210 for the arm. With the optional depth pass (80 h), the full course is ≈200–290 focused hours. [`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md) keeps the page-level decimals._
+_Rounded to whole hours: the ten rows add to ≈121–212 for the arm. With the optional depth pass (80 h), the full course is ≈201–292 focused hours. [`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md) keeps the page-level decimals._
 <!-- route:table:end -->
 
-<!-- route:lessons -->48<!-- /route --> lessons and <!-- sim-route:modules -->**17 arm + 23 depth modules**<!-- /sim-route --> you practise with. All 48 lessons and the 17 arm modules are the arm route; the 23 depth modules are the optional second pass; another <!-- sim-route:extensions -->**10 optional modules (47.5 focused hours)**<!-- /sim-route --> sit outside the route's two passes. Skipping the depth and optional work still leaves a finished arm.
+<!-- route:lessons -->49<!-- /route --> lessons and <!-- sim-route:modules -->**17 arm + 23 depth modules**<!-- /sim-route --> you practise with. All 49 lessons and the 17 arm modules are the arm route; the 23 depth modules are the optional second pass; another <!-- sim-route:extensions -->**10 optional modules (47.5 focused hours)**<!-- /sim-route --> sit outside the route's two passes. Skipping the depth and optional work still leaves a finished arm.
 
-The focused hours are targets, not measurements: each page's own estimate, summed by [`scripts/generate_sim_route.py`](scripts/generate_sim_route.py): <!-- sim-route:hours-basis -->the route's high end is a slow-learner figure on 48 of 65 pages and a single estimate on the other 17, so plan against it as a floor and expect it to rise as those pages are measured<!-- /sim-route -->. No outside learner has completed the route yet. [`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md) is the arm route, [`docs/DEPTH.md`](docs/DEPTH.md) is the depth pass, and `--check` fails CI if a count or hour drifts from the lessons.
+The focused hours are targets, not measurements: each page's own estimate, summed by [`scripts/generate_sim_route.py`](scripts/generate_sim_route.py): <!-- sim-route:hours-basis -->the route's high end is a slow-learner figure on 49 of 66 pages and a single estimate on the other 17, so plan against it as a floor and expect it to rise as those pages are measured<!-- /sim-route -->. No outside learner has completed the route yet. [`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md) is the arm route, [`docs/DEPTH.md`](docs/DEPTH.md) is the depth pass, and `--check` fails CI if a count or hour drifts from the lessons.
 
 > [!TIP]
-> **One working arm is a finish line, not a consolation prize.** The [minimum viable finish](#the-minimum-viable-finish) is 47 pages and ≈93–151 focused hours. Everything after it is optional depth.
+> **One working arm is a finish line, not a consolation prize.** The [minimum viable finish](#the-minimum-viable-finish) is 48 pages and ≈94–153 focused hours. Everything after it is optional depth.
 
 ## How long this really takes
 
@@ -121,7 +121,7 @@ The 5× and 10× are planning multipliers, not measurements: no outside learner 
 
 ## The minimum viable finish
 
-**If you want one working arm, this is a finish line, not a consolation prize.** Do Step 1, Step 2, the arm modules in Steps 3–10, the lessons the capstone opens, and Step 10. That is <!-- sim-route:minimum-pages -->47<!-- /sim-route --> pages and <!-- sim-route:minimum -->**≈93–151 focused hours**<!-- /sim-route -->, the smaller finish inside the arm route. The exact page list is [`docs/MINIMUM.md`](docs/MINIMUM.md); it is not a different course.
+**If you want one working arm, this is a finish line, not a consolation prize.** Do Step 1, Step 2, the arm modules in Steps 3–10, the lessons the capstone opens, and Step 10. That is <!-- sim-route:minimum-pages -->48<!-- /sim-route --> pages and <!-- sim-route:minimum -->**≈94–153 focused hours**<!-- /sim-route -->, the smaller finish inside the arm route. The exact page list is [`docs/MINIMUM.md`](docs/MINIMUM.md); it is not a different course.
 
 **Everything else is someday.** The arm route adds the remaining prose lessons and the capstone's graded exercise ([`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md)); the depth pass is a separate <!-- sim-route:depth-hours -->**80 focused hours**<!-- /sim-route --> in [`docs/DEPTH.md`](docs/DEPTH.md); the optional modules add their own hours ([`docs/EXTENSIONS.md`](docs/EXTENSIONS.md)). None of it is unfinished business if you stop at the arm.
 

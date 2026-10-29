@@ -115,9 +115,10 @@ check('the reported views are the slots that exist', () => {
   ]);
 });
 check('the view names are the only names', () => {
-  assert.deepEqual(EDITOR_VIEWS, ['main', 'predict', 'actual', 'expected']);
+  assert.deepEqual(EDITOR_VIEWS, ['main', 'predict', 'actual', 'expected', 'workflow']);
   assert.equal(isEditorView('actual'), true);
   assert.equal(isEditorView('predict'), true, 'the prediction gate is a view like any other');
+  assert.equal(isEditorView('workflow'), true, 'the learner’s own cards are a view like any other');
   assert.equal(isEditorView('output'), false);
   assert.equal(isEditorView(null), false);
 });
@@ -172,12 +173,20 @@ check('splitting from an output brings the editor back beside it', () => {
     'main',
   ]);
   assert.equal(nextView('main'), 'predict', 'Predict sits between the code and its outputs');
-  assert.equal(nextView('expected'), 'main', 'the list wraps');
+  assert.equal(nextView('expected'), 'workflow', 'Workflow is the last tab before the list wraps');
+  assert.equal(nextView('workflow'), 'main', 'the list wraps');
 });
 check('a split can open on the prediction gate', () => {
   const panes = splitPane(DEFAULT_PANES, 'predict');
   assert.deepEqual(panes.views, ['main', 'predict']);
   assert.equal(panes.focus, 1);
+});
+check('a split can open on the workflow, and a stored workflow pane round-trips', () => {
+  const panes = splitPane(DEFAULT_PANES, 'workflow');
+  assert.deepEqual(panes.views, ['main', 'workflow']);
+  assert.deepEqual(normalizePanes(panes), panes);
+  const back = showView(panes, 'workflow');
+  assert.equal(back.focus, 1, 'pressing the tab already open focuses its pane, never duplicates it');
 });
 check('closing the split keeps the editor where it was', () => {
   const split = splitPane({ views: ['actual', null], axis: 'rows', focus: 0 }, 'expected');

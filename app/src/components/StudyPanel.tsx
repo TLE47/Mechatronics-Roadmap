@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { GraduationCap, Highlighter, NotebookPen, Trash2 } from 'lucide-react';
+import { GitBranch, GraduationCap, Highlighter, NotebookPen, Trash2 } from 'lucide-react';
 import {
   MAX_HIGHLIGHT_CHARS,
+  MAX_NOTE_CHARS,
   addHighlight,
   cleanQuote,
   readLessonStudy,
@@ -22,6 +23,8 @@ import {
 } from '../sittingClock';
 import { DAY_MS, type Grade } from '../fsrs';
 import { InlineMarkdown } from './InlineMarkdown';
+import { workflowToMarkdown, workflowSummary } from '../workflow';
+import { readWorkflow } from '../workflowStore';
 
 /**
  * The lesson's study panel: what the learner wrote down, and the passages they kept.
@@ -42,6 +45,8 @@ import { InlineMarkdown } from './InlineMarkdown';
  */
 interface StudyPanelProps {
   lessonId: string;
+  /** Opens the editor's Workflow tab; absent when the panel is rendered outside the runner. */
+  onOpenWorkflow?: () => void;
 }
 
 /** The four answers `fsrs.ts` schedules on, in the order the learner sees them. */
@@ -79,7 +84,7 @@ function sittingLine(): { text: string; runs: number } {
   return { text: `${summary} · this sitting ${formatDuration(open.end - open.start)}`, runs };
 }
 
-export function StudyPanel({ lessonId }: StudyPanelProps) {
+export function StudyPanel({ lessonId, onOpenWorkflow }: StudyPanelProps) {
   const [note, setNote] = useState('');
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [selection, setSelection] = useState('');
@@ -92,6 +97,9 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
   // a card rating: a run happens in the runner, one component over, and a panel that only refreshed
   // for its own writes showed the number the store held when the lesson opened (`SITTING_RECORDED_EVENT`).
   const [sitting, setSitting] = useState<{ text: string; runs: number }>({ text: '', runs: 0 });
+  // The workflow this lesson already has, if any: the strip is a summary and a door, not a second
+  // editor. Its counts are re-read on every reload so a restore or an edit next door shows here.
+  const [workflow, setWorkflow] = useState<{ steps: number; open: number; hints: number } | null>(null);
   // What the store holds right now, and whether the learner has typed since: a write happens for a
   // keystroke, never for a value the component loaded. That distinction is what keeps React's
   // double-mount in development from writing an empty box over a real note - the mount load must not
@@ -108,6 +116,8 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
     dirtyRef.current = false;
     setCards(syncCards());
     setSitting(sittingLine());
+    const drawn = readWorkflow(lessonId);
+    setWorkflow(drawn ? workflowSummary(drawn) : null);
   };
 
   useEffect(() => {
@@ -182,6 +192,31 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
     setSelection('');
     reload();
     setStatus('Highlight saved');
+  };
+
+  /**
+   * The workflow, in the learner's own note box.
+   *
+   * It appends rather than replaces: the note is the place a diagram stops being a diagram and
+   * becomes something a person can reread on a phone tomorrow. Clamped to the note's own cap, and
+   * written through `saveNote` so the strip's "saved" is the store's word, not a hope.
+   */
+  const copyWorkflow = () => {
+    const drawn = readWorkflow(lessonId);
+    if (!drawn) return;
+    const base = note.trimEnd();
+    const next = (base ? `${base}\n\n${workflowToMarkdown(drawn)}` : workflowToMarkdown(drawn)).slice(
+      0,
+      MAX_NOTE_CHARS
+    );
+    setNote(next);
+    dirtyRef.current = true;
+    const landed = saveNote(lessonId, next);
+    if (landed) {
+      savedRef.current = next;
+      dirtyRef.current = false;
+    }
+    setStatus(landed ? 'Workflow copied into the note' : NOT_SAVED);
   };
 
   const comment = (highlight: Highlight, value: string) => {
@@ -324,6 +359,52 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
         >
           {sitting.text || 'No sittings recorded yet'}
         </span>
+      </div>
+
+      {/* The plan beside the understanding. It is a summary, not a second editor: the counts are the
+          workflow's own checklist, and the door opens the tab where the cards live. */}
+      <div
+        data-testid="study-workflow"
+        className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-2.5"
+      >
+        <span className="flex items-center gap-1.5 font-mono text-[12px] text-accent">
+          <GitBranch className="h-3.5 w-3.5" aria-hidden="true" />
+          Workflow
+        </span>
+        <span
+          data-testid="study-workflow-note"
+          className="min-w-0 flex-1 truncate font-mono text-[11.5px] text-faint"
+        >
+          {workflow
+            ? `${workflow.steps} card${workflow.steps === 1 ? '' : 's'} · ${
+                workflow.open + workflow.hints === 0
+                  ? 'all checks pass'
+                  : `${workflow.open + workflow.hints} check${workflow.open + workflow.hints === 1 ? '' : 's'} open`
+              }`
+            : 'no workflow for this lesson yet'}
+        </span>
+        {workflow && (
+          <button
+            type="button"
+            data-testid="btn-workflow-to-note"
+            onClick={copyWorkflow}
+            className="btn btn-ghost text-[12.5px]"
+            title="Append the numbered workflow to this lesson's note"
+          >
+            Copy into note
+          </button>
+        )}
+        {onOpenWorkflow && (
+          <button
+            type="button"
+            data-testid="btn-open-workflow"
+            onClick={onOpenWorkflow}
+            className="btn btn-ghost text-[12.5px]"
+            title="Open the Workflow tab in the editor"
+          >
+            Open workflow
+          </button>
+        )}
       </div>
 
       {reviewing && (

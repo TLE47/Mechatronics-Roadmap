@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { PYTHON_LESSONS, PythonLessonItem } from '../../data/pythonLessonsData';
 import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabPlant';
 import { asOutputMatchMode, compareStdout, OutputMatchMode } from '../../outputMatch';
@@ -24,6 +24,7 @@ import {
 } from '../../offlineTakeAlong';
 import { FaultBench08 } from '../FaultBench08';
 import { StudyPanel } from '../StudyPanel';
+import { WorkflowPanel } from '../WorkflowPanel';
 import { LessonReader } from '../LessonReader';
 import { LessonChooser, type TrackFilter } from '../LessonChooser';
 import { Sheet } from '../Sheet';
@@ -196,6 +197,7 @@ import {
   Loader2,
   History,
   GitCompare,
+  GitBranch,
   Activity,
   Share2,
   LifeBuoy,
@@ -507,6 +509,48 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // Which of the three regions the screen gives its width to (`workspaceLayout.ts`). Read once at
   // mount: it is a preference, and a reload is the only thing that changes it from outside.
   const [layout, setLayout] = useState<WorkspaceLayout>(() => readLayout());
+  // The toolbar is the control the preset is pressed on, so it is the one thing that must not move
+  // when the preset changes which regions are mounted. Capture where it sat, put it back there.
+  const layoutToolbarRef = useRef<HTMLDivElement>(null);
+  const keepLayoutTop = useRef<number | null>(null);
+  const chooseLayout = (next: WorkspaceLayout) => {
+    const bar = layoutToolbarRef.current;
+    keepLayoutTop.current = bar ? bar.getBoundingClientRect().top : null;
+    setLayout(writeLayout(next));
+  };
+  useLayoutEffect(() => {
+    const top = keepLayoutTop.current;
+    keepLayoutTop.current = null;
+    if (top === null || !layoutToolbarRef.current) return;
+    const settle = () => {
+      const bar = layoutToolbarRef.current;
+      if (!bar) return;
+      const delta = bar.getBoundingClientRect().top - top;
+      if (Math.abs(delta) > 1) window.scrollBy(0, delta);
+    };
+    settle();
+    // The lesson reader mounts at once but its Markdown arrives a moment later and grows the page
+    // above the toolbar. Keep putting the toolbar back while that settles, and stop the moment the
+    // learner takes over the scroll — a correction that fights a wheel is worse than a small jump.
+    let active = true;
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(settle) : null;
+    observer?.observe(document.body);
+    let timer = 0;
+    const cleanup = () => {
+      if (!active) return;
+      active = false;
+      observer?.disconnect();
+      window.clearTimeout(timer);
+      window.removeEventListener('wheel', cleanup);
+      window.removeEventListener('touchstart', cleanup);
+      window.removeEventListener('keydown', cleanup);
+    };
+    timer = window.setTimeout(cleanup, 2500);
+    window.addEventListener('wheel', cleanup, { passive: true });
+    window.addEventListener('touchstart', cleanup, { passive: true });
+    window.addEventListener('keydown', cleanup);
+    return cleanup;
+  }, [layout]);
   // Which edge the chooser (Study) and the results (Split) sit on (`workspaceLayout.ts`). Read once
   // at mount, like the preset: it is the same kind of preference, and only this screen changes it.
   const [dock, setDock] = useState<WorkspaceDock>(() => readDock());
@@ -916,6 +960,21 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     }
     editorPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     window.setTimeout(() => guideEditorRef.current?.focus(), 0);
+  };
+
+  /**
+   * The study panel's door into the Workflow tab.
+   *
+   * It chooses the pane first, then lands on it: on a phone that means switching to the code surface
+   * before the scroll, or the card the learner asked for is on a surface they cannot see.
+   */
+  const openWorkflowTab = () => {
+    commitPanes(showView(panes, 'workflow'));
+    if (isPhone) choosePhoneSurface('code');
+    window.setTimeout(
+      () => editorPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      isPhone ? 60 : 0
+    );
   };
 
   const showMainLine = (line: number) => {
@@ -2578,7 +2637,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       const next = layoutShortcutFor(event.code) ?? layoutShortcutFor(event.key);
       if (!next) return;
       event.preventDefault();
-      setLayout(writeLayout(next));
+      chooseLayout(next);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -3089,7 +3148,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
    * would be a door into a hidden room, so Study comes back first.
    */
   const openPredictView = () => {
-    if (!editorShown || !resultsAllowed) setLayout(writeLayout('study'));
+    if (!editorShown || !resultsAllowed) chooseLayout('study');
     if (slotFor(panes, 'predict') !== null) {
       commitPanes(showView(panes, 'predict'));
       return;
@@ -3363,6 +3422,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     </div>
   );
 
+  // The learner's own plan for this problem (`workflow.ts`), drawn as ordered cards. It is an
+  // output view like Run output: one tab press away, splittable beside the code, and mounted only
+  // while the editor shows, so the Read preset pays nothing for it.
+  const workflowPane = <WorkflowPanel lessonId={selectedId} lessonTitle={currentLesson.title} />;
+
   const actualOutputPane = (
 <div data-testid="results-panel" className="flex h-full min-h-0 flex-col bg-panel border border-line rounded-xl p-4">
     <div className="mb-2 flex items-center justify-between">
@@ -3458,7 +3522,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   );
 
   const runnerToolbar = (
-<div data-testid="runner-toolbar" className="flex flex-wrap items-center gap-1.5">
+<div ref={layoutToolbarRef} data-testid="runner-toolbar" className="flex flex-wrap items-center gap-1.5">
   {/* The presets live on this card, not in the editor's own header: Read hides that
       header, and a control that disappears with the panel it governs is a trap. A
       shortcut with no control is a feature only its author knows, so the shortcut is
@@ -3471,7 +3535,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     <select
       data-testid="layout-select"
       value={layout}
-      onChange={(event) => setLayout(writeLayout(event.target.value as WorkspaceLayout))}
+      onChange={(event) => chooseLayout(event.target.value as WorkspaceLayout)}
       className="min-h-[40px] rounded-lg border border-line bg-canvas px-1.5 text-[13px] font-mono text-body"
     >
       {LAYOUTS.map((option) => (
@@ -3494,7 +3558,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         aria-pressed={layout === option.id}
         title={option.title}
         data-testid={`layout-${option.id}`}
-        onClick={() => setLayout(writeLayout(option.id))}
+        onClick={() => chooseLayout(option.id)}
         className={`px-2 py-1 rounded text-[13px] font-mono cursor-pointer border transition-colors ${
           layout === option.id
             ? 'bg-accent text-inverse border-accent font-bold'
@@ -5394,10 +5458,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           >
             <div className="bg-canvas border-b border-line-soft px-3 py-1.5">
               <div className="flex min-w-0 items-center justify-between gap-2">
-              {/* The strip takes the row's spare width, wraps on a phone and scrolls on a wider
-                  window: a strip that wrapped at 1280 px would be a header the code below pays for. */}
+              {/* The strip takes the row's spare width and wraps when its tabs do not fit, at any
+                  width: a second header row costs less than a view nobody can see, and a helper
+                  file is what makes the six tabs overrun a 1280 px card. No sideways scroll, so
+                  every view is on screen on a phone and on a desktop. */}
               <div
-                className="flex min-w-0 flex-1 flex-nowrap items-center gap-1 overflow-x-auto"
+                className="flex min-w-0 flex-1 flex-wrap items-center gap-1"
                 role="tablist"
                 aria-label="Editor tabs"
               >
@@ -5420,7 +5486,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                         : '2px solid transparent',
                   }}
                 >
-                  <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
+                  <CheckCircle2 className="hidden h-3 w-3 sm:block" aria-hidden="true" />
                   {MAIN_FILE_NAME}
                 </button>
                 {helperFiles.map((file) => (
@@ -5444,7 +5510,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                           : '2px solid transparent',
                     }}
                   >
-                    <Lock className="h-3 w-3" aria-hidden="true" />
+                    <Lock className="hidden h-3 w-3 sm:block" aria-hidden="true" />
                     {file.name}
                   </button>
                 ))}
@@ -5454,7 +5520,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                       aria-hidden="true"
                       className="mx-1 h-4 w-px shrink-0 self-center bg-line-soft"
                     />
-                    {(['predict', 'actual', 'expected'] as const).map((view) => {
+                    {(['predict', 'actual', 'expected', 'workflow'] as const).map((view) => {
                       const selected = shownViews.has(view);
                       const meta =
                         view === 'predict'
@@ -5462,21 +5528,28 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                               label: 'Predict',
                               title:
                                 'The prediction gate: commit to what this will print before the run — tab here, or split it beside the code',
-                              icon: <Sparkles className="h-3 w-3" aria-hidden="true" />,
+                              icon: <Sparkles className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
                             }
                           : view === 'actual'
                             ? {
                                 label: 'Run output',
                                 title:
                                   'The last run’s stdout and verdict — tab here, or split it beside the code',
-                                icon: <Terminal className="h-3 w-3" aria-hidden="true" />,
+                                icon: <Terminal className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
                               }
-                            : {
-                                label: 'Expected',
-                                title:
-                                  'The lesson’s Expected Output — tab here, or split it beside the code',
-                                icon: <CheckSquare className="h-3 w-3" aria-hidden="true" />,
-                              };
+                            : view === 'workflow'
+                              ? {
+                                  label: 'Workflow',
+                                  title:
+                                    'How this problem gets solved — given, model, compute, check, with a live checklist',
+                                  icon: <GitBranch className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
+                                }
+                              : {
+                                  label: 'Expected',
+                                  title:
+                                    'The lesson’s Expected Output — tab here, or split it beside the code',
+                                  icon: <CheckSquare className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
+                                };
                       return (
                         <button
                           key={view}
@@ -5618,6 +5691,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 </div>
               )}
             </div>
+            {/* Write hides the prose, so the question it asks is printed here as the one comment a
+                Python file would carry. Read-only: the draft and the grading stay untouched. */}
+            {shownLayout === 'write' && currentLesson.goal && (
+              <p
+                data-testid="write-question"
+                className="border-b border-line-soft bg-canvas px-3 py-2 font-mono text-[11.5px] leading-relaxed text-muted"
+              >
+                <span className="text-accent" aria-hidden="true"># </span>
+                <span className="sr-only">Question: </span>
+                {currentLesson.goal}
+              </p>
+            )}
             {/* One body, up to two panes (`editorPanes.ts`). Every view stays mounted and a pane that
                 is not showing is `display:none`: that is what keeps exactly one `pre-actual-stdout`
                 on the page, so the last run can be read without selecting its tab. `order` follows
@@ -5757,6 +5842,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   >
                     {expectedOutputPane}
                   </div>
+                  <div
+                    data-testid="pane-workflow"
+                    data-pane="workflow"
+                    onClick={() => focusPane('workflow')}
+                    style={{
+                      display: shownViews.has('workflow') ? undefined : 'none',
+                      order: paneOrder('workflow'),
+                    }}
+                    className={`min-w-0 flex-1 border-t border-line-soft ${paneBorder('workflow')}`}
+                  >
+                    {workflowPane}
+                  </div>
                 </>
               )}
             </div>
@@ -5856,7 +5953,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
           {/* What the learner wrote down about this lesson. It sits between the code and the
               checks because it is about the learner's understanding rather than about the run. */}
-          <StudyPanel lessonId={selectedId} />
+          <StudyPanel lessonId={selectedId} onOpenWorkflow={openWorkflowTab} />
 
           {/* Instructor Behavioral Assessment Panel */}
           <div

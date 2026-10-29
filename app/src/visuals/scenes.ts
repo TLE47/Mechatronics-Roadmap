@@ -279,6 +279,19 @@ function square(periods: number, duty: number, offset: number, samples = 96): nu
 }
 
 export const SCENES: Record<string, DiagramSpec> = {
+  workflow: chain(
+    'The analysis workflow',
+    'Six named steps, in order: the unknown chooses the model, and the answer is written only after the check.',
+    [
+      { label: 'Given', value: '12 V, 2.4 Ω' },
+      { label: 'Unknown', value: 'draw' },
+      { label: 'Model', value: 'I = V / R' },
+      { label: 'Compute', value: '5.00 A' },
+      { label: 'Check', value: '5.00 A > 3.2 A' },
+      { label: 'Answer', value: '3.20 A' },
+    ]
+  ),
+
   'signal-chain': chain(
     'Signal chain',
     'One direction only: the sensor reads, the filter cleans, the controller decides, the motor acts.',

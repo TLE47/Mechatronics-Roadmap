@@ -2,7 +2,7 @@
 """Guard the Tier 1 jargon ban and the maths ramp's exemption from it.
 
 `scripts/lint_lessons.py` bans Tier 2/3 vocabulary (complex numbers, Laplace,
-dB, Jacobians) in the 48 beginner lessons. The ramp lessons R.5 and R.6 teach
+dB, Jacobians) in the 49 beginner lessons. The ramp lessons R.5 and R.6 teach
 rotation and frequency response *numerically*, before Tier 2 names them, so the
 banned words are those lessons' subject and the ban is waived inside `ramp/`.
 Three failures matter:

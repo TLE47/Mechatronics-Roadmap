@@ -632,7 +632,9 @@ def verify_repository(repo_root: Path) -> dict[str, Any]:
 
     # Only the repository's own Markdown: a local or CI `npm install` drops hundreds of
     # dependency READMEs under node_modules/, and the build output belongs to Vite.
-    skipped = {"node_modules", ".git", "dist", ".aistudio"}
+    # `.fb-scratch/` is git-ignored worktree scratch: those are other checkouts of this repo,
+    # not this repository's Markdown, and a stale one must not fail the gate on its own content.
+    skipped = {"node_modules", ".git", "dist", ".aistudio", ".fb-scratch"}
     md_files = sorted(
         p
         for p in repo_root.rglob("*.md")

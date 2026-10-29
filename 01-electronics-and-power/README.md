@@ -23,7 +23,7 @@
 | **3 · derive** | [after the practice pass](#tier-3-advanced--production), same step order | — | — |
 | **outside both routes** | [optional](#tier-3-advanced--production), graded, never required | [`01-electronics.T3.01a`](../modules/01-electronics.T3.01a.md) | 5 |
 
-**Step 4 costs 26.5-34 focused hours in total** - 6-13.5 of lessons, 12 of arm modules, 8.5 of Depth 2 practice - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
+**Step 4 costs 26.5-34 focused hours in total** - 6-13.5 of lessons, 12 of arm modules, 8.5 of Depth 2 practice - out of a **201.1-292 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
 **Next:** Step 5 · Build the arm: mechanics → [Track 02](../02-mechanics-kinematics-dynamics/README.md) (20-30 focused hours).
 <!-- /step-index -->

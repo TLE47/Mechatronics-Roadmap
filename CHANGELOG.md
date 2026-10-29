@@ -16,6 +16,113 @@ flowchart LR
 
 ---
 
+## [2026-10-29] — The workflow becomes a canvas, the clock becomes a toggle
+
+**The timeline is gone.** The Workflow tab drew an ordered column of cards because a 390 px screen
+had no room for free placement. That was a bad reading of the constraint: the free placement was the
+point. [`app/src/workflow.ts`](app/src/workflow.ts) is now version 2 of the document — `nodes` with
+canvas coordinates and first-class `edges` — and [`app/src/components/WorkflowCanvas.tsx`](app/src/components/WorkflowCanvas.tsx)
+draws it: a palette press spawns a card on a dotted grid, a card drags by its header (and nudges with
+the arrow keys), its title, detail and unit are edited in place, and a directed arrow is dragged from
+the dot on its right edge to the card it feeds. Tapping the dot and then the target is the same
+gesture without a mouse. An arrow carries its condition as a label, and a small × at its midpoint
+removes it. `workflowOrder` is the one reading order — breadth-first from the start cards,
+loose cards last — so the checklist's "Step 3", the Markdown numbering and the Mermaid arrows agree.
+Both exports and the checklist survived the shape change; `normalizeWorkflow` migrates a version-1
+list by keeping every card, turning its branch into a labelled arrow and its implicit chain into real
+ones, and refuses coordinates outside the canvas. `npm run test:workflow` pins the migration, the
+reading order, the arrow de-duplication and the cap; the browser suite spawns, edits inline, drags,
+draws an arrow and finds all of it after a reload.
+
+**The clock was stopping itself, and it had no Pause.** The study clock paused whenever the tab was
+hidden — the exact "it stopped in the middle of somewhere" the learner reported, with no control to
+restart it except a button that was disabled while running. The visibility listener is gone: the
+clock counts while the lesson is open until the learner says otherwise, and its one button is a real
+toggle labelled **Start**, **Pause** and **Resume**. Beside it, **Time on this lesson** expands the
+per-lesson total, the number of sittings and today's share from the same `sittingClock.ts` store the
+trail and portfolio read (`lessonTotals`). `npm run test:studyclock` pins the arithmetic and the
+per-lesson filter; `npm run test:e2e:home` walks Start → Pause → Resume → Log & reset and opens the
+disclosure.
+
+**Two smaller learner-facing repairs.** The layout toolbar is now pinned while Study/Write/Read/Debug
+swap the regions around it: the chosen preset captures the bar's viewport top, restores it once the
+new layout has mounted, and keeps restoring it through the reader's own resize until the learner
+takes over the scroll or 2.5 s passes — the same card no longer jumps hundreds of pixels under the
+pointer. P.6's lesson text and starter stopped handing over the answers (`return 5.0`, `return 255`),
+and the Write preset prints the lesson's own question above the editor as the one read-only comment a
+Python file would carry.
+
+---
+
+## [2026-10-29] — The phone's tab strip fits, the guide stays shut, the cap refuses
+
+**Three defects the audit reproduced.** At 390 px the editor strip computed `flex-wrap: nowrap` and
+its 425 px of tabs sat in 272 px, so the new Workflow tab — and part of Expected — was outside the
+screen with no cue. The strip now wraps whenever its tabs do not fit: below `sm` with the tab icons hidden (labels stay),
+and at a desktop width when a lesson brings a helper file and the six tabs overrun the row. Every view
+is on screen — main, Run output, Expected and Workflow — instead of parked behind a sideways scroll. `npm run test:e2e:mobile` measures every visible tab inside the strip's own box,
+asserts no sideways scroll, and opens Workflow at 390.
+
+**The how-to is first-visit, not permanent.** It opened again on any lesson with no stored workflow
+because the effect asked `!stored || !readWorkflowGuideSeen()`; a dismissal is now the only input, so
+it stays closed across a reload and the one-press toggle is what remains. The browser suite dismisses
+it, reloads the empty lesson, and checks both facts.
+
+**The 24-card cap refuses instead of trimming.** It lived only in `normalizeWorkflow`, so a 25th card
+rendered and then vanished on the next write. `appendWorkflowStep` is now the single add door: it
+returns `null` at the cap, the panel flushes any pending save and says *at most 24 steps — remove one
+before adding another*, and nothing is added. `npm run test:workflow` covers 24 accepted, the 25th
+refused without mutating the document, and room again after a removal; the browser suite fills to the
+cap, watches the refusal, and clears the document.
+
+---
+
+## [2026-10-29] — The method gets a tab: a workflow the learner draws and the notes quote
+
+**The gap.** The workbench could say what ran, what the lesson expected and what the learner forecast —
+and none of those is *how the learner decided to get there*. Predict grades the answer, not the
+method, so a right number reached by skipping the units check looked identical to a right number
+reached by understanding it. The one artefact an analysis course exists to teach had nowhere to live.
+
+**The model.** [`app/src/workflow.ts`](app/src/workflow.ts) is a pure document: one ordered list of
+cards, each with a kind, a title, a detail, an optional unit and at most one branch (*if this holds,
+go to step N*). Twelve kinds in two palettes — analysis (Given, Unknown, Model, Compute, Check,
+Answer) and code (Input, Transform, Branch, Loop, Test, Output) — because a worked problem and a
+program are the same method with different nouns. Bounded at 24 cards; `normalizeWorkflow` is the one
+door stored values pass through, so a junk card is dropped, a duplicate id keeps the first, and a
+branch to a card that is gone is removed rather than drawn to nowhere. `validateWorkflow` returns ten
+issue codes in sentences a beginner can act on (`missing-unit`: "Step 4 has a number but no unit — A,
+V, rad/s, %"). They are **advice**: nothing in the app disables Run, gates grading or withholds a
+lesson because a check is open, and the panel says so beside the count.
+
+**The tab.** **Workflow** is the fifth view of the editor card ([`app/src/editorPanes.ts`](app/src/editorPanes.ts)),
+so it tabs, splits beside the code and remembers its arrangement like Predict and the two outputs; at
+380 px in a split or 390 px on a phone it is a single column of numbered cards, and every card can be
+reordered from the keyboard. A lesson nobody has drawn yet opens on three doors, not a blank card:
+this lesson's own example (only P.15 claims one), six seeded templates in both palettes
+([`app/src/workflowTemplates.ts`](app/src/workflowTemplates.ts)), or one Given card to edit. The
+three-line how-to is one press away on every visit and opens by itself the first time. Copy Mermaid
+and Copy Markdown leave with the numbered flow, branches included, so the diagram can go into a
+report.
+
+**Where it is kept.** [`app/src/workflowStore.ts`](app/src/workflowStore.ts) holds one workflow per
+lesson in the same bucket as notes and drafts, written on a short debounce and again when the lesson
+changes — under the lesson id it was typed in, so a switch cannot file P.1's plan under P.2. It is
+authored work, so the backup zip carries it and a restore merges it by `updatedAt` (a newer local
+copy wins, nothing is deleted). The study panel grew a strip that names the flow — steps and open
+checks — with **Open workflow**, and **Copy into note** appends the numbered flow to the lesson's note,
+clamped to the note's own cap.
+
+**P.15.** [Lesson P.15](track-p/P.15-analysis-workflow-given-unknown-model-check-answer.md) teaches the
+method end-to-end on the motor-stall problem — 12 V, 2.4 Ω, a driver that peaks at 3.2 A — with its
+own graded exercise, a `workflow` figure in the reader, and the callout and next-chain entries every
+page carries. `npm run test:workflow` pins the model, the ten issue codes, both exports, all seven
+templates, the store and its merge (42 checks); `npm run test:panes` counts the new view; the browser
+suite opens the tab, fills a Compute card, watches the unit item close, reloads and finds the card,
+then clears it.
+
+---
+
 ## [2026-10-29] — The phone's account chip is an avatar, not an address
 
 **The gap.** The header chip prints the signed-in email, and at 390 px an address is wider than the

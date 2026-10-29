@@ -8,7 +8,8 @@
  *
  *  - a **view** is what a pane can show: `main` (the lesson's Python, or its read-only helper),
  *    `predict` (the forecast gate: what the learner thinks it will print), `actual` (the last run's
- *    stdout and verdict) and `expected` (the presentation check);
+ *    stdout and verdict), `expected` (the presentation check) and `workflow` (the learner's own
+ *    cards for how the problem is solved);
  *  - a **pane** is one slot of the editor body. One slot is the normal editor; a second slot makes
  *    the body a split, side by side (`columns`) or one above the other (`rows`), the way a terminal
  *    multiplexer is arranged;
@@ -27,7 +28,7 @@
  * go through, and `npm run test:panes` pins it.
  */
 
-export const EDITOR_VIEWS = ['main', 'predict', 'actual', 'expected'] as const;
+export const EDITOR_VIEWS = ['main', 'predict', 'actual', 'expected', 'workflow'] as const;
 
 export type EditorView = (typeof EDITOR_VIEWS)[number];
 
@@ -37,6 +38,7 @@ export const EDITOR_VIEW_LABELS: Record<EditorView, string> = {
   predict: 'Predict',
   actual: 'Run output',
   expected: 'Expected',
+  workflow: 'Workflow',
 };
 
 /** Which way two panes divide the body. */
@@ -62,7 +64,13 @@ export const STORAGE_KEY_EDITOR_PANES = 'mechalab_editor_panes_v1';
 export const MAX_PANES = 2;
 
 export function isEditorView(value: unknown): value is EditorView {
-  return value === 'main' || value === 'predict' || value === 'actual' || value === 'expected';
+  return (
+    value === 'main' ||
+    value === 'predict' ||
+    value === 'actual' ||
+    value === 'expected' ||
+    value === 'workflow'
+  );
 }
 
 export function isPaneAxis(value: unknown): value is PaneAxis {

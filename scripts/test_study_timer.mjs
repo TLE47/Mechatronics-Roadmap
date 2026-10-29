@@ -24,7 +24,7 @@ import {
   startTimer,
   writeTimer,
 } from '../app/src/studyTimer.ts';
-import { MAX_SITTING_MS, closeSitting, nextSitting } from '../app/src/sittingClock.ts';
+import { MAX_SITTING_MS, closeSitting, lessonTotals, nextSitting } from '../app/src/sittingClock.ts';
 
 let passed = 0;
 let failed = 0;
@@ -208,6 +208,43 @@ check('blocked storage costs the write, never the render', () => {
   assert.doesNotThrow(() => writeTimer({ ...IDLE_TIMER, bankedMs: MIN }, angry));
   assert.doesNotThrow(() => clearTimer(angry));
   assert.deepEqual(readTimer(null), IDLE_TIMER);
+});
+
+section('what this lesson has cost');
+
+check('the lesson total counts its own sittings, and today only the ones today', () => {
+  const midnight = new Date(T0);
+  midnight.setHours(0, 0, 0, 0);
+  const day = midnight.getTime();
+  const sittings = [
+    { start: day - 3 * 60 * MIN, end: day - 3 * 60 * MIN + 20 * MIN, runs: 0, reviews: 0, lessons: ['P.1'] },
+    { start: day + MIN, end: day + 11 * MIN, runs: 0, reviews: 0, lessons: ['P.1'] },
+    { start: day + 30 * MIN, end: day + 40 * MIN, runs: 0, reviews: 0, lessons: ['P.2'] },
+    { start: day + 60 * MIN, end: day + 70 * MIN, runs: 0, reviews: 0, lessons: ['P.1', 'P.2'] },
+  ];
+  const totals = lessonTotals(sittings, 'P.1', day + 12 * 60 * MIN);
+  assert.equal(totals.count, 3, 'yesterday’s sitting still belongs to the lesson');
+  assert.equal(totals.totalMs, 20 * MIN + 10 * MIN + 10 * MIN);
+  assert.equal(totals.todayMs, 20 * MIN, 'today is the two sittings that started today');
+  // A sitting that touched two lessons is counted for both: the store never recorded a split.
+  assert.equal(lessonTotals(sittings, 'P.2', day + 12 * 60 * MIN).totalMs, 10 * MIN + 10 * MIN);
+});
+
+check('an empty lesson id matches nothing, not every sitting', () => {
+  const sittings = [
+    { start: T0, end: T0 + 5 * MIN, runs: 0, reviews: 0, lessons: ['P.1'] },
+    { start: T0 + MIN, end: T0 + 6 * MIN, runs: 0, reviews: 0, lessons: [] },
+  ];
+  assert.deepEqual(lessonTotals(sittings, '', T0 + 10 * MIN), { count: 0, totalMs: 0, todayMs: 0 });
+  assert.deepEqual(lessonTotals(sittings, '   ', T0 + 10 * MIN), { count: 0, totalMs: 0, todayMs: 0 });
+  assert.equal(lessonTotals([], 'P.1', T0).count, 0);
+});
+
+check('a lesson nobody has studied reads as zero, never as NaN', () => {
+  const sittings = [
+    { start: T0, end: T0 + 5 * MIN, runs: 0, reviews: 0, lessons: ['P.2'] },
+  ];
+  assert.deepEqual(lessonTotals(sittings, 'P.1', T0 + 10 * MIN), { count: 0, totalMs: 0, todayMs: 0 });
 });
 
 section('what a logged stretch does to the sitting');

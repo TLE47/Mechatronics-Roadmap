@@ -22,7 +22,7 @@
 | **3 · derive** | [after the practice pass](#tier-3-capstone-builds-advanced--production-pass), same step order | — | — |
 | **outside both routes** | [optional](#tier-3-capstone-builds-advanced--production-pass), graded, never required | — | — |
 
-**Step 10 costs 6.5-9 focused hours in total** - 2-4.5 of lessons, 4.5 of arm modules - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
+**Step 10 costs 6.5-9 focused hours in total** - 2-4.5 of lessons, 4.5 of arm modules - out of a **201.1-292 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
 **Last step:** the course ends here, at the capstone.
 <!-- /step-index -->

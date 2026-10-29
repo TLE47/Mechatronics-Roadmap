@@ -4,18 +4,18 @@
  * `sittingClock.ts` measures study time on its own: it extends a sitting whenever the learner opens
  * a lesson, runs code or answers a card, and closes it after five idle minutes. That is honest, but
  * it is invisible — the only read-out was a small line in the Study panel, and nothing lets a
- * learner say "this hour was study". So the brief card carries a clock with two buttons: **Start /
- * Resume** and **Log & reset**. The clock counts while the lesson is open; Log & reset files the
- * stretch as study time and puts the digits back to zero.
+ * learner say "this hour was study". So the brief card carries a clock with one toggle — **Start /
+ * Pause / Resume** — and **Log & reset**. The clock counts while the lesson is open; Log & reset
+ * files the stretch as study time and puts the digits back to zero.
  *
  * The rules, and why each is the one it is:
  *
- * - **It counts in banked stretches.** A stretch ends when the tab is hidden or the page reloads;
- *   the time it earned is banked and the next press of Resume starts a new one. That is what makes
- *   the clock honest across a reload instead of losing the half hour before it.
- * - **A hidden tab does not count.** The clock pauses when the page goes away (`document.visibility
- *   .hidden`) and waits for Resume. Counting there would file an hour the learner spent elsewhere,
- *   which is the one number this exists to keep credible.
+ * - **It counts in banked stretches.** A stretch ends when the learner presses Pause or the page
+ *   reloads; the time it earned is banked and the next press of Resume starts a new one. That is
+ *   what makes the clock honest across a reload instead of losing the half hour before it.
+ * - **Only the learner stops it.** A tab in the background keeps counting while the lesson stays
+ *   open: the clock used to pause itself on `document.visibility.hidden`, and the learner came back
+ *   to digits that had not moved, which read as the clock breaking. Pause is the explicit stop.
  * - **A page that was gone is trusted only to its last heartbeat.** While the clock runs it writes a
  *   heartbeat a minute; a store that says "running since Tuesday" cannot credit the week, so
  *   `resumeTimer` pauses it at the last heartbeat. It is the sitting's own five-minute break rule,

@@ -41,11 +41,11 @@ export const SPINE_SOURCE: SpineStepData[] = [
     modules: [],
     optional: [],
     hours: {
-      arm: { low: 16.75, high: 42.5 },
+      arm: { low: 17.5, high: 44.5 },
       depth2: { low: 0, high: 0 },
       depth3: { low: 0, high: 0 },
       depth: { low: 0, high: 0 },
-      total: { low: 16.75, high: 42.5 },
+      total: { low: 17.5, high: 44.5 },
     },
   },
   {

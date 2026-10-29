@@ -216,5 +216,5 @@ assert abs(i_cont_a - 1.50) < 1e-9
 - [ ] I can distinguish **Recommended Operating Conditions** from **Absolute Maximum Ratings** and verify why `DRV8833` (`2.7–10.8 V`) is for $6\text{–}9\text{ V}$ rails while `TB6612FNG` (`4.5–13.5 V`) covers $12\text{ V}$.
 
 <!-- next-step:start -->
-👉 **Next:** [Step 1 · Python and the maths a robot needs — Lesson P.M: Track P Milestone — Gravity-Holding Robot Arm Link Simulator](P.M-track-p-milestone.md)
+👉 **Next:** [Step 1 · Python and the maths a robot needs — Lesson P.15: The Analysis Workflow — Given, Unknown, Model, Compute, Check, Answer](P.15-analysis-workflow-given-unknown-model-check-answer.md)
 <!-- next-step:end -->

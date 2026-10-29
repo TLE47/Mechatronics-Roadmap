@@ -168,9 +168,9 @@ def main():
 
     arm = arm_chain()
     chain = route_chain()
-    if len(arm) != 65 or len(chain) != 88:
+    if len(arm) != 66 or len(chain) != 89:
         raise SystemExit(
-            f"the route must be 65 arm pages + 23 depth pages, found {len(arm)} + {len(chain) - len(arm)}"
+            f"the route must be 66 arm pages + 23 depth pages, found {len(arm)} + {len(chain) - len(arm)}"
         )
 
     stale = []

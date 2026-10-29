@@ -23,7 +23,7 @@
 | **3 · derive** | [after the practice pass](#tier-3-advanced--production), same step order | — | — |
 | **outside both routes** | [optional](#tier-3-advanced--production), graded, never required | [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md), [`06-robotics.T2.06b`](../modules/06-robotics.T2.06b.md), [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md), [`06-robotics.T3.06b`](../modules/06-robotics.T3.06b.md) | 20.5 |
 
-**Step 9 costs 14.5-18.5 focused hours in total** - 1.5-3.5 of lessons, 3.5 of arm modules - shared by Track 06 and Track 07, this one's pages are 5-7 of it - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
+**Step 9 costs 14.5-18.5 focused hours in total** - 1.5-3.5 of lessons, 3.5 of arm modules - shared by Track 06 and Track 07, this one's pages are 5-7 of it - out of a **201.1-292 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
 **Next:** Step 10 · Put it together: the 2-DOF arm → [Track 08](../08-capstone-projects/README.md) (6.5-9 focused hours).
 <!-- /step-index -->

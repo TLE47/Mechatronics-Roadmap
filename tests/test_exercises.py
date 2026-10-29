@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Automated test suite for all 48 beginner lessons:
-- Track P (`P.1` through `P.12` + `P.14` + `P.M`: 14 Python lessons)
+Automated test suite for all 49 beginner lessons:
+- Track P (`P.1` through `P.12` + `P.14` + `P.15` + `P.M`: 15 Python lessons)
 - Stage 0 (`S0.0`: 1 Python effort/flow analogy lesson; `S0.1` through `S0.6`: 6 Falstad circuit lessons; `S0.7` through `S0.M`: 4 Arduino Uno Wokwi lessons)
 - Track 00 (`00.1` through `00.3`: 3 Python physics-modeling lessons)
 - Track 01 (`01.1`: 1 Falstad circuit lesson; `01.2`: 1 Wokwi Arduino + Falstad lesson; `01.3` and `01.4`: 2 Python electronics-modeling lessons)
 - Track 02 (`02.1` through `02.5`: 5 Python mechanics-modeling lessons)
 - Tracks 03–08 (`03.1`, `03.2`, `03.3`, `04.1`, `04.2`, `04.3`, `05.1`, `05.2`, `06.1`, `07.1`, `08.1`: 11 Python sensors, micro-labs, embedded C bridge, control, robotics, SysID & capstone lessons)
 
-1. Dynamically extracts every Python `Starter Code` and `Full Solution` from all 36 Python lessons,
+1. Dynamically extracts every Python `Starter Code` and `Full Solution` from all 37 Python lessons,
    executes them, and verifies exact `Expected Output` matches.
 2. Executes the Python numerical mirrors for the 7 Falstad-only circuit lessons (`S0.1`–`S0.6`, `01.1`)
    (moved out of the lesson markdown files into `tests/` per Part A.5 so learners only build/probe in Falstad)
@@ -103,8 +103,8 @@ class TestBeginnerRoadmapExercises(unittest.TestCase):
         """Every Python lesson's Starter Code runs without error, Full Solution matches Expected Output + Instructor Behavioral Tests, and print-only spoofing fails."""
         lesson_files = get_python_lesson_files()
         self.assertEqual(
-            len(lesson_files), 36,
-            f"expected 36 Python lessons with a Starter/Full Solution pair; got "
+            len(lesson_files), 37,
+            f"expected 37 Python lessons with a Starter/Full Solution pair; got "
             f"{len(lesson_files)} - check get_python_lesson_files' glob, since a renamed "
             f"directory would silently drop lessons from every check below",
         )

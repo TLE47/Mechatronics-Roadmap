@@ -23,7 +23,7 @@
 | **3 · derive** | [after the practice pass](#tier-3-advanced--production), same step order | — | — |
 | **outside both routes** | [optional](#tier-3-advanced--production), graded, never required | [`04-embedded.T2.04c`](../modules/04-embedded.T2.04c.md), [`04-embedded.T2.04d`](../modules/04-embedded.T2.04d.md), [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md) | 13 |
 
-**Step 7 costs 19-25 focused hours in total** - 4-10 of lessons, 7 of arm modules, 8 of Depth 2 practice - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
+**Step 7 costs 19-25 focused hours in total** - 4-10 of lessons, 7 of arm modules, 8 of Depth 2 practice - out of a **201.1-292 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
 **Next:** Step 8 · Make it hold still: control → [Track 05](../05-control-and-estimation/README.md) (17-21 focused hours).
 <!-- /step-index -->

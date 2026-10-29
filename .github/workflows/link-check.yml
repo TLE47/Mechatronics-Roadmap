@@ -35,7 +35,7 @@ jobs:
       # per push (runs 40791783568, 40784308531, 40745056287, 40742627152). They stay on the weekly
       # and dispatched run, where no `ci.yml` run exists to inherit them from - and the sweep below
       # still runs on every event, because that verdict is this workflow's own.
-      - name: Lint all 48 beginner lessons (weekly and dispatched runs only - ci.yml owns it)
+      - name: Lint all 49 beginner lessons (weekly and dispatched runs only - ci.yml owns it)
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: python3 scripts/lint_lessons.py
 

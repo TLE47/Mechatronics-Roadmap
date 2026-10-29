@@ -1285,6 +1285,180 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       await page.waitForTimeout(250);
       assert.equal(await page.getByTestId('editor-main').isVisible(), true, 'the main tab returns the code');
 
+      // 5d-ii. The workflow is a fifth view: the learner's own cards for how the problem gets
+      //        solved. The checklist names what a card is missing and never disables Run, and the
+      //        cards are authored work, so a reload finds them again under the lesson's own key.
+      {
+        await page.getByTestId('editor-tab-workflow').click();
+        await page.waitForTimeout(250);
+        assert.equal(
+          await page.getByTestId('panel-workflow').isVisible(),
+          true,
+          'the Workflow tab must show the workflow panel'
+        );
+        assert.equal(
+          await page.getByTestId('workflow-empty').isVisible(),
+          true,
+          'a lesson nobody has drawn yet must offer a start, not a blank card'
+        );
+        // The how-to is a first-visit card, not a permanent header: one dismissal leaves the
+        // one-press toggle, and an empty lesson must not reopen the card on the next load.
+        if (await page.getByTestId('workflow-howto').count()) {
+          await page.getByTestId('workflow-howto-dismiss').click();
+        }
+        await page.waitForTimeout(200);
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await waitForEditor(page, undefined, 30000);
+        await page.waitForTimeout(600);
+        if (!(await page.getByTestId('panel-workflow').isVisible().catch(() => false))) {
+          await page.getByTestId('editor-tab-workflow').click();
+          await page.waitForTimeout(250);
+        }
+        assert.equal(
+          await page.getByTestId('workflow-howto').count(),
+          0,
+          'a dismissed how-to must not reopen on a lesson with no workflow'
+        );
+        assert.equal(
+          await page.getByTestId('workflow-howto-toggle').count(),
+          1,
+          'the one-press how-to must still be there after a dismissal'
+        );
+        await page.getByTestId('workflow-start-blank').click();
+        await page.waitForTimeout(200);
+        assert.equal(
+          await page.locator('[data-node-id]').count(),
+          1,
+          'a blank workflow must open on one editable card, not on nothing'
+        );
+        await page.getByTestId('workflow-add-compute').click();
+        await page.waitForTimeout(200);
+        assert.equal(
+          await page.locator('[data-node-id]').count(),
+          2,
+          'a palette press must spawn a card on the canvas'
+        );
+        // Inline editing: the card is the form. No edit mode, no second panel to open.
+        await page.getByTestId('workflow-node-title-1').fill('Divide');
+        await page.getByTestId('workflow-node-detail-1').fill('12.0 / 2.4 = 5.00');
+        await page.waitForTimeout(300);
+        assert.match(
+          await page.getByTestId('workflow-issues').innerText(),
+          /has a number but no unit/,
+          'a compute with a number and no unit must be named, with the card it belongs to'
+        );
+        assert.equal(
+          await page.getByTestId('btn-run-verify').isEnabled(),
+          true,
+          'an open checklist item is advice: it must never disable Run'
+        );
+        await page.getByTestId('workflow-node-unit-1').fill('A');
+        await page.waitForTimeout(300);
+        assert.doesNotMatch(
+          await page.getByTestId('workflow-issues').innerText(),
+          /has a number but no unit/,
+          'naming the unit must close that item rather than leave a stale one'
+        );
+
+        // Dragging: a card follows the pointer by its header and lands where it was released.
+        const cardBefore = await page.getByTestId('workflow-node-1').boundingBox();
+        const grip = await page.getByTestId('workflow-node-drag-1').boundingBox();
+        await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(grip.x + grip.width / 2 + 120, grip.y + grip.height / 2, { steps: 8 });
+        await page.mouse.up();
+        await page.waitForTimeout(350);
+        const cardAfter = await page.getByTestId('workflow-node-1').boundingBox();
+        assert.ok(
+          Math.abs(cardAfter.x - cardBefore.x - 120) <= 14 && Math.abs(cardAfter.y - cardBefore.y) <= 14,
+          `a dragged card must follow the pointer, but it moved ${Math.round(cardAfter.x - cardBefore.x)}x${Math.round(cardAfter.y - cardBefore.y)}`
+        );
+
+        // An arrow is drawn from the dot on a card's right edge to the card it feeds.
+        assert.equal(
+          await page.locator('svg g[data-testid^="workflow-edge-"]').count(),
+          0,
+          'a fresh workflow has no arrows'
+        );
+        const outDot = await page.getByTestId('workflow-node-out-0').boundingBox();
+        const targetCard = await page.getByTestId('workflow-node-1').boundingBox();
+        await page.mouse.move(outDot.x + outDot.width / 2, outDot.y + outDot.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(targetCard.x + targetCard.width / 2, targetCard.y + targetCard.height / 2, {
+          steps: 10,
+        });
+        await page.mouse.up();
+        await page.waitForTimeout(350);
+        assert.equal(
+          await page.locator('svg g[data-testid^="workflow-edge-"]').count(),
+          1,
+          'dragging from a card’s dot to another card must draw one directed arrow'
+        );
+
+        await page.waitForTimeout(700);
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await waitForEditor(page, undefined, 30000);
+        await page.waitForTimeout(700);
+        if (!(await page.getByTestId('panel-workflow').isVisible().catch(() => false))) {
+          await page.getByTestId('editor-tab-workflow').click();
+          await page.waitForTimeout(250);
+        }
+        assert.equal(
+          await page.getByTestId('workflow-node-title-1').inputValue(),
+          'Divide',
+          'the cards are authored work: they must survive a reload'
+        );
+        assert.equal(
+          await page.locator('svg g[data-testid^="workflow-edge-"]').count(),
+          1,
+          'the arrow is authored work too: a reload must find it'
+        );
+        assert.match(
+          (await page.getByTestId('study-workflow-note').textContent()) ?? '',
+          /2 cards/,
+          'the study panel must summarise the workflow this lesson now has'
+        );
+        // The cap refuses at the interaction: 24 cards stand, the 25th is rejected with a
+        // sentence, and a reload finds exactly the 24 the screen showed — not a trimmed document.
+        await page.evaluate(async () => {
+          for (let index = 2; index < 24; index += 1) {
+            document.querySelector('[data-testid="workflow-add-given"]').click();
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+        });
+        await page.waitForTimeout(300);
+        assert.equal(
+          await page.locator('[data-node-id]').count(),
+          24,
+          '24 cards are the cap, and adding up to it must work'
+        );
+        await page.getByTestId('workflow-add-given').click();
+        await page.waitForTimeout(600);
+        assert.equal(
+          await page.locator('[data-node-id]').count(),
+          24,
+          'the 25th card must be refused, not added and trimmed on the way to the store'
+        );
+        assert.match(
+          await page.getByTestId('workflow-status').innerText(),
+          /at most 24 cards/,
+          'a refusal must say why, in the header the learner is looking at'
+        );
+        await page.getByTestId('workflow-clear').click();
+        await page.getByTestId('workflow-clear-yes').click();
+        await page.waitForTimeout(300);
+        assert.equal(
+          await page.getByTestId('workflow-empty').isVisible(),
+          true,
+          'clearing must return the lesson to its empty state, not to a blank card'
+        );
+        await page.getByTestId('editor-tab-main').click();
+        await page.waitForTimeout(250);
+        console.log(
+          '  ok the Workflow tab spawns, edits inline, drags, draws an arrow and survives a reload'
+        );
+      }
+
       // The run controls share one row at 1280, even after a prediction was skipped: the state
       // must live in the button's name, not in 78 px of label that pushed Predict onto a row of
       // its own while a fresh visit (label "Predict") measured one row.

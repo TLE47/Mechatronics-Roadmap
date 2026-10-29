@@ -13,7 +13,7 @@ After it, there are two further layers, each with its own generated page: the **
 pass** in [`DEPTH.md`](DEPTH.md) (23 Tier 2/3 modules, taken in the same step order) and
 the **Extensions** in [`EXTENSIONS.md`](EXTENSIONS.md). Neither is required for the arm.
 
-**Arm route total: ≈120–210 focused hours** for 17 arm modules and all 48 lessons. The depth pass is 80 hours; the full course is ≈200–290.
+**Arm route total: ≈121–212 focused hours** for 17 arm modules and all 49 lessons. The depth pass is 80 hours; the full course is ≈201–292.
 
 **Route status: `author-dogfood`** — the author has run every page and no outside learner has finished this route, so every hour is a target rather than a measurement.
 
@@ -44,8 +44,9 @@ flowchart LR
 | Step 1 · Python and the maths a robot needs | `P.11` Reading Time-Series Graphs — Slope and Area | 1.5-3.5 |
 | Step 1 · Python and the maths a robot needs | `P.12` Linear Forces (F = ma) and Lever Torque (tau = m*g*L*cos(theta)) | 1.5-3.5 |
 | Step 1 · Python and the maths a robot needs | `P.14` Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds | 0.75-2 |
+| Step 1 · Python and the maths a robot needs | `P.15` The Analysis Workflow — Given, Unknown, Model, Compute, Check, Answer | 0.75-2 |
 | Step 1 · Python and the maths a robot needs | `P.M` Track P Milestone — Gravity-Holding Robot Arm Link Simulator | 1-2.5 |
-| Step 1 · Python and the maths a robot needs | **14 lessons, together** | ≈17–43 |
+| Step 1 · Python and the maths a robot needs | **15 lessons, together** | ≈18–45 |
 | Step 2 · Circuits and your first microcontroller | `S0.0` Why Electricity Is Like Water Flow — Effort, Flow & Pipe Constriction | 0.75-2 |
 | Step 2 · Circuits and your first microcontroller | `S0.1` Closed DC Circuits, Ground Reference (0 V) and Ohm's Law | 1-3 |
 | Step 2 · Circuits and your first microcontroller | `S0.2` Series vs. Parallel Resistor Networks, Voltage Dividers and Potentiometers | 1.5-3.5 |
@@ -106,26 +107,26 @@ flowchart LR
 | Step 10 · Put it together: the 2-DOF arm | `08.1` Tier 1 Boss Milestone — 1 kHz 2-DOF Compliant Arm Plant, Figure-8 PD Control & CRC-8 Telemetry | 2-4.5 |
 | Step 10 · Put it together: the 2-DOF arm | `08-capstones.T3.07a` System Error/Latency Budgeting, Cross-Domain Interface Contracts & Pre-Bring-Up Safety Sign-Off **· arm** | 4.5 |
 | Step 10 · Put it together: the 2-DOF arm | **1 lesson + 1 arm module, together** | ≈6–9 |
-| **Arm route total** | **17 arm modules + all 48 lessons (65 pages)** | **120.35-210** |
+| **Arm route total** | **17 arm modules + all 49 lessons (66 pages)** | **121.1-212** |
 
 These are **focused hours**: time with the page open, excluding setup, debugging and
 re-reading. The low end is every page's `est_hours` / `typical_hours`; the high end is
 its `slow_learner_hours` where the page states one. The README gives the calendar
 estimate these become once first-time overhead is counted.
 
-**Estimate coverage:** The route's high end is a slow-learner figure on 48 of 65 pages and a single estimate on the other 17, so plan against it as a floor and expect it to rise as those pages are measured.
+**Estimate coverage:** The route's high end is a slow-learner figure on 49 of 66 pages and a single estimate on the other 17, so plan against it as a floor and expect it to rise as those pages are measured.
 
 Nothing in this table is hand-entered, and `--check` fails when it drifts from the pages.
 
 The stage rows above are rounded to whole hours with the same allocation as the README's
 step table, so `16.75-42.5` appears as `≈17–43` in both places; the page rows and the
-arm total keep the exact sums (`120.35-210`).
+arm total keep the exact sums (`121.1-212`).
 
 ## What is not on this page
 
 - **The depth pass** - 23 Tier 2/3 modules, 80 focused hours, in [`DEPTH.md`](DEPTH.md). Take it after this route, in the same step order. Nothing on this
   page depends on it.
-- **The minimum finish** - 47 pages, 93-151 focused hours, in [`MINIMUM.md`](MINIMUM.md). A smaller finish that still builds the arm.
+- **The minimum finish** - 48 pages, 94-153 focused hours, in [`MINIMUM.md`](MINIMUM.md). A smaller finish that still builds the arm.
 - **The Extensions** - 10 optional modules, 47.5 focused hours, in
   [`EXTENSIONS.md`](EXTENSIONS.md). A third layer, outside both routes.
 

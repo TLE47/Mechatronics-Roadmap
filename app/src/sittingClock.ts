@@ -279,6 +279,43 @@ export function sittingTotals(sittings: Sitting[], now: number = Date.now()): Si
   };
 }
 
+export interface LessonTotals {
+  /** Sittings that touched this lesson. */
+  count: number;
+  totalMs: number;
+  /** The part of that total in sittings that started since local midnight. */
+  todayMs: number;
+}
+
+/**
+ * Time in sittings that had this lesson open.
+ *
+ * A sitting is a run of activity, not a per-lesson stopwatch: a sitting that touched two lessons is
+ * counted for both, because the honest reading is "time spent while this lesson was open", not a
+ * split the store never recorded. An empty lesson id matches nothing rather than every sitting, so a
+ * row without a lesson cannot claim the whole day.
+ */
+export function lessonTotals(
+  sittings: Sitting[],
+  lessonId: string,
+  now: number = Date.now()
+): LessonTotals {
+  const id = typeof lessonId === 'string' ? lessonId.trim() : '';
+  if (!id) return { count: 0, totalMs: 0, todayMs: 0 };
+  const midnight = new Date(now);
+  midnight.setHours(0, 0, 0, 0);
+  const startOfToday = midnight.getTime();
+  const matching = sittings.filter((sitting) => sitting.lessons.includes(id));
+  return {
+    count: matching.length,
+    totalMs: matching.map(duration).reduce((total, ms) => total + ms, 0),
+    todayMs: matching
+      .filter((sitting) => sitting.start >= startOfToday)
+      .map(duration)
+      .reduce((total, ms) => total + ms, 0),
+  };
+}
+
 /** `under a minute`, `23 min`, `1 h 12 min` — a duration a person reads without arithmetic. */
 export function formatDuration(ms: number): string {
   if (!Number.isFinite(ms) || ms < 60_000) return 'under a minute';

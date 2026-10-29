@@ -25,15 +25,15 @@
 
 ```mermaid
 flowchart LR
-    Arm["Arm layer<br/>Steps 1-10 · 120.35-210 h"] --> Built["A verified 2-DOF arm"]
+    Arm["Arm layer<br/>Steps 1-10 · 121.1-212 h"] --> Built["A verified 2-DOF arm"]
     Built --> Depth["Depth layer<br/>Steps 3-10 again · 80 h"]
-    Depth --> Full["Full course<br/>200.35-290 h"]
+    Depth --> Full["Full course<br/>201.1-292 h"]
     Outside["Outside both routes<br/>10 modules"] -.-> Full
 ```
 
 | Step | Lessons | Arm layer | Depth 2 · practice | Depth 3 · derive | Focused hours |
 | :--- | ---: | :--- | :--- | :--- | ---: |
-| **1 · Python and the maths a robot needs** ([Track P](../track-p/README.md)) | 14 | — | — | — | **16.75-42.5** |
+| **1 · Python and the maths a robot needs** ([Track P](../track-p/README.md)) | 15 | — | — | — | **17.5-44.5** |
 | **2 · Circuits and your first microcontroller** ([Stage 0](../stage-0/README.md)) | 11 | — | — | — | **13.75-33** |
 | **3 · Make a joint move: foundations** ([Track 00](../00-foundations/README.md)) | 3 | 5 modules · 20.5-26.5 h | 10 modules · 29.5 h | 1 module · 5 h | **55-61** |
 | **4 · Power the joint: electronics** ([Track 01](../01-electronics-and-power/README.md)) | 4 | 4 modules · 18-25.5 h | 2 modules · 8.5 h | — | **26.5-34** |
@@ -43,13 +43,13 @@ flowchart LR
 | **8 · Make it hold still: control** ([Track 05](../05-control-and-estimation/README.md)) | 2 | 1 module · 6.5-10.5 h | 1 module · 4.5 h | 3 modules · 6 h | **17-21** |
 | **9 · Plan motion and bring it up safely** ([Track 06](../06-robotics-and-autonomy/README.md) + [Track 07](../07-systems-hil-and-production/README.md)) | 2 | 2 modules · 10-14 h | 1 module · 4.5 h | — | **14.5-18.5** |
 | **10 · Put it together: the 2-DOF arm** ([Track 08](../08-capstone-projects/README.md)) | 1 | 1 module · 6.5-9 h | — | — | **6.5-9** |
-| **Arm route, Steps 1-10** | 48 | 17 modules · 120.35-210 h | — | — | **120.35-210** |
+| **Arm route, Steps 1-10** | 49 | 17 modules · 121.1-212 h | — | — | **121.1-212** |
 | **Depth 2 pass, after Step 10** | — | — | 18 modules · 64 h | — | **64** |
 | **Depth 3 pass, after Step 10** | — | — | — | 5 modules · 16 h | **16** |
 | **Depth pass, after Step 10** | — | — | 18 modules | 5 modules | **80** |
-| **Full course** | 48 | 17 modules | 18 modules | 5 modules | **200.35-290** |
+| **Full course** | 49 | 17 modules | 18 modules | 5 modules | **201.1-292** |
 
-The arm route is **120.35-210 focused hours**, the depth pass adds **80** - of which Depth 2 practice is **64** and Depth 3 derivation is **16** - and the full course is **200.35-290**. The minimum viable finish - every Tier 1 bridge plus the capstone and the 5 lessons it opens - is **93-151 focused hours**; its page list is [`MINIMUM.md`](MINIMUM.md).
+The arm route is **121.1-212 focused hours**, the depth pass adds **80** - of which Depth 2 practice is **64** and Depth 3 derivation is **16** - and the full course is **201.1-292**. The minimum viable finish - every Tier 1 bridge plus the capstone and the 5 lessons it opens - is **93.75-153 focused hours**; its page list is [`MINIMUM.md`](MINIMUM.md).
 
 ## C. The teaching sequence every page follows
 
@@ -86,7 +86,7 @@ The depth layer's Tier 3 pages split into two levels, and both are graded:
 
 > Read a formula, write it in Python, and check your own answer.
 
-Starts at [`P.1`](../track-p/P.1-variables-and-data-types.md) · **16.75-42.5 focused hours** · 14 lessons.
+Starts at [`P.1`](../track-p/P.1-variables-and-data-types.md) · **17.5-44.5 focused hours** · 15 lessons.
 
 | Page | What it teaches | Layer | Focused hours |
 | :--- | :--- | :--- | ---: |
@@ -103,6 +103,7 @@ Starts at [`P.1`](../track-p/P.1-variables-and-data-types.md) · **16.75-42.5 fo
 | [`P.11`](../track-p/P.11-reading-time-series-graphs.md) | Reading Time-Series Graphs — Slope and Area | lesson | 1.5-3.5 |
 | [`P.12`](../track-p/P.12-forces-and-lever-torque.md) | Linear Forces (F = ma) and Lever Torque (tau = m*g*L*cos(theta)) | lesson | 1.5-3.5 |
 | [`P.14`](../track-p/P.14-reading-a-datasheet-table.md) | Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds | lesson | 0.75-2 |
+| [`P.15`](../track-p/P.15-analysis-workflow-given-unknown-model-check-answer.md) | The Analysis Workflow — Given, Unknown, Model, Compute, Check, Answer | lesson | 0.75-2 |
 | [`P.M`](../track-p/P.M-track-p-milestone.md) | Track P Milestone — Gravity-Holding Robot Arm Link Simulator | lesson | 1-2.5 |
 
 ### Step 2 · Circuits and your first microcontroller

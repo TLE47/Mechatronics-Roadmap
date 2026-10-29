@@ -39,8 +39,8 @@ class RegistryTests(unittest.TestCase):
     def test_every_python_page_is_covered(self):
         pages = gr.workbench_pages()
         self.assertEqual(
-            len(pages), 92,
-            msg="expected 42 lesson pages (36 lessons plus the six ramp lessons) and 50 "
+            len(pages), 93,
+            msg="expected 43 lesson pages (37 lessons plus the six ramp lessons) and 50 "
                 "graded-module pages in the registry; a smaller count means an entry's page was "
                 "skipped, so its callout cannot be checked",
         )
@@ -133,8 +133,8 @@ class CommittedPageTests(unittest.TestCase):
 
     def test_every_lesson_page_is_covered(self):
         self.assertEqual(
-            len(gr.all_pages()), 104,
-            msg="expected 86 pages with a workbench entry and 18 without; a smaller total means a "
+            len(gr.all_pages()), 105,
+            msg="expected 87 pages with a workbench entry and 18 without; a smaller total means a "
                 "lesson page a search result can land on still says nothing",
         )
 

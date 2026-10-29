@@ -339,6 +339,43 @@ async function main() {
         timeout: 20000,
       });
       await waitForEditor(page);
+      // Every editor view has to be on screen at 390 px: the strip wraps rather than hiding its
+      // last tab, and Workflow is the view a phone could not reach while the strip was nowrap.
+      const editorTabs = await page.evaluate(() => {
+        const list = document.querySelector('[role="tablist"][aria-label="Editor tabs"]');
+        const box = list.getBoundingClientRect();
+        const tabs = [...list.querySelectorAll('[role="tab"]')].filter(
+          (tab) => tab.getBoundingClientRect().width > 0
+        );
+        return {
+          scroll: list.scrollWidth - list.clientWidth,
+          wrap: getComputedStyle(list).flexWrap,
+          ids: tabs.map((tab) => tab.getAttribute('data-testid')),
+          inside: tabs.every((tab) => {
+            const rect = tab.getBoundingClientRect();
+            return (
+              rect.left >= box.left - 1 &&
+              rect.right <= box.right + 1 &&
+              rect.top >= box.top - 1 &&
+              rect.bottom <= box.bottom + 1
+            );
+          }),
+        };
+      });
+      check(editorTabs.wrap === 'wrap', `the editor tab strip must wrap at 390 px, not ${editorTabs.wrap}`);
+      check(
+        editorTabs.scroll === 0,
+        `the editor tab strip still scrolls ${editorTabs.scroll}px sideways at 390 px`
+      );
+      check(editorTabs.inside, 'every editor view tab must be inside the strip at 390 px');
+      check(
+        editorTabs.ids.includes('editor-tab-workflow'),
+        `the Workflow view is missing from the phone's editor tabs: ${editorTabs.ids.join(', ')}`
+      );
+      await page.getByTestId('editor-tab-workflow').click();
+      await page.getByTestId('panel-workflow').waitFor({ state: 'visible', timeout: 10000 });
+      ok('every editor view is on screen at 390 px, Workflow included');
+      await page.getByTestId('editor-tab-main').click();
       check(
         !(await page.getByTestId('lesson-reader').isVisible()),
         'the Code surface must not keep the lesson text below the editor'

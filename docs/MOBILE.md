@@ -54,6 +54,17 @@ flowchart LR
    snooze. Accepted installs need no record — the next launch is `standalone` and the first rule hides
    the row.
 
+**The workflow rides in Code.** The editor's output views — Predict, Run output, Expected, Workflow — are
+tabs of one card, and the Workflow canvas is born in one column: the same flow is legible in a 380 px
+split and at 390 px, the dotted paper scrolls inside its own pane, and an arrow is drawn by tapping a
+card's dot and then the card it feeds — the drag gesture, for a finger that cannot hover. Every
+control stays at the touch floor, and **Open workflow** in the study panel switches to the Code
+surface before scrolling to the card, so the tab a learner asked for is never on a surface they
+cannot see. The editor's tab strip wraps whenever its tabs do not fit
+— at 390 px into labelled rows with its icons hidden, and at a desktop width when a helper file
+overruns the row — so all four output views are reachable without the sideways scroll that used to
+push the last one off screen.
+
 ## One sheet, seven overlays
 
 `components/Sheet.tsx` is the only dialog: a bottom sheet on a phone, the centred dialog the desktop

@@ -23,7 +23,7 @@
 | **3 · derive** | [after the practice pass](#tier-3-advanced--production), same step order | [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md) | 5 |
 | **outside both routes** | [optional](#tier-3-advanced--production), graded, never required | — | — |
 
-**Step 5 costs 20-30 focused hours in total** - 7-17 of lessons, 3.5 of arm modules, 4.5 of Depth 2 practice, 5 of Depth 3 derivation - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
+**Step 5 costs 20-30 focused hours in total** - 7-17 of lessons, 3.5 of arm modules, 4.5 of Depth 2 practice, 5 of Depth 3 derivation - out of a **201.1-292 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
 **Next:** Step 6 · Measure the joint: sensors → [Track 03](../03-sensors-and-actuators/README.md) (11.35-16 focused hours).
 <!-- /step-index -->

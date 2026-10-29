@@ -471,6 +471,24 @@ assert math.isclose(datasheet_val_to_base_si(250.0, "mA"), 0.25, abs_tol=1e-9)
 assert math.isclose(datasheet_val_to_base_si(20.0, "kHz"), 20000.0, abs_tol=1e-6)
 """,
     ),
+    "P.15": (
+        [
+            "Test winding_draw on unseen 24 V/2.4 ohm and 9 V/3 ohm givens",
+            "Test check_against_limit and answer_line on both the inside-limit and clamped branches",
+        ],
+        """import math
+assert math.isclose(winding_draw(24.0, 2.4), 10.0, abs_tol=1e-9)
+assert math.isclose(winding_draw(9.0, 3.0), 3.0, abs_tol=1e-9)
+_ok, _passable = check_against_limit(2.0, 3.2)
+assert _ok is True and math.isclose(_passable, 2.0, abs_tol=1e-9)
+_ok, _passable = check_against_limit(10.0, 3.2)
+assert _ok is False and math.isclose(_passable, 3.2, abs_tol=1e-9)
+_inside = answer_line(2.0, 3.2, True, 2.0)
+assert "2.00 A" in _inside and "clamped" not in _inside
+_over = answer_line(10.0, 3.2, False, 3.2)
+assert "3.20 A" in _over and "clamped" in _over and "10.00 A" in _over
+""",
+    ),
     "P.M": (
         [
             "Test cmd10_to_torque saturation at negative (-50), zero, midpoint (511.5), and overflow (2048) inputs",
@@ -888,6 +906,18 @@ def extract_output_match(fm_block: str, lesson_id: str) -> str:
     return mode
 
 
+def extract_goal(text: str) -> str:
+    """The one sentence under `## Goal`: what the page asks the learner to do.
+
+    The workbench shows it in the Write preset, where the prose is hidden, so it has to be the
+    page's own words rather than a second hand-written summary that can drift from the lesson.
+    """
+    match = re.search(r"^## Goal\s*\n+(.+?)(?=\n\s*\n|\n#|\Z)", text, re.MULTILINE | re.DOTALL)
+    if not match:
+        return ""
+    return re.sub(r"\s+", " ", match.group(1)).strip()
+
+
 def extract_hints(text: str) -> list[str]:
     diy_m = re.search(r"^## Do it yourself\s*$(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL)
     diy_sec = diy_m.group(1) if diy_m else text
@@ -955,13 +985,19 @@ def exercise_lessons():
         checker = exercise_bundle.selfcheck_source(directory)
         entry_id = delivery.get("workbench_id", "EX." + manifest["id"])
         entry_path = os.path.relpath(os.path.join(directory, "solution.py"), ROOT)
+        entry_reader = reader_page_path(entry_id, entry_path)
+        goal = manifest["title"]
+        if entry_reader:
+            with open(os.path.join(ROOT, entry_reader), "r", encoding="utf-8") as handle:
+                goal = extract_goal(handle.read()) or goal
         entries.append(
             {
                 "id": entry_id,
                 "title": "%s - graded exercise" % manifest["title"],
+                "goal": goal,
                 "track": "modules",
                 "path": entry_path,
-                "readerPath": reader_page_path(entry_id, entry_path),
+                "readerPath": entry_reader,
                 # An exercise is one learning objective, not a list of its functions: the ideas
                 # count is a beginner-lesson rule and the workbench enforces <= 2.
                 "ideas": [manifest["title"]],
@@ -1020,6 +1056,7 @@ def build_lessons():
             {
                 "id": lesson_id,
                 "title": title_m.group(1).strip() if title_m else rel,
+                "goal": extract_goal(txt) or (title_m.group(1).strip() if title_m else rel),
                 "track": folder,
                 "path": rel,
                 "readerPath": reader_page_path(lesson_id, rel),
@@ -1050,6 +1087,8 @@ def main():
         "export interface PythonLessonItem {\n"
         "  id: string;\n"
         "  title: string;\n"
+        "  /** One sentence: what the lesson asks for; the Write preset shows it as a comment. */\n"
+        "  goal: string;\n"
         "  track: string;\n"
         "  path: string;\n"
         "  /** The Markdown page the reader renders; '' when the entry has no prose page. */\n"

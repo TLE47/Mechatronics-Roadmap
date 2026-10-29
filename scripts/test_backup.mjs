@@ -68,6 +68,21 @@ import {
 } from '../app/src/progressKeys.ts';
 import { MAX_CARDS, cardId, readCards, reviewCard, syncCards } from '../app/src/studyCards.ts';
 import { readSittings, recordSittingEvent } from '../app/src/sittingClock.ts';
+import { readWorkflow, saveWorkflow } from '../app/src/workflowStore.ts';
+
+/** A minimal valid workflow, so the archive has authored cards to carry and merge. */
+function workflowDoc(title) {
+  return {
+    version: 1,
+    mode: 'analysis',
+    title,
+    steps: [
+      { id: 's1', kind: 'given', title: 'Numbers', detail: '12 V', unit: 'V' },
+      { id: 's2', kind: 'answer', title: 'Say it', detail: '5 A', unit: 'A' },
+    ],
+    updatedAt: 1,
+  };
+}
 import { DAY_MS } from '../app/src/fsrs.ts';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 
@@ -195,6 +210,7 @@ check('the bundle names its files, its schema and its date', () => {
       'drafts.json',
       'history.json',
       'study.json',
+      'workflow.json',
       'checks.json',
       'study-cards.json',
       'learning-log.json',
@@ -257,6 +273,7 @@ check('the archive carries every store, and the manifest counts them', () => {
     highlights: 1,
     checks: 2,
     cards: 1,
+    workflows: 0,
     events: 1,
   });
   // The deck's *existence* is derived from the notes store, so a backup taken before the deck was
@@ -267,6 +284,34 @@ check('the archive carries every store, and the manifest counts them', () => {
     /localStorage|storage/, // the file holds the maps themselves, not the bucket's keys
     'progress.json should be data, not a dump of the storage layer'
   );
+});
+
+check('a workflow travels in the archive, comes back, and a second restore adds nothing', () => {
+  freshBrowser();
+  saveWorkflow(LESSON.id, workflowDoc('Motor stall current'), 1000);
+  const archive = createBackupZip(1_700_000_000_000);
+  freshBrowser();
+  const first = restoreBackupZip(archive);
+  assert.equal(first.ok, true);
+  assert.equal(first.report.workflows, 1);
+  assert.equal(readWorkflow(LESSON.id).title, 'Motor stall current');
+  const second = restoreBackupZip(archive);
+  assert.equal(second.report.workflows, 0, 'the same archive twice is nothing new');
+  assert.equal(readWorkflow(LESSON.id).title, 'Motor stall current');
+});
+
+check('a restore keeps the newer workflow, and never deletes one only this browser has', () => {
+  freshBrowser();
+  saveWorkflow(LESSON.id, workflowDoc('from the archive'), 9000);
+  const archive = createBackupZip(0);
+  freshBrowser();
+  saveWorkflow(LESSON.id, workflowDoc('written here this morning'), 5000);
+  saveWorkflow(OTHER.id, workflowDoc('only here'));
+  const result = restoreBackupZip(archive);
+  assert.equal(result.ok, true);
+  assert.equal(result.report.workflows, 1, 'the newer copy is the one that wins');
+  assert.equal(readWorkflow(LESSON.id).title, 'from the archive');
+  assert.equal(readWorkflow(OTHER.id).title, 'only here', 'a restore adds, it never deletes');
 });
 
 check('a restore into an empty browser brings back exactly what was backed up', () => {

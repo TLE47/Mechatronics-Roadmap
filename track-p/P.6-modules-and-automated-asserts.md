@@ -81,12 +81,12 @@ import math
 
 def distance_2d(x_m, y_m):
     # TODO 1: the straight-line distance from the origin to this point
-    return 5.0
+    return 0.0
 
 
 def clamp_cmd(cmd):
     # TODO 2: the command, kept inside its eight-bit range
-    return 255
+    return 0
 
 
 d1 = distance_2d(3.0, 4.0)

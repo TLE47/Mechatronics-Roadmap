@@ -33,6 +33,7 @@ flowchart LR
 | Step 1 | [`P.11` Reading Time-Series Graphs — Slope and Area](../track-p/P.11-reading-time-series-graphs.md) | 1.5-3.5 |
 | Step 1 | [`P.12` Linear Forces (F = ma) and Lever Torque (tau = m*g*L*cos(theta))](../track-p/P.12-forces-and-lever-torque.md) | 1.5-3.5 |
 | Step 1 | [`P.14` Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds](../track-p/P.14-reading-a-datasheet-table.md) | 0.75-2 |
+| Step 1 | [`P.15` The Analysis Workflow — Given, Unknown, Model, Compute, Check, Answer](../track-p/P.15-analysis-workflow-given-unknown-model-check-answer.md) | 0.75-2 |
 | Step 1 | [`P.M` Track P Milestone — Gravity-Holding Robot Arm Link Simulator](../track-p/P.M-track-p-milestone.md) | 1-2.5 |
 | Step 2 | [`S0.0` Why Electricity Is Like Water Flow — Effort, Flow & Pipe Constriction](../stage-0/S0.0-why-electricity-is-like-flow.md) | 0.75-2 |
 | Step 2 | [`S0.1` Closed DC Circuits, Ground Reference (0 V) and Ohm's Law](../stage-0/S0.1-closed-circuits-and-ohms-law.md) | 1-3 |
@@ -67,7 +68,7 @@ flowchart LR
 | Arm prerequisites | [`06.1` Rest-to-Rest Cubic Polynomial Trajectories and Joint-Space Gravity Feedforward](../06-robotics-and-autonomy/06.1-cubic-trajectories-and-compliant-joints.md) | 1.5-3.5 |
 | Arm prerequisites | [`07.1` 10-Step Smoke-Free Hardware Bring-Up and Single-Tone Sine-Sweep System Identification](../07-systems-hil-and-production/07.1-safe-bringup-and-sine-sweep-sysid.md) | 1.5-3.5 |
 | Step 10 | [`08.1` Tier 1 Boss Milestone — 1 kHz 2-DOF Compliant Arm Plant, Figure-8 PD Control & CRC-8 Telemetry](../08-capstone-projects/08.1-tier1-2dof-compliant-arm-capstone.md) | 2-4.5 |
-| **Minimum viable finish** | **47 pages: 31 lessons + 16 modules** | **93-151** |
+| **Minimum viable finish** | **48 pages: 32 lessons + 16 modules** | **93.75-153** |
 
 At **6 focused hours a week** the page time is about 4-6 months. Add the first-time
 overhead the README explains (5x focused hours) and plan **1.5-2.5 years**; at 10x it is
@@ -84,6 +85,6 @@ overhead the README explains (5x focused hours) and plan **1.5-2.5 years**; at 1
 
 ## What the arm route adds
 
-The arm route is **120.35-210 focused hours**: 17 arm modules and all 48 lessons (65 pages). It is the same arm with all of its reading and the capstone's graded exercise, not a different project.
+The arm route is **121.1-212 focused hours**: 17 arm modules and all 49 lessons (66 pages). It is the same arm with all of its reading and the capstone's graded exercise, not a different project.
 
-The depth pass is a second, optional route: **23 modules, 80-80 focused hours**, page by page in [`DEPTH.md`](DEPTH.md). The full course is the arm plus the depth pass, **200.35-290 focused hours**.
+The depth pass is a second, optional route: **23 modules, 80-80 focused hours**, page by page in [`DEPTH.md`](DEPTH.md). The full course is the arm plus the depth pass, **201.1-292 focused hours**.

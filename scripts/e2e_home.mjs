@@ -578,33 +578,74 @@ async function main() {
     );
     console.log(`  ok Start opened ${TODAY_ENTRY?.id} in one click`);
 
-    // ---- 7a. The study clock in the brief: Start, the digits move, Log & reset files them ----
+    // ---- 7a. The study clock in the brief: Start, Pause, Resume, Log & reset, and its log ----
     {
       const clock = page.getByTestId('study-timer');
       await clock.waitFor({ timeout: 30000 });
-      const start = page.getByTestId('btn-study-timer');
+      const toggle = page.getByTestId('btn-study-timer');
       const reset = page.getByTestId('btn-study-timer-reset');
+      const elapsedText = async () =>
+        (await page.getByTestId('study-timer-elapsed').textContent())?.trim();
       assert.equal(
         await clock.getAttribute('data-state'),
         'idle',
         'a fresh visit must open with the clock at zero'
       );
-      assert.equal((await page.getByTestId('study-timer-elapsed').textContent())?.trim(), '0:00:00');
+      assert.equal(await elapsedText(), '0:00:00');
       assert.equal(await reset.isDisabled(), true, 'a zero clock has nothing to log');
-      assert.equal(
-        (await start.textContent())?.trim(),
-        'Start',
-        'the first press is Start, not Resume'
-      );
-      await start.click();
+      assert.equal((await toggle.textContent())?.trim(), 'Start', 'the first press is Start, not Resume');
+      await toggle.click();
       await page.waitForTimeout(1500);
       assert.equal(await clock.getAttribute('data-state'), 'running', 'Start must start the clock');
-      assert.notEqual(
-        (await page.getByTestId('study-timer-elapsed').textContent())?.trim(),
-        '0:00:00',
-        'the clock must show the seconds it has counted'
+      assert.notEqual(await elapsedText(), '0:00:00', 'the clock must show the seconds it has counted');
+      assert.equal(
+        (await toggle.textContent())?.trim(),
+        'Pause',
+        'a running clock must offer Pause, not a button that only says it is counting'
       );
-      assert.equal(await start.isDisabled(), true, 'a running clock has nothing for Start to do');
+      assert.equal(await toggle.isEnabled(), true, 'the running clock’s only control must be pressable');
+      assert.equal(await toggle.getAttribute('data-timer-action'), 'pause');
+      await toggle.click();
+      await page.waitForTimeout(450);
+      assert.equal(
+        await clock.getAttribute('data-state'),
+        'paused',
+        'Pause must stop counting without filing the stretch'
+      );
+      assert.equal((await toggle.textContent())?.trim(), 'Resume', 'a paused clock offers Resume');
+      assert.equal(await toggle.getAttribute('data-timer-action'), 'resume');
+      const held = await elapsedText();
+      await page.waitForTimeout(1400);
+      assert.equal(await elapsedText(), held, 'a paused clock must not keep creeping');
+      await toggle.click();
+      await page.waitForTimeout(1300);
+      assert.equal(
+        await clock.getAttribute('data-state'),
+        'running',
+        'Resume must carry on from where the clock paused'
+      );
+      assert.notEqual(await elapsedText(), held, 'Resume must add the seconds that follow it');
+
+      // The disclosure beside the clock: what this lesson has cost, opened by its own press.
+      const logged = page.getByTestId('btn-study-logged');
+      assert.equal(await logged.getAttribute('aria-expanded'), 'false');
+      await logged.click();
+      await page.getByTestId('study-timer-logged-panel').waitFor({ timeout: 5000 });
+      assert.equal(await logged.getAttribute('aria-expanded'), 'true');
+      assert.match(
+        (await page.getByTestId('study-timer-lesson-total').textContent()) ?? '',
+        /This lesson/,
+        'the opened log must name what it is measuring'
+      );
+      await logged.click();
+      assert.equal(
+        await page.getByTestId('study-timer-logged-panel').count(),
+        0,
+        'a second press must close the disclosure'
+      );
+
+      await toggle.click();
+      await page.waitForTimeout(250);
       await reset.click();
       await page.waitForTimeout(350);
       assert.equal(
@@ -612,14 +653,14 @@ async function main() {
         'idle',
         'Log & reset must put the clock back to zero'
       );
-      assert.equal((await page.getByTestId('study-timer-elapsed').textContent())?.trim(), '0:00:00');
+      assert.equal(await elapsedText(), '0:00:00');
       assert.match(
         (await page.getByTestId('study-timer-logged').textContent()) ?? '',
         /^Logged /,
         'the reset must say what it kept'
       );
       assert.equal(await reset.isDisabled(), true, 'the zeroed clock has nothing more to log');
-      console.log('  ok the brief’s study clock starts, counts and files its stretch');
+      console.log('  ok the brief’s study clock starts, pauses, resumes and files its stretch');
     }
 
     // ---- 7b. Continue puts the reader back where it was left ----

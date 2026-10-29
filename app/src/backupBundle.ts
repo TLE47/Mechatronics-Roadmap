@@ -47,6 +47,13 @@ import { mergeCards, parseCards, readCardList, readCards, replaceCards } from '.
 import { mergeLearningLog } from './progressMerge.ts';
 import { mergeTourStates, readTour, writeTour } from './tourState.ts';
 import {
+  asWorkflowStore,
+  mergeWorkflows,
+  readWorkflowStore,
+  replaceWorkflows,
+  workflowCounts,
+} from './workflowStore.ts';
+import {
   STORAGE_KEY_COMPLETED,
   STORAGE_KEY_MILESTONES,
   STORAGE_KEY_VERIFIED,
@@ -74,6 +81,8 @@ export interface BackupCounts {
   checks: number;
   /** Review cards that currently exist: a commented highlight is one, scheduled or not. */
   cards: number;
+  /** Workflows drawn, one per lesson that has one. */
+  workflows: number;
   events: number;
 }
 
@@ -116,6 +125,7 @@ function currentCounts(): BackupCounts {
     highlights: study.highlights,
     checks: tickCounts().ticks,
     cards: readCardList().length,
+    workflows: workflowCounts().workflows,
     events: readLearningLog().length,
   };
 }
@@ -141,6 +151,7 @@ progress.json       Lessons you ran to a verdict, lessons you marked yourself, m
 drafts.json         The unfinished editor text for each lesson you were working on.
 history.json        The versions each Run filed, with the verdict that run got.
 study.json          Your notes and the passages you highlighted, per lesson.
+workflow.json       The cards you drew for each lesson: given, model, compute, check, answer.
 checks.json         The lesson bullets you ticked while reading, per lesson.
 study-cards.json    When each review card is due, and how many times you have answered it.
 learning-log.json   When you opened, ran, passed, and used a hint - the pilot record.
@@ -206,6 +217,14 @@ export function collectBackup(now: number = Date.now()): BackupFile[] {
     name: 'study.json',
     text: JSON.stringify({ schema: 'mechalab.backup.study/1', study: readStudy() }, null, 2),
   };
+  const workflows: BackupFile = {
+    name: 'workflow.json',
+    text: JSON.stringify(
+      { schema: 'mechalab.backup.workflow/1', workflows: readWorkflowStore() },
+      null,
+      2
+    ),
+  };
   const checks: BackupFile = {
     name: 'checks.json',
     text: JSON.stringify({ schema: 'mechalab.backup.checks/1', checks: readChecks() }, null, 2),
@@ -226,7 +245,7 @@ export function collectBackup(now: number = Date.now()): BackupFile[] {
     name: 'tour.json',
     text: JSON.stringify({ schema: 'mechalab.backup.tour/1', tour: readTour() }, null, 2),
   };
-  const data: BackupFile[] = [progress, drafts, history, study, checks, cards, log, tour];
+  const data: BackupFile[] = [progress, drafts, history, study, workflows, checks, cards, log, tour];
   const manifest: BackupManifest = {
     schema: BACKUP_SCHEMA,
     app: 'MechaLab Workbench',
@@ -293,6 +312,7 @@ export function backupSummary(counts: BackupCounts, bytes: number): string {
     counts.highlights ? `${counts.highlights} highlight${counts.highlights === 1 ? '' : 's'}` : '',
     counts.checks ? `${counts.checks} checklist tick${counts.checks === 1 ? '' : 's'}` : '',
     counts.cards ? `${counts.cards} card${counts.cards === 1 ? '' : 's'}` : '',
+    counts.workflows ? `${counts.workflows} workflow${counts.workflows === 1 ? '' : 's'}` : '',
     counts.events ? `${counts.events} log event${counts.events === 1 ? '' : 's'}` : '',
   ].filter(Boolean);
   return `Backed up · ${[...parts, formatBackupSize(bytes)].join(' · ')}`;
@@ -310,6 +330,9 @@ export function restoreSummary(report: RestoreReport): string {
     report.highlights ? `${report.highlights} highlight${report.highlights === 1 ? '' : 's'}` : '',
     report.checks ? `${report.checks} checklist tick${report.checks === 1 ? '' : 's'} merged` : '',
     report.cards ? `${report.cards} card ${report.cards === 1 ? 'schedule' : 'schedules'} merged` : '',
+    report.workflows
+      ? `${report.workflows} workflow${report.workflows === 1 ? '' : 's'} merged`
+      : '',
     report.events ? `${report.events} log event${report.events === 1 ? '' : 's'}` : '',
   ].filter(Boolean);
   const skipped = report.skipped.length ? ` · skipped ${report.skipped.join(', ')}` : '';
@@ -434,12 +457,29 @@ function restoreStudy(text: string | undefined, report: RestoreReport): void {
 }
 
 /**
- * Merge a restored deck in.
+ * Merge a restored workflow store in.
  *
- * A backup taken before cards existed has no such file at all: that is an older backup, not a
- * corrupt one, so the absence is silent. `mergeCards` keeps the more-reviewed schedule, which is
- * what makes a restore safe to repeat and impossible to use to send a card backwards.
+ * A backup taken before workflows existed has no such file: an older backup, not a corrupt one, so
+ * the absence is silent. A lesson this browser has nothing for is added; one it has is replaced only
+ * by a newer document. Nothing is ever deleted, which is what makes the restore safe to repeat.
  */
+function restoreWorkflows(text: string | undefined, report: RestoreReport): void {
+  if (text === undefined) return;
+  const file = asRecord(parseJson(text));
+  const raw = asRecord(file?.workflows);
+  if (!raw) {
+    report.skipped.push('workflow.json');
+    return;
+  }
+  const { store, added, updated } = mergeWorkflows(readWorkflowStore(), asWorkflowStore(raw));
+  if (!added && !updated) return;
+  if (!replaceWorkflows(store)) {
+    report.skipped.push('workflow.json (the store refused the write)');
+    return;
+  }
+  report.workflows += added + updated;
+}
+
 /**
  * Merge a restore's checklist ticks in.
  *
@@ -465,6 +505,13 @@ function restoreChecks(text: string | undefined, report: RestoreReport): void {
   report.checks += added;
 }
 
+/**
+ * Merge a restored deck in.
+ *
+ * A backup taken before cards existed has no such file at all: that is an older backup, not a
+ * corrupt one, so the absence is silent. `mergeCards` keeps the more-reviewed schedule, which is
+ * what makes a restore safe to repeat and impossible to use to send a card backwards.
+ */
 function restoreCards(text: string | undefined, report: RestoreReport): void {
   if (text === undefined) return;
   const file = asRecord(parseJson(text));
@@ -569,6 +616,7 @@ export function restoreBackupZip(bytes: Uint8Array): RestoreResult {
     highlights: 0,
     checks: 0,
     cards: 0,
+    workflows: 0,
     events: 0,
     skipped: [],
     files: read.entries.length,
@@ -577,6 +625,7 @@ export function restoreBackupZip(bytes: Uint8Array): RestoreResult {
   restoreDrafts(contents.get('drafts.json'), report);
   restoreHistory(contents.get('history.json'), report);
   restoreStudy(contents.get('study.json'), report);
+  restoreWorkflows(contents.get('workflow.json'), report);
   restoreChecks(contents.get('checks.json'), report);
   restoreCards(contents.get('study-cards.json'), report);
   restoreLog(contents.get('learning-log.json'), report);

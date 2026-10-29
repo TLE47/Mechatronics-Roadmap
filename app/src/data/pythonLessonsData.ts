@@ -2,6 +2,8 @@
 export interface PythonLessonItem {
   id: string;
   title: string;
+  /** One sentence: what the lesson asks for; the Write preset shows it as a comment. */
+  goal: string;
   track: string;
   path: string;
   /** The Markdown page the reader renders; '' when the entry has no prose page. */
@@ -20,6 +22,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "P.1",
     "title": "Variables and Fundamental Data Types",
+    "goal": "Store robot measurements such as battery charge level, wheel pulse counts, and safety status flags in named Python variables, and distinguish the four fundamental data types (`int`, `float`, `str`, `bool`).",
     "track": "track-p",
     "path": "track-p/P.1-variables-and-data-types.md",
     "readerPath": "track-p/P.1-variables-and-data-types.md",
@@ -44,6 +47,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "P.2",
     "title": "Computer Arithmetic and Order of Operations",
+    "goal": "Translate multi-step physics and circuit formulas into bug-free Python arithmetic using explicit multiplication (`*`), division (`/`), exponents (`**`), and parentheses `()`.",
     "track": "track-p",
     "path": "track-p/P.2-arithmetic-and-order-of-operations.md",
     "readerPath": "track-p/P.2-arithmetic-and-order-of-operations.md",
@@ -68,6 +72,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "P.3",
     "title": "Conditional Decisions (if/elif/else) and Command Clamping",
+    "goal": "Use comparison operators and `if / elif / else` statements to make safety decisions in code and clamp out-of-range motor commands into a safe hardware range (`[0, 255]`).",
     "track": "track-p",
     "path": "track-p/P.3-decisions-and-clamping.md",
     "readerPath": "track-p/P.3-decisions-and-clamping.md",
@@ -92,6 +97,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "P.4",
     "title": "Ordered Lists and Repeating Actions with for Loops",
+    "goal": "Store sequences of sensor readings in zero-indexed Python `lists` (`[a, b, c]`) and process every item automatically using `for` loops and `range()`.",
     "track": "track-p",
     "path": "track-p/P.4-lists-and-for-loops.md",
     "readerPath": "track-p/P.4-lists-and-for-loops.md",
@@ -116,6 +122,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "P.5",
     "title": "Reusable Functions (def/return) and while Loops",
+    "goal": "Package repeatable engineering calculations into named functions using `def` and `return`, and step physical simulations forward in time using `while` loops.",
     "track": "track-p",
     "path": "track-p/P.5-functions-and-while-loops.md",
     "readerPath": "track-p/P.5-functions-and-while-loops.md",
@@ -140,6 +147,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "P.6",
     "title": "Loading Modules (import) and Automated Self-Checks (assert)",
+    "goal": "Load built-in math tools (`math.sqrt`, `math.pi`) using `import math`, and write automated self-checks (`assert`) so your code verifies its own calculations automatically.",
     "track": "track-p",
     "path": "track-p/P.6-modules-and-automated-asserts.md",
     "readerPath": "track-p/P.6-modules-and-automated-asserts.md",
@@ -147,7 +155,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Loading standard-library modules with import",
       "Automated self-checks with assert"
     ],
-    "starterCode": "import math\n\n\ndef distance_2d(x_m, y_m):\n    # TODO 1: the straight-line distance from the origin to this point\n    return 5.0\n\n\ndef clamp_cmd(cmd):\n    # TODO 2: the command, kept inside its eight-bit range\n    return 255\n\n\nd1 = distance_2d(3.0, 4.0)\nd2 = distance_2d(0.6, 0.8)\n\n# TODO 3: Verify that all assertions pass once TODO 1 and TODO 2 are implemented!\nassert round(d1, 4) == 5.0\nassert clamp_cmd(300) == 255\n\nprint(f\"Distance (3, 4): {d1:.2f} m | Distance (0.6, 0.8): {d2:.2f} m\")\nprint(f\"Clamped(-20)={clamp_cmd(-20)} | Clamped(128)={clamp_cmd(128)} | Clamped(300)={clamp_cmd(300)}\")\nprint(\"All assert checks passed!\")",
+    "starterCode": "import math\n\n\ndef distance_2d(x_m, y_m):\n    # TODO 1: the straight-line distance from the origin to this point\n    return 0.0\n\n\ndef clamp_cmd(cmd):\n    # TODO 2: the command, kept inside its eight-bit range\n    return 0\n\n\nd1 = distance_2d(3.0, 4.0)\nd2 = distance_2d(0.6, 0.8)\n\n# TODO 3: Verify that all assertions pass once TODO 1 and TODO 2 are implemented!\nassert round(d1, 4) == 5.0\nassert clamp_cmd(300) == 255\n\nprint(f\"Distance (3, 4): {d1:.2f} m | Distance (0.6, 0.8): {d2:.2f} m\")\nprint(f\"Clamped(-20)={clamp_cmd(-20)} | Clamped(128)={clamp_cmd(128)} | Clamped(300)={clamp_cmd(300)}\")\nprint(\"All assert checks passed!\")",
     "hints": [
       "In `distance_2d`, pass `(x_m ** 2) + (y_m ** 2)` inside `math.sqrt(...)`. In `clamp_cmd`, use `if cmd > 255: return 255` and `elif cmd < 0: return 0`, followed by `return cmd`.",
       "```python def distance_2d(x_m, y_m): return math.sqrt((x_m ** 2) + (y_m ** 2)) def clamp_cmd(cmd): if cmd > 255: return 255 elif cmd < 0: return 0 return cmd ```"
@@ -164,6 +172,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "P.7",
     "title": "Base SI Units and Metric Prefixes (M, k, m, \u00b5)",
+    "goal": "Identify the base SI units (`m`, `kg`, `s`) and unit symbols (`A`, `V`, `\u03a9`) used in mechatronics, and convert values with metric prefixes (`M`, `k`, `m`, `\u00b5`) into base units before plugging them into equations.",
     "track": "track-p",
     "path": "track-p/P.7-si-units-and-metric-prefixes.md",
     "readerPath": "track-p/P.7-si-units-and-metric-prefixes.md",
@@ -188,6 +197,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "P.8",
     "title": "Cycle Frequency (Hz), Period (T = 1/f) and Binary Bits (2^N)",
+    "goal": "Convert between a repeating signal's **frequency** ($f$, in Hertz `Hz`) and its **period** ($T = 1/f$, in seconds), and use **powers of 2** ($2^N$) to calculate the exact integer range of an $N$-bit microcontroller register.",
     "track": "track-p",
     "path": "track-p/P.8-frequency-and-binary-bits.md",
     "readerPath": "track-p/P.8-frequency-and-binary-bits.md",
@@ -212,6 +222,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "P.9",
     "title": "Rearranging Physics Formulas and Linear Range Scaling",
+    "goal": "Rearrange physics formulas to isolate any unknown variable on the left side of `=`, and linearly map 10-bit sensor counts (`0..1023`) into physical units (`0..5.0`) or 8-bit actuator commands (`0..255`).",
     "track": "track-p",
     "path": "track-p/P.9-rearranging-formulas-and-scaling.md",
     "readerPath": "track-p/P.9-rearranging-formulas-and-scaling.md",
@@ -236,6 +247,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "P.10",
     "title": "Radians, Rotational Speed (rad/s) and Right-Triangle Trigonometry",
+    "goal": "Convert angles between degrees and **radians** ($\\pi\\text{ rad} = 180^\\circ$) and motor speeds between `RPM` and `rad/s`, and use `math.cos()`, `math.sin()`, and `math.atan2(y, x)` to compute 2D robot arm geometry.",
     "track": "track-p",
     "path": "track-p/P.10-radians-and-right-triangle-trig.md",
     "readerPath": "track-p/P.10-radians-and-right-triangle-trig.md",
@@ -260,6 +272,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "P.11",
     "title": "Reading Time-Series Graphs \u2014 Slope and Area",
+    "goal": "Read position-vs-time and velocity-vs-time telemetry plots by connecting **slope** ($\\Delta y / \\Delta t$) to rate of change (velocity and acceleration) and **rectangle area** ($v \\cdot \\Delta t$) to accumulated displacement.",
     "track": "track-p",
     "path": "track-p/P.11-reading-time-series-graphs.md",
     "readerPath": "track-p/P.11-reading-time-series-graphs.md",
@@ -284,6 +297,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "P.12",
     "title": "Linear Forces (F = ma) and Lever Torque (tau = m*g*L*cos(theta))",
+    "goal": "Calculate linear forces ($F = ma$) and gravitational weight ($W = mg$), and compute the **lever torque** ($\\tau = F \\cdot r_\\perp = m g L \\cos\\theta$) required for a robot joint to hold a payload at any angle $\\theta$ measured from the horizontal.",
     "track": "track-p",
     "path": "track-p/P.12-forces-and-lever-torque.md",
     "readerPath": "track-p/P.12-forces-and-lever-torque.md",
@@ -308,6 +322,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "P.14",
     "title": "Reading a Datasheet Table \u2014 Unit Columns, Min/Typ/Max & Safe Operating Bounds",
+    "goal": "Read a real hardware **datasheet specification table** (`DRV8833` vs. `TB6612FNG` motor driver ICs) by checking the **Unit** column for metric prefixes (`mV`, `mA`, `kHz`) and distinguishing **Recommended Operating Conditions (`Min` / `Typ` / `Max`)** from destructive **Absolute Maximum Ratings**.",
     "track": "track-p",
     "path": "track-p/P.14-reading-a-datasheet-table.md",
     "readerPath": "track-p/P.14-reading-a-datasheet-table.md",
@@ -330,8 +345,34 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "instructorTests": "import math\nassert is_within_recommended_bounds(10.8, 2.7, 10.8) is True\nassert is_within_recommended_bounds(11.5, 2.7, 10.8) is False\nassert select_safe_driver(3.3) == [\"DRV8833\"]\nassert select_safe_driver(6.0) == [\"DRV8833\", \"TB6612FNG\"]\nassert select_safe_driver(12.0) == [\"TB6612FNG\"]\nassert select_safe_driver(14.5) == []\nassert math.isclose(datasheet_val_to_base_si(250.0, \"mA\"), 0.25, abs_tol=1e-9)\nassert math.isclose(datasheet_val_to_base_si(20.0, \"kHz\"), 20000.0, abs_tol=1e-6)"
   },
   {
+    "id": "P.15",
+    "title": "The Analysis Workflow \u2014 Given, Unknown, Model, Compute, Check, Answer",
+    "goal": "Turn a word problem into an ordered **analysis workflow** \u2014 state what is **given**, name the **unknown**, choose the **model**, **compute**, **check** the result against its unit and its limits, then write the **answer** \u2014 and build the same six steps as a small Python program you can reuse.",
+    "track": "track-p",
+    "path": "track-p/P.15-analysis-workflow-given-unknown-model-check-answer.md",
+    "readerPath": "track-p/P.15-analysis-workflow-given-unknown-model-check-answer.md",
+    "ideas": [
+      "Ordering an analysis: Given, Unknown, Model, Compute, Check, Answer",
+      "Checking an answer against units, bounds, and the driver limit before trusting it"
+    ],
+    "starterCode": "SUPPLY_V = 12.0\nWINDING_OHM = 2.4\nDRIVER_LIMIT_A = 3.2\n\n\ndef winding_draw(supply_v, winding_ohm):\n    # TODO 1: the Model step, one division. Use the parameters, not the numbers.\n    return 0.0\n\n\ndef check_against_limit(draw_a, limit_a):\n    # TODO 2: the Check step. Return (ok, passable): the draw itself when it is inside the\n    # limit, and the limit when it is not.\n    return (False, 0.0)\n\n\ndef answer_line(draw_a, limit_a, ok, passable_a):\n    # TODO 3: the Answer step. Name the value and its unit; when it was clamped, say so and\n    # say what the winding would have drawn.\n    return \"TODO\"\n\n\nplanned_draw = winding_draw(SUPPLY_V, WINDING_OHM)\nok, passable = check_against_limit(planned_draw, DRIVER_LIMIT_A)\n\nprint(f\"Model: draw = supply / winding = {SUPPLY_V:.1f} V / {WINDING_OHM:.1f} ohm\")\nprint(f\"Computed: {planned_draw:.2f} A\")\nprint(answer_line(planned_draw, DRIVER_LIMIT_A, ok, passable))",
+    "hints": [
+      "`winding_draw` is the model `supply / winding`. `check_against_limit` compares `draw_a <= limit_a` and returns `(True, draw_a)` when the draw fits, `(False, limit_a)` when it does not. `answer_line` prints `passable_a` in both cases, and adds the clamped explanation only when `ok` is `False`.",
+      "```python def check_against_limit(draw_a, limit_a): if draw_a <= limit_a: return (True, draw_a) return (False, limit_a) def answer_line(draw_a, limit_a, ok, passable_a): if ok: return f\"Answer: {passable_a:.2f} A, inside the {limit_a:.2f} A driver limit\" return ( f\"Answer: {passable_a:.2f} A, clamped to the {limit_a:.2f} A driver limit \" f\"(the winding would draw {draw_a:.2f} A)\" ) ```"
+    ],
+    "fullSolution": "SUPPLY_V = 12.0\nWINDING_OHM = 2.4\nDRIVER_LIMIT_A = 3.2\n\n\ndef winding_draw(supply_v, winding_ohm):\n    return supply_v / winding_ohm\n\n\ndef check_against_limit(draw_a, limit_a):\n    if draw_a <= limit_a:\n        return (True, draw_a)\n    return (False, limit_a)\n\n\ndef answer_line(draw_a, limit_a, ok, passable_a):\n    if ok:\n        return f\"Answer: {passable_a:.2f} A, inside the {limit_a:.2f} A driver limit\"\n    return (\n        f\"Answer: {passable_a:.2f} A, clamped to the {limit_a:.2f} A driver limit \"\n        f\"(the winding would draw {draw_a:.2f} A)\"\n    )\n\n\nplanned_draw = winding_draw(SUPPLY_V, WINDING_OHM)\nok, passable = check_against_limit(planned_draw, DRIVER_LIMIT_A)\n\nprint(f\"Model: draw = supply / winding = {SUPPLY_V:.1f} V / {WINDING_OHM:.1f} ohm\")\nprint(f\"Computed: {planned_draw:.2f} A\")\nprint(answer_line(planned_draw, DRIVER_LIMIT_A, ok, passable))",
+    "expectedOutput": "Model: draw = supply / winding = 12.0 V / 2.4 ohm\nComputed: 5.00 A\nAnswer: 3.20 A, clamped to the 3.20 A driver limit (the winding would draw 5.00 A)",
+    "outputMatch": "normalized",
+    "instructorTestSummary": [
+      "Test winding_draw on unseen 24 V/2.4 ohm and 9 V/3 ohm givens",
+      "Test check_against_limit and answer_line on both the inside-limit and clamped branches"
+    ],
+    "instructorTests": "import math\nassert math.isclose(winding_draw(24.0, 2.4), 10.0, abs_tol=1e-9)\nassert math.isclose(winding_draw(9.0, 3.0), 3.0, abs_tol=1e-9)\n_ok, _passable = check_against_limit(2.0, 3.2)\nassert _ok is True and math.isclose(_passable, 2.0, abs_tol=1e-9)\n_ok, _passable = check_against_limit(10.0, 3.2)\nassert _ok is False and math.isclose(_passable, 3.2, abs_tol=1e-9)\n_inside = answer_line(2.0, 3.2, True, 2.0)\nassert \"2.00 A\" in _inside and \"clamped\" not in _inside\n_over = answer_line(10.0, 3.2, False, 3.2)\nassert \"3.20 A\" in _over and \"clamped\" in _over and \"10.00 A\" in _over"
+  },
+  {
     "id": "P.M",
     "title": "Track P Milestone \u2014 Gravity-Holding Robot Arm Link Simulator",
+    "goal": "Combine everything from Track P (variables, clamping, loops, functions, `assert`, metric conversions, 10-bit scaling, radians, time-series area integration, and $\\tau = mgL\\cos\\theta$ gravity torque) into a self-testing Python simulation of a single-joint robot arm lifting a payload against gravity.",
     "track": "track-p",
     "path": "track-p/P.M-track-p-milestone.md",
     "readerPath": "track-p/P.M-track-p-milestone.md",
@@ -355,6 +396,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "R.1",
     "title": "Rate of Change \u2014 Reading dq/dt From Two Samples, and Why the Interval Matters",
+    "goal": "Turn two encoder samples into a **joint speed** (`dq/dt` in rad/s) without guessing the units, read the **sign** as direction, and see why the **average** over a window and the **rate at one moment** are different numbers \u2014 the difference Tier 2 writes as $\\dot{q}$.",
     "track": "ramp",
     "path": "ramp/R.1-rate-of-change.md",
     "readerPath": "ramp/R.1-rate-of-change.md",
@@ -379,6 +421,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "R.2",
     "title": "Accumulation \u2014 Recovering Position From Rates, and Why a Small Bias Drifts",
+    "goal": "Go the other way from R.1 and recover **position from a series of rates** by adding up area, then use that sum to explain the two things that bite every real robot: **the starting value is part of the answer**, and **a constant bias integrates into an ever-growing error**.",
     "track": "ramp",
     "path": "ramp/R.2-accumulation.md",
     "readerPath": "ramp/R.2-accumulation.md",
@@ -403,6 +446,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "R.3",
     "title": "Two Numbers That Move Together \u2014 State Vectors, One Tick, and Why Separate Commands Add Up",
+    "goal": "Stop tracking a joint as loose variables and hold it as **one state with two named slots**, `[q, qd]`, advanced **together** on every tick. Then use that shape to see why two separate torque commands produce exactly the same motion as their sum.",
     "track": "ramp",
     "path": "ramp/R.3-state-vectors.md",
     "readerPath": "ramp/R.3-state-vectors.md",
@@ -427,6 +471,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "R.4",
     "title": "Tables That Transform \u2014 Writing One Tick as a Matrix Multiply, and Reading Rows as Rates",
+    "goal": "Take the two-line tick from R.3 and store its **coefficients in a table**, so one multiply `A @ x + B\u00b7u` produces the same answer as the two lines. Then read the table back: each **row** is the rate of one slot, each **column** says where one input goes.",
     "track": "ramp",
     "path": "ramp/R.4-matrix-updates.md",
     "readerPath": "ramp/R.4-matrix-updates.md",
@@ -451,6 +496,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "R.5",
     "title": "Spinning Arrows \u2014 Complex Numbers and Phasor Sums, Computed Before Named",
+    "goal": "Carry a **rotation and a length together in one number**, rotate by multiplying, and add two of them the way you add arrows \u2014 then use that to explain why three motor phases 120\u00b0 apart sum to nothing while a 3 and a 4 at right angles make a 5.",
     "track": "ramp",
     "path": "ramp/R.5-phasors.md",
     "readerPath": "ramp/R.5-phasors.md",
@@ -475,6 +521,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "R.6",
     "title": "Wiggle In, Wiggle Out \u2014 Shaking the Joint and Reading Gain and Phase",
+    "goal": "Command the joint with a **sine wave** instead of a step, wait for the transient to die, and read two numbers from one steady period: how big the motion was compared with the command (**gain**) and how far behind it lagged (**phase**). Then find the frequency where the lag is 45\u00b0 and the gain has fallen to 0.7071 \u2014 the corner.",
     "track": "ramp",
     "path": "ramp/R.6-frequency-response.md",
     "readerPath": "ramp/R.6-frequency-response.md",
@@ -499,6 +546,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "S0.0",
     "title": "Why Electricity Is Like Water Flow \u2014 Effort, Flow & Pipe Constriction",
+    "goal": "Build an intuitive physical mental model of electricity **before** opening your first circuit simulator by comparing a closed water pump-and-pipe loop to an electrical circuit using the universal **Effort $\\times$ Flow** framework (so Track 00 Lesson `00.1` is a familiar revisit, not a cold first contact).",
     "track": "stage-0",
     "path": "stage-0/S0.0-why-electricity-is-like-flow.md",
     "readerPath": "stage-0/S0.0-why-electricity-is-like-flow.md",
@@ -523,6 +571,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "00.1",
     "title": "Cross-Domain Power (P = Effort * Flow) and First-Order Lag",
+    "goal": "Connect electrical, linear mechanical, and rotational mechanical systems through the universal power law ($\\text{Power} = \\text{Effort} \\times \\text{Flow}$, measured in Watts `W`), and simulate a **first-order lag** step response in Python to see why every real sensor, thermal body, and RC circuit reaches $63.2\\%$ of a step command in $1\\tau$ and $99.3\\%$ in $5\\tau$.",
     "track": "00-foundations",
     "path": "00-foundations/00.1-effort-flow-and-first-order-lag.md",
     "readerPath": "00-foundations/00.1-effort-flow-and-first-order-lag.md",
@@ -547,6 +596,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "00.2",
     "title": "Second-Order Motion \u2014 Springs (F_s = -k*x), Dampers (F_d = -b*v) and Damping Regimes",
+    "goal": "Model a mass attached to a **spring** (**Hooke's Law**, $F_s = -k \\cdot x$) and a **viscous damper** ($F_d = -b \\cdot v$), and calculate its **natural frequency** ($\\omega_n = \\sqrt{k/m}$) and **damping ratio** ($\\zeta$) in Python to predict whether a robot joint will ring (**underdamped**, $\\zeta < 1$), settle as fast as possible without overshoot (**critically damped**, $\\zeta = 1$), or creep sluggishly (**overdamped**, $\\zeta > 1$).",
     "track": "00-foundations",
     "path": "00-foundations/00.2-mass-spring-damper-oscillations.md",
     "readerPath": "00-foundations/00.2-mass-spring-damper-oscillations.md",
@@ -571,6 +621,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "00.3",
     "title": "Engineering Modeling Discipline \u2014 4-Step Workflow, Dimensional Checks and Sign Conventions",
+    "goal": "Apply a repeatable **4-step engineering modeling workflow** (**Diagram $\\rightarrow$ Symbolic Equations $\\rightarrow$ Code $\\rightarrow$ Sanity Check**) and catch bugs before powering hardware by verifying **dimensional unit consistency** and **extreme-case sign conventions** ($\\theta = 0^\\circ$ vs. $90^\\circ$) in Python.",
     "track": "00-foundations",
     "path": "00-foundations/00.3-modeling-discipline-and-sanity-checks.md",
     "readerPath": "00-foundations/00.3-modeling-discipline-and-sanity-checks.md",
@@ -595,6 +646,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "01.3",
     "title": "Multi-Rail Robot Power \u2014 Linear (LDO) vs. Switching (Buck) Regulators and Power Budgets",
+    "goal": "Step a $12.0\\text{ V}$ robot battery down to a clean $5.0\\text{ V}$ logic rail by comparing the heat wasted in a **Linear Regulator (`LDO`)** ($P_{\\text{heat}} = (V_{\\text{in}} - V_{\\text{out}}) \\cdot I_{\\text{load}}$) against a high-efficiency **Switching (`Buck`) Converter** ($I_{\\text{in}} = \\frac{V_{\\text{out}} \\cdot I_{\\text{out}}}{\\eta \\cdot V_{\\text{in}}}$), and build a complete **worst-case system power budget** in Python.",
     "track": "01-electronics-and-power",
     "path": "01-electronics-and-power/01.3-power-regulators-and-power-budget.md",
     "readerPath": "01-electronics-and-power/01.3-power-regulators-and-power-budget.md",
@@ -619,6 +671,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "01.4",
     "title": "Quiet Sensor Signals \u2014 Star Grounding and Passive RC Low-Pass Filters (f_c = 1/(2*pi*R*C))",
+    "goal": "Eliminate false analog sensor jumps when motors run by wiring a single-point **star ground** (preventing **ground bounce** $V_{\\text{ground}} = I_{\\text{motor}} \\cdot R_{\\text{wire}}$), and size a passive **RC low-pass filter** with **cutoff frequency** $f_c = \\frac{1}{2\\pi R C}$ to pass slow sensor changes while blocking high-frequency PWM switching noise.",
     "track": "01-electronics-and-power",
     "path": "01-electronics-and-power/01.4-grounding-and-rc-lowpass-filters.md",
     "readerPath": "01-electronics-and-power/01.4-grounding-and-rc-lowpass-filters.md",
@@ -643,6 +696,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "02.1",
     "title": "2D Coordinate Frames and 1-Link Planar Arm Forward Kinematics",
+    "goal": "Define a 2D **coordinate frame** (`Origin (0, 0)`, $+x$ right, $+y$ up, $+\\theta$ counter-clockwise `CCW`) at a robot shoulder joint, and compute **1-link planar forward kinematics** ($x = L_1 \\cos\\theta_1$, $y = L_1 \\sin\\theta_1$) and its circular **workspace** boundary in Python.",
     "track": "02-mechanics-kinematics-dynamics",
     "path": "02-mechanics-kinematics-dynamics/02.1-1d-link-fk-and-coord-frames.md",
     "readerPath": "02-mechanics-kinematics-dynamics/02.1-1d-link-fk-and-coord-frames.md",
@@ -667,6 +721,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "02.2",
     "title": "2-Link Planar Arm Forward Kinematics (theta_1, theta_2 -> x, y)",
+    "goal": "Add a second link ($L_2$) and an elbow motor ($\\theta_2$) to your planar robot arm, relate the **relative joint angle** $\\theta_2$ to the forearm's **absolute world angle** ($\\theta_{12} = \\theta_1 + \\theta_2$), and compute the **end-effector** (hand) position $(x, y)$ by chaining two tip-to-tail vectors in Python.",
     "track": "02-mechanics-kinematics-dynamics",
     "path": "02-mechanics-kinematics-dynamics/02.2-2link-planar-forward-kinematics.md",
     "readerPath": "02-mechanics-kinematics-dynamics/02.2-2link-planar-forward-kinematics.md",
@@ -690,6 +745,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "02.3",
     "title": "2-Link Planar Arm Inverse Kinematics (x, y -> theta_1, theta_2) and Reachability",
+    "goal": "Solve **2-link planar Inverse Kinematics (`IK`)** in Python to convert a desired **end-effector** target $(x, y)$ into the required shoulder and elbow motor angles $(\\theta_1, \\theta_2)$ using the **Law of Cosines** and `math.atan2(y, x)`, while clamping `-1.0..+1.0` at **kinematic singularities** ($r = L_1 + L_2$) and verifying the solution with a round-trip Forward Kinematics (`FK`) check.",
     "track": "02-mechanics-kinematics-dynamics",
     "path": "02-mechanics-kinematics-dynamics/02.3-2link-planar-inverse-kinematics.md",
     "readerPath": "02-mechanics-kinematics-dynamics/02.3-2link-planar-inverse-kinematics.md",
@@ -714,6 +770,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "02.4",
     "title": "Rotational Dynamics (tau_net = I_rot * alpha), Gear Ratios (N) and Reflected Inertia",
+    "goal": "Calculate the **moment of inertia** ($I_{\\text{rot}} = m r^2$) and **angular acceleration** ($\\alpha = \\tau_{\\text{net}} / I_{\\text{rot}}$) of a rotating link, and size a **gear ratio** ($N$) in Python by trading speed division ($\\omega_{\\text{out}} = \\omega_{\\text{in}} / N$) for torque multiplication ($\\tau_{\\text{out}} = \\eta N \\tau_{\\text{in}}$) and $1/N^2$ **reflected inertia**.",
     "track": "02-mechanics-kinematics-dynamics",
     "path": "02-mechanics-kinematics-dynamics/02.4-rotational-inertia-and-gear-ratios.md",
     "readerPath": "02-mechanics-kinematics-dynamics/02.4-rotational-inertia-and-gear-ratios.md",
@@ -738,6 +795,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "02.5",
     "title": "Practical Robot Mechanisms \u2014 Double-Shear Bearings, Timing Belts and 3D-Printed Parts",
+    "goal": "Design reliable beginner robot joints that don't bend, wobble, or snap by supporting rotating shafts in **double shear** with ball bearings, sizing **GT2 timing belt** pulleys ($N = N_{\\text{driven}} / N_{\\text{driver}}$, pitch radius $r_p = \\frac{N_{\\text{teeth}} \\cdot p}{2\\pi}$) in Python, and orienting 3D-printed brackets with proper **clearance fits** (`+0.20 mm`).",
     "track": "02-mechanics-kinematics-dynamics",
     "path": "02-mechanics-kinematics-dynamics/02.5-bearings-belts-and-3d-printing.md",
     "readerPath": "02-mechanics-kinematics-dynamics/02.5-bearings-belts-and-3d-printing.md",
@@ -762,6 +820,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "03.1",
     "title": "Quadrature Encoders (4x Counting) and 12-Bit Magnetic Angle Sensors",
+    "goal": "Calculate shaft angle and angular resolution from an **incremental quadrature encoder** (`A/B` channels decoded at $4\\times$ edges per slot) and a **12-bit absolute magnetic encoder** (`AS5600`, `0..4095` counts per revolution), and convert raw sensor counts into degrees and radians in Python.",
     "track": "03-sensors-and-actuators",
     "path": "03-sensors-and-actuators/03.1-quadrature-and-magnetic-encoders.md",
     "readerPath": "03-sensors-and-actuators/03.1-quadrature-and-magnetic-encoders.md",
@@ -786,6 +845,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "03.2",
     "title": "3-Phase Brushless Motors, Pole Pairs and 90-Degree Electrical Torque Lead",
+    "goal": "Convert mechanical shaft angle $\\theta_m$ into **electrical angle** $\\theta_e = N_p \\theta_m$ for a brushless motor with $N_p$ **pole pairs**, and compute the balanced 3-phase sinusoidal coil voltages $(v_a, v_b, v_c)$ that keep the stator magnetic field locked **$90^\\circ$ electrical ahead** of the rotor magnets for smooth maximum torque.",
     "track": "03-sensors-and-actuators",
     "path": "03-sensors-and-actuators/03.2-three-phase-bldc-and-electrical-angle.md",
     "readerPath": "03-sensors-and-actuators/03.2-three-phase-bldc-and-electrical-angle.md",
@@ -810,6 +870,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "03.3",
     "title": "Track 02 + 03 Integration Micro-Lab \u2014 Read Dual Encoders to Compute 2-Link End-Effector Position",
+    "goal": "In this **20-minute Zero-New-Theory Integration Micro-Lab**, combine **Track 02 (`Lesson 02.2`: 2-Link Forward Kinematics)** and **Track 03 (`Lesson 03.1`: Quadrature & `AS5600` Magnetic Encoders)** to read raw integer counts from shoulder and elbow encoders, compute the live `(x, y)` end-effector coordinates of our recurring 2-DOF robot arm, and diagnose two classic `R4` sensor-to-kinematics faults (a $1\\times$ vs. $4\\times$ CPR mismatch and an inverted encoder sign).",
     "track": "03-sensors-and-actuators",
     "path": "03-sensors-and-actuators/03.3-encoder-to-fk-integration-microlab.md",
     "readerPath": "03-sensors-and-actuators/03.3-encoder-to-fk-integration-microlab.md",
@@ -834,6 +895,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "04.1",
     "title": "Fixed-Width C/C++ Types (uint16_t), volatile ISR Flags and 1 kHz Timer Loops",
+    "goal": "Bridge from Python to microcontroller C/C++ by computing roll-over-safe tick differences with **fixed-width integers (`uint16_t`)** and replacing blocking `delay()` loops with a deterministic **$1\\text{ kHz}$ hardware timer Interrupt Service Routine (`ISR`)** using a `volatile` flag.",
     "track": "04-embedded-and-realtime",
     "path": "04-embedded-and-realtime/04.1-c-types-and-hardware-timer-isr.md",
     "readerPath": "04-embedded-and-realtime/04.1-c-types-and-hardware-timer-isr.md",
@@ -858,6 +920,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "04.2",
     "title": "Packed Binary Telemetry Structs (struct.pack), CRC-8 & UART Bandwidth Budgets",
+    "goal": "Pack and unpack a compact **binary telemetry struct** between microcontroller C/C++ (`struct __attribute__((packed))`) and Python (`struct.pack` / `struct.unpack`), verify **8N1 UART serial bandwidth budgets** ($10\\text{ bits/byte}$), and protect each frame with a **`0xAA` sync byte** and a true polynomial **CRC-8 (`0x07`)** checksum that catches multi-bit errors that fool a simple XOR checksum.",
     "track": "04-embedded-and-realtime",
     "path": "04-embedded-and-realtime/04.2-packed-structs-and-crc8-telemetry.md",
     "readerPath": "04-embedded-and-realtime/04.2-packed-structs-and-crc8-telemetry.md",
@@ -882,6 +945,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "04.3",
     "title": "Python-to-C Bridge (Part 3) \u2014 C Structs as Labeled Boxes & Pointers as Box Addresses",
+    "goal": "Complete our 3-part **Python-to-C Bridge** (`04.1` Fixed-Width Ints + Overflow $\\to$ `04.2` Bitwise Masks + CRC-8 $\\to$ `04.3` Structs + Pointers) by using only two mental pictures: **a C `struct` is a labeled box** that holds a joint's variables together, and **a pointer (`JointState *p = &joint`) is the memory address of that box** so a function can update the original box in place (`p->pos_rad = ...`) without copying it\u2014and diagnose the classic `R4` pass-by-value bug where a C function modifies a temporary copy that vanishes upon return.",
     "track": "04-embedded-and-realtime",
     "path": "04-embedded-and-realtime/04.3-structs-and-pointers-labeled-boxes.md",
     "readerPath": "04-embedded-and-realtime/04.3-structs-and-pointers-labeled-boxes.md",
@@ -906,6 +970,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "05.1",
     "title": "PID Virtual Spring-Damper Control and Integrator Anti-Windup Clamping",
+    "goal": "Simulate a closed-loop **PID controller** on a gravity-loaded robot arm joint, connecting **Proportional ($K_p$)** and **Derivative ($K_d$)** gains to a physical virtual spring and viscous damper, and adding **anti-windup clamping** to the **Integral ($K_i$)** accumulator so actuator saturation never causes violent windup overshoot.",
     "track": "05-control-and-estimation",
     "path": "05-control-and-estimation/05.1-pid-virtual-spring-damper-and-anti-windup.md",
     "readerPath": "05-control-and-estimation/05.1-pid-virtual-spring-damper-and-anti-windup.md",
@@ -930,6 +995,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "05.2",
     "title": "Gyroscope Drift, Accelerometer Tilt (atan2) and 2-Line Complementary IMU Fusion",
+    "goal": "Compare fast but drifting **gyroscope integration** against drift-free but vibration-noisy **accelerometer gravity tilt (`atan2`)**, and fuse both in 2 lines of Python using a **complementary IMU filter** ($\\hat{\\theta}_k = \\alpha(\\hat{\\theta}_{k-1} + \\omega_{\\text{gyro}}\\Delta t) + (1-\\alpha)\\theta_{\\text{acc},k}$).",
     "track": "05-control-and-estimation",
     "path": "05-control-and-estimation/05.2-complementary-imu-sensor-fusion.md",
     "readerPath": "05-control-and-estimation/05.2-complementary-imu-sensor-fusion.md",
@@ -954,6 +1020,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "06.1",
     "title": "Rest-to-Rest Cubic Polynomial Trajectories and Joint-Space Gravity Feedforward",
+    "goal": "Replace sudden step commands with a smooth **rest-to-rest cubic polynomial trajectory** ($q_d(t) = q_0 + (3s^2 - 2s^3)(q_f - q_0)$, $s = t/T$) whose velocity starts and ends at zero, and combine a soft PD spring-damper with **gravity feedforward** ($\\tau_{\\text{ff}} = m g L \\cos q$) for safe, human-friendly **joint-space compliant control**.",
     "track": "06-robotics-and-autonomy",
     "path": "06-robotics-and-autonomy/06.1-cubic-trajectories-and-compliant-joints.md",
     "readerPath": "06-robotics-and-autonomy/06.1-cubic-trajectories-and-compliant-joints.md",
@@ -978,6 +1045,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "07.1",
     "title": "10-Step Smoke-Free Hardware Bring-Up and Single-Tone Sine-Sweep System Identification",
+    "goal": "Verify encoder-to-actuator sign matching and current-limited power-on safety using the **10-step smoke-free hardware bring-up protocol**, and extract a motor joint's true **viscous friction ($b$)** and **rotational inertia ($J$)** from a two-frequency **sine-sweep system identification** experiment.",
     "track": "07-systems-hil-and-production",
     "path": "07-systems-hil-and-production/07.1-safe-bringup-and-sine-sweep-sysid.md",
     "readerPath": "07-systems-hil-and-production/07.1-safe-bringup-and-sine-sweep-sysid.md",
@@ -1002,6 +1070,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "08.1",
     "title": "Tier 1 Boss Milestone \u2014 1 kHz 2-DOF Compliant Arm Plant, Figure-8 PD Control & CRC-8 Telemetry",
+    "goal": "Integrate every skill from **Track P**, **Stage 0**, and **Pass 1 (`Tracks 00\u201307`)** into a complete, self-verifying **1,000-step ($1\\text{ kHz}$, $\\Delta t = 0.001\\text{ s}$) time-stepped 2-DOF Planar Compliant Robot Arm** simulation that solves Law-of-Cosines Inverse Kinematics (`Lesson 02.3`), drives a physical 2-link plant with joint inertia, damping, gravity loading, and a $0.4\\text{\u2013}0.6\\text{ s}$ payload disturbance using closed-loop **PD + 2-link gravity feedforward** (`Lesson 06.1`), measures **both kinematic IK$\\to$FK round-trip error and actual dynamic arm tip tracking error**, and verifies **20-byte polynomial CRC-8 (`0x07`) telemetry & 8N1 UART ring-buffer bandwidth** (`Lesson 04.2`).",
     "track": "08-capstone-projects",
     "path": "08-capstone-projects/08.1-tier1-2dof-compliant-arm-capstone.md",
     "readerPath": "08-capstone-projects/08.1-tier1-2dof-compliant-arm-capstone.md",
@@ -1026,6 +1095,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.00-foundations.T1.00a",
     "title": "Variables, loops, functions and the traceback that names its own exception - graded exercise",
+    "goal": "Variables, loops, functions and the traceback that names its own exception",
     "track": "modules",
     "path": "exercises/00-foundations.T1.00a/solution.py",
     "readerPath": "modules/00-foundations.T1.00a.md",
@@ -1048,6 +1118,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.00-foundations.T1.00b",
     "title": "A recorded window: timestamps, calibrated traces, RMS error and the Git lookup - graded exercise",
+    "goal": "A recorded window: timestamps, calibrated traces, RMS error and the Git lookup",
     "track": "modules",
     "path": "exercises/00-foundations.T1.00b/solution.py",
     "readerPath": "modules/00-foundations.T1.00b.md",
@@ -1070,6 +1141,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.00-foundations.T1.00c",
     "title": "SI prefixes, the RPM-to-rad/s factor and the unit algebra of a PCB trace - graded exercise",
+    "goal": "SI prefixes, the RPM-to-rad/s factor and the unit algebra of a PCB trace",
     "track": "modules",
     "path": "exercises/00-foundations.T1.00c/solution.py",
     "readerPath": "modules/00-foundations.T1.00c.md",
@@ -1092,6 +1164,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.00-foundations.T1.00d",
     "title": "The calibration line, the unit circle and the four-quadrant heading - graded exercise",
+    "goal": "The calibration line, the unit circle and the four-quadrant heading",
     "track": "modules",
     "path": "exercises/00-foundations.T1.00d/solution.py",
     "readerPath": "modules/00-foundations.T1.00d.md",
@@ -1114,6 +1187,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.00-foundations.T1.00e",
     "title": "Symplectic Euler on a spring-mass-damper, energy and lever torque - graded exercise",
+    "goal": "Symplectic Euler on a spring-mass-damper, energy and lever torque",
     "track": "modules",
     "path": "exercises/00-foundations.T1.00e/solution.py",
     "readerPath": "modules/00-foundations.T1.00e.md",
@@ -1136,6 +1210,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.00-foundations.T2.00a",
     "title": "Encoder velocity and the running integral that inverts it - graded exercise",
+    "goal": "Encoder velocity and the running integral that inverts it",
     "track": "modules",
     "path": "exercises/00-foundations.T2.00a/solution.py",
     "readerPath": "modules/00-foundations.T2.00a.md",
@@ -1158,6 +1233,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.00-foundations.T2.00b",
     "title": "Dot and cross products, independence, and change of basis - graded exercise",
+    "goal": "Dot and cross products, independence, and change of basis",
     "track": "modules",
     "path": "exercises/00-foundations.T2.00b/solution.py",
     "readerPath": "modules/00-foundations.T2.00b.md",
@@ -1180,6 +1256,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.00-foundations.T2.00c",
     "title": "First- and second-order response, damping and the stability limit - graded exercise",
+    "goal": "First- and second-order response, damping and the stability limit",
     "track": "modules",
     "path": "exercises/00-foundations.T2.00c/solution.py",
     "readerPath": "modules/00-foundations.T2.00c.md",
@@ -1202,6 +1279,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.00-foundations.T2.00d",
     "title": "Complex numbers, Euler's formula and phasor sums - graded exercise",
+    "goal": "Complex numbers, Euler's formula and phasor sums",
     "track": "modules",
     "path": "exercises/00-foundations.T2.00d/solution.py",
     "readerPath": "modules/00-foundations.T2.00d.md",
@@ -1224,6 +1302,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.00-foundations.T2.00e",
     "title": "State space, poles and the two discretisations - graded exercise",
+    "goal": "State space, poles and the two discretisations",
     "track": "modules",
     "path": "exercises/00-foundations.T2.00e/solution.py",
     "readerPath": "modules/00-foundations.T2.00e.md",
@@ -1246,6 +1325,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.00-foundations.T2.00f",
     "title": "Sampling, the Nyquist limit and aliasing - graded exercise",
+    "goal": "Sampling, the Nyquist limit and aliasing",
     "track": "modules",
     "path": "exercises/00-foundations.T2.00f/solution.py",
     "readerPath": "modules/00-foundations.T2.00f.md",
@@ -1268,6 +1348,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.00-foundations.T2.00g",
     "title": "Matrix-vector multiplication and the one-step state update - graded exercise",
+    "goal": "Matrix-vector multiplication and the one-step state update",
     "track": "modules",
     "path": "exercises/00-foundations.T2.00g/solution.py",
     "readerPath": "modules/00-foundations.T2.00g.md",
@@ -1290,6 +1371,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.00-foundations.T2.00h",
     "title": "Winding impedance, transfer functions, decibels and the resonance peak - graded exercise",
+    "goal": "Winding impedance, transfer functions, decibels and the resonance peak",
     "track": "modules",
     "path": "exercises/00-foundations.T2.00h/solution.py",
     "readerPath": "modules/00-foundations.T2.00h.md",
@@ -1312,6 +1394,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.00-foundations.T2.00i",
     "title": "Pre-warped Tustin notches - graded exercise",
+    "goal": "Pre-warped Tustin notches",
     "track": "modules",
     "path": "exercises/00-foundations.T2.00i/solution.py",
     "readerPath": "modules/00-foundations.T2.00i.md",
@@ -1334,6 +1417,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.00-foundations.T2.00j",
     "title": "Gaussian covariance and the predict step - graded exercise",
+    "goal": "Gaussian covariance and the predict step",
     "track": "modules",
     "path": "exercises/00-foundations.T2.00j/solution.py",
     "readerPath": "modules/00-foundations.T2.00j.md",
@@ -1356,6 +1440,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.00-foundations.T3.00a",
     "title": "The hat map, Rodrigues' formula and the power balance - graded exercise",
+    "goal": "The hat map, Rodrigues' formula and the power balance",
     "track": "modules",
     "path": "exercises/00-foundations.T3.00a/solution.py",
     "readerPath": "modules/00-foundations.T3.00a.md",
@@ -1378,6 +1463,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.01-electronics.T1.01a",
     "title": "Ohm's law, loaded voltage dividers, Joule heating and the LED series resistor - graded exercise",
+    "goal": "Ohm's law, loaded voltage dividers, Joule heating and the LED series resistor",
     "track": "modules",
     "path": "exercises/01-electronics.T1.01a/solution.py",
     "readerPath": "modules/01-electronics.T1.01a.md",
@@ -1400,6 +1486,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.01-electronics.T1.01b",
     "title": "MOSFET conduction loss, PWM duty, shoot-through and the H-bridge - graded exercise",
+    "goal": "MOSFET conduction loss, PWM duty, shoot-through and the H-bridge",
     "track": "modules",
     "path": "exercises/01-electronics.T1.01b/solution.py",
     "readerPath": "modules/01-electronics.T1.01b.md",
@@ -1422,6 +1509,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.01-electronics.T1.01c",
     "title": "Current-limited bench supply foldback, DMM modes, breadboard heat and the short check - graded exercise",
+    "goal": "Current-limited bench supply foldback, DMM modes, breadboard heat and the short check",
     "track": "modules",
     "path": "exercises/01-electronics.T1.01c/solution.py",
     "readerPath": "modules/01-electronics.T1.01c.md",
@@ -1444,6 +1532,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.01-electronics.T1.01d",
     "title": "RC time constants, the -3 dB corner, bulk decoupling, stored energy and inductive flyback - graded exercise",
+    "goal": "RC time constants, the -3 dB corner, bulk decoupling, stored energy and inductive flyback",
     "track": "modules",
     "path": "exercises/01-electronics.T1.01d/solution.py",
     "readerPath": "modules/01-electronics.T1.01d.md",
@@ -1466,6 +1555,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.01-electronics.T2.01a",
     "title": "The bidirectional shunt stage, its clipping current, Kelvin gain error and CMRR - graded exercise",
+    "goal": "The bidirectional shunt stage, its clipping current, Kelvin gain error and CMRR",
     "track": "modules",
     "path": "exercises/01-electronics.T2.01a/solution.py",
     "readerPath": "modules/01-electronics.T2.01a.md",
@@ -1488,6 +1578,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.01-electronics.T2.01b",
     "title": "Parasitic loop inductance, bootstrap gate drive and the 48 V pre-charge - graded exercise",
+    "goal": "Parasitic loop inductance, bootstrap gate drive and the 48 V pre-charge",
     "track": "modules",
     "path": "exercises/01-electronics.T2.01b/solution.py",
     "readerPath": "modules/01-electronics.T2.01b.md",
@@ -1510,6 +1601,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.01-electronics.T3.01a",
     "title": "Flux-cancelling loop inductance, Bessel group delay, the SAR charge bucket and the Cauer thermal ladder - graded exercise",
+    "goal": "Flux-cancelling loop inductance, Bessel group delay, the SAR charge bucket and the Cauer thermal ladder",
     "track": "modules",
     "path": "exercises/01-electronics.T3.01a/solution.py",
     "readerPath": "modules/01-electronics.T3.01a.md",
@@ -1532,6 +1624,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.02-mechanics.T1.02a",
     "title": "Lever-arm gravity torque, static balance and the gear stage - graded exercise",
+    "goal": "Lever-arm gravity torque, static balance and the gear stage",
     "track": "modules",
     "path": "exercises/02-mechanics.T1.02a/solution.py",
     "readerPath": "modules/02-mechanics.T1.02a.md",
@@ -1554,6 +1647,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.02-mechanics.T2.02a",
     "title": "Jacobians, J^T forces and gravity from CoM Jacobians - graded exercise",
+    "goal": "Jacobians, J^T forces and gravity from CoM Jacobians",
     "track": "modules",
     "path": "exercises/02-mechanics.T2.02a/solution.py",
     "readerPath": "modules/02-mechanics.T2.02a.md",
@@ -1576,6 +1670,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.02-mechanics.T3.02a",
     "title": "Screw axes, the notch flexure and the two-pass Newton-Euler recursion - graded exercise",
+    "goal": "Screw axes, the notch flexure and the two-pass Newton-Euler recursion",
     "track": "modules",
     "path": "exercises/02-mechanics.T3.02a/solution.py",
     "readerPath": "modules/02-mechanics.T3.02a.md",
@@ -1598,6 +1693,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.03-sensors.T1.03a",
     "title": "Back-EMF, pole pairs and the quadrature encoder - graded exercise",
+    "goal": "Back-EMF, pole pairs and the quadrature encoder",
     "track": "modules",
     "path": "exercises/03-sensors.T1.03a/solution.py",
     "readerPath": "modules/03-sensors.T1.03a.md",
@@ -1620,6 +1716,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.03-sensors.T2.03a",
     "title": "Clarke, Park, a tracking PLL and the averaging law - graded exercise",
+    "goal": "Clarke, Park, a tracking PLL and the averaging law",
     "track": "modules",
     "path": "exercises/03-sensors.T2.03a/solution.py",
     "readerPath": "modules/03-sensors.T2.03a.md",
@@ -1642,6 +1739,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.03-sensors.T3.03a",
     "title": "Rotating-frame decoupling, Min-Max SVPWM and the Fourier encoder fit - graded exercise",
+    "goal": "Rotating-frame decoupling, Min-Max SVPWM and the Fourier encoder fit",
     "track": "modules",
     "path": "exercises/03-sensors.T3.03a/solution.py",
     "readerPath": "modules/03-sensors.T3.03a.md",
@@ -1664,6 +1762,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.04-embedded.T1.04a",
     "title": "Fixed-width integers, bit masks and the 8-byte telemetry frame - graded exercise",
+    "goal": "Fixed-width integers, bit masks and the 8-byte telemetry frame",
     "track": "modules",
     "path": "exercises/04-embedded.T1.04a/solution.py",
     "readerPath": "modules/04-embedded.T1.04a.md",
@@ -1686,6 +1785,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.04-embedded.T1.04b",
     "title": "The non-blocking tick scheduler, the ISR budget and the latched fault state - graded exercise",
+    "goal": "The non-blocking tick scheduler, the ISR budget and the latched fault state",
     "track": "modules",
     "path": "exercises/04-embedded.T1.04b/solution.py",
     "readerPath": "modules/04-embedded.T1.04b.md",
@@ -1708,6 +1808,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.04-embedded.T2.04a",
     "title": "SPI frame time, polled-versus-DMA CPU load and the ping-pong half an ISR may read - graded exercise",
+    "goal": "SPI frame time, polled-versus-DMA CPU load and the ping-pong half an ISR may read",
     "track": "modules",
     "path": "exercises/04-embedded.T2.04a/solution.py",
     "readerPath": "modules/04-embedded.T2.04a.md",
@@ -1730,6 +1831,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.04-embedded.T2.04b",
     "title": "RTOS utilisation, priority inheritance, CAN arbitration and the MIT fixed-point frame - graded exercise",
+    "goal": "RTOS utilisation, priority inheritance, CAN arbitration and the MIT fixed-point frame",
     "track": "modules",
     "path": "exercises/04-embedded.T2.04b/solution.py",
     "readerPath": "modules/04-embedded.T2.04b.md",
@@ -1752,6 +1854,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.04-embedded.T2.04c",
     "title": "Zephyr static RAM, devicetree binding, priority order and k_mutex inheritance - graded exercise",
+    "goal": "Zephyr static RAM, devicetree binding, priority order and k_mutex inheritance",
     "track": "modules",
     "path": "exercises/04-embedded.T2.04c/solution.py",
     "readerPath": "modules/04-embedded.T2.04c.md",
@@ -1774,6 +1877,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.04-embedded.T2.04d",
     "title": "Wire budget, executor handles, the spin WCET and the NTP offset - graded exercise",
+    "goal": "Wire budget, executor handles, the spin WCET and the NTP offset",
     "track": "modules",
     "path": "exercises/04-embedded.T2.04d/solution.py",
     "readerPath": "modules/04-embedded.T2.04d.md",
@@ -1796,6 +1900,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.04-embedded.T3.04a",
     "title": "Center-aligned ARR, the Q1.31 CORDIC word and a wait-free seqlock - graded exercise",
+    "goal": "Center-aligned ARR, the Q1.31 CORDIC word and a wait-free seqlock",
     "track": "modules",
     "path": "exercises/04-embedded.T3.04a/solution.py",
     "readerPath": "modules/04-embedded.T3.04a.md",
@@ -1818,6 +1923,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.05-control.T1.05a",
     "title": "PID as a virtual spring, damper and bias, with saturation and anti-windup - graded exercise",
+    "goal": "PID as a virtual spring, damper and bias, with saturation and anti-windup",
     "track": "modules",
     "path": "exercises/05-control.T1.05a/solution.py",
     "readerPath": "modules/05-control.T1.05a.md",
@@ -1840,6 +1946,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.05-control.T2.05a",
     "title": "Margins, sensitivity, an observer and an LQR gain - graded exercise",
+    "goal": "Margins, sensitivity, an observer and an LQR gain",
     "track": "modules",
     "path": "exercises/05-control.T2.05a/solution.py",
     "readerPath": "modules/05-control.T2.05a.md",
@@ -1862,6 +1969,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.05-control.T3.05a",
     "title": "Joseph-form covariance update and NEES consistency - graded exercise",
+    "goal": "Joseph-form covariance update and NEES consistency",
     "track": "modules",
     "path": "exercises/05-control.T3.05a/solution.py",
     "readerPath": "modules/05-control.T3.05a.md",
@@ -1884,6 +1992,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.05-control.T3.05b",
     "title": "Tangent-space error injection on SO(3) and the ESKF reset - graded exercise",
+    "goal": "Tangent-space error injection on SO(3) and the ESKF reset",
     "track": "modules",
     "path": "exercises/05-control.T3.05b/solution.py",
     "readerPath": "modules/05-control.T3.05b.md",
@@ -1906,6 +2015,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.05-control.T3.05c",
     "title": "Control Barrier Function QP safety filter - graded exercise",
+    "goal": "Control Barrier Function QP safety filter",
     "track": "modules",
     "path": "exercises/05-control.T3.05c/solution.py",
     "readerPath": "modules/05-control.T3.05c.md",
@@ -1928,6 +2038,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.06-robotics.T1.06a",
     "title": "Rest-to-rest cubic trajectory, actuator duration budget and the virtual spring-damper - graded exercise",
+    "goal": "Rest-to-rest cubic trajectory, actuator duration budget and the virtual spring-damper",
     "track": "modules",
     "path": "exercises/06-robotics.T1.06a/solution.py",
     "readerPath": "modules/06-robotics.T1.06a.md",
@@ -1950,6 +2061,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.06-robotics.T2.06a",
     "title": "QoS compatibility, a tf2 chain, its inverse and the buffer - graded exercise",
+    "goal": "QoS compatibility, a tf2 chain, its inverse and the buffer",
     "track": "modules",
     "path": "exercises/06-robotics.T2.06a/solution.py",
     "readerPath": "modules/06-robotics.T2.06a.md",
@@ -1972,6 +2084,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.06-robotics.T2.06b",
     "title": "Simulated clock, recording budget, replay scaling and decimation - graded exercise",
+    "goal": "Simulated clock, recording budget, replay scaling and decimation",
     "track": "modules",
     "path": "exercises/06-robotics.T2.06b/solution.py",
     "readerPath": "modules/06-robotics.T2.06b.md",
@@ -1994,6 +2107,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.06-robotics.T3.06a",
     "title": "MSE, hand-written backpropagation, gradient descent and behaviour cloning - graded exercise",
+    "goal": "MSE, hand-written backpropagation, gradient descent and behaviour cloning",
     "track": "modules",
     "path": "exercises/06-robotics.T3.06a/solution.py",
     "readerPath": "modules/06-robotics.T3.06a.md",
@@ -2016,6 +2130,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.06-robotics.T3.06b",
     "title": "Discounted returns, PPO clipping, temporal ensembling and the safety shield - graded exercise",
+    "goal": "Discounted returns, PPO clipping, temporal ensembling and the safety shield",
     "track": "modules",
     "path": "exercises/06-robotics.T3.06b/solution.py",
     "readerPath": "modules/06-robotics.T3.06b.md",
@@ -2038,6 +2153,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.07-systems.T1.07a",
     "title": "Cyclic PLC scan, series NC E-stop chain, latching state machine and sine-sweep gain/phase - graded exercise",
+    "goal": "Cyclic PLC scan, series NC E-stop chain, latching state machine and sine-sweep gain/phase",
     "track": "modules",
     "path": "exercises/07-systems.T1.07a/solution.py",
     "readerPath": "modules/07-systems.T1.07a.md",
@@ -2060,6 +2176,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.07-systems.T2.07a",
     "title": "Regenerative energy, the chopper bound, the counter and the watchdog - graded exercise",
+    "goal": "Regenerative energy, the chopper bound, the counter and the watchdog",
     "track": "modules",
     "path": "exercises/07-systems.T2.07a/solution.py",
     "readerPath": "modules/07-systems.T2.07a.md",
@@ -2082,6 +2199,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.07-systems.T3.06a",
     "title": "OPC UA PubSub rate, AAS NodeId map, PLd and the Category 3 STO evaluator - graded exercise",
+    "goal": "OPC UA PubSub rate, AAS NodeId map, PLd and the Category 3 STO evaluator",
     "track": "modules",
     "path": "exercises/07-systems.T3.06a/solution.py",
     "readerPath": "modules/07-systems.T3.06a.md",
@@ -2104,6 +2222,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
     "id": "EX.08-capstones.T3.07a",
     "title": "RSS spatial error budget, end-to-end latency as phase margin, and the five-domain bring-up sign-off - graded exercise",
+    "goal": "RSS spatial error budget, end-to-end latency as phase margin, and the five-domain bring-up sign-off",
     "track": "modules",
     "path": "exercises/08-capstones.T3.07a/solution.py",
     "readerPath": "modules/08-capstones.T3.07a.md",

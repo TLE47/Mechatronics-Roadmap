@@ -24,7 +24,7 @@
 | **3 · derive** | [after the practice pass](#tier-3-advanced--production), same step order | [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) | 5 |
 | **outside both routes** | [optional](#tier-3-advanced--production), graded, never required | — | — |
 
-**Step 3 costs 55-61 focused hours in total** - 4-10 of lessons, 16.5 of arm modules, 29.5 of Depth 2 practice, 5 of Depth 3 derivation - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
+**Step 3 costs 55-61 focused hours in total** - 4-10 of lessons, 16.5 of arm modules, 29.5 of Depth 2 practice, 5 of Depth 3 derivation - out of a **201.1-292 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
 **Next:** Step 4 · Power the joint: electronics → [Track 01](../01-electronics-and-power/README.md) (26.5-34 focused hours).
 <!-- /step-index -->
