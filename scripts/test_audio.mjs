@@ -15,6 +15,7 @@
  */
 
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {
   CLICK_PEAK,
   BED_TRIM,
@@ -24,6 +25,7 @@ import {
   DUCK_GAIN,
   FOCUS_GAIN,
   GUST_GAIN,
+  MAX_TAPE_NODES,
   MAX_VOICES,
   SoundEngine,
   UI_GAP_MS,
@@ -31,7 +33,16 @@ import {
   handleSoundMessage,
 } from '../app/src/audio/engine.ts';
 import { ROOM_LAYERS, ROOM_TRIM, RUN_IN_FOCUS, loudestLayer, roomMix } from '../app/src/audio/ambience.ts';
-import { MUSIC_BEDS, bedCredit, bedFor } from '../app/src/audio/musicCatalogue.ts';
+import {
+  DRONE_ID,
+  MUSIC_CATEGORIES,
+  MUSIC_TAPES,
+  categoryOf,
+  isTapeId,
+  tapesIn,
+  tapeById,
+  tapeCredit,
+} from '../app/src/audio/musicCatalogue.ts';
 import { panFromX, roleForControl } from '../app/src/audio/clickMap.ts';
 import {
   DEFAULT_SOUND_PREFS,
@@ -184,8 +195,8 @@ function engineFor(startAt = 0, options = {}) {
     // The recorded loop is injected, never fetched: these checks are about the graph, and a Node
     // test must never reach the network. `null` is the file that could not be had.
     loadRain: options.loadRain ?? (async () => null),
-    // The beds are injected too: `null` is the fallback the drone already covers.
-    loadMusic: options.loadMusic ?? (async () => ({ home: null, focus: null })),
+    // The tapes are injected too: `null` is the fallback the drone already covers.
+    loadTape: options.loadTape ?? (async () => null),
   });
   return {
     context,
@@ -272,15 +283,22 @@ await check('levels are clamped to 0..1 and rounded to what the slider can show'
     room: DEFAULT_SOUND_PREFS.room,
     sfx: 0,
     clicks: true,
-    beds: 'lofi',
+    tape: DEFAULT_SOUND_PREFS.tape,
   });
   // A record written before the Room fader existed keeps its choice and gains the default.
   const old = parseSoundPrefs('{"on":true,"music":0.3,"sfx":0.5}');
   assert.equal(old.room, DEFAULT_SOUND_PREFS.room, 'an old record must not lose sound over a new fader');
   assert.equal(old.clicks, true, 'an old record keeps the interface clicks it always had');
-  assert.equal(old.beds, 'lofi', 'and gets today\'s music');
-  // A hostile choice of bed falls back rather than reaching the engine as an unknown string.
-  assert.equal(parseSoundPrefs('{"beds":"kazoo"}').beds, 'lofi');
+  assert.equal(old.tape, 'lab-night', 'and gets today\'s first tape');
+  // The pre-tape field migrates both ways it could have been written: the drone stays the drone, and
+  // "lo-fi" was the recording this catalogue still opens with.
+  assert.equal(parseSoundPrefs('{"beds":"synth"}').tape, 'drone');
+  assert.equal(parseSoundPrefs('{"beds":"lofi"}').tape, 'lab-night');
+  assert.equal(parseSoundPrefs('{"tape":"winter-blues"}').tape, 'winter-blues');
+  // A hostile or stale id falls back rather than reaching the engine as an unknown string.
+  assert.equal(parseSoundPrefs('{"beds":"kazoo"}').tape, 'lab-night');
+  assert.equal(parseSoundPrefs('{"tape":"kazoo"}').tape, 'lab-night');
+  assert.equal(parseSoundPrefs('{"tape":"removed-in-a-later-release"}').tape, 'lab-night');
   assert.equal(parseSoundPrefs('{"clicks":"no"}').clicks, true, 'only the literal false switches clicks off');
   assert.equal(parseSoundPrefs('{"clicks":false}').clicks, false);
 });
@@ -297,7 +315,7 @@ await check('the choice round-trips and every control hears it', () => {
     room: DEFAULT_SOUND_PREFS.room,
     sfx: DEFAULT_SOUND_PREFS.sfx,
     clicks: true,
-    beds: 'lofi',
+    tape: DEFAULT_SOUND_PREFS.tape,
   });
   assert.deepEqual(readSoundPrefs(), written, 'the store must hold what the control returned');
   assert.equal(seen.length, 1);
@@ -310,15 +328,16 @@ await check('the choice round-trips and every control hears it', () => {
     room: DEFAULT_SOUND_PREFS.room,
     sfx: 0.1,
     clicks: true,
-    beds: 'lofi',
+    tape: DEFAULT_SOUND_PREFS.tape,
   });
-  // The two switches are part of the choice, and are never clamped or coerced by a level patch.
-  const switched = writeSoundPrefs({ clicks: false, beds: 'synth', music: 0.2 });
+  // The switch and the tape are part of the choice, and are never clamped or coerced by a level patch.
+  const switched = writeSoundPrefs({ clicks: false, tape: 'neon-stage', music: 0.2 });
   assert.equal(switched.clicks, false);
-  assert.equal(switched.beds, 'synth');
+  assert.equal(switched.tape, 'neon-stage');
   assert.equal(switched.music, 0.2);
+  assert.equal(writeSoundPrefs({ tape: 'not-a-tape' }).tape, 'neon-stage', 'an unknown id must not replace a real one');
   // Back to the record the next assertion is about, so the switches are the only thing that moved.
-  writeSoundPrefs({ clicks: true, beds: 'lofi', music: 0.4 });
+  writeSoundPrefs({ clicks: true, tape: DEFAULT_SOUND_PREFS.tape, music: 0.4 });
   assert.deepEqual(cachedSoundPrefs(), after);
 });
 
@@ -709,90 +728,169 @@ await check('the bus carries a click with its position, and clamps what it is gi
 
 // ---- the music ------------------------------------------------------------------------------
 
-await check('the catalogue names two tracks, their scenes and their licence', () => {
-  assert.equal(MUSIC_BEDS.length, 2);
-  assert.deepEqual(
-    MUSIC_BEDS.map((bed) => [bed.id, bed.scene]),
-    [
-      ['lab-night', 'home'],
-      ['focus-current', 'focus'],
-    ]
-  );
-  for (const bed of MUSIC_BEDS) {
-    assert.match(bed.licence, /CC0 1\.0|public domain/i, `${bed.id} must be usable without permission`);
-    assert.match(bed.page, /^https:\/\//, `${bed.id} must point at the page that states the licence`);
-    assert.ok(bed.title && bed.artist, `${bed.id} must be creditable`);
+const MUSIC_DIR = new URL('../app/src/audio/assets/music/', import.meta.url);
+
+await check('the catalogue names eight tapes in six categories, each with a file and a licence', () => {
+  assert.equal(MUSIC_TAPES.length, 8);
+  const ids = new Set();
+  for (const tape of MUSIC_TAPES) {
+    assert.ok(!ids.has(tape.id), `${tape.id} must be unique`);
+    ids.add(tape.id);
+    assert.ok(
+      MUSIC_CATEGORIES.some((entry) => entry.id === tape.category),
+      `${tape.id} is in a category the panel draws`
+    );
+    assert.ok(tape.seconds > 0 && tape.seconds <= 60, `${tape.id} must be a loop a learner can sit through`);
+    assert.match(tape.page, /^https:\/\//, `${tape.id} must point at its page or its generator`);
+    assert.ok(tape.title && tape.artist, `${tape.id} must be creditable`);
+    if (tape.composed) {
+      // Calling a synth loop a licensed song would be a lie the learner cannot check.
+      assert.match(tape.licence, /this repository/i, `${tape.id} must say it was written here`);
+      assert.equal(tape.artist, 'composed by this repository');
+    } else {
+      assert.match(tape.licence, /CC0 1\.0|public domain/i, `${tape.id} must be usable without permission`);
+    }
   }
-  assert.equal(bedFor('home').id, 'lab-night');
-  assert.equal(bedFor('focus').id, 'focus-current');
-  const credit = bedCredit(bedFor('home'));
+  // Every category is reachable: the panel iterates the category list, so a tape in an unlisted one
+  // would be in the catalogue and unpickable.
+  for (const category of MUSIC_CATEGORIES) {
+    assert.ok(tapesIn(category.id).length >= 1, `${category.id} must hold a tape`);
+  }
+  assert.equal(new Set(MUSIC_TAPES.map((tape) => tape.category)).size, MUSIC_CATEGORIES.length);
+  // The catalogue and the files are one fact, checked both ways: a missing file is a drone the learner
+  // did not ask for, and an orphan file is bytes in every build with no way to hear them.
+  const files = fs
+    .readdirSync(MUSIC_DIR)
+    .filter((name) => name.endsWith('.m4a'))
+    .map((name) => name.replace(/\.m4a$/, ''))
+    .sort();
+  assert.deepEqual([...ids].sort(), files, 'every tape has its file and every file its tape');
+  assert.equal(isTapeId(DRONE_ID), true);
+  assert.equal(isTapeId('lab-night'), true);
+  assert.equal(categoryOf(DRONE_ID), null);
+  assert.equal(categoryOf('winter-blues'), 'jazz');
+  const credit = tapeCredit(tapeById('lab-night'));
   assert.match(credit, /Snow Drift/);
-  assert.match(credit, /holiznacc0/);
+  assert.match(credit, /HoliznaCC0/);
   assert.match(credit, /CC0/);
+  assert.match(tapeCredit(tapeById('neon-stage')), /composed by this repository/);
 });
 
 const BED_BUFFER = {
-  numberOfChannels: 2,
+  numberOfChannels: 1,
   length: 48000,
   sampleRate: 48000,
   getChannelData: () => new Float32Array(48000),
 };
 
-await check('the lo-fi beds replace the drone once they decode', async () => {
-  const { context, engine } = engineFor(0, {
-    loadMusic: async () => ({ home: BED_BUFFER, focus: BED_BUFFER }),
-  });
-  await engine.enable({ on: true, music: 0.6, room: 0.5, sfx: 0.8, clicks: true, beds: 'lofi' });
+/** A preference record with one tape, so each engine test says only what it is about. */
+function prefsWith(tape, extra = {}) {
+  return { on: true, music: 0.6, room: 0.5, sfx: 0.8, clicks: true, tape, ...extra };
+}
+
+await check('the chosen tape replaces the drone once it decodes, and a scene change stays on it', async () => {
+  const { context, engine } = engineFor(0, { loadTape: async () => BED_BUFFER });
+  await engine.enable(prefsWith('winter-blues'));
   await engine.whenMusicReady();
   assert.equal(engine.debug().musicSource, 'file');
   const { music, gains } = graph(context);
-  // The two drone beds are built first, the two recorded beds after them; both hang off the music bus.
+  // The two drone beds are built with the graph, the tape after it; all three hang off the music bus.
   const underMusic = gains.filter((node) => node.targets.includes(music));
-  assert.equal(underMusic.length, 4, 'two drone beds and two recorded beds');
-  const [droneHome, droneFocus, fileHome, fileFocus] = underMusic;
-  assert.equal(droneHome.gain.value, 0, 'the drone is silent once a bed is playing');
+  assert.equal(underMusic.length, 3, 'two drone beds and the one chosen tape');
+  const [droneHome, droneFocus, tape] = underMusic;
+  assert.equal(droneHome.gain.value, 0, 'the drone is silent once a tape is playing');
   assert.equal(droneFocus.gain.value, 0);
-  assert.equal(fileHome.gain.value, BED_TRIM, 'and the home bed is at its trim');
-  assert.equal(fileFocus.gain.value, 0, 'only one bed is audible');
+  assert.equal(tape.gain.value, BED_TRIM, 'and the tape is at its trim');
   engine.setScene('focus');
-  assert.equal(fileHome.gain.value, 0);
-  assert.equal(fileFocus.gain.value, BED_TRIM);
-  // Both beds loop: a 60-second cut that stopped would be a minute of silence.
-  const looping = context.nodes.filter((node) => node.kind === 'buffer-source' && node.buffer === BED_BUFFER);
-  assert.equal(looping.length, 2);
-  assert.ok(looping.every((node) => node.loop === true));
+  assert.equal(tape.gain.value, BED_TRIM, 'focus quiets the music through the bus, not by switching tape');
+  const loops = context.nodes.filter((node) => node.kind === 'buffer-source' && node.buffer === BED_BUFFER);
+  assert.equal(loops.length, 1, 'one file, one loop');
+  assert.ok(loops[0].loop, 'a loop that stopped would be a minute of silence');
 });
 
-await check('a bed that cannot be had leaves the drone playing', async () => {
+await check('a tape that cannot be had leaves the drone playing', async () => {
   const { context, engine } = engineFor();
-  await engine.enable({ on: true, music: 0.6, room: 0.5, sfx: 0.8 });
+  await engine.enable(prefsWith('winter-blues'));
   await engine.whenMusicReady();
   assert.equal(engine.debug().musicSource, 'synth');
   const { music, gains } = graph(context);
   const [droneHome] = gains.filter((node) => node.targets.includes(music));
-  assert.equal(droneHome.gain.value, 1, 'the drone is what plays when the files cannot be had');
+  assert.equal(droneHome.gain.value, 1, 'the drone is what plays when the file cannot be had');
   engine.setScene('focus');
   assert.equal(droneHome.gain.value, 0);
 });
 
-await check('choosing the drone never fetches a bed', async () => {
+await check('choosing the drone never fetches a tape, and switching back is one fetch', async () => {
   let fetches = 0;
   const { engine } = engineFor(0, {
-    loadMusic: async () => {
+    loadTape: async () => {
       fetches += 1;
-      return { home: BED_BUFFER, focus: BED_BUFFER };
+      return BED_BUFFER;
     },
   });
-  await engine.enable({ on: true, music: 0.6, room: 0.5, sfx: 0.8, clicks: true, beds: 'synth' });
+  await engine.enable(prefsWith(DRONE_ID));
   await engine.whenMusicReady();
   assert.equal(fetches, 0, 'a learner who chose the drone downloads no music');
   assert.equal(engine.debug().musicSource, 'synth');
-  assert.equal(engine.debug().beds, 'synth');
-  // Switching back is when the fetch happens — not a page load earlier.
-  engine.apply({ on: true, music: 0.6, room: 0.5, sfx: 0.8, clicks: true, beds: 'lofi' });
+  assert.equal(engine.debug().tape, DRONE_ID);
+  // Switching is when the fetch happens — not a page load earlier.
+  engine.apply(prefsWith('winter-blues'));
   await engine.whenMusicReady();
-  assert.equal(fetches, 1, 'choosing the beds fetches them once');
+  assert.equal(fetches, 1, 'choosing a tape fetches that one tape');
   assert.equal(engine.debug().musicSource, 'file');
+  // And back again: the tape is retained at zero gain, so a second visit is not a second download.
+  engine.apply(prefsWith(DRONE_ID));
+  engine.apply(prefsWith('winter-blues'));
+  await engine.whenMusicReady();
+  assert.equal(fetches, 1, 'a tape already decoded is never fetched twice');
+});
+
+await check('music at zero downloads nothing until it is raised', async () => {
+  let fetches = 0;
+  const { engine } = engineFor(0, {
+    loadTape: async () => {
+      fetches += 1;
+      return BED_BUFFER;
+    },
+  });
+  await engine.enable(prefsWith('winter-blues', { music: 0 }));
+  await engine.whenMusicReady();
+  assert.equal(fetches, 0, 'silence is not a reason to ask the network for a file');
+  engine.apply(prefsWith('winter-blues', { music: 0.4 }));
+  await engine.whenMusicReady();
+  assert.equal(fetches, 1, 'the first audible moment is when it loads');
+  assert.equal(engine.debug().musicSource, 'file');
+});
+
+await check('the engine retains a few tapes and never more than its cap', async () => {
+  const { context, engine } = engineFor(0, { loadTape: async () => BED_BUFFER });
+  await engine.enable(prefsWith('lab-night'));
+  await engine.whenMusicReady();
+  for (const id of ['winter-blues', 'city-lights', 'neon-stage']) {
+    engine.apply(prefsWith(id));
+    await engine.whenMusicReady();
+  }
+  const loops = context.nodes.filter((node) => node.kind === 'buffer-source' && node.buffer === BED_BUFFER);
+  assert.equal(loops.length, MAX_TAPE_NODES + 1, 'four tapes were started in all');
+  assert.equal(loops.filter((node) => node.stoppedAt !== null).length, 1, 'the oldest gave its node up');
+  assert.equal(engine.debug().musicSource, 'file');
+});
+
+await check('an abandoned tape failing late does not blank the one playing', async () => {
+  let release;
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  const { engine } = engineFor(0, {
+    loadTape: async (id) => (id === 'lab-night' ? gate : BED_BUFFER),
+  });
+  await engine.enable(prefsWith('lab-night'));
+  engine.apply(prefsWith('paper-lanterns'));
+  await engine.whenMusicReady();
+  assert.equal(engine.debug().musicSource, 'file');
+  release(null);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(engine.debug().musicSource, 'file', 'the 404 for the last choice is not a verdict on this one');
 });
 
 await check('the click switch silences the interface, and a preview still plays', async () => {

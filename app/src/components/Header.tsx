@@ -449,7 +449,9 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Who you are here, and the only control in the header that says something about you: a
               filled chip with the avatar disc, the email (or the words a newcomer needs), and the
               chevron that says a panel opens. The visible text is the accessible name — an aria-label
-              that reworded it would fail WCAG 2.5.3, which this header has been caught by before. */}
+              that reworded it would fail WCAG 2.5.3, which this header has been caught by before.
+              Below `md` the words are screen-reader-only: an email is long and the tray beside it is
+              the phone's one scrolling row, so the avatar stands alone and still has a name. */}
           <button
             onClick={onOpenAccount}
             data-testid="btn-account"
@@ -460,7 +462,7 @@ export const Header: React.FC<HeaderProps> = ({
                 ? `Signed in as ${accountEmail} — progress syncs to your account`
                 : 'Sign in to keep your progress across browsers, or keep it in this one'
             }
-            className="flex max-w-[16rem] shrink-0 cursor-pointer items-center gap-2 rounded-full py-1 pl-1 pr-2.5 text-[12.5px] font-semibold transition-colors hover:brightness-110"
+            className="flex max-w-[16rem] shrink-0 cursor-pointer items-center gap-2 rounded-full py-1 pl-1 pr-1 text-[12.5px] font-semibold transition-colors hover:brightness-110 md:pr-2.5"
             style={{
               border: '1px solid color-mix(in srgb, var(--accent) 40%, var(--border))',
               background: 'color-mix(in srgb, var(--accent-soft) 80%, var(--panel-2))',
@@ -478,8 +480,8 @@ export const Header: React.FC<HeaderProps> = ({
                 <User className="h-3.5 w-3.5" />
               )}
             </span>
-            <span className="truncate">{accountEmail ?? 'Sign in'}</span>
-            <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden="true" />
+            <span className="truncate max-md:sr-only">{accountEmail ?? 'Sign in'}</span>
+            <ChevronRight className="hidden h-3.5 w-3.5 shrink-0 opacity-70 md:block" aria-hidden="true" />
           </button>
         </div>
       </div>

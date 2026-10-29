@@ -19,8 +19,7 @@
  * one a learner can reason about in a second.
  */
 
-/** `lofi` is the two recorded beds; `synth` is the oscillator drone the engine has always had. */
-export type BedChoice = 'lofi' | 'synth';
+import { DEFAULT_TAPE, isTapeId, tapeById } from './musicCatalogue.ts';
 
 export interface SoundPrefs {
   /** The master. Off means nothing is scheduled and the context is suspended. */
@@ -40,12 +39,17 @@ export interface SoundPrefs {
    * would be a hidden way to say the same thing.
    */
   clicks: boolean;
-  /** Which music: the recorded lo-fi beds, or the synthesised drone. */
-  beds: BedChoice;
+  /**
+   * Which music: a tape id from `MUSIC_TAPES`, or `drone` for the two detuned oscillators.
+   *
+   * An id rather than a category, because a category with two tapes must remember which one — and a
+   * catalogue id outlives a panel that groups it differently.
+   */
+  tape: string;
 }
 
 export const SOUND_STORAGE_KEY = 'mechalab_sound_v1';
-export const SOUND_SCHEMA = 'mechalab.sound/1';
+export const SOUND_SCHEMA = 'mechalab.sound/2';
 
 /** What a fresh browser hears: nothing, until the toggle is pressed. */
 export const DEFAULT_SOUND_PREFS: SoundPrefs = {
@@ -54,7 +58,7 @@ export const DEFAULT_SOUND_PREFS: SoundPrefs = {
   room: 0.45,
   sfx: 0.8,
   clicks: true,
-  beds: 'lofi',
+  tape: DEFAULT_TAPE,
 };
 
 /** A level that would not round-trip is a level the slider could never show. */
@@ -81,7 +85,8 @@ function storage(): Storage | null {
 export function parseSoundPrefs(raw: string | null | undefined): SoundPrefs {
   if (!raw) return { ...DEFAULT_SOUND_PREFS };
   try {
-    const parsed = JSON.parse(raw) as Partial<SoundPrefs> | null;
+    // `beds` is the pre-tape field this record may still carry; it is read only to migrate it.
+    const parsed = JSON.parse(raw) as (Partial<SoundPrefs> & { beds?: unknown }) | null;
     if (!parsed || typeof parsed !== 'object') return { ...DEFAULT_SOUND_PREFS };
     return {
       on: parsed.on === true,
@@ -91,11 +96,27 @@ export function parseSoundPrefs(raw: string | null | undefined): SoundPrefs {
       sfx: clampLevel(parsed.sfx, DEFAULT_SOUND_PREFS.sfx),
       // Same for the two switches: an old record keeps its levels and gains today's defaults.
       clicks: parsed.clicks !== false,
-      beds: parsed.beds === 'synth' ? 'synth' : 'lofi',
+      tape: storedTape(parsed.tape, parsed.beds),
     };
   } catch {
     return { ...DEFAULT_SOUND_PREFS };
   }
+}
+
+/**
+ * The tape a stored record names, migrating the pre-tape field.
+ *
+ * Before this field existed the choice was `beds: 'lofi' | 'synth'`. Both old values have an exact
+ * new meaning — `lofi` was these same two recordings, `synth` was the drone — so a learner who chose
+ * the drone in an earlier visit keeps the drone, and everyone else keeps the recording they had.
+ * Anything else is the default tape: a catalogue can lose an id between releases, and a lost id must
+ * cost the choice, never the control.
+ */
+function storedTape(tape: unknown, legacyBeds: unknown): string {
+  if (isTapeId(tape)) return tape;
+  if (legacyBeds === 'synth') return 'drone';
+  // A legacy record named no tape inside lo-fi; the first tape is the one it was hearing.
+  return legacyBeds === 'lofi' ? 'lab-night' : DEFAULT_TAPE;
 }
 
 export function readSoundPrefs(): SoundPrefs {
@@ -138,7 +159,7 @@ export function writeSoundPrefs(patch: Partial<SoundPrefs>): SoundPrefs {
     room: clampLevel(patch.room, base.room),
     sfx: clampLevel(patch.sfx, base.sfx),
     clicks: typeof patch.clicks === 'boolean' ? patch.clicks : base.clicks,
-    beds: patch.beds === 'synth' || patch.beds === 'lofi' ? patch.beds : base.beds,
+    tape: isTapeId(patch.tape) ? patch.tape : base.tape,
   };
   current = next;
   const store = storage();
@@ -166,7 +187,9 @@ export function soundLabel(on: boolean): string {
 
 /** The panel's one-line explanation; the same words in both variants. */
 export function soundHint(on: boolean): string {
-  return on
-    ? 'Lo-fi at the bench, rain on the window, a tick under the controls. Muted in one click.'
-    : 'Nothing plays until you turn this on. The choice is remembered.';
+  if (!on) return 'Nothing plays until you turn this on. The choice is remembered.';
+  const tape = cachedSoundPrefs().tape;
+  return tape === 'drone'
+    ? 'Two detuned oscillators under the room tone, a tick under the controls. Muted in one click.'
+    : `${tapeById(tape).title} under the room tone, a tick under the controls. Muted in one click.`;
 }

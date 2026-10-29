@@ -1,7 +1,15 @@
 import React from 'react';
 import { RotateCcw } from 'lucide-react';
 import type { SoundPrefs } from '../audio/prefs.ts';
-import { MUSIC_BEDS, bedCredit } from '../audio/musicCatalogue.ts';
+import {
+  DRONE_ID,
+  MUSIC_CATEGORIES,
+  TAPE_SCRIPT_PAGE,
+  categoryOf,
+  tapesIn,
+  tapeById,
+  tapeCredit,
+} from '../audio/musicCatalogue.ts';
 import type { UiRole } from '../audio/facade.ts';
 
 /**
@@ -12,9 +20,11 @@ import type { UiRole } from '../audio/facade.ts';
  *
  * 1. **Sound** — the master, and what "on" actually means (nothing autoplays; a remembered on waits
  *    for the next press).
- * 2. **Music** — the bed's level, and *which* bed: the two recorded lo-fi tracks or the synthesised
- *    drone. The line under it says what the run duck does, because a learner who hears the music step
- *    back deserves to know it was the checks.
+ * 2. **Music** — the level, then *which* tape: six categories (Lo-fi, Jazz, Instrumental, Anime, Pop,
+ *    K-pop) plus the drone, and inside a category the tapes it holds. The rows are chips that wrap,
+ *    because a 360 px phone cannot show six side by side and a horizontal scroller would hide three
+ *    of them. The line under the picker says what the run duck does, because a learner who hears the
+ *    music step back deserves to know it was the checks.
  * 3. **Room** — the rain, the floor and the city, as one fader, with what those words mean.
  * 4. **Interface** — the tick level, a switch for whether the interface ticks at all, and previews,
  *    so the decision is made by ear rather than by description.
@@ -42,7 +52,8 @@ interface Props {
   onToggle: () => void;
   onLevel: (key: 'music' | 'room' | 'sfx', value: number) => void;
   onClicks: (on: boolean) => void;
-  onBeds: (beds: 'lofi' | 'synth') => void;
+  /** A catalogue tape id, or `drone`. */
+  onTape: (tape: string) => void;
   onPreview: (role: UiRole) => void;
   onReset: () => void;
 }
@@ -67,11 +78,14 @@ export const SoundSettingsPanel: React.FC<Props> = ({
   onToggle,
   onLevel,
   onClicks,
-  onBeds,
+  onTape,
   onPreview,
   onReset,
 }) => {
   const tid = (base: string) => (testIdSuffix ? `${base}-${testIdSuffix}` : base);
+  const tape = tapeById(prefs.tape);
+  const openCategory = categoryOf(prefs.tape);
+  const openCategoryHint = MUSIC_CATEGORIES.find((entry) => entry.id === openCategory)?.hint ?? null;
   return (
   <div
     id={id}
@@ -144,33 +158,83 @@ export const SoundSettingsPanel: React.FC<Props> = ({
         className="mt-1 w-full cursor-pointer"
         style={{ accentColor: 'var(--accent)' }}
       />
-      <div className="mt-2 flex gap-1.5" role="group" aria-label="Music source">
-        {(['lofi', 'synth'] as const).map((choice) => {
-          const active = prefs.beds === choice;
+      {/* Six categories wrap into two or three rows on a phone; the drone is the last chip, not a
+          seventh category, because it is the one choice that is not a song. */}
+      <div className="mt-2 flex flex-wrap gap-1" role="group" aria-label="Music category">
+        {MUSIC_CATEGORIES.map((entry) => {
+          const active = openCategory === entry.id;
           return (
             <button
-              key={choice}
+              key={entry.id}
               type="button"
               disabled={!prefs.on}
               aria-pressed={active}
-              onClick={() => onBeds(choice)}
-              data-testid={tid(`sound-bed-${choice}`)}
-              className="flex-1 rounded-md border px-2 py-1 text-[11px] font-semibold disabled:opacity-50"
+              onClick={() => {
+                const first = tapesIn(entry.id)[0];
+                if (first) onTape(first.id);
+              }}
+              data-testid={tid(`sound-category-${entry.id}`)}
+              className="min-h-[32px] rounded-full border px-2.5 py-0.5 text-[11px] font-semibold disabled:opacity-50"
               style={{
                 borderColor: active ? 'var(--accent)' : 'var(--border)',
                 backgroundColor: active ? 'var(--accent-soft)' : 'transparent',
                 color: active ? 'var(--accent)' : 'var(--muted)',
               }}
             >
-              {choice === 'lofi' ? 'Lo-fi tapes' : 'Drone'}
+              {entry.label}
             </button>
           );
         })}
+        <button
+          type="button"
+          disabled={!prefs.on}
+          aria-pressed={prefs.tape === DRONE_ID}
+          onClick={() => onTape(DRONE_ID)}
+          data-testid={tid('sound-tape-drone')}
+          className="min-h-[32px] rounded-full border px-2.5 py-0.5 text-[11px] font-semibold disabled:opacity-50"
+          style={{
+            borderColor: prefs.tape === DRONE_ID ? 'var(--accent)' : 'var(--border)',
+            backgroundColor: prefs.tape === DRONE_ID ? 'var(--accent-soft)' : 'transparent',
+            color: prefs.tape === DRONE_ID ? 'var(--accent)' : 'var(--muted)',
+          }}
+        >
+          Drone
+        </button>
       </div>
+
+      {/* The tapes inside the open category. One row per tape, full width, so the whole row is a
+          thumb target and a title never has to be truncated into an ellipsis. */}
+      {openCategory ? (
+        <div className="mt-1.5 flex flex-col gap-1" role="group" aria-label="Music tape">
+          {tapesIn(openCategory).map((entry) => {
+            const active = prefs.tape === entry.id;
+            return (
+              <button
+                key={entry.id}
+                type="button"
+                disabled={!prefs.on}
+                aria-pressed={active}
+                onClick={() => onTape(entry.id)}
+                data-testid={tid(`sound-tape-${entry.id}`)}
+                className="flex min-h-[34px] items-center justify-between gap-2 rounded-md border px-2 py-1 text-left text-[11px] disabled:opacity-50"
+                style={{
+                  borderColor: active ? 'var(--accent)' : 'var(--border)',
+                  backgroundColor: active ? 'var(--accent-soft)' : 'transparent',
+                  color: active ? 'var(--accent)' : 'var(--text)',
+                }}
+              >
+                <span className="truncate font-semibold">{entry.title}</span>
+                <span className="shrink-0 font-mono text-[10px] tabular-nums" style={{ color: 'var(--muted)' }}>
+                  {entry.seconds}s
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
       <p className="mt-1 text-[11px] leading-snug" style={{ color: 'var(--dim)' }}>
-        {prefs.beds === 'lofi'
-          ? `${MUSIC_BEDS[0].title} at the bench, ${MUSIC_BEDS[1].title} in focus.`
-          : 'Two detuned oscillators — a texture rather than a song.'}
+        {openCategoryHint ?? 'Two detuned oscillators — a texture rather than a song.'}
       </p>
     </section>
 
@@ -248,17 +312,23 @@ export const SoundSettingsPanel: React.FC<Props> = ({
     {/* ---- Whose music this is ---- */}
     <section aria-label="Credits" className="mt-3 border-t pt-2" style={{ borderColor: 'var(--border)' }}>
       <p className="text-[10.5px] leading-snug" style={{ color: 'var(--dim)' }}        data-testid={tid('sound-credits')}>
-        {bedCredit()} · public domain, cut into 60-second loops by this repository.
+        {prefs.tape === DRONE_ID
+          ? 'The drone is generated live by the sound engine — no recording, no licence.'
+          : `${tapeCredit(tape)}.`}
       </p>
       <div className="mt-2 flex items-center justify-between">
         <a
-          href="https://freemusicarchive.org/music/holiznacc0/winter-lofi/"
+          href={prefs.tape === DRONE_ID ? TAPE_SCRIPT_PAGE : tape.page}
           target="_blank"
           rel="noreferrer noopener"
           className="text-[10.5px] underline"
           style={{ color: 'var(--muted)' }}
         >
-          Winter Lofi on Free Music Archive
+          {prefs.tape === DRONE_ID
+            ? 'The build script'
+            : tape.composed
+              ? 'How it is rendered'
+              : 'This track on Free Music Archive'}
         </a>
         <button
           type="button"

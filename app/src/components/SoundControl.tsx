@@ -276,7 +276,7 @@ export const SoundControl: React.FC<{ variant?: 'header' | 'pill'; testIdSuffix?
       ...DEFAULT_SOUND_PREFS,
       on: prefsRef.current.on,
       // A reset that changed the music mid-phrase would be a surprise; it is a level reset first.
-      beds: prefsRef.current.beds,
+      tape: prefsRef.current.tape,
     });
 
   return (
@@ -348,7 +348,7 @@ export const SoundControl: React.FC<{ variant?: 'header' | 'pill'; testIdSuffix?
               onToggle={toggle}
               onLevel={setLevel}
               onClicks={(on) => change({ clicks: on })}
-              onBeds={(beds) => change({ beds })}
+              onTape={(tape) => change({ tape })}
               onPreview={preview}
               onReset={reset}
             />
