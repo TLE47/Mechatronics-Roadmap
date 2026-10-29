@@ -105,9 +105,42 @@ SUITE_JOBS = ("e2e-suites", "bundle-suites", "audit-suites", "runtime-suites")
 MATRIX_RUNNER = os.path.join(ROOT, "scripts", "test_workbench.mjs")
 PARTITIONS = ("e2e", "bundle")
 
+# The URL sweep, and the three lesson gates it used to re-run on every pull request. `ci.yml` owns
+# all three on the same bytes, so a pull request paid 4-8 s for a second verdict that can only
+# disagree with the first (measured on runs 40791783568, 40784308531, 40745056287, 40742627152).
+LINK_CHECK = os.path.join(ROOT, ".github", "workflows", "link-check.yml")
+WEEKLY_ONLY = "github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'"
+SWEEP = "scripts/check_links.py --write-report"
+SHARED_GATES = (
+    ("python3 scripts/lint_lessons.py", "python3 scripts/lint_lessons.py"),
+    (
+        "python3 scripts/generate_python_lessons_data.py --check",
+        "python3 scripts/generate_python_lessons_data.py --check",
+    ),
+    # Not spelled out in `ci.yml`: the discovery run collects every `test*.py` under `tests/`, and
+    # this file is one of them. Naming the collection command keeps the check honest about *how*
+    # the main workflow owns this gate.
+    ("python3 tests/test_exercises.py", "python3 -m unittest discover -s tests"),
+)
+
 
 def ci_text():
     return read(CI)
+
+
+def workflow_steps(path):
+    """A workflow's steps as text: each `- ` item at the job body's own indentation."""
+    return re.split(r"^      - ", read(path), flags=re.M)[1:]
+
+
+def step_guard(block):
+    """A step's own `if:` value, or None - its property lines, never its `run:` body.
+
+    The sweep below names the weekly condition inside its script (it turns `--fail-on-rise` on for a
+    scheduled run), so a substring search over the whole block would read a flag as a guard.
+    """
+    match = re.search(r"^        if: (.+)$", block, flags=re.M)
+    return match.group(1).strip() if match else None
 
 
 def job_block(text, name):
@@ -338,6 +371,52 @@ class WorkflowSpeedTests(unittest.TestCase):
                     msg="expected both Playwright steps bounded: a throttled mirror must fail the "
                     "run in minutes, not hold it for seventeen",
                 )
+
+    def test_the_link_sweep_does_not_re_grade_what_ci_owns(self):
+        """One verdict per push: the second workflow keeps its sweep, not a copy of the gates.
+
+        `link-check.yml` ran the lesson lint, the lesson-data check and the exercise tests on every
+        pull request, all of which `verify-and-test` already runs on the same commit. The duplicate
+        was 4-8 s of runner time per push and, worse, a verdict that can disagree with the one the
+        contributor is already looking at. Measured on four pull requests before the change: runs
+        40791783568 (12 s job), 40784308531 (63 s), 40745056287 (18 s) and 40742627152 (15 s), of
+        which those three steps were 4, 5, 8 and 4 s.
+        """
+        steps = workflow_steps(LINK_CHECK)
+        ci = ci_text()
+        for command, owner in SHARED_GATES:
+            with self.subTest(command=command):
+                self.assertIn(
+                    owner,
+                    ci,
+                    msg=f"expected `{owner}` in ci.yml: the gate is only skipped in "
+                    "link-check.yml because the main workflow already runs it on the same bytes",
+                )
+                matches = [step for step in steps if command in step]
+                self.assertEqual(
+                    len(matches),
+                    1,
+                    msg=f"expected `{command}` in exactly one step of link-check.yml",
+                )
+                self.assertEqual(
+                    step_guard(matches[0]),
+                    WEEKLY_ONLY,
+                    msg="expected this lesson gate on the weekly/dispatched run only: on a push "
+                    "or a pull request it is a second verdict on bytes `ci.yml` just graded, "
+                    "which cost 4-8 s per push and can only disagree",
+                )
+        self.assertTrue(
+            os.path.isfile(os.path.join(ROOT, "tests", "test_exercises.py")),
+            msg="expected tests/test_exercises.py: the discovery run only owns it while it exists",
+        )
+        sweeps = [step for step in steps if SWEEP in step]
+        self.assertEqual(len(sweeps), 1, msg="expected the URL sweep in one step of link-check.yml")
+        self.assertIsNone(
+            step_guard(sweeps[0]),
+            msg="expected the sweep to run on every event, pull requests included: it is the "
+            "verdict this workflow exists to give, and gating it would take the link gate off "
+            "the pull request",
+        )
 
     def test_publishing_waits_for_every_browser_suite(self):
         ci = ci_text()
