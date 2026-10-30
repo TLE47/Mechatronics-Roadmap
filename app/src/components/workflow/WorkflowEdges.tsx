@@ -99,7 +99,7 @@ export function WorkflowEdges({
       </svg>
 
       {drawn.map(({ edge, index, from, to, a, b }) => {
-        const { label, remove } = edgeControls(a, b);
+        const { label, remove } = edgeControls(a, edge.fromSide, b, edge.toSide);
         return (
           <div key={`edge-controls-${edge.id}`}>
             {edge.label && (

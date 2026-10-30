@@ -54,6 +54,22 @@ function bendBetween(a: { x: number; y: number }, b: { x: number; y: number }): 
   return Math.max(16, Math.min(56, Math.hypot(b.x - a.x, b.y - a.y) / 2));
 }
 
+/** The two control points of the cubic between two dots, each pushed out along its own side. */
+function controlPoints(
+  a: { x: number; y: number },
+  aSide: WorkflowSide,
+  b: { x: number; y: number },
+  bSide: WorkflowSide
+): { c1: { x: number; y: number }; c2: { x: number; y: number } } {
+  const bend = bendBetween(a, b);
+  const av = SIDE_VECTOR[aSide];
+  const bv = SIDE_VECTOR[bSide];
+  return {
+    c1: { x: a.x + av.x * bend, y: a.y + av.y * bend },
+    c2: { x: b.x + bv.x * bend, y: b.y + bv.y * bend },
+  };
+}
+
 /** A cubic that leaves its source and enters its target along the named sides. */
 export function edgeCurve(
   a: { x: number; y: number },
@@ -61,12 +77,8 @@ export function edgeCurve(
   b: { x: number; y: number },
   bSide: WorkflowSide
 ): string {
-  const bend = bendBetween(a, b);
-  const av = SIDE_VECTOR[aSide];
-  const bv = SIDE_VECTOR[bSide];
-  return `M ${a.x} ${a.y} C ${a.x + av.x * bend} ${a.y + av.y * bend}, ${b.x + bv.x * bend} ${
-    b.y + bv.y * bend
-  }, ${b.x} ${b.y}`;
+  const { c1, c2 } = controlPoints(a, aSide, b, bSide);
+  return `M ${a.x} ${a.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${b.x} ${b.y}`;
 }
 
 /** The dashed preview follows the pointer; it only needs the source side's departure. */
@@ -80,16 +92,29 @@ export function pendingCurve(
   return `M ${a.x} ${a.y} C ${a.x + av.x * bend} ${a.y + av.y * bend}, ${b.x} ${b.y}, ${b.x} ${b.y}`;
 }
 
+/** The arrow's own point at the half-way parameter (t = 0.5), not the line between the two dots. */
+function curveMidpoint(
+  a: { x: number; y: number },
+  aSide: WorkflowSide,
+  b: { x: number; y: number },
+  bSide: WorkflowSide
+): { x: number; y: number } {
+  const { c1, c2 } = controlPoints(a, aSide, b, bSide);
+  return { x: (a.x + 3 * c1.x + 3 * c2.x + b.x) / 8, y: (a.y + 3 * c1.y + 3 * c2.y + b.y) / 8 };
+}
+
 /**
- * Where an arrow's label and remove button attach: the label on the midpoint between the two dots,
- * the button 10 px to its right so the two never overlap. The label lifts itself above the line and
- * the button centres itself on it in CSS; both share this one anchor, so they cannot drift apart.
+ * Where an arrow's label and remove button attach: the label on the curve's half-way point, the
+ * button 10 px to its right so the two never overlap. The label lifts itself above the line and the
+ * button centres itself on it in CSS; both share this one anchor, so they cannot drift apart.
  */
 export function edgeControls(
   a: { x: number; y: number },
-  b: { x: number; y: number }
+  aSide: WorkflowSide,
+  b: { x: number; y: number },
+  bSide: WorkflowSide
 ): { label: { x: number; y: number }; remove: { x: number; y: number } } {
-  const label = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  const label = curveMidpoint(a, aSide, b, bSide);
   return { label, remove: { x: label.x + 10, y: label.y } };
 }
 

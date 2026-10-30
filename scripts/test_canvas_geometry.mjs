@@ -124,30 +124,26 @@ check('the dashed preview leaves like an arrow and lands on the pointer', () => 
   assert.equal(pendingCurve({ x: 0, y: 0 }, 'top', { x: 0, y: 10 }), 'M 0 0 C 0 -16, 0 10, 0 10');
 });
 
-check('an edge’s label and remove button share the dots’ midpoint, the button 10 px right', () => {
+check('an edge’s label and remove button share the arrow’s half-way point, the button 10 px right', () => {
   const at = (x, y) => ({ x, y });
   const cases = [
-    // Forward, reversed and vertical edges all anchor on the same midpoint between the dots.
-    [at(300, 270), at(500, 270), at(400, 270)],
-    [at(500, 270), at(300, 270), at(400, 270)],
-    [at(400, 200), at(400, 340), at(400, 270)],
-    [at(0, 0), at(300, 200), at(150, 100)],
+    // A symmetric forward, reversed or vertical pair: the cubic's t = 0.5 point is the dots' midpoint.
+    [at(300, 270), 'right', at(500, 270), 'left', at(400, 270)],
+    [at(500, 270), 'left', at(300, 270), 'right', at(400, 270)],
+    [at(400, 200), 'bottom', at(400, 340), 'top', at(400, 270)],
+    // A bowed pair: the chord midpoint (400, 385) put the label 23 px off this arrow.
+    [at(500, 270), 'right', at(300, 500), 'top', at(421, 364)],
+    // A sideways exit into a vertical entry pulls the curve the other way.
+    [at(0, 0), 'bottom', at(200, 260), 'left', at(79, 151)],
     // A half pixel is kept, not rounded: the label must sit on the line the arrow draws.
-    [at(0, 0), at(301, 201), at(150.5, 100.5)],
+    [at(0, 0), 'right', at(301, 201), 'left', at(150.5, 100.5)],
   ];
-  for (const [a, b, mid] of cases) {
-    assert.deepEqual(edgeControls(a, b), { label: mid, remove: { x: mid.x + 10, y: mid.y } });
+  for (const [a, aSide, b, bSide, mid] of cases) {
+    assert.deepEqual(edgeControls(a, aSide, b, bSide), {
+      label: mid,
+      remove: { x: mid.x + 10, y: mid.y },
+    });
   }
-});
-
-check('the dashed preview anchors like a drawn edge', () => {
-  const source = anchorFrom(card(300, 200), 'right', { a: 140 });
-  const cursor = { x: 300, y: 500 };
-  assert.ok(pendingCurve(source, 'right', cursor).startsWith(`M ${source.x} ${source.y} C`));
-  assert.deepEqual(edgeControls(source, cursor), {
-    label: { x: 400, y: 385 },
-    remove: { x: 410, y: 385 },
-  });
 });
 
 check('a body-drop picks the side of the target that faces the source', () => {

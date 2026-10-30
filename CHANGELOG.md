@@ -29,10 +29,16 @@ fails the suite; the browser run no longer has to be the first to notice. It rid
 matrix, so both CI partitions run it.
 
 The pass also moved the last inline arithmetic out of the edge layer: `edgeControls` in the same
-module now owns the midpoint an arrow's label and remove button share (the label on it, the button
-10 px to its right), so the two cannot drift apart, and the suite pins that midpoint for forward,
-reversed and vertical edges and for the dashed preview. Rendered positions are unchanged — the
-surface snapshot passes without a re-record.
+module now owns the anchor an arrow's label and remove button share (the label on it, the button
+10 px to its right), so the two cannot drift apart.
+
+**That anchor is the arrow's own point at t = 0.5, not the line between the dots.** On a bowed arrow —
+a card's right dot feeding another card's top dot, a same-side or a reversed pair — the chord
+midpoint is not on the curve: a measured 36 × 210 px hop put the controls 29.7 px off the arrow they
+belong to. `curveMidpoint` now evaluates the same cubic the path draws (through the shared
+`controlPoints`, so the two cannot disagree), and the geometry suite pins it, the bowed case the old
+midpoint got wrong included. Symmetric forward, reversed and vertical pairs land where they did; the
+bowed ones move onto their arrow, so `docs/surface-snapshot.json` was re-recorded.
 
 ## [2026-10-29] — The canvas splits along its seams
 
