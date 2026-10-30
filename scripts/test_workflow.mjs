@@ -34,6 +34,7 @@ import {
   MAX_WORKFLOW_TITLE_CHARS,
   EDGE_TYPE_LABEL,
   KIND_META,
+  NODE_SHAPE,
   STEP_KINDS,
   WORKFLOW_EDGE_TYPES,
   WORKFLOW_SIDES,
@@ -690,9 +691,67 @@ check('Mermaid is every card and every arrow, the labelled one dotted', () => {
     workflowToMermaid(exporting),
     [
       'flowchart TD',
-      '  n1["Given · Supply"]',
+      '  n1[/"Given · Supply"/]',
       '  n2["Compute · Divide"]',
-      '  n3["Answer · Result"]',
+      '  n3(["Answer · Result"])',
+      '  n1 --> n2',
+      '  n2 --> n3',
+      '  n2 -.->|"hot \'now\'"| n3',
+    ].join('\n')
+  );
+});
+
+check('every kind is drawn on the plate its meaning implies, and Mermaid draws it', () => {
+  // Derived from the kind, never stored: an old document gains shapes without a migration.
+  assert.deepEqual(
+    STEP_KINDS.map((kind) => `${kind}:${NODE_SHAPE[kind]}`),
+    [
+      'given:data',
+      'unknown:data',
+      'model:rect',
+      'compute:rect',
+      'check:gate',
+      'answer:stadium',
+      'input:data',
+      'transform:rect',
+      'branch:gate',
+      'loop:gate',
+      'test:gate',
+      'output:stadium',
+    ]
+  );
+  const doc = {
+    ...emptyWorkflow('analysis', 'Shapes'),
+    nodes: [
+      { id: 's1', kind: 'given', title: 'Supply', detail: '', ...autoNodePosition(0) },
+      { id: 's2', kind: 'branch', title: 'Test it', detail: '', ...autoNodePosition(1) },
+      { id: 's3', kind: 'answer', title: '5 A', detail: '', ...autoNodePosition(2) },
+      { id: 's4', kind: 'model', title: 'Plant', detail: '', ...autoNodePosition(3) },
+    ],
+  };
+  const mermaid = workflowToMermaid(doc);
+  for (const line of [
+    '  n1[/"Given · Supply"/]',
+    '  n2{{"Branch · Test it"}}',
+    '  n3(["Answer · 5 A"])',
+    '  n4["Model · Plant"]',
+  ]) {
+    assert.ok(mermaid.includes(line), `${line} missing from\n${mermaid}`);
+  }
+});
+
+check('a frame leaves as a subgraph, its cards inside and every arrow outside', () => {
+  // Not re-normalized: this is the export's own rule, and a stale id must not empty the frame.
+  const doc = { ...exporting, groups: [{ title: 'Supply chain', nodeIds: ['s1', 's2', 'gone'] }] };
+  assert.equal(
+    workflowToMermaid(doc),
+    [
+      'flowchart TD',
+      '  subgraph g1["Supply chain"]',
+      '    n1[/"Given · Supply"/]',
+      '    n2["Compute · Divide"]',
+      '  end',
+      '  n3(["Answer · Result"])',
       '  n1 --> n2',
       '  n2 --> n3',
       '  n2 -.->|"hot \'now\'"| n3',

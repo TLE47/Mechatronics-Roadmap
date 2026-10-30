@@ -10,9 +10,11 @@ import {
   MAX_STEP_DETAIL_CHARS,
   MAX_STEP_TITLE_CHARS,
   MAX_STEP_UNIT_CHARS,
+  NODE_SHAPE,
   NODE_WIDTH,
   PORT_LABEL,
   WORKFLOW_SIDES,
+  type NodeShape,
   type PortKind,
   type SocketKinds,
   type WorkflowIssue,
@@ -36,6 +38,24 @@ import type { LinkDraft } from './useLinking.ts';
 
 const NUDGE = 8;
 const NUDGE_FAST = 32;
+
+/**
+ * How a kind's plate is drawn: the same silhouette a flowchart gives that meaning.
+ *
+ * The cuts are 14 px and the fields are indented past them, because a card is a form — a diamond
+ * big enough to hold three inputs would be a 400 px point. The plate says what the card is; the
+ * fields stay readable. `rect` keeps the border and ring it always had, so no recorded card moves.
+ */
+const SHAPE_CLIP: Partial<Record<NodeShape, string>> = {
+  data: 'polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%)',
+  gate: 'polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 14px)',
+};
+const SHAPE_ROUND: Record<NodeShape, string> = {
+  rect: 'rounded-xl',
+  stadium: 'rounded-[32px]',
+  data: '',
+  gate: '',
+};
 
 const PORT_POSITION: Record<WorkflowSide, string> = {
   left: 'left-0 top-1/2 -translate-x-1/2 -translate-y-1/2',
@@ -103,6 +123,14 @@ export function WorkflowNodeCard({
 }: WorkflowNodeCardProps) {
   const Icon = iconForKind(node.kind);
   const meta = KIND_META[node.kind];
+  const shape = NODE_SHAPE[node.kind];
+  const shaped = shape !== 'rect';
+  const clip = SHAPE_CLIP[shape];
+  const frame = selected
+    ? 'border-accent ring-2 ring-accent/25'
+    : issue
+      ? 'border-amber/70'
+      : 'border-line';
 
   const nudge = (event: ReactKeyboardEvent) => {
     const step = event.shiftKey ? NUDGE_FAST : NUDGE;
@@ -135,12 +163,31 @@ export function WorkflowNodeCard({
       data-testid={`workflow-node-${index}`}
       data-step={number}
       data-kind={node.kind}
+      data-shape={shape}
       style={{ left: position.x, top: position.y, width: NODE_WIDTH }}
-      className={`absolute z-20 cursor-default rounded-xl border bg-panel shadow-sm ${
-        selected ? 'border-accent ring-2 ring-accent/25' : issue ? 'border-amber/70' : 'border-line'
-      } ${dragging ? 'z-30 shadow-lg' : ''}`}
+      className={`absolute z-20 cursor-default ${
+        shaped ? '' : `rounded-xl border bg-panel shadow-sm ${frame}`
+      } ${dragging ? (shaped ? 'z-30' : 'z-30 shadow-lg') : ''}`}
       onPointerDown={(event) => onLinkLand(event, node)}
     >
+      {shaped && (
+        <>
+          <div
+            aria-hidden="true"
+            style={clip ? { clipPath: clip } : undefined}
+            className={`pointer-events-none absolute inset-0 drop-shadow-sm ${SHAPE_ROUND[shape]} ${
+              selected ? 'bg-accent' : issue ? 'bg-amber/70' : 'bg-line'
+            }`}
+          />
+          <div
+            aria-hidden="true"
+            style={clip ? { clipPath: clip } : undefined}
+            className={`pointer-events-none absolute bg-panel ${SHAPE_ROUND[shape]} ${
+              selected ? 'inset-[2px]' : 'inset-px'
+            }`}
+          />
+        </>
+      )}
       <div
         data-testid={`workflow-node-drag-${index}`}
         role="group"
@@ -148,7 +195,9 @@ export function WorkflowNodeCard({
         aria-label={`Card ${number}, ${meta.label}. Drag to move; arrow keys nudge it.`}
         onPointerDown={(event) => onDragStart(event, node)}
         onKeyDown={nudge}
-        className="flex cursor-grab touch-none items-center gap-1.5 rounded-t-xl border-b border-line-soft bg-canvas px-2 py-1.5 select-none focus-visible:outline-2 focus-visible:outline-accent"
+        className={`flex cursor-grab touch-none items-center gap-1.5 border-b border-line-soft py-1.5 select-none focus-visible:outline-2 focus-visible:outline-accent ${
+          shaped ? 'px-4' : 'rounded-t-xl bg-canvas px-2'
+        }`}
       >
         <Icon className="h-3 w-3 shrink-0 text-accent" aria-hidden="true" />
         <span className="truncate font-mono text-[10px] uppercase tracking-[0.1em] text-accent">
@@ -180,7 +229,7 @@ export function WorkflowNodeCard({
         )}
       </div>
 
-      <div className="space-y-1 p-1.5">
+      <div className={`space-y-1 ${shaped ? 'px-4 py-1.5' : 'p-1.5'}`}>
         <input
           data-testid={`workflow-node-title-${index}`}
           aria-label={`Title of card ${index + 1}`}

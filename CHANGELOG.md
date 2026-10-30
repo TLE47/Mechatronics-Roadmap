@@ -16,6 +16,32 @@ flowchart LR
 
 ---
 
+## [2026-10-30] — A frame leaves the panel as a subgraph
+
+**A named frame was a box on the canvas and nothing in the export.** Copy Mermaid listed every card
+in one flat column, so "these four are the motor subsystem" survived only as pixels. A frame is now a
+Mermaid `subgraph g1["…"] … end` with its cards inside and every arrow left on the flowchart where
+the others are: a card claimed by a frame is written once, the members keep reading order inside the
+box, and a frame whose cards are all gone is dropped rather than emitted empty. A workflow with no
+frames gains no subgraph line: its cards and arrows are written where they always were.
+
+`npm run test:workflow` pins the subgraph block, the one-card-once rule and the empty-frame drop.
+
+## [2026-10-30] — A card's plate says what it is
+
+**Every card was the same rectangle.** A Given and an Answer, a Compute and a Branch: the diagram's
+shape said nothing until a word was read. Each kind now stands on the plate a flowchart gives its
+meaning ([`workflow.ts`](app/src/workflow.ts) `NODE_SHAPE`): Given, Input, Unknown data parallelograms;
+Check, Branch, Loop and Test cut-corner decision plates; Answer and Output terminators; the rest the
+plain process card. The plate is read from the kind rather than stored, so a document drawn before
+shapes existed opens unchanged and gains them, and no field can disagree with the outline. The cuts
+are 14 px with the fields indented past them — a card is a form, and a diamond that held three inputs
+would be a 400 px point. Copy Mermaid carries the same four shapes as `[/ … /]`, `{{ … }}` and
+`([ … ])`, so the export is no longer a column of identical boxes.
+
+`npm run test:workflow` pins the kind-to-plate table and the four Mermaid operators; `tsc -b`, the
+reader suite and `check:snapshot` pass unchanged, because a plate moves no measured box.
+
 ## [2026-10-30] — The canvas guard sees its dots and its frame
 
 **The snapshot looked at the cards, not at what connects them.** `check:snapshot` recorded the

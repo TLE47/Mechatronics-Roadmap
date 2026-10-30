@@ -252,6 +252,33 @@ export const STEPS_BY_MODE: Record<WorkflowMode, StepKind[]> = {
   code: STEP_KINDS.filter((kind) => KIND_META[kind].mode === 'code'),
 };
 
+/** The four silhouettes a card can be drawn on. */
+export type NodeShape = 'rect' | 'data' | 'gate' | 'stadium';
+
+/**
+ * The plate a kind is drawn on, read off what the kind means rather than added as a field.
+ *
+ * A flowchart already has a vocabulary for this and a learner reading one expects it: a value that
+ * enters or is sought is a parallelogram, a question or a check is a cut-corner decision plate, an
+ * answer that ends the reasoning is a terminator. Deriving it from the kind keeps an old document
+ * unchanged — there is nothing new stored to migrate — and lets the canvas and Mermaid agree.
+ * `rect` is the plain process plate every card had before shapes existed.
+ */
+export const NODE_SHAPE: Record<StepKind, NodeShape> = {
+  given: 'data',
+  unknown: 'data',
+  model: 'rect',
+  compute: 'rect',
+  check: 'gate',
+  answer: 'stadium',
+  input: 'data',
+  transform: 'rect',
+  branch: 'gate',
+  loop: 'gate',
+  test: 'gate',
+  output: 'stadium',
+};
+
 /** One card on the canvas. `x`/`y` are canvas pixels from the top-left of the grid. */
 export interface WorkflowNode {
   id: string;
@@ -983,21 +1010,50 @@ const MERMAID_LINK: Record<WorkflowEdgeType, string> = {
   communication: '-.->',
 };
 
+/** The Mermaid brackets for a shape: a terminator is not a process, and a question is not a step. */
+const MERMAID_NODE: Record<NodeShape, (text: string) => string> = {
+  rect: (text) => `["${text}"]`,
+  data: (text) => `[/"${text}"/]`,
+  gate: (text) => `{{"${text}"}}`,
+  stadium: (text) => `(["${text}"])`,
+};
+
 /**
  * The workflow as a Mermaid `flowchart`, for a note, a report or a lesson page.
  *
  * Node ids are positional (`n1`, `n2`) rather than the learner's own ids, because a card id is not a
- * safe Mermaid identifier the moment a document is hand-edited. A labelled control arrow is dotted —
- * the branch a person would draw by hand — and an arrow that carries something other than control
- * flow says so in its link text (`data · RPM`), because Mermaid has no second dash to spend.
+ * safe Mermaid identifier the moment a document is hand-edited. Each card keeps the plate its kind
+ * is drawn on, so the export is not a column of identical rectangles. A labelled control arrow is
+ * dotted — the branch a person would draw by hand — and an arrow that carries something other than
+ * control flow says so in its link text (`data · RPM`), because Mermaid has no second dash to spend.
  */
 export function workflowToMermaid(doc: WorkflowDoc): string {
   const order = workflowOrder(doc);
   const index = new Map(order.map((node, position) => [node.id, position]));
   const lines = ['flowchart TD'];
+  const card = (position: number) => {
+    const node = order[position];
+    const label = mermaidText(`${KIND_META[node.kind].label} · ${node.title || 'untitled'}`);
+    return `  n${position + 1}${MERMAID_NODE[NODE_SHAPE[node.kind]](label)}`;
+  };
+  // A frame is a named subsystem, so it leaves as a subgraph: its cards sit inside the box and the
+  // arrows stay on the flowchart where every other arrow is. A card is claimed once (the read already
+  // keeps one frame per card), and a frame with no surviving cards is dropped rather than emptied.
+  const framed = new Set<string>();
+  let frame = 0;
+  for (const group of doc.groups ?? []) {
+    const members = group.nodeIds
+      .filter((id) => index.has(id) && !framed.has(id))
+      .sort((a, b) => (index.get(a) ?? 0) - (index.get(b) ?? 0));
+    if (!members.length) continue;
+    frame += 1;
+    members.forEach((id) => framed.add(id));
+    lines.push(`  subgraph g${frame}["${mermaidText(group.title || `Group ${frame}`)}"]`);
+    for (const id of members) lines.push(`  ${card(index.get(id) ?? 0)}`);
+    lines.push('  end');
+  }
   order.forEach((node, position) => {
-    const label = `${KIND_META[node.kind].label} · ${node.title || 'untitled'}`;
-    lines.push(`  n${position + 1}["${mermaidText(label)}"]`);
+    if (!framed.has(node.id)) lines.push(card(position));
   });
   for (const edge of doc.edges) {
     const from = index.get(edge.from);

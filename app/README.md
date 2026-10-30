@@ -956,6 +956,13 @@ it, so a 24 V run reads as power and an encoder feed reads as data without readi
 is never the only signal: every kind has its own dash pattern and weight. Kind and label are authored
 work, stored with the card positions and found again after a reload.
 
+**A card is drawn on the plate its kind means**, not one rectangle for everything: Given, Input and
+Unknown are data parallelograms, Check, Branch, Loop and Test are cut-corner decision plates, and
+Answer and Output are terminators; the rest keep the plain process card. The plate is derived from the
+kind, so a workflow stored before shapes existed gains them with no migration and no new field to fall
+out of step, and Copy Mermaid draws the same four with its own brackets (`[/ … /]`, `{{ … }}`,
+`([ … ])`).
+
 Each dot can also say **what it is for**: IN, OUT, DATA, PWR or MECH. A dot's socket is read off the
 arrows plugged into it — a data run lands DATA at both ends, a power run PWR — so the card shows its
 role in the diagram without a second property that could fall out of step, and a dot that two kinds
