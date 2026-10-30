@@ -16,6 +16,20 @@ flowchart LR
 
 ---
 
+## [2026-10-30] — The canvas guard sees its dots and its frame
+
+**The snapshot looked at the cards, not at what connects them.** `check:snapshot` recorded the
+Workflow canvas's cards, arrow paths, labels and remove buttons, but never its port dots, and the
+seeded diagram had no frame — so a dot nudged off its card, or a frame chip moved, changed no number.
+[`scripts/snapshot_surfaces.mjs`](scripts/snapshot_surfaces.mjs) now records every port dot and the
+named frame with its chip, seeded the way a learner draws one: arm **Group**, drag across the paper,
+name it "Motor subsystem".
+
+**Proved by moving them.** A `translate` nudge on every dot and a 12 px chip nudge each fail with the
+field named (`wf-port-*`, `wf-chip-0`) in `dark`, `light`, `paper` and `contrast`; the restored tree
+re-records and passes all 56 surfaces. [`docs/VERIFICATION.md`](docs/VERIFICATION.md) now says exactly
+what is guarded instead of claiming every connector and control is.
+
 ## [2026-10-30] — A frame names the cards it holds
 
 **"These four are the motor subsystem."** A workflow can now hold named **frames**

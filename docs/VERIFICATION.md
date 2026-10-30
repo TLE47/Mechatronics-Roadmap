@@ -490,10 +490,12 @@ and the walk stop describing the same six moments, or when a recorded row sits a
 `npm run check:snapshot` records the **painted surface** of all 56 surfaces — the twelve tabs, Home and the Workflow canvas, in each of the four palettes — header,
 activity rail, main pane and first panel geometry, the count of buttons, inputs, links, headings,
 canvases and tables, and the colours, type and `--bg/--panel/--text/--accent` the browser resolved. On
-the Workflow canvas it also records each card's box, each arrow's path, its label and the remove button
-that hangs from the arrow's half-way point, seeded through the panel's own blank/code/branch/condition
-path — so a connector or a control that drifts is a finding rather than something only a person sees — and
-fails when any of it moves. It is deliberately **not a pixel diff**: a baseline captured on the Mac this
+the Workflow canvas it also records each card's box, every port dot, each arrow's path, its label, kind
+chip and the remove button that hangs from the arrow's half-way point, and a named frame with its chip,
+seeded through the panel's own blank/code/branch/condition path and its Group gesture — so a connector, a
+dot or a control that drifts is a finding rather than something only a person sees — and fails when any of
+it moves. A `translate` nudge of every port dot and a 12 px nudge of the frame chip each fail, with the
+field named, in all four palettes. It is deliberately **not a pixel diff**: a baseline captured on the Mac this
 was written on does not survive the trip to the Linux runner, and a gate whose first red build is
 antialiasing is a gate people disable. Box numbers are compared with a 2 px tolerance (subpixel
 rounding is not a finding); counts and resolved styles are exact. Determinism is what makes it a gate

@@ -162,12 +162,24 @@ function measure(selectors) {
   const main = document.querySelector('#main') ?? document.querySelector('main');
   const panel = main?.firstElementChild ?? null;
   const root = getComputedStyle(document.documentElement);
-  // The Workflow canvas's own geometry: a node, an arrow's path, and the label and remove button
-  // that hang from its half-way point. Empty on every other surface, so those record no extra box.
+  // The Workflow canvas's own geometry: every card, every port dot, an arrow's path, the label and
+  // controls that hang from its half-way point, and the frame that names a set of cards. Empty on
+  // every other surface, so those record no extra box.
   const workflow = {};
   const edgeAt = (testid) => testid.split('-').pop();
   for (const card of document.querySelectorAll('[data-node-id]')) {
     workflow[`wf-node-${card.getAttribute('data-node-id')}`] = box(card);
+  }
+  // A dot is where a connector starts and ends: a card that moved but left its dots behind, or a
+  // dot nudged off its anchor, is the drift the arrow's path alone cannot show.
+  for (const dot of document.querySelectorAll('[data-testid^="workflow-node-port-"]')) {
+    workflow[`wf-port-${dot.dataset.testid.replace('workflow-node-port-', '')}`] = box(dot);
+  }
+  // The frame's own box and the chip that names and moves it. The chip sits half outside the frame,
+  // so its box is recorded separately from the frame's.
+  for (const frame of document.querySelectorAll('[data-testid^="workflow-group-"]')) {
+    const match = /^workflow-group-(chip-)?(\d+)$/.exec(frame.dataset.testid);
+    if (match) workflow[`wf-${match[1] ? 'chip' : 'group'}-${match[2]}`] = box(frame);
   }
   for (const label of document.querySelectorAll('[data-testid^="workflow-edge-label-"]')) {
     workflow[`wf-label-${edgeAt(label.dataset.testid)}`] = box(label);
@@ -272,10 +284,11 @@ function compareSurfaces(name, expected, actual) {
  * The Workflow canvas seeded the way a learner reaches it.
  *
  * A blank analysis card, the palette switched to code, a Branch card carrying a condition, an arrow
- * dragged from that branch's right dot onto the first card's top dot, and that arrow given the power
- * kind: the shortest authored diagram with a bowed connector, a label, a kind chip and a remove
- * button for the snapshot to guard. Card 0 is placed by `autoNodePosition`, so every palette records
- * the same boxes, and a kind's own stroke travels with them.
+ * dragged from that branch's right dot onto the first card's top dot, that arrow given the power
+ * kind, and the two cards framed as "Motor subsystem": the shortest authored diagram with a bowed
+ * connector, a label, a kind chip, a remove button, both cards' port dots and a frame with its chip
+ * for the snapshot to guard. Card 0 is placed by `autoNodePosition`, so every palette records the
+ * same boxes, and a kind's own stroke travels with them.
  */
 async function seedWorkflow(page) {
   await page.click('[data-testid="tab-btn-tab-pyodide"]');
@@ -303,6 +316,16 @@ async function seedWorkflow(page) {
   await page.getByTestId('workflow-edge-type-power-0').click();
   await page.getByTestId('workflow-edge-close-0').click();
   await page.waitForTimeout(200);
+  // A frame is drawn, not assembled: arm Group and drag a box across the whole paper, the gesture the
+  // browser suite proves. The frame then names both cards, so its box and chip are part of the surface.
+  await page.getByTestId('workflow-group-draw').click();
+  const canvas = await page.getByTestId('workflow-canvas').boundingBox();
+  await page.mouse.move(canvas.x + canvas.width - 24, canvas.y + canvas.height - 24);
+  await page.mouse.down();
+  await page.mouse.move(canvas.x + 4, canvas.y + 4, { steps: 10 });
+  await page.mouse.up();
+  await page.getByTestId('workflow-group-title-0').fill('Motor subsystem');
+  await page.waitForTimeout(300);
 }
 
 async function main() {
@@ -461,9 +484,10 @@ async function main() {
         'its tables from `app/src/data/linkHistoryData.ts`, which the weekly sweep regenerates: a data ' +
         'refresh that changes a host or run count moves that surface and is a re-record too ' +
         '(`--record --tab tab-links` records all four palettes). The Workflow surface records each ' +
-        'card’s box, each arrow’s path and the label and remove button that hang from its half-way ' +
-        'point, seeded through the panel’s own blank/code/branch/condition path so every palette ' +
-        'records the same authored diagram. Re-record with ' +
+        'card’s box, every port dot, each arrow’s path and the label, kind chip and remove button that ' +
+        'hang from its half-way point, and the named frame that groups the cards with its chip — seeded ' +
+        'through the panel’s own blank/code/branch/condition path and its Group gesture so every ' +
+        'palette records the same authored diagram. Re-record with ' +
         '`npm run check:snapshot -- --record` when a change to the screen is intended, and read the diff: ' +
         'it is a list of what moved.',
       version: 1,
