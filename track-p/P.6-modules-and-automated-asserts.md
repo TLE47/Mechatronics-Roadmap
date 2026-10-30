@@ -73,7 +73,7 @@ runs an automatic safety check every time the script starts. When comparing deci
 - **What is real-hardware only:** Nothing in this lesson requires hardware.
 
 ### Starter Code (runs as-is — fill in the TODOs)
-Complete `distance_2d` (`TODO 1`) and `clamp_cmd` (`TODO 2`), then uncomment or keep the `assert` self-checks in `TODO 3`:
+Complete `distance_2d` (`TODO 1`) and `clamp_cmd` (`TODO 2`), then write the `assert` self-checks in `TODO 3`:
 
 ```python
 import math
@@ -92,17 +92,15 @@ def clamp_cmd(cmd):
 d1 = distance_2d(3.0, 4.0)
 d2 = distance_2d(0.6, 0.8)
 
-# TODO 3: Verify that all assertions pass once TODO 1 and TODO 2 are implemented!
-assert round(d1, 4) == 5.0
-assert clamp_cmd(300) == 255
+# TODO 3: Write the two self-checks this lesson teaches: the straight-line
+# result, and the command's eight-bit range. Then print the pass line.
 
 print(f"Distance (3, 4): {d1:.2f} m | Distance (0.6, 0.8): {d2:.2f} m")
 print(f"Clamped(-20)={clamp_cmd(-20)} | Clamped(128)={clamp_cmd(128)} | Clamped(300)={clamp_cmd(300)}")
-print("All assert checks passed!")
 ```
 
 ### Expected Output
-When `TODO 1` and `TODO 2` are completed, running the script prints:
+When `TODO 1`–`TODO 3` are completed, running the script prints:
 
 ```text
 Distance (3, 4): 5.00 m | Distance (0.6, 0.8): 1.00 m

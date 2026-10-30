@@ -22,7 +22,7 @@ flowchart LR
 | What each of the ten steps costs, page by page, and each track's three depth layers | `scripts/route_model.py` from each page's front matter | `python3.12 scripts/generate_step_docs.py --check` |
 | The README's Start here block and the workbench card | `app/src/data/startHere.json` (one file, read by both) | `python3.12 scripts/generate_start_here.py --check` |
 | The callout on every lesson and module page: where to run it, or that there is no entry | `app/src/data/pythonLessonsData.ts`, the workbench's own registry | `python3.12 scripts/generate_run_callouts.py --check` |
-| The searchable text of the 65 reading pages, which `⌘⇧F` fetches on demand | `scripts/route_model.py` (the page list) and the Markdown pages themselves | `python3.12 scripts/generate_prose_index.py --check` |
+| The searchable text of the 66 reading pages, which `⌘⇧F` fetches on demand | `scripts/route_model.py` (the page list) and the Markdown pages themselves | `python3.12 scripts/generate_prose_index.py --check` |
 | The try-it link under a marked code block, carrying that block's current text and the page's own entry | `app/src/tryLinks.ts`, encoding with the app's share codec from each page's `?lesson=` | `node --experimental-strip-types scripts/generate_try_links.mjs --check` |
 | The name of every tab, and no page or label referring to one by position | `app/src/data/workbenchTabs.json`, read by `App.tsx` and by the callout generator | `python3.12 scripts/check_tab_names.py` |
 | Which workbench entries a roadmap step asks for, and that every entry is claimed once | `app/src/practiceLinks.ts`, joining the roadmap and the registry by track and pass | `npm run test:practice` |
@@ -174,7 +174,7 @@ npm run test:e2e:mobile                 # the phone gate: 390x844 with touch —
 npm run test:e2e:storage                # the migration in Chromium: a pre-IndexedDB bucket arrives whole, the screen shows it, new work stays in the database
 npm run test:palette                    # ⌘K, ⌘P and ⌘⇧F: the whole catalogue once, the ranking order, and that the sheet lists every key once
 npm run test:search                     # ⌘⇧F inside the lessons: a starter line is the editor's line, a hint is not, the solution is not searchable, and the caps hold
-npm run test:prose                      # ⌘⇧F in the 65 reading pages: the route's own list, no code/tables/callouts in the index, GitHub's anchor rule, a prose-only word found, heading beats body, and the caps
+npm run test:prose                      # ⌘⇧F in the 66 reading pages: the route's own list, no code/tables/callouts in the index, GitHub's anchor rule, a prose-only word found, heading beats body, and the caps
 npm run test:editor                     # slider directives and which lessons get helper tabs
 npm run test:storage                    # the move to IndexedDB: the bucket fallback, the migration order, the coalesced write queue, the retry after a refused write
 npm run test:traceback                  # Python's failure as data: the learner's frame, chained failures, both SyntaxError shapes, and the index entry it matches

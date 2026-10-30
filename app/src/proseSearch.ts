@@ -2,7 +2,7 @@
  * Searching the course's reading pages (`⌘⇧F`, `app/src/proseSearch.ts`).
  *
  * `lessonSearch.ts` reads the text the app already carries: the starter, the hint ladder, the
- * instructor's checks and the expected output. The 65 reading pages — 48 prose lessons and the 17
+ * instructor's checks and the expected output. The 66 reading pages — 49 prose lessons and the 17
  * arm modules — are Markdown in the repository, and Pages serves only the built app, so their words
  * are not in the bundle at all. A learner who half-remembers "the page with the anti-windup
  * clamping" could find the lesson by its *name* and could not find the page by a word in its body.
