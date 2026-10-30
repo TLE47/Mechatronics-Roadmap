@@ -26,7 +26,13 @@ coordinates through the viewport's scroll and zoom lens, the bend's 16 px floor,
 all 16 side pairs an arrow can leave and enter, the dashed preview, and the side a body-drop picks
 (including the tie and the taller-card scale). A dot one pixel off its card, or a bend cap moved to 60,
 fails the suite; the browser run no longer has to be the first to notice. It rides the workbench
-matrix, so both CI partitions run it, and no production code changed.
+matrix, so both CI partitions run it.
+
+The pass also moved the last inline arithmetic out of the edge layer: `edgeControls` in the same
+module now owns the midpoint an arrow's label and remove button share (the label on it, the button
+10 px to its right), so the two cannot drift apart, and the suite pins that midpoint for forward,
+reversed and vertical edges and for the dashed preview. Rendered positions are unchanged — the
+surface snapshot passes without a re-record.
 
 ## [2026-10-29] — The canvas splits along its seams
 

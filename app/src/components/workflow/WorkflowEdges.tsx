@@ -3,7 +3,7 @@ import {
   type WorkflowDoc,
   type WorkflowNode,
 } from '../../workflow.ts';
-import { anchorFrom, edgeCurve, pendingCurve } from './canvasGeometry.ts';
+import { anchorFrom, edgeControls, edgeCurve, pendingCurve } from './canvasGeometry.ts';
 import type { LinkDraft } from './useLinking.ts';
 
 /**
@@ -99,14 +99,13 @@ export function WorkflowEdges({
       </svg>
 
       {drawn.map(({ edge, index, from, to, a, b }) => {
-        const left = (a.x + b.x) / 2;
-        const top = (a.y + b.y) / 2;
+        const { label, remove } = edgeControls(a, b);
         return (
           <div key={`edge-controls-${edge.id}`}>
             {edge.label && (
               <span
                 className="pointer-events-none absolute z-10 max-w-[140px] -translate-x-1/2 -translate-y-[calc(100%+2px)] truncate rounded border border-line bg-panel px-1 font-mono text-[10px] text-muted"
-                style={{ left, top }}
+                style={{ left: label.x, top: label.y }}
                 title={edge.label}
               >
                 {edge.label}
@@ -119,7 +118,7 @@ export function WorkflowEdges({
               title="Remove this arrow"
               onClick={() => onDisconnect(edge.id)}
               className="absolute z-20 flex h-4 w-4 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-line bg-panel font-mono text-[10px] leading-none text-faint opacity-60 hover:border-rose hover:text-rose hover:opacity-100"
-              style={{ left: left + 10, top }}
+              style={{ left: remove.x, top: remove.y }}
             >
               ×
             </button>

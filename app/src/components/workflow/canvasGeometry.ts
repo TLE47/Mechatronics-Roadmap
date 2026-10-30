@@ -80,6 +80,19 @@ export function pendingCurve(
   return `M ${a.x} ${a.y} C ${a.x + av.x * bend} ${a.y + av.y * bend}, ${b.x} ${b.y}, ${b.x} ${b.y}`;
 }
 
+/**
+ * Where an arrow's label and remove button attach: the label on the midpoint between the two dots,
+ * the button 10 px to its right so the two never overlap. The label lifts itself above the line and
+ * the button centres itself on it in CSS; both share this one anchor, so they cannot drift apart.
+ */
+export function edgeControls(
+  a: { x: number; y: number },
+  b: { x: number; y: number }
+): { label: { x: number; y: number }; remove: { x: number; y: number } } {
+  const label = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  return { label, remove: { x: label.x + 10, y: label.y } };
+}
+
 /** The side of `to` that looks at `from` when a drop lands on the card body rather than a dot. */
 export function facingSide(
   from: WorkflowNode,

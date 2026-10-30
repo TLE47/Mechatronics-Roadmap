@@ -7,7 +7,8 @@
  * how far the curve may bend. A dot a few pixels off its card is only visible in a browser run, so
  * the numbers are pinned here, at the card size the canvas lays out (200 px wide) and the heights the
  * observer reports: the four dots on a known card at a known drag position, all 16 side pairs a drag
- * can draw, the bend's floor, halving and cap, and the side a body-drop picks.
+ * can draw, the bend's floor, halving and cap, the side a body-drop picks, and where an edge's label
+ * and remove button attach.
  */
 
 import assert from 'node:assert/strict';
@@ -17,6 +18,7 @@ import {
   anchorFrom,
   cardHeight,
   clamp,
+  edgeControls,
   edgeCurve,
   facingSide,
   pendingCurve,
@@ -120,6 +122,32 @@ check('every side pair leaves and enters along its own side', () => {
 check('the dashed preview leaves like an arrow and lands on the pointer', () => {
   assert.equal(pendingCurve({ x: 0, y: 0 }, 'right', { x: 300, y: 200 }), 'M 0 0 C 56 0, 300 200, 300 200');
   assert.equal(pendingCurve({ x: 0, y: 0 }, 'top', { x: 0, y: 10 }), 'M 0 0 C 0 -16, 0 10, 0 10');
+});
+
+check('an edge’s label and remove button share the dots’ midpoint, the button 10 px right', () => {
+  const at = (x, y) => ({ x, y });
+  const cases = [
+    // Forward, reversed and vertical edges all anchor on the same midpoint between the dots.
+    [at(300, 270), at(500, 270), at(400, 270)],
+    [at(500, 270), at(300, 270), at(400, 270)],
+    [at(400, 200), at(400, 340), at(400, 270)],
+    [at(0, 0), at(300, 200), at(150, 100)],
+    // A half pixel is kept, not rounded: the label must sit on the line the arrow draws.
+    [at(0, 0), at(301, 201), at(150.5, 100.5)],
+  ];
+  for (const [a, b, mid] of cases) {
+    assert.deepEqual(edgeControls(a, b), { label: mid, remove: { x: mid.x + 10, y: mid.y } });
+  }
+});
+
+check('the dashed preview anchors like a drawn edge', () => {
+  const source = anchorFrom(card(300, 200), 'right', { a: 140 });
+  const cursor = { x: 300, y: 500 };
+  assert.ok(pendingCurve(source, 'right', cursor).startsWith(`M ${source.x} ${source.y} C`));
+  assert.deepEqual(edgeControls(source, cursor), {
+    label: { x: 400, y: 385 },
+    remove: { x: 410, y: 385 },
+  });
 });
 
 check('a body-drop picks the side of the target that faces the source', () => {
