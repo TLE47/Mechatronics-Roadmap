@@ -46,7 +46,7 @@ const BUTTON =
   'inline-flex items-center gap-1 rounded border border-line bg-raise px-2.5 py-1 text-[12px] font-mono font-semibold text-ink cursor-pointer hover:bg-elevate disabled:opacity-50 disabled:cursor-not-allowed';
 
 const LINK_BUTTON =
-  'inline-flex items-center gap-1 font-mono text-[11.5px] text-accent underline decoration-dotted cursor-pointer';
+  'inline-flex items-center gap-1 font-mono text-[12px] text-accent underline decoration-dotted cursor-pointer';
 
 export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = ({
   lessonId,

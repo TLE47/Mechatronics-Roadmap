@@ -48,7 +48,7 @@ flowchart LR
 
 ### Idea 1: Ordering an analysis: Given, Unknown, Model, Compute, Check, Answer
 - **Primary resource:** [The Physics Classroom — Drawing Free-Body Diagrams](https://www.physicsclassroom.com/class/newtlaws/Lesson-2/Drawing-Free-Body-Diagrams) `[HTTP 200 — Verified by scripts/check_links.py]`
-  - **What to read:** Read the exact heading **`Drawing Free-Body Diagrams`** and the **`Summary`** below it.
+  - **What to read:** Read the exact heading **`Drawing Free-Body Diagrams`**; the page names every force on the object before it draws a single arrow, which is the habit this lesson borrows: name every quantity before choosing a formula.
   - **What to skip:** Skip the practice problems; you are borrowing the habit of naming every known quantity before writing a formula, not the drawing technique.
   - **Key takeaway:** A problem you can state is half solved. Write the **given** quantities with their units (`supply = 12.0 V`, `winding = 2.4 ohm`, `driver limit = 3.2 A`), name the one **unknown** (`the draw`), and only then choose the **model** that connects them. The order matters because the model is chosen by the unknown, not by whichever formula you remember first.
   - **Alternative resource:** [MathsIsFun — Order of Operations](https://www.mathsisfun.com/operation-order-pemdas.html) `[HTTP 200 — Verified by scripts/check_links.py]` — Review the exact heading **`Order of Operations`**; a workflow is the same idea applied to reasoning instead of arithmetic.
