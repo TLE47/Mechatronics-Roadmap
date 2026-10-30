@@ -16,6 +16,50 @@ flowchart LR
 
 ---
 
+## [2026-10-30] — A frame names the cards it holds
+
+**"These four are the motor subsystem."** A workflow can now hold named **frames**
+([`workflow.ts`](app/src/workflow.ts)): each is a title and the cards inside it, with no rectangle
+stored. The box is read from the cards on every render (`groupRect` in
+[`canvasGeometry.ts`](app/src/components/workflow/canvasGeometry.ts)), so moving, dragging or deleting
+a card can never leave a frame disagreeing with what is inside it; read back, a frame whose cards are
+gone is dropped, a card named by two frames is kept by the first, and a document drawn before frames
+existed gains no field. A frame has no id of its own — it is named and removed by its place in the
+list, so nothing outside the document can hold a stale key.
+
+**Drawn, not assembled.** Press **Group** (or hold Shift) and drag a box across the cards; the
+capsule reports the box once, on release, and the cards whose centres it covers become the frame
+([`useMarquee.ts`](app/src/components/workflow/useMarquee.ts)). Centre rather than overlap: a box
+nicked across a card's corner does not claim it. The name is typed on the chip that hangs below the
+box, where the opening column always has room, so no band is carved out of the cards. The chip is
+drawn above the cards rather than inside the box, so its name and `×` stay pressable under a
+neighbouring card, and its grip is a whole control row tall: press it — or the frame's own 12 px
+paper — and every card inside moves as one unit, in one document write
+([`useNodeDrag.ts`](app/src/components/workflow/useNodeDrag.ts)), with the box following the members
+while they move. The grid reserves its air under the last card, so the chip's controls can never
+scroll out of reach. `×` takes the frame away and leaves the cards; a card deleted from a frame
+shrinks it, and the frame disappears when it names nothing.
+
+**Weight stayed inside its ceiling.** The pass added 2.2 kB to `js_gzip` against 1.5 kB of headroom,
+so the ceiling did not move: [`vite.config.ts`](vite.config.ts) now strips the stylesheet's comments
+when [`themeTokens.ts`](app/src/themeTokens.ts) imports `index.css?raw` — the theme route already
+stripped them at runtime, and they were several kilobytes of prose in every learner's chunk.
+Signed-in `js_gzip` measured **957.0 → 951.6 kB**, and no budget file changed.
+
+**Pinned where the repo already pins it.** `test:canvas_geometry` adds the frame box (union, pad, the
+opening card that no longer needs a band), the centre rule with a negative drag, and the origin
+clamp; `test:workflow` adds the tolerant read (missing cards, a card in two frames, junk nodeIds, a
+legacy document with no `groups`, and a contested dot that stays plain after a third kind). The
+browser suite draws a frame around three cards, names it, drags it by its grip and checks every
+member moved by the same delta, checks the chip is not scrolled out of the grid, deletes a card and
+checks the frame holds two, reloads and finds the name and membership, then removes the frame and
+keeps the cards.
+`check:snapshot` was re-recorded: all four palettes' Workflow surface gain the one **Group** button
+(209 → 210), the document grows 40 px taller to hold the chip's air, and every control's box is
+unchanged.
+
+---
+
 ## [2026-10-30] — A dot says what it is for
 
 **IN, OUT, DATA, PWR, MECH.** Each end of a workflow arrow can now carry a socket kind

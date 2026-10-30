@@ -58,7 +58,10 @@ export function useViewport(
     let height = 300;
     for (const node of nodes) {
       width = Math.max(width, node.x + NODE_WIDTH + 48);
-      height = Math.max(height, node.y + 200);
+      // A card is guessed at 200 px, and a frame's name chip hangs 24 px below its box: without
+      // that air under the last card, the chip scrolls out of the paper and its name and × are
+      // unreachable.
+      height = Math.max(height, node.y + 200 + 40);
     }
     return { width, height };
   }, [nodes]);

@@ -21,6 +21,7 @@ import {
   type WorkflowDoc,
   type WorkflowEdge,
   type WorkflowEdgeType,
+  type WorkflowGroup,
   type WorkflowIssue,
   type WorkflowNode,
   type WorkflowSide,
@@ -92,6 +93,9 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [pendingTemplate, setPendingTemplate] = useState<WorkflowTemplate | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  // The frame gesture is armed, not always on: the same paper pans, and on a phone a plain drag has
+  // to keep scrolling.
+  const [grouping, setGrouping] = useState(false);
   // The checklist is advice, not the work. On a phone it is a count and one press away: 24 open
   // cards are 24 wrapped lines, and the canvas below them started ~1,900 px down the page. A
   // desktop has the room and opens the list. A press pins the learner's choice; until then the list
@@ -128,6 +132,7 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
     setConfirmClear(false);
     setPendingTemplate(null);
     setTemplatesOpen(false);
+    setGrouping(false);
     // Seen once means closed from then on, even on a lesson with no workflow: `stored` is not the
     // question here — an empty tab is exactly where a learner who dismissed the guide expects the
     // one-press toggle, not the three-item card again.
@@ -167,6 +172,20 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
     commit({ ...doc, nodes: doc.nodes.map((entry) => (entry.id === id ? { ...entry, x, y } : entry)) });
   };
 
+  /** A frame drag reports every member, so the whole move is one document and one write. */
+  const moveNodes = (moves: { id: string; x: number; y: number }[]) => {
+    if (!doc) return;
+    const byId = new Map(moves.map((move) => [move.id, move]));
+    let changed = false;
+    const nodes = doc.nodes.map((node) => {
+      const move = byId.get(node.id);
+      if (!move || (node.x === move.x && node.y === move.y)) return node;
+      changed = true;
+      return { ...node, x: move.x, y: move.y };
+    });
+    if (changed) commit({ ...doc, nodes });
+  };
+
   const addNode = (kind: StepKind) => {
     if (!doc) return;
     const next = addWorkflowNode(doc, kind);
@@ -201,8 +220,57 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
     if (selectedEdgeId && !keptEdges.some((edge) => edge.id === selectedEdgeId)) {
       setSelectedEdgeId(null);
     }
-    commit({ ...doc, nodes: remaining, edges: keptEdges });
+    // A frame loses the card but keeps its name and the rest: membership is about cards, not ids
+    // that once existed. A frame left with nothing goes, because it named nothing any more.
+    const nextGroups = (doc.groups ?? [])
+      .map((group) => ({ ...group, nodeIds: group.nodeIds.filter((member) => member !== id) }))
+      .filter((group) => group.nodeIds.length);
+    const next = { ...doc, nodes: remaining, edges: keptEdges };
+    if (nextGroups.length) next.groups = nextGroups;
+    else delete next.groups;
+    commit(next);
     setStatus(lostEdges ? 'Card removed — its arrows went with it' : 'Card removed');
+  };
+
+  /**
+   * The frame a drawn box asked for.
+   *
+   * A card belongs to one frame, so grouping cards that already sit in one moves them: the old frame
+   * keeps the cards it still has, and disappears if that is none. A new frame starts named by its
+   * position, and the name is edited on the frame itself.
+   */
+  const groupCards = (nodeIds: string[]) => {
+    if (!doc) return;
+    setGrouping(false);
+    if (!nodeIds.length) {
+      setStatus('Drag across cards to frame them');
+      return;
+    }
+    const kept = (doc.groups ?? [])
+      .map((group) => ({ ...group, nodeIds: group.nodeIds.filter((id) => !nodeIds.includes(id)) }))
+      .filter((group) => group.nodeIds.length);
+    const group: WorkflowGroup = { title: `Group ${kept.length + 1}`, nodeIds };
+    commit({ ...doc, groups: [...kept, group] });
+    selectNode(null);
+    setStatus('');
+  };
+
+  const renameGroup = (index: number, title: string) => {
+    if (!doc) return;
+    commit({
+      ...doc,
+      groups: (doc.groups ?? []).map((group, at) => (at === index ? { ...group, title } : group)),
+    });
+  };
+
+  const removeGroup = (index: number) => {
+    if (!doc) return;
+    const groups = (doc.groups ?? []).filter((_, at) => at !== index);
+    const next = { ...doc };
+    if (groups.length) next.groups = groups;
+    else delete next.groups;
+    commit(next);
+    setStatus('Frame removed');
   };
 
   const connect = (
@@ -577,6 +645,11 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
           onEdgeType={setEdgeType}
           onEdgeLabel={setEdgeLabel}
           onEdgePort={setEdgePort}
+          onMoveMany={moveNodes}
+          grouping={grouping}
+          onGroupCards={groupCards}
+          onRenameGroup={renameGroup}
+          onRemoveGroup={removeGroup}
         />
       </Suspense>
 
@@ -609,6 +682,19 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
         >
           <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
           Templates
+        </button>
+        <button
+          type="button"
+          data-testid="workflow-group-draw"
+          aria-pressed={grouping}
+          title="Draw a box around cards to frame them"
+          onClick={() => {
+            setGrouping(!grouping);
+            setStatus(grouping ? '' : 'Drag a box around cards');
+          }}
+          className={`btn btn-ghost text-[12px] ${grouping ? 'text-accent' : ''}`}
+        >
+          Group
         </button>
         <button
           type="button"

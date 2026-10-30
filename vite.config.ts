@@ -37,6 +37,27 @@ import { ISOLATION_HEADERS } from './scripts/isolation-headers.mjs';
  * network beyond the page, and makes `check:weight` measure the real cost instead of skipping a
  * remote stylesheet (`entryNames` used to ignore it).
  */
+/**
+ * The theme route reads `index.css?raw` to print the palette (`themeTokens.ts`) and strips the
+ * stylesheet's comments itself before parsing — they are prose for the maintainer, not data. Doing
+ * that strip at build time keeps that prose out of every learner's download: `index.css` explains
+ * itself at length, and shipping it verbatim made those explanations several kilobytes of the main
+ * chunk for a page that never showed them.
+ */
+function rawCssWithoutComments(): Plugin {
+  return {
+    name: 'mechalab:raw-css-without-comments',
+    enforce: 'pre',
+    load(id) {
+      if (!id.endsWith('/app/src/index.css?raw')) return null;
+      const file = id.slice(0, -'?raw'.length);
+      this.addWatchFile(file);
+      const css = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, ' ');
+      return `export default ${JSON.stringify(css)};`;
+    },
+  };
+}
+
 function katexWoff2Only(): Plugin {
   return {
     name: 'mechalab:katex-woff2-only',
@@ -62,7 +83,7 @@ export default defineConfig(({ command }) => ({
   envDir: '..',
   base: command === 'build' ? PAGES_BASE : '/',
   define: { __APP_VERSION__: JSON.stringify(version) },
-  plugins: [katexWoff2Only(), react(), tailwindcss()],
+  plugins: [rawCssWithoutComments(), katexWoff2Only(), react(), tailwindcss()],
   build: {
     outDir: '../dist',
     emptyOutDir: true,

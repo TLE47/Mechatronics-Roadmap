@@ -13,7 +13,6 @@ import {
   NODE_WIDTH,
   PORT_LABEL,
   WORKFLOW_SIDES,
-  socketKind,
   type PortKind,
   type SocketKinds,
   type WorkflowIssue,
@@ -236,7 +235,7 @@ export function WorkflowNodeCard({
       {WORKFLOW_SIDES.map((side) => {
         const source = linking?.nodeId === node.id && linking.side === side;
         const target = Boolean(linking && linking.nodeId !== node.id);
-        const plugged = socketKind(sockets?.[side]);
+        const plugged = sockets?.[side] ?? null;
         const what = plugged ? `${PORT_LABEL[plugged]} socket` : 'connection';
         return (
           <button

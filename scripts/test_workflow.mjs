@@ -14,6 +14,8 @@
  *    uses, so a branch that says "step 3" is card 3 on screen.
  * 4. **Authored work survives.** One workflow per lesson, a refused write reported rather than
  *    swallowed, and a merge that adds and updates but never deletes.
+ * 5. **A frame is a claim about which cards exist.** Restoring a document drops a frame whose cards
+ *    are gone, keeps a card in only one frame, and adds nothing to a document that had no frames.
  *
  * Run: node --experimental-strip-types scripts/test_workflow.mjs
  */
@@ -21,6 +23,7 @@
 import assert from 'node:assert/strict';
 import { Window } from 'happy-dom';
 import {
+  MAX_GROUP_TITLE_CHARS,
   MAX_BRANCH_CONDITION_CHARS,
   MAX_EDGES,
   MAX_NODE_COORD,
@@ -41,7 +44,6 @@ import {
   edgeLabelFor,
   edgePortOf,
   edgeTypeOf,
-  socketKind,
   socketKinds,
   withEdgePort,
   emptyWorkflow,
@@ -905,21 +907,68 @@ check('a stored socket is read tolerantly, and junk draws a plain dot', () => {
 check('a card reads its sockets off its arrows, and two kinds on one dot read plain', () => {
   const doc = normalizeWorkflow(
     graph(
-      [{ kind: 'input', title: 'Encoder' }, { kind: 'compute', title: 'MCU' }, { kind: 'given', title: 'PSU' }],
+      [
+        { kind: 'input', title: 'Encoder' },
+        { kind: 'compute', title: 'MCU' },
+        { kind: 'given', title: 'PSU' },
+        { kind: 'input', title: 'Bus' },
+      ],
       [
         { from: 's1', to: 's2', fromSide: 'right', toSide: 'left', type: 'data' },
         { from: 's3', to: 's2', fromSide: 'right', toSide: 'left', type: 'power' },
+        // Data again after power: the dot was contested on the second cable and stays contested,
+        // rather than the last kind read winning.
+        { from: 's4', to: 's2', fromSide: 'right', toSide: 'left', type: 'data' },
       ]
     )
   );
   const sockets = socketKinds(doc);
-  assert.equal(socketKind(sockets.get('s1').right), 'data', 'a DATA run leaves a DATA socket');
-  assert.deepEqual(sockets.get('s2').left, ['data', 'power']);
-  assert.equal(socketKind(sockets.get('s2').left), null, 'a dot two kinds feed draws as a plain dot');
-  assert.equal(socketKind(sockets.get('s2').right), null, 'and a dot nothing touches is empty');
+  assert.equal(sockets.get('s1').right, 'data', 'a DATA run leaves a DATA socket');
+  assert.equal(sockets.get('s2').left, null, 'a dot two kinds feed draws as a plain dot');
+  assert.equal(sockets.get('s2').right, null, 'and a dot nothing touches is empty');
 });
 
-section('6. Templates are usable at birth');
+section('6. A frame names the cards it holds');
+
+check('a frame keeps only cards that exist, and one card belongs to one frame', () => {
+  const doc = normalizeWorkflow({
+    ...graph([
+      { kind: 'given', title: 'a' },
+      { kind: 'given', title: 'b' },
+      { kind: 'given', title: 'c' },
+      { kind: 'given', title: 'd' },
+    ]),
+    groups: [
+      { title: 'Motor', nodeIds: ['s1', 's2', 'gone'] },
+      // s2 is already in Motor, so Sensor keeps only s3.
+      { title: 'Sensor', nodeIds: ['s2', 's3'] },
+      // Nothing left: a name over no card is not a frame.
+      { title: 'Empty', nodeIds: [] },
+      // A name is a label, not a document: over-long text is cut, and the frame still exists.
+      { title: `  ${'x'.repeat(MAX_GROUP_TITLE_CHARS + 20)}  `, nodeIds: ['s4'] },
+    ],
+  });
+  assert.deepEqual(doc.groups, [
+    { title: 'Motor', nodeIds: ['s1', 's2'] },
+    { title: 'Sensor', nodeIds: ['s3'] },
+    { title: 'x'.repeat(MAX_GROUP_TITLE_CHARS), nodeIds: ['s4'] },
+  ]);
+  // Through the store's JSON, which is the path a reload takes.
+  assert.deepEqual(normalizeWorkflow(JSON.parse(JSON.stringify(doc))).groups, doc.groups);
+  assert.deepEqual(
+    normalizeWorkflow(graph([{ kind: 'given', title: 'a' }])).groups,
+    undefined,
+    'a document drawn before frames existed gains no `groups` field, so it round-trips unchanged'
+  );
+  assert.deepEqual(
+    normalizeWorkflow({ ...graph([{ kind: 'given', title: 'a' }]), groups: [{ nodeIds: 's1' }, { title: 'x' }] })
+      .groups,
+    undefined,
+    'junk frames are dropped rather than drawn as half a frame'
+  );
+});
+
+section('7. Templates are usable at birth');
 
 check('every kind has a label and a sentence', () => {
   assert.equal(STEP_KINDS.length, 12);
@@ -1019,7 +1068,7 @@ check('P.15 opens on the motor-stall example, and no other lesson claims one', (
   assert.equal(templateForLesson(''), null);
 });
 
-section('7. One workflow per lesson survives the store');
+section('8. One workflow per lesson survives the store');
 
 check('a written workflow reads back with the timestamp the write set', () => {
   freshBrowser();

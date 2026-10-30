@@ -1756,13 +1756,136 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           /Step 2 needs a title/,
           'and the checklist must call that same card Step 2'
         );
+
+        // A frame is drawn, not assembled: arm Group, drag a box across the cards, name it on its
+        // chip, then move the chip — all members travel together, one card deleted shrinks the
+        // frame, and a reload finds the name and the membership.
+        await page.getByTestId('workflow-group-draw').click();
+        assert.match(
+          await page.getByTestId('workflow-status').innerText(),
+          /Drag a box/,
+          'arming Group must say what the next drag will do'
+        );
+        const groupCanvas = await page.getByTestId('workflow-canvas').boundingBox();
+        await page.mouse.move(groupCanvas.x + groupCanvas.width - 24, groupCanvas.y + groupCanvas.height - 24);
+        await page.mouse.down();
+        await page.mouse.move(groupCanvas.x + 4, groupCanvas.y + 4, { steps: 10 });
+        await page.mouse.up();
+        await page.waitForTimeout(400);
+        assert.equal(
+          await page.getByTestId('workflow-group-0').count(),
+          1,
+          'a box across the cards must produce a frame'
+        );
+        assert.equal(
+          await page.getByTestId('workflow-group-title-0').inputValue(),
+          'Group 1',
+          'a new frame starts named by its place, and the name is edited where it sits'
+        );
+        const framedTop = await page.getByTestId('workflow-group-0').evaluate((frame) => parseFloat(frame.style.top));
+        assert.ok(
+          framedTop >= 0,
+          `a frame on the first column must not lose its name chip above the paper (top ${framedTop})`
+        );
+        assert.ok(
+          await page.evaluate(() => {
+            const chip = document.querySelector('[data-testid="workflow-group-chip-0"]').getBoundingClientRect();
+            const grid = document.querySelector('[data-testid="workflow-canvas-grid"]').getBoundingClientRect();
+            return chip.bottom <= grid.bottom;
+          }),
+          'the chip hangs below the last card, so the grid must reserve air for it'
+        );
+        await page.getByTestId('workflow-group-title-0').fill('Winding → driver');
+        await page.waitForTimeout(300);
+        const beforeGroupDrag = await page.evaluate(() =>
+          [...document.querySelectorAll('[data-node-id]')].map((card) => ({
+            id: card.getAttribute('data-node-id'),
+            left: parseFloat(card.style.left),
+            top: parseFloat(card.style.top),
+          }))
+        );
+        // The grip on the chip is the frame's handle: it is drawn above the cards and is a whole
+        // control row tall, so it can be grabbed where a mouse and a finger both can. Scroll it into
+        // the canvas first: three cards tall, its box can start above the visible paper.
+        await page.getByTestId('workflow-group-grip-0').scrollIntoViewIfNeeded();
+        await page.waitForTimeout(200);
+        const gripBox = await page.getByTestId('workflow-group-grip-0').boundingBox();
+        await page.mouse.move(gripBox.x + gripBox.width / 2, gripBox.y + gripBox.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(gripBox.x + gripBox.width / 2 + 40, gripBox.y + gripBox.height / 2 + 40, {
+          steps: 8,
+        });
+        await page.mouse.up();
+        await page.waitForTimeout(400);
+        const afterGroupDrag = await page.evaluate(() =>
+          [...document.querySelectorAll('[data-node-id]')].map((card) => ({
+            id: card.getAttribute('data-node-id'),
+            left: parseFloat(card.style.left),
+            top: parseFloat(card.style.top),
+          }))
+        );
+        for (const before of beforeGroupDrag) {
+          const after = afterGroupDrag.find((card) => card.id === before.id);
+          assert.equal(
+            Math.round(after.left - before.left),
+            40,
+            'dragging a frame by its chip must move every card in it by the same dx'
+          );
+          assert.equal(Math.round(after.top - before.top), 40, 'and the same dy');
+        }
+        const cardsInFrame = () =>
+          page.evaluate(() => {
+            const frame = document.querySelector('[data-testid="workflow-group-0"]').getBoundingClientRect();
+            return [...document.querySelectorAll('[data-node-id]')].filter((card) => {
+              const rect = card.getBoundingClientRect();
+              const cx = rect.left + rect.width / 2;
+              const cy = rect.top + rect.height / 2;
+              return cx >= frame.left && cx <= frame.right && cy >= frame.top && cy <= frame.bottom;
+            }).length;
+          });
+        await page.getByTestId('workflow-node-delete-2').click();
+        await page.waitForTimeout(700);
+        assert.equal(
+          await cardsInFrame(),
+          2,
+          'a frame loses a deleted card but keeps its name and the rest'
+        );
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await waitForEditor(page, undefined, 30000);
+        await page.waitForTimeout(600);
+        if (!(await page.getByTestId('panel-workflow').isVisible().catch(() => false))) {
+          await page.getByTestId('editor-tab-workflow').click();
+          await page.waitForTimeout(250);
+        }
+        assert.equal(
+          await page.getByTestId('workflow-group-title-0').inputValue(),
+          'Winding → driver',
+          'a frame’s name is authored work: a reload must find it again'
+        );
+        assert.equal(
+          await cardsInFrame(),
+          2,
+          'and membership must survive the reload with the deleted card already gone'
+        );
+        await page.getByTestId('workflow-group-remove-0').click();
+        await page.waitForTimeout(300);
+        assert.equal(
+          await page.getByTestId('workflow-group-0').count(),
+          0,
+          'removing a frame must take the frame only'
+        );
+        assert.equal(
+          await page.locator('[data-node-id]').count(),
+          2,
+          'the cards a frame named must stay when the frame goes'
+        );
         await page.getByTestId('workflow-clear').click();
         await page.getByTestId('workflow-clear-yes').click();
         await page.waitForTimeout(250);
         await page.getByTestId('editor-tab-main').click();
         await page.waitForTimeout(250);
         console.log(
-          '  ok the Workflow tab spawns, edits inline, drags, draws an arrow and survives a reload'
+          '  ok the Workflow tab spawns, edits inline, drags, draws an arrow, frames cards and survives a reload'
         );
       }
 

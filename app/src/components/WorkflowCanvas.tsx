@@ -9,10 +9,13 @@ import type {
   WorkflowSide,
   PortKind,
 } from '../workflow.ts';
+import { cardsWithin, groupRect } from './workflow/canvasGeometry.ts';
 import { WorkflowEdges } from './workflow/WorkflowEdges.tsx';
+import { WorkflowGroupFrame } from './workflow/WorkflowGroupFrame.tsx';
 import { WorkflowNodeCard } from './workflow/WorkflowNodeCard.tsx';
 import { useLinking } from './workflow/useLinking.ts';
-import { useNodeDrag } from './workflow/useNodeDrag.ts';
+import { useMarquee } from './workflow/useMarquee.ts';
+import { useNodeDrag, type NodeMove } from './workflow/useNodeDrag.ts';
 import { useNodeHeights } from './workflow/useNodeHeights.ts';
 import { useViewport } from './workflow/useViewport.ts';
 
@@ -28,10 +31,12 @@ import { useViewport } from './workflow/useViewport.ts';
  *
  * - `canvasGeometry.ts` — where a dot sits, how an arrow bends, which side faces a source. Pure.
  * - `useViewport.ts` — the lens: view scale, fit/100%, scrolled offset, drag-pan and arrow-key pan.
- * - `useNodeDrag.ts` — one card's drag, held in pixels until release.
+ * - `useNodeDrag.ts` — a card's or a frame's drag, held in pixels until release.
+ * - `useMarquee.ts` — the armed box that turns a drag on paper into a frame around cards.
  * - `useLinking.ts` — the arrow being drawn: drag-dot-to-dot, or tap-then-tap.
  * - `useNodeHeights.ts` — the measured card heights the four dots need.
  * - `WorkflowNodeCard.tsx` — one editable card and its four ports.
+ * - `WorkflowGroupFrame.tsx` — one named frame and its chip.
  * - `WorkflowEdges.tsx` — the paths, the arrowheads, the dashed preview and each edge's controls.
  *
  * Three rules the interaction keeps:
@@ -76,6 +81,14 @@ export interface WorkflowCanvasProps {
   onEdgeType: (edgeId: string, type: WorkflowEdgeType) => void;
   onEdgeLabel: (edgeId: string, label: string) => void;
   onEdgePort: (edgeId: string, end: 'from' | 'to', kind: PortKind | null) => void;
+  /** A frame drag reports every member at once, so one release is one document write. */
+  onMoveMany: (moves: NodeMove[]) => void;
+  /** Whether the next drag on paper draws a frame instead of panning. */
+  grouping: boolean;
+  onGroupCards: (nodeIds: string[]) => void;
+  /** Frames are named and removed by their place in the document, not by a stored key. */
+  onRenameGroup: (index: number, title: string) => void;
+  onRemoveGroup: (index: number) => void;
 }
 
 export function WorkflowCanvas({
@@ -94,6 +107,11 @@ export function WorkflowCanvas({
   onEdgeType,
   onEdgeLabel,
   onEdgePort,
+  onMoveMany,
+  grouping,
+  onGroupCards,
+  onRenameGroup,
+  onRemoveGroup,
 }: WorkflowCanvasProps) {
   const byId = useMemo(() => new Map(doc.nodes.map((node) => [node.id, node])), [doc.nodes]);
   // Which socket each dot has become, once per document: the cards read it, and no card can hold a
@@ -103,7 +121,35 @@ export function WorkflowCanvas({
 
   const viewport = useViewport(doc.nodes, onSelect);
   const heights = useNodeHeights(viewport.gridRef, nodeIds);
-  const drag = useNodeDrag({ toCanvas: viewport.toCanvas, onMove, onSelect });
+  const drag = useNodeDrag({ toCanvas: viewport.toCanvas, onMoveMany, onSelect });
+
+  // A frame is drawn from the cards it holds, at the position they are at right now: mid-drag, the
+  // box follows its members instead of snapping back at release.
+  const shown = useMemo(
+    () =>
+      drag.live
+        ? doc.nodes.map((node) => {
+            const live = drag.live?.get(node.id);
+            return live ? { ...node, ...live } : node;
+          })
+        : doc.nodes,
+    [doc.nodes, drag.live]
+  );
+  const frames = useMemo(
+    () =>
+      (doc.groups ?? []).flatMap((group, index) => {
+        const members = shown.filter((node) => group.nodeIds.includes(node.id));
+        const rect = groupRect(members, heights);
+        return rect ? [{ group, index, rect, members }] : [];
+      }),
+    [doc.groups, shown, heights]
+  );
+
+  const marquee = useMarquee({
+    toCanvas: viewport.toCanvas,
+    onDone: (rect) => onGroupCards(cardsWithin(rect, shown, heights)),
+  });
+
   const linking = useLinking({
     toCanvas: viewport.toCanvas,
     byId,
@@ -126,7 +172,15 @@ export function WorkflowCanvas({
       <div
         ref={viewport.surfaceRef}
         data-testid="workflow-canvas"
-        onPointerDown={viewport.startPan}
+        // Capture first: armed, or with Shift held, a drag on paper draws a frame — including over
+        // an existing frame, whose own press would otherwise start moving it. Otherwise: pan.
+        onPointerDownCapture={(event) => {
+          if ((grouping || event.shiftKey) && marquee.start(event)) event.stopPropagation();
+        }}
+        onPointerDown={(event) => viewport.startPan(event)}
+        onPointerMove={marquee.move}
+        onPointerUp={marquee.finish}
+        onPointerCancel={marquee.finish}
         onKeyDown={viewport.panWithKeys}
         tabIndex={0}
         role="group"
@@ -161,6 +215,19 @@ export function WorkflowCanvas({
               transformOrigin: '0 0',
             }}
           >
+            {frames.map(({ group, index, rect, members }) => (
+              <WorkflowGroupFrame
+                key={index}
+                group={group}
+                index={index}
+                rect={rect}
+                members={members}
+                onRename={onRenameGroup}
+                onRemove={onRemoveGroup}
+                onDragStart={drag.startDrag}
+              />
+            ))}
+
             <WorkflowEdges
               doc={doc}
               byId={byId}
@@ -184,12 +251,8 @@ export function WorkflowCanvas({
                 number={numbers.get(node.id) ?? index + 1}
                 issue={issueByStep.get(node.id)}
                 selected={selectedId === node.id}
-                position={
-                  drag.dragId === node.id && drag.livePosition
-                    ? drag.livePosition
-                    : { x: node.x, y: node.y }
-                }
-                dragging={drag.dragId === node.id}
+                position={drag.live?.get(node.id) ?? { x: node.x, y: node.y }}
+                dragging={Boolean(drag.dragIds?.includes(node.id))}
                 linking={linking.linking}
                 sockets={sockets.get(node.id)}
                 onSelect={onSelect}
@@ -201,6 +264,19 @@ export function WorkflowCanvas({
                 onLinkLand={linking.landOnCard}
               />
             ))}
+
+            {marquee.rect && (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute z-40 rounded border border-dashed border-accent bg-accent/10"
+                style={{
+                  left: marquee.rect.x,
+                  top: marquee.rect.y,
+                  width: marquee.rect.width,
+                  height: marquee.rect.height,
+                }}
+              />
+            )}
           </div>
         </div>
       </div>

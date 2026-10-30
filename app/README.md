@@ -965,7 +965,16 @@ that already carries a socket inherits it, so extending a power chain keeps it p
 drawn as its letter (I, O, D, P, M), which survives greyscale and every palette, and is named for a
 screen reader; a diagram drawn before sockets existed keeps its plain dots and gains no field until
 a learner chooses one. The canvas is a lazy chunk inside the tab — opening Workflow fetches it — so a
-lesson's text never waits on cards the learner may not open. The vertical pair is what lets a join or a loop leave the column without
+lesson's text never waits on cards the learner may not open.
+
+Cards can also be gathered into a **frame**: press **Group** (or hold Shift) and drag a box across
+them, and the cards whose centres it covers become one named box — "winding", "motor subsystem" —
+that moves as a unit. The frame stores no rectangle: its box is read from its cards, so dragging a
+card stretches it, deleting one shrinks it, and the last card gone takes the frame with it. The name
+is typed on the chip that hangs below the box, where the opening column always has room; the chip is
+drawn above the cards so its name and `×` are never buried, and its grip — or the frame's own paper —
+moves every card inside in one write, while the `×` removes the frame and keeps the cards. A card belongs to one frame, grouping cards that already sit in one moves them, and
+a document drawn before frames existed round-trips unchanged. The vertical pair is what lets a join or a loop leave the column without
 crossing the chain; only left and right carry reading order. It is a view of
 the same card, so it tabs and splits like the outputs and its arrangement is remembered; cards also
 nudge with the arrow keys, and the surface is capped at 70% of the viewport and scrolls inside that,
@@ -1452,7 +1461,7 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/workflowTemplates.ts`](src/workflowTemplates.ts) | Six seeded flows in both palettes, one blank, each laid out as a connected column with its arrows drawn, and the single lesson that opens on its own example. |
 | [`src/components/WorkflowPanel.tsx`](src/components/WorkflowPanel.tsx) | The Workflow tab's container: owns the document, its debounced save, the selected card and every mutation; validates once per document and composes the canvas (behind a lazy boundary), picker and guide. |
 | [`src/components/WorkflowCanvas.tsx`](src/components/WorkflowCanvas.tsx) | The node canvas's surface and composition: the scroll pane, the scaled grid, the fit button, and the wiring of the viewport, the cards and the arrows. Each concern beside it is readable alone. |
-| [`src/components/workflow/`](src/components/workflow/) | The canvas's parts: `canvasGeometry.ts` (dots, bends, facing sides — pure), `useViewport.ts` (scale, Fit/100%, drag-pan and arrow-key pan), `useNodeDrag.ts` (one card's drag held in pixels until release), `useLinking.ts` (the arrow being drawn, dot-to-dot or tap-then-tap), `useNodeHeights.ts` (the measured heights the four dots need), `WorkflowNodeCard.tsx` (one editable card and its four lettered sockets) and `WorkflowEdges.tsx` (paths, one arrowhead per kind, the styles palette the kind chip opens with the socket choice for each end, the dashed preview and the edge controls). |
+| [`src/components/workflow/`](src/components/workflow/) | The canvas's parts: `canvasGeometry.ts` (dots, bends, facing sides and frame boxes — pure), `useViewport.ts` (scale, Fit/100%, drag-pan and arrow-key pan), `useNodeDrag.ts` (one card's or one frame's drag held in pixels until release), `useMarquee.ts` (the box that groups cards), `useLinking.ts` (the arrow being drawn, dot-to-dot or tap-then-tap), `useNodeHeights.ts` (the measured heights the four dots need), `WorkflowNodeCard.tsx` (one editable card and its four lettered sockets), `WorkflowGroupFrame.tsx` (one named frame, its name chip and its remove control) and `WorkflowEdges.tsx` (paths, one arrowhead per kind, the styles palette the kind chip opens with the socket choice for each end, the dashed preview and the edge controls). |
 | [`src/components/TemplatePicker.tsx`](src/components/TemplatePicker.tsx) | The two palettes of seeded flows, as starting shapes to edit. |
 | [`src/components/HowToCard.tsx`](src/components/HowToCard.tsx) | The three-line guide to the tab; whether it is open is the container's policy. |
 | [`src/watchMode.ts`](src/watchMode.ts) | When the checks may re-run themselves — after a graded failure, on an edited buffer, never past the gate — and the remembered toggle. |

@@ -14,13 +14,17 @@
 import assert from 'node:assert/strict';
 import { NODE_WIDTH, WORKFLOW_SIDES } from '../app/src/workflow.ts';
 import {
+  GROUP_PAD,
   NODE_FALLBACK_HEIGHT,
   anchorFrom,
   cardHeight,
+  cardsWithin,
   clamp,
   edgeControls,
   edgeCurve,
   facingSide,
+  groupRect,
+  normalizeRect,
   pendingCurve,
 } from '../app/src/components/workflow/canvasGeometry.ts';
 
@@ -168,6 +172,49 @@ check('a body-drop picks the side of the target that faces the source', () => {
 check('a self-link still answers, though the gesture refuses to draw one', () => {
   // `useLinking` cancels a link to its own card; the arithmetic must not divide by a zero diagonal.
   assert.equal(facingSide(card(0, 0), card(0, 0), 120, 120), 'right');
+});
+
+check('a frame hugs its cards, one pad out', () => {
+  const at = (id, x, y) => ({ id, kind: 'given', title: id, detail: '', x, y });
+  const cases = [
+    // One card, measured: 200 wide, 140 tall, a pad of air on each side.
+    [[at('a', 300, 200)], { a: 140 }, { x: 300 - GROUP_PAD, y: 200 - GROUP_PAD, width: 200 + GROUP_PAD * 2, height: 140 + GROUP_PAD * 2 }],
+    // Two cards: the box spans both, and the taller one sets the bottom.
+    [[at('a', 0, 0), at('b', 300, 200)], { a: 120, b: 140 }, { x: 0, y: 0, width: 500 + GROUP_PAD * 2, height: 340 + GROUP_PAD * 2 }],
+    // The opening card sits CANVAS_PAD from the paper, which is more than one pad: no sliding.
+    [[at('a', 16, 16)], { a: 120 }, { x: 4, y: 4, width: 200 + GROUP_PAD * 2, height: 120 + GROUP_PAD * 2 }],
+    // Before the observer has measured anything the 120 px guess is used, not zero.
+    [[at('a', 300, 200)], {}, { x: 288, y: 188, width: 200 + GROUP_PAD * 2, height: 120 + GROUP_PAD * 2 }],
+  ];
+  for (const [members, heights, box] of cases) {
+    assert.deepEqual(groupRect(members, heights), box);
+  }
+  assert.equal(groupRect([], {}), null, 'a frame with no cards draws nothing');
+});
+
+check('a drawn box picks up the cards whose centres it covers', () => {
+  const at = (id, x, y) => ({ id, kind: 'given', title: id, detail: '', x, y });
+  const heights = { a: 120, b: 140 };
+  const nodes = [at('a', 0, 0), at('b', 300, 200)];
+  const cases = [
+    // Around both cards' centres (100, 60) and (400, 270).
+    [{ x: -20, y: -20, width: 540, height: 380 }, ['a', 'b']],
+    // A box that only nicks card b's corner does not claim it: its centre is outside.
+    [{ x: 0, y: 0, width: 150, height: 100 }, ['a']],
+    // Dragged up and left, the rectangle is negative; it is the same box.
+    [{ x: 520, y: 400, width: -540, height: -420 }, ['a', 'b']],
+    // The centre on the boundary counts, so a box drawn exactly around a card keeps it.
+    [{ x: 100, y: 60, width: 0, height: 0 }, ['a']],
+  ];
+  for (const [rect, ids] of cases) {
+    assert.deepEqual(cardsWithin(rect, nodes, heights), ids, JSON.stringify(rect));
+  }
+  assert.deepEqual(normalizeRect({ x: 10, y: 10, width: -5, height: -8 }), {
+    x: 5,
+    y: 2,
+    width: 5,
+    height: 8,
+  });
 });
 
 check('clamp keeps a drag on the paper', () => {

@@ -118,6 +118,81 @@ export function edgeControls(
   return { label, remove: { x: label.x + 10, y: label.y } };
 }
 
+/** A canvas-pixel rectangle from the paper's top-left. */
+export interface CanvasRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** Air between a frame and the cards it holds; its name chip hangs in the space below. */
+export const GROUP_PAD = 12;
+
+/**
+ * The box a frame draws: the union of its cards, padded.
+ *
+ * Derived rather than stored, so it cannot disagree with what is inside: a card dragged outward
+ * stretches its frame, a card deleted shrinks it, and no rectangle has to be kept in step. The name
+ * chip hangs below the box, where the opening column always has room, so no band is carved out of
+ * the cards and no chip can be clipped by the paper's top edge.
+ */
+export function groupRect(
+  members: readonly WorkflowNode[],
+  heights: Record<string, number>
+): CanvasRect | null {
+  if (!members.length) return null;
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const node of members) {
+    minX = Math.min(minX, node.x);
+    minY = Math.min(minY, node.y);
+    maxX = Math.max(maxX, node.x + NODE_WIDTH);
+    maxY = Math.max(maxY, node.y + cardHeight(heights, node.id));
+  }
+  return {
+    x: Math.max(0, minX - GROUP_PAD),
+    y: Math.max(0, minY - GROUP_PAD),
+    width: maxX - minX + GROUP_PAD * 2,
+    height: maxY - minY + GROUP_PAD * 2,
+  };
+}
+
+/** The same rectangle with a negative width or height turned positive, as a drag can produce. */
+export function normalizeRect(rect: CanvasRect): CanvasRect {
+  return {
+    x: Math.min(rect.x, rect.x + rect.width),
+    y: Math.min(rect.y, rect.y + rect.height),
+    width: Math.abs(rect.width),
+    height: Math.abs(rect.height),
+  };
+}
+
+/**
+ * The cards a drawn box covers, judged by each card's centre.
+ *
+ * Centre rather than overlap: a box nicked across a corner of a card should not claim it, and a
+ * gesture that only edges over an existing frame should not silently swallow the cards inside it.
+ * A card's centre is inside its frame at every card size, so a box drawn tightly around a frame's
+ * cards picks up exactly those cards.
+ */
+export function cardsWithin(
+  rect: CanvasRect,
+  nodes: readonly WorkflowNode[],
+  heights: Record<string, number>
+): string[] {
+  const box = normalizeRect(rect);
+  return nodes
+    .filter((node) => {
+      const cx = node.x + NODE_WIDTH / 2;
+      const cy = node.y + cardHeight(heights, node.id) / 2;
+      return cx >= box.x && cx <= box.x + box.width && cy >= box.y && cy <= box.y + box.height;
+    })
+    .map((node) => node.id);
+}
+
 /** The side of `to` that looks at `from` when a drop lands on the card body rather than a dot. */
 export function facingSide(
   from: WorkflowNode,

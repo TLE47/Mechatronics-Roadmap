@@ -34,6 +34,7 @@ export const MAX_STEP_TITLE_CHARS = 80;
 export const MAX_STEP_DETAIL_CHARS = 400;
 export const MAX_STEP_UNIT_CHARS = 16;
 export const MAX_BRANCH_CONDITION_CHARS = 60;
+export const MAX_GROUP_TITLE_CHARS = 40;
 /** The furthest a card may be dragged, so a stray pointer cannot make an unscrollable canvas. */
 export const MAX_NODE_COORD = 4000;
 /** The width a card is laid out at; also the width the canvas reserves for it. */
@@ -284,12 +285,31 @@ export interface WorkflowEdge {
   toPort?: PortKind;
 }
 
+/**
+ * A named frame around cards: "these four are the motor subsystem".
+ *
+ * A frame stores no rectangle. Its box is read from the cards it holds
+ * (`groupRect` in `components/workflow/canvasGeometry.ts`), so a group cannot contain no card, cannot
+ * disagree with what is drawn inside it, and moving, dragging or deleting a card needs no second
+ * bookkeeping. One card belongs to one frame; grouping cards that already sit in one moves them.
+ *
+ * A frame has no id of its own: it is read, moved and named by its place in the list, the way a
+ * paragraph is. Nothing outside the document ever refers to a frame by a key that could be stale.
+ */
+export interface WorkflowGroup {
+  title: string;
+  /** The cards inside it, in document order. */
+  nodeIds: string[];
+}
+
 export interface WorkflowDoc {
   version: typeof WORKFLOW_VERSION;
   mode: WorkflowMode;
   title: string;
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
+  /** Named frames; absent when the diagram has none, so an ungrouped document is unchanged. */
+  groups?: WorkflowGroup[];
   updatedAt: number;
 }
 
@@ -371,37 +391,46 @@ export function withEdgePort(
   return next;
 }
 
-/** A card's four dots and the kinds plugged into each, from the document's arrows. */
-export type SocketKinds = Record<WorkflowSide, PortKind[]>;
+/** A card's four dots and the kind plugged into each; null is an empty dot or a contested one. */
+export type SocketKinds = Record<WorkflowSide, PortKind | null>;
 
 /**
  * What is plugged into each dot of each card.
  *
  * Read off the arrows rather than stored twice: an arrow is the thing that knows its socket, so a
- * dot cannot disagree with the cable in it. A dot nothing is plugged into has an empty list, and a
- * dot fed by two different kinds lists both — the card draws the plain dot then, because a socket
- * cannot be two things at once.
+ * dot cannot disagree with the cable in it. A dot nothing is plugged into is null, and a dot fed by
+ * two different kinds is null too — the card draws the plain dot then, because a socket cannot be
+ * two things at once.
  */
 export function socketKinds(doc: WorkflowDoc): Map<string, SocketKinds> {
-  const sockets = new Map<string, SocketKinds>();
+  // A set per dot, not one value rewritten as the arrows are read: null already means "nothing is
+  // plugged in" and "two kinds are", so it cannot also be the progress of the scan — kinds A, B, A
+  // would otherwise come back as A rather than as a contested dot.
+  const found = new Map<string, Record<WorkflowSide, Set<PortKind>>>();
   const add = (nodeId: string, side: WorkflowSide, kind: PortKind | null) => {
     if (!kind) return;
-    const record = sockets.get(nodeId) ?? { left: [], right: [], top: [], bottom: [] };
-    const list = record[side];
-    if (!list.includes(kind)) list.push(kind);
-    sockets.set(nodeId, record);
+    const record =
+      found.get(nodeId) ?? { left: new Set(), right: new Set(), top: new Set(), bottom: new Set() };
+    record[side].add(kind);
+    found.set(nodeId, record);
   };
   for (const edge of doc.edges) {
     add(edge.from, edge.fromSide, edgePortOf(edge, 'from'));
     add(edge.to, edge.toSide, edgePortOf(edge, 'to'));
   }
-  return sockets;
-}
-
-/** The one kind a dot carries, or null when it is empty or carries more than one. */
-export function socketKind(kinds: PortKind[] | undefined): PortKind | null {
-  if (!kinds || kinds.length !== 1) return null;
-  return kinds[0];
+  /** One kind reads, more than one is contested, none is empty — all three are null to the card. */
+  const one = (kinds: Set<PortKind>): PortKind | null => (kinds.size === 1 ? [...kinds][0] : null);
+  return new Map(
+    [...found].map(([id, record]) => [
+      id,
+      {
+        left: one(record.left),
+        right: one(record.right),
+        top: one(record.top),
+        bottom: one(record.bottom),
+      },
+    ])
+  );
 }
 
 /** The kind an arrow carries; `flow` is the meaning of an arrow that never named one. */
@@ -427,24 +456,31 @@ export function withEdgeType(edge: WorkflowEdge, type: WorkflowEdgeType): Workfl
   return next;
 }
 
+/** The next `<prefix><n>` id, past every id of that shape still in the document. */
+function nextId(prefix: string, ids: readonly string[]): string {
+  let highest = 0;
+  for (const id of ids) {
+    if (!id.startsWith(prefix)) continue;
+    const number = Number(id.slice(prefix.length));
+    if (number > highest) highest = number;
+  }
+  return `${prefix}${highest + 1}`;
+}
+
 /** The next free card id: `s1`, `s2`, … A removed id is not reused within one session's edits. */
 export function nextStepId(nodes: WorkflowNode[]): string {
-  let highest = 0;
-  for (const node of nodes) {
-    const match = /^s(\d+)$/.exec(node.id);
-    if (match) highest = Math.max(highest, Number(match[1]));
-  }
-  return `s${highest + 1}`;
+  return nextId(
+    's',
+    nodes.map((node) => node.id)
+  );
 }
 
 /** The next free arrow id, past every id still in the document. */
 export function nextEdgeId(edges: WorkflowEdge[]): string {
-  let highest = 0;
-  for (const edge of edges) {
-    const match = /^e(\d+)$/.exec(edge.id);
-    if (match) highest = Math.max(highest, Number(match[1]));
-  }
-  return `e${highest + 1}`;
+  return nextId(
+    'e',
+    edges.map((edge) => edge.id)
+  );
 }
 
 /**
@@ -671,11 +707,31 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
     edges.push(edge);
   }
 
+  // Frames are read after the cards and arrows, because a frame is a claim about which cards exist.
+  // A card named by two frames is kept by the first: "drag the motor subsystem" must have one
+  // answer. A frame whose cards are all gone is dropped, one with a single card is not — a name on
+  // one card is still what the learner said.
+  const groups: WorkflowGroup[] = [];
+  const claimed = new Set<string>();
+  if (rawNodes && Array.isArray(record.groups)) {
+    for (const entry of record.groups) {
+      const stored = asRecord(entry);
+      if (!stored || !Array.isArray(stored.nodeIds)) continue;
+      const nodeIds = stored.nodeIds.filter((id): id is string => {
+        if (typeof id !== 'string' || !seen.has(id) || claimed.has(id)) return false;
+        claimed.add(id);
+        return true;
+      });
+      if (!nodeIds.length) continue;
+      groups.push({ title: clean(stored.title, MAX_GROUP_TITLE_CHARS), nodeIds });
+    }
+  }
+
   const updatedAt =
     typeof record.updatedAt === 'number' && Number.isFinite(record.updatedAt) && record.updatedAt > 0
       ? record.updatedAt
       : Date.now();
-  return {
+  const doc: WorkflowDoc = {
     version: WORKFLOW_VERSION,
     mode,
     title: clean(record.title, MAX_WORKFLOW_TITLE_CHARS),
@@ -683,6 +739,8 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
     edges,
     updatedAt,
   };
+  if (groups.length) doc.groups = groups;
+  return doc;
 }
 
 /**
