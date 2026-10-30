@@ -21,6 +21,7 @@ import {
   type WorkflowEdge,
   type WorkflowMode,
   type WorkflowNode,
+  type WorkflowSide,
 } from './workflow.ts';
 
 export interface WorkflowTemplate {
@@ -66,16 +67,31 @@ function flow(
   }));
   const edges: WorkflowEdge[] = [];
   const drawn = new Set<string>();
-  const connect = (from: string, to: string, label?: string) => {
+  const connect = (
+    from: string,
+    to: string,
+    fromSide: WorkflowSide,
+    toSide: WorkflowSide,
+    label?: string
+  ) => {
     if (from === to || !nodes.some((node) => node.id === to) || drawn.has(`${from}->${to}`)) return;
     drawn.add(`${from}->${to}`);
-    edges.push({ id: `e${edges.length + 1}`, from, to, ...(label ? { label } : {}) });
+    edges.push({
+      id: `e${edges.length + 1}`,
+      from,
+      to,
+      fromSide,
+      toSide,
+      ...(label ? { label } : {}),
+    });
   };
   for (const [index, step] of steps.entries()) {
-    if (step.branch) connect(`s${index + 1}`, step.branch.to, step.branch.when);
+    // A branch jumps past the next card; leaving from its right edge keeps that path out of the
+    // straight column the chain draws.
+    if (step.branch) connect(`s${index + 1}`, step.branch.to, 'right', 'left', step.branch.when);
   }
   for (let index = 0; index < steps.length - 1; index += 1) {
-    connect(`s${index + 1}`, `s${index + 2}`);
+    connect(`s${index + 1}`, `s${index + 2}`, 'bottom', 'top');
   }
   return { version: WORKFLOW_VERSION, mode, title, nodes, edges, updatedAt: now };
 }

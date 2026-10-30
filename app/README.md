@@ -945,8 +945,10 @@ suite for the side-by-side geometry and the reload).
 **The method has a tab too.** **Workflow** is the learner's own plan for how the problem gets solved —
 the analysis palette (Given, Unknown, Model, Compute, Check, Answer) or the code one (Input,
 Transform, Branch, Loop, Test, Output) — drawn as a node canvas: a palette press spawns a card, a card
-drags by its header and edits in place, and a directed arrow is dragged from the dot on its right edge
-to the card it feeds (tap the dot, then the target, is the same gesture for a phone). It is a view of
+drags by its header and edits in place, and a directed arrow is dragged from any of a card's four dots
+(left, right, top, bottom) to any dot on the card it feeds (tap a dot, then the target, is the same
+gesture for a phone). The vertical pair is what lets a join or a loop leave the column without
+crossing the chain; only left and right carry reading order. It is a view of
 the same card, so it tabs and splits like the outputs and its arrangement is remembered; cards also
 nudge with the arrow keys, and the surface is capped at 70% of the viewport and scrolls inside that,
 so a 24-card flow neither widens the page nor turns a 390 px phone into a four-thousand-pixel

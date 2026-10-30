@@ -31,6 +31,7 @@ import {
   MAX_WORKFLOW_TITLE_CHARS,
   KIND_META,
   STEP_KINDS,
+  WORKFLOW_SIDES,
   STEPS_BY_MODE,
   addWorkflowNode,
   autoNodePosition,
@@ -212,6 +213,48 @@ check('a version-1 list migrates: every card kept, its branch becomes a labelled
     'the list’s implied chain must survive as real arrows'
   );
   assert.equal(normalized.edges.length, 4, 'three chain arrows and the one branch');
+});
+
+check('an old version-2 arrow keeps the right-to-left attachment it was drawn with', () => {
+  const normalized = normalizeWorkflow(good);
+  for (const edge of normalized.edges) {
+    assert.equal(edge.fromSide, 'right', `${edge.from}->${edge.to} lost its source side`);
+    assert.equal(edge.toSide, 'left', `${edge.from}->${edge.to} lost its target side`);
+  }
+  assert.equal(normalized.edges.length, 5);
+});
+
+check('a side the editor never offered is repaired instead of rendering off the card', () => {
+  const normalized = normalizeWorkflow(
+    graph(
+      [{ title: 'a' }, { title: 'b' }],
+      [{ from: 's1', to: 's2', fromSide: 'sideways', toSide: 'bottom' }]
+    )
+  );
+  assert.equal(normalized.edges[0].fromSide, 'right');
+  assert.equal(normalized.edges[0].toSide, 'bottom');
+});
+
+check('a version-1 column migrates with its chain down the paper, and branches around it', () => {
+  const normalized = normalizeWorkflow(
+    v1([
+      { kind: 'given', title: 'a' },
+      { kind: 'compute', title: 'b' },
+      { kind: 'answer', title: 'c', branch: { when: 'wrong', to: 's1' } },
+    ])
+  );
+  const chain = normalized.edges.filter((edge) => !edge.label);
+  assert.deepEqual(
+    chain.map((edge) => `${edge.fromSide}->${edge.toSide}`),
+    ['bottom->top', 'bottom->top'],
+    'the implied chain must read down the one-column migration'
+  );
+  const branch = normalized.edges.find((edge) => edge.label);
+  assert.deepEqual([branch.fromSide, branch.toSide], ['right', 'left']);
+  for (const edge of normalized.edges) {
+    assert.ok(WORKFLOW_SIDES.includes(edge.fromSide), edge.fromSide);
+    assert.ok(WORKFLOW_SIDES.includes(edge.toSide), edge.toSide);
+  }
 });
 
 check('a junk card is dropped and the rest kept', () => {
@@ -716,6 +759,20 @@ check('every template but the blank one has its cards filled in, and no open iss
   }
   const blank = validateWorkflow(templateById('blank').build());
   assert.ok(blank.some((issue) => issue.code === 'empty-step'), 'the blank template is an invitation');
+});
+
+check('templates attach their chain down the column and their branches around it', () => {
+  for (const template of WORKFLOW_TEMPLATES) {
+    for (const edge of template.build().edges) {
+      assert.ok(WORKFLOW_SIDES.includes(edge.fromSide), `${template.id} has a bad source side`);
+      assert.ok(WORKFLOW_SIDES.includes(edge.toSide), `${template.id} has a bad target side`);
+      if (edge.label) {
+        assert.deepEqual([edge.fromSide, edge.toSide], ['right', 'left'], template.id);
+      } else {
+        assert.deepEqual([edge.fromSide, edge.toSide], ['bottom', 'top'], template.id);
+      }
+    }
+  }
 });
 
 check('a template branch that points at the next card keeps its condition', () => {

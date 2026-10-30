@@ -16,8 +16,10 @@ import {
   workflowToMermaid,
   type StepKind,
   type WorkflowDoc,
+  type WorkflowEdge,
   type WorkflowIssue,
   type WorkflowNode,
+  type WorkflowSide,
 } from '../workflow.ts';
 import { templateForLesson, type WorkflowTemplate } from '../workflowTemplates.ts';
 import {
@@ -179,7 +181,7 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
     setStatus(lostEdges ? 'Card removed — its arrows went with it' : 'Card removed');
   };
 
-  const connect = (from: string, to: string) => {
+  const connect = (from: string, to: string, fromSide: WorkflowSide, toSide: WorkflowSide) => {
     if (!doc) return;
     if (from === to) {
       setStatus('A card cannot feed itself — connect it to the next one instead');
@@ -193,7 +195,7 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
       setStatus(`A workflow holds at most ${MAX_EDGES} arrows — remove one before drawing another`);
       return;
     }
-    const edge = { id: nextEdgeId(doc.edges), from, to };
+    const edge: WorkflowEdge = { id: nextEdgeId(doc.edges), from, to, fromSide, toSide };
     commit({ ...doc, edges: [...doc.edges, edge] });
     setStatus('Arrow added');
   };

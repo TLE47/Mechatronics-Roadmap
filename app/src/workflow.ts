@@ -59,6 +59,10 @@ export const STEP_KINDS = [
 export type StepKind = (typeof STEP_KINDS)[number];
 export type WorkflowMode = 'analysis' | 'code';
 
+/** The four edges of a card an arrow can attach to. */
+export const WORKFLOW_SIDES = ['left', 'right', 'top', 'bottom'] as const;
+export type WorkflowSide = (typeof WORKFLOW_SIDES)[number];
+
 export const MODE_LABEL: Record<WorkflowMode, string> = { analysis: 'Analysis', code: 'Code' };
 
 /** The glyph a card kind draws, named here so the model needs no UI package to describe it. */
@@ -195,11 +199,16 @@ export interface WorkflowNode {
   y: number;
 }
 
-/** One directed arrow. `label` is the condition a branch edge carries, when it has one. */
+/** One directed arrow, attached to a named side of each card. */
 export interface WorkflowEdge {
   id: string;
   from: string;
   to: string;
+  /** Which edge of the source card the arrow leaves from. */
+  fromSide: WorkflowSide;
+  /** Which edge of the target card it lands on. */
+  toSide: WorkflowSide;
+  /** The condition a branch edge carries, when it has one. */
   label?: string;
 }
 
@@ -242,6 +251,10 @@ function clean(value: unknown, max: number): string {
 
 function isKind(value: unknown): value is StepKind {
   return typeof value === 'string' && Object.prototype.hasOwnProperty.call(KIND_META, value);
+}
+
+function isSide(value: unknown): value is WorkflowSide {
+  return typeof value === 'string' && (WORKFLOW_SIDES as readonly string[]).includes(value);
 }
 
 /** The next free card id: `s1`, `s2`, … A removed id is not reused within one session's edits. */
@@ -359,13 +372,23 @@ function readNode(value: unknown, mode: WorkflowMode, fallbackId: string, index:
   };
 }
 
-function readEdge(value: unknown): { from: string; to: string; label: string } | null {
+function readEdge(
+  value: unknown
+): { from: string; to: string; label: string; fromSide: WorkflowSide; toSide: WorkflowSide } | null {
   const record = asRecord(value);
   if (!record) return null;
   const from = clean(record.from, 40);
   const to = clean(record.to, 40);
   if (!from || !to) return null;
-  return { from, to, label: clean(record.label, MAX_BRANCH_CONDITION_CHARS) };
+  return {
+    from,
+    to,
+    label: clean(record.label, MAX_BRANCH_CONDITION_CHARS),
+    // A version-2 document written before cards had four points carries no side. Right-to-left is
+    // the arrow it drew then, so that is what it keeps.
+    fromSide: isSide(record.fromSide) ? record.fromSide : 'right',
+    toSide: isSide(record.toSide) ? record.toSide : 'left',
+  };
 }
 
 /**
@@ -389,7 +412,13 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
   const source = rawNodes ?? rawSteps;
 
   const nodes: WorkflowNode[] = [];
-  const branches: { from: string; to: string; label: string }[] = [];
+  const branches: {
+    from: string;
+    to: string;
+    label: string;
+    fromSide: WorkflowSide;
+    toSide: WorkflowSide;
+  }[] = [];
   const seen = new Set<string>();
   for (const entry of source) {
     if (nodes.length >= MAX_STEPS) break;
@@ -397,7 +426,16 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
     if (!read || seen.has(read.node.id)) continue;
     seen.add(read.node.id);
     nodes.push(read.node);
-    if (read.branch) branches.push({ from: read.node.id, to: read.branch.to, label: read.branch.label });
+    if (read.branch) {
+      branches.push({
+        from: read.node.id,
+        to: read.branch.to,
+        label: read.branch.label,
+        // A v1 branch jumped forward; the side curve says "this is not the next step".
+        fromSide: 'right',
+        toSide: 'left',
+      });
+    }
   }
   if (nodes.length === 0) return null;
 
@@ -409,6 +447,9 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
     from: node.id,
     to: nodes[index + 1].id,
     label: '',
+    // The v1 list became a single column, so its implied arrow now runs down the paper.
+    fromSide: 'bottom' as WorkflowSide,
+    toSide: 'top' as WorkflowSide,
   }));
   const candidates = rawNodes
     ? rawEdges.map(readEdge).filter((edge): edge is NonNullable<typeof edge> => Boolean(edge))
@@ -419,10 +460,17 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
     if (edges.length >= MAX_EDGES) break;
     if (!seen.has(candidate.from) || !seen.has(candidate.to)) continue;
     if (candidate.from === candidate.to) continue;
+    // One arrow per ordered pair: two paths between the same cards would say the same thing twice.
     const key = `${candidate.from}->${candidate.to}`;
     if (drawn.has(key)) continue;
     drawn.add(key);
-    const edge: WorkflowEdge = { id: `e${edges.length + 1}`, from: candidate.from, to: candidate.to };
+    const edge: WorkflowEdge = {
+      id: `e${edges.length + 1}`,
+      from: candidate.from,
+      to: candidate.to,
+      fromSide: candidate.fromSide,
+      toSide: candidate.toSide,
+    };
     if (candidate.label) edge.label = candidate.label;
     edges.push(edge);
   }

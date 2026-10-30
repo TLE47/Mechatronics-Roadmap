@@ -1386,25 +1386,37 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           `a dragged card must follow the pointer, but it moved ${Math.round(cardAfter.x - cardBefore.x)}x${Math.round(cardAfter.y - cardBefore.y)}`
         );
 
-        // An arrow is drawn from the dot on a card's right edge to the card it feeds.
+        // One handle on each of the four sides, and each is both an inlet and an outlet: a flow
+        // drawn bottom-up or sideways needs no scrolling around. Only right and left carry order;
+        // the vertical pair is for joins and loops that would cross the line otherwise.
+        for (const side of ['left', 'right', 'top', 'bottom']) {
+          assert.equal(
+            await page.locator(`[data-testid^="workflow-node-port-${side}-"]`).count(),
+            2,
+            `both cards must offer a handle on their ${side} side`
+          );
+        }
+        // An arrow is drawn from a dot on a card's right edge to an inlet on the card it feeds.
         assert.equal(
           await page.locator('svg g[data-testid^="workflow-edge-"]').count(),
           0,
           'a fresh workflow has no arrows'
         );
-        const outDot = await page.getByTestId('workflow-node-out-0').boundingBox();
-        const targetCard = await page.getByTestId('workflow-node-1').boundingBox();
+        const outDot = await page.getByTestId('workflow-node-port-right-0').boundingBox();
+        const targetCard = await page.getByTestId('workflow-node-port-top-1').boundingBox();
         await page.mouse.move(outDot.x + outDot.width / 2, outDot.y + outDot.height / 2);
         await page.mouse.down();
-        await page.mouse.move(targetCard.x + targetCard.width / 2, targetCard.y + targetCard.height / 2, {
-          steps: 10,
-        });
+        await page.mouse.move(
+          targetCard.x + targetCard.width / 2,
+          targetCard.y + targetCard.height / 2,
+          { steps: 10 }
+        );
         await page.mouse.up();
         await page.waitForTimeout(350);
         assert.equal(
           await page.locator('svg g[data-testid^="workflow-edge-"]').count(),
           1,
-          'dragging from a card’s dot to another card must draw one directed arrow'
+          'dragging from a right outlet to a top inlet must draw one directed arrow, not cancel'
         );
 
         await page.waitForTimeout(700);
@@ -1574,8 +1586,8 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.getByTestId('workflow-add-compute').click();
         await page.getByTestId('workflow-add-answer').click();
         await page.waitForTimeout(250);
-        const reorderOut = await page.getByTestId('workflow-node-out-0').boundingBox();
-        const reorderTarget = await page.getByTestId('workflow-node-2').boundingBox();
+        const reorderOut = await page.getByTestId('workflow-node-port-right-0').boundingBox();
+        const reorderTarget = await page.getByTestId('workflow-node-port-left-2').boundingBox();
         await page.mouse.move(reorderOut.x + reorderOut.width / 2, reorderOut.y + reorderOut.height / 2);
         await page.mouse.down();
         await page.mouse.move(

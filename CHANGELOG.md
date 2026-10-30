@@ -18,6 +18,19 @@ flowchart LR
 
 ## [2026-10-29] — One numbering, an honest clock label, and the task in Write
 
+**A card has four connection points, not two.** The canvas offered a dot on the left and right only,
+so a join or a loop had to leave the column sideways and cross the chain it was drawn beside. Every
+card now carries a dot on each of its four edges (`WORKFLOW_SIDES` in
+[`app/src/workflow.ts`](app/src/workflow.ts)): an arrow may start and end on any of them, and a drop
+on the card body still snaps to the side facing its source. Left and right stay the sides that mean
+order; the vertical pair exists for the paths the column cannot hold. Edges store their two sides,
+so a curved arrow survives a reload rather than being re-guessed; a version-2 document written before
+this keeps the right-to-left attachment it was drawn with, and a version-1 list migrates down the
+paper (bottom to top) with its branches around it. `npm run test:workflow` pins the old-document
+default, the four-side acceptance and the template sides; `npm run test:e2e` counts all four handles
+on two cards, drags a right outlet onto a top inlet and finds the arrow drawn, then lands the reorder
+arrow on a left inlet.
+
 **A card's badge and the checklist now agree.** The canvas numbered cards by their position in the
 `nodes` array while `validateWorkflow`, the Markdown and the Mermaid numbered them by the arrow
 order — after drawing `s1 → s6`, the card wore **6** and the warning named it **Step 3**. Both now
@@ -80,7 +93,7 @@ point. [`app/src/workflow.ts`](app/src/workflow.ts) is now version 2 of the docu
 canvas coordinates and first-class `edges` — and [`app/src/components/WorkflowCanvas.tsx`](app/src/components/WorkflowCanvas.tsx)
 draws it: a palette press spawns a card on a dotted grid, a card drags by its header (and nudges with
 the arrow keys), its title, detail and unit are edited in place, and a directed arrow is dragged from
-the dot on its right edge to the card it feeds. Tapping the dot and then the target is the same
+a dot on a card's edge to the card it feeds. Tapping the dot and then the target is the same
 gesture without a mouse. An arrow carries its condition as a label, and a small × at its midpoint
 removes it. `workflowOrder` is the one reading order — breadth-first from the start cards,
 loose cards last — so the checklist's "Step 3", the Markdown numbering and the Mermaid arrows agree.

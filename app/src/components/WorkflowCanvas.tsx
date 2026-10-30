@@ -14,9 +14,11 @@ import {
   MAX_STEP_TITLE_CHARS,
   MAX_STEP_UNIT_CHARS,
   NODE_WIDTH,
+  WORKFLOW_SIDES,
   type WorkflowDoc,
   type WorkflowIssue,
   type WorkflowNode,
+  type WorkflowSide,
 } from '../workflow.ts';
 import { iconForKind } from './workflowIcons.ts';
 
@@ -25,7 +27,7 @@ import { iconForKind } from './workflowIcons.ts';
  *
  * The tab used to be a list, and a list cannot show a branch that goes back, two paths that meet, or
  * the shape a learner actually has in mind. This draws the graph: cards on a dotted grid, dragged by
- * their header, arrows drawn from a card's right-hand dot to another card.
+ * their header, arrows drawn between any of their four connection dots.
  *
  * Three rules the interaction keeps:
  *
@@ -34,8 +36,8 @@ import { iconForKind } from './workflowIcons.ts';
  *    drag in progress, so a reload or a lesson switch can never leave two versions of one card.
  * 2. **A card is editable where it sits.** Title, detail and unit are always inputs on the card — no
  *    edit mode to enter, and no second form that can drift from what the card shows.
- * 3. **Two ways to draw an arrow.** Drag from the dot to the target (a mouse), or tap the dot then
- *    tap the target (a phone, or an unsteady hand). Escape, or a tap on empty grid, cancels.
+ * 3. **Two ways to draw an arrow.** Drag from one dot to another (a mouse), or tap the first then
+ *    the second (a phone, or an unsteady hand). Escape, or a tap on empty grid, cancels.
  *
  * Cards are laid out in canvas pixels, and the grid grows with the furthest card, so a learner can
  * drag right and down rather than being boxed into a first screenful. The surface scrolls; the page
@@ -53,12 +55,12 @@ export interface WorkflowCanvasProps {
   onMove: (id: string, x: number, y: number) => void;
   onUpdate: (id: string, patch: Partial<WorkflowNode>) => void;
   onRemove: (id: string) => void;
-  onConnect: (from: string, to: string) => void;
+  onConnect: (from: string, to: string, fromSide: WorkflowSide, toSide: WorkflowSide) => void;
   onDisconnect: (edgeId: string) => void;
 }
 
-/** How far down a card the arrows attach: the middle of its header. */
-const ANCHOR_Y = 26;
+/** Before the first DOM measurement: tall enough for a header and two detail lines. */
+const NODE_FALLBACK_HEIGHT = 120;
 const DRAG_STEP = 4;
 const NUDGE = 8;
 const NUDGE_FAST = 32;
@@ -72,33 +74,92 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-function anchorRight(node: WorkflowNode): { x: number; y: number } {
-  return { x: node.x + NODE_WIDTH, y: node.y + ANCHOR_Y };
+const SIDE_VECTOR: Record<WorkflowSide, { x: number; y: number }> = {
+  left: { x: -1, y: 0 },
+  right: { x: 1, y: 0 },
+  top: { x: 0, y: -1 },
+  bottom: { x: 0, y: 1 },
+};
+
+/** A dot sits on its card's edge; the anchor is that edge's midpoint. */
+function anchorOn(node: WorkflowNode, side: WorkflowSide, height: number): { x: number; y: number } {
+  switch (side) {
+    case 'left':
+      return { x: node.x, y: node.y + height / 2 };
+    case 'right':
+      return { x: node.x + NODE_WIDTH, y: node.y + height / 2 };
+    case 'top':
+      return { x: node.x + NODE_WIDTH / 2, y: node.y };
+    case 'bottom':
+      return { x: node.x + NODE_WIDTH / 2, y: node.y + height };
+  }
 }
 
-function anchorLeft(node: WorkflowNode): { x: number; y: number } {
-  return { x: node.x, y: node.y + ANCHOR_Y };
+/** A cubic that leaves its source and enters its target along the named sides. */
+function edgeCurve(
+  a: { x: number; y: number },
+  aSide: WorkflowSide,
+  b: { x: number; y: number },
+  bSide: WorkflowSide
+): string {
+  const bend = Math.max(16, Math.min(56, Math.hypot(b.x - a.x, b.y - a.y) / 2));
+  const av = SIDE_VECTOR[aSide];
+  const bv = SIDE_VECTOR[bSide];
+  return `M ${a.x} ${a.y} C ${a.x + av.x * bend} ${a.y + av.y * bend}, ${b.x + bv.x * bend} ${
+    b.y + bv.y * bend
+  }, ${b.x} ${b.y}`;
 }
 
-/**
- * A connector that stays in the paper between two cards.
- *
- * A vertical flow has the next card down and to the left (its left edge is the one-column x), so a
- * bend proportional to the horizontal gap would throw the control point far off the canvas and draw
- * a loop around the card. The bend is capped and the controls meet at the midpoint height instead:
- * the arrow leaves the right dot, crosses the gap, and settles into the next card's left dot.
- */
-function curve(a: { x: number; y: number }, b: { x: number; y: number }): string {
-  const bend = Math.max(28, Math.min(52, Math.abs(b.y - a.y) * 0.25));
-  const midY = (a.y + b.y) / 2;
-  return `M ${a.x} ${a.y} C ${a.x + bend} ${midY}, ${b.x - bend} ${midY}, ${b.x} ${b.y}`;
+/** The dashed preview follows the pointer; it only needs the source side's departure. */
+function pendingCurve(
+  a: { x: number; y: number },
+  aSide: WorkflowSide,
+  b: { x: number; y: number }
+): string {
+  const bend = Math.max(16, Math.min(56, Math.hypot(b.x - a.x, b.y - a.y) / 2));
+  const av = SIDE_VECTOR[aSide];
+  return `M ${a.x} ${a.y} C ${a.x + av.x * bend} ${a.y + av.y * bend}, ${b.x} ${b.y}, ${b.x} ${b.y}`;
 }
 
-function nodeIdAt(clientX: number, clientY: number): string | null {
+/** The side of `to` that looks at `from` when a drop lands on the card body rather than a dot. */
+function facingSide(from: WorkflowNode, to: WorkflowNode, fromHeight: number, toHeight: number): WorkflowSide {
+  const dx = from.x + NODE_WIDTH / 2 - (to.x + NODE_WIDTH / 2);
+  const dy = from.y + fromHeight / 2 - (to.y + toHeight / 2);
+  const vertical = Math.abs(dy) / Math.max(1, Math.max(fromHeight, toHeight));
+  const horizontal = Math.abs(dx) / NODE_WIDTH;
+  if (horizontal >= vertical) return dx < 0 ? 'left' : 'right';
+  return dy < 0 ? 'top' : 'bottom';
+}
+
+interface ConnectionTarget {
+  nodeId: string;
+  /** The dot under the pointer, or null when the pointer is on the card body. */
+  side: WorkflowSide | null;
+}
+
+interface LinkDraft {
+  nodeId: string;
+  side: WorkflowSide;
+}
+
+function connectionTargetAt(clientX: number, clientY: number): ConnectionTarget | null {
   const element = document.elementFromPoint(clientX, clientY) as HTMLElement | null;
-  const card = element?.closest('[data-node-id]');
-  return card?.getAttribute('data-node-id') ?? null;
+  const port = element?.closest<HTMLElement>('[data-port]');
+  const card =
+    port?.closest<HTMLElement>('[data-node-id]') ?? element?.closest<HTMLElement>('[data-node-id]');
+  const nodeId = card?.getAttribute('data-node-id');
+  if (!nodeId) return null;
+  const raw = port?.getAttribute('data-port');
+  const side = raw && (WORKFLOW_SIDES as readonly string[]).includes(raw) ? (raw as WorkflowSide) : null;
+  return { nodeId, side };
 }
+
+const PORT_POSITION: Record<WorkflowSide, string> = {
+  left: 'left-0 top-1/2 -translate-x-1/2 -translate-y-1/2',
+  right: 'right-0 top-1/2 translate-x-1/2 -translate-y-1/2',
+  top: 'top-0 left-1/2 -translate-x-1/2 -translate-y-1/2',
+  bottom: 'bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2',
+};
 
 export function WorkflowCanvas({
   doc,
@@ -125,11 +186,43 @@ export function WorkflowCanvas({
   const dragged = useRef<{ x: number; y: number } | null>(null);
   const dragMoved = useRef(false);
   const [livePosition, setLivePosition] = useState<{ x: number; y: number } | null>(null);
-  const [linking, setLinking] = useState<string | null>(null);
+  const [linking, setLinking] = useState<LinkDraft | null>(null);
   const [cursor, setCursor] = useState({ x: 0, y: 0 });
   const linkTravelled = useRef(false);
+  const [heights, setHeights] = useState<Record<string, number>>({});
 
   const byId = useMemo(() => new Map(doc.nodes.map((node) => [node.id, node])), [doc.nodes]);
+  const nodeIds = useMemo(() => doc.nodes.map((node) => node.id).join('\u0000'), [doc.nodes]);
+  const heightOf = (id: string) => heights[id] ?? NODE_FALLBACK_HEIGHT;
+
+  // The four dots sit on the card's own edges, so the anchors need the card's rendered height, not
+  // a guess: a measured card is a unit field taller than an unmeasured one. The observer follows
+  // the cards, not the document, so typing does not re-measure the canvas on every keystroke.
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!grid || typeof ResizeObserver === 'undefined') return;
+    const measure = () => {
+      const next: Record<string, number> = {};
+      grid.querySelectorAll<HTMLElement>('[data-node-id]').forEach((card) => {
+        const id = card.dataset.nodeId;
+        if (id) next[id] = card.offsetHeight;
+      });
+      setHeights((previous) => {
+        const keys = Object.keys(next);
+        if (
+          keys.length === Object.keys(previous).length &&
+          keys.every((key) => previous[key] === next[key])
+        ) {
+          return previous;
+        }
+        return next;
+      });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    grid.querySelectorAll<HTMLElement>('[data-node-id]').forEach((card) => observer.observe(card));
+    return () => observer.disconnect();
+  }, [nodeIds]);
 
   const extents = useMemo(() => {
     // The grid is only as wide as the cards need: a 380 px split must not get a horizontal
@@ -331,15 +424,27 @@ export function WorkflowCanvas({
     };
   }, [dragId, onMove]);
 
-  /** Arm an arrow. A tap on the source dot leaves it armed; a drag draws and drops in one gesture. */
-  const startLink = (event: ReactPointerEvent, node: WorkflowNode) => {
+  /**
+   * A port's pointer down. With an arrow already armed this is the target, so it completes at this
+   * side; otherwise it starts one. Every side is both a source and a target.
+   */
+  const startLink = (event: ReactPointerEvent, node: WorkflowNode, side: WorkflowSide) => {
     if (event.button !== 0) return;
     event.preventDefault();
     event.stopPropagation();
+    if (linking) {
+      if (linking.nodeId === node.id) {
+        setLinking(null);
+        return;
+      }
+      onConnect(linking.nodeId, node.id, linking.side, side);
+      setLinking(null);
+      return;
+    }
     const point = toCanvas(event.clientX, event.clientY);
     linkTravelled.current = false;
     setCursor(point);
-    setLinking(node.id);
+    setLinking({ nodeId: node.id, side });
     onSelect(node.id);
   };
 
@@ -350,9 +455,17 @@ export function WorkflowCanvas({
       setCursor(toCanvas(event.clientX, event.clientY));
     };
     const up = (event: PointerEvent) => {
-      const target = nodeIdAt(event.clientX, event.clientY);
-      if (target && target !== linking) {
-        onConnect(linking, target);
+      const target = connectionTargetAt(event.clientX, event.clientY);
+      if (target && target.nodeId !== linking.nodeId) {
+        const from = byId.get(linking.nodeId);
+        const to = byId.get(target.nodeId);
+        if (!from || !to) {
+          setLinking(null);
+          return;
+        }
+        const toSide =
+          target.side ?? facingSide(from, to, heightOf(from.id), heightOf(to.id));
+        onConnect(linking.nodeId, target.nodeId, linking.side, toSide);
         setLinking(null);
         return;
       }
@@ -371,7 +484,7 @@ export function WorkflowCanvas({
       window.removeEventListener('pointerup', up);
       window.removeEventListener('keydown', key);
     };
-  }, [linking, onConnect]);
+  }, [linking, onConnect, byId, heights]);
 
   // An issue pressed in the checklist names a card; bring that card into view instead of trusting
   // that the learner can guess which one it is.
@@ -404,7 +517,7 @@ export function WorkflowCanvas({
     onSelect(node.id);
   };
 
-  const linkSource = linking ? byId.get(linking) ?? null : null;
+  const linkSource = linking ? byId.get(linking.nodeId) ?? null : null;
 
   return (
     <div className="relative mt-2 flex min-h-0 flex-1 flex-col">
@@ -469,10 +582,12 @@ export function WorkflowCanvas({
             const from = byId.get(edge.from);
             const to = byId.get(edge.to);
             if (!from || !to) return null;
+            const a = anchorOn(from, edge.fromSide, heightOf(from.id));
+            const b = anchorOn(to, edge.toSide, heightOf(to.id));
             return (
               <g key={edge.id} data-testid={`workflow-edge-${index}`}>
                 <path
-                  d={curve(anchorRight(from), anchorLeft(to))}
+                  d={edgeCurve(a, edge.fromSide, b, edge.toSide)}
                   fill="none"
                   stroke="var(--accent)"
                   strokeWidth={1.6}
@@ -482,10 +597,14 @@ export function WorkflowCanvas({
               </g>
             );
           })}
-          {linkSource && (
+          {linkSource && linking && (
             <path
               data-testid="workflow-edge-pending"
-              d={curve(anchorRight(linkSource), cursor)}
+              d={pendingCurve(
+                anchorOn(linkSource, linking.side, heightOf(linkSource.id)),
+                linking.side,
+                cursor
+              )}
               fill="none"
               stroke="var(--accent)"
               strokeWidth={1.6}
@@ -498,8 +617,8 @@ export function WorkflowCanvas({
           const from = byId.get(edge.from);
           const to = byId.get(edge.to);
           if (!from || !to) return null;
-          const a = anchorRight(from);
-          const b = anchorLeft(to);
+          const a = anchorOn(from, edge.fromSide, heightOf(from.id));
+          const b = anchorOn(to, edge.toSide, heightOf(to.id));
           const left = (a.x + b.x) / 2;
           const top = (a.y + b.y) / 2;
           return (
@@ -547,13 +666,24 @@ export function WorkflowCanvas({
               } ${dragId === node.id ? 'z-20 shadow-lg' : ''}`}
               onPointerDown={(event) => {
                 if (!linking) return;
-                if (linking === node.id) {
+                if (linking.nodeId === node.id) {
+                  setLinking(null);
+                  return;
+                }
+                const from = byId.get(linking.nodeId);
+                if (!from) {
                   setLinking(null);
                   return;
                 }
                 event.preventDefault();
                 event.stopPropagation();
-                onConnect(linking, node.id);
+                // The card body is a generous target: land on the side that faces the source.
+                onConnect(
+                  linking.nodeId,
+                  node.id,
+                  linking.side,
+                  facingSide(from, node, heightOf(from.id), heightOf(node.id))
+                );
                 setLinking(null);
               }}
             >
@@ -635,36 +765,30 @@ export function WorkflowCanvas({
                 )}
               </div>
 
-              <button
-                type="button"
-                data-testid={`workflow-node-in-${index}`}
-                aria-label={`Connect an arrow into card ${index + 1}`}
-                title="An arrow lands here"
-                onPointerDown={(event) => {
-                  if (!linking) return;
-                  event.preventDefault();
-                  event.stopPropagation();
-                  if (linking !== node.id) onConnect(linking, node.id);
-                  setLinking(null);
-                }}
-                className={`absolute -left-2.5 top-4 z-20 h-5 w-5 touch-none rounded-full border bg-panel ${
-                  linking && linking !== node.id
-                    ? 'border-accent ring-2 ring-accent/30'
-                    : 'border-line'
-                }`}
-              />
-              <button
-                type="button"
-                data-testid={`workflow-node-out-${index}`}
-                aria-label={`Start an arrow from card ${index + 1}`}
-                title="Drag from this dot to another card to draw an arrow"
-                onPointerDown={(event) => startLink(event, node)}
-                className={`absolute -right-2.5 top-4 z-20 flex h-5 w-5 touch-none cursor-crosshair items-center justify-center rounded-full border border-accent bg-panel ${
-                  linking === node.id ? 'ring-2 ring-accent/40' : ''
-                }`}
-              >
-                <span className="h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
-              </button>
+              {WORKFLOW_SIDES.map((side) => {
+                const source = linking?.nodeId === node.id && linking.side === side;
+                const target = Boolean(linking && linking.nodeId !== node.id);
+                return (
+                  <button
+                    key={side}
+                    type="button"
+                    data-testid={`workflow-node-port-${side}-${index}`}
+                    data-port={side}
+                    aria-label={`${side} connection on card ${number}: drag an arrow from here, or drop one here`}
+                    title={
+                      target
+                        ? `Connect the arrow to the ${side}`
+                        : `Drag an arrow from the ${side} of this card`
+                    }
+                    onPointerDown={(event) => startLink(event, node, side)}
+                    className={`absolute z-20 flex h-5 w-5 touch-none cursor-crosshair items-center justify-center rounded-full border border-accent bg-panel ${PORT_POSITION[side]} ${
+                      source || target ? 'ring-2 ring-accent/35' : ''
+                    }`}
+                  >
+                    <span className="h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
+                  </button>
+                );
+              })}
             </div>
           );
         })}
