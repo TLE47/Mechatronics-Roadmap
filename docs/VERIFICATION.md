@@ -494,11 +494,12 @@ and the walk stop describing the same six moments, or when a recorded row sits a
 activity rail, main pane and first panel geometry, the count of buttons, inputs, links, headings,
 canvases and tables, and the colours, type and `--bg/--panel/--text/--accent` the browser resolved. On
 the Workflow canvas it also records each card's box, every port dot, each arrow's path, its label, kind
-chip and the remove button that hangs from the arrow's half-way point, and a named frame with its chip,
-seeded through the panel's own blank/code/branch/condition path and its Group gesture — so a connector, a
-dot or a control that drifts is a finding rather than something only a person sees — and fails when any of
-it moves. A `translate` nudge of every port dot and a 12 px nudge of the frame chip each fail, with the
-field named, in all four palettes. The rules themselves are a contract table
+chip and the remove button that hangs from the arrow's half-way point, a named frame with its chip, a Fork
+and Join bar, and a named lane's band and chip, seeded through the panel's own
+blank/code/branch/condition, Group and Lane gestures — so a connector, a dot or a control that drifts is
+a finding rather than something only a person sees — and fails when any of it moves. A `translate` nudge
+of every port dot, a 12 px nudge of the frame chip, a 6 px shift of a Fork bar and a 6 px drop of a lane
+chip each fail, with the field named, in all four palettes. The rules themselves are a contract table
 ([`scripts/test_snapshot_compare.mjs`](../scripts/test_snapshot_compare.mjs), run by
 `tests/test_snapshot_compare.py` through the unittest discovery): a 2 px move passes and a 3 px move
 fails with the field named, while a changed count or style, a surface missing from either side and a

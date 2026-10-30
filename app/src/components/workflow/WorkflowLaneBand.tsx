@@ -24,11 +24,13 @@ export function WorkflowLaneBand({ lane, index, rect, onRename, onRemove }: Work
     <>
       <div
         data-testid={`workflow-lane-${index}`}
+        data-lane-band=""
         aria-hidden="true"
         className="pointer-events-none absolute z-[9] rounded-lg border border-accent/25 bg-accent/[0.035]"
         style={{ left: rect.x, top: rect.y, width: rect.width, height: rect.height }}
       />
       <div
+        data-testid={`workflow-lane-chip-${index}`}
         data-lane-chip=""
         className="absolute z-30 flex items-center rounded border border-accent/40 bg-panel shadow-sm"
         style={{ left: rect.x + 6, top: rect.y + 2 }}

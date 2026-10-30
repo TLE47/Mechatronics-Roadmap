@@ -11,8 +11,9 @@
  *
  * This gate asks that, for **56 surfaces**: the twelve tabs, Home and the Workflow canvas, in all
  * four palettes. The canvas is measured with its connectors included: a node's box, an arrow's path,
- * the label and the remove button that hang from it, so a curve or a control that drifts is a finding
- * rather than something only a person notices.
+ * the label and the remove button that hang from it, a frame and a lane with their chips, and the
+ * Fork and Join bars, so a curve or a control that drifts is a finding rather than something only a
+ * person notices.
  *
  * **It is not a pixel diff, and that is a decision rather than a shortcut.** A screenshot baseline is
  * taken on one machine, and its antialiasing does not exist on the next: the runner that builds this
@@ -176,11 +177,27 @@ function measure(selectors) {
   for (const dot of document.querySelectorAll('[data-testid^="workflow-node-port-"]')) {
     workflow[`wf-port-${dot.dataset.testid.replace('workflow-node-port-', '')}`] = box(dot);
   }
+  // A fork or join is its own plate, and its box is what says "this bar is still the width of a
+  // bar": the node box above records it among every card, this key names the meaning.
+  for (const bar of document.querySelectorAll('[data-shape="bar"]')) {
+    const kind = bar.getAttribute('data-kind');
+    if (kind) workflow[`wf-bar-${kind}`] = box(bar);
+  }
   // The frame's own box and the chip that names and moves it. The chip sits half outside the frame,
   // so its box is recorded separately from the frame's.
   for (const frame of document.querySelectorAll('[data-testid^="workflow-group-"]')) {
     const match = /^workflow-group-(chip-)?(\d+)$/.exec(frame.dataset.testid);
     if (match) workflow[`wf-${match[1] ? 'chip' : 'group'}-${match[2]}`] = box(frame);
+  }
+  // The partition band is derived from its cards, so its box says the cards it claims are still the
+  // ones the lane wraps; the chip is the separate control that renames or removes it.
+  for (const lane of document.querySelectorAll('[data-lane-band]')) {
+    const match = /^workflow-lane-(\d+)$/.exec(lane.dataset.testid);
+    if (match) workflow[`wf-lane-${match[1]}`] = box(lane);
+  }
+  for (const chip of document.querySelectorAll('[data-testid^="workflow-lane-chip-"]')) {
+    const match = /^workflow-lane-chip-(\d+)$/.exec(chip.dataset.testid);
+    if (match) workflow[`wf-lane-chip-${match[1]}`] = box(chip);
   }
   for (const label of document.querySelectorAll('[data-testid^="workflow-edge-label-"]')) {
     workflow[`wf-label-${edgeAt(label.dataset.testid)}`] = box(label);
@@ -244,8 +261,10 @@ function measure(selectors) {
  * dragged from that branch's right dot onto the first card's top dot, that arrow given the power
  * kind, and the two cards framed as "Motor subsystem": the shortest authored diagram with a bowed
  * connector, a label, a kind chip, a remove button, both cards' port dots and a frame with its chip
- * for the snapshot to guard. Card 0 is placed by `autoNodePosition`, so every palette records the
- * same boxes, and a kind's own stroke travels with them.
+ * for the snapshot to guard. A Fork and a Join bar are then added below the frame, and a lane is
+ * drawn around both and named "Parallel work", so the two plates no other card can draw and a
+ * partition's band and chip are recorded too. Card 0 is placed by `autoNodePosition`, so every
+ * palette records the same boxes, and a kind's own stroke travels with them.
  */
 async function seedWorkflow(page) {
   await page.click('[data-testid="tab-btn-tab-pyodide"]');
@@ -282,6 +301,51 @@ async function seedWorkflow(page) {
   await page.mouse.move(canvas.x + 4, canvas.y + 4, { steps: 10 });
   await page.mouse.up();
   await page.getByTestId('workflow-group-title-0').fill('Motor subsystem');
+  await page.waitForTimeout(300);
+  // Two bars and a partition, below the frame so neither covers the other. A fork and a join are the
+  // only plates that use `data-shape="bar"`; the lane is drawn around both with the panel's own
+  // gesture, then named. Clicking a palette button below the fold scrolls the page, and that would
+  // move every earlier card's recorded box, so the seeded page position is put back before measuring.
+  const seededPageScroll = await page.evaluate(() => window.scrollY);
+  const seededCanvasScroll = await page
+    .getByTestId('workflow-canvas')
+    .evaluate((element) => element.scrollTop);
+  await page.getByTestId('workflow-add-fork').click();
+  await page.getByTestId('workflow-add-join').click();
+  // The auto column leaves only the frame's own padding between the second card and the first bar,
+  // and a lane's band reaches further above its cards than that. Move both bars down one grid run so
+  // the frame's chip and the lane's chip stay separate boxes a learner can press.
+  for (const index of [2, 3]) {
+    const handle = await page.getByTestId(`workflow-node-drag-${index}`).boundingBox();
+    await page.mouse.move(handle.x + 16, handle.y + handle.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(handle.x + 16, handle.y + handle.height / 2 + 56, { steps: 8 });
+    await page.mouse.up();
+  }
+  await page.waitForTimeout(200);
+  await page.getByTestId('workflow-lane-draw').click();
+  const laneCanvas = await page.getByTestId('workflow-canvas').boundingBox();
+  const forkBox = await page.getByTestId('workflow-node-2').boundingBox();
+  const joinBox = await page.getByTestId('workflow-node-3').boundingBox();
+  const laneLeft = Math.min(forkBox.x, joinBox.x) - 12;
+  const laneTop = Math.max(laneCanvas.y + 4, Math.min(forkBox.y, joinBox.y) - 12);
+  const laneBottom = Math.min(
+    laneCanvas.y + laneCanvas.height - 4,
+    Math.max(forkBox.y + forkBox.height, joinBox.y + joinBox.height) + 12
+  );
+  await page.mouse.move(laneCanvas.x + laneCanvas.width - 28, laneTop);
+  await page.mouse.down();
+  await page.mouse.move(laneLeft, laneBottom, { steps: 10 });
+  await page.mouse.up();
+  await page.getByTestId('workflow-lane-title-0').fill('Parallel work');
+  // The lane needed both bars visible; the measurement wants the paper where the frame and the first
+  // cards were seeded, so the added bars do not move an earlier card's recorded box.
+  await page
+    .getByTestId('workflow-canvas')
+    .evaluate((element, top) => {
+      element.scrollTop = top;
+    }, seededCanvasScroll);
+  await page.evaluate((top) => window.scrollTo(0, top), seededPageScroll);
   await page.waitForTimeout(300);
 }
 
