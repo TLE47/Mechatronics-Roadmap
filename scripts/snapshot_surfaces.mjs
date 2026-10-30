@@ -271,8 +271,7 @@ function compareSurfaces(name, expected, actual) {
  * diagram with a bowed connector, a label and a remove button for the snapshot to guard. Card 0 is
  * placed by `autoNodePosition`, so every palette records the same boxes.
  */
-async function seedWorkflow(page, baseUrl) {
-  await page.goto(baseUrl, { waitUntil: 'load' });
+async function seedWorkflow(page) {
   await page.click('[data-testid="tab-btn-tab-pyodide"]');
   await page.getByTestId('editor-tab-workflow').click();
   await page.getByTestId('panel-workflow').waitFor({ timeout: 30000 });
@@ -373,7 +372,9 @@ async function main() {
           await page.goto(`${baseUrl}?view=home`, { waitUntil: 'load' });
           await page.getByTestId('home-dashboard').waitFor({ timeout: 30000 });
         } else if (surface === 'workflow') {
-          await seedWorkflow(page, baseUrl);
+          // The canvas is opened from the workbench root, the way a learner gets there after Home.
+          await page.goto(baseUrl, { waitUntil: 'load' });
+          await seedWorkflow(page);
         } else {
           await page.click(`[data-testid="tab-btn-${surface}"]`);
         }
