@@ -26,6 +26,18 @@
  * act on, and nothing in the app blocks a run or a lesson because a checklist item is open.
  */
 
+import {
+  PROCESS_KIND_META,
+  PROCESS_KINDS,
+  PROCESS_SHAPES,
+  forkJoinIssues,
+  isForkJoin,
+  laneBlocks,
+  laneMarkdown,
+  readLanes,
+  type WorkflowLane,
+} from './workflowProcesses.ts';
+
 export const WORKFLOW_VERSION = 2;
 export const MAX_STEPS = 24;
 export const MAX_EDGES = 48;
@@ -42,7 +54,7 @@ export const NODE_WIDTH = 200;
 export const NODE_ROW = 172;
 export const CANVAS_PAD = 16;
 
-export const STEP_KINDS = [
+const BASE_STEP_KINDS = [
   'given',
   'unknown',
   'model',
@@ -57,6 +69,9 @@ export const STEP_KINDS = [
   'output',
   'merge',
 ] as const;
+
+/** The graph's own kinds plus the two bars owned by `workflowProcesses.ts`. */
+export const STEP_KINDS = [...BASE_STEP_KINDS, ...PROCESS_KINDS] as const;
 
 export type StepKind = (typeof STEP_KINDS)[number];
 export type WorkflowMode = 'analysis' | 'code';
@@ -254,6 +269,7 @@ export const KIND_META: Record<StepKind, KindMeta> = {
     mode: 'both',
     icon: 'merge',
   },
+  ...PROCESS_KIND_META,
 };
 
 /** Each palette, in card order, read off the single table above. */
@@ -263,7 +279,7 @@ export const STEPS_BY_MODE: Record<WorkflowMode, StepKind[]> = {
 };
 
 /** The five silhouettes a card can be drawn on. */
-export type NodeShape = 'rect' | 'data' | 'gate' | 'diamond' | 'stadium';
+export type NodeShape = 'rect' | 'data' | 'gate' | 'diamond' | 'stadium' | 'bar';
 
 /**
  * The plate a kind is drawn on, read off what the kind means rather than added as a field.
@@ -290,6 +306,7 @@ export const NODE_SHAPE: Record<StepKind, NodeShape> = {
   test: 'gate',
   output: 'stadium',
   merge: 'diamond',
+  ...PROCESS_SHAPES,
 };
 
 /** One card on the canvas. `x`/`y` are canvas pixels from the top-left of the grid. */
@@ -356,6 +373,8 @@ export interface WorkflowDoc {
   title: string;
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
+  /** Named activity partitions, owned by `workflowProcesses.ts`; no field means no partitions. */
+  lanes?: WorkflowLane[];
   /** Named frames; absent when the diagram has none, so an ungrouped document is unchanged. */
   groups?: WorkflowGroup[];
   updatedAt: number;
@@ -369,7 +388,9 @@ export type IssueCode =
   | 'missing-unit'
   | 'model-without-equation'
   | 'check-without-comparison'
-  | 'no-check';
+  | 'no-check'
+  | 'fork-without-branches'
+  | 'join-without-branches';
 
 export interface WorkflowIssue {
   code: IssueCode;
@@ -781,6 +802,10 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
     }
   }
 
+  // Partitions claim cards independently of frames: a card can be both in the motor subsystem and
+  // owned by firmware, so the two reads keep separate "already claimed" sets.
+  const lanes = rawNodes ? readLanes(record.lanes, seen) : [];
+
   const updatedAt =
     typeof record.updatedAt === 'number' && Number.isFinite(record.updatedAt) && record.updatedAt > 0
       ? record.updatedAt
@@ -794,6 +819,7 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
     updatedAt,
   };
   if (groups.length) doc.groups = groups;
+  if (lanes.length) doc.lanes = lanes;
   return doc;
 }
 
@@ -920,7 +946,8 @@ export function validateWorkflow(doc: WorkflowDoc): WorkflowIssue[] {
 
   for (const node of order) {
     const where = `Step ${number.get(node.id) ?? '?'}`;
-    if (!node.title) {
+    // A fork or join is a bar, not a form: it has no title field, so it cannot be empty.
+    if (!node.title && !isForkJoin(node.kind)) {
       issues.push({
         code: 'empty-step',
         stepId: node.id,
@@ -977,6 +1004,8 @@ export function validateWorkflow(doc: WorkflowDoc): WorkflowIssue[] {
     });
   }
 
+  // Concurrency advice lives with the two bars that need it (`workflowProcesses.ts`).
+  issues.push(...forkJoinIssues(doc, number));
   return issues;
 }
 
@@ -1045,6 +1074,7 @@ const MERMAID_NODE: Record<NodeShape, (text: string) => string> = {
   gate: (text) => `{{"${text}"}}`,
   diamond: (text) => `{"${text}"}`,
   stadium: (text) => `(["${text}"])`,
+  bar: (text) => `[["${text}"]]`,
 };
 
 /**
@@ -1062,13 +1092,21 @@ export function workflowToMermaid(doc: WorkflowDoc): string {
   const lines = ['flowchart TD'];
   const card = (position: number) => {
     const node = order[position];
-    const label = mermaidText(`${KIND_META[node.kind].label} · ${node.title || 'untitled'}`);
+    const label = mermaidText(
+      isForkJoin(node.kind)
+        ? KIND_META[node.kind].label
+        : `${KIND_META[node.kind].label} · ${node.title || 'untitled'}`
+    );
     return `  n${position + 1}${MERMAID_NODE[NODE_SHAPE[node.kind]](label)}`;
   };
+  // A partition leaves first: its cards sit inside a subgraph named for who owns them. A lane beat a
+  // frame to a card when both name it, because Mermaid cannot put one node in two subgraphs.
+  const lanes = laneBlocks(doc.lanes, index, card);
+  lines.push(...lanes.lines);
   // A frame is a named subsystem, so it leaves as a subgraph: its cards sit inside the box and the
   // arrows stay on the flowchart where every other arrow is. A card is claimed once (the read already
   // keeps one frame per card), and a frame with no surviving cards is dropped rather than emptied.
-  const framed = new Set<string>();
+  const framed = lanes.claimed;
   let frame = 0;
   for (const group of doc.groups ?? []) {
     const members = group.nodeIds
@@ -1117,7 +1155,8 @@ export function workflowToMarkdown(doc: WorkflowDoc): string {
     const label = KIND_META[node.kind].label;
     const unit = node.unit ? ` _(${node.unit})_` : '';
     const detail = node.detail ? ` — ${node.detail}` : '';
-    lines.push(`${position + 1}. **${label}** — ${node.title || 'untitled'}${detail}${unit}`);
+    const body = isForkJoin(node.kind) ? '' : ` — ${node.title || 'untitled'}${detail}${unit}`;
+    lines.push(`${position + 1}. **${label}**${body}${laneMarkdown(doc.lanes, node)}`);
     const next = order[position + 1];
     for (const edge of doc.edges) {
       if (edge.from !== node.id) continue;

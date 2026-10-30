@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { socketKinds } from '../workflow.ts';
+import { isForkJoin } from '../workflowProcesses.ts';
 import type {
   WorkflowDoc,
   WorkflowEdgeType,
@@ -9,9 +10,11 @@ import type {
   WorkflowSide,
   PortKind,
 } from '../workflow.ts';
-import { cardsWithin, groupRect } from './workflow/canvasGeometry.ts';
+import { cardsWithin, groupRect, laneRect } from './workflow/canvasGeometry.ts';
 import { WorkflowEdges } from './workflow/WorkflowEdges.tsx';
+import { WorkflowForkJoinCard } from './workflow/WorkflowForkJoinCard.tsx';
 import { WorkflowGroupFrame } from './workflow/WorkflowGroupFrame.tsx';
+import { WorkflowLaneBand } from './workflow/WorkflowLaneBand.tsx';
 import { WorkflowNodeCard } from './workflow/WorkflowNodeCard.tsx';
 import { useLinking } from './workflow/useLinking.ts';
 import { useMarquee } from './workflow/useMarquee.ts';
@@ -87,9 +90,14 @@ export interface WorkflowCanvasProps {
   /** Whether the next drag on paper draws a frame instead of panning. */
   grouping: boolean;
   onGroupCards: (nodeIds: string[]) => void;
-  /** Frames are named and removed by their place in the document, not by a stored key. */
+  /** Whether the next drag on paper draws an activity partition instead of panning. */
+  laning: boolean;
+  onLaneCards: (nodeIds: string[]) => void;
+  /** Frames and lanes are named and removed by their place in the document, not by a stored key. */
   onRenameGroup: (index: number, title: string) => void;
   onRemoveGroup: (index: number) => void;
+  onRenameLane: (index: number, title: string) => void;
+  onRemoveLane: (index: number) => void;
 }
 
 export function WorkflowCanvas({
@@ -112,8 +120,12 @@ export function WorkflowCanvas({
   onMoveMany,
   grouping,
   onGroupCards,
+  laning,
+  onLaneCards,
   onRenameGroup,
   onRemoveGroup,
+  onRenameLane,
+  onRemoveLane,
 }: WorkflowCanvasProps) {
   const byId = useMemo(() => new Map(doc.nodes.map((node) => [node.id, node])), [doc.nodes]);
   // Which socket each dot has become, once per document: the cards read it, and no card can hold a
@@ -147,9 +159,25 @@ export function WorkflowCanvas({
     [doc.groups, shown, heights]
   );
 
+  // Partitions are read the same way frames are: from the cards inside them, never from a stored
+  // rectangle, so a drag redraws the band and a deletion shrinks it.
+  const lanes = useMemo(
+    () =>
+      (doc.lanes ?? []).flatMap((lane, index) => {
+        const members = shown.filter((node) => lane.nodeIds.includes(node.id));
+        const rect = laneRect(members, heights);
+        return rect ? [{ lane, index, rect }] : [];
+      }),
+    [doc.lanes, shown, heights]
+  );
+
   const marquee = useMarquee({
     toCanvas: viewport.toCanvas,
-    onDone: (rect) => onGroupCards(cardsWithin(rect, shown, heights)),
+    onDone: (rect) => {
+      const nodeIds = cardsWithin(rect, shown, heights);
+      if (laning) onLaneCards(nodeIds);
+      else onGroupCards(nodeIds);
+    },
   });
 
   const linking = useLinking({
@@ -177,7 +205,7 @@ export function WorkflowCanvas({
         // Capture first: armed, or with Shift held, a drag on paper draws a frame — including over
         // an existing frame, whose own press would otherwise start moving it. Otherwise: pan.
         onPointerDownCapture={(event) => {
-          if ((grouping || event.shiftKey) && marquee.start(event)) event.stopPropagation();
+          if ((grouping || laning || event.shiftKey) && marquee.start(event)) event.stopPropagation();
         }}
         onPointerDown={(event) => viewport.startPan(event)}
         onPointerMove={marquee.move}
@@ -217,6 +245,17 @@ export function WorkflowCanvas({
               transformOrigin: '0 0',
             }}
           >
+            {lanes.map(({ lane, index, rect }) => (
+              <WorkflowLaneBand
+                key={`lane-${index}`}
+                lane={lane}
+                index={index}
+                rect={rect}
+                onRename={onRenameLane}
+                onRemove={onRemoveLane}
+              />
+            ))}
+
             {frames.map(({ group, index, rect, members }) => (
               <WorkflowGroupFrame
                 key={index}
@@ -246,27 +285,30 @@ export function WorkflowCanvas({
               onEdgePort={onEdgePort}
             />
 
-            {doc.nodes.map((node, index) => (
-              <WorkflowNodeCard
-                key={node.id}
-                node={node}
-                index={index}
-                number={numbers.get(node.id) ?? index + 1}
-                issue={issueByStep.get(node.id)}
-                selected={selectedId === node.id}
-                position={drag.live?.get(node.id) ?? { x: node.x, y: node.y }}
-                dragging={Boolean(drag.dragIds?.includes(node.id))}
-                linking={linking.linking}
-                sockets={sockets.get(node.id)}
-                onSelect={onSelect}
-                onMove={onMove}
-                onUpdate={onUpdate}
-                onRemove={onRemove}
-                onDragStart={drag.startDrag}
-                onLinkStart={linking.startLink}
-                onLinkLand={linking.landOnCard}
-              />
-            ))}
+            {doc.nodes.map((node, index) => {
+              const shared = {
+                node,
+                index,
+                number: numbers.get(node.id) ?? index + 1,
+                issue: issueByStep.get(node.id),
+                selected: selectedId === node.id,
+                position: drag.live?.get(node.id) ?? { x: node.x, y: node.y },
+                dragging: Boolean(drag.dragIds?.includes(node.id)),
+                linking: linking.linking,
+                sockets: sockets.get(node.id),
+                onSelect,
+                onMove,
+                onRemove,
+                onDragStart: drag.startDrag,
+                onLinkStart: linking.startLink,
+                onLinkLand: linking.landOnCard,
+              };
+              return isForkJoin(node.kind) ? (
+                <WorkflowForkJoinCard key={node.id} {...shared} />
+              ) : (
+                <WorkflowNodeCard key={node.id} {...shared} onUpdate={onUpdate} />
+              );
+            })}
 
             {marquee.rect && (
               <div

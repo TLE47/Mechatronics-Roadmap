@@ -41,7 +41,7 @@ export function useMarquee({
     // too.
     if (
       target.closest(
-        'button, input, textarea, select, a, [data-node-id], [data-edge-inspector], [data-frame-chip]'
+        'button, input, textarea, select, a, [data-node-id], [data-edge-inspector], [data-frame-chip], [data-lane-chip]'
       )
     ) {
       return false;

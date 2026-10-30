@@ -1,28 +1,22 @@
-import type {
-  KeyboardEvent as ReactKeyboardEvent,
-  PointerEvent as ReactPointerEvent,
-} from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import { Trash2 } from 'lucide-react';
 import {
   KIND_META,
   MAX_BRANCH_CONDITION_CHARS,
-  MAX_NODE_COORD,
   MAX_STEP_DETAIL_CHARS,
   MAX_STEP_TITLE_CHARS,
   MAX_STEP_UNIT_CHARS,
   NODE_SHAPE,
   NODE_WIDTH,
-  PORT_LABEL,
-  WORKFLOW_SIDES,
   type NodeShape,
-  type PortKind,
   type SocketKinds,
   type WorkflowIssue,
   type WorkflowNode,
   type WorkflowSide,
 } from '../../workflow.ts';
 import { iconForKind } from '../workflowIcons.ts';
-import { clamp } from './canvasGeometry.ts';
+import { nudgeCard } from './cardNudge.ts';
+import { WorkflowPorts } from './WorkflowPorts.tsx';
 import type { LinkDraft } from './useLinking.ts';
 
 /**
@@ -35,9 +29,6 @@ import type { LinkDraft } from './useLinking.ts';
  * The card owns no state — the position it is drawn at, whether it is being dragged, and which
  * arrow is armed all belong to the canvas, so two cards can never disagree about them.
  */
-
-const NUDGE = 8;
-const NUDGE_FAST = 32;
 
 /**
  * How a kind's plate is drawn: the same silhouette a flowchart gives that meaning.
@@ -57,6 +48,7 @@ const SHAPE_ROUND: Record<NodeShape, string> = {
   data: '',
   gate: '',
   diamond: '',
+  bar: '',
 };
 /** A cut or diamond corner leaves the outer strip empty, so those fields move inward. */
 const SHAPE_INSET: Partial<Record<NodeShape, string>> = {
@@ -64,29 +56,6 @@ const SHAPE_INSET: Partial<Record<NodeShape, string>> = {
   gate: 'px-4',
   diamond: 'px-9',
 };
-
-const PORT_POSITION: Record<WorkflowSide, string> = {
-  left: 'left-0 top-1/2 -translate-x-1/2 -translate-y-1/2',
-  right: 'right-0 top-1/2 translate-x-1/2 -translate-y-1/2',
-  top: 'top-0 left-1/2 -translate-x-1/2 -translate-y-1/2',
-  bottom: 'bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2',
-};
-
-/**
- * The letter inside a dot: what is plugged into it, told apart without colour at all.
- *
- * I, O, D, P and M are the initials a hardware diagram already uses, and they survive a colour-blind
- * reader, a greyscale print and every palette; a dot with nothing plugged in keeps the plain bead
- * every canvas drawn before ports had.
- */
-function PortGlyph({ kind }: { kind: PortKind | null }) {
-  if (!kind) return <circle cx="5" cy="5" r="2.6" fill="currentColor" />;
-  return (
-    <text x="5" y="5" textAnchor="middle" dominantBaseline="central" fontSize="7" fill="currentColor">
-      {PORT_LABEL[kind][0]}
-    </text>
-  );
-}
 
 export interface WorkflowNodeCardProps {
   node: WorkflowNode;
@@ -141,28 +110,6 @@ export function WorkflowNodeCard({
       ? 'border-amber/70'
       : 'border-line';
 
-  const nudge = (event: ReactKeyboardEvent) => {
-    const step = event.shiftKey ? NUDGE_FAST : NUDGE;
-    const delta =
-      event.key === 'ArrowLeft'
-        ? { x: -step, y: 0 }
-        : event.key === 'ArrowRight'
-          ? { x: step, y: 0 }
-          : event.key === 'ArrowUp'
-            ? { x: 0, y: -step }
-            : event.key === 'ArrowDown'
-              ? { x: 0, y: step }
-              : null;
-    if (!delta) return;
-    event.preventDefault();
-    onMove(
-      node.id,
-      clamp(node.x + delta.x, 0, MAX_NODE_COORD),
-      clamp(node.y + delta.y, 0, MAX_NODE_COORD)
-    );
-    onSelect(node.id);
-  };
-
   // A resting card sits under the connector layer (`z-[25]`): a curve that crosses a card must be
   // seen, because its arrowhead is the only thing that says where it lands. A card being dragged
   // rises above the arrows it is crossing.
@@ -203,7 +150,7 @@ export function WorkflowNodeCard({
         tabIndex={0}
         aria-label={`Card ${number}, ${meta.label}. Drag to move; arrow keys nudge it.`}
         onPointerDown={(event) => onDragStart(event, node)}
-        onKeyDown={nudge}
+        onKeyDown={(event) => nudgeCard(event, node, onMove, onSelect)}
         className={`flex cursor-grab touch-none items-center gap-1.5 border-b border-line-soft py-1.5 select-none focus-visible:outline-2 focus-visible:outline-accent ${
           shaped ? inset : 'rounded-t-xl bg-canvas px-2'
         }`}
@@ -290,35 +237,14 @@ export function WorkflowNodeCard({
         )}
       </div>
 
-      {WORKFLOW_SIDES.map((side) => {
-        const source = linking?.nodeId === node.id && linking.side === side;
-        const target = Boolean(linking && linking.nodeId !== node.id);
-        const plugged = sockets?.[side] ?? null;
-        const what = plugged ? `${PORT_LABEL[plugged]} socket` : 'connection';
-        return (
-          <button
-            key={side}
-            type="button"
-            data-testid={`workflow-node-port-${side}-${index}`}
-            data-port={side}
-            data-port-kind={plugged ?? undefined}
-            aria-label={`${side} ${what} on card ${number}: drag an arrow from here, or drop one here`}
-            title={
-              target
-                ? `Connect the arrow to the ${side}${plugged ? ` (${PORT_LABEL[plugged]})` : ''}`
-                : `Drag an arrow from the ${side}${plugged ? ` ${PORT_LABEL[plugged]}` : ''} of this card`
-            }
-            onPointerDown={(event) => onLinkStart(event, node, side)}
-            className={`absolute z-20 flex h-5 w-5 touch-none cursor-crosshair items-center justify-center rounded-full border border-accent bg-panel ${PORT_POSITION[side]} ${
-              source || target ? 'ring-2 ring-accent/35' : ''
-            }`}
-          >
-            <svg viewBox="0 0 10 10" className="h-2.5 w-2.5 text-accent" aria-hidden="true">
-              <PortGlyph kind={plugged} />
-            </svg>
-          </button>
-        );
-      })}
+      <WorkflowPorts
+        node={node}
+        index={index}
+        number={number}
+        sockets={sockets}
+        linking={linking}
+        onLinkStart={onLinkStart}
+      />
     </div>
   );
 }

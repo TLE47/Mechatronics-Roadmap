@@ -66,6 +66,18 @@ import {
   templatesForMode,
 } from '../app/src/workflowTemplates.ts';
 import {
+  MAX_LANES,
+  PROCESS_KINDS,
+  forkJoinIssues,
+  isForkJoin,
+  laneBlocks,
+  laneMarkdown,
+  readLanes,
+  removeLane,
+  renameLane,
+  withLane,
+} from '../app/src/workflowProcesses.ts';
+import {
   STORAGE_KEY_WORKFLOW,
   WORKFLOW_GUIDE_KEY,
   clearWorkflow,
@@ -719,6 +731,8 @@ check('every kind is drawn on the plate its meaning implies, and Mermaid draws i
       'test:gate',
       'output:stadium',
       'merge:diamond',
+      'fork:bar',
+      'join:bar',
     ]
   );
   const doc = {
@@ -729,6 +743,8 @@ check('every kind is drawn on the plate its meaning implies, and Mermaid draws i
       { id: 's3', kind: 'answer', title: '5 A', detail: '', ...autoNodePosition(2) },
       { id: 's4', kind: 'model', title: 'Plant', detail: '', ...autoNodePosition(3) },
       { id: 's5', kind: 'merge', title: 'Paths meet', detail: '', ...autoNodePosition(4) },
+      { id: 's6', kind: 'fork', title: '', detail: '', ...autoNodePosition(5) },
+      { id: 's7', kind: 'join', title: '', detail: '', ...autoNodePosition(6) },
     ],
   };
   const mermaid = workflowToMermaid(doc);
@@ -738,6 +754,8 @@ check('every kind is drawn on the plate its meaning implies, and Mermaid draws i
     '  n3(["Answer · 5 A"])',
     '  n4["Model · Plant"]',
     '  n5{"Merge · Paths meet"}',
+    '  n6[["Fork"]]',
+    '  n7[["Join"]]',
   ]) {
     assert.ok(mermaid.includes(line), `${line} missing from\n${mermaid}`);
   }
@@ -1096,7 +1114,174 @@ check('a merge is a real kind in both palettes, drawn as a diamond, and takes tw
   assert.ok(workflowToMermaid(doc).includes('  n5{"Merge · Meet"}'));
 });
 
-section('7. A frame names the cards it holds');
+section('7. A fork splits, a join waits, and a lane names who owns a card');
+
+check('a fork and a join are bars in both palettes, named by both exports', () => {
+  assert.deepEqual([...PROCESS_KINDS], ['fork', 'join']);
+  for (const kind of PROCESS_KINDS) {
+    assert.equal(KIND_META[kind].mode, 'both');
+    assert.equal(isForkJoin(kind), true);
+    assert.equal(NODE_SHAPE[kind], 'bar');
+    assert.ok(!KIND_META[kind].start && !KIND_META[kind].terminal, kind);
+  }
+  const doc = normalizeWorkflow(
+    graph(
+      [
+        { kind: 'given', title: 'Start', detail: '' },
+        { kind: 'fork', title: '', detail: '' },
+        { kind: 'transform', title: 'Sense', detail: '' },
+        { kind: 'transform', title: 'Drive', detail: '' },
+        { kind: 'join', title: '', detail: '' },
+        { kind: 'answer', title: 'Done', detail: '' },
+      ],
+      [
+        { from: 's1', to: 's2' },
+        { from: 's2', to: 's3' },
+        { from: 's2', to: 's4' },
+        { from: 's3', to: 's5' },
+        { from: 's4', to: 's5' },
+        { from: 's5', to: 's6' },
+      ]
+    )
+  );
+  const mermaid = workflowToMermaid(doc);
+  for (const line of ['  n2[["Fork"]]', '  n5[["Join"]]']) {
+    assert.ok(mermaid.includes(line), `${line} missing from\n${mermaid}`);
+  }
+  assert.ok(!mermaid.includes('Fork · untitled'), 'a bar has no title field, so it must not export one');
+  const markdown = workflowToMarkdown(doc);
+  assert.ok(markdown.includes('2. **Fork**\n'), markdown);
+  assert.ok(markdown.includes('5. **Join**\n'), markdown);
+  assert.deepEqual(
+    validateWorkflow(doc)
+      .filter((issue) => issue.code === 'fork-without-branches' || issue.code === 'join-without-branches')
+      .map((issue) => issue.code),
+    [],
+    'two exits from the fork and two entries to the join are the shape the hints ask for'
+  );
+  assert.deepEqual(
+    forkJoinIssues(doc, new Map(doc.nodes.map((node, at) => [node.id, at + 1]))),
+    [],
+    'the shared helper agrees with validation'
+  );
+});
+
+check('a fork with one exit and a join with one entry are named, not refused', () => {
+  const cases = [
+    {
+      nodes: [{ kind: 'given', title: 'a' }, { kind: 'fork', title: '' }, { kind: 'transform', title: 'b' }],
+      edges: [{ from: 's1', to: 's2' }, { from: 's2', to: 's3' }],
+      code: 'fork-without-branches',
+    },
+    {
+      nodes: [{ kind: 'given', title: 'a' }, { kind: 'join', title: '' }, { kind: 'answer', title: 'b' }],
+      edges: [{ from: 's1', to: 's2' }, { from: 's2', to: 's3' }],
+      code: 'join-without-branches',
+    },
+  ];
+  for (const entry of cases) {
+    const doc = normalizeWorkflow(graph(entry.nodes, entry.edges));
+    const issue = validateWorkflow(doc).find((candidate) => candidate.code === entry.code);
+    assert.ok(issue, `${entry.code} missing`);
+    assert.equal(issue.severity, 'hint', 'a half-built parallel shape is advice, never a gate');
+    assert.equal(
+      forkJoinIssues(doc, new Map(doc.nodes.map((node, at) => [node.id, at + 1])))[0].code,
+      entry.code
+    );
+  }
+});
+
+check('a lane keeps one card in one partition, drops junk, and leaves old documents alone', () => {
+  assert.equal(normalizeWorkflow(good).lanes, undefined, 'a document saved before lanes gains no field');
+  const doc = normalizeWorkflow({
+    ...graph([
+      { kind: 'given', title: 'Supply' },
+      { kind: 'compute', title: 'Divide' },
+      { kind: 'answer', title: 'Result' },
+      { kind: 'transform', title: 'Loose' },
+    ]),
+    lanes: [
+      { title: 'Mechanical', nodeIds: ['s1', 'gone', 's1'] },
+      { title: 'Firmware', nodeIds: ['s1', 's2'] },
+      { title: 'Empty', nodeIds: [] },
+      { title: 'Junk' },
+      'not a lane',
+    ],
+  });
+  assert.deepEqual(doc.lanes, [
+    { title: 'Mechanical', nodeIds: ['s1'] },
+    { title: 'Firmware', nodeIds: ['s2'] },
+  ]);
+  assert.equal(
+    normalizeWorkflow({ ...graph([{ kind: 'given', title: 'a' }]), lanes: [] }).lanes,
+    undefined,
+    'an empty lane list is written as no field, like an empty frame list'
+  );
+  assert.deepEqual(
+    readLanes([{ title: 'A', nodeIds: ['s1', 's1'] }], new Set(['s1'])),
+    [{ title: 'A', nodeIds: ['s1'] }],
+    'the reader itself keeps the first claim on a card'
+  );
+});
+
+check('moving cards between lanes leaves no card claimed twice, and a lane can be named or removed', () => {
+  const lanes = [
+    { title: 'Mechanical', nodeIds: ['s1', 's2'] },
+    { title: 'Firmware', nodeIds: ['s3'] },
+  ];
+  assert.deepEqual(withLane(lanes, ['s2'], 'Electronics'), [
+    { title: 'Mechanical', nodeIds: ['s1'] },
+    { title: 'Firmware', nodeIds: ['s3'] },
+    { title: 'Electronics', nodeIds: ['s2'] },
+  ], 'the card leaves its old lane and the old lane keeps the rest');
+  assert.deepEqual(withLane([{ title: 'Only', nodeIds: ['s1'] }], ['s1'], 'Moved'), [
+    { title: 'Moved', nodeIds: ['s1'] },
+  ], 'a lane that loses its last card goes');
+  assert.deepEqual(renameLane(lanes, 1, '  Firm  ')[1], { title: 'Firm', nodeIds: ['s3'] });
+  assert.deepEqual(removeLane(lanes, 0), [{ title: 'Firmware', nodeIds: ['s3'] }]);
+  assert.ok(MAX_LANES >= 2);
+});
+
+check('a lane leaves as a named subgraph, outranks a frame for the same card, and names itself in Markdown', () => {
+  const doc = normalizeWorkflow({
+    ...graph(
+      [
+        { kind: 'given', title: 'Supply', detail: '' },
+        { kind: 'compute', title: 'Divide', detail: '' },
+        { kind: 'answer', title: 'Result', detail: '' },
+      ],
+      [
+        { from: 's1', to: 's2' },
+        { from: 's2', to: 's3' },
+      ]
+    ),
+    lanes: [{ title: 'Mechanical', nodeIds: ['s1', 's2'] }],
+    groups: [{ title: 'Motor', nodeIds: ['s2', 's3'] }],
+  });
+  const mermaid = workflowToMermaid(doc);
+  for (const line of [
+    '  subgraph lane1["Mechanical"]',
+    '  subgraph g1["Motor"]',
+    '    n1[/"Given · Supply"/]',
+    '    n3(["Answer · Result"])',
+  ]) {
+    assert.ok(mermaid.includes(line), `${line} missing from\n${mermaid}`);
+  }
+  assert.equal(
+    mermaid.split('n2["Compute · Divide"]').length - 1,
+    1,
+    'a card named by a lane and a frame is written once'
+  );
+  const index = new Map(doc.nodes.map((node, at) => [node.id, at]));
+  const blocks = laneBlocks(doc.lanes, index, (position) => `n${position + 1}`);
+  assert.deepEqual(blocks.lines.slice(0, 2), ['  subgraph lane1["Mechanical"]', '  n1']);
+  assert.deepEqual([...blocks.claimed], ['s1', 's2'], 'the frame pass is told which cards are taken');
+  assert.equal(laneMarkdown(doc.lanes, doc.nodes[0]), ' · lane Mechanical');
+  assert.match(workflowToMarkdown(doc), /^1\. \*\*Given\*\* — Supply · lane Mechanical$/m);
+  assert.doesNotMatch(workflowToMarkdown(doc), /^3\. .*lane Mechanical$/m);
+});
+
+section('8. A frame names the cards it holds');
 
 check('a frame keeps only cards that exist, and one card belongs to one frame', () => {
   const doc = normalizeWorkflow({
@@ -1136,16 +1321,36 @@ check('a frame keeps only cards that exist, and one card belongs to one frame', 
   );
 });
 
-section('8. Templates are usable at birth');
+section('9. Templates are usable at birth');
 
 check('every kind has a label and a sentence', () => {
-  assert.equal(STEP_KINDS.length, 13);
+  assert.equal(STEP_KINDS.length, 15);
   for (const kind of STEP_KINDS) {
     assert.ok(KIND_META[kind].label, kind);
     assert.ok(KIND_META[kind].hint.length > 20, kind);
   }
-  assert.deepEqual(STEPS_BY_MODE.analysis, ['given', 'unknown', 'model', 'compute', 'check', 'answer', 'merge']);
-  assert.deepEqual(STEPS_BY_MODE.code, ['input', 'transform', 'branch', 'loop', 'test', 'output', 'merge']);
+  assert.deepEqual(STEPS_BY_MODE.analysis, [
+    'given',
+    'unknown',
+    'model',
+    'compute',
+    'check',
+    'answer',
+    'merge',
+    'fork',
+    'join',
+  ]);
+  assert.deepEqual(STEPS_BY_MODE.code, [
+    'input',
+    'transform',
+    'branch',
+    'loop',
+    'test',
+    'output',
+    'merge',
+    'fork',
+    'join',
+  ]);
 });
 
 check('every template is a graph the canvas can draw, every card joined to the flow', () => {
@@ -1236,7 +1441,7 @@ check('P.15 opens on the motor-stall example, and no other lesson claims one', (
   assert.equal(templateForLesson(''), null);
 });
 
-section('9. One workflow per lesson survives the store');
+section('10. One workflow per lesson survives the store');
 
 check('a written workflow reads back with the timestamp the write set', () => {
   freshBrowser();

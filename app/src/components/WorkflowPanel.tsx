@@ -26,6 +26,12 @@ import {
   type WorkflowNode,
   type WorkflowSide,
 } from '../workflow.ts';
+import {
+  MAX_LANES,
+  removeLane as withoutLane,
+  renameLane as retitleLane,
+  withLane,
+} from '../workflowProcesses.ts';
 import { templateForLesson, type WorkflowTemplate } from '../workflowTemplates.ts';
 import {
   clearWorkflow,
@@ -96,6 +102,9 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
   // The frame gesture is armed, not always on: the same paper pans, and on a phone a plain drag has
   // to keep scrolling.
   const [grouping, setGrouping] = useState(false);
+  // A lane is armed the same way a frame is, and the two are mutually exclusive: one drag cannot
+  // mean both "group these" and "this is who owns them".
+  const [laning, setLaning] = useState(false);
   // The checklist is advice, not the work. On a phone it is a count and one press away: 24 open
   // cards are 24 wrapped lines, and the canvas below them started ~1,900 px down the page. A
   // desktop has the room and opens the list. A press pins the learner's choice; until then the list
@@ -133,6 +142,7 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
     setPendingTemplate(null);
     setTemplatesOpen(false);
     setGrouping(false);
+    setLaning(false);
     // Seen once means closed from then on, even on a lesson with no workflow: `stored` is not the
     // question here — an empty tab is exactly where a learner who dismissed the guide expects the
     // one-press toggle, not the three-item card again.
@@ -225,9 +235,14 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
     const nextGroups = (doc.groups ?? [])
       .map((group) => ({ ...group, nodeIds: group.nodeIds.filter((member) => member !== id) }))
       .filter((group) => group.nodeIds.length);
+    const nextLanes = (doc.lanes ?? [])
+      .map((lane) => ({ ...lane, nodeIds: lane.nodeIds.filter((member) => member !== id) }))
+      .filter((lane) => lane.nodeIds.length);
     const next = { ...doc, nodes: remaining, edges: keptEdges };
     if (nextGroups.length) next.groups = nextGroups;
     else delete next.groups;
+    if (nextLanes.length) next.lanes = nextLanes;
+    else delete next.lanes;
     commit(next);
     setStatus(lostEdges ? 'Card removed — its arrows went with it' : 'Card removed');
   };
@@ -271,6 +286,45 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
     else delete next.groups;
     commit(next);
     setStatus('Frame removed');
+  };
+
+  /**
+   * The partition a drawn box asked for.
+   *
+   * The same gesture as a frame, a different claim: these cards are owned by one group of people.
+   * A card belongs to one lane, so drawing over cards already in one moves them, and the old lane is
+   * dropped if that was all it named.
+   */
+  const laneCards = (nodeIds: string[]) => {
+    if (!doc) return;
+    setLaning(false);
+    if (!nodeIds.length) {
+      setStatus('Drag across cards to put them in a lane');
+      return;
+    }
+    const lanes = withLane(doc.lanes ?? [], nodeIds, `Lane ${(doc.lanes?.length ?? 0) + 1}`);
+    if (lanes.length > MAX_LANES) {
+      setStatus(`A workflow holds at most ${MAX_LANES} lanes — remove one before drawing another`);
+      return;
+    }
+    commit({ ...doc, lanes });
+    selectNode(null);
+    setStatus('');
+  };
+
+  const renameLane = (index: number, title: string) => {
+    if (!doc) return;
+    commit({ ...doc, lanes: retitleLane(doc.lanes ?? [], index, title) });
+  };
+
+  const removeLane = (index: number) => {
+    if (!doc) return;
+    const lanes = withoutLane(doc.lanes ?? [], index);
+    const next = { ...doc };
+    if (lanes.length) next.lanes = lanes;
+    else delete next.lanes;
+    commit(next);
+    setStatus('Lane removed');
   };
 
   const connect = (
@@ -669,8 +723,12 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
           onMoveMany={moveNodes}
           grouping={grouping}
           onGroupCards={groupCards}
+          laning={laning}
+          onLaneCards={laneCards}
           onRenameGroup={renameGroup}
           onRemoveGroup={removeGroup}
+          onRenameLane={renameLane}
+          onRemoveLane={removeLane}
         />
       </Suspense>
 
@@ -711,11 +769,26 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
           title="Draw a box around cards to frame them"
           onClick={() => {
             setGrouping(!grouping);
+            setLaning(false);
             setStatus(grouping ? '' : 'Drag a box around cards');
           }}
           className={`btn btn-ghost text-[12px] ${grouping ? 'text-accent' : ''}`}
         >
           Group
+        </button>
+        <button
+          type="button"
+          data-testid="workflow-lane-draw"
+          aria-pressed={laning}
+          title="Draw a box around cards to put them in a named activity partition"
+          onClick={() => {
+            setLaning(!laning);
+            setGrouping(false);
+            setStatus(laning ? '' : 'Drag a box around cards to name their lane');
+          }}
+          className={`btn btn-ghost text-[12px] ${laning ? 'text-accent' : ''}`}
+        >
+          Lane
         </button>
         <button
           type="button"

@@ -160,6 +160,25 @@ export function groupRect(
   };
 }
 
+/** The strip a partition adds above its cards for the lane's own name. */
+export const LANE_HEADER = 22;
+
+/**
+ * The band a named partition draws: its cards' union, with a strip above them for the lane name.
+ *
+ * The header is carved out of the paper above the cards rather than out of the cards themselves, so
+ * no field is covered by a lane's name. Like a frame's box it is read from its members, never stored.
+ */
+export function laneRect(
+  members: readonly WorkflowNode[],
+  heights: Record<string, number>
+): CanvasRect | null {
+  const box = groupRect(members, heights);
+  if (!box) return null;
+  const top = Math.max(0, box.y - LANE_HEADER);
+  return { ...box, y: top, height: box.height + (box.y - top) };
+}
+
 /** The same rectangle with a negative width or height turned positive, as a drag can produce. */
 export function normalizeRect(rect: CanvasRect): CanvasRect {
   return {

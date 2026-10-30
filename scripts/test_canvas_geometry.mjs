@@ -15,6 +15,7 @@ import assert from 'node:assert/strict';
 import { NODE_WIDTH, WORKFLOW_SIDES } from '../app/src/workflow.ts';
 import {
   GROUP_PAD,
+  LANE_HEADER,
   NODE_FALLBACK_HEIGHT,
   anchorFrom,
   cardHeight,
@@ -24,6 +25,7 @@ import {
   edgeCurve,
   facingSide,
   groupRect,
+  laneRect,
   normalizeRect,
   pendingCurve,
 } from '../app/src/components/workflow/canvasGeometry.ts';
@@ -190,6 +192,22 @@ check('a frame hugs its cards, one pad out', () => {
     assert.deepEqual(groupRect(members, heights), box);
   }
   assert.equal(groupRect([], {}), null, 'a frame with no cards draws nothing');
+});
+
+check('a lane adds a name strip above its cards, and loses it only at the paper edge', () => {
+  const at = (id, x, y) => ({ id, kind: 'given', title: id, detail: '', x, y });
+  const box = { x: 300 - GROUP_PAD, y: 200 - GROUP_PAD, width: 200 + GROUP_PAD * 2, height: 140 + GROUP_PAD * 2 };
+  assert.deepEqual(laneRect([at('a', 300, 200)], { a: 140 }), {
+    ...box,
+    y: box.y - LANE_HEADER,
+    height: box.height + LANE_HEADER,
+  });
+  // The opening card's frame already starts at y 4, so there is only 4 px of paper above it: the
+  // strip is clipped, not drawn off the canvas.
+  const top = laneRect([at('a', 16, 16)], { a: 120 });
+  assert.equal(top.y, 0);
+  assert.equal(top.height, 120 + GROUP_PAD * 2 + 4);
+  assert.equal(laneRect([], {}), null, 'a lane with no cards draws nothing');
 });
 
 check('a drawn box picks up the cards whose centres it covers', () => {
