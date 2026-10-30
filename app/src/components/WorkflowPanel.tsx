@@ -340,6 +340,26 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
     });
   };
 
+  /**
+   * The condition under which a decision takes this one exit.
+   *
+   * Written on the arrow rather than the card so two exits can differ. Clearing it removes the field,
+   * and the branch card's own condition takes over again — the text an old document already shows.
+   */
+  const setEdgeGuard = (edgeId: string, guard: string) => {
+    if (!doc) return;
+    commit({
+      ...doc,
+      edges: doc.edges.map((edge) => {
+        if (edge.id !== edgeId) return edge;
+        const next = { ...edge };
+        if (guard) next.guard = guard;
+        else delete next.guard;
+        return next;
+      }),
+    });
+  };
+
   /** Which socket one end of an arrow plugs into; `null` returns it to the kind's own. */
   const setEdgePort = (edgeId: string, end: 'from' | 'to', kind: PortKind | null) => {
     if (!doc) return;
@@ -644,6 +664,7 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
           onSelectEdge={selectEdge}
           onEdgeType={setEdgeType}
           onEdgeLabel={setEdgeLabel}
+          onEdgeGuard={setEdgeGuard}
           onEdgePort={setEdgePort}
           onMoveMany={moveNodes}
           grouping={grouping}

@@ -16,6 +16,27 @@ flowchart LR
 
 ---
 
+## [2026-10-30] — A decision's exits carry their own guards, and a merge closes them
+
+**One condition on a Branch card labelled every arrow leaving it**, so a decision with two exits said
+`draw > 3.2 A` on both and could not express "otherwise". A guard is now stored per arrow
+(`WorkflowEdge.guard`) and authored in that arrow's inspector, beside its kind, label and sockets. The
+card-level condition is still read — as the fallback for every unguarded exit — so a document saved
+before this change opens saying exactly what it said, and a guard typed on one exit never renames the
+other. `edgeLabelFor` is still the single answer for what an arrow says: its guard, else its source
+card's condition, else its label. Copy Mermaid names each guard on its own edge
+(`n3 -.->|"draw > 3.2 A"| n4`), and Markdown does the same.
+
+**A merge is now a card kind**, in both palettes and neither a start nor a terminal: converging flows
+have a node the model and both exports can name instead of terminating on an action. Branch and Merge
+share the diamond — the one plate no action or check uses — and a decision is distinguishable from an
+action on the canvas at a glance; Check, Loop and Test keep their cut-corner plates, so no card that
+existed before this change moved.
+
+`npm run test:workflow` pins two differently guarded exits, the card-condition fallback, the dropped
+blank guard and a merge that takes two flows; the app was driven to draw the same diagram and
+`check:snapshot` re-recorded only the palette's new button and the diamond's 2 px reflow.
+
 ## [2026-10-30] — A frame leaves the panel as a subgraph
 
 **A named frame was a box on the canvas and nothing in the export.** Copy Mermaid listed every card

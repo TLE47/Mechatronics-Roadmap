@@ -3,6 +3,7 @@ import {
   ClipboardList,
   Flag,
   GitBranch,
+  GitMerge,
   HelpCircle,
   LogIn,
   Repeat,
@@ -34,6 +35,7 @@ const ICONS: Record<WorkflowIcon, LucideIcon> = {
   repeat: Repeat,
   'test-tube': TestTube2,
   terminal: SquareTerminal,
+  merge: GitMerge,
 };
 
 export function iconForKind(kind: StepKind): LucideIcon {

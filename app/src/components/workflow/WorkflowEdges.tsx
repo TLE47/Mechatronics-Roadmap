@@ -44,6 +44,44 @@ export const EDGE_STYLE: Record<
   communication: { color: 'var(--muted)', width: 2.2, dash: '11 4', opacity: 0.8 },
 };
 
+/** The one text field in the inspector, used for both an arrow's guard and its label. */
+function EdgeField({
+  testid,
+  label,
+  value,
+  placeholder,
+  onChange,
+  onFocus,
+}: {
+  testid: string;
+  label: string;
+  value: string;
+  placeholder: string;
+  onChange: (value: string) => void;
+  onFocus: () => void;
+}) {
+  return (
+    <label className="mt-1.5 block">
+      <span className="font-mono text-[10px] text-faint">{label}</span>
+      <input
+        data-testid={testid}
+        aria-label={`${label} on this arrow`}
+        value={value}
+        maxLength={MAX_BRANCH_CONDITION_CHARS}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+        onFocus={onFocus}
+        className="mt-0.5 w-full rounded border px-1.5 py-1 font-mono text-[11.5px] outline-none focus:border-accent"
+        style={{
+          borderColor: 'var(--border)',
+          backgroundColor: 'var(--canvas)',
+          color: 'var(--text)',
+        }}
+      />
+    </label>
+  );
+}
+
 export interface WorkflowEdgesProps {
   doc: WorkflowDoc;
   byId: Map<string, WorkflowNode>;
@@ -57,6 +95,7 @@ export interface WorkflowEdgesProps {
   onDisconnect: (edgeId: string) => void;
   onEdgeType: (edgeId: string, type: WorkflowEdgeType) => void;
   onEdgeLabel: (edgeId: string, label: string) => void;
+  onEdgeGuard: (edgeId: string, guard: string) => void;
   onEdgePort: (edgeId: string, end: 'from' | 'to', kind: PortKind | null) => void;
 }
 
@@ -72,6 +111,7 @@ export function WorkflowEdges({
   onDisconnect,
   onEdgeType,
   onEdgeLabel,
+  onEdgeGuard,
   onEdgePort,
 }: WorkflowEdgesProps) {
   // Escape closes the inspector wherever focus is: it is the same "put that away" key as the pending
@@ -284,32 +324,27 @@ export function WorkflowEdges({
                     );
                   })}
                 </div>
-                {from.kind === 'branch' && from.condition ? (
-                  // A branch card owns its condition, and that is what its arrows say, so there is
-                  // nothing to type here: editing this input would change a sentence nobody sees.
-                  <p className="mt-1.5 font-mono text-[10px] leading-snug text-faint">
-                    Says “{from.condition}” — edit it on the branch card.
-                  </p>
-                ) : (
-                  <label className="mt-1.5 block">
-                    <span className="font-mono text-[10px] text-faint">Label</span>
-                    <input
-                      data-testid={`workflow-edge-label-input-${index}`}
-                      aria-label="Label on this arrow"
-                      value={edge.label ?? ''}
-                      maxLength={MAX_BRANCH_CONDITION_CHARS}
-                      placeholder="RPM, PWM, torque"
-                      onChange={(event) => onEdgeLabel(edge.id, event.target.value)}
-                      onFocus={() => onSelectEdge(edge.id)}
-                      className="mt-0.5 w-full rounded border px-1.5 py-1 font-mono text-[11.5px] outline-none focus:border-accent"
-                      style={{
-                        borderColor: 'var(--border)',
-                        backgroundColor: 'var(--canvas)',
-                        color: 'var(--text)',
-                      }}
-                    />
-                  </label>
+                {from.kind === 'branch' && (
+                  // A guard belongs to the exit, not the question: two arrows out of one decision
+                  // carry two conditions. An empty guard falls back to the card's condition, which
+                  // is what every arrow of an older document says.
+                  <EdgeField
+                    testid={`workflow-edge-guard-input-${index}`}
+                    label="Guard"
+                    value={edge.guard ?? ''}
+                    placeholder={from.condition ? `card: ${from.condition}` : 'draw > 3.2 A'}
+                    onChange={(guard) => onEdgeGuard(edge.id, guard)}
+                    onFocus={() => onSelectEdge(edge.id)}
+                  />
                 )}
+                <EdgeField
+                  testid={`workflow-edge-label-input-${index}`}
+                  label="Label"
+                  value={edge.label ?? ''}
+                  placeholder="RPM, PWM, torque"
+                  onChange={(label) => onEdgeLabel(edge.id, label)}
+                  onFocus={() => onSelectEdge(edge.id)}
+                />
                 <button
                   type="button"
                   data-testid={`workflow-edge-close-${index}`}

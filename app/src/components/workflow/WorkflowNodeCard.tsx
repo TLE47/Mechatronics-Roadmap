@@ -49,12 +49,20 @@ const NUDGE_FAST = 32;
 const SHAPE_CLIP: Partial<Record<NodeShape, string>> = {
   data: 'polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%)',
   gate: 'polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 14px)',
+  diamond: 'polygon(50% 0, 100% 50%, 50% 100%, 0 50%)',
 };
 const SHAPE_ROUND: Record<NodeShape, string> = {
   rect: 'rounded-xl',
   stadium: 'rounded-[32px]',
   data: '',
   gate: '',
+  diamond: '',
+};
+/** A cut or diamond corner leaves the outer strip empty, so those fields move inward. */
+const SHAPE_INSET: Partial<Record<NodeShape, string>> = {
+  data: 'px-4',
+  gate: 'px-4',
+  diamond: 'px-9',
 };
 
 const PORT_POSITION: Record<WorkflowSide, string> = {
@@ -126,6 +134,7 @@ export function WorkflowNodeCard({
   const shape = NODE_SHAPE[node.kind];
   const shaped = shape !== 'rect';
   const clip = SHAPE_CLIP[shape];
+  const inset = SHAPE_INSET[shape] ?? '';
   const frame = selected
     ? 'border-accent ring-2 ring-accent/25'
     : issue
@@ -196,7 +205,7 @@ export function WorkflowNodeCard({
         onPointerDown={(event) => onDragStart(event, node)}
         onKeyDown={nudge}
         className={`flex cursor-grab touch-none items-center gap-1.5 border-b border-line-soft py-1.5 select-none focus-visible:outline-2 focus-visible:outline-accent ${
-          shaped ? 'px-4' : 'rounded-t-xl bg-canvas px-2'
+          shaped ? inset : 'rounded-t-xl bg-canvas px-2'
         }`}
       >
         <Icon className="h-3 w-3 shrink-0 text-accent" aria-hidden="true" />
@@ -229,7 +238,7 @@ export function WorkflowNodeCard({
         )}
       </div>
 
-      <div className={`space-y-1 ${shaped ? 'px-4 py-1.5' : 'p-1.5'}`}>
+      <div className={`space-y-1 ${shaped ? `${inset} py-1.5` : 'p-1.5'}`}>
         <input
           data-testid={`workflow-node-title-${index}`}
           aria-label={`Title of card ${index + 1}`}

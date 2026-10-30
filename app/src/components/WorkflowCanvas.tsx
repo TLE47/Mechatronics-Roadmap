@@ -80,6 +80,7 @@ export interface WorkflowCanvasProps {
   onSelectEdge: (edgeId: string | null) => void;
   onEdgeType: (edgeId: string, type: WorkflowEdgeType) => void;
   onEdgeLabel: (edgeId: string, label: string) => void;
+  onEdgeGuard: (edgeId: string, guard: string) => void;
   onEdgePort: (edgeId: string, end: 'from' | 'to', kind: PortKind | null) => void;
   /** A frame drag reports every member at once, so one release is one document write. */
   onMoveMany: (moves: NodeMove[]) => void;
@@ -106,6 +107,7 @@ export function WorkflowCanvas({
   onSelectEdge,
   onEdgeType,
   onEdgeLabel,
+  onEdgeGuard,
   onEdgePort,
   onMoveMany,
   grouping,
@@ -240,6 +242,7 @@ export function WorkflowCanvas({
               onDisconnect={onDisconnect}
               onEdgeType={onEdgeType}
               onEdgeLabel={onEdgeLabel}
+              onEdgeGuard={onEdgeGuard}
               onEdgePort={onEdgePort}
             />
 

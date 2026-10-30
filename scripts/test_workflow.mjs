@@ -714,10 +714,11 @@ check('every kind is drawn on the plate its meaning implies, and Mermaid draws i
       'answer:stadium',
       'input:data',
       'transform:rect',
-      'branch:gate',
+      'branch:diamond',
       'loop:gate',
       'test:gate',
       'output:stadium',
+      'merge:diamond',
     ]
   );
   const doc = {
@@ -727,14 +728,16 @@ check('every kind is drawn on the plate its meaning implies, and Mermaid draws i
       { id: 's2', kind: 'branch', title: 'Test it', detail: '', ...autoNodePosition(1) },
       { id: 's3', kind: 'answer', title: '5 A', detail: '', ...autoNodePosition(2) },
       { id: 's4', kind: 'model', title: 'Plant', detail: '', ...autoNodePosition(3) },
+      { id: 's5', kind: 'merge', title: 'Paths meet', detail: '', ...autoNodePosition(4) },
     ],
   };
   const mermaid = workflowToMermaid(doc);
   for (const line of [
     '  n1[/"Given · Supply"/]',
-    '  n2{{"Branch · Test it"}}',
+    '  n2{"Branch · Test it"}',
     '  n3(["Answer · 5 A"])',
     '  n4["Model · Plant"]',
+    '  n5{"Merge · Paths meet"}',
   ]) {
     assert.ok(mermaid.includes(line), `${line} missing from\n${mermaid}`);
   }
@@ -987,7 +990,113 @@ check('a card reads its sockets off its arrows, and two kinds on one dot read pl
   assert.equal(sockets.get('s2').right, null, 'and a dot nothing touches is empty');
 });
 
-section('6. A frame names the cards it holds');
+section('6. A guard belongs to the exit, and a merge names where paths meet');
+
+check('two exits of one decision carry their own guards, and Mermaid names each', () => {
+  const doc = normalizeWorkflow(
+    graph(
+      [
+        { kind: 'branch', title: 'Over current?', detail: '', condition: 'fallback condition' },
+        { kind: 'answer', title: 'Clamp', detail: '' },
+        { kind: 'answer', title: 'Run', detail: '' },
+      ],
+      [
+        { from: 's1', to: 's2', guard: 'draw > 3.2 A' },
+        { from: 's1', to: 's3', guard: 'draw ≤ 3.2 A' },
+      ]
+    )
+  );
+  const [first, second] = doc.edges;
+  assert.equal(edgeLabelFor(doc.nodes[0], first), 'draw > 3.2 A');
+  assert.equal(edgeLabelFor(doc.nodes[0], second), 'draw ≤ 3.2 A', 'one condition is not copied to both');
+  const mermaid = workflowToMermaid(doc);
+  for (const line of [
+    '  n1{"Branch · Over current?"}',
+    '  n1 -.->|"draw > 3.2 A"| n2',
+    '  n1 -.->|"draw ≤ 3.2 A"| n3',
+  ]) {
+    assert.ok(mermaid.includes(line), `${line} missing from\n${mermaid}`);
+  }
+  const markdown = workflowToMarkdown(doc);
+  assert.ok(markdown.includes('   - if draw > 3.2 A → step 2'), markdown);
+  assert.ok(markdown.includes('   - if draw ≤ 3.2 A → step 3'), markdown);
+});
+
+check('an old card-level condition still labels every unguarded exit', () => {
+  // The document a learner saved before guards were per-edge stores one condition on the branch
+  // card. It must open saying exactly what it said, and a guard on one exit must not rename the other.
+  const doc = normalizeWorkflow(
+    graph(
+      [
+        { kind: 'branch', title: 'Too hot?', detail: '', condition: 'T > 80 °C' },
+        { kind: 'answer', title: 'Fan', detail: '' },
+        { kind: 'answer', title: 'Hold', detail: '' },
+      ],
+      [
+        { from: 's1', to: 's2' },
+        { from: 's1', to: 's3' },
+      ]
+    )
+  );
+  assert.deepEqual(
+    doc.edges.map((edge) => edgeLabelFor(doc.nodes[0], edge)),
+    ['T > 80 °C', 'T > 80 °C']
+  );
+  const edited = { ...doc, edges: doc.edges.map((edge, index) => (index ? edge : { ...edge, guard: 'T > 100 °C' })) };
+  assert.deepEqual(
+    edited.edges.map((edge) => edgeLabelFor(edited.nodes[0], edge)),
+    ['T > 100 °C', 'T > 80 °C']
+  );
+});
+
+check('a junk or empty guard is dropped, not drawn as half a port-style field', () => {
+  const doc = normalizeWorkflow(
+    graph([{ kind: 'branch', title: 'a' }, { kind: 'answer', title: 'b' }], [
+      { from: 's1', to: 's2', guard: '   ' },
+    ])
+  );
+  assert.equal(doc.edges[0].guard, undefined);
+  assert.equal(
+    normalizeWorkflow(
+      graph([{ kind: 'branch', title: 'a' }, { kind: 'answer', title: 'b' }], [{ from: 's1', to: 's2' }])
+    ).edges[0].guard,
+    undefined,
+    'an arrow saved before guards existed carries no extra field'
+  );
+});
+
+check('a merge is a real kind in both palettes, drawn as a diamond, and takes two flows', () => {
+  assert.equal(KIND_META.merge.mode, 'both');
+  assert.ok(STEPS_BY_MODE.analysis.includes('merge'));
+  assert.ok(STEPS_BY_MODE.code.includes('merge'));
+  assert.equal(NODE_SHAPE.merge, 'diamond');
+  assert.equal(NODE_SHAPE.branch, 'diamond');
+  assert.ok(!KIND_META.merge.start && !KIND_META.merge.terminal, 'a merge neither starts nor ends a flow');
+  const doc = normalizeWorkflow(
+    graph(
+      [
+        { kind: 'given', title: 'Supply', detail: '' },
+        { kind: 'branch', title: 'Which path?', detail: '' },
+        { kind: 'compute', title: 'Long path', detail: '' },
+        { kind: 'compute', title: 'Short path', detail: '' },
+        { kind: 'merge', title: 'Meet', detail: '' },
+        { kind: 'answer', title: 'Done', detail: '' },
+      ],
+      [
+        { from: 's1', to: 's2' },
+        { from: 's2', to: 's3' },
+        { from: 's2', to: 's4' },
+        { from: 's3', to: 's5' },
+        { from: 's4', to: 's5' },
+        { from: 's5', to: 's6' },
+      ]
+    )
+  );
+  assert.equal(doc.edges.filter((edge) => edge.to === 's5').length, 2, 'both flows land on the merge');
+  assert.ok(workflowToMermaid(doc).includes('  n5{"Merge · Meet"}'));
+});
+
+section('7. A frame names the cards it holds');
 
 check('a frame keeps only cards that exist, and one card belongs to one frame', () => {
   const doc = normalizeWorkflow({
@@ -1027,16 +1136,16 @@ check('a frame keeps only cards that exist, and one card belongs to one frame', 
   );
 });
 
-section('7. Templates are usable at birth');
+section('8. Templates are usable at birth');
 
 check('every kind has a label and a sentence', () => {
-  assert.equal(STEP_KINDS.length, 12);
+  assert.equal(STEP_KINDS.length, 13);
   for (const kind of STEP_KINDS) {
     assert.ok(KIND_META[kind].label, kind);
     assert.ok(KIND_META[kind].hint.length > 20, kind);
   }
-  assert.deepEqual(STEPS_BY_MODE.analysis, ['given', 'unknown', 'model', 'compute', 'check', 'answer']);
-  assert.deepEqual(STEPS_BY_MODE.code, ['input', 'transform', 'branch', 'loop', 'test', 'output']);
+  assert.deepEqual(STEPS_BY_MODE.analysis, ['given', 'unknown', 'model', 'compute', 'check', 'answer', 'merge']);
+  assert.deepEqual(STEPS_BY_MODE.code, ['input', 'transform', 'branch', 'loop', 'test', 'output', 'merge']);
 });
 
 check('every template is a graph the canvas can draw, every card joined to the flow', () => {
@@ -1127,7 +1236,7 @@ check('P.15 opens on the motor-stall example, and no other lesson claims one', (
   assert.equal(templateForLesson(''), null);
 });
 
-section('8. One workflow per lesson survives the store');
+section('9. One workflow per lesson survives the store');
 
 check('a written workflow reads back with the timestamp the write set', () => {
   freshBrowser();

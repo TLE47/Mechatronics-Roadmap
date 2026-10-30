@@ -943,13 +943,17 @@ its edge ([`src/editorPanes.ts`](src/editorPanes.ts), `npm run test:panes` for t
 suite for the side-by-side geometry and the reload).
 
 **The method has a tab too.** **Workflow** is the learner's own plan for how the problem gets solved —
-the analysis palette (Given, Unknown, Model, Compute, Check, Answer) or the code one (Input,
-Transform, Branch, Loop, Test, Output) — drawn as a node canvas: a palette press spawns a card, a card
+the analysis palette (Given, Unknown, Model, Compute, Check, Answer, Merge) or the code one (Input,
+Transform, Branch, Loop, Test, Output, Merge) — drawn as a node canvas: a palette press spawns a card, a card
 drags by its header and edits in place, and a directed arrow is dragged from any of a card's four dots
 (left, right, top, bottom) to any dot on the card it feeds (tap a dot, then the target, is the same
-gesture for a phone). A **Branch** card carries its own condition field, and every arrow leaving that
-card shows it — typed on the card, not in a second form, and carried into the Mermaid and Markdown
-exports. An arrow also says **what it carries**: control flow, data, signal, power, mechanical or
+gesture for a phone). A **Branch** card carries its condition field, but the condition that decides
+one exit belongs to that arrow: the edge inspector has a **Guard** box, so two exits of the same
+decision can say `draw > 3.2 A` and `otherwise`. An arrow with no guard falls back to its branch
+card's condition — the sentence every arrow of an older document already shows — and that fallback is
+carried into the Mermaid and Markdown exports, where each guard is named on its own edge. A **Merge**
+card, in both palettes, is where two paths meet again: a diamond that neither starts nor ends a flow.
+An arrow also says **what it carries**: control flow, data, signal, power, mechanical or
 communication. Press the small kind chip under the wire to open the styles palette — six kinds, each
 a swatch drawn the way the canvas draws it — and the line, its arrowhead and the export change with
 it, so a 24 V run reads as power and an encoder feed reads as data without reading a legend. Colour
@@ -957,11 +961,12 @@ is never the only signal: every kind has its own dash pattern and weight. Kind a
 work, stored with the card positions and found again after a reload.
 
 **A card is drawn on the plate its kind means**, not one rectangle for everything: Given, Input and
-Unknown are data parallelograms, Check, Branch, Loop and Test are cut-corner decision plates, and
-Answer and Output are terminators; the rest keep the plain process card. The plate is derived from the
-kind, so a workflow stored before shapes existed gains them with no migration and no new field to fall
-out of step, and Copy Mermaid draws the same four with its own brackets (`[/ … /]`, `{{ … }}`,
-`([ … ])`).
+Unknown are data parallelograms, Branch and Merge are diamonds, Check, Loop and Test are cut-corner
+plates, and Answer and Output are terminators; the rest keep the plain process card. A diamond is what
+makes a decision tell itself apart from an action without reading the label. The plate is derived from
+the kind, so a workflow stored before shapes existed gains them with no migration and no new field to
+fall out of step, and Copy Mermaid draws the same five with its own brackets (`[/ … /]`, `{{ … }}`,
+`{" … "}`, `([ … ])`).
 
 Each dot can also say **what it is for**: IN, OUT, DATA, PWR or MECH. A dot's socket is read off the
 arrows plugged into it — a data run lands DATA at both ends, a power run PWR — so the card shows its

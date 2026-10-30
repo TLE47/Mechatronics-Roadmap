@@ -55,10 +55,13 @@ export const STEP_KINDS = [
   'loop',
   'test',
   'output',
+  'merge',
 ] as const;
 
 export type StepKind = (typeof STEP_KINDS)[number];
 export type WorkflowMode = 'analysis' | 'code';
+/** A palette kind lives in one mode or, like Merge, in both. */
+export type PaletteMode = WorkflowMode | 'both';
 
 /** The four edges of a card an arrow can attach to. */
 export const WORKFLOW_SIDES = ['left', 'right', 'top', 'bottom'] as const;
@@ -143,14 +146,15 @@ export type WorkflowIcon =
   | 'branch'
   | 'repeat'
   | 'test-tube'
-  | 'terminal';
+  | 'terminal'
+  | 'merge';
 
 export interface KindMeta {
   label: string;
   /** One line, in the second person: what belongs on this card. */
   hint: string;
   /** The palette this card belongs to. `STEPS_BY_MODE` is derived from it, never listed twice. */
-  mode: WorkflowMode;
+  mode: PaletteMode;
   /** The glyph, resolved to a component by `components/workflowIcons.ts`. */
   icon: WorkflowIcon;
   /** The card a flow may open on. */
@@ -244,25 +248,33 @@ export const KIND_META: Record<StepKind, KindMeta> = {
     icon: 'terminal',
     terminal: true,
   },
+  merge: {
+    label: 'Merge',
+    hint: 'Where two paths meet again — no work happens on this card.',
+    mode: 'both',
+    icon: 'merge',
+  },
 };
 
 /** Each palette, in card order, read off the single table above. */
 export const STEPS_BY_MODE: Record<WorkflowMode, StepKind[]> = {
-  analysis: STEP_KINDS.filter((kind) => KIND_META[kind].mode === 'analysis'),
-  code: STEP_KINDS.filter((kind) => KIND_META[kind].mode === 'code'),
+  analysis: STEP_KINDS.filter((kind) => ['analysis', 'both'].includes(KIND_META[kind].mode)),
+  code: STEP_KINDS.filter((kind) => ['code', 'both'].includes(KIND_META[kind].mode)),
 };
 
-/** The four silhouettes a card can be drawn on. */
-export type NodeShape = 'rect' | 'data' | 'gate' | 'stadium';
+/** The five silhouettes a card can be drawn on. */
+export type NodeShape = 'rect' | 'data' | 'gate' | 'diamond' | 'stadium';
 
 /**
  * The plate a kind is drawn on, read off what the kind means rather than added as a field.
  *
  * A flowchart already has a vocabulary for this and a learner reading one expects it: a value that
- * enters or is sought is a parallelogram, a question or a check is a cut-corner decision plate, an
- * answer that ends the reasoning is a terminator. Deriving it from the kind keeps an old document
- * unchanged — there is nothing new stored to migrate — and lets the canvas and Mermaid agree.
- * `rect` is the plain process plate every card had before shapes existed.
+ * enters or is sought is a parallelogram, a decision or the merge that closes it is a diamond, a
+ * check is a cut-corner gate plate, and an answer that ends the reasoning is a terminator. Deriving
+ * it from the kind keeps an old document unchanged — there is nothing new stored to migrate — and
+ * lets the canvas and Mermaid agree. `rect` is the plain process plate an action had before shapes
+ * existed: only a decision and a merge get the diamond, so the plate itself distinguishes a branch
+ * from an action.
  */
 export const NODE_SHAPE: Record<StepKind, NodeShape> = {
   given: 'data',
@@ -273,10 +285,11 @@ export const NODE_SHAPE: Record<StepKind, NodeShape> = {
   answer: 'stadium',
   input: 'data',
   transform: 'rect',
-  branch: 'gate',
+  branch: 'diamond',
   loop: 'gate',
   test: 'gate',
   output: 'stadium',
+  merge: 'diamond',
 };
 
 /** One card on the canvas. `x`/`y` are canvas pixels from the top-left of the grid. */
@@ -306,6 +319,14 @@ export interface WorkflowEdge {
   label?: string;
   /** What the arrow carries; absent means control flow, which is what it meant before kinds. */
   type?: WorkflowEdgeType;
+  /**
+   * The guard on this flow: the condition under which a decision takes this exit.
+   *
+   * Per arrow, not per decision, because two exits of one question carry two conditions. A stored
+   * document from before guards were per-edge keeps its card-level `condition`, which is read as the
+   * fallback for every arrow leaving that branch — so an old diagram says exactly what it said.
+   */
+  guard?: string;
   /** The socket it leaves from, when that is not the one its kind implies. */
   fromPort?: PortKind;
   /** The socket it lands on, when that is not the one its kind implies. */
@@ -613,6 +634,7 @@ function readEdge(
   from: string;
   to: string;
   label: string;
+  guard: string;
   type: WorkflowEdgeType | undefined;
   fromPort: PortKind | undefined;
   toPort: PortKind | undefined;
@@ -628,6 +650,7 @@ function readEdge(
     from,
     to,
     label: clean(record.label, MAX_BRANCH_CONDITION_CHARS),
+    guard: clean(record.guard, MAX_BRANCH_CONDITION_CHARS),
     type: isEdgeType(record.type) ? record.type : undefined,
     fromPort: isPortKind(record.fromPort) ? record.fromPort : undefined,
     toPort: isPortKind(record.toPort) ? record.toPort : undefined,
@@ -663,6 +686,7 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
     from: string;
     to: string;
     label: string;
+    guard: '';
     type: undefined;
     fromPort: undefined;
     toPort: undefined;
@@ -681,6 +705,7 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
         from: read.node.id,
         to: read.branch.to,
         label: read.branch.label,
+        guard: '',
         type: undefined,
         fromPort: undefined,
         toPort: undefined,
@@ -700,6 +725,7 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
     from: node.id,
     to: nodes[index + 1].id,
     label: '',
+    guard: '',
     type: undefined,
     fromPort: undefined,
     toPort: undefined,
@@ -728,6 +754,7 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
       toSide: candidate.toSide,
     };
     if (candidate.label) edge.label = candidate.label;
+    if (candidate.guard) edge.guard = candidate.guard;
     if (candidate.type && candidate.type !== 'flow') edge.type = candidate.type;
     if (candidate.fromPort) edge.fromPort = candidate.fromPort;
     if (candidate.toPort) edge.toPort = candidate.toPort;
@@ -964,13 +991,14 @@ export interface WorkflowSummary {
 /**
  * The text an arrow carries on screen and in an export.
  *
- * A branch card owns its condition, so the arrow follows that card: changing the condition renames
- * every arrow leaving it, and an arrow drawn before the condition was typed shows it too. A restored
- * document may carry a label with no branch card behind it; that label stays the fallback.
+ * One answer, read in one order: an arrow's own guard, then the condition on the branch card it
+ * leaves — which is what every arrow of a saved document said before guards were per-edge — then the
+ * arrow's label. Changing a branch card's condition therefore still renames every unguarded arrow at
+ * once, while a guard written on one exit stays that exit's alone.
  */
 export function edgeLabelFor(from: WorkflowNode, edge: WorkflowEdge): string {
   const condition = from.kind === 'branch' ? from.condition ?? '' : '';
-  return condition || edge.label || '';
+  return edge.guard || condition || edge.label || '';
 }
 
 /**
@@ -1015,6 +1043,7 @@ const MERMAID_NODE: Record<NodeShape, (text: string) => string> = {
   rect: (text) => `["${text}"]`,
   data: (text) => `[/"${text}"/]`,
   gate: (text) => `{{"${text}"}}`,
+  diamond: (text) => `{"${text}"}`,
   stadium: (text) => `(["${text}"])`,
 };
 
