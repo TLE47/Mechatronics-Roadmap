@@ -114,6 +114,7 @@
     "test:reset": "node --experimental-strip-types scripts/test_reset.mjs",
     "test:analysis": "node --experimental-strip-types scripts/test_analysis.mjs",
     "test:study": "node --experimental-strip-types scripts/test_study.mjs",
+    "test:geometry": "node --experimental-strip-types scripts/test_canvas_geometry.mjs",
     "test:workflow": "node --experimental-strip-types scripts/test_workflow.mjs",
     "test:checklists": "node --experimental-strip-types scripts/test_checklists.mjs",
     "test:review": "node --experimental-strip-types scripts/test_review.mjs",

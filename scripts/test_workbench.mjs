@@ -30,6 +30,7 @@
  *   test:backup      the backup archive: CRC, round trip, the three refusals, and a merge that never deletes
  *   test:analysis    completions, hover and signatures without a browser: insertion point, cursor coordinates, the call under the cursor, note shape, transport
  *   test:study       notes and highlights: what is kept, deduped, refused by the store, and what a restore merges
+ *   test:geometry    the canvas's arithmetic: four dots on a card, the 16 side pairs, the bend's floor and cap
  *   test:workflow    the learner's own plan: junk-tolerant cards, advisory checks, six templates, one per lesson
  *   test:checklists  a lesson's bullet ticks: per lesson, identified by their words, bounded, clearable
  *   test:review      FSRS: the 0.9-at-stability identity, grade ordering, lapses, the interval cap, and the card join
@@ -231,6 +232,7 @@ async function main() {
     { label: 'reset', script: 'test_reset.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'analysis', script: 'test_analysis.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'study', script: 'test_study.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'geometry', script: 'test_canvas_geometry.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'workflow', script: 'test_workflow.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'checks', script: 'test_checklists.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'review', script: 'test_review.mjs', env: { NODE_OPTIONS: TYPES } },

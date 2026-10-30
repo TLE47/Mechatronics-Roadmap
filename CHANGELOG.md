@@ -16,6 +16,18 @@ flowchart LR
 
 ---
 
+## [2026-10-29] — The canvas arithmetic gets a direct contract
+
+**The numbers every arrow depends on are now asserted without a browser.**
+[`scripts/test_canvas_geometry.mjs`](scripts/test_canvas_geometry.mjs) (`npm run test:geometry`) pins
+[`canvasGeometry.ts`](app/src/components/workflow/canvasGeometry.ts) at the size the canvas lays out:
+the four dots on a 200 × 140 card at a known position and after a snapped drag, their canvas-pixel
+coordinates through the viewport's scroll and zoom lens, the bend's 16 px floor, halving and 56 px cap,
+all 16 side pairs an arrow can leave and enter, the dashed preview, and the side a body-drop picks
+(including the tie and the taller-card scale). A dot one pixel off its card, or a bend cap moved to 60,
+fails the suite; the browser run no longer has to be the first to notice. It rides the workbench
+matrix, so both CI partitions run it, and no production code changed.
+
 ## [2026-10-29] — The canvas splits along its seams
 
 **One 815-line component became one surface and seven parts.** `WorkflowCanvas.tsx` had grown to own
