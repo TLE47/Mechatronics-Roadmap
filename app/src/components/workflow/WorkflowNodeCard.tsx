@@ -11,7 +11,11 @@ import {
   MAX_STEP_TITLE_CHARS,
   MAX_STEP_UNIT_CHARS,
   NODE_WIDTH,
+  PORT_LABEL,
   WORKFLOW_SIDES,
+  socketKind,
+  type PortKind,
+  type SocketKinds,
   type WorkflowIssue,
   type WorkflowNode,
   type WorkflowSide,
@@ -41,6 +45,22 @@ const PORT_POSITION: Record<WorkflowSide, string> = {
   bottom: 'bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2',
 };
 
+/**
+ * The letter inside a dot: what is plugged into it, told apart without colour at all.
+ *
+ * I, O, D, P and M are the initials a hardware diagram already uses, and they survive a colour-blind
+ * reader, a greyscale print and every palette; a dot with nothing plugged in keeps the plain bead
+ * every canvas drawn before ports had.
+ */
+function PortGlyph({ kind }: { kind: PortKind | null }) {
+  if (!kind) return <circle cx="5" cy="5" r="2.6" fill="currentColor" />;
+  return (
+    <text x="5" y="5" textAnchor="middle" dominantBaseline="central" fontSize="7" fill="currentColor">
+      {PORT_LABEL[kind][0]}
+    </text>
+  );
+}
+
 export interface WorkflowNodeCardProps {
   node: WorkflowNode;
   index: number;
@@ -52,6 +72,8 @@ export interface WorkflowNodeCardProps {
   position: { x: number; y: number };
   dragging: boolean;
   linking: LinkDraft | null;
+  /** What is plugged into each of this card's four dots, read off the document's arrows. */
+  sockets: SocketKinds | undefined;
   onSelect: (id: string) => void;
   onMove: (id: string, x: number, y: number) => void;
   onUpdate: (id: string, patch: Partial<WorkflowNode>) => void;
@@ -71,6 +93,7 @@ export function WorkflowNodeCard({
   position,
   dragging,
   linking,
+  sockets,
   onSelect,
   onMove,
   onUpdate,
@@ -213,24 +236,29 @@ export function WorkflowNodeCard({
       {WORKFLOW_SIDES.map((side) => {
         const source = linking?.nodeId === node.id && linking.side === side;
         const target = Boolean(linking && linking.nodeId !== node.id);
+        const plugged = socketKind(sockets?.[side]);
+        const what = plugged ? `${PORT_LABEL[plugged]} socket` : 'connection';
         return (
           <button
             key={side}
             type="button"
             data-testid={`workflow-node-port-${side}-${index}`}
             data-port={side}
-            aria-label={`${side} connection on card ${number}: drag an arrow from here, or drop one here`}
+            data-port-kind={plugged ?? undefined}
+            aria-label={`${side} ${what} on card ${number}: drag an arrow from here, or drop one here`}
             title={
               target
-                ? `Connect the arrow to the ${side}`
-                : `Drag an arrow from the ${side} of this card`
+                ? `Connect the arrow to the ${side}${plugged ? ` (${PORT_LABEL[plugged]})` : ''}`
+                : `Drag an arrow from the ${side}${plugged ? ` ${PORT_LABEL[plugged]}` : ''} of this card`
             }
             onPointerDown={(event) => onLinkStart(event, node, side)}
             className={`absolute z-20 flex h-5 w-5 touch-none cursor-crosshair items-center justify-center rounded-full border border-accent bg-panel ${PORT_POSITION[side]} ${
               source || target ? 'ring-2 ring-accent/35' : ''
             }`}
           >
-            <span className="h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
+            <svg viewBox="0 0 10 10" className="h-2.5 w-2.5 text-accent" aria-hidden="true">
+              <PortGlyph kind={plugged} />
+            </svg>
           </button>
         );
       })}

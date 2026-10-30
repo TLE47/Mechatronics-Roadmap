@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { ChevronDown, GitBranch, MousePointerClick, Sparkles, Trash2 } from 'lucide-react';
 import {
   KIND_META,
@@ -11,11 +11,13 @@ import {
   emptyWorkflow,
   nextEdgeId,
   validateWorkflow,
+  withEdgePort,
   withEdgeType,
   workflowNumbers,
   workflowToMarkdown,
   workflowToMermaid,
   type StepKind,
+  type PortKind,
   type WorkflowDoc,
   type WorkflowEdge,
   type WorkflowEdgeType,
@@ -33,7 +35,13 @@ import {
 } from '../workflowStore.ts';
 import { HowToCard } from './HowToCard.tsx';
 import { TemplatePicker } from './TemplatePicker.tsx';
-import { WorkflowCanvas } from './WorkflowCanvas.tsx';
+// The canvas — cards, arrows, the fit lens, the edge inspector — is a whole surface that a learner
+// who never opens the Workflow tab should not parse before the lesson text is on screen. It sits
+// behind a lazy boundary, like the simulation tabs in `App.tsx`, and the pane says it is loading
+// while the chunk arrives on the first press.
+const WorkflowCanvas = lazy(() =>
+  import('./WorkflowCanvas.tsx').then((module) => ({ default: module.WorkflowCanvas }))
+);
 import { iconForKind } from './workflowIcons.ts';
 import { useMediaQuery } from '../useMediaQuery.ts';
 
@@ -130,6 +138,12 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
   // under, and an unmount cannot drop a keystroke.
   useEffect(() => () => flush(), [flush]);
 
+  // Start the canvas chunk the moment the tab opens, not on the press that first needs it: the
+  // boundary is there to keep the tab off a first paint, not to make "Start blank" wait.
+  useEffect(() => {
+    void import('./WorkflowCanvas.tsx');
+  }, []);
+
   const commit = (next: WorkflowDoc) => {
     const stamped = { ...next, updatedAt: Date.now() };
     setDoc(stamped);
@@ -191,7 +205,14 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
     setStatus(lostEdges ? 'Card removed — its arrows went with it' : 'Card removed');
   };
 
-  const connect = (from: string, to: string, fromSide: WorkflowSide, toSide: WorkflowSide) => {
+  const connect = (
+    from: string,
+    to: string,
+    fromSide: WorkflowSide,
+    toSide: WorkflowSide,
+    fromPort: PortKind | null,
+    toPort: PortKind | null
+  ) => {
     if (!doc) return;
     if (from === to) {
       setStatus('A card cannot feed itself — connect it to the next one instead');
@@ -205,7 +226,17 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
       setStatus(`A workflow holds at most ${MAX_EDGES} arrows — remove one before drawing another`);
       return;
     }
-    const edge: WorkflowEdge = { id: nextEdgeId(doc.edges), from, to, fromSide, toSide };
+    // A dot that already carries a socket hands it to the new arrow, so extending a power run
+    // keeps it power; a dot with nothing plugged in adds no field at all.
+    const edge: WorkflowEdge = {
+      id: nextEdgeId(doc.edges),
+      from,
+      to,
+      fromSide,
+      toSide,
+      ...(fromPort ? { fromPort } : {}),
+      ...(toPort ? { toPort } : {}),
+    };
     commit({ ...doc, edges: [...doc.edges, edge] });
     setStatus('Arrow added');
   };
@@ -238,6 +269,15 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
         else delete next.label;
         return next;
       }),
+    });
+  };
+
+  /** Which socket one end of an arrow plugs into; `null` returns it to the kind's own. */
+  const setEdgePort = (edgeId: string, end: 'from' | 'to', kind: PortKind | null) => {
+    if (!doc) return;
+    commit({
+      ...doc,
+      edges: doc.edges.map((edge) => (edge.id === edgeId ? withEdgePort(edge, end, kind) : edge)),
     });
   };
 
@@ -513,23 +553,32 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
         <span>Drag empty canvas or use the arrow keys to pan; Fit frames the flow</span>
       </div>
 
-      <WorkflowCanvas
-        key={lessonId}
-        doc={doc}
-        numbers={numbers}
-        issueByStep={issueByStep}
-        selectedId={selectedId}
-        onSelect={selectNode}
-        onMove={moveNode}
-        onUpdate={updateNode}
-        onRemove={removeNode}
-        onConnect={connect}
-        onDisconnect={disconnect}
-        selectedEdgeId={selectedEdgeId}
-        onSelectEdge={selectEdge}
-        onEdgeType={setEdgeType}
-        onEdgeLabel={setEdgeLabel}
-      />
+      <Suspense
+        fallback={
+          <p data-testid="workflow-canvas-loading" className="mt-2 font-mono text-[11.5px] text-faint">
+            Loading the canvas…
+          </p>
+        }
+      >
+        <WorkflowCanvas
+          key={lessonId}
+          doc={doc}
+          numbers={numbers}
+          issueByStep={issueByStep}
+          selectedId={selectedId}
+          onSelect={selectNode}
+          onMove={moveNode}
+          onUpdate={updateNode}
+          onRemove={removeNode}
+          onConnect={connect}
+          onDisconnect={disconnect}
+          selectedEdgeId={selectedEdgeId}
+          onSelectEdge={selectEdge}
+          onEdgeType={setEdgeType}
+          onEdgeLabel={setEdgeLabel}
+          onEdgePort={setEdgePort}
+        />
+      </Suspense>
 
       <div data-testid="workflow-add" className="mt-2 flex flex-wrap items-center gap-1.5">
         <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-faint">Add</span>

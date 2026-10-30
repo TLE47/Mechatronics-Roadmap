@@ -3,9 +3,13 @@ import {
   EDGE_TYPE_LABEL,
   KIND_META,
   MAX_BRANCH_CONDITION_CHARS,
+  PORT_KINDS,
+  PORT_LABEL,
   WORKFLOW_EDGE_TYPES,
   edgeCaption,
+  edgePortOf,
   edgeTypeOf,
+  type PortKind,
   type WorkflowDoc,
   type WorkflowEdgeType,
   type WorkflowNode,
@@ -53,6 +57,7 @@ export interface WorkflowEdgesProps {
   onDisconnect: (edgeId: string) => void;
   onEdgeType: (edgeId: string, type: WorkflowEdgeType) => void;
   onEdgeLabel: (edgeId: string, label: string) => void;
+  onEdgePort: (edgeId: string, end: 'from' | 'to', kind: PortKind | null) => void;
 }
 
 export function WorkflowEdges({
@@ -67,6 +72,7 @@ export function WorkflowEdges({
   onDisconnect,
   onEdgeType,
   onEdgeLabel,
+  onEdgePort,
 }: WorkflowEdgesProps) {
   // Escape closes the inspector wherever focus is: it is the same "put that away" key as the pending
   // arrow's, and a panel of six buttons with no visible way out is a trap on a phone.
@@ -249,6 +255,34 @@ export function WorkflowEdges({
                       {EDGE_TYPE_LABEL[choice]}
                     </button>
                   ))}
+                </div>
+                {/* Which socket each end plugs into. Empty means the kind's own socket — the
+                    default a stored arrow keeps, so no document is rewritten by looking at it. */}
+                <div className="mt-1.5 grid grid-cols-2 gap-1">
+                  {(['from', 'to'] as const).map((end) => {
+                    const socket = edgePortOf(edge, end);
+                    return (
+                      <select
+                        key={end}
+                        data-testid={`workflow-edge-port-${end}-${index}`}
+                        aria-label={`${end === 'from' ? 'From' : 'To'} socket — ${
+                          socket ? PORT_LABEL[socket] : 'plain dot'
+                        } unless changed`}
+                        value={(end === 'from' ? edge.fromPort : edge.toPort) ?? ''}
+                        onChange={(event) =>
+                          onEdgePort(edge.id, end, (event.target.value || null) as PortKind | null)
+                        }
+                        className="min-h-8 w-full rounded border border-line bg-canvas px-1 font-mono text-[11px] text-body"
+                      >
+                        <option value="">{`auto · ${socket ? PORT_LABEL[socket] : 'plain'}`}</option>
+                        {PORT_KINDS.map((kind) => (
+                          <option key={kind} value={kind}>
+                            {PORT_LABEL[kind]}
+                          </option>
+                        ))}
+                      </select>
+                    );
+                  })}
                 </div>
                 {from.kind === 'branch' && from.condition ? (
                   // A branch card owns its condition, and that is what its arrows say, so there is

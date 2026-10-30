@@ -1337,14 +1337,16 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           'the one-press how-to must still be there after a dismissal'
         );
         await page.getByTestId('workflow-start-blank').click();
-        await page.waitForTimeout(200);
+        // The canvas is a lazy chunk (`WorkflowPanel.tsx`): the card arrives when it arrives, and the
+        // assertion waits for the card rather than for a stopwatch.
+        await page.locator('[data-node-id]').first().waitFor({ state: 'visible', timeout: 15000 });
         assert.equal(
           await page.locator('[data-node-id]').count(),
           1,
           'a blank workflow must open on one editable card, not on nothing'
         );
         await page.getByTestId('workflow-add-compute').click();
-        await page.waitForTimeout(200);
+        await page.locator('[data-node-id]').nth(1).waitFor({ state: 'visible', timeout: 15000 });
         assert.equal(
           await page.locator('[data-node-id]').count(),
           2,
@@ -1508,6 +1510,30 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           'Data',
           'the chip must name the kind the arrow now carries'
         );
+        // Sockets: a data run plugs DATA into both ends, so the card's own dots say what they are —
+        // and moving one end puts that socket on the dot, which is where a learner reads it.
+        assert.equal(
+          await page.getByTestId('workflow-edge-port-to-0').inputValue(),
+          '',
+          'an untouched end must sit on its kind’s own socket, not store a duplicate of it'
+        );
+        assert.equal(
+          await page.getByTestId('workflow-node-port-right-0').getAttribute('data-port-kind'),
+          'data',
+          'a data arrow must plug a DATA socket into the card it leaves'
+        );
+        assert.match(
+          await page.getByTestId('workflow-node-port-right-0').getAttribute('aria-label'),
+          /DATA socket/,
+          'the socket must be named for a screen reader, not only drawn'
+        );
+        await page.getByTestId('workflow-edge-port-to-0').selectOption('in');
+        await page.waitForTimeout(300);
+        assert.equal(
+          await page.getByTestId('workflow-node-port-top-1').getAttribute('data-port-kind'),
+          'in',
+          'choosing IN for an end must show IN on the dot it lands on'
+        );
         await page.getByTestId('workflow-edge-label-input-0').fill('12.0 / 2.4');
         await page.waitForTimeout(300);
         assert.equal(
@@ -1549,6 +1575,11 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           await page.getByTestId('workflow-edge-label-0').innerText(),
           '12.0 / 2.4',
           'and so is the label typed on a typed arrow'
+        );
+        assert.equal(
+          await page.getByTestId('workflow-node-port-top-1').getAttribute('data-port-kind'),
+          'in',
+          'a chosen socket is authored work too: a reload must find IN where it was placed'
         );
         // Back to the two cards the rest of this block measures, in the palette it adds with.
         await page.getByTestId('workflow-node-delete-2').click();

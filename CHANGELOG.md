@@ -16,6 +16,49 @@ flowchart LR
 
 ---
 
+## [2026-10-30] — A dot says what it is for
+
+**IN, OUT, DATA, PWR, MECH.** Each end of a workflow arrow can now carry a socket kind
+([`workflow.ts`](app/src/workflow.ts)): `fromPort`/`toPort` are optional and read through the same
+tolerant normaliser as edges, so a stored value outside the five is dropped rather than drawn, and a
+document from before sockets existed round-trips with plain dots and no extra field. An end with no
+stored socket follows its arrow's kind — `flow` leaves and enters plain dots, `data`/`signal`/`comms`
+land DATA at both ends, `power` PWR, `mechanical` MECH — and choosing a socket in the edge inspector
+overrides that one end. The same override is cleared by picking `auto`, which deletes the field
+instead of storing a copy of the default.
+
+**Dots read without colour.** Each of a card's four dots draws the initial of what is plugged into it
+(I, O, D, P, M) in [`WorkflowNodeCard.tsx`](app/src/components/workflow/WorkflowNodeCard.tsx), and
+the button's label names the socket for a screen reader ("right DATA socket on card 2"). A dot fed
+by two different kinds stays a plain bead, because a socket cannot be two things at once. A dot
+nothing touches keeps the plain bead every earlier canvas drew.
+
+**A drawn arrow honours the dot it starts on.** `useLinking` reads the socket off the dot under the
+pointer, so an arrow dragged from a dot that already carries PWR is a PWR end — extending a power
+chain needs no second step — while every dot stays both an inlet and an outlet, and an existing
+diagram connects exactly as it did before. Sockets are authored from the inspector under the label
+field (one select per end, at the 32 px/hit floor the rest of the panel uses), so nothing needs a
+hand-edited document.
+
+**The canvas is a lazy chunk.** Opening the Workflow tab used to parse the cards, arrows, fit lens
+and inspector whether or not the tab was ever opened. [`WorkflowPanel.tsx`](app/src/components/WorkflowPanel.tsx)
+now loads [`WorkflowCanvas.tsx`](app/src/components/WorkflowCanvas.tsx) behind a `React.lazy`
+boundary like the twelve lab tabs, prefetches it the moment the tab mounts, and says it is loading
+under the palette while the chunk arrives. First paint measured **575.3 → 569.1 kB** signed-in.
+Splitting a chunk changes the compression context, so `js_gzip` measured 954.5 → **955.5 kB**; its
+signed-in ceiling is 957 kB with 1.5 kB of room, and the reason is recorded in
+[`docs/weight-budget.json`](docs/weight-budget.json) — 6.2 kB off the visit for 1.0 kB of emitted
+total is the trade `entry_gzip` exists to make.
+
+**Pinned where the repo already pins it.** `test:workflow` grows three checks: the socket table for
+all six kinds plus an override and its clear, a tolerant read that drops junk and leaves a legacy
+edge byte-identical, and `socketKinds` reading a card's dots off its arrows (including the two-kinds
+case). The browser suite chooses IN for an arrow's target end, asserts the dot and its label change,
+and finds the socket again after a reload; `check:snapshot` passed with **no re-record**, because
+the guarded surface draws no typed edge and its pixels did not move.
+
+---
+
 ## [2026-10-30] — An arrow says what it carries
 
 **Control flow, data, signal, power, mechanical, communication.** `WorkflowEdge` gains an optional

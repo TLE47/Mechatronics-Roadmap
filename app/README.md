@@ -954,7 +954,18 @@ communication. Press the small kind chip under the wire to open the styles palet
 a swatch drawn the way the canvas draws it — and the line, its arrowhead and the export change with
 it, so a 24 V run reads as power and an encoder feed reads as data without reading a legend. Colour
 is never the only signal: every kind has its own dash pattern and weight. Kind and label are authored
-work, stored with the card positions and found again after a reload. The vertical pair is what lets a join or a loop leave the column without
+work, stored with the card positions and found again after a reload.
+
+Each dot can also say **what it is for**: IN, OUT, DATA, PWR or MECH. A dot's socket is read off the
+arrows plugged into it — a data run lands DATA at both ends, a power run PWR — so the card shows its
+role in the diagram without a second property that could fall out of step, and a dot that two kinds
+feed stays plain rather than claiming one of them. The edge inspector carries a socket for each end:
+choosing one moves that dot, `auto` hands the end back to its kind, and a new arrow drawn from a dot
+that already carries a socket inherits it, so extending a power chain keeps it power. A socket is
+drawn as its letter (I, O, D, P, M), which survives greyscale and every palette, and is named for a
+screen reader; a diagram drawn before sockets existed keeps its plain dots and gains no field until
+a learner chooses one. The canvas is a lazy chunk inside the tab — opening Workflow fetches it — so a
+lesson's text never waits on cards the learner may not open. The vertical pair is what lets a join or a loop leave the column without
 crossing the chain; only left and right carry reading order. It is a view of
 the same card, so it tabs and splits like the outputs and its arrangement is remembered; cards also
 nudge with the arrow keys, and the surface is capped at 70% of the viewport and scrolls inside that,
@@ -1436,12 +1447,12 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/draftHistory.ts`](src/draftHistory.ts) | The versions behind the draft: what each run started from, with its verdict, bounded per lesson and in total, plus the merge a restore uses. |
 | [`src/codeDiff.ts`](src/codeDiff.ts) | The Diff panel's engine: exact-line LCS, hunk windows with counted gaps, the coarse head/tail fallback, and the changed-line count the roadmap card reuses. |
 | [`src/predictGate.ts`](src/predictGate.ts) | Predict first: how a free-text guess is graded against the expected output (four verdicts, lines not substrings), and the bounded per-lesson store of guesses and skips. |
-| [`src/workflow.ts`](src/workflow.ts) | The learner's workflow as data: the two palettes, nodes and typed arrows, the one reading order, the eight advisory checks, the version-1 migration, and the Mermaid and Markdown exports. |
+| [`src/workflow.ts`](src/workflow.ts) | The learner's workflow as data: the two palettes, nodes and typed arrows, the five socket kinds an arrow's ends derive or override, the one reading order, the eight advisory checks, the version-1 migration, and the Mermaid and Markdown exports. |
 | [`src/workflowStore.ts`](src/workflowStore.ts) | One workflow per lesson in the bulk bucket: the refused write, the backup entry, and the newer-wins merge a restore uses. |
 | [`src/workflowTemplates.ts`](src/workflowTemplates.ts) | Six seeded flows in both palettes, one blank, each laid out as a connected column with its arrows drawn, and the single lesson that opens on its own example. |
-| [`src/components/WorkflowPanel.tsx`](src/components/WorkflowPanel.tsx) | The Workflow tab's container: owns the document, its debounced save, the selected card and every mutation; validates once per document and composes the canvas, picker and guide. |
+| [`src/components/WorkflowPanel.tsx`](src/components/WorkflowPanel.tsx) | The Workflow tab's container: owns the document, its debounced save, the selected card and every mutation; validates once per document and composes the canvas (behind a lazy boundary), picker and guide. |
 | [`src/components/WorkflowCanvas.tsx`](src/components/WorkflowCanvas.tsx) | The node canvas's surface and composition: the scroll pane, the scaled grid, the fit button, and the wiring of the viewport, the cards and the arrows. Each concern beside it is readable alone. |
-| [`src/components/workflow/`](src/components/workflow/) | The canvas's parts: `canvasGeometry.ts` (dots, bends, facing sides — pure), `useViewport.ts` (scale, Fit/100%, drag-pan and arrow-key pan), `useNodeDrag.ts` (one card's drag held in pixels until release), `useLinking.ts` (the arrow being drawn, dot-to-dot or tap-then-tap), `useNodeHeights.ts` (the measured heights the four dots need), `WorkflowNodeCard.tsx` (one editable card and its ports) and `WorkflowEdges.tsx` (paths, one arrowhead per kind, the styles palette the kind chip opens, the dashed preview and the edge controls). |
+| [`src/components/workflow/`](src/components/workflow/) | The canvas's parts: `canvasGeometry.ts` (dots, bends, facing sides — pure), `useViewport.ts` (scale, Fit/100%, drag-pan and arrow-key pan), `useNodeDrag.ts` (one card's drag held in pixels until release), `useLinking.ts` (the arrow being drawn, dot-to-dot or tap-then-tap), `useNodeHeights.ts` (the measured heights the four dots need), `WorkflowNodeCard.tsx` (one editable card and its four lettered sockets) and `WorkflowEdges.tsx` (paths, one arrowhead per kind, the styles palette the kind chip opens with the socket choice for each end, the dashed preview and the edge controls). |
 | [`src/components/TemplatePicker.tsx`](src/components/TemplatePicker.tsx) | The two palettes of seeded flows, as starting shapes to edit. |
 | [`src/components/HowToCard.tsx`](src/components/HowToCard.tsx) | The three-line guide to the tab; whether it is open is the container's policy. |
 | [`src/watchMode.ts`](src/watchMode.ts) | When the checks may re-run themselves — after a graded failure, on an edited buffer, never past the gate — and the remembered toggle. |

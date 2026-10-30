@@ -92,6 +92,41 @@ export const EDGE_TYPE_LABEL: Record<WorkflowEdgeType, string> = {
   communication: 'Comms',
 };
 
+/**
+ * What a dot is for: the socket an arrow plugs into.
+ *
+ * A card's four dots are its hardware, so an arrow should be able to say it is plugged into an OUT or
+ * a PWR, not merely into "the right edge". A port is opt-in and additive: an arrow that never names
+ * one keeps the plain dot every diagram drawn before this had, so a stored document round-trips
+ * unchanged and nothing on an old canvas moves.
+ */
+export const PORT_KINDS = ['in', 'out', 'data', 'power', 'mechanical'] as const;
+export type PortKind = (typeof PORT_KINDS)[number];
+
+/** The word on a socket's tooltip, in the short form a 200 px card can carry. */
+export const PORT_LABEL: Record<PortKind, string> = {
+  in: 'IN',
+  out: 'OUT',
+  data: 'DATA',
+  power: 'PWR',
+  mechanical: 'MECH',
+};
+
+/**
+ * The sockets each kind of cable plugs into: what a kind means when nobody overrides it.
+ *
+ * Control flow has no row on purpose. Every diagram drawn before sockets existed is control flow,
+ * and giving it OUT/IN by default would move every one of those dots; an unclassified arrow keeps
+ * the plain dot it always had, and OUT/IN are chosen like any other socket.
+ */
+const EDGE_PORTS: Record<Exclude<WorkflowEdgeType, 'flow'>, { from: PortKind; to: PortKind }> = {
+  data: { from: 'data', to: 'data' },
+  signal: { from: 'data', to: 'data' },
+  power: { from: 'power', to: 'power' },
+  mechanical: { from: 'mechanical', to: 'mechanical' },
+  communication: { from: 'data', to: 'data' },
+};
+
 export const MODE_LABEL: Record<WorkflowMode, string> = { analysis: 'Analysis', code: 'Code' };
 
 /** The glyph a card kind draws, named here so the model needs no UI package to describe it. */
@@ -243,6 +278,10 @@ export interface WorkflowEdge {
   label?: string;
   /** What the arrow carries; absent means control flow, which is what it meant before kinds. */
   type?: WorkflowEdgeType;
+  /** The socket it leaves from, when that is not the one its kind implies. */
+  fromPort?: PortKind;
+  /** The socket it lands on, when that is not the one its kind implies. */
+  toPort?: PortKind;
 }
 
 export interface WorkflowDoc {
@@ -294,6 +333,77 @@ function isEdgeType(value: unknown): value is WorkflowEdgeType {
   return typeof value === 'string' && (WORKFLOW_EDGE_TYPES as readonly string[]).includes(value);
 }
 
+export function isPortKind(value: unknown): value is PortKind {
+  return typeof value === 'string' && (PORT_KINDS as readonly string[]).includes(value);
+}
+
+/**
+ * The socket an arrow's end plugs into, or `null` for a plain dot.
+ *
+ * A control arrow nobody classified, and an arrow that never named a socket, both read `null`: the
+ * classic dot. A typed arrow reads its kind's socket unless the learner has moved that end, which is
+ * the one override this model keeps.
+ */
+export function edgePortOf(edge: WorkflowEdge, end: 'from' | 'to'): PortKind | null {
+  const chosen = end === 'from' ? edge.fromPort : edge.toPort;
+  if (chosen) return chosen;
+  const type = edgeTypeOf(edge);
+  return type === 'flow' ? null : EDGE_PORTS[type][end];
+}
+
+/**
+ * The same arrow with one end moved to a socket, or cleared back to the kind's own.
+ *
+ * Choosing the socket the kind already implies stores nothing, for the same reason `flow` is an
+ * absent field: an arrow nobody moved and one moved back to the same place must read, draw and
+ * round-trip identically.
+ */
+export function withEdgePort(
+  edge: WorkflowEdge,
+  end: 'from' | 'to',
+  kind: PortKind | null
+): WorkflowEdge {
+  const next = { ...edge };
+  const field = end === 'from' ? 'fromPort' : 'toPort';
+  const type = edgeTypeOf(edge);
+  if (!kind || (type !== 'flow' && kind === EDGE_PORTS[type][end])) delete next[field];
+  else next[field] = kind;
+  return next;
+}
+
+/** A card's four dots and the kinds plugged into each, from the document's arrows. */
+export type SocketKinds = Record<WorkflowSide, PortKind[]>;
+
+/**
+ * What is plugged into each dot of each card.
+ *
+ * Read off the arrows rather than stored twice: an arrow is the thing that knows its socket, so a
+ * dot cannot disagree with the cable in it. A dot nothing is plugged into has an empty list, and a
+ * dot fed by two different kinds lists both — the card draws the plain dot then, because a socket
+ * cannot be two things at once.
+ */
+export function socketKinds(doc: WorkflowDoc): Map<string, SocketKinds> {
+  const sockets = new Map<string, SocketKinds>();
+  const add = (nodeId: string, side: WorkflowSide, kind: PortKind | null) => {
+    if (!kind) return;
+    const record = sockets.get(nodeId) ?? { left: [], right: [], top: [], bottom: [] };
+    const list = record[side];
+    if (!list.includes(kind)) list.push(kind);
+    sockets.set(nodeId, record);
+  };
+  for (const edge of doc.edges) {
+    add(edge.from, edge.fromSide, edgePortOf(edge, 'from'));
+    add(edge.to, edge.toSide, edgePortOf(edge, 'to'));
+  }
+  return sockets;
+}
+
+/** The one kind a dot carries, or null when it is empty or carries more than one. */
+export function socketKind(kinds: PortKind[] | undefined): PortKind | null {
+  if (!kinds || kinds.length !== 1) return null;
+  return kinds[0];
+}
+
 /** The kind an arrow carries; `flow` is the meaning of an arrow that never named one. */
 export function edgeTypeOf(edge: WorkflowEdge): WorkflowEdgeType {
   return edge.type ?? 'flow';
@@ -310,6 +420,10 @@ export function withEdgeType(edge: WorkflowEdge, type: WorkflowEdgeType): Workfl
   const next = { ...edge };
   if (type === 'flow') delete next.type;
   else next.type = type;
+  // The kind decides the sockets: a cable moved to PWR and then changed to Data must follow its new
+  // kind rather than keep a socket nothing on the canvas implies.
+  delete next.fromPort;
+  delete next.toPort;
   return next;
 }
 
@@ -437,6 +551,8 @@ function readEdge(
   to: string;
   label: string;
   type: WorkflowEdgeType | undefined;
+  fromPort: PortKind | undefined;
+  toPort: PortKind | undefined;
   fromSide: WorkflowSide;
   toSide: WorkflowSide;
 } | null {
@@ -450,6 +566,8 @@ function readEdge(
     to,
     label: clean(record.label, MAX_BRANCH_CONDITION_CHARS),
     type: isEdgeType(record.type) ? record.type : undefined,
+    fromPort: isPortKind(record.fromPort) ? record.fromPort : undefined,
+    toPort: isPortKind(record.toPort) ? record.toPort : undefined,
     // A version-2 document written before cards had four points carries no side. Right-to-left is
     // the arrow it drew then, so that is what it keeps.
     fromSide: isSide(record.fromSide) ? record.fromSide : 'right',
@@ -483,6 +601,8 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
     to: string;
     label: string;
     type: undefined;
+    fromPort: undefined;
+    toPort: undefined;
     fromSide: WorkflowSide;
     toSide: WorkflowSide;
   }[] = [];
@@ -499,6 +619,8 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
         to: read.branch.to,
         label: read.branch.label,
         type: undefined,
+        fromPort: undefined,
+        toPort: undefined,
         // A v1 branch jumped forward; the side curve says "this is not the next step".
         fromSide: 'right',
         toSide: 'left',
@@ -516,6 +638,8 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
     to: nodes[index + 1].id,
     label: '',
     type: undefined,
+    fromPort: undefined,
+    toPort: undefined,
     // The v1 list became a single column, so its implied arrow now runs down the paper.
     fromSide: 'bottom' as WorkflowSide,
     toSide: 'top' as WorkflowSide,
@@ -542,6 +666,8 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
     };
     if (candidate.label) edge.label = candidate.label;
     if (candidate.type && candidate.type !== 'flow') edge.type = candidate.type;
+    if (candidate.fromPort) edge.fromPort = candidate.fromPort;
+    if (candidate.toPort) edge.toPort = candidate.toPort;
     edges.push(edge);
   }
 

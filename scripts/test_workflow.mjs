@@ -39,7 +39,11 @@ import {
   autoNodePosition,
   edgeCaption,
   edgeLabelFor,
+  edgePortOf,
   edgeTypeOf,
+  socketKind,
+  socketKinds,
+  withEdgePort,
   emptyWorkflow,
   nextEdgeId,
   nextStepId,
@@ -847,7 +851,75 @@ check('a typed arrow names its kind in Mermaid, Markdown and on the chip', () =>
   );
 });
 
-section('5. Templates are usable at birth');
+section('5. A dot says what it is for');
+
+check('a socket follows the arrow’s kind, and a chosen socket wins', () => {
+  // The one table both the canvas and the card read: which end of a cable plugs into what.
+  const table = ['flow', 'data', 'signal', 'power', 'mechanical', 'communication'].map((type) => {
+    const edge = { id: 'e1', from: 's1', to: 's2', fromSide: 'right', toSide: 'left', type };
+    return [type, edgePortOf(edge, 'from'), edgePortOf(edge, 'to')];
+  });
+  assert.deepEqual(table, [
+    ['flow', null, null],
+    ['data', 'data', 'data'],
+    ['signal', 'data', 'data'],
+    ['power', 'power', 'power'],
+    ['mechanical', 'mechanical', 'mechanical'],
+    ['communication', 'data', 'data'],
+  ]);
+  const power = { id: 'e1', from: 's1', to: 's2', fromSide: 'right', toSide: 'left', type: 'power' };
+  const moved = withEdgePort(power, 'from', 'in');
+  assert.equal(moved.fromPort, 'in');
+  assert.equal(edgePortOf(moved, 'from'), 'in', 'what the learner chose beats the kind’s default');
+  assert.equal(edgePortOf(moved, 'to'), 'power', 'and moving one end leaves the other on its default');
+  assert.equal(withEdgePort(moved, 'from', null).fromPort, undefined, 'clearing returns it to the kind');
+  assert.equal(
+    withEdgePort(power, 'to', 'power').toPort,
+    undefined,
+    'choosing the socket the kind already implies stores nothing, like a flow kind'
+  );
+});
+
+check('a stored socket is read tolerantly, and junk draws a plain dot', () => {
+  const doc = normalizeWorkflow(
+    graph(
+      [{ kind: 'input', title: 'Encoder' }, { kind: 'compute', title: 'MCU' }],
+      [
+        { from: 's1', to: 's2', fromPort: 'data', toPort: 'PWR' },
+        { from: 's2', to: 's1', fromPort: 'banana', toSide: 'right' },
+      ]
+    )
+  );
+  assert.equal(doc.edges[0].fromPort, 'data');
+  assert.equal(doc.edges[0].toPort, undefined, 'a socket outside the five is dropped, not drawn');
+  assert.equal(doc.edges[1].fromPort, undefined);
+  assert.deepEqual(
+    normalizeWorkflow(
+      graph([{ kind: 'given', title: 'a' }, { kind: 'answer', title: 'b' }], [{ from: 's1', to: 's2' }])
+    ).edges[0],
+    { id: 'e1', from: 's1', to: 's2', fromSide: 'right', toSide: 'left' },
+    'a diagram drawn before ports existed carries no extra field'
+  );
+});
+
+check('a card reads its sockets off its arrows, and two kinds on one dot read plain', () => {
+  const doc = normalizeWorkflow(
+    graph(
+      [{ kind: 'input', title: 'Encoder' }, { kind: 'compute', title: 'MCU' }, { kind: 'given', title: 'PSU' }],
+      [
+        { from: 's1', to: 's2', fromSide: 'right', toSide: 'left', type: 'data' },
+        { from: 's3', to: 's2', fromSide: 'right', toSide: 'left', type: 'power' },
+      ]
+    )
+  );
+  const sockets = socketKinds(doc);
+  assert.equal(socketKind(sockets.get('s1').right), 'data', 'a DATA run leaves a DATA socket');
+  assert.deepEqual(sockets.get('s2').left, ['data', 'power']);
+  assert.equal(socketKind(sockets.get('s2').left), null, 'a dot two kinds feed draws as a plain dot');
+  assert.equal(socketKind(sockets.get('s2').right), null, 'and a dot nothing touches is empty');
+});
+
+section('6. Templates are usable at birth');
 
 check('every kind has a label and a sentence', () => {
   assert.equal(STEP_KINDS.length, 12);
@@ -947,7 +1019,7 @@ check('P.15 opens on the motor-stall example, and no other lesson claims one', (
   assert.equal(templateForLesson(''), null);
 });
 
-section('6. One workflow per lesson survives the store');
+section('7. One workflow per lesson survives the store');
 
 check('a written workflow reads back with the timestamp the write set', () => {
   freshBrowser();

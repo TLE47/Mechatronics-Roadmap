@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import { WORKFLOW_SIDES, type WorkflowNode, type WorkflowSide } from '../../workflow.ts';
+import {
+  WORKFLOW_SIDES,
+  isPortKind,
+  type PortKind,
+  type WorkflowNode,
+  type WorkflowSide,
+} from '../../workflow.ts';
 import { cardHeight, facingSide } from './canvasGeometry.ts';
 
 /**
@@ -16,12 +22,22 @@ import { cardHeight, facingSide } from './canvasGeometry.ts';
 export interface LinkDraft {
   nodeId: string;
   side: WorkflowSide;
+  /** The socket the arrow leaves from, when the dot it started on already carries one. */
+  kind: PortKind | null;
 }
 
 interface ConnectionTarget {
   nodeId: string;
   /** The dot under the pointer, or null when the pointer is on the card body. */
   side: WorkflowSide | null;
+  /** The socket that dot carries, if any: the arrow plugs into it rather than the card's body. */
+  kind: PortKind | null;
+}
+
+/** The port kind a dot advertises, read off its own DOM so no card state has to be consulted. */
+function portKindOf(element: Element | null | undefined): PortKind | null {
+  const raw = element?.getAttribute('data-port-kind');
+  return isPortKind(raw) ? raw : null;
 }
 
 function connectionTargetAt(clientX: number, clientY: number): ConnectionTarget | null {
@@ -33,7 +49,7 @@ function connectionTargetAt(clientX: number, clientY: number): ConnectionTarget 
   if (!nodeId) return null;
   const raw = port?.getAttribute('data-port');
   const side = raw && (WORKFLOW_SIDES as readonly string[]).includes(raw) ? (raw as WorkflowSide) : null;
-  return { nodeId, side };
+  return { nodeId, side, kind: portKindOf(port) };
 }
 
 export interface Linking {
@@ -55,7 +71,14 @@ export function useLinking({
   toCanvas: (clientX: number, clientY: number) => { x: number; y: number };
   byId: Map<string, WorkflowNode>;
   heights: Record<string, number>;
-  onConnect: (from: string, to: string, fromSide: WorkflowSide, toSide: WorkflowSide) => void;
+  onConnect: (
+    from: string,
+    to: string,
+    fromSide: WorkflowSide,
+    toSide: WorkflowSide,
+    fromKind: PortKind | null,
+    toKind: PortKind | null
+  ) => void;
   onSelect: (id: string | null) => void;
 }): Linking {
   const [linking, setLinking] = useState<LinkDraft | null>(null);
@@ -75,14 +98,14 @@ export function useLinking({
         setLinking(null);
         return;
       }
-      onConnect(linking.nodeId, node.id, linking.side, side);
+      onConnect(linking.nodeId, node.id, linking.side, side, linking.kind, portKindOf(event.currentTarget));
       setLinking(null);
       return;
     }
     const point = toCanvas(event.clientX, event.clientY);
     linkTravelled.current = false;
     setCursor(point);
-    setLinking({ nodeId: node.id, side });
+    setLinking({ nodeId: node.id, side, kind: portKindOf(event.currentTarget) });
     onSelect(node.id);
   };
 
@@ -104,7 +127,9 @@ export function useLinking({
       linking.nodeId,
       node.id,
       linking.side,
-      facingSide(from, node, cardHeight(heights, from.id), cardHeight(heights, node.id))
+      facingSide(from, node, cardHeight(heights, from.id), cardHeight(heights, node.id)),
+      linking.kind,
+      null
     );
     setLinking(null);
   };
@@ -126,7 +151,7 @@ export function useLinking({
         }
         const toSide =
           target.side ?? facingSide(from, to, cardHeight(heights, from.id), cardHeight(heights, to.id));
-        onConnect(linking.nodeId, target.nodeId, linking.side, toSide);
+        onConnect(linking.nodeId, target.nodeId, linking.side, toSide, linking.kind, target.kind);
         setLinking(null);
         return;
       }
