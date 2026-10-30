@@ -968,7 +968,8 @@ and a version-1 list is migrated on read, its branches becoming labelled arrows.
 summarises the flow and can append it to the note
 ([`src/workflow.ts`](src/workflow.ts), [`src/workflowStore.ts`](src/workflowStore.ts),
 [`src/components/WorkflowPanel.tsx`](src/components/WorkflowPanel.tsx),
-[`src/components/WorkflowCanvas.tsx`](src/components/WorkflowCanvas.tsx), `npm run test:workflow`, and
+[`src/components/WorkflowCanvas.tsx`](src/components/WorkflowCanvas.tsx) with its
+[`src/components/workflow/`](src/components/workflow/) pieces, `npm run test:workflow`, and
 the browser suite for spawning, dragging, drawing an arrow, the unit item and the reload).
 
 **A panel can sit on either edge.** The presets decide what is on screen; **docking** decides which
@@ -1432,7 +1433,8 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/workflowStore.ts`](src/workflowStore.ts) | One workflow per lesson in the bulk bucket: the refused write, the backup entry, and the newer-wins merge a restore uses. |
 | [`src/workflowTemplates.ts`](src/workflowTemplates.ts) | Six seeded flows in both palettes, one blank, each laid out as a connected column with its arrows drawn, and the single lesson that opens on its own example. |
 | [`src/components/WorkflowPanel.tsx`](src/components/WorkflowPanel.tsx) | The Workflow tab's container: owns the document, its debounced save, the selected card and every mutation; validates once per document and composes the canvas, picker and guide. |
-| [`src/components/WorkflowCanvas.tsx`](src/components/WorkflowCanvas.tsx) | The node canvas: absolute cards on a dotted grid, header dragging with a keyboard nudge, inline fields, arrow handles, curved edges and their remove controls, empty-paper panning and the Fit/100% view lens. |
+| [`src/components/WorkflowCanvas.tsx`](src/components/WorkflowCanvas.tsx) | The node canvas's surface and composition: the scroll pane, the scaled grid, the fit button, and the wiring of the viewport, the cards and the arrows. Each concern beside it is readable alone. |
+| [`src/components/workflow/`](src/components/workflow/) | The canvas's parts: `canvasGeometry.ts` (dots, bends, facing sides — pure), `useViewport.ts` (scale, Fit/100%, drag-pan and arrow-key pan), `useNodeDrag.ts` (one card's drag held in pixels until release), `useLinking.ts` (the arrow being drawn, dot-to-dot or tap-then-tap), `useNodeHeights.ts` (the measured heights the four dots need), `WorkflowNodeCard.tsx` (one editable card and its ports) and `WorkflowEdges.tsx` (paths, arrowheads, dashed preview, edge controls). |
 | [`src/components/TemplatePicker.tsx`](src/components/TemplatePicker.tsx) | The two palettes of seeded flows, as starting shapes to edit. |
 | [`src/components/HowToCard.tsx`](src/components/HowToCard.tsx) | The three-line guide to the tab; whether it is open is the container's policy. |
 | [`src/watchMode.ts`](src/watchMode.ts) | When the checks may re-run themselves — after a graded failure, on an edited buffer, never past the gate — and the remembered toggle. |

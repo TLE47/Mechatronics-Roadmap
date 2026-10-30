@@ -16,6 +16,25 @@ flowchart LR
 
 ---
 
+## [2026-10-29] — The canvas splits along its seams
+
+**One 815-line component became one surface and seven parts.** `WorkflowCanvas.tsx` had grown to own
+four unrelated things at once: the fit lens and the view's scroll offset, the two ways to pan, the
+pixel state of a drag, and the arrow-drawing state machine — so a change to any one of them landed in
+the same function body as the other three. The file is now the surface and the composition (189
+lines), and each concern lives in [`app/src/components/workflow/`](app/src/components/workflow/):
+`canvasGeometry.ts` for the pure arithmetic (a dot's anchor, an arrow's bend, the side facing a
+source), `useViewport.ts` for the lens (scale, Fit/100%, scrolled offset, empty-paper panning,
+arrow-key panning), `useNodeDrag.ts` for one card's drag, `useLinking.ts` for the arrow being drawn,
+`useNodeHeights.ts` for the measured heights the four dots need, `WorkflowNodeCard.tsx` for one
+editable card and its ports, and `WorkflowEdges.tsx` for the paths, arrowheads, dashed preview and
+each edge's label and remove button. The document still belongs to the panel, the lens still belongs
+to the canvas and is never written to a workflow, and the cards still own no state.
+
+No behaviour moved: every test id, aria label, visible string, class and arrow-side rule is the one
+it was, which the unchanged surface snapshot (52 surfaces), the workflow unit suite (55), the
+real-browser suite's spawn/edit/drag/draw/reload case and the 390 px mobile gate all confirm.
+
 ## [2026-10-29] — One numbering, an honest clock label, and the task in Write
 
 **A card has four connection points, not two.** The canvas offered a dot on the left and right only,
