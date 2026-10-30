@@ -104,6 +104,9 @@ export function WorkflowNodeCard({
     onSelect(node.id);
   };
 
+  // A resting card sits under the connector layer (`z-[25]`): a curve that crosses a card must be
+  // seen, because its arrowhead is the only thing that says where it lands. A card being dragged
+  // rises above the arrows it is crossing.
   return (
     <div
       data-node-id={node.id}
@@ -111,9 +114,9 @@ export function WorkflowNodeCard({
       data-step={number}
       data-kind={node.kind}
       style={{ left: position.x, top: position.y, width: NODE_WIDTH }}
-      className={`absolute z-10 cursor-default rounded-xl border bg-panel shadow-sm ${
+      className={`absolute z-20 cursor-default rounded-xl border bg-panel shadow-sm ${
         selected ? 'border-accent ring-2 ring-accent/25' : issue ? 'border-amber/70' : 'border-line'
-      } ${dragging ? 'z-20 shadow-lg' : ''}`}
+      } ${dragging ? 'z-30 shadow-lg' : ''}`}
       onPointerDown={(event) => onLinkLand(event, node)}
     >
       <div

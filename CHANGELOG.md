@@ -16,6 +16,36 @@ flowchart LR
 
 ---
 
+## [2026-10-30] — An arrow says what it carries
+
+**Control flow, data, signal, power, mechanical, communication.** `WorkflowEdge` gains an optional
+`type` ([`workflow.ts`](app/src/workflow.ts)), read through `normalizeWorkflow` and defaulted to
+control flow; `flow` is stored as an *absent* field, so every document drawn before this pass
+round-trips byte-identically and nothing on screen moves for it. Every kind draws differently in
+[`WorkflowEdges.tsx`](app/src/components/workflow/WorkflowEdges.tsx): `EDGE_STYLE` is one row per
+kind — accent solid for control, emerald dashed for data, amber dotted for signal, a rose cable for
+power, purple dash-dot for mechanical, muted long-dash for comms — with a matching arrowhead, so a
+24 V run reads as power and an encoder feed as data without a legend, and colour is never the only
+signal. The kind chip under the wire opens a six-swatch styles palette and a label field; kind and
+label are authored work, saved with the cards and found again after a reload. Both exports name the
+kind (`-.->|"data · RPM"|`, `==>|"power"|`, `- data: RPM → step 2`), and a branch card's condition
+still outranks a label on its arrows.
+
+**The connector layer sits above resting cards.** `WorkflowCanvas.tsx` used to paint the arrows
+inside the grid *before* the cards, so a bowed arrow to a top port ran under a card body and its
+arrowhead appeared out of nowhere; the audit reproduced it on a branch → top-port edge. The SVG is
+now `z-[25]` between a resting card (`z-20`) and a dragged one (`z-30`), so a wire that crosses a
+card is visible instead of swallowed. Routing around cards is still its own pass.
+
+**Pinned where the repo already pins it.** `test:workflow` grows three checks (a kind survives a
+round trip and junk falls back to control flow, `flow` is stored as absence, and a typed arrow names
+itself in Mermaid, Markdown and on the chip), 57 → 60. The browser suite opens the palette on the
+first arrow, makes it a data run, asserts the dashed stroke and the `workflow-arrow-data` marker,
+types a label on the edge itself, and finds both after a reload. `check:snapshot` records the new
+kind chip's box on the four Workflow surfaces and seeds the diagram's arrow as a power run, so
+`docs/surface-snapshot.json` was re-recorded (56 surfaces; the other 52 were unchanged apart from a
+1 px document-height flake inside the 2 px tolerance).
+
 ## [2026-10-30] — A branch says its condition, and the canvas enters the snapshot
 
 **The condition is on the card, and the arrow reads it.** A Branch card has a fourth field, its

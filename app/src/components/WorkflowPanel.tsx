@@ -11,12 +11,14 @@ import {
   emptyWorkflow,
   nextEdgeId,
   validateWorkflow,
+  withEdgeType,
   workflowNumbers,
   workflowToMarkdown,
   workflowToMermaid,
   type StepKind,
   type WorkflowDoc,
   type WorkflowEdge,
+  type WorkflowEdgeType,
   type WorkflowIssue,
   type WorkflowNode,
   type WorkflowSide,
@@ -73,6 +75,10 @@ function templateHasContent(doc: WorkflowDoc | null): boolean {
 export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
   const [doc, setDoc] = useState<WorkflowDoc | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // One selection at a time: a card or an arrow. The arrow's inspector is the only place a kind is
+  // chosen, so opening it closes the card ring — two highlighted things would leave "which one does
+  // the palette edit?" to be guessed.
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [status, setStatus] = useState('');
   const [howTo, setHowTo] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
@@ -109,6 +115,7 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
     const stored = readWorkflow(lessonId);
     setDoc(stored);
     setSelectedId(null);
+    setSelectedEdgeId(null);
     setStatus('');
     setConfirmClear(false);
     setPendingTemplate(null);
@@ -158,7 +165,7 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
       return;
     }
     commit(next);
-    setSelectedId(next.nodes[next.nodes.length - 1].id);
+    selectNode(next.nodes[next.nodes.length - 1].id);
     setStatus('');
   };
 
@@ -177,6 +184,9 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
       return;
     }
     const lostEdges = doc.edges.length - keptEdges.length;
+    if (selectedEdgeId && !keptEdges.some((edge) => edge.id === selectedEdgeId)) {
+      setSelectedEdgeId(null);
+    }
     commit({ ...doc, nodes: remaining, edges: keptEdges });
     setStatus(lostEdges ? 'Card removed — its arrows went with it' : 'Card removed');
   };
@@ -203,13 +213,49 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
   const disconnect = (edgeId: string) => {
     if (!doc) return;
     commit({ ...doc, edges: doc.edges.filter((edge) => edge.id !== edgeId) });
+    if (selectedEdgeId === edgeId) setSelectedEdgeId(null);
     setStatus('Arrow removed');
+  };
+
+  /** The arrow's kind. `flow` is stored as an absent field (see `withEdgeType`). */
+  const setEdgeType = (edgeId: string, type: WorkflowEdgeType) => {
+    if (!doc) return;
+    commit({
+      ...doc,
+      edges: doc.edges.map((edge) => (edge.id === edgeId ? withEdgeType(edge, type) : edge)),
+    });
+    setStatus(`Arrow set to ${type}`);
+  };
+
+  const setEdgeLabel = (edgeId: string, label: string) => {
+    if (!doc) return;
+    commit({
+      ...doc,
+      edges: doc.edges.map((edge) => {
+        if (edge.id !== edgeId) return edge;
+        const next = { ...edge };
+        if (label) next.label = label;
+        else delete next.label;
+        return next;
+      }),
+    });
+  };
+
+  /** A card press clears the arrow inspector: one selection, so the palette edits what is ringed. */
+  const selectNode = (id: string | null) => {
+    setSelectedId(id);
+    if (id) setSelectedEdgeId(null);
+  };
+
+  const selectEdge = (id: string | null) => {
+    setSelectedEdgeId(id);
+    if (id) setSelectedId(null);
   };
 
   const applyTemplate = (template: WorkflowTemplate) => {
     const built = template.build();
     commit(built);
-    setSelectedId(built.nodes[0]?.id ?? null);
+    selectNode(built.nodes[0]?.id ?? null);
     setTemplatesOpen(false);
     setPendingTemplate(null);
     setHowTo(false);
@@ -238,13 +284,13 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
   };
 
   const focusIssue = (issue: WorkflowIssue) => {
-    if (issue.stepId) setSelectedId(issue.stepId);
+    if (issue.stepId) selectNode(issue.stepId);
   };
 
   const startBlank = () => {
     const built = emptyWorkflow('analysis', lessonTitle);
     commit(built);
-    setSelectedId(built.nodes[0].id);
+    selectNode(built.nodes[0].id);
     markWorkflowGuideSeen();
     setHowTo(false);
     setStatus('Started a blank workflow');
@@ -462,7 +508,7 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
           Drag a card by its header
         </span>
         <span aria-hidden="true">·</span>
-        <span>Drag the dot on a card’s right edge to another card to draw an arrow</span>
+        <span>Drag a dot to another card to draw an arrow; press an arrow to name what it carries</span>
         <span aria-hidden="true">·</span>
         <span>Drag empty canvas or use the arrow keys to pan; Fit frames the flow</span>
       </div>
@@ -473,12 +519,16 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
         numbers={numbers}
         issueByStep={issueByStep}
         selectedId={selectedId}
-        onSelect={setSelectedId}
+        onSelect={selectNode}
         onMove={moveNode}
         onUpdate={updateNode}
         onRemove={removeNode}
         onConnect={connect}
         onDisconnect={disconnect}
+        selectedEdgeId={selectedEdgeId}
+        onSelectEdge={selectEdge}
+        onEdgeType={setEdgeType}
+        onEdgeLabel={setEdgeLabel}
       />
 
       <div data-testid="workflow-add" className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -554,6 +604,7 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
               pending.current = null;
               setDoc(null);
               setSelectedId(null);
+              setSelectedEdgeId(null);
               setConfirmClear(false);
               setStatus('Workflow cleared');
             }}

@@ -1466,6 +1466,62 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           'draw > 3.2 A',
           'typing a condition on a branch card must label its arrow without a second form'
         );
+        // An arrow says what it carries. The first arrow (given → compute) is unclassified, so it
+        // opens on Control; making it a Data run gives it its own line, its own arrowhead and a
+        // label of its own — and the branch card's condition still outranks a label on *its* arrows.
+        assert.equal(
+          await page.getByTestId('workflow-edge-kind-0').innerText(),
+          'Control',
+          'an arrow nobody classified must say Control, not nothing'
+        );
+        await page.getByTestId('workflow-edge-kind-0').click();
+        await page.waitForTimeout(200);
+        assert.equal(
+          await page.getByTestId('workflow-edge-inspector-0').isVisible(),
+          true,
+          'pressing an arrow’s kind must open the palette that edits it'
+        );
+        assert.equal(
+          await page.locator('[data-testid^="workflow-edge-type-"]').count(),
+          6,
+          'the palette must offer every kind an arrow can carry'
+        );
+        await page.getByTestId('workflow-edge-type-data-0').click();
+        await page.waitForTimeout(300);
+        const dataStroke = await page.locator('svg g[data-testid="workflow-edge-0"] path').evaluate((el) => ({
+          dash: getComputedStyle(el).strokeDasharray,
+          width: getComputedStyle(el).strokeWidth,
+          marker: el.getAttribute('marker-end'),
+        }));
+        assert.notEqual(
+          dataStroke.dash,
+          'none',
+          'a data arrow must be dashed: the kind has to be visible without reading the chip'
+        );
+        assert.equal(
+          dataStroke.marker,
+          'url(#workflow-arrow-data)',
+          'each kind must carry its own arrowhead, not the control-flow one'
+        );
+        assert.equal(
+          await page.getByTestId('workflow-edge-kind-0').innerText(),
+          'Data',
+          'the chip must name the kind the arrow now carries'
+        );
+        await page.getByTestId('workflow-edge-label-input-0').fill('12.0 / 2.4');
+        await page.waitForTimeout(300);
+        assert.equal(
+          await page.getByTestId('workflow-edge-label-0').innerText(),
+          '12.0 / 2.4',
+          'a typed arrow can be labelled on the edge itself'
+        );
+        await page.getByTestId('workflow-edge-close-0').click();
+        await page.waitForTimeout(150);
+        assert.equal(
+          await page.getByTestId('workflow-edge-inspector-0').count(),
+          0,
+          'Done must put the palette away'
+        );
         await page.waitForTimeout(600);
         await page.reload({ waitUntil: 'domcontentloaded' });
         await waitForEditor(page, undefined, 30000);
@@ -1483,6 +1539,16 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           await page.getByTestId('workflow-edge-label-1').innerText(),
           'draw > 3.2 A',
           'the label is the card’s condition, so it must survive the reload too'
+        );
+        assert.equal(
+          await page.getByTestId('workflow-edge-kind-0').innerText(),
+          'Data',
+          'an arrow’s kind is authored work: a reload must find it again'
+        );
+        assert.equal(
+          await page.getByTestId('workflow-edge-label-0').innerText(),
+          '12.0 / 2.4',
+          'and so is the label typed on a typed arrow'
         );
         // Back to the two cards the rest of this block measures, in the palette it adds with.
         await page.getByTestId('workflow-node-delete-2').click();

@@ -140,7 +140,9 @@ export function useViewport(
   const startPan = (event: ReactPointerEvent) => {
     if (event.button !== 0 || event.pointerType === 'touch') return;
     const target = event.target as HTMLElement;
-    if (target.closest('[data-node-id], button, input, textarea, select, a')) return;
+    // The arrow inspector is paper drawn on the paper: a press in its padding is a press on a
+    // control, not the start of a pan.
+    if (target.closest('[data-node-id], [data-edge-inspector], button, input, textarea, select, a')) return;
     const surface = surfaceRef.current;
     if (!surface) return;
     event.preventDefault();

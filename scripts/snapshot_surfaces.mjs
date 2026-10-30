@@ -175,6 +175,11 @@ function measure(selectors) {
   for (const control of document.querySelectorAll('[data-testid^="workflow-edge-remove-"]')) {
     workflow[`wf-control-${edgeAt(control.dataset.testid)}`] = box(control);
   }
+  // The kind chip is the affordance that opens the styles palette, so its box is part of what an
+  // arrow looks like: a chip that drifted onto the line would be recorded here.
+  for (const kind of document.querySelectorAll('[data-testid^="workflow-edge-kind-"]')) {
+    workflow[`wf-kind-${edgeAt(kind.dataset.testid)}`] = box(kind);
+  }
   for (const group of document.querySelectorAll('svg g[data-testid^="workflow-edge-"]')) {
     if (!/^workflow-edge-\d+$/.test(group.dataset.testid)) continue;
     workflow[`wf-path-${edgeAt(group.dataset.testid)}`] = box(group.querySelector('path'));
@@ -266,10 +271,11 @@ function compareSurfaces(name, expected, actual) {
 /**
  * The Workflow canvas seeded the way a learner reaches it.
  *
- * A blank analysis card, the palette switched to code, a Branch card carrying a condition, and an
- * arrow dragged from that branch's right dot onto the first card's top dot: the shortest authored
- * diagram with a bowed connector, a label and a remove button for the snapshot to guard. Card 0 is
- * placed by `autoNodePosition`, so every palette records the same boxes.
+ * A blank analysis card, the palette switched to code, a Branch card carrying a condition, an arrow
+ * dragged from that branch's right dot onto the first card's top dot, and that arrow given the power
+ * kind: the shortest authored diagram with a bowed connector, a label, a kind chip and a remove
+ * button for the snapshot to guard. Card 0 is placed by `autoNodePosition`, so every palette records
+ * the same boxes, and a kind's own stroke travels with them.
  */
 async function seedWorkflow(page) {
   await page.click('[data-testid="tab-btn-tab-pyodide"]');
@@ -293,6 +299,10 @@ async function seedWorkflow(page) {
   await page.mouse.move(end.x + end.width / 2, end.y + end.height / 2, { steps: 10 });
   await page.mouse.up();
   await page.waitForTimeout(300);
+  await page.getByTestId('workflow-edge-kind-0').click();
+  await page.getByTestId('workflow-edge-type-power-0').click();
+  await page.getByTestId('workflow-edge-close-0').click();
+  await page.waitForTimeout(200);
 }
 
 async function main() {

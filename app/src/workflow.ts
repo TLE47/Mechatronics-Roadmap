@@ -63,6 +63,35 @@ export type WorkflowMode = 'analysis' | 'code';
 export const WORKFLOW_SIDES = ['left', 'right', 'top', 'bottom'] as const;
 export type WorkflowSide = (typeof WORKFLOW_SIDES)[number];
 
+/**
+ * What an arrow carries.
+ *
+ * In a mechatronics diagram not every arrow is control flow: a sensor feeds data, a supply feeds
+ * power, a motor feeds a gearbox torque. Drawing all of them the same hides the one thing the
+ * diagram is for, so an arrow names its kind and the canvas draws that kind differently — while
+ * `flow` stays the meaning of an arrow nobody has classified, which is every arrow drawn before
+ * this existed.
+ */
+export const WORKFLOW_EDGE_TYPES = [
+  'flow',
+  'data',
+  'signal',
+  'power',
+  'mechanical',
+  'communication',
+] as const;
+export type WorkflowEdgeType = (typeof WORKFLOW_EDGE_TYPES)[number];
+
+/** The one word a chip, a swatch and both exports use for a kind. */
+export const EDGE_TYPE_LABEL: Record<WorkflowEdgeType, string> = {
+  flow: 'Control',
+  data: 'Data',
+  signal: 'Signal',
+  power: 'Power',
+  mechanical: 'Mechanical',
+  communication: 'Comms',
+};
+
 export const MODE_LABEL: Record<WorkflowMode, string> = { analysis: 'Analysis', code: 'Code' };
 
 /** The glyph a card kind draws, named here so the model needs no UI package to describe it. */
@@ -212,6 +241,8 @@ export interface WorkflowEdge {
   toSide: WorkflowSide;
   /** A restored document's label for the arrow; a branch card's own condition outranks it. */
   label?: string;
+  /** What the arrow carries; absent means control flow, which is what it meant before kinds. */
+  type?: WorkflowEdgeType;
 }
 
 export interface WorkflowDoc {
@@ -257,6 +288,29 @@ function isKind(value: unknown): value is StepKind {
 
 function isSide(value: unknown): value is WorkflowSide {
   return typeof value === 'string' && (WORKFLOW_SIDES as readonly string[]).includes(value);
+}
+
+function isEdgeType(value: unknown): value is WorkflowEdgeType {
+  return typeof value === 'string' && (WORKFLOW_EDGE_TYPES as readonly string[]).includes(value);
+}
+
+/** The kind an arrow carries; `flow` is the meaning of an arrow that never named one. */
+export function edgeTypeOf(edge: WorkflowEdge): WorkflowEdgeType {
+  return edge.type ?? 'flow';
+}
+
+/**
+ * The same arrow with a different kind.
+ *
+ * `flow` is written as an absent field rather than a stored `'flow'`: an unclassified arrow and a
+ * deliberately control-flow one draw, export and round-trip the same, so nothing in a document
+ * changes when this feature is not used.
+ */
+export function withEdgeType(edge: WorkflowEdge, type: WorkflowEdgeType): WorkflowEdge {
+  const next = { ...edge };
+  if (type === 'flow') delete next.type;
+  else next.type = type;
+  return next;
 }
 
 /** The next free card id: `s1`, `s2`, … A removed id is not reused within one session's edits. */
@@ -378,7 +432,14 @@ function readNode(value: unknown, mode: WorkflowMode, fallbackId: string, index:
 
 function readEdge(
   value: unknown
-): { from: string; to: string; label: string; fromSide: WorkflowSide; toSide: WorkflowSide } | null {
+): {
+  from: string;
+  to: string;
+  label: string;
+  type: WorkflowEdgeType | undefined;
+  fromSide: WorkflowSide;
+  toSide: WorkflowSide;
+} | null {
   const record = asRecord(value);
   if (!record) return null;
   const from = clean(record.from, 40);
@@ -388,6 +449,7 @@ function readEdge(
     from,
     to,
     label: clean(record.label, MAX_BRANCH_CONDITION_CHARS),
+    type: isEdgeType(record.type) ? record.type : undefined,
     // A version-2 document written before cards had four points carries no side. Right-to-left is
     // the arrow it drew then, so that is what it keeps.
     fromSide: isSide(record.fromSide) ? record.fromSide : 'right',
@@ -420,6 +482,7 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
     from: string;
     to: string;
     label: string;
+    type: undefined;
     fromSide: WorkflowSide;
     toSide: WorkflowSide;
   }[] = [];
@@ -435,6 +498,7 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
         from: read.node.id,
         to: read.branch.to,
         label: read.branch.label,
+        type: undefined,
         // A v1 branch jumped forward; the side curve says "this is not the next step".
         fromSide: 'right',
         toSide: 'left',
@@ -451,6 +515,7 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
     from: node.id,
     to: nodes[index + 1].id,
     label: '',
+    type: undefined,
     // The v1 list became a single column, so its implied arrow now runs down the paper.
     fromSide: 'bottom' as WorkflowSide,
     toSide: 'top' as WorkflowSide,
@@ -476,6 +541,7 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
       toSide: candidate.toSide,
     };
     if (candidate.label) edge.label = candidate.label;
+    if (candidate.type && candidate.type !== 'flow') edge.type = candidate.type;
     edges.push(edge);
   }
 
@@ -696,6 +762,20 @@ export function edgeLabelFor(from: WorkflowNode, edge: WorkflowEdge): string {
   return condition || edge.label || '';
 }
 
+/**
+ * What the chip over an arrow says: its label, or the kind when the label is still empty.
+ *
+ * A typed arrow with nothing written on it would otherwise be a line with no word at all, and the
+ * kind is the first thing a reader needs from it. `flow` stays silent, because an unclassified
+ * arrow is the default and a chip on every one of them would be noise.
+ */
+export function edgeCaption(from: WorkflowNode, edge: WorkflowEdge): string {
+  const label = edgeLabelFor(from, edge);
+  if (label) return label;
+  const type = edgeTypeOf(edge);
+  return type === 'flow' ? '' : EDGE_TYPE_LABEL[type];
+}
+
 export function workflowSummary(doc: WorkflowDoc): WorkflowSummary {
   const issues = validateWorkflow(doc);
   return {
@@ -709,12 +789,23 @@ function mermaidText(text: string, max = 64): string {
   return text.replace(/"/g, "'").replace(/\s+/g, ' ').trim().slice(0, max);
 }
 
+/** The Mermaid operator each kind draws with; a cable, a wire and a condition are not one line. */
+const MERMAID_LINK: Record<WorkflowEdgeType, string> = {
+  flow: '-->',
+  data: '-.->',
+  signal: '-.->',
+  power: '==>',
+  mechanical: '-->',
+  communication: '-.->',
+};
+
 /**
  * The workflow as a Mermaid `flowchart`, for a note, a report or a lesson page.
  *
  * Node ids are positional (`n1`, `n2`) rather than the learner's own ids, because a card id is not a
- * safe Mermaid identifier the moment a document is hand-edited. A labelled arrow is dotted —
- * the branch a person would draw by hand.
+ * safe Mermaid identifier the moment a document is hand-edited. A labelled control arrow is dotted —
+ * the branch a person would draw by hand — and an arrow that carries something other than control
+ * flow says so in its link text (`data · RPM`), because Mermaid has no second dash to spend.
  */
 export function workflowToMermaid(doc: WorkflowDoc): string {
   const order = workflowOrder(doc);
@@ -728,12 +819,15 @@ export function workflowToMermaid(doc: WorkflowDoc): string {
     const from = index.get(edge.from);
     const to = index.get(edge.to);
     if (from === undefined || to === undefined) continue;
+    const type = edgeTypeOf(edge);
     const label = edgeLabelFor(order[from], edge);
-    if (label) {
-      lines.push(`  n${from + 1} -.->|"${mermaidText(label, 40)}"| n${to + 1}`);
-    } else {
-      lines.push(`  n${from + 1} --> n${to + 1}`);
+    const text = type === 'flow' ? label : [EDGE_TYPE_LABEL[type].toLowerCase(), label].filter(Boolean).join(' · ');
+    if (!text) {
+      lines.push(`  n${from + 1} ${MERMAID_LINK[type]} n${to + 1}`);
+      continue;
     }
+    const link = type === 'flow' ? '-.->' : MERMAID_LINK[type];
+    lines.push(`  n${from + 1} ${link}|"${mermaidText(text, 40)}"| n${to + 1}`);
   }
   return lines.join('\n');
 }
@@ -759,10 +853,18 @@ export function workflowToMarkdown(doc: WorkflowDoc): string {
     for (const edge of doc.edges) {
       if (edge.from !== node.id) continue;
       const label = edgeLabelFor(node, edge);
-      if (next && edge.to === next.id && !label) continue;
+      const type = edgeTypeOf(edge);
+      // The plain arrow to the next card is the reading order itself; a typed arrow carries something
+      // the order does not, so it is always written down.
+      if (next && edge.to === next.id && type === 'flow' && !label) continue;
       const to = number.get(edge.to);
       if (to === undefined) continue;
-      lines.push(label ? `   - if ${label} → step ${to}` : `   - → step ${to}`);
+      if (type !== 'flow') {
+        const kind = EDGE_TYPE_LABEL[type].toLowerCase();
+        lines.push(label ? `   - ${kind}: ${label} → step ${to}` : `   - ${kind} → step ${to}`);
+      } else {
+        lines.push(label ? `   - if ${label} → step ${to}` : `   - → step ${to}`);
+      }
     }
   });
   return lines.join('\n');

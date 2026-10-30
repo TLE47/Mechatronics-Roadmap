@@ -29,13 +29,17 @@ import {
   MAX_STEP_TITLE_CHARS,
   MAX_STEP_UNIT_CHARS,
   MAX_WORKFLOW_TITLE_CHARS,
+  EDGE_TYPE_LABEL,
   KIND_META,
   STEP_KINDS,
+  WORKFLOW_EDGE_TYPES,
   WORKFLOW_SIDES,
   STEPS_BY_MODE,
   addWorkflowNode,
   autoNodePosition,
+  edgeCaption,
   edgeLabelFor,
+  edgeTypeOf,
   emptyWorkflow,
   nextEdgeId,
   nextStepId,
@@ -46,6 +50,7 @@ import {
   workflowSummary,
   workflowToMarkdown,
   workflowToMermaid,
+  withEdgeType,
 } from '../app/src/workflow.ts';
 import {
   WORKFLOW_TEMPLATES,
@@ -769,6 +774,77 @@ check('a restored edge label shows until the branch card types its own condition
     'a non-branch card does not borrow a condition'
   );
   assert.equal(edgeLabelFor(branch, { ...edge, label: undefined }), '');
+});
+
+check('an arrow kind survives a round trip, and a junk kind falls back to control flow', () => {
+  const normalized = normalizeWorkflow(
+    graph(
+      [
+        { kind: 'input', title: 'Encoder' },
+        { kind: 'compute', title: 'RPM' },
+        { kind: 'output', title: 'Drive' },
+      ],
+      [
+        { from: 's1', to: 's2', type: 'data' },
+        { from: 's2', to: 's3', type: 'torque-ish' },
+      ],
+      { mode: 'code' }
+    )
+  );
+  assert.equal(normalized.edges[0].type, 'data');
+  assert.equal(edgeTypeOf(normalized.edges[0]), 'data');
+  assert.equal(normalized.edges[1].type, undefined, 'a kind outside the union is not stored');
+  assert.equal(edgeTypeOf(normalized.edges[1]), 'flow', 'and the arrow still means control flow');
+  assert.deepEqual([...WORKFLOW_EDGE_TYPES], [
+    'flow',
+    'data',
+    'signal',
+    'power',
+    'mechanical',
+    'communication',
+  ]);
+  for (const type of WORKFLOW_EDGE_TYPES) assert.ok(EDGE_TYPE_LABEL[type], type);
+});
+
+check('control flow is stored as an absent field, so a kind-less document does not change', () => {
+  const edge = { id: 'e1', from: 's1', to: 's2', fromSide: 'right', toSide: 'left' };
+  assert.equal(withEdgeType({ ...edge, type: 'power' }, 'flow').type, undefined);
+  assert.equal(withEdgeType(edge, 'power').type, 'power');
+  assert.deepEqual(
+    normalizeWorkflow(graph([{ kind: 'given', title: 'a' }, { kind: 'answer', title: 'b' }], [edge])).edges[0],
+    { ...edge, id: 'e1' },
+    'an arrow nobody classified carries no extra field'
+  );
+});
+
+check('a typed arrow names its kind in Mermaid, Markdown and on the chip', () => {
+  const doc = normalizeWorkflow(
+    graph(
+      [
+        { kind: 'input', title: 'Encoder' },
+        { kind: 'compute', title: 'RPM' },
+        { kind: 'output', title: 'Drive' },
+      ],
+      [
+        { from: 's1', to: 's2', type: 'data', label: 'RPM' },
+        { from: 's2', to: 's3', type: 'power' },
+      ],
+      { mode: 'code' }
+    )
+  );
+  const mermaid = workflowToMermaid(doc);
+  assert.match(mermaid, /n1 -\.->\|"data · RPM"\| n2/, 'data is dotted and says so');
+  assert.match(mermaid, /n2 ==>\|"power"\| n3/, 'a power run is a thick arrow that names itself');
+  const markdown = workflowToMarkdown(doc);
+  assert.match(markdown, /^ {3}- data: RPM → step 2$/m);
+  assert.match(markdown, /^ {3}- power → step 3$/m);
+  assert.equal(edgeCaption(doc.nodes[0], doc.edges[0]), 'RPM', 'the label is what the chip says');
+  assert.equal(edgeCaption(doc.nodes[1], doc.edges[1]), 'Power', 'an unlabelled typed arrow wears its kind');
+  assert.equal(
+    edgeCaption(doc.nodes[0], { ...doc.edges[0], label: undefined, type: 'flow' }),
+    '',
+    'an unlabelled control arrow stays silent'
+  );
 });
 
 section('5. Templates are usable at birth');

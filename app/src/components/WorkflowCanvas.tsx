@@ -1,6 +1,12 @@
 import { useEffect, useMemo } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
-import type { WorkflowDoc, WorkflowIssue, WorkflowNode, WorkflowSide } from '../workflow.ts';
+import type {
+  WorkflowDoc,
+  WorkflowEdgeType,
+  WorkflowIssue,
+  WorkflowNode,
+  WorkflowSide,
+} from '../workflow.ts';
 import { WorkflowEdges } from './workflow/WorkflowEdges.tsx';
 import { WorkflowNodeCard } from './workflow/WorkflowNodeCard.tsx';
 import { useLinking } from './workflow/useLinking.ts';
@@ -55,6 +61,11 @@ export interface WorkflowCanvasProps {
   onRemove: (id: string) => void;
   onConnect: (from: string, to: string, fromSide: WorkflowSide, toSide: WorkflowSide) => void;
   onDisconnect: (edgeId: string) => void;
+  /** The arrow whose kind palette is open, if any. */
+  selectedEdgeId: string | null;
+  onSelectEdge: (edgeId: string | null) => void;
+  onEdgeType: (edgeId: string, type: WorkflowEdgeType) => void;
+  onEdgeLabel: (edgeId: string, label: string) => void;
 }
 
 export function WorkflowCanvas({
@@ -68,6 +79,10 @@ export function WorkflowCanvas({
   onRemove,
   onConnect,
   onDisconnect,
+  selectedEdgeId,
+  onSelectEdge,
+  onEdgeType,
+  onEdgeLabel,
 }: WorkflowCanvasProps) {
   const byId = useMemo(() => new Map(doc.nodes.map((node) => [node.id, node])), [doc.nodes]);
   const nodeIds = useMemo(() => doc.nodes.map((node) => node.id).join('\u0000'), [doc.nodes]);
@@ -139,7 +154,11 @@ export function WorkflowCanvas({
               extents={viewport.extents}
               linking={linking.linking}
               cursor={linking.cursor}
+              selectedEdgeId={selectedEdgeId}
+              onSelectEdge={onSelectEdge}
               onDisconnect={onDisconnect}
+              onEdgeType={onEdgeType}
+              onEdgeLabel={onEdgeLabel}
             />
 
             {doc.nodes.map((node, index) => (

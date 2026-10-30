@@ -105,7 +105,7 @@
           196,
           119,
           1244,
-          3251
+          3252
         ],
         "panel": [
           216,
@@ -123,7 +123,7 @@
           0,
           0,
           1440,
-          3413
+          3414
         ]
       },
       "counts": {
@@ -1042,6 +1042,122 @@
         }
       }
     },
+    "dark/workflow": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          61
+        ],
+        "rail": [
+          0,
+          0,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          -2456,
+          1244,
+          3701
+        ],
+        "panel": [
+          216,
+          -2436,
+          1204,
+          363
+        ],
+        "footer": [
+          0,
+          1245,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          3863
+        ],
+        "wf-node-s1": [
+          495,
+          163,
+          200,
+          149
+        ],
+        "wf-node-s2": [
+          495,
+          335,
+          200,
+          149
+        ],
+        "wf-label-0": [
+          625,
+          245,
+          82,
+          18
+        ],
+        "wf-control-0": [
+          733,
+          267,
+          16,
+          16
+        ],
+        "wf-kind-0": [
+          676,
+          267,
+          53,
+          16
+        ],
+        "wf-path-0": [
+          595,
+          156,
+          112,
+          253
+        ]
+      },
+      "counts": {
+        "buttons": 209,
+        "inputs": 43,
+        "links": 13,
+        "headings": 18,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(7, 11, 18)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#070b12",
+          "panel": "#0e1624",
+          "text": "#eef4ff",
+          "accent": "#38bdf8"
+        }
+      }
+    },
     "light/tab-arch": {
       "boxes": {
         "header": [
@@ -1140,7 +1256,7 @@
           196,
           119,
           1244,
-          3251
+          3252
         ],
         "panel": [
           216,
@@ -1158,7 +1274,7 @@
           0,
           0,
           1440,
-          3413
+          3414
         ]
       },
       "counts": {
@@ -2077,6 +2193,122 @@
         }
       }
     },
+    "light/workflow": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          61
+        ],
+        "rail": [
+          0,
+          0,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          -2456,
+          1244,
+          3701
+        ],
+        "panel": [
+          216,
+          -2436,
+          1204,
+          363
+        ],
+        "footer": [
+          0,
+          1245,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          3863
+        ],
+        "wf-node-s1": [
+          495,
+          163,
+          200,
+          149
+        ],
+        "wf-node-s2": [
+          495,
+          335,
+          200,
+          149
+        ],
+        "wf-label-0": [
+          625,
+          245,
+          82,
+          18
+        ],
+        "wf-control-0": [
+          733,
+          267,
+          16,
+          16
+        ],
+        "wf-kind-0": [
+          676,
+          267,
+          53,
+          16
+        ],
+        "wf-path-0": [
+          595,
+          156,
+          112,
+          253
+        ]
+      },
+      "counts": {
+        "buttons": 209,
+        "inputs": 43,
+        "links": 13,
+        "headings": 18,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(248, 246, 242)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#f8f6f2",
+          "panel": "#fff",
+          "text": "#141a24",
+          "accent": "#0d6b64"
+        }
+      }
+    },
     "paper/tab-arch": {
       "boxes": {
         "header": [
@@ -2175,7 +2407,7 @@
           196,
           119,
           1244,
-          3251
+          3252
         ],
         "panel": [
           216,
@@ -2193,7 +2425,7 @@
           0,
           0,
           1440,
-          3413
+          3414
         ]
       },
       "counts": {
@@ -3112,6 +3344,122 @@
         }
       }
     },
+    "paper/workflow": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          61
+        ],
+        "rail": [
+          0,
+          0,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          -2456,
+          1244,
+          3701
+        ],
+        "panel": [
+          216,
+          -2436,
+          1204,
+          363
+        ],
+        "footer": [
+          0,
+          1245,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          3863
+        ],
+        "wf-node-s1": [
+          495,
+          163,
+          200,
+          149
+        ],
+        "wf-node-s2": [
+          495,
+          335,
+          200,
+          149
+        ],
+        "wf-label-0": [
+          625,
+          245,
+          82,
+          18
+        ],
+        "wf-control-0": [
+          733,
+          267,
+          16,
+          16
+        ],
+        "wf-kind-0": [
+          676,
+          267,
+          53,
+          16
+        ],
+        "wf-path-0": [
+          595,
+          156,
+          112,
+          253
+        ]
+      },
+      "counts": {
+        "buttons": 209,
+        "inputs": 43,
+        "links": 13,
+        "headings": 18,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(239, 228, 208)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#efe4d0",
+          "panel": "#f9f1e2",
+          "text": "#1f1710",
+          "accent": "#0b6157"
+        }
+      }
+    },
     "contrast/tab-arch": {
       "boxes": {
         "header": [
@@ -3210,7 +3558,7 @@
           196,
           119,
           1244,
-          3251
+          3252
         ],
         "panel": [
           216,
@@ -3228,7 +3576,7 @@
           0,
           0,
           1440,
-          3413
+          3414
         ]
       },
       "counts": {
@@ -4147,336 +4495,6 @@
         }
       }
     },
-    "dark/workflow": {
-      "boxes": {
-        "header": [
-          0,
-          0,
-          1440,
-          61
-        ],
-        "rail": [
-          0,
-          0,
-          195,
-          759
-        ],
-        "main": [
-          196,
-          -2456,
-          1244,
-          3701
-        ],
-        "panel": [
-          216,
-          -2436,
-          1204,
-          363
-        ],
-        "footer": [
-          0,
-          1245,
-          1440,
-          43
-        ],
-        "document": [
-          0,
-          0,
-          1440,
-          3863
-        ],
-        "wf-node-s1": [
-          495,
-          163,
-          200,
-          149
-        ],
-        "wf-node-s2": [
-          495,
-          335,
-          200,
-          149
-        ],
-        "wf-label-0": [
-          625,
-          245,
-          82,
-          18
-        ],
-        "wf-control-0": [
-          676,
-          257,
-          16,
-          16
-        ],
-        "wf-path-0": [
-          595,
-          156,
-          112,
-          253
-        ]
-      },
-      "counts": {
-        "buttons": 208,
-        "inputs": 43,
-        "links": 13,
-        "headings": 18,
-        "canvases": 1,
-        "tables": 0
-      },
-      "styles": {
-        "body": {
-          "display": "block",
-          "background": "rgb(7, 11, 18)",
-          "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
-          "fontSize": "16.32px"
-        },
-        "main": {
-          "display": "block",
-          "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
-          "fontSize": "16.32px"
-        },
-        "panel": {
-          "display": "block",
-          "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
-          "fontSize": "16.32px"
-        },
-        "shell": {
-          "display": "block"
-        },
-        "tokens": {
-          "bg": "#070b12",
-          "panel": "#0e1624",
-          "text": "#eef4ff",
-          "accent": "#38bdf8"
-        }
-      }
-    },
-    "light/workflow": {
-      "boxes": {
-        "header": [
-          0,
-          0,
-          1440,
-          61
-        ],
-        "rail": [
-          0,
-          0,
-          195,
-          759
-        ],
-        "main": [
-          196,
-          -2456,
-          1244,
-          3701
-        ],
-        "panel": [
-          216,
-          -2436,
-          1204,
-          363
-        ],
-        "footer": [
-          0,
-          1245,
-          1440,
-          43
-        ],
-        "document": [
-          0,
-          0,
-          1440,
-          3863
-        ],
-        "wf-node-s1": [
-          495,
-          163,
-          200,
-          149
-        ],
-        "wf-node-s2": [
-          495,
-          335,
-          200,
-          149
-        ],
-        "wf-label-0": [
-          625,
-          245,
-          82,
-          18
-        ],
-        "wf-control-0": [
-          676,
-          257,
-          16,
-          16
-        ],
-        "wf-path-0": [
-          595,
-          156,
-          112,
-          253
-        ]
-      },
-      "counts": {
-        "buttons": 208,
-        "inputs": 43,
-        "links": 13,
-        "headings": 18,
-        "canvases": 1,
-        "tables": 0
-      },
-      "styles": {
-        "body": {
-          "display": "block",
-          "background": "rgb(248, 246, 242)",
-          "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
-          "fontSize": "16.32px"
-        },
-        "main": {
-          "display": "block",
-          "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
-          "fontSize": "16.32px"
-        },
-        "panel": {
-          "display": "block",
-          "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
-          "fontSize": "16.32px"
-        },
-        "shell": {
-          "display": "block"
-        },
-        "tokens": {
-          "bg": "#f8f6f2",
-          "panel": "#fff",
-          "text": "#141a24",
-          "accent": "#0d6b64"
-        }
-      }
-    },
-    "paper/workflow": {
-      "boxes": {
-        "header": [
-          0,
-          0,
-          1440,
-          61
-        ],
-        "rail": [
-          0,
-          0,
-          195,
-          759
-        ],
-        "main": [
-          196,
-          -2456,
-          1244,
-          3701
-        ],
-        "panel": [
-          216,
-          -2436,
-          1204,
-          363
-        ],
-        "footer": [
-          0,
-          1245,
-          1440,
-          43
-        ],
-        "document": [
-          0,
-          0,
-          1440,
-          3863
-        ],
-        "wf-node-s1": [
-          495,
-          163,
-          200,
-          149
-        ],
-        "wf-node-s2": [
-          495,
-          335,
-          200,
-          149
-        ],
-        "wf-label-0": [
-          625,
-          245,
-          82,
-          18
-        ],
-        "wf-control-0": [
-          676,
-          257,
-          16,
-          16
-        ],
-        "wf-path-0": [
-          595,
-          156,
-          112,
-          253
-        ]
-      },
-      "counts": {
-        "buttons": 208,
-        "inputs": 43,
-        "links": 13,
-        "headings": 18,
-        "canvases": 1,
-        "tables": 0
-      },
-      "styles": {
-        "body": {
-          "display": "block",
-          "background": "rgb(239, 228, 208)",
-          "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
-          "fontSize": "16.32px"
-        },
-        "main": {
-          "display": "block",
-          "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
-          "fontSize": "16.32px"
-        },
-        "panel": {
-          "display": "block",
-          "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
-          "fontSize": "16.32px"
-        },
-        "shell": {
-          "display": "block"
-        },
-        "tokens": {
-          "bg": "#efe4d0",
-          "panel": "#f9f1e2",
-          "text": "#1f1710",
-          "accent": "#0b6157"
-        }
-      }
-    },
     "contrast/workflow": {
       "boxes": {
         "header": [
@@ -4534,9 +4552,15 @@
           18
         ],
         "wf-control-0": [
-          676,
-          257,
+          733,
+          267,
           16,
+          16
+        ],
+        "wf-kind-0": [
+          676,
+          267,
+          53,
           16
         ],
         "wf-path-0": [
@@ -4547,7 +4571,7 @@
         ]
       },
       "counts": {
-        "buttons": 208,
+        "buttons": 209,
         "inputs": 43,
         "links": 13,
         "headings": 18,
