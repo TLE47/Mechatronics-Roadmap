@@ -5,6 +5,7 @@ import type {
 import { Trash2 } from 'lucide-react';
 import {
   KIND_META,
+  MAX_BRANCH_CONDITION_CHARS,
   MAX_NODE_COORD,
   MAX_STEP_DETAIL_CHARS,
   MAX_STEP_TITLE_CHARS,
@@ -178,6 +179,19 @@ export function WorkflowNodeCard({
           className="w-full resize-y rounded border border-transparent bg-transparent px-1 py-0.5 font-mono text-[11px] leading-snug outline-none hover:bg-raise focus:border-line focus:bg-canvas"
           style={{ color: 'var(--muted)' }}
         />
+        {node.kind === 'branch' && (
+          <input
+            data-testid={`workflow-node-condition-${index}`}
+            aria-label={`Condition on card ${number}'s arrows`}
+            value={node.condition ?? ''}
+            maxLength={MAX_BRANCH_CONDITION_CHARS}
+            placeholder="condition — speed > 0.5"
+            onChange={(event) => onUpdate(node.id, { condition: event.target.value })}
+            onFocus={() => onSelect(node.id)}
+            className="w-full rounded border border-transparent bg-transparent px-1 py-0.5 font-mono text-[10.5px] outline-none hover:bg-raise focus:border-line focus:bg-canvas"
+            style={{ color: 'var(--accent)' }}
+          />
+        )}
         {meta.measured && (
           <input
             data-testid={`workflow-node-unit-${index}`}

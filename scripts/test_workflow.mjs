@@ -35,6 +35,7 @@ import {
   STEPS_BY_MODE,
   addWorkflowNode,
   autoNodePosition,
+  edgeLabelFor,
   emptyWorkflow,
   nextEdgeId,
   nextStepId,
@@ -718,6 +719,56 @@ check('an unlabelled arrow that is not the next card is still written down', () 
 
 check('a document with no title still names itself', () => {
   assert.equal(workflowToMarkdown({ ...exporting, title: '' }).split('\n')[0], '### Workflow — Workflow');
+});
+
+check('a branch card’s condition is what its arrows say on screen and in both exports', () => {
+  const labelled = graph(
+    [
+      { kind: 'input', title: 'read' },
+      { kind: 'branch', title: 'limit', condition: `  ${'x'.repeat(MAX_BRANCH_CONDITION_CHARS + 5)}  ` },
+      { kind: 'answer', title: 'clamp' },
+    ],
+    [
+      { from: 's1', to: 's2', fromSide: 'bottom', toSide: 'top' },
+      { from: 's2', to: 's3', fromSide: 'bottom', toSide: 'top' },
+    ],
+    { mode: 'code' }
+  );
+  const normalized = normalizeWorkflow(labelled);
+  assert.equal(normalized.nodes[1].condition, 'x'.repeat(MAX_BRANCH_CONDITION_CHARS));
+  const branch = { ...normalized.nodes[1], condition: 'draw > 3.2 A' };
+  const edge = normalized.edges[1];
+  assert.equal(edgeLabelFor(branch, edge), 'draw > 3.2 A');
+  const doc = { ...normalized, nodes: [normalized.nodes[0], branch, normalized.nodes[2]] };
+  assert.match(workflowToMermaid(doc), /n2 -\.->\|"draw > 3\.2 A"\| n3/);
+  assert.match(workflowToMarkdown(doc), /^ {3}- if draw > 3\.2 A → step 3$/m);
+});
+
+check('a restored edge label shows until the branch card types its own condition', () => {
+  const doc = normalizeWorkflow(
+    graph(
+      [
+        { kind: 'input', title: 'read' },
+        { kind: 'branch', title: 'limit' },
+        { kind: 'answer', title: 'clamp' },
+      ],
+      [
+        { from: 's1', to: 's2', fromSide: 'bottom', toSide: 'top' },
+        { from: 's2', to: 's3', fromSide: 'bottom', toSide: 'top', label: 'hot' },
+      ],
+      { mode: 'code' }
+    )
+  );
+  const branch = doc.nodes[1];
+  const edge = doc.edges[1];
+  assert.equal(edgeLabelFor(branch, edge), 'hot', 'a restored label is the fallback');
+  assert.equal(edgeLabelFor({ ...branch, condition: 'cold' }, edge), 'cold', 'the card’s condition wins');
+  assert.equal(
+    edgeLabelFor({ ...branch, kind: 'compute', condition: 'cold' }, edge),
+    'hot',
+    'a non-branch card does not borrow a condition'
+  );
+  assert.equal(edgeLabelFor(branch, { ...edge, label: undefined }), '');
 });
 
 section('5. Templates are usable at birth');

@@ -27,7 +27,7 @@ export function HowToCard({ onDismiss }: { onDismiss: () => void }) {
       <ol className="mt-1 list-decimal space-y-0.5 pl-4 text-[12px]" style={{ color: 'var(--body)' }}>
         <li>Pick the shape that matches the question — analysis and code are two palettes, not two apps.</li>
         <li>Press a card on the palette to drop it on the grid, then drag it by its header and type straight into it.</li>
-        <li>Drag the dot on a card’s right edge to the card it feeds to draw the arrow. The checklist names what is missing; it never stops you running the code.</li>
+        <li>Drag the dot on a card’s edge to the card it feeds to draw the arrow; a Branch card’s condition becomes the label on its arrows. The checklist names what is missing; it never stops you running the code.</li>
       </ol>
     </div>
   );

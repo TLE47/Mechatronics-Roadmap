@@ -9,7 +9,10 @@
  * token stopped applying: each of those leaves every test green, because every test asks about a
  * feature and none asks what the screen is shaped like.
  *
- * This gate asks that, for **52 surfaces**: the twelve tabs and Home, in all four palettes.
+ * This gate asks that, for **56 surfaces**: the twelve tabs, Home and the Workflow canvas, in all
+ * four palettes. The canvas is measured with its connectors included: a node's box, an arrow's path,
+ * the label and the remove button that hang from it, so a curve or a control that drifts is a finding
+ * rather than something only a person notices.
  *
  * **It is not a pixel diff, and that is a decision rather than a shortcut.** A screenshot baseline is
  * taken on one machine, and its antialiasing does not exist on the next: the runner that builds this
@@ -90,6 +93,12 @@ const ALL_TABS = Object.keys(tabNames.tabs);
  * feature suite does not see. The admin area is not here: it only renders for a signed-in admin.
  */
 const PAGES = ['home'];
+/**
+ * Views that are not a tab of their own: the Workflow canvas lives inside the editor of the
+ * Python tab, but it is a surface a learner draws on, and its arrows are geometry worth guarding.
+ * Each is seeded the way a learner reaches it, so the recorded boxes are an authored diagram's.
+ */
+const EXTRAS = ['workflow'];
 
 const argv = process.argv.slice(2);
 const RECORD = argv.includes('--record');
@@ -101,7 +110,7 @@ const only = (flag) => {
 };
 const ONLY_TAB = only('--tab');
 const ONLY_PALETTE = only('--palette');
-const SURFACE_IDS = ONLY_TAB ? [ONLY_TAB] : [...ALL_TABS, ...PAGES];
+const SURFACE_IDS = ONLY_TAB ? [ONLY_TAB] : [...ALL_TABS, ...PAGES, ...EXTRAS];
 const THEMES = ONLY_PALETTE ? [ONLY_PALETTE] : PALETTES;
 const FILTERED = Boolean(ONLY_TAB || ONLY_PALETTE);
 
@@ -153,6 +162,23 @@ function measure(selectors) {
   const main = document.querySelector('#main') ?? document.querySelector('main');
   const panel = main?.firstElementChild ?? null;
   const root = getComputedStyle(document.documentElement);
+  // The Workflow canvas's own geometry: a node, an arrow's path, and the label and remove button
+  // that hang from its half-way point. Empty on every other surface, so those record no extra box.
+  const workflow = {};
+  const edgeAt = (testid) => testid.split('-').pop();
+  for (const card of document.querySelectorAll('[data-node-id]')) {
+    workflow[`wf-node-${card.getAttribute('data-node-id')}`] = box(card);
+  }
+  for (const label of document.querySelectorAll('[data-testid^="workflow-edge-label-"]')) {
+    workflow[`wf-label-${edgeAt(label.dataset.testid)}`] = box(label);
+  }
+  for (const control of document.querySelectorAll('[data-testid^="workflow-edge-remove-"]')) {
+    workflow[`wf-control-${edgeAt(control.dataset.testid)}`] = box(control);
+  }
+  for (const group of document.querySelectorAll('svg g[data-testid^="workflow-edge-"]')) {
+    if (!/^workflow-edge-\d+$/.test(group.dataset.testid)) continue;
+    workflow[`wf-path-${edgeAt(group.dataset.testid)}`] = box(group.querySelector('path'));
+  }
   const counts = {};
   for (const [field, selector] of Object.entries(selectors)) {
     counts[field] = document.querySelectorAll(selector).length;
@@ -169,6 +195,7 @@ function measure(selectors) {
       footer: box(document.querySelector('footer')),
       // A page that grows by a screenful is a layout change even when every region is where it was.
       document: [0, 0, document.documentElement.clientWidth, document.documentElement.scrollHeight],
+      ...workflow,
     },
     // What the tab is made of. A card losing its buttons, a lab losing its canvas, or a table losing its
     // rows is the kind of drift no behavioural suite notices, because no suite ever asked.
@@ -236,9 +263,44 @@ function compareSurfaces(name, expected, actual) {
   return rows;
 }
 
+/**
+ * The Workflow canvas seeded the way a learner reaches it.
+ *
+ * A blank analysis card, the palette switched to code, a Branch card carrying a condition, and an
+ * arrow dragged from that branch's right dot onto the first card's top dot: the shortest authored
+ * diagram with a bowed connector, a label and a remove button for the snapshot to guard. Card 0 is
+ * placed by `autoNodePosition`, so every palette records the same boxes.
+ */
+async function seedWorkflow(page, baseUrl) {
+  await page.goto(baseUrl, { waitUntil: 'load' });
+  await page.click('[data-testid="tab-btn-tab-pyodide"]');
+  await page.getByTestId('editor-tab-workflow').click();
+  await page.getByTestId('panel-workflow').waitFor({ timeout: 30000 });
+  const dismiss = page.getByTestId('workflow-howto-dismiss');
+  if (await dismiss.count()) await dismiss.click();
+  if (await page.getByTestId('workflow-start-blank').count()) {
+    await page.getByTestId('workflow-start-blank').click();
+  }
+  await page.getByTestId('workflow-mode-code').click();
+  await page.getByTestId('workflow-add-branch').click();
+  await page.getByTestId('workflow-node-condition-1').fill('draw > 3.2 A');
+  const from = page.getByTestId('workflow-node-port-right-1');
+  const to = page.getByTestId('workflow-node-port-top-0');
+  await from.scrollIntoViewIfNeeded();
+  const start = await from.boundingBox();
+  const end = await to.boundingBox();
+  await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(end.x + end.width / 2, end.y + end.height / 2, { steps: 10 });
+  await page.mouse.up();
+  await page.waitForTimeout(300);
+}
+
 async function main() {
-  if (ONLY_TAB && ![...ALL_TABS, ...PAGES].includes(ONLY_TAB)) {
-    console.error(`[FAIL] unknown surface ${ONLY_TAB}; use ${[...ALL_TABS, ...PAGES].join(', ')}`);
+  if (ONLY_TAB && ![...ALL_TABS, ...PAGES, ...EXTRAS].includes(ONLY_TAB)) {
+    console.error(
+      `[FAIL] unknown surface ${ONLY_TAB}; use ${[...ALL_TABS, ...PAGES, ...EXTRAS].join(', ')}`
+    );
     process.exit(2);
   }
   if (ONLY_PALETTE && !PALETTES.includes(ONLY_PALETTE)) {
@@ -310,6 +372,8 @@ async function main() {
           // visit deterministic instead of depending on a stored last visit.
           await page.goto(`${baseUrl}?view=home`, { waitUntil: 'load' });
           await page.getByTestId('home-dashboard').waitFor({ timeout: 30000 });
+        } else if (surface === 'workflow') {
+          await seedWorkflow(page, baseUrl);
         } else {
           await page.click(`[data-testid="tab-btn-${surface}"]`);
         }
@@ -375,7 +439,8 @@ async function main() {
     const merged = FILTERED ? { ...(previous?.surfaces ?? {}), ...surfaces } : surfaces;
     const document = {
       _why:
-        'The painted surface of all 52 surfaces — the twelve tabs and Home, in four palettes — read by ' +
+        'The painted surface of all 56 surfaces — the twelve tabs, Home and the Workflow canvas, in ' +
+        'four palettes — read by ' +
         '`npm run check:snapshot` (`scripts/snapshot_surfaces.mjs`). Each entry records where the header, ' +
         'activity rail, main pane and its first panel sit, how many buttons, inputs, links, headings, ' +
         'canvases and tables the surface has, and the resolved colours, type and palette tokens. It is **not a pixel diff**: the runner is ' +
@@ -384,7 +449,10 @@ async function main() {
         'subpixel rounding is not a finding; counts and resolved styles are exact. The Links tab draws ' +
         'its tables from `app/src/data/linkHistoryData.ts`, which the weekly sweep regenerates: a data ' +
         'refresh that changes a host or run count moves that surface and is a re-record too ' +
-        '(`--record --tab tab-links` records all four palettes). Re-record with ' +
+        '(`--record --tab tab-links` records all four palettes). The Workflow surface records each ' +
+        'card’s box, each arrow’s path and the label and remove button that hang from its half-way ' +
+        'point, seeded through the panel’s own blank/code/branch/condition path so every palette ' +
+        'records the same authored diagram. Re-record with ' +
         '`npm run check:snapshot -- --record` when a change to the screen is intended, and read the diff: ' +
         'it is a list of what moved.',
       version: 1,

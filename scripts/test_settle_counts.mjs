@@ -3,7 +3,7 @@
  * The settle gate waits for a count that lands late
  * (`scripts/test_settle_counts.mjs`, `npm run test:settle`)
  *
- * `scripts/snapshot_surfaces.mjs` measures 52 surfaces that are still arriving: a lazy chunk, a lesson
+ * `scripts/snapshot_surfaces.mjs` measures 56 surfaces that are still arriving: a lazy chunk, a lesson
  * fetched as JSON, and on `tab-links` the GitHub API. The gate it waits on used to be silence only —
  * no resize and no node for 250 ms — and silence is not the same as finished. A request still in
  * flight moves nothing: `paper/tab-links` recorded 5 links on one run and 4 on the next, and the
@@ -16,7 +16,7 @@
  *
  * Two more shapes are pinned here: a count that arrives with no `*-loading` marker at all (so the
  * gate cannot be just a spinner check), and a page that never finishes (so the bound holds and the
- * sweep is not left hanging on 52 surfaces).
+ * sweep is not left hanging on 56 surfaces).
  *
  * Usage
  *     node scripts/test_settle_counts.mjs

@@ -1442,6 +1442,58 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           /2 cards/,
           'the study panel must summarise the workflow this lesson now has'
         );
+        // A branch card owns its condition, and that condition is what its arrow says: typed on the
+        // card, shown on the canvas, exported, and still there after a reload.
+        await page.getByTestId('workflow-mode-code').click();
+        await page.waitForTimeout(200);
+        await page.getByTestId('workflow-add-branch').click();
+        await page.waitForTimeout(250);
+        await page.getByTestId('workflow-node-condition-2').fill('draw > 3.2 A');
+        await page.waitForTimeout(250);
+        // Tap-then-tap: the phone's way to draw the same arrow, and independent of where the
+        // canvas is scrolled — the first press arms the branch, the second lands on the target dot.
+        await page.getByTestId('workflow-node-port-right-2').click();
+        await page.waitForTimeout(150);
+        await page.getByTestId('workflow-node-port-top-1').click();
+        await page.waitForTimeout(350);
+        assert.equal(
+          await page.locator('svg g[data-testid^="workflow-edge-"]').count(),
+          2,
+          'a branch condition needs its own arrow, drawn from the branch card'
+        );
+        assert.equal(
+          await page.getByTestId('workflow-edge-label-1').innerText(),
+          'draw > 3.2 A',
+          'typing a condition on a branch card must label its arrow without a second form'
+        );
+        await page.waitForTimeout(600);
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await waitForEditor(page, undefined, 30000);
+        await page.waitForTimeout(600);
+        if (!(await page.getByTestId('panel-workflow').isVisible().catch(() => false))) {
+          await page.getByTestId('editor-tab-workflow').click();
+          await page.waitForTimeout(250);
+        }
+        assert.equal(
+          await page.getByTestId('workflow-node-condition-2').inputValue(),
+          'draw > 3.2 A',
+          'the condition is authored work: a reload must find it in the card'
+        );
+        assert.equal(
+          await page.getByTestId('workflow-edge-label-1').innerText(),
+          'draw > 3.2 A',
+          'the label is the card’s condition, so it must survive the reload too'
+        );
+        // Back to the two cards the rest of this block measures, in the palette it adds with.
+        await page.getByTestId('workflow-node-delete-2').click();
+        await page.waitForTimeout(300);
+        await page.getByTestId('workflow-mode-analysis').click();
+        await page.waitForTimeout(700);
+        assert.equal(
+          await page.locator('[data-node-id]').count(),
+          2,
+          'the branch check must leave the two cards the cap and fit checks below measure'
+        );
         // The cap refuses at the interaction: 24 cards stand, the 25th is rejected with a
         // sentence, and a reload finds exactly the 24 the screen showed — not a trimmed document.
         await page.evaluate(async () => {

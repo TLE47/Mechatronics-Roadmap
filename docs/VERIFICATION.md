@@ -126,7 +126,7 @@ npm run test:theme                      # palette rules: stored pick, OS default
 npm run test:theme:e2e                  # the three controls + contrast on all 12 tabs, in all four palettes
 npm run check:weight                    # the gzipped shell against docs/weight-budget.json in both build shapes: a local-only dist/ also builds the signed-in one into dist-signed-in/, grades it, and removes it
 npm run check:lighthouse                # Lighthouse on the built bundle: best-practices, SEO and accessibility against docs/lighthouse-allowlist.json (performance not run)
-npm run check:snapshot                  # the painted surface of all 52 surfaces (twelve tabs and Home, four palettes) against docs/surface-snapshot.json: geometry (2 px), control counts, resolved styles
+npm run check:snapshot                  # the painted surface of all 56 surfaces (twelve tabs, Home and the Workflow canvas, four palettes) against docs/surface-snapshot.json: geometry (2 px), control counts, resolved styles
 npm run test:settle                     # the gate that sweep waits on, driven against pages whose count arrives late: a copy of the previous silence-only gate is the failing control, and a count that lands with no loading marker plus one that never finishes pin the other two edges
 npm run check:labels                    # the first screen's type, rendered at 1280x800: eight controls at rest, twelve behind More, primary 13 px, controls 12 px, metadata 11 px, lesson text 17-18 px — and Home's controls and metadata at the same floors
 npm run test:perf                       # the visit, timed: six moments on the built bundle, on a laptop and on a throttled phone, each against docs/perf-budget.json (add --record to write docs/PERF.md)
@@ -484,9 +484,12 @@ function of its contention, which is the same reason `check:lighthouse` does not
 What CI runs is `npm run test:perf:unit` — no browser, ~60 ms — which fails when the page, the budget
 and the walk stop describing the same six moments, or when a recorded row sits above its own ceiling.
 
-`npm run check:snapshot` records the **painted surface** of all 52 surfaces — the twelve tabs and Home, in each of the four palettes — header,
+`npm run check:snapshot` records the **painted surface** of all 56 surfaces — the twelve tabs, Home and the Workflow canvas, in each of the four palettes — header,
 activity rail, main pane and first panel geometry, the count of buttons, inputs, links, headings,
-canvases and tables, and the colours, type and `--bg/--panel/--text/--accent` the browser resolved — and
+canvases and tables, and the colours, type and `--bg/--panel/--text/--accent` the browser resolved. On
+the Workflow canvas it also records each card's box, each arrow's path, its label and the remove button
+that hangs from the arrow's half-way point, seeded through the panel's own blank/code/branch/condition
+path — so a connector or a control that drifts is a finding rather than something only a person sees — and
 fails when any of it moves. It is deliberately **not a pixel diff**: a baseline captured on the Mac this
 was written on does not survive the trip to the Linux runner, and a gate whose first red build is
 antialiasing is a gate people disable. Box numbers are compared with a 2 px tolerance (subpixel

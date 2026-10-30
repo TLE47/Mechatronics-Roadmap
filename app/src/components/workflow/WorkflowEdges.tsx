@@ -1,5 +1,6 @@
 import {
   KIND_META,
+  edgeLabelFor,
   type WorkflowDoc,
   type WorkflowNode,
 } from '../../workflow.ts';
@@ -99,16 +100,18 @@ export function WorkflowEdges({
       </svg>
 
       {drawn.map(({ edge, index, from, to, a, b }) => {
-        const { label, remove } = edgeControls(a, edge.fromSide, b, edge.toSide);
+        const { label: anchor, remove } = edgeControls(a, edge.fromSide, b, edge.toSide);
+        const text = edgeLabelFor(from, edge);
         return (
           <div key={`edge-controls-${edge.id}`}>
-            {edge.label && (
+            {text && (
               <span
+                data-testid={`workflow-edge-label-${index}`}
                 className="pointer-events-none absolute z-10 max-w-[140px] -translate-x-1/2 -translate-y-[calc(100%+2px)] truncate rounded border border-line bg-panel px-1 font-mono text-[10px] text-muted"
-                style={{ left: label.x, top: label.y }}
-                title={edge.label}
+                style={{ left: anchor.x, top: anchor.y }}
+                title={text}
               >
-                {edge.label}
+                {text}
               </span>
             )}
             <button

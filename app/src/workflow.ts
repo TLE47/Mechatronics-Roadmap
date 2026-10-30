@@ -195,6 +195,8 @@ export interface WorkflowNode {
   detail: string;
   /** A unit for a measured card (`A`, `rad/s`, `%`); absent when the card does not need one. */
   unit?: string;
+  /** A branch card's condition; it labels that card's outgoing arrows (`edgeLabelFor`). */
+  condition?: string;
   x: number;
   y: number;
 }
@@ -208,7 +210,7 @@ export interface WorkflowEdge {
   fromSide: WorkflowSide;
   /** Which edge of the target card it lands on. */
   toSide: WorkflowSide;
-  /** The condition a branch edge carries, when it has one. */
+  /** A restored document's label for the arrow; a branch card's own condition outranks it. */
   label?: string;
 }
 
@@ -364,6 +366,8 @@ function readNode(value: unknown, mode: WorkflowMode, fallbackId: string, index:
   };
   const unit = clean(record.unit, MAX_STEP_UNIT_CHARS);
   if (unit) node.unit = unit;
+  const condition = clean(record.condition, MAX_BRANCH_CONDITION_CHARS);
+  if (condition) node.condition = condition;
   const branch = asRecord(record.branch);
   const to = branch ? clean(branch.to, 40) : '';
   return {
@@ -680,6 +684,18 @@ export interface WorkflowSummary {
   hints: number;
 }
 
+/**
+ * The text an arrow carries on screen and in an export.
+ *
+ * A branch card owns its condition, so the arrow follows that card: changing the condition renames
+ * every arrow leaving it, and an arrow drawn before the condition was typed shows it too. A restored
+ * document may carry a label with no branch card behind it; that label stays the fallback.
+ */
+export function edgeLabelFor(from: WorkflowNode, edge: WorkflowEdge): string {
+  const condition = from.kind === 'branch' ? from.condition ?? '' : '';
+  return condition || edge.label || '';
+}
+
 export function workflowSummary(doc: WorkflowDoc): WorkflowSummary {
   const issues = validateWorkflow(doc);
   return {
@@ -712,8 +728,9 @@ export function workflowToMermaid(doc: WorkflowDoc): string {
     const from = index.get(edge.from);
     const to = index.get(edge.to);
     if (from === undefined || to === undefined) continue;
-    if (edge.label) {
-      lines.push(`  n${from + 1} -.->|"${mermaidText(edge.label, 40)}"| n${to + 1}`);
+    const label = edgeLabelFor(order[from], edge);
+    if (label) {
+      lines.push(`  n${from + 1} -.->|"${mermaidText(label, 40)}"| n${to + 1}`);
     } else {
       lines.push(`  n${from + 1} --> n${to + 1}`);
     }
@@ -741,10 +758,11 @@ export function workflowToMarkdown(doc: WorkflowDoc): string {
     const next = order[position + 1];
     for (const edge of doc.edges) {
       if (edge.from !== node.id) continue;
-      if (next && edge.to === next.id && !edge.label) continue;
+      const label = edgeLabelFor(node, edge);
+      if (next && edge.to === next.id && !label) continue;
       const to = number.get(edge.to);
       if (to === undefined) continue;
-      lines.push(edge.label ? `   - if ${edge.label} → step ${to}` : `   - → step ${to}`);
+      lines.push(label ? `   - if ${label} → step ${to}` : `   - → step ${to}`);
     }
   });
   return lines.join('\n');

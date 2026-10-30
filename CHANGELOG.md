@@ -16,6 +16,26 @@ flowchart LR
 
 ---
 
+## [2026-10-30] — A branch says its condition, and the canvas enters the snapshot
+
+**The condition is on the card, and the arrow reads it.** A Branch card has a fourth field, its
+condition ([`WorkflowNodeCard.tsx`](app/src/components/workflow/WorkflowNodeCard.tsx)), stored on the
+node. `edgeLabelFor` is the one rule for what an arrow says — a branch card's condition, else a
+restored document's edge label — and the canvas, the Mermaid export and the Markdown export all call
+it, so the diagram and the note cannot disagree. Typing on the card renames every arrow leaving it as
+you type, and a condition typed before the arrow is drawn labels the arrow when it arrives. The
+browser suite types `draw > 3.2 A` on a Branch card, draws its arrow by tap-then-tap, reads the label
+off the canvas, reloads, and finds both the field and the label.
+
+**The Workflow canvas is a measured surface.**
+[`check:snapshot`](scripts/snapshot_surfaces.mjs) now records **56 surfaces** — the twelve tabs, Home
+and the canvas — in four palettes. The canvas is seeded through the panel's own
+blank → code → Branch → condition → arrow path, and each entry records both cards' boxes, the arrow's
+path, its label and the remove button that hangs from the curve's half-way point, so a connector or a
+control that drifts is a finding instead of something only a person notices. The four palettes
+recorded identical boxes; the other 52 surfaces were untouched, and `docs/surface-snapshot.json` was
+re-recorded with only the four new entries added.
+
 ## [2026-10-29] — The canvas arithmetic gets a direct contract
 
 **The numbers every arrow depends on are now asserted without a browser.**

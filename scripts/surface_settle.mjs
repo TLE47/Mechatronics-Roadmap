@@ -21,7 +21,7 @@
  * *stable* number rather than a number that merely stopped changing: an empty list is stable too.
  *
  * The wait is bounded (`limitMs`), because a tab that never stops animating must not hang a sweep of
- * 52 surfaces; a surface that reaches the bound is reported as `settled: false` and measured anyway,
+ * 56 surfaces; a surface that reaches the bound is reported as `settled: false` and measured anyway,
  * which is the same thing the sweep did before, said out loud.
  *
  * `scripts/test_settle_counts.mjs` drives this function against pages whose count lands late, together

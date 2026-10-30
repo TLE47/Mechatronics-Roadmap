@@ -690,7 +690,7 @@ built from this public repository, and maps would roughly double what Pages serv
 the same three-way ratchet as the accessibility one: unlisted fails, wider than recorded fails, and
 stale fails.
 
-**`npm run check:snapshot`** records the **painted surface** of all 52 surfaces — the twelve tabs and Home, in all four palettes: where
+**`npm run check:snapshot`** records the **painted surface** of all 56 surfaces — the twelve tabs, Home and the Workflow canvas, in all four palettes: where
 the header, the activity rail, the main pane and its first panel sit, how many buttons, inputs, links,
 headings, canvases and tables the tab has, and the colours, type and palette tokens the browser
 resolved. Every other suite asks about a feature; this one is the only place that notices a panel that
@@ -947,7 +947,9 @@ the analysis palette (Given, Unknown, Model, Compute, Check, Answer) or the code
 Transform, Branch, Loop, Test, Output) — drawn as a node canvas: a palette press spawns a card, a card
 drags by its header and edits in place, and a directed arrow is dragged from any of a card's four dots
 (left, right, top, bottom) to any dot on the card it feeds (tap a dot, then the target, is the same
-gesture for a phone). The vertical pair is what lets a join or a loop leave the column without
+gesture for a phone). A **Branch** card carries its own condition field, and every arrow leaving that
+card shows it — typed on the card, not in a second form, and carried into the Mermaid and Markdown
+exports. The vertical pair is what lets a join or a loop leave the column without
 crossing the chain; only left and right carry reading order. It is a view of
 the same card, so it tabs and splits like the outputs and its arrangement is remembered; cards also
 nudge with the arrow keys, and the surface is capped at 70% of the viewport and scrolls inside that,
@@ -1515,7 +1517,7 @@ npm run check:firmware       # each .hex was built from the sketch the page ship
 npm run check:axe            # axe over all twelve tabs and Home in every palette; serious/critical fails, stale allowlists fail
 npm run check:weight         # the gzipped shell against docs/weight-budget.json (run after npm run build)
 npm run check:lighthouse     # best-practices, SEO and accessibility audits on the built bundle; performance is not run
-npm run check:snapshot       # the painted structure of all 52 surfaces against docs/surface-snapshot.json
+npm run check:snapshot       # the painted structure of all 56 surfaces against docs/surface-snapshot.json
 npm run test:perf            # the visit, timed: six moments on the built bundle, laptop and throttled phone, against docs/perf-budget.json (--record writes docs/PERF.md)
 npm run test:perf:unit       # the perf page and its ceilings without a browser; a CI step
 npm run test:e2e:backup      # the header buttons in Chromium: write a zip, wipe, restore to store and screen
