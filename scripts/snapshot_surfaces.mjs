@@ -47,6 +47,7 @@ import { resolveChromiumExecutable } from './e2e_browser_workbench.mjs';
 import { ensureBuilt, startStaticServer } from './e2e_pages_bundle.mjs';
 import { SETTLE, SURFACE_COUNTS, settleSurface } from './surface_settle.mjs';
 import { seedTourSeen } from './tour_seed.mjs';
+import { compareSnapshot } from './snapshot_compare.mjs';
 
 const ROOT = process.cwd();
 const SNAPSHOT_FILE = path.join(ROOT, 'docs', 'surface-snapshot.json');
@@ -234,50 +235,6 @@ function measure(selectors) {
       },
     },
   };
-}
-
-/** Every place two surfaces disagree, as one row each. */
-function compareSurfaces(name, expected, actual) {
-  const rows = [];
-  const add = (part, field, want, got) => rows.push({ surface: name, part, field, expected: want, actual: got });
-
-  for (const [field, want] of Object.entries(expected.boxes ?? {})) {
-    const got = actual.boxes?.[field] ?? null;
-    if (want === null && got === null) continue;
-    if (want === null || got === null) {
-      add('boxes', field, want, got);
-      continue;
-    }
-    for (let index = 0; index < want.length; index += 1) {
-      if (Math.abs(want[index] - got[index]) > TOLERANCE_PX) {
-        add('boxes', field, want, got);
-        break;
-      }
-    }
-  }
-  for (const field of Object.keys(actual.boxes ?? {})) {
-    if (!(field in (expected.boxes ?? {}))) add('boxes', field, null, actual.boxes[field]);
-  }
-
-  for (const [field, want] of Object.entries(expected.counts ?? {})) {
-    const got = actual.counts?.[field] ?? null;
-    if (want !== got) add('counts', field, want, got);
-  }
-
-  const flatStyles = (styles, prefix = '') => {
-    const out = {};
-    for (const [key, value] of Object.entries(styles ?? {})) {
-      if (value && typeof value === 'object') Object.assign(out, flatStyles(value, `${prefix}${key}.`));
-      else out[`${prefix}${key}`] = value;
-    }
-    return out;
-  };
-  const wantStyles = flatStyles(expected.styles);
-  const gotStyles = flatStyles(actual.styles);
-  for (const [field, want] of Object.entries(wantStyles)) {
-    if (gotStyles[field] !== want) add('styles', field, want, gotStyles[field] ?? null);
-  }
-  return rows;
 }
 
 /**
@@ -508,20 +465,11 @@ async function main() {
   }
   const snapshot = JSON.parse(fs.readFileSync(SNAPSHOT_FILE, 'utf8'));
   const expected = snapshot.surfaces ?? {};
-  const rows = [];
-  for (const [name, actual] of Object.entries(surfaces)) {
-    const want = expected[name];
-    if (!want) {
-      rows.push({ surface: name, part: 'surface', field: 'new', expected: null, actual: 'not in the snapshot' });
-      continue;
-    }
-    rows.push(...compareSurfaces(name, want, actual));
-  }
-  // A surface the snapshot still lists but the sweep could not produce: a tab that was removed or
-  // renamed, which is exactly the drift a snapshot exists to make someone acknowledge.
-  const stale = FILTERED
-    ? []
-    : Object.keys(expected).filter((name) => !(name in surfaces));
+  // The verdict lives in `snapshot_compare.mjs`, where its contract runs without a browser.
+  const { rows, stale } = compareSnapshot(expected, surfaces, {
+    tolerance: TOLERANCE_PX,
+    checkStale: !FILTERED,
+  });
 
   if (JSON_OUT) {
     console.log(

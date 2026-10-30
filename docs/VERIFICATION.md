@@ -495,7 +495,11 @@ chip and the remove button that hangs from the arrow's half-way point, and a nam
 seeded through the panel's own blank/code/branch/condition path and its Group gesture — so a connector, a
 dot or a control that drifts is a finding rather than something only a person sees — and fails when any of
 it moves. A `translate` nudge of every port dot and a 12 px nudge of the frame chip each fail, with the
-field named, in all four palettes. It is deliberately **not a pixel diff**: a baseline captured on the Mac this
+field named, in all four palettes. The rules themselves are a contract table
+([`scripts/test_snapshot_compare.mjs`](../scripts/test_snapshot_compare.mjs), run by
+`tests/test_snapshot_compare.py` through the unittest discovery): a 2 px move passes and a 3 px move
+fails with the field named, while a changed count or style, a surface missing from either side and a
+measured box the recording never saw each fail. It is deliberately **not a pixel diff**: a baseline captured on the Mac this
 was written on does not survive the trip to the Linux runner, and a gate whose first red build is
 antialiasing is a gate people disable. Box numbers are compared with a 2 px tolerance (subpixel
 rounding is not a finding); counts and resolved styles are exact. Determinism is what makes it a gate
