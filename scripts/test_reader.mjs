@@ -26,8 +26,10 @@ import {
 } from '../app/src/readerMarkdown.ts';
 import {
   MAX_ANCHOR_CHARS,
+  SAVE_AFTER_MS,
   STORAGE_KEY_READING,
   clearReadingPosition,
+  createReadingSaver,
   readReadingPosition,
   writeReadingPosition,
 } from '../app/src/readingPosition.ts';
@@ -410,6 +412,107 @@ check('clearing one lesson leaves the others alone', () => {
   } finally {
     delete globalThis.localStorage;
   }
+});
+
+/** A clock whose timers fire only when the test steps it. */
+function fakeClock() {
+  let now = 0;
+  let next = 1;
+  const jobs = new Map();
+  return {
+    now: () => now,
+    set: (fn, ms) => {
+      const id = next++;
+      jobs.set(id, { at: now + ms, fn });
+      return id;
+    },
+    clear: (id) => jobs.delete(id),
+    advance: (ms) => {
+      now += ms;
+      for (;;) {
+        const due = [...jobs.entries()]
+          .filter(([, job]) => job.at <= now)
+          .sort((a, b) => a[1].at - b[1].at)[0];
+        if (!due) return;
+        jobs.delete(due[0]);
+        due[1].fn();
+      }
+    },
+    pending: () => jobs.size,
+  };
+}
+
+check('a first scroll is written at once', () => {
+  const clock = fakeClock();
+  const writes = [];
+  const saver = createReadingSaver((position) => writes.push(position), SAVE_AFTER_MS, clock);
+  saver.remember({ anchor: 'goal', at: 120 });
+  assert.deepEqual(writes, [{ anchor: 'goal', at: 120 }]);
+  assert.equal(clock.pending(), 0, 'an immediate write leaves no timer behind');
+});
+
+check('a scroll inside the window is written when it closes, not dropped', () => {
+  const clock = fakeClock();
+  const writes = [];
+  const saver = createReadingSaver((position) => writes.push(position), SAVE_AFTER_MS, clock);
+  saver.remember({ anchor: 'goal', at: 10 });
+  clock.advance(100);
+  saver.remember({ anchor: 'idea-1', at: 1476 });
+  assert.equal(writes.length, 1, 'inside the window nothing is written yet');
+  clock.advance(250);
+  assert.deepEqual(writes.at(-1), { anchor: 'idea-1', at: 1476 }, 'the last scroll is the one stored');
+  assert.equal(writes.length, 2, 'once, not once per scroll');
+  assert.equal(clock.pending(), 0);
+});
+
+check('a burst inside the window collapses to one write of the newest position', () => {
+  const clock = fakeClock();
+  const writes = [];
+  const saver = createReadingSaver((position) => writes.push(position), SAVE_AFTER_MS, clock);
+  saver.remember({ anchor: 'a', at: 1 });
+  clock.advance(100);
+  saver.remember({ anchor: 'b', at: 2 });
+  clock.advance(100);
+  saver.remember({ anchor: 'c', at: 3 });
+  clock.advance(100);
+  saver.remember({ anchor: 'd', at: 4 });
+  clock.advance(50);
+  assert.deepEqual(writes, [{ anchor: 'a', at: 1 }, { anchor: 'd', at: 4 }]);
+});
+
+check('the window opens again after the write it scheduled', () => {
+  const clock = fakeClock();
+  const writes = [];
+  const saver = createReadingSaver((position) => writes.push(position), SAVE_AFTER_MS, clock);
+  saver.remember({ anchor: 'a', at: 1 });
+  clock.advance(SAVE_AFTER_MS);
+  saver.remember({ anchor: 'b', at: 2 });
+  assert.deepEqual(writes, [{ anchor: 'a', at: 1 }, { anchor: 'b', at: 2 }], 'exactly at the window is open');
+});
+
+check('flush writes a pending position now, and cancels the timer', () => {
+  const clock = fakeClock();
+  const writes = [];
+  const saver = createReadingSaver((position) => writes.push(position), SAVE_AFTER_MS, clock);
+  saver.remember({ anchor: 'a', at: 1 });
+  clock.advance(100);
+  saver.remember({ anchor: 'b', at: 2 });
+  saver.flush();
+  assert.deepEqual(writes, [{ anchor: 'a', at: 1 }, { anchor: 'b', at: 2 }]);
+  clock.advance(1000);
+  assert.equal(writes.length, 2, 'the timer cannot write it twice');
+});
+
+check('cancel drops a pending position without writing it', () => {
+  const clock = fakeClock();
+  const writes = [];
+  const saver = createReadingSaver((position) => writes.push(position), SAVE_AFTER_MS, clock);
+  saver.remember({ anchor: 'a', at: 1 });
+  clock.advance(100);
+  saver.remember({ anchor: 'b', at: 2 });
+  saver.cancel();
+  clock.advance(1000);
+  assert.deepEqual(writes, [{ anchor: 'a', at: 1 }]);
 });
 
 check('a store that throws costs the memory, never the scroll', () => {

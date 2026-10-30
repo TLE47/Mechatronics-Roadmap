@@ -129,6 +129,75 @@ export function writeReadingPosition(lessonId: string, position: ReadingPosition
   return clean;
 }
 
+/** A scroll paused for this long is written; one inside the window is written when the window closes. */
+export const SAVE_AFTER_MS = 350;
+
+/** The clock a saver uses, injectable so its window can be stepped in a test rather than slept. */
+export interface SaveTimers {
+  now: () => number;
+  set: (fn: () => void, ms: number) => number;
+  clear: (handle: number) => void;
+}
+
+export interface ReadingSaver {
+  /** Offer the latest position. The first one writes now; one inside the window writes at its close. */
+  remember: (position: ReadingPosition) => void;
+  /** Write a pending position now, if there is one. */
+  flush: () => void;
+  /** Drop a pending position without writing it, as returning to the top does. */
+  cancel: () => void;
+}
+
+const LIVE_TIMERS: SaveTimers = {
+  now: () => Date.now(),
+  set: (fn, ms) => setTimeout(fn, ms) as unknown as number,
+  clear: (handle) => clearTimeout(handle),
+};
+
+/**
+ * One write per pause, and never a dropped scroll.
+ *
+ * A throttle that only skips a write inside the window loses the last scroll before a reload: the
+ * position is then whatever was stored at mount, which is how the pages suite came back 327 px into a
+ * section it had left at 1476. An edit inside the window is therefore kept as pending and written
+ * when the window closes (or on `flush`), and only the newest position is written.
+ */
+export function createReadingSaver(
+  write: (position: ReadingPosition) => void,
+  afterMs = SAVE_AFTER_MS,
+  timers: SaveTimers = LIVE_TIMERS
+): ReadingSaver {
+  // Null until the first write: a clock's zero is a real instant, not "never written".
+  let lastSaved: number | null = null;
+  let pending: ReadingPosition | null = null;
+  let handle: number | null = null;
+  const cancel = () => {
+    if (handle !== null) {
+      timers.clear(handle);
+      handle = null;
+    }
+    pending = null;
+  };
+  const flush = () => {
+    if (handle !== null) {
+      timers.clear(handle);
+      handle = null;
+    }
+    if (!pending) return;
+    const position = pending;
+    pending = null;
+    lastSaved = timers.now();
+    write(position);
+  };
+  const remember = (position: ReadingPosition) => {
+    pending = position;
+    const wait = lastSaved === null ? 0 : Math.max(0, afterMs - (timers.now() - lastSaved));
+    if (wait === 0) flush();
+    else if (handle === null) handle = timers.set(flush, wait);
+  };
+  return { remember, flush, cancel };
+}
+
 /** Forget one lesson's position, as the reader's "Top" control does after scrolling to the start. */
 export function clearReadingPosition(lessonId: string): void {
   const store = storage();

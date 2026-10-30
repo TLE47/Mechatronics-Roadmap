@@ -26,9 +26,11 @@ import {
 import { headingAnchors, inlinePlain } from '../readerMarkdown';
 import {
   clearReadingPosition,
+  createReadingSaver,
   readReadingPosition,
   writeReadingPosition,
   type ReadingPosition,
+  type ReadingSaver,
 } from '../readingPosition';
 import {
   MAX_COMMENT_CHARS,
@@ -121,9 +123,6 @@ interface LessonReaderProps {
    */
   hidden?: boolean;
 }
-
-/** How long a scroll must be still before the position is written: one write per pause, not per pixel. */
-const SAVE_AFTER_MS = 350;
 
 /** The page's absolute URL, for the source link a heading or a figure points back to. */
 function repoUrl(path: string): string {
@@ -275,7 +274,18 @@ export function LessonReader({
   /** Where the caret goes when the next render commits, because a controlled box forgets it. */
   const stickyCaretRef = useRef<{ start: number; end: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const lastSaveRef = useRef(0);
+  // The saver belongs to the lesson it was made for: a pending write must not land on the next one.
+  const saverRef = useRef<{ lessonId: string; saver: ReadingSaver } | null>(null);
+  const saverFor = (id: string): ReadingSaver => {
+    if (!saverRef.current || saverRef.current.lessonId !== id) {
+      saverRef.current?.saver.flush();
+      saverRef.current = {
+        lessonId: id,
+        saver: createReadingSaver((position) => writeReadingPosition(id, position)),
+      };
+    }
+    return saverRef.current.saver;
+  };
   const pendingRef = useRef<ReadingPosition | null>(null);
   const anchors = useMemo(() => headingAnchors(page?.blocks ?? []), [page]);
 
@@ -400,6 +410,7 @@ export function LessonReader({
   // the place the learner was reading, and `scroll` may not fire again before unmount.
   useEffect(() => {
     return () => {
+      saverRef.current?.saver.flush();
       const pending = pendingRef.current;
       if (pending) writeReadingPosition(lessonId, pending);
     };
@@ -470,10 +481,7 @@ export function LessonReader({
     if (!container || !page) return;
     const position = currentPosition(container);
     pendingRef.current = position;
-    const now = Date.now();
-    if (now - lastSaveRef.current < SAVE_AFTER_MS) return;
-    lastSaveRef.current = now;
-    writeReadingPosition(lessonId, position);
+    saverFor(lessonId).remember(position);
   };
 
   // A controlled textarea loses its selection when React writes the value back. Restoring it in a
@@ -716,6 +724,7 @@ export function LessonReader({
     const container = scrollRef.current;
     if (!container) return;
     container.scrollTop = 0;
+    saverFor(lessonId).cancel();
     pendingRef.current = { anchor: '', at: 0 };
     clearReadingPosition(lessonId);
   };
