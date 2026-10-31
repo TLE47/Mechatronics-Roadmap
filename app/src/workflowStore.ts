@@ -15,7 +15,7 @@
  */
 
 import { bulkStorage } from './bulkStorage.ts';
-import { normalizeWorkflow, type WorkflowDoc } from './workflow.ts';
+import { STEP_KINDS, normalizeWorkflow, type StepKind, type WorkflowDoc } from './workflow.ts';
 
 export const STORAGE_KEY_WORKFLOW = 'mechalab_workflow_v1';
 /** Whether the three-line how-to has been dismissed once, so it does not open on every lesson. */
@@ -190,5 +190,37 @@ export function markWorkflowGuideSeen(): void {
     store.setItem(WORKFLOW_GUIDE_KEY, 'seen');
   } catch {
     // A blocked bucket leaves the how-to open next time, which is the harmless direction.
+  }
+}
+
+/**
+ * What a dragged arrow creates on bare paper: one card kind, or `ask` (the picker).
+ *
+ * It is a canvas preference, not part of the document, so it lives beside the how-to flag; a value
+ * that is not a kind this build knows reads as `ask`, which is the direction that cannot create the
+ * wrong card.
+ */
+export const DROP_DEFAULT_KEY = 'mechalab_workflow_drop_default_v1';
+
+export function readDropDefault(): StepKind | 'ask' {
+  const store = bucket();
+  if (!store) return 'ask';
+  try {
+    const raw = store.getItem(DROP_DEFAULT_KEY);
+    return raw && (STEP_KINDS as readonly string[]).includes(raw) ? (raw as StepKind) : 'ask';
+  } catch {
+    return 'ask';
+  }
+}
+
+/** `ask` removes the entry instead of storing it, so a learner who never chose has no setting. */
+export function saveDropDefault(kind: StepKind | 'ask'): void {
+  const store = bucket();
+  if (!store) return;
+  try {
+    if (kind === 'ask') store.removeItem(DROP_DEFAULT_KEY);
+    else store.setItem(DROP_DEFAULT_KEY, kind);
+  } catch {
+    // A blocked bucket just means the next drag asks again.
   }
 }

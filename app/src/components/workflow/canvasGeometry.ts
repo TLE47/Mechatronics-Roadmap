@@ -1,4 +1,4 @@
-import { NODE_WIDTH, type WorkflowNode, type WorkflowSide } from '../../workflow.ts';
+import { NODE_WIDTH, type EdgeRoute, type WorkflowNode, type WorkflowSide } from '../../workflow.ts';
 
 /**
  * The workflow canvas's geometry (`components/workflow/canvasGeometry.ts`).
@@ -81,6 +81,120 @@ export function edgeCurve(
   return `M ${a.x} ${a.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${b.x} ${b.y}`;
 }
 
+/**
+ * A straight line reads as straight only near an axis: past this drift it crosses the paper
+ * diagonally, so `edgePath` draws the rounded elbow instead of a line nothing lines up with.
+ */
+export const STRAIGHT_ALIGN = 12;
+
+/** The corner radius of a rounded route, capped again by half of each leg it turns through. */
+const ROUTE_RADIUS = 12;
+
+function unit(from: { x: number; y: number }, to: { x: number; y: number }) {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const length = Math.hypot(dx, dy);
+  return length ? { x: dx / length, y: dy / length, length } : null;
+}
+
+/**
+ * The points an elbow runs through: out of the source's dot, a turn, and into the target's.
+ *
+ * The departure matters as much as the dots: an arrow leaving a card's right side must first go
+ * right, or it would start by crossing the card it belongs to. Two horizontal (or two vertical)
+ * faces turn once on the shared axis; mixed faces turn once where the two departures cross.
+ */
+function elbowPoints(
+  a: { x: number; y: number },
+  aSide: WorkflowSide,
+  b: { x: number; y: number },
+  bSide: WorkflowSide
+): { x: number; y: number }[] {
+  const bend = Math.max(20, Math.min(64, Math.hypot(b.x - a.x, b.y - a.y) / 3));
+  const av = SIDE_VECTOR[aSide];
+  const bv = SIDE_VECTOR[bSide];
+  const p1 = { x: a.x + av.x * bend, y: a.y + av.y * bend };
+  const p2 = { x: b.x + bv.x * bend, y: b.y + bv.y * bend };
+  const aLevel = av.y === 0;
+  const bLevel = bv.y === 0;
+  const points =
+    aLevel && bLevel
+      ? (() => {
+          const mid = (p1.x + p2.x) / 2;
+          return [a, p1, { x: mid, y: p1.y }, { x: mid, y: p2.y }, p2, b];
+        })()
+      : !aLevel && !bLevel
+        ? (() => {
+            const mid = (p1.y + p2.y) / 2;
+            return [a, p1, { x: p1.x, y: mid }, { x: p2.x, y: mid }, p2, b];
+          })()
+        : aLevel
+          ? [a, p1, { x: p2.x, y: p1.y }, p2, b]
+          : [a, p1, { x: p1.x, y: p2.y }, p2, b];
+  // A corner that lands on its neighbour (two dots already level) is not a corner: dropping it keeps
+  // the path valid for the renderer and the midpoint honest.
+  return points.filter(
+    (point, index) => index === 0 || Math.hypot(point.x - points[index - 1].x, point.y - points[index - 1].y) > 0.5
+  );
+}
+
+/** The points a route runs through; `straight` only where it is aligned, else a rounded elbow. */
+function routePoints(
+  a: { x: number; y: number },
+  aSide: WorkflowSide,
+  b: { x: number; y: number },
+  bSide: WorkflowSide,
+  route: EdgeRoute
+): { x: number; y: number }[] {
+  if (route === 'straight' && (Math.abs(a.y - b.y) <= STRAIGHT_ALIGN || Math.abs(a.x - b.x) <= STRAIGHT_ALIGN)) {
+    return [a, b];
+  }
+  return elbowPoints(a, aSide, b, bSide);
+}
+
+function linePath(points: { x: number; y: number }[]): string {
+  return points.map((point, index) => `${index ? 'L' : 'M'} ${point.x} ${point.y}`).join(' ');
+}
+
+/** A polyline with each interior corner turned through a quadratic of at most `ROUTE_RADIUS`. */
+function roundedPath(points: { x: number; y: number }[]): string {
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let index = 1; index < points.length - 1; index += 1) {
+    const previous = points[index - 1];
+    const corner = points[index];
+    const next = points[index + 1];
+    const incoming = unit(previous, corner);
+    const outgoing = unit(corner, next);
+    if (!incoming || !outgoing) continue;
+    const back = Math.min(ROUTE_RADIUS, incoming.length / 2);
+    const forward = Math.min(ROUTE_RADIUS, outgoing.length / 2);
+    d += ` L ${corner.x - incoming.x * back} ${corner.y - incoming.y * back} Q ${corner.x} ${corner.y} ${
+      corner.x + outgoing.x * forward
+    } ${corner.y + outgoing.y * forward}`;
+  }
+  const last = points[points.length - 1];
+  return `${d} L ${last.x} ${last.y}`;
+}
+
+/**
+ * An arrow's line for the route it is set to.
+ *
+ * `curved` is the cubic every arrow had; `elbow` turns at right angles, `rounded` turns through a
+ * small radius, and `straight` is a line only when the two dots are level — a diagonal straight
+ * arrow would cut across cards, so it borrows the rounded elbow instead of looking broken.
+ */
+export function edgePath(
+  a: { x: number; y: number },
+  aSide: WorkflowSide,
+  b: { x: number; y: number },
+  bSide: WorkflowSide,
+  route: EdgeRoute
+): string {
+  if (route === 'curved') return edgeCurve(a, aSide, b, bSide);
+  const points = routePoints(a, aSide, b, bSide, route);
+  return route === 'elbow' ? linePath(points) : roundedPath(points);
+}
+
 /** The dashed preview follows the pointer; it only needs the source side's departure. */
 export function pendingCurve(
   a: { x: number; y: number },
@@ -103,18 +217,41 @@ function curveMidpoint(
   return { x: (a.x + 3 * c1.x + 3 * c2.x + b.x) / 8, y: (a.y + 3 * c1.y + 3 * c2.y + b.y) / 8 };
 }
 
+/** The point half-way along a polyline, measured by length rather than by corner count. */
+function polylineMidpoint(points: { x: number; y: number }[]): { x: number; y: number } {
+  let total = 0;
+  for (let index = 1; index < points.length; index += 1) {
+    total += Math.hypot(points[index].x - points[index - 1].x, points[index].y - points[index - 1].y);
+  }
+  let left = total / 2;
+  for (let index = 1; index < points.length; index += 1) {
+    const from = points[index - 1];
+    const to = points[index];
+    const length = Math.hypot(to.x - from.x, to.y - from.y);
+    if (length >= left) {
+      const at = length ? left / length : 0;
+      return { x: from.x + (to.x - from.x) * at, y: from.y + (to.y - from.y) * at };
+    }
+    left -= length;
+  }
+  return points[points.length - 1];
+}
+
 /**
- * Where an arrow's label and remove button attach: the label on the curve's half-way point, the
- * button 10 px to its right so the two never overlap. The label lifts itself above the line and the
- * button centres itself on it in CSS; both share this one anchor, so they cannot drift apart.
+ * Where an arrow's label and remove button attach: on the line's half-way point, and the button
+ * 10 px to its right so the two never overlap. The label lifts itself above the line and the button
+ * centres itself on it in CSS; both share this one anchor, so they cannot drift apart — and it moves
+ * with the route, so a label never floats off the elbow it belongs to.
  */
 export function edgeControls(
   a: { x: number; y: number },
   aSide: WorkflowSide,
   b: { x: number; y: number },
-  bSide: WorkflowSide
+  bSide: WorkflowSide,
+  route: EdgeRoute = 'curved'
 ): { label: { x: number; y: number }; remove: { x: number; y: number } } {
-  const label = curveMidpoint(a, aSide, b, bSide);
+  const label =
+    route === 'curved' ? curveMidpoint(a, aSide, b, bSide) : polylineMidpoint(routePoints(a, aSide, b, bSide, route));
   return { label, remove: { x: label.x + 10, y: label.y } };
 }
 
@@ -160,8 +297,14 @@ export function groupRect(
   };
 }
 
-/** The strip a partition adds above its cards for the lane's own name. */
-export const LANE_HEADER = 22;
+/**
+ * The strip a partition adds above its cards for the lane's own name.
+ *
+ * 34 px, not the chip's own 20: a top port dot is centred on a card's top edge and reaches 10 px
+ * above it, so a 22 px header put the lane's name field over the first card's top dot and stole its
+ * press. The strip clears chip (22) plus dot (10) with 2 px to spare.
+ */
+export const LANE_HEADER = 34;
 
 /**
  * The band a named partition draws: its cards' union, with a strip above them for the lane name.

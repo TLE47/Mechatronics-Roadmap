@@ -16,6 +16,167 @@ flowchart LR
 
 ---
 
+## [2026-10-30] — The workflow editor has one owner
+
+**A canvas action is added in one place.** The workflow document, its selection, its history, its
+debounced save and its clipboard moved out of the 1,189-line panel into
+`components/workflow/useWorkflowEditor.ts`, which returns one command per action; the panel, canvas,
+press menu, inspector and keyboard shortcuts all call those commands. The structural rules under
+them — a last card clears the lesson, a removed card leaves its frames and lanes, an arrow cannot
+point at its own card — are pure functions in `workflowEdits.ts`, and the panel is now layout and
+transient view state. No behaviour changed: the existing unit, geometry, snapshot and browser suites
+pass unchanged.
+
+## [2026-10-30] — Undo that covers every edit, and the shortcuts an editor has
+
+**Every canvas edit is one step back.** Moves (a drag or an arrow key), cuts, removals, additions, pasted
+and dropped cards, route and kind choices, frames, lanes, template changes and a cleared diagram all
+run through the panel's one write path, so `⌘Z` / `Ctrl+Z` restores the document before the edit and
+`⌘⇧Z` / `Ctrl+Y` walks forward again. Header buttons show what is available and name their keys; the
+empty panel keeps an **Undo** after a Clear, so clearing is never a dead end. A new edit after an undo
+drops the redo branch, the history is capped at 60 steps, and it is memory only — not saved, and empty
+on the next visit.
+
+**Typing is a run, not a character.** Edits made from a focused text field (a card's words, a lane or
+frame name, an edge label or guard, the workflow title) extend the same step while they continue and
+the pauses stay short, so one undo takes back a sentence instead of one letter. Clicks, drags and keys
+on the paper always start their own step, and a field keeps its native text undo.
+
+## [2026-10-30] — Arrows that bend four ways, drops that make cards, and words with no plate
+
+**An arrow's line is chosen, not fixed.** Every arrow now draws as one of four routes: the cubic it
+always had, a rounded turn, a hard right angle, or a straight line. The route is presentation, so it
+is stored only when it is not the default curve, both exports are unchanged, and a document saved
+before routes existed opens drawing exactly what it drew. A straight line is drawn only when its two
+dots are level; on a diagonal it borrows the rounded elbow, because a straight arrow that cuts
+across cards reads as a mistake rather than a shortcut. The choice lives in the arrow's own
+inspector, beside the kind that says what the line carries.
+
+**A drag from a connection dot can end by making the next card.** Released on bare paper, the drag
+opens the palette at that point and the chosen card is written together with its arrow in one
+document write, so the dot is never left half-drawn. A **Drop** control beside the mode switch
+remembers a default card — `Ask` unless the learner picks one — which turns the same drag into a
+single gesture; `Alt`/`Option` still opens the picker, so the default never becomes the only choice.
+The preference is a canvas setting and is stored outside the document.
+
+**A Text card is a label, not a box.** The new kind draws its title and detail on the paper with no
+plate, no border and no shadow — selection shows a thin ring while it is chosen — and it takes part
+in every existing gesture: drag, nudge, ports, arrows, frames, lanes, copy and paste. Mermaid exports
+its bare words instead of a kind-prefixed label. Old documents gain nothing: the kind exists only
+when a card of it is added.
+
+## [2026-10-30] — Brighter cards, a card's own menu, and a size that is any number
+
+**A fill now reads as the colour, not a hint of it.** The plate mixes 40% of the theme token over the
+panel instead of 12%: on the light palette amber is a warm tan rather than off-white, and on the dark
+one the same card is a clear amber-brown, while the default words keep their contrast. The tokens and
+the write-only-when-chosen rule are unchanged, so a document saved before styling still opens with
+no field.
+
+**Right-clicking a card opens that card's menu.** The five colours and "no fill" — the row the
+inspector draws, now from the same component — sit above **Copy**, **Cut** and **Remove**; a fork/join
+bar gets the colours and the clipboard items too. Bare paper with a card in hand offers **Paste**,
+which drops the copy at the pressed point. A clip is one card's words and look (no arrows: an arrow
+without its other end is not a flow), pasted through `addWorkflowNode`, so it takes a fresh id, obeys
+the card bound and lands on the grid like any other add. The clipboard is memory, like a selection:
+nothing is written into the document, and every exit still returns the caret to the paper.
+
+**Size stopped being three steps.** The inspector's S/M/L buttons are one slider: any whole pixel
+from 9 to 24, with a readout naming the number and the detail held one pixel under the title. The two
+named steps a saved document may still hold (`sm`, `lg`) read and draw at 11 and 14 px, so nothing
+saved before the slider opens differently; 12 px — the size every card had — is stored as no field.
+
+**The browser suite covers it.** A card's menu is opened with a right-click, a colour is chosen and
+checked on the plate, Copy → Paste adds the card with the same kind and look and an id of its own,
+and Cut takes it away again; the size slider is moved one key off the default and the card must draw
+13 px before and after a reload. `test:workflow` pins the numeric read (kept in range, rounded,
+out-of-range dropped) and that the old steps and a free size draw from one mapping.
+
+**The weight ceiling did not move, and is now spent.** `js_gzip` measured 958.8 kB of its 959 kB
+budget — 194 B left, down from 905 B; `entry_gzip` 569.4 of 575 and `largest_js_gzip` 380.9 of 390.
+The next control on this canvas needs trimming or a deliberate ceiling move, not the assumption of
+room.
+
+## [2026-10-30] — A card can be tinted, recoloured, resized, and it can set maths
+
+**Colour, ink and size are optional names, stored only when chosen.** A fill tints the plate with 12%
+of a theme token over the panel, ink recolours the card's words (a default card's detail keeps its
+muted colour until one is picked), and size steps the title and the detail together — `sm` 11/10,
+`lg` 14/12.5 px, `md` the sizes every card had. Nothing is a hex: both palettes define the five
+tokens, so a card painted in the dark theme keeps its contrast when the page turns light, and the
+normalizer drops an unknown token rather than storing it. A document saved before styling opens and
+re-saves with no field; a fork/join bar takes a fill but no ink or size, because it has no words of
+its own. The inspector's swatches are painted from the same table the plate reads (`CARD_COLOR_VAR`),
+so the dot a learner presses and the card it paints cannot disagree.
+
+**A field with `$…$` draws the formula and shows its source while focused.** The runs come from the
+reader's own `parseInline`, so a card and a lesson split maths by one rule, and KaTeX — the renderer
+every other tab already ships — draws it in the field's own ink and size. The input and the drawing
+are the same field, swapped by `peer-focus:hidden`, so the card keeps one value and no edit state.
+The source stays the document's text: Copy Mermaid and Copy Markdown carry `$F = ma$` unchanged.
+
+**The surface snapshot records the Workflow canvas against its own panel.** The palette is a list
+that keeps growing, and every press scrolled the page just enough to show the pressed button: the
+inspector gaining the style row moved all 33 canvas boxes by 30 px with the diagram untouched, and
+the seed's arrow drag stopped reaching a port that had slid under the sticky header. The drag now
+scrolls only as far as its two dots need and puts the page back, the seed pins both scrolls before
+measuring, and the canvas boxes are relative to the panel. Nothing about the drawing's size or
+spacing changed; the workflow surface's own numbers were re-recorded once for that frame, and every
+other surface matches unchanged.
+
+**One ceiling moved by hand, with the measurement.** The look and the maths are app code on the
+runner chunk, the tab the app opens on: signed-in `js_gzip` 957,128 → 958,095 B against 958,000, so
+the ceiling is 959 kB with 905 B left — room for one more small control, not a library. `entry_gzip`
+568.0 → 568.8 kB and `largest_js_gzip` 379.6 → 380.3 kB both stay inside their numbers.
+
+## [2026-10-30] — Press-to-add, full screen, and the canvas stops hiding its own controls
+
+**A right-click is a second door to the palette.** Empty paper opens the list of cards the current
+palette offers and the chosen card lands where the press was, so a flow can be sketched from the
+pointer instead of the Add row; a card, a fork/join bar, a lane, a frame or an arrow opens the same
+list anchored on itself with the one action its own `×` already offered. `Shift+F10` (or the Menu
+key) opens it where the paper has focus, and `Esc`, a press on the backdrop or a Tab past the last
+item close it; every exit puts the caret back on the paper, so the next `Shift+F10` needs no mouse.
+The menu is a `role`-less group of plain buttons on purpose: what must be reachable and drivable by
+keyboard is the action, not an ARIA menu pattern half-implemented. It stores nothing.
+
+**Full screen is a view of the same pane, not a second one.** One button in the panel header expands
+the workflow to the viewport, the paper loses its 70% cap and takes a 75vh floor, the palette and the
+inspector keep working because nothing is copied, the page behind cannot scroll, and `Esc` (or the
+same button) returns the pane and the page's scroll to where they were. Nothing about it is written
+to the document. The browser suite right-clicks two spots on a real diagram, asserts each card lands
+under its press and survives a reload, then enters full screen, adds from the palette there, and
+checks the pane and scroll are restored on the way out. `js_gzip` still fits: the menu reuses
+`btn btn-ghost`, the fullscreen branch is two class strings on the existing wrapper, and the paper's
+floor replaced a parallel layout layer (`check:weight` PASS, 957.0 kB ceiling untouched).
+
+## [2026-10-30] — A card can carry its note and its lesson, and the canvas stops painting over the workbench
+
+**Notes and lesson links are card metadata, not extra cards.** Selecting a card opens one inspector
+below the paper with a note box, a lesson picker and **Open**; both fields are optional, clearing one
+deletes it instead of storing `''`, and a document saved before either existed opens and re-saves with
+no new field (the normalizer adds nothing). The note is a tooltip and a one-line footer on its card;
+the link is a button that opens the chosen lesson in the workbench without leaving the editor. Copy
+Mermaid writes each as a comment on its own node (`%% note n2: …`, `%% lesson n2: P.15`) so it adds no
+node to the exported flow, and Copy Markdown lists them under the numbered step. A fork/join bar has
+neither field by design; it still has a lane.
+
+**A lane can be created, named and removed from the keyboard.** The inspector's lane picker is a
+native select: **New lane…** appends the partition and hands its name field the caret, an existing
+lane moves the card without duplicating its name, and **No lane** drops the claim. The fork and join
+bars use the same header nudge as a card (8 px, 32 with Shift). The browser suite now creates two
+lanes from the inspector, asserts the caret lands in the new name field, renames one, reloads to find
+both names and their cards, removes one and checks every card stays.
+
+**The canvas no longer paints over the controls around it.** The canvas is its own stacking context
+(`z-0`) and the paper is isolated, so a card, a lane chip or the `z-50` edge inspector scrolled under
+the sticky tab rail or the fixed Run bar stays under those controls; the arrows and edge labels now
+sit under the cards (`z-15`) so a wire crossing a card cannot hide its title, ports or delete button.
+A lane reserves 34 px above its first card for the name field — chip 22 px plus the 10 px a top port
+dot overhangs — and hangs that chip at `z-[19]`, under the cards, so at the paper's clamped top edge
+the port still wins the press. `check:snapshot` was re-recorded for the lane band's new header; every
+other surface is unchanged.
+
 ## [2026-10-30] — A decision's exits carry their own guards, and a merge closes them
 
 **One condition on a Branch card labelled every arrow leaving it**, so a decision with two exits said

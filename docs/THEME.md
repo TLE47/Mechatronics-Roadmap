@@ -207,9 +207,10 @@ before the attribute is corrected.
 
 `?view=theme` opens the same table inside the workbench — the four palettes side by side, a swatch
 beside every value, all three controls in place, linked from the footer. It is a route rather than a
-tab: the learner-facing rail stays at the tabs a learner needs. The page parses
-[`app/src/index.css`](../app/src/index.css) at build time (`?raw`) instead of carrying a copy, so a
-token added to the stylesheet appears there with no edit — and a missing `:root`,
+tab: the learner-facing rail stays at the tabs a learner needs. The page's table is parsed out of
+[`app/src/index.css`](../app/src/index.css) once at build time by the `virtual:theme-tokens` module
+in [`vite.config.ts`](../vite.config.ts), instead of the page carrying a copy of the stylesheet, so a
+token added to `index.css` appears there with no edit — and a missing `:root`,
 `[data-theme="light"]`, `[data-theme="paper"]`, `[data-theme="contrast"]` or `@theme inline` block
 shows as an error panel rather than a half-empty table. That page, this one and the stylesheet cannot disagree: each is checked
 against the file.

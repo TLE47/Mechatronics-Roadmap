@@ -2,8 +2,9 @@
  * The palette as data: `app/src/index.css` read back into the rows the theme route prints.
  *
  * The route must not carry a second copy of the palette — a hand-typed table is a table that one day
- * says something the stylesheet does not. So the stylesheet is the input (`index.css?raw` in the
- * page, a file read in the Node suite) and this module is the only thing that knows its shape.
+ * says something the stylesheet does not. So the stylesheet is the input (read by the build's
+ * `virtual:theme-tokens` module in `vite.config.ts`, and by the file in the Node suite) and this
+ * module is the only thing that knows its shape.
  *
  * Five blocks matter, and all five are read rather than assumed:
  *

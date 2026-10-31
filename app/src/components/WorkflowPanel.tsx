@@ -1,47 +1,35 @@
-import { Suspense, lazy, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { ChevronDown, GitBranch, MousePointerClick, Sparkles, Trash2 } from 'lucide-react';
 import {
   KIND_META,
   MODE_LABEL,
-  MAX_EDGES,
-  MAX_STEPS,
   MAX_WORKFLOW_TITLE_CHARS,
   STEPS_BY_MODE,
-  addWorkflowNode,
-  emptyWorkflow,
-  nextEdgeId,
   validateWorkflow,
-  withEdgePort,
-  withEdgeType,
   workflowNumbers,
   workflowToMarkdown,
   workflowToMermaid,
   type StepKind,
-  type PortKind,
   type WorkflowDoc,
-  type WorkflowEdge,
-  type WorkflowEdgeType,
-  type WorkflowGroup,
   type WorkflowIssue,
-  type WorkflowNode,
-  type WorkflowSide,
 } from '../workflow.ts';
-import {
-  MAX_LANES,
-  removeLane as withoutLane,
-  renameLane as retitleLane,
-  withLane,
-} from '../workflowProcesses.ts';
+import { laneIndexOf } from '../workflowProcesses.ts';
 import { templateForLesson, type WorkflowTemplate } from '../workflowTemplates.ts';
 import {
-  clearWorkflow,
   markWorkflowGuideSeen,
-  readWorkflow,
+  readDropDefault,
   readWorkflowGuideSeen,
-  saveWorkflow,
+  saveDropDefault,
 } from '../workflowStore.ts';
+import { PYTHON_LESSONS } from '../data/pythonLessonsData.ts';
+import { isKnownLesson } from '../lessonRoute.ts';
 import { HowToCard } from './HowToCard.tsx';
 import { TemplatePicker } from './TemplatePicker.tsx';
+import { WorkflowSelectionInspector } from './workflow/WorkflowSelectionInspector.tsx';
+import { WorkflowMenu, type WorkflowMenuRequest } from './workflow/WorkflowMenu.tsx';
+import type { LinkDraft } from './workflow/useLinking.ts';
+import { useFullscreen } from './workflow/useFullscreen.ts';
+import { useWorkflowEditor } from './workflow/useWorkflowEditor.ts';
 // The canvas — cards, arrows, the fit lens, the edge inspector — is a whole surface that a learner
 // who never opens the Workflow tab should not parse before the lesson text is on screen. It sits
 // behind a lazy boundary, like the simulation tabs in `App.tsx`, and the pane says it is loading
@@ -53,33 +41,38 @@ import { iconForKind } from './workflowIcons.ts';
 import { useMediaQuery } from '../useMediaQuery.ts';
 
 /**
- * The workflow tab (`components/WorkflowPanel.tsx`).
+ * The workflow tab (`components/WorkflowPanel.tsx`) — layout and view state.
  *
  * A learner's plan for one problem, drawn as nodes on a canvas: what is given, what is unknown, the
  * model, the arithmetic, the check, the answer — or, for a program, input through output. The notes
  * panel can say what was understood; this says how the learner decided to get there, which is the
  * part a correct answer hides.
  *
+ * The document and every action that changes it belong to `workflow/useWorkflowEditor.ts`; the
+ * structural rules belong to `workflowEdits.ts`. This file decides where things sit and which
+ * transient view is open — the guide, the template picker, the press menu, the clear confirmation,
+ * the grouping/lane arming, full screen — and it renders the canvas, the inspector and the toolbar
+ * from the editor's commands. Adding an action should mean adding a command to the editor (and a
+ * surface that calls it), not adding document logic here.
+ *
  * Three decisions this component keeps:
  *
  * 1. **A graph, not a form.** Cards are placed where the learner dragged them and arrows are drawn
- *    between them (`components/WorkflowCanvas.tsx` does the pixels; this file owns the document).
+ *    between them (`components/WorkflowCanvas.tsx` does the pixels).
  * 2. **The checklist advises.** It names the card and the missing thing in a sentence a beginner can
  *    act on; it never disables Run and it never gates a lesson.
  * 3. **Nothing is lost by clicking away.** Edits are written on a short debounce and again when the
  *    lesson changes, under the lesson id they were typed in — the note box's rule, for the same
- *    reason.
- *
- * This file owns the document, its persistence and the selected card; validation runs once per
- * document in a memo and the canvas reads each card's issue from that index. Every mutation — a
- * keystroke, a drag, an arrow, a delete — lands here, so the two panes can never disagree.
+ *    reason, now enforced by the editor hook.
  */
 export interface WorkflowPanelProps {
   lessonId: string;
   lessonTitle: string;
+  /** Open a lesson a card links to, without leaving the workbench. */
+  onOpenLesson?: (lessonId: string) => void;
 }
 
-const NOT_SAVED = 'Not saved — storage is blocked or full';
+const LESSON_CHOICES = PYTHON_LESSONS.map((lesson) => ({ id: lesson.id, title: lesson.title }));
 
 function templateHasContent(doc: WorkflowDoc | null): boolean {
   if (!doc) return false;
@@ -87,24 +80,73 @@ function templateHasContent(doc: WorkflowDoc | null): boolean {
   return doc.nodes.some((node) => node.title.trim() || node.detail.trim() || node.unit);
 }
 
-export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
-  const [doc, setDoc] = useState<WorkflowDoc | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  // One selection at a time: a card or an arrow. The arrow's inspector is the only place a kind is
-  // chosen, so opening it closes the card ring — two highlighted things would leave "which one does
-  // the palette edit?" to be guessed.
-  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
-  const [status, setStatus] = useState('');
+export function WorkflowPanel({ lessonId, lessonTitle, onOpenLesson }: WorkflowPanelProps) {
+  const {
+    doc,
+    selectedId,
+    selectedEdgeId,
+    status,
+    say: setStatus,
+    historySize,
+    undo,
+    redo,
+    selectNode,
+    selectEdge,
+    updateNode,
+    setNodeAnnotation,
+    moveNode,
+    moveNodes,
+    addNode,
+    removeNode,
+    copyNode,
+    cutNode,
+    spawnLinked,
+    pasteNode,
+    canPaste,
+    connect,
+    disconnect,
+    setEdgeType,
+    setEdgeLabel,
+    setEdgeGuard,
+    setEdgePort,
+    setEdgeRoute,
+    groupCards,
+    renameGroup,
+    removeGroup,
+    setMode,
+    setTitle,
+    applyTemplate: startFrom,
+    startBlank: startBlankDoc,
+    clearOpen,
+    armClear,
+    disarmClear,
+    clearIt,
+    focusIssue,
+    focusLane,
+    setFocusLane,
+    createLane,
+    assignLane,
+    renameLane,
+    removeLane,
+  } = useWorkflowEditor(lessonId, lessonTitle);
+
   const [howTo, setHowTo] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [pendingTemplate, setPendingTemplate] = useState<WorkflowTemplate | null>(null);
-  const [confirmClear, setConfirmClear] = useState(false);
   // The frame gesture is armed, not always on: the same paper pans, and on a phone a plain drag has
   // to keep scrolling.
   const [grouping, setGrouping] = useState(false);
   // A lane is armed the same way a frame is, and the two are mutually exclusive: one drag cannot
   // mean both "group these" and "this is who owns them".
   const [laning, setLaning] = useState(false);
+  // The context menu: what the press hit, and where it was. One owner, so a card, a lane, a frame
+  // and an arrow all report through the same request.
+  const [menu, setMenu] = useState<WorkflowMenuRequest | null>(null);
+  // What a dragged arrow creates when it ends on bare paper: `ask` opens the picker. Read once, and
+  // written only when the learner picks a different answer, so an untouched canvas has no setting.
+  const [dropDefault, setDropDefault] = useState<StepKind | 'ask'>(readDropDefault);
+  // The whole viewport, not the pane: the view, its scroll lock and its restore live in their module.
+  const [full, toggleFull] = useFullscreen();
   // The checklist is advice, not the work. On a phone it is a count and one press away: 24 open
   // cards are 24 wrapped lines, and the canvas below them started ~1,900 px down the page. A
   // desktop has the room and opens the list. A press pins the learner's choice; until then the list
@@ -114,44 +156,26 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
   const checksOpen = checksChoice ?? !phone;
   const checksId = useId();
 
-  // The write that has not landed yet, and the timer that will land it. The lesson id is captured
-  // beside the document: a flush that ran after a lesson switch would otherwise file P.1's work
-  // under P.2's key.
-  const pending = useRef<{ lesson: string; doc: WorkflowDoc } | null>(null);
-  const timer = useRef<number | null>(null);
-
-  const flush = useCallback(() => {
-    if (timer.current !== null) {
-      window.clearTimeout(timer.current);
-      timer.current = null;
-    }
-    const entry = pending.current;
-    if (!entry) return;
-    pending.current = null;
-    setStatus(saveWorkflow(entry.lesson, entry.doc) ? 'Saved' : NOT_SAVED);
-  }, []);
-
+  // ⌘Z / ⌘⇧Z (Ctrl on other platforms), the editor's own pair, plus the Windows redo habit Ctrl+Y.
+  // A focused field keeps its native undo; a hidden tab has no root box and listens to nothing.
+  const root = useRef<HTMLDivElement | null>(null);
+  const steps = useRef({ undo, redo });
+  steps.current = { undo, redo };
   useEffect(() => {
-    flush();
-    const stored = readWorkflow(lessonId);
-    setDoc(stored);
-    setSelectedId(null);
-    setSelectedEdgeId(null);
-    setStatus('');
-    setConfirmClear(false);
-    setPendingTemplate(null);
-    setTemplatesOpen(false);
-    setGrouping(false);
-    setLaning(false);
-    // Seen once means closed from then on, even on a lesson with no workflow: `stored` is not the
-    // question here — an empty tab is exactly where a learner who dismissed the guide expects the
-    // one-press toggle, not the three-item card again.
-    setHowTo(!readWorkflowGuideSeen());
-  }, [lessonId, flush]);
-
-  // Leaving the card is leaving the editor: the pending write lands with the lesson id it was typed
-  // under, and an unmount cannot drop a keystroke.
-  useEffect(() => () => flush(), [flush]);
+    const onKey = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
+      const key = event.key.toLowerCase();
+      const forward = key === 'y' || (key === 'z' && event.shiftKey);
+      if (key !== 'z' && !forward) return;
+      const target = event.target as Element | null;
+      if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (!root.current?.getClientRects().length) return;
+      event.preventDefault();
+      (forward ? steps.current.redo : steps.current.undo)();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   // Start the canvas chunk the moment the tab opens, not on the press that first needs it: the
   // boundary is there to keep the tab off a first paint, not to make "Start blank" wait.
@@ -159,290 +183,50 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
     void import('./WorkflowCanvas.tsx');
   }, []);
 
-  const commit = (next: WorkflowDoc) => {
-    const stamped = { ...next, updatedAt: Date.now() };
-    setDoc(stamped);
-    pending.current = { lesson: lessonId, doc: stamped };
-    if (timer.current !== null) window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(flush, 500);
-  };
-
-  const updateNode = (id: string, patch: Partial<WorkflowNode>) => {
-    if (!doc) return;
-    commit({
-      ...doc,
-      nodes: doc.nodes.map((node) => (node.id === id ? { ...node, ...patch } : node)),
-    });
-  };
-
-  const moveNode = (id: string, x: number, y: number) => {
-    if (!doc) return;
-    const node = doc.nodes.find((entry) => entry.id === id);
-    if (!node || (node.x === x && node.y === y)) return;
-    commit({ ...doc, nodes: doc.nodes.map((entry) => (entry.id === id ? { ...entry, x, y } : entry)) });
-  };
-
-  /** A frame drag reports every member, so the whole move is one document and one write. */
-  const moveNodes = (moves: { id: string; x: number; y: number }[]) => {
-    if (!doc) return;
-    const byId = new Map(moves.map((move) => [move.id, move]));
-    let changed = false;
-    const nodes = doc.nodes.map((node) => {
-      const move = byId.get(node.id);
-      if (!move || (node.x === move.x && node.y === move.y)) return node;
-      changed = true;
-      return { ...node, x: move.x, y: move.y };
-    });
-    if (changed) commit({ ...doc, nodes });
-  };
-
-  const addNode = (kind: StepKind) => {
-    if (!doc) return;
-    const next = addWorkflowNode(doc, kind);
-    if (!next) {
-      // The one place the bound is felt: a card that would not survive the next write is not added
-      // at all, and the header says why. Flush first, so the previous add's "Saved" cannot land
-      // half a second later and wipe the sentence that explains the refusal.
-      flush();
-      setStatus(`A workflow holds at most ${MAX_STEPS} cards — remove one before adding another`);
-      return;
-    }
-    commit(next);
-    selectNode(next.nodes[next.nodes.length - 1].id);
-    setStatus('');
-  };
-
-  const removeNode = (id: string) => {
-    if (!doc) return;
-    const remaining = doc.nodes.filter((node) => node.id !== id);
-    const keptEdges = doc.edges.filter((edge) => edge.from !== id && edge.to !== id);
-    if (selectedId === id) setSelectedId(null);
-    if (remaining.length === 0) {
-      // A workflow with no cards is not a diagram: the lesson goes back to its empty state rather
-      // than storing a document the panel would have to pretend is a flow.
-      clearWorkflow(lessonId);
-      pending.current = null;
-      setDoc(null);
-      setStatus('Workflow cleared');
-      return;
-    }
-    const lostEdges = doc.edges.length - keptEdges.length;
-    if (selectedEdgeId && !keptEdges.some((edge) => edge.id === selectedEdgeId)) {
-      setSelectedEdgeId(null);
-    }
-    // A frame loses the card but keeps its name and the rest: membership is about cards, not ids
-    // that once existed. A frame left with nothing goes, because it named nothing any more.
-    const nextGroups = (doc.groups ?? [])
-      .map((group) => ({ ...group, nodeIds: group.nodeIds.filter((member) => member !== id) }))
-      .filter((group) => group.nodeIds.length);
-    const nextLanes = (doc.lanes ?? [])
-      .map((lane) => ({ ...lane, nodeIds: lane.nodeIds.filter((member) => member !== id) }))
-      .filter((lane) => lane.nodeIds.length);
-    const next = { ...doc, nodes: remaining, edges: keptEdges };
-    if (nextGroups.length) next.groups = nextGroups;
-    else delete next.groups;
-    if (nextLanes.length) next.lanes = nextLanes;
-    else delete next.lanes;
-    commit(next);
-    setStatus(lostEdges ? 'Card removed — its arrows went with it' : 'Card removed');
-  };
-
-  /**
-   * The frame a drawn box asked for.
-   *
-   * A card belongs to one frame, so grouping cards that already sit in one moves them: the old frame
-   * keeps the cards it still has, and disappears if that is none. A new frame starts named by its
-   * position, and the name is edited on the frame itself.
-   */
-  const groupCards = (nodeIds: string[]) => {
-    if (!doc) return;
+  // A lesson switch clears the view flags the editor does not own. The document, its selection, its
+  // history and the pending clear are reset by `useWorkflowEditor`.
+  useEffect(() => {
+    setPendingTemplate(null);
+    setTemplatesOpen(false);
     setGrouping(false);
-    if (!nodeIds.length) {
-      setStatus('Drag across cards to frame them');
-      return;
-    }
-    const kept = (doc.groups ?? [])
-      .map((group) => ({ ...group, nodeIds: group.nodeIds.filter((id) => !nodeIds.includes(id)) }))
-      .filter((group) => group.nodeIds.length);
-    const group: WorkflowGroup = { title: `Group ${kept.length + 1}`, nodeIds };
-    commit({ ...doc, groups: [...kept, group] });
-    selectNode(null);
-    setStatus('');
-  };
-
-  const renameGroup = (index: number, title: string) => {
-    if (!doc) return;
-    commit({
-      ...doc,
-      groups: (doc.groups ?? []).map((group, at) => (at === index ? { ...group, title } : group)),
-    });
-  };
-
-  const removeGroup = (index: number) => {
-    if (!doc) return;
-    const groups = (doc.groups ?? []).filter((_, at) => at !== index);
-    const next = { ...doc };
-    if (groups.length) next.groups = groups;
-    else delete next.groups;
-    commit(next);
-    setStatus('Frame removed');
-  };
-
-  /**
-   * The partition a drawn box asked for.
-   *
-   * The same gesture as a frame, a different claim: these cards are owned by one group of people.
-   * A card belongs to one lane, so drawing over cards already in one moves them, and the old lane is
-   * dropped if that was all it named.
-   */
-  const laneCards = (nodeIds: string[]) => {
-    if (!doc) return;
     setLaning(false);
-    if (!nodeIds.length) {
-      setStatus('Drag across cards to put them in a lane');
+    // Seen once means closed from then on, even on a lesson with no workflow: an empty tab is
+    // exactly where a learner who dismissed the guide expects the one-press toggle, not the
+    // three-item card again.
+    setHowTo(!readWorkflowGuideSeen());
+  }, [lessonId]);
+
+  const openNodeLesson = (id: string) => {
+    if (!id) return;
+    if (!isKnownLesson(id)) {
+      setStatus(`No lesson “${id}” — pick one from the list`);
       return;
     }
-    const lanes = withLane(doc.lanes ?? [], nodeIds, `Lane ${(doc.lanes?.length ?? 0) + 1}`);
-    if (lanes.length > MAX_LANES) {
-      setStatus(`A workflow holds at most ${MAX_LANES} lanes — remove one before drawing another`);
-      return;
-    }
-    commit({ ...doc, lanes });
-    selectNode(null);
-    setStatus('');
+    onOpenLesson?.(id);
   };
 
-  const renameLane = (index: number, title: string) => {
-    if (!doc) return;
-    commit({ ...doc, lanes: retitleLane(doc.lanes ?? [], index, title) });
-  };
-
-  const removeLane = (index: number) => {
-    if (!doc) return;
-    const lanes = withoutLane(doc.lanes ?? [], index);
-    const next = { ...doc };
-    if (lanes.length) next.lanes = lanes;
-    else delete next.lanes;
-    commit(next);
-    setStatus('Lane removed');
-  };
-
-  const connect = (
-    from: string,
-    to: string,
-    fromSide: WorkflowSide,
-    toSide: WorkflowSide,
-    fromPort: PortKind | null,
-    toPort: PortKind | null
+  /** A drag that left a dot and ended on bare paper: the default card, or the picker when asked. */
+  const dropLink = (
+    draft: LinkDraft,
+    at: { x: number; y: number },
+    client: { x: number; y: number },
+    picker: boolean
   ) => {
     if (!doc) return;
-    if (from === to) {
-      setStatus('A card cannot feed itself — connect it to the next one instead');
+    if (!picker && dropDefault !== 'ask' && STEPS_BY_MODE[doc.mode].includes(dropDefault)) {
+      spawnLinked(dropDefault, at, draft);
       return;
     }
-    if (doc.edges.some((edge) => edge.from === from && edge.to === to)) {
-      setStatus('That arrow is already drawn');
-      return;
-    }
-    if (doc.edges.length >= MAX_EDGES) {
-      setStatus(`A workflow holds at most ${MAX_EDGES} arrows — remove one before drawing another`);
-      return;
-    }
-    // A dot that already carries a socket hands it to the new arrow, so extending a power run
-    // keeps it power; a dot with nothing plugged in adds no field at all.
-    const edge: WorkflowEdge = {
-      id: nextEdgeId(doc.edges),
-      from,
-      to,
-      fromSide,
-      toSide,
-      ...(fromPort ? { fromPort } : {}),
-      ...(toPort ? { toPort } : {}),
-    };
-    commit({ ...doc, edges: [...doc.edges, edge] });
-    setStatus('Arrow added');
+    setMenu({ x: client.x, y: client.y, onPickKind: (kind) => spawnLinked(kind, at, draft) });
   };
 
-  const disconnect = (edgeId: string) => {
-    if (!doc) return;
-    commit({ ...doc, edges: doc.edges.filter((edge) => edge.id !== edgeId) });
-    if (selectedEdgeId === edgeId) setSelectedEdgeId(null);
-    setStatus('Arrow removed');
-  };
-
-  /** The arrow's kind. `flow` is stored as an absent field (see `withEdgeType`). */
-  const setEdgeType = (edgeId: string, type: WorkflowEdgeType) => {
-    if (!doc) return;
-    commit({
-      ...doc,
-      edges: doc.edges.map((edge) => (edge.id === edgeId ? withEdgeType(edge, type) : edge)),
-    });
-    setStatus(`Arrow set to ${type}`);
-  };
-
-  const setEdgeLabel = (edgeId: string, label: string) => {
-    if (!doc) return;
-    commit({
-      ...doc,
-      edges: doc.edges.map((edge) => {
-        if (edge.id !== edgeId) return edge;
-        const next = { ...edge };
-        if (label) next.label = label;
-        else delete next.label;
-        return next;
-      }),
-    });
-  };
-
-  /**
-   * The condition under which a decision takes this one exit.
-   *
-   * Written on the arrow rather than the card so two exits can differ. Clearing it removes the field,
-   * and the branch card's own condition takes over again — the text an old document already shows.
-   */
-  const setEdgeGuard = (edgeId: string, guard: string) => {
-    if (!doc) return;
-    commit({
-      ...doc,
-      edges: doc.edges.map((edge) => {
-        if (edge.id !== edgeId) return edge;
-        const next = { ...edge };
-        if (guard) next.guard = guard;
-        else delete next.guard;
-        return next;
-      }),
-    });
-  };
-
-  /** Which socket one end of an arrow plugs into; `null` returns it to the kind's own. */
-  const setEdgePort = (edgeId: string, end: 'from' | 'to', kind: PortKind | null) => {
-    if (!doc) return;
-    commit({
-      ...doc,
-      edges: doc.edges.map((edge) => (edge.id === edgeId ? withEdgePort(edge, end, kind) : edge)),
-    });
-  };
-
-  /** A card press clears the arrow inspector: one selection, so the palette edits what is ringed. */
-  const selectNode = (id: string | null) => {
-    setSelectedId(id);
-    if (id) setSelectedEdgeId(null);
-  };
-
-  const selectEdge = (id: string | null) => {
-    setSelectedEdgeId(id);
-    if (id) setSelectedId(null);
-  };
-
+  /** Starting a document closes the picker and the guide; the editor writes the document itself. */
   const applyTemplate = (template: WorkflowTemplate) => {
-    const built = template.build();
-    commit(built);
-    selectNode(built.nodes[0]?.id ?? null);
+    startFrom(template);
     setTemplatesOpen(false);
     setPendingTemplate(null);
     setHowTo(false);
     markWorkflowGuideSeen();
-    setStatus(`Started from “${template.name}”`);
   };
 
   const chooseTemplate = (template: WorkflowTemplate) => {
@@ -465,17 +249,10 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
       .catch(() => setStatus('Copy was blocked — the browser refused the clipboard'));
   };
 
-  const focusIssue = (issue: WorkflowIssue) => {
-    if (issue.stepId) selectNode(issue.stepId);
-  };
-
   const startBlank = () => {
-    const built = emptyWorkflow('analysis', lessonTitle);
-    commit(built);
-    selectNode(built.nodes[0].id);
+    startBlankDoc();
     markWorkflowGuideSeen();
     setHowTo(false);
-    setStatus('Started a blank workflow');
   };
 
   const lessonTemplate = templateForLesson(lessonId);
@@ -519,6 +296,7 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
   if (!doc) {
     return (
       <div
+        ref={root}
         data-testid="panel-workflow"
         className="flex h-full min-h-0 flex-col rounded-xl border border-line bg-panel p-4"
       >
@@ -527,11 +305,37 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
             <GitBranch className="h-4 w-4" aria-hidden="true" />
             Workflow <span className="text-faint">· {lessonTitle}</span>
           </span>
-          {status && (
-            <span role="status" data-testid="workflow-status" className="font-mono text-[11px] text-faint">
-              {status}
-            </span>
-          )}
+          <span className="flex items-center gap-1.5">
+            {status && (
+              <span role="status" data-testid="workflow-status" className="font-mono text-[11px] text-faint">
+                {status}
+              </span>
+            )}
+            {historySize.past > 0 && (
+              <button
+                type="button"
+                data-testid="workflow-undo"
+                onClick={undo}
+                title="Undo (⌘Z)"
+                aria-keyshortcuts="Meta+Z Control+Z"
+                className="btn btn-ghost h-8 px-2 font-mono text-[10.5px]"
+              >
+                Undo
+              </button>
+            )}
+            {historySize.future > 0 && (
+              <button
+                type="button"
+                data-testid="workflow-redo"
+                onClick={redo}
+                title="Redo (⌘⇧Z)"
+                aria-keyshortcuts="Meta+Shift+Z Control+Y"
+                className="btn btn-ghost h-8 px-2 font-mono text-[10.5px]"
+              >
+                Redo
+              </button>
+            )}
+          </span>
         </div>
 
         <div data-testid="workflow-empty" className="mt-3">
@@ -579,10 +383,16 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
     );
   }
 
+  const selectedNode = selectedId ? (doc.nodes.find((node) => node.id === selectedId) ?? null) : null;
+  const selectedLane = selectedNode ? laneIndexOf(doc.lanes, selectedNode.id) : -1;
+
   return (
     <div
+      ref={root}
       data-testid="panel-workflow"
-      className="flex h-full min-h-0 flex-col rounded-xl border border-line bg-panel p-4"
+      className={`flex min-h-0 flex-col bg-panel p-4 ${
+        full ? 'fixed inset-0 z-50 overflow-auto' : 'h-full rounded-xl border border-line'
+      }`}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="flex min-w-0 items-center gap-1.5 font-mono text-[13px] text-accent">
@@ -590,8 +400,41 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
           <span className="truncate">Workflow</span>{' '}
           <span className="truncate text-faint">· {lessonTitle}</span>
         </span>
-        <span role="status" data-testid="workflow-status" className="font-mono text-[11px] text-faint">
-          {status}
+        <span className="flex items-center gap-1.5">
+          <span role="status" data-testid="workflow-status" className="font-mono text-[11px] text-faint">
+            {status}
+          </span>
+          <button
+            type="button"
+            data-testid="workflow-undo"
+            onClick={undo}
+            disabled={!historySize.past}
+            title="Undo (⌘Z)"
+            aria-keyshortcuts="Meta+Z Control+Z"
+            className="btn btn-ghost h-8 px-2 font-mono text-[10.5px] disabled:opacity-40"
+          >
+            Undo
+          </button>
+          <button
+            type="button"
+            data-testid="workflow-redo"
+            onClick={redo}
+            disabled={!historySize.future}
+            title="Redo (⌘⇧Z)"
+            aria-keyshortcuts="Meta+Shift+Z Control+Y"
+            className="btn btn-ghost h-8 px-2 font-mono text-[10.5px] disabled:opacity-40"
+          >
+            Redo
+          </button>
+          <button
+            type="button"
+            data-testid="workflow-fullscreen"
+            aria-pressed={full}
+            onClick={toggleFull}
+            className="btn btn-ghost h-8 px-2 font-mono text-[10.5px]"
+          >
+            {full ? 'Exit full' : 'Full screen'}
+          </button>
         </span>
       </div>
 
@@ -603,10 +446,7 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
               type="button"
               data-testid={`workflow-mode-${mode}`}
               aria-pressed={doc.mode === mode}
-              onClick={() => {
-                if (doc.mode === mode) return;
-                commit({ ...doc, mode });
-              }}
+              onClick={() => setMode(mode)}
               className={`min-h-9 cursor-pointer rounded border px-2 py-0.5 font-mono text-[11px] ${
                 doc.mode === mode
                   ? 'border-accent/60 bg-accent/10 text-accent'
@@ -617,13 +457,39 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
             </button>
           ))}
         </div>
+        <label className="flex items-center gap-1 font-mono text-[10.5px] text-faint">
+          Drop
+          <select
+            data-testid="workflow-drop-default"
+            aria-label="Card an arrow drop creates"
+            title="Dragging a dot onto paper makes this card. Alt asks."
+            value={
+              STEPS_BY_MODE[doc.mode].some((kind) => kind === dropDefault) ? dropDefault : 'ask'
+            }
+            onChange={(event) => {
+              const value = event.target.value as StepKind | 'ask';
+              if (value !== 'ask' && !STEPS_BY_MODE[doc.mode].includes(value)) return;
+              setDropDefault(value);
+              saveDropDefault(value);
+              setStatus(value === 'ask' ? 'Arrow drops ask' : `Arrow drops: ${KIND_META[value].label}`);
+            }}
+            className="min-h-9 rounded border border-line bg-canvas px-1 font-mono text-[11px] text-body outline-none focus-visible:outline-2 focus-visible:outline-accent"
+          >
+            <option value="ask">Ask</option>
+            {STEPS_BY_MODE[doc.mode].map((kind) => (
+              <option key={kind} value={kind}>
+                {KIND_META[kind].label}
+              </option>
+            ))}
+          </select>
+        </label>
         <input
           data-testid="workflow-title"
           aria-label="Workflow title"
           value={doc.title}
           placeholder={lessonTitle}
           maxLength={MAX_WORKFLOW_TITLE_CHARS}
-          onChange={(event) => commit({ ...doc, title: event.target.value })}
+          onChange={(event) => setTitle(event.target.value)}
           className="min-w-0 flex-1 rounded border px-2 py-1 text-[12.5px] font-semibold outline-none"
           style={{ borderColor: 'var(--border)', backgroundColor: 'var(--canvas)', color: 'var(--text)' }}
         />
@@ -712,25 +578,60 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
           onMove={moveNode}
           onUpdate={updateNode}
           onRemove={removeNode}
+          onOpenLesson={openNodeLesson}
           onConnect={connect}
           onDisconnect={disconnect}
+          onDropLink={dropLink}
           selectedEdgeId={selectedEdgeId}
           onSelectEdge={selectEdge}
           onEdgeType={setEdgeType}
           onEdgeLabel={setEdgeLabel}
           onEdgeGuard={setEdgeGuard}
           onEdgePort={setEdgePort}
+          onEdgeRoute={setEdgeRoute}
           onMoveMany={moveNodes}
           grouping={grouping}
-          onGroupCards={groupCards}
+          onGroupCards={(ids) => {
+            setGrouping(false);
+            groupCards(ids);
+          }}
           laning={laning}
-          onLaneCards={laneCards}
+          onLaneCards={(ids) => {
+            setLaning(false);
+            createLane(ids);
+          }}
           onRenameGroup={renameGroup}
           onRemoveGroup={removeGroup}
           onRenameLane={renameLane}
           onRemoveLane={removeLane}
+          focusLane={focusLane}
+          onLaneNameFocused={() => setFocusLane(null)}
+          onMenu={setMenu}
+          onCopyNode={copyNode}
+          onCutNode={cutNode}
+          onPaste={pasteNode}
+          canPaste={canPaste}
+          fullscreen={full}
         />
       </Suspense>
+
+      {/* Below the paper, never above it: the inspector is in flow, so opening it must not move the
+          card the learner just pressed. */}
+      {selectedNode && (
+        <WorkflowSelectionInspector
+          node={selectedNode}
+          number={numbers.get(selectedNode.id) ?? 1}
+          lanes={doc.lanes ?? []}
+          laneIndex={selectedLane}
+          lessons={LESSON_CHOICES}
+          onNote={(note) => setNodeAnnotation(selectedNode.id, 'note', note)}
+          onLesson={(lesson) => setNodeAnnotation(selectedNode.id, 'lesson', lesson)}
+          onOpenLesson={openNodeLesson}
+          onLane={(choice) => assignLane(selectedNode.id, choice)}
+          onStyle={(patch) => updateNode(selectedNode.id, patch)}
+          onDismiss={() => selectNode(null)}
+        />
+      )}
 
       <div data-testid="workflow-add" className="mt-2 flex flex-wrap items-center gap-1.5">
         <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-faint">Add</span>
@@ -809,7 +710,7 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
         <button
           type="button"
           data-testid="workflow-clear"
-          onClick={() => setConfirmClear(true)}
+          onClick={() => armClear()}
           className="btn btn-ghost ml-auto text-[12px] text-rose"
         >
           <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
@@ -817,7 +718,7 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
         </button>
       </div>
 
-      {confirmClear && (
+      {clearOpen && (
         <div
           data-testid="workflow-clear-confirm"
           className="mt-1.5 flex flex-wrap items-center gap-1.5 rounded-lg border border-rose/40 bg-rose/5 px-2.5 py-2"
@@ -828,15 +729,7 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
           <button
             type="button"
             data-testid="workflow-clear-yes"
-            onClick={() => {
-              clearWorkflow(lessonId);
-              pending.current = null;
-              setDoc(null);
-              setSelectedId(null);
-              setSelectedEdgeId(null);
-              setConfirmClear(false);
-              setStatus('Workflow cleared');
-            }}
+            onClick={clearIt}
             className="btn btn-ghost text-[12px] text-rose"
           >
             Clear it
@@ -844,7 +737,7 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
           <button
             type="button"
             data-testid="workflow-clear-no"
-            onClick={() => setConfirmClear(false)}
+            onClick={disarmClear}
             className="btn btn-ghost text-[12px]"
           >
             Keep it
@@ -884,6 +777,10 @@ export function WorkflowPanel({ lessonId, lessonTitle }: WorkflowPanelProps) {
       <p className="mt-2 text-[11px] text-faint">
         Export copies the numbered flow, not the canvas. Nothing here blocks a run or a lesson.
       </p>
+
+      {menu && (
+        <WorkflowMenu request={menu} doc={doc} onAdd={addNode} onClose={() => setMenu(null)} />
+      )}
     </div>
   );
 }

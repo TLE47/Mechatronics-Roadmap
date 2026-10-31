@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import katex from 'katex';
+import { renderToString } from 'katex';
 
 interface MathViewProps {
   math: string;
@@ -10,7 +10,7 @@ interface MathViewProps {
 export const MathView: React.FC<MathViewProps> = ({ math, block = false, className = '' }) => {
   const html = useMemo(() => {
     try {
-      return katex.renderToString(math, {
+      return renderToString(math, {
         displayMode: block,
         throwOnError: false,
         trust: true,

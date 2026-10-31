@@ -58,8 +58,9 @@ above stated once. It is checked against `src/index.css` by `tests/test_theme_do
 drift from the stylesheet.
 
 The same table is in the app at `?view=theme`, linked from the footer
-([`src/components/ThemeTokens.tsx`](src/components/ThemeTokens.tsx)). It reads `index.css` with
-`?raw` and paints each value, so it needs no maintenance when a token is added; `npm run
+([`src/components/ThemeTokens.tsx`](src/components/ThemeTokens.tsx)). Its table is parsed out of
+`index.css` at build time (`virtual:theme-tokens` in `vite.config.ts`) and it paints each value, so it
+needs no maintenance when a token is added; `npm run
 test:theme:tokens` pins the parse and `npm run test:theme:e2e` checks the painted swatches in a
 browser. The page is a route, not a tab: the learner's rail is unchanged.
 
@@ -986,7 +987,31 @@ card stretches it, deleting one shrinks it, and the last card gone takes the fra
 is typed on the chip that hangs below the box, where the opening column always has room; the chip is
 drawn above the cards so its name and `×` are never buried, and its grip — or the frame's own paper —
 moves every card inside in one write, while the `×` removes the frame and keeps the cards. A card belongs to one frame, grouping cards that already sit in one moves them, and
-a document drawn before frames existed round-trips unchanged. The vertical pair is what lets a join or a loop leave the column without
+a document drawn before frames existed round-trips unchanged. A **lane** is the other half of that
+idea: the same drag with **Lane** armed makes a named activity partition (Mechanical, Firmware,
+Electronics), and its band is read from its cards so deleting one shrinks it. A lane cannot be
+dragged by its band — moving a card moves the band — and its name tab sits in 34 px reserved above
+the first card, clear of the top port dot.
+
+**A card's look is its own, and so is its maths.** Selecting a card also offers a fill, an ink and a
+size: the fill mixes 40% of a theme token forward over the panel so the colour reads at a glance, the
+ink recolours the card's words, and the size is any whole pixel from 9 to 24 — a slider, not three
+named steps — with the detail held one pixel under the title. All three are optional and written only
+when chosen, so a document saved before them gains no field; the two old steps (`sm`, `lg`) still
+read and draw at 11 and 14 px, and a fork/join bar (which has no words) offers only the fill. They
+are token names rather than hexes, so the card keeps its contrast in all four palettes. A field
+holding `$…$` is drawn by KaTeX through the reader's own inline parser and shows its source while
+focused; both exports carry the source unchanged.
+
+**A card can carry a note and a lesson link without becoming another card.** Selecting a card opens
+one small inspector below the paper: a note box, a lesson picker with **Open**, and the lane picker.
+Both fields are optional and clearing one deletes it, so a document saved before either existed gains
+no field; a bar has no note or link by design. The note shows as a one-line footer on its card, the
+link as a button that opens the chosen lesson, Copy Mermaid writes each as a comment on its own node,
+and Copy Markdown lists them under the numbered step. The lane picker is also the keyboard's whole
+path to a partition: **New lane…** appends one and puts the caret in its name field, an existing lane
+moves the card, and **No lane** keeps the card while dropping the claim. Fork and join bars nudge
+with the same arrow keys as a card (8 px, 32 with Shift). The vertical pair is what lets a join or a loop leave the column without
 crossing the chain; only left and right carry reading order. It is a view of
 the same card, so it tabs and splits like the outputs and its arrangement is remembered; cards also
 nudge with the arrow keys, and the surface is capped at 70% of the viewport and scrolls inside that,
@@ -1003,13 +1028,66 @@ checklist's "Step 3" and the Markdown numbering are one reading order, so advice
 card it is about. P.15 opens on its own example; any lesson can start from one of six templates or a
 single Given card; the three-line how-to is always one press away; Copy Mermaid and Copy Markdown
 export the numbered flow,
-and a version-1 list is migrated on read, its branches becoming labelled arrows. The study panel
+and a version-1 list is migrated on read, its branches becoming labelled arrows.
+
+**The palette is not the only way in.** A **right-click on empty paper** opens a list of the cards
+that palette offers, and the card it makes lands where the press was — the pointer says where, the
+menu says what, so a flow can be sketched without a trip down to the Add row. **A card's own menu**
+is where its look and its clipboard live: the same five colours and "no fill" the inspector draws,
+then Copy, Cut and Remove — one card's words and look, arrows deliberately left behind — while bare
+paper with a clip in hand offers **Paste** and drops the copy at the pressed point. A fork/join bar
+gets the colours, Copy and Cut as well; a lane, a frame or an arrow opens the same list anchored on
+that part with the one action its own small control already offers. The list is a menu, not a dialog: the first item takes focus, Tab
+walks the rest, `Esc` closes it, and a press anywhere else lands on a thin backdrop first, so the
+click that dismisses the menu never also pans the paper. Tabbing past the last item closes it too,
+and every exit — a pick, `Esc`, the backdrop, a lost focus — puts the caret back on the paper, so the
+next `Shift+F10` needs no mouse. `Shift+F10` or the Menu key opens it from the keyboard where the
+paper has focus. **Full screen** is one button in the panel's own header and
+one `Esc` out: the panel covers the viewport, the paper loses its 70% cap and takes a 75vh floor, the
+palette and the inspector keep working because it is the same pane rather than a copy, the page behind
+it cannot scroll, and leaving puts the pane and the page's scroll back where they were. Neither is
+stored: a reload opens the panel in its normal frame with no zoom and no menu.
+
+**A drag from a dot can end by making the card it was heading for.** Released on bare paper, the
+drag opens the palette at the release point; the card it makes is written together with its arrow in
+one document write, so no half-drawn arrow is left behind. The **Drop** control beside the mode
+switch may remember one card kind: with a default set, the same drag is one gesture, while
+`Alt`/`Option` still opens the picker. That preference is a canvas setting, stored outside the
+document. **Text** is the palette's label kind: its title and detail sit on the paper with no plate,
+border or shadow, and it takes every existing gesture — drag, nudge, ports, arrows, frames, lanes,
+copy and paste. **An arrow's route** is chosen in its own inspector: curved (the default, and what
+every older arrow keeps), rounded, a right angle, or straight. A straight line is drawn only when its
+two dots are level; on a diagonal it borrows the rounded elbow rather than cutting across the paper.
+Routing is presentation, so neither export changes and an unset route writes no field (see
+[`src/components/workflow/canvasGeometry.ts`](src/components/workflow/canvasGeometry.ts) and
+`npm run test:geometry`). **Undo covers every edit** — moves, cuts, removals, additions, paste,
+dropped cards, routes, frames, lanes and a cleared diagram — with `⌘Z`/`Ctrl+Z` back and
+`⌘⇧Z`/`Ctrl+Y` forward, plus the header's Undo/Redo buttons; a run of typing in a focused field is one
+step, a new edit after an undo drops the redo branch, and the history is memory only (see
+[`src/workflowHistory.ts`](src/workflowHistory.ts) and `npm run test:workflow`).
+
+**Where a workflow action lives.** The canvas's document has one owner:
+[`src/components/workflow/useWorkflowEditor.ts`](src/components/workflow/useWorkflowEditor.ts)
+holds the document, its selection, history, pending save and clipboard, and returns one command per
+action. The panel, the canvas, the press menu, the inspector and the keyboard shortcuts all call
+those commands, so a new action is a command in the editor plus the surface that offers it — never a
+new mutation in the panel. The structural rules under those commands are pure functions in
+[`src/workflowEdits.ts`](src/workflowEdits.ts) (a last card clears the lesson, a removed card leaves
+its frames and lanes, an arrow cannot point at its own card), testable without a browser.
+`WorkflowPanel.tsx` is then layout and view state: which guide, picker, menu or confirmation is open,
+and where the palette, paper and inspector sit.
+
+The study panel
 summarises the flow and can append it to the note
-([`src/workflow.ts`](src/workflow.ts), [`src/workflowStore.ts`](src/workflowStore.ts),
+([`src/workflow.ts`](src/workflow.ts), [`src/workflowClipboard.ts`](src/workflowClipboard.ts),
+[`src/workflowStore.ts`](src/workflowStore.ts),
 [`src/components/WorkflowPanel.tsx`](src/components/WorkflowPanel.tsx),
 [`src/components/WorkflowCanvas.tsx`](src/components/WorkflowCanvas.tsx) with its
 [`src/components/workflow/`](src/components/workflow/) pieces, `npm run test:workflow`, and
-the browser suite for spawning, dragging, drawing an arrow, the unit item and the reload).
+the browser suite for spawning, dragging, drawing an arrow, the unit item and the reload). The
+[`src/workflowEdits.ts`](src/workflowEdits.ts) algebra and
+[`src/components/workflow/useWorkflowEditor.ts`](src/components/workflow/useWorkflowEditor.ts)
+editor keep the panel to layout: see *Where a workflow action lives* above.
 
 **A panel can sit on either edge.** The presets decide what is on screen; **docking** decides which
 side. Study's lesson text can move to the right of the work area, and Debug's results to the left of
@@ -1471,9 +1549,11 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/workflow.ts`](src/workflow.ts) | The learner's workflow as data: the two palettes, nodes and typed arrows, the five socket kinds an arrow's ends derive or override, the one reading order, the eight advisory checks, the version-1 migration, and the Mermaid and Markdown exports. |
 | [`src/workflowStore.ts`](src/workflowStore.ts) | One workflow per lesson in the bulk bucket: the refused write, the backup entry, and the newer-wins merge a restore uses. |
 | [`src/workflowTemplates.ts`](src/workflowTemplates.ts) | Six seeded flows in both palettes, one blank, each laid out as a connected column with its arrows drawn, and the single lesson that opens on its own example. |
-| [`src/components/WorkflowPanel.tsx`](src/components/WorkflowPanel.tsx) | The Workflow tab's container: owns the document, its debounced save, the selected card and every mutation; validates once per document and composes the canvas (behind a lazy boundary), picker and guide. |
+| [`src/components/WorkflowPanel.tsx`](src/components/WorkflowPanel.tsx) | The Workflow tab's layout and view state: the guide, picker, press menu and confirmations it opens, the toolbar and checklist it draws, and the canvas (behind a lazy boundary) and inspector it composes; the document itself belongs to the editor hook. |
+| [`src/components/workflow/useWorkflowEditor.ts`](src/components/workflow/useWorkflowEditor.ts) | The workflow editor: the document, its selected card or arrow, its history, its debounced save and clipboard, and one command per action — the single owner every surface calls. |
+| [`src/workflowEdits.ts`](src/workflowEdits.ts) | The document algebra behind those commands, pure and without React: node edits, moves, removal with its frames and lanes, linked spawns, arrows, and frames. |
 | [`src/components/WorkflowCanvas.tsx`](src/components/WorkflowCanvas.tsx) | The node canvas's surface and composition: the scroll pane, the scaled grid, the fit button, and the wiring of the viewport, the cards and the arrows. Each concern beside it is readable alone. |
-| [`src/components/workflow/`](src/components/workflow/) | The canvas's parts: `canvasGeometry.ts` (dots, bends, facing sides and frame boxes — pure), `useViewport.ts` (scale, Fit/100%, drag-pan and arrow-key pan), `useNodeDrag.ts` (one card's or one frame's drag held in pixels until release), `useMarquee.ts` (the box that groups cards), `useLinking.ts` (the arrow being drawn, dot-to-dot or tap-then-tap), `useNodeHeights.ts` (the measured heights the four dots need), `WorkflowNodeCard.tsx` (one editable card and its four lettered sockets), `WorkflowGroupFrame.tsx` (one named frame, its name chip and its remove control) and `WorkflowEdges.tsx` (paths, one arrowhead per kind, the styles palette the kind chip opens with the socket choice for each end, the dashed preview and the edge controls). |
+| [`src/components/workflow/`](src/components/workflow/) | The canvas's parts: `canvasGeometry.ts` (dots, bends, facing sides, frame and lane boxes — pure), `cardNudge.ts` (the 8/32 px arrow-key step a card and a bar share), `cardStyle.ts` (the token→variable table, the plate's tint, the card's ink and its type scale), `CardSwatches.tsx` (the colour row the inspector and the press menu share), `useViewport.ts` (scale, Fit/100%, drag-pan and arrow-key pan), `useNodeDrag.ts` (one card's or one frame's drag held in pixels until release), `useMarquee.ts` (the box that groups cards or draws a lane), `useLinking.ts` (the arrow being drawn, dot-to-dot or tap-then-tap), `useNodeHeights.ts` (the measured heights the four dots need), `WorkflowNodeCard.tsx` (one editable card and its four lettered sockets), `WorkflowForkJoinCard.tsx` (a concurrency bar), `WorkflowGroupFrame.tsx` (one named frame, its name chip and its remove control), `WorkflowLaneBand.tsx` (one activity partition, its band and name tab), `WorkflowSelectionInspector.tsx` (the selected card's note, lesson link, lane picker, colour swatches and size slider), `WorkflowMenu.tsx` (the press list: a card's colours and clipboard items, Paste on paper, its backdrop, its clamp to the viewport and its Escape) and `WorkflowEdges.tsx` (paths, one arrowhead per kind, the styles palette the kind chip opens with the socket choice for each end, the dashed preview and the edge controls). |
 | [`src/components/TemplatePicker.tsx`](src/components/TemplatePicker.tsx) | The two palettes of seeded flows, as starting shapes to edit. |
 | [`src/components/HowToCard.tsx`](src/components/HowToCard.tsx) | The three-line guide to the tab; whether it is open is the container's policy. |
 | [`src/watchMode.ts`](src/watchMode.ts) | When the checks may re-run themselves — after a graded failure, on an edited buffer, never past the gate — and the remembered toggle. |

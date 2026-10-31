@@ -23,15 +23,28 @@
 import assert from 'node:assert/strict';
 import { Window } from 'happy-dom';
 import {
+  HISTORY_BURST_MS,
+  MAX_HISTORY,
+  emptyHistory,
+  recordHistory,
+  stepHistory,
+} from '../app/src/workflowHistory.ts';
+import {
   MAX_GROUP_TITLE_CHARS,
   MAX_BRANCH_CONDITION_CHARS,
   MAX_EDGES,
+  MAX_FONT_SIZE,
   MAX_NODE_COORD,
   MAX_STEPS,
+  MIN_FONT_SIZE,
   MAX_STEP_DETAIL_CHARS,
+  MAX_STEP_LESSON_CHARS,
+  MAX_STEP_NOTE_CHARS,
   MAX_STEP_TITLE_CHARS,
   MAX_STEP_UNIT_CHARS,
   MAX_WORKFLOW_TITLE_CHARS,
+  EDGE_ROUTES,
+  EDGE_ROUTE_LABEL,
   EDGE_TYPE_LABEL,
   KIND_META,
   NODE_SHAPE,
@@ -44,9 +57,11 @@ import {
   edgeCaption,
   edgeLabelFor,
   edgePortOf,
+  edgeRouteOf,
   edgeTypeOf,
   socketKinds,
   withEdgePort,
+  withEdgeRoute,
   emptyWorkflow,
   nextEdgeId,
   nextStepId,
@@ -59,6 +74,18 @@ import {
   workflowToMermaid,
   withEdgeType,
 } from '../app/src/workflow.ts';
+import { cardType } from '../app/src/components/workflow/cardStyle.ts';
+import {
+  annotateNode,
+  connectNodes,
+  groupCards,
+  linkNewNode,
+  moveNodes,
+  removeGroup,
+  removeNode,
+  renameGroup,
+} from '../app/src/workflowEdits.ts';
+import { clipCard, pasteCard } from '../app/src/workflowClipboard.ts';
 import {
   WORKFLOW_TEMPLATES,
   templateById,
@@ -71,11 +98,14 @@ import {
   forkJoinIssues,
   isForkJoin,
   laneBlocks,
+  laneIndexOf,
   laneMarkdown,
+  moveNodeToLane,
   readLanes,
   removeLane,
   renameLane,
   withLane,
+  withoutNodeFromLanes,
 } from '../app/src/workflowProcesses.ts';
 import {
   STORAGE_KEY_WORKFLOW,
@@ -326,6 +356,8 @@ check('text is cut to its own bound, never skipped', () => {
         title: 'x'.repeat(MAX_STEP_TITLE_CHARS + 20),
         detail: 'd'.repeat(MAX_STEP_DETAIL_CHARS + 20),
         unit: 'u'.repeat(MAX_STEP_UNIT_CHARS + 5),
+        note: 'n'.repeat(MAX_STEP_NOTE_CHARS + 5),
+        lesson: 'l'.repeat(MAX_STEP_LESSON_CHARS + 5),
       },
       { id: 's2', kind: 'answer', title: 'end', detail: '' },
     ],
@@ -335,7 +367,81 @@ check('text is cut to its own bound, never skipped', () => {
   assert.equal(normalized.nodes[0].title.length, MAX_STEP_TITLE_CHARS);
   assert.equal(normalized.nodes[0].detail.length, MAX_STEP_DETAIL_CHARS);
   assert.equal(normalized.nodes[0].unit.length, MAX_STEP_UNIT_CHARS);
+  assert.equal(normalized.nodes[0].note.length, MAX_STEP_NOTE_CHARS);
+  assert.equal(normalized.nodes[0].lesson.length, MAX_STEP_LESSON_CHARS);
   assert.equal(normalized.edges[0].label.length, MAX_BRANCH_CONDITION_CHARS);
+});
+
+check('a card’s fill, ink and size are theme tokens; junk and absence add no field', () => {
+  const styled = normalizeWorkflow(
+    graph([
+      { title: 'tinted', fill: 'amber', ink: 'rose', size: 'lg' },
+      { title: 'junk', fill: '#ff0000', ink: 'nonsense', size: 'xl' },
+    ])
+  );
+  assert.equal(styled.nodes[0].fill, 'amber');
+  assert.equal(styled.nodes[0].ink, 'rose');
+  assert.equal(styled.nodes[0].size, 'lg');
+  for (const field of ['fill', 'ink', 'size']) {
+    assert.equal(field in styled.nodes[1], false, `an unknown ${field} is dropped, not stored`);
+  }
+  for (const node of normalizeWorkflow(good).nodes) {
+    for (const field of ['fill', 'ink', 'size']) {
+      assert.equal(field in node, false, `a document saved before styling gains no ${field}`);
+    }
+  }
+  const small = normalizeWorkflow(graph([{ title: 'a', size: 'sm', fill: 'purple' }]));
+  assert.equal(small.nodes[0].size, 'sm');
+  assert.equal(small.nodes[0].fill, 'purple');
+  // Size is any whole pixel in the model's own range, not only the two steps an older document can
+  // hold: a number is kept as itself, one outside the range is dropped like any other junk.
+  const sized = normalizeWorkflow(
+    graph([
+      { title: 'free', size: 17 },
+      { title: 'too big', size: MAX_FONT_SIZE + 1 },
+      { title: 'too small', size: MIN_FONT_SIZE - 1 },
+      { title: 'rounded', size: 9.6 },
+      { title: 'not a number', size: '17' },
+    ])
+  );
+  assert.equal(sized.nodes[0].size, 17);
+  assert.equal('size' in sized.nodes[1], false, 'a size above the range is dropped');
+  assert.equal('size' in sized.nodes[2], false, 'and one below it');
+  assert.equal(sized.nodes[3].size, 10, 'a fractional size is rounded to the scale the slider offers');
+  assert.equal('size' in sized.nodes[4], false, 'a string size is not a number');
+  // The two named steps and the free scale draw from one mapping: a chosen pixel size keeps the
+  // detail one pixel under its title, and an unset card draws exactly where it always did.
+  assert.deepEqual(cardType(undefined), { title: 12, detail: 11 });
+  assert.deepEqual(cardType('lg'), { title: 14, detail: 12.5 });
+  assert.deepEqual(cardType(17), { title: 17, detail: 16 });
+});
+
+check('a copied card pastes with its words and look, as a new card and without its arrows', () => {
+  const source = normalizeWorkflow(
+    graph(
+      [
+        { kind: 'branch', title: 'Load $F$ ok?', detail: 'read the rail', condition: 'draw > 3 A', fill: 'amber', ink: 'rose', size: 15, note: 'check the supply', lesson: 'P.15' },
+        { kind: 'answer', title: 'done' },
+      ],
+      [{ from: 's1', to: 's2' }]
+    )
+  );
+  const clip = clipCard(source.nodes[0]);
+  const pasted = pasteCard(source, clip);
+  assert.ok(pasted, 'a document with room must paste');
+  assert.equal(pasted.nodes.length, source.nodes.length + 1, 'pasting adds one card');
+  const added = pasted.nodes[pasted.nodes.length - 1];
+  assert.notEqual(added.id, source.nodes[0].id, 'the copy takes an id of its own');
+  for (const field of ['kind', 'title', 'detail', 'condition', 'fill', 'ink', 'size', 'note', 'lesson']) {
+    assert.deepEqual(added[field], source.nodes[0][field], `the copy keeps ${field}`);
+  }
+  assert.deepEqual(pasted.edges, source.edges, 'and copies no arrow, which would have no second end');
+  const at = pasteCard(source, clip, { x: 400, y: 480 });
+  const centred = at.nodes[at.nodes.length - 1];
+  assert.ok(centred.x < 400 && centred.x + 200 > 400, 'a paste on paper centres the card on the press');
+  assert.ok(centred.y >= 440 && centred.y <= 480, 'and drops it under the pointer');
+  // Nothing on the clip carries the source's id or position into the new card.
+  assert.equal(pasted.nodes.filter((node) => node.id === added.id).length, 1, 'one card holds the new id');
 });
 
 check('an unknown kind becomes the mode’s opening card', () => {
@@ -731,6 +837,7 @@ check('every kind is drawn on the plate its meaning implies, and Mermaid draws i
       'test:gate',
       'output:stadium',
       'merge:diamond',
+      'text:rect',
       'fork:bar',
       'join:bar',
     ]
@@ -745,6 +852,7 @@ check('every kind is drawn on the plate its meaning implies, and Mermaid draws i
       { id: 's5', kind: 'merge', title: 'Paths meet', detail: '', ...autoNodePosition(4) },
       { id: 's6', kind: 'fork', title: '', detail: '', ...autoNodePosition(5) },
       { id: 's7', kind: 'join', title: '', detail: '', ...autoNodePosition(6) },
+      { id: 's8', kind: 'text', title: 'Look here', detail: '', ...autoNodePosition(7) },
     ],
   };
   const mermaid = workflowToMermaid(doc);
@@ -756,6 +864,8 @@ check('every kind is drawn on the plate its meaning implies, and Mermaid draws i
     '  n5{"Merge · Paths meet"}',
     '  n6[["Fork"]]',
     '  n7[["Join"]]',
+    // A text card is a label, so the export writes its words alone — no kind prefix on bare words.
+    '  n8["Look here"]',
   ]) {
     assert.ok(mermaid.includes(line), `${line} missing from\n${mermaid}`);
   }
@@ -791,6 +901,57 @@ check('Markdown numbers the cards and points a branch at the number on screen', 
       '3. **Answer** — Result — 5 A _(A)_',
     ].join('\n')
   );
+});
+
+check('a note and a lesson link are card metadata, exported without becoming another node', () => {
+  const annotated = normalizeWorkflow({
+    ...exporting,
+    nodes: exporting.nodes.map((node, index) =>
+      index === 0
+        ? { ...node, note: '  read the supply first  ', lesson: 'P.15' }
+        : node
+    ),
+  });
+  assert.equal(annotated.nodes[0].note, 'read the supply first');
+  assert.equal(annotated.nodes[0].lesson, 'P.15');
+  assert.equal('note' in annotated.nodes[1], false, 'a card without a note gains no field');
+  assert.equal('lesson' in annotated.nodes[1], false, 'a card without a link gains no field');
+  const mermaid = workflowToMermaid(annotated);
+  assert.match(mermaid, /^  %% note n1: read the supply first$/m);
+  assert.match(mermaid, /^  %% lesson n1: P\.15$/m);
+  // A node declaration opens a bracket (`[`, `([[`, `{[`); an arrow line never does.
+  assert.equal(
+    mermaid.split('\n').filter((line) => /^  n\d+[[({]/.test(line)).length,
+    3,
+    'metadata adds no node'
+  );
+  const markdown = workflowToMarkdown(annotated);
+  assert.match(markdown, /^1\. \*\*Given\*\* — Supply$/m);
+  assert.match(markdown, /^ {3}- note: read the supply first$/m);
+  assert.match(markdown, /^ {3}- lesson: P\.15$/m);
+  assert.equal(
+    normalizeWorkflow(exporting).nodes[0].note,
+    undefined,
+    'a document saved before notes gains no field'
+  );
+});
+
+check('maths in a card’s words is carried into both exports unchanged', () => {
+  const withMath = normalizeWorkflow(
+    graph(
+      [
+        { title: 'Force $F = ma$', detail: 'so $a = F/m$' },
+        { kind: 'answer', title: 'done' },
+      ],
+      [{ from: 's1', to: 's2' }]
+    )
+  );
+  assert.match(workflowToMermaid(withMath), /\$F = ma\$/);
+  const markdown = workflowToMarkdown(withMath);
+  assert.match(markdown, /\$F = ma\$/);
+  assert.match(markdown, /\$a = F\/m\$/);
+  // The source stays the document's text: a card is not rewritten when it is exported.
+  assert.equal(withMath.nodes[0].title, 'Force $F = ma$');
 });
 
 check('an unlabelled arrow that is not the next card is still written down', () => {
@@ -900,6 +1061,25 @@ check('control flow is stored as an absent field, so a kind-less document does n
     normalizeWorkflow(graph([{ kind: 'given', title: 'a' }, { kind: 'answer', title: 'b' }], [edge])).edges[0],
     { ...edge, id: 'e1' },
     'an arrow nobody classified carries no extra field'
+  );
+});
+
+check('a route is stored only off the default curve, and junk reads as curved', () => {
+  const edge = { id: 'e1', from: 's1', to: 's2', fromSide: 'right', toSide: 'left' };
+  assert.equal(edgeRouteOf(edge), 'curved', 'an arrow drawn before routes keeps the cubic it had');
+  assert.deepEqual([...EDGE_ROUTES], ['curved', 'rounded', 'elbow', 'straight']);
+  for (const route of EDGE_ROUTES) assert.ok(EDGE_ROUTE_LABEL[route], route);
+  assert.equal(withEdgeRoute({ ...edge, route: 'elbow' }, 'curved').route, undefined);
+  assert.equal(withEdgeRoute(edge, 'rounded').route, 'rounded');
+  const nodes = [{ kind: 'given', title: 'a' }, { kind: 'answer', title: 'b' }];
+  assert.equal(
+    normalizeWorkflow(graph(nodes, [{ from: 's1', to: 's2', route: 'diagonal' }])).edges[0].route,
+    undefined,
+    'a route this build does not draw is not stored'
+  );
+  assert.equal(
+    normalizeWorkflow(graph(nodes, [{ from: 's1', to: 's2', route: 'elbow' }])).edges[0].route,
+    'elbow'
   );
 });
 
@@ -1239,6 +1419,22 @@ check('moving cards between lanes leaves no card claimed twice, and a lane can b
   ], 'a lane that loses its last card goes');
   assert.deepEqual(renameLane(lanes, 1, '  Firm  ')[1], { title: 'Firm', nodeIds: ['s3'] });
   assert.deepEqual(removeLane(lanes, 0), [{ title: 'Firmware', nodeIds: ['s3'] }]);
+  assert.equal(laneIndexOf(lanes, 's3'), 1);
+  assert.equal(laneIndexOf(lanes, 'gone'), -1, 'a card outside every lane has no index');
+  assert.deepEqual(
+    withoutNodeFromLanes(lanes, 's2'),
+    [
+      { title: 'Mechanical', nodeIds: ['s1'] },
+      { title: 'Firmware', nodeIds: ['s3'] },
+    ],
+    'taking a card out keeps the lane it left, because another card still owns it'
+  );
+  assert.deepEqual(
+    moveNodeToLane(lanes, 's3', 0),
+    [{ title: 'Mechanical', nodeIds: ['s1', 's2', 's3'] }],
+    'moving the last card out drops the emptied source lane and does not duplicate the name'
+  );
+  assert.deepEqual(moveNodeToLane(lanes, 's1', 0), lanes, 'a card already in the target is unchanged');
   assert.ok(MAX_LANES >= 2);
 });
 
@@ -1324,7 +1520,7 @@ check('a frame keeps only cards that exist, and one card belongs to one frame', 
 section('9. Templates are usable at birth');
 
 check('every kind has a label and a sentence', () => {
-  assert.equal(STEP_KINDS.length, 15);
+  assert.equal(STEP_KINDS.length, 16);
   for (const kind of STEP_KINDS) {
     assert.ok(KIND_META[kind].label, kind);
     assert.ok(KIND_META[kind].hint.length > 20, kind);
@@ -1337,6 +1533,7 @@ check('every kind has a label and a sentence', () => {
     'check',
     'answer',
     'merge',
+    'text',
     'fork',
     'join',
   ]);
@@ -1348,6 +1545,7 @@ check('every kind has a label and a sentence', () => {
     'test',
     'output',
     'merge',
+    'text',
     'fork',
     'join',
   ]);
@@ -1560,6 +1758,156 @@ check('the how-to is remembered once and read back through a blocked bucket as u
 
 check('the store key is the documented one', () => {
   assert.equal(STORAGE_KEY_WORKFLOW, 'mechalab_workflow_v1');
+});
+
+section('11. An edit is one step back, and a run of typing is one step');
+
+check('undo returns the document before an edit, and redo the one after', () => {
+  let history = emptyHistory();
+  history = recordHistory(history, 'A', 1000);
+  history = recordHistory(history, 'B', 2000);
+  const back = stepHistory(history, 'C', true);
+  assert.equal(back.value, 'B');
+  const further = stepHistory(back.history, 'B', true);
+  assert.equal(further.value, 'A');
+  const forward = stepHistory(further.history, 'A', false);
+  assert.equal(forward.value, 'B');
+  assert.equal(stepHistory(further.history, 'A', false).value, 'B', 'redo walks forward in order');
+});
+
+check('a run of keystrokes is one undo step, and a pause starts another', () => {
+  let history = emptyHistory();
+  history = recordHistory(history, 'A', 0, true);
+  history = recordHistory(history, 'AB', 100, true);
+  history = recordHistory(history, 'ABC', 200, true);
+  assert.equal(history.past.length, 1, 'three keystrokes, one entry');
+  assert.equal(stepHistory(history, 'ABC', true).value, 'A');
+  history = recordHistory(history, 'ABC', 200 + HISTORY_BURST_MS + 1, true);
+  assert.equal(history.past.length, 2, 'a pause long enough to think starts another entry');
+});
+
+check('a structural edit always starts a step, and a new edit drops redo', () => {
+  let history = emptyHistory();
+  history = recordHistory(history, 'A', 0, true);
+  history = recordHistory(history, 'AB', 50, true);
+  assert.equal(history.past.length, 1);
+  history = recordHistory(history, 'AB', 60);
+  assert.equal(history.past.length, 2, 'a click is its own step, never merged into typing');
+  const back = stepHistory(history, 'ABC', true);
+  assert.equal(back.value, 'AB');
+  const redone = stepHistory(back.history, 'AB', false);
+  assert.equal(redone.value, 'ABC');
+  assert.equal(
+    recordHistory(back.history, 'AB', 70).future.length,
+    0,
+    'editing after an undo leaves nothing to redo'
+  );
+});
+
+check('history is bounded, and says so when there is nowhere to go', () => {
+  let history = emptyHistory();
+  for (let index = 0; index < MAX_HISTORY + 5; index += 1) {
+    history = recordHistory(history, `d${index}`, index * 1000);
+  }
+  assert.equal(history.past.length, MAX_HISTORY);
+  assert.equal(history.past[0], 'd5', 'the oldest steps fall off, not the newest');
+  assert.equal(stepHistory(emptyHistory(), 'A', true), null);
+  assert.equal(stepHistory(emptyHistory(), 'A', false), null);
+});
+
+section('12. The editor\'s document algebra is pure');
+
+check('removing a card takes its arrows, frames and lane with it, and the last card empties the lesson', () => {
+  let doc = emptyWorkflow('analysis', 'Algebra');
+  doc = addWorkflowNode(doc, STEPS_BY_MODE.analysis[1]);
+  doc = addWorkflowNode(doc, STEPS_BY_MODE.analysis[2]);
+  const [a, b, c] = doc.nodes;
+  doc = {
+    ...doc,
+    edges: [
+      { id: 'e1', from: a.id, to: b.id, fromSide: 'bottom', toSide: 'top' },
+      { id: 'e2', from: b.id, to: c.id, fromSide: 'bottom', toSide: 'top' },
+    ],
+    groups: [{ title: 'Motor', nodeIds: [b.id] }],
+    lanes: [{ title: 'Firmware', nodeIds: [b.id] }],
+  };
+  const cut = removeNode(doc, b.id);
+  assert.equal(cut.lostEdges, 2, 'both arrows that touched the card are counted');
+  assert.deepEqual(cut.doc.nodes.map((node) => node.id), [a.id, c.id]);
+  assert.equal(cut.doc.edges.length, 0, 'an arrow without its card is not kept');
+  assert.equal(cut.doc.groups, undefined, 'a frame that names only removed cards goes');
+  assert.equal(cut.doc.lanes, undefined, 'a lane that names only removed cards goes');
+  const framed = removeNode({ ...doc, groups: [{ title: 'Motor', nodeIds: [a.id, b.id, c.id] }] }, b.id);
+  assert.deepEqual(framed.doc.groups[0].nodeIds, [a.id, c.id], 'a frame keeps the cards it still has');
+  assert.equal(removeNode(cut.doc, a.id).doc.nodes.length, 1);
+  assert.equal(
+    removeNode(removeNode(cut.doc, a.id).doc, c.id).doc,
+    null,
+    'the last card returns the lesson to its empty state'
+  );
+});
+
+check('a note or lesson link is dropped when cleared, never stored as an empty string', () => {
+  const doc = emptyWorkflow('analysis');
+  const id = doc.nodes[0].id;
+  const noted = annotateNode(doc, id, 'note', 'because the gain is 4');
+  assert.equal(noted.nodes[0].note, 'because the gain is 4');
+  const cleared = annotateNode(noted, id, 'note', '');
+  assert.ok(!('note' in cleared.nodes[0]), 'clearing removes the field');
+});
+
+check('a move is one document, and an unchanged move writes nothing', () => {
+  const doc = emptyWorkflow('analysis');
+  const node = doc.nodes[0];
+  const moved = moveNodes(doc, [{ id: node.id, x: node.x + 24, y: node.y + 8 }]);
+  assert.equal(moved.nodes[0].x, node.x + 24);
+  assert.equal(moved.nodes[0].y, node.y + 8);
+  assert.equal(moveNodes(doc, [{ id: node.id, x: node.x, y: node.y }]), null);
+});
+
+check('an arrow refuses itself and a duplicate, and carries a socket only where one was plugged in', () => {
+  let doc = emptyWorkflow('analysis', 'Arrows');
+  doc = addWorkflowNode(doc, STEPS_BY_MODE.analysis[1]);
+  const [a, b] = doc.nodes;
+  assert.equal(connectNodes(doc, a.id, a.id, 'bottom', 'top', null, null), 'self');
+  const one = connectNodes(doc, a.id, b.id, 'bottom', 'top', 'power', null);
+  assert.equal(one.doc.edges.length, 1);
+  assert.equal(one.doc.edges[0].fromPort, 'power');
+  assert.ok(!('toPort' in one.doc.edges[0]), 'an unplugged end writes no field');
+  assert.equal(connectNodes(one.doc, a.id, b.id, 'bottom', 'top', null, null), 'duplicate');
+});
+
+check('a drag from a dot writes the card and its arrow together, entered from the facing side', () => {
+  const doc = emptyWorkflow('analysis', 'Spawn');
+  const from = doc.nodes[0];
+  const result = linkNewNode(doc, STEPS_BY_MODE.analysis[1], { x: 480, y: 96 }, {
+    nodeId: from.id,
+    side: 'right',
+    kind: null,
+  });
+  assert.equal(result.doc.nodes.length, 2);
+  assert.equal(result.doc.edges.length, 1);
+  const added = result.doc.nodes.find((node) => node.id === result.id);
+  assert.ok(added, 'the returned id names the card that landed');
+  assert.equal(result.doc.edges[0].to, result.id);
+  assert.equal(result.doc.edges[0].fromSide, 'right');
+  assert.equal(result.doc.edges[0].toSide, from.x > added.x ? 'right' : 'left');
+});
+
+check('frames take the cards out of the frame they were in, and the last frame removes the field', () => {
+  const doc = emptyWorkflow('analysis', 'Frames');
+  const first = doc.nodes[0].id;
+  const grown = addWorkflowNode(doc, STEPS_BY_MODE.analysis[1]);
+  const second = grown.nodes[1].id;
+  const grouped = groupCards(grown, [first, second]);
+  assert.equal(grouped.groups.length, 1);
+  assert.equal(grouped.groups[0].title, 'Group 1', 'a new frame is named by its position');
+  const renamed = renameGroup(grouped, 0, 'Motor');
+  assert.equal(renamed.groups[0].title, 'Motor');
+  const moved = groupCards(renamed, [second]);
+  assert.deepEqual(moved.groups.map((group) => group.nodeIds), [[first], [second]]);
+  assert.equal(moved.groups[1].title, 'Group 2', 'the new frame counts the ones that remain');
+  assert.equal(removeGroup({ ...renamed, groups: [renamed.groups[0]] }, 0).groups, undefined);
 });
 
 for (const entry of entries) {

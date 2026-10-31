@@ -17,12 +17,14 @@ import {
   GROUP_PAD,
   LANE_HEADER,
   NODE_FALLBACK_HEIGHT,
+  STRAIGHT_ALIGN,
   anchorFrom,
   cardHeight,
   cardsWithin,
   clamp,
   edgeControls,
   edgeCurve,
+  edgePath,
   facingSide,
   groupRect,
   laneRect,
@@ -150,6 +152,35 @@ check('an edge’s label and remove button share the arrow’s half-way point, t
       remove: { x: mid.x + 10, y: mid.y },
     });
   }
+});
+
+check('a route turns square, rounds its turns, or runs straight only when the dots are level', () => {
+  const a = { x: 0, y: 0 };
+  const b = { x: 300, y: 200 };
+  assert.equal(edgePath(a, 'right', b, 'left', 'curved'), edgeCurve(a, 'right', b, 'left'));
+  // A 200 px drop bends at the 64 px cap, turns on the shared axis, and enters from the left.
+  assert.equal(
+    edgePath(a, 'right', b, 'left', 'elbow'),
+    'M 0 0 L 64 0 L 150 0 L 150 200 L 236 200 L 300 200'
+  );
+  assert.match(
+    edgePath(a, 'right', b, 'left', 'rounded'),
+    /^M 0 0 L 52 0 Q 64 0 76 0 L 138 0 Q 150 0 150 12 L 150 188 Q 150 200 162 200 L 224 200 Q 236 200 248 200 L 300 200$/
+  );
+  assert.equal(
+    edgePath(a, 'right', { x: 300, y: 0 }, 'left', 'straight'),
+    'M 0 0 L 300 0',
+    'level dots get the line they asked for'
+  );
+  assert.equal(
+    edgePath(a, 'right', { x: 300, y: STRAIGHT_ALIGN + 1 }, 'left', 'straight'),
+    edgePath(a, 'right', { x: 300, y: STRAIGHT_ALIGN + 1 }, 'left', 'rounded'),
+    'a diagonal straight arrow borrows the rounded turn rather than cutting across the paper'
+  );
+  assert.deepEqual(edgeControls(a, 'right', b, 'left', 'elbow'), {
+    label: { x: 150, y: 100 },
+    remove: { x: 160, y: 100 },
+  });
 });
 
 check('a body-drop picks the side of the target that faces the source', () => {

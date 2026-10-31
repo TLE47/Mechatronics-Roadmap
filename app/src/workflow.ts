@@ -45,6 +45,8 @@ export const MAX_WORKFLOW_TITLE_CHARS = 80;
 export const MAX_STEP_TITLE_CHARS = 80;
 export const MAX_STEP_DETAIL_CHARS = 400;
 export const MAX_STEP_UNIT_CHARS = 16;
+export const MAX_STEP_NOTE_CHARS = 240;
+export const MAX_STEP_LESSON_CHARS = 60;
 export const MAX_BRANCH_CONDITION_CHARS = 60;
 export const MAX_GROUP_TITLE_CHARS = 40;
 /** The furthest a card may be dragged, so a stray pointer cannot make an unscrollable canvas. */
@@ -68,6 +70,7 @@ const BASE_STEP_KINDS = [
   'test',
   'output',
   'merge',
+  'text',
 ] as const;
 
 /** The graph's own kinds plus the two bars owned by `workflowProcesses.ts`. */
@@ -100,6 +103,23 @@ export const WORKFLOW_EDGE_TYPES = [
   'communication',
 ] as const;
 export type WorkflowEdgeType = (typeof WORKFLOW_EDGE_TYPES)[number];
+
+/**
+ * How an arrow's line is drawn.
+ *
+ * The kind says what an arrow carries; the route says how the line gets there. It is presentation,
+ * so it is stored per arrow only when it is not the curve every diagram drawn before this had, and
+ * a straight line that would cross the paper diagonally falls back to the rounded elbow (see
+ * `edgePath`): straight is a promise the geometry only keeps where it reads.
+ */
+export const EDGE_ROUTES = ['curved', 'rounded', 'elbow', 'straight'] as const;
+export type EdgeRoute = (typeof EDGE_ROUTES)[number];
+export const EDGE_ROUTE_LABEL: Record<EdgeRoute, string> = {
+  curved: 'Curved',
+  rounded: 'Rounded',
+  elbow: 'Right angle',
+  straight: 'Straight',
+};
 
 /** The one word a chip, a swatch and both exports use for a kind. */
 export const EDGE_TYPE_LABEL: Record<WorkflowEdgeType, string> = {
@@ -162,7 +182,8 @@ export type WorkflowIcon =
   | 'repeat'
   | 'test-tube'
   | 'terminal'
-  | 'merge';
+  | 'merge'
+  | 'text';
 
 export interface KindMeta {
   label: string;
@@ -224,6 +245,12 @@ export const KIND_META: Record<StepKind, KindMeta> = {
     icon: 'flag',
     terminal: true,
     measured: true,
+  },
+  text: {
+    label: 'Text',
+    hint: 'Words on the paper: a title or a warning, no box around it.',
+    mode: 'both',
+    icon: 'text',
   },
   input: {
     label: 'Input',
@@ -306,8 +333,34 @@ export const NODE_SHAPE: Record<StepKind, NodeShape> = {
   test: 'gate',
   output: 'stadium',
   merge: 'diamond',
+  text: 'rect',
   ...PROCESS_SHAPES,
 };
+
+/**
+ * The colours a card may be tinted with: theme tokens, never a raw hex.
+ *
+ * A stored token is read in whichever palette is on screen, so a card painted in the dark theme keeps
+ * its contrast when the page turns light. Both palettes define every one of these variables
+ * (`app/src/index.css`), and `CARD_COLOR_VAR` is the one place that maps a token to a variable.
+ */
+export const CARD_COLORS = ['accent', 'emerald', 'amber', 'rose', 'purple'] as const;
+export type CardColor = (typeof CARD_COLORS)[number];
+
+/** The smallest and largest title a card may be set to, in pixels. */
+export const MIN_FONT_SIZE = 9;
+export const MAX_FONT_SIZE = 24;
+
+/** The two named steps a document could hold before the size was free; `md` was never stored. */
+export type CardStep = 'sm' | 'lg';
+
+/**
+ * A card's type: one of the old named steps, or any whole pixel size in `MIN_FONT_SIZE`–`MAX_FONT_SIZE`.
+ *
+ * The steps are still readable so a document drawn while they were the only choice renders exactly
+ * as it did; they map to 11 px and 14 px, which is what the slider then shows.
+ */
+export type CardSize = CardStep | number;
 
 /** One card on the canvas. `x`/`y` are canvas pixels from the top-left of the grid. */
 export interface WorkflowNode {
@@ -317,8 +370,22 @@ export interface WorkflowNode {
   detail: string;
   /** A unit for a measured card (`A`, `rad/s`, `%`); absent when the card does not need one. */
   unit?: string;
+  /**
+   * A comment on this card, not a second detail field: why the step exists, what to check, or the
+   * part of the problem the card does not spell out. UML calls this a note; it is exported as a
+   * Mermaid comment and a Markdown sub-item so no diagram label grows with it.
+   */
+  note?: string;
+  /** The lesson this card came from or explains, by the runner's own id (e.g. `P.15`). */
+  lesson?: string;
   /** A branch card's condition; it labels that card's outgoing arrows (`edgeLabelFor`). */
   condition?: string;
+  /** A theme colour for the card's plate; absent is the panel surface every card had. */
+  fill?: CardColor;
+  /** A theme colour for the card's words; absent is the panel's own text colour. */
+  ink?: CardColor;
+  /** A smaller or larger text step; absent is the size a card always had. */
+  size?: CardSize;
   x: number;
   y: number;
 }
@@ -348,6 +415,8 @@ export interface WorkflowEdge {
   fromPort?: PortKind;
   /** The socket it lands on, when that is not the one its kind implies. */
   toPort?: PortKind;
+  /** How the line bends; absent is the curve every arrow had before routes existed. */
+  route?: EdgeRoute;
 }
 
 /**
@@ -414,12 +483,20 @@ function isKind(value: unknown): value is StepKind {
   return typeof value === 'string' && Object.prototype.hasOwnProperty.call(KIND_META, value);
 }
 
+function isCardColor(value: unknown): value is CardColor {
+  return typeof value === 'string' && (CARD_COLORS as readonly string[]).includes(value);
+}
+
 function isSide(value: unknown): value is WorkflowSide {
   return typeof value === 'string' && (WORKFLOW_SIDES as readonly string[]).includes(value);
 }
 
 function isEdgeType(value: unknown): value is WorkflowEdgeType {
   return typeof value === 'string' && (WORKFLOW_EDGE_TYPES as readonly string[]).includes(value);
+}
+
+function isEdgeRoute(value: unknown): value is EdgeRoute {
+  return typeof value === 'string' && (EDGE_ROUTES as readonly string[]).includes(value);
 }
 
 export function isPortKind(value: unknown): value is PortKind {
@@ -507,6 +584,19 @@ export function edgeTypeOf(edge: WorkflowEdge): WorkflowEdgeType {
   return edge.type ?? 'flow';
 }
 
+/** The route an arrow draws on; the curve is the line every arrow had before routes existed. */
+export function edgeRouteOf(edge: WorkflowEdge): EdgeRoute {
+  return edge.route ?? 'curved';
+}
+
+/** The same arrow drawn another way. The curve is stored as an absent field, like `flow`. */
+export function withEdgeRoute(edge: WorkflowEdge, route: EdgeRoute): WorkflowEdge {
+  const next = { ...edge };
+  if (route === 'curved') delete next.route;
+  else next.route = route;
+  return next;
+}
+
 /**
  * The same arrow with a different kind.
  *
@@ -522,6 +612,23 @@ export function withEdgeType(edge: WorkflowEdge, type: WorkflowEdgeType): Workfl
   // kind rather than keep a socket nothing on the canvas implies.
   delete next.fromPort;
   delete next.toPort;
+  return next;
+}
+
+/**
+ * An arrow's label or guard: the text it carries, or — for an empty value — no field at all.
+ *
+ * A flow is stored as an absent field for the same reason (see `withEdgeType`): a document that
+ * never carried one stays byte-for-byte what it was, and the card's own condition is the fallback.
+ */
+export function withEdgeText(
+  edge: WorkflowEdge,
+  field: 'label' | 'guard',
+  value: string
+): WorkflowEdge {
+  const next = { ...edge };
+  if (value) next[field] = value;
+  else delete next[field];
   return next;
 }
 
@@ -586,14 +693,27 @@ export function freeNodePosition(nodes: WorkflowNode[]): { x: number; y: number 
  * and is then trimmed on the way to the store is a card the learner watched disappear after a reload.
  * `null` is the refusal, and callers say why rather than adding a card that will not be saved.
  */
-export function addWorkflowNode(doc: WorkflowDoc, kind: StepKind): WorkflowDoc | null {
+export function addWorkflowNode(
+  doc: WorkflowDoc,
+  kind: StepKind,
+  /** The canvas point a context-menu add was asked for; omitted, the card takes the first free slot. */
+  at?: { x: number; y: number }
+): WorkflowDoc | null {
   if (doc.nodes.length >= MAX_STEPS) return null;
+  // The press lands on the new card's header, snapped to the paper's 8 px grid: two cards added
+  // from the menu line up, and neither can be placed half off the paper.
+  const placed = at
+    ? {
+        x: Math.max(0, Math.round((at.x - NODE_WIDTH / 2) / 8) * 8),
+        y: Math.max(0, Math.round((at.y - 20) / 8) * 8),
+      }
+    : freeNodePosition(doc.nodes);
   const node: WorkflowNode = {
     id: nextStepId(doc.nodes),
     kind,
     title: '',
     detail: '',
-    ...freeNodePosition(doc.nodes),
+    ...placed,
   };
   return { ...doc, nodes: [...doc.nodes, node] };
 }
@@ -639,8 +759,21 @@ function readNode(value: unknown, mode: WorkflowMode, fallbackId: string, index:
   };
   const unit = clean(record.unit, MAX_STEP_UNIT_CHARS);
   if (unit) node.unit = unit;
+  const note = clean(record.note, MAX_STEP_NOTE_CHARS);
+  if (note) node.note = note;
+  const lesson = clean(record.lesson, MAX_STEP_LESSON_CHARS);
+  if (lesson) node.lesson = lesson;
   const condition = clean(record.condition, MAX_BRANCH_CONDITION_CHARS);
   if (condition) node.condition = condition;
+  // Styling is written only when it differs from the card's own default, so a document that never
+  // used it reads and stores exactly the bytes it did before (see `withEdgeType` for the same rule).
+  if (isCardColor(record.fill)) node.fill = record.fill;
+  if (isCardColor(record.ink)) node.ink = record.ink;
+  if (record.size === 'sm' || record.size === 'lg') node.size = record.size;
+  else if (typeof record.size === 'number' && Number.isFinite(record.size)) {
+    const size = Math.round(record.size);
+    if (size >= MIN_FONT_SIZE && size <= MAX_FONT_SIZE) node.size = size;
+  }
   const branch = asRecord(record.branch);
   const to = branch ? clean(branch.to, 40) : '';
   return {
@@ -657,6 +790,7 @@ function readEdge(
   label: string;
   guard: string;
   type: WorkflowEdgeType | undefined;
+  route: EdgeRoute | undefined;
   fromPort: PortKind | undefined;
   toPort: PortKind | undefined;
   fromSide: WorkflowSide;
@@ -673,6 +807,7 @@ function readEdge(
     label: clean(record.label, MAX_BRANCH_CONDITION_CHARS),
     guard: clean(record.guard, MAX_BRANCH_CONDITION_CHARS),
     type: isEdgeType(record.type) ? record.type : undefined,
+    route: isEdgeRoute(record.route) ? record.route : undefined,
     fromPort: isPortKind(record.fromPort) ? record.fromPort : undefined,
     toPort: isPortKind(record.toPort) ? record.toPort : undefined,
     // A version-2 document written before cards had four points carries no side. Right-to-left is
@@ -709,6 +844,7 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
     label: string;
     guard: '';
     type: undefined;
+    route: undefined;
     fromPort: undefined;
     toPort: undefined;
     fromSide: WorkflowSide;
@@ -728,6 +864,7 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
         label: read.branch.label,
         guard: '',
         type: undefined,
+        route: undefined,
         fromPort: undefined,
         toPort: undefined,
         // A v1 branch jumped forward; the side curve says "this is not the next step".
@@ -748,6 +885,7 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
     label: '',
     guard: '',
     type: undefined,
+    route: undefined,
     fromPort: undefined,
     toPort: undefined,
     // The v1 list became a single column, so its implied arrow now runs down the paper.
@@ -777,6 +915,7 @@ export function normalizeWorkflow(value: unknown): WorkflowDoc | null {
     if (candidate.label) edge.label = candidate.label;
     if (candidate.guard) edge.guard = candidate.guard;
     if (candidate.type && candidate.type !== 'flow') edge.type = candidate.type;
+    if (candidate.route && candidate.route !== 'curved') edge.route = candidate.route;
     if (candidate.fromPort) edge.fromPort = candidate.fromPort;
     if (candidate.toPort) edge.toPort = candidate.toPort;
     edges.push(edge);
@@ -1095,7 +1234,9 @@ export function workflowToMermaid(doc: WorkflowDoc): string {
     const label = mermaidText(
       isForkJoin(node.kind)
         ? KIND_META[node.kind].label
-        : `${KIND_META[node.kind].label} · ${node.title || 'untitled'}`
+        : node.kind === 'text'
+          ? node.title || 'text'
+          : `${KIND_META[node.kind].label} · ${node.title || 'untitled'}`
     );
     return `  n${position + 1}${MERMAID_NODE[NODE_SHAPE[node.kind]](label)}`;
   };
@@ -1136,6 +1277,12 @@ export function workflowToMermaid(doc: WorkflowDoc): string {
     const link = type === 'flow' ? '-.->' : MERMAID_LINK[type];
     lines.push(`  n${from + 1} ${link}|"${mermaidText(text, 40)}"| n${to + 1}`);
   }
+  // A note and a lesson link are metadata about a card, not another node on the graph: Mermaid's
+  // comment line names the card without adding a box or an arrow nobody drew.
+  order.forEach((node, position) => {
+    if (node.note) lines.push(`  %% note n${position + 1}: ${mermaidText(node.note, 160)}`);
+    if (node.lesson) lines.push(`  %% lesson n${position + 1}: ${mermaidText(node.lesson, MAX_STEP_LESSON_CHARS)}`);
+  });
   return lines.join('\n');
 }
 
@@ -1157,6 +1304,8 @@ export function workflowToMarkdown(doc: WorkflowDoc): string {
     const detail = node.detail ? ` — ${node.detail}` : '';
     const body = isForkJoin(node.kind) ? '' : ` — ${node.title || 'untitled'}${detail}${unit}`;
     lines.push(`${position + 1}. **${label}**${body}${laneMarkdown(doc.lanes, node)}`);
+    if (node.note) lines.push(`   - note: ${node.note}`);
+    if (node.lesson) lines.push(`   - lesson: ${node.lesson}`);
     const next = order[position + 1];
     for (const edge of doc.edges) {
       if (edge.from !== node.id) continue;

@@ -1,7 +1,8 @@
-import type { PointerEvent as ReactPointerEvent } from 'react';
+import type { FocusEvent as ReactFocusEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { Trash2 } from 'lucide-react';
 import { KIND_META, NODE_WIDTH, type SocketKinds, type WorkflowIssue, type WorkflowNode } from '../../workflow.ts';
 import { iconForKind } from '../workflowIcons.ts';
+import { cardFill } from './cardStyle.ts';
 import { nudgeCard } from './cardNudge.ts';
 import { WorkflowPorts } from './WorkflowPorts.tsx';
 import type { LinkDraft } from './useLinking.ts';
@@ -57,6 +58,10 @@ export function WorkflowForkJoinCard({
   const Icon = iconForKind(node.kind);
   const meta = KIND_META[node.kind];
   const frame = selected ? 'border-accent ring-2 ring-accent/25' : issue ? 'border-amber/70' : 'border-line';
+  // The bar's own header selects it, never a focus bubbling from its delete button or a port.
+  const selectSelf = (event: ReactFocusEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) onSelect(node.id);
+  };
   return (
     <div
       data-node-id={node.id}
@@ -64,9 +69,9 @@ export function WorkflowForkJoinCard({
       data-step={number}
       data-kind={node.kind}
       data-shape="bar"
-      style={{ left: position.x, top: position.y, width: NODE_WIDTH }}
-      className={`absolute z-20 cursor-default rounded-lg border bg-panel shadow-sm ${frame} ${
-        dragging ? 'z-30 shadow-lg' : ''
+      style={{ left: position.x, top: position.y, width: NODE_WIDTH, backgroundColor: cardFill(node.fill) }}
+      className={`absolute cursor-default rounded-lg border bg-panel shadow-sm ${frame} ${
+        dragging ? 'z-40 shadow-lg' : selected ? 'z-30' : 'z-20'
       }`}
       onPointerDown={(event) => onLinkLand(event, node)}
     >
@@ -74,7 +79,9 @@ export function WorkflowForkJoinCard({
         data-testid={`workflow-node-drag-${index}`}
         role="group"
         tabIndex={0}
-        aria-label={`${meta.label} ${number}. Drag to move; arrow keys nudge it.`}
+        aria-label={`${meta.label} bar ${number}. Drag to move; arrow keys nudge it.`}
+        aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
+        onFocus={selectSelf}
         onPointerDown={(event) => onDragStart(event, node)}
         onKeyDown={(event) => nudgeCard(event, node, onMove, onSelect)}
         className="flex cursor-grab touch-none items-center gap-1.5 rounded-t-lg border-b border-line-soft bg-canvas px-2 py-1 select-none focus-visible:outline-2 focus-visible:outline-accent"

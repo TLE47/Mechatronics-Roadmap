@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { themeTokensFromCss } from './app/src/themeTokens.ts';
 
 // One release identity, one file (`package.json`). The footer reads it through
 // `app/src/appVersion.ts`, and this define is the only place the value enters the bundle - a second
@@ -38,22 +39,26 @@ import { ISOLATION_HEADERS } from './scripts/isolation-headers.mjs';
  * remote stylesheet (`entryNames` used to ignore it).
  */
 /**
- * The theme route reads `index.css?raw` to print the palette (`themeTokens.ts`) and strips the
- * stylesheet's comments itself before parsing — they are prose for the maintainer, not data. Doing
- * that strip at build time keeps that prose out of every learner's download: `index.css` explains
- * itself at length, and shipping it verbatim made those explanations several kilobytes of the main
- * chunk for a page that never showed them.
+ * The theme route's palette, parsed out of `index.css` once at build time (`themeTokens.ts`).
+ *
+ * The page used to import the stylesheet itself (`index.css?raw`) and parse it in the browser, which
+ * put a second copy of all 16 kB of it in the bundle for a page that only needs the 10 kB table. The
+ * parse follows the same file the app is built from, and the Node suite (`test:theme:tokens`) runs the
+ * same function against the file, so the page still cannot describe a palette the app does not use.
  */
-function rawCssWithoutComments(): Plugin {
+function themeTokenTable(): Plugin {
+  const id = 'virtual:theme-tokens';
+  const resolved = `\0${id}`;
   return {
-    name: 'mechalab:raw-css-without-comments',
-    enforce: 'pre',
-    load(id) {
-      if (!id.endsWith('/app/src/index.css?raw')) return null;
-      const file = id.slice(0, -'?raw'.length);
-      this.addWatchFile(file);
-      const css = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, ' ');
-      return `export default ${JSON.stringify(css)};`;
+    name: 'mechalab:theme-token-table',
+    resolveId(source) {
+      return source === id ? resolved : null;
+    },
+    load(moduleId) {
+      if (moduleId !== resolved) return null;
+      const file = new URL('./app/src/index.css', import.meta.url);
+      this.addWatchFile(file.pathname);
+      return `export default ${JSON.stringify(themeTokensFromCss(readFileSync(file, 'utf8')))};`;
     },
   };
 }
@@ -83,7 +88,7 @@ export default defineConfig(({ command }) => ({
   envDir: '..',
   base: command === 'build' ? PAGES_BASE : '/',
   define: { __APP_VERSION__: JSON.stringify(version) },
-  plugins: [rawCssWithoutComments(), katexWoff2Only(), react(), tailwindcss()],
+  plugins: [themeTokenTable(), katexWoff2Only(), react(), tailwindcss()],
   build: {
     outDir: '../dist',
     emptyOutDir: true,

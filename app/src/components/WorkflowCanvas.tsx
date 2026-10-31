@@ -3,6 +3,7 @@ import { Maximize2, Minimize2 } from 'lucide-react';
 import { socketKinds } from '../workflow.ts';
 import { isForkJoin } from '../workflowProcesses.ts';
 import type {
+  EdgeRoute,
   WorkflowDoc,
   WorkflowEdgeType,
   WorkflowIssue,
@@ -16,7 +17,8 @@ import { WorkflowForkJoinCard } from './workflow/WorkflowForkJoinCard.tsx';
 import { WorkflowGroupFrame } from './workflow/WorkflowGroupFrame.tsx';
 import { WorkflowLaneBand } from './workflow/WorkflowLaneBand.tsx';
 import { WorkflowNodeCard } from './workflow/WorkflowNodeCard.tsx';
-import { useLinking } from './workflow/useLinking.ts';
+import type { WorkflowMenuRequest } from './workflow/WorkflowMenu.tsx';
+import { useLinking, type LinkDraft } from './workflow/useLinking.ts';
 import { useMarquee } from './workflow/useMarquee.ts';
 import { useNodeDrag, type NodeMove } from './workflow/useNodeDrag.ts';
 import { useNodeHeights } from './workflow/useNodeHeights.ts';
@@ -69,6 +71,7 @@ export interface WorkflowCanvasProps {
   onMove: (id: string, x: number, y: number) => void;
   onUpdate: (id: string, patch: Partial<WorkflowNode>) => void;
   onRemove: (id: string) => void;
+  onOpenLesson: (lesson: string) => void;
   onConnect: (
     from: string,
     to: string,
@@ -78,6 +81,13 @@ export interface WorkflowCanvasProps {
     toPort: PortKind | null
   ) => void;
   onDisconnect: (edgeId: string) => void;
+  /** A drag that left a dot and ended on bare paper: the panel makes the card there and links it. */
+  onDropLink: (
+    draft: LinkDraft,
+    at: { x: number; y: number },
+    client: { x: number; y: number },
+    picker: boolean
+  ) => void;
   /** The arrow whose kind palette is open, if any. */
   selectedEdgeId: string | null;
   onSelectEdge: (edgeId: string | null) => void;
@@ -85,6 +95,7 @@ export interface WorkflowCanvasProps {
   onEdgeLabel: (edgeId: string, label: string) => void;
   onEdgeGuard: (edgeId: string, guard: string) => void;
   onEdgePort: (edgeId: string, end: 'from' | 'to', kind: PortKind | null) => void;
+  onEdgeRoute: (edgeId: string, route: EdgeRoute) => void;
   /** A frame drag reports every member at once, so one release is one document write. */
   onMoveMany: (moves: NodeMove[]) => void;
   /** Whether the next drag on paper draws a frame instead of panning. */
@@ -98,6 +109,18 @@ export interface WorkflowCanvasProps {
   onRemoveGroup: (index: number) => void;
   onRenameLane: (index: number, title: string) => void;
   onRemoveLane: (index: number) => void;
+  /** The lane whose name field should take focus after a keyboard creation. */
+  focusLane: number | null;
+  onLaneNameFocused: () => void;
+  /** A right-click or a keyboard menu press on the paper, a card, a frame, a lane or an arrow. */
+  onMenu: (request: WorkflowMenuRequest) => void;
+  /** The menu's clipboard items: one card at a time, owned by the panel. */
+  onCopyNode: (id: string) => void;
+  onCutNode: (id: string) => void;
+  onPaste: (at?: { x: number; y: number }) => void;
+  canPaste: boolean;
+  /** Open filling the viewport: the paper is no longer capped at 70% of the screen. */
+  fullscreen: boolean;
 }
 
 export function WorkflowCanvas({
@@ -109,14 +132,17 @@ export function WorkflowCanvas({
   onMove,
   onUpdate,
   onRemove,
+  onOpenLesson,
   onConnect,
   onDisconnect,
+  onDropLink,
   selectedEdgeId,
   onSelectEdge,
   onEdgeType,
   onEdgeLabel,
   onEdgeGuard,
   onEdgePort,
+  onEdgeRoute,
   onMoveMany,
   grouping,
   onGroupCards,
@@ -126,6 +152,14 @@ export function WorkflowCanvas({
   onRemoveGroup,
   onRenameLane,
   onRemoveLane,
+  focusLane,
+  onLaneNameFocused,
+  onMenu,
+  onCopyNode,
+  onCutNode,
+  onPaste,
+  canPaste,
+  fullscreen,
 }: WorkflowCanvasProps) {
   const byId = useMemo(() => new Map(doc.nodes.map((node) => [node.id, node])), [doc.nodes]);
   // Which socket each dot has become, once per document: the cards read it, and no card can hold a
@@ -186,7 +220,62 @@ export function WorkflowCanvas({
     heights,
     onConnect,
     onSelect,
+    onDropEmpty: onDropLink,
   });
+
+  /**
+   * What a press landed on, read off the DOM the way the link gesture reads a drop target.
+   *
+   * One handler on the paper rather than a callback on every card, bar, band and arrow: the parts
+   * keep their own gestures, and the mapping from what is painted to what the menu can act on lives
+   * in one place. The press resolves to the one action it can offer, so the menu never has to know
+   * what kind of thing it is standing on. Every part of the diagram ends its test hook with its
+   * index, so one number names it — and a card, whose hook is its id, is read first.
+   */
+  const actionAt = (target: Element): (() => void) | null => {
+    const hit = target.closest<HTMLElement>('[data-testid]')?.dataset.testid ?? '';
+    const index = Number(/(\d+)$/.exec(hit)?.[1]);
+    if (Number.isNaN(index)) return null;
+    if (hit.startsWith('workflow-edge-')) {
+      const edge = doc.edges[index];
+      return edge ? () => onDisconnect(edge.id) : null;
+    }
+    return hit.startsWith('workflow-lane-')
+      ? () => onRemoveLane(index)
+      : hit.startsWith('workflow-group-')
+        ? () => onRemoveGroup(index)
+        : null;
+  };
+
+  /**
+   * A menu request for a viewport point: a card's own actions and colours, a drawn part's removal, or
+   * bare paper to add on. Paste rides on every request that has a paper point to land on.
+   */
+  const openMenu = (
+    x: number,
+    y: number,
+    node?: WorkflowNode | null,
+    action?: (() => void) | null
+  ) => {
+    const at = viewport.toCanvas(x, y);
+    if (node) {
+      onMenu({
+        x,
+        y,
+        node,
+        remove: () => onRemove(node.id),
+        onCopy: () => onCopyNode(node.id),
+        onCut: () => onCutNode(node.id),
+        onFill: (fill) => onUpdate(node.id, { fill }),
+      });
+      return;
+    }
+    const request: WorkflowMenuRequest = action
+      ? { x, y, remove: action }
+      : { x, y, at };
+    if (canPaste) request.onPaste = () => onPaste(at);
+    onMenu(request);
+  };
 
   // An issue pressed in the checklist names a card; bring that card into view instead of trusting
   // that the learner can guess which one it is.
@@ -198,7 +287,16 @@ export function WorkflowCanvas({
   }, [selectedId]);
 
   return (
-    <div className="relative mt-2 flex min-h-0 flex-1 flex-col">
+    // `z-0` is the canvas's own stacking level: every control inside it (`z-20` cards through the
+    // `z-50` edge inspector) is contained here, so a diagram scrolled under the sticky tab rail or
+    // the fixed Run bar can never paint over those buttons. Without it, the Fit button tied the
+    // rail's `z-30` and won on DOM order. `isolate` on the paper does the same for its own layers:
+    // an edge label at `z-40` must not cover the Fit button, which is a sibling of the scroll box.
+    // In full screen the wrapper, not the scroll box, carries the floor: a min-height on a flex
+    // child taller than its parent spills over the rows below it instead of pushing them down.
+    <div
+      className={`relative z-0 mt-2 flex flex-1 flex-col ${fullscreen ? 'min-h-[75vh]' : 'min-h-0'}`}
+    >
       <div
         ref={viewport.surfaceRef}
         data-testid="workflow-canvas"
@@ -211,15 +309,43 @@ export function WorkflowCanvas({
         onPointerMove={marquee.move}
         onPointerUp={marquee.finish}
         onPointerCancel={marquee.finish}
-        onKeyDown={viewport.panWithKeys}
+        onContextMenu={(event) => {
+          // A field keeps the browser's own menu: copy and paste are what a learner needs there.
+          if ((event.target as Element).closest('input, textarea, select')) return;
+          event.preventDefault();
+          const node = doc.nodes.find(
+            (entry) =>
+              entry.id ===
+              (event.target as Element).closest<HTMLElement>('[data-node-id]')?.dataset.nodeId
+          );
+          openMenu(
+            event.clientX,
+            event.clientY,
+            node ?? null,
+            node ? null : actionAt(event.target as Element)
+          );
+        }}
+        onKeyDown={(event) => {
+          // The keyboard's right-click: Shift+F10, or the Menu key, opens the paper's menu where
+          // the canvas centre is, since there is no pointer to name a place.
+          if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+            event.preventDefault();
+            const rect = event.currentTarget.getBoundingClientRect();
+            openMenu(rect.left + 60, rect.top + 60);
+            return;
+          }
+          viewport.panWithKeys(event);
+        }}
         tabIndex={0}
         role="group"
         aria-label="Workflow canvas. Arrow keys pan it; drag a card by its header to move the card."
         aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
-        // The 70 vh cap is what makes this a canvas rather than a growing page: a 24-card flow on a
-        // phone scrolls inside the pane instead of turning the lesson into a four-thousand-pixel
-        // document.
-        className={`relative min-h-[280px] max-h-[70vh] flex-1 overflow-auto overscroll-contain rounded-lg border border-line-soft bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+        // The 70 vh cap is what makes this a canvas rather than a growing page; full screen is a
+        // bigger paper, so that cap is the one thing it removes. The 55 vh floor above keeps the
+        // paper at least half the viewport even with the checklist, the guide and the inspector open.
+        className={`relative isolate min-h-[280px] flex-1 overflow-auto overscroll-contain rounded-lg border border-line-soft bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+          fullscreen ? '' : 'max-h-[70vh]'
+        } ${
           viewport.panning ? 'cursor-grabbing select-none' : 'cursor-grab'
         }`}
         style={{
@@ -251,6 +377,8 @@ export function WorkflowCanvas({
                 lane={lane}
                 index={index}
                 rect={rect}
+                focusName={focusLane === index}
+                onNameFocused={onLaneNameFocused}
                 onRename={onRenameLane}
                 onRemove={onRemoveLane}
               />
@@ -283,6 +411,7 @@ export function WorkflowCanvas({
               onEdgeLabel={onEdgeLabel}
               onEdgeGuard={onEdgeGuard}
               onEdgePort={onEdgePort}
+              onEdgeRoute={onEdgeRoute}
             />
 
             {doc.nodes.map((node, index) => {
@@ -299,6 +428,7 @@ export function WorkflowCanvas({
                 onSelect,
                 onMove,
                 onRemove,
+                onOpenLesson,
                 onDragStart: drag.startDrag,
                 onLinkStart: linking.startLink,
                 onLinkLand: linking.landOnCard,

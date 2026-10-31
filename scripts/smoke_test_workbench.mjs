@@ -931,7 +931,7 @@ export async function runSmokeTests(viteServer) {
     );
     assert(
       rowCount >= 20,
-      `the token page must print a row per colour token (expected >= 20, got ${rowCount}); a short table means the ?raw stylesheet import or the parser stopped matching`
+      `the token page must print a row per colour token (expected >= 20, got ${rowCount}); a short table means the build-time palette module or the parser stopped matching`
     );
     assert(
       ['dark', 'light', 'paper', 'contrast'].every((palette) =>

@@ -392,7 +392,7 @@ async function main() {
       const rowsOnPage = await page.locator('[data-testid="theme-token-row"]').count();
       assert.ok(
         rowsOnPage >= 20,
-        `expected a row per colour token on ?view=theme, got ${rowsOnPage}; the ?raw import or the parser stopped matching`
+        `expected a row per colour token on ?view=theme, got ${rowsOnPage}; the build-time palette module or the parser stopped matching`
       );
       // Painted pixels, not printed text: every swatch must carry the colour it claims.
       const swatches = await page.evaluate(() => {

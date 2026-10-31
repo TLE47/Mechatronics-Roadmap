@@ -11,6 +11,7 @@ import {
   Sigma,
   SquareTerminal,
   TestTube2,
+  Type,
   Wand2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -36,6 +37,7 @@ const ICONS: Record<WorkflowIcon, LucideIcon> = {
   'test-tube': TestTube2,
   terminal: SquareTerminal,
   merge: GitMerge,
+  text: Type,
 };
 
 export function iconForKind(kind: StepKind): LucideIcon {

@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import {
+  EDGE_ROUTES,
+  EDGE_ROUTE_LABEL,
   EDGE_TYPE_LABEL,
   KIND_META,
   MAX_BRANCH_CONDITION_CHARS,
@@ -8,20 +10,25 @@ import {
   WORKFLOW_EDGE_TYPES,
   edgeCaption,
   edgePortOf,
+  edgeRouteOf,
   edgeTypeOf,
+  type EdgeRoute,
   type PortKind,
   type WorkflowDoc,
   type WorkflowEdgeType,
   type WorkflowNode,
 } from '../../workflow.ts';
-import { anchorFrom, edgeControls, edgeCurve, pendingCurve } from './canvasGeometry.ts';
+import { anchorFrom, edgeControls, edgePath, pendingCurve } from './canvasGeometry.ts';
 import type { LinkDraft } from './useLinking.ts';
 
 /**
  * The arrows of a workflow (`components/workflow/WorkflowEdges.tsx`).
  *
  * One layer for everything drawn between cards: the cubic paths with their arrowheads, the dashed
- * preview while an arrow is being drawn, and each edge's label, kind chip and remove button. It reads
+ * preview while an arrow is being drawn, and each edge's label, kind chip and remove button. The
+ * paths and labels are diagram, not content: they sit above the frame bands and below the cards
+ * (`z-20`), so an arrow crossing a card never hides its title or its buttons; the kind chip and the
+ * remove button are the only parts above a card, because they have to be pressed. It reads
  * the document and the measured card heights, and reports an edit; it owns no state but the Escape
  * that closes the inspector.
  *
@@ -97,6 +104,7 @@ export interface WorkflowEdgesProps {
   onEdgeLabel: (edgeId: string, label: string) => void;
   onEdgeGuard: (edgeId: string, guard: string) => void;
   onEdgePort: (edgeId: string, end: 'from' | 'to', kind: PortKind | null) => void;
+  onEdgeRoute: (edgeId: string, route: EdgeRoute) => void;
 }
 
 export function WorkflowEdges({
@@ -113,6 +121,7 @@ export function WorkflowEdges({
   onEdgeLabel,
   onEdgeGuard,
   onEdgePort,
+  onEdgeRoute,
 }: WorkflowEdgesProps) {
   // Escape closes the inspector wherever focus is: it is the same "put that away" key as the pending
   // arrow's, and a panel of six buttons with no visible way out is a trap on a phone.
@@ -138,6 +147,7 @@ export function WorkflowEdges({
         from,
         to,
         type: edgeTypeOf(edge),
+        route: edgeRouteOf(edge),
         a: anchorFrom(from, edge.fromSide, heights),
         b: anchorFrom(to, edge.toSide, heights),
       },
@@ -148,7 +158,7 @@ export function WorkflowEdges({
   return (
     <>
       <svg
-        className="pointer-events-none absolute inset-0 z-[25]"
+        className="pointer-events-none absolute inset-0 z-[15]"
         width={extents.width}
         height={extents.height}
         aria-hidden="true"
@@ -169,10 +179,11 @@ export function WorkflowEdges({
             </marker>
           ))}
         </defs>
-        {drawn.map(({ edge, index, a, b, type }) => (
+        {drawn.map(({ edge, index, a, b, type, route }) => (
           <g key={edge.id} data-testid={`workflow-edge-${index}`}>
             <path
-              d={edgeCurve(a, edge.fromSide, b, edge.toSide)}
+              data-route={route}
+              d={edgePath(a, edge.fromSide, b, edge.toSide, route)}
               fill="none"
               stroke={EDGE_STYLE[type].color}
               strokeWidth={EDGE_STYLE[type].width}
@@ -194,8 +205,8 @@ export function WorkflowEdges({
         )}
       </svg>
 
-      {drawn.map(({ edge, index, from, to, type, a, b }) => {
-        const { label: anchor, remove } = edgeControls(a, edge.fromSide, b, edge.toSide);
+      {drawn.map(({ edge, index, from, to, type, route, a, b }) => {
+        const { label: anchor, remove } = edgeControls(a, edge.fromSide, b, edge.toSide, route);
         // `remove` is where the row of controls starts: the label rides above the line, the kind and
         // × hang below it, so a long label can never sit on top of the buttons.
         const text = edgeCaption(from, edge);
@@ -205,7 +216,7 @@ export function WorkflowEdges({
             {text && (
               <span
                 data-testid={`workflow-edge-label-${index}`}
-                className="pointer-events-none absolute z-40 max-w-[140px] -translate-x-1/2 -translate-y-[calc(100%+2px)] truncate rounded border border-line bg-panel px-1 font-mono text-[10px] text-muted"
+                className="pointer-events-none absolute z-[15] max-w-[140px] -translate-x-1/2 -translate-y-[calc(100%+2px)] truncate rounded border border-line bg-panel px-1 font-mono text-[10px] text-muted"
                 style={{ left: anchor.x, top: anchor.y }}
                 title={text}
               >
@@ -293,6 +304,29 @@ export function WorkflowEdges({
                         />
                       </svg>
                       {EDGE_TYPE_LABEL[choice]}
+                    </button>
+                  ))}
+                </div>
+                {/* How the line bends. Route is presentation, so it is picked here beside the
+                    kind that decides what the line carries. */}
+                <p className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+                  How it bends
+                </p>
+                <div className="mt-1 grid grid-cols-2 gap-1">
+                  {EDGE_ROUTES.map((choice) => (
+                    <button
+                      key={choice}
+                      type="button"
+                      data-testid={`workflow-edge-route-${choice}-${index}`}
+                      aria-pressed={route === choice}
+                      onClick={() => onEdgeRoute(edge.id, choice)}
+                      className={`min-h-8 cursor-pointer rounded border px-1.5 text-[11px] ${
+                        route === choice
+                          ? 'border-accent/60 bg-accent/10 text-accent'
+                          : 'border-line bg-canvas text-muted hover:bg-raise'
+                      }`}
+                    >
+                      {EDGE_ROUTE_LABEL[choice]}
                     </button>
                   ))}
                 </div>

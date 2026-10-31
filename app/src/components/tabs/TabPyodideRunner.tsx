@@ -3431,7 +3431,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // The learner's own plan for this problem (`workflow.ts`), drawn as ordered cards. It is an
   // output view like Run output: one tab press away, splittable beside the code, and mounted only
   // while the editor shows, so the Read preset pays nothing for it.
-  const workflowPane = <WorkflowPanel lessonId={selectedId} lessonTitle={currentLesson.title} />;
+  const workflowPane = (
+    <WorkflowPanel
+      lessonId={selectedId}
+      lessonTitle={currentLesson.title}
+      onOpenLesson={selectLesson}
+    />
+  );
 
   const actualOutputPane = (
 <div data-testid="results-panel" className="flex h-full min-h-0 flex-col bg-panel border border-line rounded-xl p-4">

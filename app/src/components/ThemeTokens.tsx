@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
-import themeCss from '../index.css?raw';
-import { themeTokensFromCss, type ColourToken, type TokenRow } from '../themeTokens';
+import React from 'react';
+import themeTokens from 'virtual:theme-tokens';
+import type { ColourToken, TokenRow } from '../themeTokens';
 import {
   CONTRAST_LABEL,
   PAPER_LABEL,
@@ -139,10 +139,11 @@ const ScaleRow: React.FC<{ row: TokenRow }> = ({ row }) => (
 /**
  * `?view=theme` — the palette, printed from the stylesheet that draws it.
  *
- * Every value and every utility family here is parsed out of `index.css` at build time (`?raw`), and
- * each swatch is painted with the value printed beside it, so the page cannot describe a palette the
- * app does not use. It is deliberately not a workbench tab: it is a reference for whoever is adding a
- * colour, and the learner-facing rail stays at the tabs a learner needs.
+ * Every value and every utility family here is parsed out of `index.css` at build time (the
+ * `virtual:theme-tokens` module in `vite.config.ts`), and each swatch is painted with the value
+ * printed beside it, so the page cannot describe a palette the app does not use. It is deliberately
+ * not a workbench tab: it is a reference for whoever is adding a colour, and the learner-facing rail
+ * stays at the tabs a learner needs.
  */
 export const ThemeTokens: React.FC<ThemeTokensPageProps> = ({
   theme,
@@ -151,8 +152,7 @@ export const ThemeTokens: React.FC<ThemeTokensPageProps> = ({
   onToggleContrast,
   onTogglePaper,
 }) => {
-  const table = useMemo(() => themeTokensFromCss(themeCss), []);
-  const familyCount = Object.keys(table.utilities).length;
+  const familyCount = Object.keys(themeTokens.utilities).length;
 
   return (
     <div className="space-y-4" data-testid="theme-tokens-page">
@@ -220,8 +220,8 @@ export const ThemeTokens: React.FC<ThemeTokensPageProps> = ({
           <span className="chip" data-testid="theme-active-palette" data-theme-now={theme}>
             This page: {theme}
           </span>
-          <span className="chip tnum">{table.colour.length} colour tokens</span>
-          <span className="chip tnum">{table.scale.length} scale values</span>
+          <span className="chip tnum">{themeTokens.colour.length} colour tokens</span>
+          <span className="chip tnum">{themeTokens.scale.length} scale values</span>
           <span className="chip tnum">{familyCount} utility families</span>
           <a
             href={RULES_URL}
@@ -233,9 +233,9 @@ export const ThemeTokens: React.FC<ThemeTokensPageProps> = ({
         </div>
       </section>
 
-      {table.error && (
+      {themeTokens.error && (
         <p className="surface p-4 text-[13px]" style={{ color: 'var(--rose)' }} data-testid="theme-tokens-error">
-          {table.error}
+          {themeTokens.error}
         </p>
       )}
 
@@ -264,7 +264,7 @@ export const ThemeTokens: React.FC<ThemeTokensPageProps> = ({
               </tr>
             </thead>
             <tbody>
-              {table.colour.map((row) => (
+              {themeTokens.colour.map((row) => (
                 <ColourRow key={row.name} row={row} />
               ))}
             </tbody>
@@ -295,7 +295,7 @@ export const ThemeTokens: React.FC<ThemeTokensPageProps> = ({
               </tr>
             </thead>
             <tbody>
-              {table.scale.map((row) => (
+              {themeTokens.scale.map((row) => (
                 <ScaleRow key={row.name} row={row} />
               ))}
             </tbody>

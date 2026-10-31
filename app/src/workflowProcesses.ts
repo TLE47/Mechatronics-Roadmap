@@ -105,6 +105,19 @@ export function readLanes(value: unknown, exists: ReadonlySet<string>): Workflow
 }
 
 /**
+ * A document with its lane list replaced, or the field dropped when no lane is left.
+ *
+ * No field is written for a document that has no lanes (see the header), and every mutation that can
+ * empty the list needs that rule, so it lives once here instead of at each call site.
+ */
+export function withLanes(doc: WorkflowDoc, lanes: WorkflowLane[]): WorkflowDoc {
+  const next = { ...doc };
+  if (lanes.length) next.lanes = lanes;
+  else delete next.lanes;
+  return next;
+}
+
+/**
  * Put cards in one lane, taking them out of any lane they were in.
  *
  * Returning a new array (and dropping a lane that lost its last card) is the whole mutation: the
@@ -139,6 +152,45 @@ export function removeLane(lanes: readonly WorkflowLane[], index: number): Workf
 /** The name of the lane a card belongs to, or '' for a card that sits outside every partition. */
 export function laneTitleFor(lanes: readonly WorkflowLane[] | undefined, nodeId: string): string {
   return lanes?.find((lane) => lane.nodeIds.includes(nodeId))?.title ?? '';
+}
+
+/** Where a card sits, for the inspector's lane picker; -1 means outside every partition. */
+export function laneIndexOf(lanes: readonly WorkflowLane[] | undefined, nodeId: string): number {
+  return (lanes ?? []).findIndex((lane) => lane.nodeIds.includes(nodeId));
+}
+
+/** Take one card out of every lane, dropping a lane that named only that card. */
+export function withoutNodeFromLanes(
+  lanes: readonly WorkflowLane[],
+  nodeId: string
+): WorkflowLane[] {
+  return lanes
+    .map((lane) => ({ ...lane, nodeIds: lane.nodeIds.filter((id) => id !== nodeId) }))
+    .filter((lane) => lane.nodeIds.length);
+}
+
+/**
+ * Move one card to an existing lane, keeping one claim per card and one lane per non-empty name.
+ *
+ * The target is read before any source lane is emptied, because dropping the source first would
+ * shift the index the caller passed. A card already in the target is a no-op, not a duplicate.
+ */
+export function moveNodeToLane(
+  lanes: readonly WorkflowLane[],
+  nodeId: string,
+  index: number
+): WorkflowLane[] {
+  if (!lanes[index]) return [...lanes];
+  if (lanes[index].nodeIds.includes(nodeId)) return [...lanes];
+  return lanes
+    .map((lane, at) => ({
+      ...lane,
+      nodeIds:
+        at === index
+          ? [...lane.nodeIds.filter((id) => id !== nodeId), nodeId]
+          : lane.nodeIds.filter((id) => id !== nodeId),
+    }))
+    .filter((lane) => lane.nodeIds.length);
 }
 
 /**

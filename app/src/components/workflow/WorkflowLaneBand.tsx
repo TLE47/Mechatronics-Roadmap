@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { MAX_LANE_TITLE_CHARS, type WorkflowLane } from '../../workflowProcesses.ts';
 import type { CanvasRect } from './canvasGeometry.ts';
 
@@ -9,17 +10,39 @@ import type { CanvasRect } from './canvasGeometry.ts';
  * A lane is not a drag handle: moving its cards moves the band, and a lane drawn as one unit would
  * make a partition behave like a second frame. The tab is the one control — rename it, or remove the
  * partition and keep every card.
+ *
+ * The tab sits at `z-[19]`, under the cards: the reserved header normally leaves it in open air, but
+ * a lane pinned to the paper's top edge cannot reserve that air (`laneRect` clamps at 0), and there
+ * the card's top port must win the press rather than lose it to a name field.
  */
 
 export interface WorkflowLaneBandProps {
   lane: WorkflowLane;
   index: number;
   rect: CanvasRect;
+  /** A lane just created from the keyboard gets its name field instead of losing the caret. */
+  focusName?: boolean;
+  onNameFocused?: () => void;
   onRename: (index: number, title: string) => void;
   onRemove: (index: number) => void;
 }
 
-export function WorkflowLaneBand({ lane, index, rect, onRename, onRemove }: WorkflowLaneBandProps) {
+export function WorkflowLaneBand({
+  lane,
+  index,
+  rect,
+  focusName = false,
+  onNameFocused,
+  onRename,
+  onRemove,
+}: WorkflowLaneBandProps) {
+  const titleRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!focusName) return;
+    titleRef.current?.focus();
+    titleRef.current?.select();
+    onNameFocused?.();
+  }, [focusName, onNameFocused]);
   return (
     <>
       <div
@@ -32,7 +55,7 @@ export function WorkflowLaneBand({ lane, index, rect, onRename, onRemove }: Work
       <div
         data-testid={`workflow-lane-chip-${index}`}
         data-lane-chip=""
-        className="absolute z-30 flex items-center rounded border border-accent/40 bg-panel shadow-sm"
+        className="absolute z-[19] flex items-center rounded border border-accent/40 bg-panel shadow-sm"
         style={{ left: rect.x + 6, top: rect.y + 2 }}
         onPointerDown={(event) => event.stopPropagation()}
       >
@@ -40,6 +63,7 @@ export function WorkflowLaneBand({ lane, index, rect, onRename, onRemove }: Work
           Lane
         </span>
         <input
+          ref={titleRef}
           data-testid={`workflow-lane-title-${index}`}
           aria-label={`Name of lane ${index + 1}`}
           value={lane.title}

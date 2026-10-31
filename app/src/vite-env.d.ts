@@ -12,3 +12,9 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+/** The palette table `vite.config.ts` parses out of `app/src/index.css` at build time. */
+declare module 'virtual:theme-tokens' {
+  const table: import('./themeTokens').PaletteTable;
+  export default table;
+}

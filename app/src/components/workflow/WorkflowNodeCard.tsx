@@ -1,5 +1,5 @@
-import type { PointerEvent as ReactPointerEvent } from 'react';
-import { Trash2 } from 'lucide-react';
+import type { FocusEvent as ReactFocusEvent, PointerEvent as ReactPointerEvent } from 'react';
+import { BookOpen, StickyNote, Trash2 } from 'lucide-react';
 import {
   KIND_META,
   MAX_BRANCH_CONDITION_CHARS,
@@ -15,6 +15,9 @@ import {
   type WorkflowSide,
 } from '../../workflow.ts';
 import { iconForKind } from '../workflowIcons.ts';
+import { MathView } from '../MathView.tsx';
+import { parseInline, type InlineRun } from '../../readerMarkdown.ts';
+import { cardFill, cardInk, cardType } from './cardStyle.ts';
 import { nudgeCard } from './cardNudge.ts';
 import { WorkflowPorts } from './WorkflowPorts.tsx';
 import type { LinkDraft } from './useLinking.ts';
@@ -57,6 +60,24 @@ const SHAPE_INSET: Partial<Record<NodeShape, string>> = {
   diamond: 'px-9',
 };
 
+/**
+ * A field's words with `$…$` drawn as maths.
+ *
+ * The runs come from the reader's own inline parser (`readerMarkdown.ts`), so a formula on a card is
+ * split by the same rule as a formula in a lesson — one parser, not a second weaker one. Only the
+ * maths runs are drawn differently: a card is a diagram label, so its emphasis stays the plain text
+ * it already is.
+ */
+function CardWords({ runs }: { runs: InlineRun[] }) {
+  return (
+    <>
+      {runs.map((run, index) =>
+        run.k === 'math' ? <MathView key={index} math={run.v} /> : <span key={index}>{run.v}</span>
+      )}
+    </>
+  );
+}
+
 export interface WorkflowNodeCardProps {
   node: WorkflowNode;
   index: number;
@@ -74,6 +95,7 @@ export interface WorkflowNodeCardProps {
   onMove: (id: string, x: number, y: number) => void;
   onUpdate: (id: string, patch: Partial<WorkflowNode>) => void;
   onRemove: (id: string) => void;
+  onOpenLesson: (lesson: string) => void;
   onDragStart: (event: ReactPointerEvent, node: WorkflowNode) => void;
   onLinkStart: (event: ReactPointerEvent, node: WorkflowNode, side: WorkflowSide) => void;
   /** A press on the body: the canvas's armed arrow lands here, or the press is just a selection. */
@@ -94,6 +116,7 @@ export function WorkflowNodeCard({
   onMove,
   onUpdate,
   onRemove,
+  onOpenLesson,
   onDragStart,
   onLinkStart,
   onLinkLand,
@@ -102,6 +125,9 @@ export function WorkflowNodeCard({
   const meta = KIND_META[node.kind];
   const shape = NODE_SHAPE[node.kind];
   const shaped = shape !== 'rect';
+  // A text card is words on the paper: the same fields, no plate around them. Selection still shows
+  // a ring, so a label can be nudged and deleted like anything else without a box in the diagram.
+  const bare = node.kind === 'text';
   const clip = SHAPE_CLIP[shape];
   const inset = SHAPE_INSET[shape] ?? '';
   const frame = selected
@@ -109,10 +135,27 @@ export function WorkflowNodeCard({
     : issue
       ? 'border-amber/70'
       : 'border-line';
+  const type = cardType(node.size);
+  const ink = cardInk(node.ink);
+  // Without a chosen ink the detail keeps the muted colour it always had; a chosen ink is the one
+  // colour the learner asked the card's words to be, so both fields take it.
+  const detailInk = node.ink ? ink : 'var(--muted)';
+  const fill = cardFill(node.fill);
+  const titleRuns = parseInline(node.title);
+  const detailRuns = parseInline(node.detail);
+  const titleMath = titleRuns.some((run) => run.k === 'math');
+  const detailMath = detailRuns.some((run) => run.k === 'math');
 
-  // A resting card sits under the connector layer (`z-[25]`): a curve that crosses a card must be
-  // seen, because its arrowhead is the only thing that says where it lands. A card being dragged
-  // rises above the arrows it is crossing.
+  // Only the header itself selects. A focus that bubbles up from the delete button or a port must
+  // not open the inspector: that panel is in flow above the paper and would move the control under
+  // the pointer between its press and its release.
+  const selectSelf = (event: ReactFocusEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) onSelect(node.id);
+  };
+
+  // A resting card sits above the connector layer (`z-[15]`): a curve is diagram, the card is what
+  // the learner is editing, and an arrow that crosses a card must not hide its title or delete
+  // button. A card being dragged rises above the other cards it is crossing.
   return (
     <div
       data-node-id={node.id}
@@ -120,10 +163,17 @@ export function WorkflowNodeCard({
       data-step={number}
       data-kind={node.kind}
       data-shape={shape}
-      style={{ left: position.x, top: position.y, width: NODE_WIDTH }}
-      className={`absolute z-20 cursor-default ${
-        shaped ? '' : `rounded-xl border bg-panel shadow-sm ${frame}`
-      } ${dragging ? (shaped ? 'z-30' : 'z-30 shadow-lg') : ''}`}
+      style={{
+        left: position.x,
+        top: position.y,
+        width: NODE_WIDTH,
+        // A shaped plate is clipped inside this box: tinting the box would paint a rectangle behind
+        // the diamond. Only the plain rectangle takes the fill here; the plate takes it below.
+        ...(shaped ? {} : { backgroundColor: fill }),
+      }}
+      className={`absolute cursor-default ${
+        shaped ? '' : bare ? `rounded-lg ${selected ? 'ring-1 ring-accent/40' : ''}` : `rounded-xl border bg-panel shadow-sm ${frame}`
+      } ${dragging ? 'z-40' : selected ? 'z-30' : 'z-20'} ${dragging && !shaped && !bare ? 'shadow-lg' : ''}`}
       onPointerDown={(event) => onLinkLand(event, node)}
     >
       {shaped && (
@@ -137,7 +187,7 @@ export function WorkflowNodeCard({
           />
           <div
             aria-hidden="true"
-            style={clip ? { clipPath: clip } : undefined}
+            style={{ clipPath: clip, backgroundColor: fill }}
             className={`pointer-events-none absolute bg-panel ${SHAPE_ROUND[shape]} ${
               selected ? 'inset-[2px]' : 'inset-px'
             }`}
@@ -149,10 +199,12 @@ export function WorkflowNodeCard({
         role="group"
         tabIndex={0}
         aria-label={`Card ${number}, ${meta.label}. Drag to move; arrow keys nudge it.`}
+        aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
+        onFocus={selectSelf}
         onPointerDown={(event) => onDragStart(event, node)}
         onKeyDown={(event) => nudgeCard(event, node, onMove, onSelect)}
-        className={`flex cursor-grab touch-none items-center gap-1.5 border-b border-line-soft py-1.5 select-none focus-visible:outline-2 focus-visible:outline-accent ${
-          shaped ? inset : 'rounded-t-xl bg-canvas px-2'
+        className={`flex cursor-grab touch-none items-center gap-1.5 select-none py-1.5 focus-visible:outline-2 focus-visible:outline-accent ${
+          bare ? 'bg-transparent px-1' : shaped ? inset : 'rounded-t-xl border-b border-line-soft bg-canvas px-2'
         }`}
       >
         <Icon className="h-3 w-3 shrink-0 text-accent" aria-hidden="true" />
@@ -185,30 +237,61 @@ export function WorkflowNodeCard({
         )}
       </div>
 
-      <div className={`space-y-1 ${shaped ? `${inset} py-1.5` : 'p-1.5'}`}>
-        <input
-          data-testid={`workflow-node-title-${index}`}
-          aria-label={`Title of card ${index + 1}`}
-          value={node.title}
-          maxLength={MAX_STEP_TITLE_CHARS}
-          placeholder={`${meta.label} — one idea`}
-          onChange={(event) => onUpdate(node.id, { title: event.target.value })}
-          onFocus={() => onSelect(node.id)}
-          className="w-full rounded border border-transparent bg-transparent px-1 py-0.5 text-[12px] font-semibold outline-none hover:bg-raise focus:border-line focus:bg-canvas"
-          style={{ color: 'var(--text)' }}
-        />
-        <textarea
-          data-testid={`workflow-node-detail-${index}`}
-          aria-label={`Detail of card ${index + 1}`}
-          value={node.detail}
-          rows={2}
-          maxLength={MAX_STEP_DETAIL_CHARS}
-          placeholder={meta.hint}
-          onChange={(event) => onUpdate(node.id, { detail: event.target.value })}
-          onFocus={() => onSelect(node.id)}
-          className="w-full resize-y rounded border border-transparent bg-transparent px-1 py-0.5 font-mono text-[11px] leading-snug outline-none hover:bg-raise focus:border-line focus:bg-canvas"
-          style={{ color: 'var(--muted)' }}
-        />
+      <div className={`space-y-1 ${shaped ? `${inset} py-1.5` : bare ? 'px-1 pb-1' : 'p-1.5'}`}>
+        {/* A field with maths in it shows the maths until it is focused, then the source it is made
+            of: the input is the same field, hidden behind the rendering rather than a second copy.
+            `peer-focus:hidden` is what swaps them, so the card needs no edit state of its own. */}
+        <div className="relative">
+          <input
+            data-testid={`workflow-node-title-${index}`}
+            aria-label={`Title of card ${index + 1}`}
+            value={node.title}
+            maxLength={MAX_STEP_TITLE_CHARS}
+            placeholder={`${meta.label} — one idea`}
+            onChange={(event) => onUpdate(node.id, { title: event.target.value })}
+            onFocus={() => onSelect(node.id)}
+            className={`peer w-full rounded border border-transparent bg-transparent px-1 py-0.5 font-semibold outline-none hover:bg-raise focus:border-line focus:bg-canvas ${
+              titleMath ? 'opacity-0 focus:opacity-100' : ''
+            }`}
+            style={{ color: ink, fontSize: type.title }}
+          />
+          {/* A formula is taller than a line of text (a fraction is two), so the rendering gets a
+              little room above and below the input's box rather than being clipped to it. */}
+          {titleMath && (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 -inset-y-1 flex items-center overflow-hidden px-1 py-0.5 peer-focus:hidden"
+              style={{ color: ink, fontSize: type.title }}
+            >
+              <CardWords runs={titleRuns} />
+            </span>
+          )}
+        </div>
+        <div className="relative">
+          <textarea
+            data-testid={`workflow-node-detail-${index}`}
+            aria-label={`Detail of card ${index + 1}`}
+            value={node.detail}
+            rows={2}
+            maxLength={MAX_STEP_DETAIL_CHARS}
+            placeholder={meta.hint}
+            onChange={(event) => onUpdate(node.id, { detail: event.target.value })}
+            onFocus={() => onSelect(node.id)}
+            className={`peer w-full resize-y rounded border border-transparent bg-transparent px-1 py-0.5 font-mono leading-snug outline-none hover:bg-raise focus:border-line focus:bg-canvas ${
+              detailMath ? 'opacity-0 focus:opacity-100' : ''
+            }`}
+            style={{ color: detailInk, fontSize: type.detail }}
+          />
+          {detailMath && (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 -inset-y-1 overflow-hidden whitespace-pre-wrap px-1 py-0.5 font-mono leading-snug peer-focus:hidden"
+              style={{ color: detailInk, fontSize: type.detail }}
+            >
+              <CardWords runs={detailRuns} />
+            </span>
+          )}
+        </div>
         {node.kind === 'branch' && (
           <input
             data-testid={`workflow-node-condition-${index}`}
@@ -236,6 +319,38 @@ export function WorkflowNodeCard({
           />
         )}
       </div>
+
+      {(node.note || node.lesson) && (
+        <div className="flex flex-wrap items-center gap-1 border-t border-line-soft px-1.5 py-1">
+          {node.note && (
+            <span
+              data-testid={`workflow-node-note-${index}`}
+              title={node.note}
+              className="flex min-w-0 items-center gap-1 font-mono text-[10px] text-muted"
+            >
+              <StickyNote className="h-2.5 w-2.5 shrink-0 text-faint" aria-hidden="true" />
+              <span className="truncate">{node.note}</span>
+            </span>
+          )}
+          {node.lesson && (
+            <button
+              type="button"
+              data-testid={`workflow-node-lesson-${index}`}
+              aria-label={`Open lesson ${node.lesson}`}
+              title={`Open lesson ${node.lesson}`}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                onOpenLesson(node.lesson ?? '');
+              }}
+              className="flex shrink-0 cursor-pointer items-center gap-0.5 rounded border border-line bg-canvas px-1 font-mono text-[10px] text-accent hover:border-accent"
+            >
+              <BookOpen className="h-2.5 w-2.5" aria-hidden="true" />
+              {node.lesson}
+            </button>
+          )}
+        </div>
+      )}
 
       <WorkflowPorts
         node={node}

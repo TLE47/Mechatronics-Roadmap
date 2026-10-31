@@ -17,7 +17,6 @@ export interface LinearTrackStep {
   milestoneId: string;
   milestoneTask: string;
   deliverableGate: string;
-  linkedTab: TabId;
   presetId: string;
   presetLabel: string;
   studyLinks: { label: string; url: string; note?: string }[];
@@ -38,7 +37,6 @@ export interface TierPassMeta {
   hardwareStack: string;
   softwareStack: string;
   mathDepth: string;
-  unlockRequirement: string;
 }
 
 export const TIER_PASS_META: Record<ActiveTierPass, TierPassMeta> = {
@@ -52,7 +50,6 @@ export const TIER_PASS_META: Record<ActiveTierPass, TierPassMeta> = {
     hardwareStack: 'Solderless Breadboard · ESP32 / Arduino / STM32 Nucleo · Digital Multimeter · CC/CV Bench PSU',
     softwareStack: 'Basic C/C++ Loop · Hardware Timer PWM · Serial Plotter',
     mathDepth: 'Ohm’s Law (V = IR), Power (P = I²R), RC Time Constant (τ = RC)',
-    unlockRequirement: 'Starting Point — Complete all 3 Level-0 Bench Modules to unlock the Tier 1 Pass.',
   },
   tier1: {
     id: 'tier1',
@@ -64,7 +61,6 @@ export const TIER_PASS_META: Record<ActiveTierPass, TierPassMeta> = {
     hardwareStack: 'Breakout Modules (DRV8833 / DRV8313) · I2C/SPI Magnetic Encoders · 3D-Printed Brackets & Hobby Servos',
     softwareStack: 'Python Finite-Difference Sims · SimpleFOC · Non-Blocking Timer ISRs · Basic PID',
     mathDepth: 'Finite Differences (Δx/Δt), 2D Trigonometry, First-Order RC Filters, Basic PID Law',
-    unlockRequirement: 'Complete Tracks 00–08 (Tier 1) to graduate from breadboards and unlock Tier 2.',
   },
   tier2: {
     id: 'tier2',
@@ -76,7 +72,6 @@ export const TIER_PASS_META: Record<ActiveTierPass, TierPassMeta> = {
     hardwareStack: 'Custom 2–4 Layer KiCad PCBs · Half-Bridge Gate Drivers · 4-Terminal Kelvin Shunts · 6:1–8:1 Planetary Gears',
     softwareStack: 'FreeRTOS / Zephyr · DMA Circular Buffers · CAN-FD MIT Protocol · MuJoCo XML · LQR & Linear KF',
     mathDepth: 'State-Space Matrices (ẋ = Ax+Bu), Quaternions, Pre-Warped Tustin Biquads, Bode Loop Shaping',
-    unlockRequirement: 'Complete Tracks 00–08 (Tier 2) to master custom PCBs & RTOS and unlock Tier 3.',
   },
   tier3: {
     id: 'tier3',
@@ -88,7 +83,6 @@ export const TIER_PASS_META: Record<ActiveTierPass, TierPassMeta> = {
     hardwareStack: '6-Layer 48V/30A FOC PCB (STM32G474 + DRV8353 + OptiMOS 6) · Ti-6Al-4V Flexures · Dual-Channel Hardware STO',
     softwareStack: '40 kHz Zero-Wait-State CCM ISR · Hardware CORDIC · C++20 WaitFreeSeqLock · ECBF-QP & Khatib WBC',
     mathDepth: 'Matrix Lie Algebras so(3)/se(3), Featherstone Spatial Algebra, Joseph ESKF, Schroeder Spectral SysID',
-    unlockRequirement: 'Final Production Mastery — All 12 Automated Hardware, Firmware & Control Verification Gates.',
   },
 };
 
@@ -111,7 +105,6 @@ export const LEVEL_0_STEPS: LinearTrackStep[] = [
     milestoneId: 'l0_m1',
     milestoneTask: 'Predict the voltage spike when a 1 mH motor coil carrying 5 A is switched off in 100 ns without a diode (V = L·ΔI/Δt = 50,000 V!), explaining why every inductive load needs a recirculation path.',
     deliverableGate: 'Concept Check: Explain V, I, R, C, L, and State Vectors without looking at notes.',
-    linkedTab: 'tab-arch',
     presetId: 'wafer_scanner',
     presetLabel: 'Inspect Two-Mass Energy Analogy',
     studyLinks: [
@@ -155,7 +148,6 @@ export const LEVEL_0_STEPS: LinearTrackStep[] = [
     milestoneId: 'l0_m2',
     milestoneTask: 'Wire a 1 kΩ + 100 nF RC low-pass filter on a breadboard, verify zero VCC-to-GND shorts with a DMM, power via a current-limited supply, and measure the 0–63.2% rise time (τ = 100 µs) on a scope.',
     deliverableGate: 'Bench Gate: Safe CC/CV power-up + DMM continuity check + Scope trigger capture.',
-    linkedTab: 'tab-cadpcb',
     presetId: 'pcb_6layer_opt',
     presetLabel: 'Compare Breadboard vs. 6-Layer PCB',
     studyLinks: [
@@ -199,7 +191,6 @@ export const LEVEL_0_STEPS: LinearTrackStep[] = [
     milestoneId: 'l0_m3',
     milestoneTask: 'Flash an ESP32 or STM32 Nucleo to read a potentiometer via 12-bit ADC and modulate the speed of a 12 V DC motor via a 20 kHz hardware PWM MOSFET stage, streaming live RPM/ADC telemetry at 100 Hz.',
     deliverableGate: 'Level 0 Graduation Gate: Working Potentiometer → ADC → MCU → 20kHz PWM → MOSFET → Motor loop.',
-    linkedTab: 'tab-foc',
     presetId: 'foc_cobot_joint',
     presetLabel: 'Preview 3-Phase PWM Simulator',
     studyLinks: [
@@ -249,7 +240,6 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't1_tr00',
     milestoneTask: 'Write a Python script that simulates a 2-mass spring-damper drive, injects a sine sweep, and plots the vibration amplitude peak.',
     deliverableGate: 'Tier 1.0 Gate: Working time-stepping physics loop + 2D rotation plotter.',
-    linkedTab: 'tab-bode',
     presetId: 'surgical_cable',
     presetLabel: 'Open Two-Mass Resonance Sim',
     studyLinks: [
@@ -293,7 +283,6 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't1_tr01',
     milestoneTask: 'Wire an ESP32/STM32 + DRV8833 breakout driving a 12 V DC gearmotor; capture clean PWM reversals on a scope with <100 mV droop on the 3.3 V MCU rail.',
     deliverableGate: 'Tier 1.1 Gate: Glitch-free bidirectional H-bridge breadboard build.',
-    linkedTab: 'tab-cadpcb',
     presetId: 'pcb_6layer_opt',
     presetLabel: 'Open Power Stage Explorer',
     studyLinks: [
@@ -336,7 +325,6 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't1_tr02',
     milestoneTask: 'Code a 2-DOF planar inverse kinematics solver and command a 2-link arm (in simulation or with 2 hobby servos) to trace a figure-8 path.',
     deliverableGate: 'Tier 1.2 Gate: Zero-NaN 2-DOF IK solver + working 2-link trajectory tracker.',
-    linkedTab: 'tab-models',
     presetId: 'robot_hopper_crouch',
     presetLabel: 'Open Kinematic Chain Inspector',
     studyLinks: [
@@ -379,7 +367,6 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't1_tr03',
     milestoneTask: 'Connect a magnetic encoder and a 3-phase DRV8313 breakout to an ESP32/STM32 using SimpleFOC, align the electrical zero offset, and run closed-loop angle control.',
     deliverableGate: 'Tier 1.3 Gate: Smooth 3-phase brushless position holding with SimpleFOC.',
-    linkedTab: 'tab-foc',
     presetId: 'foc_cobot_joint',
     presetLabel: 'Open FOC & SVPWM Simulator',
     studyLinks: [
@@ -422,7 +409,6 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't1_tr04',
     milestoneTask: 'Refactor an Arduino/STM32 loop into a hardware-timed 1 kHz ISR, toggle a GPIO debug pin inside the ISR to verify exact 1.000 ms spacing on a scope/logic analyzer, and stream binary packets.',
     deliverableGate: 'Tier 1.4 Gate: 1 kHz hardware-timer ISR verified on scope + binary packet parser.',
-    linkedTab: 'tab-eskf',
     presetId: 'eskf_seqlock_clean',
     presetLabel: 'Open Real-Time Telemetry Sim',
     studyLinks: [
@@ -465,7 +451,6 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't1_tr05',
     milestoneTask: 'Tune a discrete PID controller with anti-windup and derivative filtering to stabilize a 1-DOF pendulum/arm, and fuse an MPU6050/LSM6DSO IMU using a complementary filter.',
     deliverableGate: 'Tier 1.5 Gate: Step response with <5% overshoot + drift-free IMU tilt angle.',
-    linkedTab: 'tab-pend',
     presetId: 'pend_swingup',
     presetLabel: 'Open Pendulum Balancer Sim',
     studyLinks: [
@@ -508,7 +493,6 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't1_tr06',
     milestoneTask: 'Program a virtual spring wall (free motion for q < 45°, stiff spring for q ≥ 45°) and execute a sine-sweep frequency test across 1–50 Hz.',
     deliverableGate: 'Tier 1.6 Gate: Smooth cubic trajectory tracker + physical virtual wall demo.',
-    linkedTab: 'tab-sysid',
     presetId: 'sysid_schroeder_clean',
     presetLabel: 'Open Frequency Identification Sim',
     studyLinks: [
@@ -551,7 +535,6 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't1_tr08',
     milestoneTask: 'Complete the Tier 1 2-DOF desktop robot (or pass all 8 interactive simulator presets in Tier 1 mode) to unlock the Tier 2 Applied Engineering Pass!',
     deliverableGate: '🏆 TIER 1 GRADUATION: Unlock Tier 2 (Custom PCBs, RTOS/DMA, LQR & MuJoCo).',
-    linkedTab: 'tab-models',
     presetId: 'robot_arm_polish',
     presetLabel: 'Launch Capstone Inspector',
     studyLinks: [
@@ -605,7 +588,6 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't2_tr00',
     milestoneTask: 'Tune the Biquad Notch Filter in Vibration Filter & Resonance Lab to cancel the 290.6 Hz two-mass resonance peak by >25 dB and verify float32 TDF-II stability.',
     deliverableGate: 'Tier 2.0 Gate: Pre-warped TDF-II notch filter achieving ≤ -25 dB attenuation at f_r.',
-    linkedTab: 'tab-bode',
     presetId: 'cnc_ballscrew',
     presetLabel: 'Tune CNC Ballscrew Notch',
     studyLinks: [
@@ -653,7 +635,6 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't2_tr01',
     milestoneTask: 'Inspect the Capstone I 48V/30A BOM & thermal solver in 3D Parts & Motor Driver PCB Lab; compare the 2-layer 5.2 nH overshoot preset against the 6-layer 1.6 nH layout.',
     deliverableGate: 'Tier 2.1 Gate: DRC-clean KiCad half-bridge schematic/layout + Kelvin sense routing.',
-    linkedTab: 'tab-cadpcb',
     presetId: 'pcb_2layer_bad',
     presetLabel: 'Inspect 2-Layer vs 6-Layer PCB',
     studyLinks: [
@@ -701,7 +682,6 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't2_tr02',
     milestoneTask: 'Articulate all 3 Capstone URDF/MuJoCo models in Robot Arm Kinematics & Safety Cutoff and inspect the 3D CAD wireframes (Notch Flexure, Kelvin Coupling, 8:1 QDD Carrier) in 3D Parts & Motor Driver PCB Lab.',
     deliverableGate: 'Tier 2.2 Gate: Watertight STEP/STL meshes + SPD-validated URDF/MJCF robot models.',
-    linkedTab: 'tab-models',
     presetId: 'robot_furuta_bal',
     presetLabel: 'Inspect URDF/MuJoCo Models',
     studyLinks: [
@@ -749,7 +729,6 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't2_tr03',
     milestoneTask: 'Explore the 25 kHz FOC simulator in Brushless Motor Control Lab across 1,200–5,500 RPM and observe how rotor speed couples into the d-q axes.',
     deliverableGate: 'Tier 2.3 Gate: Custom Clarke/Park implementation + lag-free Type-II velocity PLL.',
-    linkedTab: 'tab-foc',
     presetId: 'foc_drone_prop',
     presetLabel: 'Test High-Speed FOC Coupling',
     studyLinks: [
@@ -792,7 +771,6 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't2_tr04',
     milestoneTask: 'Verify multi-rate task schedulability and inspect real-time ISR-to-planner contention behavior in IMU Sensor Fusion & Real-Time Lock.',
     deliverableGate: 'Tier 2.4 Gate: Exact RTA deadline proof + bit-exact MIT CAN frame encoder/decoder.',
-    linkedTab: 'tab-eskf',
     presetId: 'eskf_seqlock_clean',
     presetLabel: 'Open RTOS & IPC Simulator',
     studyLinks: [
@@ -840,7 +818,6 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't2_tr05',
     milestoneTask: 'Run the Furuta Pendulum simulator in Pendulum Balance & Safety Walls, adjust LQR angle weight Q_θ and swing-up gain k_E, and test impulse recovery.',
     deliverableGate: 'Tier 2.5 Gate: Autonomous pendulum swing-up and upright LQR stabilization.',
-    linkedTab: 'tab-pend',
     presetId: 'pend_swingup',
     presetLabel: 'Run Swing-Up + LQR Sim',
     studyLinks: [
@@ -888,7 +865,6 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't2_tr06',
     milestoneTask: 'Test encoder wire-break CRC fault injection in Robot Arm Kinematics & Safety Cutoff and verify safe fault transitions.',
     deliverableGate: 'Tier 2.6 Gate: Working Cartesian Jacobian transpose controller + HIL fault test pass.',
-    linkedTab: 'tab-models',
     presetId: 'sto_enc_crc',
     presetLabel: 'Test HIL Fault Injection',
     studyLinks: [
@@ -931,7 +907,6 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't2_tr08',
     milestoneTask: 'Complete all Tier 2 Applied Milestones across Tracks 00–08 to unlock the final Tier 3 Production & Graduate Mastery Pass!',
     deliverableGate: '🏆 TIER 2 GRADUATION: Unlock Tier 3 (Lie Groups, <2nH 48V FOC, WaitFreeSeqLock & STO).',
-    linkedTab: 'tab-cadpcb',
     presetId: 'cad_qdd_carrier',
     presetLabel: 'Inspect QDD Actuator Design',
     studyLinks: [
@@ -980,7 +955,6 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't3_tr00',
     milestoneTask: 'Verify the ASML Wafer Stage 390 Hz resonance suppression preset in Vibration Filter & Resonance Lab and review the SO(3) small-angle guard in the 1-Page Reference Card.',
     deliverableGate: 'Tier 3.0 Gate: Lab 00 Suite — |ΔE| < 10⁻⁹ J & exact SO(3) tangent-space identities.',
-    linkedTab: 'tab-bode',
     presetId: 'wafer_scanner',
     presetLabel: 'Run ASML Wafer Stage Sim',
     studyLinks: [
@@ -1023,7 +997,6 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't3_tr01',
     milestoneTask: 'Run the 30A Peak Torque Thermal Load preset in 3D Parts & Motor Driver PCB Lab and verify V_DS,peak < 60 V. The T_j < 110 °C gate applies to the 15 A continuous design point (T_j 90.9 °C); holding 30 A continuous drives T_j to 206 °C, so 30 A is a short peak, not a continuous rating.',
     deliverableGate: 'Tier 3.1 Gate: Lab 01 & Capstone I PCB — V_DS,peak = 53.1 V, Efficiency = 99.11%.',
-    linkedTab: 'tab-cadpcb',
     presetId: 'pcb_peak_30a',
     presetLabel: 'Run 30A Electro-Thermal Solver',
     studyLinks: [
@@ -1066,7 +1039,6 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't3_tr02',
     milestoneTask: 'Inspect the Ti-6Al-4V Notch Flexure and 440C Kelvin 3-2-1 Coupling in 3D Parts & Motor Driver PCB Lab and tune web thickness t to observe rotational stiffness k_θ.',
     deliverableGate: 'Tier 3.2 Gate: Lab 02 Suite — ‖τ_RNEA - τ_Lagrange‖_∞ < 10⁻¹¹ N·m.',
-    linkedTab: 'tab-cadpcb',
     presetId: 'cad_flexure_stage',
     presetLabel: 'Inspect Ti-6Al-4V Flexure CAD',
     studyLinks: [
@@ -1114,7 +1086,6 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't3_tr03',
     milestoneTask: 'In Brushless Motor Control Lab, toggle Cross-Coupling Decoupling OFF and ON at 2,500 RPM and run the 24A Hopper Jump preset to verify ≤180 µs rise time.',
     deliverableGate: 'Tier 3.3 Gate: Lab 03 Suite — t_rise ≤ 180 µs, INL < 0.04°, +15.47% SVPWM boost.',
-    linkedTab: 'tab-foc',
     presetId: 'foc_qdd_jump',
     presetLabel: 'Run 24A Hopper Jump FOC',
     studyLinks: [
@@ -1157,7 +1128,6 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't3_tr04',
     milestoneTask: 'In IMU Sensor Fusion & Real-Time Lock, toggle `WaitFreeSeqLock` vs. Unprotected Shared Struct to observe corrupted torn-read spikes vs. 0 torn reads across 250k cycles.',
     deliverableGate: 'Tier 3.4 Gate: Lab 04 & Firmware Suite — 0 heap allocs, 0 torn reads, <30 ns latency.',
-    linkedTab: 'tab-eskf',
     presetId: 'eskf_torn_race',
     presetLabel: 'Compare Torn Reads vs SeqLock',
     studyLinks: [
@@ -1205,7 +1175,6 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't3_tr05',
     milestoneTask: 'Test the Tight ±0.50m CBF Safety Wall preset in Pendulum Balance & Safety Walls and the High Gyro Bias Recovery preset in IMU Sensor Fusion & Real-Time Lock.',
     deliverableGate: 'Tier 3.5 Gate: Lab 05 Suite — NEES ∈ χ²_95% & 0 CBF safety wall violations.',
-    linkedTab: 'tab-pend',
     presetId: 'pend_cbf_wall',
     presetLabel: 'Test Tight ±0.50m CBF Wall',
     studyLinks: [
@@ -1253,7 +1222,6 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't3_tr06',
     milestoneTask: 'Compare Schroeder vs. Zero-Phase Clipping in Sine-Sweep System Identification, and trigger the <1 µs 42A Short Desat Trip in Robot Arm Kinematics & Safety Cutoff.',
     deliverableGate: 'Tier 3.6 Gate: Lab 06 & 07 Suites — CF = 1.66, RMS SysID error < 0.5 dB, STO trip = 0.65 µs.',
-    linkedTab: 'tab-sysid',
     presetId: 'sysid_zero_clip',
     presetLabel: 'Compare Schroeder vs Zero-Phase',
     studyLinks: [
@@ -1297,7 +1265,6 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     milestoneId: 't3_tr08',
     milestoneTask: 'Complete all Tier 3 Production Milestones to achieve 100% MechaLab Roadmap Mastery!',
     deliverableGate: '🏆 FULL ROADMAP MASTERY: 12/12 Production Suites Verified.',
-    linkedTab: 'tab-models',
     presetId: 'robot_hopper_crouch',
     presetLabel: 'Inspect All Capstone Models',
     studyLinks: [

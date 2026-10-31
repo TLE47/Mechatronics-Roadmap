@@ -67,6 +67,7 @@ export function useLinking({
   heights,
   onConnect,
   onSelect,
+  onDropEmpty,
 }: {
   toCanvas: (clientX: number, clientY: number) => { x: number; y: number };
   byId: Map<string, WorkflowNode>;
@@ -80,6 +81,16 @@ export function useLinking({
     toKind: PortKind | null
   ) => void;
   onSelect: (id: string | null) => void;
+  /**
+   * A drag from a dot that ended on bare paper: make the card the arrow was heading for there.
+   * The last flag is the picker override (Alt/Option), which asks even when a default is set.
+   */
+  onDropEmpty?: (
+    draft: LinkDraft,
+    at: { x: number; y: number },
+    client: { x: number; y: number },
+    picker: boolean
+  ) => void;
 }): Linking {
   const [linking, setLinking] = useState<LinkDraft | null>(null);
   const [cursor, setCursor] = useState({ x: 0, y: 0 });
@@ -155,6 +166,18 @@ export function useLinking({
         setLinking(null);
         return;
       }
+      // Released on bare paper: that is the gesture asking for the next card, so the arrow is no
+      // longer half-drawn — the panel makes the card here and links it in the same write.
+      if (!target && linkTravelled.current && onDropEmpty) {
+        onDropEmpty(
+          linking,
+          toCanvas(event.clientX, event.clientY),
+          { x: event.clientX, y: event.clientY },
+          event.altKey
+        );
+        setLinking(null);
+        return;
+      }
       // Released on its own dot: stay armed for the phone's tap-then-tap. Released on the grid, or
       // after a drag that ended nowhere: cancel, because a half-drawn arrow left armed is a trap.
       if (target === null || linkTravelled.current) setLinking(null);
@@ -170,7 +193,7 @@ export function useLinking({
       window.removeEventListener('pointerup', up);
       window.removeEventListener('keydown', key);
     };
-  }, [linking, onConnect, byId, heights]);
+  }, [linking, onConnect, byId, heights, onDropEmpty]);
 
   return { linking, cursor, startLink, landOnCard };
 }

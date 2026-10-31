@@ -1404,10 +1404,29 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           0,
           'a fresh workflow has no arrows'
         );
-        const outDot = await page.getByTestId('workflow-node-port-right-0').boundingBox();
-        const targetCard = await page.getByTestId('workflow-node-port-top-1').boundingBox();
+        // A dot is only a place the pointer can land once the panel has stopped moving, and after the
+        // edits above the outlet can sit *under* the page's sticky header, where a press lands on the
+        // header and arms nothing. `scrollIntoViewIfNeeded` is not enough — a covered dot is still in
+        // the viewport — so centre it, wait for its box to hold still (the save status arrives a beat
+        // after the edit and rewraps the header), and measure the target *after* the press, because
+        // starting an arrow opens the inspector below the paper and shortens it.
+        const outPort = page.getByTestId('workflow-node-port-right-0');
+        const inPort = page.getByTestId('workflow-node-port-top-1');
+        const still = async (locator) => {
+          let box = await locator.boundingBox();
+          for (let tries = 0; tries < 20; tries += 1) {
+            await page.waitForTimeout(50);
+            const next = await locator.boundingBox();
+            if (next && box && Math.abs(next.x - box.x) < 0.5 && Math.abs(next.y - box.y) < 0.5) return next;
+            box = next;
+          }
+          return box;
+        };
+        await outPort.evaluate((dot) => dot.scrollIntoView({ block: 'center', inline: 'nearest' }));
+        const outDot = await still(outPort);
         await page.mouse.move(outDot.x + outDot.width / 2, outDot.y + outDot.height / 2);
         await page.mouse.down();
+        const targetCard = await still(inPort);
         await page.mouse.move(
           targetCard.x + targetCard.width / 2,
           targetCard.y + targetCard.height / 2,
@@ -1668,15 +1687,35 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           '100% must restore the canvas to life size'
         );
 
+        // A point on bare paper, found rather than guessed: the seeded diagram's cards move as the
+        // suite edits it, so a fixed coordinate can land on one and start a card drag instead of a
+        // pan (or open that card's menu rather than the paper's).
+        const emptySpot = (minX) =>
+          page.getByTestId('workflow-canvas').evaluate((canvas, minX) => {
+            const rect = canvas.getBoundingClientRect();
+            for (let y = rect.top + 60; y < rect.bottom - 60; y += 20) {
+              for (let x = Math.max(rect.left + 40, minX); x < rect.right - 30; x += 20) {
+                const hit = document.elementFromPoint(x, y);
+                const taken =
+                  hit?.closest(
+                    '[data-node-id],[data-lane-band],[data-testid^="workflow-edge-"],[data-testid^="workflow-group-"]'
+                  ) ?? null;
+                if (!taken && hit?.closest('[data-testid="workflow-canvas"]')) return { x, y };
+              }
+            }
+            return null;
+          }, minX);
+
         // Drag empty paper to pan: 24 cards stand taller than the canvas, and the background is the
         // handle that moves the view without moving a card.
         await page.getByTestId('workflow-canvas').evaluate((canvas) => {
           canvas.scrollTop = 0;
         });
-        const panFrom = await page.getByTestId('workflow-canvas').boundingBox();
-        await page.mouse.move(panFrom.x + panFrom.width - 30, panFrom.y + 100);
+        const panSpot = await emptySpot(0);
+        assert.ok(panSpot, 'panning needs bare paper to start on');
+        await page.mouse.move(panSpot.x, panSpot.y);
         await page.mouse.down();
-        await page.mouse.move(panFrom.x + panFrom.width - 30, panFrom.y - 60, { steps: 8 });
+        await page.mouse.move(panSpot.x, panSpot.y - 160, { steps: 8 });
         await page.mouse.up();
         await page.waitForTimeout(300);
         const panned = await page.getByTestId('workflow-canvas').evaluate((canvas) => canvas.scrollTop);
@@ -1735,6 +1774,12 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.getByTestId('workflow-add-compute').click();
         await page.getByTestId('workflow-add-answer').click();
         await page.waitForTimeout(250);
+        // The ports are canvas coordinates, and the page may have scrolled above them in earlier
+        // steps: bring the paper into view so both dots are on screen before a pointer drag.
+        await page
+          .getByTestId('workflow-canvas')
+          .evaluate((canvas) => canvas.scrollIntoView({ block: 'center' }));
+        await page.waitForTimeout(200);
         const reorderOut = await page.getByTestId('workflow-node-port-right-0').boundingBox();
         const reorderTarget = await page.getByTestId('workflow-node-port-left-2').boundingBox();
         await page.mouse.move(reorderOut.x + reorderOut.width / 2, reorderOut.y + reorderOut.height / 2);
@@ -1766,6 +1811,11 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           /Drag a box/,
           'arming Group must say what the next drag will do'
         );
+        // The palette press above scrolled the page just far enough to show its button, which can leave
+        // the paper's foot below the window. Centre it first: the box is drawn in viewport pixels, and
+        // a corner outside the window would start the drag on nothing.
+        await page.getByTestId('workflow-canvas').evaluate((canvas) => canvas.scrollIntoView({ block: 'center' }));
+        await page.waitForTimeout(250);
         const groupCanvas = await page.getByTestId('workflow-canvas').boundingBox();
         await page.mouse.move(groupCanvas.x + groupCanvas.width - 24, groupCanvas.y + groupCanvas.height - 24);
         await page.mouse.down();
@@ -1879,6 +1929,608 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           2,
           'the cards a frame named must stay when the frame goes'
         );
+
+        // A fork bar is not a card with a different border: its own header takes focus, an arrow
+        // key nudges it by the same 8 px a card moves, and the document — not the pixels — is what
+        // changed.
+        await page.getByTestId('workflow-add-fork').click();
+        await page.getByTestId('workflow-node-drag-2').waitFor({ state: 'visible', timeout: 15000 });
+        await page.getByTestId('workflow-node-drag-2').focus();
+        const barBefore = await page.getByTestId('workflow-node-2').evaluate((bar) => parseFloat(bar.style.top));
+        await page.keyboard.press('ArrowDown');
+        await page.waitForTimeout(250);
+        assert.equal(
+          await page.getByTestId('workflow-node-2').evaluate((bar) => parseFloat(bar.style.top)),
+          barBefore + 8,
+          'a fork bar must nudge by 8 px from its own header, like a card'
+        );
+
+        // A lane is created, named and removed from the keyboard alone: select a card, open its
+        // inspector, choose “New lane”, and the caret lands in the lane's name field.
+        await page.getByTestId('workflow-node-title-0').click();
+        await page.getByTestId('workflow-selection').waitFor({ state: 'visible', timeout: 10000 });
+        await page.getByTestId('workflow-card-lane').selectOption('new');
+        await page.waitForTimeout(300);
+        assert.equal(await page.getByTestId('workflow-lane-0').count(), 1, 'choosing New lane adds a lane');
+        assert.equal(
+          await page.evaluate(() => document.activeElement?.getAttribute('data-testid')),
+          'workflow-lane-title-0',
+          'a new lane must hand its name field the caret'
+        );
+        await page.getByTestId('workflow-lane-title-0').fill('Mechanical');
+        await page.waitForTimeout(300);
+        await page.getByTestId('workflow-node-title-1').click();
+        await page.getByTestId('workflow-card-lane').selectOption('new');
+        await page.waitForTimeout(300);
+        await page.getByTestId('workflow-lane-title-1').fill('Firmware');
+        // A card's look is authored, not a preview: the swatches write a theme token, the size steps
+        // the type, and a field holding `$…$` is drawn by KaTeX — with its source back while focused.
+        await page.getByTestId('workflow-node-title-0').click();
+        await page.getByTestId('workflow-fill-amber').click();
+        await page.getByTestId('workflow-ink-rose').click();
+        // The size is a free scale, not three steps: one arrow key moves it off the default.
+        await page.getByTestId('workflow-size').focus();
+        await page.keyboard.press('ArrowRight');
+        await page.waitForTimeout(150);
+        assert.equal(
+          await page.getByTestId('workflow-size-value').innerText(),
+          '13px',
+          'the size readout must name the chosen pixel size'
+        );
+        await page.getByTestId('workflow-node-title-0').fill('Force $F = ma$');
+        await page.getByTestId('workflow-node-title-0').evaluate((input) => input.blur());
+        await page.waitForTimeout(200);
+        assert.equal(
+          await page.getByTestId('workflow-node-0').locator('.katex').count(),
+          1,
+          'a field with $…$ must be drawn, not left as source'
+        );
+        assert.equal(
+          await page.getByTestId('workflow-node-title-0').evaluate((input) => getComputedStyle(input).opacity),
+          '0',
+          'and the source is what the drawing replaces while the field is not focused'
+        );
+        assert.equal(
+          await page.getByTestId('workflow-node-title-0').evaluate((input) => getComputedStyle(input).fontSize),
+          '13px',
+          'a card must draw its title at the size the slider chose, not only store it'
+        );
+        // The panel writes half a second after the last keystroke; reloading inside that window is
+        // what a learner who closes the tab immediately would lose, not what this test is asking.
+        await page.waitForTimeout(700);
+        assert.equal(await page.getByTestId('workflow-lane-0').count(), 1, 'a second lane is a second band');
+        assert.equal(await page.getByTestId('workflow-lane-1').count(), 1, 'without replacing the first');
+
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await waitForEditor(page, undefined, 30000);
+        await page.waitForTimeout(600);
+        if (!(await page.getByTestId('panel-workflow').isVisible().catch(() => false))) {
+          await page.getByTestId('editor-tab-workflow').click();
+          await page.waitForTimeout(250);
+        }
+        assert.equal(
+          await page.getByTestId('workflow-lane-title-0').inputValue(),
+          'Mechanical',
+          'a lane’s name is authored work: a reload must find it again'
+        );
+        assert.equal(
+          await page.getByTestId('workflow-lane-title-1').inputValue(),
+          'Firmware',
+          'and so is the second lane’s'
+        );
+        assert.equal(
+          await page.getByTestId('workflow-node-0').locator('.katex').count(),
+          1,
+          'the formula is authored work: a reload must draw it again'
+        );
+        assert.equal(
+          await page.getByTestId('workflow-node-0').evaluate((card) =>
+            [...card.querySelectorAll('[style]')].some((el) =>
+              (el.getAttribute('style') ?? '').includes('--amber')
+            )
+          ),
+          true,
+          'so is the fill: a reload must paint the card with the token it stored'
+        );
+        assert.equal(
+          await page.getByTestId('workflow-node-title-0').getAttribute('style'),
+          'color: var(--rose); font-size: 13px;',
+          'and so are the ink and the size, written only because they were chosen'
+        );
+        await page.getByTestId('workflow-lane-title-1').fill('Firmware team');
+        await page.waitForTimeout(300);
+        assert.equal(
+          await page.getByTestId('workflow-lane-title-1').inputValue(),
+          'Firmware team',
+          'an existing lane is renamed where its name sits'
+        );
+        await page.getByTestId('workflow-lane-remove-0').click();
+        await page.waitForTimeout(300);
+        assert.equal(await page.getByTestId('workflow-lane-0').count(), 1, 'removing a lane takes the band only');
+        assert.equal(
+          await page.locator('[data-node-id]').count(),
+          3,
+          'and every card a lane named stays, fork bar included'
+        );
+        // A right-click is the second way to add: the menu opens under the pointer, and the card it
+        // makes lands where the press was instead of the palette's next free column slot.
+        // Canvas coordinates, the same conversion the paper does: a page that scrolls the new card
+        // into view after the press must not move the point the assertion is about.
+        const paperPoint = (x, y) =>
+          page.getByTestId('workflow-canvas').evaluate((canvas, point) => {
+            const rect = canvas.getBoundingClientRect();
+            const grid = canvas.querySelector('[data-testid="workflow-canvas-grid"]');
+            const scale = grid.getBoundingClientRect().width / grid.offsetWidth || 1;
+            return {
+              x: (point.x - rect.left + canvas.scrollLeft) / scale,
+              y: (point.y - rect.top + canvas.scrollTop) / scale,
+            };
+          }, { x, y });
+        const menuAdd = async (x, y, label) => {
+          const at = await paperPoint(x, y);
+          await page.mouse.click(x, y, { button: 'right' });
+          const menu = page.getByTestId('workflow-menu');
+          await menu.waitFor({ timeout: 5000 });
+          await menu.getByRole('button', { name: label }).click();
+          await page.waitForTimeout(350);
+          const box = await page.locator('[data-node-id]').last().evaluate((card) => ({
+            x: card.offsetLeft,
+            y: card.offsetTop,
+            width: card.offsetWidth,
+            height: card.offsetHeight,
+          }));
+          return { at, box };
+        };
+        await page.getByTestId('workflow-canvas').evaluate((canvas) => canvas.scrollIntoView({ block: 'center' }));
+        await page.waitForTimeout(250);
+
+        const firstAt = await emptySpot(0);
+        assert.ok(firstAt, 'the canvas must have bare paper to right-click');
+        const first = await menuAdd(firstAt.x, firstAt.y, 'Compute');
+        assert.equal(await page.locator('[data-node-id]').count(), 4, 'the menu adds one card');
+        assert.ok(
+          first.at.x >= first.box.x &&
+            first.at.x <= first.box.x + first.box.width &&
+            first.at.y >= first.box.y &&
+            first.at.y <= first.box.y + first.box.height,
+          `a card added from the menu must land under the pointer, not in the palette's column (press on paper ${Math.round(first.at.x)},${Math.round(first.at.y)}; card at ${first.box.x},${first.box.y})`
+        );
+        const secondAt = await emptySpot(
+          (await page.getByTestId('workflow-canvas').boundingBox()).x + 280
+        );
+        assert.ok(secondAt, 'a second speck of bare paper must exist to the right');
+        const second = await menuAdd(secondAt.x, secondAt.y, 'Given');
+        assert.equal(await page.locator('[data-node-id]').count(), 5, 'and a second one adds a second card');
+        assert.ok(
+          Math.abs(second.box.x - first.box.x) >= 120 || Math.abs(second.box.y - first.box.y) >= 120,
+          `two presses in different places must not stack both cards in one column (${first.box.x},${first.box.y} and ${second.box.x},${second.box.y})`
+        );
+        const placed = await page.locator('[data-node-id]').last().evaluate((card) => card.style.left);
+
+        // Escape closes the menu without adding anything, and Shift+F10 opens it for a keyboard.
+        const thirdAt = await emptySpot(0);
+        await page.mouse.click(thirdAt.x, thirdAt.y, { button: 'right' });
+        await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(200);
+        assert.equal(await page.getByTestId('workflow-menu').count(), 0, 'Escape must close the menu');
+        assert.equal(await page.locator('[data-node-id]').count(), 5, 'and must not add a card on the way out');
+        await page.getByTestId('workflow-canvas').focus();
+        await page.keyboard.press('Shift+F10');
+        await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
+        assert.equal(
+          await page.evaluate(() => document.activeElement?.closest('[data-testid="workflow-menu"]') !== null),
+          true,
+          'a menu opened from the keyboard must put the caret on its first item'
+        );
+        // Tab past the last item: focus leaving the list closes it, and the paper takes the caret
+        // back — Shift+F10 has to work again without reaching for the mouse.
+        const itemCount = await page.getByTestId('workflow-menu').getByRole('button').count();
+        for (let i = 0; i < itemCount; i += 1) await page.keyboard.press('Tab');
+        await page.waitForTimeout(200);
+        assert.equal(
+          await page.getByTestId('workflow-menu').count(),
+          0,
+          'tabbing past the last item must close the menu'
+        );
+        assert.equal(
+          await page.evaluate(() => document.activeElement?.getAttribute('data-testid')),
+          'workflow-canvas',
+          'and the paper must take the caret back'
+        );
+        await page.keyboard.press('Shift+F10');
+        await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
+        assert.equal(
+          await page.evaluate(() => document.activeElement?.closest('[data-testid="workflow-menu"]') !== null),
+          true,
+          'Shift+F10 must reopen it for the keyboard'
+        );
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(150);
+
+        // A press outside the menu closes it and does not reach the paper: no card, no pan.
+        const outsideAt = await emptySpot(0);
+        const panBefore = await page.getByTestId('workflow-canvas').evaluate((canvas) => canvas.scrollLeft);
+        await page.mouse.click(outsideAt.x, outsideAt.y, { button: 'right' });
+        await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
+        await page.mouse.click(outsideAt.x + 260, outsideAt.y);
+        await page.waitForTimeout(250);
+        assert.equal(await page.getByTestId('workflow-menu').count(), 0, 'a press outside must close the menu');
+        assert.equal(await page.locator('[data-node-id]').count(), 5, 'and must not add a card');
+        assert.equal(
+          await page.getByTestId('workflow-canvas').evaluate((canvas) => canvas.scrollLeft),
+          panBefore,
+          'and must not pan the paper under it'
+        );
+
+        // A press on a card is that card's own menu: its fill colours, Copy, Cut and Remove, without
+        // selecting it first. The swatches are the same component the inspector draws.
+        // The card the menu added last sits on top of the seeded ones, so its header is the one a
+        // learner can actually press; an earlier card's header is under it.
+        const openCardMenu = async () => {
+          await page.getByTestId('workflow-node-drag-3').click({ button: 'right' });
+          await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
+        };
+        await openCardMenu();
+        for (const label of ['Copy', 'Cut', 'Remove']) {
+          assert.equal(
+            await page.getByTestId('workflow-menu').getByRole('button', { name: label, exact: true }).count(),
+            1,
+            `a card's menu must offer ${label}`
+          );
+        }
+        await page.getByTestId('workflow-menu-fill-purple').click();
+        await page.waitForTimeout(300);
+        const painted = (testid) =>
+          page.getByTestId(testid).evaluate((card) =>
+            [card, ...card.querySelectorAll('[style]')].some((el) =>
+              (el.getAttribute('style') ?? '').includes('--purple')
+            )
+          );
+        assert.equal(await painted('workflow-node-3'), true, 'a colour chosen from the card menu must paint it');
+        await openCardMenu();
+        await page.getByTestId('workflow-menu').getByRole('button', { name: 'Copy', exact: true }).click();
+        await page.waitForTimeout(250);
+        const pasteAt = await emptySpot(0);
+        await page.mouse.click(pasteAt.x, pasteAt.y, { button: 'right' });
+        await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
+        await page.getByTestId('workflow-menu').getByRole('button', { name: 'Paste', exact: true }).click();
+        await page.waitForTimeout(400);
+        assert.equal(await page.locator('[data-node-id]').count(), 6, 'Paste must add the clip as a card');
+        const pasted = await page.locator('[data-node-id]').last().evaluate((card) => ({
+          id: card.getAttribute('data-node-id'),
+          kind: card.getAttribute('data-kind'),
+          purple: [card, ...card.querySelectorAll('[style]')].some((el) =>
+            (el.getAttribute('style') ?? '').includes('--purple')
+          ),
+        }));
+        assert.equal(
+          pasted.kind,
+          await page.getByTestId('workflow-node-3').getAttribute('data-kind'),
+          'a pasted card keeps its kind'
+        );
+        assert.equal(pasted.purple, true, 'and its look');
+        assert.notEqual(pasted.id, 's1', 'with an id of its own');
+        // Cut takes the pasted card away again, so the count the reload below records is unchanged.
+        await page
+          .locator('[data-node-id]')
+          .last()
+          .locator('[data-testid^="workflow-node-drag-"]')
+          .click({ button: 'right' });
+        await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
+        await page.getByTestId('workflow-menu').getByRole('button', { name: 'Cut', exact: true }).click();
+        await page.waitForTimeout(300);
+        assert.equal(await page.locator('[data-node-id]').count(), 5, 'Cut must take the card away');
+
+        await page.waitForTimeout(700);
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await waitForEditor(page, undefined, 30000);
+        await page.waitForTimeout(700);
+        if (!(await page.getByTestId('panel-workflow').isVisible().catch(() => false))) {
+          await page.getByTestId('editor-tab-workflow').click();
+          await page.waitForTimeout(250);
+        }
+        assert.equal(
+          await page.locator('[data-node-id]').count(),
+          5,
+          'cards added from the menu are authored work: a reload must find them'
+        );
+        assert.ok(
+          (
+            await page
+              .locator('[data-node-id]')
+              .evaluateAll((cards) => cards.map((card) => card.style.left))
+          ).includes(placed),
+          'and the card the menu placed is still where the press put it'
+        );
+
+        // Full screen: the panel fills the viewport, the paper gets at least half of it, the palette
+        // and the inspector keep working, and Escape puts the pane and the page scroll back.
+        const viewport = page.viewportSize();
+        // Bring the button into view first: a press that scrolls the page to its own control would
+        // record a line the learner never chose and then blame the app for restoring it.
+        await page.getByTestId('workflow-fullscreen').scrollIntoViewIfNeeded();
+        await page.waitForTimeout(200);
+        const paneBefore = await page.getByTestId('panel-workflow').boundingBox();
+        const canvasBefore = await page.getByTestId('workflow-canvas').boundingBox();
+        const scrollBefore = await page.evaluate(() => window.scrollY);
+        await page.getByTestId('workflow-fullscreen').click();
+        await page.waitForTimeout(400);
+        const paneFull = await page.getByTestId('panel-workflow').boundingBox();
+        assert.ok(
+          paneFull.width >= viewport.width - 2 && paneFull.height >= viewport.height - 2,
+          `full screen must fill the viewport, not the pane (${Math.round(paneFull.width)}x${Math.round(paneFull.height)} in ${viewport.width}x${viewport.height})`
+        );
+        const canvasFull = await page.getByTestId('workflow-canvas').boundingBox();
+        assert.ok(
+          canvasFull.height >= canvasBefore.height && canvasFull.height >= viewport.height * 0.5,
+          `full screen must give the paper more room, not less (${Math.round(canvasFull.height)} vs ${Math.round(canvasBefore.height)})`
+        );
+        await page.getByTestId('workflow-mode-analysis').click();
+        await page.getByTestId('workflow-add-compute').click();
+        await page.waitForTimeout(350);
+        assert.equal(await page.locator('[data-node-id]').count(), 6, 'the palette must still add while full screen');
+        assert.equal(await page.getByTestId('workflow-selection').count(), 1, 'and its inspector must still open');
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(450);
+        assert.equal(
+          await page.getByTestId('workflow-fullscreen').getAttribute('aria-pressed'),
+          'false',
+          'Escape must leave full screen'
+        );
+        const paneAfter = await page.getByTestId('panel-workflow').boundingBox();
+        assert.ok(
+          Math.abs(paneAfter.x - paneBefore.x) <= 2 && Math.abs(paneAfter.width - paneBefore.width) <= 2,
+          'the pane must come back where it was'
+        );
+        assert.equal(await page.evaluate(() => window.scrollY), scrollBefore, 'and so must the page scroll');
+        assert.equal(
+          await page.evaluate(() => document.documentElement.style.overflow),
+          '',
+          'leaving full screen must release the page scroll'
+        );
+
+        // Dragging a dot onto bare paper asks what to put there, and the card lands at the release
+        // point already linked. The picker is the palette, so a workflow can be sketched without
+        // leaving the paper.
+        // The paper point is found after the port is on screen: scrolling to the dot moves the
+        // canvas, and a spot picked before that can end up under a card.
+        const dragTo = async (portIndex, alt = false) => {
+          const port = page.getByTestId(`workflow-node-port-right-${portIndex}`);
+          await port.scrollIntoViewIfNeeded();
+          await page.waitForTimeout(200);
+          const target = await emptySpot(0);
+          assert.ok(target, 'a drag needs bare paper to land on');
+          const box = await port.boundingBox();
+          await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+          if (alt) await page.keyboard.down('Alt');
+          await page.mouse.down();
+          await page.mouse.move(target.x, target.y, { steps: 10 });
+          await page.mouse.up();
+          if (alt) await page.keyboard.up('Alt');
+          return target;
+        };
+        const edgeChips = () => page.locator('[data-testid^="workflow-edge-kind-"]').count();
+        await page.getByTestId('workflow-canvas').evaluate((canvas) => canvas.scrollIntoView({ block: 'center' }));
+        await page.waitForTimeout(250);
+        const chipsBefore = await edgeChips();
+        // The card the full-screen step added is the newest, so its dot is the one nothing covers.
+        const dropPaper = await dragTo(5);
+        await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
+        await page.getByTestId('workflow-menu').getByRole('button', { name: 'Text', exact: true }).click();
+        await page.waitForTimeout(500);
+        assert.equal(await page.locator('[data-node-id]').count(), 7, 'the picker must make the card it was asked for');
+        assert.equal(await edgeChips(), chipsBefore + 1, 'and link it to the dot the drag left');
+        const dropped = await page.locator('[data-node-id]').last().evaluate((card) => ({
+          x: card.offsetLeft,
+          y: card.offsetTop,
+          width: card.offsetWidth,
+          height: card.offsetHeight,
+          kind: card.getAttribute('data-kind'),
+          background: getComputedStyle(card).backgroundColor,
+          border: getComputedStyle(card).borderTopWidth,
+        }));
+        const dropAt = await paperPoint(dropPaper.x, dropPaper.y);
+        assert.equal(dropped.kind, 'text', 'the chosen kind is the card that landed');
+        assert.ok(
+          dropAt.x >= dropped.x && dropAt.x <= dropped.x + dropped.width &&
+            dropAt.y >= dropped.y && dropAt.y <= dropped.y + dropped.height,
+          `a dropped card must land at the release point (${Math.round(dropAt.x)},${Math.round(dropAt.y)} in card at ${dropped.x},${dropped.y})`
+        );
+        assert.equal(dropped.background, 'rgba(0, 0, 0, 0)', 'a text card is words on paper, not a plate');
+        assert.equal(dropped.border, '0px', 'and it has no outline');
+
+        // A default card turns the same drag into one gesture: no menu, a card and an arrow. Alt
+        // still asks, so the default never becomes the only choice.
+        await page.getByTestId('workflow-drop-default').selectOption('compute');
+        assert.equal(
+          await page.evaluate(() => localStorage.getItem('mechalab_workflow_drop_default_v1')),
+          'compute',
+          'the default is remembered, not just held in the pane'
+        );
+        await dragTo(6);
+        await page.waitForTimeout(450);
+        assert.equal(await page.getByTestId('workflow-menu').count(), 0, 'a default drop must not ask');
+        assert.equal(await page.locator('[data-node-id]').count(), 8, 'it must add the default card');
+        assert.equal(await edgeChips(), chipsBefore + 2, 'and its arrow');
+        await dragTo(7, true);
+        await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(250);
+        assert.equal(await page.locator('[data-node-id]').count(), 8, 'Alt must ask instead of adding');
+
+        // An arrow's route is chosen in its own inspector and changes the line the SVG draws.
+        const routeEdge = chipsBefore + 1;
+        await page.getByTestId(`workflow-edge-kind-${routeEdge}`).click();
+        await page.getByTestId(`workflow-edge-route-elbow-${routeEdge}`).click();
+        await page.waitForTimeout(250);
+        assert.equal(
+          await page
+            .locator(`[data-testid="workflow-edge-${routeEdge}"] path`)
+            .getAttribute('data-route'),
+          'elbow',
+          'the picked route must reach the line, not just the button'
+        );
+        await page.getByTestId(`workflow-edge-route-straight-${routeEdge}`).click();
+        await page.waitForTimeout(250);
+        const straightPath = await page
+          .locator(`[data-testid="workflow-edge-${routeEdge}"] path`)
+          .evaluate((path) => ({ route: path.getAttribute('data-route'), d: path.getAttribute('d') }));
+        assert.equal(straightPath.route, 'straight', 'straight is available where the dots are level');
+        assert.equal(
+          (straightPath.d ?? '').includes('C'),
+          false,
+          `a straight route must not fall back to the cubic (${straightPath.d})`
+        );
+
+        // Undo and redo are the editor pair every learner already knows, over the same one write
+        // path: the last edit comes back, and redo puts it forward again.
+        const mod = process.platform === 'darwin' ? 'Meta' : 'Control';
+        const routeOf = (index) =>
+          page.locator(`[data-testid="workflow-edge-${index}"] path`).getAttribute('data-route');
+        await page.getByTestId('workflow-canvas').focus();
+        await page.keyboard.press(`${mod}+z`);
+        await page.waitForTimeout(350);
+        // Each route press is its own step, so one undo is the choice before the last one.
+        assert.equal(await routeOf(routeEdge), 'elbow', 'undo must take the last route choice back');
+        assert.equal(await page.getByTestId('workflow-redo').isEnabled(), true, 'and offer redo');
+        await page.keyboard.press(`${mod}+Shift+z`);
+        await page.waitForTimeout(350);
+        assert.equal(await routeOf(routeEdge), 'straight', 'redo must draw the route again');
+
+        // A keyboard nudge is a move like any other, and undo restores the exact old position.
+        const handle0 = page.getByTestId('workflow-node-drag-0');
+        await handle0.scrollIntoViewIfNeeded();
+        const homeX = await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetLeft);
+        await handle0.focus();
+        await page.keyboard.press('ArrowRight');
+        await page.waitForTimeout(300);
+        assert.notEqual(
+          await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetLeft),
+          homeX,
+          'the nudge must move the card'
+        );
+        await page.keyboard.press(`${mod}+z`);
+        await page.waitForTimeout(350);
+        assert.equal(
+          await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetLeft),
+          homeX,
+          'undo must put the card back where the nudge found it'
+        );
+
+        // Cutting a card is destructive, so it is exactly the edit undo has to cover: the card comes
+        // back with its own id, which is what its arrows and its lesson link still name.
+        const lastCard = page.locator('[data-node-id]').last();
+        const lastId = await lastCard.getAttribute('data-node-id');
+        await lastCard.locator('[data-testid^="workflow-node-drag-"]').click({ button: 'right' });
+        await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
+        await page.getByTestId('workflow-menu').getByRole('button', { name: 'Cut', exact: true }).click();
+        await page.waitForTimeout(350);
+        assert.equal(await page.locator('[data-node-id]').count(), 7, 'Cut removes the card');
+        await page.getByTestId('workflow-canvas').focus();
+        await page.keyboard.press(`${mod}+z`);
+        await page.waitForTimeout(350);
+        assert.equal(await page.locator('[data-node-id]').count(), 8, 'undo must bring the cut card back');
+        assert.equal(
+          await page.locator(`[data-node-id="${lastId}"]`).count(),
+          1,
+          'with its own id, so its arrows still name it'
+        );
+
+        // A run of typing into one card field is one undo step: the caret typed eight keys, so a
+        // single undo must take back the whole word, not the last letter.
+        const title0 = page.getByTestId('workflow-node-title-0');
+        await title0.scrollIntoViewIfNeeded();
+        const titleBefore = await title0.inputValue();
+        // A card whose title holds `$…$` draws KaTeX over its source, so the input is transparent
+        // until focused; a real press reaches it, programmatic focus is the visible equivalent here.
+        await title0.focus();
+        await page.keyboard.press(`${mod}+a`);
+        await page.keyboard.type('Gearbox', { delay: 35 });
+        assert.equal(await title0.inputValue(), 'Gearbox', 'the typed word must land in the field');
+        await page.getByTestId('workflow-canvas').focus();
+        await page.keyboard.press(`${mod}+z`);
+        await page.waitForTimeout(350);
+        assert.equal(
+          await title0.inputValue(),
+          titleBefore,
+          'one undo must take back the whole typed run, not one character of it'
+        );
+
+        // A keyboard nudge is a structural move. The header buttons undo and redo it, and Ctrl+Y
+        // (the non-Apple redo habit) redoes it too once the button pair has proved itself.
+        const nudgeHandle = page.getByTestId('workflow-node-drag-0');
+        await nudgeHandle.scrollIntoViewIfNeeded();
+        const walkX = await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetLeft);
+        await nudgeHandle.focus();
+        await page.keyboard.press('ArrowRight');
+        await page.waitForTimeout(300);
+        const nudgedX = await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetLeft);
+        assert.notEqual(nudgedX, walkX, 'the nudge must move the card');
+        await page.getByTestId('workflow-undo').click();
+        await page.waitForTimeout(350);
+        assert.equal(
+          await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetLeft),
+          walkX,
+          'the header Undo must put the card back'
+        );
+        await page.getByTestId('workflow-redo').click();
+        await page.waitForTimeout(350);
+        assert.equal(
+          await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetLeft),
+          nudgedX,
+          'the header Redo must move it forward again after a structural edit'
+        );
+        await page.getByTestId('workflow-canvas').focus();
+        await page.keyboard.press(`${mod}+z`);
+        await page.waitForTimeout(350);
+        await page.keyboard.press('Control+y');
+        await page.waitForTimeout(350);
+        assert.equal(
+          await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetLeft),
+          nudgedX,
+          'Ctrl+Y must redo the structural move'
+        );
+
+        // Remove from a card's own menu is the other destructive path, and the same one-step rule.
+        const victim = page.locator('[data-node-id]').last();
+        const victimId = await victim.getAttribute('data-node-id');
+        await victim.locator('[data-testid^="workflow-node-drag-"]').click({ button: 'right' });
+        await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
+        await page.getByTestId('workflow-menu').getByRole('button', { name: 'Remove', exact: true }).click();
+        await page.waitForTimeout(350);
+        assert.equal(await page.locator('[data-node-id]').count(), 7, 'Remove must take the card away');
+        await page.getByTestId('workflow-canvas').focus();
+        await page.keyboard.press(`${mod}+z`);
+        await page.waitForTimeout(350);
+        assert.equal(await page.locator('[data-node-id]').count(), 8, 'undo must bring a removed card back');
+        assert.equal(
+          await page.locator(`[data-node-id="${victimId}"]`).count(),
+          1,
+          'with the id its arrows still use'
+        );
+
+        // Clearing the diagram is the largest destructive edit; the empty panel keeps an Undo, and
+        // the canvas comes back whole — every card and every arrow.
+        const edgesBeforeClear = await edgeChips();
+        await page.getByTestId('workflow-clear').click();
+        await page.getByTestId('workflow-clear-yes').click();
+        await page.waitForTimeout(400);
+        assert.equal(await page.locator('[data-node-id]').count(), 0, 'Clear must empty the diagram');
+        assert.equal(await page.getByTestId('workflow-empty').count(), 1, 'and the panel must say it is empty');
+        await page.getByTestId('workflow-undo').waitFor({ timeout: 5000 });
+        await page.getByTestId('workflow-undo').click();
+        await page.waitForTimeout(450);
+        assert.equal(await page.locator('[data-node-id]').count(), 8, 'undo must bring the whole diagram back');
+        assert.equal(await edgeChips(), edgesBeforeClear, 'and every arrow with it');
+        await page.getByTestId('workflow-canvas').focus();
+        await page.keyboard.press(`${mod}+Shift+z`);
+        await page.waitForTimeout(400);
+        assert.equal(await page.locator('[data-node-id]').count(), 0, 'redo must clear it again');
+        await page.keyboard.press(`${mod}+z`);
+        await page.waitForTimeout(400);
+        assert.equal(await page.locator('[data-node-id]').count(), 8, 'and undo must still be there afterwards');
+
         await page.getByTestId('workflow-clear').click();
         await page.getByTestId('workflow-clear-yes').click();
         await page.waitForTimeout(250);
