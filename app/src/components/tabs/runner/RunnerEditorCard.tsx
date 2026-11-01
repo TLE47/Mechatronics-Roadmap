@@ -19,9 +19,10 @@ import type { EditorPanes, EditorView } from '../../../editorPanes';
 import type { WorkspaceLayout } from '../../../workspaceLayout';
 import type { AnalysisSession } from '../../../analysisClient';
 import type { HarnessGate } from '../../../harnessGrading';
-import type { PredictionRecord } from '../../../predictGate';
+import type { PredictGate } from './usePredictGate';
 
-interface RunnerEditorCardProps {
+/** Which surface the card is on, and what that surface may show. */
+interface EditorSurface {
   panelRef: RefObject<HTMLDivElement | null>;
   phoneCode: boolean;
   editorShown: boolean;
@@ -32,6 +33,10 @@ interface RunnerEditorCardProps {
   isPhone: boolean;
   deferPhoneEditor: boolean;
   layout: WorkspaceLayout;
+}
+
+/** The text in the editor, its writer, the files it may open, and the editor's own settings. */
+interface EditorDraft {
   code: string;
   commitCode: (next: string) => void;
   mainEditorRef: RefObject<PythonEditorHandle | null>;
@@ -42,17 +47,6 @@ interface RunnerEditorCardProps {
   onOpenHelper: (name: string | null) => void;
   pendingJump: { file: string; line: number; lesson: string } | null;
   onClearJump: () => void;
-  panes: EditorPanes;
-  paneSplit: boolean;
-  shownViews: Set<EditorView>;
-  views: EditorView[];
-  onShowView: (view: EditorView) => void;
-  onSplit: () => void;
-  onSetAxis: (axis: 'columns' | 'rows') => void;
-  onCloseSplit: () => void;
-  focusPane: (view: EditorView) => void;
-  paneOrder: (view: EditorView) => number;
-  paneBorder: (view: EditorView) => string;
   symbolMiss: string | null;
   sliderCount: number;
   vimOn: boolean;
@@ -67,26 +61,56 @@ interface RunnerEditorCardProps {
   onToggleBreakpoint: (line: number) => void;
   onBreakpointsMoved: (entries: { line: number; condition: string }[]) => void;
   breakpoints: { line: number; condition: string }[];
-  predictRecord: PredictionRecord | null;
-  predictText: string;
-  onPredictText: (text: string) => void;
-  onCommitPrediction: () => void;
-  onSkipPrediction: () => void;
-  onPredictAgain: () => void;
-  onClosePredict: () => void;
-  asksForFinish: boolean;
-  heldRun: boolean;
+}
+
+/** The editor's panes and the arrangement they are drawn in. */
+interface EditorPaneSet {
+  value: EditorPanes;
+  split: boolean;
+  shownViews: Set<EditorView>;
+  views: EditorView[];
+  onShowView: (view: EditorView) => void;
+  onSplit: () => void;
+  onSetAxis: (axis: 'columns' | 'rows') => void;
+  onCloseSplit: () => void;
+  focusPane: (view: EditorView) => void;
+  paneOrder: (view: EditorView) => number;
+  paneBorder: (view: EditorView) => string;
+}
+
+/** What the last run said, as the verdict and the gate's lead line read it. */
+interface EditorRun {
   isRunning: boolean;
   passStatus: Parameters<typeof RunVerdict>[0]['passStatus'];
   harnessResult: HarnessGate | null;
+  asksForFinish: boolean;
+}
+
+/** The regions laid out inside the card but owned by the caller. */
+interface EditorSlots {
   toolbar: ReactNode;
   feedback: ReactNode;
   actualOutputPane: ReactNode;
   expectedOutputPane: ReactNode;
   workflowPane: ReactNode;
+}
+
+/** The other workbench, when this document is shared. */
+interface EditorCollab {
   coEdit: { lesson: string; remote: number } | null;
   collabNotice: string | null;
   peerLabel: string | null | undefined;
+}
+
+interface RunnerEditorCardProps {
+  surface: EditorSurface;
+  draft: EditorDraft;
+  panes: EditorPaneSet;
+  gate: PredictGate;
+  run: EditorRun;
+  slots: EditorSlots;
+  collab: EditorCollab;
+  onClosePredict: () => void;
 }
 
 /**
@@ -108,6 +132,8 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
     isPhone,
     deferPhoneEditor,
     layout,
+  } = props.surface;
+  const {
     code,
     commitCode,
     mainEditorRef,
@@ -118,17 +144,6 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
     onOpenHelper,
     pendingJump,
     onClearJump,
-    panes,
-    paneSplit,
-    shownViews,
-    views,
-    onShowView,
-    onSplit,
-    onSetAxis,
-    onCloseSplit,
-    focusPane,
-    paneOrder,
-    paneBorder,
     symbolMiss,
     sliderCount,
     vimOn,
@@ -143,27 +158,24 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
     onToggleBreakpoint,
     onBreakpointsMoved,
     breakpoints,
-    predictRecord,
-    predictText,
-    onPredictText,
-    onCommitPrediction,
-    onSkipPrediction,
-    onPredictAgain,
-    onClosePredict,
-    asksForFinish,
-    heldRun,
-    isRunning,
-    passStatus,
-    harnessResult,
-    toolbar,
-    feedback,
-    actualOutputPane,
-    expectedOutputPane,
-    workflowPane,
-    coEdit,
-    collabNotice,
-    peerLabel,
-  } = props;
+  } = props.draft;
+  const {
+    value: panes,
+    split: paneSplit,
+    shownViews,
+    views,
+    onShowView,
+    onSplit,
+    onSetAxis,
+    onCloseSplit,
+    focusPane,
+    paneOrder,
+    paneBorder,
+  } = props.panes;
+  const { gate, onClosePredict } = props;
+  const { isRunning, passStatus, harnessResult, asksForFinish } = props.run;
+  const { toolbar, feedback, actualOutputPane, expectedOutputPane, workflowPane } = props.slots;
+  const { coEdit, collabNotice, peerLabel } = props.collab;
 
   return (
     <div
@@ -509,15 +521,15 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
               className={`min-w-0 flex-1 border-t border-line-soft ${paneBorder('predict')}`}
             >
               <PredictPane
-                record={predictRecord}
-                text={predictText}
-                onText={onPredictText}
-                onCommit={onCommitPrediction}
-                onSkip={onSkipPrediction}
-                onAgain={onPredictAgain}
+                record={gate.record}
+                text={gate.text}
+                onText={gate.setText}
+                onCommit={gate.commit}
+                onSkip={gate.skip}
+                onAgain={gate.again}
                 onClose={onClosePredict}
                 asksForFinish={asksForFinish}
-                held={heldRun}
+                held={gate.holding}
                 running={isRunning}
               />
             </div>

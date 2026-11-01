@@ -16,17 +16,22 @@ import {
 import type { ScopeSeries } from '../../../scopeModel';
 import { AssessmentPanel } from './AssessmentPanel';
 
-interface ResultsColumnProps {
-  resultsSide: 'left' | 'right';
+/** Where the column sits and how its split is dragged. */
+interface ResultsSplit {
+  side: 'left' | 'right';
   /** False on the phone's Lesson surface: the checks come back with the code, not before it. */
   visible: boolean;
   columns: boolean;
-  splitRatio: number;
-  draggingSplit: boolean;
-  onBeginSplitDrag: (event: ReactPointerEvent<HTMLDivElement>) => void;
-  onMoveSplitDrag: (event: ReactPointerEvent<HTMLDivElement>) => void;
-  onEndSplitDrag: (event: ReactPointerEvent<HTMLDivElement>) => void;
-  onCommitSplitRatio: (ratio: number) => void;
+  ratio: number;
+  dragging: boolean;
+  onBeginDrag: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onMoveDrag: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onEndDrag: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onCommitRatio: (ratio: number) => void;
+}
+
+/** What the checker and the traceback said about the code on screen. */
+interface ResultsChecks {
   lintNotes: LintNote[];
   analysisNotice: string | null;
   lessonId: string;
@@ -45,15 +50,30 @@ interface ResultsColumnProps {
   passStatus: string;
   harnessResult: HarnessGate | null;
   resultsShown: boolean;
-  trace: TraceSnapshot | null;
-  traceStep: number;
-  onTraceStep: (step: number) => void;
-  runSource: string;
-  onRevealTrace: (line: number) => void;
-  scopeSeries: ScopeSeries[];
-  pinnedScope: ScopeSeries[] | null;
-  onPinScope: () => void;
-  onUnpinScope: () => void;
+}
+
+/** The last run, replayed line by line. */
+interface ResultsTrace {
+  snapshot: TraceSnapshot | null;
+  step: number;
+  onStep: (step: number) => void;
+  source: string;
+  onReveal: (line: number) => void;
+}
+
+/** The scope's own record of the run. */
+interface ResultsScope {
+  series: ScopeSeries[];
+  pinned: ScopeSeries[] | null;
+  onPin: () => void;
+  onUnpin: () => void;
+}
+
+interface ResultsColumnProps {
+  split: ResultsSplit;
+  checks: ResultsChecks;
+  trace: ResultsTrace;
+  scope: ResultsScope;
 }
 
 /**
@@ -63,44 +83,40 @@ interface ResultsColumnProps {
  * and the study note describe the code, and a preset that moved only half of them would put a verdict
  * beside nothing.
  */
-export function ResultsColumn({
-  resultsSide,
-  visible,
-  columns,
-  splitRatio,
-  draggingSplit,
-  onBeginSplitDrag,
-  onMoveSplitDrag,
-  onEndSplitDrag,
-  onCommitSplitRatio,
-  lintNotes,
-  analysisNotice,
-  lessonId,
-  onOpenWorkflow,
-  assessmentRef,
-  behaviorCheck,
-  outputCheck,
-  outputMatchMode,
-  exactFormatting,
-  instructorTestSummary,
-  checkFailures,
-  revealedHints,
-  hintCount,
-  onRevealHint,
-  instructorError,
-  passStatus,
-  harnessResult,
-  resultsShown,
-  trace,
-  traceStep,
-  onTraceStep,
-  runSource,
-  onRevealTrace,
-  scopeSeries,
-  pinnedScope,
-  onPinScope,
-  onUnpinScope,
-}: ResultsColumnProps) {
+export function ResultsColumn({ split, checks, trace, scope }: ResultsColumnProps) {
+  const {
+    side: resultsSide,
+    visible,
+    columns,
+    ratio: splitRatio,
+    dragging: draggingSplit,
+    onBeginDrag: onBeginSplitDrag,
+    onMoveDrag: onMoveSplitDrag,
+    onEndDrag: onEndSplitDrag,
+    onCommitRatio: onCommitSplitRatio,
+  } = split;
+  const {
+    lintNotes,
+    analysisNotice,
+    lessonId,
+    onOpenWorkflow,
+    assessmentRef,
+    behaviorCheck,
+    outputCheck,
+    outputMatchMode,
+    exactFormatting,
+    instructorTestSummary,
+    checkFailures,
+    revealedHints,
+    hintCount,
+    onRevealHint,
+    instructorError,
+    passStatus,
+    harnessResult,
+    resultsShown,
+  } = checks;
+  const { snapshot: traceSnapshot, step: traceStep, onStep: onTraceStep, source: runSource, onReveal: onRevealTrace } = trace;
+  const { series: scopeSeries, pinned: pinnedScope, onPin: onPinScope, onUnpin: onUnpinScope } = scope;
   return (
     <div
       className="space-y-4 relative"
@@ -215,7 +231,7 @@ export function ResultsColumn({
       {/* The run trace: the last run replayed step by step, beside the output it explains. A
           recording, so it is gone when an edit makes it describe a program that no longer exists. */}
       <div style={{ display: resultsShown ? undefined : 'none' }}>
-        <TracePanel trace={trace} step={traceStep} onStep={onTraceStep} source={runSource} onReveal={onRevealTrace} />
+        <TracePanel trace={traceSnapshot} step={traceStep} onStep={onTraceStep} source={runSource} onReveal={onRevealTrace} />
       </div>
 
       {/* The Scope: the learner's own traced signal, drawn the moment the first batch lands. */}

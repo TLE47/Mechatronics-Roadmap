@@ -7,6 +7,7 @@ one concern and is readable without the tab.
 | Module | Owns |
 |---|---|
 | `useRunnerExecution.ts` | The run: the worker session and buffers, every cell a run's outcome lands in (output, trace, analysis, watches, parks), and `runPythonCode` / `runCellTo` / Stop / Pause / frame edits / watches. |
+| `usePredictGate.ts` | The predict-first question: this lesson's record, the half-typed guess, the run it holds, and the one `requestRun` every surface asks a run through. |
 | `useRunnerArrangement.ts` | The editor/results split share, which side results sit on, and the persisted layout record. |
 | `RunnerToolbar.tsx` | The run controls: presets and dock, Pause/Stop/Run, Predict, and the More panel's actions. |
 | `RunnerEditorCard.tsx` | The editor surface: main/helper tabs, the pane strip, the split controls, and the editor body beside Predict, Run output, Expected and Workflow. |
@@ -21,6 +22,9 @@ one concern and is readable without the tab.
 | `useFirstRunTour.ts` | The first-run tour: record, offer/chip, gates, focus and dismissal. |
 
 Wiring rule: a region takes exactly the state and callbacks it renders; it never reaches into the tab.
-The run is one state every region is a view of, so it lives in one place — `useRunnerExecution.ts` —
-and the shared worker protocol under it lives in `../../runtime/pyodideWorker.ts`. A change to how a
-lesson runs lands in the hook; a change to how the tab looks lands here.
+A region with more than a handful of inputs takes them as named concern objects — `RunnerEditorCard`
+is handed `surface`, `draft`, `panes`, `gate`, `run`, `slots` and `collab`, and `ResultsColumn` its
+`split`, `checks`, `trace` and `scope` — so its signature says what it depends on. The run is one
+state every region is a view of, so it lives in one place — `useRunnerExecution.ts` — and the shared
+worker protocol under it lives in `../../runtime/pyodideWorker.ts`. A change to how a lesson runs lands
+in the hook; a change to how the tab looks lands here.

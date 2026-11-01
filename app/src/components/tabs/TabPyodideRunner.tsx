@@ -43,7 +43,7 @@ import { AnalysisSession, sameNotes, type LintNote } from '../../analysisClient'
 import { rememberLessonInUrl } from '../../lessonRoute';
 import { rememberLastLesson } from '../../lastLesson';
 import { isEdited, readDraft, readDrafts, saveDraft } from '../../lessonDraft';
-import { STORAGE_KEY_COMPLETED, STORAGE_KEY_VERIFIED } from '../../progressKeys';
+import { readFlagMap, STORAGE_KEY_COMPLETED, STORAGE_KEY_VERIFIED } from '../../progressKeys';
 import {
   clearHistory,
   recordSnapshot,
@@ -58,7 +58,6 @@ import {
   runTarget,
   type DiffTarget,
 } from '../../diffReference';
-import { checkPrediction, clearPrediction, predictionFor, savePrediction, type PredictionRecord } from '../../predictGate';
 import {
   WATCH_DEBOUNCE_MS,
   readWatch,
@@ -94,6 +93,7 @@ import { readBreakpoints, setBreakpointCondition, toggleBreakpoint, writeBreakpo
 import { readWatches } from '../../editor/watches';
 
 import { useRunnerArrangement } from './runner/useRunnerArrangement';
+import { usePredictGate } from './runner/usePredictGate';
 
 import { RunnerRuntimeStrip } from './runner/RunnerRuntimeStrip';
 
@@ -445,23 +445,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     state: 'idle' | 'working' | 'ready' | 'partial' | 'unsupported';
     report: OfflineCacheReport | null;
   }>({ state: 'idle', report: null });
-  const [localVerified, setLocalVerified] = useState<Record<string, boolean>>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY_VERIFIED);
-      return raw ? JSON.parse(raw) : {};
-    } catch {
-      return {};
-    }
-  });
+  const [localVerified, setLocalVerified] = useState<Record<string, boolean>>(() =>
+    readFlagMap(STORAGE_KEY_VERIFIED)
+  );
 
-  const [localCompleted, setLocalCompleted] = useState<Record<string, boolean>>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY_COMPLETED);
-      return raw ? JSON.parse(raw) : {};
-    } catch {
-      return {};
-    }
-  });
+  const [localCompleted, setLocalCompleted] = useState<Record<string, boolean>>(() =>
+    readFlagMap(STORAGE_KEY_COMPLETED)
+  );
 
   const verifiedLessons = externalVerified || localVerified;
   const completedLessons = externalCompleted || localCompleted;
@@ -790,28 +780,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // changes: carrying `run:2` across a switch would describe another lesson's work.
   useEffect(() => {
     setDiffTarget('starter');
-  }, [selectedId]);
-  // Predict first (see `app/src/predictGate.ts`). The first Run of a lesson asks what it will print
-  // and holds the run until the learner commits or skips; the record is per lesson and per store.
-  const [predictRecord, setPredictRecord] = useState<PredictionRecord | null>(null);
-  const [predictText, setPredictText] = useState('');
-  /** The run the gate is holding: set when Run was pressed before a prediction was made. */
-  const [heldRun, setHeldRun] = useState<{ code: string; lesson: PythonLessonItem } | null>(null);
-  // Watch mode (see `app/src/watchMode.ts`): after a graded failure, a pause in typing re-runs the
-  // checks. Off unless the learner asked for it.
-  const [watchOn, setWatchOn] = useState<boolean>(() => readWatch());
-  /** Set for the one run watch mode starts, so the log and the filed versions know it was automatic. */
-  const watchRunRef = useRef(false);
-  // Vim keys (see `app/src/vimMode.ts`): a remembered opt-in, and the mode the editor is reading keys
-  // in while it is on — a badge with no mode would be the one question normal mode always raises.
-  const [vimOn, setVimOn] = useState<boolean>(() => readVim());
-  const [vimMode, setVimMode] = useState<string>('normal');
-  // A new lesson is a new question: the panel closes, the half-typed guess goes, and the record is
-  // read for the lesson now on screen rather than the one just left.
-  useEffect(() => {
-    setPredictRecord(predictionFor(selectedId));
-    setPredictText('');
-    setHeldRun(null);
   }, [selectedId]);
 
   // One `lesson_open` per visit, including the first render: it is the denominator for abandon rate.
@@ -1677,83 +1645,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setInstructorError('');
   };
 
-  /**
-   * Every run the learner asks for by name goes through here, so the predict-first gate cannot be
-   * walked around by using the keyboard instead of the button.
-   */
-  const requestRun = (sourceCode: string, lesson: PythonLessonItem = currentLesson) => {
-    if (isRunning) return;
-    // The gate asks what the *lesson* will print. A page's snippet is not the lesson, and a guess
-    // about a loop the reader has not read yet is a quiz nobody asked for.
-    if (scratchRef.current) {
-      void runPythonCode(sourceCode, lesson);
-      return;
-    }
-    // A suite that drives hundreds of runs sets this once; the gate keeps its own browser step, so
-    // what is switched off here is a prompt, not a check.
-    if (typeof window !== 'undefined' && window.__mechalabPredictFirst === false) {
-      void runPythonCode(sourceCode, lesson);
-      return;
-    }
-    const existing = predictionFor(lesson.id);
-    setPredictRecord(existing);
-    if (!existing) {
-      setHeldRun({ code: sourceCode, lesson });
-      setPredictText('');
-      openPredictView();
-      return;
-    }
-    void runPythonCode(sourceCode, lesson);
-  };
-
-  /** Commit the guess and let the held run go; the verdict stays on screen beside the output. */
-  const commitPrediction = () => {
-    const pending = heldRun;
-    const lesson = pending?.lesson ?? currentLesson;
-    const text = predictText.trim();
-    if (!text) return;
-    const check = checkPrediction(text, lesson.expectedOutput);
-    const record = savePrediction({
-      lessonId: lesson.id,
-      text,
-      verdict: check.verdict,
-      matchedLines: check.matchedLines,
-      predictedLines: check.predictedLines,
-      skipped: false,
-      at: Date.now(),
-    });
-    setPredictRecord(record);
-    setHeldRun(null);
-    // A run was waiting on the answer, so it goes now; a prediction made from the toolbar (no run
-    // held) is just filed.
-    if (pending) void runPythonCode(pending.code, lesson);
-  };
-
-  /** Skip is a recorded decision, not a loophole: nothing is blocked, and "skipped" is stored. */
-  const skipPrediction = () => {
-    const pending = heldRun;
-    const lesson = pending?.lesson ?? currentLesson;
-    const record = savePrediction({
-      lessonId: lesson.id,
-      text: '',
-      verdict: 'miss',
-      matchedLines: 0,
-      predictedLines: 0,
-      skipped: true,
-      at: Date.now(),
-    });
-    setPredictRecord(record);
-    setHeldRun(null);
-    if (pending) void runPythonCode(pending.code, lesson);
-  };
-
-  /** Forget this lesson's commit so the question is asked again (a second attempt, not a reset). */
-  const predictAgain = () => {
-    clearPrediction(selectedId);
-    setPredictRecord(null);
-    setPredictText('');
-    setHeldRun(null);
-  };
+  // Watch mode (see `app/src/watchMode.ts`): after a graded failure, a pause in typing re-runs the
+  // checks. Off unless the learner asked for it.
+  const [watchOn, setWatchOn] = useState<boolean>(() => readWatch());
+  /** Set for the one run watch mode starts, so the log and the filed versions know it was automatic. */
+  const watchRunRef = useRef(false);
+  // Vim keys (see `app/src/vimMode.ts`): a remembered opt-in, and the mode the editor is reading keys
+  // in while it is on — a badge with no mode would be the one question normal mode always raises.
+  const [vimOn, setVimOn] = useState<boolean>(() => readVim());
+  const [vimMode, setVimMode] = useState<string>('normal');
 
   // ⌥1–⌥4 pick a layout, from anywhere including inside the editor. The buttons in the editor's
   // header are the discoverable path; this is the shortcut the buttons print.
@@ -1770,67 +1670,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // ⌘↵ / Ctrl+↵ runs from anywhere on this screen, including inside the editor. The button stays
-  // the discoverable path; this is the one keyboard habit a code editor trains. The key is read from
-  // the sheet's keymap (`app/src/keymap.ts`), so a learner who rebinds Run is not left with the old
-  // chord still running the lesson and the new one doing nothing.
-  const runShortcutRef = useRef<() => void>(() => {});
-  runShortcutRef.current = () => {
-    if (isRunning) return;
-    const lesson = PYTHON_LESSONS.find((l) => l.id === lessonIdRef.current) || PYTHON_LESSONS[0];
-    requestRun(codeRef.current, lesson);
-  };
-  const keymap = useKeymap();
-  const keymapRef = useRef<Keymap>(keymap);
-  keymapRef.current = keymap;
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.defaultPrevented) return;
-      if (actionForEvent(keymapRef.current, event) === 'run') {
-        event.preventDefault();
-        runShortcutRef.current();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-
-  // Watch mode: one run per pause in typing, and only when there is something to watch — a graded
-  // failure whose buffer has changed since the run that produced it. `watchDecision` holds the rules.
-  const watchTimerRef = useRef<number | null>(null);
-  const directRunRef = useRef<(lesson: PythonLessonItem) => void>(() => {});
-  directRunRef.current = (lesson) => {
-    void runPythonCode(codeRef.current, lesson);
-  };
-  useEffect(() => {
-    if (watchTimerRef.current !== null) {
-      window.clearTimeout(watchTimerRef.current);
-      watchTimerRef.current = null;
-    }
-    const decision = watchDecision({
-      enabled: watchOn,
-      lastVerdict: passStatus as WatchVerdict,
-      running: isRunning,
-      // The gate owns the next run while a run is actually held for a guess: a re-run here would be
-      // the one path around it. The test is `heldRun`, not the pane's existence — the Predict tab
-      // can be open before any run has asked, and `panes` used to make that state look like a hold
-      // forever (the watch loop then never fired again).
-      gateHolding: heldRun !== null,
-      editedSinceRun: code !== runCodeRef.current,
-    });
-    if (decision !== 'run') return;
-    watchTimerRef.current = window.setTimeout(() => {
-      watchTimerRef.current = null;
-      watchRunRef.current = true;
-      directRunRef.current(currentLesson);
-    }, WATCH_DEBOUNCE_MS);
-    return () => {
-      if (watchTimerRef.current !== null) {
-        window.clearTimeout(watchTimerRef.current);
-        watchTimerRef.current = null;
-      }
-    };
-  }, [watchOn, code, passStatus, isRunning, heldRun, selectedId, currentLesson]);
 
   // A slider drag is a parameter change, so the answer is a fresh run - but one run per drag, not
   // one per pixel. The timer is cleared on unmount so a removed tab cannot run in the background.
@@ -2061,11 +1900,83 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     }
     commitPanes(isSplit(panes) ? showView(panes, 'predict') : splitPane(panes, 'predict'));
   };
+  // Predict first (see `app/src/predictGate.ts`). The gate owns the question, its store record
+  // and the run it holds; every surface asks for a run through it.
+  const gate = usePredictGate({
+    selectedId,
+    currentLesson,
+    scratchRef,
+    isRunning,
+    runPythonCode,
+    openPane: openPredictView,
+  });
+
+  // ⌘↵ / Ctrl+↵ runs from anywhere on this screen, including inside the editor. The button stays
+  // the discoverable path; this is the one keyboard habit a code editor trains. The key is read from
+  // the sheet's keymap (`app/src/keymap.ts`), so a learner who rebinds Run is not left with the old
+  // chord still running the lesson and the new one doing nothing.
+  const runShortcutRef = useRef<() => void>(() => {});
+  runShortcutRef.current = () => {
+    if (isRunning) return;
+    const lesson = PYTHON_LESSONS.find((l) => l.id === lessonIdRef.current) || PYTHON_LESSONS[0];
+    gate.requestRun(codeRef.current, lesson);
+  };
+  const keymap = useKeymap();
+  const keymapRef = useRef<Keymap>(keymap);
+  keymapRef.current = keymap;
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
+      if (actionForEvent(keymapRef.current, event) === 'run') {
+        event.preventDefault();
+        runShortcutRef.current();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // Watch mode: one run per pause in typing, and only when there is something to watch — a graded
+  // failure whose buffer has changed since the run that produced it. `watchDecision` holds the rules.
+  const watchTimerRef = useRef<number | null>(null);
+  const directRunRef = useRef<(lesson: PythonLessonItem) => void>(() => {});
+  directRunRef.current = (lesson) => {
+    void runPythonCode(codeRef.current, lesson);
+  };
+  useEffect(() => {
+    if (watchTimerRef.current !== null) {
+      window.clearTimeout(watchTimerRef.current);
+      watchTimerRef.current = null;
+    }
+    const decision = watchDecision({
+      enabled: watchOn,
+      lastVerdict: passStatus as WatchVerdict,
+      running: isRunning,
+      // The gate owns the next run while a run is actually held for a guess: a re-run here would be
+      // the one path around it. The test is `heldRun`, not the pane's existence — the Predict tab
+      // can be open before any run has asked, and `panes` used to make that state look like a hold
+      // forever (the watch loop then never fired again).
+      gateHolding: gate.holding,
+      editedSinceRun: code !== runCodeRef.current,
+    });
+    if (decision !== 'run') return;
+    watchTimerRef.current = window.setTimeout(() => {
+      watchTimerRef.current = null;
+      watchRunRef.current = true;
+      directRunRef.current(currentLesson);
+    }, WATCH_DEBOUNCE_MS);
+    return () => {
+      if (watchTimerRef.current !== null) {
+        window.clearTimeout(watchTimerRef.current);
+        watchTimerRef.current = null;
+      }
+    };
+  }, [watchOn, code, passStatus, isRunning, gate.holding, selectedId, currentLesson]);
   // The phone bar's two actions both open the code first: a run's output and a prediction are
   // about the editor, and starting one from the prose should land on the screen that shows it.
   const phoneRun = () => {
     choosePhoneSurface('code');
-    requestRun(codeRef.current, currentLesson);
+    gate.requestRun(codeRef.current, currentLesson);
   };
   const phonePredict = () => {
     choosePhoneSurface('code');
@@ -2264,16 +2175,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       onRun={() => {
         const lesson =
           PYTHON_LESSONS.find((l) => l.id === lessonIdRef.current) || PYTHON_LESSONS[0];
-        requestRun(codeRef.current, lesson);
+        gate.requestRun(codeRef.current, lesson);
       }}
-      predictRecord={predictRecord}
-      onPredict={() => {
-        // The gate is a pane, so the button opens and focuses it instead of toggling a block: a
-        // press with the tab already on screen is how a learner rereads the verdict.
-        setPredictRecord(predictionFor(selectedId));
-        setHeldRun(null);
-        openPredictView();
-      }}
+      predictRecord={gate.record}
+      onPredict={gate.open}
       predictPaneOpen={resultsAllowed && shownViews.has('predict')}
       isCurrentSelfMarked={isCurrentSelfMarked}
       onToggleSelfMarked={() => toggleLessonSelfMarked(currentLesson.id)}
@@ -2494,7 +2399,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 The red line names the value it expected and the value your code produced.
               </p>
               <button
-                onClick={() => requestRun(codeRef.current, currentLesson)}
+                onClick={() => gate.requestRun(codeRef.current, currentLesson)}
                 disabled={isRunning}
                 data-testid="btn-guide-run"
                 className="mt-2 px-2.5 py-1 rounded text-[12.5px] font-mono font-bold bg-emerald hover:bg-emerald-strong text-inverse disabled:opacity-50 cursor-pointer"
@@ -3225,7 +3130,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             <FaultBench08
               report={harnessReport}
               grading={isRunning}
-              onGrade={() => requestRun(codeRef.current, currentLesson)}
+              onGrade={() => gate.requestRun(codeRef.current, currentLesson)}
             />
           )}
           {currentHarness && currentLesson.id !== '08.1' && (
@@ -3233,7 +3138,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               harness={currentHarness}
               report={harnessReport}
               grading={isRunning}
-              onGrade={() => requestRun(codeRef.current, currentLesson)}
+              onGrade={() => gate.requestRun(codeRef.current, currentLesson)}
             />
           )}
 
@@ -3361,109 +3266,114 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             )}
           {/* The editor surface, one home (`runner/RunnerEditorCard.tsx`). */}
           <RunnerEditorCard
-            panelRef={editorPanelRef}
-            phoneCode={phoneCode}
-            editorShown={editorShown}
-            resultsAllowed={resultsAllowed}
-            phoneEditorVisible={phoneEditorVisible}
-            isPhone={isPhone}
-            deferPhoneEditor={deferPhoneEditor}
-            layout={shownLayout}
-            code={code}
-            commitCode={commitCode}
-            mainEditorRef={guideEditorRef}
-            helperEditorRef={helperEditorRef}
-            helperFiles={helperFiles}
-            openHelper={openHelper}
-            openHelperFile={openHelperFile}
-            onOpenHelper={setOpenHelper}
-            pendingJump={pendingJump}
-            onClearJump={() => setPendingJump(null)}
-            panes={panes}
-            paneSplit={paneSplit}
-            shownViews={shownViews}
-            views={visibleViews(panes)}
-            onShowView={(view) => commitPanes(showView(panes, view))}
-            onSplit={() => commitPanes(splitPane(panes))}
-            onSetAxis={(axis) => commitPanes(setAxis(panes, axis))}
-            onCloseSplit={() => commitPanes(closeSplit(panes))}
-            focusPane={focusPane}
-            paneOrder={paneOrder}
-            paneBorder={paneBorder}
-            symbolMiss={symbolMiss}
-            sliderCount={sliderCount}
-            vimOn={vimOn}
-            vimModeLabel={vimModeLabel(vimMode)}
-            onVimMode={setVimMode}
-            writeQuestion={writeQuestion}
-            lessonId={selectedId}
-            onSliderCommit={handleSliderCommit}
-            getAnalysis={getReadyAnalysis}
-            onGoToDefinition={goToDefinition}
-            onRunCell={runCellTo}
-            onToggleBreakpoint={toggleBreakpointAt}
-            onBreakpointsMoved={followBreakpointEdits}
-            breakpoints={breakpoints}
-            predictRecord={predictRecord}
-            predictText={predictText}
-            onPredictText={setPredictText}
-            onCommitPrediction={commitPrediction}
-            onSkipPrediction={skipPrediction}
-            onPredictAgain={predictAgain}
+            surface={{
+              panelRef: editorPanelRef,
+              phoneCode,
+              editorShown,
+              resultsAllowed,
+              phoneEditorVisible,
+              isPhone,
+              deferPhoneEditor,
+              layout: shownLayout,
+            }}
+            draft={{
+              code,
+              commitCode,
+              mainEditorRef: guideEditorRef,
+              helperEditorRef,
+              helperFiles,
+              openHelper,
+              openHelperFile,
+              onOpenHelper: setOpenHelper,
+              pendingJump,
+              onClearJump: () => setPendingJump(null),
+              symbolMiss,
+              sliderCount,
+              vimOn,
+              vimModeLabel: vimModeLabel(vimMode),
+              onVimMode: setVimMode,
+              writeQuestion,
+              lessonId: selectedId,
+              onSliderCommit: handleSliderCommit,
+              getAnalysis: getReadyAnalysis,
+              onGoToDefinition: goToDefinition,
+              onRunCell: runCellTo,
+              onToggleBreakpoint: toggleBreakpointAt,
+              onBreakpointsMoved: followBreakpointEdits,
+              breakpoints,
+            }}
+            panes={{
+              value: panes,
+              split: paneSplit,
+              shownViews,
+              views: visibleViews(panes),
+              onShowView: (view) => commitPanes(showView(panes, view)),
+              onSplit: () => commitPanes(splitPane(panes)),
+              onSetAxis: (axis) => commitPanes(setAxis(panes, axis)),
+              onCloseSplit: () => commitPanes(closeSplit(panes)),
+              focusPane,
+              paneOrder,
+              paneBorder,
+            }}
+            gate={gate}
+            run={{ isRunning, passStatus, harnessResult, asksForFinish: gateAsksForFinish }}
+            slots={{
+              toolbar: runnerToolbar,
+              feedback: runFeedback,
+              actualOutputPane,
+              expectedOutputPane,
+              workflowPane,
+            }}
+            collab={{ coEdit, collabNotice, peerLabel: pair.peer }}
             onClosePredict={() => commitPanes(closeView(panes, 'predict'))}
-            asksForFinish={gateAsksForFinish}
-            heldRun={heldRun !== null}
-            isRunning={isRunning}
-            passStatus={passStatus}
-            harnessResult={harnessResult}
-            toolbar={runnerToolbar}
-            feedback={runFeedback}
-            actualOutputPane={actualOutputPane}
-            expectedOutputPane={expectedOutputPane}
-            workflowPane={workflowPane}
-            coEdit={coEdit}
-            collabNotice={collabNotice}
-            peerLabel={pair.peer}
           />
 
           {/* Everything that reports on the editor (`runner/ResultsColumn.tsx`). */}
           <ResultsColumn
-            resultsSide={resultsSide}
-            visible={phoneEditorVisible}
-            columns={layoutArrangement(layout) === 'columns'}
-            splitRatio={splitRatio}
-            draggingSplit={draggingSplit}
-            onBeginSplitDrag={beginSplitDrag}
-            onMoveSplitDrag={moveSplitDrag}
-            onEndSplitDrag={endSplitDrag}
-            onCommitSplitRatio={commitSplitRatio}
-            lintNotes={lintNotes}
-            analysisNotice={analysisNotice}
-            lessonId={selectedId}
-            onOpenWorkflow={openWorkflowTab}
-            assessmentRef={guideAssessmentRef}
-            behaviorCheck={behaviorCheck}
-            outputCheck={outputCheck}
-            outputMatchMode={outputMatchMode}
-            exactFormatting={!lessonDowngradesFormatting}
-            instructorTestSummary={currentLesson.instructorTestSummary}
-            checkFailures={checkFailures}
-            revealedHints={revealedHints}
-            hintCount={hintCount}
-            onRevealHint={revealHint}
-            instructorError={instructorError}
-            passStatus={passStatus}
-            harnessResult={harnessResult}
-            resultsShown={layoutShows(shownLayout, 'results')}
-            trace={trace}
-            traceStep={traceStep}
-            onTraceStep={setTraceStep}
-            runSource={runCodeRef.current || code}
-            onRevealTrace={showMainLine}
-            scopeSeries={scopeSeries}
-            pinnedScope={pinnedScope}
-            onPinScope={() => setPinnedScope(scopeSeries)}
-            onUnpinScope={() => setPinnedScope(null)}
+            split={{
+              side: resultsSide,
+              visible: phoneEditorVisible,
+              columns: layoutArrangement(layout) === 'columns',
+              ratio: splitRatio,
+              dragging: draggingSplit,
+              onBeginDrag: beginSplitDrag,
+              onMoveDrag: moveSplitDrag,
+              onEndDrag: endSplitDrag,
+              onCommitRatio: commitSplitRatio,
+            }}
+            checks={{
+              lintNotes,
+              analysisNotice,
+              lessonId: selectedId,
+              onOpenWorkflow: openWorkflowTab,
+              assessmentRef: guideAssessmentRef,
+              behaviorCheck,
+              outputCheck,
+              outputMatchMode,
+              exactFormatting: !lessonDowngradesFormatting,
+              instructorTestSummary: currentLesson.instructorTestSummary,
+              checkFailures,
+              revealedHints,
+              hintCount,
+              onRevealHint: revealHint,
+              instructorError,
+              passStatus,
+              harnessResult,
+              resultsShown: layoutShows(shownLayout, 'results'),
+            }}
+            trace={{
+              snapshot: trace,
+              step: traceStep,
+              onStep: setTraceStep,
+              source: runCodeRef.current || code,
+              onReveal: showMainLine,
+            }}
+            scope={{
+              series: scopeSeries,
+              pinned: pinnedScope,
+              onPin: () => setPinnedScope(scopeSeries),
+              onUnpin: () => setPinnedScope(null),
+            }}
           />
         </div>
         </div>
@@ -3480,7 +3390,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           firstDiff: outputComparison.firstDiff,
           harnessSummary: harnessResult?.summary ?? null,
           stderr,
-          prediction: predictRecord,
+          prediction: gate.record,
         })}
       </p>
 
