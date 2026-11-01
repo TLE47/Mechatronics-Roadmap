@@ -25,14 +25,26 @@ import {
   DUCK_GAIN,
   FOCUS_GAIN,
   GUST_GAIN,
+  MASTER_HEADROOM,
   MAX_TAPE_NODES,
   MAX_VOICES,
+  MUSIC_LOWPASS_HZ,
   SoundEngine,
   UI_GAP_MS,
   clickLength,
   handleSoundMessage,
 } from '../app/src/audio/engine.ts';
 import { ROOM_LAYERS, ROOM_TRIM, RUN_IN_FOCUS, loudestLayer, roomMix } from '../app/src/audio/ambience.ts';
+import {
+  change as changeMix,
+  configureMusicManager,
+  install as installManager,
+  reset as resetMix,
+  setGenre,
+  setVolume,
+  subscribeArmed,
+  togglePlay,
+} from '../app/src/audio/musicManager.ts';
 import {
   DRONE_ID,
   MUSIC_CATEGORIES,
@@ -212,16 +224,26 @@ function engineFor(startAt = 0, options = {}) {
  *
  * `master → limiter → destination` is the whole reason the old `master = gain into destination`
  * lookup is gone: the last thing before the speakers is the limiter, and everything else hangs off
- * the master.
+ * the master. The bed reaches the duck through its low-pass, so the music bus is found by its filter
+ * rather than by being first in the list.
  */
 function graph(context) {
   const gains = context.nodes.filter((node) => node.kind === 'gain');
   const limiter = context.nodes.find((node) => node.kind === 'compressor');
   const master = gains.find((node) => limiter && node.targets.includes(limiter));
   const duck = gains.find((node) => master && node.targets.includes(master));
-  const underDuck = gains.filter((node) => duck && node.targets.includes(duck));
+  const musicFilter = context.nodes.find(
+    (node) =>
+      node.kind === 'filter' &&
+      node.type === 'lowpass' &&
+      node.frequency.value === MUSIC_LOWPASS_HZ &&
+      duck &&
+      node.targets.includes(duck)
+  );
+  const music = gains.find((node) => musicFilter && node.targets.includes(musicFilter));
+  const room = gains.find((node) => duck && node !== music && node.targets.includes(duck));
   const sfx = gains.find((node) => master && node !== duck && node.targets.includes(master));
-  return { limiter, master, duck, music: underDuck[0], room: underDuck[1], sfx, gains };
+  return { limiter, master, duck, musicFilter, music, room, sfx, gains };
 }
 
 /** How many oscillators a call created, i.e. how many tones were scheduled. */
@@ -389,7 +411,7 @@ await check('the master follows the toggle, and disabling suspends the context',
   await engine.enable({ on: true, music: 0.6, sfx: 0.8 });
   const { master } = graph(context);
   assert.ok(master, 'the master gain must reach the limiter');
-  assert.equal(master.gain.value, 1);
+  assert.equal(master.gain.value, MASTER_HEADROOM, 'the master keeps the spec\'s 0.7 headroom');
   engine.apply({ on: false, music: 0.6, sfx: 0.8 });
   assert.equal(master.gain.value, 0);
   await engine.disable();
@@ -730,8 +752,8 @@ await check('the bus carries a click with its position, and clamps what it is gi
 
 const MUSIC_DIR = new URL('../app/src/audio/assets/music/', import.meta.url);
 
-await check('the catalogue names eight tapes in six categories, each with a file and a licence', () => {
-  assert.equal(MUSIC_TAPES.length, 8);
+await check('the catalogue names eleven tapes in five genre doors, each with a file and a licence', () => {
+  assert.equal(MUSIC_TAPES.length, 11);
   const ids = new Set();
   for (const tape of MUSIC_TAPES) {
     assert.ok(!ids.has(tape.id), `${tape.id} must be unique`);
@@ -768,7 +790,7 @@ await check('the catalogue names eight tapes in six categories, each with a file
   assert.equal(isTapeId(DRONE_ID), true);
   assert.equal(isTapeId('lab-night'), true);
   assert.equal(categoryOf(DRONE_ID), null);
-  assert.equal(categoryOf('winter-blues'), 'jazz');
+  assert.equal(categoryOf('winter-blues'), 'acoustic');
   const credit = tapeCredit(tapeById('lab-night'));
   assert.match(credit, /Snow Drift/);
   assert.match(credit, /HoliznaCC0/);
@@ -947,6 +969,89 @@ await check('the bus dispatches a cue, and reads only its own messages back', ()
     assert.equal(readSoundMessage(bogus), null);
     const message = new CustomEvent(SOUND_EVENT, { detail: { kind: 'cue', cue: 'run-fail' } });
     assert.deepEqual(readSoundMessage(message), { kind: 'cue', cue: 'run-fail' });
+  } finally {
+    globalThis.window = previousWindow;
+  }
+});
+
+// ---- the manager -----------------------------------------------------------------------------
+//
+// One owner for the runtime, and the three methods the spec names. The engine is a recorder here:
+// these checks are about what a genre press, a fader and the toggle write, and that they reach the
+// mix through the store rather than through a second path only one control uses.
+
+const managerMix = { applied: [], enabled: [], scenes: [] };
+class ManagerEngine {
+  apply(prefs) {
+    managerMix.applied.push({ ...prefs });
+  }
+  setScene(scene) {
+    managerMix.scenes.push(scene);
+  }
+  async enable(prefs) {
+    managerMix.enabled.push({ ...prefs });
+  }
+}
+
+await check('the manager picks a door\'s own tape, keeps a chosen one, and every write reaches the mix', async () => {
+  const target = new EventTarget();
+  target.requestIdleCallback = (callback) => {
+    callback();
+    return 0;
+  };
+  const previousWindow = globalThis.window;
+  globalThis.window = target;
+  try {
+    storage.removeItem(SOUND_STORAGE_KEY);
+    writeSoundPrefs({ ...DEFAULT_SOUND_PREFS, on: false });
+    configureMusicManager(async () => ({ SoundEngine: ManagerEngine, handleSoundMessage: () => {} }));
+    installManager();
+    // The idle warm-up is the manager's own load: wait for it so the first write has a mix to reach.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // A door plays the tape written for it, not whichever happened to be first in the list.
+    assert.equal(setGenre('synthwave'), 'night-drive');
+    assert.equal(cachedSoundPrefs().tape, 'night-drive');
+    assert.equal(managerMix.applied.at(-1).tape, 'night-drive', 'the door press reaches the engine');
+    const applied = managerMix.applied.length;
+    assert.equal(setGenre('synthwave'), 'night-drive');
+    assert.equal(managerMix.applied.length, applied, 'choosing the same door again restarts nothing');
+
+    // A tape chosen inside a door survives choosing that door again.
+    changeMix({ tape: 'neon-stage' });
+    assert.equal(setGenre('jpop'), 'neon-stage');
+
+    // The fader is the store's number, rounded to what the slider can show.
+    assert.equal(setVolume(0.333), 0.33);
+    assert.equal(managerMix.applied.at(-1).music, 0.33);
+    assert.equal(setVolume(4), 1);
+
+    // Arming is part of the manager: a remembered "on" waits for a gesture, and the first one starts it.
+    const arms = [];
+    const release = subscribeArmed((on) => arms.push(on));
+    changeMix({ on: true });
+    assert.deepEqual(arms, [false], 'a remembered on is armed, not started');
+    target.dispatchEvent(new Event('pointerdown'));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.deepEqual(arms, [false, true], 'the first gesture starts it');
+    assert.equal(managerMix.enabled.length, 1, 'and enables the engine once');
+    release();
+
+    // A reset restores the levels but never switches sound off, and never changes the tape.
+    const reset = resetMix();
+    assert.equal(reset.on, true);
+    assert.equal(reset.tape, 'neon-stage');
+    assert.equal(reset.music, DEFAULT_SOUND_PREFS.music);
+
+    // The toggle is one press in either direction, and the engine hears both.
+    const off = togglePlay();
+    assert.equal(off.on, false);
+    assert.equal(managerMix.applied.at(-1).on, false);
+    const on = togglePlay();
+    assert.equal(on.on, true);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.equal(managerMix.enabled.length, 2, 'turning it back on starts it from the press');
+    togglePlay();
   } finally {
     globalThis.window = previousWindow;
   }

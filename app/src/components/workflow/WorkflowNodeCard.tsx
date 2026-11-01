@@ -1,5 +1,5 @@
 import type { FocusEvent as ReactFocusEvent, PointerEvent as ReactPointerEvent } from 'react';
-import { BookOpen, StickyNote, Trash2 } from 'lucide-react';
+import { BookOpen, ClipboardCheck, Cpu, Gauge, StickyNote, Trash2 } from 'lucide-react';
 import {
   KIND_META,
   MAX_BRANCH_CONDITION_CHARS,
@@ -14,6 +14,8 @@ import {
   type WorkflowNode,
   type WorkflowSide,
 } from '../../workflow.ts';
+import { missingProjectObject, type ProjectObject } from '../../projectRef.ts';
+import { PROJECT_WORDS } from '../../projectPresentation.ts';
 import { iconForKind } from '../workflowIcons.ts';
 import { MathView } from '../MathView.tsx';
 import { parseInline, type InlineRun } from '../../readerMarkdown.ts';
@@ -21,6 +23,13 @@ import { cardFill, cardInk, cardType } from './cardStyle.ts';
 import { nudgeCard } from './cardNudge.ts';
 import { WorkflowPorts } from './WorkflowPorts.tsx';
 import type { LinkDraft } from './useLinking.ts';
+
+/** The badge glyph for each kind; the card is the only surface that draws one. */
+const PROJECT_ICONS: Record<string, typeof Cpu> = {
+  component: Cpu,
+  requirement: ClipboardCheck,
+  test: Gauge,
+};
 
 /**
  * One card on the canvas (`components/workflow/WorkflowNodeCard.tsx`).
@@ -80,11 +89,15 @@ function CardWords({ runs }: { runs: InlineRun[] }) {
 
 export interface WorkflowNodeCardProps {
   node: WorkflowNode;
+  /** The project object this card cites, when the id still resolves; the id alone otherwise. */
+  projectObject: ProjectObject | undefined;
   index: number;
   /** Its place in the one reading order — the number the checklist also says. */
   number: number;
   issue: WorkflowIssue | undefined;
   selected: boolean;
+  /** A run token is on this card: the simulation's trail, drawn in the run colour. */
+  active: boolean;
   /** Where the canvas draws it: the document's point, or the live one during a drag. */
   position: { x: number; y: number };
   dragging: boolean;
@@ -96,6 +109,8 @@ export interface WorkflowNodeCardProps {
   onUpdate: (id: string, patch: Partial<WorkflowNode>) => void;
   onRemove: (id: string) => void;
   onOpenLesson: (lesson: string) => void;
+  /** Pressed on the badge: open the cited object in the view its kind owns. */
+  onOpenObject?: (projectRef: string) => void;
   onDragStart: (event: ReactPointerEvent, node: WorkflowNode) => void;
   onLinkStart: (event: ReactPointerEvent, node: WorkflowNode, side: WorkflowSide) => void;
   /** A press on the body: the canvas's armed arrow lands here, or the press is just a selection. */
@@ -104,10 +119,12 @@ export interface WorkflowNodeCardProps {
 
 export function WorkflowNodeCard({
   node,
+  projectObject,
   index,
   number,
   issue,
   selected,
+  active,
   position,
   dragging,
   linking,
@@ -117,6 +134,7 @@ export function WorkflowNodeCard({
   onUpdate,
   onRemove,
   onOpenLesson,
+  onOpenObject,
   onDragStart,
   onLinkStart,
   onLinkLand,
@@ -124,17 +142,30 @@ export function WorkflowNodeCard({
   const Icon = iconForKind(node.kind);
   const meta = KIND_META[node.kind];
   const shape = NODE_SHAPE[node.kind];
+  const words = projectObject ? PROJECT_WORDS[projectObject.kind] : undefined;
+  const ObjectIcon = projectObject ? PROJECT_ICONS[projectObject.kind] : undefined;
+  const badgeIcon = ObjectIcon ? (
+    <ObjectIcon className="h-2.5 w-2.5 shrink-0 text-accent" aria-hidden="true" />
+  ) : (
+    <Cpu className="h-2.5 w-2.5 shrink-0 text-accent" aria-hidden="true" />
+  );
+  const badgeLabel = projectObject ? projectObject.label : node.projectRef;
+  const badgeTitle = projectObject
+    ? `${projectObject.id} — open ${words?.label ?? projectObject.kind}`
+    : missingProjectObject(node.projectRef ?? '');
   const shaped = shape !== 'rect';
   // A text card is words on the paper: the same fields, no plate around them. Selection still shows
   // a ring, so a label can be nudged and deleted like anything else without a box in the diagram.
   const bare = node.kind === 'text';
   const clip = SHAPE_CLIP[shape];
   const inset = SHAPE_INSET[shape] ?? '';
-  const frame = selected
-    ? 'border-accent ring-2 ring-accent/25'
-    : issue
-      ? 'border-amber/70'
-      : 'border-line';
+  const frame = active
+    ? 'border-emerald ring-2 ring-emerald/40'
+    : selected
+      ? 'border-accent ring-2 ring-accent/25'
+      : issue
+        ? 'border-amber/70'
+        : 'border-line';
   const type = cardType(node.size);
   const ink = cardInk(node.ink);
   // Without a chosen ink the detail keeps the muted colour it always had; a chosen ink is the one
@@ -163,6 +194,7 @@ export function WorkflowNodeCard({
       data-step={number}
       data-kind={node.kind}
       data-shape={shape}
+      data-run-active={active ? 'true' : undefined}
       style={{
         left: position.x,
         top: position.y,
@@ -172,7 +204,11 @@ export function WorkflowNodeCard({
         ...(shaped ? {} : { backgroundColor: fill }),
       }}
       className={`absolute cursor-default ${
-        shaped ? '' : bare ? `rounded-lg ${selected ? 'ring-1 ring-accent/40' : ''}` : `rounded-xl border bg-panel shadow-sm ${frame}`
+        shaped
+          ? ''
+          : bare
+            ? `rounded-lg ${active ? 'ring-1 ring-emerald/60' : selected ? 'ring-1 ring-accent/40' : ''}`
+            : `rounded-xl border bg-panel shadow-sm ${frame}`
       } ${dragging ? 'z-40' : selected ? 'z-30' : 'z-20'} ${dragging && !shaped && !bare ? 'shadow-lg' : ''}`}
       onPointerDown={(event) => onLinkLand(event, node)}
     >
@@ -182,7 +218,7 @@ export function WorkflowNodeCard({
             aria-hidden="true"
             style={clip ? { clipPath: clip } : undefined}
             className={`pointer-events-none absolute inset-0 drop-shadow-sm ${SHAPE_ROUND[shape]} ${
-              selected ? 'bg-accent' : issue ? 'bg-amber/70' : 'bg-line'
+              active ? 'bg-emerald' : selected ? 'bg-accent' : issue ? 'bg-amber/70' : 'bg-line'
             }`}
           />
           <div
@@ -238,6 +274,33 @@ export function WorkflowNodeCard({
       </div>
 
       <div className={`space-y-1 ${shaped ? `${inset} py-1.5` : bare ? 'px-1 pb-1' : 'p-1.5'}`}>
+        {/* What this step touches in the project: one id, resolved to its designation and part
+            number, or to a requirement's reference and title. A card whose id no longer resolves
+            still says which id it cites, rather than silently dropping the reference — a dangling
+            citation is worth seeing. The glyph says which view the badge opens. */}
+        {node.projectRef &&
+          (onOpenObject ? (
+            <button
+              type="button"
+              data-testid={`workflow-node-ref-${index}`}
+              title={badgeTitle}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={() => onOpenObject(node.projectRef as string)}
+              className="flex w-full min-w-0 cursor-pointer items-center gap-1 rounded bg-raise/60 px-1 py-0.5 text-left font-mono text-[9.5px] text-muted hover:bg-raise hover:text-body focus-visible:outline-2 focus-visible:outline-accent"
+            >
+              {badgeIcon}
+              <span className="truncate">{badgeLabel}</span>
+            </button>
+          ) : (
+            <div
+              data-testid={`workflow-node-ref-${index}`}
+              title={projectObject ? projectObject.id : missingProjectObject(node.projectRef)}
+              className="flex min-w-0 items-center gap-1 rounded bg-raise/60 px-1 py-0.5 font-mono text-[9.5px] text-muted"
+            >
+              {badgeIcon}
+              <span className="truncate">{badgeLabel}</span>
+            </div>
+          ))}
         {/* A field with maths in it shows the maths until it is focused, then the source it is made
             of: the input is the same field, hidden behind the rendering rather than a second copy.
             `peer-focus:hidden` is what swaps them, so the card needs no edit state of its own. */}

@@ -86,7 +86,11 @@ export function WorkflowMenu({
   const rows = items.length * 32 + (node && onFill ? 32 : 0) + 12;
   const close = () => {
     onClose();
-    document.querySelector<HTMLElement>('[data-testid=workflow-canvas]')?.focus();
+    // Without `preventScroll` the browser drags the page to the paper, so dismissing a menu (or
+    // picking an item) can move the diagram under the learner by the height of the canvas offset.
+    document
+      .querySelector<HTMLElement>('[data-testid=workflow-canvas]')
+      ?.focus({ preventScroll: true });
   };
   return (
     <>

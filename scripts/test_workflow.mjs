@@ -35,6 +35,7 @@ import {
   MAX_EDGES,
   MAX_FONT_SIZE,
   MAX_NODE_COORD,
+  MAX_PROJECT_REF_CHARS,
   MAX_STEPS,
   MIN_FONT_SIZE,
   MAX_STEP_DETAIL_CHARS,
@@ -66,15 +67,15 @@ import {
   nextEdgeId,
   nextStepId,
   normalizeWorkflow,
-  validateWorkflow,
   workflowNumbers,
   workflowOrder,
-  workflowSummary,
   workflowToMarkdown,
   workflowToMermaid,
   withEdgeType,
 } from '../app/src/workflow.ts';
 import { cardType } from '../app/src/components/workflow/cardStyle.ts';
+import { validateWorkflow, workflowSummary } from '../app/src/workflowValidation.ts';
+import { chooseRun, runStatus, startRun, stepRun } from '../app/src/workflowRun.ts';
 import {
   annotateNode,
   connectNodes,
@@ -1908,6 +1909,413 @@ check('frames take the cards out of the frame they were in, and the last frame r
   assert.deepEqual(moved.groups.map((group) => group.nodeIds), [[first], [second]]);
   assert.equal(moved.groups[1].title, 'Group 2', 'the new frame counts the ones that remain');
   assert.equal(removeGroup({ ...renamed, groups: [renamed.groups[0]] }, 0).groups, undefined);
+});
+
+section('13. A decision says when each way is taken, and a run walks the flow');
+
+check('a decision with two exits and no guards is open, and the sentence names the card', () => {
+  const doc = graph(
+    [
+      { kind: 'given', title: 'start' },
+      { kind: 'branch', title: 'over the limit?' },
+      { kind: 'answer', title: 'yes' },
+      { kind: 'answer', title: 'no' },
+    ],
+    [
+      { from: 's1', to: 's2' },
+      { from: 's2', to: 's3' },
+      { from: 's2', to: 's4' },
+    ]
+  );
+  const issue = validateWorkflow(doc).find((entry) => entry.code === 'branch-without-guard');
+  assert.ok(issue, 'two unguarded exits must be named');
+  assert.equal(issue.severity, 'open');
+  assert.equal(issue.stepId, 's2');
+  assert.match(issue.message, /^Step 2 has 2 ways out/);
+});
+
+check('a guard on every exit, or one card condition, is enough', () => {
+  const nodes = [
+    { kind: 'given', title: 'start' },
+    { kind: 'branch', title: 'over the limit?' },
+    { kind: 'answer', title: 'yes' },
+    { kind: 'answer', title: 'no' },
+  ];
+  const guarded = graph(nodes, [
+    { from: 's1', to: 's2' },
+    { from: 's2', to: 's3', guard: 'temp > 80' },
+    { from: 's2', to: 's4', guard: 'else' },
+  ]);
+  assert.equal(
+    validateWorkflow(guarded).some((entry) => entry.code === 'branch-without-guard'),
+    false,
+    'two guards are the shape the rule asks for'
+  );
+  const conditioned = graph(
+    nodes.map((node, index) => (index === 1 ? { ...node, condition: 'temp > 80' } : node)),
+    [
+      { from: 's1', to: 's2' },
+      { from: 's2', to: 's3' },
+      { from: 's2', to: 's4' },
+    ]
+  );
+  assert.equal(
+    validateWorkflow(conditioned).some((entry) => entry.code === 'branch-without-guard'),
+    false,
+    'a card condition still labels every one of its exits'
+  );
+});
+
+check('two exits that say the same guard are ambiguous, and two different guards are not', () => {
+  const nodes = [
+    { kind: 'given', title: 'start' },
+    { kind: 'branch', title: 'over the limit?' },
+    { kind: 'answer', title: 'yes' },
+    { kind: 'answer', title: 'no' },
+  ];
+  const twice = graph(nodes, [
+    { from: 's1', to: 's2' },
+    { from: 's2', to: 's3', guard: 'temp > 80' },
+    { from: 's2', to: 's4', guard: 'Temp  >  80' },
+  ]);
+  const issue = validateWorkflow(twice).find((entry) => entry.code === 'ambiguous-guard');
+  assert.ok(issue, 'the same condition written twice must be named');
+  assert.equal(issue.severity, 'open');
+  assert.equal(issue.stepId, 's2');
+  assert.match(issue.message, /^Step 2 has two ways out that both say/);
+  const distinct = graph(nodes, [
+    { from: 's1', to: 's2' },
+    { from: 's2', to: 's3', guard: 'temp > 80' },
+    { from: 's2', to: 's4', guard: 'else' },
+  ]);
+  assert.equal(
+    validateWorkflow(distinct).some((entry) => entry.code === 'ambiguous-guard'),
+    false,
+    'two different guards are not ambiguous'
+  );
+  const legacy = graph(
+    nodes.map((node, index) => (index === 1 ? { ...node, condition: 'temp > 80' } : node)),
+    [
+      { from: 's1', to: 's2' },
+      { from: 's2', to: 's3' },
+      { from: 's2', to: 's4' },
+    ]
+  );
+  assert.equal(
+    validateWorkflow(legacy).some((entry) => entry.code === 'ambiguous-guard'),
+    false,
+    'one Branch condition labelling both exits is the fallback, not two guards saying the same thing'
+  );
+});
+
+check('a merge that closes one path is advice, and two paths into it silence it', () => {
+  const nodes = [
+    { kind: 'given', title: 'start' },
+    { kind: 'branch', title: 'over the limit?' },
+    { kind: 'answer', title: 'yes' },
+    { kind: 'merge', title: '' },
+    { kind: 'answer', title: 'no' },
+    { kind: 'answer', title: 'end' },
+  ];
+  const solo = graph(nodes, [
+    { from: 's1', to: 's2' },
+    { from: 's2', to: 's4', guard: 'yes' },
+    { from: 's4', to: 's6' },
+  ]);
+  const issue = validateWorkflow(solo).find((entry) => entry.code === 'merge-without-branches');
+  assert.ok(issue, 'one path into a merge is not merging anything');
+  assert.equal(issue.severity, 'hint');
+  assert.equal(issue.stepId, 's4');
+  const joined = graph(nodes, [
+    { from: 's1', to: 's2' },
+    { from: 's2', to: 's3', guard: 'yes' },
+    { from: 's2', to: 's5', guard: 'else' },
+    { from: 's3', to: 's4' },
+    { from: 's5', to: 's4' },
+    { from: 's4', to: 's6' },
+  ]);
+  assert.equal(
+    validateWorkflow(joined).some((entry) => entry.code === 'merge-without-branches'),
+    false,
+    'two paths into the merge are the shape it exists for'
+  );
+});
+
+check('a wired group the start cannot reach is detached, and a finish never reached is named', () => {
+  const detached = graph(
+    [
+      { kind: 'given', title: 'start' },
+      { kind: 'answer', title: 'end' },
+      { kind: 'compute', title: 'island' },
+      { kind: 'answer', title: 'island end' },
+    ],
+    [
+      { from: 's1', to: 's2' },
+      { from: 's3', to: 's4' },
+    ]
+  );
+  const issues = validateWorkflow(detached).filter((entry) => entry.code === 'detached-flow');
+  assert.deepEqual(issues.map((issue) => issue.stepId), ['s3', 's4']);
+  assert.equal(issues[0].severity, 'hint');
+  const lost = graph(
+    [
+      { kind: 'given', title: 'start' },
+      { kind: 'compute', title: 'loop' },
+      { kind: 'answer', title: 'end' },
+    ],
+    [
+      { from: 's1', to: 's2' },
+      { from: 's2', to: 's2' },
+    ]
+  );
+  const finish = validateWorkflow(lost).find((entry) => entry.code === 'no-final-path');
+  assert.ok(finish, 'a start and an answer that never meet are not a flow');
+  assert.equal(finish.severity, 'open');
+  assert.match(finish.message, /Answer card/);
+});
+
+check('a run walks a linear flow to its answer, and every step follows one arrow', () => {
+  let run = startRun(good);
+  assert.deepEqual(run, { at: ['s1'], taken: [], choice: null, done: false, steps: 0 });
+  for (let step = 1; step <= 5; step += 1) {
+    run = stepRun(good, run);
+    assert.equal(run.at.length, 1, `step ${step} must keep one token`);
+  }
+  assert.deepEqual(run.at, ['s6']);
+  run = stepRun(good, run);
+  assert.equal(run.done, true);
+  assert.equal(run.at.length, 0);
+  assert.equal(run.taken.length, 5);
+  assert.equal(new Set(run.taken).size, 5);
+  assert.match(runStatus(good, run).text, /^Done — 6 steps/);
+});
+
+check('a decision pauses the run, offers its guards, and only its own exits answer', () => {
+  const doc = graph(
+    [
+      { kind: 'given', title: 'start' },
+      { kind: 'branch', title: 'over the limit?' },
+      { kind: 'answer', title: 'hot' },
+      { kind: 'answer', title: 'fine' },
+    ],
+    [
+      { from: 's1', to: 's2' },
+      { from: 's2', to: 's3', guard: 'temp > 80' },
+      { from: 's2', to: 's4', guard: 'else' },
+    ]
+  );
+  let run = stepRun(doc, startRun(doc));
+  assert.deepEqual(run.at, ['s2']);
+  run = stepRun(doc, run);
+  assert.equal(run.choice, 's2', 'the run stops on the question instead of guessing');
+  assert.deepEqual(run.at, ['s2'], 'and its token stays where the question is');
+  assert.deepEqual(runStatus(doc, run).exits.map((exit) => exit.label), ['temp > 80', 'else']);
+  assert.equal(chooseRun(doc, run, 'e1'), null, 'an arrow that is not an exit cannot be chosen');
+  run = chooseRun(doc, run, 'e3');
+  assert.deepEqual(run.at, ['s4']);
+  assert.equal(run.choice, null);
+  assert.deepEqual(run.taken, ['e1', 'e3']);
+});
+
+check('a fork puts a token on every branch and the join consumes them together', () => {
+  const doc = graph(
+    [
+      { kind: 'given', title: 'start' },
+      { kind: 'fork', title: '' },
+      { kind: 'transform', title: 'read the sensor' },
+      { kind: 'transform', title: 'watch the button' },
+      { kind: 'join', title: '' },
+      { kind: 'answer', title: 'done' },
+    ],
+    [
+      { from: 's1', to: 's2' },
+      { from: 's2', to: 's3' },
+      { from: 's2', to: 's4' },
+      { from: 's3', to: 's5' },
+      { from: 's4', to: 's5' },
+      { from: 's5', to: 's6' },
+    ]
+  );
+  let run = stepRun(doc, startRun(doc));
+  run = stepRun(doc, run);
+  assert.deepEqual(run.at, ['s3', 's4'], 'the fork starts both branches');
+  run = stepRun(doc, run);
+  assert.deepEqual(run.at, ['s5', 's5'], 'both branches arrive at the join');
+  run = stepRun(doc, run);
+  assert.deepEqual(run.at, ['s6'], 'the join releases one token, not two');
+  run = stepRun(doc, run);
+  assert.equal(run.done, true);
+});
+
+check('a join with a branch that never arrives waits, and says so', () => {
+  const doc = graph(
+    [
+      { kind: 'given', title: 'start' },
+      { kind: 'transform', title: 'only branch' },
+      { kind: 'join', title: '' },
+      { kind: 'answer', title: 'done' },
+      { kind: 'transform', title: 'never reached' },
+    ],
+    [
+      { from: 's1', to: 's2' },
+      { from: 's2', to: 's3' },
+      { from: 's5', to: 's3' },
+      { from: 's3', to: 's4' },
+    ]
+  );
+  let run = startRun(doc);
+  for (let step = 0; step < 3; step += 1) run = stepRun(doc, run);
+  assert.deepEqual(run.at, ['s3']);
+  assert.match(runStatus(doc, run).text, /Waiting at the join/);
+});
+
+check('a typed cable is not execution: a run follows control arrows only', () => {
+  const doc = graph(
+    [
+      { kind: 'given', title: 'start' },
+      { kind: 'answer', title: 'end' },
+    ],
+    [{ from: 's1', to: 's2', type: 'data' }]
+  );
+  const run = stepRun(doc, startRun(doc));
+  assert.equal(run.done, true);
+  assert.deepEqual(run.taken, []);
+});
+
+section('14. A card cites the project object it touches');
+
+check('a citation is stored by id and read back as it was written', () => {
+  const doc = normalizeWorkflow({
+    version: 2,
+    mode: 'analysis',
+    title: 'Read the encoder',
+    nodes: [
+      {
+        id: 's1',
+        kind: 'given',
+        title: 'Read encoder',
+        detail: '',
+        x: 0,
+        y: 0,
+        projectRef: '08-capstone1-foc-eda/req-therm-01',
+      },
+    ],
+    edges: [],
+  });
+  assert.equal(doc.nodes[0].projectRef, '08-capstone1-foc-eda/req-therm-01');
+  assert.equal('componentId' in doc.nodes[0], false, 'the old field must not survive a read');
+});
+
+check('a saved part citation under the old field name migrates to projectRef', () => {
+  const doc = normalizeWorkflow({
+    version: 2,
+    mode: 'analysis',
+    nodes: [
+      { id: 's1', kind: 'given', title: 'a', detail: '', x: 0, y: 0, componentId: '08-capstone1-foc-eda/u6' },
+    ],
+    edges: [],
+  });
+  assert.equal(doc.nodes[0].projectRef, '08-capstone1-foc-eda/u6');
+  const both = normalizeWorkflow({
+    version: 2,
+    mode: 'analysis',
+    nodes: [
+      {
+        id: 's1',
+        kind: 'given',
+        title: 'a',
+        detail: '',
+        x: 0,
+        y: 0,
+        componentId: '08-capstone1-foc-eda/u2',
+        projectRef: '08-capstone1-foc-eda/req-elec-01',
+      },
+    ],
+    edges: [],
+  });
+  assert.equal(both.nodes[0].projectRef, '08-capstone1-foc-eda/req-elec-01', 'the current field wins');
+});
+
+check('a document with no citation gains no field, and junk never becomes one', () => {
+  const plain = graph([{ kind: 'given', title: 'a' }, { kind: 'answer', title: 'b' }]);
+  assert.equal('projectRef' in plain.nodes[0], false);
+  for (const junk of ['', '   ', 42, null, {}, 'x'.repeat(MAX_PROJECT_REF_CHARS + 1)]) {
+    for (const field of ['projectRef', 'componentId']) {
+      const doc = normalizeWorkflow({
+        version: 2,
+        mode: 'analysis',
+        nodes: [{ id: 's1', kind: 'given', title: 'a', detail: '', x: 0, y: 0, [field]: junk }],
+        edges: [],
+      });
+      assert.equal(
+        'projectRef' in doc.nodes[0],
+        false,
+        `${JSON.stringify(junk)} in ${field} was kept as a citation`
+      );
+    }
+  }
+});
+
+check('clearing a citation deletes the field instead of storing an empty string', () => {
+  let doc = graph([{ kind: 'given', title: 'a' }, { kind: 'answer', title: 'b' }]);
+  doc = annotateNode(doc, 's1', 'projectRef', '08-capstone1-foc-eda/u1');
+  assert.equal(doc.nodes[0].projectRef, '08-capstone1-foc-eda/u1');
+  doc = annotateNode(doc, 's1', 'projectRef', '');
+  assert.equal('projectRef' in doc.nodes[0], false);
+});
+
+check('the citation leaves in both exports, and only when it exists', () => {
+  const cited = annotateNode(
+    graph([{ kind: 'given', title: 'a' }, { kind: 'answer', title: 'b' }], [
+      { from: 's1', to: 's2' },
+    ]),
+    's1',
+    'projectRef',
+    '08-capstone1-foc-eda/req-therm-01'
+  );
+  assert.match(workflowToMermaid(cited), /%% project n1: 08-capstone1-foc-eda\/req-therm-01/);
+  assert.match(workflowToMarkdown(cited), /- project: 08-capstone1-foc-eda\/req-therm-01/);
+  const plain = graph([{ kind: 'given', title: 'a' }, { kind: 'answer', title: 'b' }]);
+  assert.doesNotMatch(workflowToMermaid(plain), /%% project/);
+  assert.doesNotMatch(workflowToMarkdown(plain), /- project:/);
+});
+
+check('a test is cited by the same id, clipboard and exports as any other object', () => {
+  const testId = '08-capstone1-foc-eda/test-therm-01';
+  const doc = annotateNode(
+    graph([{ kind: 'given', title: 'a' }, { kind: 'answer', title: 'b' }]),
+    's1',
+    'projectRef',
+    testId
+  );
+  assert.equal(doc.nodes[0].projectRef, testId);
+  assert.match(workflowToMermaid(doc), /test-therm-01/);
+  assert.match(workflowToMarkdown(doc), /test-therm-01/);
+  const clip = clipCard(doc.nodes[0]);
+  assert.equal(clip.projectRef, testId);
+  const pasted = pasteCard(doc, clip);
+  assert.equal(pasted.nodes.at(-1).projectRef, testId);
+});
+
+check('a copied card carries its citation, and a paste keeps it', () => {
+  const doc = annotateNode(
+    graph([{ kind: 'given', title: 'a' }, { kind: 'answer', title: 'b' }]),
+    's1',
+    'projectRef',
+    '08-capstone1-foc-eda/u2'
+  );
+  const clip = clipCard(doc.nodes[0]);
+  assert.equal(clip.projectRef, '08-capstone1-foc-eda/u2');
+  const pasted = pasteCard(doc, clip);
+  assert.equal(pasted.nodes.at(-1).projectRef, '08-capstone1-foc-eda/u2');
+});
+
+check('a clipboard taken under the old field name still pastes its citation', () => {
+  const doc = graph([{ kind: 'given', title: 'a' }, { kind: 'answer', title: 'b' }]);
+  const legacy = { ...clipCard(doc.nodes[0]), projectRef: undefined, componentId: '08-capstone1-foc-eda/req-sense-01' };
+  const pasted = pasteCard(doc, legacy);
+  assert.equal(pasted.nodes.at(-1).projectRef, '08-capstone1-foc-eda/req-sense-01');
+  assert.equal('componentId' in pasted.nodes.at(-1), false);
 });
 
 for (const entry of entries) {

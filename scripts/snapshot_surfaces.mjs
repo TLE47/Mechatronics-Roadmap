@@ -9,7 +9,7 @@
  * token stopped applying: each of those leaves every test green, because every test asks about a
  * feature and none asks what the screen is shaped like.
  *
- * This gate asks that, for **56 surfaces**: the twelve tabs, Home and the Workflow canvas, in all
+ * This gate asks that, for **64 surfaces**: the fourteen tabs, Home and the Workflow canvas, in all
  * four palettes. The canvas is measured with its connectors included: a node's box, an arrow's path,
  * the label and the remove button that hang from it, a frame and a lane with their chips, and the
  * Fork and Join bars, so a curve or a control that drifts is a finding rather than something only a
@@ -293,45 +293,6 @@ async function closeSelection(page) {
   await page.waitForTimeout(120);
 }
 
-/**
- * Drag one dot onto another, scrolling only as far as the pair needs and then putting the page back.
- *
- * The app header is sticky, so a dot at the top of the viewport sits behind it: the press lands on the
- * header, no arrow starts, and the seed goes on to click an inspector that does not exist. How far the
- * palette buttons scrolled the page depends on how tall the palette is, so a control above the paper
- * growing a row must not fail this gate. The drag is done wherever both dots are reachable, and the
- * scroll the seed was at is restored before anything is measured (the recorded boxes are viewport
- * coordinates of that resting page).
- */
-async function dragDot(page, from, to) {
-  const before = await page.evaluate(() => {
-    const canvas = document.querySelector('[data-testid="workflow-canvas"]');
-    return { page: window.scrollY, canvas: canvas ? canvas.scrollTop : 0 };
-  });
-  const viewport = page.viewportSize();
-  const header = await page.locator('header').first().boundingBox();
-  const ceiling = header ? header.y + header.height : 0;
-  const a = await from.boundingBox();
-  const b = await to.boundingBox();
-  const top = Math.min(a.y, b.y);
-  const bottom = Math.max(a.y + a.height, b.y + b.height);
-  if (top < ceiling + 4) {
-    await page.evaluate((dy) => window.scrollBy(0, dy), top - ceiling - 12);
-  } else if (bottom > viewport.height - 4) {
-    await page.evaluate((dy) => window.scrollBy(0, dy), bottom - viewport.height + 12);
-  }
-  const start = await from.boundingBox();
-  const end = await to.boundingBox();
-  await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(end.x + end.width / 2, end.y + end.height / 2, { steps: 10 });
-  await page.mouse.up();
-  await page.evaluate((offset) => window.scrollTo(0, offset), before.page);
-  await page.getByTestId('workflow-canvas').evaluate((element, offset) => {
-    element.scrollTop = offset;
-  }, before.canvas);
-}
-
 async function seedWorkflow(page) {
   await page.click('[data-testid="tab-btn-tab-pyodide"]');
   await page.getByTestId('editor-tab-workflow').click();
@@ -344,11 +305,12 @@ async function seedWorkflow(page) {
   await page.getByTestId('workflow-mode-code').click();
   await page.getByTestId('workflow-add-branch').click();
   await page.getByTestId('workflow-node-condition-1').fill('draw > 3.2 A');
-  await dragDot(
-    page,
-    page.getByTestId('workflow-node-port-right-1'),
-    page.getByTestId('workflow-node-port-top-0')
-  );
+  // Tap the two dots rather than dragging between their centres: a tap scrolls its own target into
+  // view, while a coordinate drag's start can land under the header (or outside the viewport) after
+  // the palette has scrolled the page, which is a seed that silently creates no arrow. Both gestures
+  // make the same arrow; the browser suite proves the drag separately.
+  await page.getByTestId('workflow-node-port-right-1').click();
+  await page.getByTestId('workflow-node-port-top-0').click();
   await page.waitForTimeout(300);
   await page.getByTestId('workflow-edge-kind-0').click();
   await page.getByTestId('workflow-edge-type-power-0').click();
@@ -361,6 +323,11 @@ async function seedWorkflow(page) {
   // snapshot records are the ones a learner sees with nothing selected.
   await closeSelection(page);
   await page.getByTestId('workflow-group-draw').click();
+  // The button arms the gesture in state; wait for the armed render before the drag, because a
+  // press dispatched in the same frame still sees the previous, disarmed one and pans instead.
+  await page.waitForFunction(
+    () => document.querySelector('[data-testid="workflow-group-draw"]')?.getAttribute('aria-pressed') === 'true'
+  );
   const canvas = await page.getByTestId('workflow-canvas').boundingBox();
   await page.mouse.move(canvas.x + canvas.width - 24, canvas.y + canvas.height - 24);
   await page.mouse.down();
@@ -377,7 +344,12 @@ async function seedWorkflow(page) {
   // and a lane's band reaches further above its cards than that. Move both bars down one grid run so
   // the frame's chip and the lane's chip stay separate boxes a learner can press.
   for (const index of [2, 3]) {
-    const handle = await page.getByTestId(`workflow-node-drag-${index}`).boundingBox();
+    // The palette presses above leave the page scrolling for a frame or two; a handle read while
+    // that settles is pressed at a point the card has already left, and the drag lands on paper.
+    const grip = page.getByTestId(`workflow-node-drag-${index}`);
+    await grip.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(80);
+    const handle = await grip.boundingBox();
     await page.mouse.move(handle.x + 16, handle.y + handle.height / 2);
     await page.mouse.down();
     await page.mouse.move(handle.x + 16, handle.y + handle.height / 2 + 56, { steps: 8 });
@@ -389,6 +361,17 @@ async function seedWorkflow(page) {
   // just made the paper taller, and the second bar can still sit below its bottom edge.
   await page.getByTestId('workflow-node-3').scrollIntoViewIfNeeded();
   await page.getByTestId('workflow-lane-draw').click();
+  await page.waitForFunction(
+    () => document.querySelector('[data-testid="workflow-lane-draw"]')?.getAttribute('aria-pressed') === 'true'
+  );
+  // Pressing a palette button scrolls the page just far enough to show that button, and how far
+  // depends on how tall the panel's chrome happened to be on this run. Put the whole paper on
+  // screen before drawing on it, so the box is computed from a known viewport instead of from
+  // wherever the last press left the page — a card can otherwise sit above the window and the
+  // lane's own start point would be outside it.
+  await page.getByTestId('workflow-canvas').evaluate((element) => {
+    element.scrollIntoView({ block: 'center' });
+  });
   const laneCanvas = await page.getByTestId('workflow-canvas').boundingBox();
   const forkBox = await page.getByTestId('workflow-node-2').boundingBox();
   const joinBox = await page.getByTestId('workflow-node-3').boundingBox();
@@ -498,7 +481,7 @@ async function main() {
         } else {
           await page.click(`[data-testid="tab-btn-${surface}"]`);
         }
-        // Eleven of the twelve tabs are lazy chunks, and the editor is a lazy boundary of its own: a
+        // All but the runner are lazy chunks, and the editor is a lazy boundary of its own: a
         // measurement taken during either placeholder would describe a panel that says "Loading".
         // The lesson pane fetches its page too (Run 229): a surface measured while it says "Loading the
         // lesson text" is 71 px shorter and has a heading count of 3 instead of 17, which is a baseline
@@ -560,7 +543,7 @@ async function main() {
     const merged = FILTERED ? { ...(previous?.surfaces ?? {}), ...surfaces } : surfaces;
     const document = {
       _why:
-        'The painted surface of all 56 surfaces — the twelve tabs, Home and the Workflow canvas, in ' +
+        'The painted surface of all 64 surfaces — the fourteen tabs, Home and the Workflow canvas, in ' +
         'four palettes — read by ' +
         '`npm run check:snapshot` (`scripts/snapshot_surfaces.mjs`). Each entry records where the header, ' +
         'activity rail, main pane and its first panel sit, how many buttons, inputs, links, headings, ' +

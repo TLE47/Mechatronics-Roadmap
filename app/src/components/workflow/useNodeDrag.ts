@@ -44,6 +44,8 @@ export function useNodeDrag({
   const starts = useRef<NodeMove[]>([]);
   const delta = useRef({ dx: 0, dy: 0 });
   const moved = useRef(false);
+  /** The window listeners of the drag in hand, so its own release can take them off again. */
+  const detach = useRef<(() => void) | null>(null);
 
   const begin = (event: ReactPointerEvent, nodes: readonly WorkflowNode[]) => {
     if (event.button !== 0 || !nodes.length) return;
@@ -56,22 +58,19 @@ export function useNodeDrag({
     setLive(new Map(nodes.map((node) => [node.id, { x: node.x, y: node.y }])));
     setDragIds(nodes.map((node) => node.id));
     onSelect(nodes.length === 1 ? nodes[0].id : null);
-  };
 
-  const startDrag = (event: ReactPointerEvent, nodes: WorkflowNode | readonly WorkflowNode[]) =>
-    begin(event, Array.isArray(nodes) ? nodes : [nodes]);
-
-  useEffect(() => {
-    if (!dragIds) return;
-    const move = (event: PointerEvent) => {
+    // The listeners go on at the press, not in an effect after the render it causes: a quick drag
+    // can be released before that render commits, and a release nobody heard leaves the card drawn
+    // where the document does not say it is.
+    const move = (pointerEvent: PointerEvent) => {
       const origin = start.current;
       if (!origin) return;
-      const point = toCanvas(event.clientX, event.clientY);
-      const nodes = starts.current;
-      const minX = Math.min(...nodes.map((node) => node.x));
-      const minY = Math.min(...nodes.map((node) => node.y));
-      const maxX = Math.max(...nodes.map((node) => node.x));
-      const maxY = Math.max(...nodes.map((node) => node.y));
+      const point = toCanvas(pointerEvent.clientX, pointerEvent.clientY);
+      const held = starts.current;
+      const minX = Math.min(...held.map((node) => node.x));
+      const minY = Math.min(...held.map((node) => node.y));
+      const maxX = Math.max(...held.map((node) => node.x));
+      const maxY = Math.max(...held.map((node) => node.y));
       // The grid first, then the paper: a delta that would push any member out of bounds is
       // clamped as one number, so the frame keeps its shape against every edge.
       const dx = Math.min(
@@ -84,7 +83,7 @@ export function useNodeDrag({
       );
       delta.current = { dx, dy };
       moved.current = true;
-      setLive(new Map(nodes.map((node) => [node.id, { x: node.x + dx, y: node.y + dy }])));
+      setLive(new Map(held.map((node) => [node.id, { x: node.x + dx, y: node.y + dy }])));
     };
     const finish = () => {
       const { dx, dy } = delta.current;
@@ -97,16 +96,25 @@ export function useNodeDrag({
       moved.current = false;
       setLive(null);
       setDragIds(null);
+      detach.current?.();
+      detach.current = null;
     };
+    detach.current?.();
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', finish);
     window.addEventListener('pointercancel', finish);
-    return () => {
+    detach.current = () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', finish);
       window.removeEventListener('pointercancel', finish);
     };
-  }, [dragIds, toCanvas, onMoveMany]);
+  };
+
+  const startDrag = (event: ReactPointerEvent, nodes: WorkflowNode | readonly WorkflowNode[]) =>
+    begin(event, Array.isArray(nodes) ? nodes : [nodes]);
+
+  // A tab hidden or unmounted mid-drag still takes its window listeners with it.
+  useEffect(() => () => detach.current?.(), []);
 
   return { dragIds, live, startDrag };
 }

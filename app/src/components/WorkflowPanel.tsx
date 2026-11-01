@@ -5,7 +5,6 @@ import {
   MODE_LABEL,
   MAX_WORKFLOW_TITLE_CHARS,
   STEPS_BY_MODE,
-  validateWorkflow,
   workflowNumbers,
   workflowToMarkdown,
   workflowToMermaid,
@@ -14,6 +13,7 @@ import {
   type WorkflowIssue,
 } from '../workflow.ts';
 import { laneIndexOf } from '../workflowProcesses.ts';
+import { validateWorkflow } from '../workflowValidation.ts';
 import { templateForLesson, type WorkflowTemplate } from '../workflowTemplates.ts';
 import {
   markWorkflowGuideSeen,
@@ -26,10 +26,12 @@ import { isKnownLesson } from '../lessonRoute.ts';
 import { HowToCard } from './HowToCard.tsx';
 import { TemplatePicker } from './TemplatePicker.tsx';
 import { WorkflowSelectionInspector } from './workflow/WorkflowSelectionInspector.tsx';
+import { openProjectObject } from '../projectPresentation.ts';
 import { WorkflowMenu, type WorkflowMenuRequest } from './workflow/WorkflowMenu.tsx';
 import type { LinkDraft } from './workflow/useLinking.ts';
 import { useFullscreen } from './workflow/useFullscreen.ts';
 import { useWorkflowEditor } from './workflow/useWorkflowEditor.ts';
+import { useWorkflowRun } from './workflow/useWorkflowRun.ts';
 // The canvas — cards, arrows, the fit lens, the edge inspector — is a whole surface that a learner
 // who never opens the Workflow tab should not parse before the lesson text is on screen. It sits
 // behind a lazy boundary, like the simulation tabs in `App.tsx`, and the pane says it is loading
@@ -70,6 +72,9 @@ export interface WorkflowPanelProps {
   lessonTitle: string;
   /** Open a lesson a card links to, without leaving the workbench. */
   onOpenLesson?: (lessonId: string) => void;
+  /** The two doors a cited object can use; its kind declaration chooses one. */
+  onOpenProjectPart?: (projectRef: string) => void;
+  onOpenRequirement?: (requirementId: string) => void;
 }
 
 const LESSON_CHOICES = PYTHON_LESSONS.map((lesson) => ({ id: lesson.id, title: lesson.title }));
@@ -80,7 +85,24 @@ function templateHasContent(doc: WorkflowDoc | null): boolean {
   return doc.nodes.some((node) => node.title.trim() || node.detail.trim() || node.unit);
 }
 
-export function WorkflowPanel({ lessonId, lessonTitle, onOpenLesson }: WorkflowPanelProps) {
+export function WorkflowPanel({
+  lessonId,
+  lessonTitle,
+  onOpenLesson,
+  onOpenProjectPart,
+  onOpenRequirement,
+}: WorkflowPanelProps) {
+  const doors =
+    onOpenProjectPart && onOpenRequirement
+      ? { project: onOpenProjectPart, requirement: onOpenRequirement }
+      : null;
+  const onOpenObject = doors
+    ? (projectRef: string, kind?: string) => {
+        if (!openProjectObject(kind, projectRef, doors)) {
+          doors.project(projectRef);
+        }
+      }
+    : undefined;
   const {
     doc,
     selectedId,
@@ -129,6 +151,9 @@ export function WorkflowPanel({ lessonId, lessonTitle, onOpenLesson }: WorkflowP
     renameLane,
     removeLane,
   } = useWorkflowEditor(lessonId, lessonTitle);
+
+  // A walk through the diagram: view state, reset by every edit (see the hook).
+  const sim = useWorkflowRun(doc);
 
   const [howTo, setHowTo] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
@@ -253,6 +278,23 @@ export function WorkflowPanel({ lessonId, lessonTitle, onOpenLesson }: WorkflowP
     startBlankDoc();
     markWorkflowGuideSeen();
     setHowTo(false);
+  };
+
+  /**
+   * The checklist's one promise: the card an item names is brought onto the paper. It scrolls the
+   * paper only — selecting a card must not move the page — and it is the checklist that asks,
+   * rather than every selection, so adding a card never scrolls the diagram under the pointer.
+   */
+  const revealCard = (id: string) => {
+    requestAnimationFrame(() => {
+      const canvas = root.current?.querySelector<HTMLElement>('[data-testid="workflow-canvas"]');
+      const card = canvas?.querySelector<HTMLElement>(`[data-node-id="${CSS.escape(id)}"]`);
+      if (!canvas || !card) return;
+      const view = canvas.getBoundingClientRect();
+      const box = card.getBoundingClientRect();
+      if (box.top < view.top) canvas.scrollTop += box.top - view.top - 8;
+      else if (box.bottom > view.bottom) canvas.scrollTop += box.bottom - view.bottom + 8;
+    });
   };
 
   const lessonTemplate = templateForLesson(lessonId);
@@ -528,26 +570,6 @@ export function WorkflowPanel({ lessonId, lessonTitle, onOpenLesson }: WorkflowP
         )}
       </div>
 
-      {issues.length > 0 && checksOpen && (
-        <ul id={checksId} data-testid="workflow-issues" className="mt-1 space-y-0.5">
-          {issues.map((issue, index) => (
-            <li key={`${issue.code}-${issue.stepId ?? 'flow'}-${index}`}>
-              <button
-                type="button"
-                data-testid={`workflow-issue-${index}`}
-                onClick={() => focusIssue(issue)}
-                className="flex w-full cursor-pointer items-start gap-1.5 rounded px-1 py-0.5 text-left text-[11.5px] hover:bg-raise"
-              >
-                <span aria-hidden="true" className={issue.severity === 'open' ? 'text-amber' : 'text-faint'}>
-                  {issue.severity === 'open' ? '•' : '·'}
-                </span>
-                <span className={issue.severity === 'open' ? 'text-amber' : 'text-muted'}>{issue.message}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
       {guide}
 
       <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[10.5px] text-faint">
@@ -579,6 +601,7 @@ export function WorkflowPanel({ lessonId, lessonTitle, onOpenLesson }: WorkflowP
           onUpdate={updateNode}
           onRemove={removeNode}
           onOpenLesson={openNodeLesson}
+          onOpenObject={onOpenObject}
           onConnect={connect}
           onDisconnect={disconnect}
           onDropLink={dropLink}
@@ -612,8 +635,39 @@ export function WorkflowPanel({ lessonId, lessonTitle, onOpenLesson }: WorkflowP
           onPaste={pasteNode}
           canPaste={canPaste}
           fullscreen={full}
+          sim={sim}
         />
       </Suspense>
+
+      {/* The advice sits below the paper, not above it. Adding or fixing one card changes the issue
+          list, and a list above the canvas would move the diagram under the pointer between a drop
+          and the card it made; below, a growing list can only push what follows it. */}
+      {issues.length > 0 && checksOpen && (
+        <ul
+          id={checksId}
+          data-testid="workflow-issues"
+          className="mt-1 max-h-40 space-y-0.5 overflow-auto"
+        >
+          {issues.map((issue, index) => (
+            <li key={`${issue.code}-${issue.stepId ?? 'flow'}-${index}`}>
+              <button
+                type="button"
+                data-testid={`workflow-issue-${index}`}
+                onClick={() => {
+                  focusIssue(issue);
+                  if (issue.stepId) revealCard(issue.stepId);
+                }}
+                className="flex w-full cursor-pointer items-start gap-1.5 rounded px-1 py-0.5 text-left text-[11.5px] hover:bg-raise"
+              >
+                <span aria-hidden="true" className={issue.severity === 'open' ? 'text-amber' : 'text-faint'}>
+                  {issue.severity === 'open' ? '•' : '·'}
+                </span>
+                <span className={issue.severity === 'open' ? 'text-amber' : 'text-muted'}>{issue.message}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
 
       {/* Below the paper, never above it: the inspector is in flow, so opening it must not move the
           card the learner just pressed. */}
@@ -627,6 +681,7 @@ export function WorkflowPanel({ lessonId, lessonTitle, onOpenLesson }: WorkflowP
           onNote={(note) => setNodeAnnotation(selectedNode.id, 'note', note)}
           onLesson={(lesson) => setNodeAnnotation(selectedNode.id, 'lesson', lesson)}
           onOpenLesson={openNodeLesson}
+          onObject={(projectRef) => setNodeAnnotation(selectedNode.id, 'projectRef', projectRef)}
           onLane={(choice) => assignLane(selectedNode.id, choice)}
           onStyle={(patch) => updateNode(selectedNode.id, patch)}
           onDismiss={() => selectNode(null)}

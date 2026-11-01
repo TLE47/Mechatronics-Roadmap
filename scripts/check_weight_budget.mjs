@@ -281,7 +281,7 @@ function printBuild(heading, build) {
       '(fetched only after sound is turned on)'
   );
   log(
-    `  music tapes (all eight)${' '.repeat(15)}` +
+    `  music tapes (all eleven)${' '.repeat(14)}` +
       `${(Number.isFinite(build.measured.music) ? formatBytes(build.measured.music) : 'missing').padStart(8)}  ` +
       '(fetched one at a time, after a gesture, when a tape is chosen)'
   );

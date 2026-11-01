@@ -65,7 +65,7 @@ test:theme:tokens` pins the parse and `npm run test:theme:e2e` checks the painte
 browser. The page is a route, not a tab: the learner's rail is unchanged.
 
 Legibility is measured, not eyeballed: `npm run test:theme` pins the storage/OS rules and keeps the
-three controls honest, and `npm run test:theme:e2e` drives Chromium through all twelve tabs in all four
+three controls honest, and `npm run test:theme:e2e` drives Chromium through all fourteen tabs in all four
 palettes, compositing each text run over the backgrounds it actually sits on and failing anything
 below 3:1 (the current floor is 4.52:1, and 7:1 in high contrast). The unit suite runs inside
 `npm run test:workbench`; the browser sweep is its own CI step,
@@ -602,7 +602,7 @@ preview — and the download and the preview are the same string.
 
 Four measurements about the shell itself, all measured rather than asserted.
 
-**`npm run check:axe`** injects `axe-core` into every one of the twelve tabs, in all four palettes, and
+**`npm run check:axe`** injects `axe-core` into every one of the fourteen tabs, in all four palettes, and
 fails on anything `serious` or `critical`. `minor` and `moderate` findings are printed (a few dozen of
 them, counted per tab and palette, and all of one kind: `page-has-heading-one`, `region`,
 `heading-order`) and do not fail — a gate that trips on a landmark suggestion is a gate people turn off. `color-contrast` is switched off here on purpose: the theme
@@ -691,7 +691,7 @@ built from this public repository, and maps would roughly double what Pages serv
 the same three-way ratchet as the accessibility one: unlisted fails, wider than recorded fails, and
 stale fails.
 
-**`npm run check:snapshot`** records the **painted surface** of all 56 surfaces — the twelve tabs, Home and the Workflow canvas, in all four palettes: where
+**`npm run check:snapshot`** records the **painted surface** of all 64 surfaces — the fourteen tabs, Home and the Workflow canvas, in all four palettes: where
 the header, the activity rail, the main pane and its first panel sit, how many buttons, inputs, links,
 headings, canvases and tables the tab has, and the colours, type and palette tokens the browser
 resolved. Every other suite asks about a feature; this one is the only place that notices a panel that
@@ -1021,7 +1021,9 @@ document. The empty paper pans the view under the pointer, or with the arrow key
 card at once; it becomes **100%** while the map is shrunk, returning to
 life size around whatever was in the middle of the view. Zoom is a lens on the screen, never a field
 in the saved workflow. Nothing about the run changes: the checklist names what a card is missing (`missing-unit`,
-`no-answer`, `unconnected`, and five more) and never disables Run or a lesson. On a phone the list is
+`no-answer`, `unconnected`, and five more) and what the diagram's own semantics make impossible — a
+decision whose exits have no guards, a wired island no start card reaches, a finish no path reaches —
+and never disables Run or a lesson. On a phone the list is
 folded to its count, one press from the sentences, so the canvas is what follows the palette rather
 than twenty-four wrapped lines of advice. A card's badge, the
 checklist's "Step 3" and the Markdown numbering are one reading order, so advice always names the
@@ -1048,6 +1050,16 @@ palette and the inspector keep working because it is the same pane rather than a
 it cannot scroll, and leaving puts the pane and the page's scroll back where they were. Neither is
 stored: a reload opens the panel in its normal frame with no zoom and no menu.
 
+**A workflow can be walked, not only read.** **Start** in the Simulate row puts a token on the
+first start card, **Step** follows one control arrow, and **Stop** clears the marks. A decision
+pauses the walk and offers its guards as the only buttons that answer it, and the arrow chosen is
+drawn in the run colour; a fork puts a token on every branch while its join holds the run until all
+of them arrive, saying so while it waits. Only **control** arrows are followed — a data, signal,
+power or mechanical cable says something about the system, not what runs next — so a diagram joined
+only by cables stops with a sentence instead of pretending to execute. Any edit invalidates the walk,
+and nothing about it is stored. The engine is pure ([`src/workflowRun.ts`](src/workflowRun.ts)), and
+`npm run test:workflow` walks a branch, a fork/join and a cable-only dead end without a browser.
+
 **A drag from a dot can end by making the card it was heading for.** Released on bare paper, the
 drag opens the palette at the release point; the card it makes is written together with its arrow in
 one document write, so no half-drawn arrow is left behind. The **Drop** control beside the mode
@@ -1065,6 +1077,21 @@ dropped cards, routes, frames, lanes and a cleared diagram — with `⌘Z`/`Ctrl
 `⌘⇧Z`/`Ctrl+Y` forward, plus the header's Undo/Redo buttons; a run of typing in a focused field is one
 step, a new edit after an undo drops the redo branch, and the history is memory only (see
 [`src/workflowHistory.ts`](src/workflowHistory.ts) and `npm run test:workflow`).
+
+**A card can say which project object it is about.** The inspector's **Project** picker groups the
+capstone's parts, requirements and tests — designation, part number, reference and title, read from
+the same generated list the PCB lab, the register and Project Mode use
+([`src/capstoneObjects.ts`](src/capstoneObjects.ts)) — and the card stores the object's **id**, never
+its name or a kind prefix (`src/workflow.ts`'s `projectRef`). A badge on the card resolves a part to
+`U1 · STM32G474RET6`, a requirement to `REQ-THERM-01 · Stay cool at full load`, or a test to
+`TEST-THERM-01 · Junction temperature at full load`, and pressing it opens the view that object
+belongs to, on that id: Project Mode for a part, the Requirements register for a requirement, and
+the requirement a test judges (with its verification row marked) for a test. The picker is optional and absent from a card that cites nothing; a
+saved id that no longer resolves keeps an option with the shared missing-object sentence, and the
+badge prints the id rather than dropping the citation silently. The citation travels with a copied
+card (Cut/Paste) and into both exports, as a `%% project n1: …` comment in Mermaid and a
+`- project: …` line in Markdown; a document drawn before objects existed gains no field, and the
+old `componentId` field is still read when `projectRef` is absent.
 
 **Where a workflow action lives.** The canvas's document has one owner:
 [`src/components/workflow/useWorkflowEditor.ts`](src/components/workflow/useWorkflowEditor.ts)
@@ -1102,7 +1129,7 @@ the DOM (it is what the results are about) while the screen can put either one f
 ([`src/workspaceLayout.ts`](src/workspaceLayout.ts), `npm run test:layout`, `npm run test:e2e:pages`
 for the docked geometry and the drag).
 
-**At `xl` the tab rail is an activity bar.** Below 1280 px the twelve tabs are the horizontal scroller
+**At `xl` the tab rail is an activity bar.** Below 1280 px the fourteen tabs are the horizontal scroller
 they have always been; above it they are a vertical strip down the left edge, pinned to the top so a
 long lesson scrolls past it, with every label visible and none of them behind a sideways scroll. Same
 buttons, same `data-testid`s: the strip is the rail's classes, not a second copy of the list.
@@ -1459,7 +1486,7 @@ recording the hash of the sketch each was built from and of the file.
 
 ## The phone shell
 
-Below 768 px the workbench is a different shell, not a narrower one. The twelve-tab rail becomes a
+Below 768 px the workbench is a different shell, not a narrower one. The tab rail becomes a
 picker row ([`src/components/PhoneTabPicker.tsx`](src/components/PhoneTabPicker.tsx)), Study becomes
 one surface at a time — the prose or the code, remembered per lesson in
 [`src/phoneSurface.ts`](src/phoneSurface.ts) — and Run sits on a fixed bar so it is never a scroll
@@ -1546,14 +1573,16 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/draftHistory.ts`](src/draftHistory.ts) | The versions behind the draft: what each run started from, with its verdict, bounded per lesson and in total, plus the merge a restore uses. |
 | [`src/codeDiff.ts`](src/codeDiff.ts) | The Diff panel's engine: exact-line LCS, hunk windows with counted gaps, the coarse head/tail fallback, and the changed-line count the roadmap card reuses. |
 | [`src/predictGate.ts`](src/predictGate.ts) | Predict first: how a free-text guess is graded against the expected output (four verdicts, lines not substrings), and the bounded per-lesson store of guesses and skips. |
-| [`src/workflow.ts`](src/workflow.ts) | The learner's workflow as data: the two palettes, nodes and typed arrows, the five socket kinds an arrow's ends derive or override, the one reading order, the eight advisory checks, the version-1 migration, and the Mermaid and Markdown exports. |
+| [`src/workflow.ts`](src/workflow.ts) | The learner's workflow as data: the two palettes, nodes and typed arrows, the five socket kinds an arrow's ends derive or override, the one reading order, the version-1 migration, and the Mermaid and Markdown exports. |
+| [`src/workflowValidation.ts`](src/workflowValidation.ts) | What the diagram is missing, as one rule list: a start, a finish, a title, a unit, a guard on each decision exit and never the same guard twice, a merge with two paths into it, no detached island, and a path from start to finish. Advice only. |
+| [`src/workflowRun.ts`](src/workflowRun.ts) | Walking the diagram: one token per start, a step along control arrows, a paused decision with its guards, a fork that splits and a join that waits. Pure, no timers. |
 | [`src/workflowStore.ts`](src/workflowStore.ts) | One workflow per lesson in the bulk bucket: the refused write, the backup entry, and the newer-wins merge a restore uses. |
 | [`src/workflowTemplates.ts`](src/workflowTemplates.ts) | Six seeded flows in both palettes, one blank, each laid out as a connected column with its arrows drawn, and the single lesson that opens on its own example. |
 | [`src/components/WorkflowPanel.tsx`](src/components/WorkflowPanel.tsx) | The Workflow tab's layout and view state: the guide, picker, press menu and confirmations it opens, the toolbar and checklist it draws, and the canvas (behind a lazy boundary) and inspector it composes; the document itself belongs to the editor hook. |
 | [`src/components/workflow/useWorkflowEditor.ts`](src/components/workflow/useWorkflowEditor.ts) | The workflow editor: the document, its selected card or arrow, its history, its debounced save and clipboard, and one command per action — the single owner every surface calls. |
 | [`src/workflowEdits.ts`](src/workflowEdits.ts) | The document algebra behind those commands, pure and without React: node edits, moves, removal with its frames and lanes, linked spawns, arrows, and frames. |
 | [`src/components/WorkflowCanvas.tsx`](src/components/WorkflowCanvas.tsx) | The node canvas's surface and composition: the scroll pane, the scaled grid, the fit button, and the wiring of the viewport, the cards and the arrows. Each concern beside it is readable alone. |
-| [`src/components/workflow/`](src/components/workflow/) | The canvas's parts: `canvasGeometry.ts` (dots, bends, facing sides, frame and lane boxes — pure), `cardNudge.ts` (the 8/32 px arrow-key step a card and a bar share), `cardStyle.ts` (the token→variable table, the plate's tint, the card's ink and its type scale), `CardSwatches.tsx` (the colour row the inspector and the press menu share), `useViewport.ts` (scale, Fit/100%, drag-pan and arrow-key pan), `useNodeDrag.ts` (one card's or one frame's drag held in pixels until release), `useMarquee.ts` (the box that groups cards or draws a lane), `useLinking.ts` (the arrow being drawn, dot-to-dot or tap-then-tap), `useNodeHeights.ts` (the measured heights the four dots need), `WorkflowNodeCard.tsx` (one editable card and its four lettered sockets), `WorkflowForkJoinCard.tsx` (a concurrency bar), `WorkflowGroupFrame.tsx` (one named frame, its name chip and its remove control), `WorkflowLaneBand.tsx` (one activity partition, its band and name tab), `WorkflowSelectionInspector.tsx` (the selected card's note, lesson link, lane picker, colour swatches and size slider), `WorkflowMenu.tsx` (the press list: a card's colours and clipboard items, Paste on paper, its backdrop, its clamp to the viewport and its Escape) and `WorkflowEdges.tsx` (paths, one arrowhead per kind, the styles palette the kind chip opens with the socket choice for each end, the dashed preview and the edge controls). |
+| [`src/components/workflow/`](src/components/workflow/) | The canvas's parts: `canvasGeometry.ts` (dots, bends, facing sides, frame and lane boxes — pure), `cardNudge.ts` (the 8/32 px arrow-key step a card and a bar share), `cardStyle.ts` (the token→variable table, the plate's tint, the card's ink and its type scale), `CardSwatches.tsx` (the colour row the inspector and the press menu share), `useViewport.ts` (scale, Fit/100%, drag-pan and arrow-key pan), `useNodeDrag.ts` (one card's or one frame's drag held in pixels until release), `useMarquee.ts` (the box that groups cards or draws a lane), `useLinking.ts` (the arrow being drawn, dot-to-dot or tap-then-tap), `useNodeHeights.ts` (the measured heights the four dots need), `WorkflowNodeCard.tsx` (one editable card and its four lettered sockets), `WorkflowForkJoinCard.tsx` (a concurrency bar), `WorkflowGroupFrame.tsx` (one named frame, its name chip and its remove control), `WorkflowLaneBand.tsx` (one activity partition, its band and name tab), `WorkflowSelectionInspector.tsx` (the selected card's note, lesson link, lane picker, colour swatches and size slider), `WorkflowMenu.tsx` (the press list: a card's colours and clipboard items, Paste on paper, its backdrop, its clamp to the viewport and its Escape), `WorkflowRunBar.tsx` (the Simulate row and the guards a paused decision offers), `useWorkflowRun.ts` (the run in progress, reset by every edit) and `WorkflowEdges.tsx` (paths, one arrowhead per kind, the styles palette the kind chip opens with the socket choice for each end, the run trail, the dashed preview and the edge controls). |
 | [`src/components/TemplatePicker.tsx`](src/components/TemplatePicker.tsx) | The two palettes of seeded flows, as starting shapes to edit. |
 | [`src/components/HowToCard.tsx`](src/components/HowToCard.tsx) | The three-line guide to the tab; whether it is open is the container's policy. |
 | [`src/watchMode.ts`](src/watchMode.ts) | When the checks may re-run themselves — after a graded failure, on an edited buffer, never past the gate — and the remembered toggle. |
@@ -1561,6 +1590,17 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/backupZip.ts`](src/backupZip.ts) | The zip writer and reader a backup is made of: stored entries, CRC-32, and the four ways a chosen file can fail. |
 | [`src/backupBundle.ts`](src/backupBundle.ts) | What a backup holds and how a restore merges it: flags union, drafts fill gaps, versions and events dedupe. |
 | [`src/progressKeys.ts`](src/progressKeys.ts) | Where the three progress maps live, so the backup can read them without importing React. |
+| [`src/projectModel.ts`](src/projectModel.ts) | The one object model: a project's components under stable ids (`<project>/<first refDes>`, a bank is one object), requirements with the part ids that meet them, tests with the measured value and limit that judge a requirement, a kind vocabulary, a strict read that recomputes the summary from the rows and refuses a duplicate id or a foreign one, the derived `testPasses`/`requirementPasses` rules, and the adapter that turns a capstone EDA report into that document. Generated by `npm run gen:project`; pinned by `npm run test:project` ([`docs/PROJECT_MODEL.md`](../docs/PROJECT_MODEL.md)). |
+| [`src/projectKinds.ts`](src/projectKinds.ts) | The one model declaration of what a project object kind is: its collection, strict reader, search matcher and groups. Holds data, not JSX and no icon, so the Node generator can read the document without a UI library. |
+| [`src/projectPresentation.ts`](src/projectPresentation.ts) | The entry-safe presentation of a kind: label, plural and which existing view answers a badge press. Separate from the model so the picker and badge can name and open a kind without loading its strict reader. |
+| [`src/projectRows.ts`](src/projectRows.ts) | The row and browse copy per kind, imported only by the two lazy views. |
+| [`src/components/workflow/ProjectObjectPicker.tsx`](src/components/workflow/ProjectObjectPicker.tsx) | The lazy citation picker: the generated object list, its optgroups and the dangling-id option, loaded on the first selected card. |
+| [`src/projectQueries.ts`](src/projectQueries.ts) | The questions a view asks of those objects, pure and generic over the declaration: which object matches a query, the one object of a kind an id names, and a requirement's cited parts in citation order. No component in this file, so `npm run test:project` pins it without a browser. |
+| [`src/projectRead.ts`](src/projectRead.ts), [`src/projectVocabulary.ts`](src/projectVocabulary.ts), [`src/projectStatus.ts`](src/projectStatus.ts) | The strict read's primitives, its generic id claim (`claim`) and the stamp (`stamp`) that makes the claimed id authoritative, the shared component/requirement vocabularies, and the derived `testPasses`/`requirementPasses` rules — beside the declaration, re-exported by the model so callers keep their names. |
+| [`src/components/tabs/TabProject.tsx`](src/components/tabs/TabProject.tsx) | Project Mode: the second view over `projectModel.ts` — search, kind-grouped rows, the selected part's id, rating, derating and cost, the requirements that cite it with each one's test and derived status, and the fixed open-a-part request a workflow card's badge sends. |
+| [`src/components/project/ProjectBrowser.tsx`](src/components/project/ProjectBrowser.tsx) | The one object list both views draw: search field, count, group headings, empty sentence and row buttons, with the browse words and testids taken from `projectRows.ts` and the groups from `projectKinds.ts`. |
+| [`src/components/tabs/TabRequirements.tsx`](src/components/tabs/TabRequirements.tsx) | The Requirements register: search, kind-grouped rows naming each test, and a verification block with the measured actual, its limit, the derived pass state and the method. |
+| [`src/capstoneObjects.ts`](src/capstoneObjects.ts) | The objects a workflow card may cite: parts, requirements and tests reduced to id, kind and label from the generated project document, so the picker, the card badge and the views name the same objects under the same ids. A second project adds a module beside it and points `WorkflowCanvas` and `ProjectObjectPicker` at that module. |
 | [`src/scopeModel.ts`](src/scopeModel.ts) | What a Scope payload must be to be drawn: NaN dropped, lengths aligned, flat traces widened, tables sampled. |
 | [`src/components/ScopePanel.tsx`](src/components/ScopePanel.tsx) | The Scope: canvas, shared axes, legend with last values, and the same data as a table. |
 | [`src/learningLog.ts`](src/learningLog.ts) | The event log behind the friction report and the roadmap's "opened / tried" states. |
@@ -1570,20 +1610,22 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/timeline.ts`](src/timeline.ts) | The log and the sittings as days of work: the fold that drops repeat rows, local days, and the caps. |
 | [`src/trailReading.ts`](src/trailReading.ts) | The same days read for advice: a resisting lesson, a quiet review deck, days that were only opens — at most three, each behind its own floor. |
 | [`../scripts/weight_budget.mjs`](../scripts/weight_budget.mjs) | The weight rules: what counts, what a breach is, and why an unmeasured budget fails too. |
-| [`../scripts/build_music.mjs`](../scripts/build_music.mjs) | Makes the eight tapes: four fixed windows cut from CC0 recordings, four loops composed from a seeded score, all folded seamless and RMS-matched, then AAC. |
+| [`../scripts/build_music.mjs`](../scripts/build_music.mjs) | Makes the eleven tapes: four fixed windows cut from CC0 recordings, seven loops composed from a seeded score, all folded seamless and RMS-matched, then AAC. |
 | [`src/components/TrailCard.tsx`](src/components/TrailCard.tsx) | The roadmap's trail: a day's time and work, a row per event, and rows that open their lesson. |
 | [`src/focusMode.ts`](src/focusMode.ts) | Focus mode's stored choice and the event the header, the pill and the page share. |
 | [`src/audio/prefs.ts`](src/audio/prefs.ts) | Sound's stored choice (`mechalab_sound_v1`), its clamping, the subscribers both controls read, and the labels. Off by default. |
 | [`src/audio/facade.ts`](src/audio/facade.ts) | The two functions the runner and focus mode call — `playCue`, `setSoundScene` — as one window event, so no audio code reaches the entry chunk. |
 | [`src/audio/engine.ts`](src/audio/engine.ts) | The only AudioContext: the mixer graph, synthesised cues, the chosen tape (three decoded loops cached, crossfaded) with the drone as its fallback, the limiter, the duck and the focus scene, the seven interface ticks, and the recorded rain. A lazy chunk, fetched after first paint. |
-| [`src/audio/musicCatalogue.ts`](src/audio/musicCatalogue.ts) | The eight tapes as facts — category, title, artist, album, licence, source page — and no audio imports, so the panel and a Node test can read them. |
+| [`src/audio/musicCatalogue.ts`](src/audio/musicCatalogue.ts) | The eleven tapes as facts — genre door, title, artist, album, licence, source page — and no audio imports, so the panel and a Node test can read them. |
+| [`src/audio/musicManager.ts`](src/audio/musicManager.ts) | One owner for the sound runtime: `togglePlay`, `setGenre`, `setVolume`, the gesture that starts a remembered "on", and the single store→engine path. |
 | [`src/audio/musicBeds.ts`](src/audio/musicBeds.ts) | The tapes' lazy URL glob, their fetch and their decode; reached only through a dynamic import inside the engine, and `null` for every way it can fail. |
 | [`src/components/SoundSettingsPanel.tsx`](src/components/SoundSettingsPanel.tsx) | The audio settings panel: master and armed state, Music with its source choice, Room, Cues, the Interface switch and previews, the credit line and Reset. Not a dialog: no focus trap, closes on Escape. |
 | [`src/audio/clickMap.ts`](src/audio/clickMap.ts) | What a control is, from what it already says about itself (`data-sound`, role, `aria-pressed`, a close word), and the pan a pointer's position asks for. |
 | [`src/audio/ambience.ts`](src/audio/ambience.ts) | The room as a table: rain, floor, city and bench, per state — and why the bench is the one layer that rises during a run. |
 | [`src/audio/rainAsset.ts`](src/audio/rainAsset.ts) | The recorded loop's URL, in its own module, so a Node test can import the engine without meeting an `.m4a`. |
 | [`src/components/SoundClicks.tsx`](src/components/SoundClicks.tsx) | The interface's ear: one delegated listener, the dedupe between a pointer and a keyboard press, and nothing rendered. |
-| [`src/components/SoundControl.tsx`](src/components/SoundControl.tsx) | The header's sound button and panel, the focus pill's mute, and the one-shot gesture that starts a remembered "on" without autoplaying. |
+| [`src/components/SoundControl.tsx`](src/components/SoundControl.tsx) | Where the sound panel goes, how it closes, and which control drew it — placement and glue over `musicManager.ts`. |
+| [`src/components/AudioPlayerWidget.tsx`](src/components/AudioPlayerWidget.tsx) | The strip the header and the focus pill both draw: one toggle, the five genre doors, and the panel's door. |
 | [`src/portfolio.ts`](src/portfolio.ts) | The exported Markdown: progress, notes and passages, the deck, and the measured sittings. |
 | [`src/traceback.ts`](src/traceback.ts) | CPython's failure text as data: frames, the learner's own frame, chains, and both SyntaxError shapes. |
 | [`src/errorIndex.ts`](src/errorIndex.ts) | The explainer's entries matched to a parsed failure, and the honest "not in the index" case. |
@@ -1631,10 +1673,10 @@ npm run test:board           # the Board card: each lesson's sketch, a predictio
 npm run check:panel          # the card's generated data still matches the five Arduino lesson pages
 npm run test:avr             # every committed .hex runs in avr8js and prints its lesson's serial; corrupt records and wrong expectations refused
 npm run check:firmware       # each .hex was built from the sketch the page ships, and is the file the index hashes
-npm run check:axe            # axe over all twelve tabs and Home in every palette; serious/critical fails, stale allowlists fail
+npm run check:axe            # axe over all fourteen tabs and Home in every palette; serious/critical fails, stale allowlists fail
 npm run check:weight         # the gzipped shell against docs/weight-budget.json (run after npm run build)
 npm run check:lighthouse     # best-practices, SEO and accessibility audits on the built bundle; performance is not run
-npm run check:snapshot       # the painted structure of all 56 surfaces against docs/surface-snapshot.json
+npm run check:snapshot       # the painted structure of all 64 surfaces against docs/surface-snapshot.json
 npm run test:perf            # the visit, timed: six moments on the built bundle, laptop and throttled phone, against docs/perf-budget.json (--record writes docs/PERF.md)
 npm run test:perf:unit       # the perf page and its ceilings without a browser; a CI step
 npm run test:e2e:backup      # the header buttons in Chromium: write a zip, wipe, restore to store and screen

@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react';
 import { BookOpen, StickyNote, X } from 'lucide-react';
 import { KIND_META, MAX_FONT_SIZE, MIN_FONT_SIZE, type WorkflowNode } from '../../workflow.ts';
 import { isForkJoin, type WorkflowLane } from '../../workflowProcesses.ts';
@@ -33,11 +34,17 @@ export interface WorkflowSelectionInspectorProps {
   onNote: (note: string) => void;
   onLesson: (lesson: string) => void;
   onOpenLesson: (lesson: string) => void;
+  /** An empty string clears the citation; the edit drops the field rather than storing ''. */
+  onObject: (projectRef: string) => void;
   onLane: (choice: 'none' | 'new' | number) => void;
   /** A look is optional, so `undefined` puts a card back to the theme's own surface and type. */
   onStyle: (patch: Partial<Pick<WorkflowNode, 'fill' | 'ink' | 'size'>>) => void;
   onDismiss: () => void;
 }
+
+const ProjectObjectPicker = lazy(() =>
+  import('./ProjectObjectPicker.tsx').then((module) => ({ default: module.ProjectObjectPicker }))
+);
 
 export function WorkflowSelectionInspector({
   node,
@@ -48,6 +55,7 @@ export function WorkflowSelectionInspector({
   onNote,
   onLesson,
   onOpenLesson,
+  onObject,
   onLane,
   onStyle,
   onDismiss,
@@ -131,6 +139,20 @@ export function WorkflowSelectionInspector({
           </label>
         )}
       </div>
+
+      {/* The engineering object this step touches, by one id. Optional like the lesson link, and
+          stored as the id alone, so the same STM32 or requirement is one object here and in its own
+          view. Parts and requirements are grouped in one picker; a dangling id keeps its option,
+          named with the same sentence the views use, instead of being silently cleared by render. */}
+      {!bar && (
+        <Suspense fallback={null}>
+          <ProjectObjectPicker
+            projectRef={node.projectRef}
+            ariaLabel={`Project object linked from ${KIND_META[node.kind].label} ${number}`}
+            onObject={onObject}
+          />
+        </Suspense>
+      )}
 
       {/* The card's look, not its content: a bar has no words of its own to recolour or resize, so
           it only offers the fill its plate can take. */}

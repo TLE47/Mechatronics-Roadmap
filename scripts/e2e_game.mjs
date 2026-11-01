@@ -306,17 +306,19 @@ async function main() {
       );
       console.log('  ok the click switch silences the interface, and still works while silent');
 
-      // Six categories plus the drone, and the tapes inside the open one: choosing a category is a
+      // Five genre doors plus the drone, and the tapes inside the open one: choosing a door is a
       // press, not a list the learner has to discover, so every chip must be present and reachable.
-      for (const category of ['lofi', 'jazz', 'instrumental', 'anime', 'pop', 'kpop']) {
+      for (const category of ['lofi', 'jpop', 'synthwave', 'chiptune', 'acoustic']) {
         assert.equal(
           await page.getByTestId(`sound-category-${category}`).count(),
           1,
-          `the picker must carry the ${category} category`
+          `the picker must carry the ${category} door`
         );
       }
-      await page.getByTestId('sound-category-jazz').click();
+      // A door opens on its own default tape; the second tape inside it is one more press.
+      await page.getByTestId('sound-category-acoustic').click();
       await page.getByTestId('sound-tape-winter-blues').waitFor({ timeout: 5000 });
+      await page.getByTestId('sound-tape-winter-blues').click();
       await page.waitForFunction(() => window.__mechalabAudio?.().tape === 'winter-blues', undefined, {
         timeout: 5000,
       });
@@ -335,7 +337,7 @@ async function main() {
       await page.waitForFunction(() => window.__mechalabAudio?.().musicSource === 'synth', undefined, {
         timeout: 10000,
       });
-      await page.getByTestId('sound-category-kpop').click();
+      await page.getByTestId('sound-category-jpop').click();
       await page.getByTestId('sound-tape-neon-stage').click();
       await page.waitForFunction(() => window.__mechalabAudio?.().musicSource === 'file', undefined, {
         timeout: 20000,
@@ -347,6 +349,21 @@ async function main() {
       );
       console.log('  ok the drone and a composed tape are both reachable and honest about it');
       await page.keyboard.press('Escape');
+
+      // The header's genre picker is the same choice without the panel: it plays the door's own tape,
+      // and it is reachable from the header itself rather than three presses deep in a popover.
+      await page.getByTestId('sound-genre').selectOption('synthwave');
+      await page.waitForFunction(() => window.__mechalabAudio?.().tape === 'night-drive', undefined, {
+        timeout: 5000,
+      });
+      await page.waitForFunction(() => window.__mechalabAudio?.().musicSource === 'file', undefined, {
+        timeout: 20000,
+      });
+      await page.getByTestId('sound-genre').selectOption('chiptune');
+      await page.waitForFunction(() => window.__mechalabAudio?.().tape === 'pixel-run', undefined, {
+        timeout: 5000,
+      });
+      console.log('  ok the header picker plays each door\'s own tape');
 
       // Focus is a scene on the same bus: the bed crossfades quieter and the header's control goes
       // with the chrome, so the pill carries the one press from muted.
@@ -505,7 +522,7 @@ async function main() {
     await browser.close();
     if (ownServer) await ownServer.viteServer.close();
   }
-  console.log('[PASS] game: 17 browser checks');
+  console.log('[PASS] game: 21 browser checks');
 }
 
 main().catch((error) => {

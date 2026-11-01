@@ -271,6 +271,9 @@ interface TabPyodideRunnerProps {
   onToggleLessonCompleted?: (lessonId: string, forceValue?: boolean) => void;
   /** Opens the roadmap at the pass the open entry belongs to. */
   onOpenRoadmap?: (pass: ActiveTierPass, milestoneId: string) => void;
+  /** The two doors a workflow citation may use; the object's kind declaration chooses one. */
+  onOpenProjectPart?: (projectRef: string) => void;
+  onOpenRequirement?: (requirementId: string) => void;
   /**
    * A counter the palette bumps when "Run the lesson" is chosen. A nonce, not a callback: the
    * palette outlives this component (it is mounted whatever tab is open), so it cannot hold the
@@ -382,6 +385,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   onMarkLessonVerified,
   onToggleLessonCompleted,
   onOpenRoadmap,
+  onOpenProjectPart,
+  onOpenRequirement,
   runRequest,
   formatRequest,
   tourRequest,
@@ -3436,6 +3441,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       lessonId={selectedId}
       lessonTitle={currentLesson.title}
       onOpenLesson={selectLesson}
+      onOpenProjectPart={onOpenProjectPart}
+      onOpenRequirement={onOpenRequirement}
     />
   );
 

@@ -1293,10 +1293,21 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
   },
 ];
 
-// Two tabs have no tier guide: Link Health reports on the checker rather than a simulated plant, and
-// Board runs a compiled sketch that has no tier to widen.
+// Reference tabs have no tier guide: Link Health reports on the checker rather than a simulated
+// plant, Board runs a compiled sketch with no tier to widen, and Project Mode and Requirements are
+// views of the objects rather than a plant to widen. One type and one predicate, so a new
+// reference tab is added here and the banner follows instead of appearing over it.
+export type SimulatorTabId = Exclude<
+  TabId,
+  'tab-arch' | 'tab-pyodide' | 'tab-placement' | 'tab-links' | 'tab-board' | 'tab-project' | 'tab-req'
+>;
+
+export function hasTierGuide(id: TabId): id is SimulatorTabId {
+  return id in SIMULATOR_TIER_GUIDES;
+}
+
 export const SIMULATOR_TIER_GUIDES: Record<
-  Exclude<TabId, 'tab-arch' | 'tab-pyodide' | 'tab-placement' | 'tab-links' | 'tab-board'>,
+  SimulatorTabId,
   Record<ActiveTierPass, { badge: string; title: string; focus: string; actionHint: string }>
 > = {
   'tab-bode': {

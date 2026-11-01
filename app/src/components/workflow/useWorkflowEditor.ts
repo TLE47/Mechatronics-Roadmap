@@ -70,6 +70,20 @@ export function useWorkflowEditor(lessonId: string, lessonTitle: string) {
   const pending = useRef<{ lesson: string; doc: WorkflowDoc } | null>(null);
   const timer = useRef<number | null>(null);
 
+  /**
+   * The document as the last write left it, not as the last render saw it.
+   *
+   * Two gestures in quick succession — drag this card, then that one — can each read a `doc` from
+   * the same committed render; the second would then build its edit on the state before the first
+   * and silently undo it. `write` stamps this ref synchronously, so every edit composes with the one
+   * before it even when React has not painted in between. Loads and clears set it through the
+   * effect, so a document that did not come from an edit still lands here.
+   */
+  const latest = useRef<WorkflowDoc | null>(null);
+  useEffect(() => {
+    latest.current = doc;
+  }, [doc]);
+
   const flush = useCallback(() => {
     if (timer.current !== null) {
       window.clearTimeout(timer.current);
@@ -90,6 +104,7 @@ export function useWorkflowEditor(lessonId: string, lessonTitle: string) {
 
   const write = (next: WorkflowDoc) => {
     const stamped = { ...next, updatedAt: Date.now() };
+    latest.current = stamped;
     setDoc(stamped);
     pending.current = { lesson: lessonId, doc: stamped };
     if (timer.current !== null) window.clearTimeout(timer.current);
@@ -104,7 +119,7 @@ export function useWorkflowEditor(lessonId: string, lessonTitle: string) {
   };
 
   const commit = (next: WorkflowDoc) => {
-    remember(doc);
+    remember(latest.current ?? doc);
     write(next);
   };
 
@@ -191,7 +206,11 @@ export function useWorkflowEditor(lessonId: string, lessonTitle: string) {
     if (doc) commit(edits.editNode(doc, id, patch));
   };
 
-  const setNodeAnnotation = (id: string, field: 'note' | 'lesson', value: string) => {
+  const setNodeAnnotation = (
+    id: string,
+    field: 'note' | 'lesson' | 'projectRef',
+    value: string
+  ) => {
     if (doc) commit(edits.annotateNode(doc, id, field, value));
   };
 
@@ -204,8 +223,9 @@ export function useWorkflowEditor(lessonId: string, lessonTitle: string) {
 
   /** A frame drag reports every member, so the whole move is one document and one write. */
   const moveNodes = (moves: edits.NodeMove[]) => {
-    if (!doc) return;
-    const next = edits.moveNodes(doc, moves);
+    const base = latest.current ?? doc;
+    if (!base) return;
+    const next = edits.moveNodes(base, moves);
     if (next) commit(next);
   };
 

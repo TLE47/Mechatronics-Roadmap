@@ -21,7 +21,10 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TAB_DATA = os.path.join(ROOT, "app", "src", "data", "workbenchTabs.json")
-APP = os.path.join(ROOT, "app", "src", "App.tsx")
+# The labels live in the one-entry-per-tab registry; the shell reads that registry and derives the
+# view switch's count from it.
+APP = os.path.join(ROOT, "app", "src", "tabRegistry.tsx")
+SHELL = os.path.join(ROOT, "app", "src", "App.tsx")
 CALLOUT = os.path.join(ROOT, "scripts", "generate_run_callouts.py")
 
 # A historical record keeps the words it shipped with; every other page has to be current.
@@ -65,8 +68,8 @@ def main(argv=None):
     tabs = data.get("tabs", {})
     findings = []
 
-    if len(tabs) != 12:
-        findings.append("expected 12 tabs in %s, found %d" % (os.path.relpath(TAB_DATA, ROOT), len(tabs)))
+    if len(tabs) != 14:
+        findings.append("expected 14 tabs in %s, found %d" % (os.path.relpath(TAB_DATA, ROOT), len(tabs)))
     if not data.get("workbenchUrl", "").startswith("https://"):
         findings.append("workbenchUrl must be the public https address the pages link to")
     for tab_id, name in tabs.items():
@@ -95,7 +98,7 @@ def main(argv=None):
             shared.append("PYTHON_TAB_NAME")
         if not any(token in app for token in shared):
             findings.append(
-                "App.tsx does not render the shared name for %s; a hand-typed label can drift" % tab_id
+                "the tab registry does not render the shared name for %s; a hand-typed label can drift" % tab_id
             )
     # A position is a leading "N. "; a technical label may legitimately start with 25 kHz.
     if re.search(r"(beginner|technical)Label:\s*'\d+\.\s", app):
@@ -104,12 +107,14 @@ def main(argv=None):
     # The view switch's technical label says how many labs there are. The count has to come from the
     # registry the rail renders: it said "All 10" while twelve tabs shipped, and a typed number is
     # the one thing adding a tab does not update.
-    if "labsSwitchLabel(WORKBENCH_TABS.length)" not in app:
+    with open(SHELL, encoding="utf-8") as handle:
+        shell = handle.read()
+    if "labsSwitchLabel(WORKBENCH_TABS.length)" not in shell:
         findings.append(
             "App.tsx does not derive the view switch's lab count from WORKBENCH_TABS; "
             "pass WORKBENCH_TABS.length to labsSwitchLabel"
         )
-    if re.search(r"All\s+\d+\s+Engineering Labs", app):
+    if re.search(r"All\s+\d+\s+Engineering Labs", shell):
         findings.append("App.tsx hard-codes the number of Engineering Labs")
 
     with open(CALLOUT, encoding="utf-8") as handle:

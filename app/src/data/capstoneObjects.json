@@ -1,0 +1,162 @@
+[
+  {
+    "id": "08-capstone1-foc-eda/u1",
+    "kind": "component",
+    "label": "U1 · STM32G474RET6"
+  },
+  {
+    "id": "08-capstone1-foc-eda/u2",
+    "kind": "component",
+    "label": "U2 · DRV8353RSRGZR"
+  },
+  {
+    "id": "08-capstone1-foc-eda/q1",
+    "kind": "component",
+    "label": "Q1,Q2,Q3,Q4,Q5,Q6 · ISC030N08NM6"
+  },
+  {
+    "id": "08-capstone1-foc-eda/u3",
+    "kind": "component",
+    "label": "U3,U4,U5 · INA240A2PWR"
+  },
+  {
+    "id": "08-capstone1-foc-eda/r-sh-a",
+    "kind": "component",
+    "label": "R_SH_A,R_SH_B,R_SH_C · CSS2H-2512R-1L00F"
+  },
+  {
+    "id": "08-capstone1-foc-eda/u6",
+    "kind": "component",
+    "label": "U6 · MA732GQ-Z"
+  },
+  {
+    "id": "08-capstone1-foc-eda/u7",
+    "kind": "component",
+    "label": "U7 · TCAN1044VDRBRQ1"
+  },
+  {
+    "id": "08-capstone1-foc-eda/u8",
+    "kind": "component",
+    "label": "U8 · LM5164DDAR"
+  },
+  {
+    "id": "08-capstone1-foc-eda/u9",
+    "kind": "component",
+    "label": "U9 · TPS7A2033PDBVR"
+  },
+  {
+    "id": "08-capstone1-foc-eda/u10",
+    "kind": "component",
+    "label": "U10 · SN74LVC2G08DCUR"
+  },
+  {
+    "id": "08-capstone1-foc-eda/c-hf1-c-hf6",
+    "kind": "component",
+    "label": "C_HF1..C_HF6 · GCM32ER72A225KA37L"
+  },
+  {
+    "id": "08-capstone1-foc-eda/c-bulk1",
+    "kind": "component",
+    "label": "C_BULK1,C_BULK2 · EEH-ZA1K470P"
+  },
+  {
+    "id": "08-capstone1-foc-eda/req-therm-01",
+    "kind": "requirement",
+    "label": "REQ-THERM-01 · Stay cool at full load"
+  },
+  {
+    "id": "08-capstone1-foc-eda/req-therm-02",
+    "kind": "requirement",
+    "label": "REQ-THERM-02 · Survive a current burst"
+  },
+  {
+    "id": "08-capstone1-foc-eda/req-elec-01",
+    "kind": "requirement",
+    "label": "REQ-ELEC-01 · Convert power efficiently"
+  },
+  {
+    "id": "08-capstone1-foc-eda/req-elec-02",
+    "kind": "requirement",
+    "label": "REQ-ELEC-02 · Hold the switch-node spike"
+  },
+  {
+    "id": "08-capstone1-foc-eda/req-ctrl-01",
+    "kind": "requirement",
+    "label": "REQ-CTRL-01 · Drive all three phases"
+  },
+  {
+    "id": "08-capstone1-foc-eda/req-sense-01",
+    "kind": "requirement",
+    "label": "REQ-SENSE-01 · Measure every phase current"
+  },
+  {
+    "id": "08-capstone1-foc-eda/req-comms-01",
+    "kind": "requirement",
+    "label": "REQ-COMMS-01 · Report to the controller"
+  },
+  {
+    "id": "08-capstone1-foc-eda/req-safe-01",
+    "kind": "requirement",
+    "label": "REQ-SAFE-01 · Cut the bridge in a fault"
+  },
+  {
+    "id": "08-capstone1-foc-eda/req-reli-01",
+    "kind": "requirement",
+    "label": "REQ-RELI-01 · Keep every part inside its rating"
+  },
+  {
+    "id": "08-capstone1-foc-eda/req-cost-01",
+    "kind": "requirement",
+    "label": "REQ-COST-01 · Stay inside the prototype budget"
+  },
+  {
+    "id": "08-capstone1-foc-eda/test-therm-01",
+    "kind": "test",
+    "label": "TEST-THERM-01 · Junction temperature at full load"
+  },
+  {
+    "id": "08-capstone1-foc-eda/test-therm-02",
+    "kind": "test",
+    "label": "TEST-THERM-02 · Junction temperature in a burst"
+  },
+  {
+    "id": "08-capstone1-foc-eda/test-elec-01",
+    "kind": "test",
+    "label": "TEST-ELEC-01 · Inverter efficiency at full load"
+  },
+  {
+    "id": "08-capstone1-foc-eda/test-elec-02",
+    "kind": "test",
+    "label": "TEST-ELEC-02 · Switch-node spike at turn-off"
+  },
+  {
+    "id": "08-capstone1-foc-eda/test-ctrl-01",
+    "kind": "test",
+    "label": "TEST-CTRL-01 · Complementary PWM channels"
+  },
+  {
+    "id": "08-capstone1-foc-eda/test-sense-01",
+    "kind": "test",
+    "label": "TEST-SENSE-01 · Kelvin sense pairs"
+  },
+  {
+    "id": "08-capstone1-foc-eda/test-comms-01",
+    "kind": "test",
+    "label": "TEST-COMMS-01 · Fitted CAN-FD transceiver"
+  },
+  {
+    "id": "08-capstone1-foc-eda/test-safe-01",
+    "kind": "test",
+    "label": "TEST-SAFE-01 · Safe Torque Off channels"
+  },
+  {
+    "id": "08-capstone1-foc-eda/test-reli-01",
+    "kind": "test",
+    "label": "TEST-RELI-01 · Derated BOM lines"
+  },
+  {
+    "id": "08-capstone1-foc-eda/test-cost-01",
+    "kind": "test",
+    "label": "TEST-COST-01 · Prototype BOM cost"
+  }
+]

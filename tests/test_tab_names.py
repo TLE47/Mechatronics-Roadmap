@@ -45,12 +45,12 @@ class TableTests(unittest.TestCase):
         with open(TAB_DATA, encoding="utf-8") as handle:
             data = json.load(handle)
         self.assertEqual(
-            len(data["tabs"]), 12,
-            msg="expected the 12 workbench tabs; a missing one means its label has nowhere to come "
-                "from and App.tsx would need a hand-typed name again",
+            len(data["tabs"]), 14,
+            msg="expected the 14 workbench tabs; a missing one means its label has nowhere to come "
+                "from and the tab registry would need a hand-typed name again",
         )
         self.assertEqual(
-            len(set(data["tabs"].values())), 12,
+            len(set(data["tabs"].values())), 14,
             msg="expected one unique name per tab; two tabs sharing a name means a page naming one cannot be understood - check workbenchTabs.json",
         )
         self.assertFalse(
@@ -70,14 +70,14 @@ class TableTests(unittest.TestCase):
 
 class AppTests(unittest.TestCase):
     def test_the_app_renders_the_table(self):
-        with open(os.path.join(ROOT, "app", "src", "App.tsx"), encoding="utf-8") as handle:
+        with open(os.path.join(ROOT, "app", "src", "tabRegistry.tsx"), encoding="utf-8") as handle:
             app = handle.read()
         for tab_id in ct.load_tabs()["tabs"]:
             with self.subTest(tab=tab_id):
                 self.assertIn(
                     "TAB_NAMES", app,
-                    msg="expected App.tsx to read the shared names; a hand-typed label can drift "
-                        "from the table - check the TAB_NAMES usage",
+                    msg="expected the tab registry to read the shared names; a hand-typed label can "
+                        "drift from the table - check the TAB_NAMES usage",
                 )
                 self.assertNotRegex(
                     app,

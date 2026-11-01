@@ -26,6 +26,7 @@ export interface WorkflowForkJoinCardProps {
   number: number;
   issue: WorkflowIssue | undefined;
   selected: boolean;
+  active: boolean;
   position: { x: number; y: number };
   dragging: boolean;
   linking: LinkDraft | null;
@@ -44,6 +45,7 @@ export function WorkflowForkJoinCard({
   number,
   issue,
   selected,
+  active,
   position,
   dragging,
   linking,
@@ -57,7 +59,13 @@ export function WorkflowForkJoinCard({
 }: WorkflowForkJoinCardProps) {
   const Icon = iconForKind(node.kind);
   const meta = KIND_META[node.kind];
-  const frame = selected ? 'border-accent ring-2 ring-accent/25' : issue ? 'border-amber/70' : 'border-line';
+  const frame = active
+    ? 'border-emerald ring-2 ring-emerald/40'
+    : selected
+      ? 'border-accent ring-2 ring-accent/25'
+      : issue
+        ? 'border-amber/70'
+        : 'border-line';
   // The bar's own header selects it, never a focus bubbling from its delete button or a port.
   const selectSelf = (event: ReactFocusEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) onSelect(node.id);
@@ -69,6 +77,7 @@ export function WorkflowForkJoinCard({
       data-step={number}
       data-kind={node.kind}
       data-shape="bar"
+      data-run-active={active ? 'true' : undefined}
       style={{ left: position.x, top: position.y, width: NODE_WIDTH, backgroundColor: cardFill(node.fill) }}
       className={`absolute cursor-default rounded-lg border bg-panel shadow-sm ${frame} ${
         dragging ? 'z-40 shadow-lg' : selected ? 'z-30' : 'z-20'

@@ -11,8 +11,14 @@
 
 import { addWorkflowNode, type WorkflowDoc, type WorkflowNode } from './workflow.ts';
 
-/** One card's content and style, ready to be pasted: everything except the id. */
-export type CardClipboard = Omit<WorkflowNode, 'id'>;
+/**
+ * One card's content and style, ready to be pasted: everything except the id.
+ *
+ * `componentId` is the field's old part-only name. A clip is memory, so it does not need migrating
+ * on read, but a clip taken by an older build (or by a hand-made test fixture) still has it; pasting
+ * accepts both and writes only `projectRef`.
+ */
+export type CardClipboard = Omit<WorkflowNode, 'id'> & { componentId?: string };
 
 /** What copying a card keeps. Fields the card never had stay absent, not empty strings. */
 export function clipCard(node: WorkflowNode): CardClipboard {
@@ -23,6 +29,7 @@ export function clipCard(node: WorkflowNode): CardClipboard {
     unit: node.unit,
     note: node.note,
     lesson: node.lesson,
+    projectRef: node.projectRef,
     condition: node.condition,
     fill: node.fill,
     ink: node.ink,
@@ -48,6 +55,8 @@ export function pasteCard(
   if (clip.unit) words.unit = clip.unit;
   if (clip.note) words.note = clip.note;
   if (clip.lesson) words.lesson = clip.lesson;
+  const projectRef = clip.projectRef ?? clip.componentId;
+  if (projectRef) words.projectRef = projectRef;
   if (clip.condition) words.condition = clip.condition;
   if (clip.fill) words.fill = clip.fill;
   if (clip.ink) words.ink = clip.ink;

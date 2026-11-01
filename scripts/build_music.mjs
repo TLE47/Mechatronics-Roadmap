@@ -1,17 +1,18 @@
 #!/usr/bin/env node
 /**
- * The music tapes (`scripts/build_music.mjs`): four cut from CC0 recordings, four written here.
+ * The music tapes (`scripts/build_music.mjs`): four cut from CC0 recordings, seven written here.
  *
- * The catalogue (`app/src/audio/musicCatalogue.ts`) names eight tapes in six categories. Two kinds of
- * source feed them, and the script never pretends otherwise:
+ * The catalogue (`app/src/audio/musicCatalogue.ts`) names eleven tapes in five genre doors. Two kinds
+ * of source feed them, and the script never pretends otherwise:
  *
  * - **Recorded.** Excerpts of four real tracks, all by HoliznaCC0 from the CC0 album *Winter Lofi* on
  *   Free Music Archive. CC0 means public-domain dedication: bundling, cutting and redistributing them
  *   is permitted without attribution, which is what makes shipping them in the app's chunk legal. The
  *   panel still credits the artist, because a learner is entitled to know whose music they hear.
- * - **Composed.** Four tapes this file renders itself: an anime pentatonic bell loop, a pop and a K-pop
- *   four-chord loop, and an instrumental plucked arpeggio. No free recording covers those idioms, and
- *   a synthesised loop labelled honestly as composed is better than a licensed-sounding lie.
+ * - **Composed.** Seven tapes this file renders itself: an anime pentatonic bell loop, a pop and a
+ *   K-pop four-chord loop, an instrumental plucked arpeggio, a city-pop chorus, a retrowave
+ *   arpeggio and an 8-bit pulse loop. No free recording covers those idioms, and a synthesised loop
+ *   labelled honestly as composed is better than a licensed-sounding lie.
  *
  * What the script does to a **recorded** source, and why it is a script rather than a one-off:
  *
@@ -485,6 +486,92 @@ function renderKpop(seconds, seed) {
   return renderFourChord(seconds, seed, { chords: KPOP_CHORDS, bpm: 120, arp: true, clapLevel: 0.3 });
 }
 
+const CITY_POP_CHORDS = [
+  [45, 52, 57, 60], // Am7
+  [41, 48, 53, 57], // Fmaj7
+  [48, 52, 55, 59], // Cmaj7
+  [43, 50, 55, 59], // G7
+];
+const SYNTH_CHORDS = [
+  [45, 52, 57, 60], // Am
+  [41, 48, 53, 57], // F
+  [48, 52, 55, 60], // C
+  [43, 50, 55, 59], // G
+];
+
+/** City pop: 90 bpm, a lazy bell lead over maj7 pads, offbeat stabs and a walking bass. */
+function renderCityPop(seconds, seed) {
+  const out = emptyBuffer(seconds);
+  const rng = mulberry32(seed);
+  const beat = 60 / 90;
+  const bar = beat * 4;
+  const bars = Math.round(seconds / bar);
+  const lead = [76, 79, 81, 84, 81, 79, 76, 74, 72, 74, 76, 79];
+  for (let index = 0; index < bars; index += 1) {
+    const at = index * bar;
+    const chord = CITY_POP_CHORDS[index % 4];
+    padChord(out, at, bar * 0.98, chord, 0.1);
+    for (let step = 0; step < 8; step += 1) {
+      const t = at + step * (beat / 2);
+      if (step === 0) kick(out, t, 0.5);
+      if (step === 4) kick(out, t, 0.38);
+      if (step === 2 || step === 6) clap(out, t, 0.13, rng);
+      if (step % 2 === 1) hat(out, t, 0.05, rng);
+      bassNote(out, t, beat * 0.4, chord[0] - 12, 0.24);
+      if (step === 3 || step === 7) pluck(out, t, hz(chord[1] + 12), 0.16, 0.22);
+    }
+    bell(out, at, hz(lead[index % lead.length]), 0.14);
+  }
+  return out;
+}
+
+/** Synthwave: 120 bpm, saw pads, a sixteenth analog arpeggio and a kick on every beat. */
+function renderSynthwave(seconds, seed) {
+  const out = emptyBuffer(seconds);
+  const rng = mulberry32(seed);
+  const beat = 60 / 120;
+  const bar = beat * 4;
+  const bars = Math.round(seconds / bar);
+  for (let index = 0; index < bars; index += 1) {
+    const at = index * bar;
+    const chord = SYNTH_CHORDS[index % 4];
+    padChord(out, at, bar * 0.98, chord.map((note) => note + 12), 0.08);
+    for (let step = 0; step < 16; step += 1) {
+      const t = at + step * (beat / 4);
+      if (step % 4 === 0) kick(out, t, 0.6);
+      if (step % 4 === 2) hat(out, t, 0.06, rng);
+      pluck(out, t, hz(chord[(step + index) % 4] + (step % 8 >= 4 ? 12 : 0)), 0.2, 0.16);
+      if (step % 8 === 0) bassNote(out, t, beat * 0.8, chord[0] - 12, 0.3);
+    }
+  }
+  return out;
+}
+
+/** Chiptune: 120 bpm, a pulse lead through the same saw voice, a triangle bass and noise hats. */
+function renderChiptune(seconds, seed) {
+  const out = emptyBuffer(seconds);
+  const rng = mulberry32(seed);
+  const beat = 60 / 120;
+  const bar = beat * 4;
+  const bars = Math.round(seconds / bar);
+  const motif = [72, 76, 79, 76, 72, 74, 76, 79, 81, 79, 76, 74, 72, 76, 79, 84];
+  for (let index = 0; index < bars; index += 1) {
+    const at = index * bar;
+    const chord = SYNTH_CHORDS[index % 4];
+    for (let step = 0; step < 16; step += 1) {
+      const t = at + step * (beat / 4);
+      if (step % 4 === 0) kick(out, t, 0.5);
+      if (step % 4 === 2) hat(out, t, 0.08, rng);
+      const note = motif[(step + index * 2) % motif.length];
+      addVoice(out, t, 0.14, (t2) =>
+        0.12 * Math.min(1, t2 / 0.004) * Math.exp(-t2 / 0.07) * (saw(hz(note), t2) * 0.5 + saw(hz(note) * 2, t2) * 0.2)
+      );
+      if (step % 8 === 0) bassNote(out, t, beat * 0.6, chord[0] - 24, 0.28);
+    }
+  }
+  return out;
+}
+
 function renderFourChord(seconds, seed, { chords, bpm, arp, clapLevel }) {
   const out = emptyBuffer(seconds);
   const rng = mulberry32(seed);
@@ -517,6 +604,9 @@ export const COMPOSED = [
   { id: 'paper-lanterns', title: 'Paper Lanterns', seconds: 24, seed: 0x51c7, bitrate: 40000, render: renderAnime },
   { id: 'city-lights', title: 'City Lights', seconds: 24, seed: 0x2c03, bitrate: 40000, render: renderPop },
   { id: 'neon-stage', title: 'Neon Stage', seconds: 24, seed: 0x7d19, bitrate: 40000, render: renderKpop },
+  { id: 'city-pop', title: 'Morning City', seconds: 32, seed: 0x4b21, bitrate: 40000, render: renderCityPop },
+  { id: 'night-drive', title: 'Night Drive', seconds: 16, seed: 0x9f3a, bitrate: 40000, render: renderSynthwave },
+  { id: 'pixel-run', title: 'Pixel Run', seconds: 16, seed: 0x1d77, bitrate: 40000, render: renderChiptune },
 ];
 
 async function download(track, dir) {

@@ -1375,6 +1375,20 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         );
 
         // Dragging: a card follows the pointer by its header and lands where it was released.
+        // Centre the paper first: the panel sits wherever the Python tab left the page, and at a
+        // 720 px window its top — and this card's grip — can sit under the sticky header, where a
+        // press lands on the header rather than on the card.
+        // Instant, then settled: the page scrolls smoothly by default, and a press taken while it is
+        // still gliding lands on whatever the card was over rather than the card.
+        await page.getByTestId('workflow-canvas').evaluate((element) => {
+          element.scrollIntoView({ block: 'center', behavior: 'instant' });
+        });
+        await page.waitForFunction(() => {
+          const y = window.scrollY;
+          return new Promise((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve(window.scrollY === y)))
+          );
+        });
         const cardBefore = await page.getByTestId('workflow-node-1').boundingBox();
         const grip = await page.getByTestId('workflow-node-drag-1').boundingBox();
         await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
@@ -2449,12 +2463,44 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.keyboard.type('Gearbox', { delay: 35 });
         assert.equal(await title0.inputValue(), 'Gearbox', 'the typed word must land in the field');
         await page.getByTestId('workflow-canvas').focus();
+        assert.equal(
+          await page.evaluate(() => document.activeElement?.getAttribute('data-testid')),
+          'workflow-canvas',
+          'the undo chord is pressed with focus on the paper, not in a field'
+        );
         await page.keyboard.press(`${mod}+z`);
         await page.waitForTimeout(350);
         assert.equal(
           await title0.inputValue(),
           titleBefore,
           'one undo must take back the whole typed run, not one character of it'
+        );
+
+        // A card can cite a project object, by id, from the inspector's picker: the badge resolves
+        // it to the object's own words, and the citation is a document edit like any other — undo
+        // takes it back and redo restores it. Focus selects a card, which is what opens the
+        // inspector; a pointer click here would have to land through the cards drawn on top.
+        await page.getByTestId('workflow-node-drag-0').focus();
+        const partSelect = page.getByTestId('workflow-card-project');
+        await partSelect.waitFor({ timeout: 5000 });
+        await partSelect.selectOption('08-capstone1-foc-eda/u1');
+        await page.waitForTimeout(250);
+        const partChip = page.getByTestId('workflow-node-ref-0');
+        assert.match(
+          (await partChip.innerText()).trim(),
+          /^U1 · STM32G474RET6$/,
+          'the selected part must be named on the card by its designation and part number'
+        );
+        await page.getByTestId('workflow-canvas').focus();
+        await page.keyboard.press(`${mod}+z`);
+        await page.waitForTimeout(300);
+        assert.equal(await partChip.count(), 0, 'undo must take the citation away');
+        await page.keyboard.press(`${mod}+Shift+z`);
+        await page.waitForTimeout(300);
+        assert.match(
+          (await partChip.innerText()).trim(),
+          /^U1 · STM32G474RET6$/,
+          'and redo must restore it'
         );
 
         // A keyboard nudge is a structural move. The header buttons undo and redo it, and Ctrl+Y
@@ -2509,6 +2555,14 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           1,
           'with the id its arrows still use'
         );
+        // Redo has to replay the removal itself, not only a move or a route: a structural edit that
+        // cannot be redone would leave the pair half-true after every delete.
+        await page.keyboard.press(`${mod}+Shift+z`);
+        await page.waitForTimeout(350);
+        assert.equal(await page.locator('[data-node-id]').count(), 7, 'redo must remove the card again');
+        await page.keyboard.press(`${mod}+z`);
+        await page.waitForTimeout(350);
+        assert.equal(await page.locator('[data-node-id]').count(), 8, 'and undo must still bring it back');
 
         // Clearing the diagram is the largest destructive edit; the empty panel keeps an Undo, and
         // the canvas comes back whole — every card and every arrow.
@@ -2534,6 +2588,291 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.getByTestId('workflow-clear').click();
         await page.getByTestId('workflow-clear-yes').click();
         await page.waitForTimeout(250);
+
+        // Simulation is a walk over control arrows: Start puts one token on the opening card, Step
+        // follows one arrow to the next card, and the answer ends the walk. The marks are view state,
+        // so Stop takes them away without touching the diagram.
+        await page.getByTestId('workflow-start-blank').click();
+        await page.waitForTimeout(250);
+        await page.getByTestId('workflow-add-compute').click();
+        await page.waitForTimeout(200);
+        await page.getByTestId('workflow-node-port-right-0').click();
+        await page.getByTestId('workflow-node-port-top-1').click();
+        await page.waitForTimeout(250);
+        await page.getByTestId('workflow-run-start').click();
+        await page.waitForTimeout(150);
+        assert.equal(
+          await page.locator('[data-run-active="true"]').count(),
+          1,
+          'Start must mark the opening card'
+        );
+        assert.match((await page.getByTestId('workflow-run-status').innerText()) ?? '', /^Step 1/);
+        await page.getByTestId('workflow-run-step').click();
+        await page.waitForTimeout(150);
+        assert.equal(
+          await page.getByTestId('workflow-node-1').getAttribute('data-run-active'),
+          'true',
+          'Step must move the token one control arrow forward'
+        );
+        await page.getByTestId('workflow-run-step').click();
+        await page.waitForTimeout(150);
+        assert.match((await page.getByTestId('workflow-run-status').innerText()) ?? '', /^Done/);
+        assert.equal(
+          await page.locator('[data-run-active="true"]').count(),
+          0,
+          'the end card finishes the walk instead of keeping a token'
+        );
+        await page.getByTestId('workflow-run-stop').click();
+        await page.waitForTimeout(150);
+        assert.equal(
+          await page.getByTestId('workflow-run-start').count(),
+          1,
+          'Stop must put the bar back to its start'
+        );
+
+        // A card's part badge is a door to the object, and the id is the address. Pressing the badge
+        // opens Project Mode on the id the card stores; typing that id into the view's own search
+        // finds the same part without its designation. Kept last in this block because leaving the
+        // runner unmounts the panel and its in-memory undo history.
+        await page.getByTestId('workflow-node-drag-0').focus();
+        const doorSelect = page.getByTestId('workflow-card-project');
+        await doorSelect.waitFor({ timeout: 5000 });
+        await doorSelect.selectOption('08-capstone1-foc-eda/u1');
+        await page.waitForTimeout(250);
+        const doorBadge = page.getByTestId('workflow-node-ref-0');
+        await doorBadge.waitFor({ timeout: 5000 });
+        await doorBadge.click();
+        await page.getByTestId('project-mode').waitFor({ timeout: 5000 });
+        assert.equal(
+          (await page.getByTestId('project-part-id').innerText()).trim(),
+          '08-capstone1-foc-eda/u1',
+          'the card badge must open Project Mode on the id the card cites'
+        );
+        assert.match(
+          await page.getByTestId('project-detail').innerText(),
+          /STM32G474RET6/,
+          'and the view must resolve that id to its part number'
+        );
+
+        // The object model's other door: a requirement names the parts that meet it, and a part
+        // names the requirements it helps meet, both by the same ids. REQ-CTRL-01 cites U1, so it
+        // sits in this part's detail; pressing it opens the register on that requirement, and the
+        // requirement's own U2 link closes the loop back in Project Mode.
+        const requirementDoor = page.getByTestId('project-req-4');
+        await requirementDoor.waitFor({ timeout: 5000 });
+        assert.match(
+          await requirementDoor.innerText(),
+          /REQ-CTRL-01/,
+          'the part detail must name the requirement that cites it'
+        );
+        await requirementDoor.click();
+        await page.getByTestId('requirements-mode').waitFor({ timeout: 5000 });
+        assert.equal(
+          (await page.getByTestId('requirement-id').innerText()).trim(),
+          '08-capstone1-foc-eda/req-ctrl-01',
+          'the requirement door must open the register on the id the part cites'
+        );
+        assert.match(
+          await page.getByTestId('requirement-detail').innerText(),
+          /Drive all three phases/,
+          'and the register must resolve that id to its own words'
+        );
+        await page.getByTestId('requirement-part-1').click();
+        await page.getByTestId('project-mode').waitFor({ timeout: 5000 });
+        assert.equal(
+          (await page.getByTestId('project-part-id').innerText()).trim(),
+          '08-capstone1-foc-eda/u2',
+          'and a cited part must return to Project Mode on that part’s id'
+        );
+        await page.getByTestId('project-search').fill('08-capstone1-foc-eda/u6');
+        await page.waitForTimeout(300);
+        assert.match(
+          await page.getByTestId('project-count').innerText(),
+          /^1 of 12 parts$/,
+          'an id must narrow the parts list to the one object it names'
+        );
+        assert.equal(
+          (await page.getByTestId('project-part-id').innerText()).trim(),
+          '08-capstone1-foc-eda/u6',
+          'typing an id in Project Mode must select that part'
+        );
+        assert.match(
+          await page.getByTestId('project-detail').innerText(),
+          /MA732GQ-Z/,
+          'and its detail card must name the part the id resolves to'
+        );
+        await page.getByTestId('tab-btn-tab-pyodide').click();
+        await page.waitForTimeout(250);
+
+        // The same field cites the model's other object type. A requirement id is stored as the id,
+        // not as a second kind of reference: the picker groups it, the badge names its reference and
+        // title, and pressing the badge opens the Requirements view selected on that exact row.
+        await page.getByTestId('editor-tab-workflow').click();
+        await page.waitForTimeout(400);
+        await page.getByTestId('workflow-node-drag-0').focus();
+        const objectSelect = page.getByTestId('workflow-card-project');
+        await objectSelect.waitFor({ timeout: 5000 });
+        await objectSelect.selectOption('08-capstone1-foc-eda/req-therm-01');
+        await page.waitForTimeout(300);
+        const objectBadge = page.getByTestId('workflow-node-ref-0');
+        assert.equal(
+          (await objectBadge.innerText()).trim(),
+          'REQ-THERM-01 · Stay cool at full load',
+          'a requirement citation must be named on the card, not printed as its id'
+        );
+        // A requirement citation is the same document edit as a part citation: undo restores the
+        // citation it replaced, redo puts the requirement back.
+        await page.getByTestId('workflow-canvas').focus();
+        await page.keyboard.press(`${mod}+z`);
+        await page.waitForTimeout(300);
+        assert.equal(
+          (await objectBadge.innerText()).trim(),
+          'U1 · STM32G474RET6',
+          'undo must restore the part citation the requirement replaced'
+        );
+        await page.keyboard.press(`${mod}+Shift+z`);
+        await page.waitForTimeout(300);
+        assert.equal(
+          (await objectBadge.innerText()).trim(),
+          'REQ-THERM-01 · Stay cool at full load',
+          'redo must restore the requirement citation'
+        );
+
+        // A copied card carries whichever object it cites; the pasted card keeps the same id.
+        await page.getByTestId('workflow-node-drag-0').click({ button: 'right' });
+        await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
+        await page.getByTestId('workflow-menu').getByRole('button', { name: 'Copy', exact: true }).click();
+        await page.waitForTimeout(250);
+        // The paper may be scrolled from the simulation step; a paste needs a visible bare point.
+        await page.getByTestId('workflow-canvas').evaluate((canvas) => {
+          canvas.scrollTop = 0;
+          canvas.scrollLeft = 0;
+          canvas.scrollIntoView({ block: 'center' });
+        });
+        await page.waitForTimeout(250);
+        const citePasteAt = await emptySpot(0);
+        assert.ok(citePasteAt, 'pasting a cited card needs bare paper to start on');
+        await page.mouse.click(citePasteAt.x, citePasteAt.y, { button: 'right' });
+        await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
+        await page.getByTestId('workflow-menu').getByRole('button', { name: 'Paste', exact: true }).click();
+        await page.waitForTimeout(400);
+        const copiedBadge = page
+          .locator('[data-node-id]')
+          .last()
+          .locator('[data-testid^="workflow-node-ref-"]');
+        assert.equal(
+          (await copiedBadge.innerText()).trim(),
+          'REQ-THERM-01 · Stay cool at full load',
+          'a pasted card must carry the requirement citation'
+        );
+        await page
+          .locator('[data-node-id]')
+          .last()
+          .locator('[data-testid^="workflow-node-drag-"]')
+          .click({ button: 'right' });
+        await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
+        await page.getByTestId('workflow-menu').getByRole('button', { name: 'Remove', exact: true }).click();
+        await page.waitForTimeout(300);
+
+        await objectBadge.click();
+        await page.getByTestId('requirements-mode').waitFor({ timeout: 5000 });
+        assert.equal(
+          (await page.getByTestId('requirement-id').innerText()).trim(),
+          '08-capstone1-foc-eda/req-therm-01',
+          'the card badge must open the Requirements view on the id the card cites'
+        );
+        assert.match(
+          await page.getByTestId('requirement-detail').innerText(),
+          /Stay cool at full load/,
+          'and the view must resolve that id to its own words'
+        );
+        // …and back again: the requirement's first cited part (Q1) opens Project Mode on it.
+        await page.getByTestId('requirement-part-2').click();
+        await page.getByTestId('project-mode').waitFor({ timeout: 5000 });
+        assert.equal(
+          (await page.getByTestId('project-part-id').innerText()).trim(),
+          '08-capstone1-foc-eda/q1',
+          'a requirement’s part link must open Project Mode on that part’s id'
+        );
+        assert.match(
+          await page.getByTestId('project-detail').innerText(),
+          /ISC030N08NM6/,
+          'and the view must resolve the part id to its part number'
+        );
+
+        // A test is the third object type and the same citation field: a card can cite
+        // TEST-THERM-01, the badge names it, and pressing it opens the requirement the test
+        // judges, with the measured value held against its own limit in that row.
+        await page.getByTestId('tab-btn-tab-pyodide').click();
+        await page.waitForTimeout(300);
+        await page.getByTestId('editor-tab-workflow').click();
+        await page.waitForTimeout(400);
+        await page.getByTestId('workflow-node-drag-0').focus();
+        const testSelect = page.getByTestId('workflow-card-project');
+        await testSelect.waitFor({ timeout: 5000 });
+        await testSelect.selectOption('08-capstone1-foc-eda/test-therm-01');
+        await page.waitForTimeout(300);
+        const testBadge = page.getByTestId('workflow-node-ref-0');
+        assert.equal(
+          (await testBadge.innerText()).trim(),
+          'TEST-THERM-01 · Junction temperature at full load',
+          'a test citation must be named on the card, not printed as its id'
+        );
+        // The same document edit as any citation: undo restores the requirement it replaced,
+        // redo puts the test back.
+        await page.getByTestId('workflow-canvas').focus();
+        await page.keyboard.press(`${mod}+z`);
+        await page.waitForTimeout(300);
+        assert.equal(
+          (await testBadge.innerText()).trim(),
+          'REQ-THERM-01 · Stay cool at full load',
+          'undo must restore the requirement citation the test replaced'
+        );
+        await page.keyboard.press(`${mod}+Shift+z`);
+        await page.waitForTimeout(300);
+        assert.equal(
+          (await testBadge.innerText()).trim(),
+          'TEST-THERM-01 · Junction temperature at full load',
+          'redo must restore the test citation'
+        );
+        await testBadge.click();
+        await page.getByTestId('requirements-mode').waitFor({ timeout: 5000 });
+        assert.equal(
+          (await page.getByTestId('requirement-id').innerText()).trim(),
+          '08-capstone1-foc-eda/req-therm-01',
+          'a test badge must open the requirement the test judges'
+        );
+        assert.match(
+          await page.getByTestId('requirement-test-0').innerText(),
+          /TEST-THERM-01[\s\S]*90\.92 °C ≤ 125 °C[\s\S]*pass/,
+          'and the row must show the measured actual, its limit and the derived pass state'
+        );
+
+        // Leaving and returning remounts the panel from the store; a full reload must find the
+        // citation again, because it is part of the lesson's saved document, not view state.
+        await page.getByTestId('tab-btn-tab-pyodide').click();
+        await page.waitForTimeout(300);
+        await page.getByTestId('editor-tab-workflow').click();
+        await page.waitForTimeout(400);
+        assert.equal(
+          (await page.getByTestId('workflow-node-ref-0').innerText()).trim(),
+          'TEST-THERM-01 · Junction temperature at full load',
+          'a test citation must survive the panel remounting'
+        );
+        await page.waitForTimeout(700);
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await waitForEditor(page, undefined, 30000);
+        await page.waitForTimeout(700);
+        if (!(await page.getByTestId('panel-workflow').isVisible().catch(() => false))) {
+          await page.getByTestId('editor-tab-workflow').click();
+          await page.waitForTimeout(300);
+        }
+        assert.equal(
+          (await page.getByTestId('workflow-node-ref-0').innerText()).trim(),
+          'TEST-THERM-01 · Junction temperature at full load',
+          'a reload must find the test citation it saved'
+        );
+
         await page.getByTestId('editor-tab-main').click();
         await page.waitForTimeout(250);
         console.log(
@@ -4901,14 +5240,16 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     await formattingPage.getByTestId('input-palette-search').fill('zzzzqqq');
     await formattingPage.getByTestId('palette-empty').waitFor({ timeout: 5000 });
     assert.equal(
-      await formattingPage.getByRole('option').count(),
+      // Scoped to the dialog: the header's own selects have options too, and a page-wide count
+      // would pass or fail on whatever else is mounted rather than on the palette's list.
+      await formattingPage.getByTestId('command-palette').getByRole('option').count(),
       0,
       'an unmatched query must offer nothing to open, not the whole catalogue'
     );
     await formattingPage.getByTestId('input-palette-search').fill('theme');
     await formattingPage.getByTestId('palette-item-action-toggle-theme').waitFor({ timeout: 5000 });
     await formattingPage.keyboard.press('ArrowDown');
-    const highlighted = await formattingPage.getByRole('option').evaluateAll((rows) =>
+    const highlighted = await formattingPage.getByTestId('command-palette').getByRole('option').evaluateAll((rows) =>
       rows.filter((row) => row.getAttribute('aria-selected') === 'true').map((row) => row.dataset.paletteId)
     );
     assert.equal(highlighted.length, 1, 'exactly one row may be highlighted at a time');

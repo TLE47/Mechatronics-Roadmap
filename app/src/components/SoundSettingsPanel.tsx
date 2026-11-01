@@ -6,6 +6,7 @@ import {
   MUSIC_CATEGORIES,
   TAPE_SCRIPT_PAGE,
   categoryOf,
+  defaultTapeFor,
   tapesIn,
   tapeById,
   tapeCredit,
@@ -20,8 +21,8 @@ import type { UiRole } from '../audio/facade.ts';
  *
  * 1. **Sound** — the master, and what "on" actually means (nothing autoplays; a remembered on waits
  *    for the next press).
- * 2. **Music** — the level, then *which* tape: six categories (Lo-fi, Jazz, Instrumental, Anime, Pop,
- *    K-pop) plus the drone, and inside a category the tapes it holds. The rows are chips that wrap,
+ * 2. **Music** — the level, then *which* tape: five genre doors (Lo-fi, J-Pop, Synthwave, Chiptune,
+ *    Acoustic) plus the drone, and inside a door the tapes it holds. The rows are chips that wrap,
  *    because a 360 px phone cannot show six side by side and a horizontal scroller would hide three
  *    of them. The line under the picker says what the run duck does, because a learner who hears the
  *    music step back deserves to know it was the checks.
@@ -158,8 +159,8 @@ export const SoundSettingsPanel: React.FC<Props> = ({
         className="mt-1 w-full cursor-pointer"
         style={{ accentColor: 'var(--accent)' }}
       />
-      {/* Six categories wrap into two or three rows on a phone; the drone is the last chip, not a
-          seventh category, because it is the one choice that is not a song. */}
+      {/* Five doors wrap to two rows on a phone; the drone is the last chip, not a sixth door,
+          because it is the one choice that is not a song. */}
       <div className="mt-2 flex flex-wrap gap-1" role="group" aria-label="Music category">
         {MUSIC_CATEGORIES.map((entry) => {
           const active = openCategory === entry.id;
@@ -169,10 +170,7 @@ export const SoundSettingsPanel: React.FC<Props> = ({
               type="button"
               disabled={!prefs.on}
               aria-pressed={active}
-              onClick={() => {
-                const first = tapesIn(entry.id)[0];
-                if (first) onTape(first.id);
-              }}
+              onClick={() => onTape(defaultTapeFor(entry.id).id)}
               data-testid={tid(`sound-category-${entry.id}`)}
               className="min-h-[32px] rounded-full border px-2.5 py-0.5 text-[11px] font-semibold disabled:opacity-50"
               style={{

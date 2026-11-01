@@ -22,15 +22,14 @@
  * order, and pretending it does is how an arrow ends up labelled "step 5" on a screen that shows it
  * as 2.
  *
- * `validateWorkflow` is advice, never a gate: it names what is missing in a sentence a beginner can
- * act on, and nothing in the app blocks a run or a lesson because a checklist item is open.
+ * `workflowValidation.ts` owns what is missing or worth saying: its rules are advice, never a gate,
+ * and nothing in the app blocks a run or a lesson because a checklist item is open.
  */
 
 import {
   PROCESS_KIND_META,
   PROCESS_KINDS,
   PROCESS_SHAPES,
-  forkJoinIssues,
   isForkJoin,
   laneBlocks,
   laneMarkdown,
@@ -47,6 +46,8 @@ export const MAX_STEP_DETAIL_CHARS = 400;
 export const MAX_STEP_UNIT_CHARS = 16;
 export const MAX_STEP_NOTE_CHARS = 240;
 export const MAX_STEP_LESSON_CHARS = 60;
+/** A project object id (`08-capstone1-foc-eda/u1` or `…/req-therm-01`); project slug plus one ref. */
+export const MAX_PROJECT_REF_CHARS = 80;
 export const MAX_BRANCH_CONDITION_CHARS = 60;
 export const MAX_GROUP_TITLE_CHARS = 40;
 /** The furthest a card may be dragged, so a stray pointer cannot make an unscrollable canvas. */
@@ -378,6 +379,19 @@ export interface WorkflowNode {
   note?: string;
   /** The lesson this card came from or explains, by the runner's own id (e.g. `P.15`). */
   lesson?: string;
+  /**
+   * The project object this step touches, by its stable id (`08-capstone1-foc-eda/u1`,
+   * `08-capstone1-foc-eda/req-therm-01`).
+   *
+   * One field, one syntax: the id itself already names the kind, so the card stores neither a name
+   * nor a `part:` prefix. `projectModel.ts` owns what the id means; the canvas and the inspector
+   * only resolve it for a label and a destination. Absent is every card drawn before project
+   * objects existed, and a document never gains the field by being read.
+   *
+   * `componentId` was this field's part-only name; `readNode` still accepts it so a saved diagram or
+   * a copied card from that version keeps its citation, but nothing writes it any more.
+   */
+  projectRef?: string;
   /** A branch card's condition; it labels that card's outgoing arrows (`edgeLabelFor`). */
   condition?: string;
   /** A theme colour for the card's plate; absent is the panel surface every card had. */
@@ -459,7 +473,12 @@ export type IssueCode =
   | 'check-without-comparison'
   | 'no-check'
   | 'fork-without-branches'
-  | 'join-without-branches';
+  | 'join-without-branches'
+  | 'branch-without-guard'
+  | 'ambiguous-guard'
+  | 'merge-without-branches'
+  | 'detached-flow'
+  | 'no-final-path';
 
 export interface WorkflowIssue {
   code: IssueCode;
@@ -763,6 +782,16 @@ function readNode(value: unknown, mode: WorkflowMode, fallbackId: string, index:
   if (note) node.note = note;
   const lesson = clean(record.lesson, MAX_STEP_LESSON_CHARS);
   if (lesson) node.lesson = lesson;
+  // An id is kept whole or not at all: truncating one would leave the card citing an object that
+  // does not exist, which is worse than dropping a field a hand-edit broke. `componentId` is the
+  // version-1 part-only name, read here and migrated on the next write rather than left in place.
+  const objectRef =
+    typeof record.projectRef === 'string'
+      ? record.projectRef.trim()
+      : typeof record.componentId === 'string'
+        ? record.componentId.trim()
+        : '';
+  if (objectRef && objectRef.length <= MAX_PROJECT_REF_CHARS) node.projectRef = objectRef;
   const condition = clean(record.condition, MAX_BRANCH_CONDITION_CHARS);
   if (condition) node.condition = condition;
   // Styling is written only when it differs from the card's own default, so a document that never
@@ -1040,113 +1069,7 @@ export function workflowOrder(doc: WorkflowDoc): WorkflowNode[] {
   return order;
 }
 
-function hasNumber(text: string): boolean {
-  return /\d/.test(text);
-}
 
-/**
- * What is missing or worth saying, in the order a learner reads the graph.
- *
- * The rules are deliberately about the *shape* of a worked problem rather than its content: a check
- * that names no comparison is a wish, a compute with a number and no unit is the mistake this course
- * exists to break, and a model written as prose hides the law it is supposed to teach. Nothing here
- * looks at the lesson or the code, so the same advice holds for any problem a learner brings.
- */
-export function validateWorkflow(doc: WorkflowDoc): WorkflowIssue[] {
-  const issues: WorkflowIssue[] = [];
-  const order = workflowOrder(doc);
-  const number = new Map(order.map((node, index) => [node.id, index + 1]));
-  const connected = new Set<string>();
-  for (const edge of doc.edges) {
-    connected.add(edge.from);
-    connected.add(edge.to);
-  }
-
-  if (!doc.nodes.some((node) => KIND_META[node.kind].start)) {
-    issues.push({
-      code: 'no-start',
-      stepId: null,
-      severity: 'open',
-      message: 'Start with a Given card (or Input in a code flow): the numbers the problem hands you.',
-    });
-  }
-
-  if (!doc.nodes.some((node) => KIND_META[node.kind].terminal)) {
-    issues.push({
-      code: 'no-answer',
-      stepId: null,
-      severity: 'open',
-      message:
-        doc.mode === 'code'
-          ? 'No Output card yet: say what leaves the program.'
-          : 'No Answer card yet: state the result, with its unit.',
-    });
-  }
-
-  for (const node of order) {
-    const where = `Step ${number.get(node.id) ?? '?'}`;
-    // A fork or join is a bar, not a form: it has no title field, so it cannot be empty.
-    if (!node.title && !isForkJoin(node.kind)) {
-      issues.push({
-        code: 'empty-step',
-        stepId: node.id,
-        severity: 'open',
-        message: `${where} needs a title — one idea per card.`,
-      });
-    }
-    if (doc.nodes.length > 1 && !connected.has(node.id)) {
-      issues.push({
-        code: 'unconnected',
-        stepId: node.id,
-        severity: 'open',
-        message: `${where} is not connected — drag from its dot to the card it feeds.`,
-      });
-    }
-    if (KIND_META[node.kind].measured && hasNumber(node.detail) && !node.unit) {
-      issues.push({
-        code: 'missing-unit',
-        stepId: node.id,
-        severity: 'open',
-        message: `${where} has a number but no unit — A, V, rad/s, %.`,
-      });
-    }
-    if (node.kind === 'model' && !/[=≈→]/.test(node.detail) && !/[+\-*/×÷]/.test(node.detail)) {
-      issues.push({
-        code: 'model-without-equation',
-        stepId: node.id,
-        severity: 'open',
-        message: `${where} is the model: write the law or relation, e.g. I = V / R.`,
-      });
-    }
-    if (
-      (node.kind === 'check' || node.kind === 'test') &&
-      !/[<>=≤≥±]/.test(node.detail) &&
-      !/(tolerance|within|fits|pass|fail|assert|equals|clamp)/i.test(node.detail)
-    ) {
-      issues.push({
-        code: 'check-without-comparison',
-        stepId: node.id,
-        severity: 'hint',
-        message: `${where} is a check: say what it compares — <, >, ±, or a tolerance.`,
-      });
-    }
-  }
-
-  const hasCompute = doc.nodes.some((node) => node.kind === 'compute');
-  const hasCheck = doc.nodes.some((node) => node.kind === 'check');
-  if (hasCompute && !hasCheck) {
-    issues.push({
-      code: 'no-check',
-      stepId: null,
-      severity: 'hint',
-      message: 'There is a compute but no check — add one bound, sign or size that must hold.',
-    });
-  }
-
-  // Concurrency advice lives with the two bars that need it (`workflowProcesses.ts`).
-  issues.push(...forkJoinIssues(doc, number));
-  return issues;
-}
 
 export interface WorkflowSummary {
   steps: number;
@@ -1183,14 +1106,6 @@ export function edgeCaption(from: WorkflowNode, edge: WorkflowEdge): string {
   return type === 'flow' ? '' : EDGE_TYPE_LABEL[type];
 }
 
-export function workflowSummary(doc: WorkflowDoc): WorkflowSummary {
-  const issues = validateWorkflow(doc);
-  return {
-    steps: doc.nodes.length,
-    open: issues.filter((issue) => issue.severity === 'open').length,
-    hints: issues.filter((issue) => issue.severity === 'hint').length,
-  };
-}
 
 function mermaidText(text: string, max = 64): string {
   return text.replace(/"/g, "'").replace(/\s+/g, ' ').trim().slice(0, max);
@@ -1282,6 +1197,9 @@ export function workflowToMermaid(doc: WorkflowDoc): string {
   order.forEach((node, position) => {
     if (node.note) lines.push(`  %% note n${position + 1}: ${mermaidText(node.note, 160)}`);
     if (node.lesson) lines.push(`  %% lesson n${position + 1}: ${mermaidText(node.lesson, MAX_STEP_LESSON_CHARS)}`);
+    if (node.projectRef) {
+      lines.push(`  %% project n${position + 1}: ${mermaidText(node.projectRef, MAX_PROJECT_REF_CHARS)}`);
+    }
   });
   return lines.join('\n');
 }
@@ -1306,6 +1224,7 @@ export function workflowToMarkdown(doc: WorkflowDoc): string {
     lines.push(`${position + 1}. **${label}**${body}${laneMarkdown(doc.lanes, node)}`);
     if (node.note) lines.push(`   - note: ${node.note}`);
     if (node.lesson) lines.push(`   - lesson: ${node.lesson}`);
+    if (node.projectRef) lines.push(`   - project: ${node.projectRef}`);
     const next = order[position + 1];
     for (const edge of doc.edges) {
       if (edge.from !== node.id) continue;

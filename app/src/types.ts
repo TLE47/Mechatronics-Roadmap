@@ -5,6 +5,8 @@ export type TabId =
   | 'tab-pend'
   | 'tab-models'
   | 'tab-cadpcb'
+  | 'tab-project'
+  | 'tab-req'
   | 'tab-sysid'
   | 'tab-eskf'
   | 'tab-links'
@@ -19,11 +21,4 @@ export interface TourStep {
   desc: string;
   preset?: () => void;
   enter?: () => void;
-}
-
-export interface BomItem {
-  refDes: string;
-  mpn: string;
-  functionDesc: string;
-  rating: string;
 }

@@ -232,6 +232,7 @@ async function main() {
     { label: 'reset', script: 'test_reset.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'analysis', script: 'test_analysis.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'study', script: 'test_study.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'project', script: 'test_project_model.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'geometry', script: 'test_canvas_geometry.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'workflow', script: 'test_workflow.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'checks', script: 'test_checklists.mjs', env: { NODE_OPTIONS: TYPES } },

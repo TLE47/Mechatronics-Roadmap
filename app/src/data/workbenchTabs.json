@@ -9,6 +9,8 @@
     "tab-pend": "Pendulum Balance & Safety Walls",
     "tab-models": "Robot Arm Kinematics & Safety Cutoff",
     "tab-cadpcb": "3D Parts & Motor Driver PCB Lab",
+    "tab-project": "Project Mode: Parts & IDs",
+    "tab-req": "Requirements & Part Links",
     "tab-sysid": "Sine-Sweep System Identification",
     "tab-eskf": "IMU Sensor Fusion & Real-Time Lock",
     "tab-board": "Run an Arduino Sketch",

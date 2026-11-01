@@ -24,9 +24,11 @@ import { readPredictions } from './predictGate';
 import { STORAGE_KEY_START_HERE_DISMISSED } from './startHere';
 import { SPINE_STEP_COUNT, stepForMilestone } from './spine';
 import { passChangesContent } from './courseLevels';
-// The runner is the tab the app opens on, so it is imported statically: its code is on the first
-// screen either way, and a lazy boundary there would only add a fetch before the lesson appears.
-import { TabPyodideRunner } from './components/tabs/TabPyodideRunner';
+// One entry per tab — its id, labels, icon, chunk and render — lives in `tabRegistry.tsx`. The shell
+// asks it for the active tab; a new tab is one entry there, not six edits here.
+import { HOME_LABS, WORKBENCH_TABS, prefetchTab, renderTab, type WorkbenchTabContext } from './tabRegistry';
+// Kept exported for the suites that read the registry through this module.
+export { WORKBENCH_TABS };
 
 // Every other tab is its own chunk (`React.lazy` + the import below), fetched when the learner opens
 // it. Ten tabs' code — the simulators, the placement quiz, the roadmap's matrix, the link history —
@@ -40,59 +42,6 @@ import { TabPyodideRunner } from './components/tabs/TabPyodideRunner';
 // The same importer function is what `prefetchTab` calls, so the rail can fetch a chunk on intent
 // (pointer-enter, focus) and the module registry is asked exactly once: Vite resolves both calls to
 // the same dynamic import, and the browser's module cache serves the second.
-const importTabArchitecture = () =>
-  import('./components/tabs/TabArchitecture').then((module) => ({ default: module.TabArchitecture }));
-const importTabPlacementQuiz = () =>
-  import('./components/tabs/TabPlacementQuiz').then((module) => ({ default: module.TabPlacementQuiz }));
-const importTabBode = () =>
-  import('./components/tabs/TabBode').then((module) => ({ default: module.TabBode }));
-const importTabFOC = () =>
-  import('./components/tabs/TabFOC').then((module) => ({ default: module.TabFOC }));
-const importTabPendulum = () =>
-  import('./components/tabs/TabPendulum').then((module) => ({ default: module.TabPendulum }));
-const importTabModels = () =>
-  import('./components/tabs/TabModels').then((module) => ({ default: module.TabModels }));
-const importTabCadPcb = () =>
-  import('./components/tabs/TabCadPcb').then((module) => ({ default: module.TabCadPcb }));
-const importTabSysId = () =>
-  import('./components/tabs/TabSysId').then((module) => ({ default: module.TabSysId }));
-const importTabEskf = () =>
-  import('./components/tabs/TabEskf').then((module) => ({ default: module.TabEskf }));
-const importTabLinkHealth = () =>
-  import('./components/tabs/TabLinkHealth').then((module) => ({ default: module.TabLinkHealth }));
-const importTabBoard = () =>
-  import('./components/tabs/TabBoard').then((module) => ({ default: module.TabBoard }));
-
-const TabArchitecture = React.lazy(importTabArchitecture);
-const TabPlacementQuiz = React.lazy(importTabPlacementQuiz);
-const TabBode = React.lazy(importTabBode);
-const TabFOC = React.lazy(importTabFOC);
-const TabPendulum = React.lazy(importTabPendulum);
-const TabModels = React.lazy(importTabModels);
-const TabCadPcb = React.lazy(importTabCadPcb);
-const TabSysId = React.lazy(importTabSysId);
-const TabEskf = React.lazy(importTabEskf);
-const TabLinkHealth = React.lazy(importTabLinkHealth);
-const TabBoard = React.lazy(importTabBoard);
-
-/** Fetch a tab's chunk before it is opened. The runner has none: it is imported statically. */
-const TAB_PREFETCH: Record<string, () => Promise<unknown>> = {
-  'tab-arch': importTabArchitecture,
-  'tab-placement': importTabPlacementQuiz,
-  'tab-bode': importTabBode,
-  'tab-foc': importTabFOC,
-  'tab-pend': importTabPendulum,
-  'tab-models': importTabModels,
-  'tab-cadpcb': importTabCadPcb,
-  'tab-sysid': importTabSysId,
-  'tab-eskf': importTabEskf,
-  'tab-board': importTabBoard,
-  'tab-links': importTabLinkHealth,
-};
-
-function prefetchTab(tabId: string): void {
-  void TAB_PREFETCH[tabId]?.();
-}
 import { PresetRequest, tabForPreset } from './demoPresets';
 import type { SignUpOutcome } from './components/AccountPanel';
 import {
@@ -149,7 +98,7 @@ import { actionForEvent } from './keymap';
 import { useKeymap } from './useKeymap';
 import { ThemeTokens } from './components/ThemeTokens';
 import { themeViewFromLocation, themeViewSearch } from './themeRoute';
-import { PYTHON_TAB_NAME, TAB_NAMES, labsSwitchLabel } from './tabNames';
+import { PYTHON_TAB_NAME, labsSwitchLabel } from './tabNames';
 import { APP_VERSION } from './appVersion';
 import { isKnownLesson, lessonIdFromLocation } from './lessonRoute';
 import { readSharedAttempt, type SharedAttempt } from './shareLink';
@@ -169,35 +118,22 @@ import { lessonIdOf, type PaletteItem, type PaletteMode } from './palette';
 import { paletteCatalog } from './paletteCatalog';
 import {
   ActiveTierPass,
+  hasTierGuide,
   LEVEL_0_STEPS,
   TIER_1_LINEAR_PASS,
   TIER_2_LINEAR_PASS,
   TIER_3_LINEAR_PASS,
 } from './curriculumData';
 import {
-  Activity,
-  Bot,
   Check,
-  Code2,
-  Compass,
   Copy,
-  CircuitBoard,
-  Cpu,
   Download,
   FlaskConical,
-  Gauge,
   GraduationCap,
-  LineChart,
-  Link2,
-  Map as MapIcon,
   Maximize2,
   Minimize2,
-  Radar,
-  Sparkles,
   X,
-  Zap,
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 
 /**
  * The three whole-screen views. The account panel, the learner dashboard and the admin area are
@@ -263,22 +199,6 @@ function workspaceReportLine(report: WorkspaceSyncReport): string {
   const stored = report.stored ? '' : ' This browser refused the write — the account still has the merged copy.';
   return `${arrived}${kept}${stored}`;
 }
-
-/** One glyph per tab, so the rail can be scanned by shape as well as by name. */
-const TAB_ICONS: Record<TabId, LucideIcon> = {
-  'tab-arch': MapIcon,
-  'tab-pyodide': Code2,
-  'tab-placement': Compass,
-  'tab-bode': Activity,
-  'tab-foc': Zap,
-  'tab-pend': Gauge,
-  'tab-models': Bot,
-  'tab-cadpcb': Cpu,
-  'tab-sysid': LineChart,
-  'tab-eskf': Radar,
-  'tab-board': CircuitBoard,
-  'tab-links': Link2,
-};
 
 const TOUR_STEPS: TourStepInfo[] = [
   {
@@ -362,126 +282,6 @@ function localSnapshot(): ProgressSnapshot {
 
 export type WorkbenchViewMode = 'beginner' | 'advanced';
 
-export interface WorkbenchTabMeta {
-  id: TabId;
-  beginnerLabel: string;
-  /** The plain-English second line in Beginner View; keep acronyms out of it. */
-  beginnerSubtitle: string;
-  technicalLabel: string;
-  technicalSubtitle: string;
-  isBeginnerCore: boolean;
-}
-
-export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
-  {
-    id: 'tab-arch',
-    beginnerLabel: TAB_NAMES['tab-arch'],
-    beginnerSubtitle: 'Four passes, and the practice each step asks for',
-    technicalLabel: 'Linear Tier Roadmap (Tracks 00→08)',
-    technicalSubtitle: 'Track P · Stage 0 · Depths 1–3 Matrix',
-    isBeginnerCore: true,
-  },
-  {
-    id: 'tab-pyodide',
-    beginnerLabel: `${PYTHON_TAB_NAME} (${PYTHON_LESSONS.length} lessons & exercises)`,
-    beginnerSubtitle: 'Write code, press Run, see what passes',
-    technicalLabel: 'In-Browser Python Runner (Pyodide WASM)',
-    technicalSubtitle: 'Pyodide WASM · 3-Step Hints · Asserts',
-    isBeginnerCore: true,
-  },
-  {
-    id: 'tab-placement',
-    beginnerLabel: `${TAB_NAMES['tab-placement']} (Skip What You Know)`,
-    beginnerSubtitle: 'Find the right starting step',
-    technicalLabel: 'Prerequisite Placement Quiz',
-    technicalSubtitle: '8 Module Skip-Gate Checkpoints',
-    isBeginnerCore: true,
-  },
-  {
-    id: 'tab-bode',
-    beginnerLabel: TAB_NAMES['tab-bode'],
-    beginnerSubtitle: 'Watch a vibration fade with a filter',
-    technicalLabel: 'Two-Mass Resonance & Notch Bode (Lab 00/05)',
-    technicalSubtitle: 'Two-Mass Bode · Biquad Notch Filter',
-    isBeginnerCore: true,
-  },
-  {
-    id: 'tab-foc',
-    beginnerLabel: TAB_NAMES['tab-foc'],
-    beginnerSubtitle: 'Make a motor spin smoothly',
-    technicalLabel: '25 kHz PMSM FOC & SVPWM (Lab 01/03)',
-    technicalSubtitle: '3-Phase BLDC · d-q FOC · SVPWM',
-    isBeginnerCore: true,
-  },
-  {
-    id: 'tab-pend',
-    beginnerLabel: TAB_NAMES['tab-pend'],
-    beginnerSubtitle: 'Balance a pendulum without falling',
-    technicalLabel: 'Furuta Pendulum + LQR + CBF (Lab 02/05)',
-    technicalSubtitle: 'PID/LQR Balance · CBF Safety Filter',
-    isBeginnerCore: true,
-  },
-  {
-    id: 'tab-models',
-    beginnerLabel: TAB_NAMES['tab-models'],
-    beginnerSubtitle: 'Move a robot arm to a point',
-    technicalLabel: 'URDF/MuJoCo Inspector & STO Safety (Lab 07/08)',
-    technicalSubtitle: 'Forward/Inverse Kinematics · <1 μs STO',
-    isBeginnerCore: false,
-  },
-  {
-    id: 'tab-cadpcb',
-    beginnerLabel: TAB_NAMES['tab-cadpcb'],
-    beginnerSubtitle: 'See the parts and the motor board',
-    technicalLabel: '3D CAD Parts & 48V/30A FOC PCB BOM',
-    technicalSubtitle: 'STEP Flexures · Parasitic Inductance',
-    isBeginnerCore: false,
-  },
-  {
-    id: 'tab-sysid',
-    beginnerLabel: TAB_NAMES['tab-sysid'],
-    beginnerSubtitle: 'Measure how a machine responds',
-    technicalLabel: 'Schroeder Multisine Closed-Loop SysID (Lab 07)',
-    technicalSubtitle: 'Frequency-Domain Plant Identification',
-    isBeginnerCore: false,
-  },
-  {
-    id: 'tab-eskf',
-    beginnerLabel: TAB_NAMES['tab-eskf'],
-    beginnerSubtitle: 'Combine two motion sensors',
-    technicalLabel: '6-DOF Attitude ESKF & RTOS SeqLock (Lab 04/05)',
-    technicalSubtitle: 'IMU Gyro/Accel Fusion · WaitFreeSeqLock',
-    isBeginnerCore: false,
-  },
-  {
-    id: 'tab-board',
-    beginnerLabel: `${TAB_NAMES['tab-board']} (Arduino Uno)`,
-    beginnerSubtitle: 'Run the compiled C sketch and watch its serial',
-    technicalLabel: 'ATmega328P Emulator (avr8js) · Compiled Sketch',
-    technicalSubtitle: 'Committed .hex · USART Monitor · Cycle Budget',
-    isBeginnerCore: false,
-  },
-  {
-    id: 'tab-links',
-    beginnerLabel: `${TAB_NAMES['tab-links']} (Nightly Check)`,
-    beginnerSubtitle: 'See which outside links still work',
-    technicalLabel: 'Link Check History & Not-Checked Trend',
-    technicalSubtitle: 'Blocked / Unreachable Citations · Run Timeline',
-    isBeginnerCore: false,
-  },
-];
-
-/**
- * Home's launcher, built from the registry the rail renders (`components/home/LabsPanel.tsx`). A
- * tab added to `WORKBENCH_TABS` is on Home with no second list to edit, icons included.
- */
-export const HOME_LABS = WORKBENCH_TABS.map((tab) => ({
-  id: tab.id,
-  label: tab.beginnerLabel,
-  blurb: tab.beginnerSubtitle,
-  Icon: TAB_ICONS[tab.id] ?? Sparkles,
-}));
-
 // The document itself lives in its own module so a unit suite can pin it without React; this stays
 // exported because the smoke suite and the modal have always imported it from here.
 export { buildPortfolioMarkdown } from './portfolio';
@@ -545,6 +345,10 @@ export const App: React.FC = () => {
   // A newcomer arrives to run the first lesson, not to read the advanced roadmap: open the Python
   // runner by default. The roadmap tab is still one click away for anyone who wants the map.
   const [activeTab, setActiveTab] = useState<TabId>('tab-pyodide');
+  // A workflow card cites a part by id; this is the request that opens Project Mode on it. The
+  // nonce makes a second press on the same badge a second ask, like the runner's lesson request.
+  const [projectRequest, setProjectRequest] = useState<{ id: string; nonce: number } | null>(null);
+  const [requirementRequest, setRequirementRequest] = useState<{ id: string; nonce: number } | null>(null);
   const [tourIndex, setTourIndex] = useState<number>(0);
   const [isCheatSheetOpen, setIsCheatSheetOpen] = useState<boolean>(false);
   // `⌘K` is the keyboard's table of contents: one dialog over lessons, tabs and commands. `⌘P` and
@@ -1121,6 +925,20 @@ export const App: React.FC = () => {
     setLessonRequest({ id, nonce: Date.now() });
   };
 
+  /** A workflow part badge is a door to the object, by the id the card stores. */
+  const openProjectPart = (componentId: string) => {
+    setActiveTab('tab-project');
+    setHighlightedId(null);
+    setProjectRequest({ id: componentId, nonce: Date.now() });
+  };
+
+  /** The reverse door: a part's requirement opens the register on that requirement. */
+  const openRequirement = (requirementId: string) => {
+    setActiveTab('tab-req');
+    setHighlightedId(null);
+    setRequirementRequest({ id: requirementId, nonce: Date.now() });
+  };
+
   /** A lab card is a door, not a detail panel: the workbench opens on that tab. */
   const openTabFromHome = (id: TabId) => {
     openPage('workbench');
@@ -1509,7 +1327,7 @@ export const App: React.FC = () => {
         id: tab.id,
         label: viewMode === 'beginner' ? tab.beginnerLabel : tab.technicalLabel,
         subtitle: viewMode === 'beginner' ? tab.beginnerSubtitle : tab.technicalSubtitle,
-        Icon: TAB_ICONS[tab.id] ?? Sparkles,
+        Icon: tab.Icon,
       })),
     [viewMode]
   );
@@ -1810,6 +1628,58 @@ export const App: React.FC = () => {
     );
   }
 
+  /** One bag for the tab registry: each entry takes what it needs and nothing here knows which. */
+  const workbenchTabContext: WorkbenchTabContext = {
+    onLoadPreset: handleLoadPreset,
+    highlightedId,
+    presetRequest,
+    beginnerView: viewMode === 'beginner',
+    activeTierPass,
+    onSelectTierPass: setActiveTierPass,
+    completedMilestones,
+    onToggleMilestone: handleToggleMilestone,
+    startHereDismissed,
+    onRestoreStartHere: handleRestoreStartHere,
+    openLesson,
+    lessonAttempts,
+    verifiedLessons,
+    completedLessons,
+    onMarkLessonVerified: handleMarkLessonVerified,
+    onToggleLessonCompleted: handleToggleLessonCompleted,
+    onOpenRoadmap: handleOpenRoadmap,
+    // The placement quiz still numbers its follow-ups by the old simulator order; one table maps
+    // that order to tab ids, so the quiz never stores a tab id itself.
+    switchSimulatorTab: (tabIdx) => {
+      const legacyOrder: TabId[] = [
+        'tab-arch',
+        'tab-bode',
+        'tab-foc',
+        'tab-pend',
+        'tab-models',
+        'tab-cadpcb',
+        'tab-sysid',
+        'tab-eskf',
+        'tab-pyodide',
+        'tab-placement',
+      ];
+      setActiveTab(legacyOrder[tabIdx] || 'tab-arch');
+    },
+    projectFocus: projectRequest,
+    requirementFocus: requirementRequest,
+    openProjectPart,
+    openRequirement,
+    pyodideLessonId,
+    runRequest,
+    formatRequest,
+    tourRequest,
+    reviewRequest,
+    lessonRequest,
+    sharedAttempt,
+    dismissShared: () => setSharedAttempt(null),
+    trySnippet,
+    dismissTry: () => setTrySnippet(null),
+  };
+
   return (
     <div
       id="top"
@@ -1980,7 +1850,7 @@ export const App: React.FC = () => {
               style={{ scrollbarWidth: 'thin', scrollSnapType: 'x proximity' }}
             >
             {visibleTabs.map((tab) => {
-              const Icon = TAB_ICONS[tab.id] ?? Sparkles;
+              const Icon = tab.Icon;
               const isActive = activeTab === tab.id;
               return (
                 <button
@@ -2095,11 +1965,7 @@ export const App: React.FC = () => {
               />
             </div>
           )}
-          {activeTab !== 'tab-arch' &&
-            activeTab !== 'tab-pyodide' &&
-            activeTab !== 'tab-placement' &&
-            activeTab !== 'tab-board' &&
-            activeTab !== 'tab-links' && (
+          {hasTierGuide(activeTab) && (
             <SimulatorTierBanner
               tabId={activeTab}
               activeTierPass={activeTierPass}
@@ -2107,73 +1973,7 @@ export const App: React.FC = () => {
             />
           )}
 
-          {activeTab === 'tab-arch' && (
-            <TabArchitecture
-              onLoadPreset={handleLoadPreset}
-              beginnerView={viewMode === 'beginner'}
-              activeTierPass={activeTierPass}
-              onSelectTierPass={setActiveTierPass}
-              completedMilestones={completedMilestones}
-              verifiedLessons={verifiedLessons}
-              onToggleMilestone={handleToggleMilestone}
-              startHereDismissed={startHereDismissed}
-              onRestoreStartHere={handleRestoreStartHere}
-              onOpenPyodideLesson={openLesson}
-              lessonAttempts={lessonAttempts}
-            />
-          )}
-          {activeTab === 'tab-bode' && <TabBode onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
-          {activeTab === 'tab-foc' && <TabFOC onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
-          {activeTab === 'tab-pend' && <TabPendulum onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
-          {activeTab === 'tab-models' && <TabModels onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
-          {activeTab === 'tab-cadpcb' && <TabCadPcb onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
-          {activeTab === 'tab-sysid' && <TabSysId onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
-          {activeTab === 'tab-eskf' && <TabEskf onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
-          {activeTab === 'tab-board' && <TabBoard />}
-          {activeTab === 'tab-links' && <TabLinkHealth />}
-          {activeTab === 'tab-pyodide' && (
-            // An anchor for the Start here button: it scrolls here rather than opening GitHub.
-            <div id="python-runner" className="scroll-mt-4">
-              <TabPyodideRunner
-                initialLessonId={pyodideLessonId}
-                verifiedLessons={verifiedLessons}
-                completedLessons={completedLessons}
-                onMarkLessonVerified={handleMarkLessonVerified}
-                onToggleLessonCompleted={handleToggleLessonCompleted}
-                onOpenRoadmap={handleOpenRoadmap}
-                runRequest={runRequest}
-                formatRequest={formatRequest}
-                tourRequest={tourRequest}
-                reviewRequest={reviewRequest}
-                lessonRequest={lessonRequest}
-                sharedAttempt={sharedAttempt}
-                onDismissShared={() => setSharedAttempt(null)}
-                trySnippet={trySnippet}
-                onDismissTry={() => setTrySnippet(null)}
-              />
-            </div>
-          )}
-          {activeTab === 'tab-placement' && (
-            <TabPlacementQuiz
-              onOpenPyodideLesson={openLesson}
-              onSwitchSimulatorTab={(tabIdx) => {
-                const legacyOrder: TabId[] = [
-                  'tab-arch',
-                  'tab-bode',
-                  'tab-foc',
-                  'tab-pend',
-                  'tab-models',
-                  'tab-cadpcb',
-                  'tab-sysid',
-                  'tab-eskf',
-                  'tab-pyodide',
-                  'tab-placement',
-                ];
-                const target = legacyOrder[tabIdx] || 'tab-arch';
-                setActiveTab(target);
-              }}
-            />
-          )}
+          {renderTab(activeTab, workbenchTabContext)}
           </React.Suspense>
         </main>
       </div>

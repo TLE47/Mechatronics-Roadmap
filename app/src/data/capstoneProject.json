@@ -1,0 +1,419 @@
+{
+  "schema": "mechalab.project/1",
+  "id": "08-capstone1-foc-eda",
+  "source": "08-capstone-projects/eda-capstone1-foc-drive/foc_thermal_and_bom.json",
+  "summary": {
+    "lines": 12,
+    "placements": 27,
+    "costUsd": 40.47
+  },
+  "components": [
+    {
+      "id": "08-capstone1-foc-eda/u1",
+      "refDes": "U1",
+      "qty": 1,
+      "kind": "mcu",
+      "category": "MCU",
+      "mpn": "STM32G474RET6",
+      "description": "170 MHz ARM Cortex-M4F MCU, 512KB Flash, CORDIC math accelerator, 5x 12-bit 4MSPS ADCs",
+      "rating": "3.6V max, -40 to +125 C",
+      "derated": true,
+      "unitCostUsd": 5.85
+    },
+    {
+      "id": "08-capstone1-foc-eda/u2",
+      "refDes": "U2",
+      "qty": 1,
+      "kind": "driver",
+      "category": "Gate Driver",
+      "mpn": "DRV8353RSRGZR",
+      "description": "100V Three-Phase Smart Gate Driver with SPI config and VDS overcurrent protection",
+      "rating": "102V abs max, 1A source / 2A sink",
+      "derated": true,
+      "unitCostUsd": 4.9
+    },
+    {
+      "id": "08-capstone1-foc-eda/q1",
+      "refDes": "Q1,Q2,Q3,Q4,Q5,Q6",
+      "qty": 6,
+      "kind": "power",
+      "category": "Power MOSFET",
+      "mpn": "ISC030N08NM6",
+      "description": "80V N-Channel OptiMOS 6 Power Transistor, RDS(on)=2.5mOhm typ / 3.0mOhm max, Qg=36nC",
+      "rating": "80V VDS, 173A ID, Tj_max=175 C",
+      "derated": true,
+      "unitCostUsd": 1.45
+    },
+    {
+      "id": "08-capstone1-foc-eda/u3",
+      "refDes": "U3,U4,U5",
+      "qty": 3,
+      "kind": "sensor",
+      "category": "Current Sense Amplifier",
+      "mpn": "INA240A2PWR",
+      "description": "80V Common-Mode, Bidirectional Zero-Drift Inline Current Sense Amp, Gain=50 V/V, Enhanced PWM Rejection",
+      "rating": "-4V to +80V CM, 400 kHz BW",
+      "derated": true,
+      "unitCostUsd": 1.95
+    },
+    {
+      "id": "08-capstone1-foc-eda/r-sh-a",
+      "refDes": "R_SH_A,R_SH_B,R_SH_C",
+      "qty": 3,
+      "kind": "passive",
+      "category": "Kelvin Shunt Resistor",
+      "mpn": "CSS2H-2512R-1L00F",
+      "description": "1.0 mOhm 1% 3W 4-Terminal Kelvin Metal Element Current Sense Shunt, TCR < 50 ppm/K",
+      "rating": "3.0W continuous @ 70 C",
+      "derated": true,
+      "unitCostUsd": 0.68
+    },
+    {
+      "id": "08-capstone1-foc-eda/u6",
+      "refDes": "U6",
+      "qty": 1,
+      "kind": "sensor",
+      "category": "Magnetic Encoder",
+      "mpn": "MA732GQ-Z",
+      "description": "16-Bit Digital Contactless Angle Sensor with 16 MHz SPI & ABZ Incremental Outputs",
+      "rating": "3.6V max, -40 to +125 C",
+      "derated": true,
+      "unitCostUsd": 4.1
+    },
+    {
+      "id": "08-capstone1-foc-eda/u7",
+      "refDes": "U7",
+      "qty": 1,
+      "kind": "interface",
+      "category": "CAN-FD Transceiver",
+      "mpn": "TCAN1044VDRBRQ1",
+      "description": "Automotive 8 Mbps CAN-FD Transceiver with 1.8V-3.3V VIO and +/-58V Bus Fault Protection",
+      "rating": "+/-58V bus fault, 8 Mbps data rate",
+      "derated": true,
+      "unitCostUsd": 1.15
+    },
+    {
+      "id": "08-capstone1-foc-eda/u8",
+      "refDes": "U8",
+      "qty": 1,
+      "kind": "supply",
+      "category": "DC-DC Buck Converter",
+      "mpn": "LM5164DDAR",
+      "description": "100V Input, 1A Synchronous Buck Converter, Ultra-Low IQ",
+      "rating": "6V to 100V VIN, 1A IOUT",
+      "derated": true,
+      "unitCostUsd": 2.2
+    },
+    {
+      "id": "08-capstone1-foc-eda/u9",
+      "refDes": "U9",
+      "qty": 1,
+      "kind": "supply",
+      "category": "Low-Noise 3.3V LDO",
+      "mpn": "TPS7A2033PDBVR",
+      "description": "300mA Ultra-Low-Noise (6.5 uVrms) LDO Regulator for Analog & MCU Supply",
+      "rating": "6.0V VIN max, 300 mA",
+      "derated": true,
+      "unitCostUsd": 0.48
+    },
+    {
+      "id": "08-capstone1-foc-eda/u10",
+      "refDes": "U10",
+      "qty": 1,
+      "kind": "protection",
+      "category": "STO Safety Gate Buffer",
+      "mpn": "SN74LVC2G08DCUR",
+      "description": "Dual-Channel Hardware Safe Torque Off (STO_A & STO_B) Gate-Enable Interlock",
+      "rating": "5.5V max, t_pd = 3.2 ns",
+      "derated": true,
+      "unitCostUsd": 0.22
+    },
+    {
+      "id": "08-capstone1-foc-eda/c-hf1-c-hf6",
+      "refDes": "C_HF1..C_HF6",
+      "qty": 6,
+      "kind": "passive",
+      "category": "High-Freq Decoupling MLCC",
+      "mpn": "GCM32ER72A225KA37L",
+      "description": "2.2 uF 100V X7R Ceramic Capacitor placed <1.5 mm from half-bridge MOSFET drain-source",
+      "rating": "100V DC X7R",
+      "derated": true,
+      "unitCostUsd": 0.38
+    },
+    {
+      "id": "08-capstone1-foc-eda/c-bulk1",
+      "refDes": "C_BULK1,C_BULK2",
+      "qty": 2,
+      "kind": "passive",
+      "category": "Hybrid Polymer Bulk Cap",
+      "mpn": "EEH-ZA1K470P",
+      "description": "47 uF 80V Low-ESR (28 mOhm) Conductive Polymer Hybrid Aluminum Electrolytic Capacitor",
+      "rating": "80V DC, 2.1A ripple current",
+      "derated": true,
+      "unitCostUsd": 1.35
+    }
+  ],
+  "requirements": [
+    {
+      "id": "08-capstone1-foc-eda/req-therm-01",
+      "ref": "REQ-THERM-01",
+      "kind": "thermal",
+      "title": "Stay cool at full load",
+      "statement": "At 48 V and 15 A_rms the MOSFET junction settles at 90.92 °C, under the 125 °C limit.",
+      "partIds": [
+        "08-capstone1-foc-eda/q1",
+        "08-capstone1-foc-eda/u2",
+        "08-capstone1-foc-eda/c-hf1-c-hf6",
+        "08-capstone1-foc-eda/c-bulk1"
+      ]
+    },
+    {
+      "id": "08-capstone1-foc-eda/req-therm-02",
+      "ref": "REQ-THERM-02",
+      "kind": "thermal",
+      "title": "Survive a current burst",
+      "statement": "A 30 A burst lasting 1 s raises the junction to 100.81 °C, still under the 125 °C limit.",
+      "partIds": [
+        "08-capstone1-foc-eda/q1",
+        "08-capstone1-foc-eda/u2"
+      ]
+    },
+    {
+      "id": "08-capstone1-foc-eda/req-elec-01",
+      "ref": "REQ-ELEC-01",
+      "kind": "electrical",
+      "title": "Convert power efficiently",
+      "statement": "Drive losses total 6.21 W, so the inverter keeps 99.11 % efficiency at full load against a 97 % floor.",
+      "partIds": [
+        "08-capstone1-foc-eda/q1",
+        "08-capstone1-foc-eda/u2",
+        "08-capstone1-foc-eda/r-sh-a"
+      ]
+    },
+    {
+      "id": "08-capstone1-foc-eda/req-elec-02",
+      "ref": "REQ-ELEC-02",
+      "kind": "electrical",
+      "title": "Hold the switch-node spike",
+      "statement": "A 30 A turn-off spikes the switch node to 53.12 V, below the 60 V ceiling.",
+      "partIds": [
+        "08-capstone1-foc-eda/q1",
+        "08-capstone1-foc-eda/c-hf1-c-hf6",
+        "08-capstone1-foc-eda/c-bulk1"
+      ]
+    },
+    {
+      "id": "08-capstone1-foc-eda/req-ctrl-01",
+      "ref": "REQ-CTRL-01",
+      "kind": "control",
+      "title": "Drive all three phases",
+      "statement": "6 complementary PWM channels reach the six-FET bridge, one pair per phase.",
+      "partIds": [
+        "08-capstone1-foc-eda/u1",
+        "08-capstone1-foc-eda/u2",
+        "08-capstone1-foc-eda/q1"
+      ]
+    },
+    {
+      "id": "08-capstone1-foc-eda/req-sense-01",
+      "ref": "REQ-SENSE-01",
+      "kind": "sensing",
+      "title": "Measure every phase current",
+      "statement": "3 Kelvin shunt pairs feed the current loop, one per phase, so the control loop sees real current.",
+      "partIds": [
+        "08-capstone1-foc-eda/u3",
+        "08-capstone1-foc-eda/r-sh-a"
+      ]
+    },
+    {
+      "id": "08-capstone1-foc-eda/req-comms-01",
+      "ref": "REQ-COMMS-01",
+      "kind": "interface",
+      "title": "Report to the controller",
+      "statement": "A CAN-FD transceiver carries telemetry and commands off the board (1 fitted).",
+      "partIds": [
+        "08-capstone1-foc-eda/u7",
+        "08-capstone1-foc-eda/u1"
+      ]
+    },
+    {
+      "id": "08-capstone1-foc-eda/req-safe-01",
+      "ref": "REQ-SAFE-01",
+      "kind": "safety",
+      "title": "Cut the bridge in a fault",
+      "statement": "Two independent Safe Torque Off channels can disable the gate driver, so a fault removes drive even if the MCU hangs.",
+      "partIds": [
+        "08-capstone1-foc-eda/u10",
+        "08-capstone1-foc-eda/u2",
+        "08-capstone1-foc-eda/q1"
+      ]
+    },
+    {
+      "id": "08-capstone1-foc-eda/req-reli-01",
+      "ref": "REQ-RELI-01",
+      "kind": "reliability",
+      "title": "Keep every part inside its rating",
+      "statement": "12 of 12 BOM lines pass their derating check against the stress they see.",
+      "partIds": [
+        "08-capstone1-foc-eda/u1",
+        "08-capstone1-foc-eda/u2",
+        "08-capstone1-foc-eda/q1",
+        "08-capstone1-foc-eda/u3",
+        "08-capstone1-foc-eda/r-sh-a",
+        "08-capstone1-foc-eda/u6",
+        "08-capstone1-foc-eda/u7",
+        "08-capstone1-foc-eda/u8",
+        "08-capstone1-foc-eda/u9",
+        "08-capstone1-foc-eda/u10",
+        "08-capstone1-foc-eda/c-hf1-c-hf6",
+        "08-capstone1-foc-eda/c-bulk1"
+      ]
+    },
+    {
+      "id": "08-capstone1-foc-eda/req-cost-01",
+      "ref": "REQ-COST-01",
+      "kind": "budget",
+      "title": "Stay inside the prototype budget",
+      "statement": "The bill of materials totals $40.47 for one board, inside the $50 prototype budget.",
+      "partIds": [
+        "08-capstone1-foc-eda/u1",
+        "08-capstone1-foc-eda/q1",
+        "08-capstone1-foc-eda/u2",
+        "08-capstone1-foc-eda/u6",
+        "08-capstone1-foc-eda/u8"
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "id": "08-capstone1-foc-eda/test-therm-01",
+      "ref": "TEST-THERM-01",
+      "title": "Junction temperature at full load",
+      "method": "Steady-state electro-thermal solve in the EDA report",
+      "check": {
+        "value": 90.92,
+        "unit": "°C",
+        "limit": 125,
+        "direction": "max"
+      },
+      "requirementId": "08-capstone1-foc-eda/req-therm-01"
+    },
+    {
+      "id": "08-capstone1-foc-eda/test-therm-02",
+      "ref": "TEST-THERM-02",
+      "title": "Junction temperature in a burst",
+      "method": "Transient Cauer-ladder pulse solve in the EDA report",
+      "check": {
+        "value": 100.81,
+        "unit": "°C",
+        "limit": 125,
+        "direction": "max"
+      },
+      "requirementId": "08-capstone1-foc-eda/req-therm-02"
+    },
+    {
+      "id": "08-capstone1-foc-eda/test-elec-01",
+      "ref": "TEST-ELEC-01",
+      "title": "Inverter efficiency at full load",
+      "method": "Conduction, switching, dead-time and shunt loss model",
+      "check": {
+        "value": 99.11,
+        "unit": "%",
+        "limit": 97,
+        "direction": "min"
+      },
+      "requirementId": "08-capstone1-foc-eda/req-elec-01"
+    },
+    {
+      "id": "08-capstone1-foc-eda/test-elec-02",
+      "ref": "TEST-ELEC-02",
+      "title": "Switch-node spike at turn-off",
+      "method": "Loop-inductance turn-off model in the EDA report",
+      "check": {
+        "value": 53.12,
+        "unit": "V",
+        "limit": 60,
+        "direction": "max"
+      },
+      "requirementId": "08-capstone1-foc-eda/req-elec-02"
+    },
+    {
+      "id": "08-capstone1-foc-eda/test-ctrl-01",
+      "ref": "TEST-CTRL-01",
+      "title": "Complementary PWM channels",
+      "method": "ERC net count on the gate-drive nets",
+      "check": {
+        "value": 6,
+        "unit": "channels",
+        "limit": 6,
+        "direction": "min"
+      },
+      "requirementId": "08-capstone1-foc-eda/req-ctrl-01"
+    },
+    {
+      "id": "08-capstone1-foc-eda/test-sense-01",
+      "ref": "TEST-SENSE-01",
+      "title": "Kelvin sense pairs",
+      "method": "ERC Kelvin-sense pair count",
+      "check": {
+        "value": 3,
+        "unit": "pairs",
+        "limit": 3,
+        "direction": "min"
+      },
+      "requirementId": "08-capstone1-foc-eda/req-sense-01"
+    },
+    {
+      "id": "08-capstone1-foc-eda/test-comms-01",
+      "ref": "TEST-COMMS-01",
+      "title": "Fitted CAN-FD transceiver",
+      "method": "BOM review against the interface section",
+      "check": {
+        "value": 1,
+        "unit": "transceiver",
+        "limit": 1,
+        "direction": "min"
+      },
+      "requirementId": "08-capstone1-foc-eda/req-comms-01"
+    },
+    {
+      "id": "08-capstone1-foc-eda/test-safe-01",
+      "ref": "TEST-SAFE-01",
+      "title": "Safe Torque Off channels",
+      "method": "ERC dual-channel STO verification",
+      "check": {
+        "value": 2,
+        "unit": "channels",
+        "limit": 2,
+        "direction": "min"
+      },
+      "requirementId": "08-capstone1-foc-eda/req-safe-01"
+    },
+    {
+      "id": "08-capstone1-foc-eda/test-reli-01",
+      "ref": "TEST-RELI-01",
+      "title": "Derated BOM lines",
+      "method": "Per-line derating review in the EDA report",
+      "check": {
+        "value": 12,
+        "unit": "lines",
+        "limit": 12,
+        "direction": "min"
+      },
+      "requirementId": "08-capstone1-foc-eda/req-reli-01"
+    },
+    {
+      "id": "08-capstone1-foc-eda/test-cost-01",
+      "ref": "TEST-COST-01",
+      "title": "Prototype BOM cost",
+      "method": "BOM costing in the EDA report",
+      "check": {
+        "value": 40.47,
+        "unit": "USD",
+        "limit": 50,
+        "direction": "max"
+      },
+      "requirementId": "08-capstone1-foc-eda/req-cost-01"
+    }
+  ]
+}

@@ -1,10 +1,9 @@
 import React from 'react';
-import { ActiveTierPass, SIMULATOR_TIER_GUIDES } from '../curriculumData';
-import { TabId } from '../types';
+import { ActiveTierPass, SIMULATOR_TIER_GUIDES, type SimulatorTabId } from '../curriculumData';
 import { Layers, ArrowUpRight } from 'lucide-react';
 
 interface SimulatorTierBannerProps {
-  tabId: Exclude<TabId, 'tab-arch' | 'tab-pyodide' | 'tab-placement' | 'tab-links' | 'tab-board'>;
+  tabId: SimulatorTabId;
   activeTierPass: ActiveTierPass;
   onSelectTierPass: (pass: ActiveTierPass) => void;
 }

@@ -105,6 +105,8 @@ export interface WorkflowEdgesProps {
   onEdgeGuard: (edgeId: string, guard: string) => void;
   onEdgePort: (edgeId: string, end: 'from' | 'to', kind: PortKind | null) => void;
   onEdgeRoute: (edgeId: string, route: EdgeRoute) => void;
+  /** Arrows the simulation has followed: drawn in the run colour, over their own kind's line. */
+  taken: ReadonlySet<string>;
 }
 
 export function WorkflowEdges({
@@ -122,6 +124,7 @@ export function WorkflowEdges({
   onEdgeGuard,
   onEdgePort,
   onEdgeRoute,
+  taken,
 }: WorkflowEdgesProps) {
   // Escape closes the inspector wherever focus is: it is the same "put that away" key as the pending
   // arrow's, and a panel of six buttons with no visible way out is a trap on a phone.
@@ -178,21 +181,35 @@ export function WorkflowEdges({
               <path d="M 0 0 L 8 4 L 0 8 z" fill={EDGE_STYLE[type].color} />
             </marker>
           ))}
+          <marker
+            id="workflow-arrow-run"
+            viewBox="0 0 8 8"
+            refX="7"
+            refY="4"
+            markerWidth="7"
+            markerHeight="7"
+            orient="auto-start-reverse"
+          >
+            <path d="M 0 0 L 8 4 L 0 8 z" fill="var(--emerald)" />
+          </marker>
         </defs>
-        {drawn.map(({ edge, index, a, b, type, route }) => (
-          <g key={edge.id} data-testid={`workflow-edge-${index}`}>
-            <path
-              data-route={route}
-              d={edgePath(a, edge.fromSide, b, edge.toSide, route)}
-              fill="none"
-              stroke={EDGE_STYLE[type].color}
-              strokeWidth={EDGE_STYLE[type].width}
-              strokeOpacity={EDGE_STYLE[type].opacity}
-              strokeDasharray={EDGE_STYLE[type].dash}
-              markerEnd={`url(#workflow-arrow-${type})`}
-            />
-          </g>
-        ))}
+        {drawn.map(({ edge, index, a, b, type, route }) => {
+          const followed = taken.has(edge.id);
+          return (
+            <g key={edge.id} data-testid={`workflow-edge-${index}`} data-run-taken={followed ? 'true' : undefined}>
+              <path
+                data-route={route}
+                d={edgePath(a, edge.fromSide, b, edge.toSide, route)}
+                fill="none"
+                stroke={followed ? 'var(--emerald)' : EDGE_STYLE[type].color}
+                strokeWidth={EDGE_STYLE[type].width + (followed ? 0.8 : 0)}
+                strokeOpacity={followed ? 1 : EDGE_STYLE[type].opacity}
+                strokeDasharray={EDGE_STYLE[type].dash}
+                markerEnd={`url(#workflow-arrow-${followed ? 'run' : type})`}
+              />
+            </g>
+          );
+        })}
         {linkSource && linking && (
           <path
             data-testid="workflow-edge-pending"

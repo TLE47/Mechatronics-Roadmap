@@ -51,6 +51,10 @@ export async function runSmokeTests(viteServer) {
   const vite =
     viteServer ??
     (await createServer({
+      // The project config, not a blank one: the app imports `virtual:theme-tokens`, which only
+      // `vite.config.ts` defines. A server without it fails at `App.tsx` before a single check runs,
+      // and the failure looks like the app being broken rather than the harness missing a plugin.
+      configFile: path.join(repoRoot, 'vite.config.ts'),
       root: path.join(repoRoot, 'app'),
       define: { __APP_VERSION__: JSON.stringify(releaseVersion) },
       server: { middlewareMode: true },
@@ -393,7 +397,7 @@ export async function runSmokeTests(viteServer) {
     // Switch to Advanced View via localStorage and verify all 12 technical tabs render
     globalThis.localStorage.setItem(STORAGE_KEY_VIEW_MODE, 'advanced');
     const htmlAdvanced = cleanSsr(ReactDOMServer.renderToString(React.createElement(App)));
-    assert.equal(WORKBENCH_TABS.length, 12, 'WORKBENCH_TABS must define all 12 tabs');
+    assert.equal(WORKBENCH_TABS.length, 14, 'WORKBENCH_TABS must define all 14 tabs');
     for (const tab of WORKBENCH_TABS) {
       assert(
         htmlAdvanced.includes(`data-testid="tab-btn-${tab.id}"`),

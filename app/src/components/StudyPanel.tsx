@@ -23,7 +23,8 @@ import {
 } from '../sittingClock';
 import { DAY_MS, type Grade } from '../fsrs';
 import { InlineMarkdown } from './InlineMarkdown';
-import { workflowToMarkdown, workflowSummary } from '../workflow';
+import { workflowToMarkdown } from '../workflow';
+import { workflowSummary } from '../workflowValidation';
 import { readWorkflow } from '../workflowStore';
 
 /**

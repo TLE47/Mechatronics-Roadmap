@@ -69,6 +69,22 @@ export const GUST_GAIN = 1.55;
  */
 export const BED_TRIM = 0.22;
 /**
+ * The master's own headroom: −3 dB below unity.
+ *
+ * The limiter is still the last thing before the speakers, but a fast interface plus a verdict at the
+ * same instant arrives at the master first — a fixed 0.7 leaves the limiter something to catch instead
+ * of a mixer that already summed to unity.
+ */
+export const MASTER_HEADROOM = 0.7;
+/**
+ * The music bus's smoothing filter, in Hz.
+ *
+ * The beds are looped audio, and a lo-fi cut or a synth arpeggio can carry digital sizzle above this;
+ * a gentle low-pass on the music path alone keeps the room and the cues untouched. 9 kHz is above the
+ * fundamentals a learner is listening for and below the hash the encoders leave behind.
+ */
+export const MUSIC_LOWPASS_HZ = 9000;
+/**
  * How many decoded tapes the engine keeps alive.
  *
  * Every visited tape stays looping at zero gain, so switching back is instant instead of a second
@@ -104,6 +120,10 @@ export interface SoundDebug {
   clicks: boolean;
   /** Which tape the learner asked for: a catalogue id, or `drone`. */
   tape: string;
+  /** The music path's low-pass corner, so a browser suite can prove the filter is wired. */
+  lowpassHz: number;
+  /** The master's fixed headroom, so the mixer's ceiling is inspectable rather than implied. */
+  headroom: number;
 }
 
 export interface EngineOptions {
@@ -256,6 +276,7 @@ export class SoundEngine {
   private master: GainNode | null = null;
   private limiter: DynamicsCompressorNode | null = null;
   private musicBus: GainNode | null = null;
+  private musicFilter: BiquadFilterNode | null = null;
   private roomBus: GainNode | null = null;
   private duck: GainNode | null = null;
   private sfxBus: GainNode | null = null;
@@ -460,6 +481,8 @@ export class SoundEngine {
       musicSource: this.musicSource,
       clicks: this.clicks,
       tape: this.tape,
+      lowpassHz: this.musicFilter?.frequency.value ?? MUSIC_LOWPASS_HZ,
+      headroom: MASTER_HEADROOM,
     };
   }
 
@@ -487,7 +510,15 @@ export class SoundEngine {
     duck.connect(master);
 
     const musicBus = ctx.createGain();
-    musicBus.connect(duck);
+    // The one filter on the mixer: the music path only, so the room and the cues keep their air. The
+    // low-pass sits after the bus (the learner's fader) and before the duck, so a run quietens the
+    // filtered signal and nothing re-introduces the sizzle the filter just removed.
+    const musicFilter = ctx.createBiquadFilter();
+    musicFilter.type = 'lowpass';
+    musicFilter.frequency.value = MUSIC_LOWPASS_HZ;
+    musicFilter.Q.value = 0.7;
+    musicBus.connect(musicFilter);
+    musicFilter.connect(duck);
 
     // The room is its own bus under the duck, so the Room fader is independent of the music bed's.
     const roomBus = ctx.createGain();
@@ -581,6 +612,7 @@ export class SoundEngine {
     this.limiter = limiter;
     this.duck = duck;
     this.musicBus = musicBus;
+    this.musicFilter = musicFilter;
     this.roomBus = roomBus;
     this.sfxBus = sfxBus;
     this.labBed = labBed;
@@ -631,7 +663,7 @@ export class SoundEngine {
     const sceneFactor = this.scene === 'focus' ? FOCUS_GAIN : 1;
     const duckFactor = this.ducked ? DUCK_GAIN : 1;
     const mix = roomMix(this.scene, this.ducked);
-    ramp(this.master.gain, this.levels.on ? 1 : 0, at, seconds);
+    ramp(this.master.gain, this.levels.on ? MASTER_HEADROOM : 0, at, seconds);
     ramp(this.duck.gain, duckFactor, at, seconds);
     ramp(this.musicBus.gain, this.levels.music * sceneFactor * 0.9, at, seconds);
     ramp(this.sfxBus.gain, this.levels.sfx, at, seconds);

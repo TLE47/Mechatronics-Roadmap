@@ -16,6 +16,345 @@ flowchart LR
 
 ---
 
+## [2026-10-31] — One declaration for every project object kind
+
+**The kind declaration was split by concern, and the read stopped naming kinds.**
+`app/src/projectKinds.ts` is model only: each entry carries its collection, strict reader, matcher
+and groups; the generic list and lookup live in `projectQueries.ts` beside it. `readProject` fills a
+collection map in declaration order with one `seen` set, so a requirement can still cite a part read
+before it and a test can name a requirement; `projectObjects` and `resolveProjectObject` accept the
+table a caller passes. Presentation moved to `projectPresentation.ts` (label, plural, door) and
+`projectRows.ts` (row and browse copy, lazy views); the badge glyph is a three-line map on the one
+card that draws it. `projectObjectKind` is a string, not a union, so a kind is data rather than a
+second type edit. The old “one entry” claim is replaced by the real cost table in
+`docs/PROJECT_MODEL.md`: model-only one entry; a chip adds a words entry and a glyph line; a list
+adds row/browse entries; typed screen access adds one field to `EngineeringProject`.
+
+**A fourth kind is proven, not asserted.** `test:project` registers a fault kind, reads it through
+the generic path, checks duplicate-id refusal across kinds, search, groups, resolution, the badge
+fallback and a custom door — without editing `projectModel.ts`. The same suite pins the three real
+kinds' words, rows, doors and glyphs.
+
+**The deletion pass.** The helpers that one surface used are gone: `requirementsForPart` (the view
+filters the requirement list it already holds) and `objectById` (a second list lookup beside
+`findProjectObject`). `partsForRequirement` stays, compacted to one predicate, because it is not a
+duplicate: it prints a requirement's parts in citation order, and the generated citations are not
+BOM order (REQ-THERM-01 cites Q1 before U2), so replacing it with a component filter would have
+silently reordered the register's part list. `test:project` now pins that order. The single-use `ProjectCollections`
+interface folded into `EngineeringProject`; `ComponentKindMeta` and the `PROJECT_ROWS` registry are
+no longer exported, and `test:project` now checks the public `projectRow` instead of the map. The
+stale `projectIcons.ts` references in these docs are corrected: the badge glyph lives on the card
+that draws it. No module merge was justified — `projectRef` (reference shape), `projectPresentation`
+(entry-safe words and doors), `projectRows` (lazy rows and browse copy), `projectQueries` (pure
+questions) and `projectRead`/`projectVocabulary`/`projectStatus` (read primitives, buckets, derived
+rules) each carry a constraint the others must not: only the last three may be imported by the
+Node generator, and only the lazy views may import rows. The cut recovered 0.0 kB to the tenth the
+budget reports (`js_gzip` stays 976.5 kB, 2.5 kB under), because it removed helpers rather than a
+chunk; behaviour, ids, testids, generated data and both screens are unchanged.
+
+**The entry chunk got the bytes back.** The citation picker is a lazy component
+(`components/workflow/ProjectObjectPicker.tsx`): the generated 32-object list and its words load on
+the first selected card, not on first paint; the canvas imports the object list in its own lazy
+chunk. The requirement and test readers and browse copy stay in the lazy tab chunks. Signed-in
+`entry_gzip` 572.7 → **571.7 kB** of 578 (969 B under the pre-refactor mark), `js_gzip` 975.9 →
+**976.5 kB** of 979 (2.5 kB left; the lazy picker chunk is emitted bytes), largest 386.6 → 383.1 kB
+of 390, total 3,698,546 of 3,790,000. **No ceiling moved.**
+
+**Nothing a learner sees moved.** The document, every id, the generated object table, the picker
+groups, every testid, the row copy and the two views are the same; the picker now arrives with the
+first selection instead of with the page. `test:project` 26/26, `test:workflow` 108/108, `test:e2e`
+53 ok, `check:snapshot` 64 surfaces, `check:weight` PASS; `check_all` 37/37 and `tsc` 0 on the final tree.
+
+## [2026-10-31] — Tests: a requirement's number becomes an object
+
+**A requirement's verification is no longer prose.** `ProjectRequirement` lost its `method` and
+`check`; the measurement is a third object, `ProjectTest`, with a stable `TEST-*` id
+(`08-capstone1-foc-eda/test-therm-01`), one measured value, one limit, one direction, the method that
+produced it and the `requirementId` it judges. Both are derived from the same EDA report in
+`verificationFromReport`, so there is one record of each number; the strict read refuses a
+requirement with no test, a test whose requirement does not exist, a duplicate or foreign id, a
+non-`TEST-*` reference and a bad check. `testPasses` and `requirementPasses` are the derived-status
+rules: a test passes on the right side of its own limit (boundary included), and a requirement is met
+only when every test that judges it passes — no test is no evidence.
+
+**The existing views now say how and whether.** The register row names the requirement and its test,
+and the detail card has a verification block with the measured actual against its own limit, the
+pass state and the method. Project Mode's part detail prints each cited requirement's test reference
+and derived status. A card can cite a test through the same `projectRef` picker, badge, clipboard and
+both exports; pressing the test badge opens the register on the requirement it judges, with the test
+row marked. No tab, no second reference syntax and no copy of the measured value was added.
+
+**Measured.** `test:project` 22 → 23 checks (the report values now on tests, boundary rules, every-
+requirement-judged, one miss fails, and the malformed test shapes). `test:workflow` 107 → 108 (a test
+id through the clipboard and both exports). Signed-in `entry_gzip` 571.8 → **572.7 kB** of 575;
+`js_gzip` 973.3 → **975.1 kB** of 976 (**851 B left**); largest 383.2 → **384.1 kB** of 390; total
+3.70 MB of 3.79. No ceiling moved. `npm run test:e2e` cites a test on a card, presses its badge into
+the register, reads `90.92 °C ≤ 125 °C · pass`, then remounts and reloads with the citation intact.
+
+## [2026-10-31] — One reference for every project object
+
+**The card citation stopped being part-only.** `WorkflowNode.componentId` is now `projectRef`, and
+the field holds any project object id — `08-capstone1-foc-eda/u1` or
+`08-capstone1-foc-eda/req-therm-01` — with no second syntax and no stored kind. The reference
+vocabulary (the two kinds, their labels, the one missing-object sentence) lives in
+`app/src/projectRef.ts`; the model builds the list with `projectObjects` and resolves any id with
+`resolveProjectObject`. `npm run gen:project` now writes `app/src/data/capstoneObjects.json`
+(ids, kinds and labels) instead of the parts-only picker, so the workflow chunk still does not parse
+the project document, and `npm run test:project` compares the two lists object for object.
+
+**The picker, the badge and the door speak the same id.** The inspector's one Project picker groups
+Parts and Requirements; a requirement badge prints `REQ-THERM-01 · Stay cool at full load` with a
+checklist glyph; pressing any badge resolves the id's kind and opens that kind's view on the exact
+row (`openProjectObject`). A dangling id keeps its option and is named with
+`missingProjectObject`, the same sentence Project Mode and the register now print. `npm run
+test:e2e` cites `req-therm-01` on a card, copies and pastes the card, presses its badge into the
+register, follows its Q1 link back into Project Mode, remounts the panel and reloads the page with
+the citation intact.
+
+**Old documents and clips still read.** `readNode` accepts `componentId` when `projectRef` is absent
+and writes only `projectRef`; `pasteCard` does the same for a clipboard taken by the previous build.
+Both exports now print `%% project n…` / `- project: …`; `test:workflow` pins the legacy read, the
+precedence of the current field, the migration on annotate and paste, and the two exports.
+
+## [2026-10-31] — Requirements: the model's second object type
+
+**A requirement is now an object with an id.** `projectModel.ts` carries ten `requirements`, each
+with a stable `<project>/<ref>` id, a kind, a measured value, its limit and the `partIds` that meet
+it. They are derived from the capstone's own EDA report by `requirementsFromReport` — the junction
+temperature, the pulse temperature, efficiency, turn-off spike, the ERC pair/channel counts, the
+derating verdict and the BOM total — so a design change moves the sentence and the test that pins
+it. The reader refuses a requirement that cites a part no component has, a duplicate id, a ref that
+is not `REQ-*`, an unknown kind or a missing list; `npm run test:project` proves each value against
+the report field it came from.
+
+**The register is a lazy tab, and the link works both ways.** `TabRequirements` lists the ten by
+kind, searches by reference, words, kind or a cited part's designation/part number, and shows the
+value against its limit with a pass/miss mark. Every cited part is a door: pressing it opens Project
+Mode on that part's id, and Project Mode's detail card now lists the requirements that cite the part
+it shows — pressing one opens the register on that requirement. `npm run test:e2e` drives the round
+trip U1 → REQ-CTRL-01 → U2 in Chromium, and the tab is recorded in `docs/surface-snapshot.json`.
+
+**One registry entry per tab.** The six edits a new tab used to need (a dynamic import, a
+`React.lazy` const, a prefetch map, an icon map, a metadata block and a render line) are one entry
+in [`app/src/tabRegistry.tsx`](app/src/tabRegistry.tsx): id, labels, icon, chunk loader and render.
+`App.tsx` asks the registry for the active tab; `scripts/check_tab_names.py` reads the same entries
+for the shared names. Adding this tab cost one entry, its `TabId` and its name.
+
+**The first paint got smaller while the tab was added.** The workflow's part picker used to call
+`readProject` at import time, which put the whole model on the first-screen chunk; `npm run
+gen:project` now also writes `app/src/data/capstoneParts.json` (ids and labels) and the picker reads
+that as data. Signed-in `entry_gzip` 573.3 → **571.8 kB**; `js_gzip` 967.7 → **973.3 kB** against a
+ceiling moved to 976 kB with the reason in `docs/weight-budget.json`.
+
+## [2026-10-31] — Project Mode: the model's second view
+
+**A part now has a door.** Project Mode (`TabProject`) is the tab where an object id becomes a
+designation, a part number, a rating and a cost. It is a second view over the same generated
+`capstoneProject.json` the PCB table reads — one `readProject` call, no rows retyped — and its three
+pure questions (does this part match the query, which kind group does it belong to, which part does
+this id name) live in `app/src/projectView.ts` (since folded into `app/src/projectKinds.ts` and
+`app/src/projectQueries.ts`), where `npm run test:project`
+pins them without a browser. The component owns layout and selection only.
+
+**An id is an address on both surfaces.** A workflow card's part badge opens the tab selected on the
+id the card stores; the tab's own search accepts an id directly (`08-capstone1-foc-eda/u6`), as well
+as a designation, part number, category or the shared kind's label, and a citation that no longer
+resolves is named on the page instead of silently falling back to the first row. The browser row
+drives both doors: the badge opens the cited part, then typing another id narrows the list to that
+one part and its detail card.
+
+**The thirteenth tab moved what a tab moves.** `check_tab_names` 12 → 13, the surface snapshot
+56 → 60 pairs (re-recorded: four new surfaces, plus one button and one input on every existing
+surface — the input is the uncommitted header sound picker the baseline predated — and the 62 px the
+taller activity rail adds to the first panel), and the axe/theme walks the same 13. The tier-guide
+record and its banner learned the tab has no simulated plant to widen, which is what a naive
+thirteenth tab would otherwise crash on. `npm run test:project` is 13 checks now (10 before this
+pass): the view's search across all five fields, the kind groups covering every part once with empty
+kinds dropped, an id naming one part, and a dangling id naming none.
+
+**Weight, measured before and after.** `TabProject` is a 2.39 kB gzip lazy chunk and rides no first
+paint: signed-in `entry_gzip` 569.9 → **573.3 kB** of 575, largest 381.7 → **384.8** of 390,
+`js_gzip` 961.8 → **967.7 kB**. The 966 kB ceiling had 4.2 kB of room and the view needs 5.9, so the
+signed-in ceiling is **970 kB** (2.3 kB left), raised by hand with the reason in
+[`docs/weight-budget.json`](docs/weight-budget.json): the previous number was recorded before this
+uncommitted project work. `total` is 3.69 of 3.79 MB. The workflow surface's seed now taps the two
+dots rather than dragging between their centres — a coordinate drag's start could land under the
+sticky header after the palette scrolled the page and quietly create no arrow (it did, once, against
+the new taller rail); both gestures author the same arrow, and the browser suite still proves the
+drag.
+
+Files: `app/src/projectView.ts` (new), `app/src/components/tabs/TabProject.tsx` (new),
+`app/src/App.tsx`, `app/src/types.ts`, `app/src/data/workbenchTabs.json`,
+`app/src/curriculumData.ts`, `app/src/components/SimulatorTierBanner.tsx`,
+`scripts/test_project_model.mjs`, `scripts/e2e_browser_workbench.mjs`,
+`scripts/snapshot_surfaces.mjs`, `scripts/check_tab_names.py`, `scripts/smoke_test_workbench.mjs`,
+`scripts/axe_tabs.mjs`, `scripts/e2e_theme.mjs`, `docs/surface-snapshot.json` (re-recorded),
+`docs/PROJECT_MODEL.md`, `docs/README.md`, `docs/VERIFICATION.md`, `docs/PLAN-2.0-GAP.md`,
+`docs/MOBILE.md`, `docs/weight-budget.json`, `app/README.md`.
+
+## [2026-10-31] — A workflow card names the part it is about
+
+**The object model got its second reader.** A workflow card can now cite one of the project's
+components, so the diagram that says "read the encoder" points at the same `…/u6` the bill of
+materials orders. The citation is two pieces: an optional `componentId` on the card
+([`app/src/workflow.ts`](app/src/workflow.ts), capped at 80 characters and kept **whole or not at
+all** — a truncated id would cite an object that does not exist) and one parts list the panel passes
+down ([`app/src/capstoneObjects.ts`](app/src/capstoneObjects.ts), the capstone's objects read once
+through `projectParts`). The Canvas resolves an id to a part and the inspector picks from the same
+list, so neither surface owns a copy. The workflow document holds the citation; the generated
+project document does not, because a diagram must not be able to edit a bill of materials.
+
+**The card looks like the object, and a broken citation is visible.** A selected card's **Part** row
+lists `U1 · STM32G474RET6`-style labels; the card then wears a small badge with the same words, and
+the id stays in its tooltip. A saved id that no longer resolves keeps an option that says
+"(not in this project)" and a badge that prints the id rather than silently dropping the reference.
+A card that cites nothing draws no row and no badge, and a document saved before parts existed gains
+no field.
+
+**One edit, everywhere.** The citation travels with a copied card, prints in both exports only when
+it exists (`%% part n1: …` in Mermaid, `- part: …` in Markdown), and is a document change like any
+other: it is one undo step and redo restores it. `npm run test:workflow` grew checks for the read,
+the 80-character rule, the clipboard and both exports; `npm run test:project` proves
+`projectParts` over the real components; `npm run test:e2e` selects a part in Chromium, reads the
+badge, undoes and redoes it. That run also repaired a suite collision the new header genre picker
+had introduced: the palette's unmatched-query assertion counted every `role="option"` on the page
+and so found the audio select's six doors, and it is now scoped to the dialog it is about. No weight ceiling moved (`js_gzip` 964.7 of 966.0 kB), the workflow
+surface snapshot is unchanged (its seeded cards cite nothing), and `check:all` stays 37/37.
+
+Files: `app/src/capstoneParts.ts` (new), `app/src/data/capstoneProject.json`,
+`app/src/projectModel.ts`, `app/src/workflow.ts`, `app/src/workflowClipboard.ts`,
+`app/src/components/WorkflowCanvas.tsx`, `app/src/components/WorkflowPanel.tsx`,
+`app/src/components/workflow/WorkflowNodeCard.tsx`,
+`app/src/components/workflow/WorkflowSelectionInspector.tsx`,
+`scripts/test_workflow.mjs`, `scripts/test_project_model.mjs`,
+`scripts/e2e_browser_workbench.mjs`, `docs/PROJECT_MODEL.md`, `docs/README.md`,
+`docs/VERIFICATION.md`, `app/README.md`.
+
+## [2026-10-31] — One parts list, and every part has an id
+
+**The BOM had two lives and the app's copy was the wrong one.** `TabCadPcb` carried a hand-typed
+six-line summary of the capstone's bill of materials while its own heading printed the twelve-line
+report's own total: the encoder and the CAN transceiver were merged into one row, six real lines
+— all three shunt resistors, the buck, the LDO and the STO buffer — were missing, and no edit to the
+design could reach the card. The table now reads a document generated from the capstone's own
+`foc_thermal_and_bom.json`, so it shows 12 lines / 27 placements / \$40.47 or it shows nothing.
+
+**The foundation is the object id.** [`app/src/projectModel.ts`](app/src/projectModel.ts) gives every
+line one id a second view can cite — `<project>/<first refDes>`, so `Q1,Q2,Q3,Q4,Q5,Q6` is `…/q1`
+because a bank is one thing to order and derate — and one `kind` from a shared vocabulary
+(Microcontroller, Gate driver, Power switch, Sensing, …) while the project's own `category` stays in
+the data. `readProject` recomputes the summary from the rows, so a stored total that disagrees
+throws; a duplicate id, an id from another project, an unknown kind or a missing field is refused at
+read time rather than rendered.
+
+**Generated, never typed.** [`scripts/generate_project_data.mjs`](scripts/generate_project_data.mjs)
+reads the report through `projectFromReport` and writes
+[`app/src/data/capstoneProject.json`](app/src/data/capstoneProject.json) atomically;
+`npm run check:project` fails when it is stale, and `npm run test:project` (9 checks) compares the
+shipped file with the report, the ids, the recomputed totals, the kind coverage and the malformed
+shapes both functions refuse. The `BomItem` interface and the literal are deleted.
+
+**The table scrolls instead of the page.** Twelve real descriptions made the tab 1,217 px taller, so
+the list is a labelled, focusable region capped at 288 px; the heading carries the totals a learner
+who never scrolls would otherwise lose. The tab grew 29 px net, and the surface snapshot was
+re-recorded: against HEAD, `tab-cadpcb`'s boxes are the only geometry this change moved, and the
+remaining leaves are the uncommitted sound select (+1 `inputs` per surface) and the workflow
+surface's own recording, each described in its entry above.
+
+**A red CI suite, repaired on the way.** `npm run test:smoke` booted its own Vite server with no
+project config, so `virtual:theme-tokens` — added when the theme route stopped parsing `index.css` —
+failed at `App.tsx` before the first check ran. The suite now loads `vite.config.ts`, and the SSR
+smoke passes again; the failure had been there since that bundle change, not since this one.
+
+**Where the next feature plugs in.** A new view imports `readProject` and cites ids; a new component
+kind is one line in `CATEGORY_KIND` and one in `COMPONENT_KINDS`; requirements, tests and
+cross-surface links are the next objects, each owing its own schema and suite
+([`docs/PROJECT_MODEL.md`](docs/PROJECT_MODEL.md)).
+
+Files: `app/src/projectModel.ts` (new), `app/src/data/capstoneProject.json` (new, generated),
+`scripts/generate_project_data.mjs` (new), `scripts/test_project_model.mjs` (new),
+`app/src/components/tabs/TabCadPcb.tsx`, `app/src/types.ts`, `package.json`,
+`scripts/test_workbench.mjs`, `scripts/smoke_test_workbench.mjs`, `docs/PROJECT_MODEL.md` (new),
+`docs/README.md`,
+`docs/VERIFICATION.md`, `app/README.md`, `docs/surface-snapshot.json` (re-recorded).
+
+## [2026-10-31] — Five genre doors, and a manager that owns the music
+
+**The library is eleven tapes in five genre doors.** Lo-fi, J-Pop, Synthwave, Chiptune and Acoustic
+replace the six business-flowchart categories, and the three doors with no recorded tape got one
+written here: *Morning City* (a 32-second city-pop chorus at 90 bpm), *Night Drive* (saw pads and a
+sixteenth arpeggio) and *Pixel Run* (a pulse lead and noise hats). The four CC0 recordings are
+untouched and stay credited; the seven composed loops say so in the same sentence. Every door names
+a `defaultTape`, so choosing the door plays the loop written for its idiom rather than whichever
+tape happened to be first. `scripts/build_music.mjs` renders the three new loops from seeded scores,
+and `--check` still proves all eleven files are what the script makes.
+
+**One module owns the runtime, and every control speaks to it.** `app/src/audio/musicManager.ts` now
+holds the engine, the remembered-"on" gesture, the message bus and the single path from a stored
+preference to a mix (`togglePlay`, `setGenre`, `setVolume`). `SoundControl.tsx` kept only what is
+its own — where the panel goes, how it closes, which control drew it — and the header and focus pill
+draw the same new `AudioPlayerWidget.tsx`: one toggle, the five doors, and the panel's door. Before
+this, `SoundControl` applied the changes it made itself and ignored writes that arrived from
+elsewhere; a panel, a pill and a test could disagree about the mix. The header's picker and the
+panel's chips now write through the manager and land on the same store.
+
+**The bed's graph is the spec's, and the suite can point at it.** The music bus passes through a
+9 kHz low-pass (`MUSIC_LOWPASS_HZ`, Q 0.7) before the duck, and the master keeps `MASTER_HEADROOM`
+0.7 so the limiter catches peaks instead of being the mix's only ceiling. Both are exported and
+printed in `debug()`. The source is a decoded `AudioBufferSourceNode` rather than the spec's HTML5
+`<audio>` element: decoding is what allows the equal-power crossfade, the RMS match and the
+three-tape cache. `test_audio` grew a manager check (a door's own tape, a chosen tape kept, the
+fader's rounding, the arm and its first gesture, reset, both toggle directions) and now asserts the
+headroom and the low-pass by walking the graph's wires; `e2e:game` drives the header picker in
+Chromium and proves each door really loads its file. `music` moved to 2.35 MB and `total` to
+3.74/3.79 MB for the 326 kB of new AAC; `js_gzip` moved 3 kB for the manager and the widget.
+
+## [2026-10-31] — Two quick gestures compose, and the checks name two more mistakes
+
+**A second edit no longer starts from the last paint.** Two gestures in quick succession — drag this
+card, then that one — could each read the document from the same committed render, so the second
+built its edit on the state before the first and silently dropped it; the screen showed both moves,
+the saved diagram held one. `useWorkflowEditor` now stamps a `latest` ref on every write and the
+move commit reads it, so edits compose even when React has not painted between them. A drag's window
+listeners also attach at the press instead of in an effect after the render that press causes, so a
+fast release can no longer outrun them and leave a card drawn where the document does not say it is.
+
+**Two exits cannot say the same thing, and a merge must merge.** The rule list grew two entries:
+`ambiguous-guard` names a decision whose two ways out carry the same condition on the arrows (only
+what is written on the exit counts — a Branch's shared condition is the old fallback, not two
+guards), because the run cannot offer a learner a choice between two identical labels; and
+`merge-without-branches` is the mirror of the fork advice — a Merge with fewer than two control
+arrows into it is closing nothing, so the sentence says so instead of letting the diamond look
+finished.
+
+**The undo promises are exercised on the built app, not only in the model.** The browser row now
+types a word into a card and takes it back with one chord pressed while focus sits on the paper
+(and says so), redoes a card's menu Remove after undoing it, and walks Clear forward and back
+through both the empty panel's Undo and `⌘⇧Z`. A card drag also leaves nothing behind if the editor
+unmounts mid-gesture: its window listeners come off in the hook's own cleanup. The drag row itself
+pressed the card while the page was still gliding from `scrollIntoView` — the smooth scroll it asks
+for is an animation, and 120 ms is not the end of it — so it now scrolls instantly and waits for the
+offset to hold before measuring.
+
+## [2026-10-30] — The diagram is checked as a flow, and it can be walked
+
+**Validation is a rule list, not a function that grew.** The advisory checks moved out of the model
+into `app/src/workflowValidation.ts`, where each rule is one function in `WORKFLOW_RULES` and a new
+semantic check is one entry instead of another branch in a chain. Beyond the per-card advice, three
+flow rules now read the graph: a **decision with more than one control exit must guard each one**
+(the arrow's own guard, or the branch card's condition as the fallback every old document uses), a
+**wired island no start card reaches** is named as detached, and a **finish no path reaches** is
+named as a missing path. Every sentence still names the card and none of them gates a run or a
+lesson.
+
+**The diagram can be walked.** A Simulate row starts a token on the first start card, steps one
+control arrow at a time, and clears its marks on Stop. A decision pauses the walk and offers its
+guards as the exits; a fork starts every branch and its join waits until all of them arrive, saying
+so while it waits. Only control arrows execute — data, signal, power and mechanical cables describe
+the system, not the next step — and any edit invalidates the walk. The active cards and the followed
+arrows are drawn in the run colour, and the engine (`app/src/workflowRun.ts`) is pure and timer-free,
+so branches, joins, a waiting join and a cable-only dead end are unit-tested without a browser.
+
 ## [2026-10-30] — The workflow editor has one owner
 
 **A canvas action is added in one place.** The workflow document, its selection, its history, its

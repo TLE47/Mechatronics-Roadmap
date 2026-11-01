@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { socketKinds } from '../workflow.ts';
 import { isForkJoin } from '../workflowProcesses.ts';
@@ -17,7 +17,11 @@ import { WorkflowForkJoinCard } from './workflow/WorkflowForkJoinCard.tsx';
 import { WorkflowGroupFrame } from './workflow/WorkflowGroupFrame.tsx';
 import { WorkflowLaneBand } from './workflow/WorkflowLaneBand.tsx';
 import { WorkflowNodeCard } from './workflow/WorkflowNodeCard.tsx';
+import { CAPSTONE_OBJECTS } from '../capstoneObjects.ts';
+import type { ProjectObjectKind } from '../projectRef.ts';
+import { WorkflowRunBar } from './workflow/WorkflowRunBar.tsx';
 import type { WorkflowMenuRequest } from './workflow/WorkflowMenu.tsx';
+import type { WorkflowSimulation } from './workflow/useWorkflowRun.ts';
 import { useLinking, type LinkDraft } from './workflow/useLinking.ts';
 import { useMarquee } from './workflow/useMarquee.ts';
 import { useNodeDrag, type NodeMove } from './workflow/useNodeDrag.ts';
@@ -72,6 +76,8 @@ export interface WorkflowCanvasProps {
   onUpdate: (id: string, patch: Partial<WorkflowNode>) => void;
   onRemove: (id: string) => void;
   onOpenLesson: (lesson: string) => void;
+  /** A badge pressed on a cited card: open the view that object's kind owns, by its id. */
+  onOpenObject?: (projectRef: string, kind?: ProjectObjectKind) => void;
   onConnect: (
     from: string,
     to: string,
@@ -121,6 +127,8 @@ export interface WorkflowCanvasProps {
   canPaste: boolean;
   /** Open filling the viewport: the paper is no longer capped at 70% of the screen. */
   fullscreen: boolean;
+  /** The plan being walked: its marks, its status and its four controls, floated over the paper. */
+  sim: WorkflowSimulation;
 }
 
 export function WorkflowCanvas({
@@ -133,6 +141,7 @@ export function WorkflowCanvas({
   onUpdate,
   onRemove,
   onOpenLesson,
+  onOpenObject,
   onConnect,
   onDisconnect,
   onDropLink,
@@ -160,11 +169,17 @@ export function WorkflowCanvas({
   onPaste,
   canPaste,
   fullscreen,
+  sim,
 }: WorkflowCanvasProps) {
+  const { activeIds, takenEdges } = sim;
   const byId = useMemo(() => new Map(doc.nodes.map((node) => [node.id, node])), [doc.nodes]);
   // Which socket each dot has become, once per document: the cards read it, and no card can hold a
   // second copy of what the arrows already say.
   const sockets = useMemo(() => socketKinds(doc), [doc]);
+  const objectById = useMemo(
+    () => new Map(CAPSTONE_OBJECTS.map((object) => [object.id, object])),
+    []
+  );
   const nodeIds = useMemo(() => doc.nodes.map((node) => node.id).join('\u0000'), [doc.nodes]);
 
   const viewport = useViewport(doc.nodes, onSelect);
@@ -276,15 +291,6 @@ export function WorkflowCanvas({
     if (canPaste) request.onPaste = () => onPaste(at);
     onMenu(request);
   };
-
-  // An issue pressed in the checklist names a card; bring that card into view instead of trusting
-  // that the learner can guess which one it is.
-  useEffect(() => {
-    if (!selectedId) return;
-    const surface = viewport.surfaceRef.current;
-    const card = surface?.querySelector(`[data-node-id="${CSS.escape(selectedId)}"]`);
-    card?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-  }, [selectedId]);
 
   return (
     // `z-0` is the canvas's own stacking level: every control inside it (`z-20` cards through the
@@ -412,6 +418,7 @@ export function WorkflowCanvas({
               onEdgeGuard={onEdgeGuard}
               onEdgePort={onEdgePort}
               onEdgeRoute={onEdgeRoute}
+              taken={takenEdges}
             />
 
             {doc.nodes.map((node, index) => {
@@ -421,6 +428,7 @@ export function WorkflowCanvas({
                 number: numbers.get(node.id) ?? index + 1,
                 issue: issueByStep.get(node.id),
                 selected: selectedId === node.id,
+                active: activeIds.has(node.id),
                 position: drag.live?.get(node.id) ?? { x: node.x, y: node.y },
                 dragging: Boolean(drag.dragIds?.includes(node.id)),
                 linking: linking.linking,
@@ -429,6 +437,10 @@ export function WorkflowCanvas({
                 onMove,
                 onRemove,
                 onOpenLesson,
+                onOpenObject: onOpenObject
+                  ? (projectRef: string) =>
+                      onOpenObject(projectRef, objectById.get(projectRef)?.kind)
+                  : undefined,
                 onDragStart: drag.startDrag,
                 onLinkStart: linking.startLink,
                 onLinkLand: linking.landOnCard,
@@ -436,7 +448,12 @@ export function WorkflowCanvas({
               return isForkJoin(node.kind) ? (
                 <WorkflowForkJoinCard key={node.id} {...shared} />
               ) : (
-                <WorkflowNodeCard key={node.id} {...shared} onUpdate={onUpdate} />
+                <WorkflowNodeCard
+                  key={node.id}
+                  {...shared}
+                  projectObject={node.projectRef ? objectById.get(node.projectRef) : undefined}
+                  onUpdate={onUpdate}
+                />
               );
             })}
 
@@ -454,6 +471,19 @@ export function WorkflowCanvas({
             )}
           </div>
         </div>
+      </div>
+      {/* Floated over the paper, not laid above it: entering Simulate must not move the diagram
+          under the learner, and the opening card sits at the paper's top-left where the Fit button
+          already leaves the centre free. */}
+      <div className="absolute left-1/2 top-2 z-30 max-w-[calc(100%-6rem)] -translate-x-1/2">
+        <WorkflowRunBar
+          run={sim.run}
+          status={sim.status}
+          onStart={sim.start}
+          onStep={sim.step}
+          onChoose={sim.choose}
+          onStop={sim.stop}
+        />
       </div>
       <button
         type="button"

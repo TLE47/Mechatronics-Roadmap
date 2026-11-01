@@ -2,66 +2,104 @@
  * The music tapes, as facts (`app/src/audio/musicCatalogue.ts`).
  *
  * This module has **no audio imports** on purpose: the settings panel shows the title, the artist and
- * the licence of what is playing, and a Node test reads the same table, so neither should need Vite to
- * resolve an `.m4a`. `musicBeds.ts` is the other half — the URLs and the decode — and it is only ever
- * reached through a dynamic import inside the engine.
+ * the licence of what is playing, a Node test reads the same table, and the widget's genre picker
+ * prints the same labels — none of them should need Vite to resolve an `.m4a`. `musicBeds.ts` is the
+ * other half, the URLs and the decode, and it is only ever reached through a dynamic import inside
+ * the engine.
+ *
+ * ## Five doors, eleven tapes
+ *
+ * The panel's music section is organised by **genre**, the way a learner asks for it: Lo-fi, J-Pop,
+ * Synthwave, Chiptune, Acoustic. A category is a door, a tape is what plays, and the panel shows the
+ * tapes inside the door that is open. Every door holds at least one tape, and every door names a
+ * `defaultTape`: the one the header's picker plays when the genre is chosen, so switching doors is
+ * never a restart of whatever happened to be first in the list.
  *
  * ## Where the tapes come from
  *
  * Two kinds, and the panel always says which one is playing:
  *
  * - **Recorded.** Real tracks, all released under **CC0 1.0 Universal** on Free Music Archive, so they
- *   may be bundled, cut and redistributed with no attribution obligation. The attribution below is
- *   honour, not duty — and it is the panel's credit line, because a learner is entitled to know whose
- *   music they are hearing. All four are by HoliznaCC0, from the album *Winter Lofi*: the album is
- *   CC0 and each track's own page states the same, which is what `page` points at.
- * - **Composed.** Tapes this repository writes itself (`scripts/build_music.mjs`), one per idiom a free
- *   recording does not cover: anime, pop, K-pop, and an instrumental arpeggio. They carry the build
- *   script as the artist and say "composed by this repository" in the credit, because calling a
- *   synthesised loop a licensed K-pop song would be a lie a learner could not check.
+ *   may be bundled, cut and redistributed with no attribution obligation. All four are by HoliznaCC0,
+ *   from the album *Winter Lofi*; the credit is honour, not duty. The piano and the blues walk are
+ *   what the Acoustic door holds — the two recorded tapes that are acoustic instruments.
+ * - **Composed.** Tapes this repository writes itself (`scripts/build_music.mjs`). Seven now: the four
+ *   the catalog carried (an arpeggio, an anime bell loop, a pop and a K-pop loop) plus one written for
+ *   each of the doors a free recording does not cover — a city-pop loop for J-Pop, a retrowave loop for
+ *   Synthwave and an 8-bit loop for Chiptune. They carry the build script as the artist and say
+ *   "composed by this repository" in the credit, because calling a synthesised loop a licensed song
+ *   would be a lie a learner could not check.
  *
- * ## The categories
+ * The genre names are the doors, not a claim about provenance: the J-Pop door says in its hint that
+ * everything in it was written here, and each tape's own credit repeats it.
  *
- * Six, in the order the panel draws them, plus the drone that is not a tape at all. A category is a
- * door, not a claim: `lofi` and `instrumental` each hold two tapes, the rest one, and the panel shows
- * the tapes inside the category that is open.
+ * ## The tapes
  *
- * | tape | category | source | length |
+ * | tape | door | source | length |
  * | :--- | :--- | :--- | ---: |
  * | `lab-night` | Lo-fi | *Snow Drift* — HoliznaCC0, CC0 | 60 s |
  * | `focus-current` | Lo-fi | *Fire Place* — HoliznaCC0, CC0 | 60 s |
- * | `winter-blues` | Jazz | *Winter Blues* — HoliznaCC0, CC0 | 45 s |
- * | `first-snow` | Instrumental | *First Snow* — HoliznaCC0, CC0 | 40 s |
- * | `bench-arpeggio` | Instrumental | composed by `scripts/build_music.mjs` | 24 s |
- * | `paper-lanterns` | Anime | composed by `scripts/build_music.mjs` | 24 s |
- * | `city-lights` | Pop | composed by `scripts/build_music.mjs` | 24 s |
- * | `neon-stage` | K-pop | composed by `scripts/build_music.mjs` | 24 s |
+ * | `city-pop` | J-Pop | composed — a city-pop chorus, 32 s | 32 s |
+ * | `paper-lanterns` | J-Pop | composed — the anime-opening idiom | 24 s |
+ * | `city-lights` | J-Pop | composed — four chords and a filtered pad | 24 s |
+ * | `neon-stage` | J-Pop | composed — brighter lead, side-chained pad | 24 s |
+ * | `bench-arpeggio` | J-Pop | composed — an instrumental plucked study | 24 s |
+ * | `night-drive` | Synthwave | composed — saw pads and an analog arpeggio | 16 s |
+ * | `pixel-run` | Chiptune | composed — a pulse lead and noise hats | 16 s |
+ * | `first-snow` | Acoustic | *First Snow* — HoliznaCC0, CC0 | 40 s |
+ * | `winter-blues` | Acoustic | *Winter Blues* — HoliznaCC0, CC0 | 45 s |
  *
  * Every file is a seamless loop cut or rendered by that script; the engine's synthesised drone remains
  * as the fallback for a browser that cannot decode AAC, and as the "Drone" choice for a learner who
  * wants the music to be a texture rather than a song.
  */
 
-export type MusicCategory = 'lofi' | 'jazz' | 'instrumental' | 'anime' | 'pop' | 'kpop';
+export type MusicCategory = 'lofi' | 'jpop' | 'synthwave' | 'chiptune' | 'acoustic';
 
 /** The category that is not a tape: two detuned oscillators the engine has always had. */
 export const DRONE_ID = 'drone';
 
 export interface MusicCategoryInfo {
   id: MusicCategory;
-  /** What the chip says. Plain words: a learner should not have to know a genre to pick one. */
+  /** What the chip and the header's picker say. Emoji are the spec's, not decoration. */
   label: string;
   /** One line under the open category, in the panel. */
   hint: string;
+  /** The tape the door plays by default: the one written for its idiom. */
+  defaultTape: string;
 }
 
 export const MUSIC_CATEGORIES: readonly MusicCategoryInfo[] = [
-  { id: 'lofi', label: 'Lo-fi', hint: 'The two tapes this app opened with: a bench at night, and a fire.' },
-  { id: 'jazz', label: 'Jazz', hint: 'A slow blues walk, cut from a real CC0 recording.' },
-  { id: 'instrumental', label: 'Instrumental', hint: 'A minimal piano piece, and a plucked arpeggio this repo wrote.' },
-  { id: 'anime', label: 'Anime', hint: 'Pentatonic bells and a soft kick — the opening-credits idiom.' },
-  { id: 'pop', label: 'Pop', hint: 'Four chords, a four-on-the-floor kick and a filtered pad.' },
-  { id: 'kpop', label: 'K-pop', hint: 'Brighter lead, side-chained pad, claps on two and four.' },
+  {
+    id: 'lofi',
+    label: '☕ Lo-Fi Beats',
+    hint: 'The two recordings this app opened with: a bench at night, and a fire.',
+    defaultTape: 'lab-night',
+  },
+  {
+    id: 'jpop',
+    label: '🌸 J-Pop (City Pop)',
+    hint: 'City-pop, anime and pop instrumentals written here — no vocal leads.',
+    defaultTape: 'city-pop',
+  },
+  {
+    id: 'synthwave',
+    label: '🌆 Synthwave',
+    hint: 'Retrowave pads and an analog arpeggio, composed for this loop.',
+    defaultTape: 'night-drive',
+  },
+  {
+    id: 'chiptune',
+    label: '🕹️ Chiptune 8-Bit',
+    hint: 'A pulse lead and noise hats — the game-wave idiom, composed here.',
+    defaultTape: 'pixel-run',
+  },
+  {
+    id: 'acoustic',
+    label: '🎸 Acoustic',
+    hint: 'A minimal piano piece and a slow blues walk, both real CC0 recordings.',
+    defaultTape: 'first-snow',
+  },
 ];
 
 export interface MusicTape {
@@ -84,105 +122,66 @@ export interface MusicTape {
 const WINTER_LOFI = 'Winter Lofi';
 const CC0 = 'CC0 1.0 Universal';
 const COMPOSED_BY = 'composed by this repository';
+const MECHALAB_TAPES = 'MechaLab tapes';
+const WRITTEN_HERE = 'Written for this repository, no restrictions';
 /** Where a composed tape is described: the script that renders it. */
 export const TAPE_SCRIPT_PAGE =
   'https://github.com/TLE47/Mechatronics-Roadmap/blob/main/scripts/build_music.mjs';
 
+const composed = (
+  id: string,
+  category: MusicCategory,
+  title: string,
+  seconds: number
+): MusicTape => ({
+  id,
+  category,
+  title,
+  artist: COMPOSED_BY,
+  album: MECHALAB_TAPES,
+  licence: WRITTEN_HERE,
+  page: TAPE_SCRIPT_PAGE,
+  seconds,
+  composed: true,
+});
+
+/** A CC0 recording: the page is the track's own FMA slug, which is not always the file's id. */
+const recorded = (
+  id: string,
+  category: MusicCategory,
+  title: string,
+  seconds: number,
+  slug: string
+): MusicTape => ({
+  id,
+  category,
+  title,
+  artist: 'HoliznaCC0',
+  album: WINTER_LOFI,
+  licence: CC0,
+  page: `https://freemusicarchive.org/music/holiznacc0/winter-lofi/${slug}/`,
+  seconds,
+  composed: false,
+});
+
 export const MUSIC_TAPES: readonly MusicTape[] = [
-  {
-    id: 'lab-night',
-    category: 'lofi',
-    title: 'Snow Drift',
-    artist: 'HoliznaCC0',
-    album: WINTER_LOFI,
-    licence: CC0,
-    page: 'https://freemusicarchive.org/music/holiznacc0/winter-lofi/snow-drift/',
-    seconds: 60,
-    composed: false,
-  },
-  {
-    id: 'focus-current',
-    category: 'lofi',
-    title: 'Fire Place',
-    artist: 'HoliznaCC0',
-    album: WINTER_LOFI,
-    licence: CC0,
-    page: 'https://freemusicarchive.org/music/holiznacc0/winter-lofi/fire-place/',
-    seconds: 60,
-    composed: false,
-  },
-  {
-    id: 'winter-blues',
-    category: 'jazz',
-    title: 'Winter Blues',
-    artist: 'HoliznaCC0',
-    album: WINTER_LOFI,
-    licence: CC0,
-    page: 'https://freemusicarchive.org/music/holiznacc0/winter-lofi/winter-blues/',
-    seconds: 45,
-    composed: false,
-  },
-  {
-    id: 'first-snow',
-    category: 'instrumental',
-    title: 'First Snow',
-    artist: 'HoliznaCC0',
-    album: WINTER_LOFI,
-    licence: CC0,
-    page: 'https://freemusicarchive.org/music/holiznacc0/winter-lofi/first-snowmp3/',
-    seconds: 40,
-    composed: false,
-  },
-  {
-    id: 'bench-arpeggio',
-    category: 'instrumental',
-    title: 'Bench Arpeggio',
-    artist: COMPOSED_BY,
-    album: 'MechaLab tapes',
-    licence: 'Written for this repository, no restrictions',
-    page: TAPE_SCRIPT_PAGE,
-    seconds: 24,
-    composed: true,
-  },
-  {
-    id: 'paper-lanterns',
-    category: 'anime',
-    title: 'Paper Lanterns',
-    artist: COMPOSED_BY,
-    album: 'MechaLab tapes',
-    licence: 'Written for this repository, no restrictions',
-    page: TAPE_SCRIPT_PAGE,
-    seconds: 24,
-    composed: true,
-  },
-  {
-    id: 'city-lights',
-    category: 'pop',
-    title: 'City Lights',
-    artist: COMPOSED_BY,
-    album: 'MechaLab tapes',
-    licence: 'Written for this repository, no restrictions',
-    page: TAPE_SCRIPT_PAGE,
-    seconds: 24,
-    composed: true,
-  },
-  {
-    id: 'neon-stage',
-    category: 'kpop',
-    title: 'Neon Stage',
-    artist: COMPOSED_BY,
-    album: 'MechaLab tapes',
-    licence: 'Written for this repository, no restrictions',
-    page: TAPE_SCRIPT_PAGE,
-    seconds: 24,
-    composed: true,
-  },
+  recorded('lab-night', 'lofi', 'Snow Drift', 60, 'snow-drift'),
+  recorded('focus-current', 'lofi', 'Fire Place', 60, 'fire-place'),
+  composed('city-pop', 'jpop', 'Morning City', 32),
+  composed('paper-lanterns', 'jpop', 'Paper Lanterns', 24),
+  composed('city-lights', 'jpop', 'City Lights', 24),
+  composed('neon-stage', 'jpop', 'Neon Stage', 24),
+  composed('bench-arpeggio', 'jpop', 'Bench Arpeggio', 24),
+  composed('night-drive', 'synthwave', 'Night Drive', 16),
+  composed('pixel-run', 'chiptune', 'Pixel Run', 16),
+  recorded('first-snow', 'acoustic', 'First Snow', 40, 'first-snowmp3'),
+  recorded('winter-blues', 'acoustic', 'Winter Blues', 45, 'winter-blues'),
 ];
 
 /** The tape a fresh browser hears, and the fallback for any unknown id. */
 export const DEFAULT_TAPE = 'lab-night';
 
-const TAPE_IDS = new Set(MUSIC_TAPES.map((tape) => tape.id));
+const TAPE_IDS = new Set(MUSIC_TAPES.map((entry) => entry.id));
 
 /** A stored preference is usable only when it names a tape this build carries, or the drone. */
 export function isTapeId(value: unknown): value is string {
@@ -191,17 +190,28 @@ export function isTapeId(value: unknown): value is string {
 
 /** The tapes inside one category, in catalogue order. */
 export function tapesIn(category: MusicCategory): MusicTape[] {
-  return MUSIC_TAPES.filter((tape) => tape.category === category);
+  return MUSIC_TAPES.filter((entry) => entry.category === category);
 }
 
 /** One tape by id. An unknown id is the default tape, not an exception. */
 export function tapeById(id: string): MusicTape {
-  return MUSIC_TAPES.find((tape) => tape.id === id) ?? MUSIC_TAPES.find((tape) => tape.id === DEFAULT_TAPE)!;
+  return MUSIC_TAPES.find((entry) => entry.id === id) ?? MUSIC_TAPES.find((entry) => entry.id === DEFAULT_TAPE)!;
 }
 
-/** The category a tape belongs to, for the panel's open chip. Drone has none. */
+/** The category a tape belongs to, for the panel's open chip and the header's picker. */
 export function categoryOf(id: string): MusicCategory | null {
   return id === DRONE_ID ? null : tapeById(id).category;
+}
+
+/** The tape a genre door plays when it is chosen in the header. */
+export function defaultTapeFor(category: MusicCategory): MusicTape {
+  const info = MUSIC_CATEGORIES.find((entry) => entry.id === category);
+  return tapeById(info?.defaultTape ?? DEFAULT_TAPE);
+}
+
+/** Every genre door, in the order the panel draws them. */
+export function isMusicCategory(value: unknown): value is MusicCategory {
+  return MUSIC_CATEGORIES.some((entry) => entry.id === value);
 }
 
 /**
@@ -210,9 +220,9 @@ export function categoryOf(id: string): MusicCategory | null {
  * A composed tape says so in the same sentence that names its author, so a learner never has to work
  * out whether "MechaLab tapes" is a band.
  */
-export function tapeCredit(tape: MusicTape = tapeById(DEFAULT_TAPE)): string {
-  if (tape.composed) {
-    return `“${tape.title}” — ${COMPOSED_BY} · ${tape.licence.toLowerCase()}`;
+export function tapeCredit(entry: MusicTape = tapeById(DEFAULT_TAPE)): string {
+  if (entry.composed) {
+    return `“${entry.title}” — ${COMPOSED_BY} · ${entry.licence.toLowerCase()}`;
   }
-  return `“${tape.title}” by ${tape.artist} — ${tape.licence}, via Free Music Archive`;
+  return `“${entry.title}” by ${entry.artist} — ${entry.licence}, via Free Music Archive`;
 }

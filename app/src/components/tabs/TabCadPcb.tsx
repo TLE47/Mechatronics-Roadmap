@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MathView, MathPanel } from '../MathView';
 import { Sparkles } from 'lucide-react';
-import { BomItem } from '../../types';
 import { PresetRequest, claimPreset } from '../../demoPresets';
+import projectDocument from '../../data/capstoneProject.json';
+import { readProject } from '../../projectModel';
 import { PlotExpander } from '../PlotExpander';
 
 interface TabCadPcbProps {
@@ -60,14 +61,11 @@ function transientPulseTj(iPulse: number, tpS: number, fKhz: number): number {
   return design.tj + dP * z;
 }
 
-const BOM_DATA: BomItem[] = [
-  { refDes: 'U1', mpn: 'STM32G474RET6', functionDesc: '170MHz M4F + CORDIC', rating: '3.3V, 5x 4MSPS ADC' },
-  { refDes: 'U2', mpn: 'DRV8353RSRGZR', functionDesc: '100V 3-Ph Gate Driver', rating: '48V bus (53V peak)' },
-  { refDes: 'Q1–Q6', mpn: 'ISC030N08NM6', functionDesc: '80V 2.5mΩ OptiMOS 6', rating: '53.1V peak < 60V gate' },
-  { refDes: 'U3–U5', mpn: 'INA240A2PWR', functionDesc: '80V Inline PWM CSA', rating: '48V CM, 50 V/V gain' },
-  { refDes: 'R_SH', mpn: 'CSS2H-2512R-1L00F', functionDesc: '1.0mΩ 3W Kelvin Shunt', rating: '0.23W @ 15A_rms' },
-  { refDes: 'U6 / U7', mpn: 'MA732 / TCAN1044V', functionDesc: '16-bit SPI Enc + CAN-FD', rating: '16MHz SPI / 5Mbps' },
-];
+// The parts list is generated from the capstone's own EDA report (`npm run gen:project`), never typed
+// here: the copy this replaced showed six lines while printing the twelve-line report's total, and a
+// part that changed in the design could not reach the card. Each line carries the stable object id a
+// later view (workflow, architecture, report) cites instead of the part's name.
+const PROJECT = readProject(projectDocument);
 
 export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedId, presetRequest }) => {
   const [activeCadPart, setActiveCadPart] = useState<'flexure' | 'kelvin' | 'carrier'>('flexure');
@@ -320,9 +318,18 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
           {/* BOM Table */}
           <div className="pt-2">
             <h3 className="text-xs font-bold text-accent uppercase mb-1.5">
-              Capstone I 48V / 30A FOC Smart Actuator BOM ($40.47 Total)
+              Capstone I 48V / 30A FOC Smart Actuator BOM ({PROJECT.summary.lines} lines ·{' '}
+              {PROJECT.summary.placements} placements · ${PROJECT.summary.costUsd.toFixed(2)})
             </h3>
-            <div className="overflow-x-auto">
+            {/* The full generated list is twelve lines with real descriptions, so the table scrolls
+                inside a fixed height instead of pushing the lab's sliders and canvas a page down.
+                The heading carries the totals, so a learner who never scrolls still sees 12/27/$40.47. */}
+            <div
+              className="overflow-auto max-h-72 rounded-md"
+              role="region"
+              aria-label="Bill of materials, scrollable"
+              tabIndex={0}
+            >
               <table className="w-full text-[0.72rem] text-left border-collapse">
                 <thead>
                   <tr className="border-b border-line text-accent bg-canvas">
@@ -333,12 +340,20 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-raise text-body">
-                  {BOM_DATA.map((item) => (
-                    <tr key={item.refDes} className="hover:bg-raise/50">
-                      <td className="p-1.5 font-mono text-emerald font-bold">{item.refDes}</td>
-                      <td className="p-1.5 font-mono">{item.mpn}</td>
-                      <td className="p-1.5">{item.functionDesc}</td>
-                      <td className="p-1.5 text-muted">{item.rating}</td>
+                  {PROJECT.components.map((component) => (
+                    <tr key={component.id} className="hover:bg-raise/50">
+                      <td
+                        className="p-1.5 font-mono text-emerald font-bold"
+                        title={`${component.category} · ${component.id}`}
+                      >
+                        {component.refDes}
+                      </td>
+                      <td className="p-1.5 font-mono">{component.mpn}</td>
+                      <td className="p-1.5">{component.description}</td>
+                      <td className="p-1.5 text-muted">
+                        {component.rating}
+                        {!component.derated && <span className="text-rose"> (derating)</span>}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

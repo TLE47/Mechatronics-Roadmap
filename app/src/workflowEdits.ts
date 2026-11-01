@@ -58,11 +58,15 @@ export function editNode(doc: WorkflowDoc, id: string, patch: Partial<WorkflowNo
   };
 }
 
-/** Notes and lesson links are optional fields: clearing one removes it instead of storing ''. */
+/**
+ * Notes, lesson links and cited project objects are optional fields: clearing one removes it instead
+ * of storing ''. A citation is a reference, so an empty picker choice deletes the field rather than
+ * writing an empty string a later reader would have to treat as "no object" too.
+ */
 export function annotateNode(
   doc: WorkflowDoc,
   id: string,
-  field: 'note' | 'lesson',
+  field: 'note' | 'lesson' | 'projectRef',
   value: string
 ): WorkflowDoc {
   return {

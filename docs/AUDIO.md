@@ -18,21 +18,25 @@ Inside those rules there are three kinds of sound, with different jobs:
 * **The room is a place.** Rain on the window, the electrical floor, the city beyond it, and the
   bench under load. Which of those you hear is a fact about what you are doing — never a random
   event — and a run is the one moment the machinery is the loudest thing in the mix.
-* **The music is a bed, not a score, and it is a choice.** Eight seamless loops in six categories —
-  Lo-fi, Jazz, Instrumental, Anime, Pop, K-pop — four cut from CC0 recordings, four composed by this
-  repository. A learner picks a category, then a tape inside it; only the chosen file is fetched. A
-  learner who would rather have a texture than a song picks the **Drone**, and the same drone covers a
-  browser that cannot decode AAC.
+* **The music is a bed, not a score, and it is a choice.** Eleven seamless loops in five genre doors —
+  Lo-fi, J-Pop, Synthwave, Chiptune, Acoustic — four cut from CC0 recordings, seven composed by this
+  repository. A learner picks a door in the header's own picker or in the panel, then a tape inside
+  it; only the chosen file is fetched. A learner who would rather have a texture than a song picks the
+  **Drone**, and the same drone covers a browser that cannot decode AAC. The runtime is one module
+  (`audio/musicManager.ts`) with the spec's three methods — `togglePlay`, `setGenre`, `setVolume` —
+  and every control speaks to it rather than to the engine.
 
 ```mermaid
 flowchart LR
     R["Runner: run started / verdict"] --> B["audio/facade.ts: a window event"]
     C["SoundClicks.tsx: a control"] --> B
     P["SoundSettingsPanel.tsx: a preview"] --> B
+    W["AudioPlayerWidget.tsx: toggle + genre picker"] --> M0["audio/musicManager.ts: one owner"]
+    M0 --> E
     F["Focus mode: FOCUS_EVENT"] --> B
     B --> E["audio/engine.ts (lazy chunk)"]
     A2["audio/ambience.ts: the room table"] --> E
-    M2["audio/musicCatalogue.ts: the eight tapes"] --> E
+    M2["audio/musicCatalogue.ts: the eleven tapes"] --> E
     E --> M["music bus: one tape + drone"]
     E --> S["sfx bus"]
     E --> RM["room bus"]
@@ -68,6 +72,16 @@ quieter.
 A **limiter** (a `DynamicsCompressorNode` at −6 dB, ratio 4) is the last thing before the speakers.
 Nothing bypasses it, because a fast interface plus a verification stinger at the same instant is
 exactly the case a passive mixer gets wrong.
+
+The bed's path is the spec's graph: **source → 9 kHz low-pass → duck → master → limiter → destination**.
+`MUSIC_LOWPASS_HZ` (`9000`, Q 0.7) smooths the sizzle a lossy AAC cut can add at the top, and
+`MASTER_HEADROOM` (`0.7`) keeps the mixer below full scale so the limiter catches peaks rather than
+working as the mix's only ceiling. Both are exported and printed in `debug()`, so the browser suite
+can assert the graph instead of trusting the code. One deliberate difference from the spec: the
+source is a decoded `AudioBufferSourceNode`, not an HTML5 `<audio>` element through a
+`MediaElementAudioSourceNode` — decoding is what allows the equal-power crossfade, the RMS match and
+the three-tape cache, and a media element would loop with a seam. The elements the spec asked for
+are all present and in its order.
 
 ## What plays, and when
 
@@ -124,11 +138,16 @@ The header's sound button turns sound on and off; the `···` beside it opens t
 | Section | What it holds |
 | :--- | :--- |
 | Sound | the master, and whether a remembered "on" is armed or playing |
-| Music | the music fader, six category chips plus **Drone**, and the tapes inside the open category |
+| Music | the music fader, five genre chips plus **Drone**, and the tapes inside the open door |
 | Room | the room fader — rain, floor, city |
 | Cues | the effects fader — Run, the pips, the stamp |
 | Interface | a switch for whether the interface ticks at all, and three previews (a tab, Run, close) |
 | Credit | the track, the artist, the licence, a link to the source, and **Reset** |
+
+The **header's genre picker** is the same five doors without opening the panel: it plays the door's
+`defaultTape` (the loop written for that idiom), leaves a tape already chosen inside the door alone,
+and writes through the manager like every other control. The panel remains the place for the full
+tape list and the credit.
 
 The switches are switches, not sliders at zero: a learner may want the verdicts and the room while
 finding a tick under every button distracting. **A preview plays even with the clicks switched off** —
@@ -166,32 +185,36 @@ A run in focus is the run row with the rain and the city pulled back to 60%: foc
 the room and it holds even while the checks run. A failed run pulls one **gust** of rain (1.55×, half
 a second back down) — the room reacting to the machine, not a punishment sound.
 
-## The eight tapes, and which ones are real
+## The eleven tapes, and which ones are real
 
 The music is a small library, not one bed. A **category** is a door, a **tape** is what plays, and the
 panel says which is which — including, in the credit line, whether the learner is hearing a recording
 or something this repository wrote.
 
-| Tape | Category | Source | Length | File |
+| Tape | Door | Source | Length | File |
 | :--- | :--- | :--- | ---: | ---: |
 | *Snow Drift* | Lo-fi | HoliznaCC0, *Winter Lofi*, CC0 1.0 | 60 s | 415 kB |
 | *Fire Place* | Lo-fi | HoliznaCC0, *Winter Lofi*, CC0 1.0 | 60 s | 415 kB |
-| *Winter Blues* | Jazz | HoliznaCC0, *Winter Lofi*, CC0 1.0 | 45 s | 272 kB |
-| *First Snow* | Instrumental | HoliznaCC0, *Winter Lofi*, CC0 1.0 | 40 s | 242 kB |
-| *Bench Arpeggio* | Instrumental | composed here | 24 s | 123 kB |
-| *Paper Lanterns* | Anime | composed here | 24 s | 122 kB |
-| *City Lights* | Pop | composed here | 24 s | 121 kB |
-| *Neon Stage* | K-pop | composed here | 24 s | 122 kB |
+| *Morning City* | J-Pop | composed here | 32 s | 162 kB |
+| *Paper Lanterns* | J-Pop | composed here | 24 s | 122 kB |
+| *City Lights* | J-Pop | composed here | 24 s | 121 kB |
+| *Neon Stage* | J-Pop | composed here | 24 s | 122 kB |
+| *Bench Arpeggio* | J-Pop | composed here | 24 s | 123 kB |
+| *Night Drive* | Synthwave | composed here | 16 s | 82 kB |
+| *Pixel Run* | Chiptune | composed here | 16 s | 82 kB |
+| *First Snow* | Acoustic | HoliznaCC0, *Winter Lofi*, CC0 1.0 | 40 s | 242 kB |
+| *Winter Blues* | Acoustic | HoliznaCC0, *Winter Lofi*, CC0 1.0 | 45 s | 272 kB |
 
 **The four recordings are real tracks, and CC0.** CC0 1.0 is a public-domain dedication: a cut loop
 may be bundled and redistributed with no attribution obligation. The credit in the panel and in
 [`../app/src/audio/assets/music/NOTICE.md`](../app/src/audio/assets/music/NOTICE.md) is honour rather
 than duty.
 
-**The other four are composed, and say so.** No free recording covers anime, pop or K-pop idioms, and
-licensing a real song would be a different kind of project. `scripts/build_music.mjs` renders each
-from a seeded additive synth — bells, four-chord pads, a plucked arpeggio — so a re-render is the same
-file, and the catalogue's artist field is "composed by this repository" rather than a band name.
+**The other seven are composed, and say so.** No free recording covers city-pop, synthwave or chiptune
+idioms, and licensing a real song would be a different kind of project. `scripts/build_music.mjs`
+renders each from a seeded additive synth — bells, four-chord pads, a plucked arpeggio, a city-pop
+bell lead, a retrowave sixteenth arpeggio, an 8-bit pulse line — so a re-render is the same file, and
+the catalogue's artist field is "composed by this repository" rather than a band name.
 
 How every file is made, in one pipeline:
 
@@ -204,7 +227,7 @@ How every file is made, in one pipeline:
   peak at 0.8 and differ by 6 dB under the fader, which makes choosing a category sound like choosing
   a volume.
 * **Encoded:** the two original beds stay stereo at 56 kbps; the newer tapes are mono at 48 kbps and
-  the composed ones at 40 kbps. Eight tapes is where weight starts to matter.
+  the composed ones at 40 kbps. Eleven tapes is where weight starts to matter.
 
 Behaviour the engine owns:
 
@@ -215,14 +238,15 @@ Behaviour the engine owns:
   crossfade over 1.2 s, and a scene change (home ↔ focus) does not switch tapes at all — focus quiets
   the music through the bus.
 * **Three decoded tapes are kept.** A visited tape stays looping at zero gain so switching back is
-  instant; past three, the oldest gives up its node. Hunting through all eight cannot keep eight
+  instant; past three, the oldest gives up its node. Hunting through all eleven cannot keep eleven
   decoded buffers resident.
 * **The drone is the fallback and the alternative.** A browser without AAC, an offline first visit, a
   404: `musicFailed` leaves the synthesised bed playing and `musicSource` reports `synth`. The panel's
   **Drone** chip is the same path chosen on purpose. A late failure for a tape the learner already
   abandoned does not blank the one now playing.
-* **It is budgeted separately.** The eight files are the `music` metric at their own bytes: 1.90 MB
-  against a 2.10 MB ceiling, inside `total` and outside `entry_gzip`.
+* **It is budgeted separately.** The eleven files are the `music` metric at their own bytes: 2.23 MB
+  against a 2.35 MB ceiling, inside `total` and outside `entry_gzip`. Each is fetched on its own after
+  the gesture, so a learner who picks one door downloads none of the others.
 
 ## The room's recorded loop
 
@@ -239,15 +263,17 @@ synthesised fallback when it cannot be had.
 | `app/src/audio/facade.ts` | `playCue` / `playUi` / `previewUi` / `setSoundScene` — one window event, no audio code |
 | `app/src/audio/clickMap.ts` | what a control *is*, from what it already says; pan from a pointer |
 | `app/src/audio/ambience.ts` | the room table: four layers, per state |
-| `app/src/audio/musicCatalogue.ts` | the eight tapes as facts — category, title, artist, licence, page — with no audio imports, so the panel and the tests can read them |
+| `app/src/audio/musicCatalogue.ts` | the eleven tapes as facts — door, title, artist, licence, page — with no audio imports, so the panel and the tests can read them |
+| `app/src/audio/musicManager.ts` | one owner for the runtime: `togglePlay` / `setGenre` / `setVolume`, the gesture rule, the bus and the one path from a stored preference to a mix |
 | `app/src/audio/musicBeds.ts` | the tapes' lazy URL glob and decode, reached only through a dynamic import inside the engine |
 | `app/src/audio/engine.ts` | the AudioContext, graph, synthesis, limiter, ducking, scenes, the chosen tape and its three-node cache, the rain fetch (a lazy chunk) |
 | `app/src/audio/rainAsset.ts` | the rain loop's URL, and nothing else |
 | `app/src/components/SoundClicks.tsx` | one delegated listener; renders nothing |
-| `app/src/components/SoundControl.tsx` | the header button, the focus pill, arming on a gesture, and the engine's synchronous handler |
+| `app/src/components/SoundControl.tsx` | where the panel goes, how it closes, and which control drew it — placement and glue, no sound |
+| `app/src/components/AudioPlayerWidget.tsx` | the shared strip the header and the focus pill both draw: one toggle, the five genre doors, the panel's door |
 | `app/src/components/SoundSettingsPanel.tsx` | the panel: sections, faders, the two switches, previews, credit, reset — a card that fills the box `SoundControl` gives it |
-| `scripts/build_ambience.mjs` / `scripts/build_music.mjs` | the rain and the eight tapes, and the `--check` that proves each is what its script makes |
-| `scripts/test_audio.mjs` | the store, the graph, the automation, the room, the ticks, the catalogue, the tape cache — with a recording double |
+| `scripts/build_ambience.mjs` / `scripts/build_music.mjs` | the rain and the eleven tapes, and the `--check` that proves each is what its script makes |
+| `scripts/test_audio.mjs` | the store, the graph, the automation, the room, the ticks, the catalogue, the tape cache, the manager — with a recording double |
 
 The facade is why the runner can say "a run started" without importing the synthesiser: a learner who
 never enables sound downloads the button, the event name and the click classifier, not the engine or
@@ -267,19 +293,19 @@ in a backup, and `backupBundle.ts` says so in the archive's README.
 ## The gates
 
 ```bash
-npm run test:audio        # 35 checks: defaults, clamping and migration, graph, limiter, ducking,
+npm run test:audio        # 36 checks: defaults, clamping and migration, graph, limiter, ducking,
                           # focus, the room table, the click vocabulary, pan, the cap, the preview,
                           # the click switch, the catalogue and its files, the tape cache, a late
-                          # failure, both rain paths
-npm run test:e2e:game     # 18 checks in Chromium: off by default, one press on, the room arriving,
-                          # a click heard, the panel's six categories, a tape really loading, the
+                          # failure, both rain paths, and the manager's genre/volume/toggle writes
+npm run test:e2e:game     # 21 checks in Chromium: off by default, one press on, the room arriving,
+                          # a click heard, the panel's five genre doors, a tape really loading, the
                           # drone, a composed tape's credit, faders, a preview, the click switch, the
-                          # duck history, the pill, a gesture after reload, and one press back to
-                          # silence
-npm run check:weight      # `audio` (127 kB / 150 kB) and `music` (1.90 MB / 2.10 MB)
+                          # header picker, the duck history, the pill, a gesture after reload, and
+                          # one press back to silence
+npm run check:weight      # `audio` (127 kB / 150 kB) and `music` (2.23 MB / 2.35 MB)
 node scripts/build_ambience.mjs --check   # locally, with ffmpeg or afconvert: the rain is current
-node scripts/build_music.mjs --check      # locally, with the CC0 sources in .cache/music: all eight
-                          # tapes are what the script makes
+node scripts/build_music.mjs --check      # locally, with the CC0 sources in .cache/music: all
+                          # eleven tapes are what the script makes
 ```
 
 The `--check` commands are local proofs rather than CI gates on purpose: they compare encoded bytes,

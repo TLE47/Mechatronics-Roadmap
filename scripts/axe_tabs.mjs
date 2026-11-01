@@ -165,7 +165,7 @@ async function main() {
       ) {
         throw new Error(`expected the ${theme} palette (stored pick or ${SCHEME[theme]} OS)`);
       }
-      // Beginner mode hides the deeper labs; the sweep needs all twelve tabs.
+      // Beginner mode hides the deeper labs; the sweep needs all fourteen tabs.
       const advanced = page.locator('[data-testid="btn-mode-advanced"]');
       if (await advanced.count()) await advanced.click();
       await page.addScriptTag({ content: axeSource });
@@ -180,7 +180,7 @@ async function main() {
         } else {
           await page.click(`[data-testid="tab-btn-${tabId}"]`);
         }
-        // Eleven of the twelve tabs are lazy chunks (`React.lazy` in App.tsx): a click can land on the
+        // All but the runner are lazy chunks (`React.lazy` in tabRegistry.tsx): a click can land on the
         // Suspense panel, and auditing a panel that says "Loading this tab…" would pass every rule.
         // The editor is lazy for the same reason and shows its code as a placeholder
         // (`data-editor-ready="false"`) while CodeMirror arrives, so it is waited out too. The lesson
