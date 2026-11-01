@@ -30,6 +30,7 @@
  *   test:backup      the backup archive: CRC, round trip, the three refusals, and a merge that never deletes
  *   test:analysis    completions, hover and signatures without a browser: insertion point, cursor coordinates, the call under the cursor, note shape, transport
  *   test:study       notes and highlights: what is kept, deduped, refused by the store, and what a restore merges
+ *   test:worker      the page side of the Python worker: the run message, the kill clock's re-arm and park, a stale verdict, cancel/dispose, and a worker that cannot start
  *   test:geometry    the canvas's arithmetic: four dots on a card, the 16 side pairs, the bend's floor and cap
  *   test:workflow    the learner's own plan: junk-tolerant cards, advisory checks, six templates, one per lesson
  *   test:checklists  a lesson's bullet ticks: per lesson, identified by their words, bounded, clearable
@@ -232,6 +233,8 @@ async function main() {
     { label: 'reset', script: 'test_reset.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'analysis', script: 'test_analysis.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'study', script: 'test_study.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'studio', script: 'test_studio.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'worker', script: 'test_worker.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'project', script: 'test_project_model.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'geometry', script: 'test_canvas_geometry.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'workflow', script: 'test_workflow.mjs', env: { NODE_OPTIONS: TYPES } },
@@ -260,6 +263,7 @@ async function main() {
     { label: 'predict2e', script: 'e2e_predict_gate.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'bundle', browser: true },
     { label: 'focus2e', script: 'e2e_focus.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
     { label: 'store2e', script: 'e2e_storage.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
+    { label: 'studio2e', script: 'e2e_studio.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
     { label: 'home2e', script: 'e2e_home.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'bundle', browser: true },
     { label: 'mobile2e', script: 'e2e_mobile.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
     { label: 'reset2e', script: 'e2e_reset.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },

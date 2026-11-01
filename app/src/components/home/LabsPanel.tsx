@@ -2,12 +2,15 @@ import React from 'react';
 import { FlaskConical } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { TabId } from '../../types';
+import type { HomeDoor } from '../../homeDoor';
 
 export interface LabCard {
   id: TabId;
   label: string;
   blurb: string;
   Icon: LucideIcon;
+  /** The card Home features above the grid, when this tab has one. */
+  home?: HomeDoor;
 }
 
 export interface LabsPanelProps {
@@ -20,7 +23,7 @@ export interface LabsPanelProps {
  *
  * Home has no tab strip: it is a whole page. That would make every lab one trip through the
  * workbench unless the page carries the same doors — so it renders the rail's own registry, label
- * and subtitle included, and not a hand-written copy of twelve cards. A tab added to
+ * and subtitle included, and not a hand-written copy of the cards. A tab added to
  * `WORKBENCH_TABS` appears here with no edit to this file.
  */
 export const LabsPanel: React.FC<LabsPanelProps> = ({ labs, onOpenTab }) => (

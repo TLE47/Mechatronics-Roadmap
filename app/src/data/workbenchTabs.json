@@ -3,6 +3,7 @@
   "tabs": {
     "tab-arch": "Start Here: Roadmap & Progress",
     "tab-pyodide": "Run Python Lessons",
+    "tab-studio": "Free Study Workspace",
     "tab-placement": "Placement Quiz",
     "tab-bode": "Vibration Filter & Resonance Lab",
     "tab-foc": "Brushless Motor Control Lab",

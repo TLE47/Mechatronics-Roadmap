@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { PYTHON_LESSONS, PythonLessonItem } from '../../data/pythonLessonsData';
 import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabPlant';
+import { pyodideCdn } from '../../runtime/pyodideCdn';
+import { PyodideWorkerSession } from '../../runtime/pyodideWorker';
 import { asOutputMatchMode, compareStdout, OutputMatchMode } from '../../outputMatch';
 import { coachForLesson, exerciseTask, starterHoles } from '../../lessonCoach';
 import { failingChecks, hintCountFor, hintLock, nextRung, rungAnswersCheck } from '../../checkHints';
@@ -214,7 +216,6 @@ import {
 
 declare global {
   interface Window {
-    __mechalabPyodideCdnUrl?: string;
     __mechalabExecutionTimeoutMs?: number;
     __mechalabMaxTraceSteps?: number;
     /** `false` turns the predict-first gate off — a suite's switch, never a learner's. */
@@ -222,7 +223,6 @@ declare global {
   }
 }
 
-const DEFAULT_PYODIDE_CDN = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/';
 const DEFAULT_EXECUTION_TIMEOUT_MS = 6000;
 const DEFAULT_MAX_TRACE_STEPS = 400000;
 
@@ -764,12 +764,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     }
   };
 
-  const workerRef = useRef<Worker | null>(null);
   // One analysis channel per page, bound to whichever worker is current (Reset Runtime replaces it).
   const analysisRef = useRef<AnalysisSession | null>(null);
-  const activeRunIdRef = useRef<number>(0);
-  const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const activeResolveRef = useRef<((val: any) => void) | null>(null);
+  // The status the warm-up promise has to know about without re-rendering: a worker that is already
+  // loaded answers a second `warm` with silence (it has nothing new to report), so the page has to
+  // remember for itself that Python is up.
+  const pyodideStatusRef = useRef<'idle' | 'loading' | 'ready' | 'error'>('idle');
   // Shared memory between the page and the interpreter: [interrupt] and [state, length, bytes].
   // Both are null when the page is not cross-origin isolated, and Stop falls back to terminating.
   const interruptRef = useRef<SharedArrayBuffer | null>(null);
@@ -790,32 +790,63 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // terminate shows a new one, which is exactly the distinction the runtime suite checks.
   const [runtimeBoot, setRuntimeBoot] = useState<string | null>(null);
 
-  const clearRunWatchdog = () => {
-    if (timeoutIdRef.current) {
-      clearTimeout(timeoutIdRef.current);
-      timeoutIdRef.current = null;
-    }
-  };
-
-  const destroyWorker = () => {
-    clearRunWatchdog();
-    if (stopFallbackRef.current) {
-      clearTimeout(stopFallbackRef.current);
-      stopFallbackRef.current = null;
-    }
-    if (workerRef.current) {
+  // The worker protocol - run identity, kill clock, dispose - has one owner
+  // (`runtime/pyodideWorker.ts`). This page supplies what only a lesson runner has: the shared
+  // buffers Stop, stdin and Pause need, the analysis listener, and the status line.
+  const sessionRef = useRef<PyodideWorkerSession | null>(null);
+  const session = (sessionRef.current ??= new PyodideWorkerSession({
+    onStatus: (data) => {
+      if (data.status === 'loading') setPyodideStatus('loading');
+      else if (data.status === 'ready') {
+        setPyodideStatus('ready');
+        if (typeof data.ms === 'number') setReadyMs(data.ms);
+        if (data.boot) setRuntimeBoot(String(data.boot));
+      } else if (data.status === 'error') setPyodideStatus('error');
+    },
+    onCreate: (worker) => {
+      // Cross-origin isolation is what makes SharedArrayBuffer exist. With it, Stop raises
+      // KeyboardInterrupt in the running program and the session survives; without it, Stop still
+      // works, by terminating the worker (the old behaviour).
       try {
-        workerRef.current.terminate();
+        if (typeof SharedArrayBuffer !== 'undefined') {
+          interruptRef.current = new SharedArrayBuffer(4);
+          stdinCtrlRef.current = new SharedArrayBuffer(8 * 1024);
+          pauseRef.current = new SharedArrayBuffer(8);
+          frameEditRef.current = new SharedArrayBuffer(8 + FRAME_EDIT_BYTES);
+          setPauseCapable(true);
+          worker.postMessage({
+            type: 'init',
+            interruptBuffer: interruptRef.current,
+            stdinBuffer: stdinCtrlRef.current,
+            pauseBuffer: pauseRef.current,
+            editBuffer: frameEditRef.current,
+          });
+        }
       } catch {
-        // ignore termination errors
+        interruptRef.current = null;
+        stdinCtrlRef.current = null;
+        pauseRef.current = null;
+        frameEditRef.current = null;
       }
-      workerRef.current = null;
-    }
-  };
+      // A brand-new worker has not loaded Python, so the status has to stop saying it has. A tab
+      // switch terminates the worker while this component's state survives it, and the next mount
+      // warms a new one - without this, the chip reads "Python ready" for the whole re-download,
+      // and every request gated on readiness (completions, hover, signature, lint) believes it too.
+      setPyodideStatus('idle');
+      pyodideStatusRef.current = 'idle';
+      worker.addEventListener('message', (event: MessageEvent) => {
+        analysisRef.current?.handleMessage(event.data);
+      });
+    },
+  }));
 
   useEffect(() => {
     return () => {
-      destroyWorker();
+      session.dispose();
+      if (stopFallbackRef.current) {
+        clearTimeout(stopFallbackRef.current);
+        stopFallbackRef.current = null;
+      }
       // A tab can be taken off screen without this component losing its state (the phone shell and
       // the tab panels keep views mounted), and the worker goes with the effects. Forgetting the
       // warm guard is what lets the next activation warm a new one; forgetting the status is a chip
@@ -1611,62 +1642,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     onDismissShared?.();
   };
 
-  const getOrCreateWorker = (): Worker => {
-    if (workerRef.current) {
-      return workerRef.current;
-    }
-    // A real module URL, not a blob: the service worker controls this worker, so the Pyodide wheels it
-    // fetches can be cached and served with the network off. `type: 'module'` is what lets the worker
-    // use a dynamic `import()` for the ESM runtime instead of `importScripts`.
-    const worker = new Worker(new URL('../../runtime/pythonWorker.js', import.meta.url), {
-      type: 'module',
-    });
-    // Cross-origin isolation is what makes SharedArrayBuffer exist. With it, Stop raises
-    // KeyboardInterrupt in the running program and the session survives; without it, Stop still
-    // works, by terminating the worker (the old behaviour).
-    try {
-      if (typeof SharedArrayBuffer !== 'undefined') {
-        interruptRef.current = new SharedArrayBuffer(4);
-        stdinCtrlRef.current = new SharedArrayBuffer(8 * 1024);
-        pauseRef.current = new SharedArrayBuffer(8);
-        frameEditRef.current = new SharedArrayBuffer(8 + FRAME_EDIT_BYTES);
-        setPauseCapable(true);
-        worker.postMessage({
-          type: 'init',
-          interruptBuffer: interruptRef.current,
-          stdinBuffer: stdinCtrlRef.current,
-          pauseBuffer: pauseRef.current,
-          editBuffer: frameEditRef.current,
-        });
-      }
-    } catch {
-      interruptRef.current = null;
-      stdinCtrlRef.current = null;
-      pauseRef.current = null;
-      frameEditRef.current = null;
-    }
-    // A brand-new worker has not loaded Python, so the status has to stop saying it has. A tab switch
-    // terminates the worker while this component's state survives it, and the next mount warms a new
-    // one - without this, the chip reads "Python ready" for the whole re-download, and every request
-    // gated on readiness (completions, hover, signature, lint) believes it too.
-    //
-    // The ref is set here rather than waiting for the render below: it is what the analysis gate
-    // reads, and it exists to answer without a render.
-    setPyodideStatus('idle');
-    pyodideStatusRef.current = 'idle';
-    workerRef.current = worker;
-    // Analysis answers carry a request id and no run id. The session claims them here, so the run
-    // path's own `onmessage` handler can never mistake a completion list for a verdict.
-    worker.addEventListener('message', (event: MessageEvent) => {
-      analysisRef.current?.handleMessage(event.data);
-    });
-    return worker;
-  };
-
-  // The status the warm-up promise below has to know about without re-rendering: a worker that is
-  // already loaded answers a second `warm` with silence (it has nothing new to report), so the page
-  // has to remember for itself that Python is up.
-  const pyodideStatusRef = useRef<'idle' | 'loading' | 'ready' | 'error'>('idle');
   useEffect(() => {
     pyodideStatusRef.current = pyodideStatus;
   }, [pyodideStatus]);
@@ -1675,15 +1650,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const analysisSession = (): AnalysisSession => {
     if (!analysisRef.current) {
       analysisRef.current = new AnalysisSession((message) =>
-        getOrCreateWorker().postMessage({
+        session.post({
           // Every analysis request carries the CDN, like a run and a format do. The worker needs it
           // to install Jedi on the first request of a worker that has not been warmed yet — a tab
           // switch can keep this component while replacing its worker, and an analysis request may
           // be the first message that worker ever sees. Without it the worker tried to import
           // `undefinedpyodide.mjs` and every completion fell back to keywords silently.
-          cdnUrl:
-            (typeof window !== 'undefined' && window.__mechalabPyodideCdnUrl) ||
-            DEFAULT_PYODIDE_CDN,
+          cdnUrl: pyodideCdn(),
           ...message,
         })
       );
@@ -1794,14 +1767,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       };
       const timer = window.setTimeout(() => finish(false), timeoutMs);
       try {
-        worker = getOrCreateWorker();
+        worker = session.ensure();
       } catch {
         finish(false);
         return;
       }
       worker.addEventListener('message', onMessage);
-      const cdnUrl =
-        (typeof window !== 'undefined' && window.__mechalabPyodideCdnUrl) || DEFAULT_PYODIDE_CDN;
+      const cdnUrl = pyodideCdn();
       worker.postMessage({ type: 'warm', cdnUrl });
     });
 
@@ -1936,29 +1908,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     if (connection?.saveData || connection?.effectiveType === 'slow-2g' || connection?.effectiveType === '2g') {
       return;
     }
-    const cdnUrl =
-      (typeof window !== 'undefined' && window.__mechalabPyodideCdnUrl) || DEFAULT_PYODIDE_CDN;
+    const cdnUrl = pyodideCdn();
     let cancelled = false;
     const warm = () => {
       if (cancelled || warmStartedRef.current) return;
       warmStartedRef.current = true;
       try {
-        const worker = getOrCreateWorker();
-        const previousHandler = worker.onmessage;
-        worker.onmessage = (event: MessageEvent) => {
-          const data = event.data || {};
-          if (data.type === 'status' && (data.status === 'loading' || data.status === 'ready')) {
-            setPyodideStatus(data.status);
-            // The warm-up is how most learners meet the runtime, so its measured time is the one the
-            // status line reports; the run handler sets this too, for a cold first Run.
-            if (data.status === 'ready' && typeof data.ms === 'number') setReadyMs(data.ms);
-            if (data.status === 'ready' && data.boot) setRuntimeBoot(String(data.boot));
-          }
-          if (data.type === 'status' && data.status === 'ready') {
-            worker.onmessage = previousHandler;
-          }
-        };
-        worker.postMessage({ type: 'warm', cdnUrl });
+        // The session's status handler moves the chip, so a warm-up needs no handler of its own.
+        session.post({ type: 'warm', cdnUrl });
       } catch {
         // A warm-up that cannot start is not something to report: the Run that needs it will.
       }
@@ -1974,9 +1931,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       if (!idleCallback) window.clearTimeout(handle as number);
     };
   }, [codeOpened, isPhone, layout]);
-
-  /** Re-arms the run's watchdog when a pause is answered: the clock belongs to execution. */
-  const resumeWatchdogRef = useRef<(() => void) | null>(null);
 
   /**
    * Ask the interpreter to stop at the next line of the learner's file.
@@ -2141,11 +2095,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     // The expression being typed survives a Step (it is still about to be pinned); the sentence a
     // full bar gave belongs to the park that is ending.
     setWatchError('');
-    resumeWatchdogRef.current?.();
+    session.resumeClock();
   };
 
   const stopExecution = (customMessage?: string) => {
-    const runId = activeRunIdRef.current;
+    const runId = session.runId;
     // A parked interpreter is not on the interrupt word's clock: it is waiting on the pause word,
     // so wake that wait with a stop of its own.
     if (pauseRef.current) {
@@ -2159,7 +2113,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     // With shared memory, stop in place: the interpreter raises KeyboardInterrupt inside the
     // running program, so imports, variables and the loaded runtime all survive. A worker that
     // cannot unwind within the grace period is terminated by the fallback below.
-    if (workerRef.current && interruptRef.current) {
+    if (session.worker && interruptRef.current) {
       // The word has to be written from THIS thread. `postMessage` to a worker that is inside a
       // Python loop queues behind the loop it is meant to stop, which is why the buffer is shared:
       // CPython polls it between bytecodes and raises KeyboardInterrupt in the running program.
@@ -2177,8 +2131,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       if (stopFallbackRef.current) clearTimeout(stopFallbackRef.current);
       stopFallbackRef.current = setTimeout(() => {
         stopFallbackRef.current = null;
-        if (activeRunIdRef.current !== runId || !activeResolveRef.current) return;
-        destroyWorker();
+        if (!session.isCurrent(runId) || !session.running) return;
+        session.dispose();
         setIsRunning(false);
         setPyodideStatus('idle');
         setBehaviorCheck('failed');
@@ -2186,32 +2140,23 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         setStderr(
           'Execution stopped: the interpreter did not unwind, so the worker was restarted. Your editor code is preserved.'
         );
-        if (activeResolveRef.current) {
-          activeResolveRef.current({ stopped: true });
-          activeResolveRef.current = null;
-        }
+        session.settle({ stopped: true });
       }, 1500);
       return;
     }
-    activeRunIdRef.current += 1;
-    destroyWorker();
+    const stopMsg =
+      customMessage ||
+      'Execution stopped by user. Background Python Web Worker was terminated and your editor code is preserved.';
+    session.cancel({ stopped: true, message: stopMsg });
     setIsRunning(false);
     setPyodideStatus('idle');
     setBehaviorCheck('failed');
     setPassStatus('stopped');
-    const stopMsg =
-      customMessage ||
-      'Execution stopped by user. Background Python Web Worker was terminated and your editor code is preserved.';
     setStderr(stopMsg);
-    if (activeResolveRef.current) {
-      activeResolveRef.current({ stopped: true, message: stopMsg });
-      activeResolveRef.current = null;
-    }
   };
 
   const resetRuntime = () => {
-    activeRunIdRef.current += 1;
-    destroyWorker();
+    session.cancel({ stopped: true, message: 'Runtime reset' });
     setIsRunning(false);
     setPyodideStatus('idle');
     setStdout('');
@@ -2220,10 +2165,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setBehaviorCheck('untested');
     setOutputCheck('untested');
     setPassStatus('untested');
-    if (activeResolveRef.current) {
-      activeResolveRef.current({ stopped: true, message: 'Runtime reset' });
-      activeResolveRef.current = null;
-    }
   };
 
   // `lesson` defaults to the rendered lesson; Run passes the one selected at click time. `grade`
@@ -2239,8 +2180,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     const grade = options.grade !== false && !scratchRef.current;
     const matchMode: OutputMatchMode = asOutputMatchMode(lesson.outputMatch);
     const attemptLessonId = lesson.id;
-    const runId = activeRunIdRef.current + 1;
-    activeRunIdRef.current = runId;
+    let runId = 0;
 
     setIsRunning(true);
     // A new run is not paused: a bar left over from the previous one would describe a worker that
@@ -2264,8 +2204,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setOutputCheck('untested');
     setPassStatus('untested');
 
-    const cdnUrl =
-      (typeof window !== 'undefined' && window.__mechalabPyodideCdnUrl) || DEFAULT_PYODIDE_CDN;
+    const cdnUrl = pyodideCdn();
     const timeoutMs =
       (typeof window !== 'undefined' && window.__mechalabExecutionTimeoutMs) ||
       DEFAULT_EXECUTION_TIMEOUT_MS;
@@ -2273,105 +2212,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       (typeof window !== 'undefined' && window.__mechalabMaxTraceSteps) || DEFAULT_MAX_TRACE_STEPS;
 
     try {
-      const worker = getOrCreateWorker();
-
-      const workerOutcome: any = await new Promise((resolve) => {
-        activeResolveRef.current = resolve;
-
-        const armExecutionWatchdog = (ms: number, label: string) => {
-          clearRunWatchdog();
-          // What Step and Continue call: the same watchdog, on the run's own timeout, from whatever
-          // thread of execution the page is on when it answers.
-          resumeWatchdogRef.current = () => armExecutionWatchdog(timeoutMs, 'Python execution');
-          timeoutIdRef.current = setTimeout(() => {
-            if (activeRunIdRef.current === runId) {
-              destroyWorker();
-              resolve({
-                watchdogTimedOut: true,
-                message: `ExecutionTimeoutError: ${label} exceeded ${(ms / 1000).toFixed(
-                  1
-                )}s limit and the background Web Worker was terminated (possible infinite loop such as 'while True:'). Your editor code is preserved — fix the loop condition or click Reset Runtime.`,
-              });
-            }
-          }, ms);
-        };
-
-        // Initial watchdog allows up to 45s for first-time CDN WASM download, then switches to timeoutMs once ready
-        armExecutionWatchdog(Math.max(timeoutMs, 45000), 'Initial WASM load + execution');
-
-        worker.onmessage = (ev: MessageEvent) => {
-          const data = ev.data || {};
-          if (data.type === 'status') {
-            if (data.status === 'loading') {
-              setPyodideStatus('loading');
-            } else if (data.status === 'ready') {
-              setPyodideStatus('ready');
-              if (typeof data.ms === 'number') setReadyMs(data.ms);
-              if (data.boot) setRuntimeBoot(String(data.boot));
-              armExecutionWatchdog(timeoutMs, 'Python execution');
-            } else if (data.status === 'error') {
-              setPyodideStatus('error');
-            }
-            return;
-          }
-          // The learner's `input()` is waiting on a line; the run is still alive, so this is not
-          // an outcome — answer it and keep waiting.
-          if (data.type === 'stdin-request') {
-            setStdinPrompt(String(data.prompt || ''));
-            setStdinValue('');
-            return;
-          }
-          // Batched scope points, not an outcome: handle them and keep waiting for the verdict. This
-          // has to sit above the runId gate below, which resolves the run on any message.
-          if (data.type === 'scope') {
-            if (data.runId === runId) setScopeSeries(normalizeScopeSeries(data.series));
-            return;
-          }
-          // A pause is not an outcome: the worker is parked and this page holds the key. The
-          // watchdog is cleared here - a paused run is not a slow run - and re-armed by Step or
-          // Continue when the interpreter starts moving again.
-          if (data.type === 'paused') {
-            if (data.runId !== runId) return;
-            clearRunWatchdog();
-            const step = (data.step as PausedStep) ?? null;
-            setPausedStep(step);
-            // An edit that landed re-posts this park with the frame's new values: the form closes and
-            // the chips show what the program will use. One that was refused keeps the form open and
-            // says why, in the interpreter's own words.
-            if (step?.edit_error) setFrameEditError(step.edit_error);
-            else {
-              setFrameEditError('');
-              setFrameEdit(null);
-            }
-            // A re-post is also the answer to a watch request: whatever the page was saying about
-            // the last one is stale, and the chips now show what this frame says.
-            setWatchError('');
-            return;
-          }
-          if (data.runId !== runId) return;
-          if (stopFallbackRef.current) {
-            clearTimeout(stopFallbackRef.current);
-            stopFallbackRef.current = null;
-          }
-          clearRunWatchdog();
-          resolve(data);
-        };
-
-        worker.onerror = (err: ErrorEvent) => {
-          clearRunWatchdog();
-          destroyWorker();
-          setPyodideStatus('error');
-          resolve({
-            type: 'error',
-            error:
-              err?.message ||
-              'Pyodide Web Worker failed to initialize or load from CDN. Execution verification requires Pyodide WASM.',
-          });
-        };
-
-        worker.postMessage({
-          type: 'run',
-          runId,
+      const started = session.run(
+        {
           studentCode: sourceCode,
           // Nothing to grade with: an ungraded run must not execute the appended self-check or the
           // capstone bench, because a half-written program would fail checks it was never meant to
@@ -2395,11 +2237,42 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           plantSource: MECHALAB_PLANT_PY,
           plantFilename: MECHALAB_PLANT_FILENAME,
           helperFiles: helperFiles.map((file) => ({ name: file.name, content: file.content })),
-        });
-      });
-
-      activeResolveRef.current = null;
-      if (activeRunIdRef.current !== runId) return;
+        },
+        // The first load also fetches Pyodide, so it gets the longer clock; once the interpreter
+        // reports ready the run's own budget applies.
+        { loadKillMs: Math.max(timeoutMs, 45_000), killMs: timeoutMs },
+        {
+          // Everything that is not a verdict: a waiting `input()`, a scope batch, or a park (whose
+          // clock the session has already stopped). A stale run's messages never reach here.
+          onMessage: (data) => {
+            if (data.type === 'stdin-request') {
+              setStdinPrompt(String(data.prompt || ''));
+              setStdinValue('');
+              return;
+            }
+            if (data.type === 'scope') {
+              setScopeSeries(normalizeScopeSeries(data.series));
+              return;
+            }
+            const step = (data.step as PausedStep) ?? null;
+            setPausedStep(step);
+            // An edit that landed re-posts this park with the frame's new values: the form closes and
+            // the chips show what the program will use. One that was refused keeps the form open and
+            // says why, in the interpreter's own words.
+            if (step?.edit_error) setFrameEditError(step.edit_error);
+            else {
+              setFrameEditError('');
+              setFrameEdit(null);
+            }
+            // A re-post is also the answer to a watch request: whatever the page was saying about
+            // the last one is stale, and the chips now show what this frame says.
+            setWatchError('');
+          },
+        }
+      );
+      runId = session.runId;
+      const workerOutcome: any = await started;
+      if (!session.isCurrent(runId)) return;
 
       if (workerOutcome?.stopped) {
         // The interpreter was interrupted, not killed: it is still loaded for the next Run.
@@ -2418,10 +2291,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         return;
       }
 
-      if (workerOutcome?.watchdogTimedOut || workerOutcome?.timedOut) {
+      if (workerOutcome?.timedOut) {
         guideEditorRef.current?.setInlineValues([]);
         if (workerOutcome?.stdout) setStdout(workerOutcome.stdout);
-        setStderr(workerOutcome.message || workerOutcome.stderr || 'Execution timed out.');
+        const label =
+          workerOutcome.phase === 'load' ? 'Initial WASM load + execution' : 'Python execution';
+        setStderr(
+          workerOutcome.type === 'timeout'
+            ? `ExecutionTimeoutError: ${label} exceeded ${(Number(workerOutcome.ms) / 1000).toFixed(
+                1
+              )}s limit and the background Web Worker was terminated (possible infinite loop such as 'while True:'). Your editor code is preserved — fix the loop condition or click Reset Runtime.`
+            : workerOutcome.message || workerOutcome.stderr || 'Execution timed out.'
+        );
         // The lines that ran before the budget ran out: the tail is exactly where the loop turned.
         setTrace(readTrace(workerOutcome?.trace));
         setTraceStep(0);
@@ -2432,7 +2313,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
       if (workerOutcome?.type === 'error') {
         setPyodideStatus('error');
-        setStderr(workerOutcome.error || 'Execution error');
+        setStderr(
+          workerOutcome.error ||
+            (workerOutcome.workerFailed
+              ? 'Pyodide Web Worker failed to initialize or load from CDN. Execution verification requires Pyodide WASM.'
+              : 'Execution error')
+        );
         setBehaviorCheck('failed');
         setPassStatus('error');
         return;
@@ -2538,10 +2424,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           [attemptLessonId]: (prev[attemptLessonId] ?? 0) + 1,
         }));
       }
-      if (activeRunIdRef.current === runId) {
+      if (session.isCurrent(runId)) {
         setIsRunning(false);
         setPausedStep(null);
-        resumeWatchdogRef.current = null;
+      }
+      if (stopFallbackRef.current) {
+        clearTimeout(stopFallbackRef.current);
+        stopFallbackRef.current = null;
       }
     }
   };

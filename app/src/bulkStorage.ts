@@ -43,6 +43,7 @@ export const BULK_KEYS = [
   'mechalab_draft_history_v1',
   'mechalab.learningLog.v1',
   'mechalab_study_notes_v1',
+  'mechalab_studio_v1',
   'mechalab_study_cards_v1',
   'mechalab_sittings_v1',
 ] as const;

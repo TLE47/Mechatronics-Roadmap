@@ -165,7 +165,7 @@ async function main() {
       ) {
         throw new Error(`expected the ${theme} palette (stored pick or ${SCHEME[theme]} OS)`);
       }
-      // Beginner mode hides the deeper labs; the sweep needs all fourteen tabs.
+      // Beginner mode hides the deeper labs; the sweep needs all fifteen tabs.
       const advanced = page.locator('[data-testid="btn-mode-advanced"]');
       if (await advanced.count()) await advanced.click();
       await page.addScriptTag({ content: axeSource });

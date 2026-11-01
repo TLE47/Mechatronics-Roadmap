@@ -65,7 +65,7 @@ test:theme:tokens` pins the parse and `npm run test:theme:e2e` checks the painte
 browser. The page is a route, not a tab: the learner's rail is unchanged.
 
 Legibility is measured, not eyeballed: `npm run test:theme` pins the storage/OS rules and keeps the
-three controls honest, and `npm run test:theme:e2e` drives Chromium through all fourteen tabs in all four
+three controls honest, and `npm run test:theme:e2e` drives Chromium through all fifteen tabs in all four
 palettes, compositing each text run over the backgrounds it actually sits on and failing anything
 below 3:1 (the current floor is 4.52:1, and 7:1 in high contrast). The unit suite runs inside
 `npm run test:workbench`; the browser sweep is its own CI step,
@@ -602,7 +602,7 @@ preview — and the download and the preview are the same string.
 
 Four measurements about the shell itself, all measured rather than asserted.
 
-**`npm run check:axe`** injects `axe-core` into every one of the fourteen tabs, in all four palettes, and
+**`npm run check:axe`** injects `axe-core` into every one of the fifteen tabs, in all four palettes, and
 fails on anything `serious` or `critical`. `minor` and `moderate` findings are printed (a few dozen of
 them, counted per tab and palette, and all of one kind: `page-has-heading-one`, `region`,
 `heading-order`) and do not fail — a gate that trips on a landmark suggestion is a gate people turn off. `color-contrast` is switched off here on purpose: the theme
@@ -691,7 +691,7 @@ built from this public repository, and maps would roughly double what Pages serv
 the same three-way ratchet as the accessibility one: unlisted fails, wider than recorded fails, and
 stale fails.
 
-**`npm run check:snapshot`** records the **painted surface** of all 64 surfaces — the fourteen tabs, Home and the Workflow canvas, in all four palettes: where
+**`npm run check:snapshot`** records the **painted surface** of all 68 surfaces — the fifteen tabs, Home and the Workflow canvas, in all four palettes: where
 the header, the activity rail, the main pane and its first panel sit, how many buttons, inputs, links,
 headings, canvases and tables the tab has, and the colours, type and palette tokens the browser
 resolved. Every other suite asks about a feature; this one is the only place that notices a panel that
@@ -1129,7 +1129,7 @@ the DOM (it is what the results are about) while the screen can put either one f
 ([`src/workspaceLayout.ts`](src/workspaceLayout.ts), `npm run test:layout`, `npm run test:e2e:pages`
 for the docked geometry and the drag).
 
-**At `xl` the tab rail is an activity bar.** Below 1280 px the fourteen tabs are the horizontal scroller
+**At `xl` the tab rail is an activity bar.** Below 1280 px the fifteen tabs are the horizontal scroller
 they have always been; above it they are a vertical strip down the left edge, pinned to the top so a
 long lesson scrolls past it, with every label visible and none of them behind a sideways scroll. Same
 buttons, same `data-testid`s: the strip is the rail's classes, not a second copy of the list.
@@ -1553,7 +1553,12 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/lessonCoach.ts`](src/lessonCoach.ts) | The progressive hints and the stuck-state prompts. |
 | [`src/checkHints.ts`](src/checkHints.ts) | The join between a failed check and the hint rung that answers it, plus the rule that earns rung 2. |
 | [`src/runtime/pythonWorker.js`](src/runtime/pythonWorker.js) | The interpreter worker: warm-up, run, in-place Stop, `input()`, `mechalab.scope`, `result` and `scope` messages. |
+| [`src/runtime/pyodideWorker.ts`](src/runtime/pyodideWorker.ts) | The page side of that protocol, one owner for both runners: the run request, the one verdict, run identity, the page kill clock and dispose. |
 | [`src/components/PythonEditor.tsx`](src/components/PythonEditor.tsx) | The CodeMirror editor: view, external sync, test bridge. |
+| [`src/components/tabs/TabStudio.tsx`](src/components/tabs/TabStudio.tsx) | The free-study workspace: a scratch program, a workflow plan and a notebook, one tab and no lesson — Code and Plan in the main area, the note always beside it on a desktop and one pane at a time on a phone. |
+| [`src/studio/store.ts`](src/studio/store.ts) | The one studio record (`mechalab_studio_v1`): the code, the note, a tolerant read, a capped write that reports a refused store, and the starter. |
+| [`src/studio/pythonRun.ts`](src/studio/pythonRun.ts) | The studio's consumer of the shared session: one ungraded program in, one verdict out, no grading inputs, no trace, and the sentences the tab prints. |
+| [`src/runtime/pyodideCdn.ts`](src/runtime/pyodideCdn.ts) | The one interpreter address the runner and the studio both read. |
 | [`src/editor/`](src/editor) | Editor-only logic: the token theme, the slider model and its widget. |
 | [`src/lessonFiles.ts`](src/lessonFiles.ts) | The read-only helper files a lesson brings (the shared plant). |
 | [`src/lessonPage.ts`](src/lessonPage.ts) | The lesson text as data: the payload's shape and guard, where it is served from, and one fetch per page. |
@@ -1567,7 +1572,7 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/phoneSurface.ts`](src/phoneSurface.ts) | Which half of Study a phone is showing, remembered for the lesson it belongs to. |
 | [`src/installOffer.ts`](src/installOffer.ts) | When the install row may appear: never installed, the browser's prompt, iOS's Share sheet, a thirty-day snooze. |
 | [`src/components/Sheet.tsx`](src/components/Sheet.tsx) | The one dialog: a bottom sheet on a phone, focus trap, Escape, focus restore, a locked page. |
-| [`src/components/PhoneTabPicker.tsx`](src/components/PhoneTabPicker.tsx) | The phone's one-row tab picker and the sheet that lists all twelve labs. |
+| [`src/components/PhoneTabPicker.tsx`](src/components/PhoneTabPicker.tsx) | The phone's one-row tab picker and the sheet that lists all fifteen tabs. |
 | [`src/components/PlotExpander.tsx`](src/components/PlotExpander.tsx) | A lab canvas at its own resolution, in a sheet that scrolls both ways. |
 | [`src/components/PythonKeys.tsx`](src/components/PythonKeys.tsx) | The punctuation a phone keyboard hides, inserted at the caret through the editor's own handle. |
 | [`src/draftHistory.ts`](src/draftHistory.ts) | The versions behind the draft: what each run started from, with its verdict, bounded per lesson and in total, plus the merge a restore uses. |
@@ -1625,7 +1630,7 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/audio/rainAsset.ts`](src/audio/rainAsset.ts) | The recorded loop's URL, in its own module, so a Node test can import the engine without meeting an `.m4a`. |
 | [`src/components/SoundClicks.tsx`](src/components/SoundClicks.tsx) | The interface's ear: one delegated listener, the dedupe between a pointer and a keyboard press, and nothing rendered. |
 | [`src/components/SoundControl.tsx`](src/components/SoundControl.tsx) | Where the sound panel goes, how it closes, and which control drew it — placement and glue over `musicManager.ts`. |
-| [`src/components/AudioPlayerWidget.tsx`](src/components/AudioPlayerWidget.tsx) | The strip the header and the focus pill both draw: one toggle, the five genre doors, and the panel's door. |
+| [`src/components/AudioPlayerWidget.tsx`](src/components/AudioPlayerWidget.tsx) | The strip the header and the focus pill both draw: one toggle and the panel's door. The genre and tape choice lives in the settings panel, not the header. |
 | [`src/portfolio.ts`](src/portfolio.ts) | The exported Markdown: progress, notes and passages, the deck, and the measured sittings. |
 | [`src/traceback.ts`](src/traceback.ts) | CPython's failure text as data: frames, the learner's own frame, chains, and both SyntaxError shapes. |
 | [`src/errorIndex.ts`](src/errorIndex.ts) | The explainer's entries matched to a parsed failure, and the honest "not in the index" case. |
@@ -1673,10 +1678,10 @@ npm run test:board           # the Board card: each lesson's sketch, a predictio
 npm run check:panel          # the card's generated data still matches the five Arduino lesson pages
 npm run test:avr             # every committed .hex runs in avr8js and prints its lesson's serial; corrupt records and wrong expectations refused
 npm run check:firmware       # each .hex was built from the sketch the page ships, and is the file the index hashes
-npm run check:axe            # axe over all fourteen tabs and Home in every palette; serious/critical fails, stale allowlists fail
+npm run check:axe            # axe over all fifteen tabs and Home in every palette; serious/critical fails, stale allowlists fail
 npm run check:weight         # the gzipped shell against docs/weight-budget.json (run after npm run build)
 npm run check:lighthouse     # best-practices, SEO and accessibility audits on the built bundle; performance is not run
-npm run check:snapshot       # the painted structure of all 64 surfaces against docs/surface-snapshot.json
+npm run check:snapshot       # the painted structure of all 68 surfaces against docs/surface-snapshot.json
 npm run test:perf            # the visit, timed: six moments on the built bundle, laptop and throttled phone, against docs/perf-budget.json (--record writes docs/PERF.md)
 npm run test:perf:unit       # the perf page and its ceilings without a browser; a CI step
 npm run test:e2e:backup      # the header buttons in Chromium: write a zip, wipe, restore to store and screen

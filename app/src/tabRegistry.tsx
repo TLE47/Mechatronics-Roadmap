@@ -27,11 +27,13 @@ import {
   LineChart,
   Link2,
   Map as MapIcon,
+  NotebookPen,
   Radar,
   Zap,
   type LucideIcon,
 } from 'lucide-react';
 import { TabPyodideRunner } from './components/tabs/TabPyodideRunner';
+import { STUDIO_HOME_DOOR, type HomeDoor } from './homeDoor';
 import { PYTHON_LESSONS } from './data/pythonLessonsData';
 import { PYTHON_TAB_NAME, TAB_NAMES } from './tabNames';
 import type { ActiveTierPass } from './curriculumData';
@@ -91,6 +93,8 @@ export interface WorkbenchTabMeta {
   technicalLabel: string;
   technicalSubtitle: string;
   isBeginnerCore: boolean;
+  /** The Home card that introduces this tab above the labs grid, when it has one. */
+  home?: HomeDoor;
   /** The split point. Absent for a tab the shell already ships. */
   load?: () => Promise<{ default: View }>;
   /** A tab whose code is in the entry chunk rather than a chunk of its own. */
@@ -169,6 +173,19 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
         />
       </div>
     ),
+  },
+  {
+    id: 'tab-studio',
+    Icon: NotebookPen,
+    beginnerLabel: TAB_NAMES['tab-studio'],
+    beginnerSubtitle: 'Write code, plan a workflow, keep notes — no lesson attached',
+    technicalLabel: 'Scratch Python · Workflow Canvas · Notebook',
+    technicalSubtitle: 'Ungraded · Local only · Your own pace',
+    isBeginnerCore: true,
+    home: STUDIO_HOME_DOOR,
+    load: () =>
+      import('./components/tabs/TabStudio').then((module) => ({ default: module.TabStudio })),
+    render: (_context, View) => <View />,
   },
   {
     id: 'tab-placement',
@@ -357,4 +374,5 @@ export const HOME_LABS = WORKBENCH_TABS.map((tab) => ({
   label: tab.beginnerLabel,
   blurb: tab.beginnerSubtitle,
   Icon: tab.Icon,
+  home: tab.home,
 }));

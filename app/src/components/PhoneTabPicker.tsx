@@ -10,7 +10,7 @@ import { InstallOffer } from './InstallOffer';
  *
  * A twelve-item rail does not fit 390 px, and the rail that did fit was a horizontal scroller whose
  * last tabs were off-screen with no sign they existed. This is one row showing where you are and a
- * sheet listing every tab: all twelve are reachable, the current one is named in the header, and the
+ * sheet listing every tab: all fifteen are reachable, the current one is named in the header, and the
  * row costs 48 px instead of the rail's two lines.
  *
  * The rail stays at `md` and up. The picker is rendered by `App` and hidden from `md` by CSS, so a

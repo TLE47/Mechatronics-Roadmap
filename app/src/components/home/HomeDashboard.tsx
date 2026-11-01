@@ -112,6 +112,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = (props) => {
   const scrap = scrapTotal(props.awards);
   const shelf = scrapShelf(props.awards);
   const marks = awardsOfKind(props.awards, 'proof-mark');
+  const featuredDoor = props.labs.find((lab) => lab.home);
 
   const startToday = () => {
     if (home.today.entryId) props.onOpenLesson(home.today.entryId);
@@ -235,6 +236,27 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = (props) => {
           </p>
         )}
       </section>
+
+      {/* A workspace, not a lab: the three things a learner does when no lesson is telling them
+          what to do, in one place. It stays in the labs grid too — that grid is the complete
+          index, and this card is the introduction, both read from the registry entry. */}
+      {featuredDoor?.home && (
+        <section className={`${card} border-accent/30`} data-testid={featuredDoor.home.testId}>
+          <div className={sectionHeading}>
+            <featuredDoor.Icon className="h-4 w-4 text-accent" aria-hidden="true" />
+            {featuredDoor.home.title}
+          </div>
+          <p className="text-xs text-muted">{featuredDoor.home.blurb}</p>
+          <button
+            onClick={() => props.onOpenTab(featuredDoor.id)}
+            data-testid={`${featuredDoor.home.testId}-open`}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3.5 py-2 text-xs font-bold text-inverse cursor-pointer hover:bg-accent/80"
+          >
+            {featuredDoor.home.action}
+            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        </section>
+      )}
 
       <LabsPanel labs={props.labs} onOpenTab={props.onOpenTab} />
 

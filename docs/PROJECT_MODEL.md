@@ -186,7 +186,7 @@ the requirement that test judges, with the test row marked. `npm run test:projec
 derived-status rules, every report value, and the malformed documents the reader refuses.
 
 **The tab is one registry entry.** `app/src/tabRegistry.tsx` holds each tab's id, labels, icon,
-chunk loader and render, so adding this fourteenth tab was one entry plus its `TabId` and its name
+chunk loader and render, so adding the Project tab was one entry plus its `TabId` and its name
 in `workbenchTabs.json` — not the six edits (import, lazy const, prefetch map, icon map, metadata
 block, render line) the shell used to need. `scripts/check_tab_names.py` reads that registry for the
 shared names.

@@ -397,7 +397,7 @@ export async function runSmokeTests(viteServer) {
     // Switch to Advanced View via localStorage and verify all 12 technical tabs render
     globalThis.localStorage.setItem(STORAGE_KEY_VIEW_MODE, 'advanced');
     const htmlAdvanced = cleanSsr(ReactDOMServer.renderToString(React.createElement(App)));
-    assert.equal(WORKBENCH_TABS.length, 14, 'WORKBENCH_TABS must define all 14 tabs');
+    assert.equal(WORKBENCH_TABS.length, 15, 'WORKBENCH_TABS must define all 15 tabs');
     for (const tab of WORKBENCH_TABS) {
       assert(
         htmlAdvanced.includes(`data-testid="tab-btn-${tab.id}"`),
@@ -665,9 +665,15 @@ export async function runSmokeTests(viteServer) {
       !runnerSrc.includes('normalizeCode') && !runnerSrc.includes("setPyodideStatus('fallback')"),
       'TabPyodideRunner must never award an execution pass from fallback text without executing in Pyodide'
     );
+    // The worker itself is constructed and terminated by the session that owns the protocol
+    // (`runtime/pyodideWorker.ts`), for both the runner and the studio.
+    const workerSrc = fs.readFileSync(
+      path.join(repoRoot, 'app', 'src', 'runtime', 'pyodideWorker.ts'),
+      'utf-8'
+    );
     assert(
-      runnerSrc.includes('new Worker(') && runnerSrc.includes('.terminate()'),
-      'TabPyodideRunner must isolate Python execution inside a terminable Web Worker'
+      workerSrc.includes('new Worker(') && workerSrc.includes('.terminate()'),
+      'the shared worker session must isolate Python execution inside a terminable Web Worker'
     );
 
     const htmlRunner = cleanSsr(

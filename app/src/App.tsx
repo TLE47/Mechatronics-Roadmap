@@ -1091,14 +1091,20 @@ export const App: React.FC = () => {
       window.open(item.href, '_blank', 'noopener,noreferrer');
       return;
     }
+    /** A pick that belongs to a tab must land on the workbench, even when the palette opened on Home. */
+    const openWorkbench = () => {
+      if (wholePage !== 'workbench') openPage('workbench');
+    };
     const lessonId = lessonIdOf(item);
     if (lessonId) {
+      openWorkbench();
       openLesson(lessonId, item.line);
       return;
     }
     if (item.kind === 'tab') {
       const target = WORKBENCH_TABS.find((tab) => `tab-${tab.id}` === item.id);
       if (target) {
+        openWorkbench();
         setActiveTab(target.id);
         setHighlightedId(null);
       }
@@ -1106,35 +1112,43 @@ export const App: React.FC = () => {
     }
     switch (item.id) {
       case 'action-run-lesson':
+        openWorkbench();
         setActiveTab('tab-pyodide');
         setRunRequest((nonce) => nonce + 1);
         break;
       case 'action-format-file':
+        openWorkbench();
         setActiveTab('tab-pyodide');
         setFormatRequest((nonce) => nonce + 1);
         break;
       case 'action-tour-replay':
+        openWorkbench();
         requestTour();
         break;
       case 'action-toggle-theme':
         toggleThemeMode();
         break;
       case 'action-beginner-view':
+        openWorkbench();
         setViewMode('beginner');
         break;
       case 'action-advanced-view':
+        openWorkbench();
         setViewMode('advanced');
         break;
       case 'action-open-home':
         openPage('home');
         break;
       case 'action-open-cheatsheet':
+        openWorkbench();
         setIsCheatSheetOpen(true);
         break;
       case 'action-open-shortcuts':
+        openWorkbench();
         setIsShortcutsOpen(true);
         break;
       case 'action-export-portfolio':
+        openWorkbench();
         setIsPortfolioModalOpen(true);
         break;
       case 'action-export-log':
@@ -1147,6 +1161,7 @@ export const App: React.FC = () => {
       case 'action-pass-tier1':
       case 'action-pass-tier2':
       case 'action-pass-tier3': {
+        openWorkbench();
         const pass = item.id.replace('action-pass-', '') as ActiveTierPass;
         setActiveTierPass(pass);
         setActiveTab('tab-arch');
@@ -1157,6 +1172,20 @@ export const App: React.FC = () => {
         break;
     }
   };
+
+  // One dialog for both whole-page and workbench layouts: Home has the same header search, and the
+  // palette's own results move to the workbench when the target lives there.
+  const paletteOverlay = (
+    <CommandPalette
+      isOpen={isPaletteOpen}
+      mode={paletteMode}
+      items={paletteMode === 'lessons' ? lessonPaletteItems : paletteItems}
+      search={paletteSearch}
+      note={proseNote}
+      onClose={() => setIsPaletteOpen(false)}
+      onSelect={handlePaletteSelect}
+    />
+  );
 
   // ⌘K / Ctrl+K from anywhere, including inside the editor: a palette that only opens when no
   // field has focus is the one you cannot use while typing, which is when you want it.
@@ -1580,6 +1609,7 @@ export const App: React.FC = () => {
           </React.Suspense>
         </main>
         <SiteFooter onOpenIntro={() => openPage('intro')} />
+        {paletteOverlay}
         {accountPanel}
       </div>
     );
@@ -1989,15 +2019,7 @@ export const App: React.FC = () => {
       <ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
 
       {/* ⌘K / ⌘P / ⌘⇧F. Rendered last so it sits above every panel, and only mounted while open. */}
-      <CommandPalette
-        isOpen={isPaletteOpen}
-        mode={paletteMode}
-        items={paletteMode === 'lessons' ? lessonPaletteItems : paletteItems}
-        search={paletteSearch}
-        note={proseNote}
-        onClose={() => setIsPaletteOpen(false)}
-        onSelect={handlePaletteSelect}
-      />
+      {paletteOverlay}
 
       {/* Export Progress Portfolio Modal */}
       {isPortfolioModalOpen && (

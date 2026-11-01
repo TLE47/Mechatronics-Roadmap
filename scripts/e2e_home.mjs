@@ -28,6 +28,7 @@ import { seedTourSeen } from './tour_seed.mjs';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 import { nextMission } from '../app/src/gamification/missions.ts';
 import { SPINE } from '../app/src/spine.ts';
+import { STUDIO_HOME_DOOR } from '../app/src/homeDoor.ts';
 
 const COMPLETED_KEY = 'mechalab_pyodide_completed_v1';
 const TAB_IDS = Object.keys(
@@ -510,6 +511,59 @@ async function main() {
     await page.getByTestId('btn-intro-home').click();
     await waitForHome(page);
     console.log('  ok Home and the footer both open the introduction');
+
+    // ---- 2c. The featured card is the registry descriptor, rendered ----
+    {
+      const card = page.getByTestId(STUDIO_HOME_DOOR.testId);
+      assert.equal(await card.count(), 1, 'Home must render the descriptor’s section');
+      const copy = ((await card.textContent()) ?? '').replace(/\s+/g, ' ').trim();
+      assert.ok(copy.includes(STUDIO_HOME_DOOR.title), 'the card must read the descriptor’s title');
+      assert.ok(copy.includes(STUDIO_HOME_DOOR.blurb), 'the card must read the descriptor’s blurb');
+      const open = page.getByTestId(`${STUDIO_HOME_DOOR.testId}-open`);
+      assert.equal(await open.count(), 1, 'the descriptor’s test id must name its button too');
+      assert.equal(
+        (await open.textContent())?.trim(),
+        STUDIO_HOME_DOOR.action,
+        'the button must read the descriptor’s action'
+      );
+      console.log('  ok Home’s featured card is the registry descriptor, not a second copy');
+    }
+
+    // ---- 2d. Search works from Home, by button and by key, and a result lands on the workbench ----
+    await page.getByTestId('btn-open-palette').click();
+    await page.getByTestId('command-palette').waitFor({ timeout: 10000 });
+    assert.equal(
+      await page
+        .getByTestId('input-palette-search')
+        .evaluate((element) => element === document.activeElement),
+      true,
+      'the header search button must open the palette with its field focused'
+    );
+    await page.keyboard.press('Escape');
+    assert.equal(
+      await page.getByTestId('command-palette').count(),
+      0,
+      'Escape must close the palette'
+    );
+    await page.keyboard.press('Control+k');
+    await page.getByTestId('command-palette').waitFor({ timeout: 10000 });
+    await page.getByTestId('input-palette-search').fill(FIRST_LESSON.id);
+    await page.keyboard.press('Enter');
+    await page.getByTestId('tab-btn-tab-pyodide').waitFor({ timeout: 30000 });
+    assert.equal(
+      await page.getByTestId('home-dashboard').count(),
+      0,
+      'a search result must leave Home for the workbench it opens'
+    );
+    assert.equal(
+      await page.getByTestId('tab-btn-tab-pyodide').getAttribute('aria-current'),
+      'page',
+      'a lesson result must open the runner'
+    );
+    console.log('  ok Home search opens by button and key, and its result opens the workbench');
+
+    await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });
+    await waitForHome(page);
 
     // ---- 3. Today is one check, not a map ----
     assert.equal(await page.getByTestId('home-today').isVisible(), true);

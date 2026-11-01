@@ -16,6 +16,37 @@ flowchart LR
 
 ---
 
+## [2026-11-01] — A free-study workspace, not another lesson
+
+**Home gained one card and the workbench one tab, both for work nobody assigned.** *Free study*
+sits between Continue and the labs index and opens `tab-studio` (`NotebookPen`, “Free Study
+Workspace”), a tab with no lesson behind it: a scratch Python editor with its own Run/Stop and
+output, the workflow canvas under the reserved `studio` key, and a plain notebook. On a desktop the
+note rail stays beside Code or Plan; at 390 px the same three are one view at a time. Nothing is
+graded and nothing is recorded as progress: no instructor tests, expected output, review cards or
+sitting clock reach the studio, and the page says so in its header. The card is an introduction —
+the tab is also in the `HOME_LABS` grid, so “Your labs” stays the complete index rather than
+shrinking to make room.
+
+**One record, one runner, one interpreter address.** `app/src/studio/store.ts` keeps
+`mechalab_studio_v1` (`code`, `note`, `updatedAt`) with a tolerant read, capped writes and an empty
+studio that removes its key; `app/src/studio/pythonRun.ts` is a scratch-only client of the existing
+worker — one program in, one verdict out, no grading inputs, trace, stdin or breakpoints, a 20 s
+worker budget and a 30 s page kill, and a dispose when the tab closes. `app/src/runtime/pyodideCdn.ts`
+is the one CDN address the runner and the studio both read instead of two copies. The plan rides the
+backup because it is the same workflow store, and a plan is not a second document format — the
+browser suite exports the archive, wipes the browser, restores it and opens the studio plan again.
+
+The tab is registered once (`types.ts`, `workbenchTabs.json`, `tabRegistry.tsx`), which moved the
+counts a tab always moves: 15 tabs, 68 painted surfaces, and the `check:tabnames` / `check:axe` /
+theme sweeps read the registry rather than a list. `npm run test:studio` pins the store and the
+runner's protocol — Stop, a runtime error, a refused load and its retry, the 30 s page kill and
+dispose, with a stub worker. `npm run test:e2e:studio` proves Home's door, a real run, Stop and both
+the step budget and the interpreter's 20 s budget each ending a run with a fresh Run after it, a
+runtime error's traceback, the killed run's code still saved, the code and notebook through a reload,
+and the plan through both a reload and a backup/wipe/restore round trip, with one pane at a time on
+a phone. No dependency was added.
+
 ## [2026-10-31] — One declaration for every project object kind
 
 **The kind declaration was split by concern, and the read stopped naming kinds.**

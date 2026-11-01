@@ -68,8 +68,8 @@ def main(argv=None):
     tabs = data.get("tabs", {})
     findings = []
 
-    if len(tabs) != 14:
-        findings.append("expected 14 tabs in %s, found %d" % (os.path.relpath(TAB_DATA, ROOT), len(tabs)))
+    if len(tabs) != 15:
+        findings.append("expected 15 tabs in %s, found %d" % (os.path.relpath(TAB_DATA, ROOT), len(tabs)))
     if not data.get("workbenchUrl", "").startswith("https://"):
         findings.append("workbenchUrl must be the public https address the pages link to")
     for tab_id, name in tabs.items():

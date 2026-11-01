@@ -1,12 +1,12 @@
 /**
  * The Python runtime: Pyodide in its own worker.
  *
- * This file is the worker itself, built by Vite as a module worker
- * (`new Worker(new URL('../../runtime/pythonWorker.js', import.meta.url), { type: 'module' })`). It was
- * a blob-URL string in TabPyodideRunner until the offline work: a service worker does not control blob
- * workers, so nothing in that blob's network traffic could be cached. A real module URL puts the worker
- * in the service worker's scope, which is what lets Pyodide's 10 MB of wheels be served from the cache
- * on a plane.
+ * This file is the worker itself, built by Vite as a module worker and created on the page side of
+ * the protocol (`pyodideWorker.ts`: `new Worker(new URL('./pythonWorker.js', import.meta.url), { type:
+ * 'module' })`). It was a blob-URL string in TabPyodideRunner until the offline work: a service worker
+ * does not control blob workers, so nothing in that blob's network traffic could be cached. A real
+ * module URL puts the worker in the service worker's scope, which is what lets Pyodide's 10 MB of
+ * wheels be served from the cache on a plane.
  *
  * Plain JavaScript, not TypeScript: it was extracted verbatim from the string it used to be, all of its
  * edges are messages rather than calls, and a `.js` worker keeps `tsc` out of a file whose whole job is

@@ -19,7 +19,7 @@ flowchart LR
 ## The loop, in the order a learner meets it
 
 1. **The shell.** Below `md` the tab rail is replaced by `components/PhoneTabPicker.tsx`: one
-   row that names the current lab and opens a sheet listing all fourteen. The rail stays in the DOM for
+   row that names the current lab and opens a sheet listing all fifteen tabs. The rail stays in the DOM for
    `md` and up and is hidden by CSS, so a rotation or a resize needs no React state to choose between
    them. The header measures itself into `--header-h` (`components/Header.tsx`), because the picker is
    a second sticky row and a guessed offset puts it under the header the moment the action tray wraps.
@@ -141,7 +141,7 @@ npm run icons             # regenerate the manifest PNGs from favicon.svg
 
 `scripts/e2e_mobile.mjs` is a real Chromium at 390 × 844, `isMobile`, `hasTouch`, DPR 3. It asserts,
 in order: the shell fits with the picker as its only nav row and the header publishing its measured
-height; all fourteen tabs are in the sheet with 44 px rows, Escape closes it and focus returns; a lab's
+height; all fifteen tabs are in the sheet with 44 px rows, Escape closes it and focus returns; a lab's
 plot opens at its own resolution and scrolls; Study opens on the text, Code mounts the editor, a
 punctuation key inserts at the caret, every key is 40 px, the Run bar ends on the bottom edge, and a
 sheet hides it; a reload inside Code comes back to Code and Lesson hides the editor without a remount;
