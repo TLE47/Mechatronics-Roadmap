@@ -174,7 +174,7 @@ def fact_value(fact: dict, root: str):
             sys.path.insert(0, scripts)
         import check_all  # noqa: PLC0415 - imported here so the rest of the gate costs nothing
 
-        return sum(1 for gate in check_all.GATES if not (fact.get("fast") and gate[2]))
+        return sum(1 for gate in [*check_all.GATES, *check_all.AUDIT_GATES] if not (fact.get("fast") and gate[2]))
     if kind == "json_count":
         with open(os.path.join(root, fact["path"]), encoding="utf-8") as handle:
             node = _dig(json.load(handle), fact.get("pointer", ""))
