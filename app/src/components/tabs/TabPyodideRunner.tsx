@@ -2,12 +2,12 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { PYTHON_LESSONS, PythonLessonItem } from '../../data/pythonLessonsData';
 import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabPlant';
 import { pyodideCdn } from '../../runtime/pyodideCdn';
-import { PyodideWorkerSession } from '../../runtime/pyodideWorker';
+
 import { asOutputMatchMode, compareStdout, OutputMatchMode } from '../../outputMatch';
 import { coachForLesson, exerciseTask, starterHoles } from '../../lessonCoach';
 import { failingChecks, hintCountFor, hintLock, nextRung, rungAnswersCheck } from '../../checkHints';
 import { entryHeadline, matchError } from '../../errorIndex';
-import { failureSummary, isAssertionFailure, parseFailure } from '../../traceback';
+import { failureSummary, parseFailure } from '../../traceback';
 import { TracebackCard } from '../TracebackCard';
 import { HelpSheet } from '../HelpSheet';
 import type { HelpReportInput } from '../../helpReport';
@@ -16,21 +16,14 @@ import { usePairSession } from '../../usePairSession';
 import { attemptLines, lessonLabel } from '../../pairing';
 import { COLLAB_MAX_TEXT, CollabText, fromWire, type CollabOp } from '../../collab';
 import { lessonPageUrl } from '../../startHere';
-import {
-  assetUrlsFromDocument,
-  cacheInventory,
-  offlineReportLine,
-  offlineWarmSupported,
-  warmWithServiceWorker,
-  type OfflineCacheReport,
-} from '../../offlineTakeAlong';
+import { assetUrlsFromDocument, cacheInventory, offlineWarmSupported, warmWithServiceWorker, type OfflineCacheReport } from '../../offlineTakeAlong';
 import { FaultBench08 } from '../FaultBench08';
-import { StudyPanel } from '../StudyPanel';
+
 import { WorkflowPanel } from '../WorkflowPanel';
 import { LessonReader } from '../LessonReader';
 import { LessonChooser, type TrackFilter } from '../LessonChooser';
 import { Sheet } from '../Sheet';
-import { PythonKeys } from '../PythonKeys';
+
 import {
   readPhoneSurface,
   writePhoneSurface,
@@ -40,18 +33,13 @@ import { FirstRunTour } from '../FirstRunTour';
 import { layoutForStep } from '../../tour';
 import { resumeLabel } from '../../tourState';
 import { playCue } from '../../audio/facade';
-import type { HarnessReport } from '../../harnessGrading.ts';
-import { harnessGate, parseHarnessReport } from '../../harnessGrading.ts';
-import { harnessForLesson, harnessSourceForLesson } from '../../lessonHarnesses.ts';
+
+import { harnessGate } from '../../harnessGrading.ts';
+import { harnessForLesson } from '../../lessonHarnesses.ts';
 import { LessonHarnessPanel } from '../LessonHarnessPanel';
 import { logEvent } from '../../learningLog';
 import { recordSittingEvent } from '../../sittingClock';
-import {
-  AnalysisSession,
-  noteLabel,
-  sameNotes,
-  type LintNote,
-} from '../../analysisClient';
+import { AnalysisSession, sameNotes, type LintNote } from '../../analysisClient';
 import { rememberLessonInUrl } from '../../lessonRoute';
 import { rememberLastLesson } from '../../lastLesson';
 import { isEdited, readDraft, readDrafts, saveDraft } from '../../lessonDraft';
@@ -70,14 +58,7 @@ import {
   runTarget,
   type DiffTarget,
 } from '../../diffReference';
-import {
-  checkPrediction,
-  clearPrediction,
-  describeCheck,
-  predictionFor,
-  savePrediction,
-  type PredictionRecord,
-} from '../../predictGate';
+import { checkPrediction, clearPrediction, predictionFor, savePrediction, type PredictionRecord } from '../../predictGate';
 import {
   WATCH_DEBOUNCE_MS,
   readWatch,
@@ -85,35 +66,14 @@ import {
   watchDecision,
   type WatchVerdict,
 } from '../../watchMode';
-import { VIM_LABEL, readVim, vimHint, vimModeLabel, writeVim } from '../../vimMode';
+import { readVim, vimModeLabel, writeVim } from '../../vimMode';
 import { runAnnouncement } from '../../announce';
 import { MAX_SHARE_URL, shareUrl, type SharedAttempt } from '../../shareLink';
-import { inlineValuesFor, readRunValues } from '../../inlineValues';
-import {
-  TRACE_NAME_CAP,
-  TRACE_STEP_CAP,
-  TRACE_VALUE_CHARS,
-  readTrace,
-  type TraceSnapshot,
-} from '../../runTrace';
-import { TracePanel } from '../TracePanel';
 import { StudyTimerRow } from '../StudyTimerRow';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { findDefinition } from '../../symbolIndex';
-import { cellPrefix } from '../../editor/cells';
-import {
-  DEFAULT_SPLIT_RATIO,
-  LAYOUTS,
-  SPLIT_MIN_RATIO,
-  SPLIT_MAX_RATIO,
-  layoutArrangement,
-  layoutShortcutFor,
-  layoutShows,
-  splitGridTemplate,
-  splitRatioAfterKey,
-  splitRatioPercent,
-  type WorkspaceLayout,
-} from '../../workspaceLayout';
+
+import { layoutArrangement, layoutShortcutFor, layoutShows, splitGridTemplate } from '../../workspaceLayout';
 import {
   closeSplit,
   closeView,
@@ -130,81 +90,28 @@ import { actionForEvent, type Keymap } from '../../keymap';
 import { useKeymap } from '../../useKeymap';
 import { markPaintReady } from '../../paintTiming';
 import { parseSliders } from '../../editor/sliderModel';
-import {
-  MAX_CONDITION_CHARS,
-  breakpointsForRun,
-  readBreakpoints,
-  setBreakpointCondition,
-  toggleBreakpoint,
-  writeBreakpoints,
-  type Breakpoint,
-} from '../../editor/breakpoints';
-import {
-  MAX_WATCHES_PER_LESSON,
-  addWatch,
-  normalizeWatch,
-  normalizeWatches,
-  readWatches,
-  removeWatch,
-  writeWatches,
-} from '../../editor/watches';
-import type { LessonFile } from '../../lessonFiles';
+import { readBreakpoints, setBreakpointCondition, toggleBreakpoint, writeBreakpoints, type Breakpoint } from '../../editor/breakpoints';
+import { readWatches } from '../../editor/watches';
+
 import { useRunnerArrangement } from './runner/useRunnerArrangement';
-import { RunVerdict } from './runner/RunVerdict';
-import { PredictPane } from './runner/PredictPane';
+
 import { RunnerRuntimeStrip } from './runner/RunnerRuntimeStrip';
-import { AssessmentPanel } from './runner/AssessmentPanel';
-import { PausedBar, type PausedStep } from './runner/PausedBar';
+
+import { PausedBar } from './runner/PausedBar';
 import { ResultsColumn } from './runner/ResultsColumn';
 import { DraftHistoryPanel } from './runner/DraftHistoryPanel';
 import { BreakpointPanel } from './runner/BreakpointPanel';
 import { RunnerToolbar } from './runner/RunnerToolbar';
 import { RunnerEditorCard } from './runner/RunnerEditorCard';
+import { useRunnerExecution } from './runner/useRunnerExecution';
 import { useFirstRunTour } from './runner/useFirstRunTour';
-import { PythonEditor, type PythonEditorHandle } from '../PythonEditor';
-import { ScopePanel } from '../ScopePanel';
-import { normalizeScopeSeries, type ScopeSeries } from '../../scopeModel';
+import { type PythonEditorHandle } from '../PythonEditor';
+
 import { roadmapStepForLesson } from '../../practiceLinks';
 import { stepBreadcrumb, stepCostLabel, stepForMilestone } from '../../spine';
-import { PYTHON_TAB_NAME } from '../../tabNames';
+
 import type { ActiveTierPass } from '../../curriculumData';
-import {
-  Play,
-  RotateCcw,
-  Eye,
-  Lightbulb,
-  CheckCircle2,
-  AlertTriangle,
-  Terminal,
-  BookOpen,
-  Sparkles,
-  Check,
-  ChevronRight,
-  Search,
-  CheckSquare,
-  Square,
-  OctagonX,
-  Pause,
-  RefreshCw,
-  ShieldCheck,
-  Lock,
-  Loader2,
-  History,
-  GitCompare,
-  GitBranch,
-  Activity,
-  Share2,
-  LifeBuoy,
-  Users,
-  Keyboard,
-  CircleDot,
-  Wand2,
-  MoreHorizontal,
-  Columns2,
-  Rows2,
-  ArrowLeftRight,
-  X,
-} from 'lucide-react';
+import { Play, Lightbulb, BookOpen, Sparkles, Check, ChevronRight, OctagonX, LifeBuoy } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -215,9 +122,6 @@ declare global {
   }
 }
 
-const DEFAULT_EXECUTION_TIMEOUT_MS = 6000;
-const DEFAULT_MAX_TRACE_STEPS = 400000;
-
 // The keys live in `progressKeys.ts`, because the backup reads the same stores without importing
 // React; re-exported here so the existing importers keep their names.
 export { STORAGE_KEY_COMPLETED, STORAGE_KEY_VERIFIED };
@@ -227,7 +131,6 @@ export const STORAGE_KEY_FIRST_GUIDE = 'mechalab_first_guide_dismissed_v1';
 
 // The runtime worker lives in its own module (`src/runtime/pythonWorker.ts`) so the service worker
 // can cache what it fetches; this component only owns the messages it sends.
-
 
 /** The last palette run request this page has acted on; see the effect near the keyboard shortcut. */
 let LAST_RUN_REQUEST_HANDLED = 0;
@@ -291,14 +194,6 @@ interface TabPyodideRunnerProps {
   /** Forget the snippet once the learner leaves scratch. */
   onDismissTry?: () => void;
 }
-
-/**
- * How large a frame edit may be, in UTF-8 bytes.
- *
- * The shared buffer is 8 bytes of `[state, length]` plus this many bytes of payload: an expression a
- * learner types into one line, with room to spare, and small enough that the copy is never a pause.
- */
-const FRAME_EDIT_BYTES = 2000;
 
 /** What the Share button last did, so the line under the toolbar can say it. */
 type ShareStatus =
@@ -369,7 +264,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // thing under the strip rather than the fourth.
   const [phoneBriefOpen, setPhoneBriefOpen] = useState(false);
   // One warm-up per page, even if the effect below runs again when the phone opens the code.
-  const warmStartedRef = useRef(false);
 
   /**
    * Switch the phone's Study surface, and remember it for this lesson.
@@ -435,7 +329,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const {
     layout,
     chooseLayout,
-    layoutToolbarRef,
     dock,
     dockChoice,
     flipDock,
@@ -471,13 +364,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const [revealedHints, setRevealedHints] = useState<number>(0);
   // Runs completed per lesson: Hint 2 waits for one, so the ladder is not a table of contents.
   // Kept per lesson, not reset on selection, because an earlier attempt on that lesson counts.
-  const [runAttempts, setRunAttempts] = useState<Record<string, number>>({});
   // The attempt count at the moment rung 1 was opened, per lesson. Rung 2 is the near-solution, so
   // it is earned by an attempt *after* the nudge (`checkHints.hintLock`), not by the run that was
   // already on screen when the nudge was read.
   const [hintOpenedAt, setHintOpenedAt] = useState<Record<string, number>>({});
-  const [stdout, setStdout] = useState<string>('');
-  const [stderr, setStderr] = useState<string>('');
   const [shareStatus, setShareStatus] = useState<ShareStatus>({ kind: 'idle' });
   // Ask for help (`app/src/components/HelpSheet.tsx`): one report built from the run on screen.
   const [helpOpen, setHelpOpen] = useState<boolean>(false);
@@ -535,19 +425,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       );
     }
   });
-  const [instructorError, setInstructorError] = useState<string>('');
-  // What a capstone harness grades: the metrics the learner's own functions produce.
-  const [harnessReport, setHarnessReport] = useState<HarnessReport | null>(null);
-  const [behaviorCheck, setBehaviorCheck] = useState<'untested' | 'passed' | 'failed'>('untested');
-  const [outputCheck, setOutputCheck] = useState<'untested' | 'matched' | 'differs'>('untested');
-  const [isRunning, setIsRunning] = useState<boolean>(false);
-  // Where the interpreter is parked, or null when it is not. The worker posts the step and then
-  // blocks; Step, Continue and Stop are the three answers it is waiting for.
-  const [pausedStep, setPausedStep] = useState<PausedStep | null>(null);
-  // The value being changed while the interpreter is parked, and why the last change was refused.
-  // Both belong to the park: they are dropped when it ends or when the run moves on.
-  const [frameEdit, setFrameEdit] = useState<{ name: string; expression: string } | null>(null);
-  const [frameEditError, setFrameEditError] = useState<string>('');
   // The lines the gutter has armed for this lesson (`app/src/editor/breakpoints.ts`). Read at mount,
   // re-read on a lesson switch, and written on every click: the store, not this state, is what a
   // reload reads back.
@@ -557,23 +434,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // The Breakpoints panel: on request only. A dot alone does not say what it is waiting for, so the
   // conditions live in one place the toolbar can open, titled with the count the gutter is drawing.
   const [breakpointsOpen, setBreakpointsOpen] = useState(false);
-  // The expressions pinned in the paused bar, per lesson like the dots above: `total` is one
-  // lesson's variable, so the list travels with the file it was written for.
-  const [watches, setWatches] = useState<string[]>(() =>
-    readWatches(initialLessonId || PYTHON_LESSONS[0].id)
-  );
-  // The expression being typed, and why the last one was refused: a bar already at its cap says so
-  // instead of silently dropping a watch nobody asked it to drop.
-  const [watchDraft, setWatchDraft] = useState<string>('');
-  const [watchError, setWatchError] = useState<string>('');
-  // Whether this page got a shared command word, which is what makes a park possible at all. State,
-  // not `pauseRef.current`: the buffer is created when the worker is, and a ref would not re-render
-  // the toolbar — the button would exist only after the learner pressed something else.
-  const [pauseCapable, setPauseCapable] = useState(false);
-  // The pass toast is short and dismissable by time alone: it exists to carry the learner into
-  // the next lesson while the win is fresh, not to become another panel to close.
-  const [showPassToast, setShowPassToast] = useState<boolean>(false);
-  const [pyodideStatus, setPyodideStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+
+  // The worker session, the state a run writes and the park commands have one home
+  // (`runner/useRunnerExecution.ts`); this tab composes them with the lesson and the chrome.
+  const lessonIdRef = useRef<string>(initialLessonId || PYTHON_LESSONS[0].id);
   // The "take this step offline" press: what it found, what it measured, and whether the runtime
   // came along. `ready` requires the interpreter's own files, not just the shell - a cached page that
   // cannot run Python is not offline-ready for this app.
@@ -581,10 +445,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     state: 'idle' | 'working' | 'ready' | 'partial' | 'unsupported';
     report: OfflineCacheReport | null;
   }>({ state: 'idle', report: null });
-  const [passStatus, setPassStatus] = useState<
-    'untested' | 'passed' | 'harness_failed' | 'behavior_failed' | 'mismatch' | 'stopped' | 'error'
-  >('untested');
-
   const [localVerified, setLocalVerified] = useState<Record<string, boolean>>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY_VERIFIED);
@@ -638,102 +498,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       });
     }
   };
-
-  // One analysis channel per page, bound to whichever worker is current (Reset Runtime replaces it).
-  const analysisRef = useRef<AnalysisSession | null>(null);
-  // The status the warm-up promise has to know about without re-rendering: a worker that is already
-  // loaded answers a second `warm` with silence (it has nothing new to report), so the page has to
-  // remember for itself that Python is up.
-  const pyodideStatusRef = useRef<'idle' | 'loading' | 'ready' | 'error'>('idle');
-  // Shared memory between the page and the interpreter: [interrupt] and [state, length, bytes].
-  // Both are null when the page is not cross-origin isolated, and Stop falls back to terminating.
-  const interruptRef = useRef<SharedArrayBuffer | null>(null);
-  const stdinCtrlRef = useRef<SharedArrayBuffer | null>(null);
-  // Pause: two shared words, because a message cannot reach a worker that is parked inside Python.
-  // Word 0 is the command this page writes, word 1 the status the worker sets (see the worker's
-  // `pauseAt`). Null means the browser gave no SharedArrayBuffer, and then Pause is simply absent —
-  // a button that cannot work is worse than one that is not offered.
-  const pauseRef = useRef<SharedArrayBuffer | null>(null);
-  // A change to a parked frame's values. The command word decides, the payload rides here: the same
-  // `[length, bytes]` shape stdin uses, for the same reason — a message queues behind the park.
-  const frameEditRef = useRef<SharedArrayBuffer | null>(null);
-  const stopFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [stdinPrompt, setStdinPrompt] = useState<string | null>(null);
-  const [stdinValue, setStdinValue] = useState<string>('');
-  const [readyMs, setReadyMs] = useState<number | null>(null);
-  // Changes only when the worker is replaced. A Stop that interrupts keeps it; a Stop that had to
-  // terminate shows a new one, which is exactly the distinction the runtime suite checks.
-  const [runtimeBoot, setRuntimeBoot] = useState<string | null>(null);
-
-  // The worker protocol - run identity, kill clock, dispose - has one owner
-  // (`runtime/pyodideWorker.ts`). This page supplies what only a lesson runner has: the shared
-  // buffers Stop, stdin and Pause need, the analysis listener, and the status line.
-  const sessionRef = useRef<PyodideWorkerSession | null>(null);
-  const session = (sessionRef.current ??= new PyodideWorkerSession({
-    onStatus: (data) => {
-      if (data.status === 'loading') setPyodideStatus('loading');
-      else if (data.status === 'ready') {
-        setPyodideStatus('ready');
-        if (typeof data.ms === 'number') setReadyMs(data.ms);
-        if (data.boot) setRuntimeBoot(String(data.boot));
-      } else if (data.status === 'error') setPyodideStatus('error');
-    },
-    onCreate: (worker) => {
-      // Cross-origin isolation is what makes SharedArrayBuffer exist. With it, Stop raises
-      // KeyboardInterrupt in the running program and the session survives; without it, Stop still
-      // works, by terminating the worker (the old behaviour).
-      try {
-        if (typeof SharedArrayBuffer !== 'undefined') {
-          interruptRef.current = new SharedArrayBuffer(4);
-          stdinCtrlRef.current = new SharedArrayBuffer(8 * 1024);
-          pauseRef.current = new SharedArrayBuffer(8);
-          frameEditRef.current = new SharedArrayBuffer(8 + FRAME_EDIT_BYTES);
-          setPauseCapable(true);
-          worker.postMessage({
-            type: 'init',
-            interruptBuffer: interruptRef.current,
-            stdinBuffer: stdinCtrlRef.current,
-            pauseBuffer: pauseRef.current,
-            editBuffer: frameEditRef.current,
-          });
-        }
-      } catch {
-        interruptRef.current = null;
-        stdinCtrlRef.current = null;
-        pauseRef.current = null;
-        frameEditRef.current = null;
-      }
-      // A brand-new worker has not loaded Python, so the status has to stop saying it has. A tab
-      // switch terminates the worker while this component's state survives it, and the next mount
-      // warms a new one - without this, the chip reads "Python ready" for the whole re-download,
-      // and every request gated on readiness (completions, hover, signature, lint) believes it too.
-      setPyodideStatus('idle');
-      pyodideStatusRef.current = 'idle';
-      worker.addEventListener('message', (event: MessageEvent) => {
-        analysisRef.current?.handleMessage(event.data);
-      });
-    },
-  }));
-
-  useEffect(() => {
-    return () => {
-      session.dispose();
-      if (stopFallbackRef.current) {
-        clearTimeout(stopFallbackRef.current);
-        stopFallbackRef.current = null;
-      }
-      // A tab can be taken off screen without this component losing its state (the phone shell and
-      // the tab panels keep views mounted), and the worker goes with the effects. Forgetting the
-      // warm guard is what lets the next activation warm a new one; forgetting the status is a chip
-      // that says "Python ready" about a worker that was terminated.
-      warmStartedRef.current = false;
-      pyodideStatusRef.current = 'idle';
-      setPyodideStatus('idle');
-      // A run cannot outlive the worker that was executing it: its promise was abandoned with the
-      // effects, so the Run button must not come back disabled as if the program were still going.
-      setIsRunning(false);
-    };
-  }, []);
 
   // The paint reading's fourth moment: this tab has committed, which is when the Run button is on
   // screen and clickable. Once per visit, not once per lesson (`paintTiming.ts`).
@@ -816,6 +580,79 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     [currentLesson]
   );
   const sliderCount = React.useMemo(() => parseSliders(code).length, [code]);
+
+  const codeRef = useRef<string>(code);
+  const currentLessonRef = useRef<PythonLessonItem>(currentLesson);
+  const execution = useRunnerExecution({
+    selectedId,
+    lessonIdRef,
+    currentLessonRef,
+    scratchRef,
+    codeRef,
+    helperFiles,
+    breakpoints,
+    editorRef: guideEditorRef,
+    markLessonVerified,
+  });
+  const {
+    session,
+    analysisRef,
+    pyodideStatusRef,
+    stdinCtrlRef,
+    warmStartedRef,
+    stdout,
+    setStdout,
+    stderr,
+    setStderr,
+    runAttempts,
+    instructorError,
+    setInstructorError,
+    harnessReport,
+    setHarnessReport,
+    behaviorCheck,
+    setBehaviorCheck,
+    outputCheck,
+    setOutputCheck,
+    isRunning,
+    pausedStep,
+    frameEdit,
+    frameEditError,
+    setWatches,
+    watchDraft,
+    setWatchDraft,
+    watchError,
+    setWatchError,
+    pauseCapable,
+    showPassToast,
+    setShowPassToast,
+    pyodideStatus,
+    setPyodideStatus,
+    passStatus,
+    setPassStatus,
+    stdinPrompt,
+    setStdinPrompt,
+    stdinValue,
+    setStdinValue,
+    readyMs,
+    setReadyMs,
+    runtimeBoot,
+    scopeSeries,
+    trace,
+    traceStep,
+    setTraceStep,
+    pinnedScope,
+    setPinnedScope,
+    pauseExecution,
+    answerPause,
+    stopExecution,
+    resetRuntime,
+    handleFrameEdit,
+    applyFrameEdit,
+    submitWatch,
+    removeWatched,
+    runPythonCode,
+    runCellTo,
+  } = execution;
   const openHelperFile = helperFiles.find((file) => file.name === openHelper) ?? null;
   useEffect(() => {
     setOpenHelper(null);
@@ -976,18 +813,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setPredictText('');
     setHeldRun(null);
   }, [selectedId]);
-  // The run's traced signals. Empty means the run drew nothing, which is the normal case for a
-  // lesson that only prints, so the panel renders nothing at all rather than an empty frame.
-  const [scopeSeries, setScopeSeries] = useState<ScopeSeries[]>([]);
-  // The run trace and the step on screen (`app/src/runTrace.ts`): a recording of the last run, replayed
-  // rather than paused. Reset with the run, read from the outcome that ended it.
-  const [trace, setTrace] = useState<TraceSnapshot | null>(null);
-  const [traceStep, setTraceStep] = useState(0);
-  // The run pinned as A: its traces stay on the axes while the next run draws over them as B, which
-  // is how a parameter change is read - one `t`, both values, on the same pair of axes. Cleared when
-  // the lesson changes, because a trace from another lesson is not the baseline for this one.
-  const [pinnedScope, setPinnedScope] = useState<ScopeSeries[] | null>(null);
-
 
   // One `lesson_open` per visit, including the first render: it is the denominator for abandon rate.
   // The sitting clock takes the same event, because it is the moment the learner is here: it opens a
@@ -1210,8 +1035,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // change them, so Load Solution followed by Run in the same task runs the reference instead of
   // the starter both handlers were rendered with. The effects re-confirm the refs after each
   // commit, which is the same value whenever the handlers are the only writers.
-  const codeRef = useRef<string>(code);
-  const lessonIdRef = useRef<string>(initialLessonId || PYTHON_LESSONS[0].id);
   // What the checker last said about this buffer, and the one sentence to show when it could not be
   // installed at all. Both are cleared on a lesson change: a note about another file is noise.
   const [lintNotes, setLintNotes] = useState<LintNote[]>([]);
@@ -1808,21 +1631,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   }, [codeOpened, isPhone, layout]);
 
   /**
-   * Ask the interpreter to stop at the next line of the learner's file.
-   *
-   * A request, not a command: a line boundary is the only place a `settrace` hook can park, so the
-   * pause lands on the next executed line — the answer to "where is my loop now?" is the line it is
-   * about to run, which is the line the learner is reading.
-   */
-  const pauseExecution = () => {
-    const buffer = pauseRef.current;
-    if (!buffer || !isRunning || pausedStep) return;
-    const view = new Int32Array(buffer, 0, 2);
-    Atomics.store(view, 0, 1);
-    Atomics.notify(view, 0);
-  };
-
-  /**
    * Arm or disarm a line the gutter was clicked on (or `F9` was pressed on).
    *
    * Written through and read back, so the dot the learner sees is the list the next run will carry:
@@ -1858,20 +1666,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setBreakpoints(writeBreakpoints(id, setBreakpointCondition(breakpoints, line, condition)));
   };
 
-  /**
-   * Change one of the parked frame's values, and stay parked.
-   *
-   * The expression is evaluated by the worker **in the frame it is stopped in** and written back to
-   * the frame, so the next line runs with the value the learner chose. The run does not move: the page
-   * gets the same line back with the frame's new values, so "what if it were 41" is answered before
-   * the learner decides to continue. A refused expression comes back as `edit_error` on that bar.
-   */
-  /** Picking a value is the start of an edit, so the last refusal goes with it. */
-  const handleFrameEdit = (edit: { name: string; expression: string } | null) => {
-    setFrameEdit(edit);
-    setFrameEditError('');
-  };
-
   /** Restoring is the same text, back in the editor, and the badges cleared: they described the
    * code that was there a moment ago, not this one. */
   const restoreDraftVersion = (restored: string) => {
@@ -1881,465 +1675,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setBehaviorCheck('untested');
     setOutputCheck('untested');
     setInstructorError('');
-  };
-
-  const applyFrameEdit = () => {
-    const buffer = frameEditRef.current;
-    const pause = pauseRef.current;
-    if (!buffer || !pause || !pausedStep || !frameEdit) return;
-    const payload = new TextEncoder().encode(
-      JSON.stringify({ name: frameEdit.name, expression: frameEdit.expression })
-    );
-    if (!payload.length || payload.length > FRAME_EDIT_BYTES) {
-      setFrameEditError(`An edit must be between 1 and ${FRAME_EDIT_BYTES} bytes of UTF-8.`);
-      return;
-    }
-    // Bytes first, then the command that tells the worker to read them: it is parked on the command
-    // word and will not look at the buffer until that word changes.
-    new Uint8Array(buffer, 8, payload.length).set(payload);
-    Atomics.store(new Int32Array(buffer, 0, 2), 1, payload.length);
-    const command = new Int32Array(pause, 0, 2);
-    Atomics.store(command, 0, 5);
-    Atomics.notify(command, 0);
-    setFrameEditError('');
-  };
-
-  /**
-   * Ask the parked interpreter to pin (or unpin) an expression, without moving the run.
-   *
-   * The request rides the frame-edit buffer, which is only ever read between two parks: the worker is
-   * blocked on the command word, so the bytes are in place before it looks. Python answers by posting
-   * the same line again with the expression evaluated in that frame — which is why a watch shows its
-   * value the moment it is pinned rather than one Step later.
-   */
-  const askWorkerWatch = (request: { add?: string; remove?: string }) => {
-    const buffer = frameEditRef.current;
-    const pause = pauseRef.current;
-    if (!buffer || !pause) return;
-    const payload = new TextEncoder().encode(JSON.stringify(request));
-    if (!payload.length || payload.length > FRAME_EDIT_BYTES) return;
-    new Uint8Array(buffer, 8, payload.length).set(payload);
-    Atomics.store(new Int32Array(buffer, 0, 2), 1, payload.length);
-    const command = new Int32Array(pause, 0, 2);
-    Atomics.store(command, 0, 8);
-    Atomics.notify(command, 0);
-  };
-
-  /**
-   * Pin the typed expression.
-   *
-   * Stored per lesson first, then sent to the parked worker so the value appears beside it: a bar that
-   * showed a watch with nothing next to it, one Step before its first answer, would look broken. A bar
-   * at its cap refuses here, in words — evicting a watch the learner chose would be a silent edit to
-   * their list.
-   */
-  const submitWatch = () => {
-    const id = lessonIdRef.current || selectedId;
-    const wanted = normalizeWatch(watchDraft);
-    if (!wanted) {
-      setWatchDraft('');
-      return;
-    }
-    setWatchDraft('');
-    if (watches.includes(wanted)) {
-      setWatchError('');
-      return;
-    }
-    const next = addWatch(watches, wanted);
-    if (next.length === watches.length) {
-      setWatchError(`Watch up to ${MAX_WATCHES_PER_LESSON} expressions; remove one to pin another.`);
-      return;
-    }
-    setWatches(writeWatches(id, next));
-    setWatchError('');
-    if (pausedStep) askWorkerWatch({ add: wanted });
-  };
-
-  /** Unpin one expression. The parked bar is posted again without it, so the chips follow the list. */
-  const removeWatched = (expression: string) => {
-    const id = lessonIdRef.current || selectedId;
-    setWatches(writeWatches(id, removeWatch(watches, expression)));
-    setWatchError('');
-    if (pausedStep) askWorkerWatch({ remove: expression });
-  };
-
-  /**
-   * Answer a parked interpreter: 2 continue, 3 step, 4 stop, 6 step into the call.
-   *
-   * The command is a shared word because a message would queue behind the very call it is meant to
-   * steer. Step leaves the worker's hook armed for the next line, so holding the button walks the
-   * program one line at a time; Step in arms it for the next line of *any* file the learner can open,
-   * which is where a call's own body starts.
-   */
-  const answerPause = (command: 2 | 3 | 4 | 6 | 7) => {
-    const buffer = pauseRef.current;
-    if (!buffer) return;
-    const view = new Int32Array(buffer, 0, 2);
-    Atomics.store(view, 0, command);
-    Atomics.notify(view, 0);
-    if (command === 4) {
-      stopExecution();
-      return;
-    }
-    setPausedStep(null);
-    setFrameEdit(null);
-    setFrameEditError('');
-    // The expression being typed survives a Step (it is still about to be pinned); the sentence a
-    // full bar gave belongs to the park that is ending.
-    setWatchError('');
-    session.resumeClock();
-  };
-
-  const stopExecution = (customMessage?: string) => {
-    const runId = session.runId;
-    // A parked interpreter is not on the interrupt word's clock: it is waiting on the pause word,
-    // so wake that wait with a stop of its own.
-    if (pauseRef.current) {
-      const pause = new Int32Array(pauseRef.current, 0, 2);
-      Atomics.store(pause, 0, 4);
-      Atomics.notify(pause, 0);
-      setPausedStep(null);
-      setFrameEdit(null);
-      setFrameEditError('');
-    }
-    // With shared memory, stop in place: the interpreter raises KeyboardInterrupt inside the
-    // running program, so imports, variables and the loaded runtime all survive. A worker that
-    // cannot unwind within the grace period is terminated by the fallback below.
-    if (session.worker && interruptRef.current) {
-      // The word has to be written from THIS thread. `postMessage` to a worker that is inside a
-      // Python loop queues behind the loop it is meant to stop, which is why the buffer is shared:
-      // CPython polls it between bytecodes and raises KeyboardInterrupt in the running program.
-      const interrupt = new Int32Array(interruptRef.current);
-      Atomics.store(interrupt, 0, 2);
-      Atomics.notify(interrupt, 0);
-      // A program parked in input() is not on the interpreter's clock; wake that wait too.
-      if (stdinCtrlRef.current) {
-        const stdin = new Int32Array(stdinCtrlRef.current, 0, 2);
-        Atomics.store(stdin, 0, -1);
-        Atomics.notify(stdin, 0);
-      }
-      setStderr('Stopping…');
-      setStdinPrompt(null);
-      if (stopFallbackRef.current) clearTimeout(stopFallbackRef.current);
-      stopFallbackRef.current = setTimeout(() => {
-        stopFallbackRef.current = null;
-        if (!session.isCurrent(runId) || !session.running) return;
-        session.dispose();
-        setIsRunning(false);
-        setPyodideStatus('idle');
-        setBehaviorCheck('failed');
-        setPassStatus('stopped');
-        setStderr(
-          'Execution stopped: the interpreter did not unwind, so the worker was restarted. Your editor code is preserved.'
-        );
-        session.settle({ stopped: true });
-      }, 1500);
-      return;
-    }
-    const stopMsg =
-      customMessage ||
-      'Execution stopped by user. Background Python Web Worker was terminated and your editor code is preserved.';
-    session.cancel({ stopped: true, message: stopMsg });
-    setIsRunning(false);
-    setPyodideStatus('idle');
-    setBehaviorCheck('failed');
-    setPassStatus('stopped');
-    setStderr(stopMsg);
-  };
-
-  const resetRuntime = () => {
-    session.cancel({ stopped: true, message: 'Runtime reset' });
-    setIsRunning(false);
-    setPyodideStatus('idle');
-    setStdout('');
-    setStderr('Python Web Worker runtime reset. Your editor code is preserved — click "Run & Verify" to start a fresh session.');
-    setInstructorError('');
-    setBehaviorCheck('untested');
-    setOutputCheck('untested');
-    setPassStatus('untested');
-  };
-
-  // `lesson` defaults to the rendered lesson; Run passes the one selected at click time. `grade`
-  // defaults to true; a cell's **Run to here** passes false, because a prefix of the program is not an
-  // attempt at the lesson and must never verify it (`app/src/editor/cells.ts`). Scratch is the third
-  // case and the simplest: a page's snippet is not an attempt either, so every run in scratch is
-  // ungraded however it was started - the button, the shortcut, the palette, watch or a slider.
-  const runPythonCode = async (
-    sourceCode: string,
-    lesson: PythonLessonItem = currentLesson,
-    options: { grade?: boolean } = {}
-  ) => {
-    const grade = options.grade !== false && !scratchRef.current;
-    const matchMode: OutputMatchMode = asOutputMatchMode(lesson.outputMatch);
-    const attemptLessonId = lesson.id;
-    let runId = 0;
-
-    setIsRunning(true);
-    // A new run is not paused: a bar left over from the previous one would describe a worker that
-    // has already been replaced by this run.
-    setPausedStep(null);
-    setFrameEdit(null);
-    setFrameEditError('');
-    setStdout('');
-    setStderr('');
-    setInstructorError('');
-    // A trace belongs to the run that produced it: the panel starts empty, and the worker's first
-    // batch replaces it (a run that traces nothing leaves no stale curve on screen).
-    setScopeSeries([]);
-    // The same rule for the replay: the previous run's steps describe a program that is gone.
-    setTrace(null);
-    setTraceStep(0);
-    // A report describes the code that produced it: a run that never reaches the harness (a syntax
-    // error, a timeout) must not leave the previous run's green cards on screen.
-    setHarnessReport(null);
-    setBehaviorCheck('untested');
-    setOutputCheck('untested');
-    setPassStatus('untested');
-
-    const cdnUrl = pyodideCdn();
-    const timeoutMs =
-      (typeof window !== 'undefined' && window.__mechalabExecutionTimeoutMs) ||
-      DEFAULT_EXECUTION_TIMEOUT_MS;
-    const maxSteps =
-      (typeof window !== 'undefined' && window.__mechalabMaxTraceSteps) || DEFAULT_MAX_TRACE_STEPS;
-
-    try {
-      const started = session.run(
-        {
-          studentCode: sourceCode,
-          // Nothing to grade with: an ungraded run must not execute the appended self-check or the
-          // capstone bench, because a half-written program would fail checks it was never meant to
-          // meet and the failure would look like a verdict.
-          instructorTests: grade ? lesson.instructorTests : '',
-          benchSource: grade ? harnessSourceForLesson(lesson.id) : '',
-          cdnUrl,
-          maxSteps,
-          timeoutSec: Math.max(0.5, (timeoutMs - 500) / 1000),
-          // The trace's caps travel with the request: the worker records with the page's numbers, so
-          // "300 of 12,431" and the 300 on screen cannot mean two different things.
-          trace: { cap: TRACE_STEP_CAP, names: TRACE_NAME_CAP, chars: TRACE_VALUE_CHARS },
-          // The lines to park on, checked against the text this run executes: a stored line past the
-          // end of the document, or one that is blank, cannot be a breakpoint on this program. They
-          // travel with the request because a message cannot reach a worker inside Python — a dot
-          // added mid-run is therefore for the next run, which the paused bar's title says.
-          breakpoints: breakpointsForRun(sourceCode, breakpoints),
-          // The pinned expressions travel with the request, like the dots: the worker evaluates them
-          // in whichever frame it parks in, so a watch added mid-run is for the next run.
-          watches: normalizeWatches(watches),
-          plantSource: MECHALAB_PLANT_PY,
-          plantFilename: MECHALAB_PLANT_FILENAME,
-          helperFiles: helperFiles.map((file) => ({ name: file.name, content: file.content })),
-        },
-        // The first load also fetches Pyodide, so it gets the longer clock; once the interpreter
-        // reports ready the run's own budget applies.
-        { loadKillMs: Math.max(timeoutMs, 45_000), killMs: timeoutMs },
-        {
-          // Everything that is not a verdict: a waiting `input()`, a scope batch, or a park (whose
-          // clock the session has already stopped). A stale run's messages never reach here.
-          onMessage: (data) => {
-            if (data.type === 'stdin-request') {
-              setStdinPrompt(String(data.prompt || ''));
-              setStdinValue('');
-              return;
-            }
-            if (data.type === 'scope') {
-              setScopeSeries(normalizeScopeSeries(data.series));
-              return;
-            }
-            const step = (data.step as PausedStep) ?? null;
-            setPausedStep(step);
-            // An edit that landed re-posts this park with the frame's new values: the form closes and
-            // the chips show what the program will use. One that was refused keeps the form open and
-            // says why, in the interpreter's own words.
-            if (step?.edit_error) setFrameEditError(step.edit_error);
-            else {
-              setFrameEditError('');
-              setFrameEdit(null);
-            }
-            // A re-post is also the answer to a watch request: whatever the page was saying about
-            // the last one is stale, and the chips now show what this frame says.
-            setWatchError('');
-          },
-        }
-      );
-      runId = session.runId;
-      const workerOutcome: any = await started;
-      if (!session.isCurrent(runId)) return;
-
-      if (workerOutcome?.stopped) {
-        // The interpreter was interrupted, not killed: it is still loaded for the next Run.
-        setStdinPrompt(null);
-        // No values: a stopped run is not a finished one, and a half-filled namespace drawn as if it
-        // were an answer is worse than no answer.
-        guideEditorRef.current?.setInlineValues([]);
-        if (workerOutcome?.stdout) setStdout(String(workerOutcome.stdout));
-        setStderr(String(workerOutcome.stderr || 'Execution stopped by user.'));
-        // A stop still leaves the lines it reached: "where was my loop when I stopped it" is the
-        // question Stop is pressed to answer.
-        setTrace(readTrace(workerOutcome?.trace));
-        setTraceStep(0);
-        setBehaviorCheck('failed');
-        setPassStatus('stopped');
-        return;
-      }
-
-      if (workerOutcome?.timedOut) {
-        guideEditorRef.current?.setInlineValues([]);
-        if (workerOutcome?.stdout) setStdout(workerOutcome.stdout);
-        const label =
-          workerOutcome.phase === 'load' ? 'Initial WASM load + execution' : 'Python execution';
-        setStderr(
-          workerOutcome.type === 'timeout'
-            ? `ExecutionTimeoutError: ${label} exceeded ${(Number(workerOutcome.ms) / 1000).toFixed(
-                1
-              )}s limit and the background Web Worker was terminated (possible infinite loop such as 'while True:'). Your editor code is preserved — fix the loop condition or click Reset Runtime.`
-            : workerOutcome.message || workerOutcome.stderr || 'Execution timed out.'
-        );
-        // The lines that ran before the budget ran out: the tail is exactly where the loop turned.
-        setTrace(readTrace(workerOutcome?.trace));
-        setTraceStep(0);
-        setBehaviorCheck('failed');
-        setPassStatus('stopped');
-        return;
-      }
-
-      if (workerOutcome?.type === 'error') {
-        setPyodideStatus('error');
-        setStderr(
-          workerOutcome.error ||
-            (workerOutcome.workerFailed
-              ? 'Pyodide Web Worker failed to initialize or load from CDN. Execution verification requires Pyodide WASM.'
-              : 'Execution error')
-        );
-        setBehaviorCheck('failed');
-        setPassStatus('error');
-        return;
-      }
-
-      const actualOut: string = String(workerOutcome?.stdout || '').trim();
-      const actualErr: string = String(workerOutcome?.stderr || '').trim();
-      setStdout(actualOut);
-      setStderr(actualErr);
-      // Inline values: what this run left each top-level name holding, drawn beside the line that
-      // bound it. Joined against `sourceCode` — the text the run executed, a snapshot — because the
-      // editor may have changed since, and a value must sit next to the line that produced it.
-      guideEditorRef.current?.setInlineValues(
-        inlineValuesFor(sourceCode, readRunValues(workerOutcome?.inlineValues)),
-      );
-      // The replay: every line this run executed, kept by the worker's own trace hook. Validated here
-      // because it crossed a thread boundary as JSON (`app/src/runTrace.ts`).
-      setTrace(readTrace(workerOutcome?.trace));
-      setTraceStep(0);
-      if (!grade) {
-        // A cell run is a look at what the program does so far. An exception is still a report — a
-        // prefix that raises should say so — but no check is graded and no lesson is verified.
-        setBehaviorCheck('untested');
-        setOutputCheck('untested');
-        setPassStatus(workerOutcome?.runtimeError ? 'error' : 'untested');
-        return;
-      }
-      // A capstone is graded by its harness, not only by its printed lines. A number that misses its
-      // target keeps its real value on the card *and* keeps the lesson unverified; `null` means the
-      // harness never reported, which is unproven rather than a pass.
-      const lessonHarness = harnessForLesson(lesson.id);
-      const parsedHarness = lessonHarness
-        ? parseHarnessReport(workerOutcome?.bench, lessonHarness)
-        : null;
-      setHarnessReport(parsedHarness);
-      const harness = lessonHarness ? harnessGate(lessonHarness, parsedHarness) : null;
-
-      if (workerOutcome?.runtimeError) {
-        setBehaviorCheck('failed');
-        // The class, not the prefix: the worker sends the whole traceback now, so this reads the
-        // exception out of it rather than checking what the text starts with.
-        if (isAssertionFailure(actualErr)) {
-          setInstructorError(actualErr);
-          // The learner's own check fired; if the harness names a number behind it, that metric is
-          // the thing to fix, so it outranks the assertion line. A syntax error or a NameError keeps
-          // its own verdict: the program never got far enough for a metric to be the story.
-          if (harness && !harness.passed) {
-            setPassStatus('harness_failed');
-            return;
-          }
-          setPassStatus('behavior_failed');
-        } else {
-          setPassStatus('error');
-        }
-        return;
-      }
-
-      const isOutputMatched =
-        !actualErr &&
-        compareStdout(actualOut, lesson.expectedOutput, matchMode).matched;
-      const isBehaviorPassed = Boolean(workerOutcome?.instructorPassed);
-
-      setOutputCheck(isOutputMatched ? 'matched' : 'differs');
-      setBehaviorCheck(isBehaviorPassed ? 'passed' : 'failed');
-
-      if (!isBehaviorPassed) {
-        setInstructorError(
-          workerOutcome?.instructorError ||
-            'Instructor behavioral tests failed on unseen or boundary inputs.'
-        );
-      }
-
-      // The harness outranks the other verdicts on a capstone: its graded metrics are the pass
-      // condition, so a card left off its target reports that number instead of a logged assertion.
-      if (harness && !harness.passed) {
-        setPassStatus('harness_failed');
-        return;
-      }
-
-      if (!isBehaviorPassed) {
-        setPassStatus('behavior_failed');
-        return;
-      }
-
-      if (isBehaviorPassed && isOutputMatched) {
-        setPassStatus('passed');
-        markLessonVerified(lesson.id);
-      } else {
-        setPassStatus('mismatch');
-      }
-    } catch (err: any) {
-      setStderr(err?.message || String(err));
-      setPassStatus('error');
-    } finally {
-      // A finished run counts as the attempt that unlocks Hint 2, even if it failed or was
-      // stopped - the point is that the learner tried before asking for the next nudge. The
-      // count is keyed by the lesson that ran, so leaving mid-run cannot unlock another lesson.
-      // A cell run is not an attempt: it runs part of the program, and Hint 2 is the reward for
-      // trying the exercise.
-      if (grade) {
-        setRunAttempts((prev) => ({
-          ...prev,
-          [attemptLessonId]: (prev[attemptLessonId] ?? 0) + 1,
-        }));
-      }
-      if (session.isCurrent(runId)) {
-        setIsRunning(false);
-        setPausedStep(null);
-      }
-      if (stopFallbackRef.current) {
-        clearTimeout(stopFallbackRef.current);
-        stopFallbackRef.current = null;
-      }
-    }
-  };
-
-  /**
-   * A `# %%` cell's **Run to here**: the document through the end of that cell, ungraded.
-   *
-   * Through the cell, not just the cell, because the worker runs each program in a fresh namespace —
-   * a later cell on its own would `NameError` on everything the earlier ones bound (`cells.ts`). The
-   * predict gate is skipped on purpose: it asks what the *lesson* will print, and a prefix is not the
-   * lesson. Nothing is graded, so nothing is verified and Hint 2 is not unlocked.
-   */
-  const runCellTo = (index: number) => {
-    if (isRunning) return;
-    const prefix = cellPrefix(codeRef.current, index);
-    if (!prefix || !prefix.trim()) return;
-    void runPythonCode(prefix, currentLesson, { grade: false });
   };
 
   /**

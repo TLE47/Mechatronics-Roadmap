@@ -1,10 +1,12 @@
 # The lesson runner, split
 
-`TabPyodideRunner.tsx` is the assembly: it owns the run, the lesson choice and the writers, and renders
-the regions below. Each module here owns one concern and is readable without the tab.
+`TabPyodideRunner.tsx` is the assembly: it owns the lesson choice, the editor's writers and the
+chrome, destructures the execution hook by name, and renders the regions below. Each module here owns
+one concern and is readable without the tab.
 
 | Module | Owns |
 |---|---|
+| `useRunnerExecution.ts` | The run: the worker session and buffers, every cell a run's outcome lands in (output, trace, analysis, watches, parks), and `runPythonCode` / `runCellTo` / Stop / Pause / frame edits / watches. |
 | `useRunnerArrangement.ts` | The editor/results split share, which side results sit on, and the persisted layout record. |
 | `RunnerToolbar.tsx` | The run controls: presets and dock, Pause/Stop/Run, Predict, and the More panel's actions. |
 | `RunnerEditorCard.tsx` | The editor surface: main/helper tabs, the pane strip, the split controls, and the editor body beside Predict, Run output, Expected and Workflow. |
@@ -19,7 +21,6 @@ the regions below. Each module here owns one concern and is readable without the
 | `useFirstRunTour.ts` | The first-run tour: record, offer/chip, gates, focus and dismissal. |
 
 Wiring rule: a region takes exactly the state and callbacks it renders; it never reaches into the tab.
-The run itself (`runPythonCode`, the session and the state it writes) is still owned by the tab: it is
-the one state every region is a view of, and the shared worker protocol lives in
-`../../runtime/pyodideWorker.ts`. Lifting it into `useRunnerExecution.ts` is the next seam — every
-region already reads it by name, so the tab can keep its JSX and destructure the hook's return.
+The run is one state every region is a view of, so it lives in one place — `useRunnerExecution.ts` —
+and the shared worker protocol under it lives in `../../runtime/pyodideWorker.ts`. A change to how a
+lesson runs lands in the hook; a change to how the tab looks lands here.
