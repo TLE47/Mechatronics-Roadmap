@@ -1794,17 +1794,25 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           .getByTestId('workflow-canvas')
           .evaluate((canvas) => canvas.scrollIntoView({ block: 'center' }));
         await page.waitForTimeout(200);
+        const arrowsBefore = await page.locator('[data-testid^="workflow-edge-kind-"]').count();
         const reorderOut = await page.getByTestId('workflow-node-port-right-0').boundingBox();
-        const reorderTarget = await page.getByTestId('workflow-node-port-left-2').boundingBox();
         await page.mouse.move(reorderOut.x + reorderOut.width / 2, reorderOut.y + reorderOut.height / 2);
         await page.mouse.down();
+        // Measured after the press: starting a link can pan the paper under the pointer, and a dot
+        // located before that release is somewhere else by the time the pointer arrives.
+        const reorderTarget = await page.getByTestId('workflow-node-port-left-2').boundingBox();
         await page.mouse.move(
           reorderTarget.x + reorderTarget.width / 2,
           reorderTarget.y + reorderTarget.height / 2,
           { steps: 8 }
         );
         await page.mouse.up();
-        await page.waitForTimeout(350);
+        // Wait for the arrow the drag draws, not for a stopwatch: the badge renumbering is part of the
+        // same commit, so an arrow on screen is the condition the assertion below needs.
+        await page
+          .locator('[data-testid^="workflow-edge-kind-"]')
+          .nth(arrowsBefore)
+          .waitFor({ timeout: 5000 });
         assert.equal(
           (await page.getByTestId('workflow-node-number-2').textContent())?.trim(),
           '2',
