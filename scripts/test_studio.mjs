@@ -18,8 +18,8 @@
  * The runner has its own contract below, with a stub `Worker` instead of Pyodide: one run message
  * carries no grading inputs, a result delivers stdout or stderr, Stop terminates, the 30 s page kill
  * resolves as a timeout, a load failure discards the worker so the next Run is a fresh one, and
- * leaving the tab terminates. The browser suite proves the visible half end to end: Stop, both
- * budgets, a runtime error, and a fresh Run after each.
+ * leaving the tab terminates. The browser suite proves the visible half end to end: Stop, a runtime
+ * error, and a fresh Run after each.
  *
  * Run: node --experimental-strip-types scripts/test_studio.mjs
  */

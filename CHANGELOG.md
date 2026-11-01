@@ -41,11 +41,14 @@ The tab is registered once (`types.ts`, `workbenchTabs.json`, `tabRegistry.tsx`)
 counts a tab always moves: 15 tabs, 68 painted surfaces, and the `check:tabnames` / `check:axe` /
 theme sweeps read the registry rather than a list. `npm run test:studio` pins the store and the
 runner's protocol — Stop, a runtime error, a refused load and its retry, the 30 s page kill and
-dispose, with a stub worker. `npm run test:e2e:studio` proves Home's door, a real run, Stop and both
-the step budget and the interpreter's 20 s budget each ending a run with a fresh Run after it, a
-runtime error's traceback, the killed run's code still saved, the code and notebook through a reload,
+dispose, with a stub worker. `npm run test:e2e:studio` proves Home's door, a real run, Stop and a
+runtime error each ending a run with a fresh Run after it, the runtime error's traceback, the killed
+run's code still saved, the code and notebook through a reload,
 and the plan through both a reload and a backup/wipe/restore round trip, with one pane at a time on
-a phone. No dependency was added.
+a phone. The worker's loop budget and the page's kill clock are not re-proved in the browser — the
+runner's browser gate already drives the budget through an infinite loop, and `test:worker` pins the
+clock — so the studio's browser suite tests the sentences a learner reads rather than the clocks
+behind them. No dependency was added.
 
 ## [2026-10-31] — One declaration for every project object kind
 

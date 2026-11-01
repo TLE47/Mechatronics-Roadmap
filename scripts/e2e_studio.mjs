@@ -2,16 +2,18 @@
 /**
  * The free-study studio, in a real browser (`scripts/e2e_studio.mjs`, `npm run test:e2e:studio`).
  *
- * The unit suite (`test:studio`) pins the store and the runner's protocol; what only a browser can
- * answer is whether the workspace is reachable from Home, whether Run really executes a program
- * nobody graded, whether every way a run can end leaves a sentence the learner can read, whether
- * Stop recovers to a fresh interpreter, and whether the code, the notebook and the plan survive
- * both a reload and a backup round trip — the promises the tab makes in its own copy.
+ * The unit suites pin the store, the runner's wrapper and the worker protocol; what only a browser
+ * can answer is whether the workspace is reachable from Home, whether Run really executes a program
+ * nobody graded, whether a run that ends early leaves a sentence the learner can read, whether Stop
+ * recovers to a fresh interpreter, and whether the code, the notebook and the plan survive both a
+ * reload and a backup round trip — the promises the tab makes in its own copy.
  *
- * The runner paths are driven, not inferred: a runtime error, a program over the step budget, one
- * over the interpreter's 20 s budget, and a stop mid-loop each wait for their own sentence. The
- * code is read back from the store after the stop, because "your editor code is preserved" is a
- * claim the learner sees in the error and a killed run is exactly when it matters.
+ * The budgets are not proved again here, because a browser is the most expensive place to prove
+ * them: the worker's loop budget is the runner's browser gate (`e2e_browser_workbench.mjs` drives it
+ * through an infinite loop), and the page's kill clock is `test:worker` and `test:studio`. This
+ * suite's job starts at the sentence the learner reads. The code is read back from the store after
+ * the stop, because "your editor code is preserved" is a claim the learner sees in the error and a
+ * killed run is exactly when it matters.
  *
  * The workflow half needs no lesson: it drives the same canvas the lesson tab draws, under the
  * reserved `studio` document key, reloads to prove the diagram came back from the store, and then
@@ -168,42 +170,7 @@ async function main() {
     );
     ok('the code from a killed run survives a reload');
 
-    // ---- 4. The step budget ends a loop and the next Run recovers ----
-    await runProgram(
-      page,
-      'total = 0\nfor i in range(2_100_000):\n    total += 1\nprint(total)\n'
-    );
-    await waitForStderr(page, /Loop exceeded execution limit/);
-    assert.equal(
-      await page.getByTestId('studio-output').textContent(),
-      '',
-      'a run stopped by the step budget must not print the result it never reached'
-    );
-    await runProgram(page, 'print("after the step cap")\n');
-    await page
-      .getByTestId('studio-output')
-      .filter({ hasText: 'after the step cap' })
-      .waitFor({ timeout: 120000 });
-    ok('the step budget ends a loop, and the next Run still executes');
-
-    // ---- 5. The interpreter's 20 s budget ends a program that sleeps ----
-    // The program sleeps in short slices inside a loop, so the interpreter's own line clock reaches
-    // its 20 s budget and raises about ten seconds before the page's 30 s kill could. A single
-    // `sleep(23)` made this a race between the two clocks: it proved the budget only when the
-    // machine happened to notice the sleep's return before the kill did.
-    await runProgram(
-      page,
-      'import time\nstart = time.monotonic()\nwhile time.monotonic() - start < 21:\n    time.sleep(0.25)\nprint("should not print")\n'
-    );
-    await waitForStderr(page, /ExecutionTimeoutError: Loop exceeded execution limit/);
-    await runProgram(page, 'print("after the timeout")\n');
-    await page
-      .getByTestId('studio-output')
-      .filter({ hasText: 'after the timeout' })
-      .waitFor({ timeout: 120000 });
-    ok('the interpreter’s own 20 s budget ends a program, and the next Run recovers');
-
-    // ---- 6. A runtime error is the learner's traceback, and the next Run recovers ----
+    // ---- 4. A runtime error is the learner's traceback, and the next Run recovers ----
     await runProgram(page, 'raise ValueError("studio e2e boom")\n');
     await waitForStderr(page, /ValueError: studio e2e boom/);
     await runProgram(page, 'print("fresh run")\n');
@@ -213,7 +180,7 @@ async function main() {
       .waitFor({ timeout: 120000 });
     ok('a runtime error shows its traceback, and the next Run still executes');
 
-    // ---- 7. The note and the code survive a reload ----
+    // ---- 5. The note and the code survive a reload ----
     await page.getByTestId('studio-note').fill('The tolerance is on the angle, not the position.');
     // "Saved on this device" is the idle line, so only the write's own "Saved" proves the debounce
     // landed; waiting for the idle sentence would reload before the store had the note.
@@ -232,7 +199,7 @@ async function main() {
     );
     ok('the note and the code come back after a reload');
 
-    // ---- 8. A plan drawn with no lesson also survives ----
+    // ---- 6. A plan drawn with no lesson also survives ----
     await page.getByTestId('studio-view-plan').click();
     await page.getByTestId('panel-workflow').waitFor({ timeout: 30000 });
     await page.getByTestId('workflow-start-blank').click();
@@ -259,7 +226,7 @@ async function main() {
     );
     ok('a plan drawn with no lesson survives a reload');
 
-    // ---- 9. The plan is in the backup, and comes back after a wipe and a restore ----
+    // ---- 7. The plan is in the backup, and comes back after a wipe and a restore ----
     const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
     await page.getByTestId('btn-backup-download').click();
     const download = await downloadPromise;
@@ -310,7 +277,7 @@ async function main() {
     );
     ok('the studio plan survives a backup, wipe and restore');
 
-    // ---- 10. A phone gets one pane at a time ----
+    // ---- 8. A phone gets one pane at a time ----
     await page.setViewportSize(PHONE);
     await page.waitForTimeout(200);
     await page.getByTestId('studio-view-code').click();
@@ -335,7 +302,7 @@ async function main() {
 
     assert.deepEqual(pageErrors, [], `the studio threw during the walk: ${pageErrors.join(' | ')}`);
     console.log(
-      '[PASS] Studio: Home opens it; Run, Stop, the step cap, the interpreter timeout and a runtime error each end with their own sentence; a fresh Run recovers; killed code, the note and the plan survive reloads; and the plan survives a backup, wipe and restore'
+      '[PASS] Studio: Home opens it; Run, Stop and a runtime error each leave their own sentence, and a fresh Run recovers; killed code, the note and the plan survive reloads; and the plan survives a backup, wipe and restore'
     );
     await context.close();
   } finally {
