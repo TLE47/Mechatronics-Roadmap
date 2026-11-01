@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
-"""Run every gate CI's verification step runs, in that same order, from one command.
+"""Run the gates CI's verification step runs, plus the label audit, from one command.
 
 `.github/workflows/ci.yml` runs about thirty checks before a push is green, and a broken generated
 file costs a full CI round trip to discover. Two of the last three pushes to this repository were
 stopped by gates a contributor can run locally in seconds: the generated `concepts` crosswalk had
 gone stale, and `check_term_order.py` counted a machine-written next-step line as taught material.
 
-The gate list here is not a second opinion about what matters: it is the verify step's command list,
-and `tests/test_check_all.py` parses that workflow and fails when the two drift apart in either
-direction. Adding a check to CI therefore adds it here, and a gate cannot be quietly dropped.
+The `GATES` table is the verify step's command list, and `tests/test_check_all.py` parses that
+workflow and fails when the two drift apart in either direction. `AUDIT_GATES` holds gates CI runs
+in another job that a local pre-push should still exercise; the same test holds every audit row to a
+command that exists in the workflow. Adding a check to CI therefore adds it here, and a gate cannot
+be quietly dropped.
 
 The two sweeps are marked heavy - the 48-package exercise run (~10 s) and the 21-suite unittest
 discovery (~32 s) - and are skipped unless `--full` is given, because the gates in front of them are
 what catch drift.
 
 Usage
-    python3 scripts/check_all.py             # the drift gates, in CI order (~40 s)
+    python3 scripts/check_all.py             # the drift gates + the label audit (~50 s)
     python3 scripts/check_all.py --full      # + exercise sweep and unittest discovery
     python3 scripts/check_all.py --list      # names, commands, which are heavy
     python3 scripts/check_all.py --only legacy_crosswalk --only term_order
@@ -107,11 +109,21 @@ GATES: list[tuple[str, list[str], bool]] = [
     ("tests", ["-m", "unittest", "discover", "-s", "tests"], True),
 ]
 
+# Gates CI runs outside the verify step. They stay separate so `GATES` remains an exact copy of that
+# step for `tests/test_check_all.py`; every row still names a command the workflow runs. The label
+# audit caught a Home control every verify gate called green (run 41328467078), so a pre-push run
+# now measures it too.
+AUDIT_GATES: list[tuple[str, list[str], bool]] = [
+    ("labels", ["npm", "run", "check:labels"], False),
+]
+
 REPORT_PATH = os.path.join(os.environ.get("RUNNER_TEMP", "/tmp"), "run-exercise.json")
 
 
 def command_for(argv: list[str]) -> list[str]:
     """The full argv for a gate, with CI's report handoff added where CI adds it."""
+    if argv[:1] == ["npm"]:
+        return argv
     if argv[:1] == ["scripts/run_exercise.py"]:
         return [sys.executable, *argv, "--report-file", REPORT_PATH]
     return [sys.executable, *argv]
@@ -126,7 +138,8 @@ def environment_for(argv: list[str]) -> dict[str, str]:
 
 
 def selected(only: list[str], full: bool) -> list[tuple[str, list[str], bool]]:
-    gates = GATES if full else [gate for gate in GATES if not gate[2]]
+    every = [*GATES, *AUDIT_GATES]
+    gates = every if full else [gate for gate in every if not gate[2]]
     if not only:
         return gates
     wanted = {name.lower() for name in only}
@@ -168,7 +181,7 @@ def run(gate: tuple[str, list[str], bool], quiet: bool) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Run the gates CI's verification step runs, in CI's order.",
+        description="Run the gates CI's verification step runs, plus the label audit, in CI's order.",
         epilog="Exit-code family: typed (0 pass, 1 a gate failed, 2 bad interpreter or arguments).",
     )
     parser.add_argument("--full", action="store_true", help="also run the exercise sweep and the unittest discovery")
@@ -187,8 +200,9 @@ def main() -> int:
         return 2
 
     if args.list:
-        for name, argv, heavy in GATES:
-            print(f"{'heavy' if heavy else '     '}  {name:<22} python3 {' '.join(argv)}")
+        for name, argv, heavy in [*GATES, *AUDIT_GATES]:
+            shown = " ".join(argv) if argv[0] == "npm" else f"python3 {' '.join(argv)}"
+            print(f"{'heavy' if heavy else '     '}  {name:<22} {shown}")
         return 0
 
     gates = selected(args.only, args.full)

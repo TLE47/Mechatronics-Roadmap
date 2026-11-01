@@ -81,7 +81,7 @@ export function AudioPlayerWidget({
             else onGenre(value as MusicCategory);
           }}
           title="Music genre — picking one starts the tape when sound is on"
-          className="ml-1 hidden max-w-[8.5rem] cursor-pointer rounded-lg border border-line bg-canvas px-1 py-1 text-[11px] text-body md:block"
+          className="ml-1 hidden max-w-[8.5rem] cursor-pointer rounded-lg border border-line bg-canvas px-1 py-1 text-xs text-body md:block"
         >
           {MUSIC_CATEGORIES.map((entry) => (
             <option key={entry.id} value={entry.id}>

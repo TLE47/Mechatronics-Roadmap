@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
-"""The local gate list must be the CI gate list, not a copy that drifted.
+"""The local verify table must be the CI verify table, and audit extras must be real CI commands.
 
-`scripts/check_all.py` promises "every gate CI runs, in CI's order". That promise is only worth
-something if something checks it, so this test parses the verify step out of
-`.github/workflows/ci.yml` (as text - PyYAML is not a dependency here) and compares it with the
-script's table in both directions:
+`scripts/check_all.py` promises the verify step's gates in CI's order, plus the audit gates a local
+pre-push should exercise. That promise is only worth something if something checks it, so this test
+parses the verify step out of `.github/workflows/ci.yml` (as text - PyYAML is not a dependency here)
+and compares it with the script's table in both directions:
 
 1. **A gate added to CI is not silently missing locally** - the next `--check` step lands in the
    workflow and a contributor's one command keeps passing without it.
 2. **A gate cannot be quietly dropped** - deleting a row from the script to make a pre-push run go
    green would fail here.
+3. **An audit extra is not invented** - every `AUDIT_GATES` row names a command the workflow runs
+   outside the verify step, so the local command grows only with CI's own gates.
 
 Run: `python3 tests/test_check_all.py` (also discovered by `python3 -m unittest discover`).
 """
@@ -33,10 +35,14 @@ WORKFLOW = os.path.join(ROOT, ".github", "workflows", "ci.yml")
 VERIFY_STEP = "Verify Markdown structure, internal links, Mermaid diagrams & LaTeX math fences"
 
 
+def workflow_text():
+    with open(WORKFLOW, encoding="utf-8") as handle:
+        return handle.read()
+
+
 def verify_commands():
     """The `python3` commands of the verify step, normalised to (target, checks)."""
-    with open(WORKFLOW, encoding="utf-8") as handle:
-        text = handle.read()
+    text = workflow_text()
     start = text.index(VERIFY_STEP)
     body = text[start:]
     end = re.search(r"\n\s*#?\s*- name:", body[len(VERIFY_STEP):])
@@ -65,6 +71,10 @@ def gate_specs():
     return [(gate[1][0] if gate[1][0] != "-m" else "unittest", "--check" in gate[1]) for gate in check_all.GATES]
 
 
+def audit_specs():
+    return [(name, argv) for name, argv, _heavy in check_all.AUDIT_GATES]
+
+
 class CheckAllParityTests(unittest.TestCase):
     def test_every_ci_gate_is_in_the_local_command(self):
         ci = verify_commands()
@@ -77,13 +87,22 @@ class CheckAllParityTests(unittest.TestCase):
             "or CI will catch a drift the local command calls green",
         )
 
-    def test_the_local_command_adds_nothing_ci_does_not_run(self):
+    def test_the_verify_table_adds_nothing_ci_does_not_run(self):
         extra = [spec for spec in gate_specs() if spec not in verify_commands()]
         self.assertEqual(
             extra,
             [],
             msg=f"expected the local table to mirror CI exactly; {extra} is not in the workflow's verify step",
         )
+
+    def test_every_audit_gate_is_a_real_ci_command(self):
+        text = workflow_text()
+        for name, argv in audit_specs():
+            self.assertIn(
+                " ".join(argv),
+                text,
+                msg=f"expected audit gate {name} to name a command in ci.yml; {' '.join(argv)} is missing",
+            )
 
     def test_the_order_matches_ci(self):
         ci = [spec for spec in verify_commands() if spec in gate_specs()]
@@ -100,8 +119,20 @@ class CheckAllParityTests(unittest.TestCase):
                 continue
             path = os.path.join(ROOT, argv[0])
             self.assertTrue(os.path.exists(path), msg=f"expected gate {name} to name a real script; {argv[0]} is missing")
-        names = [gate[0] for gate in check_all.GATES]
+        for name, argv, _heavy in check_all.AUDIT_GATES:
+            self.assertEqual(argv[:1], ["npm"], msg=f"expected audit gate {name} to use a command runner, not a Python file")
+        names = [gate[0] for gate in [*check_all.GATES, *check_all.AUDIT_GATES]]
         self.assertEqual(len(names), len(set(names)), msg=f"expected one row per gate name; a duplicate would run twice: {names}")
+
+    def test_a_local_run_includes_the_label_audit(self):
+        names = [gate[0] for gate in check_all.selected([], full=False)]
+        self.assertIn("labels", names, msg="expected the label audit to run before a push")
+        labels = next(gate for gate in check_all.AUDIT_GATES if gate[0] == "labels")
+        self.assertEqual(
+            labels[1],
+            ["npm", "run", "check:labels"],
+            "expected the label audit to run npm's check:labels command",
+        )
 
     def test_the_heavy_sweeps_are_the_ones_skipped_by_default(self):
         fast = [gate[1][0] for gate in check_all.selected([], full=False)]
