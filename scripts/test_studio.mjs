@@ -350,6 +350,24 @@ await checkAsync(`the ${SCRATCH_KILL_MS / 1000} s page kill terminates and resol
   }
 });
 
+await checkAsync('a browser that refuses a worker reports a failed start, not a hung run', async () => {
+  globalThis.Worker = class {
+    constructor() {
+      throw new Error('SecurityError: worker-src is blocked');
+    }
+  };
+  try {
+    const statuses = [];
+    const runner = createScratchRunner((status) => statuses.push(status));
+    const result = await runner.run('print(1)\n');
+    assert.equal(result.ok, false);
+    assert.match(result.stderr, /could not start/);
+    assert.equal(statuses.at(-1), 'error', 'the status line must stop promising a run');
+  } finally {
+    restoreWorker();
+  }
+});
+
 await checkAsync('dispose terminates, and a later run does not reuse the closed worker', async () => {
   useFakeWorkers();
   const runner = createScratchRunner(() => {});

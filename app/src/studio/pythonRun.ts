@@ -137,10 +137,19 @@ export function createScratchRunner(onStatus: (status: ScratchStatus) => void): 
   const run = async (code: string): Promise<ScratchResult> => {
     if (session.running) stop();
     onStatus('running');
-    const verdict = await session.run(request(code), {
-      loadKillMs: SCRATCH_KILL_MS,
-      killMs: SCRATCH_KILL_MS,
-    });
+    let verdict: PythonWorkerMessage;
+    try {
+      verdict = await session.run(request(code), {
+        loadKillMs: SCRATCH_KILL_MS,
+        killMs: SCRATCH_KILL_MS,
+      });
+    } catch {
+      // `ensure()` throws at its caller when the browser refuses a module worker (a CSP without
+      // `worker-src`, an engine without module workers): that is a start that failed, not a run to
+      // wait out, so it gets the same sentence as a worker that could not.
+      onStatus('error');
+      return { stdout: '', stderr: WORKER_FAILED, ok: false };
+    }
     if (verdict.type === 'result') onStatus(session.worker ? 'ready' : 'idle');
     else if (verdict.type === 'timeout' || verdict.type === 'error') {
       onStatus(verdict.type === 'error' ? 'error' : 'idle');
