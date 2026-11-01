@@ -20,8 +20,8 @@ Inside those rules there are three kinds of sound, with different jobs:
   event — and a run is the one moment the machinery is the loudest thing in the mix.
 * **The music is a bed, not a score, and it is a choice.** Eleven seamless loops in five genre doors —
   Lo-fi, J-Pop, Synthwave, Chiptune, Acoustic — four cut from CC0 recordings, seven composed by this
-  repository. A learner picks a door in the header's own picker or in the panel, then a tape inside
-  it; only the chosen file is fetched. A learner who would rather have a texture than a song picks the
+  repository. A learner picks a door and then a tape inside the settings panel, which is the only
+  picker; only the chosen file is fetched. A learner who would rather have a texture than a song picks the
   **Drone**, and the same drone covers a browser that cannot decode AAC. The runtime is one module
   (`audio/musicManager.ts`) with the spec's three methods — `togglePlay`, `setGenre`, `setVolume` —
   and every control speaks to it rather than to the engine.
@@ -31,7 +31,7 @@ flowchart LR
     R["Runner: run started / verdict"] --> B["audio/facade.ts: a window event"]
     C["SoundClicks.tsx: a control"] --> B
     P["SoundSettingsPanel.tsx: a preview"] --> B
-    W["AudioPlayerWidget.tsx: toggle + genre picker"] --> M0["audio/musicManager.ts: one owner"]
+    W["AudioPlayerWidget.tsx: toggle + panel door"] --> M0["audio/musicManager.ts: one owner"]
     M0 --> E
     F["Focus mode: FOCUS_EVENT"] --> B
     B --> E["audio/engine.ts (lazy chunk)"]
@@ -144,10 +144,10 @@ The header's sound button turns sound on and off; the `···` beside it opens t
 | Interface | a switch for whether the interface ticks at all, and three previews (a tab, Run, close) |
 | Credit | the track, the artist, the licence, a link to the source, and **Reset** |
 
-The **header's genre picker** is the same five doors without opening the panel: it plays the door's
-`defaultTape` (the loop written for that idiom), leaves a tape already chosen inside the door alone,
-and writes through the manager like every other control. The panel remains the place for the full
-tape list and the credit.
+The **settings panel is the only genre picker**: five doors, and choosing one plays its `defaultTape`
+(the loop written for that idiom). The header strip carries just the mute toggle and the panel's door,
+so a learner cannot change the bed from a control they never opened. The panel is also the place for
+the full tape list and the credit.
 
 The switches are switches, not sliders at zero: a learner may want the verdicts and the room while
 finding a tick under every button distracting. **A preview plays even with the clicks switched off** —
@@ -270,7 +270,7 @@ synthesised fallback when it cannot be had.
 | `app/src/audio/rainAsset.ts` | the rain loop's URL, and nothing else |
 | `app/src/components/SoundClicks.tsx` | one delegated listener; renders nothing |
 | `app/src/components/SoundControl.tsx` | where the panel goes, how it closes, and which control drew it — placement and glue, no sound |
-| `app/src/components/AudioPlayerWidget.tsx` | the shared strip the header and the focus pill both draw: one toggle, the five genre doors, the panel's door |
+| `app/src/components/AudioPlayerWidget.tsx` | the shared strip the header and the focus pill both draw: one toggle and the panel's door; the genre and tape choice lives in the panel |
 | `app/src/components/SoundSettingsPanel.tsx` | the panel: sections, faders, the two switches, previews, credit, reset — a card that fills the box `SoundControl` gives it |
 | `scripts/build_ambience.mjs` / `scripts/build_music.mjs` | the rain and the eleven tapes, and the `--check` that proves each is what its script makes |
 | `scripts/test_audio.mjs` | the store, the graph, the automation, the room, the ticks, the catalogue, the tape cache, the manager — with a recording double |
@@ -300,8 +300,8 @@ npm run test:audio        # 36 checks: defaults, clamping and migration, graph, 
 npm run test:e2e:game     # 21 checks in Chromium: off by default, one press on, the room arriving,
                           # a click heard, the panel's five genre doors, a tape really loading, the
                           # drone, a composed tape's credit, faders, a preview, the click switch, the
-                          # header picker, the duck history, the pill, a gesture after reload, and
-                          # one press back to silence
+                          # panel being the only picker, the duck history, the pill, a gesture after
+                          # reload, and one press back to silence
 npm run check:weight      # `audio` (127 kB / 150 kB) and `music` (2.23 MB / 2.35 MB)
 node scripts/build_ambience.mjs --check   # locally, with ffmpeg or afconvert: the rain is current
 node scripts/build_music.mjs --check      # locally, with the CC0 sources in .cache/music: all

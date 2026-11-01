@@ -350,20 +350,14 @@ async function main() {
       console.log('  ok the drone and a composed tape are both reachable and honest about it');
       await page.keyboard.press('Escape');
 
-      // The header's genre picker is the same choice without the panel: it plays the door's own tape,
-      // and it is reachable from the header itself rather than three presses deep in a popover.
-      await page.getByTestId('sound-genre').selectOption('synthwave');
-      await page.waitForFunction(() => window.__mechalabAudio?.().tape === 'night-drive', undefined, {
-        timeout: 5000,
-      });
-      await page.waitForFunction(() => window.__mechalabAudio?.().musicSource === 'file', undefined, {
-        timeout: 20000,
-      });
-      await page.getByTestId('sound-genre').selectOption('chiptune');
-      await page.waitForFunction(() => window.__mechalabAudio?.().tape === 'pixel-run', undefined, {
-        timeout: 5000,
-      });
-      console.log('  ok the header picker plays each door\'s own tape');
+      // The genre choice belongs to the settings panel. The header used to carry a second picker;
+      // it is gone, so a learner cannot change the bed from a control they never opened.
+      assert.equal(
+        await page.getByTestId('sound-genre').count(),
+        0,
+        'the header must not carry a genre select; the settings panel is the only picker'
+      );
+      console.log('  ok the settings panel is the only genre picker');
 
       // Focus is a scene on the same bus: the bed crossfades quieter and the header's control goes
       // with the chrome, so the pill carries the one press from muted.

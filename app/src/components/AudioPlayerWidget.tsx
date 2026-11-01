@@ -1,16 +1,13 @@
 import { Volume2, VolumeX } from 'lucide-react';
-import { DRONE_ID, MUSIC_CATEGORIES, categoryOf, type MusicCategory } from '../audio/musicCatalogue.ts';
 import { soundLabel, type SoundPrefs } from '../audio/prefs.ts';
 
 interface AudioPlayerWidgetProps {
   prefs: SoundPrefs;
-  /** The phone header's pill, which drops the genre list and only opens the sheet. */
+  /** The focus pill, which keeps the one press from muted while the header is hidden. */
   pill?: boolean;
   open: boolean;
   panelId: string;
   onToggle: () => void;
-  onGenre: (genre: MusicCategory) => void;
-  onDrone: () => void;
   /** Absent on the pill: the pill's whole job is to open the panel. */
   onOpenPanel?: () => void;
   testIdSuffix?: string;
@@ -19,10 +16,10 @@ interface AudioPlayerWidgetProps {
 }
 
 /**
- * The music strip: one toggle, the five genre doors, and the panel's door.
+ * The music strip: one toggle and the panel's door.
  *
- * The header control and the phone pill are the same widget because they are the same controls; the
- * pill drops the genre list, where the sheet carries it, and keeps the one press from muted.
+ * The header control and the focus pill are the same widget because they are the same controls. The
+ * genre and tape choice lives in the settings panel, so this strip cannot become a second picker.
  */
 export function AudioPlayerWidget({
   prefs,
@@ -30,15 +27,12 @@ export function AudioPlayerWidget({
   open,
   panelId,
   onToggle,
-  onGenre,
-  onDrone,
   onOpenPanel,
   testIdSuffix = '',
   wrapRef,
   triggerRef,
 }: AudioPlayerWidgetProps) {
   const tid = (base: string) => (testIdSuffix ? `${base}-${testIdSuffix}` : base);
-  const genre = categoryOf(prefs.tape);
   return (
     <div ref={wrapRef} data-testid={tid(pill ? 'sound-control-pill' : 'sound-control')} className="relative flex items-center">
       <button
@@ -70,27 +64,6 @@ export function AudioPlayerWidget({
           <span className="hidden 2xl:inline">Sound</span>
         )}
       </button>
-      {!pill && (
-        <select
-          data-testid="sound-genre"
-          aria-label="Music genre"
-          value={genre ?? DRONE_ID}
-          onChange={(event) => {
-            const value = event.target.value;
-            if (value === DRONE_ID) onDrone();
-            else onGenre(value as MusicCategory);
-          }}
-          title="Music genre — picking one starts the tape when sound is on"
-          className="ml-1 hidden max-w-[8.5rem] cursor-pointer rounded-lg border border-line bg-canvas px-1 py-1 text-xs text-body md:block"
-        >
-          {MUSIC_CATEGORIES.map((entry) => (
-            <option key={entry.id} value={entry.id}>
-              {entry.label}
-            </option>
-          ))}
-          <option value={DRONE_ID}>🎛️ Drone</option>
-        </select>
-      )}
       {onOpenPanel && (
         <button
           ref={triggerRef}

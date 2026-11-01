@@ -2,8 +2,8 @@
  * The music tapes, as facts (`app/src/audio/musicCatalogue.ts`).
  *
  * This module has **no audio imports** on purpose: the settings panel shows the title, the artist and
- * the licence of what is playing, a Node test reads the same table, and the widget's genre picker
- * prints the same labels — none of them should need Vite to resolve an `.m4a`. `musicBeds.ts` is the
+ * the licence of what is playing, a Node test reads the same table, and the settings panel prints the
+ * same labels — none of them should need Vite to resolve an `.m4a`. `musicBeds.ts` is the
  * other half, the URLs and the decode, and it is only ever reached through a dynamic import inside
  * the engine.
  *
@@ -12,8 +12,8 @@
  * The panel's music section is organised by **genre**, the way a learner asks for it: Lo-fi, J-Pop,
  * Synthwave, Chiptune, Acoustic. A category is a door, a tape is what plays, and the panel shows the
  * tapes inside the door that is open. Every door holds at least one tape, and every door names a
- * `defaultTape`: the one the header's picker plays when the genre is chosen, so switching doors is
- * never a restart of whatever happened to be first in the list.
+ * `defaultTape`: the one the panel plays when a genre door is chosen, so switching doors is never a
+ * restart of whatever happened to be first in the list.
  *
  * ## Where the tapes come from
  *
@@ -61,7 +61,7 @@ export const DRONE_ID = 'drone';
 
 export interface MusicCategoryInfo {
   id: MusicCategory;
-  /** What the chip and the header's picker say. Emoji are the spec's, not decoration. */
+  /** What the panel's chip says. Emoji are the spec's, not decoration. */
   label: string;
   /** One line under the open category, in the panel. */
   hint: string;
@@ -198,7 +198,7 @@ export function tapeById(id: string): MusicTape {
   return MUSIC_TAPES.find((entry) => entry.id === id) ?? MUSIC_TAPES.find((entry) => entry.id === DEFAULT_TAPE)!;
 }
 
-/** The category a tape belongs to, for the panel's open chip and the header's picker. */
+/** The category a tape belongs to, for the panel's open chip. */
 export function categoryOf(id: string): MusicCategory | null {
   return id === DRONE_ID ? null : tapeById(id).category;
 }

@@ -1,8 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { cachedSoundPrefs, subscribeSoundPrefs, type SoundPrefs } from '../audio/prefs.ts';
-import type { MusicCategory } from '../audio/musicCatalogue.ts';
-import { change, install, preview, reset, setGenre, subscribeArmed, togglePlay } from '../audio/musicManager.ts';
+import { change, install, preview, reset, subscribeArmed, togglePlay } from '../audio/musicManager.ts';
 import type { UiRole } from '../audio/facade.ts';
 import { AudioPlayerWidget } from './AudioPlayerWidget.tsx';
 import { SoundSettingsPanel } from './SoundSettingsPanel.tsx';
@@ -163,8 +162,6 @@ export const SoundControl: React.FC<{ variant?: 'header' | 'pill'; testIdSuffix?
         wrapRef={wrapRef}
         triggerRef={triggerRef}
         onToggle={() => togglePlay()}
-        onGenre={(genre: MusicCategory) => setGenre(genre)}
-        onDrone={() => change({ tape: 'drone' })}
         onOpenPanel={pill ? undefined : () => setOpen((value) => !value)}
       />
       {open &&
