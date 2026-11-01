@@ -43,9 +43,9 @@ interpreter fails on a page you did not touch. Check with `python3 --version`; i
 use `python3.12` or put Homebrew's `bin` first on `PATH`.
 
 **The one command to run before a push:** `python3 scripts/check_all.py` runs every gate CI's
-verification step runs, in CI's order, and takes about 12 s; `--full` adds the 48-package exercise
-sweep and the unittest discovery, `--list` names the gates, and `--only <gate>` re-runs one after
-you regenerate a file. It refuses to run on anything but Python 3.12. The script's gate table and
+verification step runs, plus the label audit, in CI's order, and takes about 50 s; `--full` adds
+the 48-package exercise sweep and the unittest discovery, `--list` names the gates, and
+`--only <gate>` re-runs one after you regenerate a file. It refuses to run on anything but Python 3.12. The script's gate table and
 `.github/workflows/ci.yml` are kept equal by [`tests/test_check_all.py`](tests/test_check_all.py),
 so a check CI gains is not silently missing locally. Its first gate reads the workflow files
 themselves: a `ci.yml` GitHub cannot parse fails **in 0 s with no jobs**, which is what an unquoted

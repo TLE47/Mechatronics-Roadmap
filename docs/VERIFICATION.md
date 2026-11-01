@@ -129,7 +129,7 @@ and asserts after a bounded `waitForFunction` on the state it claims. The sleeps
 ## Full local run
 
 ```bash
-python3.12 scripts/check_all.py         # every gate CI's verify step runs, in CI's order (~12 s)
+python3.12 scripts/check_all.py         # every gate CI's verify step runs, plus the label audit, in CI's order (~50 s)
 python3.12 scripts/check_workflows.py   # the workflow files themselves, before the push
 python3.12 scripts/check_doc_commands.py # every command the docs tell a reader to run still exists (Run 200)
 python3.12 scripts/check_plan_rows.py   # the 2.0 gap page: every row closed, every `ships` row runnable (Run 203)
