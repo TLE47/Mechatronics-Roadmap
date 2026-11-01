@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { PYTHON_LESSONS, PythonLessonItem } from '../../data/pythonLessonsData';
 import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabPlant';
 import { pyodideCdn } from '../../runtime/pyodideCdn';
@@ -37,15 +37,8 @@ import {
   type PhoneSurface,
 } from '../../phoneSurface';
 import { FirstRunTour } from '../FirstRunTour';
-import {
-  layoutForStep,
-  reduceTour,
-  stepAt,
-  type TourFacts,
-  type TourSignal,
-  type TourState,
-} from '../../tour';
-import { readTour, resumeLabel, tourOffer, writeTour } from '../../tourState';
+import { layoutForStep } from '../../tour';
+import { resumeLabel } from '../../tourState';
 import { playCue } from '../../audio/facade';
 import type { HarnessReport } from '../../harnessGrading.ts';
 import { harnessGate, parseHarnessReport } from '../../harnessGrading.ts';
@@ -113,22 +106,12 @@ import {
   LAYOUTS,
   SPLIT_MIN_RATIO,
   SPLIT_MAX_RATIO,
-  dockControl,
-  flippedDock,
   layoutArrangement,
   layoutShortcutFor,
   layoutShows,
-  readDock,
-  readLayout,
-  readSplitRatio,
   splitGridTemplate,
   splitRatioAfterKey,
-  splitRatioAt,
   splitRatioPercent,
-  writeDock,
-  writeLayout,
-  writeSplitRatio,
-  type WorkspaceDock,
   type WorkspaceLayout,
 } from '../../workspaceLayout';
 import {
@@ -136,14 +119,11 @@ import {
   closeView,
   focusSlot,
   isSplit,
-  readPanes,
   setAxis,
   showView,
   slotFor,
   splitPane,
   visibleViews,
-  writePanes,
-  type EditorPanes,
   type EditorView,
 } from '../../editorPanes';
 import { actionForEvent, type Keymap } from '../../keymap';
@@ -169,6 +149,16 @@ import {
   writeWatches,
 } from '../../editor/watches';
 import type { LessonFile } from '../../lessonFiles';
+import { useRunnerArrangement } from './runner/useRunnerArrangement';
+import { RunVerdict } from './runner/RunVerdict';
+import { PredictPane } from './runner/PredictPane';
+import { RunnerRuntimeStrip } from './runner/RunnerRuntimeStrip';
+import { AssessmentPanel } from './runner/AssessmentPanel';
+import { PausedBar, type PausedStep } from './runner/PausedBar';
+import { ResultsColumn } from './runner/ResultsColumn';
+import { DraftHistoryPanel } from './runner/DraftHistoryPanel';
+import { BreakpointPanel } from './runner/BreakpointPanel';
+import { useFirstRunTour } from './runner/useFirstRunTour';
 import { PythonEditor, type PythonEditorHandle } from '../PythonEditor';
 import { ScopePanel } from '../ScopePanel';
 import { normalizeScopeSeries, type ScopeSeries } from '../../scopeModel';
@@ -237,27 +227,6 @@ export const STORAGE_KEY_FIRST_GUIDE = 'mechalab_first_guide_dismissed_v1';
 // can cache what it fetches; this component only owns the messages it sends.
 
 
-/**
- * The text a parked line is quoted from.
- *
- * A park names its own file because a Step in can land in a helper tab or the shared plant: quoting
- * main.py's line 116 for a line of the plant would be a sentence about a different program. The
- * learner's file is the text the run executed (so an edit made while parked cannot rewrite the
- * quote), while a helper and the plant are quoted from the same copies their tabs show.
- */
-function sourceForPark(
-  file: string | undefined,
-  runCode: string,
-  helperFiles: readonly LessonFile[]
-): string {
-  if (!file || file === '<lesson_editor>') return runCode;
-  const helper = helperFiles.find((entry) => entry.name === file);
-  if (helper) return helper.content;
-  // The plant is written into every run, whether or not this lesson's own text mentions it, so a
-  // learner can import it anywhere and step into it there.
-  return file === MECHALAB_PLANT_FILENAME ? MECHALAB_PLANT_PY : '';
-}
-
 /** The last palette run request this page has acted on; see the effect near the keyboard shortcut. */
 let LAST_RUN_REQUEST_HANDLED = 0;
 /** And the last palette Format request, which needs the same record for the same reason. */
@@ -322,46 +291,6 @@ interface TabPyodideRunnerProps {
 }
 
 /**
- * The line the interpreter is parked on, as the worker reports it.
- *
- * The values are the frame's own, formatted in the worker (`_trace_values`) exactly as the recorded
- * trace's are, so a paused line and the replay read the same way.
- */
-interface PausedStep {
-  line: number;
-  fn: string;
-  depth: number;
-  values: { name: string; value: string }[];
-  /** Why the interpreter parked: a gutter breakpoint, a Step, or the Pause button. */
-  reason?: 'breakpoint' | 'step' | 'pause';
-  /** A frame edit that was refused, in the interpreter's own words; absent when it landed. */
-  edit_error?: string;
-  /**
-   * The file the parked line is in: `<lesson_editor>` for the learner's own document, a helper tab's
-   * name, or the plant's filename. Absent from an older worker, which only ever parked in one file.
-   */
-  file?: string;
-  /**
-   * Why a conditional breakpoint would not evaluate, in the interpreter's own words.
-   *
-   * A condition is the learner's expression, and one that raises is a mistake in it — not a reason to
-   * skip the park or to end the run. The bar says what the interpreter said, on the line it stopped
-   * on, so the fix is one look away.
-   */
-  condition_error?: string;
-  /**
-   * The expressions the learner pinned, answered in this frame (`app/src/editor/watches.ts`).
-   *
-   * Absent when nothing is pinned. Each entry is the expression the learner wrote and either the
-   * value the interpreter gave it here or the sentence it raised: a watch that cannot be evaluated in
-   * this frame is a question this frame cannot answer, not a reason to end the run.
-   */
-  watches?: { expression: string; value?: string; error?: string }[];
-  /** A watch that could not be pinned (a full bar), in the interpreter's own words. */
-  watch_error?: string;
-}
-
-/**
  * How large a frame edit may be, in UTF-8 bytes.
  *
  * The shared buffer is 8 bytes of `[state, length]` plus this many bytes of payload: an expression a
@@ -406,18 +335,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // Set when a run starts, so the result effect can tell a scratch run from an attempt at the lesson
   // even if the learner has already left scratch by the time it finishes.
   const runScratchRef = useRef<boolean>(false);
-  // The first-run tour (`app/src/tour.ts`, `app/src/tourState.ts`). Read once at mount: it records
-  // what this browser has already been shown, and only this screen writes it back.
-  const [tourState, setTourState] = useState<TourState>(() => readTour());
-  // Whether *this visit* draws the coach mark, which is not the same question as what the record says.
-  // A record left on step 4 means the learner closed the page mid-tour: that gets the chip, and the
-  // card only comes back when they take it. Only a fresh record on step one opens by itself.
-  const [tourOpen, setTourOpen] = useState<boolean>(() => {
-    const stored = readTour();
-    return stored.status === 'active' && stored.stepIndex === 0;
-  });
-  // The chip is either "new here" or "you were at step 4": the same control, two honest labels.
-  const [tourChip, setTourChip] = useState<{ resume: boolean } | null>(null);
+  // The first-run tour owns its own record and gates (`runner/useFirstRunTour.ts`).
   const [isPhone, setIsPhone] = useState<boolean>(() => {
     try {
       return window.matchMedia('(max-width: 767px)').matches;
@@ -511,70 +429,25 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // The name F12 was pressed on when nothing in the lesson defines it. Said in the file strip, which
   // is already there, rather than in a toast the learner has to dismiss.
   const [symbolMiss, setSymbolMiss] = useState<string | null>(null);
-  // Which of the three regions the screen gives its width to (`workspaceLayout.ts`). Read once at
-  // mount: it is a preference, and a reload is the only thing that changes it from outside.
-  const [layout, setLayout] = useState<WorkspaceLayout>(() => readLayout());
-  // The toolbar is the control the preset is pressed on, so it is the one thing that must not move
-  // when the preset changes which regions are mounted. Capture where it sat, put it back there.
-  const layoutToolbarRef = useRef<HTMLDivElement>(null);
-  const keepLayoutTop = useRef<number | null>(null);
-  const chooseLayout = (next: WorkspaceLayout) => {
-    const bar = layoutToolbarRef.current;
-    keepLayoutTop.current = bar ? bar.getBoundingClientRect().top : null;
-    setLayout(writeLayout(next));
-  };
-  useLayoutEffect(() => {
-    const top = keepLayoutTop.current;
-    keepLayoutTop.current = null;
-    if (top === null || !layoutToolbarRef.current) return;
-    const settle = () => {
-      const bar = layoutToolbarRef.current;
-      if (!bar) return;
-      const delta = bar.getBoundingClientRect().top - top;
-      if (Math.abs(delta) > 1) window.scrollBy(0, delta);
-    };
-    settle();
-    // The lesson reader mounts at once but its Markdown arrives a moment later and grows the page
-    // above the toolbar. Keep putting the toolbar back while that settles, and stop the moment the
-    // learner takes over the scroll — a correction that fights a wheel is worse than a small jump.
-    let active = true;
-    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(settle) : null;
-    observer?.observe(document.body);
-    let timer = 0;
-    const cleanup = () => {
-      if (!active) return;
-      active = false;
-      observer?.disconnect();
-      window.clearTimeout(timer);
-      window.removeEventListener('wheel', cleanup);
-      window.removeEventListener('touchstart', cleanup);
-      window.removeEventListener('keydown', cleanup);
-    };
-    timer = window.setTimeout(cleanup, 2500);
-    window.addEventListener('wheel', cleanup, { passive: true });
-    window.addEventListener('touchstart', cleanup, { passive: true });
-    window.addEventListener('keydown', cleanup);
-    return cleanup;
-  }, [layout]);
-  // Which edge the chooser (Study) and the results (Split) sit on (`workspaceLayout.ts`). Read once
-  // at mount, like the preset: it is the same kind of preference, and only this screen changes it.
-  const [dock, setDock] = useState<WorkspaceDock>(() => readDock());
-  const dockChoice = dockControl(dock, layout);
-  const resultsSide = dock.results;
-  // Split's divider, as the share of the work area the editor gets (`workspaceLayout.ts`). Read once
-  // at mount like the preset itself: a drag is the only thing that changes it from outside storage.
-  const [splitRatio, setSplitRatio] = useState<number>(() => readSplitRatio());
-  // Which views the editor's tabs show, and whether the body is split into two panes
-  // (`editorPanes.ts`). Read once at mount for the same reason the preset is: this screen is the
-  // only one that changes it, and the arrangement belongs to this browser.
-  const [panes, setPanes] = useState<EditorPanes>(() => readPanes());
-  const commitPanes = (next: EditorPanes) => setPanes(writePanes(next));
-  const splitRatioRef = useRef<number>(splitRatio);
-  splitRatioRef.current = splitRatio;
-  const [draggingSplit, setDraggingSplit] = useState(false);
-  /** The pointer whose drag is in flight, so a second finger on a trackpad cannot drag both ways. */
-  const splitDragRef = useRef<number | null>(null);
-  const splitContainerRef = useRef<HTMLDivElement | null>(null);
+  // The arrangement — preset, dock and the editor's panes — has one owner of its own.
+  const {
+    layout,
+    chooseLayout,
+    layoutToolbarRef,
+    dock,
+    dockChoice,
+    flipDock,
+    resultsSide,
+    splitRatio,
+    commitSplitRatio,
+    draggingSplit,
+    splitContainerRef,
+    beginSplitDrag,
+    moveSplitDrag,
+    endSplitDrag,
+    panes,
+    commitPanes,
+  } = useRunnerArrangement();
   const guideAssessmentRef = useRef<HTMLDivElement | null>(null);
   // Named groups the roadmap also uses; the old "Step 1 / Steps 3-5 / Steps 6-10" numbering was a
   // third scheme, belonging to neither the roadmap's passes nor any tab the learner can open.
@@ -1991,6 +1864,23 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
    * gets the same line back with the frame's new values, so "what if it were 41" is answered before
    * the learner decides to continue. A refused expression comes back as `edit_error` on that bar.
    */
+  /** Picking a value is the start of an edit, so the last refusal goes with it. */
+  const handleFrameEdit = (edit: { name: string; expression: string } | null) => {
+    setFrameEdit(edit);
+    setFrameEditError('');
+  };
+
+  /** Restoring is the same text, back in the editor, and the badges cleared: they described the
+   * code that was there a moment ago, not this one. */
+  const restoreDraftVersion = (restored: string) => {
+    commitCode(restored);
+    saveDraft(selectedId, restored);
+    setPassStatus('untested');
+    setBehaviorCheck('untested');
+    setOutputCheck('untested');
+    setInstructorError('');
+  };
+
   const applyFrameEdit = () => {
     const buffer = frameEditRef.current;
     const pause = pauseRef.current;
@@ -2543,67 +2433,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // ---------------------------------------------------------------------------------------------
-  // The Split divider.
-  //
-  // A pointer drag, captured by the handle itself: with pointer capture the moves keep arriving at
-  // the handle even when the pointer is over the editor or the page, so there are no window listeners
-  // to leak and no way to end a drag by letting go outside the window.
-  // ---------------------------------------------------------------------------------------------
-  const commitSplitRatio = (ratio: number) => setSplitRatio(writeSplitRatio(ratio));
-
-  const beginSplitDrag = (event: React.PointerEvent<HTMLDivElement>) => {
-    // The primary button only: a right click on the handle must not capture the pointer.
-    if (event.button !== 0) return;
-    splitDragRef.current = event.pointerId;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setDraggingSplit(true);
-    event.preventDefault();
-  };
-
-  const moveSplitDrag = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (splitDragRef.current !== event.pointerId) return;
-    const container = splitContainerRef.current;
-    const box = container?.getBoundingClientRect();
-    if (!container || !box) return;
-    // The tracks share what the gap leaves, so the boundary is at `left + free * ratio`. Measuring
-    // against the full width would leave the divider half a gap behind the pointer.
-    const gap = Number.parseFloat(getComputedStyle(container).columnGap) || 0;
-    const next = splitRatioAt(event.clientX, box.left, box.width - gap, resultsSide);
-    // No write while dragging: a pointer emits a move per pixel, and a stored key per pixel is a
-    // write per pixel. The drag ends with one.
-    if (next !== null) setSplitRatio(next);
-  };
-
-  const endSplitDrag = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (splitDragRef.current !== event.pointerId) return;
-    splitDragRef.current = null;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-    setDraggingSplit(false);
-    // The release position, not the last ratio that was rendered. A pointermove is a continuous
-    // event, so its setState can still be queued when the release arrives (the browser coalesces
-    // moves under load); committing the ref then writes one move behind where the learner let go,
-    // and the boundary stays a step off — CI caught exactly that, 39% after a drag to 35%. The
-    // pointerup carries the position the drag ended at, so it is authoritative. A cancel carries
-    // none, and commits what it has.
-    const container = splitContainerRef.current;
-    const box = container?.getBoundingClientRect();
-    const gap = container ? Number.parseFloat(getComputedStyle(container).columnGap) || 0 : 0;
-    const released =
-      event.type === 'pointerup' && box
-        ? splitRatioAt(event.clientX, box.left, box.width - gap, resultsSide)
-        : null;
-    setSplitRatio(writeSplitRatio(released ?? splitRatioRef.current));
-  };
-
-  // A preset change can unmount the handle mid-drag (⌥1 while holding it). Pointer capture dies with
-  // the element, so the release never arrives and the "dragging" branch would stay on.
-  useEffect(() => {
-    if (layoutArrangement(layout) !== 'columns') setDraggingSplit(false);
-  }, [layout]);
-
   // ⌘↵ / Ctrl+↵ runs from anywhere on this screen, including inside the editor. The button stays
   // the discoverable path; this is the one keyboard habit a code editor trains. The key is read from
   // the sheet's keymap (`app/src/keymap.ts`), so a learner who rebinds Run is not left with the old
@@ -2804,192 +2633,32 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const guideShowsExpectedGot =
     passStatus === 'behavior_failed' && guideFixLine.startsWith('AssertionError');
 
-  /* ---- The first-run tour --------------------------------------------------------------------
-   * The gate is the app's own state, never a click: step 3 moves when the editor text differs from
-   * the text the tour found, and step 4 moves when a run has ended with a verdict. `reduceTour` owns
-   * those rules; this block only measures and forwards, so a rule lives in one place to be tested.
-   */
-  const tourStep = stepAt(tourState.stepIndex);
-  const tourActive = tourOpen && tourState.status === 'active';
-  // What the document was when the tour reached the editor step. A draft restored from storage is not
-  // an edit the learner made in this visit, and must not satisfy a step that asks them to type.
-  const tourBaselineRef = useRef<string | null>(null);
-  // Runs already counted when the tour started: a run from before it does not satisfy step 4.
-  const tourRunBaselineRef = useRef<number>(0);
+  // The first-run tour owns its own record, gates and baselines (`runner/useFirstRunTour.ts`).
   const runButtonRef = useRef<HTMLButtonElement | null>(null);
-  const attemptsHereNow = runAttempts[selectedId] ?? 0;
-  const tourFacts: TourFacts = {
-    edited: tourBaselineRef.current !== null && code !== tourBaselineRef.current,
-    runFinished: !isRunning && attemptsHereNow > tourRunBaselineRef.current,
-    passed: passStatus === 'passed',
-  };
-  const tourFactsRef = useRef<TourFacts>(tourFacts);
-  tourFactsRef.current = tourFacts;
-
-  // A mirror of the record for the click handlers: the reducer is pure, but writing the record and
-  // closing the card are two updates, and doing them inside a `setTourState` updater would run both
-  // twice under StrictMode's double-invoke.
-  const tourStateRef = useRef<TourState>(tourState);
-  tourStateRef.current = tourState;
-
-  const signalTour = (signal: TourSignal) => {
-    const previous = tourStateRef.current;
-    const next = reduceTour(previous, signal, tourFactsRef.current);
-    if (next === previous) return;
-    // Local only, like every other log line: this is how a pilot tells "walked it" from "closed it at
-    // step two" without watching anyone (`learningLog.ts`).
-    logEvent({
-      kind: 'tour',
-      action: next.status === 'completed' ? 'completed' : next.status === 'dismissed' ? 'skipped' : 'step',
-      level: next.stepIndex + 1,
-    });
-    setTourState(writeTour(next));
-    // Anything but "still walking" puts the card away: a dismissed and a finished tour look the same
-    // on the page, and the record is what remembers which one it was.
-    if (next.status !== 'active') setTourOpen(false);
-  };
-
-  /**
-   * Start (or restart) the tour, with both baselines taken now.
-   *
-   * `resume` continues at the step the record left off at; `restart` is the replay the palette and the
-   * `?` sheet ask for, which begins at step one because that is what "replay" means.
-   */
-  const startTour = (mode: 'restart' | 'resume' = 'restart') => {
-    tourBaselineRef.current = null;
-    tourRunBaselineRef.current = runAttempts[selectedId] ?? 0;
-    setTourChip(null);
-    setTourOpen(true);
-    const previous = readTour();
-    const next: TourState =
-      mode === 'resume'
-        ? { ...previous, status: 'active', chipShown: true, updatedAt: Date.now() }
-        : reduceTour(previous, 'replay', tourFactsRef.current);
-    logEvent({
-      kind: 'tour',
-      action: mode === 'resume' ? 'resume' : 'shown',
-      level: next.stepIndex + 1,
-    });
-    setTourState(writeTour(next));
-  };
-
-  // Which surface to offer. Judged against the lesson actually open, so a deep link into a later
-  // entry gets the chip rather than a tour of six steps about someone else's lesson.
-  useEffect(() => {
-    const current = readTour();
-    const offer = tourOffer(current, {
-      onFirstLesson: selectedId === PYTHON_LESSONS[0].id,
-      hasProgress:
-        Object.keys(verifiedLessons).length > 0 ||
-        Object.keys(completedLessons).length > 0 ||
-        Object.keys(readDrafts()).length > 0,
-    });
-    if (offer === 'none') return;
-    if (offer === 'tour') {
-      tourBaselineRef.current = null;
-      tourRunBaselineRef.current = runAttempts[selectedId] ?? 0;
-      setTourOpen(true);
-      // A record that is already open on step one is this effect running again (StrictMode's
-      // double-invoke in development), not a second time the learner was shown it.
-      if (!(current.status === 'active' && current.stepIndex === 0)) {
-        logEvent({ kind: 'tour', action: 'shown', level: 1 });
-      }
-      setTourState(writeTour({ ...current, status: 'active', stepIndex: 0, updatedAt: Date.now() }));
-      return;
-    }
-    // Someone who left the tour at step 4 gets the step, not the welcome: `active` is the record that
-    // says where they were.
-    setTourChip({ resume: current.status === 'active' });
-    setTourState(writeTour({ ...current, chipShown: true, updatedAt: Date.now() }));
-    // Deliberately keyed on the lesson: the counts are read once per visit, so the run that finishes
-    // during the tour cannot close the tour it is part of.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId]);
-
-  // Home's Review button asks the Study panel for attention with a nonce, the same way the palette
-  // asks for a run. The deck is already mounted; this scrolls it into view and puts the keyboard on
-  // its first control, and a mount never fires a request nobody made this visit.
-  const lastReviewRequestRef = useRef<number>(reviewRequest ?? 0);
-  useEffect(() => {
-    if ((reviewRequest ?? 0) === lastReviewRequestRef.current) return;
-    lastReviewRequestRef.current = reviewRequest ?? 0;
-    const deck = document.getElementById('study-deck');
-    if (!deck) return;
-    deck.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    deck.focus({ preventScroll: true });
-  }, [reviewRequest]);
-
-  // The palette and the `?` sheet ask for a replay with a nonce, the same way they ask for a run.
-  const lastTourRequestRef = useRef<number>(tourRequest ?? 0);
-  useEffect(() => {
-    if ((tourRequest ?? 0) === lastTourRequestRef.current) return;
-    lastTourRequestRef.current = tourRequest ?? 0;
-    startTour();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tourRequest]);
-
-  // Step 3's gate: the editor now holds text that is not the text the tour found.
-  useEffect(() => {
-    if (!tourActive) return;
-    if (tourStep.gate === 'edited') {
-      if (tourBaselineRef.current === null) {
-        tourBaselineRef.current = code;
-        return;
-      }
-      if (tourFactsRef.current.edited) signalTour('edited');
-    }
-  }, [tourActive, tourStep.gate, code]);
-
-  // Step 4's gate: a run that finished while the tour was on screen.
-  useEffect(() => {
-    if (!tourActive) return;
-    if (tourStep.gate === 'run-finished' && tourFactsRef.current.runFinished) {
-      signalTour('run-finished');
-    }
-  }, [tourActive, tourStep.gate, tourFacts.runFinished]);
-
-  // Focus follows the kind of step: the editor for the typing one, Run for the press one. A card that
-  // keeps focus while asking the learner to type is a card they have to fight.
-  //
-  // The editor is a deferred chunk (`PythonEditor` draws the starter text while CodeMirror loads), so
-  // the handle can still be null when this runs — on a loaded machine the tour asked for focus before
-  // there was anything to focus and the step sat there untyped. So the request is retried until the
-  // handle answers, bounded, and cancelled the moment the step changes or the tour closes.
-  useEffect(() => {
-    if (!tourActive) return;
-    if (tourStep.id === 'run') {
-      runButtonRef.current?.focus();
-      return;
-    }
-    if (tourStep.id !== 'editor') return;
-    let timer = 0;
-    let waited = 0;
-    const ask = () => {
-      const editor = guideEditorRef.current;
-      if (editor) {
-        editor.focus();
-        return;
-      }
-      if (waited >= 5000) return;
-      waited += 100;
-      timer = window.setTimeout(ask, 100);
-    };
-    ask();
-    return () => window.clearTimeout(timer);
-  }, [tourActive, tourStep.id]);
-
-  // Esc closes the tour — unless a sheet is open, in which case that press was meant for the sheet.
-  useEffect(() => {
-    if (!tourActive) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      if (moreOpen || helpOpen || pairOpen) return;
-      signalTour('dismiss');
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tourActive, moreOpen, helpOpen, pairOpen]);
+  const {
+    tourActive,
+    tourStep,
+    tourState,
+    tourFacts,
+    tourChip,
+    setTourChip,
+    startTour,
+    signalTour,
+  } = useFirstRunTour({
+    selectedId,
+    code,
+    runAttempts,
+    isRunning,
+    passStatus,
+    tourRequest,
+    hasProgress:
+      Object.keys(verifiedLessons).length > 0 ||
+      Object.keys(completedLessons).length > 0 ||
+      Object.keys(readDrafts()).length > 0,
+    sheetOpen: moreOpen || helpOpen || pairOpen,
+    runButtonRef,
+    editorRef: guideEditorRef,
+  });
 
   // A narrower window turns the coach mark into a bottom sheet; the preset the tour leans on follows.
   useEffect(() => {
@@ -3122,69 +2791,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // back without opening a pane. The six states are the same spans that used to sit in the output
   // card's header; they live beside the run controls now, where every preset that shows the editor
   // can see them (Write included).
-  const runVerdict =
-    passStatus === 'untested' ? null : (
-      <span className="flex min-w-0 flex-wrap items-center gap-1 font-mono text-[11px] font-bold">
-        {passStatus === 'passed' && (
-          <span
-            data-testid="status-assert-passed"
-            className="flex items-center gap-1 text-emerald"
-          >
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            <span>PASS · Behavior &amp; Output Verified</span>
-          </span>
-        )}
-        {passStatus === 'harness_failed' && (
-          <span
-            data-testid="status-harness-failed"
-            className="flex items-center gap-1 text-rose"
-          >
-            <AlertTriangle className="h-3.5 w-3.5" />
-            <span>
-              HARNESS FAILED · {harnessResult?.met ?? 0} / {harnessResult?.total ?? 0}{' '}
-              Metrics At Target
-            </span>
-          </span>
-        )}
-        {passStatus === 'behavior_failed' && (
-          <span
-            data-testid="status-behavior-failed"
-            className="flex items-center gap-1 text-rose"
-          >
-            <AlertTriangle className="h-3.5 w-3.5" />
-            <span>BEHAVIOR FAILED · Instructor Tests Failed</span>
-          </span>
-        )}
-        {passStatus === 'mismatch' && (
-          <span
-            data-testid="status-output-mismatch"
-            className="flex items-center gap-1 text-amber"
-          >
-            <AlertTriangle className="h-3.5 w-3.5" />
-            <span>BEHAVIOR PASSED · Output Format Differs</span>
-          </span>
-        )}
-        {passStatus === 'stopped' && (
-          <span
-            data-testid="status-execution-stopped"
-            className="flex items-center gap-1 text-amber"
-          >
-            <OctagonX className="h-3.5 w-3.5" />
-            <span>STOPPED · Loop Limit / Cancelled</span>
-          </span>
-        )}
-        {passStatus === 'error' && (
-          <span
-            data-testid="status-execution-error"
-            className="flex items-center gap-1 text-rose"
-          >
-            <AlertTriangle className="h-3.5 w-3.5" />
-            <span>ERROR · Syntax / Runtime Error</span>
-          </span>
-        )}
-      </span>
-    );
-
   /**
    * The prediction gate, as an editor pane (`predictGate.ts`).
    *
@@ -3192,136 +2798,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
    * that has to print it: side by side or stacked, like the run output and the expected text.
    * Pressing Predict opens it; a first Run with no commit opens it and holds the run.
    */
-  const predictPane = (
-    <div className="flex h-full min-h-0 flex-col bg-panel border border-line rounded-xl p-4">
-      <div
-        id="predict-gate"
-        data-testid="predict-gate"
-        data-predict-state={predictRecord ? (predictRecord.skipped ? 'skipped' : 'judged') : 'asking'}
-        className="rounded-lg border border-amber/40 bg-canvas p-3"
-      >
-        {predictRecord ? (
-          <>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-[11px] font-mono text-amber">
-                PREDICT · {predictRecord.skipped ? 'skipped' : describeCheck(predictRecord)}
-              </span>
-              <div className="flex flex-wrap items-center gap-1.5">
-                <button
-                  onClick={predictAgain}
-                  data-testid="btn-predict-again"
-                  className="px-2 py-0.5 rounded text-[11px] font-mono text-muted hover:text-accent border border-line cursor-pointer"
-                >
-                  Predict again
-                </button>
-                <button
-                  onClick={() => commitPanes(closeView(panes, 'predict'))}
-                  data-testid="btn-predict-close"
-                  className="px-2 py-0.5 rounded text-[11px] font-mono text-muted hover:text-body border border-line cursor-pointer"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-            {predictRecord.skipped ? (
-              <p data-testid="predict-skipped-text" className="mt-2 text-xs text-muted">
-                You ran this one without predicting. The run went through; nothing was
-                blocked.
-              </p>
-            ) : (
-              <>
-                <p className="mt-2 text-[11px] font-mono text-faint">You wrote</p>
-                <pre
-                  data-testid="predict-recorded"
-                  className="mt-1 overflow-auto rounded border border-line-soft bg-panel p-2 font-mono text-[11.5px] text-body whitespace-pre-wrap"
-                >
-                  {predictRecord.text}
-                </pre>
-                <p
-                  data-testid="predict-verdict-text"
-                  className={`mt-1.5 text-xs ${
-                    predictRecord.verdict === 'match'
-                      ? 'text-emerald'
-                      : predictRecord.verdict === 'miss'
-                        ? 'text-rose'
-                        : 'text-amber'
-                  }`}
-                >
-                  {predictRecord.verdict === 'match'
-                    ? 'You called it: the output matched, line for line.'
-                    : predictRecord.verdict === 'reordered'
-                      ? 'The right lines, in a different order: the program prints them in its own sequence, and that sequence is the lesson.'
-                      : predictRecord.verdict === 'partial'
-                        ? `Your guess and the output share ${predictRecord.matchedLines} of ${predictRecord.predictedLines} lines. The rest are the ones worth reading twice.`
-                        : 'None of your lines are in the output. That is the useful part: the screen just told you something you did not expect.'}
-                </p>
-              </>
-            )}
-          </>
-        ) : (
-          <>
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <span className="text-[11px] font-mono text-amber">
-                {gateAsksForFinish
-                  ? 'PREDICT FIRST · what will a finished run print?'
-                  : 'PREDICT FIRST · what will this print?'}
-              </span>
-              <span className="text-[11px] font-mono text-faint">
-                {heldRun ? 'before the run' : 'before you press Run'}
-              </span>
-            </div>
-            <label htmlFor="predict-input" className="mt-2 block text-xs text-body">
-              Type the output you expect, one line per line of output. It is checked against
-              the lesson&apos;s own expected output when you commit, and the run goes then.
-              {gateAsksForFinish && (
-                <>
-                  {' '}
-                  This starter stops at its first NotImplementedError, so predict the line a
-                  finished file prints — not the traceback.
-                </>
-              )}
-            </label>
-            <textarea
-              id="predict-input"
-              value={predictText}
-              onChange={(event) => setPredictText(event.target.value)}
-              rows={3}
-              spellCheck={false}
-              data-testid="predict-input"
-              // Shape, never content: the old example was P.1's own expected line repeated on
-              // every lesson, which was half the answer to P.1's gate and another lesson's
-              // output everywhere else.
-              placeholder={'one line per line the program prints, e.g.\nLabel: value | Label: value'}
-              className="mt-1.5 w-full rounded border border-line bg-panel p-2 font-mono text-[12px] text-body resize-y"
-            />
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <button
-                onClick={commitPrediction}
-                disabled={!predictText.trim() || isRunning}
-                data-testid="btn-predict-run"
-                className="btn btn-primary px-3 py-1.5 text-[12px] font-bold disabled:opacity-50"
-              >
-                {heldRun ? 'Predict & Run' : 'Save prediction'}
-              </button>
-              <button
-                onClick={skipPrediction}
-                disabled={isRunning}
-                data-testid="btn-predict-skip"
-                title="Run without predicting. The skip is recorded, so it is not counted as a prediction."
-                className="px-2.5 py-1.5 rounded-lg text-xs font-mono text-muted hover:text-body border border-line cursor-pointer disabled:opacity-50"
-              >
-                Skip and run
-              </button>
-              <span className="text-[11px] text-faint">
-                A missed guess is what makes the result stick.
-              </span>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
-
   // The learner's own plan for this problem (`workflow.ts`), drawn as ordered cards. It is an
   // output view like Run output: one tab press away, splittable beside the code, and mounted only
   // while the editor shows, so the Read preset pays nothing for it.
@@ -3493,7 +2969,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     <button
       type="button"
       data-testid="btn-dock-toggle"
-      onClick={() => setDock(writeDock(flippedDock(dock, layout)))}
+      onClick={flipDock}
       title={dockChoice.title}
       // The visible words come first, then the sentence: a name that only describes what
       // is drawn fails WCAG 2.5.3, which is what Lighthouse's
@@ -3862,147 +3338,17 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           </button>
         </div>
       )}
-      {/* Runtime strip. The three numbers that move, the interpreter, and one line about what
-          this screen is. The long explanation now lives in the first-lesson guide below, so a
-          learner reaches the editor a screen sooner. */}
-      <div
-        className="rounded-[var(--r-md)] border"
-        style={{ borderColor: 'var(--border)', backgroundColor: 'var(--panel)' }}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <span
-              className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--r-sm)] border"
-              style={{ borderColor: 'var(--border)', color: 'var(--emerald)', backgroundColor: 'var(--bg)' }}
-              aria-hidden="true"
-            >
-              <Terminal className="h-4 w-4" />
-            </span>
-            <div className="min-w-0">
-              <p className="flex flex-wrap items-center gap-2 text-[12.5px] font-semibold" style={{ color: 'var(--text)' }}>
-                <span>Python 3.12 in an isolated Web Worker</span>
-                <span
-                  data-testid="runner-runtime-status"
-                  data-runtime-status={pyodideStatus}
-                  data-runtime-boot={runtimeBoot ?? undefined}
-                  className="chip"
-                  style={{ color: pyodideStatus === 'error' ? 'var(--rose)' : 'var(--accent)' }}
-                >
-                  {pyodideStatus === 'ready'
-                    ? readyMs !== null
-                      ? `Python ready in ${(readyMs / 1000).toFixed(1)} s`
-                      : 'Python ready (Worker WASM)'
-                    : pyodideStatus === 'loading'
-                    ? 'Loading WASM...'
-                    : pyodideStatus === 'error'
-                    ? 'WASM Load Error'
-                    : // The worker exists and the warm-up is in flight; say so, because "Ready"
-                      // here would claim a runtime that has not finished downloading.
-                      'Warming Python (once, ~10 MB)…'}
-                </span>
-              </p>
-              <p className="mt-0.5 hidden text-[12px] sm:block" style={{ color: 'var(--dim)' }}>
-                {PYTHON_LESSONS.length} entries · starter code, three hints, behavioural tests
-              </p>
-            </div>
-          </div>
 
-          {/* On a phone the three counters are a second screen of chrome before the lesson. The
-              status chip above already says whether Python is ready; the counts are here when
-              there is room for them. */}
-          <div className="hidden items-center gap-3 font-mono tabular-nums md:flex">
-            <div className="text-right">
-              <div className="text-[12px]" style={{ color: 'var(--dim)' }}>
-                Executed &amp; Passed (WASM)
-              </div>
-              <div
-                className="text-[13px] font-bold"
-                data-testid="runner-verified-count"
-                style={{ color: 'var(--emerald)' }}
-              >
-                {`${verifiedCount} / ${PYTHON_LESSONS.length} Verified`}
-              </div>
-            </div>
-            <div className="h-8 w-px" style={{ backgroundColor: 'var(--border)' }} />
-            <div className="text-right">
-              <div className="text-[12px]" style={{ color: 'var(--dim)' }}>
-                Self-Marked
-              </div>
-              <div
-                className="text-[13px] font-bold"
-                data-testid="runner-self-marked-count"
-                style={{ color: 'var(--muted)' }}
-              >
-                {`${completedCount} / ${PYTHON_LESSONS.length} Marked`}
-              </div>
-            </div>
-            <div className="h-8 w-px" style={{ backgroundColor: 'var(--border)' }} />
-            {/* Take this step offline. The size is on the button because "ready offline" without a
-                number is a claim; the state is on a data attribute so the browser suite reads the same
-                thing a learner does. */}
-            <div className="text-right">
-              <div className="text-[12px]" style={{ color: 'var(--dim)' }}>
-                Offline
-              </div>
-              <button
-                onClick={takeOffline}
-                data-testid="btn-offline-takealong"
-                data-offline-state={offline.state}
-                disabled={offline.state === 'working'}
-                title={
-                  offline.state === 'unsupported'
-                    ? 'This host sends its own isolation headers (dev server or preview), so it has no service worker to cache with - the built site on Pages does.'
-                    : offline.state === 'ready'
-                      ? 'The page, its bundle and Python are cached: this step opens and runs with the network off'
-                      : 'Cache this page, its bundle and the Python runtime, then report how much that took'
-                }
-                className="mt-0.5 px-2 py-0.5 rounded text-[12.5px] font-mono border cursor-pointer disabled:cursor-wait"
-                style={{
-                  color:
-                    offline.state === 'ready'
-                      ? 'var(--emerald)'
-                      : offline.state === 'unsupported'
-                        ? 'var(--dim)'
-                        : 'var(--accent)',
-                  borderColor: 'var(--border)',
-                  backgroundColor: 'var(--bg)',
-                }}
-              >
-                {offline.state === 'working'
-                  ? 'Caching… Python is loading'
-                  : offline.state === 'unsupported'
-                    ? 'Offline: built site only'
-                    : offline.state === 'ready'
-                      ? `Offline ready · ${offline.report ? offlineReportLine(offline.report) : 'checking'}`
-                      : offline.state === 'partial'
-                        ? `Take Python offline · ${offline.report ? offlineReportLine(offline.report) : ''}`
-                        : 'Take this step offline'}
-              </button>
-              {offline.state === 'partial' && (
-                <div
-                  data-testid="offline-partial-note"
-                  className="text-[10px] font-mono"
-                  style={{ color: 'var(--amber)' }}
-                >
-                  the shell is cached; press again for Python
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* One thin bar for the one number a learner is trying to move. */}
-        <div className="h-1 w-full overflow-hidden rounded-b-[var(--r-md)]" style={{ backgroundColor: 'var(--border-soft)' }}>
-          <div
-            className="h-full transition-[width] duration-500"
-            style={{
-              width: `${PYTHON_LESSONS.length ? Math.round((verifiedCount / PYTHON_LESSONS.length) * 100) : 0}%`,
-              background: 'linear-gradient(90deg, var(--accent), var(--emerald))',
-            }}
-          />
-        </div>
-      </div>
-
+      <RunnerRuntimeStrip
+        pyodideStatus={pyodideStatus}
+        runtimeBoot={runtimeBoot}
+        readyMs={readyMs}
+        verifiedCount={verifiedCount}
+        completedCount={completedCount}
+        lessonCount={PYTHON_LESSONS.length}
+        offline={offline}
+        onTakeOffline={takeOffline}
+      />
       {showFirstGuide && isPhone && !guideOpen && (
         <button
           type="button"
@@ -4609,152 +3955,23 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 </div>
               </div>
             )}
-
-            {/* The versions behind the draft. A draft is one latest text; this is the run that
-                worked before the last edit, which is the thing a learner actually wants back. */}
-            {historyOpen && (
-              <div
-                id="draft-history"
-                data-testid="draft-history"
-                className="mt-3 rounded-lg border border-line-soft bg-canvas p-3"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-mono text-accent">
-                    RUN HISTORY · this lesson
-                  </span>
-                  {draftHistory.length > 0 && (
-                    <button
-                      onClick={() => {
-                        clearHistory(selectedId);
-                        setHistoryVersion((version) => version + 1);
-                      }}
-                      data-testid="btn-clear-history"
-                      className="px-2 py-0.5 rounded text-[11px] font-mono text-muted hover:text-rose border border-line cursor-pointer"
-                    >
-                      Forget these
-                    </button>
-                  )}
-                </div>
-                {draftHistory.length === 0 ? (
-                  <p className="text-xs text-muted mt-2" data-testid="draft-history-empty">
-                    Every run files the code it started from, so a version that worked is one click
-                    away. Nothing filed yet — press Run.
-                  </p>
-                ) : (
-                  <ol className="mt-2 space-y-1.5">
-                    {draftHistory.map((snapshot, index) => (
-                      <li
-                        key={`${snapshot.at}-${index}`}
-                        data-testid={`history-entry-${index}`}
-                        className="flex flex-wrap items-center justify-between gap-2 text-xs border border-line-soft rounded px-2 py-1"
-                      >
-                        <span className="font-mono text-muted">
-                          {snapshotAgeLabel(snapshot.at)}
-                        </span>
-                        <span
-                          data-testid={`history-entry-${index}-verdict`}
-                          className={`font-mono ${
-                            snapshot.outcome === 'verified' || snapshot.outcome === 'passed'
-                              ? 'text-emerald'
-                              : 'text-amber'
-                          }`}
-                        >
-                          {verdictLabel(snapshot.outcome)}
-                        </span>
-                        <button
-                          onClick={() => {
-                            // The same text, back in the editor, and the badges cleared: they
-                            // described the code that was there a moment ago, not this one.
-                            commitCode(snapshot.code);
-                            saveDraft(selectedId, snapshot.code);
-                            setPassStatus('untested');
-                            setBehaviorCheck('untested');
-                            setOutputCheck('untested');
-                            setInstructorError('');
-                          }}
-                          data-testid={`btn-restore-history-${index}`}
-                          className="px-2 py-0.5 rounded text-[11px] font-mono bg-accent/15 hover:bg-accent/25 text-accent border border-accent/40 cursor-pointer"
-                        >
-                          Restore
-                        </button>
-                      </li>
-                    ))}
-                  </ol>
-                )}
-                <p className="text-[11px] text-faint mt-2">
-                  Five attempts per lesson, kept locally. Restoring puts that code back in the editor
-                  — press Run to grade it again.
-                </p>
-              </div>
-            )}
-
-            {/* Every dot and the sentence it waits for. The gutter can arm a line but cannot say
-                why a park should let a loop pass; this is the one place a condition is written, and
-                the input is the stored value rather than a copy of it. */}
-            {breakpointsOpen && (
-              <div
-                id="breakpoint-panel"
-                data-testid="breakpoint-panel"
-                className="mt-3 rounded-lg border border-line-soft bg-canvas p-3"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-[11px] font-mono text-accent">
-                    BREAKPOINTS · this lesson
-                  </span>
-                  <span className="text-[11px] font-mono text-faint">
-                    {breakpoints.length
-                      ? `${breakpoints.length} armed · read when a run starts`
-                      : 'nothing armed'}
-                  </span>
-                </div>
-                {breakpoints.length === 0 ? (
-                  <p className="text-xs text-muted mt-2" data-testid="breakpoint-panel-empty">
-                    Click the column left of a line number to break there (or press F9 with the
-                    cursor on it). A condition narrows the dot to the pass that matters —{' '}
-                    <code className="font-mono text-body">n == 3</code> — so a loop is not a stop per
-                    turn.
-                  </p>
-                ) : (
-                  <ul className="mt-2 space-y-1.5">
-                    {breakpoints.map((entry) => (
-                      <li
-                        key={entry.line}
-                        data-testid={`breakpoint-row-${entry.line}`}
-                        className="flex flex-wrap items-center gap-2 text-xs"
-                      >
-                        <span className="w-14 shrink-0 font-mono text-muted">line {entry.line}</span>
-                        <input
-                          data-testid={`breakpoint-condition-${entry.line}`}
-                          aria-label={`Condition for the breakpoint on line ${entry.line}, as a Python expression`}
-                          placeholder="stop only when… (Python expression)"
-                          value={entry.condition}
-                          onChange={(event) => setConditionAt(entry.line, event.target.value)}
-                          maxLength={MAX_CONDITION_CHARS}
-                          spellCheck={false}
-                          className="min-w-0 flex-1 rounded border px-1.5 py-0.5 font-mono text-[11px] text-body"
-                          style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg)' }}
-                        />
-                        <button
-                          onClick={() => toggleBreakpointAt(entry.line)}
-                          data-testid={`btn-clear-breakpoint-${entry.line}`}
-                          title={`Remove the breakpoint on line ${entry.line}`}
-                          aria-label={`Remove the breakpoint on line ${entry.line}`}
-                          className="px-2 py-0.5 rounded text-[11px] font-mono text-muted hover:text-rose border border-line cursor-pointer"
-                        >
-                          ×
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <p className="text-[11px] text-faint mt-2">
-                  A condition is a Python expression the interpreter evaluates with the names that
-                  line can see: the run stops only when it is true. A dot that waits is drawn hollow,
-                  and one whose expression raises stops anyway — with the interpreter's own words in
-                  the bar above. Conditions reach the interpreter with the next run.
-                </p>
-              </div>
-            )}
+            {/* The versions behind the draft (`runner/DraftHistoryPanel.tsx`). */}
+            <DraftHistoryPanel
+              open={historyOpen}
+              history={draftHistory}
+              onClear={() => {
+                clearHistory(selectedId);
+                setHistoryVersion((version) => version + 1);
+              }}
+              onRestore={restoreDraftVersion}
+            />
+            {/* The dots and their conditions (`runner/BreakpointPanel.tsx`). */}
+            <BreakpointPanel
+              open={breakpointsOpen}
+              breakpoints={breakpoints}
+              onSetCondition={setConditionAt}
+              onToggle={toggleBreakpointAt}
+            />
 
             {/* The learner's own change, line by line. The roadmap card could say how many lines moved;
                 this says which ones, and where. */}
@@ -5051,261 +4268,24 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               )}
             </div>
           )}
-
-          {/* Where the interpreter is, while it is there. A parked run is not a slow one, so it says
-              what it is doing rather than leaving a spinner: the line it is about to run, quoted
-              from the text that ran, and the frame's own values. Step and Continue are the two
-              answers the worker is waiting for; Stop stays where it always is, in the toolbar. */}
+          {/* Where the interpreter is, while it is there (`runner/PausedBar.tsx`). */}
           {pausedStep && (
-            <div
-              data-testid="paused-bar"
-              data-paused-reason={pausedStep.reason ?? 'pause'}
-              className="rounded-lg border p-3"
-              style={{ borderColor: 'var(--accent)', backgroundColor: 'var(--panel)' }}
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-[11px] font-mono uppercase tracking-[0.14em] text-accent">
-                  {/* Why the interpreter stopped is the first word, because a park the learner
-                      placed and one they asked for answer different questions. */}
-                  {pausedStep.reason === 'breakpoint' ? 'Breakpoint' : 'Paused'} ·{' '}
-                  {pausedStep.fn === '<module>' ? 'top level' : `${pausedStep.fn}()`} · line{' '}
-                  {pausedStep.line}
-                  {/* A step can land in a file of its own: naming it is what makes the quoted line
-                      below a statement about this program rather than the lesson's. */}
-                  {pausedStep.file && pausedStep.file !== '<lesson_editor>' && (
-                    <>
-                      {' · '}
-                      <span
-                        data-testid="paused-file"
-                        className="normal-case tracking-normal text-muted"
-                      >
-                        {pausedStep.file}
-                      </span>
-                    </>
-                  )}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => answerPause(6)}
-                    data-testid="btn-step-in"
-                    title="Step into the call this line is about to make: stop at its first line, in your file or a helper"
-                    className="px-2.5 py-1 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line cursor-pointer"
-                  >
-                    Step in
-                  </button>
-                  <button
-                    onClick={() => answerPause(3)}
-                    data-testid="btn-step"
-                    title="Run this line and stop at the next one of this file (the frame's values come with it)"
-                    className="px-2.5 py-1 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line cursor-pointer"
-                  >
-                    Step
-                  </button>
-                  <button
-                    onClick={() => answerPause(7)}
-                    data-testid="btn-step-out"
-                    title="Run the rest of this function and stop in its caller (at top level it runs to the end)"
-                    className="px-2.5 py-1 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line cursor-pointer"
-                  >
-                    Step out
-                  </button>
-                  <button
-                    onClick={() => answerPause(2)}
-                    data-testid="btn-continue"
-                    title="Run on to the end, the next breakpoint, or until you pause again"
-                    className="px-2.5 py-1 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line cursor-pointer"
-                  >
-                    Continue
-                  </button>
-                </span>
-              </div>
-              {/* Quoted from the text that ran, not from the editor: a park describes a program,
-                  and an edit made while it is parked must not rewrite what it is about to execute.
-                  A helper's line is quoted from that helper, which is why the payload names a file. */}
-              <code
-                data-testid="paused-line"
-                className="mt-2 block whitespace-pre overflow-x-auto font-mono text-[11.5px] text-body"
-              >
-                {sourceForPark(pausedStep.file, runCodeRef.current || code, helperFiles)
-                  .split('\n')[pausedStep.line - 1]?.trim() ?? ''}
-              </code>
-              {/* A condition that raised is a mistake in the condition, not a reason to skip the
-                  park or end the run: the interpreter's sentence is shown where the breakpoint is. */}
-              {pausedStep.condition_error && (
-                <p
-                  data-testid="condition-error"
-                  role="status"
-                  className="mt-1.5 font-mono text-[11px]"
-                  style={{ color: 'var(--rose)' }}
-                >
-                  {pausedStep.condition_error} — the run stopped here because the condition could not
-                  be evaluated. Fix it in Breakpoints.
-                </p>
-              )}
-              {pausedStep.values?.length > 0 && (
-                <div
-                  data-testid="paused-values"
-                  className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[11px] text-muted"
-                >
-                  {/* Each name is a button: a value you can read but not try is half a debugger. */}
-                  {pausedStep.values.map((value) => (
-                    <button
-                      key={value.name}
-                      type="button"
-                      data-testid={`paused-value-${value.name}`}
-                      onClick={() => {
-                        setFrameEdit({ name: value.name, expression: value.value });
-                        setFrameEditError('');
-                      }}
-                      title={`Change ${value.name} for this run — your code is untouched`}
-                      className="cursor-pointer border-0 bg-transparent p-0 text-left font-mono text-[11px] text-muted underline decoration-dotted underline-offset-2 hover:text-body"
-                    >
-                      <span className="text-accent">{value.name}</span> = {value.value}
-                    </button>
-                  ))}
-                </div>
-              )}
-              {/* What the learner pinned: one question asked again at every park, so the same name
-                  is answered wherever the run stops rather than only in a frame it happens to be a
-                  local of. A watch that raises says so in place - this frame cannot answer it - and
-                  the run stays exactly where it is. */}
-              <div className="mt-1.5 space-y-1">
-                {(pausedStep.watches ?? []).length > 0 && (
-                  <div
-                    data-testid="paused-watches"
-                    className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-muted"
-                  >
-                    {pausedStep.watches?.map((watch, index) => (
-                      <span
-                        key={`watch-${index}`}
-                        data-testid={`paused-watch-${index}`}
-                        className="inline-flex items-center gap-1"
-                      >
-                        <span className="text-accent">{watch.expression}</span>
-                        <span className="text-muted">=</span>
-                        {watch.error ? (
-                          <span style={{ color: 'var(--rose)' }} title={watch.error}>
-                            {watch.error}
-                          </span>
-                        ) : (
-                          <span>{watch.value}</span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => removeWatched(watch.expression)}
-                          data-testid={`btn-unwatch-${index}`}
-                          title={`Unpin ${watch.expression}`}
-                          aria-label={`Unpin ${watch.expression}`}
-                          className="cursor-pointer border-0 bg-transparent px-0.5 text-muted hover:text-body"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <form
-                  data-testid="watch-form"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    submitWatch();
-                  }}
-                  className="flex flex-wrap items-center gap-1.5 font-mono text-[11px]"
-                >
-                  <input
-                    data-testid="watch-input"
-                    aria-label="Pin an expression to show beside every pause, as Python"
-                    placeholder="pin an expression…"
-                    value={watchDraft}
-                    onChange={(event) => setWatchDraft(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Escape') {
-                        event.preventDefault();
-                        setWatchDraft('');
-                      }
-                    }}
-                    spellCheck={false}
-                    className="w-44 rounded border px-1.5 py-0.5 font-mono text-[11px] text-body"
-                    style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg)' }}
-                  />
-                  <button
-                    type="submit"
-                    data-testid="btn-watch"
-                    title="Show this expression's value at every pause in this lesson"
-                    className="px-2 py-0.5 rounded border border-line bg-canvas text-[11px] text-body cursor-pointer hover:bg-raise"
-                  >
-                    Watch
-                  </button>
-                  {(watchError || pausedStep.watch_error) && (
-                    <span
-                      data-testid="watch-error"
-                      role="status"
-                      style={{ color: 'var(--rose)' }}
-                    >
-                      {watchError || pausedStep.watch_error}
-                    </span>
-                  )}
-                </form>
-              </div>
-              {frameEdit && pauseCapable && (
-                <form
-                  data-testid="frame-edit"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    applyFrameEdit();
-                  }}
-                  className="mt-2 flex flex-wrap items-center gap-1.5 font-mono text-[11px]"
-                >
-                  <span className="text-accent">{frameEdit.name}</span>
-                  <span className="text-muted">=</span>
-                  <input
-                    data-testid="frame-edit-expression"
-                    aria-label={`New value for ${frameEdit.name}, as a Python expression`}
-                    value={frameEdit.expression}
-                    onChange={(event) => {
-                      const expression = event.target.value;
-                      setFrameEdit((current) => (current ? { ...current, expression } : current));
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Escape') {
-                        event.preventDefault();
-                        setFrameEdit(null);
-                      }
-                    }}
-                    autoFocus
-                    spellCheck={false}
-                    className="w-40 rounded border px-1.5 py-0.5 font-mono text-[11px] text-body"
-                    style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg)' }}
-                  />
-                  <button
-                    type="submit"
-                    data-testid="btn-frame-edit-apply"
-                    className="cursor-pointer rounded border border-line bg-canvas px-2 py-0.5 font-mono text-[11px] text-body hover:bg-raise"
-                  >
-                    Set
-                  </button>
-                  <button
-                    type="button"
-                    data-testid="btn-frame-edit-cancel"
-                    onClick={() => setFrameEdit(null)}
-                    className="cursor-pointer rounded border border-line bg-canvas px-2 py-0.5 font-mono text-[11px] text-muted hover:bg-raise"
-                  >
-                    Cancel
-                  </button>
-                  <span className="text-muted">this run only — your code is untouched</span>
-                </form>
-              )}
-              {frameEditError && (
-                <p
-                  data-testid="frame-edit-error"
-                  role="status"
-                  className="mt-1.5 font-mono text-[11px]"
-                  style={{ color: 'var(--rose)' }}
-                >
-                  {frameEditError}
-                </p>
-              )}
-            </div>
+            <PausedBar
+              step={pausedStep}
+              runSource={runCodeRef.current || code}
+              helperFiles={helperFiles}
+              pauseCapable={pauseCapable}
+              onAnswer={answerPause}
+              watchDraft={watchDraft}
+              onWatchDraft={setWatchDraft}
+              onSubmitWatch={submitWatch}
+              watchError={watchError}
+              onRemoveWatch={removeWatched}
+              frameEdit={frameEdit}
+              onFrameEdit={handleFrameEdit}
+              frameEditError={frameEditError}
+              onApplyFrameEdit={applyFrameEdit}
+            />
           )}
 
           <div
@@ -5594,7 +4574,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   175 px - more than the editor it sits above. */}
               {editorShown && (
                 <div className="mt-1 flex min-w-0 flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-1.5">
-                  {runVerdict}
+                  <RunVerdict passStatus={passStatus} harnessResult={harnessResult} />
                   <div className="ml-auto flex min-w-0 items-center gap-2">{runnerToolbar}</div>
                 </div>
               )}
@@ -5724,7 +4704,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     }}
                     className={`min-w-0 flex-1 border-t border-line-soft ${paneBorder('predict')}`}
                   >
-                    {predictPane}
+                    <PredictPane
+                      record={predictRecord}
+                      text={predictText}
+                      onText={setPredictText}
+                      onCommit={commitPrediction}
+                      onSkip={skipPrediction}
+                      onAgain={predictAgain}
+                      onClose={() => commitPanes(closeView(panes, 'predict'))}
+                      asksForFinish={gateAsksForFinish}
+                      held={heldRun !== null}
+                      running={isRunning}
+                    />
                   </div>
                   <div
                     data-testid="pane-actual"
@@ -5767,254 +4758,45 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             </div>
             {runFeedback}
           </div>
-
-          {/* Everything that reports on the editor. One wrapper, because Split's second column is
-              exactly this block: the checker, the trace, the scope and the output describe the code,
-              and a preset that moved only half of them would put a verdict beside nothing. */}
-          {/* The results column is the divider's anchor: the handle sits in the gap on its left
-              edge, which is the boundary itself. Dragging it moves the boundary, and the share it
-              leaves behind is remembered. Hidden below `lg`, where the two halves stack and there
-              is no boundary to drag. */}
-          <div
-            className="space-y-4 relative"
-            data-testid="results-column"
-            data-side={resultsSide}
-            // The phone's Lesson surface is one task: the checks, the trace and the study panel
-            // come back with the code, not before it.
-            style={{ display: phoneEditorVisible ? undefined : 'none' }}
-          >
-          {layoutArrangement(layout) === 'columns' && (
-            <div
-              role="separator"
-              aria-orientation="vertical"
-              aria-label="Resize the editor and results columns"
-              aria-valuemin={splitRatioPercent(SPLIT_MIN_RATIO)}
-              aria-valuemax={splitRatioPercent(SPLIT_MAX_RATIO)}
-              aria-valuenow={splitRatioPercent(splitRatio)}
-              aria-valuetext={`${splitRatioPercent(splitRatio)}% editor`}
-              data-side={resultsSide}
-              title="Drag to resize · double-click for an even split · ←/→ also work"
-              data-testid="split-divider"
-              tabIndex={0}
-              onPointerDown={beginSplitDrag}
-              onPointerMove={moveSplitDrag}
-              onPointerUp={endSplitDrag}
-              onPointerCancel={endSplitDrag}
-              onDoubleClick={() => commitSplitRatio(DEFAULT_SPLIT_RATIO)}
-              onKeyDown={(event) => {
-                const next = splitRatioAfterKey(splitRatio, event.key, event.shiftKey, resultsSide);
-                if (next === null) return;
-                event.preventDefault();
-                commitSplitRatio(next);
-              }}
-              className={`hidden lg:flex absolute top-0 bottom-0 z-10 w-3 cursor-col-resize touch-none items-center justify-center ${
-                resultsSide === 'left' ? '-right-3' : '-left-3'
-              }`}
-            >
-              <span
-                aria-hidden="true"
-                className={`h-10 w-[3px] rounded-full transition-colors ${draggingSplit ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
-                style={{ background: draggingSplit ? 'var(--accent)' : 'var(--muted)' }}
-              />
-            </div>
-          )}
-          {/* What the checker saw. Absent when there is nothing to say, because a green "0 notes"
-              strip under every lesson is furniture, not information. */}
-          {(lintNotes.length > 0 || analysisNotice) && (
-            <div
-              data-testid="analysis-notes"
-              data-lint-count={lintNotes.length}
-              className="bg-panel border border-line rounded-xl px-3.5 py-2.5 text-[11.5px]"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted">
-                  Checker · pyflakes + pycodestyle
-                </span>
-                <span className="text-[10.5px] font-mono text-faint">
-                  {lintNotes.length
-                    ? `${lintNotes.length} note${lintNotes.length === 1 ? '' : 's'}`
-                    : 'unavailable'}
-                </span>
-              </div>
-              {analysisNotice ? (
-                <p data-testid="analysis-unavailable" className="mt-1.5 text-muted">
-                  {analysisNotice}
-                </p>
-              ) : (
-                <ul className="mt-1.5 space-y-1">
-                  {lintNotes.slice(0, 3).map((note, index) => (
-                    <li
-                      key={`${note.line}:${note.column}:${index}`}
-                      data-testid={`lint-note-${index}`}
-                      className="font-mono text-[11px] text-muted"
-                    >
-                      {noteLabel(note)}
-                    </li>
-                  ))}
-                  {lintNotes.length > 3 && (
-                    <li className="text-[10.5px] text-faint">+ {lintNotes.length - 3} more</li>
-                  )}
-                </ul>
-              )}
-            </div>
-          )}
-
-          {/* What the learner wrote down about this lesson. It sits between the code and the
-              checks because it is about the learner's understanding rather than about the run. */}
-          <StudyPanel lessonId={selectedId} onOpenWorkflow={openWorkflowTab} />
-
-          {/* Instructor Behavioral Assessment Panel */}
-          <div
-            ref={guideAssessmentRef}
-            data-testid="panel-instructor-tests"
-            data-tour="checks-panel"
-            className="bg-panel border border-line rounded-xl p-4"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="text-xs font-mono text-accent flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4" />
-                <span>Instructor Behavioral Assessment (Multi-Input, Boundary &amp; Tolerance Checks)</span>
-              </div>
-              <div className="flex flex-wrap items-center gap-3 text-xs font-mono">
-                <span
-                  data-testid="badge-behavior-check"
-                  className={
-                    behaviorCheck === 'passed'
-                      ? 'text-emerald font-bold'
-                      : behaviorCheck === 'failed'
-                      ? 'text-rose font-bold'
-                      : 'text-muted'
-                  }
-                >
-                  Behavior Tests:{' '}
-                  {behaviorCheck === 'passed'
-                    ? 'PASSED'
-                    : behaviorCheck === 'failed'
-                    ? 'FAILED'
-                    : 'UNTESTED'}
-                </span>
-                <span aria-hidden="true" className="text-faint">·</span>
-                <span
-                  data-testid="badge-output-check"
-                  className={
-                    outputCheck === 'matched'
-                      ? 'text-emerald font-bold'
-                      : outputCheck === 'differs'
-                      ? 'text-amber font-bold'
-                      : 'text-muted'
-                  }
-                >
-                  Presentation (`stdout`, {outputMatchMode} match):{' '}
-                  {outputCheck === 'matched'
-                    ? 'MATCHED'
-                    : outputCheck === 'differs'
-                    ? 'DIFFERS'
-                    : 'UNTESTED'}
-                </span>
-                <span aria-hidden="true" className="text-faint">·</span>
-                <span data-testid="note-output-match-mode" className="text-[11px] text-muted">
-                  {lessonDowngradesFormatting
-                    ? 'Formatting is ignored: indentation, column padding and blank lines cannot block a correct solution.'
-                    : 'This lesson grades exact formatting: its table columns are part of the answer.'}
-                </span>
-              </div>
-            </div>
-            <ul className="mt-2.5 space-y-1 text-xs text-body font-mono">
-              {(currentLesson.instructorTestSummary || []).map((item, idx) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <span className="text-accent">•</span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-            {/* The failing check, named, with the one rung that answers it. The runner reports one
-                graded check at a time - a behavioural failure outranks a presentation one - but each
-                check owns its card and its own button, so adding the third cannot turn this into a
-                single control that guesses which failure the learner meant. */}
-            {checkFailures.map((check) => (
-              <div
-                key={check.id}
-                data-testid={`check-failure-${check.id}`}
-                aria-live="polite"
-                className="mt-2.5 p-2.5 rounded-lg bg-canvas border border-rose/40"
-              >
-                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xs font-mono">
-                  <span className="font-bold text-rose">{check.title}</span>
-                  <span aria-hidden="true" className="text-faint">·</span>
-                  <span className="text-body break-words">{check.detail}</span>
-                </div>
-                <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] font-mono">
-                  <span className="text-muted break-words">{check.why}</span>
-                  {check.hint > 0 && revealedHints < check.hint && (
-                    <button
-                      data-testid={`btn-check-hint-${check.id}`}
-                      onClick={() => revealHint(check.hint)}
-                      title={`Open Hint ${check.hint}, the rung that answers this check - and only that rung`}
-                      className="px-2 py-0.5 rounded bg-amber/15 hover:bg-amber/25 text-amber-strong border border-amber/40 cursor-pointer"
-                    >
-                      Show Hint {check.hint}
-                    </button>
-                  )}
-                  {check.hint > 0 && revealedHints >= check.hint && (
-                    <span
-                      data-testid={`check-hint-open-${check.id}`}
-                      className="text-amber"
-                    >
-                      {revealedHints < hintCount
-                        ? `Hint ${check.hint} is open below · Hint ${revealedHints + 1} waits for your next run`
-                        : `Hint ${check.hint} is open below`}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-            {instructorError && (
-              <div
-                data-testid="pre-instructor-error"
-                className="mt-2.5 p-2.5 rounded-lg bg-canvas border border-rose/50 font-mono text-xs text-rose"
-              >
-                {instructorError}
-              </div>
-            )}
-            {passStatus === 'harness_failed' && harnessResult && harnessResult.failures.length > 0 && (
-              <div
-                data-testid="pre-harness-error"
-                className="mt-2.5 p-2.5 rounded-lg bg-canvas border border-rose/50 font-mono text-xs text-rose space-y-1"
-              >
-                <div className="text-[11px] text-amber">
-                  Harness: {harnessResult.met} / {harnessResult.total} graded metrics at target
-                </div>
-                {harnessResult.failures.map((line) => (
-                  <div key={line}>{line}</div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* The run trace: the last run replayed step by step, beside the output it explains. A
-              recording, so it is gone when an edit makes it describe a program that no longer exists. */}
-          <div style={{ display: layoutShows(shownLayout, 'results') ? undefined : 'none' }}>
-            <TracePanel
-              trace={trace}
-              step={traceStep}
-              onStep={setTraceStep}
-              source={runCodeRef.current || code}
-              onReveal={showMainLine}
-            />
-          </div>
-
-          {/* The Scope: the learner's own traced signal, drawn the moment the first batch lands. */}
-          <ScopePanel
-            series={scopeSeries}
-            pinned={pinnedScope}
-            onPin={() => setPinnedScope(scopeSeries)}
-            onUnpin={() => setPinnedScope(null)}
+          {/* Everything that reports on the editor (`runner/ResultsColumn.tsx`). */}
+          <ResultsColumn
+            resultsSide={resultsSide}
+            visible={phoneEditorVisible}
+            columns={layoutArrangement(layout) === 'columns'}
+            splitRatio={splitRatio}
+            draggingSplit={draggingSplit}
+            onBeginSplitDrag={beginSplitDrag}
+            onMoveSplitDrag={moveSplitDrag}
+            onEndSplitDrag={endSplitDrag}
+            onCommitSplitRatio={commitSplitRatio}
+            lintNotes={lintNotes}
+            analysisNotice={analysisNotice}
+            lessonId={selectedId}
+            onOpenWorkflow={openWorkflowTab}
+            assessmentRef={guideAssessmentRef}
+            behaviorCheck={behaviorCheck}
+            outputCheck={outputCheck}
+            outputMatchMode={outputMatchMode}
+            exactFormatting={!lessonDowngradesFormatting}
+            instructorTestSummary={currentLesson.instructorTestSummary}
+            checkFailures={checkFailures}
+            revealedHints={revealedHints}
+            hintCount={hintCount}
+            onRevealHint={revealHint}
+            instructorError={instructorError}
+            passStatus={passStatus}
+            harnessResult={harnessResult}
+            resultsShown={layoutShows(shownLayout, 'results')}
+            trace={trace}
+            traceStep={traceStep}
+            onTraceStep={setTraceStep}
+            runSource={runCodeRef.current || code}
+            onRevealTrace={showMainLine}
+            scopeSeries={scopeSeries}
+            pinnedScope={pinnedScope}
+            onPinScope={() => setPinnedScope(scopeSeries)}
+            onUnpinScope={() => setPinnedScope(null)}
           />
-
-          {/* The output lives in the editor's own panes (`editorPanes.ts`), under the tabs of the
-              code that produced it. There is no results-only preset any more — Read keeps the
-              lesson text and Write keeps the editor — so there is no second home for it here. */}
-          </div>
         </div>
         </div>
       </div>
