@@ -158,6 +158,8 @@ import { PausedBar, type PausedStep } from './runner/PausedBar';
 import { ResultsColumn } from './runner/ResultsColumn';
 import { DraftHistoryPanel } from './runner/DraftHistoryPanel';
 import { BreakpointPanel } from './runner/BreakpointPanel';
+import { RunnerToolbar } from './runner/RunnerToolbar';
+import { RunnerEditorCard } from './runner/RunnerEditorCard';
 import { useFirstRunTour } from './runner/useFirstRunTour';
 import { PythonEditor, type PythonEditorHandle } from '../PythonEditor';
 import { ScopePanel } from '../ScopePanel';
@@ -2906,384 +2908,79 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   );
 
   const runnerToolbar = (
-<div ref={layoutToolbarRef} data-testid="runner-toolbar" className="flex flex-wrap items-center gap-1.5">
-  {/* The presets live on this card, not in the editor's own header: Read hides that
-      header, and a control that disappears with the panel it governs is a trap. A
-      shortcut with no control is a feature only its author knows, so the shortcut is
-      printed on the button. */}
-  {/* A phone gets one native select instead of four preset buttons and a dock sentence: the
-      same four layouts, one row, and a 16 px control iOS will not zoom on. The buttons come back
-      at `md`, where there is room to print their shortcut keys. */}
-  <label className="mr-1 flex items-center md:hidden">
-    <span className="sr-only">Workspace layout</span>
-    <select
-      data-testid="layout-select"
-      value={layout}
-      onChange={(event) => chooseLayout(event.target.value as WorkspaceLayout)}
-      className="min-h-[40px] rounded-lg border border-line bg-canvas px-1.5 text-[13px] font-mono text-body"
-    >
-      {LAYOUTS.map((option) => (
-        <option key={option.id} value={option.id}>
-          {option.label}
-        </option>
-      ))}
-    </select>
-  </label>
-  <div
-    role="group"
-    aria-label="Layout"
-    data-testid="layout-presets"
-    className="mr-1 hidden items-center gap-1 md:flex"
-  >
-    {LAYOUTS.map((option) => (
-      <button
-        key={option.id}
-        type="button"
-        aria-pressed={layout === option.id}
-        title={option.title}
-        data-testid={`layout-${option.id}`}
-        onClick={() => chooseLayout(option.id)}
-        className={`px-2 py-1 rounded text-[13px] font-mono cursor-pointer border transition-colors ${
-          layout === option.id
-            ? 'bg-accent text-inverse border-accent font-bold'
-            : 'bg-canvas text-muted hover:text-ink border-line-soft'
-        }`}
-      >
-        {option.label}
-        {/* 90%, not 70%: at 70% the shortcut measured 3.28:1 on the light canvas and
-            4.0:1 on the pressed accent, so the de-emphasis broke the 4.5:1 floor.
-
-            The key prints from 1360 px, where the editor card can hold the four keys plus dock,
-            More, Run and Predict with room to spare. Below that they live in the titles and the
-            `?` sheet: the 79 px the four keys cost is what pushed Predict onto a second row at
-            1280 in a real browser, where a classic scrollbar leaves the card 10 px narrower than
-            the overlay-scrollbar Chromium the suite runs in. */}
-        <span className="ml-1 hidden opacity-90 min-[1360px]:inline">{option.shortcut}</span>
-      </button>
-    ))}
-  </div>
-  {/* Docking's one control, named for the panel it moves in the preset in force:
-      "List → Right" in Study, "Results → Left" in Split. Write and Read show no
-      button, because neither has a panel beside anything to move. */}
-  {dockChoice && (
-    <button
-      type="button"
-      data-testid="btn-dock-toggle"
-      onClick={flipDock}
-      title={dockChoice.title}
-      // The visible words come first, then the sentence: a name that only describes what
-      // is drawn fails WCAG 2.5.3, which is what Lighthouse's
-      // `label-content-name-mismatch` audit named here.
-      aria-label={`${dockChoice.label}: ${dockChoice.title}`}
-      // The full sentence is a 127 px button. On a 1280 px window that was the width that pushed
-      // Predict onto a second row, so the dock reads as its arrow until the card is wide enough
-      // (2xl) to print the words beside it. The accessible name is the sentence either way.
-      className="hidden px-2 py-1 rounded text-[13px] font-mono cursor-pointer border transition-colors bg-canvas text-muted hover:text-ink border-line-soft md:flex items-center gap-1.5"
-    >
-      <ArrowLeftRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-      <span className="hidden 2xl:inline">{dockChoice.label}</span>
-    </button>
-  )}
-  {/* The first screen keeps only what a learner does next: Pause and Stop while a
-      program runs, More for the rest, and Run as the single primary action. §3 of
-      `docs/PLAN-2.1a.md` is the list; `scripts/check_label_sizes.mjs` is the gate
-      that keeps the folded controls legible once they are open. */}
-  {isRunning && pauseCapable && !pausedStep && (
-    <button
-      onClick={() => pauseExecution()}
-      data-testid="btn-pause-execution"
-      title="Stop at the next line of your file, without losing the session"
-      className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
-    >
-      <Pause className="w-3.5 h-3.5" />
-      <span>Pause</span>
-    </button>
-  )}
-  {isRunning && (
-    <button
-      onClick={() => stopExecution()}
-      data-testid="btn-stop-execution"
-      className="px-3 py-1.5 rounded-lg text-[13px] font-mono font-bold bg-rose hover:bg-rose-strong text-inverse flex items-center gap-1.5 cursor-pointer"
-    >
-      <OctagonX className="w-3.5 h-3.5" />
-      <span>Stop</span>
-    </button>
-  )}
-  <button
-    type="button"
-    ref={moreButtonRef}
-    onClick={() => setMoreOpen((open) => !open)}
-    aria-expanded={moreOpen}
-    aria-controls="toolbar-more"
-    data-testid="btn-more"
-    aria-label="More actions"
-    title="Format with Black, history, diff, reset, sharing, pairing and editor preferences"
-    className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono border flex items-center gap-1.5 cursor-pointer transition-colors ${
-      moreOpen
-        ? 'text-accent border-accent/60 bg-canvas'
-        : 'text-body border-line bg-canvas hover:bg-raise'
-    }`}
-  >
-    <MoreHorizontal className="w-3.5 h-3.5" />
-    <span className="hidden sm:inline">More ⋯</span>
-  </button>
-  <button
-    onClick={() => {
-      const lesson =
-        PYTHON_LESSONS.find((l) => l.id === lessonIdRef.current) || PYTHON_LESSONS[0];
-      requestRun(codeRef.current, lesson);
-    }}
-    disabled={isRunning}
-    ref={runButtonRef}
-    data-testid="btn-run-verify"
-    data-sound="primary"
-    data-tour="run-button"
-    title="Run & Verify Output — ⌘↵ / Ctrl+↵ runs from anywhere on this screen"
-    className="btn btn-primary ml-1 px-3.5 py-2 text-[13px] font-bold"
-  >
-    {isRunning ? (
-      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-    ) : (
-      <Play className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
-    )}
-    <span className="hidden sm:inline">{isRunning ? 'Running in Worker...' : 'Run & Verify Output'}</span>
-    <span className="sm:hidden">{isRunning ? 'Running…' : 'Run'}</span>
-    {!isRunning && <span className="kbd ml-0.5 hidden sm:inline-flex">⌘↵</span>}
-  </button>
-  {/* The gate's own door, beside Run: the question also opens by itself on a lesson's first Run,
-      and this is how a learner rereads the verdict or commits a guess before pressing it. It used
-      to be folded into More, which is the one place a convenience control is not convenient. */}
-  <button
-    onClick={() => {
-      // The gate is a pane now, so the button opens and focuses it instead of toggling a block:
-      // a press with the tab already on screen is how a learner rereads the verdict.
-      setPredictRecord(predictionFor(selectedId));
-      setHeldRun(null);
-      openPredictView();
-    }}
-    aria-expanded={resultsAllowed && shownViews.has('predict')}
-    aria-controls="pane-predict"
-    data-testid="btn-predict"
-    // The label is the same width in every state on purpose. " · skipped" added 78 px, and at
-    // 1280 the Study chooser leaves the card 800 px: that suffix was the difference between
-    // Predict beside Run and Predict alone on a second row. The state lives in the name and the
-    // tooltip, and the gate prints it in full when opened.
-    title={
-      predictRecord
-        ? `Predict first: this lesson was ${predictRecord.skipped ? 'skipped' : 'answered'} — open it to change the call`
-        : 'Predict first: commit to what the code will print, then run it'
-    }
-    aria-label={`Predict${predictRecord ? (predictRecord.skipped ? ' (skipped)' : ' (answered)') : ''}: commit to what the code will print, then run it`}
-    className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-      resultsAllowed && shownViews.has('predict') ? 'text-amber border-amber/60' : 'text-body border-line'
-    }`}
-  >
-    <Sparkles className="w-3.5 h-3.5" />
-    <span className="hidden sm:inline">Predict</span>
-  </button>
-  <div
-    id="toolbar-more"
-    role="group"
-    aria-label="More actions"
-    data-testid="toolbar-more"
-    hidden={!moreOpen}
-    onKeyDown={(event) => {
-      if (event.key !== 'Escape') return;
-      setMoreOpen(false);
-      // `preventScroll`: a control that folds itself away must not scroll the page
-      // back to the toolbar when the learner had scrolled down to read a result.
-      moreButtonRef.current?.focus({ preventScroll: true });
-    }}
-    // One press is one action, so the panel folds itself away: leaving it open would
-    // shift the editor down while the learner is reading the answer to what they
-    // pressed, and would hide the row they came from. Focus goes back to More, so a
-    // keyboard user is never dropped into the document.
-    onClick={(event) => {
-      if (!(event.target as HTMLElement).closest('button')) return;
-      setMoreOpen(false);
-      moreButtonRef.current?.focus({ preventScroll: true });
-    }}
-    className="order-last w-full rounded-xl border border-line bg-panel p-2.5"
-  >
-    <p className="px-1 pb-2 text-[11px] font-mono uppercase tracking-[0.08em] text-faint">
-      More actions
-    </p>
-    <div className="flex flex-wrap items-center gap-2">
-      <button
-        onClick={() => toggleLessonSelfMarked(currentLesson.id)}
-        data-testid="btn-toggle-lesson-complete"
-        className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono border flex items-center gap-1.5 cursor-pointer ${
-          isCurrentSelfMarked
-            ? 'bg-accent/20 border-accent text-accent'
-            : 'bg-canvas border-line text-body hover:border-accent'
-        }`}
-      >
-        {isCurrentSelfMarked ? (
-          <CheckSquare className="w-3.5 h-3.5" />
-        ) : (
-          <Square className="w-3.5 h-3.5" />
-        )}
-        <span>{isCurrentSelfMarked ? 'Self-Marked Complete' : 'Self-Mark Complete'}</span>
-      </button>
-      <button
-        onClick={() => {
-          commitCode(currentLesson.starterCode);
-          // Back on the starter is the one edit that means "forget this one".
-          saveDraft(currentLesson.id, currentLesson.starterCode);
-          setPassStatus('untested');
-          setBehaviorCheck('untested');
-          setOutputCheck('untested');
-          setInstructorError('');
-        }}
-        data-testid="btn-reset-starter"
-        className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
-      >
-        <RotateCcw className="w-3.5 h-3.5" />
-        <span>Reset Starter</span>
-      </button>
-      <button
-        onClick={resetRuntime}
-        data-testid="btn-reset-runtime"
-        title="Terminate and restart the background Python Web Worker without losing editor code"
-        className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-accent border border-accent/40 flex items-center gap-1.5 cursor-pointer"
-      >
-        <RefreshCw className="w-3.5 h-3.5" />
-        <span>Reset Runtime</span>
-      </button>
-      <button
-        onClick={() => {
-          commitCode(currentLesson.fullSolution);
-          logEvent({ kind: 'solution_open', lesson: selectedId });
-          // The diff's solution reference is earned by opening it (or by passing), so this
-          // is the moment it becomes reachable for this lesson.
-          setSolutionUsed((used) => ({ ...used, [selectedId]: true }));
-        }}
-        data-testid="btn-load-solution"
-        className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-amber border border-amber/40 flex items-center gap-1.5 cursor-pointer"
-      >
-        <Eye className="w-3.5 h-3.5" />
-        <span>Load Solution</span>
-      </button>
-      {/* Format is a text action, not a run one: it tidies the file in place, and the
-          interpreter installs the formatter on the first press. Disabled while a program
-          is running or parked, because the worker is one thread. */}
-      <button
-        onClick={() => void formatCode()}
-        disabled={isRunning || Boolean(pausedStep)}
-        data-testid="btn-format"
-        title="Re-indent and tidy this file with Black (installs on the first press, then stays in this session)"
-        className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        <Wand2 className="w-3.5 h-3.5" />
-        <span>Format</span>
-      </button>
-      <button
-        onClick={() => setHistoryOpen((open) => !open)}
-        aria-expanded={historyOpen}
-        aria-controls="draft-history"
-        data-testid="btn-draft-history"
-        title="Every run files the code it started from, with its verdict, so a version that worked is one click away"
-        className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-          historyOpen ? 'text-accent border-accent/60' : 'text-body border-line'
-        }`}
-      >
-        <History className="w-3.5 h-3.5" />
-        <span>History{draftHistory.length ? ` (${draftHistory.length})` : ''}</span>
-      </button>
-      {/* The dots the gutter is drawing, and the condition each one waits for. Always
-          present, not only once something is armed: a learner who has never clicked the
-          gutter has no other way to find out that a breakpoint can be narrowed. */}
-      <button
-        onClick={() => setBreakpointsOpen((open) => !open)}
-        aria-expanded={breakpointsOpen}
-        aria-controls="breakpoint-panel"
-        data-testid="btn-breakpoints"
-        title="Every dot on the gutter, with the condition that lets the run stop on it"
-        className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-          breakpointsOpen ? 'text-accent border-accent/60' : 'text-body border-line'
-        }`}
-      >
-        <CircleDot className="w-3.5 h-3.5" />
-        <span>
-          Breakpoints{breakpoints.length ? ` (${breakpoints.length})` : ''}
-        </span>
-      </button>
-      <button
-        onClick={() => setDiffOpen((open) => !open)}
-        aria-expanded={diffOpen}
-        aria-controls="code-diff"
-        data-testid="btn-diff"
-        title="What you changed: your code against the starter, line by line"
-        className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-          diffOpen ? 'text-accent border-accent/60' : 'text-body border-line'
-        }`}
-      >
-        <GitCompare className="w-3.5 h-3.5" />
-        <span>Diff</span>
-      </button>
-      {/* The one thing a stuck learner can send a person: this lesson and this code. The
-          code rides in the URL fragment, so it never reaches the host — and it is base64,
-          not encryption, which the title says rather than implying a privacy it lacks. */}
-      <button
-        onClick={() => void shareAttempt()}
-        data-testid="btn-share-attempt"
-        title={`Copy a link to this lesson with your code in it (${MAX_SHARE_URL} characters max). The code rides in the link's fragment, encoded — not encrypted — so send it only where you would send the file.`}
-        className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
-      >
-        <Share2 className="w-3.5 h-3.5" />
-        <span>Share</span>
-      </button>
-      {/* Pair study, beside the send: one session, two people, no server — the attempt
-          travels over a direct channel and arrives as a card, not as an edit. */}
-      <button
-        onClick={() => setPairOpen(true)}
-        data-testid="btn-pair-open"
-        title="Pair study: connect to another workbench directly and pass attempts back and forth"
-        className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-          pair.state === 'connected' ? 'text-emerald border-emerald/60' : 'text-body border-line'
-        }`}
-      >
-        <Users className="w-3.5 h-3.5" />
-        <span>
-          {coEdit
-            ? 'Pair · co-editing'
-            : `Pair${pair.state === 'connected' && pair.peer ? ` · ${pair.peer}` : ''}`}
-        </span>
-      </button>
-      {/* Vim keys: a reading preference like watch mode, remembered the same way. Off by
-          default, because normal mode reads a beginner's first `i` as a command and the
-          editor would look broken rather than unusual (`app/src/vimMode.ts`). */}
-      <button
-        onClick={() => {
-          const next = writeVim(!vimOn);
-          setVimOn(next);
-          setVimMode('normal');
-        }}
-        aria-pressed={vimOn}
-        data-testid="btn-vim"
-        title={vimHint(vimOn)}
-        className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-          vimOn ? 'text-accent border-accent/60' : 'text-body border-line'
-        }`}
-      >
-        <Keyboard className="w-3.5 h-3.5" />
-        <span>{VIM_LABEL}</span>
-      </button>
-      <button
-        onClick={() => setWatchOn(setWatch(!watchOn))}
-        aria-pressed={watchOn}
-        data-testid="btn-watch"
-        title="Watch mode: after a failed check, re-run 1.5 s after you stop typing"
-        className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-          watchOn ? 'text-emerald border-emerald/60' : 'text-body border-line'
-        }`}
-      >
-        <Activity className="w-3.5 h-3.5" />
-        <span>{watchOn ? 'Watching' : 'Watch'}</span>
-      </button>
-    </div>
-  </div>
-</div>
+    <RunnerToolbar
+      layout={layout}
+      onChooseLayout={chooseLayout}
+      dockChoice={dockChoice}
+      onFlipDock={flipDock}
+      isRunning={isRunning}
+      pauseCapable={pauseCapable}
+      paused={Boolean(pausedStep)}
+      onPause={pauseExecution}
+      onStop={() => stopExecution()}
+      moreButtonRef={moreButtonRef}
+      moreOpen={moreOpen}
+      onToggleMore={() => setMoreOpen((open) => !open)}
+      onCloseMore={() => {
+        setMoreOpen(false);
+        moreButtonRef.current?.focus({ preventScroll: true });
+      }}
+      runButtonRef={runButtonRef}
+      onRun={() => {
+        const lesson =
+          PYTHON_LESSONS.find((l) => l.id === lessonIdRef.current) || PYTHON_LESSONS[0];
+        requestRun(codeRef.current, lesson);
+      }}
+      predictRecord={predictRecord}
+      onPredict={() => {
+        // The gate is a pane, so the button opens and focuses it instead of toggling a block: a
+        // press with the tab already on screen is how a learner rereads the verdict.
+        setPredictRecord(predictionFor(selectedId));
+        setHeldRun(null);
+        openPredictView();
+      }}
+      predictPaneOpen={resultsAllowed && shownViews.has('predict')}
+      isCurrentSelfMarked={isCurrentSelfMarked}
+      onToggleSelfMarked={() => toggleLessonSelfMarked(currentLesson.id)}
+      onResetStarter={() => {
+        commitCode(currentLesson.starterCode);
+        // Back on the starter is the one edit that means "forget this one".
+        saveDraft(currentLesson.id, currentLesson.starterCode);
+        setPassStatus('untested');
+        setBehaviorCheck('untested');
+        setOutputCheck('untested');
+        setInstructorError('');
+      }}
+      onResetRuntime={resetRuntime}
+      onLoadSolution={() => {
+        commitCode(currentLesson.fullSolution);
+        logEvent({ kind: 'solution_open', lesson: selectedId });
+        // The diff's solution reference is earned by opening it (or by passing), so this is the
+        // moment it becomes reachable for this lesson.
+        setSolutionUsed((used) => ({ ...used, [selectedId]: true }));
+      }}
+      onFormat={() => void formatCode()}
+      draftHistory={draftHistory}
+      historyOpen={historyOpen}
+      onToggleHistory={() => setHistoryOpen((open) => !open)}
+      breakpoints={breakpoints}
+      breakpointsOpen={breakpointsOpen}
+      onToggleBreakpoints={() => setBreakpointsOpen((open) => !open)}
+      diffOpen={diffOpen}
+      onToggleDiff={() => setDiffOpen((open) => !open)}
+      onShare={() => void shareAttempt()}
+      onPair={() => setPairOpen(true)}
+      pair={pair}
+      coEdit={coEdit}
+      vimOn={vimOn}
+      onToggleVim={() => {
+        const next = writeVim(!vimOn);
+        setVimOn(next);
+        setVimMode('normal');
+      }}
+      watchOn={watchOn}
+      onToggleWatch={() => setWatchOn(setWatch(!watchOn))}
+    />
   );
 
   return (
@@ -4327,437 +4024,73 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 hidden={!phoneLessonVisible}
               />
             )}
+          {/* The editor surface, one home (`runner/RunnerEditorCard.tsx`). */}
+          <RunnerEditorCard
+            panelRef={editorPanelRef}
+            phoneCode={phoneCode}
+            editorShown={editorShown}
+            resultsAllowed={resultsAllowed}
+            phoneEditorVisible={phoneEditorVisible}
+            isPhone={isPhone}
+            deferPhoneEditor={deferPhoneEditor}
+            layout={shownLayout}
+            code={code}
+            commitCode={commitCode}
+            mainEditorRef={guideEditorRef}
+            helperEditorRef={helperEditorRef}
+            helperFiles={helperFiles}
+            openHelper={openHelper}
+            openHelperFile={openHelperFile}
+            onOpenHelper={setOpenHelper}
+            pendingJump={pendingJump}
+            onClearJump={() => setPendingJump(null)}
+            panes={panes}
+            paneSplit={paneSplit}
+            shownViews={shownViews}
+            views={visibleViews(panes)}
+            onShowView={(view) => commitPanes(showView(panes, view))}
+            onSplit={() => commitPanes(splitPane(panes))}
+            onSetAxis={(axis) => commitPanes(setAxis(panes, axis))}
+            onCloseSplit={() => commitPanes(closeSplit(panes))}
+            focusPane={focusPane}
+            paneOrder={paneOrder}
+            paneBorder={paneBorder}
+            symbolMiss={symbolMiss}
+            sliderCount={sliderCount}
+            vimOn={vimOn}
+            vimModeLabel={vimModeLabel(vimMode)}
+            onVimMode={setVimMode}
+            writeQuestion={writeQuestion}
+            lessonId={selectedId}
+            onSliderCommit={handleSliderCommit}
+            getAnalysis={getReadyAnalysis}
+            onGoToDefinition={goToDefinition}
+            onRunCell={runCellTo}
+            onToggleBreakpoint={toggleBreakpointAt}
+            onBreakpointsMoved={followBreakpointEdits}
+            breakpoints={breakpoints}
+            predictRecord={predictRecord}
+            predictText={predictText}
+            onPredictText={setPredictText}
+            onCommitPrediction={commitPrediction}
+            onSkipPrediction={skipPrediction}
+            onPredictAgain={predictAgain}
+            onClosePredict={() => commitPanes(closeView(panes, 'predict'))}
+            asksForFinish={gateAsksForFinish}
+            heldRun={heldRun !== null}
+            isRunning={isRunning}
+            passStatus={passStatus}
+            harnessResult={harnessResult}
+            toolbar={runnerToolbar}
+            feedback={runFeedback}
+            actualOutputPane={actualOutputPane}
+            expectedOutputPane={expectedOutputPane}
+            workflowPane={workflowPane}
+            coEdit={coEdit}
+            collabNotice={collabNotice}
+            peerLabel={pair.peer}
+          />
 
-          {/* Code editor: a small project, not a scratch pad. `main.py` is the learner's; a helper
-              the lesson imports is a second, locked tab whose text is the module Pyodide loads. */}
-          <div
-            ref={editorPanelRef}
-            id="python-runner-editor"
-            data-testid="editor-panel"
-            data-tour="editor"
-            // The phone's Code surface is the one place the editor may take the theme's taller
-            // frame (`index.css`), and 16 px is the size a phone keyboard will not zoom on.
-            data-phone-code={phoneCode ? '1' : undefined}
-            // Read hides the editor rather than shrinking it: a traceback is what that preset is for.
-            // On a phone's Lesson surface it is hidden too, and kept mounted once opened so a
-            // switch back is instant.
-            style={{ display: editorShown && phoneEditorVisible ? undefined : 'none' }}
-            className="bg-panel border border-line rounded-xl overflow-hidden scroll-mt-4"
-          >
-            <div className="bg-canvas border-b border-line-soft px-3 py-1.5">
-              <div className="flex min-w-0 items-center justify-between gap-2">
-              {/* The strip takes the row's spare width and wraps when its tabs do not fit, at any
-                  width: a second header row costs less than a view nobody can see, and a helper
-                  file is what makes the six tabs overrun a 1280 px card. No sideways scroll, so
-                  every view is on screen on a phone and on a desktop. */}
-              <div
-                className="flex min-w-0 flex-1 flex-wrap items-center gap-1"
-                role="tablist"
-                aria-label="Editor tabs"
-              >
-                <button
-                  role="tab"
-                  aria-selected={openHelper === null && shownViews.has('main')}
-                  data-testid="editor-tab-main"
-                  title="main.py — F12 on a name jumps to the line that defines it"
-                  onClick={() => {
-                    setPendingJump(null);
-                    setOpenHelper(null);
-                    commitPanes(showView(panes, 'main'));
-                  }}
-                  className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t px-2.5 py-1.5 text-[12.5px] font-mono cursor-pointer"
-                  style={{
-                    color: openHelper === null && shownViews.has('main') ? 'var(--accent)' : 'var(--muted)',
-                    borderBottom:
-                      openHelper === null && shownViews.has('main')
-                        ? '2px solid var(--accent)'
-                        : '2px solid transparent',
-                  }}
-                >
-                  <CheckCircle2 className="hidden h-3 w-3 sm:block" aria-hidden="true" />
-                  {MAIN_FILE_NAME}
-                </button>
-                {helperFiles.map((file) => (
-                  <button
-                    key={file.name}
-                    role="tab"
-                    aria-selected={openHelper === file.name && shownViews.has('main')}
-                    data-testid={`editor-tab-${file.name}`}
-                    onClick={() => {
-                      setPendingJump(null);
-                      setOpenHelper(file.name);
-                      commitPanes(showView(panes, 'main'));
-                    }}
-                    title={`${file.name} is read-only: it is the module the checks import. F12 on a name jumps to its definition.`}
-                    className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t px-2.5 py-1.5 text-[12.5px] font-mono cursor-pointer"
-                    style={{
-                      color: openHelper === file.name && shownViews.has('main') ? 'var(--accent)' : 'var(--muted)',
-                      borderBottom:
-                        openHelper === file.name && shownViews.has('main')
-                          ? '2px solid var(--accent)'
-                          : '2px solid transparent',
-                    }}
-                  >
-                    <Lock className="hidden h-3 w-3 sm:block" aria-hidden="true" />
-                    {file.name}
-                  </button>
-                ))}
-                {resultsAllowed && (
-                  <>
-                    <span
-                      aria-hidden="true"
-                      className="mx-1 h-4 w-px shrink-0 self-center bg-line-soft"
-                    />
-                    {(['predict', 'actual', 'expected', 'workflow'] as const).map((view) => {
-                      const selected = shownViews.has(view);
-                      const meta =
-                        view === 'predict'
-                          ? {
-                              label: 'Predict',
-                              title:
-                                'The prediction gate: commit to what this will print before the run — tab here, or split it beside the code',
-                              icon: <Sparkles className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
-                            }
-                          : view === 'actual'
-                            ? {
-                                label: 'Run output',
-                                title:
-                                  'The last run’s stdout and verdict — tab here, or split it beside the code',
-                                icon: <Terminal className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
-                              }
-                            : view === 'workflow'
-                              ? {
-                                  label: 'Workflow',
-                                  title:
-                                    'How this problem gets solved — given, model, compute, check, with a live checklist',
-                                  icon: <GitBranch className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
-                                }
-                              : {
-                                  label: 'Expected',
-                                  title:
-                                    'The lesson’s Expected Output — tab here, or split it beside the code',
-                                  icon: <CheckSquare className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
-                                };
-                      return (
-                        <button
-                          key={view}
-                          role="tab"
-                          aria-selected={selected}
-                          data-testid={`editor-tab-${view}`}
-                          title={meta.title}
-                          onClick={() => commitPanes(showView(panes, view))}
-                          // Predict has its own fixed button in the phone bar; its tab would take
-                          // the width that keeps Run output and Expected on screen.
-                          className={`shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t px-2.5 py-1.5 text-[12.5px] font-mono cursor-pointer ${
-                            view === 'predict' ? 'hidden md:flex' : 'flex'
-                          }`}
-                          style={{
-                            color: selected ? 'var(--accent)' : 'var(--muted)',
-                            borderBottom: selected
-                              ? '2px solid var(--accent)'
-                              : '2px solid transparent',
-                          }}
-                        >
-                          {meta.icon}
-                          {meta.label}
-                        </button>
-                      );
-                    })}
-                  </>
-                )}
-              </div>
-              {/* The terminal split, in the tab row rather than the run row: §3 caps the run
-                  controls at eight, and this is a property of the body instead of an action of
-                  the run. Side by side by default; the arrows choose a stacked split, which is
-                  the shape a narrow window gets anyway.
-
-                  A sibling of the tablist, not a child: a tablist may only own tabs, and axe
-                  reports any other child role inside it as an aria-required-children violation.
-                  Outside it the controls also stay put while the tabs scroll. */}
-              {resultsAllowed && (
-                <div
-                  role="group"
-                  aria-label="Editor panes"
-                  className="ml-1 flex shrink-0 items-center gap-0.5 pl-1"
-                >
-                  {!paneSplit ? (
-                    <button
-                      type="button"
-                      data-testid="btn-pane-split"
-                      onClick={() => commitPanes(splitPane(panes))}
-                      title="Split the editor: show two views, like a terminal"
-                      className="flex items-center gap-1 rounded border border-line bg-canvas px-2 py-0.5 text-[12px] font-mono text-body hover:bg-raise cursor-pointer"
-                    >
-                      <Columns2 className="h-3 w-3" aria-hidden="true" />
-                      <span className="hidden sm:inline">Split</span>
-                    </button>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        data-testid="btn-pane-columns"
-                        aria-pressed={panes.axis === 'columns'}
-                        onClick={() => commitPanes(setAxis(panes, 'columns'))}
-                        title="Divide the panes side by side"
-                        className={`rounded border px-1.5 py-0.5 cursor-pointer ${
-                          panes.axis === 'columns'
-                            ? 'border-accent/60 bg-accent/10 text-accent'
-                            : 'border-line bg-canvas text-muted hover:bg-raise'
-                        }`}
-                      >
-                        <Columns2 className="h-3 w-3" aria-hidden="true" />
-                        <span className="sr-only">Side by side</span>
-                      </button>
-                      <button
-                        type="button"
-                        data-testid="btn-pane-rows"
-                        aria-pressed={panes.axis === 'rows'}
-                        onClick={() => commitPanes(setAxis(panes, 'rows'))}
-                        title="Divide the panes one above the other"
-                        className={`rounded border px-1.5 py-0.5 cursor-pointer ${
-                          panes.axis === 'rows'
-                            ? 'border-accent/60 bg-accent/10 text-accent'
-                            : 'border-line bg-canvas text-muted hover:bg-raise'
-                        }`}
-                      >
-                        <Rows2 className="h-3 w-3" aria-hidden="true" />
-                        <span className="sr-only">One above the other</span>
-                      </button>
-                      <button
-                        type="button"
-                        data-testid="btn-pane-close"
-                        onClick={() => commitPanes(closeSplit(panes))}
-                        title="Close the second pane"
-                        aria-label="Close the second pane"
-                        className="rounded border border-line bg-canvas px-1.5 py-0.5 text-muted hover:bg-raise hover:text-body cursor-pointer"
-                      >
-                        <X className="h-3 w-3" aria-hidden="true" />
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
-              <span className="shrink-0 whitespace-nowrap text-[11px] font-mono text-faint tabular-nums">
-                {symbolMiss ? (
-                  <span role="status" data-testid="symbol-miss" style={{ color: 'var(--muted)' }}>
-                    no definition for <code style={{ color: 'var(--accent)' }}>{symbolMiss}</code>
-                  </span>
-                ) : openHelperFile ? (
-                  `${openHelperFile.content.split('\n').length} lines · read-only`
-                ) : (
-                  // On a phone the count costs the strip the width of a tab, so it steps aside
-                  // there; a symbol miss and a read-only helper still say their piece.
-                  <span className="hidden sm:inline">
-                    {`${code.split('\n').length} lines${sliderCount ? ` · ${sliderCount} slider${sliderCount === 1 ? '' : 's'}` : ''}`}
-                  </span>
-                )}
-                {/* Which mode is reading the keys. A live region, not decoration: with Vim on, a
-                    keystroke that does nothing is correct behaviour, and this is the only place the
-                    screen says which mode it is correct in. */}
-                {vimOn && (
-                  <span
-                    role="status"
-                    data-testid="vim-mode"
-                    title="The mode the editor is reading keys in — Escape for NORMAL, i for INSERT"
-                    className="ml-2 rounded border px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em]"
-                    style={{ borderColor: 'var(--border)', color: 'var(--accent)' }}
-                  >
-                    {vimModeLabel(vimMode)}
-                  </span>
-                )}
-              </span>
-              </div>
-              {/* The run controls live in the editor's own header: a learner's eyes are in the code,
-                  and crossing the screen to press Run was the one trip this card can save. Read
-                  hides this header, so the toolbar falls back to the top of the page there. Its own
-                  row, because a toolbar sharing a row with four tabs was what pushed this header to
-                  175 px - more than the editor it sits above. */}
-              {editorShown && (
-                <div className="mt-1 flex min-w-0 flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-1.5">
-                  <RunVerdict passStatus={passStatus} harnessResult={harnessResult} />
-                  <div className="ml-auto flex min-w-0 items-center gap-2">{runnerToolbar}</div>
-                </div>
-              )}
-            </div>
-            {/* Write hides the prose, so the question it asks is printed here as the one comment a
-                Python file would carry. The task is read from the starter's marked functions, in
-                plain text, and the word "Question:" is visible: a beginner should not have to
-                decode backticks to know what the file is for. Read-only. */}
-            {shownLayout === 'write' && writeQuestion && (
-              <p
-                data-testid="write-question"
-                className="border-b border-line-soft bg-canvas px-3 py-2 font-mono text-[11.5px] leading-relaxed text-muted"
-              >
-                <span className="font-semibold text-accent"># Question:</span> {writeQuestion}
-              </p>
-            )}
-            {/* One body, up to two panes (`editorPanes.ts`). Every view stays mounted and a pane that
-                is not showing is `display:none`: that is what keeps exactly one `pre-actual-stdout`
-                on the page, so the last run can be read without selecting its tab. `order` follows
-                the slots, which is what lets an arrangement opened on an output read left to right. */}
-            <div
-              data-testid="editor-panes"
-              data-axis={panes.axis}
-              data-split={paneSplit ? 'split' : 'single'}
-              data-focus={paneSplit ? panes.focus : 0}
-              data-views={visibleViews(panes).join(',')}
-              role="group"
-              aria-label="Editor panes: a tab press fills the pane you last clicked"
-              className={
-                paneSplit && panes.axis === 'columns'
-                  ? 'flex flex-col lg:flex-row lg:items-start'
-                  : 'flex flex-col'
-              }
-            >
-              <div
-                data-testid="pane-main"
-                data-pane="main"
-                onClick={() => focusPane('main')}
-                style={{
-                  display: shownViews.has('main') ? undefined : 'none',
-                  order: paneOrder('main'),
-                }}
-                className={`min-w-0 flex-1 ${paneBorder('main')}`}
-              >
-            {coEdit && (
-              <p
-                role="status"
-                data-testid="coedit-status"
-                className="border-b px-3 py-1.5 text-[11px]"
-                style={{ borderColor: 'var(--border)', color: 'var(--emerald, var(--accent))', backgroundColor: 'var(--bg)' }}
-              >
-                Co-editing {lessonLabel(coEdit.lesson)} with {pair.peer ?? 'the other workbench'} ·{' '}
-                {coEdit.remote === 0
-                  ? 'no edits from them yet'
-                  : `${coEdit.remote} of their edits`}{' '}
-                · undo is yours
-              </p>
-            )}
-            {!coEdit && collabNotice && (
-              <p
-                role="status"
-                data-testid="coedit-notice"
-                className="border-b px-3 py-1.5 text-[11px]"
-                style={{ borderColor: 'var(--border)', color: 'var(--muted)', backgroundColor: 'var(--bg)' }}
-              >
-                {collabNotice}
-              </p>
-            )}
-            {/* The phone's punctuation strip: a phone keyboard has no colon, bracket or underscore
-                on its first pane, and every Python line has at least one of them. */}
-            {!deferPhoneEditor && isPhone && !openHelperFile && (
-              <PythonKeys onInsert={(text) => guideEditorRef.current?.insertText(text)} />
-            )}
-            {deferPhoneEditor ? null : openHelperFile ? (
-              <>
-                <p
-                  className="border-b px-3 py-1.5 text-[11px]"
-                  style={{ borderColor: 'var(--border)', color: 'var(--muted)', backgroundColor: 'var(--bg)' }}
-                >
-                  Read-only helper. Your code imports this file; edit{' '}
-                  <span className="font-mono" style={{ color: 'var(--accent)' }}>
-                    {MAIN_FILE_NAME}
-                  </span>{' '}
-                  to change the answer.
-                </p>
-                <PythonEditor
-                  key={`${selectedId}:${openHelperFile.name}`}
-                  ref={helperEditorRef}
-                  value={openHelperFile.content}
-                  readOnly
-                  ariaLabel={`${openHelperFile.name}, read-only lesson helper`}
-                  testId="editor-helper"
-                  onGoToDefinition={goToDefinition}
-                  initialLine={pendingJump?.file === openHelperFile.name ? pendingJump.line : undefined}
-                />
-              </>
-            ) : (
-              <PythonEditor
-                key={`main:${selectedId}`}
-                ref={guideEditorRef}
-                value={code}
-                onChange={commitCode}
-                ariaLabel="Python code editor"
-                testId="editor-main"
-                onSliderCommit={handleSliderCommit}
-                getAnalysis={getReadyAnalysis}
-                onGoToDefinition={goToDefinition}
-                onRunCell={runCellTo}
-                onToggleBreakpoint={toggleBreakpointAt}
-                onBreakpointsMoved={followBreakpointEdits}
-                breakpoints={breakpoints}
-                vimMode={vimOn}
-                onVimMode={setVimMode}
-                initialLine={pendingJump?.file === MAIN_FILE_NAME ? pendingJump.line : undefined}
-              />
-            )}
-              </div>
-              {editorShown && (
-                <>
-                  <div
-                    data-testid="pane-predict"
-                    data-pane="predict"
-                    onClick={() => focusPane('predict')}
-                    style={{
-                      display: shownViews.has('predict') ? undefined : 'none',
-                      order: paneOrder('predict'),
-                    }}
-                    className={`min-w-0 flex-1 border-t border-line-soft ${paneBorder('predict')}`}
-                  >
-                    <PredictPane
-                      record={predictRecord}
-                      text={predictText}
-                      onText={setPredictText}
-                      onCommit={commitPrediction}
-                      onSkip={skipPrediction}
-                      onAgain={predictAgain}
-                      onClose={() => commitPanes(closeView(panes, 'predict'))}
-                      asksForFinish={gateAsksForFinish}
-                      held={heldRun !== null}
-                      running={isRunning}
-                    />
-                  </div>
-                  <div
-                    data-testid="pane-actual"
-                    data-pane="actual"
-                    onClick={() => focusPane('actual')}
-                    style={{
-                      display: shownViews.has('actual') ? undefined : 'none',
-                      order: paneOrder('actual'),
-                    }}
-                    className={`min-w-0 flex-1 border-t border-line-soft ${paneBorder('actual')}`}
-                  >
-                    {actualOutputPane}
-                  </div>
-                  <div
-                    data-testid="pane-expected"
-                    data-pane="expected"
-                    onClick={() => focusPane('expected')}
-                    style={{
-                      display: shownViews.has('expected') ? undefined : 'none',
-                      order: paneOrder('expected'),
-                    }}
-                    className={`min-w-0 flex-1 border-t border-line-soft ${paneBorder('expected')}`}
-                  >
-                    {expectedOutputPane}
-                  </div>
-                  <div
-                    data-testid="pane-workflow"
-                    data-pane="workflow"
-                    onClick={() => focusPane('workflow')}
-                    style={{
-                      display: shownViews.has('workflow') ? undefined : 'none',
-                      order: paneOrder('workflow'),
-                    }}
-                    className={`min-w-0 flex-1 border-t border-line-soft ${paneBorder('workflow')}`}
-                  >
-                    {workflowPane}
-                  </div>
-                </>
-              )}
-            </div>
-            {runFeedback}
-          </div>
           {/* Everything that reports on the editor (`runner/ResultsColumn.tsx`). */}
           <ResultsColumn
             resultsSide={resultsSide}

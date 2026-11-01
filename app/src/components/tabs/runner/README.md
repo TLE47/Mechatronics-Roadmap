@@ -6,6 +6,8 @@ the regions below. Each module here owns one concern and is readable without the
 | Module | Owns |
 |---|---|
 | `useRunnerArrangement.ts` | The editor/results split share, which side results sit on, and the persisted layout record. |
+| `RunnerToolbar.tsx` | The run controls: presets and dock, Pause/Stop/Run, Predict, and the More panel's actions. |
+| `RunnerEditorCard.tsx` | The editor surface: main/helper tabs, the pane strip, the split controls, and the editor body beside Predict, Run output, Expected and Workflow. |
 | `RunnerRuntimeStrip.tsx` | Where the interpreter is while it loads: first-run guide and runtime sentence. |
 | `RunVerdict.tsx` | The one-line verdict under the run controls, from the last outcome. |
 | `PredictPane.tsx` | The prediction gate's pane: the question, the committed guess and its reading. |
@@ -17,5 +19,7 @@ the regions below. Each module here owns one concern and is readable without the
 | `useFirstRunTour.ts` | The first-run tour: record, offer/chip, gates, focus and dismissal. |
 
 Wiring rule: a region takes exactly the state and callbacks it renders; it never reaches into the tab.
-The run itself (`runPythonCode` and the worker session) stays in the tab on purpose — it is the one
-state every region is a view of, and the shared worker protocol lives in `../../runtime/pyodideWorker.ts`.
+The run itself (`runPythonCode`, the session and the state it writes) is still owned by the tab: it is
+the one state every region is a view of, and the shared worker protocol lives in
+`../../runtime/pyodideWorker.ts`. Lifting it into `useRunnerExecution.ts` is the next seam — every
+region already reads it by name, so the tab can keep its JSX and destructure the hook's return.
