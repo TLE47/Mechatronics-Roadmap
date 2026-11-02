@@ -14,7 +14,7 @@ import type { HelpReportInput } from '../../helpReport';
 import { PairSheet } from '../PairSheet';
 import { usePairSession } from '../../usePairSession';
 import { attemptLines, lessonLabel } from '../../pairing';
-import { COLLAB_MAX_TEXT, CollabText, fromWire, type CollabOp } from '../../collab';
+import { fromWire } from '../../collab';
 import { lessonPageUrl } from '../../startHere';
 import { assetUrlsFromDocument, cacheInventory, offlineWarmSupported, warmWithServiceWorker, type OfflineCacheReport } from '../../offlineTakeAlong';
 import { FaultBench08 } from '../FaultBench08';
@@ -105,6 +105,7 @@ import { RunnerToolbar } from './runner/RunnerToolbar';
 import { RunnerEditorCard } from './runner/RunnerEditorCard';
 import { useRunnerExecution } from './runner/useRunnerExecution';
 import { useFirstRunTour } from './runner/useFirstRunTour';
+import { useCoEdit, type CoEdit } from './runner/useCoEdit';
 import { type PythonEditorHandle } from '../PythonEditor';
 
 import { roadmapStepForLesson } from '../../practiceLinks';
@@ -375,20 +376,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // attempt that arrived from it. The attempt is state, never an edit — the card below asks first.
   const [pairOpen, setPairOpen] = useState<boolean>(false);
   const [pairAttempt, setPairAttempt] = useState<{ lesson: string; code: string } | null>(null);
-  // Live co-editing (`app/src/collab.ts`): both pages hold the same document, and only the text that
-  // changed crosses the channel. `remote` counts the edits that arrived, which is what the status
-  // strip prints — a session with someone typing in it should look like one.
-  const [coEdit, setCoEdit] = useState<{ lesson: string; role: 'host' | 'guest'; remote: number } | null>(null);
-  // Their offer to co-edit: the text becomes the document only when this learner accepts, because
-  // accepting replaces what is in their editor (`offered-never-applied`, the rule the share link and
-  // the attempt card already follow).
-  const [collabInvite, setCollabInvite] = useState<{ lesson: string; text: string } | null>(null);
-  // Why co-editing is not running any more, when it was. One line above the editor, not a toast.
-  const [collabNotice, setCollabNotice] = useState<string | null>(null);
-  // The shared document itself, and the flag that keeps a peer's edit from being read as this
-  // workbench's own op to broadcast back at them.
-  const coEditRef = useRef<{ doc: CollabText; lesson: string } | null>(null);
-  const applyingPeerRef = useRef<boolean>(false);
+  // The co-edit session (`runner/useCoEdit.ts`) is reached through this while it is built further
+  // down: the channel's handler is registered before the session exists, and every edit it carries
+  // lands in it. `null` means no session has been built yet, which is a message that arrives early.
+  const coEditRef = useRef<CoEdit | null>(null);
   const pair = usePairSession((message) => {
     if (message.kind === 'attempt') {
       setPairAttempt({ lesson: message.lesson, code: message.code });
@@ -398,8 +389,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       return;
     }
     if (message.kind === 'collab-start') {
-      setCollabInvite({ lesson: message.lesson, text: message.text });
-      setCollabNotice(null);
+      coEditRef.current?.receiveInvite({ lesson: message.lesson, text: message.text });
       // The other way round from an attempt: an offer to co-edit is a decision about the editor
       // itself, and the sentence that says so belongs in the sheet that made it possible.
       setPairOpen(true);
@@ -407,22 +397,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     }
     if (message.kind === 'collab-ops') {
       const ops = fromWire(message.ops);
-      if (ops) applyPeerOps(ops);
+      if (ops) coEditRef.current?.applyPeerOps(ops);
       return;
     }
     if (message.kind === 'collab-stop') {
       // Their decision, so no stop is sent back: the two sides would keep telling each other it is
-      // over. Just the sentence that names what happened.
-      coEditRef.current = null;
-      setCoEdit(null);
-      setCollabInvite(null);
-      setCollabNotice(
-        message.reason === 'lesson'
-          ? 'Co-editing ended: they moved to another lesson.'
-          : message.reason === 'declined'
-            ? 'They are not co-editing this lesson right now. Your editor was not touched.'
-            : 'They stopped co-editing. Your editor is yours again.'
-      );
+      // over. The session names what happened and touches no editor.
+      coEditRef.current?.receiveStop(message.reason);
     }
   });
   // The lines the gutter has armed for this lesson (`app/src/editor/breakpoints.ts`). Read at mount,
@@ -1019,16 +1000,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const commitCode = (next: string) => {
     // A co-editing session turns every local change into ops, and the diff is what makes one code
     // path enough: typing, a paste, Format's rewrite, Load Solution and a slider all say the same
-    // thing — "the text is now this" — and `localOps` is what turns that into characters to send.
-    const shared = coEditRef.current;
-    if (shared && !applyingPeerRef.current) {
-      if (next.length > COLLAB_MAX_TEXT) {
-        stopCoEditLocally('too-long');
-      } else {
-        const ops = shared.doc.localOps(next);
-        if (ops.length > 0) pair.sendCollabOps(shared.lesson, ops);
-      }
-    }
+    // thing — "the text is now this" — and `noteLocalEdit` is what turns that into characters to
+    // send (`runner/useCoEdit.ts`).
+    noteLocalEdit(next);
     codeRef.current = next;
     setCode(next);
   };
@@ -1038,133 +1012,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   useEffect(() => {
     lessonIdRef.current = selectedId;
   }, [selectedId]);
-
-  /**
-   * Stop co-editing on this side, and tell the other one why.
-   *
-   * Only a local decision sends a message — a stop that arrived is answered by clearing the state, or
-   * the two sides would keep telling each other it is over. The session's own `bye` covers leaving.
-   */
-  const stopCoEditLocally = (reason: 'lesson' | 'left' | 'declined' | 'offline' | 'too-long') => {
-    const shared = coEditRef.current;
-    coEditRef.current = null;
-    setCoEdit(null);
-    setCollabInvite(null);
-    if (shared && (reason === 'lesson' || reason === 'left')) {
-      pair.sendCollabStop(shared.lesson, reason);
-    }
-    setCollabNotice(
-      reason === 'lesson'
-        ? 'Co-editing ended: this workbench moved to another lesson.'
-        : reason === 'left'
-          ? 'You stopped co-editing. Your editor is yours again.'
-          : reason === 'declined'
-            ? 'You turned down co-editing. Your editor was not touched.'
-            : reason === 'too-long'
-              ? `Co-editing stopped: the file passed ${COLLAB_MAX_TEXT.toLocaleString()} characters.`
-              : 'The session ended, so co-editing stopped.'
-    );
-  };
-
-  /**
-   * Apply the other workbench's edit.
-   *
-   * The ops go into the shared document first, and the editor is handed the text that results: that
-   * is the one write a peer's keystroke makes, and it is applied outside the undo history, so ⌘Z still
-   * means "undo what I typed". A batch that changes nothing here (a duplicate the channel delivered
-   * twice) does not touch the editor at all.
-   */
-  const applyPeerOps = (ops: CollabOp[]) => {
-    const shared = coEditRef.current;
-    if (!shared) return;
-    let changed = 0;
-    for (const op of ops) if (shared.doc.apply(op)) changed += 1;
-    if (changed === 0) return;
-    const next = shared.doc.text;
-    if (next.length > COLLAB_MAX_TEXT) {
-      stopCoEditLocally('too-long');
-      return;
-    }
-    applyingPeerRef.current = true;
-    try {
-      guideEditorRef.current?.applyWithoutHistory(next);
-      codeRef.current = next;
-      setCode(next);
-    } finally {
-      applyingPeerRef.current = false;
-    }
-    setCoEdit((current) => (current ? { ...current, remote: current.remote + changed } : current));
-  };
-
-  /** Offer this lesson and this text as the document both of us edit — the host's side of it. */
-  const startCoEdit = () => {
-    if (pair.state !== 'connected' || pair.role !== 'host' || coEditRef.current) return;
-    if (codeRef.current.length > COLLAB_MAX_TEXT) {
-      setCollabNotice(`Co-editing needs a file under ${COLLAB_MAX_TEXT.toLocaleString()} characters.`);
-      return;
-    }
-    if (pair.sendCollabStart(selectedId, codeRef.current) !== 'sent') {
-      setCollabNotice('The offer to co-edit did not reach them — the session is not open.');
-      return;
-    }
-    coEditRef.current = { doc: CollabText.seed(codeRef.current, 0), lesson: selectedId };
-    setCoEdit({ lesson: selectedId, role: 'host', remote: 0 });
-    setCollabNotice(null);
-  };
-
-  /** Take up their offer: their text becomes this document, and this editor becomes a shared one. */
-  const acceptCoEdit = () => {
-    const invite = collabInvite;
-    if (!invite) return;
-    if (invite.text.length > COLLAB_MAX_TEXT) {
-      setCollabInvite(null);
-      setCollabNotice(`That file is over ${COLLAB_MAX_TEXT.toLocaleString()} characters, which co-editing will not carry.`);
-      return;
-    }
-    // The lesson first: `selectLesson` loads that lesson's draft, and doing it while a shared document
-    // is live would broadcast the draft as an edit of theirs.
-    if (invite.lesson !== selectedId) selectLesson(invite.lesson);
-    coEditRef.current = { doc: CollabText.seed(invite.text, 1), lesson: invite.lesson };
-    applyingPeerRef.current = true;
-    try {
-      guideEditorRef.current?.applyWithoutHistory(invite.text);
-      codeRef.current = invite.text;
-      setCode(invite.text);
-    } finally {
-      applyingPeerRef.current = false;
-    }
-    saveDraft(invite.lesson, invite.text);
-    setCoEdit({ lesson: invite.lesson, role: 'guest', remote: 0 });
-    setCollabInvite(null);
-    setCollabNotice(null);
-    setPairOpen(false);
-  };
-
-  /** Turn down an offer without the editor moving, and let them know rather than leave them waiting. */
-  const declineCoEdit = () => {
-    const lesson = collabInvite?.lesson ?? selectedId;
-    setCollabInvite(null);
-    pair.sendCollabStop(lesson, 'declined');
-    setCollabNotice('You turned down co-editing. Your editor was not touched.');
-  };
-
-  // A shared document belongs to one lesson. Moving this workbench elsewhere ends it — and says so on
-  // both screens — rather than writing the next lesson's text into a document about another one.
-  useEffect(() => {
-    const shared = coEditRef.current;
-    if (!shared || shared.lesson === selectedId) return;
-    stopCoEditLocally('lesson');
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the lesson is the trigger
-  }, [selectedId]);
-
-  // A session that ends takes co-editing with it: there is no channel left to move text over, and a
-  // document that still says it is shared while nothing moves is worse than a sentence saying it
-  // stopped.
-  useEffect(() => {
-    if (pair.state === 'connected' || !coEditRef.current) return;
-    stopCoEditLocally('offline');
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the session state is the trigger
-  }, [pair.state]);
 
   // Typing is the draft. Written once the learner pauses rather than on every keystroke, so the
   // store sees one write per thought instead of one per character; `saveDraft` itself is what
@@ -1226,6 +1073,34 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setPassStatus('untested');
     setShareStatus({ kind: 'idle' });
   };
+
+  // Co-editing (`runner/useCoEdit.ts`): the shared document, the offer that has to be answered
+  // before an editor is replaced, and the sentence that says why it stopped. Every local write asks
+  // it, so typing, a paste, Format and a slider all reach the peer by one path.
+  const coEditSession = useCoEdit({
+    pair,
+    lessonId: selectedId,
+    readText: () => codeRef.current,
+    applyText: (text) => {
+      guideEditorRef.current?.applyWithoutHistory(text);
+      codeRef.current = text;
+      setCode(text);
+    },
+    selectLesson,
+    saveText: saveDraft,
+    onAccepted: () => setPairOpen(false),
+  });
+  coEditRef.current = coEditSession;
+  const {
+    session: coEdit,
+    invite: collabInvite,
+    notice: collabNotice,
+    start: startCoEdit,
+    accept: acceptCoEdit,
+    decline: declineCoEdit,
+    stop: stopCoEditLocally,
+    noteLocalEdit,
+  } = coEditSession;
 
   /**
    * Copy a link to this lesson with the editor's text in it.
