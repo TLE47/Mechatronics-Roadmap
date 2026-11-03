@@ -24,7 +24,8 @@ broken relative links — with each URL's reason and sources; **Not checked** li
 out and server-unverified URLs with why the checker could not verify them. Both counts and the
 scanned total come from the checker's structured `hard_failures` and `not_checked_details` in the
 latest history row, not from a dashboard copy of the classification. When the hard bucket is empty
-the panel says **No hard link failures** explicitly rather than rendering an empty table.
+the panel says **No hard link failures** explicitly rather than rendering an empty table. Both report
+tables are named, keyboard-focusable scroll regions, so their rows can be reached without a mouse.
 
 ---
 

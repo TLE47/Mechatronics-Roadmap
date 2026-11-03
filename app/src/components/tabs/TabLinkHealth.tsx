@@ -277,8 +277,17 @@ const ReportTable: React.FC<{
   items: LinkReportItem[];
   reasonHeading: string;
   testId: string;
-}> = ({ items, reasonHeading, testId }) => (
-  <div className="mt-3 max-h-72 overflow-auto rounded-lg border border-line-soft">
+  label: string;
+}> = ({ items, reasonHeading, testId, label }) => (
+  // A scrollable report is reachable without a mouse: the region takes focus and names itself, so a
+  // keyboard or screen-reader user can scroll the rows they cannot see (axe
+  // `scrollable-region-focusable`).
+  <div
+    className="mt-3 max-h-72 overflow-auto rounded-lg border border-line-soft"
+    role="region"
+    aria-label={label}
+    tabIndex={0}
+  >
     <table className="w-full text-left text-xs border-collapse" data-testid={testId}>
       <thead className="sticky top-0 bg-panel">
         <tr className="text-muted border-b border-line">
@@ -434,6 +443,7 @@ export const TabLinkHealth: React.FC = () => {
                 items={LATEST_LINK_REPORT.hardFailures}
                 reasonHeading="Reason"
                 testId="link-report-hard-table"
+                label="Hard failure report"
               />
             )}
           </section>
@@ -470,6 +480,7 @@ export const TabLinkHealth: React.FC = () => {
                 items={LATEST_LINK_REPORT.notChecked}
                 reasonHeading="Why not verified"
                 testId="link-report-not-checked-table"
+                label="Not-checked report"
               />
             )}
           </section>
