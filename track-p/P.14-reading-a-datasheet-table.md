@@ -79,14 +79,14 @@ Before wiring any part in Stage 0 or Pass 1, you must read its datasheet specifi
 Complete `is_within_recommended_bounds` (`TODO 1`), `select_safe_driver` (`TODO 2`), and `datasheet_val_to_base_si` (`TODO 3`):
 
 **Where each name comes from** (read this beside the code):
-- `DATASHEET_DRIVERS` — a hardcoded table of driver specifications; it is the source for every lookup below, not a computed result.
-- `is_within_recommended_bounds` parameters `val`, `min_val`, `max_val` — a value and its inclusive limits; `TODO 1` returns `True` only when the value sits inside them.
-- `select_safe_driver` parameter `supply_v` — the supply level in volts; `TODO 2` fills `safe` with the table's driver names whose recommended range covers it.
-- `safe` — starts as an empty list inside `select_safe_driver`; it is the function's return value.
-- `datasheet_val_to_base_si` parameters `value` and `unit_str` — a table figure and its unit column; `TODO 3` returns the figure in base SI units.
-- `drv_6v`, `drv_12v` — results of `select_safe_driver(6.0)` and `select_safe_driver(12.0)`, lists of driver names.
-- `i_cont_a` — `DATASHEET_DRIVERS["DRV8833"]["i_cont_ma"]` converted from mA to A by `datasheet_val_to_base_si`.
-- `f_pwm_hz` — `25.0` kHz converted to Hz by `datasheet_val_to_base_si`.
+1. `DATASHEET_DRIVERS` — a hardcoded table of driver specifications; it is the source for every lookup below, not a computed result.
+1. `is_within_recommended_bounds` parameters `val`, `min_val`, `max_val` — a value and its inclusive limits; `TODO 1` returns `True` only when the value sits inside them.
+1. `select_safe_driver` parameter `supply_v` — the supply level in volts; `TODO 2` fills `safe`, in table order, with the names whose recommended range covers it.
+1. `safe` — starts as an empty list inside `select_safe_driver`; it is the function's return value.
+1. `datasheet_val_to_base_si` parameters `value` and `unit_str` — a table figure and its unit column; `TODO 3` returns the figure in base SI units (`mA` to A by dividing by `1000`, `kHz` to Hz by multiplying by `1000`).
+1. `drv_6v`, `drv_12v` — results of `select_safe_driver(6.0)` and `select_safe_driver(12.0)`, lists of driver names; here `['DRV8833', 'TB6612FNG']` and `['TB6612FNG']`.
+1. `i_cont_a` — `DATASHEET_DRIVERS["DRV8833"]["i_cont_ma"]` converted from mA to A by `datasheet_val_to_base_si`; here `1.5` A.
+1. `f_pwm_hz` — `25.0` kHz converted to Hz by `datasheet_val_to_base_si`; here `25000` Hz.
 
 ```python
 DATASHEET_DRIVERS = {

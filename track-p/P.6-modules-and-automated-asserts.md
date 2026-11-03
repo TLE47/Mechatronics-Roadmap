@@ -76,11 +76,11 @@ runs an automatic safety check every time the script starts. When comparing deci
 Complete `distance_2d` (`TODO 1`) and `clamp_cmd` (`TODO 2`), then write the `assert` self-checks in `TODO 3`:
 
 **Where each name comes from** (read this beside the code):
-- `distance_2d` parameters `x_m`, `y_m` — the point's coordinates in metres; `TODO 1` returns their straight-line distance from the origin.
-- `clamp_cmd` parameter `cmd` — the raw command; `TODO 2` returns it clamped into `[0, 255]`.
-- `d1`, `d2` — results of `distance_2d(3.0, 4.0)` and `distance_2d(0.6, 0.8)`, in metres.
-- `TODO 3` asserts compare `d1`/`d2` and direct `clamp_cmd(...)` calls at `-20`, `128`, and `300`; the assertions create no new named value.
-- The `print` lines read `d1`, `d2`, and three direct `clamp_cmd(...)` results.
+1. `distance_2d` parameters `x_m`, `y_m` — the point's coordinates in metres; `TODO 1` returns their straight-line distance from the origin.
+1. `clamp_cmd` parameter `cmd` — the raw command; `TODO 2` returns it clamped into `[0, 255]`.
+1. `d1`, `d2` — results of `distance_2d(3.0, 4.0)` and `distance_2d(0.6, 0.8)`, in metres; here `5.0` m and `1.0` m.
+1. `TODO 3` asserts compare `d1`/`d2` and direct `clamp_cmd(...)` calls at `-20`, `128`, and `300`; the assertions create no new named value.
+1. The `print` lines read `d1`, `d2`, and three direct `clamp_cmd(...)` results.
 
 ```python
 import math

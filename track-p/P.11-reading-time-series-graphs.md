@@ -81,13 +81,13 @@ Every telemetry plot in robotics puts **time ($t$, in seconds)** on the horizont
 Complete `slope_velocity` (`TODO 1`) and `accumulate_positions` (`TODO 2`) to compute velocity from two position readings and accumulate position across 5 velocity steps of $\Delta t = 0.5\text{ s}$:
 
 **Where each name comes from** (read this beside the code):
-- `slope_velocity` parameters `pos_prev_m`, `pos_now_m` (metres), and `dt_s` (seconds); `TODO 1` returns the implied velocity in m/s.
-- `accumulate_positions` parameters: `velocities_m_s` is a list of velocities in m/s, and `dt_s` is the time per step in seconds.
-- `pos_m` inside `accumulate_positions` — starts at `0.0` m and carries the running position forward across the loop.
-- `history` — starts as an empty list; `TODO 2` appends the running position after each step, rounded to two places.
-- `v` — the loop variable; each pass takes the next velocity from `velocities_m_s`.
-- `v_est` — result of `slope_velocity(1.20, 2.20, 0.5)`, in m/s.
-- `pos_trace` — result of `accumulate_positions([2.0, 2.0, 4.0, 0.0, -2.0], 0.5)`, a five-item position list in metres.
+1. `slope_velocity` parameters `pos_prev_m`, `pos_now_m` (metres), and `dt_s` (seconds); `TODO 1` returns the implied velocity in m/s.
+1. `accumulate_positions` parameters: `velocities_m_s` is a list of velocities in m/s, and `dt_s` is the time per step in seconds.
+1. `pos_m` inside `accumulate_positions` — starts at `0.0` m and carries the running position forward across the loop with `pos_m = pos_m + v * dt_s`.
+1. `history` — starts as an empty list; `TODO 2` appends the running position after each step, rounded to two places.
+1. `v` — the loop variable; each pass takes the next velocity from `velocities_m_s`.
+1. `v_est` — result of `slope_velocity(1.20, 2.20, 0.5)`, in m/s; here `2.0` m/s.
+1. `pos_trace` — result of `accumulate_positions([2.0, 2.0, 4.0, 0.0, -2.0], 0.5)`, a five-item position list in metres; here `[1.0, 2.0, 4.0, 4.0, 3.0]`.
 
 ```python
 def slope_velocity(pos_prev_m, pos_now_m, dt_s):

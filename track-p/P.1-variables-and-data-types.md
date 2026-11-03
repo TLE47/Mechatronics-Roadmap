@@ -76,11 +76,11 @@ Text wrapped in quotes like `"ARMED"` is a **str** (string), whereas a safety sw
 Copy this starter script into your Python editor. It runs right now without crashing, but prints the initial un-updated values until you complete `TODO 1` and `TODO 2`:
 
 **Where each name comes from** (read this beside the code):
-- `battery_level` — hardcoded `12.60` V (a float). `TODO 1` replaces it with `battery_level - 0.45`, using its own existing value.
-- `encoder_ticks` — hardcoded `400` pulses (an int). `TODO 1` replaces it with `encoder_ticks + 25`, using its own existing value.
-- `robot_mode` — hardcoded `"STANDBY"` (a string). `TODO 2` replaces it with the active-mode string; it does not depend on the other variables.
-- `is_estop_active` — hardcoded `False` (a bool); it stays `False` throughout.
-- Both `print` lines read the four names after the TODOs; they do not create new values.
+1. `battery_level` — hardcoded `12.60` V (a float). `TODO 1` replaces it with `battery_level - 0.45`, using its own existing value; it becomes `12.15` V here.
+1. `encoder_ticks` — hardcoded `400` pulses (an int). `TODO 1` replaces it with `encoder_ticks + 25`, using its own existing value; it becomes `425` pulses here.
+1. `robot_mode` — hardcoded `"STANDBY"` (a string). `TODO 2` replaces it with `"ACTIVE"`; it does not depend on the other variables.
+1. `is_estop_active` — hardcoded `False` (a bool); it stays `False` throughout.
+1. Both `print` lines read the four names after the TODOs; they do not create new values.
 
 ```python
 # Robot state variables (units documented in comments)

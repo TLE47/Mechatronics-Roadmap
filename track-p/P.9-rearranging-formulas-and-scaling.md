@@ -83,12 +83,12 @@ The exact same algebra powers **linear range scaling**. Whenever you map a 10-bi
 Complete `solve_for_speed` (`TODO 1`), `scale10_to_five` (`TODO 2`), and `scale10_to_cmd8` (`TODO 3`):
 
 **Where each name comes from** (read this beside the code):
-- `solve_for_speed` parameters `x_final`, `x_start` (metres), and `time_s` (seconds); `TODO 1` returns the average speed in m/s.
-- `scale10_to_five` parameter `raw_10bit` — a 10-bit reading in `[0, 1023]`; `TODO 2` maps it onto the 5-volt scale.
-- `scale10_to_cmd8` parameter `raw_10bit` — the same 10-bit reading; `TODO 3` maps it onto the 8-bit command range `[0, 255]`.
-- `speed_val` — result of `solve_for_speed(5.0, 2.0, 0.015)`, in m/s.
-- `out_mid` — result of `scale10_to_five(511.5)`, in volts.
-- `cmd_mid` — result of `scale10_to_cmd8(511.5)`, in command counts.
+1. `solve_for_speed` parameters `x_final`, `x_start` (metres), and `time_s` (seconds); `TODO 1` returns the average speed in m/s.
+1. `scale10_to_five` parameter `raw_10bit` — a 10-bit reading in `[0, 1023]`; `TODO 2` maps it onto the 5-volt scale with `raw_10bit / 1023 * 5.0`.
+1. `scale10_to_cmd8` parameter `raw_10bit` — the same 10-bit reading; `TODO 3` maps it onto the 8-bit command range `[0, 255]` with `raw_10bit / 1023 * 255.0`.
+1. `speed_val` — result of `solve_for_speed(5.0, 2.0, 0.015)`, in m/s; here `200.0` m/s.
+1. `out_mid` — result of `scale10_to_five(511.5)`, in volts; here `2.5` V.
+1. `cmd_mid` — result of `scale10_to_cmd8(511.5)`, in command counts; here `127.5`.
 
 ```python
 def solve_for_speed(x_final, x_start, time_s):

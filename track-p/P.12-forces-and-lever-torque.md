@@ -85,10 +85,10 @@ Check the two physical extremes:
 Complete `weight_newtons` (`TODO 1`) and `gravity_torque_nm` (`TODO 2`) using $\tau = m \cdot g \cdot L \cdot \cos(\theta)$ where `angle_from_horiz_deg` is measured from the horizontal:
 
 **Where each name comes from** (read this beside the code):
-- `weight_newtons` parameter `mass_kg` — a mass in kilograms; `TODO 1` returns its downward weight in newtons.
-- `gravity_torque_nm` parameters `mass_kg` (kg), `length_m` (lever length in metres), and `angle_from_horiz_deg` (degrees from horizontal); `TODO 2` returns the gravity torque in N·m.
-- `angle_deg` — the loop variable; each pass takes the next angle from the hardcoded list `[0.0, 60.0, 90.0]`.
-- `tau` — the `gravity_torque_nm(0.50, 0.30, angle_deg)` result for the angle of this pass, in N·m.
+1. `weight_newtons` parameter `mass_kg` — a mass in kilograms; `TODO 1` returns `mass_kg * 9.81` in newtons.
+1. `gravity_torque_nm` parameters `mass_kg` (kg), `length_m` (lever length in metres), and `angle_from_horiz_deg` (degrees from horizontal); `TODO 2` returns `weight_newtons(mass_kg) * length_m * cos(rad)` in N·m.
+1. `angle_deg` — the loop variable; each pass takes the next angle from the hardcoded list `[0.0, 60.0, 90.0]`.
+1. `tau` — the `gravity_torque_nm(0.50, 0.30, angle_deg)` result for the angle of this pass, in N·m.
 
 ```python
 import math

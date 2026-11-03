@@ -83,12 +83,12 @@ Across this entire roadmap, we measure a robot arm link's angle $\theta$ upward 
 Complete `rpm_to_rad_s` (`TODO 1`), `arm_tip_xy` (`TODO 2`), and `target_angle_deg` (`TODO 3`):
 
 **Where each name comes from** (read this beside the code):
-- `rpm_to_rad_s` parameter `rpm` — a rotation rate in revolutions per minute; `TODO 1` returns it in radians per second.
-- `arm_tip_xy` parameters `length_m` (link length in metres) and `angle_deg` (joint angle in degrees); `TODO 2` returns the tip's `[x, y]` in metres.
-- `target_angle_deg` parameters `x_m`, `y_m` — a point's coordinates in metres; `TODO 3` returns its direction from +x in degrees.
-- `omega` — result of `rpm_to_rad_s(60.0)`, in rad/s.
-- `tip` — result of `arm_tip_xy(0.20, 60.0)`, a two-item `[x, y]` list in metres.
-- `ang` — result of `target_angle_deg(-0.10, 0.10)`, in degrees.
+1. `rpm_to_rad_s` parameter `rpm` — a rotation rate in revolutions per minute; `TODO 1` returns `rpm * 2 * math.pi / 60` in radians per second, so `60.0` becomes `6.2832 rad/s`.
+1. `arm_tip_xy` parameters `length_m` (link length in metres) and `angle_deg` (joint angle in degrees); `TODO 2` returns `[length_m * cos(rad), length_m * sin(rad)]` in metres, so `0.20 m` at `60°` becomes `[0.1000, 0.1732] m`.
+1. `target_angle_deg` parameters `x_m`, `y_m` — a point's coordinates in metres; `TODO 3` returns `math.degrees(math.atan2(y_m, x_m))`, so `(-0.10, 0.10)` becomes `135.0°`.
+1. `omega` — result of `rpm_to_rad_s(60.0)`, in rad/s.
+1. `tip` — result of `arm_tip_xy(0.20, 60.0)`, a two-item `[x, y]` list in metres.
+1. `ang` — result of `target_angle_deg(-0.10, 0.10)`, in degrees.
 
 ```python
 import math

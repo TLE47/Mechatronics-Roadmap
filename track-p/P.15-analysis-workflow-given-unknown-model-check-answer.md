@@ -74,13 +74,14 @@ Two engineers can compute the same number and only one of them produces a usable
 Complete `winding_draw` (`TODO 1`), `check_against_limit` (`TODO 2`), and `answer_line` (`TODO 3`). Each function is one step of the workflow, so fill them in order:
 
 **Where each name comes from** (read this beside the code):
-- `SUPPLY_V`, `WINDING_OHM`, `DRIVER_LIMIT_A` — hardcoded inputs: `12.0` V, `2.4` Ω, and `3.2` A.
-- `winding_draw` parameters `supply_v`, `winding_ohm` — the two inputs to the model; `TODO 1` returns `supply_v / winding_ohm` in amperes.
-- `check_against_limit` parameters `draw_a`, `limit_a` — the model's draw and the driver limit, both in amperes; `TODO 2` returns `(ok, passable)`.
-- `ok` — the boolean from `check_against_limit`: `True` when the draw fits the limit.
-- `passable_a` — the second value from `check_against_limit`: the draw when it fits, otherwise the limit.
-- `answer_line` parameters `draw_a`, `limit_a`, `ok`, `passable_a` — all four feed the final sentence; `TODO 3` returns that sentence.
-- `planned_draw` — result of `winding_draw(SUPPLY_V, WINDING_OHM)`, in amperes.
+1. `SUPPLY_V`, `WINDING_OHM`, `DRIVER_LIMIT_A` — hardcoded inputs: `12.0` V, `2.4` Ω, and `3.2` A.
+1. `winding_draw` parameters `supply_v`, `winding_ohm` — the two inputs to the model; `TODO 1` returns `supply_v / winding_ohm` in amperes.
+1. `check_against_limit` parameters `draw_a`, `limit_a` — the model's draw and the driver limit, both in amperes; `TODO 2` returns `(draw_a <= limit_a, draw_a if it fits else limit_a)`.
+1. `ok` — the boolean from `check_against_limit`: `True` when the draw fits the limit; here it is `False`.
+1. `passable_a` — the second value from `check_against_limit`: the draw when it fits, otherwise the limit; here it is `3.2` A.
+1. `passable` — the value unpacked from the `(ok, passable)` pair; it is passed to `answer_line` as `passable_a`.
+1. `answer_line` parameters `draw_a`, `limit_a`, `ok`, `passable_a` — all four feed the final sentence; `TODO 3` returns that sentence.
+1. `planned_draw` — result of `winding_draw(SUPPLY_V, WINDING_OHM)`, in amperes; here `5.0` A.
 
 ```python
 SUPPLY_V = 12.0

@@ -76,12 +76,12 @@ Sensors on a robot produce streams of measurements over time. Instead of inventi
 Complete `TODO 1` and `TODO 2` to loop through `raw_commands`, clamp each value into `[0, 255]`, append it to `clamped_commands`, and compute `total_cmd`:
 
 **Where each name comes from** (read this beside the code):
-- `raw_commands` — hardcoded list of six commands; it is the loop's source, not a result.
-- `clamped_commands` — starts as an empty list; `TODO 2` appends each safe command, so its length grows to `6`.
-- `total_cmd` — starts at `0`; `TODO 2` adds each safe command to it.
-- `cmd` — the loop variable; each pass takes the next value from `raw_commands`.
-- `safe_cmd` — `TODO 1` local result of `cmd` clamped into `[0, 255]`; it is appended and added to the total.
-- `mean_cmd` — computed after the loop as `total_cmd / len(raw_commands)`, using the six-item list.
+1. `raw_commands` — hardcoded list of six commands; it is the loop's source, not a result.
+1. `clamped_commands` — starts as an empty list; `TODO 2` appends each safe command, so its length grows to `6`.
+1. `total_cmd` — starts at `0`; `TODO 2` adds each safe command to it; here it ends at `647`.
+1. `cmd` — the loop variable; each pass takes the next value from `raw_commands`.
+1. `safe_cmd` — `TODO 1` local result of `cmd` clamped into `[0, 255]`; it is appended and added to the total.
+1. `mean_cmd` — computed after the loop as `total_cmd / len(raw_commands)`, using the six-item list; here `647 / 6 ≈ 107.83`.
 
 ```python
 raw_commands = [-30, 0, 64, 128, 200, 310]

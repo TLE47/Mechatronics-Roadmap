@@ -77,16 +77,15 @@ Why is **clamping** the most common `if/elif` pattern in robotics? Suppose your 
 Complete `TODO 1` and `TODO 2` to clamp `raw_cmd_high` (`310`) and `raw_cmd_low` (`-45`) into `[0, 255]`, and force the final output to `0` when `is_estop_pressed` is `True`:
 
 **`clamped_high` and `clamped_low` are two different outputs, not two names for one value.** Both use the same `[0, 255]` limits, but each is computed from a different raw command:
-- `raw_cmd_high` — hardcoded `310`, a command above the upper limit; only `clamped_high` reads it.
-- `raw_cmd_low` — hardcoded `-45`, a separate command below the lower limit; only `clamped_low` reads it.
-- `clamped_high` — starts as a copy of `raw_cmd_high`; `TODO 1` replaces it with `raw_cmd_high` clamped into `[0, 255]`, giving `255` here. It does not read `raw_cmd_low`.
-- `clamped_low` — starts as a copy of `raw_cmd_low`; `TODO 1` replaces it with `raw_cmd_low` clamped into `[0, 255]`, giving `0` here. It does not reuse `clamped_high`.
-- `raw_cmd_normal` — hardcoded `180`, an in-range command; it feeds `safe_output` when the E-stop is released.
-- `is_estop_pressed` — hardcoded `True`, the E-stop input; it decides whether `safe_output` is forced to `0`.
-- `safe_output` — starts as a copy of `raw_cmd_normal`; `TODO 2` sets it to `0` while `is_estop_pressed` is `True`.
+1. `raw_cmd_high` — hardcoded `310`, a command above the upper limit; only `clamped_high` reads it.
+1. `raw_cmd_low` — hardcoded `-45`, a separate command below the lower limit; only `clamped_low` reads it.
+1. `clamped_high` — starts as a copy of `raw_cmd_high`; `TODO 1` replaces it with `raw_cmd_high` clamped into `[0, 255]`, giving `255` here. It does not read `raw_cmd_low`.
+1. `clamped_low` — starts as a copy of `raw_cmd_low`; `TODO 1` replaces it with `raw_cmd_low` clamped into `[0, 255]`, giving `0` here. It does not reuse `clamped_high`.
+1. `raw_cmd_normal` — hardcoded `180`, an in-range command; it feeds `safe_output` when the E-stop is released.
+1. `is_estop_pressed` — hardcoded `True`, the E-stop input; it decides whether `safe_output` is forced to `0`.
+1. `safe_output` — starts as a copy of `raw_cmd_normal`; `TODO 2` sets it to `0` while `is_estop_pressed` is `True`. Otherwise it stays `180`.
 
 Neither name is a limit itself: `0` and `255` are the limits, and each name is a command value after those limits are applied. The two clamp names therefore hold different values at the end: `clamped_high == 255` and `clamped_low == 0`.
-
 
 ```python
 raw_cmd_high = 310
@@ -178,6 +177,7 @@ print(f"E-Stop={is_estop_pressed} -> Safe Output: {safe_output}")
 - **`SyntaxError: invalid syntax` on `if x = 5:`:** A single `=` is assignment; comparisons inside `if` require a double equals `if x == 5:`.
 - **`IndentationError: expected an indented block`:** Every line controlled by `if`, `elif`, or `else` must be indented by 4 spaces (never mix tabs and spaces).
 - **`SyntaxError: expected ':'`:** Every `if`, `elif`, and `else` header line must end with a colon `:`.
+- **Treating `clamped_high` and `clamped_low` as one clamp's upper and lower bounds:** They are two separate outputs. `clamped_high` reads only `raw_cmd_high`; `clamped_low` reads only `raw_cmd_low`. Changing one raw value changes only its own output.
 
 ---
 
