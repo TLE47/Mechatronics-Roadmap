@@ -127,6 +127,11 @@ async function main() {
     page.on('pageerror', (error) => pageErrors.push(String(error)));
 
     await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+    // Study opens with the editor body folded. This suite drives the editor directly, so expand it
+    // before waiting for CodeMirror: the control is still mounted, but its pane is display:none.
+    await page.waitForSelector('[data-testid="btn-toggle-editor"]', { state: 'attached', timeout: 60000 });
+    const foldedEditor = page.locator('[data-testid="btn-toggle-editor"][aria-expanded="false"]');
+    if (await foldedEditor.count()) await foldedEditor.first().click();
     await page.waitForSelector(EDITOR, { timeout: 60000 });
 
     // 1. Cross-origin isolation: without it there is no SharedArrayBuffer and no interrupt.
