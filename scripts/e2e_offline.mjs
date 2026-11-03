@@ -107,6 +107,20 @@ async function main() {
     await waitForIsolated(page);
     console.log('  ok the service worker takes control and the document reloads isolated (no host headers)');
 
+    // The worker fills the asset cache from fetch events after it claims the page. The reload can
+    // win that race on a slow runner, so wait for the same JS asset the assertion below requires
+    // instead of reading the cache while the first bundle response is still in flight.
+    await page.waitForFunction(
+      async () => {
+        const cache = await caches.open('mechalab-assets-v1');
+        return (await cache.keys()).some((request) =>
+          /\/assets\/.*\.js$/.test(new URL(request.url).pathname)
+        );
+      },
+      undefined,
+      { timeout: 30000 }
+    );
+
     // The shell and the hashed bundle are what makes an offline reload possible at all.
     const cached = await page.evaluate(async () => {
       const keys = await caches.keys();
