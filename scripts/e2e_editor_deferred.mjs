@@ -39,6 +39,13 @@ const LATER_STARTER_LINE = LESSON.starterCode
 /** The same modules Vite emits, in dev (source path) and in the built bundle (`assets/…-hash.js`). */
 const EDITOR_CHUNK = '**/*pythonEditorImpl*';
 
+/** Study opens folded; this suite is about the editor, so put its body on screen first. */
+async function expandEditor(page) {
+  await page.waitForSelector('[data-testid="btn-toggle-editor"]', { state: 'attached', timeout: 20000 });
+  const folded = page.locator('[data-testid="btn-toggle-editor"][aria-expanded="false"]');
+  if (await folded.count()) await folded.first().click();
+}
+
 /** Where the editor is, as the DOM says it: the shell's placeholder, or CodeMirror's own view. */
 async function editorState(page) {
   return page.evaluate(() => ({
@@ -79,6 +86,7 @@ async function main() {
       await page.waitForFunction(() => Boolean(document.querySelector('#root *')), undefined, {
         timeout: 30000,
       });
+      await expandEditor(page);
 
       // The boundary catches the rejection and leaves the placeholder standing. Waiting for its notice
       // is waiting for the failure to have happened, rather than for a timer to have expired.
@@ -138,6 +146,7 @@ async function main() {
       await page.waitForFunction(() => Boolean(document.querySelector('#root *')), undefined, {
         timeout: 30000,
       });
+      await expandEditor(page);
 
       // The placeholder is on screen first: it is what makes the swap a swap rather than a blank box.
       const early = await editorState(page);

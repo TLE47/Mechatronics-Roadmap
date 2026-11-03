@@ -108,6 +108,12 @@ async function main() {
     );
     console.log('  ok one visit filed exactly one lesson_open');
 
+    // Study opens with the editor body folded. This suite is about focus keeping the work, not about
+    // the fold: open the body first so the assertion below is about focus mode.
+    const foldedEditor = page.locator('[data-testid="btn-toggle-editor"][aria-expanded="false"]');
+    if (await foldedEditor.count()) await foldedEditor.first().click();
+    await page.getByTestId('editor-panes').waitFor({ state: 'visible', timeout: 10000 });
+
     // ---- Everything is on screen before the toggle ----
     const before = await chromeState(page);
     assert.deepEqual(
