@@ -63,6 +63,10 @@ const chooserSource = fs.readFileSync(
   path.join(root, 'app/src/components/LessonChooser.tsx'),
   'utf8'
 );
+const chooserRailSource = fs.readFileSync(
+  path.join(root, 'app/src/components/tabs/runner/LessonChooserRail.tsx'),
+  'utf8'
+);
 const foldSource = fs.readFileSync(path.join(root, 'app/src/fold.ts'), 'utf8');
 
 const store = await import(modulePath);
@@ -149,11 +153,11 @@ check('the chooser card folds from its own header, and only where a strip can re
 });
 
 check('a folded chooser leaves a strip in the same column, with the way back', () => {
-  assert.match(runnerSource, /id="lesson-chooser-rail"/);
-  assert.match(runnerSource, /data-collapsed=\{chooserFold\.folded \? 'true' : 'false'\}/);
-  assert.match(runnerSource, /data-testid="btn-lessons-unfold"/);
-  assert.match(runnerSource, /lg:grid-cols-\[48px_minmax\(0,1fr\)\]/);
-  assert.match(runnerSource, /lg:grid-cols-\[224px_minmax\(0,1fr\)\]/);
+  assert.match(chooserRailSource, /id="lesson-chooser-rail"/);
+  assert.match(chooserRailSource, /data-collapsed=\{folded \? 'true' : 'false'\}/);
+  assert.match(chooserRailSource, /data-testid="btn-lessons-unfold"/);
+  assert.match(chooserRailSource, /lg:grid-cols-\[48px_minmax\(0,1fr\)\]/);
+  assert.match(chooserRailSource, /lg:grid-cols-\[224px_minmax\(0,1fr\)\]/);
 });
 
 console.log(`\nrail collapse: ${passed} passed, ${failures.length} failed`);

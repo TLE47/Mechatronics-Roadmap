@@ -30,6 +30,7 @@ flowchart LR
 | `useRunnerArrangement.ts` | The editor/results split share, which side results sit on, and the persisted layout record. |
 | `RunnerToolbar.tsx` | The run controls: presets and dock, Pause/Stop/Run, Predict, and the More panel's actions. |
 | `RunnerEditorCard.tsx` | The editor surface: main/helper tabs, the pane strip, the split controls, and the editor body beside Predict, Run output, Expected and Workflow. |
+| `LessonChooserRail.tsx` | The Study preset's left column: the lesson chooser, the strip it folds to, and the grid width that follows the fold. |
 | `RunnerRuntimeStrip.tsx` | Where the interpreter is while it loads: first-run guide and runtime sentence. |
 | `RunVerdict.tsx` | The one-line verdict under the run controls, from the last outcome. |
 | `PredictPane.tsx` | The prediction gate's pane: the question, the committed guess and its reading. |
@@ -51,8 +52,13 @@ state every region is a view of, so it lives in one place — `useRunnerExecutio
 worker protocol under it lives in `../../runtime/pyodideWorker.ts`. A change to how a lesson runs lands
 in the hook; a change to how the tab looks lands here.
 
-Size rule, held by `npm run test:runner` (`scripts/test_runner_shape.mjs`): the tab is **2,986 lines
-with 28 state cells and 24 refs**, a state-owning hook stays under 400 lines except
+The editor precedes the reader in the DOM so the stacked Study preset reads code then text; `index.css`
+still places them by column at `2xl`, so only the walk order changes, not the drawing. The lesson
+chooser's fold and strip live in `LessonChooserRail.tsx`, which is also why the tab stays inside its
+line budget.
+
+Size rule, held by `npm run test:runner` (`scripts/test_runner_shape.mjs`): the tab's budget is
+**2,986 lines with 28 state cells and 24 refs**, a state-owning hook stays under 400 lines except
 `useRunnerExecution.ts` (one noun, so it is one module), and a view under 650. Those numbers are
 measured, not chosen; the check fails when one rises, and a pass that raises one owes the reason in
 the commit that raises it.

@@ -70,6 +70,7 @@ import {
 import { actionForEvent } from '../../keymap';
 import { useKeymapRef } from '../../useKeymap';
 import { STORAGE_KEY_CHOOSER_COLLAPSED, useFold } from '../../fold';
+import { LessonChooserRail, studyGridColumns } from './runner/LessonChooserRail';
 import { markPaintReady } from '../../paintTiming';
 import { parseSliders } from '../../editor/sliderModel';
 import { readBreakpoints, setBreakpointCondition, toggleBreakpoint, writeBreakpoints, type Breakpoint } from '../../editor/breakpoints';
@@ -1708,29 +1709,19 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     choosePhoneSurface('code');
     openPredictView();
   };
-  /**
-   * The chooser, rendered in the desktop rail or the phone sheet.
-   *
-   * One definition rather than two copies of twelve props: a filter or a count added later would
-   * otherwise have to be remembered in both, and the sheet is exactly the copy that gets forgotten.
-   */
-  const renderLessonChooser = (className?: string, maxHeight?: string, onCollapse?: () => void) => (
-    <LessonChooser
-      lessons={PYTHON_LESSONS}
-      filteredLessons={filteredLessons}
-      trackFilter={trackFilter}
-      onTrackFilter={setTrackFilter}
-      searchQuery={searchQuery}
-      onSearchQuery={setSearchQuery}
-      currentId={selectedId}
-      verifiedLessons={verifiedLessons}
-      completedLessons={completedLessons}
-      onSelect={(id) => selectLesson(id)}
-      className={className}
-      maxHeight={maxHeight}
-      onCollapse={onCollapse}
-    />
-  );
+  /** The chooser's props, shared by the desktop rail and the phone sheet (`runner/LessonChooserRail.tsx`). */
+  const chooser = {
+    lessons: PYTHON_LESSONS,
+    filteredLessons,
+    trackFilter,
+    onTrackFilter: setTrackFilter,
+    searchQuery,
+    onSearchQuery: setSearchQuery,
+    currentId: selectedId,
+    verifiedLessons,
+    completedLessons,
+    onSelect: (id: string) => selectLesson(id),
+  };
 
   // The two outputs are panes now, not a block under the code: the tab strip decides whether one is
   // on screen, and the body splits beside the editor when the learner asks for it. Each view is
@@ -2200,46 +2191,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       {/* The chooser is a rail, not a third column of the work area: the entries stay one click
           away while the lesson text and the editor share the width the chooser used to take. Read,
           Write and Debug hide it, because each of them is about one panel and nothing else. */}
-      <div
-        className={`grid grid-cols-1 gap-5 ${
-          shownLayout === 'study'
-            ? chooserFold.folded
-              ? 'lg:grid-cols-[48px_minmax(0,1fr)]'
-              : 'lg:grid-cols-[224px_minmax(0,1fr)]'
-            : ''
-        }`}
-      >
+      <div className={`grid grid-cols-1 gap-5 ${shownLayout === 'study' ? studyGridColumns(chooserFold.folded) : ''}`}>
         {shownLayout === 'study' && (
-          <div
-            id="lesson-chooser-rail"
-            data-collapsed={chooserFold.folded ? 'true' : 'false'}
-            className="hidden lg:block"
-          >
-            {chooserFold.folded ? (
-              // The strip is the way back, in the same column the card was: folded is not hidden, and
-              // the count keeps saying how many entries are behind the press.
-              <button
-                type="button"
-                onClick={chooserFold.toggle}
-                data-testid="btn-lessons-unfold"
-                aria-expanded={false}
-                aria-controls="lesson-chooser-rail"
-                aria-label="Show the lesson list"
-                title="Show the lesson list: every lesson, its filters and its search come back"
-                className="flex w-full cursor-pointer flex-col items-center gap-1 rounded-xl border border-line bg-panel py-2 text-muted transition-colors hover:border-line-strong hover:text-ink"
-              >
-                <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <span className="[writing-mode:vertical-rl] font-mono text-[10px] uppercase tracking-[0.14em]">
-                  Lessons
-                </span>
-                <span className="font-mono text-[10px] tabular-nums text-faint">
-                  {filteredLessons.length}
-                </span>
-              </button>
-            ) : (
-              renderLessonChooser(undefined, undefined, chooserFold.toggle)
-            )}
-          </div>
+          <LessonChooserRail
+            chooser={chooser}
+            folded={chooserFold.folded}
+            onToggle={chooserFold.toggle}
+            count={filteredLessons.length}
+          />
         )}
 
         <div ref={splitContainerRef} data-focus-expand className="space-y-4">
@@ -2749,11 +2708,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   : 'space-y-4'
             }
           >
-            {/* The editor is the first child, so the stacked arrangement is code first and text
-                under it: below `2xl` the Study preset's two columns are one, and a learner opens a
-                lesson to type before they open it to read. The column layout is unaffected —
-                `index.css` places the reader and the editor by column at `2xl`, so this is the
-                order a keyboard and a screen reader walk, not the place the cards are drawn. */}
+            {/* Code first in the DOM; `2xl` still places the cards by column (`runner/README.md`). */}
             {/* The editor surface, one home (`runner/RunnerEditorCard.tsx`). */}
             <RunnerEditorCard
               surface={{
@@ -3004,7 +2959,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         testId="lesson-sheet"
         size="lg"
       >
-        <div className="p-2">{renderLessonChooser(undefined, 'none')}</div>
+        <div className="p-2"><LessonChooser {...chooser} maxHeight="none" /></div>
       </Sheet>
 
       {helpOpen && <HelpSheet input={helpInput} onClose={() => setHelpOpen(false)} />}

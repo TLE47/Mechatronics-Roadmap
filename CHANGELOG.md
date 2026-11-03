@@ -73,12 +73,21 @@ total moves with it, 3.70 → 3.71 MB. The remembered page accounts for
 8 B of entry and 201 B of JavaScript over `664e852`; the bulk of the breach predates it, at
 `b5e8b63`.
 
-Covered by `npm run test:rail` (13 checks), `npm run test:panes` (the two keys, their defaults and a
-corrupt entry each pinned), `npm run test:studio` (the remembered page, its default and its junk
-values), `npm run check:weight` (the signed-in bundle within its raised ceilings), the workbench
-suite in `check:all`, a `check:snapshot` re-record whose only moved numbers are the two new controls
-and the stacked order, and both Chromium suites, the studio one reopening Plan and then Code across
-a reload.
+**The Study rail moves into its own module, so the runner's line ratchet closes.** The lesson
+chooser's folded strip and its two grid widths were inline in `TabPyodideRunner.tsx`, which `b5e8b63`
+took 42 lines over its 2,986-line budget; `runner-shape` failed on CI and skipped the deploy. The rail
+is now `runner/LessonChooserRail.tsx` — the chooser, the strip it folds to, and `studyGridColumns` —
+the tab builds the chooser's props once and hands them to the rail or the phone sheet, and `test:rail`
+reads the strip from its new owner. The tab is back under the budget without raising it, and the DOM
+is unchanged, so `check:snapshot` still passes from the same 68 surfaces.
+
+Covered by `npm run test:rail` (13 checks, the chooser strip read from its new module),
+`npm run test:runner` (12 checks, the tab back inside its line budget), `npm run test:panes` (the two
+keys, their defaults and a corrupt entry each pinned), `npm run test:studio` (the remembered page, its
+default and its junk values), `npm run check:weight` (the signed-in bundle within its raised ceilings),
+the workbench suite in `check:all`, a `check:snapshot` re-record whose only moved numbers are the two
+new controls and the stacked order, and both Chromium suites, the studio one reopening Plan and then
+Code across a reload.
 
 ## [2026-11-02] — The runner's three knots get owners, and a ratchet holds them
 
