@@ -1,6 +1,6 @@
 import type { FocusEvent as ReactFocusEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { Trash2 } from 'lucide-react';
-import { KIND_META, NODE_WIDTH, type SocketKinds, type WorkflowIssue, type WorkflowNode } from '../../workflow.ts';
+import { KIND_META, nodeWidth, type SocketKinds, type WorkflowIssue, type WorkflowNode } from '../../workflow.ts';
 import { iconForKind } from '../workflowIcons.ts';
 import { cardFill } from './cardStyle.ts';
 import { nudgeCard } from './cardNudge.ts';
@@ -31,7 +31,7 @@ export interface WorkflowForkJoinCardProps {
   dragging: boolean;
   linking: LinkDraft | null;
   sockets: SocketKinds | undefined;
-  onSelect: (id: string) => void;
+  onSelect: (id: string, additive?: boolean) => void;
   onMove: (id: string, x: number, y: number) => void;
   onRemove: (id: string) => void;
   onDragStart: (event: ReactPointerEvent, node: WorkflowNode) => void;
@@ -78,7 +78,7 @@ export function WorkflowForkJoinCard({
       data-kind={node.kind}
       data-shape="bar"
       data-run-active={active ? 'true' : undefined}
-      style={{ left: position.x, top: position.y, width: NODE_WIDTH, backgroundColor: cardFill(node.fill) }}
+      style={{ left: position.x, top: position.y, width: nodeWidth(node), backgroundColor: cardFill(node.fill) }}
       className={`absolute cursor-default rounded-lg border bg-panel shadow-sm ${frame} ${
         dragging ? 'z-40 shadow-lg' : selected ? 'z-30' : 'z-20'
       }`}

@@ -16,8 +16,11 @@ import { normalizeRect, type CanvasRect } from './canvasGeometry.ts';
 
 export interface Marquee {
   rect: CanvasRect | null;
-  /** Starts a box when the press is on empty paper; false leaves the press to whoever else wants it. */
-  start: (event: ReactPointerEvent) => boolean;
+  /**
+   * Starts a box when the press is on paper; false leaves the press to whoever else wants it.
+   * `allowStructural` is the armed frame/lane draw, which may begin over a frame or lane.
+   */
+  start: (event: ReactPointerEvent, allowStructural?: boolean) => boolean;
   move: (event: ReactPointerEvent) => void;
   finish: () => void;
 }
@@ -27,22 +30,24 @@ export function useMarquee({
   onDone,
 }: {
   toCanvas: (clientX: number, clientY: number) => { x: number; y: number };
-  onDone: (rect: CanvasRect) => void;
+  onDone: (rect: CanvasRect, dragged: boolean) => void;
 }): Marquee {
   const [rect, setRect] = useState<CanvasRect | null>(null);
   const box = useRef<CanvasRect | null>(null);
   const origin = useRef<{ x: number; y: number } | null>(null);
 
-  const start = (event: ReactPointerEvent) => {
+  const start = (event: ReactPointerEvent, allowStructural = false) => {
     if (event.button !== 0) return false;
     const target = event.target as HTMLElement;
-    // A frame's chip is a control, not paper: armed or not, pressing it must name or move the
-    // frame rather than start a box on top of it. Everything else with its own gesture is skipped
-    // too.
+    // A chip is a control, not paper: armed or not, pressing it must name or move the frame rather
+    // than start a box on top of it. Everything with its own gesture is skipped too. A frame's
+    // border is paper only for an armed frame/lane draw; a plain selection must leave the border
+    // to the frame's own drag.
     if (
       target.closest(
         'button, input, textarea, select, a, [data-node-id], [data-edge-inspector], [data-frame-chip], [data-lane-chip]'
-      )
+      ) ||
+      (!allowStructural && target.closest('[data-testid^="workflow-group-"]'))
     ) {
       return false;
     }
@@ -64,12 +69,14 @@ export function useMarquee({
   };
 
   const finish = () => {
+    if (!origin.current) return;
     const drawn = box.current && normalizeRect(box.current);
     origin.current = null;
     box.current = null;
     setRect(null);
-    // A press with no drag is a click on the paper, not a frame around nothing.
-    if (drawn && Math.min(drawn.width, drawn.height) >= 12) onDone(drawn);
+    // A press with no drag is a click on the paper: the caller clears the selection, rather than
+    // turning a zero-size box into an empty frame.
+    onDone(drawn ?? { x: 0, y: 0, width: 0, height: 0 }, Boolean(drawn && Math.min(drawn.width, drawn.height) >= 12));
   };
 
   return { rect, start, move, finish };

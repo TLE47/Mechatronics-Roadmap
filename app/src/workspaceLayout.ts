@@ -72,17 +72,17 @@ export const LAYOUTS: LayoutOption[] = [
     arrangement: 'workbench',
   },
   {
-    id: 'write',
-    label: 'Write',
+    id: 'read',
+    label: 'Read',
     shortcut: '⌥2',
-    title: 'Write layout (⌥2): the editor only — the lesson text and the results are hidden',
+    title: 'Read layout (⌥2): the lesson text only — the editor and the results are hidden',
     arrangement: 'stack',
   },
   {
-    id: 'read',
-    label: 'Read',
+    id: 'write',
+    label: 'Write',
     shortcut: '⌥3',
-    title: 'Read layout (⌥3): the lesson text only — the editor and the results are hidden',
+    title: 'Write layout (⌥3): the editor only — the lesson text and the results are hidden',
     arrangement: 'stack',
   },
   {

@@ -95,7 +95,7 @@ console.log('layout presets');
 check('four presets, each printing its own shortcut', () => {
   assert.deepEqual(
     LAYOUTS.map((option) => option.id),
-    ['study', 'write', 'read', 'debug']
+    ['study', 'read', 'write', 'debug']
   );
   assert.deepEqual(
     LAYOUTS.map((option) => option.shortcut),
@@ -120,8 +120,8 @@ check('the arrangement is a separate rule: Study is a workbench, Debug is two co
     LAYOUTS.map((option) => [option.id, layoutArrangement(option.id)]),
     [
       ['study', 'workbench'],
-      ['write', 'stack'],
       ['read', 'stack'],
+      ['write', 'stack'],
       ['debug', 'columns'],
     ]
   );
@@ -183,11 +183,11 @@ check('storage that throws on read, or on write, costs the memory and not the to
 
 check('the shortcut is the physical key, so ⌥2 works where it types ™', () => {
   assert.equal(layoutShortcutFor('Digit1'), 'study');
-  assert.equal(layoutShortcutFor('Digit2'), 'write');
-  assert.equal(layoutShortcutFor('Digit3'), 'read');
+  assert.equal(layoutShortcutFor('Digit2'), 'read');
+  assert.equal(layoutShortcutFor('Digit3'), 'write');
   assert.equal(layoutShortcutFor('Digit4'), 'debug');
   assert.equal(layoutShortcutFor('1'), 'study');
-  assert.equal(layoutShortcutFor('3'), 'read');
+  assert.equal(layoutShortcutFor('3'), 'write');
   assert.equal(layoutShortcutFor('4'), 'debug');
   assert.equal(layoutShortcutFor('Digit5'), null, 'there is no fifth preset');
   assert.equal(layoutShortcutFor('5'), null);

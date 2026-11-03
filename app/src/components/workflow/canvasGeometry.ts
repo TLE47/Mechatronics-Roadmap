@@ -1,4 +1,4 @@
-import { NODE_WIDTH, type EdgeRoute, type WorkflowNode, type WorkflowSide } from '../../workflow.ts';
+import { nodeWidth, type EdgeRoute, type WorkflowNode, type WorkflowSide } from '../../workflow.ts';
 
 /**
  * The workflow canvas's geometry (`components/workflow/canvasGeometry.ts`).
@@ -33,11 +33,11 @@ function anchorOn(node: WorkflowNode, side: WorkflowSide, height: number): { x: 
     case 'left':
       return { x: node.x, y: node.y + height / 2 };
     case 'right':
-      return { x: node.x + NODE_WIDTH, y: node.y + height / 2 };
+      return { x: node.x + nodeWidth(node), y: node.y + height / 2 };
     case 'top':
-      return { x: node.x + NODE_WIDTH / 2, y: node.y };
+      return { x: node.x + nodeWidth(node) / 2, y: node.y };
     case 'bottom':
-      return { x: node.x + NODE_WIDTH / 2, y: node.y + height };
+      return { x: node.x + nodeWidth(node) / 2, y: node.y + height };
   }
 }
 
@@ -286,7 +286,7 @@ export function groupRect(
   for (const node of members) {
     minX = Math.min(minX, node.x);
     minY = Math.min(minY, node.y);
-    maxX = Math.max(maxX, node.x + NODE_WIDTH);
+    maxX = Math.max(maxX, node.x + nodeWidth(node));
     maxY = Math.max(maxY, node.y + cardHeight(heights, node.id));
   }
   return {
@@ -348,7 +348,7 @@ export function cardsWithin(
   const box = normalizeRect(rect);
   return nodes
     .filter((node) => {
-      const cx = node.x + NODE_WIDTH / 2;
+      const cx = node.x + nodeWidth(node) / 2;
       const cy = node.y + cardHeight(heights, node.id) / 2;
       return cx >= box.x && cx <= box.x + box.width && cy >= box.y && cy <= box.y + box.height;
     })
@@ -362,10 +362,10 @@ export function facingSide(
   fromHeight: number,
   toHeight: number
 ): WorkflowSide {
-  const dx = from.x + NODE_WIDTH / 2 - (to.x + NODE_WIDTH / 2);
+  const dx = from.x + nodeWidth(from) / 2 - (to.x + nodeWidth(to) / 2);
   const dy = from.y + fromHeight / 2 - (to.y + toHeight / 2);
   const vertical = Math.abs(dy) / Math.max(1, Math.max(fromHeight, toHeight));
-  const horizontal = Math.abs(dx) / NODE_WIDTH;
+  const horizontal = Math.abs(dx) / Math.max(1, Math.max(nodeWidth(from), nodeWidth(to)));
   if (horizontal >= vertical) return dx < 0 ? 'left' : 'right';
   return dy < 0 ? 'top' : 'bottom';
 }

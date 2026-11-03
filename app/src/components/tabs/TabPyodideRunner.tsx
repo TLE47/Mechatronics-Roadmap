@@ -21,6 +21,7 @@ import { FaultBench08 } from '../FaultBench08';
 
 import { WorkflowPanel } from '../WorkflowPanel';
 import { LessonReader } from '../LessonReader';
+import { TracePanel } from '../TracePanel';
 import { LessonChooser, type TrackFilter } from '../LessonChooser';
 import { Sheet } from '../Sheet';
 
@@ -1858,6 +1859,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       onPause={pauseExecution}
       onStop={() => stopExecution()}
       onMoreOpenChange={setMoreOpen}
+      onShowTrace={() =>
+        commitPanes(
+          slotFor(panes, 'trace') !== null ? showView(panes, 'trace') : splitPane(panes, 'trace')
+        )
+      }
       runButtonRef={runButtonRef}
       onRun={() => {
         const lesson =
@@ -2736,7 +2742,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 symbolMiss,
                 sliderCount,
                 vim: { on: vim.on, mode: vim.mode, onMode: vim.setMode },
-                lesson: { id: selectedId, question: writeQuestion },
+                lesson: { id: selectedId, question: writeQuestion, goal: currentLesson.goal },
                 onSliderCommit: handleSliderCommit,
                 getAnalysis: getReadyAnalysis,
                 onGoToDefinition: goToDefinition,
@@ -2752,7 +2758,25 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 actualOutputPane,
                 expectedOutputPane,
                 workflowPane,
+                tracePane: (
+                  <TracePanel
+                    trace={trace}
+                    step={traceStep}
+                    onStep={setTraceStep}
+                    source={runCodeRef.current || code}
+                    onReveal={showMainLine}
+                  />
+                ),
               }}
+              nextChapter={
+                nextLesson
+                  ? {
+                      label: `Next: ${nextLesson.id}`,
+                      title: `Go to ${nextLesson.id}: ${nextLesson.title}`,
+                      onOpen: () => selectLesson(nextLesson.id),
+                    }
+                  : null
+              }
               collab={{ coEdit, collabNotice, peerLabel: pair.peer }}
               onClosePredict={() => commitPanes(closeView(panes, 'predict'))}
             />
@@ -2771,6 +2795,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 // Hidden, not unmounted: the phone's Code surface must return to the paragraph the
                 // reader was on, and the page's own request is not free.
                 hidden={!phoneLessonVisible}
+                scope={shownLayout === 'study' ? 'study' : 'full'}
               />
             )}
 
@@ -2805,14 +2830,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               instructorError,
               passStatus,
               harnessResult,
-              resultsShown: layoutShows(shownLayout, 'results'),
-            }}
-            trace={{
-              snapshot: trace,
-              step: traceStep,
-              onStep: setTraceStep,
-              source: runCodeRef.current || code,
-              onReveal: showMainLine,
             }}
             scope={{
               series: scopeSeries,

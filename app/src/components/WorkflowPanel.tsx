@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { ChevronDown, GitBranch, MousePointerClick, Sparkles, Trash2 } from 'lucide-react';
+import { ChevronDown, GitBranch, LayoutGrid, MousePointerClick, Search, Sparkles, Trash2, X } from 'lucide-react';
 import {
   KIND_META,
   MODE_LABEL,
@@ -13,6 +13,7 @@ import {
   type WorkflowIssue,
 } from '../workflow.ts';
 import { laneIndexOf } from '../workflowProcesses.ts';
+import { searchFieldLabel, searchWorkflow } from '../workflowSearch.ts';
 import { validateWorkflow } from '../workflowValidation.ts';
 import { templateForLesson, type WorkflowTemplate } from '../workflowTemplates.ts';
 import {
@@ -25,6 +26,7 @@ import { PYTHON_LESSONS } from '../data/pythonLessonsData.ts';
 import { isKnownLesson } from '../lessonRoute.ts';
 import { HowToCard } from './HowToCard.tsx';
 import { TemplatePicker } from './TemplatePicker.tsx';
+import { WorkflowSelectionBar } from './workflow/WorkflowSelectionBar.tsx';
 import { WorkflowSelectionInspector } from './workflow/WorkflowSelectionInspector.tsx';
 import { openProjectObject } from '../projectPresentation.ts';
 import { WorkflowMenu, type WorkflowMenuRequest } from './workflow/WorkflowMenu.tsx';
@@ -106,6 +108,7 @@ export function WorkflowPanel({
   const {
     doc,
     selectedId,
+    selectedIds,
     selectedEdgeId,
     status,
     say: setStatus,
@@ -113,8 +116,13 @@ export function WorkflowPanel({
     undo,
     redo,
     selectNode,
+    selectNodes,
     selectEdge,
     updateNode,
+    updateSelected,
+    fitSelected,
+    removeSelected,
+    layoutWorkflowCards,
     setNodeAnnotation,
     moveNode,
     moveNodes,
@@ -158,6 +166,9 @@ export function WorkflowPanel({
   const [howTo, setHowTo] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [pendingTemplate, setPendingTemplate] = useState<WorkflowTemplate | null>(null);
+  // The workflow has its own find field: the global palette searches lessons, not the cards on the
+  // paper in front of the learner.
+  const [searchQuery, setSearchQuery] = useState('');
   // The frame gesture is armed, not always on: the same paper pans, and on a phone a plain drag has
   // to keep scrolling.
   const [grouping, setGrouping] = useState(false);
@@ -182,21 +193,45 @@ export function WorkflowPanel({
   const checksId = useId();
 
   // ⌘Z / ⌘⇧Z (Ctrl on other platforms), the editor's own pair, plus the Windows redo habit Ctrl+Y.
-  // A focused field keeps its native undo; a hidden tab has no root box and listens to nothing.
+  // The same listener carries the clipboard and Delete, because a diagram is a document: C/X/V and
+  // Del are the four keys a learner already uses in every other editor on the machine.
+  // A focused field keeps its native keys; a hidden tab has no root box and listens to nothing.
   const root = useRef<HTMLDivElement | null>(null);
-  const steps = useRef({ undo, redo });
-  steps.current = { undo, redo };
+  const steps = useRef({ undo, redo, copyNode, cutNode, pasteNode, removeSelected, canPaste, selectedId, selectedIds });
+  steps.current = { undo, redo, copyNode, cutNode, pasteNode, removeSelected, canPaste, selectedId, selectedIds };
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
-      const key = event.key.toLowerCase();
-      const forward = key === 'y' || (key === 'z' && event.shiftKey);
-      if (key !== 'z' && !forward) return;
       const target = event.target as Element | null;
       if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
       if (!root.current?.getClientRects().length) return;
+      const actions = steps.current;
+      // Delete belongs to the canvas even when no modifier is held; Backspace is the same gesture on
+      // a Mac keyboard and is safe here because a text field returned above.
+      if (!event.metaKey && !event.ctrlKey && !event.altKey && (event.key === 'Delete' || event.key === 'Backspace')) {
+        if (!actions.selectedIds.length) return;
+        event.preventDefault();
+        actions.removeSelected();
+        return;
+      }
+      if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
+      const key = event.key.toLowerCase();
+      const id = actions.selectedId ?? actions.selectedIds[0];
+      if (key === 'c' || key === 'x') {
+        if (!id) return;
+        event.preventDefault();
+        (key === 'c' ? actions.copyNode : actions.cutNode)(id);
+        return;
+      }
+      if (key === 'v') {
+        if (!actions.canPaste) return;
+        event.preventDefault();
+        actions.pasteNode();
+        return;
+      }
+      const forward = key === 'y' || (key === 'z' && event.shiftKey);
+      if (key !== 'z' && !forward) return;
       event.preventDefault();
-      (forward ? steps.current.redo : steps.current.undo)();
+      (forward ? actions.redo : actions.undo)();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -298,6 +333,7 @@ export function WorkflowPanel({
   };
 
   const lessonTemplate = templateForLesson(lessonId);
+  const searchHits = useMemo(() => searchWorkflow(doc, searchQuery), [doc, searchQuery]);
   const { issues, issueByStep, numbers, open, hints } = useMemo(() => {
     const list = doc ? validateWorkflow(doc) : [];
     const byStep = new Map<string, WorkflowIssue>();
@@ -425,7 +461,8 @@ export function WorkflowPanel({
     );
   }
 
-  const selectedNode = selectedId ? (doc.nodes.find((node) => node.id === selectedId) ?? null) : null;
+  const selectedNodes = doc.nodes.filter((node) => selectedIds.includes(node.id));
+  const selectedNode = selectedNodes.length === 1 ? selectedNodes[0] : null;
   const selectedLane = selectedNode ? laneIndexOf(doc.lanes, selectedNode.id) : -1;
 
   return (
@@ -535,7 +572,88 @@ export function WorkflowPanel({
           className="min-w-0 flex-1 rounded border px-2 py-1 text-[12.5px] font-semibold outline-none"
           style={{ borderColor: 'var(--border)', backgroundColor: 'var(--canvas)', color: 'var(--text)' }}
         />
+        <button
+          type="button"
+          data-testid="workflow-auto-layout"
+          onClick={layoutWorkflowCards}
+          title="Arrange the cards in dependency columns"
+          className="flex min-h-9 cursor-pointer items-center gap-1 rounded border border-line bg-canvas px-2 font-mono text-[10.5px] text-muted hover:border-accent hover:text-accent"
+        >
+          <LayoutGrid className="h-3 w-3" aria-hidden="true" />
+          Auto layout
+        </button>
       </div>
+
+      <div className="relative mt-2" data-testid="workflow-search-wrap">
+        <Search
+          className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-faint"
+          aria-hidden="true"
+        />
+        <input
+          data-testid="workflow-search"
+          aria-label="Find a card in this workflow"
+          value={searchQuery}
+          placeholder="Find a card by title, detail, note, unit or kind…"
+          onChange={(event) => setSearchQuery(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') setSearchQuery('');
+            if (event.key === 'Enter' && searchHits[0]) {
+              selectNode(searchHits[0].node.id);
+              revealCard(searchHits[0].node.id);
+            }
+          }}
+          className="h-9 w-full rounded-lg border border-line bg-canvas pl-8 pr-16 font-mono text-[11.5px] text-body outline-none placeholder:text-faint focus:border-accent focus-visible:outline-2 focus-visible:outline-accent"
+        />
+        <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 font-mono text-[9.5px] text-faint">
+          {searchQuery.trim() ? `${searchHits.length} hit${searchHits.length === 1 ? '' : 's'}` : 'cards'}
+        </span>
+        {searchQuery && (
+          <button
+            type="button"
+            aria-label="Clear the workflow search"
+            onClick={() => setSearchQuery('')}
+            className="absolute right-10 top-1/2 grid h-5 w-5 -translate-y-1/2 cursor-pointer place-items-center rounded text-faint hover:bg-raise hover:text-body"
+          >
+            <X className="h-3 w-3" aria-hidden="true" />
+          </button>
+        )}
+      </div>
+
+      {searchQuery.trim() && (
+        <div
+          data-testid="workflow-search-results"
+          className="mt-1 max-h-44 overflow-auto rounded-lg border border-line bg-canvas p-1 shadow-sm"
+        >
+          {searchHits.length === 0 ? (
+            <p className="px-2 py-2 text-[11.5px] text-muted">No card says “{searchQuery.trim()}”.</p>
+          ) : (
+            searchHits.slice(0, 10).map((hit, index) => (
+              <button
+                key={`${hit.node.id}-${hit.field}-${index}`}
+                type="button"
+                data-testid={`workflow-search-hit-${index}`}
+                onClick={() => {
+                  selectNode(hit.node.id);
+                  revealCard(hit.node.id);
+                }}
+                className="flex w-full cursor-pointer items-start gap-2 rounded px-2 py-1.5 text-left hover:bg-raise"
+              >
+                <span className="mt-0.5 w-9 shrink-0 font-mono text-[9.5px] uppercase tracking-wide text-accent">
+                  {searchFieldLabel(hit.field)}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[11.5px] font-medium text-body">
+                    {hit.node.title || KIND_META[hit.node.kind].label}
+                  </span>
+                  <span className="mt-0.5 block truncate font-mono text-[10px] text-muted">
+                    {hit.snippet}
+                  </span>
+                </span>
+              </button>
+            ))
+          )}
+        </div>
+      )}
 
       <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
         <span
@@ -580,7 +698,9 @@ export function WorkflowPanel({
         <span aria-hidden="true">·</span>
         <span>Drag a dot to another card to draw an arrow; press an arrow to name what it carries</span>
         <span aria-hidden="true">·</span>
-        <span>Drag empty canvas or use the arrow keys to pan; Fit frames the flow</span>
+        <span>Drag empty canvas to select; Alt-drag or arrow keys pan; Ctrl/⌘-click adds a card</span>
+        <span aria-hidden="true">·</span>
+        <span>Ctrl/⌘ C, X, V copy, cut and paste; Delete removes the selection</span>
       </div>
 
       <Suspense
@@ -595,8 +715,9 @@ export function WorkflowPanel({
           doc={doc}
           numbers={numbers}
           issueByStep={issueByStep}
-          selectedId={selectedId}
+          selectedIds={selectedIds}
           onSelect={selectNode}
+          onSelectMany={selectNodes}
           onMove={moveNode}
           onUpdate={updateNode}
           onRemove={removeNode}
@@ -671,6 +792,18 @@ export function WorkflowPanel({
 
       {/* Below the paper, never above it: the inspector is in flow, so opening it must not move the
           card the learner just pressed. */}
+      {selectedNodes.length > 1 && (
+        <WorkflowSelectionBar
+          count={selectedNodes.length}
+          onFit={fitSelected}
+          wrap={selectedNodes.every((node) => node.wrapText !== false)}
+          onWrap={() =>
+            updateSelected({ wrapText: selectedNodes.every((node) => node.wrapText !== false) ? false : undefined })
+          }
+          onLayout={layoutWorkflowCards}
+          onRemove={removeSelected}
+        />      )}
+
       {selectedNode && (
         <WorkflowSelectionInspector
           node={selectedNode}

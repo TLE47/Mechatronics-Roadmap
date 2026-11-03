@@ -24,6 +24,7 @@ import {
   MAX_EDGES,
   MAX_STEPS,
   addWorkflowNode,
+  fittedNodeWidth,
   emptyWorkflow,
   type EdgeRoute,
   type PortKind,
@@ -43,6 +44,7 @@ import {
   type WorkflowHistory,
 } from '../../workflowHistory.ts';
 import { clearWorkflow, readWorkflow, saveWorkflow } from '../../workflowStore.ts';
+import { autoLayoutWorkflow } from '../../workflowLayout.ts';
 import type { WorkflowTemplate } from '../../workflowTemplates.ts';
 import { useLanes } from './useLanes.ts';
 import type { LinkDraft } from './useLinking.ts';
@@ -51,10 +53,12 @@ const NOT_SAVED = 'Not saved — storage is blocked or full';
 
 export function useWorkflowEditor(lessonId: string, lessonTitle: string) {
   const [doc, setDoc] = useState<WorkflowDoc | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  // One selection at a time: a card or an arrow. The arrow's inspector is the only place a kind is
-  // chosen, so opening it closes the card ring — two highlighted things would leave "which one does
-  // the palette edit?" to be guessed.
+  // Cards are multi-selectable; the inspector still describes exactly one card when one is picked.
+  // The set is ordered as the learner picked, which keeps the first card's inspector stable.
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const selectedId = selectedIds.length === 1 ? selectedIds[0] : null;
+  // One selection at a time between cards and arrows: the arrow inspector is the only place a kind
+  // is chosen, so opening it closes the card rings.
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [status, setStatus] = useState('');
   // The clear confirmation is editor state, not layout: an undo has to dismiss it too.
@@ -125,7 +129,7 @@ export function useWorkflowEditor(lessonId: string, lessonTitle: string) {
 
   /** Put a state back. `null` is the lesson's cleared state, not a document with no cards. */
   const restore = (next: WorkflowDoc | null) => {
-    setSelectedId(null);
+    setSelectedIds([]);
     setSelectedEdgeId(null);
     setClearOpen(false);
     if (next) {
@@ -165,15 +169,34 @@ export function useWorkflowEditor(lessonId: string, lessonTitle: string) {
     setStatus('Redone');
   };
 
-  /** A card press clears the arrow inspector: one selection, so the palette edits what is ringed. */
-  const selectNode = (id: string | null) => {
-    setSelectedId(id);
-    if (id) setSelectedEdgeId(null);
+  /**
+   * A card press. `additive` is Ctrl/Cmd-click: it toggles one card without dropping the others.
+   * A plain press replaces the selection, and a press on bare paper clears it.
+   */
+  const selectNode = (id: string | null, additive = false) => {
+    if (!id) {
+      setSelectedIds([]);
+      return;
+    }
+    setSelectedIds((previous) =>
+      additive
+        ? previous.includes(id)
+          ? previous.filter((entry) => entry !== id)
+          : [...previous, id]
+        : [id]
+    );
+    setSelectedEdgeId(null);
+  };
+
+  /** A marquee, a frame drag, or "select all": one write for the whole set. */
+  const selectNodes = (ids: readonly string[]) => {
+    setSelectedIds([...new Set(ids)]);
+    if (ids.length) setSelectedEdgeId(null);
   };
 
   const selectEdge = (id: string | null) => {
     setSelectedEdgeId(id);
-    if (id) setSelectedId(null);
+    if (id) setSelectedIds([]);
   };
 
   // The lane interaction owns creation, assignment, renaming, removal and the caret a new lane
@@ -189,7 +212,7 @@ export function useWorkflowEditor(lessonId: string, lessonTitle: string) {
   useEffect(() => {
     flush();
     setDoc(readWorkflow(lessonId));
-    setSelectedId(null);
+    setSelectedIds([]);
     setSelectedEdgeId(null);
     setStatus('');
     setClearOpen(false);
@@ -229,6 +252,23 @@ export function useWorkflowEditor(lessonId: string, lessonTitle: string) {
     if (next) commit(next);
   };
 
+  /** One patch for every selected card, used by the multi-selection style row. */
+  const updateSelected = (patch: Partial<WorkflowNode>) => {
+    const base = latest.current ?? doc;
+    if (!base || !selectedIds.length) return;
+    let next = base;
+    for (const id of selectedIds) next = edits.editNode(next, id, patch);
+    commit(next);
+  };
+
+  /** Auto layout is a document edit like a drag; undo puts every card back where it was. */
+  const layoutWorkflowCards = () => {
+    const base = latest.current ?? doc;
+    if (!base) return;
+    commit(autoLayoutWorkflow(base));
+    setStatus('Auto layout applied');
+  };
+
   const addNode = (kind: StepKind, at?: { x: number; y: number }) => {
     if (!doc) return;
     const next = addWorkflowNode(doc, kind, at);
@@ -247,7 +287,7 @@ export function useWorkflowEditor(lessonId: string, lessonTitle: string) {
 
   const removeNode = (id: string) => {
     if (!doc) return;
-    if (selectedId === id) setSelectedId(null);
+    if (selectedIds.includes(id)) setSelectedIds((previous) => previous.filter((entry) => entry !== id));
     const removed = edits.removeNode(doc, id);
     if (!removed.doc) {
       // The history keeps the last card, so that is one undo away.
@@ -261,6 +301,39 @@ export function useWorkflowEditor(lessonId: string, lessonTitle: string) {
     }
     commit(removed.doc);
     setStatus(removed.lostEdges ? 'Card removed — its arrows went with it' : 'Card removed');
+  };
+
+  /** Fit every selected card to its longest line, keeping wrapping on. */
+  const fitSelected = () => {
+    const base = latest.current ?? doc;
+    if (!base || !selectedIds.length) return;
+    let next = base;
+    for (const id of selectedIds) {
+      const node = next.nodes.find((entry) => entry.id === id);
+      if (node) next = edits.editNode(next, id, { width: fittedNodeWidth(node), wrapText: true });
+    }
+    commit(next);
+    setStatus(selectedIds.length === 1 ? 'Card fitted to its text' : 'Cards fitted to their text');
+  };
+
+  /** Remove every selected card in one history step. */
+  const removeSelected = () => {
+    const base = latest.current ?? doc;
+    if (!base || !selectedIds.length) return;
+    let next: WorkflowDoc | null = base;
+    for (const id of selectedIds) {
+      next = next ? edits.removeNode(next, id).doc : null;
+      if (!next) break;
+    }
+    if (!next) {
+      remember(base);
+      restore(null);
+      setStatus('Workflow cleared');
+      return;
+    }
+    commit(next);
+    setStatus(`${selectedIds.length} cards removed`);
+    setSelectedIds([]);
   };
 
   const copyNode = (id: string) => {
@@ -431,6 +504,7 @@ export function useWorkflowEditor(lessonId: string, lessonTitle: string) {
   return {
     doc,
     selectedId,
+    selectedIds,
     selectedEdgeId,
     status,
     say: setStatus,
@@ -438,11 +512,16 @@ export function useWorkflowEditor(lessonId: string, lessonTitle: string) {
     undo,
     redo,
     selectNode,
+    selectNodes,
     selectEdge,
     updateNode,
+    updateSelected,
+    fitSelected,
+    removeSelected,
     setNodeAnnotation,
     moveNode,
     moveNodes,
+    layoutWorkflowCards,
     addNode,
     removeNode,
     copyNode,

@@ -346,7 +346,7 @@ export const TabStudio: React.FC = () => {
           symbolMiss: null,
           sliderCount: 0,
           vim: { on: vimOn, mode: vimMode, onMode: setVimMode },
-          lesson: { id: 'studio', question: '' },
+          lesson: { id: 'studio', question: '', goal: '' },
           onSliderCommit: () => {},
           editorTestId: 'editor-studio',
         }}

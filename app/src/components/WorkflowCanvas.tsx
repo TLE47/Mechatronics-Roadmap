@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, type PointerEvent as ReactPointerEvent } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { socketKinds } from '../workflow.ts';
 import { isForkJoin } from '../workflowProcesses.ts';
@@ -70,8 +70,9 @@ export interface WorkflowCanvasProps {
   numbers: Map<string, number>;
   /** The first open issue per card, from the panel's single validation pass. */
   issueByStep: Map<string, WorkflowIssue>;
-  selectedId: string | null;
-  onSelect: (id: string | null) => void;
+  selectedIds: string[];
+  onSelect: (id: string | null, additive?: boolean) => void;
+  onSelectMany: (ids: string[]) => void;
   onMove: (id: string, x: number, y: number) => void;
   onUpdate: (id: string, patch: Partial<WorkflowNode>) => void;
   onRemove: (id: string) => void;
@@ -135,8 +136,9 @@ export function WorkflowCanvas({
   doc,
   numbers,
   issueByStep,
-  selectedId,
+  selectedIds,
   onSelect,
+  onSelectMany,
   onMove,
   onUpdate,
   onRemove,
@@ -184,7 +186,7 @@ export function WorkflowCanvas({
 
   const viewport = useViewport(doc.nodes, onSelect);
   const heights = useNodeHeights(viewport.gridRef, nodeIds);
-  const drag = useNodeDrag({ toCanvas: viewport.toCanvas, onMoveMany, onSelect });
+  const drag = useNodeDrag({ toCanvas: viewport.toCanvas, onMoveMany });
 
   // A frame is drawn from the cards it holds, at the position they are at right now: mid-drag, the
   // box follows its members instead of snapping back at release.
@@ -222,12 +224,42 @@ export function WorkflowCanvas({
 
   const marquee = useMarquee({
     toCanvas: viewport.toCanvas,
-    onDone: (rect) => {
+    onDone: (rect, dragged) => {
+      if (!dragged) {
+        if (!grouping && !laning) onSelect(null);
+        return;
+      }
       const nodeIds = cardsWithin(rect, shown, heights);
       if (laning) onLaneCards(nodeIds);
-      else onGroupCards(nodeIds);
+      else if (grouping) onGroupCards(nodeIds);
+      else onSelectMany(nodeIds);
     },
   });
+
+  /**
+   * Start a card drag on the right set: Ctrl/Cmd toggles one card for selection, a plain press on
+   * an unselected card makes it the selection, and a press inside an existing selection drags the
+   * whole set together.
+   */
+  const startCardDrag = (event: ReactPointerEvent<Element>, node: WorkflowNode) => {
+    if (event.metaKey || event.ctrlKey) {
+      event.preventDefault();
+      event.stopPropagation();
+      onSelect(node.id, true);
+      return;
+    }
+    if (!selectedIds.includes(node.id)) onSelect(node.id);
+    const held = selectedIds.includes(node.id)
+      ? doc.nodes.filter((entry) => selectedIds.includes(entry.id))
+      : [node];
+    drag.startDrag(event, held.length ? held : [node]);
+  };
+
+  /** A frame drag selects every card it carries, then moves them as one. */
+  const startFrameDrag = (event: ReactPointerEvent<Element>, nodes: readonly WorkflowNode[]) => {
+    onSelectMany(nodes.map((node) => node.id));
+    drag.startDrag(event, nodes);
+  };
 
   const linking = useLinking({
     toCanvas: viewport.toCanvas,
@@ -306,10 +338,14 @@ export function WorkflowCanvas({
       <div
         ref={viewport.surfaceRef}
         data-testid="workflow-canvas"
-        // Capture first: armed, or with Shift held, a drag on paper draws a frame — including over
-        // an existing frame, whose own press would otherwise start moving it. Otherwise: pan.
+        // Group/lane is the armed box; Shift keeps the old shortcut. A plain mouse drag is the
+        // selection box now, and Alt-drag is the explicit pan (the surface's arrow keys still pan).
         onPointerDownCapture={(event) => {
-          if ((grouping || laning || event.shiftKey) && marquee.start(event)) event.stopPropagation();
+          const armed = grouping || laning || event.shiftKey;
+          // Touch keeps native scrolling; the selection box is the persistent mouse gesture.
+          if (armed || (event.pointerType === 'mouse' && event.button === 0 && !event.altKey)) {
+            if (marquee.start(event, armed)) event.stopPropagation();
+          }
         }}
         onPointerDown={(event) => viewport.startPan(event)}
         onPointerMove={marquee.move}
@@ -399,7 +435,7 @@ export function WorkflowCanvas({
                 members={members}
                 onRename={onRenameGroup}
                 onRemove={onRemoveGroup}
-                onDragStart={drag.startDrag}
+                onDragStart={startFrameDrag}
               />
             ))}
 
@@ -427,7 +463,7 @@ export function WorkflowCanvas({
                 index,
                 number: numbers.get(node.id) ?? index + 1,
                 issue: issueByStep.get(node.id),
-                selected: selectedId === node.id,
+                selected: selectedIds.includes(node.id),
                 active: activeIds.has(node.id),
                 position: drag.live?.get(node.id) ?? { x: node.x, y: node.y },
                 dragging: Boolean(drag.dragIds?.includes(node.id)),
@@ -441,7 +477,7 @@ export function WorkflowCanvas({
                   ? (projectRef: string) =>
                       onOpenObject(projectRef, objectById.get(projectRef)?.kind)
                   : undefined,
-                onDragStart: drag.startDrag,
+                onDragStart: startCardDrag,
                 onLinkStart: linking.startLink,
                 onLinkLand: linking.landOnCard,
               };

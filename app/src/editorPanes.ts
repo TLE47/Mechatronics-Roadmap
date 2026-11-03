@@ -28,7 +28,7 @@
  * go through, and `npm run test:panes` pins it.
  */
 
-export const EDITOR_VIEWS = ['main', 'predict', 'actual', 'expected', 'workflow'] as const;
+export const EDITOR_VIEWS = ['main', 'predict', 'actual', 'expected', 'workflow', 'trace'] as const;
 
 export type EditorView = (typeof EDITOR_VIEWS)[number];
 
@@ -39,6 +39,7 @@ export const EDITOR_VIEW_LABELS: Record<EditorView, string> = {
   actual: 'Run output',
   expected: 'Expected',
   workflow: 'Workflow',
+  trace: 'Trace',
 };
 
 /** Which way two panes divide the body. */
@@ -78,7 +79,8 @@ export function isEditorView(value: unknown): value is EditorView {
     value === 'predict' ||
     value === 'actual' ||
     value === 'expected' ||
-    value === 'workflow'
+    value === 'workflow' ||
+    value === 'trace'
   );
 }
 

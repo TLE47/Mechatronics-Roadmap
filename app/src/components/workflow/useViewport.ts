@@ -7,7 +7,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type RefObject,
 } from 'react';
-import { NODE_WIDTH, type WorkflowNode } from '../../workflow.ts';
+import { nodeWidth, type WorkflowNode } from '../../workflow.ts';
 import { clamp } from './canvasGeometry.ts';
 
 /**
@@ -54,10 +54,10 @@ export function useViewport(
   const extents = useMemo(() => {
     // The grid is only as wide as the cards need: a 380 px split must not get a horizontal
     // scrollbar for paper nobody drew on.
-    let width = NODE_WIDTH + 48;
+    let width = nodeWidth(nodes[0] ?? { width: undefined }) + 48;
     let height = 300;
     for (const node of nodes) {
-      width = Math.max(width, node.x + NODE_WIDTH + 48);
+      width = Math.max(width, node.x + nodeWidth(node) + 48);
       // A card is guessed at 200 px, and a frame's name chip hangs 24 px below its box: without
       // that air under the last card, the chip scrolls out of the paper and its name and × are
       // unreachable.
@@ -141,7 +141,15 @@ export function useViewport(
    * native scroll, because hijacking touch here would take away the scrolling that already works.
    */
   const startPan = (event: ReactPointerEvent) => {
-    if (event.button !== 0 || event.pointerType === 'touch') return;
+    // A plain drag on paper is the selection box now. Panning is the explicit alternate gesture:
+    // Alt-drag with a mouse, or the canvas arrow keys. A middle press still pans as it always did;
+    // a right press belongs to the context menu, never to the viewport.
+    if (
+      event.pointerType === 'touch' ||
+      (event.button === 0 && !event.altKey) ||
+      (event.button !== 0 && event.button !== 1)
+    )
+      return;
     const target = event.target as HTMLElement;
     // The arrow inspector is paper drawn on the paper: a press in its padding is a press on a
     // control, not the start of a pan.

@@ -100,7 +100,7 @@ INSTRUCTOR_TESTS: dict[str, tuple[list[str], str]] = {
     "P.1": (
         [
             "Verify encoder_ticks (int 425), battery_level (float 12.15), robot_mode ('ACTIVE'), and is_estop_active (False)",
-            "Re-evaluate relative update expressions on unseen state (encoder_ticks=1000, battery_level=24.0)",
+            "Re-evaluate relative update expressions on two unseen states (encoder_ticks=1000/3, battery_level=24.0/7.05)",
         ],
         """import ast, math
 assert isinstance(encoder_ticks, int) and encoder_ticks == 425, f"Expected encoder_ticks=425 (int), got {encoder_ticks!r}"
@@ -114,10 +114,11 @@ _rel_stmts = [
     and any(isinstance(n, ast.Name) and n.id in ("encoder_ticks", "battery_level") and isinstance(n.ctx, ast.Load) for n in ast.walk(s))
 ]
 assert len(_rel_stmts) >= 2, "Update encoder_ticks and battery_level using relative arithmetic (e.g., encoder_ticks = encoder_ticks + 25), not hardcoded literals."
-_ns = {"encoder_ticks": 1000, "battery_level": 24.0}
-exec(compile(ast.Module(body=_rel_stmts, type_ignores=[]), "<instructor_test>", "exec"), _ns)
-assert _ns["encoder_ticks"] == 1025, f"Relative update from encoder_ticks=1000 should yield 1025, got {_ns['encoder_ticks']}"
-assert math.isclose(_ns["battery_level"], 23.55, abs_tol=1e-4), f"Relative update from battery_level=24.0 should yield 23.55, got {_ns['battery_level']}"
+for _ticks, _battery in ((1000, 24.0), (3, 7.05)):
+    _ns = {"encoder_ticks": _ticks, "battery_level": _battery}
+    exec(compile(ast.Module(body=_rel_stmts, type_ignores=[]), "<instructor_test>", "exec"), _ns)
+    assert _ns["encoder_ticks"] == _ticks + 25, f"Relative update from encoder_ticks={_ticks} should yield {_ticks + 25}, got {_ns['encoder_ticks']}"
+    assert math.isclose(_ns["battery_level"], _battery - 0.45, abs_tol=1e-4), f"Relative update from battery_level={_battery} should yield {_battery - 0.45}, got {_ns['battery_level']}"
 """,
     ),
     "P.2": (

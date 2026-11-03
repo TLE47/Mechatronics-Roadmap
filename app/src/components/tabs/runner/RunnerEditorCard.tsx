@@ -1,7 +1,11 @@
-import type { ReactNode, RefObject } from 'react';
+import { useEffect, useState, type ReactNode, type RefObject } from 'react';
 import {
+  Activity,
   CheckCircle2,
   CheckSquare,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
   Columns2,
   GitBranch,
   Lock,
@@ -62,7 +66,7 @@ interface EditorDraft {
   symbolMiss: string | null;
   sliderCount: number;
   vim: { on: boolean; mode: string; onMode: (mode: string) => void };
-  lesson: { id: string; question: string };
+  lesson: { id: string; question: string; goal: string };
   onSliderCommit: () => void;
   /** Null in a workspace with no interpreter to ask; the free-study editor has no lesson files. */
   getAnalysis?: () => AnalysisSession | null;
@@ -100,6 +104,7 @@ interface EditorSlots {
   actualOutputPane: ReactNode;
   expectedOutputPane: ReactNode;
   workflowPane: ReactNode;
+  tracePane?: ReactNode;
 }
 
 /** The other workbench, when this document is shared. */
@@ -119,6 +124,8 @@ interface RunnerEditorCardProps {
   slots: EditorSlots;
   collab: EditorCollab;
   onClosePredict?: () => void;
+  /** The next lesson after a verified pass, offered in the header while the win is fresh. */
+  nextChapter?: { label: string; title: string; onOpen: () => void } | null;
   /**
    * The result views this surface really has. The runner offers all four; the studio offers the run
    * output alone, because it has no expected output, no prediction and no lesson workflow.
@@ -159,7 +166,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
     symbolMiss,
     sliderCount,
     vim: { on: vimOn, mode: vimMode, onMode: onVimMode },
-    lesson: { id: lessonId, question: writeQuestion },
+    lesson: { id: lessonId, question: writeQuestion, goal: lessonGoal },
     onSliderCommit,
     getAnalysis,
     onGoToDefinition,
@@ -170,11 +177,23 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
   /** The badge's word, from the mode the editor is reading keys in. */
   const vimModeLabel = vimModeLabelFor(vimMode);
   const { value: panes, onPanes } = props.panes;
+  // Study opens compact: its job is the reading, and the editor is one press away. Write and
+  // Debug open the body because those presets exist for typing and for reading a failure. A phone's
+  // Code surface is the exception: there the editor is the whole task, not a detail below prose.
+  const [bodyCollapsed, setBodyCollapsed] = useState(layout === 'study' && !isPhone);
+  useEffect(() => {
+    setBodyCollapsed(layout === 'study' && !isPhone);
+  }, [layout, isPhone]);
+  // Opening the trace from More is a request for the editor body even when Study folded it.
+  useEffect(() => {
+    if (visibleViews(panes).includes('trace')) setBodyCollapsed(false);
+  }, [panes]);
   /** The prediction gate and the result views this surface has; read before `shownViews` uses them. */
   const {
     gate,
     onClosePredict,
-    resultViews = ['predict', 'actual', 'expected', 'workflow'],
+    nextChapter,
+    resultViews = ['predict', 'actual', 'expected', 'workflow', 'trace'],
   } = props;
   /**
    * What the editor body shows right now.
@@ -224,9 +243,18 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
     if (slot !== null && panes.focus !== slot) onPanes(focusSlot(panes, slot));
   };
   /** One writer for every tab press and every arrangement control below. */
-  const onShowView = (view: EditorView) => onPanes(showView(panes, view));
+  const onShowView = (view: EditorView) => {
+    setBodyCollapsed(false);
+    onPanes(showView(panes, view));
+  };
   const { isRunning, passStatus, harnessResult, asksForFinish } = props.run;
-  const { toolbar, feedback, actualOutputPane, expectedOutputPane, workflowPane } = props.slots;
+  // A failure is read in the traceback that sits under the panes. Study still opens folded, but a
+  // red verdict is the one moment the body must come to the learner rather than wait to be found.
+  useEffect(() => {
+    if (passStatus === 'untested' || passStatus === 'passed') return;
+    setBodyCollapsed(false);
+  }, [passStatus]);
+  const { toolbar, feedback, actualOutputPane, expectedOutputPane, workflowPane, tracePane } = props.slots;
   const { coEdit, collabNotice, peerLabel } = props.collab;
 
   return (
@@ -324,6 +352,12 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
                                 'How this problem gets solved — given, model, compute, check, with a live checklist',
                               icon: <GitBranch className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
                             }
+                          : view === 'trace'
+                            ? {
+                                label: 'Trace',
+                                title: 'The last run replayed line by line, with the values each frame held',
+                                icon: <Activity className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
+                              }
                           : {
                               label: 'Expected',
                               title: 'The lesson’s Expected Output — tab here, or split it beside the code',
@@ -422,6 +456,23 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
               )}
             </div>
           )}
+          <button
+            type="button"
+            data-testid="btn-toggle-editor"
+            aria-expanded={!bodyCollapsed}
+            aria-controls="editor-panes-body"
+            aria-label={bodyCollapsed ? 'Expand editor' : 'Collapse editor'}
+            title={bodyCollapsed ? 'Expand the editor body' : 'Collapse the editor body'}
+            onClick={() => setBodyCollapsed((open) => !open)}
+            className="flex shrink-0 items-center gap-1 rounded border border-line bg-canvas px-1.5 py-0.5 text-[12px] font-mono text-muted hover:border-accent hover:text-accent cursor-pointer"
+          >
+            {bodyCollapsed ? (
+              <ChevronDown className="h-3 w-3" aria-hidden="true" />
+            ) : (
+              <ChevronUp className="h-3 w-3" aria-hidden="true" />
+            )}
+            <span className="hidden sm:inline">{bodyCollapsed ? 'Expand' : 'Collapse'}</span>
+          </button>
           <span className="shrink-0 whitespace-nowrap text-[11px] font-mono text-faint tabular-nums">
             {symbolMiss ? (
               <span role="status" data-testid="symbol-miss" style={{ color: 'var(--muted)' }}>
@@ -460,6 +511,18 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
         {editorShown && (
           <div className="mt-1 flex min-w-0 flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-1.5">
             <RunVerdict passStatus={passStatus} harnessResult={harnessResult} />
+            {passStatus === 'passed' && nextChapter && (
+              <button
+                type="button"
+                data-testid="btn-next-chapter"
+                title={nextChapter.title}
+                onClick={nextChapter.onOpen}
+                className="flex min-h-8 shrink-0 items-center gap-1 rounded border border-emerald/50 bg-emerald/10 px-2 py-1 font-mono text-[12px] font-bold text-emerald hover:bg-emerald/20 cursor-pointer"
+              >
+                {nextChapter.label}
+                <ChevronRight className="h-3 w-3" aria-hidden="true" />
+              </button>
+            )}
             <div className="ml-auto flex min-w-0 items-center gap-2">{toolbar}</div>
           </div>
         )}
@@ -468,7 +531,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
           file would carry. The task is read from the starter's marked functions, in plain text, and
           the word "Question:" is visible: a beginner should not have to decode backticks to know
           what the file is for. Read-only. */}
-      {layout === 'write' && writeQuestion && (
+      {!bodyCollapsed && layout === 'write' && writeQuestion && (
         <p
           data-testid="write-question"
           className="border-b border-line-soft bg-canvas px-3 py-2 font-mono text-[11.5px] leading-relaxed text-muted"
@@ -476,8 +539,29 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
           <span className="font-semibold text-accent"># Question:</span> {writeQuestion}
         </p>
       )}
+      {/* The lesson's own goal as the comment the file would carry, before the first line of code.
+          It gives the starter a direction without changing a byte of the starter: drafts, checks
+          and the learner's undo history all still compare against exactly the text the lesson ships. */}
+      {editorShown && lessonGoal && (
+        <div
+          data-testid="editor-goal"
+          className="border-b border-line-soft bg-canvas px-3 py-2 font-mono text-[11.5px] leading-relaxed"
+        >
+          <p className="text-muted">
+            <span className="font-semibold text-accent"># Goal:</span> {lessonGoal}
+          </p>
+          <p className="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
+            <span className="rounded border border-accent/30 bg-accent/[0.07] px-1.5 py-0.5 font-semibold uppercase tracking-[0.08em] text-accent">
+              # Starter Code
+            </span>
+            <span className="text-faint">runs as-is — fill in the TODOs</span>
+          </p>
+        </div>
+      )}
       <div
+        id="editor-panes-body"
         data-testid="editor-panes"
+        style={{ display: bodyCollapsed ? 'none' : undefined }}
         data-axis={panes.axis}
         data-split={paneSplit ? 'split' : 'single'}
         data-focus={paneSplit ? panes.focus : 0}
@@ -614,10 +698,21 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
             >
               {workflowPane}
             </div>
+            {tracePane && (
+              <div
+                data-testid="pane-trace"
+                data-pane="trace"
+                onClick={() => focusPane('trace')}
+                style={{ display: shownViews.has('trace') ? undefined : 'none', order: paneOrder('trace') }}
+                className={`min-w-0 flex-1 border-t border-line-soft ${paneBorder('trace')}`}
+              >
+                {tracePane}
+              </div>
+            )}
           </>
         )}
       </div>
-      {feedback}
+      {!bodyCollapsed && feedback}
     </div>
   );
 }

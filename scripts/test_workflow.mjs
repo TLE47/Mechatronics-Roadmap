@@ -35,6 +35,9 @@ import {
   MAX_EDGES,
   MAX_FONT_SIZE,
   MAX_NODE_COORD,
+  MAX_NODE_WIDTH,
+  MIN_NODE_WIDTH,
+  NODE_WIDTH,
   MAX_PROJECT_REF_CHARS,
   MAX_STEPS,
   MIN_FONT_SIZE,
@@ -67,6 +70,8 @@ import {
   nextEdgeId,
   nextStepId,
   normalizeWorkflow,
+  nodeWidth,
+  fittedNodeWidth,
   workflowNumbers,
   workflowOrder,
   workflowToMarkdown,
@@ -74,6 +79,8 @@ import {
   withEdgeType,
 } from '../app/src/workflow.ts';
 import { cardType } from '../app/src/components/workflow/cardStyle.ts';
+import { autoLayoutWorkflow, layoutPoints } from '../app/src/workflowLayout.ts';
+import { searchWorkflow } from '../app/src/workflowSearch.ts';
 import { validateWorkflow, workflowSummary } from '../app/src/workflowValidation.ts';
 import { chooseRun, runStatus, startRun, stepRun } from '../app/src/workflowRun.ts';
 import {
@@ -2316,6 +2323,114 @@ check('a clipboard taken under the old field name still pastes its citation', ()
   const pasted = pasteCard(doc, legacy);
   assert.equal(pasted.nodes.at(-1).projectRef, '08-capstone1-foc-eda/req-sense-01');
   assert.equal('componentId' in pasted.nodes.at(-1), false);
+});
+
+section('15. Cards resize, fit, search and lay out');
+
+check('a card reads a saved width, clamps it, and defaults to the old 200 px', () => {
+  const widths = [
+    { width: 280, expected: 280 },
+    { width: 20, expected: MIN_NODE_WIDTH },
+    { width: 999, expected: MAX_NODE_WIDTH },
+    { width: 281.6, expected: 282 },
+    { width: undefined, expected: NODE_WIDTH },
+  ];
+  for (const { width, expected } of widths) {
+    const doc = normalizeWorkflow(
+      graph([{ kind: 'given', title: 'a', ...(width === undefined ? {} : { width }) }])
+    );
+    assert.equal(nodeWidth(doc.nodes[0]), expected, `width ${width}`);
+  }
+  const plain = normalizeWorkflow(graph([{ kind: 'given', title: 'a' }]));
+  assert.equal('width' in plain.nodes[0], false, 'an untouched card gains no field');
+});
+
+check('fit text widens a long line and keeps short text at the minimum', () => {
+  const short = fittedNodeWidth({ title: 'a', detail: '' });
+  const long = fittedNodeWidth({ title: 'the stall current of the motor', detail: '' });
+  assert.equal(short, MIN_NODE_WIDTH);
+  assert.ok(long > short, `long text (${long}) must be wider than short (${short})`);
+  assert.ok(long <= MAX_NODE_WIDTH);
+});
+
+check('wrap and formatting survive a read, and defaults stay absent', () => {
+  const doc = normalizeWorkflow(
+    graph([
+      { kind: 'given', title: 'a', wrapText: false, bold: true, italic: true, underline: true, align: 'center' },
+    ])
+  );
+  assert.equal(doc.nodes[0].wrapText, false);
+  assert.equal(doc.nodes[0].bold, true);
+  assert.equal(doc.nodes[0].italic, true);
+  assert.equal(doc.nodes[0].underline, true);
+  assert.equal(doc.nodes[0].align, 'center');
+  const plain = normalizeWorkflow(graph([{ kind: 'given', title: 'a' }]));
+  for (const field of ['wrapText', 'bold', 'italic', 'underline', 'align']) {
+    assert.equal(field in plain.nodes[0], false, `${field} must not be stored on a default card`);
+  }
+});
+
+check('search finds title, detail, note, unit and kind, one row per card', () => {
+  const doc = graph([
+    { kind: 'given', title: 'Battery', detail: '12.6 V', unit: 'V' },
+    { kind: 'compute', title: 'Current', detail: 'the stall current', note: 'measure this twice' },
+    { kind: 'answer', title: 'Limit', detail: 'hold at 3.2 A' },
+  ]);
+  assert.equal(searchWorkflow(doc, 'battery')[0].node.id, 's1');
+  assert.equal(searchWorkflow(doc, 'stall current')[0].node.id, 's2');
+  assert.equal(searchWorkflow(doc, 'measure')[0].field, 'note');
+  assert.equal(searchWorkflow(doc, 'compute')[0].node.id, 's2');
+  assert.equal(searchWorkflow(doc, 'v')[0].node.id, 's1');
+  assert.equal(searchWorkflow(doc, 'current').filter((hit) => hit.node.id === 's2').length, 1);
+  assert.deepEqual(searchWorkflow(doc, '  '), []);
+});
+
+check('a query with no hits returns none, and ranking prefers the title', () => {
+  const doc = graph([
+    { kind: 'given', title: 'Current', detail: 'not the answer' },
+    { kind: 'compute', title: 'Other', detail: 'Current is here' },
+  ]);
+  const hits = searchWorkflow(doc, 'current');
+  assert.equal(hits[0].node.id, 's1');
+  assert.equal(hits[0].field, 'title');
+  assert.deepEqual(searchWorkflow(doc, 'zzzz'), []);
+});
+
+check('auto layout puts a chain in dependency columns and keeps every card and edge', () => {
+  const doc = graph(
+    [
+      { kind: 'given', title: 'a' },
+      { kind: 'compute', title: 'b' },
+      { kind: 'answer', title: 'c', width: 300 },
+    ],
+    chain(3)
+  );
+  const laid = autoLayoutWorkflow(doc);
+  assert.equal(laid.nodes.length, 3);
+  assert.deepEqual(laid.edges, doc.edges);
+  const points = layoutPoints(doc);
+  assert.ok(points[0].x < points[1].x, 'a card fed by another must be to its right');
+  assert.ok(points[1].x < points[2].x, 'the answer follows the compute');
+  assert.equal(points[0].y, points[1].y);
+  assert.equal(new Set(points.map((point) => point.id)).size, 3);
+});
+
+check('auto layout is deterministic and leaves a cycle on the paper', () => {
+  const doc = graph(
+    [
+      { kind: 'given', title: 'a' },
+      { kind: 'compute', title: 'b' },
+      { kind: 'answer', title: 'c' },
+    ],
+    [
+      { from: 's1', to: 's2' },
+      { from: 's2', to: 's3' },
+      { from: 's3', to: 's1' },
+    ]
+  );
+  assert.deepEqual(layoutPoints(doc), layoutPoints(doc));
+  assert.equal(layoutPoints(doc).length, 3);
+  assert.equal(layoutPoints(doc).every((point) => Number.isFinite(point.x) && Number.isFinite(point.y)), true);
 });
 
 for (const entry of entries) {

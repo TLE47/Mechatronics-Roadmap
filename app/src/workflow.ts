@@ -52,10 +52,36 @@ export const MAX_BRANCH_CONDITION_CHARS = 60;
 export const MAX_GROUP_TITLE_CHARS = 40;
 /** The furthest a card may be dragged, so a stray pointer cannot make an unscrollable canvas. */
 export const MAX_NODE_COORD = 4000;
-/** The width a card is laid out at; also the width the canvas reserves for it. */
+/** The default width of a card; a saved `width` may be anywhere in the bounds below. */
 export const NODE_WIDTH = 200;
+export const MIN_NODE_WIDTH = 140;
+export const MAX_NODE_WIDTH = 420;
 export const NODE_ROW = 172;
+export const NODE_COLUMN = 260;
 export const CANVAS_PAD = 16;
+
+/** The card's width in canvas pixels: a saved width, clamped, or the width every card had. */
+export function nodeWidth(node: Pick<WorkflowNode, 'width'>): number {
+  if (typeof node.width !== 'number' || !Number.isFinite(node.width)) return NODE_WIDTH;
+  return Math.min(MAX_NODE_WIDTH, Math.max(MIN_NODE_WIDTH, Math.round(node.width)));
+}
+
+/**
+ * The narrowest a card can be while its longest line still reads on one line.
+ *
+ * A card has no text metrics at this layer — this is the model, not the DOM — so the estimate is
+ * deliberately generous: 7 px per title glyph plus the field's padding. It is only the starting
+ * point for Fit text; the resize handle remains exact because it writes the width the learner sees.
+ */
+export function fittedNodeWidth(node: Pick<WorkflowNode, 'title' | 'detail'>): number {
+  const longest = (text: string) => Math.max(0, ...text.split('\n').map((line) => line.trim().length));
+  const wanted = Math.max(longest(node.title) * 7, longest(node.detail) * 6.4) + 40;
+  return Math.min(MAX_NODE_WIDTH, Math.max(MIN_NODE_WIDTH, Math.ceil(wanted)));
+}
+
+/** How a card's words sit in their fields. The default is the left edge every card had. */
+export type TextAlign = 'left' | 'center' | 'right';
+export const TEXT_ALIGNS: readonly TextAlign[] = ['left', 'center', 'right'];
 
 const BASE_STEP_KINDS = [
   'given',
@@ -400,6 +426,16 @@ export interface WorkflowNode {
   ink?: CardColor;
   /** A smaller or larger text step; absent is the size a card always had. */
   size?: CardSize;
+  /** A learner-chosen card width; absent is the 200 px width every card was drawn at. */
+  width?: number;
+  /** False turns wrapping off for this card; absent keeps the wrapped default. */
+  wrapText?: boolean;
+  /** Text formatting chosen from the card's right-click toolbar. */
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  /** Where the card's words sit; absent is the left edge every card had. */
+  align?: TextAlign;
   x: number;
   y: number;
 }
@@ -803,6 +839,16 @@ function readNode(value: unknown, mode: WorkflowMode, fallbackId: string, index:
     const size = Math.round(record.size);
     if (size >= MIN_FONT_SIZE && size <= MAX_FONT_SIZE) node.size = size;
   }
+  // Presentation fields are stored only when they differ from the default, so a document that never
+  // used them keeps exactly the bytes it had before the canvas could resize or wrap a card.
+  if (typeof record.width === 'number' && Number.isFinite(record.width)) {
+    node.width = Math.min(MAX_NODE_WIDTH, Math.max(MIN_NODE_WIDTH, Math.round(record.width)));
+  }
+  if (record.wrapText === false) node.wrapText = false;
+  if (record.bold === true) node.bold = true;
+  if (record.italic === true) node.italic = true;
+  if (record.underline === true) node.underline = true;
+  if (record.align === 'center' || record.align === 'right') node.align = record.align;
   const branch = asRecord(record.branch);
   const to = branch ? clean(branch.to, 40) : '';
   return {

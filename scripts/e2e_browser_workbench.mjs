@@ -1025,6 +1025,13 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       await page.locator('[data-testid="lesson-reader"] h2').first().isVisible(),
       'the reading pane must render the page, not just its card'
     );
+    const studyProse = await page.getByTestId('reader-prose').innerText();
+    assert.ok(studyProse.trim().length > 0, 'Study keeps the reading half');
+    assert.doesNotMatch(
+      studyProse,
+      /Do it yourself/i,
+      'Study stops before the exercise: the workbench below is the doing half'
+    );
     assert.equal(
       await page.getByTestId('link-lesson-source').textContent(),
       'View source on GitHub ↗',
@@ -1035,15 +1042,16 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'true',
       'the preset in force must say so'
     );
-    await page.keyboard.press('Alt+2');
-    assert.equal(await visible('lesson-list-card'), false, '⌥2 hides the chooser');
-    assert.equal(await visible('lesson-reader'), false, '⌥2 hides the lesson text');
+    await page.keyboard.press('Alt+3');
+    await page.waitForTimeout(150);
+    assert.equal(await visible('lesson-list-card'), false, '⌥3 hides the chooser');
+    assert.equal(await visible('lesson-reader'), false, '⌥3 hides the lesson text');
     assert.equal(
       await visible('editor-tab-actual'),
       false,
-      '⌥2 hides the last run’s output, tab and all'
+      '⌥3 hides the last run’s output, tab and all'
     );
-    assert.equal(await visible('editor-panel'), true, '⌥2 keeps the editor');
+    assert.equal(await visible('editor-panel'), true, '⌥3 keeps the editor');
     assert.equal(
       await page.getByTestId('layout-write').getAttribute('aria-pressed'),
       'true',
@@ -1061,11 +1069,11 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'and count the holes when the lesson (EX.05-control.T2.05a) marks more functions than a sentence can name'
     );
     assert.doesNotMatch(writeQuestion, /[`*]/, 'the question is plain text, not raw Markdown');
-    await page.keyboard.press('Alt+3');
-    assert.equal(await visible('editor-panel'), false, '⌥3 hides the editor');
-    assert.equal(await visible('editor-tab-actual'), false, '⌥3 hides the results with the editor');
-    assert.equal(await visible('lesson-reader'), true, '⌥3 is the reading preset: the text stays');
-    assert.equal(await visible('lesson-list-card'), false, '⌥3 keeps the chooser hidden');
+    await page.keyboard.press('Alt+2');
+    assert.equal(await visible('editor-panel'), false, '⌥2 hides the editor');
+    assert.equal(await visible('editor-tab-actual'), false, '⌥2 hides the results with the editor');
+    assert.equal(await visible('lesson-reader'), true, '⌥2 is the reading preset: the text stays');
+    assert.equal(await visible('lesson-list-card'), false, '⌥2 keeps the chooser hidden');
     // Read is a click here, so the button path is pinned as well as the shortcut.
     await page.getByTestId('layout-read').click();
     assert.equal(await visible('editor-panel'), false, 'the Read button hides the editor');
@@ -1086,6 +1094,16 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     assert.equal(await visible('lesson-list-card'), true, '⌥1 brings the chooser back');
     assert.equal(await visible('lesson-reader'), true, '⌥1 brings the lesson text back');
     assert.equal(await visible('editor-tab-actual'), true, '⌥1 brings the output tab back');
+    await page.waitForTimeout(150);
+    assert.equal(
+      await visible('editor-panes'),
+      false,
+      'Study folds the editor body by default'
+    );
+    await page.getByTestId('btn-toggle-editor').click();
+    assert.equal(await visible('editor-panes'), true, 'the header control expands the body');
+    await page.getByTestId('btn-toggle-editor').click();
+    assert.equal(await visible('editor-panes'), false, 'and folds it again');
     assert.equal(await visible('results-panel'), false, 'a tab is offered, not pushed open');
     // Utility classes have no rules in this dev server (it resolves the config without the Tailwind
     // plugin), so anything asserted here is either markup or a rule from `index.css`. The split
@@ -1234,6 +1252,11 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       await page.reload({ waitUntil: 'domcontentloaded' });
       await waitForEditor(page, undefined, 30000);
       await page.waitForTimeout(700);
+      // Study opens folded; the split is still the stored arrangement underneath it.
+      if (!(await page.getByTestId('editor-panes').isVisible())) {
+        await page.getByTestId('btn-toggle-editor').click();
+        await page.waitForTimeout(150);
+      }
       assert.equal(
         await page.getByTestId('editor-main').isVisible(),
         true,
@@ -1712,7 +1735,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
                 const hit = document.elementFromPoint(x, y);
                 const taken =
                   hit?.closest(
-                    '[data-node-id],[data-lane-band],[data-testid^="workflow-edge-"],[data-testid^="workflow-group-"]'
+                    '[data-node-id],[data-lane-band],[data-testid^="workflow-edge-"],[data-testid^="workflow-group-"],button,input,textarea,select,a'
                   ) ?? null;
                 if (!taken && hit?.closest('[data-testid="workflow-canvas"]')) return { x, y };
               }
@@ -1720,20 +1743,23 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
             return null;
           }, minX);
 
-        // Drag empty paper to pan: 24 cards stand taller than the canvas, and the background is the
-        // handle that moves the view without moving a card.
+        // Drag empty paper to pan: a plain drag is the selection box now, so panning is the
+        // explicit Alt-drag gesture (middle-drag and the arrow keys also pan). 24 cards stand taller
+        // than the canvas, and the background is the handle that moves the view without a card.
         await page.getByTestId('workflow-canvas').evaluate((canvas) => {
           canvas.scrollTop = 0;
         });
         const panSpot = await emptySpot(0);
         assert.ok(panSpot, 'panning needs bare paper to start on');
+        await page.keyboard.down('Alt');
         await page.mouse.move(panSpot.x, panSpot.y);
         await page.mouse.down();
         await page.mouse.move(panSpot.x, panSpot.y - 160, { steps: 8 });
         await page.mouse.up();
+        await page.keyboard.up('Alt');
         await page.waitForTimeout(300);
         const panned = await page.getByTestId('workflow-canvas').evaluate((canvas) => canvas.scrollTop);
-        assert.ok(panned > 80, `dragging empty paper must pan the canvas, but it scrolled ${panned}px`);
+        assert.ok(panned > 80, `Alt-dragging empty paper must pan the canvas, but it scrolled ${panned}px`);
 
         // Keyboard pan: the focused paper takes the arrows, and the card under focus keeps its own
         // nudge — the same key must never do both.
@@ -2881,10 +2907,121 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           'a reload must find the test citation it saved'
         );
 
-        await page.getByTestId('editor-tab-main').click();
+        // 5d-iii. The authoring controls: resize, fit, wrap, search, auto layout, Ctrl-multi-select
+        //        and the right-click text toolbar. These are deliberately exercised on the saved
+        //        document the reload above just proved, not on a fresh blank one.
+        await page.getByTestId('workflow-node-title-0').click();
+        const resizeHandle = page.getByTestId('workflow-node-resize-0');
+        await resizeHandle.scrollIntoViewIfNeeded();
+        const widthBefore = await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetWidth);
+        const resizeBox = await resizeHandle.boundingBox();
+        await page.mouse.move(resizeBox.x + resizeBox.width / 2, resizeBox.y + resizeBox.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(resizeBox.x + resizeBox.width / 2 + 90, resizeBox.y + resizeBox.height / 2, { steps: 6 });
+        await page.mouse.up();
+        await page.waitForTimeout(350);
+        const widthAfter = await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetWidth);
+        assert.ok(
+          widthAfter >= widthBefore + 60,
+          `dragging the corner must widen the card (${widthBefore} → ${widthAfter})`
+        );
+        await page.getByTestId('workflow-node-title-0').fill('A deliberately long card title that should fit on one wide line');
+        await page.waitForTimeout(200);
+        await page.getByTestId('workflow-fit-text').click();
+        await page.waitForTimeout(300);
+        const fittedWidth = await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetWidth);
+        assert.ok(fittedWidth >= widthAfter, `Fit text must lengthen a long line (${widthAfter} → ${fittedWidth})`);
+        await page.getByTestId('workflow-wrap-text').click();
+        assert.equal(
+          await page.getByTestId('workflow-wrap-text').getAttribute('aria-pressed'),
+          'false',
+          'the wrap toggle must be able to turn wrapping off'
+        );
+        await page.getByTestId('workflow-wrap-text').click();
+
+        const search = page.getByTestId('workflow-search');
+        await search.fill('deliberately');
+        await page.getByTestId('workflow-search-hit-0').waitFor({ timeout: 5000 });
+        assert.match(
+          await page.getByTestId('workflow-search-results').innerText(),
+          /deliberately/i,
+          'search must show the matching card and its snippet'
+        );
+        await page.getByTestId('workflow-search-hit-0').click();
         await page.waitForTimeout(250);
+        assert.equal(
+          await page.getByTestId('workflow-node-0').getAttribute('data-step'),
+          '1',
+          'a search hit must select the card it names'
+        );
+        await search.fill('');
+
+        const cardCountBefore = await page.locator('[data-node-id]').count();
+        const beforeLayout = await page.locator('[data-node-id]').evaluateAll((cards) =>
+          cards.map((card) => `${card.style.left},${card.style.top}`)
+        );
+        await page.getByTestId('workflow-auto-layout').click();
+        await page.waitForTimeout(400);
+        const afterLayout = await page.locator('[data-node-id]').evaluateAll((cards) =>
+          cards.map((card) => `${card.style.left},${card.style.top}`)
+        );
+        assert.notDeepEqual(afterLayout, beforeLayout, 'Auto layout must move the cards into columns');
+        assert.equal(
+          await page.locator('[data-node-id]').count(),
+          cardCountBefore,
+          'Auto layout must keep every card'
+        );
+
+        await page.getByTestId('workflow-node-title-0').click();
+        await page.keyboard.down(mod);
+        await page.getByTestId('workflow-node-drag-1').click();
+        await page.keyboard.up(mod);
+        await page.waitForTimeout(250);
+        assert.equal(
+          await page.getByTestId('workflow-multi-selection').isVisible(),
+          true,
+          'Ctrl/⌘-click must produce a multi-card selection'
+        );
+        assert.match(
+          await page.getByTestId('workflow-multi-selection').innerText(),
+          /2 cards selected/,
+          'the selection bar must count both cards'
+        );
+
+        // Select a range in the title, then right-click it: the browser menu is replaced with the
+        // formatting toolbar, and Bold reaches the card's rendered words.
+        const titleField = page.getByTestId('workflow-node-title-0');
+        const titleBox = await titleField.boundingBox();
+        await titleField.evaluate((field, point) => {
+          field.focus();
+          field.setSelectionRange(0, 12);
+          field.dispatchEvent(
+            new MouseEvent('contextmenu', {
+              bubbles: true,
+              cancelable: true,
+              clientX: point.x,
+              clientY: point.y,
+            })
+          );
+        }, { x: titleBox.x + 16, y: titleBox.y + 8 });
+        await page.getByTestId('workflow-text-toolbar').waitFor({ timeout: 5000 });
+        await page.getByTestId('workflow-format-bold').click();
+        await page.waitForTimeout(300);
+        assert.equal(
+          await titleField.evaluate((field) => getComputedStyle(field).fontWeight),
+          '700',
+          'Bold from the text toolbar must reach the card'
+        );
+
+        await page.getByTestId('editor-tab-main').click();
+        await page.waitForTimeout(300);
+        assert.match(
+          await page.getByTestId('editor-goal').innerText(),
+          /# Goal:[\s\S]*starter code[\s\S]*runs as-is — fill in the TODOs/i,
+          'the Python editor must show the lesson goal as the starter comment'
+        );
         console.log(
-          '  ok the Workflow tab spawns, edits inline, drags, draws an arrow, frames cards and survives a reload'
+          '  ok the Workflow tab spawns, edits inline, drags, draws an arrow, frames cards, resizes, fits, wraps, searches, lays out, multi-selects, formats text, survives a reload, and shows the editor goal'
         );
       }
 
@@ -3065,19 +3202,24 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'left',
       'the lesson text comes back to the left'
     );
-    await page.keyboard.press('Alt+2');
+    await page.keyboard.press('Alt+3');
     assert.equal(
       await page.getByTestId('btn-dock-toggle').count(),
       0,
       'Write has nothing beside anything, so it must not draw a dock button'
     );
-    await page.keyboard.press('Alt+3');
+    await page.keyboard.press('Alt+2');
     assert.equal(
       await page.getByTestId('btn-dock-toggle').count(),
       0,
       'Read has nothing beside anything either'
     );
     await page.getByTestId('layout-study').click();
+    await page.waitForTimeout(150);
+    if (!(await page.getByTestId('editor-panes').isVisible())) {
+      await page.getByTestId('btn-toggle-editor').click();
+      await page.waitForTimeout(150);
+    }
     console.log('  ok docking moves the panel this preset can move, and the side is remembered');
 
     // 5e. `# %%` cells: a marker draws a "Run to here" button, and the button runs the document
@@ -3176,6 +3318,35 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     console.log('  ok a try-it link opens scratch, runs ungraded, and saves nothing');
 
+    // The Study preset is the reading half only: P.1 has an exercise section, and Study stops at
+    // its heading, while Read keeps the whole page. The editor starts expanded afterwards so the
+    // keyboard steps below land in a visible editor.
+    await page.getByTestId('reader-loading').waitFor({ state: 'detached', timeout: 10000 });
+    const p1StudyProse = await page.getByTestId('reader-prose').innerText();
+    assert.doesNotMatch(
+      p1StudyProse,
+      /Do it yourself/i,
+      'Study must stop before P.1’s exercise section'
+    );
+    await page.getByTestId('layout-read').click();
+    assert.match(
+      await page.getByTestId('reader-prose').innerText(),
+      /Do it yourself/i,
+      'Read must keep P.1’s exercise section'
+    );
+    await page.getByTestId('layout-study').click();
+    await page.waitForTimeout(400);
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      if (await page.getByTestId('editor-panes').isVisible()) break;
+      await page.getByTestId('btn-toggle-editor').click();
+      await page.waitForTimeout(250);
+    }
+    assert.equal(
+      await page.getByTestId('editor-panes').isVisible(),
+      true,
+      'the editor must be open before the keyboard steps'
+    );
+
     // 5g. Vim keys: off until asked for, remembered when asked, and the badge says which mode is
     //     reading the keystrokes. Both halves matter — with normal mode on and nothing on screen, a
     //     learner who types `i` and sees no text would decide the editor is broken
@@ -3247,6 +3418,11 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'the choice must survive a reload'
     );
     await page.getByTestId('vim-mode').waitFor({ timeout: 15000 });
+    // Study folded the body on the reload; the typing check below needs the focused editor.
+    if (!(await page.getByTestId('editor-panes').isVisible())) {
+      await page.getByTestId('btn-toggle-editor').click();
+      await page.getByTestId('editor-panes').waitFor({ state: 'visible', timeout: 5000 });
+    }
     // Off again: the badge goes, and a keystroke is a keystroke. The editor is the same editor — the
     // document, the caret and the undo history were never rebuilt for the toggle.
     await clickToolbar(page, 'btn-vim');
@@ -3280,6 +3456,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       undefined,
       { timeout: 20000 }
     );
+    await clickToolbar(page, 'btn-trace');
     await page.getByTestId('trace-panel').waitFor({ timeout: 10000 });
     // One step per executed line: the assignment, the `for` three times (two passes and the test
     // that ended it), the body twice, the print. The `# %%` marker is a comment and runs nothing.
@@ -3423,7 +3600,9 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
 
     // Per lesson, and remembered: the reload reads the list back and draws the dots on the restored
-    // draft. Both lines were armed in this lesson's file, so both are still dots afterwards.
+    // draft. Both lines were armed in this lesson's file, so both are still dots afterwards. Wait
+    // out the 400 ms draft debounce: this is a reload of the file, not a claim about lost keystrokes.
+    await page.waitForTimeout(700);
     await page.reload({ waitUntil: 'networkidle' });
     await waitForEditor(page);
     await armed(3);
@@ -4021,6 +4200,12 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'the offer must name the lesson it would replace the editor with'
     );
     await guest.getByTestId('btn-coedit-accept').click();
+    for (const paired of [page, guest]) {
+      if (!(await paired.getByTestId('editor-panes').isVisible())) {
+        await paired.getByTestId('btn-toggle-editor').click();
+        await paired.getByTestId('editor-panes').waitFor({ state: 'visible', timeout: 5000 });
+      }
+    }
     await page.getByTestId('coedit-status').waitFor({ timeout: 15000 });
     await guest.getByTestId('coedit-status').waitFor({ timeout: 15000 });
     assert.equal(
@@ -5377,6 +5562,10 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     const searchPage = await searchContext.newPage();
     try {
       await searchPage.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+      await waitForEditor(searchPage, undefined, 60000);
+      // Study opens folded, and this page is fresh. The search jump below clicks into CodeMirror, so
+      // the body has to be open before either the visibility wait or the caret click.
+      await searchPage.getByTestId('btn-toggle-editor').click();
       await searchPage.waitForSelector('[data-editor="editor-main"] .cm-content', { timeout: 60000 });
       await searchPage.keyboard.press('Control+Shift+F');
       await searchPage.getByTestId('command-palette').waitFor({ timeout: 10000 });
@@ -5578,6 +5767,12 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       await searchPage.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, {
         timeout: 20000,
       });
+      await waitForEditor(searchPage, undefined, 30000);
+      // The reload folded Study again; the editor is clicked below to prove `?` is a character.
+      if (!(await searchPage.getByTestId('editor-panes').isVisible())) {
+        await searchPage.getByTestId('btn-toggle-editor').click();
+        await searchPage.getByTestId('editor-panes').waitFor({ state: 'visible', timeout: 5000 });
+      }
       await searchPage.keyboard.press('Control+Shift+J');
       await searchPage.getByTestId('btn-focus-pill').waitFor({ timeout: 15000 });
       await searchPage.keyboard.press('Escape');

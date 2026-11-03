@@ -44,6 +44,7 @@ interface RunnerToolbarProps {
   onStop: () => void;
   /** The tab mirrors this boolean for its sheet accounting; the panel itself is the toolbar's. */
   onMoreOpenChange: (open: boolean) => void;
+  onShowTrace: () => void;
   runButtonRef: RefObject<HTMLButtonElement | null>;
   onRun: () => void;
   predictRecord: PredictionRecord | null;
@@ -92,6 +93,7 @@ export function RunnerToolbar({
   onPause,
   onStop,
   onMoreOpenChange,
+  onShowTrace,
   runButtonRef,
   onRun,
   predictRecord,
@@ -388,6 +390,15 @@ export function RunnerToolbar({
           {/* The dots the gutter is drawing, and the condition each one waits for. Always present,
               not only once something is armed: a learner who has never clicked the gutter has no
               other way to find out that a breakpoint can be narrowed. */}
+          <button
+            onClick={onShowTrace}
+            data-testid="btn-trace"
+            title="Replay the last run line by line, with the value every variable held at each step"
+            className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
+          >
+            <Activity className="w-3.5 h-3.5" />
+            <span>Trace</span>
+          </button>
           <button
             onClick={onToggleBreakpoints}
             aria-expanded={breakpointsOpen}

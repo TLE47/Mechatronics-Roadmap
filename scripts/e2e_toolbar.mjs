@@ -19,6 +19,7 @@ export const FOLDED_TOOLBAR = new Set([
   'btn-format',
   'btn-draft-history',
   'btn-breakpoints',
+  'btn-trace',
   'btn-diff',
   'btn-share-attempt',
   'btn-pair-open',

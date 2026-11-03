@@ -32,11 +32,9 @@ export interface NodeDrag {
 export function useNodeDrag({
   toCanvas,
   onMoveMany,
-  onSelect,
 }: {
   toCanvas: (clientX: number, clientY: number) => { x: number; y: number };
   onMoveMany: (moves: NodeMove[]) => void;
-  onSelect: (id: string | null) => void;
 }): NodeDrag {
   const [dragIds, setDragIds] = useState<string[] | null>(null);
   const [live, setLive] = useState<Map<string, { x: number; y: number }> | null>(null);
@@ -57,7 +55,6 @@ export function useNodeDrag({
     moved.current = false;
     setLive(new Map(nodes.map((node) => [node.id, { x: node.x, y: node.y }])));
     setDragIds(nodes.map((node) => node.id));
-    onSelect(nodes.length === 1 ? nodes[0].id : null);
 
     // The listeners go on at the press, not in an effect after the render it causes: a quick drag
     // can be released before that render commits, and a release nobody heard leaves the card drawn

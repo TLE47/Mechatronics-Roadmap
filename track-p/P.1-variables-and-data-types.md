@@ -109,6 +109,17 @@ Mode: ACTIVE | E-Stop: False
 Encoder Ticks: 425 | Battery: 12.15 V
 ```
 
+### Test more than one case
+The graded check does not stop at the starter's numbers. It re-runs your two update lines with different starting state, so a hardcoded `425` or `12.15` is caught. The inputs in the lesson text are only the first row:
+
+| `encoder_ticks` before | `battery_level` before | `encoder_ticks` after `+25` | `battery_level` after `-0.45` |
+| --- | --- | --- | --- |
+| `400` | `12.60` | `425` | `12.15` |
+| `1000` | `24.00` | `1025` | `23.55` |
+| `3` | `7.05` | `28` | `6.60` |
+
+To try another case yourself, change the two starter assignments at the top (not the `TODO` lines) and re-run. Your `TODO` lines must keep reading the old value on the right, which is what makes them work for every row.
+
 ### Hint Ladder
 
 <details>

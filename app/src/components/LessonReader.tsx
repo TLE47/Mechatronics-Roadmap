@@ -123,6 +123,20 @@ interface LessonReaderProps {
    * just carried across a rotation (`readingPosition.ts`).
    */
   hidden?: boolean;
+  /**
+   * Study is the reading half only: the page stops at its `## Do it yourself` heading, because the
+   * workbench below is the doing half. Read (and any other preset) shows the whole page.
+   */
+  scope?: 'full' | 'study';
+}
+
+/** The page up to its exercise section, for the Study preset. */
+function blocksForScope(blocks: LessonPage['blocks'], scope: 'full' | 'study'): LessonPage['blocks'] {
+  if (scope === 'full') return blocks;
+  const stop = blocks.findIndex(
+    (block) => block.t === 'h' && block.l >= 2 && /^do it yourself\b/i.test(block.x)
+  );
+  return stop === -1 ? blocks : blocks.slice(0, stop);
 }
 
 /** The page's absolute URL, for the source link a heading or a figure points back to. */
@@ -243,6 +257,7 @@ export function LessonReader({
   panel,
   onJumpToEditor,
   hidden = false,
+  scope = 'full',
 }: LessonReaderProps) {
   /** Whether the reader is showing its one-line split-view suggestion. */
   const [splitTip, setSplitTip] = useState(false);
@@ -1142,7 +1157,7 @@ export function LessonReader({
             data-testid="reader-prose"
             className={tall ? 'mx-auto max-w-[68ch] space-y-3' : 'space-y-3'}
           >
-            {page.blocks.map((block, index) => renderBlock(block, `b${index}`))}
+            {blocksForScope(page.blocks, scope).map((block, index) => renderBlock(block, `b${index}`))}
           </article>
         )}
       </div>

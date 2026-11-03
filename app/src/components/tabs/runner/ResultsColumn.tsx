@@ -1,11 +1,9 @@
 import type { PointerEvent as ReactPointerEvent, RefObject } from 'react';
 import { StudyPanel } from '../../StudyPanel';
-import { TracePanel } from '../../TracePanel';
 import { ScopePanel } from '../../ScopePanel';
 import { noteLabel, type LintNote } from '../../../analysisClient';
 import type { FailingCheck } from '../../../checkHints';
 import type { HarnessGate } from '../../../harnessGrading';
-import type { TraceSnapshot } from '../../../runTrace';
 import {
   DEFAULT_SPLIT_RATIO,
   SPLIT_MAX_RATIO,
@@ -49,16 +47,6 @@ interface ResultsChecks {
   instructorError: string;
   passStatus: string;
   harnessResult: HarnessGate | null;
-  resultsShown: boolean;
-}
-
-/** The last run, replayed line by line. */
-interface ResultsTrace {
-  snapshot: TraceSnapshot | null;
-  step: number;
-  onStep: (step: number) => void;
-  source: string;
-  onReveal: (line: number) => void;
 }
 
 /** The scope's own record of the run. */
@@ -72,7 +60,6 @@ interface ResultsScope {
 interface ResultsColumnProps {
   split: ResultsSplit;
   checks: ResultsChecks;
-  trace: ResultsTrace;
   scope: ResultsScope;
 }
 
@@ -83,7 +70,7 @@ interface ResultsColumnProps {
  * and the study note describe the code, and a preset that moved only half of them would put a verdict
  * beside nothing.
  */
-export function ResultsColumn({ split, checks, trace, scope }: ResultsColumnProps) {
+export function ResultsColumn({ split, checks, scope }: ResultsColumnProps) {
   const {
     side: resultsSide,
     visible,
@@ -113,9 +100,7 @@ export function ResultsColumn({ split, checks, trace, scope }: ResultsColumnProp
     instructorError,
     passStatus,
     harnessResult,
-    resultsShown,
   } = checks;
-  const { snapshot: traceSnapshot, step: traceStep, onStep: onTraceStep, source: runSource, onReveal: onRevealTrace } = trace;
   const { series: scopeSeries, pinned: pinnedScope, onPin: onPinScope, onUnpin: onUnpinScope } = scope;
   return (
     <div
@@ -227,12 +212,6 @@ export function ResultsColumn({ split, checks, trace, scope }: ResultsColumnProp
         passStatus={passStatus}
         harnessResult={harnessResult}
       />
-
-      {/* The run trace: the last run replayed step by step, beside the output it explains. A
-          recording, so it is gone when an edit makes it describe a program that no longer exists. */}
-      <div style={{ display: resultsShown ? undefined : 'none' }}>
-        <TracePanel trace={traceSnapshot} step={traceStep} onStep={onTraceStep} source={runSource} onReveal={onRevealTrace} />
-      </div>
 
       {/* The Scope: the learner's own traced signal, drawn the moment the first batch lands. */}
       <ScopePanel series={scopeSeries} pinned={pinnedScope} onPin={onPinScope} onUnpin={onUnpinScope} />

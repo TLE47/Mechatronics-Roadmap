@@ -1,13 +1,23 @@
-import type { FocusEvent as ReactFocusEvent, PointerEvent as ReactPointerEvent } from 'react';
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type FocusEvent as ReactFocusEvent,
+  type MouseEvent as ReactMouseEvent,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import { BookOpen, ClipboardCheck, Cpu, Gauge, StickyNote, Trash2 } from 'lucide-react';
 import {
   KIND_META,
   MAX_BRANCH_CONDITION_CHARS,
+  MAX_NODE_WIDTH,
   MAX_STEP_DETAIL_CHARS,
   MAX_STEP_TITLE_CHARS,
   MAX_STEP_UNIT_CHARS,
+  MIN_NODE_WIDTH,
   NODE_SHAPE,
-  NODE_WIDTH,
+  nodeWidth,
   type NodeShape,
   type SocketKinds,
   type WorkflowIssue,
@@ -22,6 +32,7 @@ import { parseInline, type InlineRun } from '../../readerMarkdown.ts';
 import { cardFill, cardInk, cardType } from './cardStyle.ts';
 import { nudgeCard } from './cardNudge.ts';
 import { WorkflowPorts } from './WorkflowPorts.tsx';
+import { WorkflowTextToolbar } from './WorkflowTextToolbar.tsx';
 import type { LinkDraft } from './useLinking.ts';
 
 /** The badge glyph for each kind; the card is the only surface that draws one. */
@@ -104,7 +115,7 @@ export interface WorkflowNodeCardProps {
   linking: LinkDraft | null;
   /** What is plugged into each of this card's four dots, read off the document's arrows. */
   sockets: SocketKinds | undefined;
-  onSelect: (id: string) => void;
+  onSelect: (id: string, additive?: boolean) => void;
   onMove: (id: string, x: number, y: number) => void;
   onUpdate: (id: string, patch: Partial<WorkflowNode>) => void;
   onRemove: (id: string) => void;
@@ -176,6 +187,76 @@ export function WorkflowNodeCard({
   const detailRuns = parseInline(node.detail);
   const titleMath = titleRuns.some((run) => run.k === 'math');
   const detailMath = detailRuns.some((run) => run.k === 'math');
+  const [liveWidth, setLiveWidth] = useState<number | null>(null);
+  const [toolbarAt, setToolbarAt] = useState<{ x: number; y: number } | null>(null);
+  const titleRef = useRef<HTMLTextAreaElement | null>(null);
+  const detailRef = useRef<HTMLTextAreaElement | null>(null);
+  const resizeWidth = useRef(nodeWidth(node));
+  const width = liveWidth ?? nodeWidth(node);
+
+  // A wrapped field grows with its words instead of showing a one-line scrollbar. This is the
+  // difference between a diagram label and a form control that happens to be on a canvas.
+  useLayoutEffect(() => {
+    for (const field of [titleRef.current, detailRef.current]) {
+      if (!field) continue;
+      // Measure the words first, then the field's own rows-based height. A field that still fits
+      // in its `rows` keeps no inline height at all: that is what makes one-line cards byte-for-byte
+      // identical to the card they were before this control existed.
+      field.style.height = '0px';
+      const needed = field.scrollHeight;
+      field.style.height = '';
+      const natural = field.scrollHeight;
+      if (needed > natural + 1) field.style.height = `${needed}px`;
+    }
+  }, [node.title, node.detail, width, node.size, node.wrapText]);
+
+  /** The style every field shares; each field adds its own colour and size. Only a chosen value
+   * is written, so an untouched card keeps exactly the inline style it had before formatting. */
+  const formatStyle: CSSProperties = {
+    ...(node.bold ? { fontWeight: 700 } : {}),
+    ...(node.italic ? { fontStyle: 'italic' } : {}),
+    ...(node.underline ? { textDecorationLine: 'underline' } : {}),
+    ...(node.align ? { textAlign: node.align } : {}),
+    ...(node.wrapText === false ? { whiteSpace: 'nowrap' } : {}),
+  };
+
+  /** A selected range in a field is the request for the formatting toolbar. */
+  const openTextMenu = (event: ReactMouseEvent<HTMLTextAreaElement>) => {
+    const field = event.currentTarget;
+    if (field.selectionStart === field.selectionEnd) return;
+    event.preventDefault();
+    event.stopPropagation();
+    setToolbarAt({ x: event.clientX, y: event.clientY });
+  };
+
+  /** Drag the corner to resize the plate; the document is written once, on release. */
+  const beginResize = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const startX = event.clientX;
+    const startWidth = width;
+    resizeWidth.current = startWidth;
+    const move = (pointerEvent: PointerEvent) => {
+      const next = Math.min(
+        MAX_NODE_WIDTH,
+        Math.max(MIN_NODE_WIDTH, Math.round(startWidth + pointerEvent.clientX - startX))
+      );
+      resizeWidth.current = next;
+      setLiveWidth(next);
+    };
+    const finish = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', finish);
+      window.removeEventListener('pointercancel', finish);
+      const next = resizeWidth.current;
+      setLiveWidth(null);
+      if (next !== startWidth) onUpdate(node.id, { width: next });
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', finish);
+    window.addEventListener('pointercancel', finish);
+  };
 
   // Only the header itself selects. A focus that bubbles up from the delete button or a port must
   // not open the inspector: that panel is in flow above the paper and would move the control under
@@ -198,7 +279,7 @@ export function WorkflowNodeCard({
       style={{
         left: position.x,
         top: position.y,
-        width: NODE_WIDTH,
+        width,
         // A shaped plate is clipped inside this box: tinting the box would paint a rectangle behind
         // the diamond. Only the plain rectangle takes the fill here; the plate takes it below.
         ...(shaped ? {} : { backgroundColor: fill }),
@@ -305,18 +386,22 @@ export function WorkflowNodeCard({
             of: the input is the same field, hidden behind the rendering rather than a second copy.
             `peer-focus:hidden` is what swaps them, so the card needs no edit state of its own. */}
         <div className="relative">
-          <input
+          <textarea
+            ref={titleRef}
             data-testid={`workflow-node-title-${index}`}
             aria-label={`Title of card ${index + 1}`}
             value={node.title}
+            rows={1}
+            wrap={node.wrapText === false ? 'off' : 'soft'}
             maxLength={MAX_STEP_TITLE_CHARS}
             placeholder={`${meta.label} — one idea`}
             onChange={(event) => onUpdate(node.id, { title: event.target.value })}
             onFocus={() => onSelect(node.id)}
-            className={`peer w-full rounded border border-transparent bg-transparent px-1 py-0.5 font-semibold outline-none hover:bg-raise focus:border-line focus:bg-canvas ${
-              titleMath ? 'opacity-0 focus:opacity-100' : ''
-            }`}
-            style={{ color: ink, fontSize: type.title }}
+            onContextMenu={openTextMenu}
+            className={`peer block w-full resize-none overflow-hidden rounded border border-transparent bg-transparent px-1 py-0.5 font-semibold outline-none hover:bg-raise focus:border-line focus:bg-canvas ${
+              node.wrapText === false ? 'whitespace-nowrap' : 'break-words'
+            } ${titleMath ? 'opacity-0 focus:opacity-100' : ''}`}
+            style={{ color: ink, fontSize: type.title, ...formatStyle }}
           />
           {/* A formula is taller than a line of text (a fraction is two), so the rendering gets a
               little room above and below the input's box rather than being clipped to it. */}
@@ -332,18 +417,21 @@ export function WorkflowNodeCard({
         </div>
         <div className="relative">
           <textarea
+            ref={detailRef}
             data-testid={`workflow-node-detail-${index}`}
             aria-label={`Detail of card ${index + 1}`}
             value={node.detail}
             rows={2}
+            wrap={node.wrapText === false ? 'off' : 'soft'}
             maxLength={MAX_STEP_DETAIL_CHARS}
             placeholder={meta.hint}
             onChange={(event) => onUpdate(node.id, { detail: event.target.value })}
             onFocus={() => onSelect(node.id)}
-            className={`peer w-full resize-y rounded border border-transparent bg-transparent px-1 py-0.5 font-mono leading-snug outline-none hover:bg-raise focus:border-line focus:bg-canvas ${
-              detailMath ? 'opacity-0 focus:opacity-100' : ''
-            }`}
-            style={{ color: detailInk, fontSize: type.detail }}
+            onContextMenu={openTextMenu}
+            className={`peer block w-full resize-none overflow-hidden rounded border border-transparent bg-transparent px-1 py-0.5 font-mono leading-snug outline-none hover:bg-raise focus:border-line focus:bg-canvas ${
+              node.wrapText === false ? 'whitespace-nowrap' : 'break-words'
+            } ${detailMath ? 'opacity-0 focus:opacity-100' : ''}`}
+            style={{ color: detailInk, fontSize: type.detail, ...formatStyle }}
           />
           {detailMath && (
             <span
@@ -423,6 +511,27 @@ export function WorkflowNodeCard({
         linking={linking}
         onLinkStart={onLinkStart}
       />
+
+      {/* The corner is deliberately a button, not a decorative div: it is a pointer affordance with
+          a name and a keyboard-reachable target, and a press on it must never start a card drag. */}
+      <button
+        type="button"
+        data-testid={`workflow-node-resize-${index}`}
+        aria-label={`Resize card ${number}: drag left or right`}
+        title="Drag to resize; use Fit text in the inspector to fit the words"
+        onPointerDown={beginResize}
+        className="absolute -bottom-1 -right-1 z-30 h-3.5 w-3.5 touch-none cursor-nwse-resize rounded-full border border-accent bg-panel shadow-sm hover:bg-accent/20"
+      />
+
+      {toolbarAt && (
+        <WorkflowTextToolbar
+          node={node}
+          x={toolbarAt.x}
+          y={toolbarAt.y}
+          onApply={(patch) => onUpdate(node.id, patch)}
+          onClose={() => setToolbarAt(null)}
+        />
+      )}
     </div>
   );
 }
