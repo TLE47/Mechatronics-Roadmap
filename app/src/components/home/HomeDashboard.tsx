@@ -4,6 +4,7 @@ import {
   ArrowRight,
   BookOpenCheck,
   ClipboardList,
+  FlaskConical,
   GraduationCap,
   Moon,
   ShieldCheck,
@@ -154,6 +155,14 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = (props) => {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => props.onOpenTab('tab-studio')}
+            data-testid="btn-home-studio-top"
+            className="flex items-center gap-1.5 rounded-lg border border-line bg-panel px-3 py-2 text-xs font-semibold text-ink cursor-pointer hover:bg-raise"
+          >
+            <FlaskConical className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
+            Free study
+          </button>
           <button
             onClick={props.onOpenAccount}
             data-testid="btn-home-account-top"

@@ -43,6 +43,11 @@ gate is optional, and the lesson-only capabilities (analysis, go-to-definition, 
 breakpoint dots) are absent rather than wired to no-ops. The program still runs ungraded through
 `studio/pythonRun.ts`, and the store, the note and the plan are unchanged.
 
+**Home's action tray opens the studio.** The featured card is no longer the only door to free
+study: the top-right tray, beside Account & data, now carries a Free study button. It calls the same
+`onOpenTab('tab-studio')` the card does, so the tab and its remembered page are the same whichever
+door a learner uses. `e2e_studio` drives both, and Home's snapshot carries the extra control.
+
 **The studio's arrangement is the studio's.** The free-study card now keeps its panes under its own
 key (`mechalab_studio_panes_v1`, default code above the run output) through the same `readPanes` /
 `writePanes` helpers the lesson editor uses, which take a key and a fallback. A missing, corrupt or

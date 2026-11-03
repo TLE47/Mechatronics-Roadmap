@@ -130,6 +130,24 @@ async function main() {
     );
     ok('Home’s Free study card opens the studio tab, ungraded');
 
+    // ---- 1b. The action tray is a second door to the same tab ----
+    await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });
+    const trayDoor = page.getByTestId('btn-home-studio-top');
+    await trayDoor.waitFor({ timeout: 30000 });
+    assert.match(
+      (await trayDoor.textContent()) ?? '',
+      /free study/i,
+      'the top-right button must name the workspace it opens'
+    );
+    await trayDoor.click();
+    await page.getByTestId('studio').waitFor({ timeout: 30000 });
+    assert.equal(
+      await page.getByTestId('tab-btn-tab-studio').getAttribute('aria-current'),
+      'page',
+      'the action tray must open the studio tab, not another page'
+    );
+    ok('Home’s action tray opens the studio tab too');
+
     // ---- 2. Run prints the program, and Stop recovers to a fresh interpreter ----
     await waitForEditor(page, STUDIO_EDITOR, 30000);
     assert.match(
