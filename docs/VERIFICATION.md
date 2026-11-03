@@ -312,7 +312,10 @@ while at `2xl` the reader keeps its own column beside the code. The free-study t
 runner's own editor card — `main.py` and Run output tabs, splittable panes, Vim, and its Run/Stop
 buttons in the card's toolbar — with only the views an ungraded workspace has. The browser suite
 measures the stacked order, the two columns at 1800 px, the 68 px folded rail and the 48 px chooser
-strip, each across a reload.
+strip, each across a reload. The studio card's arrangement lives under its own key
+(`mechalab_studio_panes_v1`), so a closed output pane survives a reload while the lesson editor's
+stored split is untouched; a missing, corrupt or unknown entry returns the card's code-above-output
+default rather than a blank pane, and `npm run test:panes` pins both surfaces' keys and defaults.
 
 **Docking and the activity bar are measured where they land, too.** The same built-bundle step presses
 the dock button with the results in Debug and asserts the results end before the editor starts, both

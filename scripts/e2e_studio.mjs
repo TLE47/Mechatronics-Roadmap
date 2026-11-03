@@ -187,6 +187,51 @@ async function main() {
     await page.getByTestId('studio-vim').click();
     ok('the studio editor is the runner’s card: split panes and a remembered Vim choice');
 
+    // ---- 2c. The arrangement is this card's own, and it is remembered ----
+    // A closed output pane is a chosen layout, not a reset: it has to come back after a reload. And
+    // the studio writes its own key, so arranging this card cannot move the lesson editor's split.
+    const lessonPanesBefore = await page.evaluate(() =>
+      localStorage.getItem('mechalab_editor_panes_v1')
+    );
+    await page.getByTestId('btn-pane-close').click();
+    assert.equal(
+      await page.getByTestId('editor-panes').getAttribute('data-split'),
+      'single',
+      'closing the output pane leaves one pane'
+    );
+    await page.waitForFunction(
+      () => (localStorage.getItem('mechalab_studio_panes_v1') ?? '').includes('["main",null]'),
+      undefined,
+      { timeout: 5000 }
+    );
+    assert.equal(
+      await page.evaluate(() => localStorage.getItem('mechalab_editor_panes_v1')),
+      lessonPanesBefore,
+      'the studio wrote its own key, not the lesson editor’s'
+    );
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await reopenStudio(page);
+    await page.getByTestId('editor-panes').waitFor({ timeout: 30000 });
+    assert.equal(
+      await page.getByTestId('editor-panes').getAttribute('data-split'),
+      'single',
+      'a closed output pane survives a reload'
+    );
+    assert.equal(
+      await page.getByTestId('pane-actual').isVisible(),
+      false,
+      'the reloaded card draws no output pane it was not asked for'
+    );
+    await page.getByTestId('btn-pane-split').click();
+    assert.equal(
+      await page.getByTestId('editor-panes').getAttribute('data-split'),
+      'split',
+      'the way back is the same control'
+    );
+    await page.getByTestId('pane-actual').waitFor({ timeout: 5000 });
+    ok('the editor arrangement is the studio’s own, and survives a reload');
+
     // The interpreter is loaded now, so this is a stop in the middle of a loop rather than a stop
     // that happened to win the race with Pyodide's first download.
     const interruptCode = 'import time\nfor i in range(50):\n    time.sleep(0.1)\nprint("should not print")\n';
@@ -345,7 +390,7 @@ async function main() {
 
     assert.deepEqual(pageErrors, [], `the studio threw during the walk: ${pageErrors.join(' | ')}`);
     console.log(
-      '[PASS] Studio: Home opens it; Run, Stop and a runtime error each leave their own sentence, and a fresh Run recovers; killed code, the note and the plan survive reloads; and the plan survives a backup, wipe and restore; and its editor is the runner’s card, with split panes and a remembered Vim choice'
+      '[PASS] Studio: Home opens it; Run, Stop and a runtime error each leave their own sentence, and a fresh Run recovers; killed code, the note and the plan survive reloads; and the plan survives a backup, wipe and restore; its editor is the runner’s card, with split panes and a remembered Vim choice, and its own arrangement surviving a reload'
     );
     await context.close();
   } finally {

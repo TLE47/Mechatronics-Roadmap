@@ -41,11 +41,21 @@ Vim buttons in the card's own toolbar row. The card became honest about what a s
 `resultViews` names the views it really has (the studio has the run output alone), the prediction
 gate is optional, and the lesson-only capabilities (analysis, go-to-definition, run to a cell,
 breakpoint dots) are absent rather than wired to no-ops. The program still runs ungraded through
-`studio/pythonRun.ts`, and the store, the note and the plan are unchanged.
+`studio/pythonRun.ts`, and the store, the note and the plan are unchanged.**The studio's arrangement is the studio's.** The free-study card now keeps its panes under its own
+key (`mechalab_studio_panes_v1`, default code above the run output) through the same `readPanes` /
+`writePanes` helpers the lesson editor uses, which take a key and a fallback. A missing, corrupt or
+half-written value returns that surface's default instead of a blank card: `{}`, `{"views":[]}` and
+an unknown view all land on the studio's two-pane default, while a partial value keeps what it can
+and borrows the default's axis. The two keys are independent — arranging the studio cannot move the
+runner's split or the reverse — and the studio's card also states, in its own words, that the views
+and dots a lesson has (prediction, expected output, workflow pane, helper files, analysis, inline
+values, breakpoints, run-to-a-cell) are absent because a lesson-less program has nothing to feed
+them, not because a control was left wired to nothing.
 
-Covered by `npm run test:rail` (13 checks), `npm run test:studio`, the workbench suite in
-`check:all`, a `check:snapshot` re-record whose only moved numbers are the two new controls and the
-stacked order, and both Chromium suites.
+Covered by `npm run test:rail` (13 checks), `npm run test:panes` (the two keys, their defaults and a
+corrupt entry each pinned), `npm run test:studio`, the workbench suite in `check:all`, a
+`check:snapshot` re-record whose only moved numbers are the two new controls and the stacked order,
+and both Chromium suites.
 
 ## [2026-11-02] — The runner's three knots get owners, and a ratchet holds them
 

@@ -58,7 +58,16 @@ export interface EditorPanes {
 
 export const DEFAULT_PANES: EditorPanes = { views: ['main', null], axis: 'columns', focus: 0 };
 
+/** Where the lesson editor keeps its arrangement. */
 export const STORAGE_KEY_EDITOR_PANES = 'mechalab_editor_panes_v1';
+
+/**
+ * The free-study card's own arrangement: code above the run output, which is what that card drew
+ * before it had panes at all. A second surface means a second key, so arranging one editor cannot
+ * move the other's split.
+ */
+export const STORAGE_KEY_STUDIO_PANES = 'mechalab_studio_panes_v1';
+export const STUDIO_PANES: EditorPanes = { views: ['main', 'actual'], axis: 'rows', focus: 0 };
 
 /** The most panes the body will hold. A split is the feature; a wall of 200 px columns is not. */
 export const MAX_PANES = 2;
@@ -85,7 +94,7 @@ export function isPaneAxis(value: unknown): value is PaneAxis {
  * keeps "the same view in both panes" from ever rendering two outputs; an empty list falls back to
  * the editor, because a card that fills itself with nothing cannot be recovered from inside the UI.
  */
-export function normalizePanes(value: unknown): EditorPanes {
+export function normalizePanes(value: unknown, fallback: EditorPanes = DEFAULT_PANES): EditorPanes {
   const record = value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
   const raw = Array.isArray(record.views) ? record.views : [];
   const views: EditorView[] = [];
@@ -93,8 +102,8 @@ export function normalizePanes(value: unknown): EditorPanes {
     if (isEditorView(entry) && !views.includes(entry)) views.push(entry);
     if (views.length === MAX_PANES) break;
   }
-  if (views.length === 0) views.push('main');
-  const axis: PaneAxis = isPaneAxis(record.axis) ? record.axis : DEFAULT_PANES.axis;
+  if (views.length === 0) views.push(fallback.views[0]);
+  const axis: PaneAxis = isPaneAxis(record.axis) ? record.axis : fallback.axis;
   const split = views.length > 1;
   // A focus on an empty slot would make the next tab press write nowhere; it follows the split.
   const focus: 0 | 1 = split && record.focus === 1 ? 1 : 0;
@@ -205,26 +214,51 @@ function storage(): Storage | null {
   }
 }
 
-/** The remembered panes, or the editor alone when nothing stored or the value is unusable. */
-export function readPanes(): EditorPanes {
+/**
+ * Whether a parsed value is an arrangement at all: an object with at least one view a pane can show.
+ *
+ * This is the difference between "a half-written arrangement" (normalize it field by field) and "no
+ * arrangement here" (keep the surface's own default). Without it, `{}` or `{"views":[]}` would land
+ * on `DEFAULT_PANES` — the lesson editor's one-pane layout — and a studio opening would silently lose
+ * the code-above-output card it starts with.
+ */
+function holdsAnArrangement(value: unknown): boolean {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const views = (value as Record<string, unknown>).views;
+  return Array.isArray(views) && views.some(isEditorView);
+}
+
+/**
+ * The remembered panes for one surface, or that surface's default when nothing is stored or the
+ * value is unusable. The key and the default are the caller's, so two editors hold two arrangements.
+ */
+export function readPanes(
+  key: string = STORAGE_KEY_EDITOR_PANES,
+  fallback: EditorPanes = DEFAULT_PANES
+): EditorPanes {
   const store = storage();
-  if (!store) return { ...DEFAULT_PANES };
+  if (!store) return { ...fallback };
   try {
-    const raw = store.getItem(STORAGE_KEY_EDITOR_PANES);
-    if (raw === null || raw.trim() === '') return { ...DEFAULT_PANES };
-    return normalizePanes(JSON.parse(raw));
+    const raw = store.getItem(key);
+    if (raw === null || raw.trim() === '') return { ...fallback };
+    const parsed: unknown = JSON.parse(raw);
+    if (!holdsAnArrangement(parsed)) return { ...fallback };
+    return normalizePanes(parsed, fallback);
   } catch {
-    return { ...DEFAULT_PANES };
+    return { ...fallback };
   }
 }
 
 /** Remember an arrangement and return the normalized value to render. */
-export function writePanes(panes: EditorPanes): EditorPanes {
+export function writePanes(
+  panes: EditorPanes,
+  key: string = STORAGE_KEY_EDITOR_PANES
+): EditorPanes {
   const normalized = normalizePanes(panes);
   const store = storage();
   if (store) {
     try {
-      store.setItem(STORAGE_KEY_EDITOR_PANES, JSON.stringify(normalized));
+      store.setItem(key, JSON.stringify(normalized));
     } catch {
       // Blocked or full: the arrangement lasts this visit only.
     }

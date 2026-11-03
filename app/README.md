@@ -940,7 +940,7 @@ Every view stays
 mounted and a pane that is not showing is `display:none`, so the last run is still readable (and
 greppable by the suite) while the editor is on screen, and the arrangement is remembered. **Write**
 keeps no output tab at all, and **Read** keeps no editor. The state machine is pure and validated at
-its edge ([`src/editorPanes.ts`](src/editorPanes.ts), `npm run test:panes` for the rules, the browser
+its edge ([`src/editorPanes.ts`](src/editorPanes.ts), `npm run test:panes` for the rules, including the free-study card's own key and its fallback, the browser
 suite for the side-by-side geometry and the reload).
 
 **The method has a tab too.** **Workflow** is the learner's own plan for how the problem gets solved —

@@ -27,6 +27,8 @@ import {
   EDITOR_VIEWS,
   MAX_PANES,
   STORAGE_KEY_EDITOR_PANES,
+  STORAGE_KEY_STUDIO_PANES,
+  STUDIO_PANES,
   closeSplit,
   closeView,
   focusSlot,
@@ -263,6 +265,77 @@ check('a stored duplicate is repaired on read', () => {
   });
   try {
     assert.deepEqual(readPanes().views, ['actual', null]);
+  } finally {
+    delete globalThis.localStorage;
+  }
+});
+
+section('A second surface, a second key');
+
+check('a first studio visit opens the card code above the run output', () => {
+  globalThis.localStorage = fakeStorage();
+  try {
+    assert.deepEqual(readPanes(STORAGE_KEY_STUDIO_PANES, STUDIO_PANES), STUDIO_PANES);
+    assert.deepEqual(STUDIO_PANES.views, ['main', 'actual']);
+    assert.equal(STUDIO_PANES.axis, 'rows');
+  } finally {
+    delete globalThis.localStorage;
+  }
+});
+
+check('a corrupt studio value falls back to the studio default, not a blank card', () => {
+  for (const stored of ['{not json', 'null', '[]', '{}', '{"views":[]}', '{"views":["bogus"]}']) {
+    globalThis.localStorage = fakeStorage({ [STORAGE_KEY_STUDIO_PANES]: stored });
+    try {
+      assert.deepEqual(readPanes(STORAGE_KEY_STUDIO_PANES, STUDIO_PANES), STUDIO_PANES, stored);
+    } finally {
+      delete globalThis.localStorage;
+    }
+  }
+});
+
+check('a partial studio value keeps what it can and borrows the default axis', () => {
+  globalThis.localStorage = fakeStorage({
+    [STORAGE_KEY_STUDIO_PANES]: JSON.stringify({ views: ['main'], axis: 'diagonal' }),
+  });
+  try {
+    const panes = readPanes(STORAGE_KEY_STUDIO_PANES, STUDIO_PANES);
+    assert.deepEqual(panes.views, ['main', null]);
+    assert.equal(panes.axis, 'rows', 'an unknown axis keeps the studio card on its own default');
+  } finally {
+    delete globalThis.localStorage;
+  }
+});
+
+check('a closed output pane is a remembered arrangement, not a reset', () => {
+  globalThis.localStorage = fakeStorage();
+  try {
+    const closed = writePanes(
+      { views: ['main', null], axis: 'rows', focus: 0 },
+      STORAGE_KEY_STUDIO_PANES
+    );
+    assert.deepEqual(closed.views, ['main', null]);
+    assert.deepEqual(readPanes(STORAGE_KEY_STUDIO_PANES, STUDIO_PANES), closed);
+  } finally {
+    delete globalThis.localStorage;
+  }
+});
+
+check('arranging one editor never moves the other', () => {
+  const lesson = { views: ['actual', 'main'], axis: 'columns', focus: 1 };
+  globalThis.localStorage = fakeStorage({ [STORAGE_KEY_EDITOR_PANES]: JSON.stringify(lesson) });
+  try {
+    writePanes({ views: ['main', null], axis: 'rows', focus: 0 }, STORAGE_KEY_STUDIO_PANES);
+    assert.deepEqual(readPanes(), normalizePanes(lesson), 'the lesson arrangement is untouched');
+
+    const studio = { views: ['main', 'actual'], axis: 'rows', focus: 1 };
+    writePanes(studio, STORAGE_KEY_STUDIO_PANES);
+    writePanes({ views: ['expected', null], axis: 'columns', focus: 0 }, STORAGE_KEY_EDITOR_PANES);
+    assert.deepEqual(
+      readPanes(STORAGE_KEY_STUDIO_PANES, STUDIO_PANES),
+      normalizePanes(studio),
+      'the studio arrangement is untouched'
+    );
   } finally {
     delete globalThis.localStorage;
   }

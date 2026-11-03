@@ -44,7 +44,8 @@ interface EditorSurface {
   phoneEditorVisible: boolean;
   isPhone: boolean;
   deferPhoneEditor: boolean;
-  layout: WorkspaceLayout;
+  /** The preset in force where the card belongs to one; a lesson-less surface has no preset. */
+  layout?: WorkspaceLayout;
 }
 
 /** The text in the editor, its writer, the files it may open, and the editor's own settings. */

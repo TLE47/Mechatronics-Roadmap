@@ -4,7 +4,13 @@ import { RunnerEditorCard } from './runner/RunnerEditorCard';
 import { WorkflowPanel } from '../WorkflowPanel';
 import { useMediaQuery } from '../../useMediaQuery';
 import { readVim, writeVim } from '../../vimMode';
-import type { EditorPanes } from '../../editorPanes';
+import {
+  STORAGE_KEY_STUDIO_PANES,
+  STUDIO_PANES,
+  readPanes,
+  writePanes,
+  type EditorPanes,
+} from '../../editorPanes';
 import {
   MAX_STUDIO_NOTE_CHARS,
   saveStudio,
@@ -63,11 +69,14 @@ export const TabStudio: React.FC = () => {
   // The editor is the runner's own card (`runner/RunnerEditorCard.tsx`), so the studio gets the same
   // tabs, panes and editor settings a lesson does. The result views are the ones this surface really
   // has: the run output, because nothing here has an expected output or a prediction to grade.
-  const [panes, setPanes] = useState<EditorPanes>({
-    views: ['main', 'actual'],
-    axis: 'rows',
-    focus: 0,
-  });
+  // The card's own key, not the lesson editor's: a learner who arranges this card has arranged the
+  // studio, and the runner's split belongs to a different workspace (`editorPanes.ts`). The default
+  // is the shape this card has always had — code above the run output — and a missing, corrupt or
+  // half-written entry falls back to it rather than to a blank pane.
+  const [panes, setPanes] = useState<EditorPanes>(() =>
+    readPanes(STORAGE_KEY_STUDIO_PANES, STUDIO_PANES)
+  );
+  const commitPanes = (next: EditorPanes) => setPanes(writePanes(next, STORAGE_KEY_STUDIO_PANES));
   const editorPanelRef = useRef<HTMLDivElement | null>(null);
   const mainEditorRef = useRef<PythonEditorHandle | null>(null);
   const [vimOn, setVimOn] = useState<boolean>(() => readVim());
@@ -210,8 +219,12 @@ export const TabStudio: React.FC = () => {
   );
 
   // The runner's editor card, ungraded: same tabs, same splittable panes, same editor settings, with
-  // the views this workspace can honestly offer (the run output) and none it cannot (a prediction,
-  // an expected output, a workflow for a problem it was not given).
+  // the views this workspace can honestly offer (the run output) and none it cannot. What is absent
+  // is absent on purpose rather than wired to a no-op: no prediction (nothing to forecast), no
+  // expected output (nothing graded), no workflow pane (the Plan view is the same canvas, one press
+  // away), no lesson files or go-to-definition (there is no second file), no analysis or inline
+  // values and no breakpoint dots or run-to-a-cell (studio/pythonRun.ts sends no analysis channel, no
+  // breakpoints and no cell budget, so a control that offered any of them would do nothing).
   const codePane = (
     <div data-testid="studio-code" className="min-w-0">
       <RunnerEditorCard
@@ -223,7 +236,6 @@ export const TabStudio: React.FC = () => {
           phoneEditorVisible: true,
           isPhone: phone,
           deferPhoneEditor: false,
-          layout: 'write',
         }}
         draft={{
           code: doc.code,
@@ -242,7 +254,7 @@ export const TabStudio: React.FC = () => {
           onSliderCommit: () => {},
           editorTestId: 'editor-studio',
         }}
-        panes={{ value: panes, onPanes: setPanes }}
+        panes={{ value: panes, onPanes: commitPanes }}
         run={{
           isRunning: runtime === 'running' || runtime === 'loading',
           passStatus: 'untested',
