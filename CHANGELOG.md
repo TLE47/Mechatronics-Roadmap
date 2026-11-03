@@ -41,7 +41,9 @@ Vim buttons in the card's own toolbar row. The card became honest about what a s
 `resultViews` names the views it really has (the studio has the run output alone), the prediction
 gate is optional, and the lesson-only capabilities (analysis, go-to-definition, run to a cell,
 breakpoint dots) are absent rather than wired to no-ops. The program still runs ungraded through
-`studio/pythonRun.ts`, and the store, the note and the plan are unchanged.**The studio's arrangement is the studio's.** The free-study card now keeps its panes under its own
+`studio/pythonRun.ts`, and the store, the note and the plan are unchanged.
+
+**The studio's arrangement is the studio's.** The free-study card now keeps its panes under its own
 key (`mechalab_studio_panes_v1`, default code above the run output) through the same `readPanes` /
 `writePanes` helpers the lesson editor uses, which take a key and a fallback. A missing, corrupt or
 half-written value returns that surface's default instead of a blank card: `{}`, `{"views":[]}` and
@@ -60,11 +62,22 @@ header always has a pressed page, and a refused store costing the memory rather 
 is a preference, not a key in the studio record, so choosing a page never writes the program, the
 note or the plan.
 
+**The build gate gets its headroom back, so Pages can publish.** `main` had been red since
+`b5e8b63`: the signed-in bundle measured 578.6 kB of entry against a 578.0 kB ceiling and 986.6 kB of
+JavaScript against 986.0, and `664e852` measured 578.8 and 986.7 — so `deploy-pages`, which waits on
+every job, never ran and the live site stayed on the 1 November build. The three ceilings move by
+hand, with the numbers in hand rather than recorded first: `entry_gzip` 578 → 583 kB,
+`signed_in.js_gzip` 986 → 992 kB, `largest_js_gzip` 390 → 394 kB, each about 4–5 kB of room.
+`docs/weight-budget.json` carries the measurement and the reason. The remembered page accounts for
+8 B of entry and 201 B of JavaScript over `664e852`; the bulk of the breach predates it, at
+`b5e8b63`.
+
 Covered by `npm run test:rail` (13 checks), `npm run test:panes` (the two keys, their defaults and a
 corrupt entry each pinned), `npm run test:studio` (the remembered page, its default and its junk
-values), the workbench suite in `check:all`, a `check:snapshot` re-record whose only moved numbers
-are the two new controls and the stacked order, and both Chromium suites, the studio one reopening
-Plan and then Code across a reload.
+values), `npm run check:weight` (the signed-in bundle within its raised ceilings), the workbench
+suite in `check:all`, a `check:snapshot` re-record whose only moved numbers are the two new controls
+and the stacked order, and both Chromium suites, the studio one reopening Plan and then Code across
+a reload.
 
 ## [2026-11-02] — The runner's three knots get owners, and a ratchet holds them
 
