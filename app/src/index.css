@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./visuals.css";
 
 /* ============================================================================
    MechaLab design tokens
@@ -639,6 +640,19 @@ body {
   [data-layout='study'][data-lesson-dock='right'] > [data-testid='editor-panel'],
   [data-layout='study'][data-lesson-dock='right'] > [data-testid='results-column'] {
     grid-column: 1;
+  }
+  /* Hiding the lesson is not a narrower column: the reader leaves the grid and the editor takes the
+     whole width. The hover tab the reader renders is fixed, so it costs the grid nothing. */
+  [data-layout='study']:has(> [data-testid='lesson-reader'][data-reader-hidden='true']) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  [data-layout='study']:has(> [data-testid='lesson-reader'][data-reader-hidden='true']) > [data-testid='editor-panel'] {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  [data-layout='study']:has(> [data-testid='lesson-reader'][data-reader-hidden='true']) > [data-testid='results-column'] {
+    grid-column: 1;
+    grid-row: 2;
   }
 }
 

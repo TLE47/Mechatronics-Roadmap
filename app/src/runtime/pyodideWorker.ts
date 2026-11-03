@@ -31,6 +31,9 @@ export interface PythonWorkerMessage {
   /** Set by the session when the worker itself failed, not by a `run` that ended in an error. */
   workerFailed?: boolean;
   bench?: string;
+  requestId?: number;
+  formatted?: string;
+  unavailable?: string;
   instructorPassed?: boolean;
   instructorError?: string;
   inlineValues?: unknown;
@@ -55,6 +58,12 @@ export interface PythonRunRequest {
 
 /** Which stretch of a run a killed clock was measuring. */
 export type KillPhase = 'load' | 'run';
+
+export interface PythonFormatAnswer {
+  formatted?: string;
+  error?: string;
+  unavailable?: string;
+}
 
 export interface RunLimits {
   /** Before the first `ready`: the load also has to fetch Pyodide. */
@@ -85,9 +94,13 @@ export interface WorkerSessionOptions {
  */
 export class PyodideWorkerSession {
   private current: Worker | null = null;
-  private nextRunId = 0;
-  private pending: { resolve: (message: PythonWorkerMessage) => void; handlers: RunHandlers } | null =
-    null;
+  private nextRunId = 0;  private pending: { resolve: (message: PythonWorkerMessage) => void; handlers: RunHandlers } | null = null;
+  /** Format requests are outside a run: they have their own ids and their own one-shot answers. */
+  private formatWaiters = new Map<
+    number,
+    { resolve: (answer: PythonFormatAnswer) => void; timer: ReturnType<typeof setTimeout> }
+  >();
+  private nextFormatId = 1;
   private clock: ReturnType<typeof setTimeout> | null = null;
   private limits: RunLimits | null = null;
 
@@ -129,6 +142,31 @@ export class PyodideWorkerSession {
   /** Send a message outside a run: warm, format, an analysis request. */
   post(message: Record<string, unknown>): void {
     this.ensure().postMessage(message);
+  }
+
+  /**
+   * Ask the worker for Black's formatting of one file, without a run or a grade.
+   *
+   * The worker installs Black on the first request and answers with `formatted`, the parser's
+   * `error`, or `unavailable` when the wheel/CDN/worker failed. The timeout is longer than a run's
+   * because the first call may be installing a wheel; the answer settles exactly once.
+   */
+  format(code: string, cdnUrl: string, timeoutMs = 120_000): Promise<PythonFormatAnswer> {
+    const requestId = this.nextFormatId++;
+    return new Promise<PythonFormatAnswer>((resolve) => {
+      const timer = setTimeout(() => {
+        this.formatWaiters.delete(requestId);
+        resolve({ unavailable: 'The formatter did not answer. Try Format again.' });
+      }, timeoutMs);
+      this.formatWaiters.set(requestId, { resolve, timer });
+      try {
+        this.post({ type: 'format', requestId, code, cdnUrl });
+      } catch (error) {
+        clearTimeout(timer);
+        this.formatWaiters.delete(requestId);
+        resolve({ unavailable: error instanceof Error ? error.message : String(error) });
+      }
+    });
   }
 
   run(
@@ -180,6 +218,13 @@ export class PyodideWorkerSession {
 
   dispose(): void {
     this.clearClock();
+    // A formatter waiting on a worker that is being torn down gets its answer now, not after its
+    // two-minute clock. The request is outside the run, so the run's settle path cannot reach it.
+    for (const waiter of this.formatWaiters.values()) {
+      clearTimeout(waiter.timer);
+      waiter.resolve({ unavailable: 'The formatter worker stopped.' });
+    }
+    this.formatWaiters.clear();
     const worker = this.current;
     this.current = null;
     if (!worker) return;
@@ -191,6 +236,22 @@ export class PyodideWorkerSession {
   }
 
   private receive(data: PythonWorkerMessage): void {
+    // Format answers are not runs: they must be read before the no-pending early return, and while a
+    // run is waiting they must not be mistaken for its verdict.
+    if (data.type === 'format') {
+      const requestId = Number(data.requestId) || 0;
+      const waiter = this.formatWaiters.get(requestId);
+      if (waiter) {
+        clearTimeout(waiter.timer);
+        this.formatWaiters.delete(requestId);
+        waiter.resolve({
+          formatted: typeof data.formatted === 'string' ? data.formatted : undefined,
+          error: typeof data.error === 'string' ? data.error : undefined,
+          unavailable: typeof data.unavailable === 'string' ? data.unavailable : undefined,
+        });
+      }
+      return;
+    }
     if (data.type === 'status') {
       this.options.onStatus?.(data);
       // A consumer may have discarded the worker from its status handler (a refused load), and the

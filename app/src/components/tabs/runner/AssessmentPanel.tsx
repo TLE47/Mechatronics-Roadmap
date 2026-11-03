@@ -1,5 +1,13 @@
 import type { RefObject } from 'react';
-import { ShieldCheck } from 'lucide-react';
+import {
+  Activity,
+  CheckCircle2,
+  CircleDashed,
+  Radar,
+  ShieldCheck,
+  Sparkles,
+  XCircle,
+} from 'lucide-react';
 import type { FailingCheck } from '../../../checkHints';
 import type { HarnessGate } from '../../../harnessGrading';
 
@@ -26,6 +34,11 @@ interface AssessmentPanelProps {
  * a time - a behavioural failure outranks a presentation one - but each check owns its card and its
  * own button, so adding the third cannot turn this into a single control that guesses which failure
  * the learner meant.
+ *
+ * The panel is an instrument rather than a paragraph: a live radar says the checks ran in this
+ * session, the two verdicts are tiles with their own icon and colour, and each check the lesson
+ * names is a compact card with a hover explanation. The long formatting rule stays available, but
+ * behind a disclosure, so a beginner sees the verdict before the policy.
  */
 export function AssessmentPanel({
   panelRef,
@@ -42,117 +55,196 @@ export function AssessmentPanel({
   passStatus,
   harnessResult,
 }: AssessmentPanelProps) {
+  const behaviorTone =
+    behaviorCheck === 'passed'
+      ? 'text-emerald'
+      : behaviorCheck === 'failed'
+        ? 'text-rose'
+        : 'text-muted';
+  const outputTone =
+    outputCheck === 'matched'
+      ? 'text-emerald'
+      : outputCheck === 'differs'
+        ? 'text-amber'
+        : 'text-muted';
+  const BehaviorIcon =
+    behaviorCheck === 'passed' ? CheckCircle2 : behaviorCheck === 'failed' ? XCircle : CircleDashed;
+  const OutputIcon =
+    outputCheck === 'matched' ? CheckCircle2 : outputCheck === 'differs' ? Activity : CircleDashed;
+  const live = behaviorCheck !== 'untested' || outputCheck !== 'untested';
+
   return (
     <div
       ref={panelRef}
       data-testid="panel-instructor-tests"
       data-tour="checks-panel"
-      className="bg-panel border border-line rounded-xl p-4"
+      className="relative overflow-hidden rounded-xl border border-line bg-panel p-4"
     >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-xs font-mono text-accent flex items-center gap-1.5">
-          <ShieldCheck className="w-4 h-4" />
-          <span>Instructor Behavioral Assessment (Multi-Input, Boundary &amp; Tolerance Checks)</span>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-accent/10 blur-3xl"
+      />
+      <div className="relative">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex min-w-0 items-start gap-2.5">
+            <span
+              data-testid="assessment-live"
+              data-live={live ? 'true' : 'false'}
+              className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-accent/40 bg-accent/10 text-accent"
+            >
+              <Radar className="h-4.5 w-4.5" aria-hidden="true" />
+              <span
+                aria-hidden="true"
+                className={`absolute inset-0 rounded-xl border border-accent/50 ${live ? 'animate-ping opacity-25' : 'opacity-0'}`}
+              />
+            </span>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 font-mono text-[12px] font-bold uppercase tracking-[0.06em] text-accent">
+                <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                Instructor Behavioral Assessment
+                <span className="rounded-full border border-line-soft bg-canvas px-1.5 py-0.5 text-[11px] font-normal tracking-[0.12em] text-faint">
+                  live
+                </span>
+              </div>
+              <p className="mt-0.5 text-[11px] text-muted">
+                Multi-input, boundary &amp; tolerance checks · run again to refresh
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Check verdicts">
+            <span
+              data-testid="badge-behavior-check"
+              data-state={behaviorCheck}
+              title="The instructor's own functions are called with inputs the starter never shows; this is behaviour, not a printed line."
+              className={`flex items-center gap-1.5 rounded-lg border px-2 py-1 font-mono text-[11px] ${behaviorTone} ${
+                behaviorCheck === 'untested'
+                  ? 'border-line bg-canvas'
+                  : behaviorCheck === 'passed'
+                    ? 'border-emerald/40 bg-emerald/10'
+                    : 'border-rose/40 bg-rose/10'
+              }`}
+            >
+              <BehaviorIcon className="h-3.5 w-3.5" aria-hidden="true" />
+              Behavior Tests:{' '}
+              {behaviorCheck === 'passed' ? 'PASSED' : behaviorCheck === 'failed' ? 'FAILED' : 'UNTESTED'}
+            </span>
+            <span
+              data-testid="badge-output-check"
+              data-state={outputCheck}
+              title="The last run's stdout against the lesson's expected output, under the lesson's own matching rule."
+              className={`flex items-center gap-1.5 rounded-lg border px-2 py-1 font-mono text-[11px] ${outputTone} ${
+                outputCheck === 'untested'
+                  ? 'border-line bg-canvas'
+                  : outputCheck === 'matched'
+                    ? 'border-emerald/40 bg-emerald/10'
+                    : 'border-amber/40 bg-amber/10'
+              }`}
+            >
+              <OutputIcon className="h-3.5 w-3.5" aria-hidden="true" />
+              Presentation (`stdout`, {outputMatchMode} match):{' '}
+              {outputCheck === 'matched' ? 'MATCHED' : outputCheck === 'differs' ? 'DIFFERS' : 'UNTESTED'}
+            </span>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-3 text-xs font-mono">
-          <span
-            data-testid="badge-behavior-check"
-            className={
-              behaviorCheck === 'passed'
-                ? 'text-emerald font-bold'
-                : behaviorCheck === 'failed'
-                  ? 'text-rose font-bold'
-                  : 'text-muted'
-            }
-          >
-            Behavior Tests:{' '}
-            {behaviorCheck === 'passed' ? 'PASSED' : behaviorCheck === 'failed' ? 'FAILED' : 'UNTESTED'}
-          </span>
-          <span aria-hidden="true" className="text-faint">·</span>
-          <span
-            data-testid="badge-output-check"
-            className={
-              outputCheck === 'matched'
-                ? 'text-emerald font-bold'
-                : outputCheck === 'differs'
-                  ? 'text-amber font-bold'
-                  : 'text-muted'
-            }
-          >
-            Presentation (`stdout`, {outputMatchMode} match):{' '}
-            {outputCheck === 'matched' ? 'MATCHED' : outputCheck === 'differs' ? 'DIFFERS' : 'UNTESTED'}
-          </span>
-          <span aria-hidden="true" className="text-faint">·</span>
-          <span data-testid="note-output-match-mode" className="text-[11px] text-muted">
+
+        {instructorTestSummary && instructorTestSummary.length > 0 && (
+          <ul className="mt-3 grid gap-1.5 sm:grid-cols-2" data-testid="assessment-checks">
+            {instructorTestSummary.map((item, idx) => (
+              <li
+                key={idx}
+                data-testid={`assessment-check-${idx}`}
+                title={item}
+                className="group flex items-start gap-2 rounded-lg border border-line-soft bg-canvas/70 px-2.5 py-2 text-[11.5px] leading-snug text-body transition-colors hover:border-accent/40 hover:bg-canvas"
+              >
+                <Sparkles
+                  className="mt-0.5 h-3 w-3 shrink-0 text-accent transition-transform group-hover:scale-110"
+                  aria-hidden="true"
+                />
+                <span className="min-w-0">{item}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <details
+          data-testid="assessment-formatting-rule"
+          className="group mt-2.5 rounded-lg border border-line-soft bg-canvas/60 px-2.5 py-1.5"
+        >
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 text-[12px] font-mono uppercase tracking-[0.08em] text-faint hover:text-body [&::-webkit-details-marker]:hidden">
+            <Activity className="h-3 w-3" aria-hidden="true" />
+            How presentation is read
+            <span className="ml-auto text-[11px] normal-case tracking-normal text-dim group-open:hidden">
+              open
+            </span>
+          </summary>
+          <p data-testid="note-output-match-mode" className="mt-1.5 text-[11px] leading-snug text-muted">
             {exactFormatting
               ? 'This lesson grades exact formatting: its table columns are part of the answer.'
               : 'Formatting is ignored: indentation, column padding and blank lines cannot block a correct solution.'}
-          </span>
-        </div>
-      </div>
-      <ul className="mt-2.5 space-y-1 text-xs text-body font-mono">
-        {(instructorTestSummary || []).map((item, idx) => (
-          <li key={idx} className="flex items-start gap-2">
-            <span className="text-accent">•</span>
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
-      {checkFailures.map((check) => (
-        <div
-          key={check.id}
-          data-testid={`check-failure-${check.id}`}
-          aria-live="polite"
-          className="mt-2.5 p-2.5 rounded-lg bg-canvas border border-rose/40"
-        >
-          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xs font-mono">
-            <span className="font-bold text-rose">{check.title}</span>
-            <span aria-hidden="true" className="text-faint">·</span>
-            <span className="text-body break-words">{check.detail}</span>
-          </div>
-          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] font-mono">
-            <span className="text-muted break-words">{check.why}</span>
-            {check.hint > 0 && revealedHints < check.hint && (
-              <button
-                data-testid={`btn-check-hint-${check.id}`}
-                onClick={() => onRevealHint(check.hint)}
-                title={`Open Hint ${check.hint}, the rung that answers this check - and only that rung`}
-                className="px-2 py-0.5 rounded bg-amber/15 hover:bg-amber/25 text-amber-strong border border-amber/40 cursor-pointer"
-              >
-                Show Hint {check.hint}
-              </button>
-            )}
-            {check.hint > 0 && revealedHints >= check.hint && (
-              <span data-testid={`check-hint-open-${check.id}`} className="text-amber">
-                {revealedHints < hintCount
-                  ? `Hint ${check.hint} is open below · Hint ${revealedHints + 1} waits for your next run`
-                  : `Hint ${check.hint} is open below`}
+          </p>
+        </details>
+
+        {checkFailures.map((check) => (
+          <div
+            key={check.id}
+            data-testid={`check-failure-${check.id}`}
+            aria-live="polite"
+            className="mt-2.5 rounded-lg border border-rose/40 bg-canvas p-2.5"
+          >
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xs font-mono">
+              <span className="flex items-center gap-1.5 font-bold text-rose">
+                <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                {check.title}
               </span>
-            )}
+              <span aria-hidden="true" className="text-faint">·</span>
+              <span className="break-words text-body">{check.detail}</span>
+            </div>
+            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] font-mono">
+              <span className="break-words text-muted">{check.why}</span>
+              {check.hint > 0 && revealedHints < check.hint && (
+                <button
+                  data-testid={`btn-check-hint-${check.id}`}
+                  onClick={() => onRevealHint(check.hint)}
+                  title={`Open Hint ${check.hint}, the rung that answers this check - and only that rung`}
+                  className="cursor-pointer rounded border border-amber/40 bg-amber/15 px-2 py-0.5 text-amber-strong hover:bg-amber/25"
+                >
+                  Show Hint {check.hint}
+                </button>
+              )}
+              {check.hint > 0 && revealedHints >= check.hint && (
+                <span data-testid={`check-hint-open-${check.id}`} className="text-amber">
+                  {revealedHints < hintCount
+                    ? `Hint ${check.hint} is open below · Hint ${revealedHints + 1} waits for your next run`
+                    : `Hint ${check.hint} is open below`}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
-      {instructorError && (
-        <div
-          data-testid="pre-instructor-error"
-          className="mt-2.5 p-2.5 rounded-lg bg-canvas border border-rose/50 font-mono text-xs text-rose"
-        >
-          {instructorError}
-        </div>
-      )}
-      {passStatus === 'harness_failed' && harnessResult && harnessResult.failures.length > 0 && (
-        <div
-          data-testid="pre-harness-error"
-          className="mt-2.5 p-2.5 rounded-lg bg-canvas border border-rose/50 font-mono text-xs text-rose space-y-1"
-        >
-          <div className="text-[11px] text-amber">
-            Harness: {harnessResult.met} / {harnessResult.total} graded metrics at target
+        ))}
+
+        {instructorError && (
+          <div
+            data-testid="pre-instructor-error"
+            className="mt-2.5 rounded-lg border border-rose/50 bg-canvas p-2.5 font-mono text-xs text-rose"
+          >
+            {instructorError}
           </div>
-          {harnessResult.failures.map((line) => (
-            <div key={line}>{line}</div>
-          ))}
-        </div>
-      )}
+        )}
+        {passStatus === 'harness_failed' && harnessResult && harnessResult.failures.length > 0 && (
+          <div
+            data-testid="pre-harness-error"
+            className="mt-2.5 space-y-1 rounded-lg border border-rose/50 bg-canvas p-2.5 font-mono text-xs text-rose"
+          >
+            <div className="text-[11px] text-amber">
+              Harness: {harnessResult.met} / {harnessResult.total} graded metrics at target
+            </div>
+            {harnessResult.failures.map((line) => (
+              <div key={line}>{line}</div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

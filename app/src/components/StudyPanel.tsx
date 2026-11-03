@@ -23,6 +23,7 @@ import {
 } from '../sittingClock';
 import { DAY_MS, type Grade } from '../fsrs';
 import { InlineMarkdown } from './InlineMarkdown';
+import { Notebook } from './Notebook';
 import { workflowToMarkdown } from '../workflow';
 import { workflowSummary } from '../workflowValidation';
 import { readWorkflow } from '../workflowStore';
@@ -278,25 +279,19 @@ export function StudyPanel({ lessonId, onOpenWorkflow }: StudyPanelProps) {
         </span>
       </div>
 
-      <label htmlFor="study-note" className="mt-2.5 block text-[12px] text-muted">
-        What clicked, what is still fuzzy. Saved as you type, on this device only.
-      </label>
-      <textarea
+      <Notebook
         id="study-note"
-        data-testid="study-note"
+        testId="study-note"
         value={note}
-        onChange={(event) => {
-          setNote(event.target.value);
+        onChange={(next) => {
+          setNote(next);
           dirtyRef.current = true;
         }}
-        rows={3}
+        label="What clicked, what is still fuzzy. Saved as you type, on this device only."
         placeholder="e.g. The tolerance is on the angle, not the position — that is why 5 mm passed."
-        className="mt-1.5 w-full resize-y rounded-lg border px-2.5 py-2 font-mono text-[13px] outline-none"
-        style={{
-          borderColor: 'var(--border)',
-          backgroundColor: 'var(--canvas)',
-          color: 'var(--text)',
-        }}
+        rows={4}
+        maxLength={MAX_NOTE_CHARS}
+        className="mt-2.5"
       />
 
       <div className="mt-2 flex flex-wrap items-center gap-2">

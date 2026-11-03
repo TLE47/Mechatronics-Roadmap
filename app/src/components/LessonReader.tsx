@@ -4,6 +4,7 @@ import {
   Bold,
   BookOpen,
   ChevronRight,
+  EyeOff,
   Highlighter,
   Italic,
   Loader2,
@@ -245,6 +246,8 @@ export function LessonReader({
 }: LessonReaderProps) {
   /** Whether the reader is showing its one-line split-view suggestion. */
   const [splitTip, setSplitTip] = useState(false);
+  /** The lesson text can step out of the grid entirely; the hover tab is the way back. */
+  const [collapsed, setCollapsed] = useState(false);
   const [page, setPage] = useState<LessonPage | null>(null);
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -978,14 +981,15 @@ export function LessonReader({
   };
 
   return (
+    <>
     <section
       data-testid="lesson-reader"
       data-reader-path={path}
-      data-reader-hidden={hidden || undefined}
+      data-reader-hidden={hidden || collapsed || undefined}
       // `min-w-0` is what keeps a long code line inside the pane's own scroller: as a flex child
       // the default `min-width: auto` lets its widest `<pre>` widen the whole work area instead.
-      className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-line bg-panel"
-      style={{ display: hidden ? 'none' : undefined }}
+      className="group/reader flex min-w-0 flex-col overflow-hidden rounded-xl border border-line bg-panel"
+      style={{ display: hidden || collapsed ? 'none' : undefined }}
     >
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line-soft bg-canvas px-3 py-1.5">
         <div className="flex min-w-0 items-center gap-1.5">
@@ -1038,6 +1042,17 @@ export function LessonReader({
             <RotateCcw className="h-3 w-3" /> Top
           </button>
           {toolbar}
+          <button
+            type="button"
+            onClick={() => setCollapsed(true)}
+            data-testid="btn-hide-lesson"
+            aria-label="Hide the lesson text"
+            title="Hide the lesson text and give the work area the full width"
+            className="flex items-center gap-1 rounded border border-line-soft bg-canvas px-2 py-1 text-[11px] font-mono text-muted opacity-0 transition-opacity hover:text-ink focus-visible:opacity-100 group-hover/reader:opacity-100 group-focus-within/reader:opacity-100"
+          >
+            <EyeOff className="h-3 w-3" aria-hidden="true" />
+            <span className="hidden xl:inline">Hide lesson</span>
+          </button>
         </div>
       </div>
 
@@ -1308,6 +1323,24 @@ export function LessonReader({
           </div>,
           document.body
         )}
-    </section>
+      </section>
+      {collapsed && !hidden && (
+        <div className="fixed right-0 top-1/3 z-30 -translate-y-1/2">
+          <button
+            type="button"
+            data-testid="btn-show-lesson"
+            onClick={() => setCollapsed(false)}
+            aria-label="Show the lesson text"
+            title="Show the lesson text"
+            className="flex h-24 w-8 translate-x-6 flex-col items-center justify-center gap-1 rounded-l-lg border border-r-0 border-line bg-panel/95 text-muted opacity-0 shadow-lg backdrop-blur transition-all hover:translate-x-0 hover:text-accent hover:opacity-100 focus-visible:translate-x-0 focus-visible:opacity-100"
+          >
+            <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
+            <span className="[writing-mode:vertical-rl] font-mono text-[10px] uppercase tracking-[0.14em]">
+              Lesson
+            </span>
+          </button>
+        </div>
+      )}
+    </>
   );
 }

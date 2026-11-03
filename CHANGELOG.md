@@ -86,13 +86,44 @@ the tab builds the chooser's props once and hands them to the rail or the phone 
 reads the strip from its new owner. The tab is back under the budget without raising it, and the DOM
 is unchanged, so `check:snapshot` still passes from the same 68 surfaces.
 
+**The studio gets the runner's run utilities and a Workflow view.** The free-study card's More tray
+now carries Format (Black through the same worker, installed on the first press), reset code, reset
+runtime, copy, download, and a run history that restores the code a run started from. The runner's
+split controls already belonged to the shared card; Workflow now does too, as a tab beside the run
+output, while the Plan page keeps the full canvas.
+
+**Both notebooks are note editors now.** `components/Notebook.tsx` is one editor under the lesson's
+Study panel and in the studio: bold, italic, underline, heading, bulleted/numbered/checklist lists,
+quote, inline code and link insertions; a preview rendered through the reader's own inline Markdown;
+word and character counts; copy, Markdown download and clear; and the parent's save sentence. The
+same keyboard shortcuts (⌘/Ctrl+B, I, U, K) work in both places, and a 390 px screen wraps the
+toolbar instead of scrolling sideways.
+
+**The instructor assessment reads as a live instrument.** The panel now opens with a pulsing radar,
+two verdict tiles that carry their own pass/fail/dashed icons, and each lesson check as a compact
+hover card instead of a wall of bullets. The exact-formatting rule stays available behind a
+disclosure; the verdicts and their test ids are unchanged for every existing suite.
+
+**The lesson can leave the grid.** The reader's header grows a hover-only Hide lesson control; the
+section leaves the layout entirely (not a narrower column), the editor takes the full width, and a
+hover-only edge tab brings the text back. The grid change is CSS `:has`, so no tab state or budget
+was spent on it.
+
+**Home gets a hero, and the lesson gets atmosphere.** Home now opens with a live-bench hero — a
+large display headline, three route stats, Continue/Free study/Route doors, and a CSS orbit of the
+bench's four verbs — while the existing Today, arm and progress cards stay the working page. The
+lesson shell gets a pointer-free aurora, instrument grid, orbit and four HUD chips behind the cards,
+with reduced-motion rules for both.
+
 Covered by `npm run test:rail` (13 checks, the chooser strip read from its new module),
 `npm run test:runner` (12 checks, the tab back inside its line budget), `npm run test:panes` (the two
-keys, their defaults and a corrupt entry each pinned), `npm run test:studio` (the remembered page, its
-default and its junk values), `npm run check:weight` (the signed-in bundle within its raised ceilings),
-the workbench suite in `check:all`, a `check:snapshot` re-record whose only moved numbers are the two
-new controls and the stacked order, and both Chromium suites, the studio one reopening Plan and then
-Code across a reload.
+keys, their defaults and a corrupt entry each pinned), `npm run test:studio` (21 checks, including
+Format's protocol and the studio's own history), `npm run check:labels` (248 metadata rows and Home's
+67 controls at the §3 floor), `npm run check:weight` (signed-in 585,619 B entry, 993,798 B JS,
+26,245 B CSS and 394,159 B largest, with the four ceilings raised by hand and measured), a
+`check:snapshot` re-record of `tab-pyodide`, `tab-studio`, `home` and `workflow` across all four
+palettes, both Chromium suites, the full lesson Chromium sweep (Study at both widths, breakpoints,
+watch mode, sharing and resume), and the workbench suite in `check:all`.
 
 ## [2026-11-02] — The runner's three knots get owners, and a ratchet holds them
 

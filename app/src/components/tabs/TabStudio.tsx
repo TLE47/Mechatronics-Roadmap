@@ -1,7 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { NotebookPen } from 'lucide-react';
 import type { PythonEditorHandle } from '../PythonEditor';
 import { RunnerEditorCard } from './runner/RunnerEditorCard';
 import { WorkflowPanel } from '../WorkflowPanel';
+import { Notebook } from '../Notebook';
+import { StudioMore, type StudioRunSnapshot } from './studio/StudioMore';
 import { useMediaQuery } from '../../useMediaQuery';
 import { readVim, writeVim } from '../../vimMode';
 import {
@@ -9,11 +12,13 @@ import {
   STUDIO_PANES,
   readPanes,
   writePanes,
+  showView,
   type EditorPanes,
 } from '../../editorPanes';
 import { readStudioView, writeStudioView, type StudioView } from '../../studioView';
 import {
   MAX_STUDIO_NOTE_CHARS,
+  STARTER_CODE,
   saveStudio,
   readStudio,
   type StudioDoc,
@@ -78,6 +83,9 @@ export const TabStudio: React.FC = () => {
     readPanes(STORAGE_KEY_STUDIO_PANES, STUDIO_PANES)
   );
   const commitPanes = (next: EditorPanes) => setPanes(writePanes(next, STORAGE_KEY_STUDIO_PANES));
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [history, setHistory] = useState<StudioRunSnapshot[]>([]);
+  const [formatNote, setFormatNote] = useState('');
   const editorPanelRef = useRef<HTMLDivElement | null>(null);
   const mainEditorRef = useRef<PythonEditorHandle | null>(null);
   const [vimOn, setVimOn] = useState<boolean>(() => readVim());
@@ -119,8 +127,22 @@ export const TabStudio: React.FC = () => {
 
   const run = () => {
     if (!runner.current) runner.current = createScratchRunner(setRuntime);
+    const runCode = latest.current.code;
     setResult(null);
-    void runner.current.run(latest.current.code).then(setResult);
+    void runner.current.run(runCode).then((next) => {
+      setResult(next);
+      setHistory((previous) =>
+        [
+          {
+            code: runCode,
+            output: next.stdout || next.stderr || (next.ok ? '(no output)' : ''),
+            ok: next.ok,
+            at: Date.now(),
+          },
+          ...previous,
+        ].slice(0, 8)
+      );
+    });
   };
 
   const output = result
@@ -130,34 +152,83 @@ export const TabStudio: React.FC = () => {
   const notePane = (
     <div
       data-testid="studio-note-pane"
-      className="space-y-2 rounded-xl border border-line bg-panel p-4"
+      className="rounded-xl border border-line bg-panel p-4"
     >
-      <label htmlFor="studio-note" className="block text-[12px] text-muted">
-        Notebook — what clicked, what to try next. Saved on this device.
-      </label>
-      <textarea
-        id="studio-note"
-        data-testid="studio-note"
-        value={doc.note}
-        onChange={(event) => update({ note: event.target.value })}
-        rows={phone ? 8 : 16}
-        maxLength={MAX_STUDIO_NOTE_CHARS}
-        placeholder="e.g. The tolerance is on the angle, not the position."
-        className="w-full resize-y rounded-lg border px-2.5 py-2 font-mono text-[12.5px] outline-none"
-        style={{
-          borderColor: 'var(--border)',
-          backgroundColor: 'var(--canvas)',
-          color: 'var(--text)',
-        }}
-      />
-      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted">
-        <span data-testid="studio-note-status">{saveState || 'Saved on this device'}</span>
-        <span>
-          {doc.note.length.toLocaleString()} / {MAX_STUDIO_NOTE_CHARS.toLocaleString()}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="flex items-center gap-1.5 font-mono text-[13px] text-accent">
+          <NotebookPen className="h-4 w-4" aria-hidden="true" />
+          Notebook
+        </span>
+        <span data-testid="studio-note-status" className="text-[11px] text-muted">
+          {saveState || 'Saved on this device'}
         </span>
       </div>
+      <Notebook
+        id="studio-note"
+        testId="studio-note"
+        value={doc.note}
+        onChange={(next) => update({ note: next })}
+        label="What clicked, what to try next. Saved on this device."
+        placeholder="e.g. The tolerance is on the angle, not the position."
+        rows={phone ? 8 : 14}
+        maxLength={MAX_STUDIO_NOTE_CHARS}
+        className="mt-2"
+      />
     </div>
   );
+
+  const resetCode = () => {
+    update({ code: STARTER_CODE });
+    setResult(null);
+    setMoreOpen(false);
+  };
+
+  const resetRuntime = () => {
+    runner.current?.dispose();
+    runner.current = null;
+    setRuntime('idle');
+    setResult(null);
+    setMoreOpen(false);
+  };
+
+  const formatCode = () => {
+    setMoreOpen(false);
+    if (!runner.current) runner.current = createScratchRunner(setRuntime);
+    const target = runner.current;
+    const source = latest.current.code;
+    setFormatNote('Formatting…');
+    void target.format(source).then((answer) => {
+      if (answer.formatted) {
+        update({ code: answer.formatted });
+        setResult(null);
+        setFormatNote('Formatted with Black');
+      } else {
+        setFormatNote(answer.error || answer.unavailable || 'Format did not change the file');
+      }
+    });
+  };
+
+  const copyCode = () => {
+    void navigator.clipboard?.writeText(doc.code).catch(() => {});
+    setMoreOpen(false);
+  };
+
+  const downloadCode = () => {
+    const blob = new Blob([doc.code], { type: 'text/x-python;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'studio.py';
+    anchor.click();
+    URL.revokeObjectURL(url);
+    setMoreOpen(false);
+  };
+
+  const openWorkflow = () => {
+    if (phone) setView(writeStudioView('code'));
+    commitPanes(showView(panes, 'workflow'));
+    setMoreOpen(false);
+  };
 
   /** The card's toolbar slot: the run controls and the one editor setting a scratch file has. */
   const studioToolbar = (
@@ -194,6 +265,23 @@ export const TabStudio: React.FC = () => {
       >
         Vim
       </button>
+      <StudioMore
+        open={moreOpen}
+        onToggle={() => setMoreOpen((on) => !on)}
+        onClose={() => setMoreOpen(false)}
+        onResetCode={resetCode}
+        onResetRuntime={resetRuntime}
+        onFormat={formatCode}
+        onCopyCode={copyCode}
+        onDownloadCode={downloadCode}
+        onOpenWorkflow={openWorkflow}
+        history={history}
+        onRestore={(entry) => {
+          update({ code: entry.code });
+          setMoreOpen(false);
+        }}
+        onClearHistory={() => setHistory([])}
+      />
     </div>
   );
 
@@ -219,13 +307,20 @@ export const TabStudio: React.FC = () => {
     </div>
   );
 
+  /** The learner's plan, also available as a view of the editor rather than only the Plan page. */
+  const studioWorkflow = (
+    <div data-testid="studio-workflow-pane" className="bg-canvas p-2.5">
+      <WorkflowPanel lessonId="studio" lessonTitle="Free study" />
+    </div>
+  );
+
   // The runner's editor card, ungraded: same tabs, same splittable panes, same editor settings, with
-  // the views this workspace can honestly offer (the run output) and none it cannot. What is absent
-  // is absent on purpose rather than wired to a no-op: no prediction (nothing to forecast), no
-  // expected output (nothing graded), no workflow pane (the Plan view is the same canvas, one press
-  // away), no lesson files or go-to-definition (there is no second file), no analysis or inline
-  // values and no breakpoint dots or run-to-a-cell (studio/pythonRun.ts sends no analysis channel, no
-  // breakpoints and no cell budget, so a control that offered any of them would do nothing).
+  // the views this workspace can honestly offer (the run output and the workflow). What is absent is
+  // absent on purpose rather than wired to a no-op: no prediction (nothing to forecast), no expected
+  // output (nothing graded), no lesson files or go-to-definition (there is no second file), no
+  // analysis or inline values and no breakpoint dots or run-to-a-cell (studio/pythonRun.ts sends no
+  // analysis channel, no breakpoints and no cell budget, so a control that offered any of them would
+  // do nothing).
   const codePane = (
     <div data-testid="studio-code" className="min-w-0">
       <RunnerEditorCard
@@ -267,10 +362,10 @@ export const TabStudio: React.FC = () => {
           feedback: null,
           actualOutputPane: studioOutput,
           expectedOutputPane: null,
-          workflowPane: null,
+          workflowPane: studioWorkflow,
         }}
         collab={{ coEdit: null, collabNotice: null, peerLabel: null }}
-        resultViews={['actual']}
+        resultViews={['actual', 'workflow']}
       />
     </div>
   );
@@ -292,6 +387,11 @@ export const TabStudio: React.FC = () => {
           <span data-testid="studio-python-status" className="text-[11px] text-muted">
             {RUNTIME[runtime]}
           </span>
+          {formatNote && (
+            <span data-testid="studio-format-status" className="text-[11px] text-muted">
+              {formatNote}
+            </span>
+          )}
           <span className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Studio view">
             {(
               [

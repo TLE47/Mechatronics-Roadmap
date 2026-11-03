@@ -80,6 +80,7 @@ import { useRunnerArrangement } from './runner/useRunnerArrangement';
 import { usePredictGate } from './runner/usePredictGate';
 
 import { RunnerRuntimeStrip } from './runner/RunnerRuntimeStrip';
+import { LessonAmbience } from './runner/LessonAmbience';
 
 import { PausedBar } from './runner/PausedBar';
 import { ResultsColumn } from './runner/ResultsColumn';
@@ -1909,10 +1910,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     <div
       className={
         phoneStudy
-          ? 'space-y-5 pb-[calc(4.75rem+env(safe-area-inset-bottom))]'
-          : 'space-y-5'
+          ? 'relative isolate space-y-5 pb-[calc(4.75rem+env(safe-area-inset-bottom))]'
+          : 'relative isolate space-y-5'
       }
     >
+      <LessonAmbience />
       {/* The coach mark, then the chip, before anything else on the page: the tour is about this
           screen, and a card that arrives below the fold is a card that arrives late. */}
       {tourActive && (

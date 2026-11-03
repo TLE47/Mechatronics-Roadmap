@@ -22,6 +22,7 @@ import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../data/mechalabPlan
 import { pyodideCdn } from '../runtime/pyodideCdn.ts';
 import {
   PyodideWorkerSession,
+  type PythonFormatAnswer,
   type PythonRunRequest,
   type PythonWorkerMessage,
 } from '../runtime/pyodideWorker.ts';
@@ -52,6 +53,8 @@ const KILLED = 'Stopped after 30 s — the program may have been looping. Press 
 
 export interface ScratchRunner {
   run: (code: string) => Promise<ScratchResult>;
+  /** Black's formatting of a scratch file, through the same worker and on the same load. */
+  format: (code: string) => Promise<PythonFormatAnswer>;
   stop: () => void;
   dispose: () => void;
 }
@@ -157,5 +160,10 @@ export function createScratchRunner(onStatus: (status: ScratchStatus) => void): 
     return asResult(verdict);
   };
 
-  return { run, stop, dispose: () => session.dispose() };
+  return {
+    run,
+    format: (code: string) => session.format(code, pyodideCdn()),
+    stop,
+    dispose: () => session.dispose(),
+  };
 }

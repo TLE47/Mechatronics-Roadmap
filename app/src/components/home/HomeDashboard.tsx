@@ -4,12 +4,17 @@ import {
   ArrowRight,
   BookOpenCheck,
   ClipboardList,
+  Cpu,
   FlaskConical,
+  Gauge,
+  GitBranch,
   GraduationCap,
   Moon,
+  Play,
   ShieldCheck,
   Sparkles,
   UserRound,
+  Waypoints,
   Wrench,
 } from 'lucide-react';
 import { buildDashboard, type DashboardEvent, type DashboardStudy } from '../../dashboardData';
@@ -183,6 +188,90 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = (props) => {
           )}
         </div>
       </div>
+
+      {/* The hero is the page's one loud moment. Everything under it stays a working dashboard; this
+          is the part that should make a learner want to press something before reading a table. */}
+      <section
+        data-testid="home-hero"
+        className="home-hero relative isolate overflow-hidden rounded-2xl border border-line p-5 sm:p-7"
+      >
+        <div aria-hidden="true" className="home-hero-aurora pointer-events-none absolute inset-0 -z-10" />
+        <div className="grid gap-6 lg:grid-cols-[1.12fr_0.88fr] lg:items-center">
+          <div className="min-w-0">
+            <p className="home-kicker">
+              <span aria-hidden="true" className="home-live-dot" />
+              live bench · {verifiedMissions}/{missions.length} missions verified
+            </p>
+            <h2 className="home-headline mt-3 font-display text-ink">
+              Build the loop.
+              <br />
+              <span className="home-gradient-text">Then watch it move.</span>
+            </h2>
+            <p className="mt-3 max-w-[46ch] text-[13px] leading-relaxed text-muted">
+              Read a page, predict what the code will do, run it, and let the checks tell you the
+              truth. The arm on the bench is the same one the lessons describe.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={startToday}
+                data-testid="home-hero-continue"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3.5 py-2 text-[12.5px] font-bold text-inverse transition-transform hover:-translate-y-0.5 hover:bg-accent/85"
+              >
+                <Play className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
+                Continue the route
+              </button>
+              <button
+                type="button"
+                onClick={() => props.onOpenTab('tab-studio')}
+                data-testid="home-hero-studio"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-panel/70 px-3 py-2 text-[12.5px] font-semibold text-ink hover:border-accent/50 hover:bg-raise"
+              >
+                <FlaskConical className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
+                Free study
+              </button>
+              <button
+                type="button"
+                onClick={props.onOpenRoute}
+                data-testid="home-hero-route"
+                className="inline-flex items-center gap-1 px-1.5 py-2 text-[12px] font-semibold text-muted hover:text-ink"
+              >
+                See the route
+                <ArrowRight className="h-3 w-3" aria-hidden="true" />
+              </button>
+            </div>
+            <dl className="mt-5 grid max-w-md grid-cols-3 gap-2">
+              {[
+                { label: 'Verified', value: model.progress.verified, note: 'lessons' },
+                { label: 'Due now', value: model.review.due, note: 'cards' },
+                { label: 'Notes', value: model.study.notes, note: 'kept' },
+              ].map((stat) => (
+                <div key={stat.label} className="home-stat rounded-xl border border-line px-2.5 py-2">
+                  <dd className="font-mono text-[19px] font-bold leading-none tabular-nums text-ink">
+                    {stat.value}
+                  </dd>
+                  <dt className="mt-1 text-[11px] uppercase tracking-[0.1em] text-faint">
+                    {stat.label} <span className="normal-case tracking-normal">· {stat.note}</span>
+                  </dt>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          <div aria-hidden="true" className="home-orbit">
+            <span className="home-orbit-ring home-orbit-ring--a" />
+            <span className="home-orbit-ring home-orbit-ring--b" />
+            <span className="home-orbit-core">
+              <Wrench className="h-7 w-7" />
+            </span>
+            <span className="home-orbit-node home-orbit-node--a"><Cpu className="h-4 w-4" /></span>
+            <span className="home-orbit-node home-orbit-node--b"><Gauge className="h-4 w-4" /></span>
+            <span className="home-orbit-node home-orbit-node--c"><GitBranch className="h-4 w-4" /></span>
+            <span className="home-orbit-node home-orbit-node--d"><Waypoints className="h-4 w-4" /></span>
+            <span className="home-orbit-label">sense → code → control</span>
+          </div>
+        </div>
+      </section>
 
       {/* `items-start`: the two cards are as tall as their own content. Stretched, the short Today
           card wore 230 px of empty panel under its button whenever the mission had no next check to

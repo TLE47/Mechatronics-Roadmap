@@ -31,6 +31,7 @@ flowchart LR
 | `RunnerToolbar.tsx` | The run controls: presets and dock, Pause/Stop/Run, Predict, and the More panel's actions. |
 | `RunnerEditorCard.tsx` | The editor surface: main/helper tabs, the pane strip, the split controls, and the editor body beside Predict, Run output, Expected and Workflow. |
 | `LessonChooserRail.tsx` | The Study preset's left column: the lesson chooser, the strip it folds to, and the grid width that follows the fold. |
+| `LessonAmbience.tsx` | The pointer-free atmosphere behind the runner: aurora, instrument grid, orbit and four HUD chips. |
 | `RunnerRuntimeStrip.tsx` | Where the interpreter is while it loads: first-run guide and runtime sentence. |
 | `RunVerdict.tsx` | The one-line verdict under the run controls, from the last outcome. |
 | `PredictPane.tsx` | The prediction gate's pane: the question, the committed guess and its reading. |

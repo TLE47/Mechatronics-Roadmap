@@ -1,0 +1,228 @@
+/* Home's loud moment and the lesson runner's atmosphere. Kept out of `index.css` so the token block
+   stays a token block; both use the same custom properties, so every palette retints them. */
+
+.home-hero {
+  background:
+    radial-gradient(ellipse at 12% -20%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 58%),
+    radial-gradient(ellipse at 92% 120%, color-mix(in srgb, var(--purple) 13%, transparent), transparent 55%),
+    var(--panel);
+  box-shadow: 0 18px 60px color-mix(in srgb, var(--bg) 55%, transparent);
+}
+.home-hero-aurora {
+  background:
+    radial-gradient(circle at 25% 30%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 34%),
+    radial-gradient(circle at 78% 64%, color-mix(in srgb, var(--emerald) 10%, transparent), transparent 30%);
+  animation: home-aurora 16s ease-in-out infinite alternate;
+}
+.home-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border));
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.home-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--emerald);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--emerald) 55%, transparent);
+  animation: home-pulse 2.4s ease-out infinite;
+}
+.home-headline {
+  font-size: clamp(2.15rem, 5.2vw, 3.8rem);
+  line-height: 0.96;
+  letter-spacing: -0.04em;
+}
+.home-gradient-text {
+  background: linear-gradient(92deg, var(--accent), var(--emerald) 55%, var(--purple));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.home-stat {
+  background: color-mix(in srgb, var(--canvas) 62%, transparent);
+  backdrop-filter: blur(6px);
+}
+.home-orbit {
+  position: relative;
+  display: grid;
+  min-height: 250px;
+  place-items: center;
+}
+.home-orbit::before {
+  content: '';
+  position: absolute;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 22%, transparent), transparent 68%);
+  filter: blur(12px);
+}
+.home-orbit-ring {
+  position: absolute;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: 50%;
+}
+.home-orbit-ring--a {
+  width: 228px;
+  height: 228px;
+  border-style: dashed;
+  animation: home-spin 26s linear infinite;
+}
+.home-orbit-ring--b {
+  width: 160px;
+  height: 160px;
+  border-color: color-mix(in srgb, var(--emerald) 34%, transparent);
+  animation: home-spin 18s linear infinite reverse;
+}
+.home-orbit-core {
+  position: relative;
+  display: grid;
+  width: 76px;
+  height: 76px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--border));
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--panel));
+  color: var(--accent);
+  box-shadow: 0 0 40px color-mix(in srgb, var(--accent) 24%, transparent);
+  animation: home-breathe 5.5s ease-in-out infinite;
+}
+.home-orbit-node {
+  position: absolute;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+  animation: home-float 6s ease-in-out infinite;
+}
+.home-orbit-node--a { top: 9%; left: 16%; animation-delay: -1s; }
+.home-orbit-node--b { top: 18%; right: 12%; animation-delay: -2.4s; }
+.home-orbit-node--c { bottom: 17%; left: 11%; animation-delay: -3.8s; }
+.home-orbit-node--d { bottom: 10%; right: 19%; animation-delay: -4.6s; }
+.home-orbit-label {
+  position: absolute;
+  bottom: 1%;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--canvas) 72%, transparent);
+  padding: 3px 9px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+@keyframes home-aurora {
+  from { transform: translate3d(-2%, -1%, 0) scale(1); opacity: 0.7; }
+  to { transform: translate3d(3%, 2%, 0) scale(1.08); opacity: 1; }
+}
+@keyframes home-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes home-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--emerald) 55%, transparent); }
+  70% { box-shadow: 0 0 0 8px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@keyframes home-breathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-4px) scale(1.035); }
+}
+@keyframes home-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+/* The lesson's atmosphere: a very quiet aurora and instrument grid behind the cards. */
+.lesson-ambience {
+  opacity: 0.8;
+}
+.lesson-aurora {
+  position: absolute;
+  inset: -18%;
+  background:
+    radial-gradient(circle at 18% 24%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 38%),
+    radial-gradient(circle at 82% 70%, color-mix(in srgb, var(--purple) 12%, transparent), transparent 36%),
+    radial-gradient(circle at 52% 100%, color-mix(in srgb, var(--emerald) 10%, transparent), transparent 40%);
+  filter: blur(28px);
+  animation: lesson-drift 24s ease-in-out infinite alternate;
+}
+.lesson-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--accent) 8%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--accent) 8%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at 50% 20%, black, transparent 72%);
+  opacity: 0.55;
+}
+.lesson-orbit {
+  position: absolute;
+  top: -120px;
+  right: -80px;
+  width: 360px;
+  height: 360px;
+  border: 1px solid color-mix(in srgb, var(--accent) 14%, transparent);
+  border-radius: 50%;
+  animation: home-spin 40s linear infinite;
+}
+.lesson-orbit::before,
+.lesson-orbit::after {
+  content: '';
+  position: absolute;
+  border: 1px solid color-mix(in srgb, var(--purple) 12%, transparent);
+  border-radius: 50%;
+}
+.lesson-orbit::before { inset: 42px; }
+.lesson-orbit::after { inset: 92px; border-color: color-mix(in srgb, var(--emerald) 14%, transparent); }
+.lesson-hud {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--canvas) 55%, transparent);
+  padding: 2px 7px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+  opacity: 0.65;
+}
+.lesson-hud--a { top: 22px; right: 9%; }
+.lesson-hud--b { top: 34%; left: 8px; }
+.lesson-hud--c { bottom: 18%; right: 3%; }
+.lesson-hud--d { bottom: 8%; left: 2%; }
+@keyframes lesson-drift {
+  from { transform: translate3d(-1%, -1%, 0) scale(1); }
+  to { transform: translate3d(2%, 2%, 0) scale(1.05); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hero-aurora,
+  .home-live-dot,
+  .home-orbit-ring,
+  .home-orbit-core,
+  .home-orbit-node,
+  .lesson-aurora,
+  .lesson-orbit {
+    animation: none;
+  }
+}
