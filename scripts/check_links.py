@@ -13,12 +13,13 @@ Automated Link, Relative-Path & Static-Page Heading Checker (`scripts/check_link
    re-pay for 350 unchanged citations. `--refresh` ignores the cache; `--no-cache` skips it entirely.
 2. Verifies that every relative file link resolves to an existing file on disk.
 3. Checks every unique `http://` and `https://` URL using an HTTP GET request and records its HTTP status
-   and `<title>`. Each URL gets one of five verdicts: **PASS** (2xx/3xx), **FAIL** (a 4xx the host is
-   actually answering, other than a bot wall), **BLOCKED** (401/403/429 - the host refuses automated
-   clients, so a browser is the only way to see it), **SERVER_ERROR** (5xx, retried once) and
-   **UNREACHABLE** (connection error or timeout, retried once). Only FAIL breaks the build: the other
-   three mean the page could not be checked, not that the citation is wrong, and the report says so
-   on every such row.
+   and `<title>`. Each URL gets one of five verdicts: **PASS** (2xx/3xx), **FAIL** (a 4xx that names a
+   missing document, or an unresolved redirect; a bot wall or the origin's own timeout is not evidence
+   of a dead citation), **BLOCKED** (401/403/418/429 - the host refuses automated clients, so a browser
+   is the only way to see it), **SERVER_ERROR** (5xx, retried once) and **UNREACHABLE** (connection
+   error, timeout, or an exhausted 408/425, retried once). Only FAIL breaks the build: the other three
+   mean the page could not be checked, not that the citation is wrong, and the report says so on every
+   such row.
 4. Distinguishes **Static HTML pages** (SparkFun, Physics Classroom, CS50 Notes, MathsIsFun, HyperPhysics,
    Wikipedia, Wokwi Docs, Python Docs, Electronics-Tutorials, BetterExplained, MyPhysicsLab) from
    **Interactive Browser SPAs / Simulators** (`futurecoder.io`, `falstad.com`, `phet.colorado.edu`,
@@ -43,6 +44,7 @@ import glob
 import html
 import json
 import os
+import random
 import re
 import sys
 import time
@@ -116,8 +118,13 @@ UNVERIFIED_VERDICTS = (BLOCKED, SERVER_ERROR, UNREACHABLE)
 # 418: IEEE Xplore answers scripts with a teapot while serving browsers the journal page.
 # 429: rate limiting. None of these is evidence that the link rotted.
 BOT_WALL_STATUSES = frozenset({401, 403, 418})
-# The retryable set from the host rules: transient upstream errors and throttling.
-RETRYABLE_STATUSES = frozenset({429, 502, 503, 504})
+# 408/425: the origin's own "not now" answers. They are retried, then reported as UNREACHABLE; a
+# timeout is inconclusive evidence about a citation, not proof that its document is missing.
+TRANSIENT_TIMEOUT_STATUSES = frozenset({408, 425})
+# The retryable set: throttling, transient upstream errors, and origin timeouts.
+RETRYABLE_STATUSES = frozenset({408, 425, 429, 502, 503, 504})
+# A full-jitter retry must not turn a slow sweep into an outage of its own.
+MAX_RETRY_DELAY = 2.0
 
 
 def get_target_markdown_files() -> list[str]:
@@ -162,12 +169,32 @@ OPENER = urllib.request.build_opener(_PermanentRedirects())
 
 
 def verdict_for_http_status(code: int) -> str:
-    """The verdict a non-retryable HTTP status earns, kept separate so it can be tested dry."""
+    """The verdict an HTTP status earns after any retries, kept separate so it can be tested dry."""
     if code in BOT_WALL_STATUSES or code == 429:
         return BLOCKED
+    if code in TRANSIENT_TIMEOUT_STATUSES:
+        return UNREACHABLE
     if 500 <= code < 600:
         return SERVER_ERROR
     return FAIL
+
+
+def retry_delay(attempt: int, retry_after: str | None = None) -> float:
+    """Bounded full-jitter backoff for a retryable status or a transport error.
+
+    Full jitter keeps a burst of hosts from retrying in lockstep. A numeric `Retry-After` is honoured
+    only up to the same cap: one slow host must not hold the whole sweep, but its explicit request
+    should win over the default exponential delay.
+    """
+    base = min(MAX_RETRY_DELAY, 0.5 * (2 ** max(0, attempt - 1)))
+    if retry_after:
+        try:
+            requested = float(retry_after)
+        except (TypeError, ValueError):
+            requested = 0.0
+        if requested > 0:
+            base = min(MAX_RETRY_DELAY, max(base, requested))
+    return random.uniform(0, base)
 
 
 def request_url(url: str) -> str:
@@ -185,8 +212,9 @@ def request_url(url: str) -> str:
 def fetch_url_info(url: str, timeout: int = 12, attempts: int = 2) -> tuple[str, int | str, str, str]:
     """Fetch one URL and return `(verdict, status, title, normalized_body)`.
 
-    A timeout or connection error is retried once with a short backoff before it is called
-    UNREACHABLE: one dropped connection is not evidence of a dead link, a second one is.
+    A timeout, connection error, or origin 408/425 is retried once with bounded full-jitter backoff
+    before it is called UNREACHABLE: one dropped connection is not evidence of a dead link, a second
+    one is.
     """
     headers = {
         "User-Agent": (
@@ -209,13 +237,14 @@ def fetch_url_info(url: str, timeout: int = 12, attempts: int = 2) -> tuple[str,
         except urllib.error.HTTPError as e:
             status = e.code
             if e.code in RETRYABLE_STATUSES and attempt < attempts:
-                time.sleep(0.5 * attempt)
+                retry_after = e.headers.get("Retry-After") if e.headers else None
+                time.sleep(retry_delay(attempt, retry_after))
                 continue
             return verdict_for_http_status(e.code), e.code, "", ""
         except Exception as e:
             status = str(e)
             if attempt < attempts:
-                time.sleep(0.5 * attempt)
+                time.sleep(retry_delay(attempt))
                 continue
     return UNREACHABLE, status, "", ""
 
@@ -646,6 +675,7 @@ def main() -> int:
 
     if args.write_report:
         report_path = os.path.join(ROOT, "LINK_REPORT.md")
+        hard_failures = len(relative_errors) + len(failed_urls) + len(failed_headings)
         lines = [
             "# Automated Link & Static-Page Heading Verification Report (`LINK_REPORT.md`)\n",
             "Generated by `python3 scripts/check_links.py --write-report`.\n",
@@ -665,15 +695,16 @@ def main() -> int:
                 for v in (PASS, FAIL, BLOCKED, SERVER_ERROR, UNREACHABLE)
             ),
             f"- **Broken Relative File Links:** `{len(relative_errors)}`",
-            f"- **Missing Static-Page Headings:** `{len(failed_headings)}`\n",
-            "**Verdict legend.** `PASS` = the host served the page. `FAIL` = the host answered with a 4xx "
-            "that names a missing document; it breaks the check. `BLOCKED` = 401/403/429, a bot wall or "
-            "rate limit (w3.org, dl.acm.org, allaboutcircuits.com and ctms.engin.umich.edu all answer this "
-            "way to scripts and normally to a browser); `SERVER_ERROR` = 5xx after one retry; "
-            "`UNREACHABLE` = a connection error or timeout after one retry. Those three mean *the page "
-            "could not be checked from here*, not that the citation is wrong, so they are reported and "
-            "counted but do not fail the run - otherwise a bot wall or an outage we cannot fix would keep "
-            "the check permanently red. Open the URL in a browser before treating one as dead.\n",
+            f"- **Missing Static-Page Headings:** `{len(failed_headings)}`",
+            f"- **Hard Failures:** `{hard_failures}` (URLs `{len(failed_urls)}`, headings `{len(failed_headings)}`, relative links `{len(relative_errors)}`)",
+            f"- **Not Checked (egress/block/outage):** `{len(unverified_urls)}` - these do not fail the sweep\n",
+            "**Verdict legend.** `PASS` = the host served the page. `FAIL` = a 4xx that names a missing "
+            "document or an unresolved redirect; it breaks the check. `BLOCKED` = 401/403/418/429, a bot "
+            "wall or rate limit; `SERVER_ERROR` = 5xx after one retry; `UNREACHABLE` = a connection error, "
+            "timeout, or 408/425 after one retry. Those three mean *the page could not be checked from "
+            "here*, not that the citation is wrong, so they are reported and counted but do not fail the "
+            "run - otherwise a bot wall or an outage we cannot fix would keep the check permanently red. "
+            "Open the URL in a browser before treating one as dead.\n",
             "| Status | HTTP | Verification Class | URL | Page `<title>` & Per-URL Heading Check Results | Referenced In |",
             "| :--- | :--- | :--- | :--- | :--- | :--- |",
         ]
@@ -683,6 +714,15 @@ def main() -> int:
             safe_headings = heading_summary.replace("|", "\\|")
             combined_info = f"{safe_title}<br>Headings: {safe_headings}" if safe_headings else safe_title
             lines.append(f"| {badge} | `{status}` | {kind} | {url} | {combined_info} | {sources} |")
+        lines.extend(["", "## Hard Failures", ""])
+        if failed_urls:
+            lines.extend(f"- FAIL: {url} -> HTTP `{status}` ({sources})" for url, status, sources in failed_urls)
+        if failed_headings:
+            lines.extend(f"- FAIL: {failure}" for failure in failed_headings)
+        if relative_errors:
+            lines.extend(f"- FAIL: {failure}" for failure in relative_errors)
+        if not hard_failures:
+            lines.append("None.")
         with open(report_path, "w", encoding="utf-8") as f:
             f.write("\n".join(lines) + "\n")
         print(f"Wrote {report_path}")
@@ -753,11 +793,18 @@ def main() -> int:
             print(f"FAILED URL: {url} -> {status} ({sources})", file=sys.stderr)
         for fh in failed_headings:
             print(f"FAILED HEADING: {fh}", file=sys.stderr)
+        print(
+            f"RESULT: {len(failed_urls)} hard URL failure(s), {len(failed_headings)} missing heading(s), "
+            f"{len(relative_errors)} broken relative link(s), {len(new_unverified or [])} new unverified "
+            f"URL(s); {len(unverified_urls)} not checked.",
+            file=sys.stderr,
+        )
         return 1
 
     print(
-        f"OK: {sum(1 for r in results if r[1] == PASS)} of {len(results)} external URLs were served "
-        f"(HTTP 200), 0 broken relative links, and all cited static-page headings were verified in HTML."
+        f"OK: 0 hard link failures; {sum(1 for r in results if r[1] == PASS)} of {len(results)} external "
+        f"URLs were served (HTTP 200); {len(unverified_urls)} not checked; 0 broken relative links; all "
+        f"cited static-page headings were verified in HTML."
     )
     if unverified_urls:
         print(

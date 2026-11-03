@@ -16,6 +16,17 @@ flowchart LR
 
 ---
 
+## [2026-11-03] — Link sweep: a dead watchdog citation and inconclusive timeouts
+
+**The Ganssle watchdog page is gone.** `https://www.ganssle.com/watchdogs.htm` now answers 302 to
+`/missing.html`; the Track 07 citation points to Philip Koopman's live "Proper Watchdog Timer Use"
+guide instead of papering over the redirect. **The sweep no longer treats an origin timeout as a dead document.** HTTP 408 and
+425 are retried with bounded full-jitter backoff; if the origin keeps refusing, they are `UNREACHABLE`
+and not checked, while a real 404 and an unresolved redirect still fail. The report prints the hard
+failure and not-checked totals separately, and the final stdout line names both.
+
+---
+
 ## [2026-11-03] — The shell folds its two rails, and free study gets the real editor
 
 **The tab rail folds, and remembers it.** At `xl` the rail is a 196 px activity bar on every lesson;

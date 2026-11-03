@@ -405,6 +405,88 @@ class StatusVerdictTests(unittest.TestCase):
             "cannot fix must not keep the sweep permanently red",
         )
 
+    def test_a_timeout_response_is_not_a_dead_link(self):
+        for code in (408, 425):
+            with self.subTest(code=code):
+                self.assertEqual(
+                    check_links.verdict_for_http_status(code),
+                    check_links.UNREACHABLE,
+                    "check the origin-timeout classification: expected UNREACHABLE (not checked), "
+                    "because 408/425 says the host could not answer now, not that the citation is missing",
+                )
+
+
+class RetryBackoffTests(unittest.TestCase):
+    def test_the_backoff_is_bounded_and_uses_full_jitter(self):
+        with mock.patch.object(
+            check_links.random, "uniform", side_effect=lambda low, high: high
+        ) as uniform:
+            self.assertEqual(
+                check_links.retry_delay(1),
+                0.5,
+                "check the first retry: expected the full-jitter ceiling to be half a second",
+            )
+            self.assertEqual(
+                check_links.retry_delay(8),
+                check_links.MAX_RETRY_DELAY,
+                "check the cap: expected a large attempt count to stay inside MAX_RETRY_DELAY",
+            )
+        self.assertEqual(
+            uniform.call_args_list[0][0],
+            (0, 0.5),
+            "check the jitter call: expected full jitter over the whole delay, not a fixed sleep",
+        )
+
+    def test_retry_after_can_raise_the_delay_but_not_past_the_cap(self):
+        with mock.patch.object(check_links.random, "uniform", side_effect=lambda low, high: high):
+            self.assertEqual(
+                check_links.retry_delay(1, "1.5"),
+                1.5,
+                "check Retry-After: expected a numeric header to raise the delay above the default",
+            )
+            self.assertEqual(
+                check_links.retry_delay(1, "999"),
+                check_links.MAX_RETRY_DELAY,
+                "check the Retry-After cap: expected a huge header not to stall the sweep",
+            )
+
+
+class TimeoutResponseTests(unittest.TestCase):
+    def test_a_408_is_retried_once_then_reported_as_unverified(self):
+        hits = []
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                hits.append(self.path)
+                self.send_response(408)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+
+            def log_message(self, *args):
+                pass
+
+        server = http.server.HTTPServer(("127.0.0.1", 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            with mock.patch.object(check_links.time, "sleep", return_value=None):
+                verdict, status, title, body = check_links.fetch_url_info(
+                    f"http://127.0.0.1:{server.server_port}/timeout"
+                )
+        finally:
+            server.shutdown()
+            server.server_close()
+        self.assertEqual(
+            (verdict, status, title, body),
+            (check_links.UNREACHABLE, 408, "", ""),
+            "check the 408 path: expected the retried timeout to be unverified, never a hard FAIL",
+        )
+        self.assertEqual(
+            len(hits),
+            2,
+            "check the retry count: expected a 408 to be retried exactly once before the verdict",
+        )
+
 
 class RedirectTests(unittest.TestCase):
     def test_a_308_redirect_is_followed(self):

@@ -128,7 +128,7 @@ $$
 ### 2.2 Communication Loss Watchdogs, CRC-16 & Thermal $I^2 t$ Protection
 - **Core Summary:** Production actuators never trust a single communications packet blindly or allow a severed CAN cable to leave a joint holding its last commanded torque forever. Every CAN-FD command frame is validated with a hardware CRC and a **$5.0\text{ ms}$ Host Heartbeat Timeout** (which smoothly transitions the joint into pure viscous damping $K_d$), while a background $100\text{ Hz}$ **Thermal $I^2 t$ Observer** derates maximum current before copper windings overheat.
 - **Curated Free Resources:**
-  - 🔗 [Jack Ganssle: Great Watchdog Timers for Embedded Systems](https://www.ganssle.com/watchdogs.htm) — *The classic industry guide to independent hardware window watchdogs, task health bitmasks, and safe fallback states.*
+  - 🔗 [Philip Koopman: Proper Watchdog Timer Use](https://betterembsw.blogspot.com/2014/05/proper-watchdog-timer-use.html) — *Why every periodic task must contribute to the watchdog kick, why an ISR-only kick is false security, and how to choose a safe timeout.*
   - 🔗 [Maxon Academy: Thermal Winding Time Constants & I² t Overload Protection](https://www.maxongroup.com/) — *Explains two-node thermal RC modeling (copper winding to iron stator housing) for brushless motors.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **URDF / MuJoCo & STO** in the interactive workbench and trigger all three hardware fault injections (**Overcurrent Short $42\text{ A}$**, **Encoder SPI Wire Open**, and **DC Bus Overvoltage $64\text{ V}$**) to inspect the deterministic fault detection latency and safe-state transition.
