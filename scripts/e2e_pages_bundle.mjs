@@ -64,6 +64,12 @@ const LATER_TRACK_LESSONS = ['03.3', '06.1', '08.1'];
  * The id doubles as the entry's `data-testid="lesson-item-..."` and its registry key.
  */
 const RAMP_LESSONS = ['R.1', 'R.2', 'R.3', 'R.4', 'R.5', 'R.6'];
+/** Study opens the editor body folded; these measurements need its CodeMirror on screen. */
+async function expandEditorBody(page) {
+  const toggle = page.locator('[data-testid="btn-toggle-editor"]').first();
+  await toggle.waitFor({ state: 'attached', timeout: 10000 });
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+}
 /**
  * One unique substring per ramp starter. Clicking a list item loads the next program
  * asynchronously, and every starter carries `TODO 1`, so the generic "has a TODO" wait can read the
@@ -764,6 +770,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     await wide.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, { timeout: 20000 });
     await wide.getByTestId('tab-btn-tab-pyodide').click();
     await wide.getByTestId('lesson-item-06.1').click();
+    await expandEditorBody(wide);
     await wide.waitForSelector('[data-editor="editor-main"] .cm-content', { state: 'visible', timeout: 10000 });
     // The shortcut, not the button: ⌥4 is how a learner changes preset without leaving the editor.
     await wide.keyboard.press('Alt+4');
@@ -831,7 +838,6 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       return {
         headings: [...box.querySelectorAll('[data-reader-anchor]')].map((heading) => heading.id),
         formulas: box.querySelectorAll('.katex').length,
-        code: box.querySelectorAll('pre code').length,
         source: (document.querySelector('[data-testid="link-lesson-source"]')?.textContent ?? '').trim(),
         readerLeft: Math.round(readerBox.left),
         readerRight: Math.round(readerBox.right),
@@ -937,7 +943,6 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       );
     }
     assert.ok(reader.formulas > 0, `${name}: the pane must typeset the lesson's equations`);
-    assert.ok(reader.code > 0, `${name}: the pane must render the lesson's own code fences`);
     assert.equal(
       reader.source,
       'View source on GitHub ↗',
@@ -954,6 +959,25 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
         `editor at ${reader.editorLeft}px`
     );
     assert.equal(reader.scrollable, true, `${name}: a long lesson needs its own scroll container`);
+    // Study is scoped to its study half, so the page's fenced code is not guaranteed there. Read
+    // carries the rest of the page; measure the fences where the learner reads them, then return to
+    // Study for the geometry and figure checks below.
+    await wide.getByTestId('layout-read').click();
+    await wide.waitForFunction(
+      () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'read',
+      undefined,
+      { timeout: 5000 }
+    );
+    const readCode = await wide.evaluate(
+      () => document.querySelectorAll('[data-testid="lesson-reader"] pre code').length
+    );
+    assert.ok(readCode > 0, `${name}: Read must render the lesson's own code fences`);
+    await wide.keyboard.press('Alt+1');
+    await wide.waitForFunction(
+      () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'study',
+      undefined,
+      { timeout: 5000 }
+    );
     // From the split width up they are columns again, and the reading side is the wider one.
     await wide.setViewportSize({ width: 1800, height: 1100 });
     await wide.waitForTimeout(300);
@@ -1468,6 +1492,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     assert.ok(await lesson.isVisible(), `${name}: at ${TABLET_VIEWPORT.width}px the lesson list is not usable`);
     await lesson.click();
     await lessonSheet.waitFor({ state: 'hidden', timeout: 10000 });
+    await expandEditorBody(tablet);
     await tablet.waitForSelector('[data-editor="editor-main"] .cm-content', { state: 'visible', timeout: 10000 });
 
     // The runner header must cost the step it names from the same generated spine the cards read:

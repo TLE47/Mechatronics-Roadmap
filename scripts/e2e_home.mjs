@@ -854,6 +854,8 @@ async function main() {
         { timeout: 10000 }
       );
       assert.equal(await page.getByTestId('sticky-note-popup').count(), 0, 'an edit saves and closes');
+      // Writes are queued a tick and land in IndexedDB; wait for the queue instead of a reload racing it.
+      await page.evaluate(() => window.__mechalabFlushStorage?.());
       console.log('  ok a mark reopens its note, B/Underline format it, and Save updates it in place');
 
       // Both stores are per lesson and on this device; the page is the only thing that changes.
@@ -1104,8 +1106,16 @@ async function main() {
       // P.1 is the page the checklist bug was reported on, and it has both a hint ladder and the
       // full solution written as `<details>` in its own Markdown.
       await page.goto(`${baseUrl}?lesson=P.1`, { waitUntil: 'domcontentloaded' });
+      // Study stops at `## Do it yourself`; the hint ladder and full solution are Read material now.
+      await page.getByTestId('layout-read').click();
+      await page.waitForFunction(
+        () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'read',
+        undefined,
+        { timeout: 10000 }
+      );
       await waitForEditor(page, undefined, 30000);
       await page.getByTestId('reader-scroll').waitFor({ timeout: 30000 });
+      await page.getByTestId('reader-reveal').first().waitFor({ state: 'attached', timeout: 30000 });
       await page.waitForTimeout(600);
 
       // Every checkbox id is the id the store keeps: a trailing space would come back trimmed and
@@ -1211,16 +1221,24 @@ async function main() {
       );
       assert.ok(inlineMark >= 1, 'a highlight on inline code must be drawn on the code span');      console.log('  ok a highlight on inline code is drawn on the span');
 
-      // The split-view tip, and the way to the editor when the layout has no room for two columns.
-      await page.getByTestId('btn-split-tip').click();
-      const tip = page.getByTestId('reader-split-tip');
-      await tip.waitFor({ timeout: 10000 });
-      assert.ok(/Study tip/.test((await tip.textContent()) ?? ''), 'the tip must say what it is for');
+      // Read keeps the page's own "Do it yourself" heading, and its jump switches to Write.
       assert.equal(
         await page.getByTestId('btn-do-it-yourself').count(),
         1,
         'the Do it yourself heading must offer the jump to the editor'
       );
+
+      // The split-view tip belongs to Study's header; return for the tip and the resize check.
+      await page.getByTestId('layout-study').click();
+      await page.waitForFunction(
+        () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'study',
+        undefined,
+        { timeout: 10000 }
+      );
+      await page.getByTestId('btn-split-tip').click();
+      const tip = page.getByTestId('reader-split-tip');
+      await tip.waitFor({ timeout: 10000 });
+      assert.ok(/Study tip/.test((await tip.textContent()) ?? ''), 'the tip must say what it is for');
       console.log('  ok the header offers the split-view tip, and Do it yourself jumps to the editor');
 
       // A split-view resize holds the block the reader is on at the top of the pane.

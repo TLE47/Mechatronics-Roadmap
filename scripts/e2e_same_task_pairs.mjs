@@ -152,7 +152,8 @@ window.__pairs = {
     while (
       performance.now() - started < budgetMs &&
       (document.querySelector('[data-testid="tab-loading"]') ||
-        document.querySelector('[data-editor-ready="false"]'))
+        document.querySelector('[data-editor-ready="false"]') ||
+        document.body.innerText.includes('Loading this tab'))
     ) {
       await new Promise((resolve) => setTimeout(resolve, 25));
     }
@@ -165,7 +166,8 @@ window.__pairs = {
       // reason this sweep saw "Loading this tab..." compared against a finished tab.
       const skeleton =
         document.querySelector('[data-testid="tab-loading"]') ||
-        document.querySelector('[data-editor-ready="false"]');
+        document.querySelector('[data-editor-ready="false"]') ||
+        document.body.innerText.includes('Loading this tab');
       const now = skeleton ? null : this.digest();
       if (now && now === previous) return true;
       previous = now;
@@ -399,7 +401,9 @@ async function runCase(page, baseUrl, testCase) {
         [testCase.pair, variant === 'task']
       )
     );
-    await stage('settle', () => page.evaluate(() => window.__pairs.settle(2500)));
+    // Under the parallel bundle partition a lazy tab can take more than the old 2.5 s to leave its
+    // "Loading this tab…" placeholder; that frame is not a state either arm should be compared on.
+    await stage('settle', () => page.evaluate(() => window.__pairs.settle(12000)));
     const after = await stage('fingerprint after', fingerprint);
     results[variant] = { before, after };
   }

@@ -193,8 +193,10 @@ export function useFirstRunTour({
   //
   // The editor is a deferred chunk (`PythonEditor` draws the starter text while CodeMirror loads), so
   // the handle can still be null when this runs — on a loaded machine the tour asked for focus before
-  // there was anything to focus and the step sat there untyped. So the request is retried until the
-  // handle answers, bounded, and cancelled the moment the step changes or the tour closes.
+  // there was anything to focus and the step sat there untyped. Study also opens with the body folded,
+  // and the Write preset expands it in an effect, so a handle can exist while its CodeMirror is still
+  // `display:none`; focus there goes nowhere. The request is retried until the editor is really on
+  // screen, bounded, and cancelled the moment the step changes or the tour closes.
   useEffect(() => {
     if (!tourActive) return;
     if (tourStep.id === 'run') {
@@ -206,7 +208,10 @@ export function useFirstRunTour({
     let waited = 0;
     const ask = () => {
       const editor = editorRef.current;
-      if (editor) {
+      const visible = Boolean(
+        document.querySelector('[data-editor="editor-main"] .cm-content')?.getClientRects().length
+      );
+      if (editor && visible) {
         editor.focus();
         return;
       }

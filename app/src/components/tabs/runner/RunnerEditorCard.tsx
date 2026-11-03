@@ -195,6 +195,11 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
     nextChapter,
     resultViews = ['predict', 'actual', 'expected', 'workflow', 'trace'],
   } = props;
+  // A held run is a question that has to be visible. Study opens folded, but the gate lives in the
+  // body: a Run that opens it must not leave the learner with an invisible question and a held run.
+  useEffect(() => {
+    if (gate?.holding) setBodyCollapsed(false);
+  }, [gate?.holding]);
   /**
    * What the editor body shows right now.
    *

@@ -75,6 +75,11 @@ async function openP1(page) {
   await page.getByTestId('lesson-item-P.1').scrollIntoViewIfNeeded();
   await page.getByTestId('lesson-item-P.1').click();
   await waitForEditor(page);
+  // Study opens with the editor body folded. This suite drives the gate inside that body, so open it
+  // once; a handle exists while the pane is display:none, and the gate would stay invisible.
+  const folded = page.locator('[data-testid="btn-toggle-editor"][aria-expanded="false"]');
+  if (await folded.count()) await folded.first().click();
+  await page.getByTestId('editor-panes').waitFor({ state: 'visible', timeout: 10000 });
 }
 
 export async function runPredictGateSuite({ baseUrl: externalBaseUrl } = {}) {

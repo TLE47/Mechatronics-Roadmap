@@ -608,6 +608,16 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       window.setTimeout(() => guideEditorRef.current?.focus(), 60);
       return;
     }
+    if (!editorShown) {
+      // Read shows the whole page but no editor. Its "Do it yourself" heading is where the jump
+      // lives, so take the learner to Write, then scroll once that preset has mounted the panel.
+      chooseLayout('write');
+      window.setTimeout(() => {
+        editorPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        guideEditorRef.current?.focus();
+      }, 60);
+      return;
+    }
     editorPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     window.setTimeout(() => guideEditorRef.current?.focus(), 0);
   };
@@ -2791,7 +2801,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 // set an exercise. '' means the entry has no prose page, and the pane says so.
                 path={currentLesson.readerPath}
                 tall={shownLayout === 'read'}
-                onJumpToEditor={editorShown ? jumpToEditor : undefined}
+                onJumpToEditor={jumpToEditor}
                 // Hidden, not unmounted: the phone's Code surface must return to the paragraph the
                 // reader was on, and the page's own request is not free.
                 hidden={!phoneLessonVisible}

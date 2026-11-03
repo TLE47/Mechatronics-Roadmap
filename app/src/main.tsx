@@ -38,6 +38,9 @@ async function start(): Promise<void> {
   } catch {
     // Nothing to do: `bulkStorage()` falls back to `localStorage`, and the lesson still opens.
   }
+  // A browser suite has to wait for the write-behind queue before reloading; pagehide starts the
+  // flush, but a navigation cannot await the transaction it issued.
+  Object.assign(window, { __mechalabFlushStorage: flushBulkStorage });
   // A queued write is one tick old; flushing on the way out is what stops the last edit from needing
   // that tick. Both events fire before the page is torn down, and IndexedDB commits a transaction that
   // was already issued.
