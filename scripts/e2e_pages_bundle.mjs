@@ -994,7 +994,21 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       scroll.dispatchEvent(new Event('scroll'));
       return { anchor: heading.dataset.readerAnchor, at: scroll.scrollTop };
     });
-    await wide.waitForTimeout(500);
+    // A paused scroll is written after `SAVE_AFTER_MS` (350 ms). A fixed 500 ms pause was a race on
+    // a loaded runner, and the reload then restored whatever mount had stored. Wait for this
+    // lesson's own anchor to land in the store, then reload.
+    await wide.waitForFunction(
+      ({ key, lesson, anchor }) => {
+        try {
+          const stored = JSON.parse(localStorage.getItem(key) || '{}');
+          return stored?.[lesson]?.anchor === anchor;
+        } catch {
+          return false;
+        }
+      },
+      { key: 'mechalab_reading_position_v1', lesson: '06.1', anchor: scrolled.anchor },
+      { timeout: 10000 }
+    );
     await wide.reload({ waitUntil: 'networkidle', timeout: 45000 });
     if (await wide.getByTestId('tab-btn-tab-pyodide').count()) {
       await wide.getByTestId('tab-btn-tab-pyodide').click();
@@ -1056,11 +1070,21 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       await wide.getByTestId('diagram-trajectory').scrollIntoViewIfNeeded();
       await wide.waitForTimeout(500);
 
+      // The preference reaches the figures on a render, not in the click: wait for the count the
+      // assertion is about instead of guessing how long a loaded runner needs.
       await wide.getByTestId('btn-motion-toggle').click();
-      await wide.waitForTimeout(450);
+      await wide.waitForFunction(
+        () => document.querySelectorAll('[data-testid="lesson-reader"] [data-figure-motion]').length === 0,
+        undefined,
+        { timeout: 10000 }
+      );
       assert.equal((await marks()).all, 0, `${name}: turning motion off must stop the lesson figures`);
       await wide.getByTestId('btn-motion-toggle').click();
-      await wide.waitForTimeout(500);
+      await wide.waitForFunction(
+        () => document.querySelectorAll('[data-testid="lesson-reader"] [data-figure-motion]').length >= 1,
+        undefined,
+        { timeout: 10000 }
+      );
       assert.ok((await marks()).all >= 1, `${name}: turning motion back on must restart the figure`);
       console.log(`  ok ${name}: a lesson figure moves while read, stops off screen, and follows the header switch`);
     }
@@ -1086,7 +1110,12 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
         `${name}: a reduce-motion reader who never chose must get a still figure`
       );
       await quiet.getByTestId('btn-motion-toggle').click();
-      await quiet.waitForTimeout(500);
+      // Same render boundary as the header switch above: a fixed 500 ms lost on CI while passing
+      // locally, so wait for the mark the assertion counts.
+      await quiet
+        .locator('[data-testid="lesson-reader"] [data-figure-motion]')
+        .first()
+        .waitFor({ state: 'attached', timeout: 10000 });
       assert.ok(
         (await quiet.locator('[data-testid="lesson-reader"] [data-figure-motion]').count()) >= 1,
         `${name}: choosing motion on must override the OS preference`
