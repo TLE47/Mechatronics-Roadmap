@@ -81,8 +81,7 @@ export function AssessmentPanel({
       className="relative overflow-hidden rounded-xl border border-line bg-panel p-4"
     >
       <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-accent/10 blur-3xl"
+        aria-hidden="true"                className="pointer-events-none absolute right-0 top-0 h-56 w-56 rounded-full bg-accent/10 blur-3xl"
       />
       <div className="relative">
         <div className="flex flex-wrap items-start justify-between gap-3">

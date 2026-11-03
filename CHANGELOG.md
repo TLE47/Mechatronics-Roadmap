@@ -115,15 +115,21 @@ bench's four verbs — while the existing Today, arm and progress cards stay the
 lesson shell gets a pointer-free aurora, instrument grid, orbit and four HUD chips behind the cards,
 with reduced-motion rules for both.
 
+**The atmosphere stays inside the frame.** The built-page tablet gate caught the new aurora, orbit
+and assessment glow crossing an 834 px viewport even though the layers were clipped by their cards;
+the aurora now drifts without scaling, the orbit stays still, and the assessment glow sits inside its
+own card. The page has zero horizontal overflow at 834 px again, in Chromium and Firefox.
+
 Covered by `npm run test:rail` (13 checks, the chooser strip read from its new module),
 `npm run test:runner` (12 checks, the tab back inside its line budget), `npm run test:panes` (the two
 keys, their defaults and a corrupt entry each pinned), `npm run test:studio` (21 checks, including
 Format's protocol and the studio's own history), `npm run check:labels` (248 metadata rows and Home's
-67 controls at the §3 floor), `npm run check:weight` (signed-in 585,619 B entry, 993,798 B JS,
-26,245 B CSS and 394,159 B largest, with the four ceilings raised by hand and measured), a
+67 controls at the §3 floor), `npm run check:weight` (signed-in 585,560 B entry, 993,804 B JS,
+26,191 B CSS and 394,153 B largest, with the four ceilings raised by hand and measured), a
 `check:snapshot` re-record of `tab-pyodide`, `tab-studio`, `home` and `workflow` across all four
-palettes, both Chromium suites, the full lesson Chromium sweep (Study at both widths, breakpoints,
-watch mode, sharing and resume), and the workbench suite in `check:all`.
+palettes, both Chromium suites, `npm run test:e2e:pages` in Chromium and Firefox (tablet 834 px
+zero overflow), the full lesson Chromium sweep (Study at both widths, breakpoints, watch mode,
+sharing and resume), and the workbench suite in `check:all`.
 
 ## [2026-11-02] — The runner's three knots get owners, and a ratchet holds them
 
