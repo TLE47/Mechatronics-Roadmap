@@ -75,6 +75,11 @@ Tier 2 begins with $\dot{x} = Ax + Bu$, and the dot is exactly the quotient you 
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `counts_to_rad` (`TODO 1`), `rate_rad_s` (`TODO 2`), `average_rate_rad_s` (`TODO 3`) and `central_rate_rad_s` (`TODO 4`). `peak_index` and `reversal_tick` are given:
 
+**Where each name comes from** (read this beside the code; numbered for reference, not steps):
+1. `COUNTS_PER_TURN` — `4096.0` encoder counts in one full turn; `DT_S` — `0.01` s between samples (100 Hz); `COUNTS` — the recorded ten-sample trace.
+2. `first`/`last` — endpoint rates from `rate_rad_s(COUNTS[1], COUNTS[0])` and `rate_rad_s(COUNTS[-1], COUNTS[-2])`; `whole` — the average over all nine ticks; `peak` — the index of the largest count (`6` here); `at_peak` — the central rate at that index.
+3. `counts_to_rad(counts)` — `counts * 2*pi / COUNTS_PER_TURN`; `rate_rad_s(now_counts, prev_counts, dt)` — `(counts_to_rad(now_counts) - counts_to_rad(prev_counts)) / dt`; `average_rate_rad_s(samples, dt)` — `(counts_to_rad(samples[-1]) - counts_to_rad(samples[0])) / ((len(samples)-1)*dt)`; `central_rate_rad_s(samples, i, dt)` — `(counts_to_rad(samples[i+1]) - counts_to_rad(samples[i-1])) / (2*dt)`.
+
 ```python
 import math
 

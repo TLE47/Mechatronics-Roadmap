@@ -76,6 +76,11 @@ Tier 2's first page writes exactly this state as a column and calls it `x`. The 
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `accel_rad_s2` (`TODO 1`), `step` (`TODO 2`), `run` (`TODO 3`), `add` (`TODO 4`) and `scale` (`TODO 5`). The prints and asserts at the bottom are given:
 
+**Where each name comes from** (read this beside the code; numbered for reference, not steps):
+1. `DT_S` — `0.01` s per tick; `J` — `0.02` kg·m² joint inertia; `B` — `0.05` N·m·s/rad viscous friction; `TAU` — `0.40` N·m constant command.
+2. `accel_rad_s2(state, tau=TAU, j=J, b=B)` — `(tau - b*state[1]) / j`; `step` — one Euler tick: `q += qd*dt_s`, then `qd += accel*dt_s`; `run` — repeats `step` for `ticks`; `add` — component-wise sum; `scale` — multiplies both components by `k`.
+3. `half` — 30 ticks at `TAU/2`: `0.348615` rad, `2.128463` rad/s; `rest` — the other half-command run; `both` — 30 ticks at `TAU`: `0.697230` rad, `4.256926` rad/s; `summed` — `add(half, rest)`, equal to `both`; `scale(half, 2.0)` — also equal to `both`.
+
 ```python
 DT_S = 0.01
 J = 0.02    # arm joint inertia, kg m^2

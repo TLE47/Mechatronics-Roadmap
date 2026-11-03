@@ -77,6 +77,11 @@ Tier 2 asks for the response at many frequencies and calls the picture a Bode pl
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `gain` (`TODO 1`), `phase_deg` (`TODO 2`), `simulate` (`TODO 3`) and `measure` (`TODO 4`). The print loop and the 1% assertion are given:
 
+**Where each name comes from** (read this beside the code; numbered for reference, not steps):
+1. `TAU` — `0.05` s first-order lag; `DT_S` — `0.001` s simulation step; `SETTLE_S` — `1.0` s of settling before the measured period.
+2. `gain(omega, tau=TAU)` — `1 / sqrt(1 + (omega*tau)**2)`; `phase_deg` — `-degrees(atan(omega*tau))`; `simulate` — one settled period of command and response at `dt_s`; `measure(samples, omega)` — amplitude ratio and phase difference from that period.
+3. `samples` — the command/response arrays returned by `simulate`; `settle_s` — the settling time passed to it; `m_gain` and `m_phase` — the measured pair. At `20 rad/s`, the formula is `0.7071` at `-45.000°`; the measured pair is `0.7074` at `-44.426°`.
+
 ```python
 import math
 

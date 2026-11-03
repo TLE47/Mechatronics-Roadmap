@@ -74,6 +74,11 @@ This is the page where `x_dot = Ax + Bu` stops being a formula to memorise. Ever
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `mat_vec` (`TODO 1`), `step_matrix` (`TODO 2`) and `step_two_lines` (`TODO 3`). `A` and `B_IN` are given, and so is the comparison loop:
 
+**Where each name comes from** (read this beside the code; numbered for reference, not steps):
+1. `DT_S` — `0.01` s; `J` — `0.02` kg·m²; `B` — `0.05` N·m·s/rad; `TAU` — `0.40` N·m; `A` — `[[0.0, 1.0], [0.0, -2.5]]` because `-B/J = -2.5`; `B_IN` — `[[0.0], [50.0]]` because `1/J = 50`.
+2. `mat_vec(matrix, vector)` — row-by-row dot product; `step_matrix` — `state + dt_s*(A*state + B_IN*tau)`; `step_two_lines` — the same update written as `q += qd*dt_s` and `qd += (-2.5*qd + 50*tau)*dt_s`.
+3. `matrix_path` and `line_path` — both start `[0.0, 0.0]`; after 30 ticks both are `0.697230` rad and `4.256926` rad/s. `velocity_only` — `[0.0, 1.0]`; `first_row` — `mat_vec(A, velocity_only) = [1.0, -2.5]`; `tau` — the function parameter defaulting to `TAU`.
+
 ```python
 DT_S = 0.01
 J = 0.02

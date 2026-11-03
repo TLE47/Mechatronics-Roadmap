@@ -75,6 +75,11 @@ The two ideas in this lesson are the two halves of a Tier 2 integrator state. Wh
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `left_rule_rad` (`TODO 1`), `right_rule_rad` (`TODO 2`), `trapezoid_rad` (`TODO 3`), `accumulate_rad` (`TODO 4`) and `drift_rad` (`TODO 5`):
 
+**Where each name comes from** (read this beside the code; numbered for reference, not steps):
+1. `DT_S` — `0.01` s between samples (100 Hz); `V_RAD_S` — the nine recorded rates `[0.0, 2.0, 4.0, 6.0, 6.0, 6.0, 4.0, 2.0, -2.0]` rad/s.
+2. `left_rule_rad(v, dt_s=DT_S)` — `dt_s * sum(v[:-1])`, which is `0.300` rad here; `right_rule_rad` — `dt_s * sum(v[1:])`, `0.280` rad; `trapezoid_rad` — `dt_s * (0.5*v[0] + sum(v[1:-1]) + 0.5*v[-1])`, `0.290` rad.
+3. `accumulate_rad(v, q0=0.0, dt_s=DT_S)` — starts at `q0` and adds each trapezoid interval; with `q0=0.5` it ends at `0.790` rad. `drift_rad(bias_rad_s, seconds)` — `bias_rad_s * seconds`; `0.02 * 30 = 0.600` rad.
+
 ```python
 DT_S = 0.01  # 100 Hz rate samples
 V_RAD_S = [0.0, 2.0, 4.0, 6.0, 6.0, 6.0, 4.0, 2.0, -2.0]

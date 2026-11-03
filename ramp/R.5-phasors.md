@@ -74,6 +74,11 @@ Tier 2 writes every AC quantity this way: an impedance is one arrow per frequenc
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `arrow` (`TODO 1`), `rotate` (`TODO 2`), `sum_arrows` (`TODO 3`) and `report` (`TODO 4`):
 
+**Where each name comes from** (read this beside the code; numbered for reference, not steps):
+1. `arrow(magnitude, angle_rad)` — `magnitude * cmath.exp(1j*angle_rad)`; `rotate(z, angle_rad)` — `z * cmath.exp(1j*angle_rad)`; `sum_arrows(arrows)` — `sum(arrows)`; `report(name, z)` — prints `z.real`, `z.imag`, `abs(z)`, and `math.degrees(cmath.phase(z))`.
+2. `A` — `3.0 + 0j`; `B` — `4.0j`; `S` — `A + B = 3.0 + 4.0j`, length `5.000`, angle `53.130°`; `Z` — the three unit arrows at `0°`, `120°`, `240°` sum to `0` (rounding crumbs about `1e-17`).
+3. `magnitude` and `angle_rad` are the parameters of `arrow`; `angle_rad` is also the rotation parameter. The printed names are `A`, `B`, `S`, and `Z`.
+
 ```python
 import cmath
 import math
