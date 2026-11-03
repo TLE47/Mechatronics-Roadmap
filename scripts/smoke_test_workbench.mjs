@@ -428,7 +428,7 @@ export async function runSmokeTests(viteServer) {
 
     // 1b. Verify the Link Health dashboard plots the generated run history
     const { TabLinkHealth } = linkMod;
-    const { LINK_HISTORY, LINK_HISTORY_SOURCE } = historyMod;
+    const { LATEST_LINK_REPORT, LINK_HISTORY, LINK_HISTORY_SOURCE } = historyMod;
     assert.ok(Array.isArray(LINK_HISTORY), 'linkHistoryData must export LINK_HISTORY as an array');
     assert.equal(
       LINK_HISTORY_SOURCE,
@@ -496,6 +496,42 @@ export async function runSmokeTests(viteServer) {
         latest.notChecked,
         'the KPI must show the newest run from the generated history, not a hand-typed number'
       );
+
+      assert.ok(LATEST_LINK_REPORT, 'the latest run must carry structured hard/not-checked details');
+      assert.equal(
+        LATEST_LINK_REPORT.totalUrls,
+        latest.urls,
+        'the report total must be the same scanned count as the latest history row'
+      );
+      assert.equal(
+        LATEST_LINK_REPORT.notChecked.length,
+        latest.notChecked,
+        'the not-checked section must contain one row per unverified URL in the latest run'
+      );
+      for (const item of [...LATEST_LINK_REPORT.hardFailures, ...LATEST_LINK_REPORT.notChecked]) {
+        assert.ok(item.url && item.reason, `each report row needs a URL and reason: ${JSON.stringify(item)}`);
+        assert.ok(Array.isArray(item.sources), `each report row needs a sources array: ${item.url}`);
+      }
+      assert.ok(
+        linkHtml.includes('data-testid="link-report-hard-failures"') &&
+          linkHtml.includes('data-testid="link-report-not-checked"'),
+        'Link Health must render separate hard-failure and not-checked sections'
+      );
+      const hardCount = linkHtml.match(/data-testid="link-report-hard-count"[^>]*>(\d+)/);
+      const notCheckedCount = linkHtml.match(/data-testid="link-report-not-checked-count"[^>]*>(\d+)/);
+      assert.ok(hardCount && notCheckedCount, 'both report sections must render their own counts');
+      assert.equal(Number(hardCount[1]), LATEST_LINK_REPORT.hardFailures.length, 'the hard-failure count must be the report rows');
+      assert.equal(
+        Number(notCheckedCount[1]),
+        LATEST_LINK_REPORT.notChecked.length,
+        'the not-checked count must be the report rows'
+      );
+      if (LATEST_LINK_REPORT.hardFailures.length === 0) {
+        assert.ok(
+          linkHtml.includes('data-testid="link-report-hard-zero"'),
+          'an empty hard-failure bucket must say so explicitly'
+        );
+      }
     }
 
     // 2. Verify In-Browser Python Runner (TabPyodideRunner) & its generated dataset

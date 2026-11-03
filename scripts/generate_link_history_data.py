@@ -70,6 +70,36 @@ def parse_unverified(record: dict, where: str) -> list[str] | None:
     return [str(url).strip() for url in raw if str(url).strip()]
 
 
+def parse_report_items(record: dict, key: str, where: str) -> list[dict] | None:
+    """The checker's structured hard-failure or not-checked rows, or None on an old record.
+
+    The checker owns classification. This parser only checks that each item has a URL, the reason
+    it reached that bucket, and the sources that cite it; it never maps a verdict to the other bucket.
+    """
+    raw = record.get(key)
+    if raw is None:
+        return None
+    if not isinstance(raw, list):
+        raise HistoryError(f"{where}: `{key}` must be a list, got {type(raw).__name__}")
+    items = []
+    for index, item in enumerate(raw):
+        if not isinstance(item, dict):
+            raise HistoryError(f"{where}: `{key}[{index}]` must be an object")
+        url = str(item.get("url", "")).strip()
+        reason = str(item.get("reason", "")).strip()
+        raw_sources = item.get("sources", [])
+        if not url or not reason:
+            raise HistoryError(f"{where}: `{key}[{index}]` needs both `url` and `reason`")
+        if not isinstance(raw_sources, list):
+            raise HistoryError(f"{where}: `{key}[{index}].sources` must be a list")
+        items.append({
+            "url": url,
+            "reason": reason,
+            "sources": [str(source).strip() for source in raw_sources if str(source).strip()],
+        })
+    return items
+
+
 def host_of(url: str) -> str:
     """The host a citation belongs to, with a leading `www.` removed so the two spellings agree."""
     try:
@@ -162,6 +192,8 @@ def load_history(path: str) -> tuple[list[dict], list[str]]:
                 row["serverError"] = verdicts.get("SERVER_ERROR", 0)
                 row["verdicts"] = verdicts
                 row["unverified"] = parse_unverified(record, where)
+                row["hardFailures"] = parse_report_items(record, "hard_failures", where)
+                row["notCheckedDetails"] = parse_report_items(record, "not_checked_details", where)
             except HistoryError as exc:
                 skipped.append(str(exc))
                 continue
@@ -173,6 +205,15 @@ def load_history(path: str) -> tuple[list[dict], list[str]]:
 
 def render_module(rows: list[dict], skipped: list[str], history_rel: str,
                   recurrence: list[dict], recurrence_runs: int) -> str:
+    latest = rows[-1] if rows else None
+    latest_report = None
+    if latest is not None and latest["hardFailures"] is not None and latest["notCheckedDetails"] is not None:
+        latest_report = {
+            "date": latest["date"],
+            "totalUrls": latest["urls"],
+            "hardFailures": latest["hardFailures"],
+            "notChecked": latest["notCheckedDetails"],
+        }
     points = []
     for row in rows:
         points.append(
@@ -219,6 +260,23 @@ def render_module(rows: list[dict], skipped: list[str], history_rel: str,
         "/** History lines the generator could not plot (invalid JSON, missing date). */\n"
         "export const LINK_HISTORY_SKIPPED: string[] = "
         + json.dumps(skipped, indent=2, ensure_ascii=False)
+        + ";\n\n"
+        "/** One URL in the latest sweep's hard-failure or not-checked bucket. */\n"
+        "export interface LinkReportItem {\n"
+        "  url: string;\n"
+        "  reason: string;\n"
+        "  sources: string[];\n"
+        "}\n\n"
+        "/** The checker's two-bucket report for the latest run. */\n"
+        "export interface LatestLinkReport {\n"
+        "  date: string;\n"
+        "  totalUrls: number;\n"
+        "  hardFailures: LinkReportItem[];\n"
+        "  notChecked: LinkReportItem[];\n"
+        "}\n\n"
+        "/** Null only for a run recorded before the checker added structured report rows. */\n"
+        "export const LATEST_LINK_REPORT: LatestLinkReport | null = "
+        + json.dumps(latest_report, indent=2, ensure_ascii=False)
         + ";\n\n"
         "/**\n"
         " * A host the sweep could not verify, counted across runs. `runs` is how many runs listed at\n"

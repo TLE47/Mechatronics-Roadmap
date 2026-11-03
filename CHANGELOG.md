@@ -16,6 +16,18 @@ flowchart LR
 
 ---
 
+## [2026-11-03] — Link Health separates broken citations from unverified ones
+
+The Link Health dashboard now shows the sweep's two buckets as separate panels. **Hard failures**
+lists only genuine breakage — missing documents, unresolved redirects, missing cited headings and
+broken relative links — with each URL's reason and sources; **Not checked** lists the blocked, timed
+out and server-unverified URLs with why the checker could not verify them. Both counts and the
+scanned total come from the checker's structured `hard_failures` and `not_checked_details` in the
+latest history row, not from a dashboard copy of the classification. When the hard bucket is empty
+the panel says **No hard link failures** explicitly rather than rendering an empty table.
+
+---
+
 ## [2026-11-03] — Link sweep: a dead watchdog citation and inconclusive timeouts
 
 **The Ganssle watchdog page is gone.** `https://www.ganssle.com/watchdogs.htm` now answers 302 to

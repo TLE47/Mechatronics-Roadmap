@@ -3,10 +3,12 @@ import { Activity, AlertTriangle, CheckCircle2, CircleSlash, Clock3 } from 'luci
 import {
   HOST_RECURRENCE,
   HOST_RECURRENCE_RUNS,
+  LATEST_LINK_REPORT,
   LINK_HISTORY,
   LINK_HISTORY_SKIPPED,
   LINK_HISTORY_SOURCE,
   type LinkHistoryPoint,
+  type LinkReportItem,
 } from '../../data/linkHistoryData';
 import { RiseIssuesPanel } from '../RiseIssuesPanel';
 
@@ -271,6 +273,39 @@ const TrendChart: React.FC<ChartProps> = ({ rows }) => {
   );
 };
 
+const ReportTable: React.FC<{
+  items: LinkReportItem[];
+  reasonHeading: string;
+  testId: string;
+}> = ({ items, reasonHeading, testId }) => (
+  <div className="mt-3 max-h-72 overflow-auto rounded-lg border border-line-soft">
+    <table className="w-full text-left text-xs border-collapse" data-testid={testId}>
+      <thead className="sticky top-0 bg-panel">
+        <tr className="text-muted border-b border-line">
+          <th className="py-1.5 px-2 font-semibold">URL</th>
+          <th className="py-1.5 px-2 font-semibold">{reasonHeading}</th>
+          <th className="py-1.5 px-2 font-semibold">Referenced in</th>
+        </tr>
+      </thead>
+      <tbody className="font-mono text-body">
+        {items.map((item, index) => (
+          <tr
+            key={`${item.url}-${index}`}
+            className="border-b border-line-soft last:border-0 align-top"
+            data-testid={`${testId}-row-${index}`}
+          >
+            <td className="py-1.5 px-2 break-all text-accent">{item.url}</td>
+            <td className="py-1.5 px-2 break-words text-muted">{item.reason}</td>
+            <td className="py-1.5 px-2 break-words text-[0.65rem] text-faint">
+              {item.sources.length ? item.sources.join(', ') : '—'}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
+
 export const TabLinkHealth: React.FC = () => {
   const latest = LINK_HISTORY.length ? LINK_HISTORY[LINK_HISTORY.length - 1] : null;
   const previous = LINK_HISTORY.length > 1 ? LINK_HISTORY[LINK_HISTORY.length - 2] : null;
@@ -364,6 +399,91 @@ export const TabLinkHealth: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {LATEST_LINK_REPORT ? (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <section
+            className="bg-panel border border-line rounded-xl p-4"
+            data-testid="link-report-hard-failures"
+            aria-labelledby="link-report-hard-heading"
+          >
+            <div className="flex items-baseline justify-between flex-wrap gap-2">
+              <h2 id="link-report-hard-heading" className="text-sm font-bold text-accent flex items-center gap-2">
+                <AlertTriangle size={14} /> Hard failures
+              </h2>
+              <span className="text-[0.7rem] text-muted font-mono">
+                <span data-testid="link-report-hard-count">{LATEST_LINK_REPORT.hardFailures.length}</span> /{' '}
+                {LATEST_LINK_REPORT.totalUrls} scanned
+              </span>
+            </div>
+            <p className="text-[0.7rem] text-muted mt-1 leading-relaxed">
+              URLs that actually broke: a missing document, an unresolved redirect, a missing cited heading,
+              or a broken relative link. Only this bucket fails the sweep.
+            </p>
+            {LATEST_LINK_REPORT.hardFailures.length === 0 ? (
+              <div
+                className="mt-3 rounded-lg border border-emerald/30 bg-emerald/10 px-3 py-3 text-xs text-body leading-relaxed"
+                data-testid="link-report-hard-zero"
+              >
+                <strong className="text-emerald">No hard link failures.</strong> Every citation that the
+                checker could reach was served; the {LATEST_LINK_REPORT.notChecked.length} URLs in the next
+                section are unverified, not broken.
+              </div>
+            ) : (
+              <ReportTable
+                items={LATEST_LINK_REPORT.hardFailures}
+                reasonHeading="Reason"
+                testId="link-report-hard-table"
+              />
+            )}
+          </section>
+
+          <section
+            className="bg-panel border border-line rounded-xl p-4"
+            data-testid="link-report-not-checked"
+            aria-labelledby="link-report-not-checked-heading"
+          >
+            <div className="flex items-baseline justify-between flex-wrap gap-2">
+              <h2
+                id="link-report-not-checked-heading"
+                className="text-sm font-bold text-accent flex items-center gap-2"
+              >
+                <CircleSlash size={14} /> Not checked
+              </h2>
+              <span className="text-[0.7rem] text-muted font-mono">
+                <span data-testid="link-report-not-checked-count">
+                  {LATEST_LINK_REPORT.notChecked.length}
+                </span>{' '}
+                / {LATEST_LINK_REPORT.totalUrls} scanned
+              </span>
+            </div>
+            <p className="text-[0.7rem] text-muted mt-1 leading-relaxed">
+              Blocked, timed out, or server-unverified. These are not hard failures; open one in a browser
+              before editing its citation.
+            </p>
+            {LATEST_LINK_REPORT.notChecked.length === 0 ? (
+              <p className="mt-3 text-xs text-emerald" data-testid="link-report-not-checked-empty">
+                No unchecked citations in this run.
+              </p>
+            ) : (
+              <ReportTable
+                items={LATEST_LINK_REPORT.notChecked}
+                reasonHeading="Why not verified"
+                testId="link-report-not-checked-table"
+              />
+            )}
+          </section>
+        </div>
+      ) : (
+        <div
+          className="bg-amber/10 border border-amber/40 rounded-lg p-3 text-xs text-amber leading-relaxed"
+          data-testid="link-report-unavailable"
+        >
+          The latest run predates the structured two-bucket report. Run{' '}
+          <span className="font-mono">scripts/check_links.py --history docs/link-check-history.jsonl</span>{' '}
+          to record hard failures and not-checked reasons for this panel.
+        </div>
+      )}
 
       <RiseIssuesPanel />
 

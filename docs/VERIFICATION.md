@@ -689,7 +689,10 @@ compiles the Arduino sketches against the hosted toolchain; blocked citations ar
 [`UNVERIFIED_CITATIONS.md`](UNVERIFIED_CITATIONS.md) and charted in the workbench's Link Health
 tab. The chart is generated from the sweep's history file, and the weekly job's own commit regenerates
 it *with* the new row — `ci.yml` fails the pair when they disagree, so they cannot land apart;
-`tests/test_link_history_data.py` holds that step to generating first and committing both paths.
+`tests/test_link_history_data.py` holds that step to generating first and committing both paths. The
+Link Health tab's **Hard failures** and **Not checked** panels use the latest row's structured
+`hard_failures` and `not_checked_details`, so each URL and its reason comes from the checker rather
+than a dashboard-side reinterpretation.
 
 `npm run test:smoke` and `npm run test:e2e` need `npm ci` first; the browser suites find
 Chromium through Playwright or the documented fallback paths.

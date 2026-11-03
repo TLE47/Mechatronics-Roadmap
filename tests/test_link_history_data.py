@@ -178,6 +178,47 @@ class LinkHistoryGeneratorTests(unittest.TestCase):
         self.assertEqual(drift.returncode, 1, "expected --check to fail after a hand edit; drift must be caught")
         self.assertIn("out of sync", drift.stderr, "expected the drift error to name the out-of-sync module")
 
+    def test_latest_report_keeps_the_checkers_two_buckets_and_reasons(self):
+        self.write_history(
+            record(
+                "2026-10-01T03:00:00+00:00",
+                hard_failures=[
+                    {"url": "https://bad.example/x", "reason": "HTTP 404", "sources": ["a.md"]}
+                ],
+                not_checked_details=[
+                    {"url": "https://wall.example/y", "reason": "BLOCKED (403)", "sources": ["b.md"]}
+                ],
+            )
+        )
+        result = self.generate()
+        self.assertEqual(
+            result.returncode, 0, f"expected generation to exit 0, got {result.returncode}: {result.stderr}"
+        )
+        text = self.out.read_text(encoding="utf-8")
+        self.assertIn(
+            "export const LATEST_LINK_REPORT: LatestLinkReport | null = {",
+            text,
+            "expected the latest run to emit the structured two-bucket report",
+        )
+        self.assertIn('"totalUrls": 500', text, "expected the report total to come from the run's URLs")
+        self.assertIn('"reason": "HTTP 404"', text, "expected the hard-failure reason to survive generation")
+        self.assertIn('"reason": "BLOCKED (403)"', text, "expected the not-checked reason to survive generation")
+        self.assertIn('"hardFailures": [', text, "expected a hard-failure array, not a count")
+        self.assertIn('"notChecked": [', text, "expected a not-checked array, not a count")
+
+    def test_a_run_without_structured_details_emits_a_null_latest_report(self):
+        self.write_history(record("2026-10-01T03:00:00+00:00"))
+        result = self.generate()
+        self.assertEqual(
+            result.returncode, 0, f"expected generation to exit 0, got {result.returncode}: {result.stderr}"
+        )
+        text = self.out.read_text(encoding="utf-8")
+        self.assertIn(
+            "export const LATEST_LINK_REPORT: LatestLinkReport | null = null",
+            text,
+            "expected an old row without report arrays to render the explicit unavailable state",
+        )
+
     def test_rows_are_sorted_by_time_not_file_order(self):
         self.write_history(
             record("2026-10-03T03:00:00+00:00", not_checked=9),

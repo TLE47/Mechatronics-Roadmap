@@ -139,11 +139,371 @@ export const LINK_HISTORY: LinkHistoryPoint[] = [
       "SERVER_ERROR": 1,
       "UNREACHABLE": 14
     }
+  },
+  {
+    "date": "2026-11-03T07:38:26+00:00",
+    "urls": 604,
+    "served": 561,
+    "notChecked": 43,
+    "failed": 0,
+    "blocked": 26,
+    "unreachable": 16,
+    "serverError": 1,
+    "verdicts": {
+      "BLOCKED": 26,
+      "FAIL": 0,
+      "PASS": 561,
+      "SERVER_ERROR": 1,
+      "UNREACHABLE": 16
+    }
   }
 ];
 
 /** History lines the generator could not plot (invalid JSON, missing date). */
 export const LINK_HISTORY_SKIPPED: string[] = [];
+
+/** One URL in the latest sweep's hard-failure or not-checked bucket. */
+export interface LinkReportItem {
+  url: string;
+  reason: string;
+  sources: string[];
+}
+
+/** The checker's two-bucket report for the latest run. */
+export interface LatestLinkReport {
+  date: string;
+  totalUrls: number;
+  hardFailures: LinkReportItem[];
+  notChecked: LinkReportItem[];
+}
+
+/** Null only for a run recorded before the checker added structured report rows. */
+export const LATEST_LINK_REPORT: LatestLinkReport | null = {
+  "date": "2026-11-03T07:38:26+00:00",
+  "totalUrls": 604,
+  "hardFailures": [],
+  "notChecked": [
+    {
+      "url": "https://advanced.onlinelibrary.wiley.com/doi/10.1002/aisy.202400294",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "resources/textbooks-and-papers.md"
+      ]
+    },
+    {
+      "url": "https://ctms.engin.umich.edu/CTMS/index.php?example=Introduction&section=SystemModeling",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "07-systems-hil-and-production/README.md"
+      ]
+    },
+    {
+      "url": "https://dl.acm.org/doi/10.1145/2247684.2247688",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "04-embedded-and-realtime/README.md",
+        "modules/04-embedded.T3.04a.md"
+      ]
+    },
+    {
+      "url": "https://doi.org/10.1002/9781119505730",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "00-foundations/README.md",
+        "resources/textbooks-and-papers.md"
+      ]
+    },
+    {
+      "url": "https://doi.org/10.3390/technologies14020081",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "00-foundations/README.md",
+        "resources/textbooks-and-papers.md"
+      ]
+    },
+    {
+      "url": "https://journals.sagepub.com/home/ijr",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "resources/textbooks-and-papers.md"
+      ]
+    },
+    {
+      "url": "https://mitpress.mit.edu/9780262681193/legged-robots-that-balance/",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "08-capstone-projects/README.md"
+      ]
+    },
+    {
+      "url": "https://ngspice.sourceforge.io/",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "resources/open-source-toolchains.md"
+      ]
+    },
+    {
+      "url": "https://onlinelibrary.wiley.com/doi/book/10.1002/9781118287422",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "07-systems-hil-and-production/README.md"
+      ]
+    },
+    {
+      "url": "https://sapien.ucsd.edu/",
+      "reason": "UNREACHABLE (<urlopen error timed out>)",
+      "sources": [
+        "resources/open-source-toolchains.md"
+      ]
+    },
+    {
+      "url": "https://summerschool.stiff-project.org/fileadmin/pdf/Hog1985.pdf",
+      "reason": "UNREACHABLE (<urlopen error timed out>)",
+      "sources": [
+        "06-robotics-and-autonomy/README.md"
+      ]
+    },
+    {
+      "url": "https://web.stanford.edu/~boyd/cvxbook/",
+      "reason": "UNREACHABLE (<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)>)",
+      "sources": [
+        "05-control-and-estimation/README.md"
+      ]
+    },
+    {
+      "url": "https://wiki.linuxfoundation.org/realtime/start",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "06-robotics-and-autonomy/README.md"
+      ]
+    },
+    {
+      "url": "https://wiki.st.com/stm32mcu/wiki/STM32StepByStep:STM32_step_by_step_overview",
+      "reason": "UNREACHABLE (The read operation timed out)",
+      "sources": [
+        "00-foundations/README.md"
+      ]
+    },
+    {
+      "url": "https://wiki.st.com/stm32mcu/wiki/STM32StepByStep:Step3_Introduction_to_the_UART",
+      "reason": "UNREACHABLE (The read operation timed out)",
+      "sources": [
+        "04-embedded-and-realtime/README.md"
+      ]
+    },
+    {
+      "url": "https://ww1.microchip.com/downloads/en/AppNotes/00002590B.pdf",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "03-sensors-and-actuators/README.md"
+      ]
+    },
+    {
+      "url": "https://www.allaboutcircuits.com/textbook/direct-current/",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "00-foundations/README.md",
+        "modules/01-electronics.T1.01a.md",
+        "modules/01-electronics.T1.01d.md"
+      ]
+    },
+    {
+      "url": "https://www.analog.com/en/resources/design-tools-and-calculators/ltspice-simulator.html",
+      "reason": "UNREACHABLE (The read operation timed out)",
+      "sources": [
+        "01-electronics-and-power/README.md",
+        "modules/01-electronics.T2.01a.md",
+        "resources/open-source-toolchains.md"
+      ]
+    },
+    {
+      "url": "https://www.analog.com/media/en/training-seminars/tutorials/MT-031.pdf",
+      "reason": "UNREACHABLE (The read operation timed out)",
+      "sources": [
+        "01-electronics-and-power/README.md"
+      ]
+    },
+    {
+      "url": "https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf",
+      "reason": "UNREACHABLE (The read operation timed out)",
+      "sources": [
+        "01-electronics-and-power/README.md",
+        "modules/01-electronics.T1.01b.md"
+      ]
+    },
+    {
+      "url": "https://www.cds.caltech.edu/~murray/books/AM08/pdf/fbs-pid_24Jul2020.pdf",
+      "reason": "UNREACHABLE (<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)>)",
+      "sources": [
+        "05-control-and-estimation/README.md"
+      ]
+    },
+    {
+      "url": "https://www.cds.caltech.edu/~murray/books/AM08/pdf/fbs-public_24Jul2020.pdf",
+      "reason": "UNREACHABLE (<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)>)",
+      "sources": [
+        "05-control-and-estimation/README.md"
+      ]
+    },
+    {
+      "url": "https://www.elmerfem.org/",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "resources/open-source-toolchains.md"
+      ]
+    },
+    {
+      "url": "https://www.fbsbook.org/",
+      "reason": "SERVER_ERROR (500)",
+      "sources": [
+        "00-foundations/README.md",
+        "05-control-and-estimation/05.1-pid-virtual-spring-damper-and-anti-windup.md",
+        "05-control-and-estimation/README.md",
+        "modules/00-foundations.T2.00c.md",
+        "modules/00-foundations.T2.00e.md",
+        "modules/05-control.T1.05a.md",
+        "modules/05-control.T2.05a.md",
+        "resources/textbooks-and-papers.md"
+      ]
+    },
+    {
+      "url": "https://www.ieee-ies.org/conferences",
+      "reason": "UNREACHABLE (<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)>)",
+      "sources": [
+        "resources/textbooks-and-papers.md"
+      ]
+    },
+    {
+      "url": "https://www.iso.org/standard/73933.html",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "07-systems-hil-and-production/README.md"
+      ]
+    },
+    {
+      "url": "https://www.mathworks.com/help/nav/ug/inertial-sensor-noise-analysis-using-allan-variance.html",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "03-sensors-and-actuators/README.md"
+      ]
+    },
+    {
+      "url": "https://www.mathworks.com/videos/series/understanding-pid-control.html",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "resources/textbooks-and-papers.md"
+      ]
+    },
+    {
+      "url": "https://www.maxongroup.com/",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "07-systems-hil-and-production/README.md"
+      ]
+    },
+    {
+      "url": "https://www.raspberrypi.com/",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "resources/lab-workbench-bom.md"
+      ]
+    },
+    {
+      "url": "https://www.raspberrypi.com/products/rp2350/",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "resources/lab-workbench-bom.md"
+      ]
+    },
+    {
+      "url": "https://www.rug.nl/research/portal/files/14407027/PortHamiltonianSystems.pdf",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "00-foundations/README.md"
+      ]
+    },
+    {
+      "url": "https://www.science.org/journal/scirobotics",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "resources/textbooks-and-papers.md"
+      ]
+    },
+    {
+      "url": "https://www.sciencedirect.com/journal/mechanism-and-machine-theory",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "resources/textbooks-and-papers.md"
+      ]
+    },
+    {
+      "url": "https://www.sciencedirect.com/journal/mechatronics",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "resources/textbooks-and-papers.md"
+      ]
+    },
+    {
+      "url": "https://www.sciencedirect.com/science/article/pii/S0005109899001405",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "08-capstone-projects/README.md"
+      ]
+    },
+    {
+      "url": "https://www.sciencedirect.com/science/article/pii/S0921889013001188",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "resources/textbooks-and-papers.md"
+      ]
+    },
+    {
+      "url": "https://www.st.com/",
+      "reason": "UNREACHABLE (The read operation timed out)",
+      "sources": [
+        "04-embedded-and-realtime/README.md",
+        "resources/lab-workbench-bom.md"
+      ]
+    },
+    {
+      "url": "https://www.st.com/resource/en/application_note/an4031-using-the-stm32f2-stm32f4-and-stm32f7-series-dma-controller-stmicroelectronics.pdf",
+      "reason": "UNREACHABLE (The read operation timed out)",
+      "sources": [
+        "04-embedded-and-realtime/README.md",
+        "modules/04-embedded.T2.04a.md"
+      ]
+    },
+    {
+      "url": "https://www.st.com/resource/en/application_note/an4277-using-stm32-device-pwm-shut-down-features-for-motor-control-and-digital-power-conversion-stmicroelectronics.pdf",
+      "reason": "UNREACHABLE (The read operation timed out)",
+      "sources": [
+        "07-systems-hil-and-production/README.md"
+      ]
+    },
+    {
+      "url": "https://www.st.com/resource/en/application_note/an4839-level-1-cache-on-stm32f7-series-and-stm32h7-series-stmicroelectronics.pdf",
+      "reason": "UNREACHABLE (The read operation timed out)",
+      "sources": [
+        "04-embedded-and-realtime/README.md"
+      ]
+    },
+    {
+      "url": "https://www.st.com/resource/en/user_manual/um1052-stm32f-pmsm-singledual-foc-sdk-v43-stmicroelectronics.pdf",
+      "reason": "UNREACHABLE (The read operation timed out)",
+      "sources": [
+        "03-sensors-and-actuators/README.md"
+      ]
+    },
+    {
+      "url": "https://www.w3.org/TR/audio-eq-cookbook/",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "00-foundations/README.md",
+        "modules/00-foundations.T2.00i.md"
+      ]
+    }
+  ]
+};
 
 /**
  * A host the sweep could not verify, counted across runs. `runs` is how many runs listed at
@@ -157,181 +517,181 @@ export interface HostRecurrence {
 }
 
 /** Runs whose record carried its unverified URL list; older rows cannot contribute. */
-export const HOST_RECURRENCE_RUNS: number = 6;
+export const HOST_RECURRENCE_RUNS: number = 7;
 
 export const HOST_RECURRENCE: HostRecurrence[] = [
   {
     "host": "st.com",
-    "runs": 6,
+    "runs": 7,
     "urls": 5,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "sciencedirect.com",
-    "runs": 6,
+    "runs": 7,
     "urls": 4,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "analog.com",
-    "runs": 6,
+    "runs": 7,
     "urls": 3,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "cds.caltech.edu",
-    "runs": 6,
+    "runs": 7,
     "urls": 2,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
-  },
-  {
-    "host": "ctms.engin.umich.edu",
-    "runs": 6,
-    "urls": 2,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "doi.org",
-    "runs": 6,
+    "runs": 7,
     "urls": 2,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "mathworks.com",
-    "runs": 6,
+    "runs": 7,
     "urls": 2,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "raspberrypi.com",
-    "runs": 6,
+    "runs": 7,
     "urls": 2,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "wiki.st.com",
-    "runs": 6,
+    "runs": 7,
     "urls": 2,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "advanced.onlinelibrary.wiley.com",
-    "runs": 6,
+    "runs": 7,
     "urls": 1,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "allaboutcircuits.com",
-    "runs": 6,
+    "runs": 7,
     "urls": 1,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
+  },
+  {
+    "host": "ctms.engin.umich.edu",
+    "runs": 7,
+    "urls": 1,
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "dl.acm.org",
-    "runs": 6,
+    "runs": 7,
     "urls": 1,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "elmerfem.org",
-    "runs": 6,
+    "runs": 7,
     "urls": 1,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "fbsbook.org",
-    "runs": 6,
+    "runs": 7,
     "urls": 1,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "iso.org",
-    "runs": 6,
+    "runs": 7,
     "urls": 1,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "journals.sagepub.com",
-    "runs": 6,
+    "runs": 7,
     "urls": 1,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "maxongroup.com",
-    "runs": 6,
+    "runs": 7,
     "urls": 1,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "mitpress.mit.edu",
-    "runs": 6,
+    "runs": 7,
     "urls": 1,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "ngspice.sourceforge.io",
-    "runs": 6,
+    "runs": 7,
     "urls": 1,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "onlinelibrary.wiley.com",
-    "runs": 6,
+    "runs": 7,
     "urls": 1,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "rug.nl",
-    "runs": 6,
+    "runs": 7,
     "urls": 1,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "sapien.ucsd.edu",
-    "runs": 6,
+    "runs": 7,
     "urls": 1,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "science.org",
-    "runs": 6,
+    "runs": 7,
     "urls": 1,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "w3.org",
-    "runs": 6,
+    "runs": 7,
     "urls": 1,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "wiki.linuxfoundation.org",
-    "runs": 6,
+    "runs": 7,
     "urls": 1,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "ww1.microchip.com",
-    "runs": 6,
+    "runs": 7,
     "urls": 1,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
-    "host": "reddit.com",
+    "host": "summerschool.stiff-project.org",
     "runs": 3,
-    "urls": 3,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "urls": 1,
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "compliantmechanisms.byu.edu",
     "runs": 3,
-    "urls": 1,
+    "urls": 0,
     "lastSeen": "2026-11-02T13:56:20+00:00"
   },
   {
     "host": "en.cppreference.com",
     "runs": 3,
-    "urls": 1,
+    "urls": 0,
     "lastSeen": "2026-11-02T13:56:20+00:00"
   },
   {
@@ -359,10 +719,22 @@ export const HOST_RECURRENCE: HostRecurrence[] = [
     "lastSeen": "2026-10-19T22:24:26+00:00"
   },
   {
-    "host": "summerschool.stiff-project.org",
-    "runs": 2,
-    "urls": 1,
+    "host": "reddit.com",
+    "runs": 3,
+    "urls": 0,
     "lastSeen": "2026-11-02T13:56:20+00:00"
+  },
+  {
+    "host": "ieee-ies.org",
+    "runs": 1,
+    "urls": 1,
+    "lastSeen": "2026-11-03T07:38:26+00:00"
+  },
+  {
+    "host": "web.stanford.edu",
+    "runs": 1,
+    "urls": 1,
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
     "host": "cs.stanford.edu",

@@ -515,6 +515,7 @@ def main() -> int:
     external_urls: dict[str, set[str]] = {}
     url_expected_headings: dict[str, set[str]] = {}
     relative_errors: list[str] = []
+    relative_error_details: list[dict] = []
 
     for filepath in md_files:
         rel_source = os.path.relpath(filepath, ROOT)
@@ -550,9 +551,15 @@ def main() -> int:
                         continue
                     resolved = os.path.normpath(os.path.join(os.path.dirname(filepath), rel_path))
                     if not os.path.exists(resolved):
+                        expected = os.path.relpath(resolved, ROOT)
                         relative_errors.append(
-                            f"{rel_source}: broken relative link '{target}' (expected {os.path.relpath(resolved, ROOT)})"
+                            f"{rel_source}: broken relative link '{target}' (expected {expected})"
                         )
+                        relative_error_details.append({
+                            "url": target,
+                            "reason": f"Broken relative link (expected {expected})",
+                            "sources": [rel_source],
+                        })
 
             if "- **Primary resource:**" in line:
                 active_primary_urls = [u for (u, _, _) in line_http_matches]
@@ -584,6 +591,8 @@ def main() -> int:
     failed_urls = []
     unverified_urls = []
     failed_headings = []
+    hard_failure_details: list[dict] = []
+    not_checked_details: list[dict] = []
 
     sorted_urls = sorted(external_urls.keys())
     cache = {} if args.no_cache else load_cache(args.cache)
@@ -659,6 +668,11 @@ def main() -> int:
                 else:
                     heading_status_list.append(f"`{h}`: **MISSING in HTML**")
                     failed_headings.append(f"{url} -> missing heading '{h}' (referenced in {sources})")
+                    hard_failure_details.append({
+                        "url": url,
+                        "reason": f"Missing cited heading: {h}",
+                        "sources": sorted(external_urls[url]),
+                    })
 
         if heading_status_list:
             heading_summary = "; ".join(heading_status_list)
@@ -670,8 +684,22 @@ def main() -> int:
         results.append((url, verdict, status, kind, title, heading_summary, sources))
         if verdict == FAIL:
             failed_urls.append((url, status, sources))
+            hard_failure_details.append({
+                "url": url,
+                "reason": f"HTTP {status}" if status else "HTTP failure",
+                "sources": sorted(external_urls[url]),
+            })
         elif verdict in UNVERIFIED_VERDICTS:
             unverified_urls.append((url, verdict, status, sources))
+            not_checked_details.append({
+                "url": url,
+                "reason": f"{verdict} ({status})" if status else verdict,
+                "sources": sorted(external_urls[url]),
+            })
+
+    hard_failure_details.extend(relative_error_details)
+    hard_failure_details.sort(key=lambda item: (item["url"], item["reason"]))
+    not_checked_details.sort(key=lambda item: item["url"])
 
     if args.write_report:
         report_path = os.path.join(ROOT, "LINK_REPORT.md")
@@ -740,6 +768,8 @@ def main() -> int:
         "failed": len(failed_urls),
         "missing_headings": len(failed_headings),
         "broken_relative": len(relative_errors),
+        "hard_failures": hard_failure_details,
+        "not_checked_details": not_checked_details,
         "cached": served_from_cache,
         "fetched": len(pending),
         "unverified": sorted(url for url, _verdict, _status, _sources in unverified_urls),

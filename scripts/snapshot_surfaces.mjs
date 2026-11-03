@@ -502,6 +502,11 @@ async function main() {
           return true;
         });
         await page.waitForTimeout(400);
+        // Measure from the page's own top. Pressing a tab near the bottom of the activity rail can
+        // scroll the window to reach its button, and how far depends on which tabs were visited
+        // first: a filtered `--tab` record then disagreed with the full sweep by the same offset on
+        // every region box. Pinned here, a box only moves when the layout does.
+        await page.evaluate(() => window.scrollTo(0, 0));
         // And then wait until the surface has stopped changing what it *counts*, not only how big it is
         // (`scripts/surface_settle.mjs`). Silence was the whole guard here and silence is not the same
         // as finished: a late font swap or a chart's first paint moves the page by a few pixels after
