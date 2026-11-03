@@ -16,6 +16,37 @@ flowchart LR
 
 ---
 
+## [2026-11-03] — The shell folds its two rails, and free study gets the real editor
+
+**The tab rail folds, and remembers it.** At `xl` the rail is a 196 px activity bar on every lesson;
+its first row is now a collapse button that takes it to 68 px of icons (`app/src/railCollapse.ts`).
+A folded tab draws no text, but every button keeps its name through `aria-label`, so the fold costs
+pixels rather than reach — and the press that folded it is the press that unfolds it. Below `xl` the
+rail is a strip whose labels are the row, so the control is `xl`-only.
+
+**The lesson list folds into its own column.** The chooser is the fourth fold in `fold.ts`: a Hide
+button in its header turns the 224 px rail into a 48 px strip that still names itself and counts the
+lessons behind it, so folding the list is not hiding it.
+
+**Code before prose where the preset stacks.** `index.css` splits Study into two columns only from
+`1760px`; below that the preset is one column, and the editor was the second row — a learner scrolled
+past the lesson text to reach the code. `RunnerEditorCard` now precedes `LessonReader` in the DOM, so
+the stacked order is code then text; the `2xl` grid still places the reader in the first column and
+the editor in the second by name, so the desktop arrangement is untouched.
+
+**Free study gets the runner's editor.** The studio's bare editor is now the same
+`runner/RunnerEditorCard.tsx` the lesson tab draws: `main.py` and a Run output tab, splittable panes
+with the columns/rows/close controls, the line count, the Vim badge, and the studio's Run, Stop and
+Vim buttons in the card's own toolbar row. The card became honest about what a surface can offer —
+`resultViews` names the views it really has (the studio has the run output alone), the prediction
+gate is optional, and the lesson-only capabilities (analysis, go-to-definition, run to a cell,
+breakpoint dots) are absent rather than wired to no-ops. The program still runs ungraded through
+`studio/pythonRun.ts`, and the store, the note and the plan are unchanged.
+
+Covered by `npm run test:rail` (13 checks), `npm run test:studio`, the workbench suite in
+`check:all`, a `check:snapshot` re-record whose only moved numbers are the two new controls and the
+stacked order, and both Chromium suites.
+
 ## [2026-11-02] — The runner's three knots get owners, and a ratchet holds them
 
 **The tab is assembly again, and the numbers are a check rather than a claim.** `TabPyodideRunner.tsx`

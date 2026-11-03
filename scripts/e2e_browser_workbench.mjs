@@ -5706,8 +5706,151 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     await formattingPage.getByTestId('study-highlight-0').waitFor({ timeout: 5000 });
     console.log('  ok a study note and a pinned highlight survive a reload');
 
+    // The Study preset stacks below `2xl`, and the code comes first: a learner opens a lesson to type
+    // before they open it to read. At `2xl` the two columns return, and it is the reader that keeps the
+    // first column — the stacked order must not turn the desktop preset into a column of prose.
+    await formattingPage.getByTestId('layout-study').click();
+    await formattingPage.setViewportSize({ width: 1280, height: 720 });
+    const stackedStudy = await formattingPage.evaluate(() => {
+      const editor = document.querySelector('[data-testid="editor-panel"]');
+      const reader = document.querySelector('[data-testid="lesson-reader"]');
+      if (!editor || !reader) return null;
+      const e = editor.getBoundingClientRect();
+      const r = reader.getBoundingClientRect();
+      return { editorTop: Math.round(e.top), readerTop: Math.round(r.top), editorLeft: Math.round(e.left), readerLeft: Math.round(r.left) };
+    });
+    assert.ok(stackedStudy, 'Study shows both the editor and the lesson text');
+    assert.ok(
+      stackedStudy.editorTop < stackedStudy.readerTop,
+      `stacked Study puts the editor above the lesson text; editor ${stackedStudy.editorTop}, reader ${stackedStudy.readerTop}`
+    );
+
+    await formattingPage.setViewportSize({ width: 1800, height: 1100 });
+    const columnStudy = await formattingPage.evaluate(() => {
+      const editor = document.querySelector('[data-testid="editor-panel"]');
+      const reader = document.querySelector('[data-testid="lesson-reader"]');
+      if (!editor || !reader) return null;
+      return {
+        editorLeft: Math.round(editor.getBoundingClientRect().left),
+        readerLeft: Math.round(reader.getBoundingClientRect().left),
+        editorTop: Math.round(editor.getBoundingClientRect().top),
+        readerTop: Math.round(reader.getBoundingClientRect().top),
+      };
+    });
+    assert.ok(columnStudy, 'Study keeps both cards at 2xl');
+    assert.ok(
+      columnStudy.readerLeft < columnStudy.editorLeft && columnStudy.readerTop <= columnStudy.editorTop,
+      `at 2xl the reader keeps its own column beside the code; reader ${columnStudy.readerLeft},${columnStudy.readerTop} editor ${columnStudy.editorLeft},${columnStudy.editorTop}`
+    );
+    await formattingPage.setViewportSize({ width: 1280, height: 720 });
+    console.log('  ok the Study preset stacks code above the lesson text, and keeps two columns at 2xl');
+
+    // The chooser rail folds to a 48 px strip: the lessons stay one press away, the column gives its
+    // width back to the code, and the fold is remembered. The strip is the way back, so a folded list
+    // is never a hidden one.
+    await formattingPage.getByTestId('lesson-list-card').waitFor({ timeout: 10000 });
+    const chooserWide = await formattingPage
+      .getByTestId('lesson-list-card')
+      .evaluate((card) => Math.round(card.getBoundingClientRect().width));
+    assert.ok(chooserWide >= 200, `the open chooser is a rail; measured ${chooserWide}`);
+    await formattingPage.getByTestId('btn-lessons-collapse').click();
+    await formattingPage.waitForFunction(
+      () => localStorage.getItem('mechalab_chooser_collapsed_v1') === '1',
+      undefined,
+      { timeout: 5000 }
+    );
+    assert.equal(
+      await formattingPage.getByTestId('lesson-list-card').count(),
+      0,
+      'the folded rail draws the card away'
+    );
+    const strip = await formattingPage.getByTestId('btn-lessons-unfold').boundingBox();
+    assert.ok(strip && strip.width < 80, `the strip is narrow; measured ${strip?.width}`);
+
+    await formattingPage.reload({ waitUntil: 'domcontentloaded' });
+    await formattingPage.getByTestId('btn-lessons-unfold').waitFor({ timeout: 60000 });
+    assert.equal(
+      await formattingPage.getByTestId('lesson-list-card').count(),
+      0,
+      'the chooser fold is remembered across a reload'
+    );
+    await formattingPage.getByTestId('btn-lessons-unfold').click();
+    await formattingPage.getByTestId('lesson-list-card').waitFor({ timeout: 10000 });
+    assert.ok(
+      (await formattingPage
+        .getByTestId('lesson-list-card')
+        .evaluate((card) => card.getBoundingClientRect().width)) >= 200,
+      'the card comes back at its rail width'
+    );
+    console.log('  ok the lesson list folds to a strip, remembers it, and expands from the strip');
+
+    // The rail is an activity bar at `xl`: folding it must cost no tab (the icons keep their names for
+    // a screen reader), must survive a reload, and must put the way back in the same place. Below `xl`
+    // the rail is a strip whose labels are the row, so there is nothing to fold and no control shows.
+    const railNav = formattingPage.locator('[data-chrome="rail"]');
+    await formattingPage.getByTestId('btn-rail-toggle').waitFor({ timeout: 10000 });
+    assert.equal(
+      await formattingPage.getByTestId('btn-rail-toggle').getAttribute('aria-expanded'),
+      'true',
+      'the rail starts expanded at xl'
+    );
+    const wideRail = await railNav.evaluate((nav) => Math.round(nav.getBoundingClientRect().width));
+    assert.ok(wideRail >= 190, `the expanded rail is the 196 px activity bar; measured ${wideRail}`);
+    const activeTabButton = formattingPage.getByTestId('tab-btn-tab-pyodide');
+    assert.ok(
+      (await activeTabButton.innerText()).trim().length > 0,
+      'an expanded tab shows its name'
+    );
+
+    await formattingPage.getByTestId('btn-rail-toggle').click();
+    await formattingPage.waitForFunction(
+      () => localStorage.getItem('mechalab_rail_collapsed_v1') === '1',
+      undefined,
+      { timeout: 5000 }
+    );
+    assert.equal(await railNav.getAttribute('data-collapsed'), 'true', 'the press folds the rail');
+    const foldedRail = await railNav.evaluate((nav) => Math.round(nav.getBoundingClientRect().width));
+    assert.ok(foldedRail < 100, `a folded rail costs its icons, not 196 px; measured ${foldedRail}`);
+    assert.equal(
+      (await activeTabButton.innerText()).trim(),
+      '',
+      'the folded rail draws no labels'
+    );
+    assert.ok(
+      ((await activeTabButton.getAttribute('aria-label')) ?? '').length > 0,
+      'a folded tab still has a name for a keyboard and a screen reader'
+    );
+
+    await formattingPage.reload({ waitUntil: 'domcontentloaded' });
+    await formattingPage.getByTestId('btn-rail-toggle').waitFor({ timeout: 60000 });
+    assert.equal(
+      await railNav.getAttribute('data-collapsed'),
+      'true',
+      'the fold is remembered across a reload'
+    );
+
+    await formattingPage.getByTestId('btn-rail-toggle').click();
+    await formattingPage.waitForFunction(
+      () => localStorage.getItem('mechalab_rail_collapsed_v1') === '0',
+      undefined,
+      { timeout: 5000 }
+    );
+    assert.ok(
+      (await formattingPage.getByTestId('tab-btn-tab-pyodide').innerText()).trim().length > 0,
+      'expanding brings the labels back'
+    );
+
+    await formattingPage.setViewportSize({ width: 1024, height: 720 });
+    assert.equal(
+      await formattingPage.getByTestId('btn-rail-toggle').isVisible(),
+      false,
+      'the strip below xl has nothing to fold, so it offers no control'
+    );
+    await formattingPage.setViewportSize({ width: 1280, height: 720 });
+    console.log('  ok the simulator tab rail folds to icons, remembers it, and expands from the same button');
+
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, Home’s Continue & hand-off, draft restore & step count, run history restore, Diff panel lines & earned solution reference, share link copied, opened and loaded, a pair session over hand-carried codes, two editors co-editing one document with undo staying each person’s own, inline values drawn then cleared by an edit, F12/Ctrl-click go-to-definition across the lesson’s files, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, ⌘P quick-open over lessons only, ⌘⇧F inside-the-lesson search landing on the hit’s line and finding a course page at its section, the ? key sheet open and inert in the editor, a sheet row rebound to a new key, a clash refused and a reset, study note & pinned highlight across a reload, gutter breakpoints clicked, keyed and remembered, a dot following an edit, the Board card showing its own sketch, a prediction graded against the verified serial, and the sketch copied for the simulator).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, Home’s Continue & hand-off, draft restore & step count, run history restore, Diff panel lines & earned solution reference, share link copied, opened and loaded, a pair session over hand-carried codes, two editors co-editing one document with undo staying each person’s own, inline values drawn then cleared by an edit, F12/Ctrl-click go-to-definition across the lesson’s files, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, ⌘P quick-open over lessons only, ⌘⇧F inside-the-lesson search landing on the hit’s line and finding a course page at its section, the ? key sheet open and inert in the editor, a sheet row rebound to a new key, a clash refused and a reset, study note & pinned highlight across a reload, gutter breakpoints clicked, keyed and remembered, a dot following an edit, the Board card showing its own sketch, a prediction graded against the verified serial, the sketch copied for the simulator, the simulator tab rail folded to icons, remembered and expanded again, the Study preset stacking the code above the lesson text, and the lesson list folded to a strip and back).'
     );
   } finally {
     await browser.close();

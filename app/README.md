@@ -1555,7 +1555,7 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/runtime/pythonWorker.js`](src/runtime/pythonWorker.js) | The interpreter worker: warm-up, run, in-place Stop, `input()`, `mechalab.scope`, `result` and `scope` messages. |
 | [`src/runtime/pyodideWorker.ts`](src/runtime/pyodideWorker.ts) | The page side of that protocol, one owner for both runners: the run request, the one verdict, run identity, the page kill clock and dispose. |
 | [`src/components/PythonEditor.tsx`](src/components/PythonEditor.tsx) | The CodeMirror editor: view, external sync, test bridge. |
-| [`src/components/tabs/TabStudio.tsx`](src/components/tabs/TabStudio.tsx) | The free-study workspace: a scratch program, a workflow plan and a notebook, one tab and no lesson — Code and Plan in the main area, the note always beside it on a desktop and one pane at a time on a phone. |
+| [`src/components/tabs/TabStudio.tsx`](src/components/tabs/TabStudio.tsx) | The free-study workspace: the runner's own editor card (main.py and Run output tabs, splittable panes, Vim, its Run/Stop buttons in the toolbar) over a scratch program nobody grades, plus a workflow plan and a notebook — Code and Plan in the main area, the note always beside it on a desktop and one pane at a time on a phone. |
 | [`src/studio/store.ts`](src/studio/store.ts) | The one studio record (`mechalab_studio_v1`): the code, the note, a tolerant read, a capped write that reports a refused store, and the starter. |
 | [`src/studio/pythonRun.ts`](src/studio/pythonRun.ts) | The studio's consumer of the shared session: one ungraded program in, one verdict out, no grading inputs, no trace, and the sentences the tab prints. |
 | [`src/runtime/pyodideCdn.ts`](src/runtime/pyodideCdn.ts) | The one interpreter address the runner and the studio both read. |
@@ -1618,6 +1618,7 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`../scripts/build_music.mjs`](../scripts/build_music.mjs) | Makes the eleven tapes: four fixed windows cut from CC0 recordings, seven loops composed from a seeded score, all folded seamless and RMS-matched, then AAC. |
 | [`src/components/TrailCard.tsx`](src/components/TrailCard.tsx) | The roadmap's trail: a day's time and work, a row per event, and rows that open their lesson. |
 | [`src/focusMode.ts`](src/focusMode.ts) | Focus mode's stored choice and the event the header, the pill and the page share. |
+| [`src/railCollapse.ts`](src/railCollapse.ts) | The tab rail's fold: the stored choice, read at mount and written on the press, expanded when storage refuses. |
 | [`src/audio/prefs.ts`](src/audio/prefs.ts) | Sound's stored choice (`mechalab_sound_v1`), its clamping, the subscribers both controls read, and the labels. Off by default. |
 | [`src/audio/facade.ts`](src/audio/facade.ts) | The two functions the runner and focus mode call — `playCue`, `setSoundScene` — as one window event, so no audio code reaches the entry chunk. |
 | [`src/audio/engine.ts`](src/audio/engine.ts) | The only AudioContext: the mixer graph, synthesised cues, the chosen tape (three decoded loops cached, crossfaded) with the drone as its fallback, the limiter, the duck and the focus scene, the seven interface ticks, and the recorded rain. A lazy chunk, fetched after first paint. |

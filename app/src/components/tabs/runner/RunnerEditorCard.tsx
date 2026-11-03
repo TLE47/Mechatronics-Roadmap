@@ -63,14 +63,18 @@ interface EditorDraft {
   vim: { on: boolean; mode: string; onMode: (mode: string) => void };
   lesson: { id: string; question: string };
   onSliderCommit: () => void;
-  getAnalysis: () => AnalysisSession | null;
-  onGoToDefinition: (name: string) => void;
-  onRunCell: (line: number) => void;
-  breakpoints: {
+  /** Null in a workspace with no interpreter to ask; the free-study editor has no lesson files. */
+  getAnalysis?: () => AnalysisSession | null;
+  onGoToDefinition?: (name: string) => void;
+  onRunCell?: (line: number) => void;
+  /** Absent where nothing can stop at a line, so the gutter offers no dot it cannot honour. */
+  breakpoints?: {
     entries: { line: number; condition: string }[];
     onToggle: (line: number) => void;
     onMoved: (entries: { line: number; condition: string }[]) => void;
   };
+  /** The test bridge id for the main editor; the runner's is `editor-main`. */
+  editorTestId?: string;
 }
 
 /** The editor's panes and the arrangement they are drawn in. */
@@ -108,11 +112,17 @@ interface RunnerEditorCardProps {
   surface: EditorSurface;
   draft: EditorDraft;
   panes: EditorPaneSet;
-  gate: PredictGate;
+  /** The prediction gate, where the surface has one: the free-study editor has nothing to predict. */
+  gate?: PredictGate;
   run: EditorRun;
   slots: EditorSlots;
   collab: EditorCollab;
-  onClosePredict: () => void;
+  onClosePredict?: () => void;
+  /**
+   * The result views this surface really has. The runner offers all four; the studio offers the run
+   * output alone, because it has no expected output, no prediction and no lesson workflow.
+   */
+  resultViews?: EditorView[];
 }
 
 /**
@@ -153,11 +163,18 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
     getAnalysis,
     onGoToDefinition,
     onRunCell,
-    breakpoints: { entries: breakpoints, onToggle: onToggleBreakpoint, onMoved: onBreakpointsMoved },
+    breakpoints,
+    editorTestId = 'editor-main',
   } = props.draft;
   /** The badge's word, from the mode the editor is reading keys in. */
   const vimModeLabel = vimModeLabelFor(vimMode);
   const { value: panes, onPanes } = props.panes;
+  /** The prediction gate and the result views this surface has; read before `shownViews` uses them. */
+  const {
+    gate,
+    onClosePredict,
+    resultViews = ['predict', 'actual', 'expected', 'workflow'],
+  } = props;
   /**
    * What the editor body shows right now.
    *
@@ -166,7 +183,11 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
    * falls back to the editor and the stored tab comes back with Study, which is why this is derived
    * here rather than written back to the store.
    */
-  const shownViews = new Set<EditorView>(resultsAllowed ? visibleViews(panes) : ['main']);
+  const shownViews = new Set<EditorView>(
+    resultsAllowed
+      ? visibleViews(panes).filter((view) => view === 'main' || resultViews.includes(view))
+      : ['main']
+  );
   /** Every view on screen, in slot order: the pane strip and the body read the same list. */
   const views = visibleViews(panes);
   /** Two panes only when two views are really on screen. */
@@ -203,7 +224,6 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
   };
   /** One writer for every tab press and every arrangement control below. */
   const onShowView = (view: EditorView) => onPanes(showView(panes, view));
-  const { gate, onClosePredict } = props;
   const { isRunning, passStatus, harnessResult, asksForFinish } = props.run;
   const { toolbar, feedback, actualOutputPane, expectedOutputPane, workflowPane } = props.slots;
   const { coEdit, collabNotice, peerLabel } = props.collab;
@@ -280,7 +300,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
             {resultsAllowed && (
               <>
                 <span aria-hidden="true" className="mx-1 h-4 w-px shrink-0 self-center bg-line-soft" />
-                {(['predict', 'actual', 'expected', 'workflow'] as const).map((view) => {
+                {resultViews.map((view) => {
                   const selected = shownViews.has(view);
                   const meta =
                     view === 'predict'
@@ -528,14 +548,14 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
               value={code}
               onChange={commitCode}
               ariaLabel="Python code editor"
-              testId="editor-main"
+              testId={editorTestId}
               onSliderCommit={onSliderCommit}
               getAnalysis={getAnalysis}
               onGoToDefinition={onGoToDefinition}
               onRunCell={onRunCell}
-              onToggleBreakpoint={onToggleBreakpoint}
-              onBreakpointsMoved={onBreakpointsMoved}
-              breakpoints={breakpoints}
+              onToggleBreakpoint={breakpoints?.onToggle}
+              onBreakpointsMoved={breakpoints?.onMoved}
+              breakpoints={breakpoints?.entries}
               vimMode={vimOn}
               onVimMode={onVimMode}
               initialLine={pendingJump?.file === MAIN_FILE_NAME ? pendingJump.line : undefined}
@@ -544,26 +564,28 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
         </div>
         {resultsAllowed && (
           <>
-            <div
-              data-testid="pane-predict"
-              data-pane="predict"
-              onClick={() => focusPane('predict')}
-              style={{ display: shownViews.has('predict') ? undefined : 'none', order: paneOrder('predict') }}
-              className={`min-w-0 flex-1 border-t border-line-soft ${paneBorder('predict')}`}
-            >
-              <PredictPane
-                record={gate.record}
-                text={gate.text}
-                onText={gate.setText}
-                onCommit={gate.commit}
-                onSkip={gate.skip}
-                onAgain={gate.again}
-                onClose={onClosePredict}
-                asksForFinish={asksForFinish}
-                held={gate.holding}
-                running={isRunning}
-              />
-            </div>
+            {gate && (
+              <div
+                data-testid="pane-predict"
+                data-pane="predict"
+                onClick={() => focusPane('predict')}
+                style={{ display: shownViews.has('predict') ? undefined : 'none', order: paneOrder('predict') }}
+                className={`min-w-0 flex-1 border-t border-line-soft ${paneBorder('predict')}`}
+              >
+                <PredictPane
+                  record={gate.record}
+                  text={gate.text}
+                  onText={gate.setText}
+                  onCommit={gate.commit}
+                  onSkip={gate.skip}
+                  onAgain={gate.again}
+                  onClose={() => onClosePredict?.()}
+                  asksForFinish={asksForFinish}
+                  held={gate.holding}
+                  running={isRunning}
+                />
+              </div>
+            )}
             <div
               data-testid="pane-actual"
               data-pane="actual"

@@ -225,6 +225,7 @@ async function main() {
     { label: 'try', script: 'test_try_links.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'history', script: 'test_draft_history.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'runner-shape', script: 'test_runner_shape.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'rail', script: 'test_rail_collapse.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'scope', script: 'test_scope.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'board', script: 'test_board_bridge.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'avr', script: 'test_avr.mjs', env: { NODE_OPTIONS: TYPES } },

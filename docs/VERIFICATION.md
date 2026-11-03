@@ -302,6 +302,18 @@ stored `0`, `1`, `banana` or `''` reads as the even split, a pointer outside the
 the ends, a collapsed container gives no share at all, and a blocked store costs the memory rather
 than the drag.
 
+**The shell's two rails fold, and the code comes first.** At `xl` the tab rail's own first row
+collapses it from 196 px to 68 px of icons and remembers the press (`app/src/railCollapse.ts`); a
+folded tab keeps its name through `aria-label`, and below `xl` the strip offers no control because
+its labels are the row. The lesson chooser folds through the same store as the roadmap's cards
+(`fold.ts`): Hide turns its 224 px rail into a 48 px strip that counts the lessons behind it, and
+the strip is the way back. Below the `1760px` split Study stacks the editor above the lesson text,
+while at `2xl` the reader keeps its own column beside the code. The free-study tab draws the
+runner's own editor card — `main.py` and Run output tabs, splittable panes, Vim, and its Run/Stop
+buttons in the card's toolbar — with only the views an ungraded workspace has. The browser suite
+measures the stacked order, the two columns at 1800 px, the 68 px folded rail and the 48 px chooser
+strip, each across a reload.
+
 **Docking and the activity bar are measured where they land, too.** The same built-bundle step presses
 the dock button with the results in Debug and asserts the results end before the editor starts, both
 on the same row, the editor still over 320 px and `aria-valuenow` still the *editor's* share — then

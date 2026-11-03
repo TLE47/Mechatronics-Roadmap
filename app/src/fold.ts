@@ -9,6 +9,9 @@ import { useCallback, useState } from 'react';
  * that says what the card is and puts the detail behind it — so they share the store, the hook and
  * the toggle rather than three copies of the same fifteen lines.
  *
+ * The lesson chooser is the fourth: the same store, the same hook, and a strip narrow enough to give
+ * its width back to the code while every lesson stays one press away.
+ *
  * A fold is a **preference**, like the layout or the palette, so it lives in `localStorage` beside
  * them and deliberately not in a backup: a learner who folds a card on a phone wants it folded here
  * too, and a restored archive has no business deciding which cards this device has open.
@@ -22,6 +25,8 @@ const OPEN = '0';
 export const STORAGE_KEY_RESUME_COLLAPSED = 'mechalab_resume_collapsed_v1';
 export const STORAGE_KEY_TRAIL_COLLAPSED = 'mechalab_trail_collapsed_v1';
 export const STORAGE_KEY_BOARD_COLLAPSED = 'mechalab_board_collapsed_v1';
+/** The lesson chooser's rail: a 224 px column of lessons, or a 48 px strip that brings it back. */
+export const STORAGE_KEY_CHOOSER_COLLAPSED = 'mechalab_chooser_collapsed_v1';
 
 /** The stored fold, or open. A blocked store reads as open rather than throwing at mount. */
 export function readFold(key: string): boolean {

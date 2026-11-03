@@ -22,6 +22,7 @@ const AwardToast = React.lazy(() =>
 import type { Award } from './gamification/rewards';
 import { readPredictions } from './predictGate';
 import { STORAGE_KEY_START_HERE_DISMISSED } from './startHere';
+import { readRailCollapsed, writeRailCollapsed } from './railCollapse';
 import { SPINE_STEP_COUNT, stepForMilestone } from './spine';
 import { passChangesContent } from './courseLevels';
 // One entry per tab — its id, labels, icon, chunk and render — lives in `tabRegistry.tsx`. The shell
@@ -126,6 +127,8 @@ import {
 } from './curriculumData';
 import {
   Check,
+  ChevronLeft,
+  ChevronRight,
   Copy,
   Download,
   FlaskConical,
@@ -408,6 +411,9 @@ export const App: React.FC = () => {
       return false;
     }
   });
+  // At `xl` the rail is a 196 px activity bar on every lesson; a press folds it to its icons. A
+  // preference like the layout, so it is remembered (`app/src/railCollapse.ts`).
+  const [railCollapsed, setRailCollapsed] = useState<boolean>(() => readRailCollapsed());
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState<boolean>(false);
   const [portfolioCopied, setPortfolioCopied] = useState<boolean>(false);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
@@ -629,6 +635,10 @@ export const App: React.FC = () => {
       // ignore
     }
   }, [startHereDismissed]);
+
+  useEffect(() => {
+    writeRailCollapsed(railCollapsed);
+  }, [railCollapsed]);
 
   useEffect(() => {
     try {
@@ -1860,10 +1870,41 @@ export const App: React.FC = () => {
         <nav
           aria-label="Simulator Tabs"
           data-chrome="rail"
-          className="border-b xl:w-[196px] xl:shrink-0 xl:border-b-0 xl:border-r"
+          data-testid="tab-rail-nav"
+          data-collapsed={railCollapsed ? 'true' : 'false'}
+          className={`border-b xl:shrink-0 xl:border-b-0 xl:border-r ${
+            railCollapsed ? 'xl:w-[68px]' : 'xl:w-[196px]'
+          }`}
           style={{ backgroundColor: 'var(--panel)', borderColor: 'var(--border)' }}
         >
           <div className="relative mx-auto max-w-[var(--shell-max)] xl:sticky xl:top-0 xl:max-h-screen xl:max-w-none xl:overflow-y-auto">
+            {/* The fold is the rail's own first row, so a folded rail is not a hidden one: the press
+                that took the names away is the press that brings them back. Below `xl` the rail is a
+                strip whose labels are the row, so there is nothing to fold and this is `xl`-only. */}
+            <button
+              type="button"
+              onClick={() => setRailCollapsed((collapsed) => !collapsed)}
+              data-testid="btn-rail-toggle"
+              data-sound="nav"
+              aria-expanded={!railCollapsed}
+              aria-controls="simulator-tab-rail"
+              aria-label={railCollapsed ? 'Expand the simulator tabs' : 'Collapse the simulator tabs'}
+              title={
+                railCollapsed
+                  ? 'Expand the rail: every tab by name and subtitle'
+                  : 'Collapse the rail to its icons; every tab keeps its name for a keyboard and a screen reader'
+              }
+              className="mx-2 mb-1 mt-2 hidden w-[calc(100%-1rem)] cursor-pointer items-center justify-center gap-2 rounded-[var(--r-sm)] border border-line-soft px-2 py-1 text-[11px] font-mono uppercase tracking-wider text-muted transition-colors hover:border-line hover:text-ink xl:flex"
+            >
+              {railCollapsed ? (
+                <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+              ) : (
+                <>
+                  <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>Collapse</span>
+                </>
+              )}
+            </button>
             {/* One row on a phone instead of a twelve-tab sideways scroller. It sits where the
                 rail sat, so the page below starts in the same place; the rail returns at `md`. */}
             <PhoneTabPicker
@@ -1875,6 +1916,7 @@ export const App: React.FC = () => {
               }}
             />
             <div
+              id="simulator-tab-rail"
               data-testid="tab-rail"
               className="hidden gap-2 overflow-x-auto px-3 py-2 sm:px-5 md:flex xl:flex-col xl:gap-1 xl:overflow-visible xl:px-2 xl:py-3"
               style={{ scrollbarWidth: 'thin', scrollSnapType: 'x proximity' }}
@@ -1882,6 +1924,8 @@ export const App: React.FC = () => {
             {visibleTabs.map((tab) => {
               const Icon = tab.Icon;
               const isActive = activeTab === tab.id;
+              const label = viewMode === 'beginner' ? tab.beginnerLabel : tab.technicalLabel;
+              const subtitle = viewMode === 'beginner' ? tab.beginnerSubtitle : tab.beginnerLabel;
               return (
                 <button
                   key={tab.id}
@@ -1897,7 +1941,11 @@ export const App: React.FC = () => {
                   onPointerEnter={() => prefetchTab(tab.id)}
                   onFocus={() => prefetchTab(tab.id)}
                   aria-current={isActive ? 'page' : undefined}
-                  className="group flex min-w-[12rem] shrink-0 cursor-pointer snap-start items-center gap-2.5 rounded-[var(--r-md)] border px-2.5 py-2 text-left transition-colors xl:w-full xl:min-w-0"
+                  aria-label={railCollapsed ? `${label} — ${subtitle}` : undefined}
+                  title={railCollapsed ? `${label} — ${subtitle}` : undefined}
+                  className={`group flex min-w-[12rem] shrink-0 cursor-pointer snap-start items-center gap-2.5 rounded-[var(--r-md)] border px-2.5 py-2 text-left transition-colors xl:w-full xl:min-w-0 ${
+                    railCollapsed ? 'xl:justify-center xl:px-0' : ''
+                  }`}
                   style={{
                     borderColor: isActive ? 'var(--accent)' : 'var(--border)',
                     backgroundColor: isActive ? 'var(--accent-soft)' : 'transparent',
@@ -1916,18 +1964,18 @@ export const App: React.FC = () => {
                   >
                     <Icon className="h-4 w-4" />
                   </span>
-                  <span className="min-w-0">
+                  <span className={`min-w-0${railCollapsed ? ' xl:hidden' : ''}`}>
                     <span
                       className="block truncate text-[12.5px] font-semibold"
                       style={{ color: isActive ? 'var(--accent)' : 'var(--text)' }}
                     >
-                      {viewMode === 'beginner' ? tab.beginnerLabel : tab.technicalLabel}
+                      {label}
                     </span>
                     <span
                       className="mt-0.5 block truncate text-[11px]"
                       style={{ color: isActive ? 'var(--muted)' : 'var(--dim)' }}
                     >
-                      {viewMode === 'beginner' ? tab.beginnerSubtitle : tab.beginnerLabel}
+                      {subtitle}
                     </span>
                   </span>
                 </button>

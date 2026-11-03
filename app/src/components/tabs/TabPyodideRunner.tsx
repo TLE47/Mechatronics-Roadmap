@@ -69,6 +69,7 @@ import {
 } from '../../editorPanes';
 import { actionForEvent } from '../../keymap';
 import { useKeymapRef } from '../../useKeymap';
+import { STORAGE_KEY_CHOOSER_COLLAPSED, useFold } from '../../fold';
 import { markPaintReady } from '../../paintTiming';
 import { parseSliders } from '../../editor/sliderModel';
 import { readBreakpoints, setBreakpointCondition, toggleBreakpoint, writeBreakpoints, type Breakpoint } from '../../editor/breakpoints';
@@ -280,6 +281,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     // Mount only: a later switch is handled by `choosePhoneSurface`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // The chooser rail's fold, remembered beside the other folds (`app/src/fold.ts`): Study is the only
+  // preset that draws the chooser, so the state is read where the rail is drawn rather than per preset.
+  const chooserFold = useFold(STORAGE_KEY_CHOOSER_COLLAPSED);
   const [dismissedGuides, setDismissedGuides] = useState<string[]>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY_FIRST_GUIDE);
@@ -1710,7 +1714,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
    * One definition rather than two copies of twelve props: a filter or a count added later would
    * otherwise have to be remembered in both, and the sheet is exactly the copy that gets forgotten.
    */
-  const renderLessonChooser = (className?: string, maxHeight?: string) => (
+  const renderLessonChooser = (className?: string, maxHeight?: string, onCollapse?: () => void) => (
     <LessonChooser
       lessons={PYTHON_LESSONS}
       filteredLessons={filteredLessons}
@@ -1724,6 +1728,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       onSelect={(id) => selectLesson(id)}
       className={className}
       maxHeight={maxHeight}
+      onCollapse={onCollapse}
     />
   );
 
@@ -2197,12 +2202,43 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           Write and Debug hide it, because each of them is about one panel and nothing else. */}
       <div
         className={`grid grid-cols-1 gap-5 ${
-          shownLayout === 'study' ? 'lg:grid-cols-[224px_minmax(0,1fr)]' : ''
+          shownLayout === 'study'
+            ? chooserFold.folded
+              ? 'lg:grid-cols-[48px_minmax(0,1fr)]'
+              : 'lg:grid-cols-[224px_minmax(0,1fr)]'
+            : ''
         }`}
       >
         {shownLayout === 'study' && (
-          <div className="hidden lg:block">
-            {renderLessonChooser()}
+          <div
+            id="lesson-chooser-rail"
+            data-collapsed={chooserFold.folded ? 'true' : 'false'}
+            className="hidden lg:block"
+          >
+            {chooserFold.folded ? (
+              // The strip is the way back, in the same column the card was: folded is not hidden, and
+              // the count keeps saying how many entries are behind the press.
+              <button
+                type="button"
+                onClick={chooserFold.toggle}
+                data-testid="btn-lessons-unfold"
+                aria-expanded={false}
+                aria-controls="lesson-chooser-rail"
+                aria-label="Show the lesson list"
+                title="Show the lesson list: every lesson, its filters and its search come back"
+                className="flex w-full cursor-pointer flex-col items-center gap-1 rounded-xl border border-line bg-panel py-2 text-muted transition-colors hover:border-line-strong hover:text-ink"
+              >
+                <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span className="[writing-mode:vertical-rl] font-mono text-[10px] uppercase tracking-[0.14em]">
+                  Lessons
+                </span>
+                <span className="font-mono text-[10px] tabular-nums text-faint">
+                  {filteredLessons.length}
+                </span>
+              </button>
+            ) : (
+              renderLessonChooser(undefined, undefined, chooserFold.toggle)
+            )}
           </div>
         )}
 
@@ -2713,6 +2749,57 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   : 'space-y-4'
             }
           >
+            {/* The editor is the first child, so the stacked arrangement is code first and text
+                under it: below `2xl` the Study preset's two columns are one, and a learner opens a
+                lesson to type before they open it to read. The column layout is unaffected —
+                `index.css` places the reader and the editor by column at `2xl`, so this is the
+                order a keyboard and a screen reader walk, not the place the cards are drawn. */}
+            {/* The editor surface, one home (`runner/RunnerEditorCard.tsx`). */}
+            <RunnerEditorCard
+              surface={{
+                panelRef: editorPanelRef,
+                phoneCode,
+                editorShown,
+                resultsAllowed,
+                phoneEditorVisible,
+                isPhone,
+                deferPhoneEditor,
+                layout: shownLayout,
+              }}
+              draft={{
+                code,
+                commitCode,
+                mainEditorRef: guideEditorRef,
+                helperEditorRef,
+                helperFiles,
+                openHelper,
+                onOpenHelper: setOpenHelper,
+                pendingJump,
+                onClearJump: () => setPendingJump(null),
+                symbolMiss,
+                sliderCount,
+                vim: { on: vim.on, mode: vim.mode, onMode: vim.setMode },
+                lesson: { id: selectedId, question: writeQuestion },
+                onSliderCommit: handleSliderCommit,
+                getAnalysis: getReadyAnalysis,
+                onGoToDefinition: goToDefinition,
+                onRunCell: runCellTo,
+                breakpoints: { entries: breakpoints, onToggle: toggleBreakpointAt, onMoved: followBreakpointEdits },
+              }}
+              panes={{ value: panes, onPanes: commitPanes }}
+              gate={gate}
+              run={{ isRunning, passStatus, harnessResult, asksForFinish: gateAsksForFinish }}
+              slots={{
+                toolbar: runnerToolbar,
+                feedback: runFeedback,
+                actualOutputPane,
+                expectedOutputPane,
+                workflowPane,
+              }}
+              collab={{ coEdit, collabNotice, peerLabel: pair.peer }}
+              onClosePredict={() => commitPanes(closeView(panes, 'predict'))}
+            />
+
             {/* Write and Debug do not read: the pane is not rendered at all there, so a hidden
                 preset costs no fetch and no place to lose. Coming back restores the lesson's
                 heading from the store, because unmounting flushed it. */}
@@ -2729,51 +2816,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 hidden={!phoneLessonVisible}
               />
             )}
-          {/* The editor surface, one home (`runner/RunnerEditorCard.tsx`). */}
-          <RunnerEditorCard
-            surface={{
-              panelRef: editorPanelRef,
-              phoneCode,
-              editorShown,
-              resultsAllowed,
-              phoneEditorVisible,
-              isPhone,
-              deferPhoneEditor,
-              layout: shownLayout,
-            }}
-            draft={{
-              code,
-              commitCode,
-              mainEditorRef: guideEditorRef,
-              helperEditorRef,
-              helperFiles,
-              openHelper,
-              onOpenHelper: setOpenHelper,
-              pendingJump,
-              onClearJump: () => setPendingJump(null),
-              symbolMiss,
-              sliderCount,
-              vim: { on: vim.on, mode: vim.mode, onMode: vim.setMode },
-              lesson: { id: selectedId, question: writeQuestion },
-              onSliderCommit: handleSliderCommit,
-              getAnalysis: getReadyAnalysis,
-              onGoToDefinition: goToDefinition,
-              onRunCell: runCellTo,
-              breakpoints: { entries: breakpoints, onToggle: toggleBreakpointAt, onMoved: followBreakpointEdits },
-            }}
-            panes={{ value: panes, onPanes: commitPanes }}
-            gate={gate}
-            run={{ isRunning, passStatus, harnessResult, asksForFinish: gateAsksForFinish }}
-            slots={{
-              toolbar: runnerToolbar,
-              feedback: runFeedback,
-              actualOutputPane,
-              expectedOutputPane,
-              workflowPane,
-            }}
-            collab={{ coEdit, collabNotice, peerLabel: pair.peer }}
-            onClosePredict={() => commitPanes(closeView(panes, 'predict'))}
-          />
 
           {/* Everything that reports on the editor (`runner/ResultsColumn.tsx`). */}
           <ResultsColumn

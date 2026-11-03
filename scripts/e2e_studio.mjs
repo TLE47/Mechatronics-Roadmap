@@ -144,6 +144,49 @@ async function main() {
       .waitFor({ timeout: 120000 });
     ok('Run executes a scratch program and prints its output');
 
+    // ---- 2b. The editor is the runner's own card ----
+    // The program and the run output are panes, the split controls belong to the card, and the
+    // editor's own settings (Vim) are the card's too — so a learner who moved between the lesson tab
+    // and this one finds the same editor, not a plainer copy of it.
+    assert.equal(
+      await page.getByTestId('editor-panes').getAttribute('data-split'),
+      'split',
+      'the studio opens the code above the run output'
+    );
+    assert.equal(
+      await page.getByTestId('editor-tab-actual').count(),
+      1,
+      'the run output is one of the card’s views'
+    );
+    await page.getByTestId('btn-pane-columns').click();
+    assert.equal(
+      await page.getByTestId('editor-panes').getAttribute('data-axis'),
+      'columns',
+      'the split can be turned side by side'
+    );
+    await page.getByTestId('btn-pane-rows').click();
+    assert.equal(
+      await page.getByTestId('editor-panes').getAttribute('data-axis'),
+      'rows',
+      'and back above the output'
+    );
+    await page.getByTestId('studio-vim').click();
+    assert.equal(
+      await page.getByTestId('studio-vim').getAttribute('aria-pressed'),
+      'true',
+      'the editor’s own settings live in the card’s toolbar'
+    );
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await reopenStudio(page);
+    await page.getByTestId('studio-vim').waitFor({ timeout: 30000 });
+    assert.equal(
+      await page.getByTestId('studio-vim').getAttribute('aria-pressed'),
+      'true',
+      'the Vim choice survives a reload'
+    );
+    await page.getByTestId('studio-vim').click();
+    ok('the studio editor is the runner’s card: split panes and a remembered Vim choice');
+
     // The interpreter is loaded now, so this is a stop in the middle of a loop rather than a stop
     // that happened to win the race with Pyodide's first download.
     const interruptCode = 'import time\nfor i in range(50):\n    time.sleep(0.1)\nprint("should not print")\n';
@@ -302,7 +345,7 @@ async function main() {
 
     assert.deepEqual(pageErrors, [], `the studio threw during the walk: ${pageErrors.join(' | ')}`);
     console.log(
-      '[PASS] Studio: Home opens it; Run, Stop and a runtime error each leave their own sentence, and a fresh Run recovers; killed code, the note and the plan survive reloads; and the plan survives a backup, wipe and restore'
+      '[PASS] Studio: Home opens it; Run, Stop and a runtime error each leave their own sentence, and a fresh Run recovers; killed code, the note and the plan survive reloads; and the plan survives a backup, wipe and restore; and its editor is the runner’s card, with split panes and a remembered Vim choice'
     );
     await context.close();
   } finally {

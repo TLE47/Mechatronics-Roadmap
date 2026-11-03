@@ -1,7 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { PythonEditor } from '../PythonEditor';
+import type { PythonEditorHandle } from '../PythonEditor';
+import { RunnerEditorCard } from './runner/RunnerEditorCard';
 import { WorkflowPanel } from '../WorkflowPanel';
 import { useMediaQuery } from '../../useMediaQuery';
+import { readVim, writeVim } from '../../vimMode';
+import type { EditorPanes } from '../../editorPanes';
 import {
   MAX_STUDIO_NOTE_CHARS,
   saveStudio,
@@ -57,6 +60,18 @@ export const TabStudio: React.FC = () => {
   const [runtime, setRuntime] = useState<ScratchStatus>('idle');
   const [result, setResult] = useState<ScratchResult | null>(null);
   const runner = useRef<ScratchRunner | null>(null);
+  // The editor is the runner's own card (`runner/RunnerEditorCard.tsx`), so the studio gets the same
+  // tabs, panes and editor settings a lesson does. The result views are the ones this surface really
+  // has: the run output, because nothing here has an expected output or a prediction to grade.
+  const [panes, setPanes] = useState<EditorPanes>({
+    views: ['main', 'actual'],
+    axis: 'rows',
+    focus: 0,
+  });
+  const editorPanelRef = useRef<HTMLDivElement | null>(null);
+  const mainEditorRef = useRef<PythonEditorHandle | null>(null);
+  const [vimOn, setVimOn] = useState<boolean>(() => readVim());
+  const [vimMode, setVimMode] = useState<string>('normal');
   // What the store would be if the tab closed now. Refs rather than state because the debounce and
   // the unmount write read the text that is on screen, not the render that scheduled them.
   const latest = useRef(doc);
@@ -134,58 +149,116 @@ export const TabStudio: React.FC = () => {
     </div>
   );
 
-  const codePane = (
-    <div
-      data-testid="studio-code"
-      className="space-y-2.5 rounded-xl border border-line bg-panel p-4"
-    >
-      <h2 className="text-sm font-bold text-ink">Python</h2>
-      <div className="overflow-hidden rounded-lg border border-line">
-        <PythonEditor
-          value={doc.code}
-          onChange={(next) => update({ code: next })}
-          ariaLabel="Free study code"
-          testId="editor-studio"
-        />
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          data-testid="studio-run"
-          onClick={run}
-          disabled={runtime === 'running' || runtime === 'loading'}
-          className="btn btn-primary text-[12.5px] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Run
-        </button>
-        <button
-          type="button"
-          data-testid="studio-stop"
-          onClick={() => runner.current?.stop()}
-          disabled={runtime !== 'running' && runtime !== 'loading'}
-          className="btn btn-ghost text-[12.5px] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Stop
-        </button>
-      </div>
-      <div className="rounded-lg border border-line-soft bg-canvas p-2.5">
-        <div className="text-[11px] uppercase tracking-wide text-muted">Output</div>
+  /** The card's toolbar slot: the run controls and the one editor setting a scratch file has. */
+  const studioToolbar = (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <button
+        type="button"
+        data-testid="studio-run"
+        onClick={run}
+        disabled={runtime === 'running' || runtime === 'loading'}
+        className="btn btn-primary text-[12.5px] disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Run
+      </button>
+      <button
+        type="button"
+        data-testid="studio-stop"
+        onClick={() => runner.current?.stop()}
+        disabled={runtime !== 'running' && runtime !== 'loading'}
+        className="btn btn-ghost text-[12.5px] disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Stop
+      </button>
+      <button
+        type="button"
+        data-testid="studio-vim"
+        aria-pressed={vimOn}
+        onClick={() => {
+          const next = !vimOn;
+          setVimOn(next);
+          writeVim(next);
+        }}
+        title="Read the editor's keys as Vim: normal, insert and the motions between"
+        className="btn btn-ghost text-[12.5px] aria-pressed:bg-accent aria-pressed:text-inverse"
+      >
+        Vim
+      </button>
+    </div>
+  );
+
+  /** The run output, in the card's own pane rather than a block under it. */
+  const studioOutput = (
+    <div className="bg-canvas p-2.5">
+      <div className="text-[11px] uppercase tracking-wide text-muted">Output</div>
+      <pre
+        data-testid="studio-output"
+        aria-live="polite"
+        className="mt-1 min-h-[72px] overflow-auto whitespace-pre-wrap font-mono text-[12.5px] text-body"
+      >
+        {output}
+      </pre>
+      {result?.stderr ? (
         <pre
-          data-testid="studio-output"
-          aria-live="polite"
-          className="mt-1 min-h-[72px] overflow-auto whitespace-pre-wrap font-mono text-[12.5px] text-body"
+          data-testid="studio-stderr"
+          className="mt-1 whitespace-pre-wrap font-mono text-[12.5px] text-rose"
         >
-          {output}
+          {result.stderr}
         </pre>
-        {result?.stderr ? (
-          <pre
-            data-testid="studio-stderr"
-            className="mt-1 whitespace-pre-wrap font-mono text-[12.5px] text-rose"
-          >
-            {result.stderr}
-          </pre>
-        ) : null}
-      </div>
+      ) : null}
+    </div>
+  );
+
+  // The runner's editor card, ungraded: same tabs, same splittable panes, same editor settings, with
+  // the views this workspace can honestly offer (the run output) and none it cannot (a prediction,
+  // an expected output, a workflow for a problem it was not given).
+  const codePane = (
+    <div data-testid="studio-code" className="min-w-0">
+      <RunnerEditorCard
+        surface={{
+          panelRef: editorPanelRef,
+          phoneCode: phone,
+          editorShown: true,
+          resultsAllowed: true,
+          phoneEditorVisible: true,
+          isPhone: phone,
+          deferPhoneEditor: false,
+          layout: 'write',
+        }}
+        draft={{
+          code: doc.code,
+          commitCode: (next) => update({ code: next }),
+          mainEditorRef,
+          helperEditorRef: mainEditorRef,
+          helperFiles: [],
+          openHelper: null,
+          onOpenHelper: () => {},
+          pendingJump: null,
+          onClearJump: () => {},
+          symbolMiss: null,
+          sliderCount: 0,
+          vim: { on: vimOn, mode: vimMode, onMode: setVimMode },
+          lesson: { id: 'studio', question: '' },
+          onSliderCommit: () => {},
+          editorTestId: 'editor-studio',
+        }}
+        panes={{ value: panes, onPanes: setPanes }}
+        run={{
+          isRunning: runtime === 'running' || runtime === 'loading',
+          passStatus: 'untested',
+          harnessResult: null,
+          asksForFinish: false,
+        }}
+        slots={{
+          toolbar: studioToolbar,
+          feedback: null,
+          actualOutputPane: studioOutput,
+          expectedOutputPane: null,
+          workflowPane: null,
+        }}
+        collab={{ coEdit: null, collabNotice: null, peerLabel: null }}
+        resultViews={['actual']}
+      />
     </div>
   );
 

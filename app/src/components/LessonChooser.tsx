@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, CheckCircle2, ChevronRight, Search } from 'lucide-react';
+import { Check, CheckCircle2, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import type { PythonLessonItem } from '../data/pythonLessonsData';
 import { roadmapStepForLesson } from '../practiceLinks';
 import { stepBreadcrumb } from '../spine';
@@ -32,6 +32,11 @@ interface LessonChooserProps {
   className?: string;
   /** Inline max-height for the frame; `'none'` lets a sheet's body own the scroll. */
   maxHeight?: string;
+  /**
+   * Fold the rail to its strip. Omitted in a sheet: the list is already the whole surface there, and
+   * a collapsed card inside a sheet would be a card with no room to be folded into.
+   */
+  onCollapse?: () => void;
 }
 
 export function LessonChooser({
@@ -47,6 +52,7 @@ export function LessonChooser({
   onSelect,
   className = '',
   maxHeight,
+  onCollapse,
 }: LessonChooserProps) {
   const tracks: { id: TrackFilter; label: string }[] = [
     { id: 'all', label: `All (${lessons.length})` },
@@ -93,9 +99,26 @@ export function LessonChooser({
       {/* The count gets its own line and the chips wrap: five chips and a number do not share one
           narrow column, and a chip that runs under the next panel is a chip nobody can press. */}
       <div className="mb-2">
-        <span className="mb-1.5 block font-mono text-xs tabular-nums text-muted">
-          Lessons &amp; exercises ({filteredLessons.length})
-        </span>
+        <div className="mb-1.5 flex items-center justify-between gap-2">
+          <span className="block font-mono text-xs tabular-nums text-muted">
+            Lessons &amp; exercises ({filteredLessons.length})
+          </span>
+          {onCollapse && (
+            <button
+              type="button"
+              onClick={onCollapse}
+              data-testid="btn-lessons-collapse"
+              aria-expanded={true}
+              aria-controls="lesson-chooser-rail"
+              aria-label="Hide the lesson list"
+              title="Hide the lesson list to its strip; every lesson stays one press away"
+              className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-[var(--r-sm)] border border-line-soft px-1.5 py-0.5 font-mono text-[12.5px] uppercase tracking-wider text-muted transition-colors hover:border-line hover:text-ink"
+            >
+              <ChevronLeft className="h-3 w-3" aria-hidden="true" />
+              <span>Hide</span>
+            </button>
+          )}
+        </div>
         <div className="flex flex-wrap gap-1" data-testid="track-filters">
           {tracks.map((track) => (
             <button
