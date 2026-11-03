@@ -287,6 +287,35 @@ async function main() {
     );
     ok('the note and the code come back after a reload');
 
+    // ---- 5b. The header reopens the page it was left on ----
+    // The choice is a preference, not a run's state: a learner who works from the plan should not
+    // land on the program on every reload, and a phone should not forget the page it was reading.
+    await page.getByTestId('studio-view-plan').click();
+    await page.getByTestId('studio-plan').waitFor({ timeout: 10000 });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await reopenStudio(page);
+    assert.equal(
+      await page.getByTestId('studio-view-plan').getAttribute('aria-pressed'),
+      'true',
+      'a reload must reopen Plan when Plan was the page on screen'
+    );
+    await page.getByTestId('studio-plan').waitFor({ timeout: 10000 });
+    assert.equal(
+      await page.getByTestId('studio-code').count(),
+      0,
+      'Plan is a page of its own; the editor must not also be drawn on a desktop'
+    );
+    await page.getByTestId('studio-view-code').click();
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await reopenStudio(page);
+    await waitForEditor(page, STUDIO_EDITOR, 30000);
+    assert.equal(
+      await page.getByTestId('studio-plan').count(),
+      0,
+      'choosing Code is remembered too, not only the first choice'
+    );
+    ok('the header reopens on Code or Plan after a reload');
+
     // ---- 6. A plan drawn with no lesson also survives ----
     await page.getByTestId('studio-view-plan').click();
     await page.getByTestId('panel-workflow').waitFor({ timeout: 30000 });
@@ -390,7 +419,7 @@ async function main() {
 
     assert.deepEqual(pageErrors, [], `the studio threw during the walk: ${pageErrors.join(' | ')}`);
     console.log(
-      '[PASS] Studio: Home opens it; Run, Stop and a runtime error each leave their own sentence, and a fresh Run recovers; killed code, the note and the plan survive reloads; and the plan survives a backup, wipe and restore; its editor is the runner’s card, with split panes and a remembered Vim choice, and its own arrangement surviving a reload'
+      '[PASS] Studio: Home opens it; Run, Stop and a runtime error each leave their own sentence, and a fresh Run recovers; killed code, the note and the plan survive reloads; and the plan survives a backup, wipe and restore; its editor is the runner’s card, with split panes and a remembered Vim choice, and its own arrangement surviving a reload; and its Code or Plan page returning after one'
     );
     await context.close();
   } finally {

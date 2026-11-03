@@ -316,6 +316,9 @@ strip, each across a reload. The studio card's arrangement lives under its own k
 (`mechalab_studio_panes_v1`), so a closed output pane survives a reload while the lesson editor's
 stored split is untouched; a missing, corrupt or unknown entry returns the card's code-above-output
 default rather than a blank pane, and `npm run test:panes` pins both surfaces' keys and defaults.
+The header's Code/Plan/Note choice is remembered under `mechalab_studio_view_v1`
+(`app/src/studioView.ts`), so a reload opens the page the learner left on and an unknown value opens
+Code; the studio browser row reopens Plan and then Code to prove both directions.
 
 **Docking and the activity bar are measured where they land, too.** The same built-bundle step presses
 the dock button with the results in Debug and asserts the results end before the editor starts, both

@@ -13,7 +13,9 @@
  * - the two caps apply on the way in and on the way out, so a hand-edited backup cannot grow a box
  *   past what the tab says;
  * - a patch touches one field, never the other;
- * - an empty studio removes its key, so "never wrote" and "cleared it" are the same state.
+ * - an empty studio removes its key, so "never wrote" and "cleared it" are the same state;
+ * - the header's Code/Plan/Note page is a preference under its own key, and only those three words
+ *   are a page: anything else opens the program.
  *
  * The runner has its own contract below, with a stub `Worker` instead of Pyodide: one run message
  * carries no grading inputs, a result delivers stdout or stderr, Stop terminates, the 30 s page kill
@@ -39,6 +41,14 @@ import {
   SCRATCH_KILL_MS,
   createScratchRunner,
 } from '../app/src/studio/pythonRun.ts';
+import {
+  DEFAULT_STUDIO_VIEW,
+  STORAGE_KEY_STUDIO_VIEW,
+  STUDIO_VIEWS,
+  normalizeStudioView,
+  readStudioView,
+  writeStudioView,
+} from '../app/src/studioView.ts';
 
 let passed = 0;
 let failed = 0;
@@ -384,6 +394,43 @@ await checkAsync('dispose terminates, and a later run does not reuse the closed 
 });
 
 restoreWorker();
+
+// ---- The header's page is a preference, and only its three words are pages ----
+check('a first visit, and a refused store, open the program', () => {
+  freshBrowser({ store: 'absent' });
+  assert.equal(readStudioView(), 'code');
+  freshBrowser({ store: 'throws' });
+  assert.equal(readStudioView(), 'code');
+  assert.equal(writeStudioView('plan'), 'plan', 'the caller still gets a view to render');
+});
+
+check('the chosen page is remembered', () => {
+  freshBrowser();
+  assert.equal(writeStudioView('plan'), 'plan');
+  assert.equal(readStudioView(), 'plan');
+  assert.equal(globalThis.localStorage.getItem(STORAGE_KEY_STUDIO_VIEW), 'plan');
+});
+
+check('only the three pages are a view; anything else reopens the program', () => {
+  freshBrowser();
+  for (const stored of ['output', 'Code', '', 'null', '{"view":"plan"}']) {
+    globalThis.localStorage.setItem(STORAGE_KEY_STUDIO_VIEW, stored);
+    assert.equal(readStudioView(), 'code', stored);
+  }
+  assert.deepEqual([...STUDIO_VIEWS], ['code', 'plan', 'note']);
+  assert.equal(normalizeStudioView('note'), 'note');
+  assert.equal(normalizeStudioView(undefined), DEFAULT_STUDIO_VIEW);
+});
+
+check('the view is a preference, not a key in the studio’s work', () => {
+  freshBrowser();
+  writeStudioView('note');
+  assert.equal(
+    globalThis.localStorage.getItem(STORAGE_KEY_STUDIO),
+    null,
+    'choosing a page must not write the studio record'
+  );
+});
 
 console.log(`\nstudio: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

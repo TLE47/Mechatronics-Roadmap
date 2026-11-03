@@ -52,10 +52,19 @@ and dots a lesson has (prediction, expected output, workflow pane, helper files,
 values, breakpoints, run-to-a-cell) are absent because a lesson-less program has nothing to feed
 them, not because a control was left wired to nothing.
 
+**The header remembers its page.** Code and Plan were a per-visit choice: a learner who worked from
+the plan reopened on the program every time, and a phone forgot whether it was reading the plan or
+the notebook. The choice now lives under `mechalab_studio_view_v1` (`app/src/studioView.ts`) through
+`readStudioView` / `writeStudioView`: three words, a missing or hand-edited value opening Code so the
+header always has a pressed page, and a refused store costing the memory rather than the button. It
+is a preference, not a key in the studio record, so choosing a page never writes the program, the
+note or the plan.
+
 Covered by `npm run test:rail` (13 checks), `npm run test:panes` (the two keys, their defaults and a
-corrupt entry each pinned), `npm run test:studio`, the workbench suite in `check:all`, a
-`check:snapshot` re-record whose only moved numbers are the two new controls and the stacked order,
-and both Chromium suites.
+corrupt entry each pinned), `npm run test:studio` (the remembered page, its default and its junk
+values), the workbench suite in `check:all`, a `check:snapshot` re-record whose only moved numbers
+are the two new controls and the stacked order, and both Chromium suites, the studio one reopening
+Plan and then Code across a reload.
 
 ## [2026-11-02] — The runner's three knots get owners, and a ratchet holds them
 

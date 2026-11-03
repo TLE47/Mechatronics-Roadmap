@@ -11,6 +11,7 @@ import {
   writePanes,
   type EditorPanes,
 } from '../../editorPanes';
+import { readStudioView, writeStudioView, type StudioView } from '../../studioView';
 import {
   MAX_STUDIO_NOTE_CHARS,
   saveStudio,
@@ -46,8 +47,6 @@ import {
  *    here is a real workflow, rides the backup, and cannot drift from the one the lesson tab draws.
  */
 
-type StudioView = 'code' | 'plan' | 'note';
-
 const NOT_SAVED = 'Not saved — storage is blocked or full';
 
 const RUNTIME: Record<ScratchStatus, string> = {
@@ -60,7 +59,9 @@ const RUNTIME: Record<ScratchStatus, string> = {
 
 export const TabStudio: React.FC = () => {
   const [doc, setDoc] = useState<StudioDoc>(() => readStudio());
-  const [view, setView] = useState<StudioView>('code');
+  // The header's choice is a preference (`studioView.ts`): a learner who works from the plan comes
+  // back to the plan, and a phone keeps whichever of the three pages it was reading.
+  const [view, setView] = useState<StudioView>(() => readStudioView());
   const phone = useMediaQuery('(max-width: 1023px)');
   const [saveState, setSaveState] = useState('');
   const [runtime, setRuntime] = useState<ScratchStatus>('idle');
@@ -304,7 +305,7 @@ export const TabStudio: React.FC = () => {
                 type="button"
                 data-testid={`studio-view-${id}`}
                 aria-pressed={mainView === id}
-                onClick={() => setView(id)}
+                onClick={() => setView(writeStudioView(id))}
                 className="btn btn-ghost text-[12.5px] aria-pressed:bg-accent aria-pressed:text-inverse"
               >
                 {label}
