@@ -34,6 +34,7 @@ import {
   fromWire,
   toWire,
 } from '../app/src/collab.ts';
+import { stopNotice } from '../app/src/components/tabs/runner/collabNotice.ts';
 
 let passed = 0;
 let failed = 0;
@@ -371,6 +372,27 @@ check('a document past the cap is still representable; the cap is the runner’s
   const doc = CollabText.seed(long, 0);
   assert.equal(doc.text.length, COLLAB_MAX_TEXT);
   assert.equal(doc.localOps(long + 'y').length, 1);
+});
+
+// 7. **A stop is one sentence, and whose decision it was is part of it.** The table is pure, so
+//    every branch is held here rather than inferred from a browser: a local stop says what this
+//    workbench did, a remote one never does, and the two lesson notices name different movers.
+check('a local stop names the decision this workbench made', () => {
+  assert.match(stopNotice('lesson', 'local'), /this workbench moved/);
+  assert.match(stopNotice('left', 'local'), /You stopped/);
+  assert.match(stopNotice('declined', 'local'), /You turned down/);
+  assert.match(stopNotice('too-long', 'local'), /passed 24,000 characters/);
+  assert.match(stopNotice('offline', 'local'), /The session ended/);
+});
+check('a remote stop never claims an action this workbench did not take', () => {
+  assert.match(stopNotice('lesson', 'remote'), /they moved/);
+  assert.match(stopNotice('declined', 'remote'), /They are not co-editing/);
+  assert.match(stopNotice('left', 'remote'), /They stopped co-editing/);
+  assert.doesNotMatch(stopNotice('left', 'remote'), /^You/);
+  assert.doesNotMatch(stopNotice('lesson', 'remote'), /this workbench/);
+  // The local and remote lesson sentences must not be the same string: one is repeated back over
+  // the wire by the side that decided, and the other is what the side that received it says.
+  assert.notEqual(stopNotice('lesson', 'local'), stopNotice('lesson', 'remote'));
 });
 
 console.log(`\ncollab: ${passed} passed, ${failed} failed`);

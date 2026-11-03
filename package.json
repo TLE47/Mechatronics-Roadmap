@@ -100,6 +100,7 @@
     "test:help": "node --experimental-strip-types scripts/test_help_report.mjs",
     "test:pair": "node --experimental-strip-types scripts/test_pair.mjs",
     "test:collab": "node --experimental-strip-types scripts/test_collab.mjs",
+    "test:runner": "node --experimental-strip-types scripts/test_runner_shape.mjs",
     "test:inline": "node --experimental-strip-types scripts/test_inline_values.mjs",
     "test:symbols": "node --experimental-strip-types scripts/test_symbols.mjs",
     "test:layout": "node --experimental-strip-types scripts/test_layout.mjs",

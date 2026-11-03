@@ -15,11 +15,23 @@ import { PredictPane } from './PredictPane';
 import { RunVerdict } from './RunVerdict';
 import { PythonKeys } from '../../PythonKeys';
 import { MAIN_FILE_NAME, type LessonFile } from '../../../lessonFiles';
-import type { EditorPanes, EditorView } from '../../../editorPanes';
+import {
+  closeSplit,
+  focusSlot,
+  isSplit,
+  setAxis,
+  showView,
+  slotFor,
+  splitPane,
+  visibleViews,
+  type EditorPanes,
+  type EditorView,
+} from '../../../editorPanes';
 import type { WorkspaceLayout } from '../../../workspaceLayout';
 import type { AnalysisSession } from '../../../analysisClient';
 import type { HarnessGate } from '../../../harnessGrading';
 import type { PredictGate } from './usePredictGate';
+import { vimModeLabel as vimModeLabelFor } from '../../../vimMode';
 
 /** Which surface the card is on, and what that surface may show. */
 interface EditorSurface {
@@ -43,39 +55,29 @@ interface EditorDraft {
   helperEditorRef: RefObject<PythonEditorHandle | null>;
   helperFiles: LessonFile[];
   openHelper: string | null;
-  openHelperFile: LessonFile | null;
   onOpenHelper: (name: string | null) => void;
   pendingJump: { file: string; line: number; lesson: string } | null;
   onClearJump: () => void;
   symbolMiss: string | null;
   sliderCount: number;
-  vimOn: boolean;
-  vimModeLabel: string;
-  onVimMode: (mode: string) => void;
-  writeQuestion: string;
-  lessonId: string;
+  vim: { on: boolean; mode: string; onMode: (mode: string) => void };
+  lesson: { id: string; question: string };
   onSliderCommit: () => void;
   getAnalysis: () => AnalysisSession | null;
   onGoToDefinition: (name: string) => void;
   onRunCell: (line: number) => void;
-  onToggleBreakpoint: (line: number) => void;
-  onBreakpointsMoved: (entries: { line: number; condition: string }[]) => void;
-  breakpoints: { line: number; condition: string }[];
+  breakpoints: {
+    entries: { line: number; condition: string }[];
+    onToggle: (line: number) => void;
+    onMoved: (entries: { line: number; condition: string }[]) => void;
+  };
 }
 
 /** The editor's panes and the arrangement they are drawn in. */
 interface EditorPaneSet {
   value: EditorPanes;
-  split: boolean;
-  shownViews: Set<EditorView>;
-  views: EditorView[];
-  onShowView: (view: EditorView) => void;
-  onSplit: () => void;
-  onSetAxis: (axis: 'columns' | 'rows') => void;
-  onCloseSplit: () => void;
-  focusPane: (view: EditorView) => void;
-  paneOrder: (view: EditorView) => number;
-  paneBorder: (view: EditorView) => string;
+  /** Write the arrangement. Everything else about the panes is a view of `value`. */
+  onPanes: (next: EditorPanes) => void;
 }
 
 /** What the last run said, as the verdict and the gate's lead line read it. */
@@ -140,38 +142,67 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
     helperEditorRef,
     helperFiles,
     openHelper,
-    openHelperFile,
     onOpenHelper,
     pendingJump,
     onClearJump,
     symbolMiss,
     sliderCount,
-    vimOn,
-    vimModeLabel,
-    onVimMode,
-    writeQuestion,
-    lessonId,
+    vim: { on: vimOn, mode: vimMode, onMode: onVimMode },
+    lesson: { id: lessonId, question: writeQuestion },
     onSliderCommit,
     getAnalysis,
     onGoToDefinition,
     onRunCell,
-    onToggleBreakpoint,
-    onBreakpointsMoved,
-    breakpoints,
+    breakpoints: { entries: breakpoints, onToggle: onToggleBreakpoint, onMoved: onBreakpointsMoved },
   } = props.draft;
-  const {
-    value: panes,
-    split: paneSplit,
-    shownViews,
-    views,
-    onShowView,
-    onSplit,
-    onSetAxis,
-    onCloseSplit,
-    focusPane,
-    paneOrder,
-    paneBorder,
-  } = props.panes;
+  /** The badge's word, from the mode the editor is reading keys in. */
+  const vimModeLabel = vimModeLabelFor(vimMode);
+  const { value: panes, onPanes } = props.panes;
+  /**
+   * What the editor body shows right now.
+   *
+   * The stored arrangement is the learner's, but a preset still owns the regions: Write has no
+   * results, so an output tab there would be a door into a hidden room. In that preset the body
+   * falls back to the editor and the stored tab comes back with Study, which is why this is derived
+   * here rather than written back to the store.
+   */
+  const shownViews = new Set<EditorView>(resultsAllowed ? visibleViews(panes) : ['main']);
+  /** Every view on screen, in slot order: the pane strip and the body read the same list. */
+  const views = visibleViews(panes);
+  /** Two panes only when two views are really on screen. */
+  const paneSplit = resultsAllowed && isSplit(panes) && shownViews.size > 1;
+  /** Slot order, so an arrangement opened on an output still reads left to right. */
+  const paneOrder = (view: EditorView): number => slotFor(panes, view) ?? 0;
+  /** The helper the strip names, from the file the tab picked. */
+  const openHelperFile = helperFiles.find((file) => file.name === openHelper) ?? null;
+  /**
+   * The rule between two side-by-side panes, on whichever one is second, plus a faint inset ring on
+   * the focused one. A split is a keyboard-and-pointer workspace: the tab press fills the pane the
+   * learner last clicked, so which pane that is has to be visible rather than remembered.
+   */
+  const paneBorder = (view: EditorView): string => {
+    if (!paneSplit) return '';
+    const focused = panes.focus === paneOrder(view) ? 'ring-1 ring-inset ring-accent/20' : '';
+    if (panes.axis !== 'columns') return focused;
+    const rule =
+      paneOrder(view) === 0 ? 'lg:border-t-0' : 'lg:border-l lg:border-line-soft lg:border-t-0';
+    return `${rule} ${focused}`;
+  };
+  /**
+   * Clicking a pane makes it the one a tab press fills.
+   *
+   * Without this the focused slot was only ever the one last opened, so putting Run output and
+   * Expected side by side took a tab press nobody could be expected to guess: the first click
+   * replaces the pane that already has focus. Click the pane you want to change, then its tab - the
+   * way a terminal multiplexer's active pane owns the next command.
+   */
+  const focusPane = (view: EditorView) => {
+    if (!paneSplit) return;
+    const slot = slotFor(panes, view);
+    if (slot !== null && panes.focus !== slot) onPanes(focusSlot(panes, slot));
+  };
+  /** One writer for every tab press and every arrangement control below. */
+  const onShowView = (view: EditorView) => onPanes(showView(panes, view));
   const { gate, onClosePredict } = props;
   const { isRunning, passStatus, harnessResult, asksForFinish } = props.run;
   const { toolbar, feedback, actualOutputPane, expectedOutputPane, workflowPane } = props.slots;
@@ -317,7 +348,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
                 <button
                   type="button"
                   data-testid="btn-pane-split"
-                  onClick={onSplit}
+                  onClick={() => onPanes(splitPane(panes))}
                   title="Split the editor: show two views, like a terminal"
                   className="flex items-center gap-1 rounded border border-line bg-canvas px-2 py-0.5 text-[12px] font-mono text-body hover:bg-raise cursor-pointer"
                 >
@@ -330,7 +361,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
                     type="button"
                     data-testid="btn-pane-columns"
                     aria-pressed={panes.axis === 'columns'}
-                    onClick={() => onSetAxis('columns')}
+                    onClick={() => onPanes(setAxis(panes, 'columns'))}
                     title="Divide the panes side by side"
                     className={`rounded border px-1.5 py-0.5 cursor-pointer ${
                       panes.axis === 'columns'
@@ -345,7 +376,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
                     type="button"
                     data-testid="btn-pane-rows"
                     aria-pressed={panes.axis === 'rows'}
-                    onClick={() => onSetAxis('rows')}
+                    onClick={() => onPanes(setAxis(panes, 'rows'))}
                     title="Divide the panes one above the other"
                     className={`rounded border px-1.5 py-0.5 cursor-pointer ${
                       panes.axis === 'rows'
@@ -359,7 +390,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
                   <button
                     type="button"
                     data-testid="btn-pane-close"
-                    onClick={onCloseSplit}
+                    onClick={() => onPanes(closeSplit(panes))}
                     title="Close the second pane"
                     aria-label="Close the second pane"
                     className="rounded border border-line bg-canvas px-1.5 py-0.5 text-muted hover:bg-raise hover:text-body cursor-pointer"

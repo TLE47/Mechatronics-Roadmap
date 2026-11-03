@@ -164,7 +164,7 @@ npm run test:takealong                  # the offline button's rules: which URLs
 npm run test:share                      # the share link: round trip, the URL-safe alphabet, the measured cap, every malformed fragment
 npm run test:help                       # the stuck report: the sections a helper needs, the ladder left out, three printed caps, and the issue URL's own limit
 npm run test:pair                       # the pair session's wires: both signals round-trip, the wrong box is named, junk and oversized messages are dropped, and a parse writes nothing
-npm run test:collab                     # the co-editing document: seeded ids, one-keystroke diffs, convergence under concurrent edits in either order, unknown references, the wire rules, and a paste split into batches
+npm run test:collab                     # the co-editing document: seeded ids, one-keystroke diffs, convergence under concurrent edits in either order, unknown references, the wire rules, a paste split into batches, and what a stop says from each side (a local stop names this workbench’s decision, a remote one never does)
 npm run test:board                      # the Board card: each lesson's own sketch, a prediction graded against the serial CI proves, and the shape checks that refuse a malformed bridge
 npm run check:panel                      # app/src/data/boardBridges.json still matches the five Arduino lesson pages it is generated from
 npm run test:avr                        # every committed .hex runs in avr8js and prints its lesson's serial; Intel HEX corruption and a wrong expectation are refused
@@ -207,6 +207,7 @@ npm run test:resume                     # the lesson the next visit reopens, whi
 npm run test:draft                      # the editor's unfinished work: kept per lesson, bounded per draft and never evicted by count, never a starter copy - and how much of it is written
 npm run test:history                    # the versions behind the draft: filed on Run with its verdict, deduped, capped per lesson and in total
 npm run test:codediff                   # the Diff panel's rules: a change is an exact line, gaps are trimmed to context, the coarse fallback stays true
+npm run test:runner                     # the runner's shape as a ratchet (scripts/test_runner_shape.mjs): the tab's line/state/ref budgets, the editor card's call site, which module owns co-editing and which owns the comparison, no runner module importing the tab, the hook and view size rules, and a row in runner/README.md for every module. The numbers are measured, and can only come down
 npm run test:predict                    # the predict-first gate: lines not strings, four verdicts, a bounded store, and no way to be locked out
 npm run test:watch                      # when the checks may re-run themselves: after a graded failure, on an edit, never past the gate
 npm run test:watches                    # the paused bar's pinned expressions: one line and a width, pinned once, five per lesson, junk in the store, a browser that refuses storage

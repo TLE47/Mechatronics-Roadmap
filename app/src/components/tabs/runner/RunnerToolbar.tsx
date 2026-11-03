@@ -1,4 +1,4 @@
-import type { RefObject } from 'react';
+import { useRef, useState, type RefObject } from 'react';
 import {
   Activity,
   ArrowLeftRight,
@@ -42,10 +42,8 @@ interface RunnerToolbarProps {
   paused: boolean;
   onPause: () => void;
   onStop: () => void;
-  moreButtonRef: RefObject<HTMLButtonElement | null>;
-  moreOpen: boolean;
-  onToggleMore: () => void;
-  onCloseMore: () => void;
+  /** The tab mirrors this boolean for its sheet accounting; the panel itself is the toolbar's. */
+  onMoreOpenChange: (open: boolean) => void;
   runButtonRef: RefObject<HTMLButtonElement | null>;
   onRun: () => void;
   predictRecord: PredictionRecord | null;
@@ -93,10 +91,7 @@ export function RunnerToolbar({
   paused,
   onPause,
   onStop,
-  moreButtonRef,
-  moreOpen,
-  onToggleMore,
-  onCloseMore,
+  onMoreOpenChange,
   runButtonRef,
   onRun,
   predictRecord,
@@ -125,6 +120,20 @@ export function RunnerToolbar({
   watchOn,
   onToggleWatch,
 }: RunnerToolbarProps) {
+  // The More panel is the toolbar's own: its open state and the button focus returns to never leave
+  // this component. The tab keeps a mirror for its sheet accounting, nothing else.
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreButtonRef = useRef<HTMLButtonElement | null>(null);
+  const toggleMore = () => {
+    const next = !moreOpen;
+    setMoreOpen(next);
+    onMoreOpenChange(next);
+  };
+  const closeMore = () => {
+    setMoreOpen(false);
+    onMoreOpenChange(false);
+    moreButtonRef.current?.focus({ preventScroll: true });
+  };
   return (
     <div data-testid="runner-toolbar" className="flex flex-wrap items-center gap-1.5">
       {/* The presets live on this card, not in the editor's own header: Read hides that header, and a
@@ -226,8 +235,7 @@ export function RunnerToolbar({
       )}
       <button
         type="button"
-        ref={moreButtonRef}
-        onClick={onToggleMore}
+        ref={moreButtonRef}                onClick={toggleMore}
         aria-expanded={moreOpen}
         aria-controls="toolbar-more"
         data-testid="btn-more"
@@ -294,7 +302,7 @@ export function RunnerToolbar({
         hidden={!moreOpen}
         onKeyDown={(event) => {
           if (event.key !== 'Escape') return;
-          onCloseMore();
+          closeMore();
         }}
         // One press is one action, so the panel folds itself away: leaving it open would shift the
         // editor down while the learner is reading the answer to what they pressed, and would hide
@@ -302,7 +310,7 @@ export function RunnerToolbar({
         // the document.
         onClick={(event) => {
           if (!(event.target as HTMLElement).closest('button')) return;
-          onCloseMore();
+          closeMore();
         }}
         className="order-last w-full rounded-xl border border-line bg-panel p-2.5"
       >

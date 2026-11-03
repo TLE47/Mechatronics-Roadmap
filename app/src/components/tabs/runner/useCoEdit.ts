@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from 'react';
 import { COLLAB_MAX_TEXT, CollabText, type CollabOp } from '../../../collab';
 import type { CollabStopReason } from '../../../pairing';
 import type { PairSession } from '../../../usePairSession';
+import { stopNotice } from './collabNotice';
 
 export interface CoEditSession {
   lesson: string;
@@ -96,17 +97,7 @@ export function useCoEdit({
     if (shared && (reason === 'lesson' || reason === 'left')) {
       pair.sendCollabStop(shared.lesson, reason);
     }
-    setNotice(
-      reason === 'lesson'
-        ? 'Co-editing ended: this workbench moved to another lesson.'
-        : reason === 'left'
-          ? 'You stopped co-editing. Your editor is yours again.'
-          : reason === 'declined'
-            ? 'You turned down co-editing. Your editor was not touched.'
-            : reason === 'too-long'
-              ? `Co-editing stopped: the file passed ${COLLAB_MAX_TEXT.toLocaleString()} characters.`
-              : 'The session ended, so co-editing stopped.'
-    );
+    setNotice(stopNotice(reason, 'local'));
   };
 
   /**
@@ -166,13 +157,7 @@ export function useCoEdit({
     docRef.current = null;
     setSession(null);
     setInvite(null);
-    setNotice(
-      reason === 'lesson'
-        ? 'Co-editing ended: they moved to another lesson.'
-        : reason === 'declined'
-          ? 'They are not co-editing this lesson right now. Your editor was not touched.'
-          : 'They stopped co-editing. Your editor is yours again.'
-    );
+    setNotice(stopNotice(reason, 'remote'));
   };
 
   /** Offer this lesson and this text as the document both of us edit — the host's side of it. */

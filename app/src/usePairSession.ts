@@ -70,13 +70,25 @@ export interface PairSession {
   sendCollabStop: (lesson: string, reason: CollabStopReason) => void;
   announceLesson: (lesson: string) => void;
   leave: () => void;
+  /**
+   * Route what arrives to `handler`, and return the unsubscribe.
+   *
+   * The transport owns "who is listening". A session can be created before the thing that reads its
+   * messages does — the co-edit session is declared after this hook, because it needs the lesson
+   * functions — so the listener is attachable instead of required, and no caller has to hold a ref
+   * for messages that arrive in between.
+   */
+  subscribe: (handler: (message: PairMessage) => void) => () => void;
 }
 
 /** How long the invitation waits for its own candidates before it is offered anyway. */
 const GATHER_TIMEOUT_MS = 3000;
 
+/** What a session with nobody listening does with a message. */
+const NO_MESSAGE = (): void => {};
+
 export function usePairSession(
-  onMessage: (message: PairMessage) => void,
+  onMessage?: (message: PairMessage) => void,
   initialHandle?: string
 ): PairSession {
   const [state, setState] = useState<PairState>('idle');
@@ -89,8 +101,11 @@ export function usePairSession(
   const [role, setRole] = useState<'host' | 'guest' | null>(null);
   const connectionRef = useRef<RTCPeerConnection | null>(null);
   const channelRef = useRef<RTCDataChannel | null>(null);
-  const listenerRef = useRef(onMessage);
-  listenerRef.current = onMessage;
+  const listenerRef = useRef<(message: PairMessage) => void>(onMessage ?? NO_MESSAGE);
+  // Only a handler passed *to the hook* replaces the listener on render. A later `subscribe` must
+  // survive the render that follows it: assigning `NO_MESSAGE` unconditionally here is how a
+  // subscription is silently dropped, and with it the first attempt or co-edit message after mount.
+  if (onMessage) listenerRef.current = onMessage;
   const handleRef = useRef(you);
   handleRef.current = you;
 
@@ -319,6 +334,14 @@ export function usePairSession(
     []
   );
 
+  /** Attach the reader, or replace it; the unsubscribe only clears its own handler. */
+  const subscribe = (handler: (message: PairMessage) => void): (() => void) => {
+    listenerRef.current = handler;
+    return () => {
+      if (listenerRef.current === handler) listenerRef.current = NO_MESSAGE;
+    };
+  };
+
   return {
     state,
     you,
@@ -337,5 +360,6 @@ export function usePairSession(
     sendCollabStop,
     announceLesson,
     leave,
+    subscribe,
   };
 }

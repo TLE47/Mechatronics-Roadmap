@@ -16,6 +16,51 @@ flowchart LR
 
 ---
 
+## [2026-11-02] — The runner's three knots get owners, and a ratchet holds them
+
+**The tab is assembly again, and the numbers are a check rather than a claim.** `TabPyodideRunner.tsx`
+went from 3,414 lines to **3,144**, and from 38 `useState` cells and 28 refs to **33 and 27**: the five
+cells that went are the ones the last pass had only renamed (`historyOpen`, `historyVersion`,
+`diffOpen`, `diffTarget`, `solutionUsed`), plus the co-edit ref that kept the pair channel's handler
+before its session existed. Nothing a learner sees moved: `check:snapshot` passes from the same
+record, and `tab-pyodide` still paints the same buttons, inputs and links in all four palettes.
+
+**Co-editing: the channel attaches to the session, not the tab.** `usePairSession` gained
+`subscribe`, backed by the listener ref it already kept, and lost its required handler. That one seam
+is what `runner/useCollab.ts` needed: it composes `useCoEdit` (the document, the offer, the local
+writes), subscribes once the lesson functions exist, and routes the one message that is not the
+session's — an attempt — back to the tab, which offers it. `runner/collabNotice.ts` is the stop
+sentence as a table over reason × side, so "this workbench moved" and "they moved" cannot drift, and
+both are now held by `npm run test:collab` without a browser.
+
+**The versions behind the draft and the diff are one hook, and the diff is one component.**
+`runner/useDraftComparison.ts` owns the filed list, the earned solution, the chosen reference and
+the reset on a lesson change; `runner/DiffPanel.tsx` is the 150 lines of markup that used to sit in
+the tab's JSX. The restore handler stayed behind, because only the tab may clear a run's verdict.
+
+**The editor card derives its own panes.** `panes` is now one `{ value, onPanes }`: the split, the
+visible views, the slot order, the pane borders, the focused pane and the open helper file are all
+computed in `RunnerEditorCard.tsx` from the arrangement it already holds, using the pure helpers
+`npm run test:panes` already covers. The call site is 49 lines instead of 62, and a new derivation
+is a change in the card rather than another input.
+
+**A check now holds the shape.** `scripts/test_runner_shape.mjs` (`npm run test:runner`, registered
+with the workbench suites) fails when the tab grows a line, a state cell or a ref past the measured
+number, when the co-edit or comparison state reappears in the tab, when a runner module imports the
+tab, when a state-owning hook passes 400 lines (the run's one owner excepted) or a view passes 650,
+and when a module has no row in `runner/README.md`. The browser suite gained the two paths the old
+one could not reach: a lesson switch ends the shared document and tells the other screen, and a
+keystroke typed with the diff open lands exactly once.
+
+**One ceiling moved, by hand, for an inherited breach.** The signed-in `js_gzip` measured **984.5 kB
+at the pre-pass commit** against its 982 kB ceiling — already 2.5 kB over before any of this landed.
+This pass measured **984.9 kB**: the three extractions and their module seams cost 0.4 kB gzipped
+(the runner chunk moved 383,896 → 387,738 B), which is the `entry_gzip` trade the repo accepts for
+app code on the tab that opens first. The ceiling is **986 kB**, 1.1 kB above the measurement, and
+the breach it inherits is recorded here rather than folded into this pass's cost.
+
+---
+
 ## [2026-11-01] — A free-study workspace, not another lesson
 
 **Home gained one card and the workbench one tab, both for work nobody assigned.** *Free study*

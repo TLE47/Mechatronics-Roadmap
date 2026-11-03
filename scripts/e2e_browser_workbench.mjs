@@ -4098,6 +4098,64 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     console.log('  ok two workbenches co-edit one document, and undo stays each person’s own');
 
+    // 7g-i-e. A lesson switch is the end of the shared document, not an edit of it. The side that
+    //        moved stops and says so; the side that stayed is told what happened rather than left
+    //        holding a document nothing will move again. This is the effect path, not the Stop
+    //        button: `useCoEdit` watches the lesson, and only a browser proves the sentence reaches
+    //        the other screen.
+    await page.getByTestId('btn-coedit-start').click();
+    await guest.getByTestId('btn-coedit-accept').click();
+    await guest.getByTestId('coedit-status').waitFor({ timeout: 15000 });
+    await guest.getByTestId('lesson-item-P.3').click();
+    await page.waitForFunction(
+      () =>
+        /moved to another lesson/i.test(
+          document.querySelector('[data-testid="coedit-notice"]')?.textContent ?? ''
+        ),
+      undefined,
+      { timeout: 15000 }
+    );
+    assert.equal(
+      await guest.getByTestId('coedit-status').count(),
+      0,
+      'the side that moved must not still be showing a live session'
+    );
+    console.log('  ok a lesson switch ends the shared document and tells the other screen');
+
+    // 7g-i-f. The diff panel is a view of the same buffer the channel carries. Opening it while a
+    //        session is live must not turn a peer's text into a local edit to broadcast back: the
+    //        typed line arrives once, not twice.
+    await page.getByTestId('btn-coedit-start').click();
+    await guest.getByTestId('btn-coedit-accept').click();
+    await guest.getByTestId('coedit-status').waitFor({ timeout: 15000 });
+    // Accepting closes the guest's sheet; the host's own is still open, and its scrim would swallow
+    // the toolbar press. Close it, then reach for More.
+    await page.getByTestId('btn-close-pair').click();
+    await clickToolbar(page, 'btn-diff');
+    await page.getByTestId('code-diff').waitFor({ timeout: 5000 });
+    await guest.evaluate(() => {
+      const editor = window.__mechalabEditors['editor-main'];
+      editor.setCursor(editor.get().length);
+      editor.focus();
+    });
+    await guest.keyboard.type('# diff once');
+    await page.waitForFunction(
+      () => window.__mechalabEditors['editor-main'].get().includes('# diff once'),
+      undefined,
+      { timeout: 15000 }
+    );
+    const echoed = await page.evaluate(() => {
+      const text = window.__mechalabEditors['editor-main'].get();
+      return (text.match(/# diff once/g) ?? []).length;
+    });
+    assert.equal(echoed, 1, 'a peer’s line must land once while the diff is open');
+    // Close the panel behind the sheet, then reopen the sheet this row closed: the cleanup that
+    // follows (Stop, then Leave) lives in the sheet, and More is behind its scrim.
+    await clickToolbar(page, 'btn-diff');
+    await clickToolbar(page, 'btn-pair-open');
+    await page.getByTestId('btn-coedit-stop').click();
+    console.log('  ok typing with the diff open lands once, and the panel does not echo it back');
+
     await page.getByTestId('btn-pair-leave').click();
     await page.waitForFunction(
       () =>

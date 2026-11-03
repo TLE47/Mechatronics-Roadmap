@@ -28,7 +28,6 @@ interface FirstRunTourInput {
   hasProgress: boolean;
   /** Esc belongs to a sheet while one is open, so the tour must not also close on it. */
   sheetOpen: boolean;
-  runButtonRef: RefObject<HTMLButtonElement | null>;
   editorRef: RefObject<PythonEditorHandle | null>;
 }
 
@@ -48,9 +47,11 @@ export function useFirstRunTour({
   tourRequest,
   hasProgress,
   sheetOpen,
-  runButtonRef,
   editorRef,
 }: FirstRunTourInput) {
+  // The Run button is this hook's handle: the tour is the thing that focuses it, and no other
+  // region reads it, so the ref is created and returned here rather than in the tab.
+  const runButtonRef = useRef<HTMLButtonElement | null>(null);
   // Read once at mount: it records what this browser has already been shown, and only this screen
   // writes it back.
   const [tourState, setTourState] = useState<TourState>(() => readTour());
@@ -240,5 +241,6 @@ export function useFirstRunTour({
     setTourChip,
     startTour,
     signalTour,
+    runButtonRef,
   };
 }

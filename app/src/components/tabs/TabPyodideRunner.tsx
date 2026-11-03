@@ -43,21 +43,8 @@ import { AnalysisSession, sameNotes, type LintNote } from '../../analysisClient'
 import { rememberLessonInUrl } from '../../lessonRoute';
 import { rememberLastLesson } from '../../lastLesson';
 import { isEdited, readDraft, readDrafts, saveDraft } from '../../lessonDraft';
-import { readFlagMap, STORAGE_KEY_COMPLETED, STORAGE_KEY_VERIFIED } from '../../progressKeys';
-import {
-  clearHistory,
-  recordSnapshot,
-  snapshotAgeLabel,
-  snapshotsFor,
-  verdictLabel,
-} from '../../draftHistory';
-import { diffLines, diffSummary } from '../../codeDiff';
-import {
-  diffSameMessage,
-  resolveDiffReference,
-  runTarget,
-  type DiffTarget,
-} from '../../diffReference';
+import { STORAGE_KEY_COMPLETED, STORAGE_KEY_VERIFIED } from '../../progressKeys';
+import { recordSnapshot } from '../../draftHistory';
 import {
   WATCH_DEBOUNCE_MS,
   readWatch,
@@ -65,28 +52,23 @@ import {
   watchDecision,
   type WatchVerdict,
 } from '../../watchMode';
-import { readVim, vimModeLabel, writeVim } from '../../vimMode';
 import { runAnnouncement } from '../../announce';
-import { MAX_SHARE_URL, shareUrl, type SharedAttempt } from '../../shareLink';
+import { MAX_SHARE_URL, type SharedAttempt } from '../../shareLink';
 import { StudyTimerRow } from '../StudyTimerRow';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { findDefinition } from '../../symbolIndex';
 
 import { layoutArrangement, layoutShortcutFor, layoutShows, splitGridTemplate } from '../../workspaceLayout';
 import {
-  closeSplit,
   closeView,
-  focusSlot,
   isSplit,
-  setAxis,
   showView,
   slotFor,
   splitPane,
   visibleViews,
-  type EditorView,
 } from '../../editorPanes';
-import { actionForEvent, type Keymap } from '../../keymap';
-import { useKeymap } from '../../useKeymap';
+import { actionForEvent } from '../../keymap';
+import { useKeymapRef } from '../../useKeymap';
 import { markPaintReady } from '../../paintTiming';
 import { parseSliders } from '../../editor/sliderModel';
 import { readBreakpoints, setBreakpointCondition, toggleBreakpoint, writeBreakpoints, type Breakpoint } from '../../editor/breakpoints';
@@ -105,7 +87,13 @@ import { RunnerToolbar } from './runner/RunnerToolbar';
 import { RunnerEditorCard } from './runner/RunnerEditorCard';
 import { useRunnerExecution } from './runner/useRunnerExecution';
 import { useFirstRunTour } from './runner/useFirstRunTour';
-import { useCoEdit, type CoEdit } from './runner/useCoEdit';
+import { useCollab } from './runner/useCollab';
+import { useProgressFlags } from './runner/useProgressFlags';
+import { useVimKeys } from './runner/useVimKeys';
+import { useShareLink } from './runner/useShareLink';
+import { AttemptOffers } from './runner/AttemptOffers';
+import { useDraftComparison } from './runner/useDraftComparison';
+import { DiffPanel } from './runner/DiffPanel';
 import { type PythonEditorHandle } from '../PythonEditor';
 
 import { roadmapStepForLesson } from '../../practiceLinks';
@@ -195,15 +183,6 @@ interface TabPyodideRunnerProps {
   /** Forget the snippet once the learner leaves scratch. */
   onDismissTry?: () => void;
 }
-
-/** What the Share button last did, so the line under the toolbar can say it. */
-type ShareStatus =
-  | { kind: 'idle' }
-  | { kind: 'copied'; characters: number }
-  | { kind: 'no-code' }
-  | { kind: 'too-long'; characters: number }
-  | { kind: 'failed'; url: string }
-  | { kind: 'loaded' };
 
 export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   initialLessonId,
@@ -369,43 +348,17 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // it is earned by an attempt *after* the nudge (`checkHints.hintLock`), not by the run that was
   // already on screen when the nudge was read.
   const [hintOpenedAt, setHintOpenedAt] = useState<Record<string, number>>({});
-  const [shareStatus, setShareStatus] = useState<ShareStatus>({ kind: 'idle' });
+  const share = useShareLink({ lessonId: selectedId, readCode: () => codeRef.current });
   // Ask for help (`app/src/components/HelpSheet.tsx`): one report built from the run on screen.
   const [helpOpen, setHelpOpen] = useState<boolean>(false);
   // Pair study (`app/src/components/PairSheet.tsx`): a direct session with another workbench, and the
   // attempt that arrived from it. The attempt is state, never an edit — the card below asks first.
   const [pairOpen, setPairOpen] = useState<boolean>(false);
   const [pairAttempt, setPairAttempt] = useState<{ lesson: string; code: string } | null>(null);
-  // The co-edit session (`runner/useCoEdit.ts`) is reached through this while it is built further
-  // down: the channel's handler is registered before the session exists, and every edit it carries
-  // lands in it. `null` means no session has been built yet, which is a message that arrives early.
-  const coEditRef = useRef<CoEdit | null>(null);
-  const pair = usePairSession((message) => {
-    if (message.kind === 'attempt') {
-      setPairAttempt({ lesson: message.lesson, code: message.code });
-      // Close the sheet so the card is what the learner sees: an arriving attempt is a decision, and a
-      // modal in front of it would hide the thing being decided about.
-      setPairOpen(false);
-      return;
-    }
-    if (message.kind === 'collab-start') {
-      coEditRef.current?.receiveInvite({ lesson: message.lesson, text: message.text });
-      // The other way round from an attempt: an offer to co-edit is a decision about the editor
-      // itself, and the sentence that says so belongs in the sheet that made it possible.
-      setPairOpen(true);
-      return;
-    }
-    if (message.kind === 'collab-ops') {
-      const ops = fromWire(message.ops);
-      if (ops) coEditRef.current?.applyPeerOps(ops);
-      return;
-    }
-    if (message.kind === 'collab-stop') {
-      // Their decision, so no stop is sent back: the two sides would keep telling each other it is
-      // over. The session names what happened and touches no editor.
-      coEditRef.current?.receiveStop(message.reason);
-    }
-  });
+  // The pair session is the transport only (`runner/useCollab.ts` subscribes to it). Handing it no
+  // handler is what lets the co-edit session be declared after the lesson functions it needs,
+  // instead of the tab holding a ref for messages that arrive before that session exists.
+  const pair = usePairSession();
   // The lines the gutter has armed for this lesson (`app/src/editor/breakpoints.ts`). Read at mount,
   // re-read on a lesson switch, and written on every click: the store, not this state, is what a
   // reload reads back.
@@ -426,49 +379,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     state: 'idle' | 'working' | 'ready' | 'partial' | 'unsupported';
     report: OfflineCacheReport | null;
   }>({ state: 'idle', report: null });
-  const [localVerified, setLocalVerified] = useState<Record<string, boolean>>(() =>
-    readFlagMap(STORAGE_KEY_VERIFIED)
-  );
-
-  const [localCompleted, setLocalCompleted] = useState<Record<string, boolean>>(() =>
-    readFlagMap(STORAGE_KEY_COMPLETED)
-  );
-
-  const verifiedLessons = externalVerified || localVerified;
-  const completedLessons = externalCompleted || localCompleted;
-
-  const markLessonVerified = (lessonId: string) => {
-    if (onMarkLessonVerified) {
-      onMarkLessonVerified(lessonId);
-    } else {
-      const next = { ...localVerified, [lessonId]: true };
-      setLocalVerified(next);
-      try {
-        localStorage.setItem(STORAGE_KEY_VERIFIED, JSON.stringify(next));
-      } catch {
-        // ignore storage quota errors
-      }
-    }
-  };
-
-  const toggleLessonSelfMarked = (lessonId: string, forceValue?: boolean) => {
-    if (onToggleLessonCompleted) {
-      onToggleLessonCompleted(lessonId, forceValue);
-    } else {
-      // Standalone fallback (no parent owning the state): the toggle derives from `prev`, so two
-      // same-task clicks compose instead of both reading the render they were drawn with.
-      setLocalCompleted((prev) => {
-        const nextVal = forceValue !== undefined ? forceValue : !prev[lessonId];
-        const next = { ...prev, [lessonId]: nextVal };
-        try {
-          localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify(next));
-        } catch {
-          // ignore storage quota errors
-        }
-        return next;
-      });
-    }
-  };
+  // The learner's record (`runner/useProgressFlags.ts`): the parent may own it, and when it does
+  // not this tab is the store. Read by the toolbar, the diff's solution rule and the roadmap hand-off.
+  const { verifiedLessons, completedLessons, markLessonVerified, toggleLessonSelfMarked } =
+    useProgressFlags({
+      externalVerified,
+      externalCompleted,
+      onMarkLessonVerified,
+      onToggleLessonCompleted,
+    });
 
   // The paint reading's fourth moment: this tab has committed, which is when the Run button is on
   // screen and clickable. Once per visit, not once per lesson (`paintTiming.ts`).
@@ -624,7 +543,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     runPythonCode,
     runCellTo,
   } = execution;
-  const openHelperFile = helperFiles.find((file) => file.name === openHelper) ?? null;
   useEffect(() => {
     setOpenHelper(null);
     setSymbolMiss(null);
@@ -718,51 +636,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // (unproven), never a pass.
   const currentHarness = harnessForLesson(currentLesson.id);
   const harnessResult = currentHarness ? harnessGate(currentHarness, harnessReport) : null;
-  // Re-read when the lesson changes, when a run ends, or when the learner forgets the list - the
-  // three moments it can differ from what is on screen. Never on a keystroke: the editor's own text
-  // is not what this list holds.
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [historyVersion, setHistoryVersion] = useState(0);
-  // The diff panel and what it compares against. The solution is a spoiler: the view unlocks once the
-  // learner has opened the solution for this lesson in this visit, or has passed the lesson.
-  const [diffOpen, setDiffOpen] = useState(false);
-  const [diffTarget, setDiffTarget] = useState<DiffTarget>('starter');
-  const [solutionUsed, setSolutionUsed] = useState<Record<string, boolean>>({});
+  // The versions behind the draft and what the diff compares against (`runner/useDraftComparison.ts`).
+  // Five cells and three memos used to live here; the restore handler stays in the tab, because only
+  // the tab may clear a run's verdict.
+  const comparison = useDraftComparison({
+    lesson: currentLesson,
+    code,
+    verified: Boolean(verifiedLessons[selectedId]),
+    onRestore: (restored) => restoreDraftVersion(restored),
+  });
   // The secondary half of the toolbar, folded away by default (`docs/PLAN-2.1a.md` §3). Closed is
   // the first screen a beginner sees; a control that is opened on purpose is read before it is used.
   const [moreOpen, setMoreOpen] = useState(false);
-  const moreButtonRef = useRef<HTMLButtonElement | null>(null);
-  const draftHistory = useMemo(
-    () => snapshotsFor(selectedId),
-    [selectedId, passStatus, historyVersion]
-  );
-  // What the diff compares the editor against. A solution reference is only reachable once it is
-  // earned (opened here, or the lesson is verified), so the panel cannot be used to read the answer.
-  const solutionUnlocked = Boolean(verifiedLessons[selectedId]) || Boolean(solutionUsed[selectedId]);
-  // Starter, the earned solution, or the code one of this lesson's filed runs started from. The module
-  // owns the fallbacks: a version that a restore or the cap removed reads as the starter, and the
-  // solution stays unreadable until it is earned (`app/src/diffReference.ts`).
-  const diffReference = useMemo(
-    () =>
-      resolveDiffReference(diffTarget, {
-        starter: currentLesson.starterCode,
-        solution: currentLesson.fullSolution,
-        solutionUnlocked,
-        history: draftHistory,
-      }),
-    [diffTarget, currentLesson, solutionUnlocked, draftHistory]
-  );
-  const codeDiff = useMemo(
-    () => (diffOpen ? diffLines(diffReference.code, code) : null),
-    // `code` is in the deps because this is a view of the buffer: typing is the thing being diffed.
-    [diffOpen, diffReference.code, code]
-  );
-  // A filed version belongs to one lesson, so the panel goes back to the starter when the lesson
-  // changes: carrying `run:2` across a switch would describe another lesson's work.
-  useEffect(() => {
-    setDiffTarget('starter');
-  }, [selectedId]);
-
   // One `lesson_open` per visit, including the first render: it is the denominator for abandon rate.
   // The sitting clock takes the same event, because it is the moment the learner is here: it opens a
   // sitting, or extends the one they were already in when they switched lesson without a break.
@@ -860,7 +745,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     // this run reports is already rendered by the time this effect runs - that render read the store
     // *before* the snapshot above was filed - so without the bump the version the learner just made
     // would be invisible until the lesson changed or the panel was cleared.
-    setHistoryVersion((version) => version + 1);
+    comparison.fileVersion();
     // `harnessReport` is the identity that changes when the gate's verdict can: a fresh gate object
     // every render would re-run this effect on every keystroke, which `pendingRunRef` would swallow.
   }, [isRunning, passStatus, selectedId, instructorError, stderr, harnessReport]);
@@ -1071,13 +956,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setBehaviorCheck('untested');
     setOutputCheck('untested');
     setPassStatus('untested');
-    setShareStatus({ kind: 'idle' });
+    share.reset();
   };
 
   // Co-editing (`runner/useCoEdit.ts`): the shared document, the offer that has to be answered
   // before an editor is replaced, and the sentence that says why it stopped. Every local write asks
   // it, so typing, a paste, Format and a slider all reach the peer by one path.
-  const coEditSession = useCoEdit({
+  const coEditSession = useCollab({
     pair,
     lessonId: selectedId,
     readText: () => codeRef.current,
@@ -1089,8 +974,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     selectLesson,
     saveText: saveDraft,
     onAccepted: () => setPairOpen(false),
+    onAttempt: (attempt) => {
+      setPairAttempt(attempt);
+      // Close the sheet so the card is what the learner sees: an arriving attempt is a decision, and a
+      // modal in front of it would hide the thing being decided about.
+      setPairOpen(false);
+    },
+    onInvite: () => setPairOpen(true),
   });
-  coEditRef.current = coEditSession;
   const {
     session: coEdit,
     invite: collabInvite,
@@ -1101,32 +992,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     stop: stopCoEditLocally,
     noteLocalEdit,
   } = coEditSession;
-
-  /**
-   * Copy a link to this lesson with the editor's text in it.
-   *
-   * The codec decides whether a link is possible at all (`shareLink.ts`): an empty editor has nothing
-   * to send, and a program that would make a 2,000+ character URL is refused here rather than pasted
-   * into a chat that will cut it in half. The line under the toolbar says which of those happened —
-   * and, when the clipboard refuses, prints the URL so it can still be copied by hand.
-   */
-  const shareAttempt = async () => {
-    const result = shareUrl(window.location.href, { lesson: selectedId, code: codeRef.current });
-    if (!result.ok) {
-      setShareStatus(
-        result.reason === 'too-long'
-          ? { kind: 'too-long', characters: result.characters }
-          : { kind: 'no-code' },
-      );
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(result.url);
-      setShareStatus({ kind: 'copied', characters: result.characters });
-    } catch {
-      setShareStatus({ kind: 'failed', url: result.url });
-    }
-  };
 
   /**
    * Leave scratch: the editor goes back to the learner's own draft, and the next run is graded again.
@@ -1179,7 +1044,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setBehaviorCheck('untested');
     setOutputCheck('untested');
     setInstructorError('');
-    setShareStatus({ kind: 'loaded' });
+    share.loaded();
     onDismissShared?.();
   };
 
@@ -1525,10 +1390,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const [watchOn, setWatchOn] = useState<boolean>(() => readWatch());
   /** Set for the one run watch mode starts, so the log and the filed versions know it was automatic. */
   const watchRunRef = useRef(false);
-  // Vim keys (see `app/src/vimMode.ts`): a remembered opt-in, and the mode the editor is reading keys
-  // in while it is on — a badge with no mode would be the one question normal mode always raises.
-  const [vimOn, setVimOn] = useState<boolean>(() => readVim());
-  const [vimMode, setVimMode] = useState<string>('normal');
+  // Vim keys (`runner/useVimKeys.ts`): the remembered opt-in and the mode the editor reads keys in.
+  const vim = useVimKeys();
 
   // ⌥1–⌥4 pick a layout, from anywhere including inside the editor. The buttons in the editor's
   // header are the discoverable path; this is the shortcut the buttons print.
@@ -1685,7 +1548,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     passStatus === 'behavior_failed' && guideFixLine.startsWith('AssertionError');
 
   // The first-run tour owns its own record, gates and baselines (`runner/useFirstRunTour.ts`).
-  const runButtonRef = useRef<HTMLButtonElement | null>(null);
   const {
     tourActive,
     tourStep,
@@ -1695,6 +1557,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setTourChip,
     startTour,
     signalTour,
+    runButtonRef,
   } = useFirstRunTour({
     selectedId,
     code,
@@ -1707,7 +1570,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       Object.keys(completedLessons).length > 0 ||
       Object.keys(readDrafts()).length > 0,
     sheetOpen: moreOpen || helpOpen || pairOpen,
-    runButtonRef,
     editorRef: guideEditorRef,
   });
 
@@ -1747,19 +1609,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const phoneEditorVisible = !phoneStudy || phoneSurface === 'code';
   const deferPhoneEditor = phoneStudy && !codeOpened;
   /**
-   * What the editor body shows right now.
-   *
-   * The stored arrangement is the learner's, but a preset still owns the regions: Write has no
-   * results, so an output tab there would be a door into a hidden room. In that preset the body
-   * falls back to the editor and the stored tab comes back with Study, which is why this is derived
-   * here rather than written back to the store.
-   */
-  const shownViews = new Set<EditorView>(resultsAllowed ? visibleViews(panes) : ['main']);
-  /** Two panes only when two views are really on screen. */
-  const paneSplit = resultsAllowed && isSplit(panes) && shownViews.size > 1;
-  /** Slot order, so an arrangement opened on an output still reads left to right. */
-  const paneOrder = (view: EditorView): number => slotFor(panes, view) ?? 0;
-  /**
    * Open the prediction gate as a pane, beside the code when there is no split yet.
    *
    * A guess is read against the code that has to print it, so the first press splits rather than
@@ -1796,9 +1645,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     const lesson = PYTHON_LESSONS.find((l) => l.id === lessonIdRef.current) || PYTHON_LESSONS[0];
     gate.requestRun(codeRef.current, lesson);
   };
-  const keymap = useKeymap();
-  const keymapRef = useRef<Keymap>(keymap);
-  keymapRef.current = keymap;
+  const keymapRef = useKeymapRef();
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return;
@@ -1879,32 +1726,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       maxHeight={maxHeight}
     />
   );
-  /**
-   * The rule between two side-by-side panes, on whichever one is second, plus a faint inset ring on
-   * the focused one. A split is a keyboard-and-pointer workspace: the tab press fills the pane the
-   * learner last clicked, so which pane that is has to be visible rather than remembered.
-   */
-  const paneBorder = (view: EditorView): string => {
-    if (!paneSplit) return '';
-    const focused = panes.focus === paneOrder(view) ? 'ring-1 ring-inset ring-accent/20' : '';
-    if (panes.axis !== 'columns') return focused;
-    const rule =
-      paneOrder(view) === 0 ? 'lg:border-t-0' : 'lg:border-l lg:border-line-soft lg:border-t-0';
-    return `${rule} ${focused}`;
-  };
-  /**
-   * Clicking a pane makes it the one a tab press fills.
-   *
-   * Without this the focused slot was only ever the one last opened, so putting Run output and
-   * Expected side by side took a tab press nobody could be expected to guess: the first click
-   * replaces the pane that already has focus. Click the pane you want to change, then its tab - the
-   * way a terminal multiplexer's active pane owns the next command.
-   */
-  const focusPane = (view: EditorView) => {
-    if (!paneSplit) return;
-    const slot = slotFor(panes, view);
-    if (slot !== null && panes.focus !== slot) commitPanes(focusSlot(panes, slot));
-  };
 
   // The two outputs are panes now, not a block under the code: the tab strip decides whether one is
   // on screen, and the body splits beside the editor when the learner asks for it. Each view is
@@ -2039,13 +1860,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       paused={Boolean(pausedStep)}
       onPause={pauseExecution}
       onStop={() => stopExecution()}
-      moreButtonRef={moreButtonRef}
-      moreOpen={moreOpen}
-      onToggleMore={() => setMoreOpen((open) => !open)}
-      onCloseMore={() => {
-        setMoreOpen(false);
-        moreButtonRef.current?.focus({ preventScroll: true });
-      }}
+      onMoreOpenChange={setMoreOpen}
       runButtonRef={runButtonRef}
       onRun={() => {
         const lesson =
@@ -2054,7 +1869,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       }}
       predictRecord={gate.record}
       onPredict={gate.open}
-      predictPaneOpen={resultsAllowed && shownViews.has('predict')}
+      predictPaneOpen={resultsAllowed && visibleViews(panes).includes('predict')}
       isCurrentSelfMarked={isCurrentSelfMarked}
       onToggleSelfMarked={() => toggleLessonSelfMarked(currentLesson.id)}
       onResetStarter={() => {
@@ -2072,27 +1887,23 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         logEvent({ kind: 'solution_open', lesson: selectedId });
         // The diff's solution reference is earned by opening it (or by passing), so this is the
         // moment it becomes reachable for this lesson.
-        setSolutionUsed((used) => ({ ...used, [selectedId]: true }));
+        comparison.useSolution();
       }}
       onFormat={() => void formatCode()}
-      draftHistory={draftHistory}
-      historyOpen={historyOpen}
-      onToggleHistory={() => setHistoryOpen((open) => !open)}
+      draftHistory={comparison.history}
+      historyOpen={comparison.historyOpen}
+      onToggleHistory={comparison.toggleHistory}
       breakpoints={breakpoints}
       breakpointsOpen={breakpointsOpen}
       onToggleBreakpoints={() => setBreakpointsOpen((open) => !open)}
-      diffOpen={diffOpen}
-      onToggleDiff={() => setDiffOpen((open) => !open)}
-      onShare={() => void shareAttempt()}
+      diffOpen={comparison.diffOpen}
+      onToggleDiff={comparison.toggleDiff}
+      onShare={share.share}
       onPair={() => setPairOpen(true)}
       pair={pair}
       coEdit={coEdit}
-      vimOn={vimOn}
-      onToggleVim={() => {
-        const next = writeVim(!vimOn);
-        setVimOn(next);
-        setVimMode('normal');
-      }}
+      vimOn={vim.on}
+      onToggleVim={vim.toggle}
       watchOn={watchOn}
       onToggleWatch={() => setWatchOn(setWatch(!watchOn))}
     />
@@ -2623,34 +2434,34 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               </p>
             )}
 
-            {shareStatus.kind !== 'idle' && (
+            {share.status.kind !== 'idle' && (
               <p
                 role="status"
                 data-testid="share-status"
                 className="mt-2 rounded-lg border border-line-soft bg-panel px-3 py-2 text-[12px] leading-relaxed"
                 style={{ color: 'var(--body)' }}
               >
-                {shareStatus.kind === 'copied' && (
+                {share.status.kind === 'copied' && (
                   <>
-                    Link copied — {shareStatus.characters} characters, this lesson and your code. It is
+                    Link copied — {share.status.characters} characters, this lesson and your code. It is
                     encoded in the link, not encrypted: send it only where you would send the file.
                   </>
                 )}
-                {shareStatus.kind === 'no-code' && (
+                {share.status.kind === 'no-code' && (
                   <>The editor matches nothing yet, so there is nothing to send. Type your attempt first.</>
                 )}
-                {shareStatus.kind === 'too-long' && (
+                {share.status.kind === 'too-long' && (
                   <>
-                    This link would be {shareStatus.characters} characters, and chat and mail cut off
+                    This link would be {share.status.characters} characters, and chat and mail cut off
                     around {MAX_SHARE_URL}. Trim the file (or share the Diff) and press Share again.
                   </>
                 )}
-                {shareStatus.kind === 'loaded' && <>Loaded the shared code into the editor.</>}
-                {shareStatus.kind === 'failed' && (
+                {share.status.kind === 'loaded' && <>Loaded the shared code into the editor.</>}
+                {share.status.kind === 'failed' && (
                   <>
                     Could not copy automatically. Select this link instead:{' '}
                     <code className="break-all" data-testid="share-url">
-                      {shareStatus.url}
+                      {share.status.url}
                     </code>
                   </>
                 )}
@@ -2685,97 +2496,23 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               </div>
             )}
 
-            {/* An attempt from a pair session: the same rule as a shared link — offered, never
-                applied. When it is for another lesson, the card says which one and offers the
-                switch, so loading can never drop a lesson's code into another lesson's draft. */}
-            {pairAttempt && (
-              <div
-                data-testid="pair-attempt-card"
-                className="mt-2 rounded-lg border border-accent/50 bg-accent/10 px-3 py-2.5"
-              >
-                <p className="eyebrow">From your pair session</p>
-                {pairAttempt.lesson === selectedId ? (
-                  <p className="mt-1 text-[12.5px]" style={{ color: 'var(--body)' }}>
-                    They sent their attempt for this lesson — {attemptLines(pairAttempt.code)} lines.
-                    Loading it replaces the draft in this editor; your own work is here until you
-                    press the button.
-                  </p>
-                ) : (
-                  <p className="mt-1 text-[12.5px]" style={{ color: 'var(--body)' }}>
-                    They sent {attemptLines(pairAttempt.code)} lines for{' '}
-                    {lessonLabel(pairAttempt.lesson)}, and this editor is on {selectedId}. Open their
-                    lesson first — their code will not be dropped into yours.
-                  </p>
-                )}
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  {pairAttempt.lesson === selectedId ? (
-                    <button
-                      onClick={loadPairAttempt}
-                      data-testid="btn-load-pair-attempt"
-                      className="btn btn-primary px-2.5 py-1.5 text-[12px]"
-                    >
-                      Load their code
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => selectLesson(pairAttempt.lesson)}
-                      data-testid="btn-open-pair-lesson"
-                      className="btn px-2.5 py-1.5 text-[12px]"
-                    >
-                      Open {lessonLabel(pairAttempt.lesson)}
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setPairAttempt(null)}
-                    data-testid="btn-dismiss-pair-attempt"
-                    className="btn px-2.5 py-1.5 text-[12px]"
-                  >
-                    Keep mine
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* A shared attempt is offered, never applied. The learner's own draft is the work; the
-                card says what the button replaces before it replaces it. */}
-            {sharedAttempt && sharedAttempt.lesson === selectedId && (
-              <div
-                data-testid="shared-attempt-card"
-                className="mt-2 rounded-lg border border-accent/50 bg-accent/10 px-3 py-2.5"
-              >
-                <p className="eyebrow">Shared attempt</p>
-                <p className="mt-1 text-[12.5px]" style={{ color: 'var(--body)' }}>
-                  Someone sent you their code for this lesson —{' '}
-                  {sharedAttempt.code.split('\n').length} lines. Loading it replaces the draft in
-                  this editor; your own work is here until you press the button.
-                </p>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <button
-                    onClick={loadSharedAttempt}
-                    data-testid="btn-load-shared-attempt"
-                    className="btn btn-primary px-2.5 py-1.5 text-[12px]"
-                  >
-                    Load their code
-                  </button>
-                  <button
-                    onClick={() => onDismissShared?.()}
-                    data-testid="btn-keep-own-code"
-                    className="btn px-2.5 py-1.5 text-[12px]"
-                  >
-                    Keep mine
-                  </button>
-                </div>
-              </div>
-            )}
+            {/* An attempt from a pair session, or a shared link: offered, never applied. */}
+            <AttemptOffers
+              lessonId={selectedId}
+              pairAttempt={pairAttempt}
+              sharedAttempt={sharedAttempt}
+              onLoadPair={loadPairAttempt}
+              onOpenPairLesson={selectLesson}
+              onDismissPair={() => setPairAttempt(null)}
+              onLoadShared={loadSharedAttempt}
+              onDismissShared={onDismissShared}
+            />
             {/* The versions behind the draft (`runner/DraftHistoryPanel.tsx`). */}
             <DraftHistoryPanel
-              open={historyOpen}
-              history={draftHistory}
-              onClear={() => {
-                clearHistory(selectedId);
-                setHistoryVersion((version) => version + 1);
-              }}
-              onRestore={restoreDraftVersion}
+              open={comparison.historyOpen}
+              history={comparison.history}
+              onClear={comparison.clear}
+              onRestore={comparison.restore}
             />
             {/* The dots and their conditions (`runner/BreakpointPanel.tsx`). */}
             <BreakpointPanel
@@ -2785,155 +2522,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               onToggle={toggleBreakpointAt}
             />
 
-            {/* The learner's own change, line by line. The roadmap card could say how many lines moved;
-                this says which ones, and where. */}
-            {diffOpen && codeDiff && (
-              <div
-                id="code-diff"
-                data-testid="code-diff"
-                data-diff-added={codeDiff.added}
-                data-diff-removed={codeDiff.removed}
-                data-diff-target={diffTarget}
-                className="mt-3 rounded-lg border border-line-soft bg-canvas p-3"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-[11px] font-mono text-accent">DIFF · your code</span>
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <button
-                      onClick={() => setDiffTarget('starter')}
-                      aria-pressed={diffTarget === 'starter'}
-                      data-testid="diff-target-starter"
-                      className={`px-2 py-0.5 rounded text-[11px] font-mono border cursor-pointer ${
-                        diffTarget === 'starter'
-                          ? 'text-accent border-accent/60 bg-accent/10'
-                          : 'text-muted border-line'
-                      }`}
-                    >
-                      vs starter
-                    </button>
-                    <button
-                      onClick={() => setDiffTarget('solution')}
-                      aria-pressed={diffTarget === 'solution'}
-                      disabled={!solutionUnlocked}
-                      data-testid="diff-target-solution"
-                      title={
-                        solutionUnlocked
-                          ? 'Your code against the lesson solution'
-                          : 'Open the solution, or pass the lesson, to compare against it'
-                      }
-                      className={`px-2 py-0.5 rounded text-[11px] font-mono border ${
-                        diffTarget === 'solution'
-                          ? 'text-accent border-accent/60 bg-accent/10 cursor-pointer'
-                          : solutionUnlocked
-                            ? 'text-muted border-line cursor-pointer'
-                            : 'text-faint border-line-soft cursor-not-allowed'
-                      }`}
-                    >
-                      vs solution
-                    </button>
-                    {/* The third reference: the code a filed run started from. Newest first, so the
-                        run a learner just made is the first button; the list is the same one the
-                        History panel restores from, capped at five. */}
-                    {draftHistory.map((version, index) => {
-                      const target = runTarget(index);
-                      const active = diffTarget === target;
-                      return (
-                        <button
-                          key={target}
-                          onClick={() => setDiffTarget(target)}
-                          aria-pressed={active}
-                          data-testid={`diff-target-run-${index}`}
-                          title={`Your code against the code that ran ${snapshotAgeLabel(
-                            version.at
-                          )} (${verdictLabel(version.outcome)})`}
-                          className={`px-2 py-0.5 rounded text-[11px] font-mono border cursor-pointer ${
-                            active
-                              ? 'text-accent border-accent/60 bg-accent/10'
-                              : 'text-muted border-line'
-                          }`}
-                        >
-                          vs run {index + 1} · {verdictLabel(version.outcome)}
-                        </button>
-                      );
-                    })}
-                    <span data-testid="diff-summary" className="text-[11px] font-mono text-muted">
-                      {diffSummary(codeDiff)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* The version a restore or the five-version cap removed: the panel says which
-                    reference it used rather than drawing an empty diff. */}
-                {diffReference.fellBack && diffTarget !== 'starter' && (
-                  <p data-testid="diff-fell-back" className="mt-2 text-xs text-muted">
-                    That version is gone — the panel is comparing against your starter.
-                  </p>
-                )}
-                {codeDiff.added === 0 && codeDiff.removed === 0 ? (
-                  <p data-testid="diff-same" className="mt-2 text-xs text-muted">
-                    {diffSameMessage(diffTarget, diffReference)}
-                  </p>
-                ) : (
-                  <div
-                    data-testid="diff-body"
-                    className="mt-2 max-h-72 overflow-auto rounded border border-line-soft"
-                  >
-                    {codeDiff.blocks.map((block, blockIndex) => (
-                      <div key={`block-${blockIndex}`}>
-                        {block.gap > 0 && (
-                          <div
-                            data-testid="diff-gap"
-                            className="px-2 py-0.5 font-mono text-[11px] text-faint"
-                          >
-                            … {block.gap} unchanged
-                          </div>
-                        )}
-                        {block.rows.map((row, rowIndex) => (
-                          <div
-                            key={`row-${blockIndex}-${rowIndex}`}
-                            data-testid="diff-row"
-                            data-kind={row.kind}
-                            className={`flex gap-2 px-2 font-mono text-[11.5px] leading-[1.55] ${
-                              row.kind === 'added'
-                                ? 'text-emerald bg-emerald/10'
-                                : row.kind === 'removed'
-                                  ? 'text-rose bg-rose/10'
-                                  : 'text-muted'
-                            }`}
-                          >
-                            <span className="w-7 shrink-0 text-right tabular-nums text-faint">
-                              {row.left ?? ''}
-                            </span>
-                            <span className="w-7 shrink-0 text-right tabular-nums text-faint">
-                              {row.right ?? ''}
-                            </span>
-                            <span className="w-3 shrink-0">
-                              {row.kind === 'added' ? '+' : row.kind === 'removed' ? '−' : ' '}
-                            </span>
-                            <span className="whitespace-pre">{row.text || ' '}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                    {codeDiff.truncated && (
-                      <div
-                        data-testid="diff-truncated"
-                        className="px-2 py-1 font-mono text-[11px] text-faint"
-                      >
-                        … the rest of this change is not drawn here.
-                      </div>
-                    )}
-                  </div>
-                )}
-                <p className="mt-1.5 text-[11px] text-faint">
-                  Whitespace counts: this is your file against the reference, not the lenient output
-                  comparison the checks use.
-                  {codeDiff.coarse
-                    ? ' The file is large, so only its unchanged head and tail are matched.'
-                    : ''}
-                </p>
-              </div>
-            )}
+            {/* The learner's own change, line by line (`runner/DiffPanel.tsx`). */}
+            <DiffPanel comparison={comparison} />
 
             {/* A program blocked in input() is waiting on this box. The run is alive, not stuck:
                 the worker is parked on the shared word until a line arrives. */}
@@ -3158,38 +2748,20 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               helperEditorRef,
               helperFiles,
               openHelper,
-              openHelperFile,
               onOpenHelper: setOpenHelper,
               pendingJump,
               onClearJump: () => setPendingJump(null),
               symbolMiss,
               sliderCount,
-              vimOn,
-              vimModeLabel: vimModeLabel(vimMode),
-              onVimMode: setVimMode,
-              writeQuestion,
-              lessonId: selectedId,
+              vim: { on: vim.on, mode: vim.mode, onMode: vim.setMode },
+              lesson: { id: selectedId, question: writeQuestion },
               onSliderCommit: handleSliderCommit,
               getAnalysis: getReadyAnalysis,
               onGoToDefinition: goToDefinition,
               onRunCell: runCellTo,
-              onToggleBreakpoint: toggleBreakpointAt,
-              onBreakpointsMoved: followBreakpointEdits,
-              breakpoints,
+              breakpoints: { entries: breakpoints, onToggle: toggleBreakpointAt, onMoved: followBreakpointEdits },
             }}
-            panes={{
-              value: panes,
-              split: paneSplit,
-              shownViews,
-              views: visibleViews(panes),
-              onShowView: (view) => commitPanes(showView(panes, view)),
-              onSplit: () => commitPanes(splitPane(panes)),
-              onSetAxis: (axis) => commitPanes(setAxis(panes, axis)),
-              onCloseSplit: () => commitPanes(closeSplit(panes)),
-              focusPane,
-              paneOrder,
-              paneBorder,
-            }}
+            panes={{ value: panes, onPanes: commitPanes }}
             gate={gate}
             run={{ isRunning, passStatus, harnessResult, asksForFinish: gateAsksForFinish }}
             slots={{
