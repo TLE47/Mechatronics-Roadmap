@@ -68,7 +68,8 @@ JavaScript against 986.0, and `664e852` measured 578.8 and 986.7 — so `deploy-
 every job, never ran and the live site stayed on the 1 November build. The three ceilings move by
 hand, with the numbers in hand rather than recorded first: `entry_gzip` 578 → 583 kB,
 `signed_in.js_gzip` 986 → 992 kB, `largest_js_gzip` 390 → 394 kB, each about 4–5 kB of room.
-`docs/weight-budget.json` carries the measurement and the reason. The remembered page accounts for
+`docs/weight-budget.json` carries the measurement and the reason, and the plan page's quoted bundle
+total moves with it, 3.70 → 3.71 MB. The remembered page accounts for
 8 B of entry and 201 B of JavaScript over `664e852`; the bulk of the breach predates it, at
 `b5e8b63`.
 
