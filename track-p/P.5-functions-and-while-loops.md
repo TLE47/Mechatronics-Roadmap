@@ -83,6 +83,13 @@ Functions pair naturally with **`while` loops** when simulating motion or contro
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `step_position` (`TODO 1`) and the `while` loop (`TODO 2`) to step a robot forward 4 times with velocity `1.5 m/s` and time step `dt_s = 0.2 s`:
 
+**Where each name comes from** (read this beside the code):
+- `step_position` parameters: `pos_m` is the position at the start of the step in metres, `vel_m_s` the velocity in m/s, and `dt_s` the step in seconds. `TODO 1` returns `pos_m + vel_m_s * dt_s`.
+- `pos_m` — starts at `0.0` m outside the function; each loop pass replaces it with the value returned by `step_position`.
+- `vel_m_s`, `dt_s` — hardcoded `1.5` m/s and `0.2` s; both feed every `step_position` call.
+- `step` — starts at `0`; `TODO 2` increments it once per pass, so the `while step < 4` loop stops after four passes.
+- The final `print` reads `step` and `pos_m`; it creates neither value.
+
 ```python
 def step_position(pos_m, vel_m_s, dt_s):
     # TODO 1: where the joint is after this time step

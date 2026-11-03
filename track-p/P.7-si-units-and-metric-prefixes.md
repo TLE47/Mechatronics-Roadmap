@@ -83,6 +83,15 @@ For example, if a datasheet says a sensor is $15\text{ mm}$ (millimeters) wide o
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `ma_to_amps` (`TODO 1`), `kohms_to_ohms` (`TODO 2`), and `us_to_seconds` (`TODO 3`) to convert prefixed hardware values into base SI units:
 
+**Where each name comes from** (read this beside the code):
+- `ma_to_amps` parameter `val_ma` — a reading in milliamperes; `TODO 1` returns the same reading in amperes.
+- `kohms_to_ohms` parameter `r_kohms` — a reading in kilo-ohms; `TODO 2` returns it in ohms.
+- `us_to_seconds` parameter `time_us` — a time in microseconds; `TODO 3` returns it in seconds.
+- `i_a` — result of `ma_to_amps(15.0)`, in amperes.
+- `r_ohm` — result of `kohms_to_ohms(0.22)`, in ohms.
+- `v_drop` — `i_a * r_ohm`, the product in volts; it uses the two converted values.
+- `t_sec` — result of `us_to_seconds(500.0)`, in seconds.
+
 ```python
 def ma_to_amps(val_ma):
     # TODO 1: the same reading in amperes

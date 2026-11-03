@@ -76,6 +76,18 @@ Why is **clamping** the most common `if/elif` pattern in robotics? Suppose your 
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `TODO 1` and `TODO 2` to clamp `raw_cmd_high` (`310`) and `raw_cmd_low` (`-45`) into `[0, 255]`, and force the final output to `0` when `is_estop_pressed` is `True`:
 
+**`clamped_high` and `clamped_low` are two different outputs, not two names for one value.** Both use the same `[0, 255]` limits, but each is computed from a different raw command:
+- `raw_cmd_high` — hardcoded `310`, a command above the upper limit; only `clamped_high` reads it.
+- `raw_cmd_low` — hardcoded `-45`, a separate command below the lower limit; only `clamped_low` reads it.
+- `clamped_high` — starts as a copy of `raw_cmd_high`; `TODO 1` replaces it with `raw_cmd_high` clamped into `[0, 255]`, giving `255` here. It does not read `raw_cmd_low`.
+- `clamped_low` — starts as a copy of `raw_cmd_low`; `TODO 1` replaces it with `raw_cmd_low` clamped into `[0, 255]`, giving `0` here. It does not reuse `clamped_high`.
+- `raw_cmd_normal` — hardcoded `180`, an in-range command; it feeds `safe_output` when the E-stop is released.
+- `is_estop_pressed` — hardcoded `True`, the E-stop input; it decides whether `safe_output` is forced to `0`.
+- `safe_output` — starts as a copy of `raw_cmd_normal`; `TODO 2` sets it to `0` while `is_estop_pressed` is `True`.
+
+Neither name is a limit itself: `0` and `255` are the limits, and each name is a command value after those limits are applied. The two clamp names therefore hold different values at the end: `clamped_high == 255` and `clamped_low == 0`.
+
+
 ```python
 raw_cmd_high = 310
 raw_cmd_low = -45
@@ -83,10 +95,10 @@ raw_cmd_normal = 180
 is_estop_pressed = True
 
 # TODO 1: the command held inside its eight-bit range
-clamped_high = raw_cmd_high
+clamped_high = raw_cmd_high  # TODO 1: clamp this input only
 
 # Clamp raw_cmd_low into [0, 255] the same way:
-clamped_low = raw_cmd_low
+clamped_low = raw_cmd_low    # TODO 1: clamp this separate input independently
 
 # TODO 2: the safe output for this E-stop state
 safe_output = raw_cmd_normal
@@ -96,7 +108,7 @@ print(f"E-Stop={is_estop_pressed} -> Safe Output: {safe_output}")
 ```
 
 ### Expected Output
-When `TODO 1` and `TODO 2` are completed, running the script prints:
+When `TODO 1` and `TODO 2` are completed, running the script prints (the first number is `clamped_high`, the second is `clamped_low`):
 
 ```text
 310 clamped -> 255 | -45 clamped -> 0
@@ -122,7 +134,7 @@ elif raw_cmd_high < 0:
 else:
     clamped_high = raw_cmd_high
 ```
-Apply the same pattern to `raw_cmd_low` -> `clamped_low`, and use `if is_estop_pressed:` to set `safe_output = 0`.
+Apply the same pattern to `raw_cmd_low` -> `clamped_low` — a separate output, not a reuse of `clamped_high` — and use `if is_estop_pressed:` to set `safe_output = 0`.
 </details>
 
 <details>
@@ -134,6 +146,7 @@ raw_cmd_low = -45
 raw_cmd_normal = 180
 is_estop_pressed = True
 
+# clamped_high comes only from raw_cmd_high
 if raw_cmd_high > 255:
     clamped_high = 255
 elif raw_cmd_high < 0:
@@ -141,6 +154,7 @@ elif raw_cmd_high < 0:
 else:
     clamped_high = raw_cmd_high
 
+# clamped_low is separate; it comes only from raw_cmd_low
 if raw_cmd_low > 255:
     clamped_low = 255
 elif raw_cmd_low < 0:

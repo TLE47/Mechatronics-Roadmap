@@ -86,6 +86,11 @@ Because counting starts at `0`, the maximum integer is always **$2^N - 1$**.
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `freq_to_period_ms` (`TODO 1`) and `max_unsigned_int` (`TODO 2`) to compute the period in milliseconds (`ms`) and the maximum integer value of 8-bit, 10-bit, and 12-bit registers:
 
+**Where each name comes from** (read this beside the code):
+- `freq_to_period_ms` parameter `freq_hz` — a frequency in hertz; `TODO 1` returns one period in milliseconds.
+- `max_unsigned_int` parameter `n_bits` — a register width in bits; `TODO 2` returns the largest unsigned count that width can hold.
+- The two `print` lines call both functions directly with `50.0`/`490.0` Hz and `8`/`10`/`12` bits; no other named values are created.
+
 ```python
 def freq_to_period_ms(freq_hz):
     # TODO 1: the period this frequency gives, in milliseconds

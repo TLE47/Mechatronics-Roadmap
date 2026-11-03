@@ -78,6 +78,17 @@ Similarly, when squaring a speed in $E_k = \frac{1}{2} m s^2$ in Python, write `
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `TODO 1`, `TODO 2`, and `TODO 3` to calculate a robot's updated position, a scaled sensor reading, and the motion energy of a moving cart:
 
+**Where each name comes from** (read this beside the code):
+- `wheel_speed` — hardcoded `1.25` m/s; feeds `new_pos_m`.
+- `elapsed_sec` — hardcoded `0.05` s; feeds `new_pos_m`.
+- `start_pos_m` — hardcoded `2.0` m; feeds `new_pos_m`.
+- `new_pos_m` — `TODO 1` result of `start_pos_m + wheel_speed * elapsed_sec`, in metres.
+- `supply_level` — hardcoded `12.0` V; feeds `sensor_pin`.
+- `part_a`, `part_b` — hardcoded `20000` Ω and `10000` Ω; they form the divider that feeds `sensor_pin`.
+- `sensor_pin` — `TODO 2` result of `supply_level * part_b / (part_a + part_b)`, in volts.
+- `cart_mass`, `cart_speed` — hardcoded `2.0` kg and `3.0` m/s; both feed `kinetic_energy_j`.
+- `kinetic_energy_j` — `TODO 3` result of `0.5 * cart_mass * cart_speed ** 2`, in joules.
+
 ```python
 wheel_speed = 1.25
 elapsed_sec = 0.05

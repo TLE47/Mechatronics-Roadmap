@@ -78,6 +78,16 @@ Before wiring any part in Stage 0 or Pass 1, you must read its datasheet specifi
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `is_within_recommended_bounds` (`TODO 1`), `select_safe_driver` (`TODO 2`), and `datasheet_val_to_base_si` (`TODO 3`):
 
+**Where each name comes from** (read this beside the code):
+- `DATASHEET_DRIVERS` — a hardcoded table of driver specifications; it is the source for every lookup below, not a computed result.
+- `is_within_recommended_bounds` parameters `val`, `min_val`, `max_val` — a value and its inclusive limits; `TODO 1` returns `True` only when the value sits inside them.
+- `select_safe_driver` parameter `supply_v` — the supply level in volts; `TODO 2` fills `safe` with the table's driver names whose recommended range covers it.
+- `safe` — starts as an empty list inside `select_safe_driver`; it is the function's return value.
+- `datasheet_val_to_base_si` parameters `value` and `unit_str` — a table figure and its unit column; `TODO 3` returns the figure in base SI units.
+- `drv_6v`, `drv_12v` — results of `select_safe_driver(6.0)` and `select_safe_driver(12.0)`, lists of driver names.
+- `i_cont_a` — `DATASHEET_DRIVERS["DRV8833"]["i_cont_ma"]` converted from mA to A by `datasheet_val_to_base_si`.
+- `f_pwm_hz` — `25.0` kHz converted to Hz by `datasheet_val_to_base_si`.
+
 ```python
 DATASHEET_DRIVERS = {
     "DRV8833": {"vm_min_v": 2.7, "vm_max_v": 10.8, "vm_abs_max_v": 11.8, "i_cont_ma": 1500.0},

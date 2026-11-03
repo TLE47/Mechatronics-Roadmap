@@ -69,6 +69,18 @@ Here is the physical system you are modeling using our consistent horizontal-ang
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `TODO 1`, `TODO 2`, `TODO 3`, and `TODO 4` so the milestone script converts units, scales the 10-bit command, computes horizontal-angle gravity torque $\tau_{\text{grav}} = m \cdot g \cdot L \cdot \cos(\theta)$, and steps the arm angle forward over 3 ticks of `100 ms`:
 
+**Where each name comes from** (read this beside the code):
+- `cmd10_to_torque` parameters `cmd_10bit` (a 10-bit command in `[0, 1023]`) and `max_torque_nm` (the full-scale torque in N·m); `TODO 1` clamps the command and scales it to torque.
+- `holding_torque_nm` parameters `length_m` (metres), `mass_kg` (kilograms), and `angle_from_horiz_rad` (radians); `TODO 2` returns the gravity torque in N·m.
+- `length_m`, `dt_s`, `omega_rad_s` — start at `0.0` and are filled by `TODO 3` from `250.0 mm`, `100.0 ms`, and `30.0 RPM`.
+- `mass_kg` — hardcoded `0.40` kg; it feeds every `holding_torque_nm` call.
+- `motor_tau` — result of `cmd10_to_torque(767.25, 2.0)`, in N·m.
+- `grav_tau_0` — result of `holding_torque_nm(length_m, mass_kg, 0.0)`, in N·m.
+- `can_lift` — the boolean comparison `motor_tau > grav_tau_0`.
+- `angle_rad` — starts at `0.0`; each of the three loop passes adds `omega_rad_s * dt_s` (`TODO 4`).
+- `step` — the loop variable from `range(3)`.
+- `tip_x`, `tip_y`, `tau_g` — computed inside each pass from `length_m`, `angle_rad`, and `mass_kg`; they are printed, not carried to the next pass.
+
 ```python
 import math
 
@@ -83,8 +95,9 @@ def holding_torque_nm(length_m, mass_kg, angle_from_horiz_rad):
     return 0.0
 
 
-# Arm parameters (convert 250 mm and 100 ms to base SI units!)    # TODO 3: the arm's length in metres, the tick in seconds, and the joint
-    #         speed in radians per second
+# Arm parameters (convert 250 mm and 100 ms to base SI units!)
+# TODO 3: the arm's length in metres, the tick in seconds, and the joint
+#         speed in radians per second
 length_m = 0.0
 dt_s = 0.0
 omega_rad_s = 0.0
