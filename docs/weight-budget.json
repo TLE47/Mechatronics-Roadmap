@@ -3,36 +3,37 @@
   "_why_intro": "The introduction page moved four ceilings, by hand. components/intro/IntroPage.tsx is the page the wordmark opens: a live arm, the ten-step route from SPINE, six real Diagram figures, the lab launcher and the small print. It is its own React.lazy chunk (7.0 kB gzipped), so a learner who never clicks the lockup pays nothing for it — but this metric counts every emitted byte, and the page own code, the per-part reset model (resetItems.ts, 1.9 kB in the dialog chunk) and the reader sticky-note popup are app code in chunks the app already emits. Measured signed-in: entry 522.1 → 530.5 kB, js 879.0 → 901.6, largest 338.3 → 343.9, total 2.41 → 2.44 MB. The old numbers had 482 B of entry and no room in largest_js_gzip — a budget that fails on the first control of the next feature — so they are 545 kB entry, 860 kB js local and 920 kB signed-in, 355 kB largest, and total keeps its 2.40/2.46 MB with 20 kB above the measured 2.44. entry_gzip did not move for the page itself: the chunk is fetched by the click, not by the first paint, and the 8.4 kB it did move by is the lockup new href handler and the lazy declaration in App. **The phone release moved four ceilings, by hand.** The shell below 768 px — the one-row tab picker, the shared sheet the seven overlays now use, the install row and its rules, the per-lesson surface store, the punctuation strip and the study-clock row — is app code on the first-screen chunk, because the runner is the tab the app opens on and a lazy boundary in front of its own navigation would only add a fetch before the lesson appears. (The plot expander rides in the lazy tab chunks, so it costs the entry nothing.) Measured signed-in: entry 539.2 → **549.5 kB**, js 916.3 → **927.1**, largest 353.7 → **362.6**. The old numbers had 5.8 kB of entry, 3.7 kB of the signed-in `js_gzip` and 1.3 kB in `largest_js_gzip` — a budget that fails on the next control rather than on a regression — so they are 565 kB entry, 885 kB js local and 940 kB signed-in, 376 kB largest. `total` is untouched at 2.40/2.46 MB with 2.33 measured: the new components are JavaScript that was already counted, and no font, recording or lesson page moved with them.",
   "_why_budget_2026_11_03": "The free-study editor card and its remembered page moved three signed-in ceilings by hand on 2026-11-03. main was already red before the page work: b5e8b63 measured entry 578.6 kB against 578.0 and js 986.6 against 986.0, and 664e852 measured 578.8 and 986.7, so deploy-pages, which waits on every job, never ran and the live site stayed on the 1 November build. The page itself adds 8 B of entry and 201 B of JavaScript over 664e852 (the studioView store and the two guarded calls); the bulk of the breach predates it. Measured signed-in at 578762 entry, 986890 js and 390039 largest, so the ceilings are 583000 entry, 992000 signed-in js and 394000 largest, roughly 4-5 kB of room each so the next control is not the failure this one was. Raised with the numbers in hand, not recorded first.",
   "_why_budget_2026_11_03_visuals": "The Home hero and the lesson atmosphere moved four signed-in ceilings by hand on 2026-11-03. The workbench now ships a shared Markdown notebook on both note surfaces, a studio More tray with history/format/reset/export, a Workflow view in the studio editor, a live assessment instrument and hover-based lesson hiding; the Home hero and lesson ambience also add their own CSS. Measured signed-in: entry 585.6 kB, js 993.8 kB, css 26.2 kB, largest 394.2 kB, so the ceilings are 590000, 997000, 28000 and 396000 - roughly 1.8-4.4 kB of room each. These are hand raises, not a `--record` before the fact; the previous 2026-11-03 note remains below for the page-preference measurement.",
+  "_why_budget_2026_11_03_workflow_runner": "The workflow authoring controls and the runner's goal, trace, next-lesson and collapsible Study header moved three signed-in ceilings by hand on 2026-11-03. The measured signed-in bundle was entry 590017 B, js 1001969 B and largest_js_gzip 398072 B; the old ceilings were over by 17 B, 4,969 B and 2,072 B respectively. The new ceilings are 600000 B entry, 1006000 B signed-in js and 402000 B largest_js_gzip: roughly 4-10 kB of room for the next small control, not a library. `total` is unchanged at 3,790,000 B (3,726,235 B measured); the new controls ride JavaScript that was already counted. The local-only `js_gzip` ceiling is left as it stood because this build was graded in its signed-in shape.",
   "signed_in": {
     "_why": "The same source builds a bigger bundle when the Supabase variables are set, which is how CI builds it (the anon key is a repository variable; the build is local-only on a fresh clone). Run 207 is why this block exists. CI's `entry_gzip` read 532.6 kB against the 480 kB ceiling — a real breach nobody saw locally — because `@supabase/supabase-js` was being parked by the catch-all in the statically preloaded `vendor` chunk. The fix is a split, not a ceiling: `vite.config.ts` sends it to its own `vendor-auth` chunk, which the account panel fetches when it opens, so `entry_gzip` measured 475.1 kB with accounts configured and needs no override — and it should not get one, because a first paint that differs between the two shapes would mean the split regressed. What the library really costs is emitted bytes: 57.8 kB gzipped in `vendor-auth` plus the account panel's own code in the runner chunk. (Both builds emit a `vendor-auth` file; without the variables it is the one-byte stub the folded-away import leaves, which is why the gate tells the shapes apart by that chunk's raw size rather than by its name.) `js_gzip` 801.0 kB measured against 810 kB (9 kB of room) and `total` 1.12 MB against 1.14 MB (20 kB), both by hand and by this measurement. The other five metrics are the same file in both shapes and keep their base ceilings, so a font or a stylesheet cannot grow just because someone built with a key.",
     "budgets": {
-      "js_gzip": 997000,
+      "js_gzip": 1006000,
       "total": 3790000
     }
   },
   "budgets": {
     "prose_gzip": 220000,
     "reader_gzip": 720000,
-    "entry_gzip": 590000,
+    "entry_gzip": 600000,
     "js_gzip": 895000,
     "css_gzip": 28000,
     "fonts": 600000,
-    "largest_js_gzip": 396000,
+    "largest_js_gzip": 402000,
     "audio": 150000,
     "music": 2350000,
     "total": 3740000
   },
   "measured": {
-    "entry_gzip": 585560,
-    "js_gzip": 993804,
-    "css_gzip": 26191,
+    "entry_gzip": 590017,
+    "js_gzip": 1001969,
+    "css_gzip": 26318,
     "fonts": 425324,
-    "largest_js_gzip": 394153,
-    "prose_gzip": 208627,
-    "reader_gzip": 688687,
+    "largest_js_gzip": 398072,
+    "prose_gzip": 218337,
+    "reader_gzip": 701556,
     "audio": 126967,
     "music": 2233468,
-    "total": 3717945,
+    "total": 3726235,
     "variant": "signed_in",
     "recordedAt": "2026-11-03"
   }
