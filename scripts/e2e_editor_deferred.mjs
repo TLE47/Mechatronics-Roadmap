@@ -146,7 +146,6 @@ async function main() {
       await page.waitForFunction(() => Boolean(document.querySelector('#root *')), undefined, {
         timeout: 30000,
       });
-      await expandEditor(page);
 
       // The placeholder is on screen first: it is what makes the swap a swap rather than a blank box.
       const early = await editorState(page);
@@ -157,6 +156,9 @@ async function main() {
         'the placeholder must show the starter, not a spinner'
       );
 
+      // Only now open Study's folded body: expanding can let the deferred chunk land, and the
+      // assertion above is about the first paint before it does.
+      await expandEditor(page);
       await waitForEditor(page, 'editor-main', 20000);
       await page.waitForSelector('[data-editor-ready="true"]', { timeout: 20000 });
       const ready = await editorState(page);

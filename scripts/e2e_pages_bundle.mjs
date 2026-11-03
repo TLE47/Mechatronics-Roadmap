@@ -1162,6 +1162,13 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     // arrows with a name, rather than the prose and no map.
     await wide.getByTestId('lesson-item-R.1').click();
     await wide.getByTestId('reader-loading').waitFor({ state: 'detached', timeout: 20000 });
+    // R.1's branched map is in the exercise half; Study stops before it, so read the whole page.
+    await wide.getByTestId('layout-read').click();
+    await wide.waitForFunction(
+      () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'read',
+      undefined,
+      { timeout: 5000 }
+    );
     const branchMap = await wide.evaluate(() => {
       const figure = document.querySelector('[data-testid="diagram-graph"]');
       if (!figure) return null;
