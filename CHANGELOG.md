@@ -16,6 +16,25 @@ flowchart LR
 
 ---
 
+## [2026-11-04] — CI moves its macOS jobs to an allocatable Intel runner
+
+GitHub's hosted arm64 `macos-latest` pool cancelled both macOS jobs before any step ran, twice,
+with the check-run annotation **"The job was not acquired by Runner of type hosted even after
+multiple attempts"** and a macOS arm64 capacity notice. The repository is public and the workflow
+was active, so the job definition itself was not the problem. Both `verify-and-test`'s macOS leg
+and `native-install-macos` now run on **`macos-15-intel`**, the current supported x64 image.
+
+The native-install job keeps its real coverage: `npm ci` installs the x64 optional packages,
+`check:native` derives the expected packages from `process.platform`/`process.arch`, and
+`npm run build` loads Rollup, esbuild, Tailwind Oxide and Lightning CSS natively. A new guard step
+fails loudly if `macos-15-intel` ever resolves to a non-`darwin/x64` runner, so the check cannot
+silently pass on the wrong architecture. `native-install-macos` is also part of the Pages deploy
+`needs`, so a red native install cannot publish. Historical changelog entries that name
+`macos-latest` remain records of when those jobs were added; the current workflow and this entry
+name the image it actually uses.
+
+---
+
 ## [2026-11-03] — Link Health separates broken citations from unverified ones
 
 The Link Health dashboard now shows the sweep's two buckets as separate panels. **Hard failures**

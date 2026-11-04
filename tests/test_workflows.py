@@ -423,7 +423,7 @@ class WorkflowSpeedTests(unittest.TestCase):
         deploy = job_block(ci, "deploy-pages")
         self.assertTrue(deploy, msg="expected a deploy-pages job: without it a green run would never publish the site")
         self.assertIn(
-            "needs: [verify-and-test, build-workbench, %s]" % ", ".join(SUITE_JOBS),
+            "needs: [verify-and-test, native-install-macos, build-workbench, %s]" % ", ".join(SUITE_JOBS),
             deploy,
             msg="expected the deploy to depend on every suite job and on the Python sweep: the "
             "sweep used to ride along inside the build's `needs:`, so a red sweep that no longer "

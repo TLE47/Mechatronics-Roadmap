@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-15-intel]
 
     steps:
       - name: Checkout repository
@@ -130,10 +130,13 @@ jobs:
   native-install-macos:
     # A lockfile resolved on Linux records only Linux's optional binaries, so `npm ci` on a
     # Mac installs none of the natives rollup/esbuild/Tailwind/Lightning CSS need, and the
-    # failure surfaces later as `Cannot find module '@rollup/rollup-darwin-arm64'`.
-    # This job installs from scratch on macOS and proves the binaries actually load.
-    name: Fresh install on macOS (npm ci) has every native binary the build needs
-    runs-on: macos-latest
+    # failure surfaces later as `Cannot find module '@rollup/rollup-darwin-x64'`.
+    # `macos-latest` is arm64 and its hosted pool could not acquire this job; the supported
+    # Intel image is allocatable and still exercises a real macOS install. The guard below
+    # rejects a mislabeled runner, and `check:native` derives the expected packages from its
+    # actual darwin/x64 target.
+    name: Fresh install on macOS Intel (npm ci) has every native binary the build needs
+    runs-on: macos-15-intel
 
     steps:
       - name: Checkout repository
@@ -149,6 +152,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Assert the macOS runner is the Intel target this job tests
+        run: |
+          node -e 'const { platform, arch } = process; if (platform !== "darwin" || arch !== "x64") { console.error("[FAIL] expected darwin/x64 for macos-15-intel, got " + platform + "/" + arch); process.exit(1); } console.log("[PASS] native target is " + platform + "/" + arch);'
 
       - name: Install the locked dependencies from scratch
         run: npm ci
@@ -524,8 +531,9 @@ jobs:
     # Every browser suite, not only the build: a red audit cannot publish the bundle it graded.
     # `verify-and-test` is named here in its own right now that the build no longer waits for it;
     # before that the build's `needs:` carried the dependency, and dropping it there would have let a
-    # red Python sweep publish a site whose own run was red.
-    needs: [verify-and-test, build-workbench, e2e-suites, bundle-suites, audit-suites, runtime-suites]
+    # red Python sweep publish a site whose own run was red. `native-install-macos` is named for the
+    # same reason: a failed native install must not publish a bundle it could not build locally.
+    needs: [verify-and-test, native-install-macos, build-workbench, e2e-suites, bundle-suites, audit-suites, runtime-suites]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment:

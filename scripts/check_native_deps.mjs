@@ -8,7 +8,7 @@
  * binaries. A lockfile generated on Linux therefore carries `@esbuild/linux-x64` and no
  * darwin entries, so `npm ci` on a Mac installs no native binaries at all and the failure
  * surfaces much later, inside a build, as
- *   Error: Cannot find module '@rollup/rollup-darwin-arm64'
+ *   Error: Cannot find module '@rollup/rollup-darwin-arm64' (or -darwin-x64)
  * Running this check right after `npm ci` turns that into one clear sentence on the pull
  * request, whatever platform the job runs on.
  *
