@@ -5,8 +5,8 @@ import type { WorkspaceLayout } from '../../../workspaceLayout';
  *
  * The reader ends with one quiet pill, and what it says is a decision about the preset rather than
  * about the page: Study has finished the reading half, so it continues into Read; Read has finished
- * the page, so it continues into the next lesson. A page with no next lesson offers nothing rather
- * than a button that reloads the same text.
+ * the page, so it continues into Write. Reading the page is preparation for writing the code, not a
+ * doorway into the next lesson's text.
  *
  * Pure and separate from the tab because the tab has a line budget and this is a decision, not
  * chrome: the same three strings are what a test can pin without a browser.
@@ -19,16 +19,13 @@ export interface ReaderContinue {
 
 export function readerContinue(
   layout: WorkspaceLayout,
-  next: { id: string; title: string } | null,
-  openLesson: (id: string) => void,
   chooseLayout: (layout: WorkspaceLayout) => void
 ): ReaderContinue | null {
   if (layout === 'read') {
-    if (!next) return null;
     return {
-      label: `Next: ${next.id}`,
-      title: `Finish this page and open ${next.id}: ${next.title}`,
-      onClick: () => openLesson(next.id),
+      label: 'Continue to Write',
+      title: 'Open Write: the draft, its prediction and its checks, with the page put away',
+      onClick: () => chooseLayout('write'),
     };
   }
   return {

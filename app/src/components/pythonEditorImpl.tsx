@@ -26,7 +26,7 @@ import React, {
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { bracketMatching, foldGutter, indentOnInput } from '@codemirror/language';
 import { python } from '@codemirror/lang-python';
-import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
+import { search, searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import {
   autocompletion,
   closeBrackets,
@@ -353,6 +353,9 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           bracketMatching(),
           closeBrackets(),
           rectangularSelection(),
+          // The find panel. `search()` installs it (the keymap alone cannot open a panel that does not
+          // exist); `top` keeps it above the code instead of covering the last lines.
+          search({ top: true }),
           highlightSelectionMatches(),
           autocompletion({
             override: [pythonCompletionSource(() => analysisRef.current?.() ?? null, pythonCompletions)],

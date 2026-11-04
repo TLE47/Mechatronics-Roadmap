@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react';
 import {
   KIND_META,
   STEPS_BY_MODE,
@@ -39,9 +40,11 @@ export interface WorkflowMenuRequest {
   at?: { x: number; y: number };
   /** A drawn element: the one action its own small control also offers. */
   remove?: () => void;
-  /** A card or a bar: its fill, and the clipboard items that only make sense on one card. */
+  /** A card or a bar: its fill, its wrapping, and the clipboard items that only make sense on one card. */
   node?: WorkflowNode;
   onFill?: (fill: CardColor | undefined) => void;
+  /** Toggle the card's wrapping. The card body's right-click opens this menu; it no longer wraps directly. */
+  onWrap?: () => void;
   onCopy?: () => void;
   onCut?: () => void;
   /** Bare paper with a clip in hand: paste it at the pressed point. */
@@ -64,9 +67,20 @@ export function WorkflowMenu({
   onAdd: (kind: StepKind, at: { x: number; y: number }) => void;
   onClose: () => void;
 }) {
-  const { x, y, at, node, remove, onFill, onCopy, onCut, onPaste, onPickKind } = request;
-  const items = node
+  const { x, y, at, node, remove, onFill, onWrap, onCopy, onCut, onPaste, onPickKind } = request;
+  type MenuItem = { label: string; onPick: () => void; testid?: string; checked?: boolean };
+  const items: MenuItem[] = node
     ? [
+        ...(onWrap
+          ? [
+              {
+                label: 'Wrap text',
+                testid: 'workflow-menu-wrap',
+                checked: node.wrapText !== false,
+                onPick: onWrap,
+              },
+            ]
+          : []),
         ...(onCopy ? [{ label: 'Copy', onPick: onCopy }] : []),
         ...(onCut ? [{ label: 'Cut', onPick: onCut }] : []),
         ...(remove ? [{ label: 'Remove', onPick: remove }] : []),
@@ -140,12 +154,21 @@ export function WorkflowMenu({
             key={index}
             type="button"
             autoFocus={index === 0}
+            data-testid={item.testid}
+            aria-checked={item.checked === undefined ? undefined : item.checked}
+            role={item.checked === undefined ? undefined : 'menuitemcheckbox'}
             onClick={() => {
               close();
               item.onPick();
             }}
-            className="btn btn-ghost h-8 w-full justify-start px-1.5"
+            className="btn btn-ghost h-8 w-full justify-start gap-1.5 px-1.5"
           >
+            {item.checked !== undefined && (
+              <Check
+                className={`h-3 w-3 shrink-0 ${item.checked ? 'text-accent' : 'opacity-0'}`}
+                aria-hidden="true"
+              />
+            )}
             {item.label}
           </button>
         ))}

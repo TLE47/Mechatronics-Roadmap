@@ -19,7 +19,7 @@ import type { WorkflowNode } from '../../workflow.ts';
  * short window — below there would sit on the card's own next line. A toolbar floating at the
  * pointer covered the words the learner had just selected, which is the one thing it must not do.
  *
- * Wrapping is not here: a card's wrap is toggled by right-clicking the card itself, so the toolbar
+ * Wrapping is not here: a card's wrap is an item in the card's right-click menu, so the toolbar
  * carries only the formatting a text selection asks for.
  */
 
@@ -37,6 +37,8 @@ export type ToolbarPlacement = 'above' | 'below' | 'side';
 
 export interface WorkflowTextToolbarProps {
   node: WorkflowNode;
+  /** The field the learner selected; formatting writes this field and leaves the other alone. */
+  field: 'title' | 'detail';
   anchor: TextAnchor;
   /** The field's whole card, when it is known: a card taller than the window changes the fit. */
   card?: TextAnchor | null;
@@ -98,9 +100,24 @@ export function toolbarPlacement(
   return side();
 }
 
-export function WorkflowTextToolbar({ node, anchor, card = null, onApply, onClose }: WorkflowTextToolbarProps) {
-  const toggle = (field: 'bold' | 'italic' | 'underline') =>
-    onApply({ [field]: node[field] ? undefined : true });
+export function WorkflowTextToolbar({ node, field, anchor, card = null, onApply, onClose }: WorkflowTextToolbarProps) {
+  type FormatKind = 'bold' | 'italic' | 'underline';
+  const detailKey: Record<FormatKind, 'detailBold' | 'detailItalic' | 'detailUnderline'> = {
+    bold: 'detailBold',
+    italic: 'detailItalic',
+    underline: 'detailUnderline',
+  };
+  const isOn = (kind: FormatKind) =>
+    Boolean(field === 'title' ? node[kind] : node[detailKey[kind]]);
+  const toggle = (kind: FormatKind) => {
+    const on = isOn(kind);
+    onApply(
+      field === 'title'
+        ? { [kind]: on ? undefined : true }
+        : { [detailKey[kind]]: on ? undefined : true }
+    );
+  };
+  const alignValue = field === 'title' ? node.align : node.detailAlign;
   const barRef = useRef<HTMLDivElement | null>(null);
   // Placed only after it has been measured: painting it at the corner for one frame and then
   // jumping to the field is worse than not painting it at all.
@@ -155,34 +172,36 @@ export function WorkflowTextToolbar({ node, anchor, card = null, onApply, onClos
           }
         }}
       >
-        <span className="px-1 font-mono text-[9.5px] uppercase tracking-[0.1em] text-faint">Text</span>
+        <span className="px-1 font-mono text-[9.5px] uppercase tracking-[0.1em] text-faint">
+          Text · {field}
+        </span>
         <button
           type="button"
           data-testid="workflow-format-bold"
-          aria-label="Bold card text"
-          aria-pressed={Boolean(node.bold)}
+          aria-label={`Bold the selected ${field} text`}
+          aria-pressed={isOn('bold')}
           onClick={() => toggle('bold')}
-          className={`grid h-7 w-7 cursor-pointer place-items-center rounded ${node.bold ? 'bg-accent/15 text-accent' : 'text-muted hover:bg-raise'}`}
+          className={`grid h-7 w-7 cursor-pointer place-items-center rounded ${isOn('bold') ? 'bg-accent/15 text-accent' : 'text-muted hover:bg-raise'}`}
         >
           <Bold className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
         <button
           type="button"
           data-testid="workflow-format-italic"
-          aria-label="Italic card text"
-          aria-pressed={Boolean(node.italic)}
+          aria-label={`Italicise the selected ${field} text`}
+          aria-pressed={isOn('italic')}
           onClick={() => toggle('italic')}
-          className={`grid h-7 w-7 cursor-pointer place-items-center rounded ${node.italic ? 'bg-accent/15 text-accent' : 'text-muted hover:bg-raise'}`}
+          className={`grid h-7 w-7 cursor-pointer place-items-center rounded ${isOn('italic') ? 'bg-accent/15 text-accent' : 'text-muted hover:bg-raise'}`}
         >
           <Italic className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
         <button
           type="button"
           data-testid="workflow-format-underline"
-          aria-label="Underline card text"
-          aria-pressed={Boolean(node.underline)}
+          aria-label={`Underline the selected ${field} text`}
+          aria-pressed={isOn('underline')}
           onClick={() => toggle('underline')}
-          className={`grid h-7 w-7 cursor-pointer place-items-center rounded ${node.underline ? 'bg-accent/15 text-accent' : 'text-muted hover:bg-raise'}`}
+          className={`grid h-7 w-7 cursor-pointer place-items-center rounded ${isOn('underline') ? 'bg-accent/15 text-accent' : 'text-muted hover:bg-raise'}`}
         >
           <Underline className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
@@ -198,10 +217,16 @@ export function WorkflowTextToolbar({ node, anchor, card = null, onApply, onClos
             key={align}
             type="button"
             data-testid={`workflow-format-align-${align}`}
-            aria-label={`Align card text ${align}`}
-            aria-pressed={(node.align ?? 'left') === align}
-            onClick={() => onApply({ align: align === 'left' ? undefined : align })}
-            className={`grid h-7 w-7 cursor-pointer place-items-center rounded ${(node.align ?? 'left') === align ? 'bg-accent/15 text-accent' : 'text-muted hover:bg-raise'}`}
+            aria-label={`Align the selected ${field} text ${align}`}
+            aria-pressed={(alignValue ?? 'left') === align}
+            onClick={() =>
+              onApply(
+                field === 'title'
+                  ? { align: align === 'left' ? undefined : align }
+                  : { detailAlign: align === 'left' ? undefined : align }
+              )
+            }
+            className={`grid h-7 w-7 cursor-pointer place-items-center rounded ${(alignValue ?? 'left') === align ? 'bg-accent/15 text-accent' : 'text-muted hover:bg-raise'}`}
           >
             <Icon className="h-3.5 w-3.5" aria-hidden="true" />
           </button>

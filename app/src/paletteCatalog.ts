@@ -134,7 +134,10 @@ export const PALETTE_ACTIONS: PaletteItem[] = [
 ];
 
 
-export function lessonPaletteItems(lessons: PythonLessonItem[] = PYTHON_LESSONS): PaletteItem[] {
+export function lessonPaletteItems(
+  lessons: PythonLessonItem[] = PYTHON_LESSONS,
+  verified: Record<string, boolean> = {}
+): PaletteItem[] {
   return lessons.map((lesson) => ({
     id: `lesson-${lesson.id}`,
     kind: 'lesson',
@@ -143,6 +146,7 @@ export function lessonPaletteItems(lessons: PythonLessonItem[] = PYTHON_LESSONS)
     // The lesson's own two ideas are the words a learner half-remembers ("damping ratio"), and
     // being searchable by them is the difference between the palette and scrolling the list.
     keywords: lesson.ideas.join(' · '),
+    ...(verified[lesson.id] ? { verified: true } : {}),
   }));
 }
 
@@ -157,6 +161,10 @@ export function tabPaletteItems(tabs: PaletteTabMeta[]): PaletteItem[] {
 }
 
 /** The whole catalogue, in reading order: lessons, tabs, commands. */
-export function paletteCatalog(tabs: PaletteTabMeta[], lessons: PythonLessonItem[] = PYTHON_LESSONS): PaletteItem[] {
-  return [...lessonPaletteItems(lessons), ...tabPaletteItems(tabs), ...PALETTE_ACTIONS];
+export function paletteCatalog(
+  tabs: PaletteTabMeta[],
+  lessons: PythonLessonItem[] = PYTHON_LESSONS,
+  verified: Record<string, boolean> = {}
+): PaletteItem[] {
+  return [...lessonPaletteItems(lessons, verified), ...tabPaletteItems(tabs), ...PALETTE_ACTIONS];
 }

@@ -21,7 +21,7 @@ export function BreakpointPanel({ open, breakpoints, onSetCondition, onToggle }:
       className="mt-3 rounded-lg border border-line-soft bg-canvas p-3"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-[11px] font-mono text-accent">BREAKPOINTS · this lesson</span>
+        <span className="text-[11px] font-mono text-accent">BREAKPOINTS · this file</span>
         <span className="text-[11px] font-mono text-faint">
           {breakpoints.length
             ? `${breakpoints.length} armed · read when a run starts`

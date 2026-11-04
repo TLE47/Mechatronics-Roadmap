@@ -1013,17 +1013,110 @@ def exercise_lessons():
                 "expectedOutput": exercise_bundle.expected_output(directory, root=ROOT),
                 "outputMatch": "normalized",
                 "instructorTestSummary": [
-                    "Browser: this package's own `selfcheck.py` runs again as the Instructor "
-                    "Behavioral Tests, from the workbench registry rather than from the editor - "
-                    "editing the appended copy, deleting it, or printing its PASS line does not "
-                    "verify the exercise.",
-                    "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter "
-                    "fails, the reference passes, and every planted fault fails its named test.",
+                    "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral "
+                    "Tests, from the workbench registry rather than from the editor.",
+                    "Browser: editing the appended copy, deleting it, or printing its PASS line does "
+                    "not verify the exercise.",
+                    "CI: scripts/run_exercise.py runs the package's unittest cases - the starter "
+                    "fails and the reference passes.",
+                    "Edge case — CI: every planted fault fails its named test.",
                 ],
                 "instructorTests": checker,
             }
         )
     return entries
+
+
+LEADING_VERB = re.compile(r"^(Verify|Test|Call|Re-evaluate)\b")
+
+
+def _split_points(text: str) -> list[tuple[int, int]]:
+    """Top-level separators in a claim, with the width of each separator."""
+    depth = 0
+    points: list[tuple[int, int]] = []
+    for index, char in enumerate(text):
+        if char in "([{":
+            depth += 1
+        elif char in ")]}":
+            depth = max(0, depth - 1)
+        elif depth == 0:
+            if text.startswith(", ", index):
+                points.append((index, 2))
+            elif text.startswith("; ", index):
+                points.append((index, 2))
+            elif text.startswith(" and ", index):
+                points.append((index, 5))
+    return points
+
+
+def _claim_parts(line: str):
+    """Split one summary sentence into two claims at a natural boundary.
+
+    The split only re-words the sentence the lesson already ships; it never invents a value. A
+    top-level comma or `and` near the middle wins, then a comma inside the final parenthetical
+    list, then a prepositional boundary. If none exists the sentence stays whole and the caller
+    keeps its two-case summary rather than fabricating a fourth claim.
+    """
+    text = line.strip()
+    if len(text) < 32:
+        return None
+    middle = len(text) // 2
+    points = _split_points(text)
+    if points:
+        cut, width = min(points, key=lambda point: abs(point[0] - middle))
+        left = re.sub(r",\s+and\s+", " and ", text[:cut].rstrip(" ,;"))
+        right = re.sub(r"^(and|or)\s+", "", text[cut + width:].lstrip())
+        right = re.sub(r",\s+and\s+", " and ", right)
+        if left and right:
+            verb = LEADING_VERB.match(text)
+            if verb and not LEADING_VERB.match(right):
+                right = f"{verb.group(1)} {right}"
+            return left, right
+
+    parenthetical = re.search(r"\(([^()]*)\)", text)
+    if parenthetical and "," in parenthetical.group(1):
+        body = parenthetical.group(1)
+        commas = [index for index, char in enumerate(body) if char == ","]
+        cut = min(commas, key=lambda index: abs(index - len(body) // 2))
+        left_body = body[:cut].strip()
+        right_body = body[cut + 1:].strip()
+        if left_body and right_body:
+            head = text[: parenthetical.start()].strip()
+            return f"{head} ({left_body})", f"{head}: {right_body}"
+
+    for separator in (" on ", " at ", " across ", " with ", " from "):
+        cut = text.find(separator, middle // 2)
+        if 12 < cut < len(text) - 12:
+            return text[:cut].strip(), text[cut + len(separator):].strip()
+
+    cut = text.rfind(" ", 0, middle)
+    if cut > 12:
+        return text[:cut].strip(), text[cut + 1:].strip()
+    return None
+
+
+def _edge_case(claim: str) -> str:
+    """The boundary a claim exercises, named without repeating its whole head."""
+    tail = claim.split(": ", 1)[1] if ": " in claim else claim
+    return f"Edge case — {tail}"
+
+
+def expand_summary(summary: list[str]) -> list[str]:
+    """Four named cases, the last explicitly the edge case.
+
+    The instructor assertions already run normal, unseen and boundary inputs; the two-line summary
+    collapses them into two sentences. Splitting each sentence at its own boundary gives the panel
+    four rows a learner can point at, and the last row says "edge case" because that is what the
+    second sentence's second half exercises. Exercise packages have their own environment checks
+    and ship four entries directly, so they are left alone here.
+    """
+    if len(summary) != 2 or summary[0].startswith("Browser:"):
+        return summary
+    first = _claim_parts(summary[0])
+    second = _claim_parts(summary[1])
+    if not first or not second:
+        return summary
+    return [first[0], first[1], second[0], _edge_case(second[1])]
 
 
 def build_lessons():
@@ -1068,7 +1161,7 @@ def build_lessons():
                 "fullSolution": solution,
                 "expectedOutput": expected.strip(),
                 "outputMatch": output_match,
-                "instructorTestSummary": test_summary,
+                "instructorTestSummary": expand_summary(test_summary),
                 "instructorTests": test_code.strip(),
             }
         )

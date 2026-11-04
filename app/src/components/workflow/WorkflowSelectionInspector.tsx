@@ -209,7 +209,7 @@ export function WorkflowSelectionInspector({
               <Scaling className="h-3 w-3" aria-hidden="true" /> Fit text
             </button>
             <span className="font-mono text-[10px] text-faint">
-              Right-click a card to wrap its text
+              Right-click a card for its menu, including Wrap text
             </span>
           </>
         )}

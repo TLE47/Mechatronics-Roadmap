@@ -195,6 +195,7 @@ export function WorkflowNodeCard({
   const [liveSize, setLiveSize] = useState<{ width: number; height: number } | null>(null);
   const [toolbarAt, setToolbarAt] = useState<TextAnchor | null>(null);
   const [toolbarCard, setToolbarCard] = useState<TextAnchor | null>(null);
+  const [toolbarField, setToolbarField] = useState<'title' | 'detail'>('title');
   const titleRef = useRef<HTMLTextAreaElement | null>(null);
   const detailRef = useRef<HTMLTextAreaElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
@@ -219,13 +220,20 @@ export function WorkflowNodeCard({
     }
   }, [node.title, node.detail, width, node.size, node.wrapText]);
 
-  /** The style every field shares; each field adds its own colour and size. Only a chosen value
-   * is written, so an untouched card keeps exactly the inline style it had before formatting. */
-  const formatStyle: CSSProperties = {
+  /** Title and detail carry their own formatting: a press in one field must not reformat the other.
+   * Only a chosen value is written, so an untouched card keeps exactly its pre-formatting style. */
+  const titleFormatStyle: CSSProperties = {
     ...(node.bold ? { fontWeight: 700 } : {}),
     ...(node.italic ? { fontStyle: 'italic' } : {}),
     ...(node.underline ? { textDecorationLine: 'underline' } : {}),
     ...(node.align ? { textAlign: node.align } : {}),
+    ...(node.wrapText === false ? { whiteSpace: 'nowrap' } : {}),
+  };
+  const detailFormatStyle: CSSProperties = {
+    ...(node.detailBold ? { fontWeight: 700 } : {}),
+    ...(node.detailItalic ? { fontStyle: 'italic' } : {}),
+    ...(node.detailUnderline ? { textDecorationLine: 'underline' } : {}),
+    ...(node.detailAlign ? { textAlign: node.detailAlign } : {}),
     ...(node.wrapText === false ? { whiteSpace: 'nowrap' } : {}),
   };
 
@@ -236,6 +244,7 @@ export function WorkflowNodeCard({
     event.preventDefault();
     event.stopPropagation();
     const box = field.getBoundingClientRect();
+    setToolbarField(field === titleRef.current ? 'title' : 'detail');
     // The field decides above/below; the whole card decides whether a bar below it would land on
     // the card's own next line in a window shorter than the card.
     const card = field.closest<HTMLElement>('[data-node-id]')?.getBoundingClientRect();
@@ -457,7 +466,7 @@ export function WorkflowNodeCard({
             className={`peer block w-full resize-none overflow-hidden rounded border border-transparent bg-transparent px-1 py-0.5 font-semibold outline-none hover:bg-raise focus:border-line focus:bg-canvas ${
               node.wrapText === false ? 'whitespace-nowrap' : 'break-words'
             } ${titleMath ? 'opacity-0 focus:opacity-100' : ''}`}
-            style={{ color: ink, fontSize: type.title, ...formatStyle }}
+            style={{ color: ink, fontSize: type.title, ...titleFormatStyle }}
           />
           {/* A formula is taller than a line of text (a fraction is two), so the rendering gets a
               little room above and below the input's box rather than being clipped to it. */}
@@ -487,7 +496,7 @@ export function WorkflowNodeCard({
             className={`peer block w-full resize-none overflow-hidden rounded border border-transparent bg-transparent px-1 py-0.5 font-mono leading-snug outline-none hover:bg-raise focus:border-line focus:bg-canvas ${
               node.wrapText === false ? 'whitespace-nowrap' : 'break-words'
             } ${detailMath ? 'opacity-0 focus:opacity-100' : ''}`}
-            style={{ color: detailInk, fontSize: type.detail, ...formatStyle }}
+            style={{ color: detailInk, fontSize: type.detail, ...detailFormatStyle }}
           />
           {detailMath && (
             <span
@@ -584,6 +593,7 @@ export function WorkflowNodeCard({
         createPortal(
           <WorkflowTextToolbar
             node={node}
+            field={toolbarField}
             anchor={toolbarAt}
             card={toolbarCard}
             onApply={(patch) => onUpdate(node.id, patch)}

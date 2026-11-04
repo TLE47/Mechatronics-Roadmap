@@ -121,7 +121,7 @@ export interface WorkflowCanvasProps {
   onLaneNameFocused: () => void;
   /** A right-click or a keyboard menu press on the paper, a card, a frame, a lane or an arrow. */
   onMenu: (request: WorkflowMenuRequest) => void;
-  /** A right-click on a card's plate toggles its wrapping; the header keeps the card menu. */
+  /** A right-click on a card opens its menu, where wrapping is one item among copy, cut and remove. */
   onToggleWrap: (id: string) => void;
   /** The menu's clipboard items: one card at a time, owned by the panel. */
   onCopyNode: (id: string) => void;
@@ -317,6 +317,7 @@ export function WorkflowCanvas({
         onCopy: () => onCopyNode(node.id),
         onCut: () => onCutNode(node.id),
         onFill: (fill) => onUpdate(node.id, { fill }),
+        onWrap: () => onToggleWrap(node.id),
       });
       return;
     }
@@ -360,16 +361,11 @@ export function WorkflowCanvas({
           const node = card ? byId.get(card.dataset.nodeId ?? '') : undefined;
           if (card && node) {
             event.preventDefault();
-            // The header is the card's handle: its menu is one press away there. Everywhere else on
-            // the card — including a field with no selection in it — the right-click is the wrap
-            // toggle itself. A selection in a field is the one exception: the field opens the
-            // formatting toolbar and stops the event before it reaches here.
-            if (target.closest('[data-testid^="workflow-node-drag-"]')) {
-              if (!selectedIds.includes(node.id)) onSelect(node.id);
-              openMenu(event.clientX, event.clientY, node);
-              return;
-            }
-            onToggleWrap(node.id);
+            // The whole card opens the card menu: wrapping is an item there rather than the whole
+            // meaning of a right-click. A selection in a field is the one exception: the field
+            // opens the formatting toolbar and stops the event before it reaches here.
+            if (!selectedIds.includes(node.id)) onSelect(node.id);
+            openMenu(event.clientX, event.clientY, node);
             return;
           }
           // Off a card, a field keeps the browser's own menu: copy and paste are what a learner

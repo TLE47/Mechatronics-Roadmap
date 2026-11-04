@@ -2380,7 +2380,20 @@ check('fit text widens a long line and keeps short text at the minimum', () => {
 check('wrap and formatting survive a read, and defaults stay absent', () => {
   const doc = normalizeWorkflow(
     graph([
-      { kind: 'given', title: 'a', wrapText: false, bold: true, italic: true, underline: true, align: 'center' },
+      {
+        kind: 'given',
+        title: 'a',
+        detail: 'b',
+        wrapText: false,
+        bold: true,
+        italic: true,
+        underline: true,
+        align: 'center',
+        detailBold: true,
+        detailItalic: true,
+        detailUnderline: true,
+        detailAlign: 'right',
+      },
     ])
   );
   assert.equal(doc.nodes[0].wrapText, false);
@@ -2388,8 +2401,22 @@ check('wrap and formatting survive a read, and defaults stay absent', () => {
   assert.equal(doc.nodes[0].italic, true);
   assert.equal(doc.nodes[0].underline, true);
   assert.equal(doc.nodes[0].align, 'center');
+  assert.equal(doc.nodes[0].detailBold, true);
+  assert.equal(doc.nodes[0].detailItalic, true);
+  assert.equal(doc.nodes[0].detailUnderline, true);
+  assert.equal(doc.nodes[0].detailAlign, 'right');
   const plain = normalizeWorkflow(graph([{ kind: 'given', title: 'a' }]));
-  for (const field of ['wrapText', 'bold', 'italic', 'underline', 'align']) {
+  for (const field of [
+    'wrapText',
+    'bold',
+    'italic',
+    'underline',
+    'align',
+    'detailBold',
+    'detailItalic',
+    'detailUnderline',
+    'detailAlign',
+  ]) {
     assert.equal(field in plain.nodes[0], false, `${field} must not be stored on a default card`);
   }
 });

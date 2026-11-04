@@ -133,13 +133,15 @@ export function searchLessonText(
  */
 export function lessonSearchItems(
   query: string,
-  lessons: PythonLessonItem[] = PYTHON_LESSONS
+  lessons: PythonLessonItem[] = PYTHON_LESSONS,
+  verified: Record<string, boolean> = {}
 ): PaletteItem[] {
   return searchLessonText(query, lessons).map((hit) => ({
     id: `search-${hit.lessonId}-${hit.field}-${hit.line}`,
     kind: 'lesson',
     lessonId: hit.lessonId,
     ...(isEditorLine(hit) ? { line: hit.line } : {}),
+    ...(verified[hit.lessonId] ? { verified: true } : {}),
     label: `${hit.lessonId} · ${hit.title}`,
     detail:
       hit.field === 'title'

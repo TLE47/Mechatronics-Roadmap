@@ -16,6 +16,7 @@
 }
 .home-kicker {
   display: inline-flex;
+  animation: home-rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   align-items: center;
   gap: 8px;
   border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border));
@@ -40,17 +41,39 @@
   font-size: clamp(2.15rem, 5.2vw, 3.8rem);
   line-height: 0.96;
   letter-spacing: -0.04em;
+  animation: home-rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.05s both;
 }
 .home-gradient-text {
-  background: linear-gradient(92deg, var(--accent), var(--emerald) 55%, var(--purple));
+  background: linear-gradient(92deg, var(--accent), var(--emerald) 55%, var(--purple), var(--accent));
+  background-size: 220% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  animation: home-shimmer 7s ease-in-out infinite;
+}
+/* A single soft scan across the hero, behind its words: motion you notice once and then read past. */
+.home-hero::after {
+  content: '';
+  position: absolute;
+  inset: -30% -20%;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 42%,
+    color-mix(in srgb, var(--accent) 10%, transparent) 50%,
+    transparent 58%
+  );
+  transform: translateX(-70%) rotate(6deg);
+  animation: home-scan 9s ease-in-out infinite;
 }
 .home-stat {
   background: color-mix(in srgb, var(--canvas) 62%, transparent);
   backdrop-filter: blur(6px);
+  animation: home-rise 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
+.home-stat:nth-child(2) { animation-delay: 90ms; }
+.home-stat:nth-child(3) { animation-delay: 180ms; }
 .home-orbit {
   position: relative;
   display: grid;
@@ -146,6 +169,20 @@
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-7px); }
 }
+@keyframes home-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+@keyframes home-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes home-scan {
+  0%, 100% { transform: translateX(-70%) rotate(6deg); opacity: 0; }
+  12% { opacity: 0.85; }
+  55% { transform: translateX(70%) rotate(6deg); opacity: 0.4; }
+  68% { opacity: 0; }
+}
 
 /* The lesson's atmosphere: a very quiet aurora and instrument grid behind the cards. */
 .lesson-ambience {
@@ -221,6 +258,11 @@
   .home-orbit-ring,
   .home-orbit-core,
   .home-orbit-node,
+  .home-kicker,
+  .home-headline,
+  .home-stat,
+  .home-gradient-text,
+  .home-hero::after,
   .lesson-aurora,
   .lesson-orbit {
     animation: none;

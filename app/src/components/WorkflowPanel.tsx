@@ -378,11 +378,11 @@ export function WorkflowPanel({
   }, [doc]);
 
   /**
-   * Right-clicking a card is the wrap toggle.
+   * Wrap text, from the card's right-click menu.
    *
    * A card that is part of a multi-selection toggles the whole selection, so a set of cards can be
-   * wrapped — or unwrapped — in one press. The write is one history step, and the press selects the
-   * card it landed on when that card was not already selected.
+   * wrapped — or unwrapped — in one press. The write is one history step, and the menu press selects
+   * the card it landed on when that card was not already selected.
    */
   const toggleWrapCard = (id: string) => {
     if (!doc) return;
@@ -394,7 +394,7 @@ export function WorkflowPanel({
     updateCards(ids, { wrapText: wrapping ? false : undefined });
     setStatus(
       wrapping
-        ? `Wrapping off${targets.length > 1 ? ` on ${targets.length} cards` : ''} — right-click to wrap`
+        ? `Wrapping off${targets.length > 1 ? ` on ${targets.length} cards` : ''} — Wrap text in the card menu`
         : `Wrapping on${targets.length > 1 ? ` for ${targets.length} cards` : ''}`
     );
   };
@@ -768,7 +768,7 @@ export function WorkflowPanel({
         <span aria-hidden="true">·</span>
         <span>Ctrl/⌘ C, X, V copy, cut and paste; Delete removes the selection</span>
         <span aria-hidden="true">·</span>
-        <span>Ctrl/⌘ F finds a card; right-click a card toggles wrapping</span>
+        <span>Ctrl/⌘ F finds a card; right-click a card for Wrap text and the card menu</span>
       </div>
 
       <Suspense

@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { CornerDownLeft, Search } from 'lucide-react';
+import { CheckCircle2, CornerDownLeft, Search } from 'lucide-react';
 import {
   PALETTE_MODE_TEXT,
   groupPalette,
@@ -241,6 +241,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         </span>
                       )}
                     </span>
+                    {item.verified && (
+                      <span
+                        data-testid={`palette-verified-${item.id}`}
+                        title="Passed the instructor's behavioural checks"
+                        className="flex shrink-0 items-center gap-1 rounded-full border border-emerald/40 bg-emerald/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald"
+                      >
+                        <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
+                        Verified
+                      </span>
+                    )}
                     {isActive && (
                       <CornerDownLeft
                         className="h-3.5 w-3.5 shrink-0"

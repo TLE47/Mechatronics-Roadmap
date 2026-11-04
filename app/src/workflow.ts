@@ -454,12 +454,18 @@ export interface WorkflowNode {
   height?: number;
   /** False turns wrapping off for this card; absent keeps the wrapped default. */
   wrapText?: boolean;
-  /** Text formatting chosen from the card's right-click toolbar. */
+  /** Title formatting chosen from the card's text toolbar. */
   bold?: boolean;
   italic?: boolean;
   underline?: boolean;
-  /** Where the card's words sit; absent is the left edge every card had. */
+  /** Detail formatting, kept apart from the title's so a toolbar press touches one field only. */
+  detailBold?: boolean;
+  detailItalic?: boolean;
+  detailUnderline?: boolean;
+  /** Where the card's title sits; absent is the left edge every card had. */
   align?: TextAlign;
+  /** Where the detail sits; absent is the left edge. */
+  detailAlign?: TextAlign;
   x: number;
   y: number;
 }
@@ -875,7 +881,13 @@ function readNode(value: unknown, mode: WorkflowMode, fallbackId: string, index:
   if (record.bold === true) node.bold = true;
   if (record.italic === true) node.italic = true;
   if (record.underline === true) node.underline = true;
+  if (record.detailBold === true) node.detailBold = true;
+  if (record.detailItalic === true) node.detailItalic = true;
+  if (record.detailUnderline === true) node.detailUnderline = true;
   if (record.align === 'center' || record.align === 'right') node.align = record.align;
+  if (record.detailAlign === 'center' || record.detailAlign === 'right') {
+    node.detailAlign = record.detailAlign;
+  }
   const branch = asRecord(record.branch);
   const to = branch ? clean(branch.to, 40) : '';
   return {

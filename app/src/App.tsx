@@ -1028,7 +1028,10 @@ export const App: React.FC = () => {
 
   // One catalogue, built from the lesson registry and the rail's own metadata, so the palette can
   // never list a lesson the runner does not have or name a tab the strip does not show.
-  const paletteItems = React.useMemo(() => paletteCatalog(WORKBENCH_TABS), []);
+  const paletteItems = React.useMemo(
+    () => paletteCatalog(WORKBENCH_TABS, PYTHON_LESSONS, verifiedLessons),
+    [verifiedLessons]
+  );
   // `⌘P`'s list: the same rows, without the tabs and commands. Built from the catalogue rather than
   // from the registry so a lesson can never appear in one door and not the other.
   const lessonPaletteItems = React.useMemo(
@@ -1057,10 +1060,10 @@ export const App: React.FC = () => {
   /** `⌘⇧F`'s list: the lesson text first, then the reading pages, each group in its own band. */
   const paletteSearch = React.useCallback(
     (query: string) => {
-      const rows = lessonSearchItems(query);
+      const rows = lessonSearchItems(query, PYTHON_LESSONS, verifiedLessons);
       return prosePages ? [...rows, ...proseSearchItems(query, prosePages)] : rows;
     },
-    [prosePages]
+    [prosePages, verifiedLessons]
   );
 
   // What the footer says while the file is in flight, or when it could not be had at all. Silent
@@ -1542,6 +1545,7 @@ export const App: React.FC = () => {
           onOpenAccount={() => setIsAccountOpen(true)}
           onOpenPalette={() => setIsPaletteOpen(true)}
           onOpenHome={() => openPage('home')}
+          onOpenStudio={() => openTabFromHome('tab-studio')}
           onOpenIntro={() => openPage('intro')}
           focus={focus}
           onToggleFocus={toggleFocusMode}
@@ -1648,6 +1652,7 @@ export const App: React.FC = () => {
           onOpenAccount={() => setIsAccountOpen(true)}
           onOpenPalette={() => setIsPaletteOpen(true)}
           onOpenHome={() => openPage('home')}
+          onOpenStudio={() => openTabFromHome('tab-studio')}
           onOpenIntro={() => openPage('intro')}
         />
         <main
@@ -1748,6 +1753,7 @@ export const App: React.FC = () => {
         onOpenAccount={() => setIsAccountOpen(true)}
         onOpenPalette={() => setIsPaletteOpen(true)}
         onOpenHome={() => openPage('home')}
+        onOpenStudio={() => openTabFromHome('tab-studio')}
         onOpenIntro={() => openPage('intro')}
         focus={focus}
         onToggleFocus={toggleFocusMode}

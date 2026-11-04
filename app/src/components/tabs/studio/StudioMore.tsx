@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  CircleDot,
   Copy,
   Download,
   GitBranch,
@@ -29,6 +30,10 @@ interface StudioMoreProps {
   onCopyCode: () => void;
   onDownloadCode: () => void;
   onOpenWorkflow: () => void;
+  /** Opens the breakpoint panel; armed lines also appear in the editor's gutter. */
+  onToggleBreakpoints: () => void;
+  breakpointsOpen: boolean;
+  breakpointCount: number;
   history: readonly StudioRunSnapshot[];
   onRestore: (entry: StudioRunSnapshot) => void;
   onClearHistory: () => void;
@@ -48,6 +53,9 @@ export const StudioMore: React.FC<StudioMoreProps> = ({
   onCopyCode,
   onDownloadCode,
   onOpenWorkflow,
+  onToggleBreakpoints,
+  breakpointsOpen,
+  breakpointCount,
   history,
   onRestore,
   onClearHistory,
@@ -90,6 +98,20 @@ export const StudioMore: React.FC<StudioMoreProps> = ({
         </button>
         <button type="button" data-testid="studio-format" onClick={onFormat} className={action}>
           <Wand2 className="h-3.5 w-3.5" aria-hidden="true" /> Format
+        </button>
+        <button
+          type="button"
+          data-testid="studio-breakpoints"
+          aria-pressed={breakpointsOpen}
+          onClick={onToggleBreakpoints}
+          className={action}
+        >
+          <CircleDot className="h-3.5 w-3.5" aria-hidden="true" /> Breakpoints
+          {breakpointCount > 0 && (
+            <span className="rounded-full bg-accent/15 px-1.5 font-bold text-accent">
+              {breakpointCount}
+            </span>
+          )}
         </button>
         <button type="button" data-testid="studio-copy-code" onClick={onCopyCode} className={action}>
           <Copy className="h-3.5 w-3.5" aria-hidden="true" /> Copy code

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Printer, Download, FileJson, User, ChevronRight, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, House, Pause, Play, RotateCcw } from 'lucide-react';
+import { Printer, Download, FileJson, User, ChevronRight, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, House, Pause, Play, RotateCcw, FlaskConical } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
 import { downloadLearningLog } from '../learningLog';
 import { BackupControls } from './BackupControls';
@@ -46,6 +46,8 @@ interface HeaderProps {
   onOpenPalette: () => void;
   /** Opens Home. Absent on the theme reference, which has no work to go back to. */
   onOpenHome?: () => void;
+  /** Opens Free study, the ungraded scratch editor, between Home and Search in the Navigate tray. */
+  onOpenStudio?: () => void;
   /**
    * The wordmark's destination: the introduction page. Optional in the same way `onOpenHome` is —
    * the token page passes neither, and the lockup then falls back to its plain `href`.
@@ -98,6 +100,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAccount,
   onOpenPalette,
   onOpenHome,
+  onOpenStudio,
   onOpenIntro,
   focus = false,
   onToggleFocus,
@@ -273,6 +276,18 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <House className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 <span className="hidden 2xl:inline">Home</span>
+              </button>
+            )}
+            {onOpenStudio && (
+              <button
+                onClick={onOpenStudio}
+                data-testid="btn-open-studio"
+                aria-label="Free study"
+                data-tip="Free study — a scratch editor, plan and note, nothing graded"
+                className="btn"
+              >
+                <FlaskConical className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span className="hidden 2xl:inline">Free study</span>
               </button>
             )}
             {/* The palette is a shortcut first, but a shortcut nobody can see is a secret. */}

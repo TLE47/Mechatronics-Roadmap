@@ -2951,20 +2951,28 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.waitForTimeout(300);
         const fittedWidth = await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetWidth);
         assert.ok(fittedWidth >= widthAfter, `Fit text must lengthen a long line (${widthAfter} → ${fittedWidth})`);
-        // Right-click is the wrap toggle: no control to find, no menu to read.
+        // Right-click opens the card menu; Wrap text is the item that changes wrapping.
         await page.getByTestId('workflow-node-title-0').click({ button: 'right' });
+        await page.getByTestId('workflow-menu-wrap').waitFor({ timeout: 5000 });
+        assert.match(
+          await page.getByTestId('workflow-menu').innerText(),
+          /Wrap text/,
+          'the card menu must offer Wrap text'
+        );
+        await page.getByTestId('workflow-menu-wrap').click();
         await page.waitForTimeout(200);
         assert.equal(
           await page.getByTestId('workflow-node-title-0').getAttribute('wrap'),
           'off',
-          'right-clicking a card must turn wrapping off'
+          'Wrap text in the card menu must turn wrapping off'
         );
         await page.getByTestId('workflow-node-title-0').click({ button: 'right' });
+        await page.getByTestId('workflow-menu-wrap').click();
         await page.waitForTimeout(200);
         assert.equal(
           await page.getByTestId('workflow-node-title-0').getAttribute('wrap'),
           'soft',
-          'right-clicking again must turn wrapping back on'
+          'Wrap text again must turn wrapping back on'
         );
 
         // The find field is not furniture: it appears on ⌘F / Ctrl+F and closes on Escape.
@@ -3053,7 +3061,14 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         assert.equal(
           await titleField.evaluate((field) => getComputedStyle(field).fontWeight),
           '700',
-          'Bold from the text toolbar must reach the card'
+          'Bold from the text toolbar must reach the selected field'
+        );
+        assert.notEqual(
+          await page
+            .getByTestId('workflow-node-detail-0')
+            .evaluate((field) => getComputedStyle(field).fontWeight),
+          '700',
+          'Bold must not reformat the field that was not selected'
         );
 
         await page.getByTestId('editor-tab-main').click();
@@ -3376,6 +3391,19 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       await page.getByTestId('reader-prose').innerText(),
       /Do it yourself/i,
       'Read must keep P.1’s exercise section'
+    );
+    const continueToWrite = page.getByTestId('btn-reader-continue');
+    await continueToWrite.waitFor({ timeout: 5000 });
+    assert.match(
+      (await continueToWrite.textContent()) ?? '',
+      /Continue to Write/,
+      'Read must continue into Write, not into the next lesson'
+    );
+    await continueToWrite.click();
+    assert.equal(
+      await page.getByTestId('layout-write').getAttribute('aria-pressed'),
+      'true',
+      'the Read page’s continue action must select Write'
     );
     await page.getByTestId('layout-study').click();
     await page.waitForTimeout(400);

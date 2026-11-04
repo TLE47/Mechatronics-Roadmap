@@ -19,6 +19,7 @@
  */
 
 import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../data/mechalabPlant.ts';
+import { readTrace, TRACE_NAME_CAP, TRACE_STEP_CAP, TRACE_VALUE_CHARS, type TraceSnapshot } from '../runTrace.ts';
 import { pyodideCdn } from '../runtime/pyodideCdn.ts';
 import {
   PyodideWorkerSession,
@@ -36,6 +37,8 @@ export interface ScratchResult {
   ok: boolean;
   stopped?: boolean;
   timedOut?: boolean;
+  /** The run trace, or null when the program recorded none. */
+  trace: TraceSnapshot | null;
 }
 
 /** How long the page waits before terminating a worker that has not answered. */
@@ -52,14 +55,16 @@ const STOPPED = 'Stopped. The next Run reloads Python.';
 const KILLED = 'Stopped after 30 s — the program may have been looping. Press Run to try again.';
 
 export interface ScratchRunner {
-  run: (code: string) => Promise<ScratchResult>;
+  run: (code: string, breakpoints?: readonly unknown[]) => Promise<ScratchResult>;
   /** Black's formatting of a scratch file, through the same worker and on the same load. */
   format: (code: string) => Promise<PythonFormatAnswer>;
+  /** Continue from a park, the same command the lesson runner's paused bar sends. */
+  continue: () => void;
   stop: () => void;
   dispose: () => void;
 }
 
-function request(code: string): PythonRunRequest {
+function request(code: string, breakpoints: readonly unknown[]): PythonRunRequest {
   return {
     studentCode: code,
     // Nothing to grade with: the studio has no instructor tests, bench or expected output.
@@ -72,14 +77,17 @@ function request(code: string): PythonRunRequest {
     plantSource: MECHALAB_PLANT_PY,
     plantFilename: MECHALAB_PLANT_FILENAME,
     helperFiles: [],
-    breakpoints: [],
+    breakpoints,
     watches: [],
+    // The studio's Trace tab reads the same recording the lesson runner does. The caps travel with
+    // the request so the worker and the panel cannot disagree about how much was kept.
+    trace: { cap: TRACE_STEP_CAP, names: TRACE_NAME_CAP, chars: TRACE_VALUE_CHARS },
   };
 }
 
 function asResult(message: PythonWorkerMessage): ScratchResult {
   if (message.type === 'timeout') {
-    return { stdout: '', stderr: KILLED, ok: false, timedOut: true };
+    return { stdout: '', stderr: KILLED, ok: false, timedOut: true, trace: null };
   }
   if (message.type === 'error') {
     return {
@@ -88,6 +96,7 @@ function asResult(message: PythonWorkerMessage): ScratchResult {
         message.error || (message.workerFailed ? WORKER_FAILED : 'Execution error')
       ),
       ok: false,
+      trace: null,
     };
   }
   if (message.type !== 'result') {
@@ -97,6 +106,7 @@ function asResult(message: PythonWorkerMessage): ScratchResult {
       stderr: String(message.stderr || ''),
       ok: false,
       stopped: Boolean(message.stopped),
+      trace: null,
     };
   }
   const stdout = String(message.stdout || '');
@@ -107,6 +117,7 @@ function asResult(message: PythonWorkerMessage): ScratchResult {
     ok: !stderr && !message.runtimeError && !message.timedOut,
     stopped: Boolean(message.stopped),
     timedOut: Boolean(message.timedOut),
+    trace: readTrace(message.trace),
   };
 }
 
@@ -117,8 +128,28 @@ function asResult(message: PythonWorkerMessage): ScratchResult {
  * the worker protocol stays testable in Node (the suite stubs `Worker`), and so the tab owns only
  * what the status line says.
  */
-export function createScratchRunner(onStatus: (status: ScratchStatus) => void): ScratchRunner {
+export function createScratchRunner(
+  onStatus: (status: ScratchStatus) => void,
+  onPause?: (step: { line?: number; fn?: string } | null) => void
+): ScratchRunner {
+  // The interpreter parks on this word with `Atomics.wait`; the page wakes it with Continue or Stop.
+  // Without a shared buffer the worker simply runs on, so a browser without cross-origin isolation
+  // keeps the Trace tab and loses only the park.
+  let pause: SharedArrayBuffer | null = null;
+  try {
+    if (typeof SharedArrayBuffer !== 'undefined') pause = new SharedArrayBuffer(8);
+  } catch {
+    pause = null;
+  }
   const session = new PyodideWorkerSession({
+    onCreate: (worker) => {
+      if (!pause) return;
+      try {
+        worker.postMessage({ type: 'init', pauseBuffer: pause });
+      } catch {
+        pause = null;
+      }
+    },
     onStatus: (message) => {
       if (message.status === 'loading') onStatus('loading');
       else if (message.status === 'ready') onStatus(session.running ? 'running' : 'ready');
@@ -132,26 +163,56 @@ export function createScratchRunner(onStatus: (status: ScratchStatus) => void): 
   });
 
   const stop = () => {
+    // A parked interpreter is waiting on the pause word, not on the interrupt word. Wake it so the
+    // cancellation unwinds through Python instead of leaving a parked worker to be terminated.
+    if (pause) {
+      try {
+        const view = new Int32Array(pause, 0, 2);
+        Atomics.store(view, 0, 4);
+        Atomics.notify(view, 0);
+      } catch {
+        // A buffer that cannot be reached is already gone with the worker.
+      }
+    }
     if (!session.worker && !session.running) return;
     session.cancel({ stopped: true, stderr: STOPPED });
     onStatus('idle');
   };
 
-  const run = async (code: string): Promise<ScratchResult> => {
+  const proceed = () => {
+    if (!pause) return;
+    try {
+      const view = new Int32Array(pause, 0, 2);
+      Atomics.store(view, 0, 2);
+      Atomics.notify(view, 0);
+      session.resumeClock();
+    } catch {
+      // Nothing is parked if the buffer cannot be written.
+    }
+  };
+
+  const run = async (code: string, breakpoints: readonly unknown[] = []): Promise<ScratchResult> => {
     if (session.running) stop();
     onStatus('running');
     let verdict: PythonWorkerMessage;
     try {
-      verdict = await session.run(request(code), {
+      verdict = await session.run(request(code, breakpoints), {
         loadKillMs: SCRATCH_KILL_MS,
         killMs: SCRATCH_KILL_MS,
+      }, {
+        onMessage: (message) => {
+          if (message.type === 'paused') {
+            const step = (message.step ?? {}) as { line?: number; fn?: string };
+            onPause?.({ line: Number(step.line) || 0, fn: step.fn });
+          }
+        },
       });
     } catch {
       // `ensure()` throws at its caller when the browser refuses a module worker (a CSP without
       // `worker-src`, an engine without module workers): that is a start that failed, not a run to
       // wait out, so it gets the same sentence as a worker that could not.
       onStatus('error');
-      return { stdout: '', stderr: WORKER_FAILED, ok: false };
+      return { stdout: '', stderr: WORKER_FAILED, ok: false, trace: null };
     }
     if (verdict.type === 'result') onStatus(session.worker ? 'ready' : 'idle');
     else if (verdict.type === 'timeout' || verdict.type === 'error') {
@@ -163,6 +224,7 @@ export function createScratchRunner(onStatus: (status: ScratchStatus) => void): 
   return {
     run,
     format: (code: string) => session.format(code, pyodideCdn()),
+    continue: proceed,
     stop,
     dispose: () => session.dispose(),
   };

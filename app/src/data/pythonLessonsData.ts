@@ -39,8 +39,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Mode: ACTIVE | E-Stop: False\nEncoder Ticks: 425 | Battery: 12.15 V",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Verify encoder_ticks (int 425), battery_level (float 12.15), robot_mode ('ACTIVE'), and is_estop_active (False)",
-      "Re-evaluate relative update expressions on two unseen states (encoder_ticks=1000/3, battery_level=24.0/7.05)"
+      "Verify encoder_ticks (int 425), battery_level (float 12.15)",
+      "Verify robot_mode ('ACTIVE') and is_estop_active (False)",
+      "Re-evaluate relative update expressions on two unseen states (encoder_ticks=1000/3)",
+      "Edge case \u2014 battery_level=24.0/7.05"
     ],
     "instructorTests": "import ast, math\nassert isinstance(encoder_ticks, int) and encoder_ticks == 425, f\"Expected encoder_ticks=425 (int), got {encoder_ticks!r}\"\nassert isinstance(battery_level, float) and math.isclose(battery_level, 12.15, abs_tol=1e-4), f\"Expected battery_level=12.15, got {battery_level!r}\"\nassert robot_mode == \"ACTIVE\", f\"Expected robot_mode='ACTIVE', got {robot_mode!r}\"\nassert is_estop_active is False, f\"Expected is_estop_active=False, got {is_estop_active!r}\"\n_tree = ast.parse(__mechalab_student_source__)\n_rel_stmts = [\n    s for s in _tree.body\n    if isinstance(s, (ast.Assign, ast.AugAssign))\n    and any(isinstance(n, ast.Name) and n.id in (\"encoder_ticks\", \"battery_level\") and isinstance(n.ctx, ast.Load) for n in ast.walk(s))\n]\nassert len(_rel_stmts) >= 2, \"Update encoder_ticks and battery_level using relative arithmetic (e.g., encoder_ticks = encoder_ticks + 25), not hardcoded literals.\"\nfor _ticks, _battery in ((1000, 24.0), (3, 7.05)):\n    _ns = {\"encoder_ticks\": _ticks, \"battery_level\": _battery}\n    exec(compile(ast.Module(body=_rel_stmts, type_ignores=[]), \"<instructor_test>\", \"exec\"), _ns)\n    assert _ns[\"encoder_ticks\"] == _ticks + 25, f\"Relative update from encoder_ticks={_ticks} should yield {_ticks + 25}, got {_ns['encoder_ticks']}\"\n    assert math.isclose(_ns[\"battery_level\"], _battery - 0.45, abs_tol=1e-4), f\"Relative update from battery_level={_battery} should yield {_battery - 0.45}, got {_ns['battery_level']}\""
   },
@@ -64,8 +66,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "New Position: 2.0625 m\nScaled Sensor Output: 4.00 V\nKinetic Energy: 9.00 J",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Verify new_pos_m (2.0625 m), sensor_pin (4.0 V), and kinetic_energy_j (9.0 J) within tolerance",
-      "Re-evaluate learner formulas on unseen boundary inputs (zero speed, 1:1 voltage divider, negative start position)"
+      "Verify new_pos_m (2.0625 m), sensor_pin (4.0 V)",
+      "Verify kinetic_energy_j (9.0 J) within tolerance",
+      "Re-evaluate learner formulas on unseen boundary inputs (zero speed, 1:1 voltage divider)",
+      "Edge case \u2014 negative start position"
     ],
     "instructorTests": "import ast, math\nassert math.isclose(new_pos_m, 2.0625, abs_tol=1e-5), f\"Expected new_pos_m=2.0625, got {new_pos_m}\"\nassert math.isclose(sensor_pin, 4.0, abs_tol=1e-4), f\"Expected sensor_pin=4.0, got {sensor_pin}\"\nassert math.isclose(kinetic_energy_j, 9.0, abs_tol=1e-4), f\"Expected kinetic_energy_j=9.0, got {kinetic_energy_j}\"\n_tree = ast.parse(__mechalab_student_source__)\n_expr_stmts = [\n    s for s in _tree.body\n    if isinstance(s, ast.Assign)\n    and any(isinstance(t, ast.Name) and t.id in (\"new_pos_m\", \"sensor_pin\", \"kinetic_energy_j\") for t in s.targets)\n]\n_ns = {\n    \"wheel_speed\": 3.0, \"elapsed_sec\": 0.5, \"start_pos_m\": -1.5,\n    \"supply_level\": 5.0, \"part_a\": 10000.0, \"part_b\": 10000.0,\n    \"cart_mass\": 3.0, \"cart_speed\": 4.0,\n}\nexec(compile(ast.Module(body=_expr_stmts, type_ignores=[]), \"<instructor_test>\", \"exec\"), _ns)\nassert math.isclose(_ns[\"new_pos_m\"], 0.0, abs_tol=1e-5), \"Formula for new_pos_m failed on unseen inputs (start=-1.5, speed=3.0, dt=0.5 -> 0.0)\"\nassert math.isclose(_ns[\"sensor_pin\"], 2.5, abs_tol=1e-4), \"Formula for sensor_pin failed on 1:1 divider (5.0V, 10k/10k -> 2.5V)\"\nassert math.isclose(_ns[\"kinetic_energy_j\"], 24.0, abs_tol=1e-4), \"Formula for kinetic_energy_j failed on (mass=3.0, speed=4.0 -> 24.0 J)\""
   },
@@ -89,8 +93,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "310 clamped -> 255 | -45 clamped -> 0\nE-Stop=True -> Safe Output: 0",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Verify clamped_high (255), clamped_low (0), and safe_output (0 when E-Stop active)",
-      "Re-evaluate learner if/elif/else logic on unseen boundary cases (in-range commands and E-Stop released)"
+      "Verify clamped_high (255), clamped_low (0)",
+      "Verify safe_output (0 when E-Stop active)",
+      "Re-evaluate learner if/elif/else logic",
+      "Edge case \u2014 unseen boundary cases (in-range commands and E-Stop released)"
     ],
     "instructorTests": "import ast\nassert clamped_high == 255, f\"Expected clamped_high=255, got {clamped_high}\"\nassert clamped_low == 0, f\"Expected clamped_low=0, got {clamped_low}\"\nassert safe_output == 0, f\"Expected safe_output=0 when E-Stop is True, got {safe_output}\"\n_tree = ast.parse(__mechalab_student_source__)\n_if_stmts = [s for s in _tree.body if isinstance(s, ast.If)]\nassert len(_if_stmts) >= 2, \"Expected if/elif/else conditional statements for clamping and E-Stop override.\"\n_ns = {\"raw_cmd_high\": 140, \"raw_cmd_low\": 280, \"raw_cmd_normal\": 180, \"is_estop_pressed\": False}\nexec(compile(ast.Module(body=_if_stmts, type_ignores=[]), \"<instructor_test>\", \"exec\"), _ns)\nassert _ns.get(\"clamped_high\") == 140, f\"When raw_cmd_high=140, clamped_high should be 140, got {_ns.get('clamped_high')}\"\nassert _ns.get(\"clamped_low\") == 255, f\"When raw_cmd_low=280, clamped_low should be 255, got {_ns.get('clamped_low')}\"\nassert _ns.get(\"safe_output\") == 180, f\"When is_estop_pressed=False, safe_output should be 180, got {_ns.get('safe_output')}\""
   },
@@ -114,8 +120,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Clamped list: [0, 0, 64, 128, 200, 255]\nFirst=-30 | Last=310 | Mean Clamped Cmd=107.83",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Verify clamped_commands list, total_cmd (647), and mean_cmd (107.8333)",
-      "Re-evaluate loop and mean logic on unseen 5-element boundary list [-100, 0, 100, 255, 500]"
+      "Verify clamped_commands list",
+      "Verify total_cmd (647) and mean_cmd (107.8333)",
+      "Re-evaluate loop",
+      "Edge case \u2014 Re-evaluate mean logic on unseen 5-element boundary list [-100, 0, 100, 255, 500]"
     ],
     "instructorTests": "import ast, math\nassert clamped_commands == [0, 0, 64, 128, 200, 255], f\"Expected [0, 0, 64, 128, 200, 255], got {clamped_commands}\"\nassert total_cmd == 647, f\"Expected total_cmd=647, got {total_cmd}\"\nassert math.isclose(mean_cmd, 647.0 / 6.0, abs_tol=1e-3), f\"Expected mean_cmd=107.8333, got {mean_cmd}\"\n_tree = ast.parse(__mechalab_student_source__)\n_body = [\n    s for s in _tree.body\n    if not (isinstance(s, ast.Assign) and any(isinstance(t, ast.Name) and t.id == \"raw_commands\" for t in s.targets))\n    and not (isinstance(s, ast.Expr) and isinstance(s.value, ast.Call) and getattr(s.value.func, \"id\", \"\") == \"print\")\n]\n_ns = {\"raw_commands\": [-100, 0, 100, 255, 500]}\nexec(compile(ast.Module(body=_body, type_ignores=[]), \"<instructor_test>\", \"exec\"), _ns)\nassert _ns[\"clamped_commands\"] == [0, 0, 100, 255, 255], f\"Unseen list clamp failed: got {_ns['clamped_commands']}\"\nassert math.isclose(_ns[\"mean_cmd\"], 122.0, abs_tol=1e-4), f\"Unseen list mean failed: expected 122.0, got {_ns['mean_cmd']}\""
   },
@@ -139,8 +147,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "After 4 steps: pos_m = 1.20 m",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Call step_position(pos_m, vel_m_s, dt_s) with positive, negative, and zero-dt boundary inputs",
-      "Verify 4-step while-loop state (step == 4, pos_m == 1.20 m)"
+      "Call step_position(pos_m, vel_m_s, dt_s) with positive",
+      "Call negative and zero-dt boundary inputs",
+      "Verify 4-step while-loop state (step == 4)",
+      "Edge case \u2014 pos_m == 1.20 m"
     ],
     "instructorTests": "import math\nassert callable(step_position), \"step_position must be a callable function\"\nassert math.isclose(step_position(0.0, 1.5, 0.2), 0.3, abs_tol=1e-6), \"step_position(0.0, 1.5, 0.2) must return 0.3\"\nassert math.isclose(step_position(2.5, -4.0, 0.25), 1.5, abs_tol=1e-6), \"step_position(2.5, -4.0, 0.25) must handle negative velocity\"\nassert math.isclose(step_position(-3.0, 0.0, 10.0), -3.0, abs_tol=1e-6), \"step_position with 0 velocity must keep position unchanged\"\nassert math.isclose(step_position(1.25, 8.0, 0.0), 1.25, abs_tol=1e-6), \"step_position with dt=0.0 must keep position unchanged\"\nassert step == 4 and math.isclose(pos_m, 1.20, abs_tol=1e-5), f\"Expected step=4 and pos_m=1.20 after loop, got step={step}, pos_m={pos_m}\""
   },
@@ -164,8 +174,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Distance (3, 4): 5.00 m | Distance (0.6, 0.8): 1.00 m\nClamped(-20)=0 | Clamped(128)=128 | Clamped(300)=255\nAll assert checks passed!",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test distance_2d(x_m, y_m) at origin (0,0), (3,4), negative quadrant (-5,-12), and (0.6,0.8)",
-      "Test clamp_cmd(cmd) across lower/upper saturation boundaries (-999, -1, 0, 1, 128, 255, 256, 999)"
+      "Test distance_2d(x_m, y_m) at origin (0,0), (3,4)",
+      "Test negative quadrant (-5,-12) and (0.6,0.8)",
+      "Test clamp_cmd(cmd) across lower/upper",
+      "Edge case \u2014 saturation boundaries (-999, -1, 0, 1, 128, 255, 256, 999)"
     ],
     "instructorTests": "import math\nassert math.isclose(distance_2d(0.0, 0.0), 0.0, abs_tol=1e-6), \"distance_2d(0, 0) must be 0.0\"\nassert math.isclose(distance_2d(3.0, 4.0), 5.0, abs_tol=1e-6), \"distance_2d(3, 4) must be 5.0\"\nassert math.isclose(distance_2d(-5.0, -12.0), 13.0, abs_tol=1e-6), \"distance_2d(-5, -12) must be 13.0\"\nfor _raw, _exp in [(-999, 0), (-1, 0), (0, 0), (1, 1), (128, 128), (255, 255), (256, 255), (999, 255)]:\n    assert clamp_cmd(_raw) == _exp, f\"clamp_cmd({_raw}) returned {clamp_cmd(_raw)}, expected {_exp}\""
   },
@@ -189,8 +201,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "15.0 mA = 0.0150 A | 0.22 kOhm = 220.0 Ohm | V = 3.30 V\n500.0 us = 0.000500 s",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test ma_to_amps, kohms_to_ohms, and us_to_seconds at zero, nominal, and large boundary values",
-      "Verify Ohm's law voltage drop v_drop == 3.30 V within numerical tolerance"
+      "Test ma_to_amps, kohms_to_ohms and us_to_seconds at zero",
+      "Test nominal and large boundary values",
+      "Verify Ohm's law voltage drop",
+      "Edge case \u2014 v_drop == 3.30 V within numerical tolerance"
     ],
     "instructorTests": "import math\nassert math.isclose(ma_to_amps(0.0), 0.0, abs_tol=1e-9)\nassert math.isclose(ma_to_amps(2500.0), 2.5, abs_tol=1e-6)\nassert math.isclose(kohms_to_ohms(0.0), 0.0, abs_tol=1e-9)\nassert math.isclose(kohms_to_ohms(4.7), 4700.0, abs_tol=1e-4)\nassert math.isclose(us_to_seconds(0.0), 0.0, abs_tol=1e-12)\nassert math.isclose(us_to_seconds(250000.0), 0.25, abs_tol=1e-8)\nassert math.isclose(v_drop, 3.30, abs_tol=1e-4)"
   },
@@ -214,8 +228,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "50 Hz period: 20.00 ms | 490 Hz period: 2.041 ms\n8-bit max: 255 | 10-bit max: 1023 | 12-bit max: 4095",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test freq_to_period_ms across 1 Hz, 50 Hz, 490 Hz, 1 kHz, and 20 kHz PWM frequencies",
-      "Test max_unsigned_int across 1-bit, 8-bit, 10-bit, 12-bit, and 16-bit timer widths"
+      "Test freq_to_period_ms across 1 Hz, 50 Hz",
+      "Test 490 Hz, 1 kHz and 20 kHz PWM frequencies",
+      "Test max_unsigned_int across 1-bit, 8-bit",
+      "Edge case \u2014 Test 10-bit, 12-bit and 16-bit timer widths"
     ],
     "instructorTests": "import math\nfor _f, _p in [(1.0, 1000.0), (50.0, 20.0), (1000.0, 1.0), (20000.0, 0.05)]:\n    assert math.isclose(freq_to_period_ms(_f), _p, rel_tol=1e-5), f\"freq_to_period_ms({_f}) expected {_p}\"\nfor _b, _m in [(1, 1), (8, 255), (10, 1023), (12, 4095), (16, 65535)]:\n    assert max_unsigned_int(_b) == _m, f\"max_unsigned_int({_b}) expected {_m}, got {max_unsigned_int(_b)}\""
   },
@@ -239,8 +255,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Solved Speed: 200.0 m/s\nCount 511.5 -> 2.50 units | Cmd = 127.5",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test solve_for_speed with forward, stationary (zero delta), and reverse motion inputs",
-      "Test scale10_to_five and scale10_to_cmd8 at ADC endpoints (0, 511.5, 1023)"
+      "Test solve_for_speed with forward",
+      "Test stationary (zero delta) and reverse motion inputs",
+      "Test scale10_to_five",
+      "Edge case \u2014 Test scale10_to_cmd8 at ADC endpoints (0, 511.5, 1023)"
     ],
     "instructorTests": "import math\nassert math.isclose(solve_for_speed(5.0, 2.0, 0.015), 200.0, abs_tol=1e-4)\nassert math.isclose(solve_for_speed(2.0, 2.0, 0.5), 0.0, abs_tol=1e-6)\nassert math.isclose(solve_for_speed(-1.0, 3.0, 2.0), -2.0, abs_tol=1e-6)\nassert math.isclose(scale10_to_five(0), 0.0, abs_tol=1e-6) and math.isclose(scale10_to_five(1023), 5.0, abs_tol=1e-6)\nassert math.isclose(scale10_to_cmd8(0), 0.0, abs_tol=1e-6) and math.isclose(scale10_to_cmd8(1023), 255.0, abs_tol=1e-6)"
   },
@@ -264,8 +282,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "60.0 RPM = 6.2832 rad/s\nArm tip at 60 deg: x=0.1000 m, y=0.1732 m\nAngle to (-0.10, 0.10): 135.0 deg",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test rpm_to_rad_s at 0 RPM, 60 RPM, and -30 RPM (reverse rotation)",
-      "Test arm_tip_xy and target_angle_deg across all four Cartesian quadrants (0, 90, 135, -135, 180 deg)"
+      "Test rpm_to_rad_s at 0 RPM, 60 RPM",
+      "Test -30 RPM (reverse rotation)",
+      "Test arm_tip_xy",
+      "Edge case \u2014 Test target_angle_deg across all four Cartesian quadrants (0, 90, 135, -135, 180 deg)"
     ],
     "instructorTests": "import math\nassert math.isclose(rpm_to_rad_s(0.0), 0.0, abs_tol=1e-6)\nassert math.isclose(rpm_to_rad_s(-30.0), -math.pi, abs_tol=1e-4)\n_x90, _y90 = arm_tip_xy(0.25, 90.0)\nassert math.isclose(_x90, 0.0, abs_tol=1e-6) and math.isclose(_y90, 0.25, abs_tol=1e-6)\n_x180, _y180 = arm_tip_xy(0.20, 180.0)\nassert math.isclose(_x180, -0.20, abs_tol=1e-6) and math.isclose(_y180, 0.0, abs_tol=1e-6)\nassert math.isclose(target_angle_deg(0.0, 1.0), 90.0, abs_tol=1e-4)\nassert math.isclose(target_angle_deg(-1.0, -1.0), -135.0, abs_tol=1e-4)"
   },
@@ -289,8 +309,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Estimated velocity: 2.0 m/s\nPosition trace: [1.0, 2.0, 4.0, 4.0, 3.0] | Final pos: 3.00 m",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test slope_velocity on positive, zero, and negative displacement steps",
-      "Test accumulate_positions on empty list, symmetric cancellation [1.0, -1.0], and 5-step profile"
+      "Test slope_velocity on positive, zero",
+      "Test negative displacement steps",
+      "Test accumulate_positions on empty list",
+      "Edge case \u2014 Test symmetric cancellation [1.0, -1.0] and 5-step profile"
     ],
     "instructorTests": "import math\nassert math.isclose(slope_velocity(5.0, 5.0, 0.1), 0.0, abs_tol=1e-6)\nassert math.isclose(slope_velocity(3.0, 1.0, 0.25), -8.0, abs_tol=1e-6)\nassert accumulate_positions([], 0.1) == []\nassert accumulate_positions([1.0, -1.0], 0.5) == [0.5, 0.0]\nassert accumulate_positions([2.0, 2.0, 4.0, 0.0, -2.0], 0.5) == [1.0, 2.0, 4.0, 4.0, 3.0]"
   },
@@ -314,8 +336,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Angle from horizontal =  0.0 deg -> Gravity Torque = 1.4715 N*m\nAngle from horizontal = 60.0 deg -> Gravity Torque = 0.7358 N*m\nAngle from horizontal = 90.0 deg -> Gravity Torque = 0.0000 N*m",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test weight_newtons at 0 kg, 0.5 kg, and 2.5 kg",
-      "Test gravity_torque_nm at 0 deg (max lever arm), 60 deg (half lever arm), 90 deg (zero), and 180 deg"
+      "Test weight_newtons at 0 kg",
+      "Test 0.5 kg and 2.5 kg",
+      "Test gravity_torque_nm at 0 deg (max lever arm)",
+      "Edge case \u2014 Test 60 deg (half lever arm), 90 deg (zero) and 180 deg"
     ],
     "instructorTests": "import math\nassert math.isclose(weight_newtons(0.0), 0.0, abs_tol=1e-6)\nassert math.isclose(weight_newtons(2.5), 24.525, abs_tol=1e-4)\nassert math.isclose(gravity_torque_nm(1.0, 0.5, 0.0), 4.905, abs_tol=1e-4)\nassert math.isclose(gravity_torque_nm(1.0, 0.5, 60.0), 2.4525, abs_tol=1e-4)\nassert math.isclose(gravity_torque_nm(1.0, 0.5, 90.0), 0.0, abs_tol=1e-6)"
   },
@@ -339,8 +363,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Safe at 6.0 V: ['DRV8833', 'TB6612FNG'] | Safe at 12.0 V: ['TB6612FNG']\nDRV8833 I_cont = 1.50 A | f_PWM = 25000 Hz",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test is_within_recommended_bounds and select_safe_driver across 3.3 V, 6.0 V, 10.8 V, 11.5 V, and 12.0 V supply rails",
-      "Test datasheet_val_to_base_si across mA, mV, ms, kHz, and base SI units"
+      "Test is_within_recommended_bounds and select_safe_driver across 3.3 V",
+      "Test 6.0 V, 10.8 V, 11.5 V and 12.0 V supply rails",
+      "Test datasheet_val_to_base_si across mA",
+      "Edge case \u2014 Test mV, ms, kHz and base SI units"
     ],
     "instructorTests": "import math\nassert is_within_recommended_bounds(10.8, 2.7, 10.8) is True\nassert is_within_recommended_bounds(11.5, 2.7, 10.8) is False\nassert select_safe_driver(3.3) == [\"DRV8833\"]\nassert select_safe_driver(6.0) == [\"DRV8833\", \"TB6612FNG\"]\nassert select_safe_driver(12.0) == [\"TB6612FNG\"]\nassert select_safe_driver(14.5) == []\nassert math.isclose(datasheet_val_to_base_si(250.0, \"mA\"), 0.25, abs_tol=1e-9)\nassert math.isclose(datasheet_val_to_base_si(20.0, \"kHz\"), 20000.0, abs_tol=1e-6)"
   },
@@ -364,8 +390,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Model: draw = supply / winding = 12.0 V / 2.4 ohm\nComputed: 5.00 A\nAnswer: 3.20 A, clamped to the 3.20 A driver limit (the winding would draw 5.00 A)",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test winding_draw on unseen 24 V/2.4 ohm and 9 V/3 ohm givens",
-      "Test check_against_limit and answer_line on both the inside-limit and clamped branches"
+      "Test winding_draw on unseen 24 V/2.4 ohm",
+      "Test 9 V/3 ohm givens",
+      "Test check_against_limit",
+      "Edge case \u2014 Test answer_line on both the inside-limit and clamped branches"
     ],
     "instructorTests": "import math\nassert math.isclose(winding_draw(24.0, 2.4), 10.0, abs_tol=1e-9)\nassert math.isclose(winding_draw(9.0, 3.0), 3.0, abs_tol=1e-9)\n_ok, _passable = check_against_limit(2.0, 3.2)\nassert _ok is True and math.isclose(_passable, 2.0, abs_tol=1e-9)\n_ok, _passable = check_against_limit(10.0, 3.2)\nassert _ok is False and math.isclose(_passable, 3.2, abs_tol=1e-9)\n_inside = answer_line(2.0, 3.2, True, 2.0)\nassert \"2.00 A\" in _inside and \"clamped\" not in _inside\n_over = answer_line(10.0, 3.2, False, 3.2)\nassert \"3.20 A\" in _over and \"clamped\" in _over and \"10.00 A\" in _over"
   },
@@ -388,8 +416,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Motor torque: 1.50 N*m | Gravity at 0 deg: 0.9810 N*m | Can lift: True\nStep 0: angle=18.0 deg | tip=(0.2378, 0.0773) m | tau_g=0.9330 N*m\nStep 1: angle=36.0 deg | tip=(0.2023, 0.1469) m | tau_g=0.7936 N*m\nStep 2: angle=54.0 deg | tip=(0.1469, 0.2023) m | tau_g=0.5766 N*m",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test cmd10_to_torque saturation at negative (-50), zero, midpoint (511.5), and overflow (2048) inputs",
-      "Test holding_torque_nm across radian angles (0, pi/3, pi/2) and verify 3-step trajectory state"
+      "Test cmd10_to_torque saturation at negative (-50)",
+      "Test zero, midpoint (511.5) and overflow (2048) inputs",
+      "Test holding_torque_nm across radian angles (0, pi/3, pi/2)",
+      "Edge case \u2014 Test verify 3-step trajectory state"
     ],
     "instructorTests": "import math\nassert math.isclose(cmd10_to_torque(-50, 4.0), 0.0, abs_tol=1e-6)\nassert math.isclose(cmd10_to_torque(511.5, 4.0), 2.0, abs_tol=1e-4)\nassert math.isclose(cmd10_to_torque(2048, 4.0), 4.0, abs_tol=1e-6)\nassert math.isclose(holding_torque_nm(0.50, 1.0, math.pi / 3.0), 2.4525, abs_tol=1e-4)\nassert math.isclose(holding_torque_nm(0.50, 1.0, math.pi / 2.0), 0.0, abs_tol=1e-6)\nassert can_lift is True and math.isclose(math.degrees(angle_rad), 54.0, abs_tol=1e-3)"
   },
@@ -413,8 +443,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "first step 0->1: 18.408 rad/s\nlast step 8->9: -12.272 rad/s\nwhole trace: 4.943 rad/s over 9 ticks\npeak at tick 6: 450 counts, central rate -1.150 rad/s\nrate changes sign between ticks 6 and 7",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test counts_to_rad on a full turn and a quarter turn, rate_rad_s forwards and backwards, and the average/central rates on unseen traces",
-      "Test the refusals: one sample has no average rate, the first sample has no central difference, and a rising trace has no reversal"
+      "Test counts_to_rad on a full turn and a quarter turn, rate_rad_s forwards",
+      "Test backwards and the average/central rates on unseen traces",
+      "Test the refusals: one sample has no average rate",
+      "Edge case \u2014 Test the first sample has no central difference and a rising trace has no reversal"
     ],
     "instructorTests": "import math\n_2pi = 2.0 * math.pi\nassert abs(counts_to_rad(4096) - _2pi) < 1e-12, f\"expected one turn of 4096 counts to be 2*pi rad, got {counts_to_rad(4096)!r}\"\nassert abs(counts_to_rad(1024) - _2pi / 4.0) < 1e-12, f\"expected 1024 counts to be a quarter turn (pi/2), got {counts_to_rad(1024)!r}\"\nassert abs(rate_rad_s(120, 0) - 18.407769454627694) < 1e-9, f\"expected 120 counts in 0.01 s = 18.408 rad/s, got {rate_rad_s(120, 0)!r}\"\nassert abs(rate_rad_s(0, 120) + 18.407769454627694) < 1e-9, f\"the same step backwards must be negative: expected -18.408 rad/s, got {rate_rad_s(0, 120)!r} - check the subtraction order\"\nassert abs(average_rate_rad_s([0, 409, 819]) - 62.816513263917) < 1e-9, f\"expected 819 counts over two 0.01 s ticks = 62.817 rad/s, got {average_rate_rad_s([0, 409, 819])!r}\"\nassert abs(average_rate_rad_s([0, 819], 0.02) - 62.816513263917) < 1e-9, f\"two samples average the same way: expected 62.817 rad/s, got {average_rate_rad_s([0, 819], 0.02)!r}\"\ntry:\n    average_rate_rad_s([5])\n    raise AssertionError(\"average_rate_rad_s must refuse one sample - a rate needs two\")\nexcept ValueError:\n    pass\nassert abs(central_rate_rad_s([0, 100, 180], 1) - 13.805827090970771) < 1e-9, f\"expected the central difference at [0, 100, 180] to be (180-0) counts over 0.02 s = 13.806 rad/s, got {central_rate_rad_s([0, 100, 180], 1)!r}\"\ntry:\n    central_rate_rad_s([0, 100, 180], 0)\n    raise AssertionError(\"the first sample has no left neighbour - central_rate_rad_s must refuse i = 0\")\nexcept ValueError:\n    pass\nassert peak_index([0, 5, 9, 4]) == 2, f\"expected the peak at index 2, got {peak_index([0, 5, 9, 4])!r}\"\nassert reversal_tick([0, 10, 20, 15, 5]) == (2, 3), f\"expected the sign change between ticks 2 and 3, got {reversal_tick([0, 10, 20, 15, 5])!r}\"\nassert reversal_tick([0, 10, 20]) is None, f\"a rising trace has no reversal, so the answer is None, got {reversal_tick([0, 10, 20])!r}\""
   },
@@ -438,8 +470,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "left rule: 0.300 rad\nright rule: 0.280 rad\ntrapezoid: 0.290 rad\nfrom q0 = 0.5 rad: 0.790 rad\nbias drift: 0.600 rad after 30 s",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test the left, right and trapezoid rules on a three-sample trace where all three differ, and a constant rate over 0.75 s",
-      "Test that q0 is added rather than replaced, the bias drift, and the refusals for a single sample and a negative duration"
+      "Test the left, right and trapezoid rules on a three-sample trace where all three differ",
+      "Test a constant rate over 0.75 s",
+      "Test that q0 is added rather than replaced, the bias drift",
+      "Edge case \u2014 Test the refusals for a single sample and a negative duration"
     ],
     "instructorTests": "assert abs(left_rule_rad([0.0, 2.0, 4.0], 0.5) - 1.0) < 1e-12, f\"expected the left rule on [0, 2, 4] at dt = 0.5 to be (0 + 2) * 0.5 = 1.0, got {left_rule_rad([0.0, 2.0, 4.0], 0.5)!r}\"\nassert abs(right_rule_rad([0.0, 2.0, 4.0], 0.5) - 3.0) < 1e-12, f\"expected the right rule on [0, 2, 4] at dt = 0.5 to be (2 + 4) * 0.5 = 3.0, got {right_rule_rad([0.0, 2.0, 4.0], 0.5)!r}\"\nassert abs(trapezoid_rad([0.0, 2.0, 4.0], 0.5) - 2.0) < 1e-12, f\"expected the trapezoid on [0, 2, 4] at dt = 0.5 to be 2.0, got {trapezoid_rad([0.0, 2.0, 4.0], 0.5)!r}\"\nassert abs(accumulate_rad([0.0, 2.0, 4.0], 1.0, 0.5) - 3.0) < 1e-12, f\"expected q0 = 1.0 plus 2.0 rad of travel = 3.0, got {accumulate_rad([0.0, 2.0, 4.0], 1.0, 0.5)!r} - check the starting value is added, not replaced\"\nassert abs(trapezoid_rad([3.0, 3.0, 3.0, 3.0], 0.25) - 2.25) < 1e-12, f\"expected a constant 3 rad/s held for 0.75 s to be 2.25 rad, got {trapezoid_rad([3.0, 3.0, 3.0, 3.0], 0.25)!r}\"\nassert abs(drift_rad(0.05, 10.0) - 0.5) < 1e-12, f\"expected a 0.05 rad/s bias over 10 s to drift 0.5 rad, got {drift_rad(0.05, 10.0)!r}\"\ntry:\n    drift_rad(0.05, -1.0)\n    raise AssertionError(\"drift_rad must refuse a negative duration instead of running time backwards\")\nexcept ValueError:\n    pass\nfor _rule in (left_rule_rad, right_rule_rad, trapezoid_rad):\n    try:\n        _rule([1.0])\n        raise AssertionError(f\"{_rule.__name__} must refuse a single sample - one sample is not an interval\")\n    except ValueError:\n        pass"
   },
@@ -463,8 +497,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "after 30 ticks at 0.40 N m: q = 0.697230 rad, qd = 4.256926 rad/s\n0.20 + 0.20 N m, added up: q = 0.697230 rad, qd = 4.256926 rad/s\nsuperposition error: 0.000e+00\nhalf the command alone: q = 0.348615 rad, qd = 2.128463 rad/s\ntwice the half command: q = 0.697230 rad, qd = 4.256926 rad/s",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test accel_rad_s2 and one step from rest and from a moving state, including that position uses the OLD speed",
-      "Test run against ten single steps, superposition on unseen torques, element-wise add/scale, the length refusal, and that step does not mutate its input"
+      "Test accel_rad_s2 and one step from rest and from a moving state",
+      "Test including that position uses the OLD speed",
+      "Test run against ten single steps, superposition on unseen torques",
+      "Edge case \u2014 Test element-wise add/scale, the length refusal and that step does not mutate its input"
     ],
     "instructorTests": "import math\nassert abs(accel_rad_s2([0.0, 2.0]) - 15.0) < 1e-12, f\"expected (0.40 - 0.05*2.0)/0.02 = 15.0 rad/s^2 at a speed of 2 rad/s, got {accel_rad_s2([0.0, 2.0])!r}\"\n_one = step([0.0, 0.0])\nassert abs(_one[0]) < 1e-15 and abs(_one[1] - 0.2) < 1e-12, f\"expected one tick from rest to leave q = 0 and give qd = 0.2 rad/s, got {_one!r}\"\n_next = step([1.0, 1.0])\nassert abs(_next[0] - 1.01) < 1e-12, f\"expected q = 1.0 + 1.0*0.01 = 1.01 rad using the OLD speed, got {_next[0]!r} - 1.01175 is the new-speed answer repeated every tick\"\nassert abs(_next[1] - 1.175) < 1e-12, f\"expected qd = 1.0 + 17.5*0.01 = 1.175 rad/s, got {_next[1]!r}\"\n_held = [1.0, 1.0]\nstep(_held)\nassert _held == [1.0, 1.0], f\"step must return a new state, not overwrite the caller's list; got {_held!r}\"\nassert run([0.0, 0.0], 0) == [0.0, 0.0], \"zero ticks must leave the state untouched\"\n_ten = [0.0, 0.0]\nfor _i in range(10):\n    _ten = step(_ten)\nassert max(abs(run([0.0, 0.0], 10)[0] - _ten[0]), abs(run([0.0, 0.0], 10)[1] - _ten[1])) < 1e-12, \"run(state, 10) must equal ten applications of step; a mismatch means the loop does not feed each result into the next tick\"\n_tau_a, _tau_b = 0.30, 0.12\n_both = run([0.0, 0.0], 25, tau=_tau_a + _tau_b)\n_parts = add(run([0.0, 0.0], 25, tau=_tau_a), run([0.0, 0.0], 25, tau=_tau_b))\nassert abs(_both[0] - _parts[0]) < 1e-12 and abs(_both[1] - _parts[1]) < 1e-12, f\"superposition must hold on unseen torques: got {_both!r} for the sum and {_parts!r} for the two runs added\"\nassert add([1.0, 2.0], [3.0, 4.0]) == [4.0, 6.0], f\"expected element-wise addition [4.0, 6.0], got {add([1.0, 2.0], [3.0, 4.0])!r} - list concatenation gives a four-slot state\"\nassert scale([1.0, -2.0], 2.5) == [2.5, -5.0], f\"expected [2.5, -5.0], got {scale([1.0, -2.0], 2.5)!r}\"\ntry:\n    add([1.0], [1.0, 2.0])\n    raise AssertionError(\"add must refuse states of different lengths instead of adding what it can\")\nexcept ValueError:\n    pass"
   },
@@ -488,8 +524,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "A rows: [0.0, 1.0], [0.0, -2.5]\nA applied to [0, 1] rad/s: [1.0, -2.5]\nafter 30 ticks, matrix form: q = 0.697230 rad, qd = 4.256926 rad/s\nafter 30 ticks, two lines: q = 0.697230 rad, qd = 4.256926 rad/s\nlargest difference: 0.000e+00",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test mat_vec on the lesson's [2, 3] state (rows are rates: [3, -7.5]) and on a B u multiplication",
-      "Test step_matrix against step_two_lines for one tick and for thirty, and that a row/vector shape mismatch raises ValueError"
+      "Test mat_vec on the lesson's [2, 3] state (rows are rates: [3, -7.5])",
+      "Test on a B u multiplication",
+      "Test step_matrix against step_two_lines for one tick and for thirty",
+      "Edge case \u2014 Test that a row/vector shape mismatch raises ValueError"
     ],
     "instructorTests": "import math\nassert abs(DT_S - 0.01) < 1e-12, f\"expected the lesson's 10 ms tick, got {DT_S!r}\"\nassert A == [[0.0, 1.0], [0.0, -2.5]], f\"A must hold the rates [[0, 1], [0, -2.5]], got {A!r}\"\nassert len(B_IN) == 2 and len(B_IN[0]) == 1, f\"B_IN is 2x1 - one input (torque), got {B_IN!r}\"\nassert abs(B_IN[1][0] - 50.0) < 1e-12, f\"expected B_IN[1][0] = 1/J = 50, got {B_IN[1][0]!r}\"\n_tick = mat_vec(A, [2.0, 3.0])\nassert abs(_tick[0] - 3.0) < 1e-12 and abs(_tick[1] + 7.5) < 1e-12, f\"A x for [2, 3] is [3, -7.5], got {_tick!r}\"\n_bu = mat_vec(B_IN, [0.40])\nassert abs(_bu[0]) < 1e-15 and abs(_bu[1] - 20.0) < 1e-12, f\"B u for 0.40 N*m is [0, 20], got {_bu!r}\"\ntry:\n    mat_vec(A, [1.0])\n    raise AssertionError(\"mat_vec must refuse a 2-column matrix with a one-slot vector, not read past the row\")\nexcept ValueError:\n    pass\n_one = step_matrix([0.0, 0.0])\n_one_line = step_two_lines([0.0, 0.0])\nassert abs(_one[0] - _one_line[0]) < 1e-15 and abs(_one[1] - _one_line[1]) < 1e-15, f\"one matrix tick {_one!r} must equal the two-line tick {_one_line!r}\"\nassert abs(_one[1] - 0.2) < 1e-12, f\"expected qd = 0.2 rad/s after one 10 ms tick of 0.40 N*m, got {_one[1]!r}\"\nassert abs(matrix_path[0] - 0.697230) < 1e-5, f\"expected q = 0.697230 rad after 30 ticks, got {matrix_path[0]!r}\"\nassert abs(matrix_path[1] - 4.256926) < 1e-5, f\"expected qd = 4.256926 rad/s after 30 ticks, got {matrix_path[1]!r}\"\nassert abs(matrix_path[0] - line_path[0]) < 1e-12 and abs(matrix_path[1] - line_path[1]) < 1e-12, \"the matrix path and the two-line path must agree to the last digit; a difference means a coefficient or the dt placement is wrong\"\nassert first_row == [1.0, -2.5], f\"A applied to [0, 1] must be [1, -2.5], got {first_row!r}\""
   },
@@ -513,8 +551,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "A: real 3.000, imag 0.000, length 3.000, angle 0.000 deg\nB: real 0.000, imag 4.000, length 4.000, angle 90.000 deg\nA+B: real 3.000, imag 4.000, length 5.000, angle 53.130 deg\nA turned 90 deg: real 0.000, imag 3.000, length 3.000, angle 90.000 deg\nthree phases 120 deg apart, added: length 0.000e+00",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test arrow at 0 and 90 degrees, rotate keeping the length, and that adding the two parts gives 1 + 1j rather than a length of 2",
-      "Test the empty sum and the four fields of report(), including the 53.130 degree angle from 3 + 4j"
+      "Test arrow at 0 and 90 degrees, rotate keeping the length",
+      "Test that adding the two parts gives 1 + 1j rather than a length of 2",
+      "Test the empty sum and the four fields of report()",
+      "Edge case \u2014 Test including the 53.130 degree angle from 3 + 4j"
     ],
     "instructorTests": "import cmath\nimport math\nassert abs(arrow(2.5, 0.0).real - 2.5) < 1e-12 and abs(arrow(2.5, 0.0).imag) < 1e-12, f\"expected a length 2.5 arrow at 0 rad to be 2.5 + 0j, got {arrow(2.5, 0.0)!r}\"\nassert abs(arrow(1.0, math.pi / 2.0).imag - 1.0) < 1e-12, f\"expected a unit arrow at 90 degrees to be 1j, got {arrow(1.0, math.pi / 2.0)!r}\"\nassert abs(abs(arrow(3.0, 0.7)) - 3.0) < 1e-12, f\"an arrow must keep its magnitude: expected 3.0, got {abs(arrow(3.0, 0.7))!r}\"\n_turned = rotate(arrow(2.0, 0.0), math.pi / 2.0)\nassert abs(_turned.real) < 1e-12 and abs(_turned.imag - 2.0) < 1e-12, f\"expected 2 + 0j turned 90 degrees to be 2j, got {_turned!r}\"\nassert abs(abs(rotate(arrow(4.0, 0.3), 1.1)) - 4.0) < 1e-12, f\"rotation must not change the length: expected 4.0, got {abs(rotate(arrow(4.0, 0.3), 1.1))!r}\"\nassert abs(sum_arrows([1 + 0j, 0 + 1j]) - (1 + 1j)) < 1e-12, f\"expected 1 + 1j from adding the two parts, got {sum_arrows([1 + 0j, 0 + 1j])!r} - adding the lengths would give 2\"\nassert sum_arrows([]) == 0j, f\"expected 0j for an empty list, got {sum_arrows([])!r}\"\n_line = report(\"T\", 3 + 4j)\nfor _field in (\"real 3.000\", \"imag 4.000\", \"length 5.000\", \"53.130\", \"deg\"):\n    assert _field in _line, f\"expected the report to contain {_field!r}, got {_line!r}\""
   },
@@ -538,8 +578,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "corner frequency: 3.183099 Hz\nomega   2.0 rad/s: formula 0.9950 at   -5.711 deg, measured 0.9950 at   -5.652 deg\nomega  20.0 rad/s: formula 0.7071 at  -45.000 deg, measured 0.7074 at  -44.426 deg\nomega 200.0 rad/s: formula 0.0995 at  -84.289 deg, measured 0.1005 at  -79.798 deg",
     "outputMatch": "exact",
     "instructorTestSummary": [
-      "Test the gain and phase at DC, the corner 1/tau and 200 rad/s, plus one period's sample count at 20 and 200 rad/s",
-      "Test the simulated gain and phase against the formula, and measure() on a known 2x response lagging 0.5 rad"
+      "Test the gain and phase at DC, the corner 1/tau and 200 rad/s",
+      "Test plus one period's sample count at 20 and 200 rad/s",
+      "Test the simulated gain and phase against the formula",
+      "Edge case \u2014 Test measure() on a known 2x response lagging 0.5 rad"
     ],
     "instructorTests": "import math\nassert abs(gain(0.0) - 1.0) < 1e-12, f\"expected unity gain at DC, got {gain(0.0)!r}\"\nassert abs(gain(1.0 / TAU) - math.sqrt(0.5)) < 1e-12, f\"expected gain 1/sqrt(2) = 0.7071 at the corner 1/tau = 20 rad/s, got {gain(1.0 / TAU)!r}\"\nassert abs(gain(200.0) - 0.09950371902099892) < 1e-12, f\"expected 1/sqrt(1 + 100) = 0.0995 at 200 rad/s, got {gain(200.0)!r} - a gain that stays near 1 means the frequency never entered the formula\"\nassert abs(phase_deg(0.0)) < 1e-12, f\"expected 0 degrees at DC, got {phase_deg(0.0)!r}\"\nassert abs(phase_deg(200.0) + math.degrees(math.atan(10.0))) < 1e-12, f\"expected -84.289 degrees at 200 rad/s, got {phase_deg(200.0)!r} - a positive phase means the sign was dropped\"\n_period = simulate(20.0)\nassert len(_period) == 314, f\"expected one 20 rad/s period at 1 ms to be 314 samples, got {len(_period)!r}\"\nassert all(len(_sample) == 3 for _sample in _period), \"every sample must be (t, u, y)\"\nassert len(simulate(200.0)) == 31, f\"expected 31 samples for one 200 rad/s period at 1 ms, got {len(simulate(200.0))!r}\"\n_gain_20, _phase_20 = measure(simulate(20.0), 20.0)\nassert abs(_gain_20 - gain(20.0)) < 2e-3, f\"expected the measured 20 rad/s gain to match the formula 0.7071, got {_gain_20!r}\"\nassert abs(_phase_20 - phase_deg(20.0)) < 1.5, f\"expected the measured 20 rad/s phase near -45 degrees, got {_phase_20!r}\"\n_w = 2.0 * math.pi * 5.0\n_samples = [(i * 0.001, math.sin(_w * i * 0.001), 2.0 * math.sin(_w * i * 0.001 - 0.5)) for i in range(400)]\n_gain_known, _phase_known = measure(_samples, _w)\nassert abs(_gain_known - 2.0) < 1e-3, f\"expected gain 2.0 from a response twice the command, got {_gain_known!r} - an RMS that divides the wrong way gives 0.5\"\nassert abs(_phase_known + 28.64788975654116) < 0.01, f\"expected -28.648 degrees from a response lagging 0.5 rad, got {_phase_known!r}\""
   },
@@ -563,8 +605,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Wide pipe (100 Ohm): Flow = 0.0900 A, Power = 0.8100 W\nNarrow pipe (200 Ohm): Flow = 0.0450 A | Closed valve Power = 0.0000 W",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test compute_flow inversely proportional to opposition and ValueError at opposition <= 0",
-      "Test compute_effort_flow_power (Effort * Flow) across active and zero-flow (open-loop) states"
+      "Test compute_flow inversely proportional to opposition",
+      "Test ValueError at opposition <= 0",
+      "Test compute_effort_flow_power (Effort * Flow) across active",
+      "Edge case \u2014 Test zero-flow (open-loop) states"
     ],
     "instructorTests": "import math\nassert math.isclose(compute_flow(12.0, 60.0), 0.20, abs_tol=1e-9)\nassert math.isclose(compute_flow(12.0, 120.0), 0.10, abs_tol=1e-9)\ntry:\n    compute_flow(12.0, 0.0)\nexcept ValueError:\n    pass\nelse:\n    raise AssertionError(\"a zero-ohm short must be rejected, not reported as zero flow\")\nassert math.isclose(compute_effort_flow_power(12.0, 0.20), 2.40, abs_tol=1e-9)\nassert math.isclose(compute_effort_flow_power(12.0, 0.0), 0.0, abs_tol=1e-9)"
   },
@@ -588,8 +632,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "P_elec=24.00 W | P_mech=18.00 W | Efficiency=75.0%\nFirst-order lag at 1*tau (0.5 s): 63.2%\nFirst-order lag at 5*tau (2.5 s): 99.3%",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test cross_domain_power on unseen 24V/3A electrical to 0.5 N*m @ 108 rad/s mechanical operating point",
-      "Test simulate_first_order_lag at 0 target, 1*tau (63.2%), and 5*tau (99.3%) with custom time constant"
+      "Test cross_domain_power on unseen 24V/3A",
+      "electrical to 0.5 N*m @ 108 rad/s mechanical operating point",
+      "Test simulate_first_order_lag at 0 target, 1*tau (63.2%)",
+      "Edge case \u2014 Test 5*tau (99.3%) with custom time constant"
     ],
     "instructorTests": "import math\n_pe, _pm, _eff = cross_domain_power(24.0, 3.0, 0.5, 108.0)\nassert math.isclose(_pe, 72.0, abs_tol=1e-4) and math.isclose(_pm, 54.0, abs_tol=1e-4) and math.isclose(_eff, 75.0, abs_tol=1e-4)\nassert math.isclose(simulate_first_order_lag(0.0, 0.5, 1.0), 0.0, abs_tol=1e-6)\nassert math.isclose(simulate_first_order_lag(50.0, 0.2, 0.2), 50.0 * (1.0 - math.exp(-1.0)), abs_tol=0.25)\nassert math.isclose(simulate_first_order_lag(50.0, 0.2, 1.0), 50.0 * (1.0 - math.exp(-5.0)), abs_tol=0.25)"
   },
@@ -613,8 +659,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "b= 4.0 -> omega_n=10.0 rad/s | zeta=0.20 (underdamped) | overshoot=0.53 m | x_end=0.016 m\nb=20.0 -> omega_n=10.0 rad/s | zeta=1.00 (critically_damped) | overshoot=0.00 m | x_end=0.000 m\nb=40.0 -> omega_n=10.0 rad/s | zeta=2.00 (overdamped) | overshoot=0.00 m | x_end=0.005 m",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test damping_metrics classification across underdamped (zeta=0.1), critically_damped (zeta=1.0), and overdamped (zeta=2.0)",
-      "Test simulate_spring_damper overshoot behavior across regimes"
+      "Test damping_metrics classification across underdamped (zeta=0.1)",
+      "Test critically_damped (zeta=1.0) and overdamped (zeta=2.0)",
+      "Test simulate_spring_damper overshoot behavior",
+      "Edge case \u2014 regimes"
     ],
     "instructorTests": "import math\n_wn1, _z1, _r1 = damping_metrics(4.0, 100.0, 4.0)\n_wn2, _z2, _r2 = damping_metrics(4.0, 100.0, 40.0)\n_wn3, _z3, _r3 = damping_metrics(4.0, 100.0, 80.0)\nassert math.isclose(_wn1, 5.0, abs_tol=1e-4) and math.isclose(_z1, 0.1, abs_tol=1e-4) and _r1 == \"underdamped\"\nassert math.isclose(_z2, 1.0, abs_tol=1e-4) and _r2 == \"critically_damped\"\nassert math.isclose(_z3, 2.0, abs_tol=1e-4) and _r3 == \"overdamped\"\n_, _os_under = simulate_spring_damper(1.0, 100.0, 4.0)\n_, _os_crit = simulate_spring_damper(1.0, 100.0, 20.0)\nassert _os_under > 0.45 and _os_crit < 0.005"
   },
@@ -638,8 +686,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Boundary 0 deg (horizontal): tau_hold = +1.962 N*m\nMidpoint 60 deg            : tau_hold = +0.981 N*m\nBoundary 90 deg (vertical) : tau_hold = +0.000 N*m\nAll dimensional and extreme-case sign checks PASSED!",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test holding_torque_nm at zero mass, 0 deg horizontal, 60 deg, 90 deg vertical, and 180 deg inverted",
-      "Verify run_sanity_checks() returns (1.962, 0.981, 0.0) within numerical tolerance"
+      "Test holding_torque_nm at zero mass, 0 deg horizontal",
+      "Test 60 deg, 90 deg vertical and 180 deg inverted",
+      "Verify run_sanity_checks() returns",
+      "Edge case \u2014 (1.962, 0.981, 0.0) within numerical tolerance"
     ],
     "instructorTests": "import math\nassert math.isclose(holding_torque_nm(0.0, 400.0, 0.0), 0.0, abs_tol=1e-9)\nassert math.isclose(holding_torque_nm(1.0, 500.0, 0.0), 4.905, abs_tol=1e-4)\nassert math.isclose(holding_torque_nm(1.0, 500.0, 90.0), 0.0, abs_tol=1e-6)\nassert math.isclose(holding_torque_nm(1.0, 500.0, 180.0), -4.905, abs_tol=1e-4)\n_s0, _s60, _s90 = run_sanity_checks()\nassert math.isclose(_s0, 1.962, abs_tol=1e-4) and math.isclose(_s60, 0.981, abs_tol=1e-4) and math.isclose(_s90, 0.0, abs_tol=1e-6)"
   },
@@ -663,8 +713,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "LDO heat loss : 3.50 W (at 12V -> 5V, 0.50 A)\nBuck input    : 0.231 A | Buck heat loss: 0.28 W\nBattery peak  : 3.231 A | Recommended fuse (1.25x): 4.04 A",
     "outputMatch": "exact",
     "instructorTestSummary": [
-      "Test compare_ldo_vs_buck on unseen 24V->5V @ 1.0A load with 80% buck efficiency",
-      "Test worst_case_battery_budget with custom safety factor (1.5x)"
+      "Test compare_ldo_vs_buck",
+      "unseen 24V->5V @ 1.0A load with 80% buck efficiency",
+      "Test worst_case_battery_budget",
+      "Edge case \u2014 custom safety factor (1.5x)"
     ],
     "instructorTests": "import math\n_pldo, _ibuck, _pbuck = compare_ldo_vs_buck(24.0, 5.0, 1.0, buck_eff=0.80)\nassert math.isclose(_pldo, 19.0, abs_tol=1e-4)\nassert math.isclose(_ibuck, 5.0 / (0.80 * 24.0), abs_tol=1e-5)\nassert math.isclose(_pbuck, 1.25, abs_tol=1e-4)\n_pk, _fuse = worst_case_battery_budget(5.0, 0.5, safety_factor=1.5)\nassert math.isclose(_pk, 5.5, abs_tol=1e-5) and math.isclose(_fuse, 8.25, abs_tol=1e-5)"
   },
@@ -688,8 +740,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Daisy-chain ground bounce: 0.45 V (92.1 ADC counts error!)\nRC cutoff f_c = 159.15 Hz | Ratio at f_c = 70.7% | Ratio at 20 kHz = 0.80%",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test ground_bounce_adc_error at 0A stall and on 3.3V ADC reference rail",
-      "Test rc_lowpass_response at DC (0 Hz -> 1.0 gain), cutoff f_c (0.7071 gain), and high-frequency stopband"
+      "Test ground_bounce_adc_error at 0A stall",
+      "Test on 3.3V ADC reference rail",
+      "Test rc_lowpass_response at DC (0 Hz -> 1.0 gain)",
+      "Edge case \u2014 Test cutoff f_c (0.7071 gain) and high-frequency stopband"
     ],
     "instructorTests": "import math\nassert ground_bounce_adc_error(0.0, 0.2) == (0.0, 0.0)\n_vb, _adc = ground_bounce_adc_error(2.0, 0.25, v_ref=3.3)\nassert math.isclose(_vb, 0.5, abs_tol=1e-5) and math.isclose(_adc, (0.5 / 3.3) * 1023.0, abs_tol=1e-3)\n_fc, _r0 = rc_lowpass_response(2000.0, 0.5e-6, 0.0)\n_, _rfc = rc_lowpass_response(2000.0, 0.5e-6, _fc)\nassert math.isclose(_fc, 159.15494, abs_tol=1e-2) and math.isclose(_r0, 1.0, abs_tol=1e-6)\nassert math.isclose(_rfc, 1.0 / math.sqrt(2.0), abs_tol=1e-3)"
   },
@@ -713,8 +767,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "theta1=  0.0 deg -> x=+0.250 m, y=+0.000 m (radius=0.250 m)\ntheta1= 60.0 deg -> x=+0.125 m, y=+0.217 m (radius=0.250 m)\ntheta1= 90.0 deg -> x=+0.000 m, y=+0.250 m (radius=0.250 m)\ntheta1=180.0 deg -> x=-0.250 m, y=+0.000 m (radius=0.250 m)",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test fk_1link at 0 deg, 90 deg, and -90 deg",
-      "Test verify_circular_workspace invariant r == l1_m on unseen link length and negative/obtuse angles"
+      "Test fk_1link at 0 deg",
+      "Test 90 deg and -90 deg",
+      "Test verify_circular_workspace invariant r == l1_m on unseen link length",
+      "Edge case \u2014 Test negative/obtuse angles"
     ],
     "instructorTests": "import math\n_x0, _y0 = fk_1link(0.4, 0.0)\n_x90, _y90 = fk_1link(0.4, -90.0)\nassert math.isclose(_x0, 0.4, abs_tol=1e-6) and math.isclose(_y0, 0.0, abs_tol=1e-6)\nassert math.isclose(_x90, 0.0, abs_tol=1e-6) and math.isclose(_y90, -0.4, abs_tol=1e-6)\n_res = verify_circular_workspace(0.33, [-45.0, 30.0, 135.0])\nassert len(_res) == 3 and all(math.isclose(item[3], 0.33, abs_tol=1e-6) for item in _res)"
   },
@@ -738,8 +794,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Straight Right (q1=   0, q2=   0) -> elbow=(+0.150, +0.000) m | tip=(+0.300, +0.000) m\nL-Bend Up      (q1=   0, q2=  90) -> elbow=(+0.150, +0.000) m | tip=(+0.150, +0.150) m\nStraight Up    (q1=  90, q2=   0) -> elbow=(+0.000, +0.150) m | tip=(+0.000, +0.300) m\nReach Diagonal (q1=  30, q2=  60) -> elbow=(+0.130, +0.075) m | tip=(+0.130, +0.225) m",
     "outputMatch": "exact",
     "instructorTestSummary": [
-      "fk_2link at the folded-back singularity (0.2 m, 0.2 m, 0\u00b0, 180\u00b0) returns a finite elbow and tip",
-      "fk_2link at an orthogonal bend (0.2 m, 0.1 m, 90\u00b0, -90\u00b0) puts the elbow at (0, 0.2) and the tip at (0.1, 0.2)"
+      "fk_2link at the folded-back singularity (0.2 m, 0.2 m, 0\u00b0, 180\u00b0) returns a finite elbow",
+      "tip",
+      "fk_2link at an orthogonal bend (0.2 m, 0.1 m, 90\u00b0, -90\u00b0) puts the elbow at (0, 0.2)",
+      "Edge case \u2014 the tip at (0.1, 0.2)"
     ],
     "instructorTests": "import math\n_ex, _ey, _tx, _ty = fk_2link(0.2, 0.2, 0.0, 180.0)\nassert math.isclose(_ex, 0.2, abs_tol=1e-6) and math.isclose(_tx, 0.0, abs_tol=1e-6) and math.isclose(_ty, 0.0, abs_tol=1e-6)\n_ex2, _ey2, _tx2, _ty2 = fk_2link(0.2, 0.1, 90.0, -90.0)\nassert math.isclose(_ex2, 0.0, abs_tol=1e-6) and math.isclose(_ey2, 0.2, abs_tol=1e-6)\nassert math.isclose(_tx2, 0.1, abs_tol=1e-6) and math.isclose(_ty2, 0.2, abs_tol=1e-6)"
   },
@@ -763,8 +821,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Target=(0.150, 0.150) m -> IK=(q1= +0.00 deg, q2=+90.00 deg) | FK_err=0.0000 mm\nTarget=(0.130, 0.225) m -> IK=(q1=+30.00 deg, q2=+59.96 deg) | FK_err=0.0000 mm\nTarget=(0.300, 0.000) m -> IK=(q1= +0.00 deg, q2= +0.00 deg) | FK_err=0.0000 mm",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test ik_2link_elbow_down -> fk_2link round-trip accuracy (< 1e-5 m) across unseen quadrant targets",
-      "Verify out-of-reach target (0.50, 0.0) clamps cos(theta2) cleanly without ValueError domain crash"
+      "Test ik_2link_elbow_down -> fk_2link round-trip accuracy (< 1e-5 m)",
+      "unseen quadrant targets",
+      "Verify out-of-reach target (0.50)",
+      "Edge case \u2014 0.0"
     ],
     "instructorTests": "import math\nfor _ux, _uy in [(0.20, 0.05), (0.05, 0.22), (-0.10, 0.18)]:\n    _q1, _q2 = ik_2link_elbow_down(_ux, _uy, 0.15, 0.15)\n    _fx, _fy = fk_2link(0.15, 0.15, _q1, _q2)\n    assert math.hypot(_fx - _ux, _fy - _uy) < 1e-5, f\"IK->FK round-trip failed for ({_ux}, {_uy})\"\n_q1_clamp, _q2_clamp = ik_2link_elbow_down(0.50, 0.0, 0.15, 0.15)\nassert math.isclose(_q1_clamp, 0.0, abs_tol=1e-4) and math.isclose(_q2_clamp, 0.0, abs_tol=1e-4)"
   },
@@ -788,8 +848,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Load inertia I_rot = 0.080 kg*m^2 | Angular accel alpha = 25.0 rad/s^2\n50:1 Gearbox -> tau_out = 2.125 N*m | omega_out = 6.0 rad/s\nReflected load inertia at motor shaft (I_load / N^2) = 0.000032 kg*m^2",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test point_mass_inertia_and_accel on unseen mass/radius/torque inputs",
-      "Test gearmotor_output torque amplification, speed reduction, and 1/N^2 reflected inertia scaling"
+      "Test point_mass_inertia_and_accel",
+      "unseen mass/radius/torque inputs",
+      "Test gearmotor_output torque amplification",
+      "Edge case \u2014 Test speed reduction and 1/N^2 reflected inertia scaling"
     ],
     "instructorTests": "import math\n_i, _a = point_mass_inertia_and_accel(2.0, 0.5, 3.0)\nassert math.isclose(_i, 0.5, abs_tol=1e-6) and math.isclose(_a, 6.0, abs_tol=1e-6)\n_to, _wo, _ir = gearmotor_output(0.10, 200.0, 0.5, gear_ratio_n=10.0, eff=0.90)\nassert math.isclose(_to, 0.90, abs_tol=1e-6) and math.isclose(_wo, 20.0, abs_tol=1e-6) and math.isclose(_ir, 0.005, abs_tol=1e-7)"
   },
@@ -813,8 +875,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "GT2 20T->60T ratio = 3.0:1 | Driven pitch radius = 19.10 mm | Belt pull = 78.5 N\nCAD 608 bearing bore = 22.10 mm | CAD M3 clearance hole = 3.20 mm",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test gt2_belt_drive ratio, driven pitch radius, and belt tension on 16T->64T pulley pair",
-      "Test cad_hole_diameters_mm press-fit (+0.10 mm) and clearance (+0.20 mm) allowances"
+      "Test gt2_belt_drive ratio, driven pitch radius",
+      "Test belt tension on 16T->64T pulley pair",
+      "Test cad_hole_diameters_mm press-fit (+0.10 mm)",
+      "Edge case \u2014 Test clearance (+0.20 mm) allowances"
     ],
     "instructorTests": "import math\n_rat, _rmm, _fb = gt2_belt_drive(16, 64, tau_out_nm=2.0, pitch_mm=2.0)\n_exp_r = (64 * 2.0) / (2.0 * math.pi)\nassert math.isclose(_rat, 4.0, abs_tol=1e-6) and math.isclose(_rmm, _exp_r, abs_tol=1e-4)\nassert math.isclose(_fb, 2.0 / (_exp_r / 1000.0), abs_tol=1e-3)\n_bore, _hole = cad_hole_diameters_mm(19.0, 4.0)\nassert math.isclose(_bore, 19.10, abs_tol=1e-5) and math.isclose(_hole, 4.20, abs_tol=1e-5)"
   },
@@ -838,8 +902,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Quadrature 4x output CPR: 20000 counts/rev | Resolution: 0.0180 deg/count\nAS5600 raw=   0 ->    0.0 deg (0.0000 rad)\nAS5600 raw=1024 ->   90.0 deg (1.5708 rad)\nAS5600 raw=2048 ->  180.0 deg (3.1416 rad)\nAS5600 raw=3072 ->  270.0 deg (4.7124 rad)",
     "outputMatch": "exact",
     "instructorTestSummary": [
-      "Test quadrature_resolution 4x decoding and angular resolution on 256-line disk with 20:1 gearbox",
-      "Test as5600_to_angle at 0, 512 (45 deg), and 4096 (360 deg) counts"
+      "Test quadrature_resolution 4x decoding",
+      "Test angular resolution on 256-line disk with 20:1 gearbox",
+      "Test as5600_to_angle at 0, 512 (45 deg)",
+      "Edge case \u2014 Test 4096 (360 deg) counts"
     ],
     "instructorTests": "import math\n_cpr, _deg = quadrature_resolution(256, 20)\nassert _cpr == 20480 and math.isclose(_deg, 360.0 / 20480.0, abs_tol=1e-6)\n_d512, _r512 = as5600_to_angle(512)\nassert math.isclose(_d512, 45.0, abs_tol=1e-4) and math.isclose(_r512, math.pi / 4.0, abs_tol=1e-5)"
   },
@@ -863,8 +929,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Mech= 0.0000 deg (Np=7) -> Elec=  0.0 deg\nMech=10.0000 deg (Np=7) -> Elec= 70.0 deg\nMech=25.7143 deg (Np=7) -> Elec=180.0 deg\nAt theta_e=0.0 rad (vq=6.0 V): va=+0.00 V, vb=+5.20 V, vc=-5.20 V (sum=+0.00 V)",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test mech_to_elec_deg modulo-360 wraparound for 11-pole-pair and 4-pole-pair rotors",
-      "Test three_phase_voltages balanced sum (va + vb + vc == 0) across multiple electrical angles"
+      "Test mech_to_elec_deg modulo-360 wraparound for 11-pole-pair",
+      "Test 4-pole-pair rotors",
+      "Test three_phase_voltages balanced sum (va + vb + vc == 0)",
+      "Edge case \u2014 multiple electrical angles"
     ],
     "instructorTests": "import math\nassert math.isclose(mech_to_elec_deg(360.0 / 11.0, 11), 0.0, abs_tol=1e-5)\nassert math.isclose(mech_to_elec_deg(15.0, 4), 60.0, abs_tol=1e-5)\nfor _ang in [0.0, 0.7, 2.1]:\n    _va, _vb, _vc = three_phase_voltages(_ang, 12.0)\n    assert math.isclose(_va + _vb + _vc, 0.0, abs_tol=1e-6), \"Three-phase voltages must sum to zero\""
   },
@@ -888,8 +956,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Tip (c1=1024, c2=-1024): x=0.100 m, y=0.120 m\nDiagnosed Fault 1: inverted_elbow_sign | Diagnosed Fault 2: missing_4x_cpr",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test encoders_to_tip_xy at horizontal stretch (0, 0) and orthogonal bend (1024, -1024)",
-      "Test diagnose_encoder_fk_fault across ok, inverted_elbow_sign, and missing_4x_cpr fault modes"
+      "Test encoders_to_tip_xy at horizontal stretch (0, 0)",
+      "Test orthogonal bend (1024, -1024)",
+      "Test diagnose_encoder_fk_fault across ok",
+      "Edge case \u2014 Test inverted_elbow_sign and missing_4x_cpr fault modes"
     ],
     "instructorTests": "import math\n_x0, _y0 = encoders_to_tip_xy(0, 0, cpr1=4096, cpr2=4096, l1_m=0.15, l2_m=0.10)\nassert math.isclose(_x0, 0.25, abs_tol=1e-6) and math.isclose(_y0, 0.0, abs_tol=1e-6)\nassert diagnose_encoder_fk_fault(1024, -1024, (0.10, 0.12)) == \"ok\"\nassert diagnose_encoder_fk_fault(1024, -1024, (-0.10, 0.12)) == \"inverted_elbow_sign\""
   },
@@ -913,8 +983,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "uint16 prev= 1000, now= 1250 -> delta=250 ticks\nuint16 prev=65530, now=    4 -> delta= 10 ticks\n1 kHz Timer ISR (dt=1.0 ms): measured omega = 20.0 rad/s\nBlocking Serial stall (dt=5.0 ms): measured omega = 100.0 rad/s (5x JITTER SPIKE!) | uint8(300)=44 (wrapped=True)",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test uint16_tick_delta at zero elapsed, normal step, and 16-bit wraparound boundary (65535 -> 0)",
-      "Test velocity_from_step jitter amplification and diagnose_uint8_wrap_bug at 255 vs 256/300 rollover"
+      "Test uint16_tick_delta at zero elapsed, normal step",
+      "Test 16-bit wraparound boundary (65535 -> 0)",
+      "Test velocity_from_step jitter amplification",
+      "Edge case \u2014 Test diagnose_uint8_wrap_bug at 255 vs 256/300 rollover"
     ],
     "instructorTests": "import math\nassert uint16_tick_delta(0, 0) == 0\nassert uint16_tick_delta(0, 65535) == 1\nassert uint16_tick_delta(10, 65526) == 20\nassert math.isclose(velocity_from_step(10.0, 0.002, assumed_dt_s=0.001), 20.0, abs_tol=1e-6)\nassert diagnose_uint8_wrap_bug(255) == (255, False)\nassert diagnose_uint8_wrap_bug(256) == (0, True)\nassert diagnose_uint8_wrap_bug(300) == (44, True)"
   },
@@ -938,8 +1010,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Frame size: 10 bytes | CRC8=0x2B | Clean valid: True | tick=1000, enc=2048, vel=3.25 rad/s\nPaired 2-bit flip: XOR fooled=True | CRC-8 valid=False\n1 kHz 8N1 budget: 10B=100000 bps (115.2k ok=True) | 20B=200000 bps (115.2k ok=False, 500k ok=True)",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Verify crc8_ccitt standard check value (b'123456789' -> 0xF4) and 2-bit burst detection over xor_checksum",
-      "Test pack_telemetry_10b / unpack_and_verify_10b on uint16 + signed float payloads and uart_bandwidth_ok 80% ceiling"
+      "Verify crc8_ccitt standard check value (b'123456789' -> 0xF4)",
+      "Verify 2-bit burst detection over xor_checksum",
+      "Test pack_telemetry_10b / unpack_and_verify_10b on uint16 + signed float payloads",
+      "Edge case \u2014 Test uart_bandwidth_ok 80% ceiling"
     ],
     "instructorTests": "import math\nassert crc8_ccitt(b\"123456789\") == 0xF4, f\"Standard CRC-8-CCITT of b'123456789' must be 0xF4, got {hex(crc8_ccitt(b'123456789'))}\"\n_f = pack_telemetry_10b(999, 4095, -3.5)\nassert len(_f) == 10\n_ok, _t, _e, _v = unpack_and_verify_10b(_f)\nassert _ok and _t == 999 and _e == 4095 and math.isclose(_v, -3.5, abs_tol=1e-5)\n_bad = bytearray(_f); _bad[2] ^= 0x01\nassert unpack_and_verify_10b(bytes(_bad))[0] is False\nassert uart_bandwidth_ok(25, 1000, 250000) == (250000, False)\nassert uart_bandwidth_ok(25, 1000, 500000) == (250000, True)"
   },
@@ -963,8 +1037,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "After copy call: count=0 (pass_by_value_copy_bug)\nAfter pointer call: count=1024, pos=1.5708 rad, vel=157.08 rad/s (updated_in_place_ok)",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test make_joint_box and update_joint_in_place mutation vs update_joint_copy_bug pass-by-value behavior",
-      "Test diagnose_struct_update_bug detection of pass_by_value_copy_bug vs updated_in_place_ok"
+      "Test make_joint_box",
+      "Test update_joint_in_place mutation vs update_joint_copy_bug pass-by-value behavior",
+      "Test diagnose_struct_update_bug detection of",
+      "Edge case \u2014 pass_by_value_copy_bug vs updated_in_place_ok"
     ],
     "instructorTests": "import math\n_jb = make_joint_box(\"elbow\", cpr=4096)\nassert _jb[\"enc_count\"] == 0 and _jb[\"pos_rad\"] == 0.0\nupdate_joint_in_place(_jb, 2048, 0.020)\nassert _jb[\"enc_count\"] == 2048 and math.isclose(_jb[\"pos_rad\"], math.pi, abs_tol=1e-6)\nassert diagnose_struct_update_bug(0, 0, 512) == \"pass_by_value_copy_bug\"\nassert diagnose_struct_update_bug(0, 512, 512) == \"updated_in_place_ok\""
   },
@@ -988,8 +1064,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Pure PD (Ki=0): final q=0.850 rad (gravity sag=0.150 rad)\nUnclamped PID:  final q=1.000 rad | Overshoot=0.372 rad (WINDUP!)\nAnti-windup PID: final q=1.000 rad | Overshoot=0.047 rad (CLEAN!)",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test sim_pid_arm steady-state gravity sag when ki=0.0",
-      "Verify anti_windup=True drastically reduces integral windup overshoot on unseen ki=15.0 gain"
+      "Test sim_pid_arm",
+      "steady-state gravity sag when ki=0.0",
+      "Verify anti_windup=True drastically reduces integral windup overshoot",
+      "Edge case \u2014 unseen ki=15.0 gain"
     ],
     "instructorTests": "import math\n_q0, _ = sim_pid_arm(4.0, 0.0, 0.4, False)\n_q_wu, _os_wu = sim_pid_arm(4.0, 15.0, 0.4, False)\n_q_aw, _os_aw = sim_pid_arm(4.0, 15.0, 0.4, True)\nassert _q0 < 0.90, \"Pure PD (ki=0) must exhibit gravity sag under constant gravity torque\"\nassert _os_wu > 0.25 and _os_aw < _os_wu * 0.35 and math.isclose(_q_aw, 1.0, abs_tol=0.02)"
   },
@@ -1013,8 +1091,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Accel tilt at (ay=0, az=9.81): 0.000 rad | at (ay=az): 0.7854 rad\nAfter 10.0 s with +0.05 rad/s gyro bias: Gyro-only=0.500 rad | Complementary=0.023 rad (tau_c=0.490 s)",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test accel_tilt_rad at 0 deg, -90 deg, and +45 deg",
-      "Test run_complementary_imu drift rejection with unseen gyro_bias=0.10 rad/s and alpha=0.95"
+      "Test accel_tilt_rad at 0 deg",
+      "Test -90 deg and +45 deg",
+      "Test run_complementary_imu drift rejection with unseen gyro_bias=0.10 rad/s",
+      "Edge case \u2014 Test alpha=0.95"
     ],
     "instructorTests": "import math\nassert math.isclose(accel_tilt_rad(-9.81, 0.0), -math.pi / 2.0, abs_tol=1e-4)\nassert math.isclose(accel_tilt_rad(5.0, 5.0), math.pi / 4.0, abs_tol=1e-4)\n_g, _c = run_complementary_imu(steps=500, dt=0.01, gyro_bias=0.10, alpha=0.95)\nassert math.isclose(_g, 0.50, abs_tol=1e-3) and abs(_c) < 0.03"
   },
@@ -1038,8 +1118,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Cubic t=0.0 s -> q_d=0.000 rad | dq_d=0.000 rad/s\nCubic t=0.5 s -> q_d=0.600 rad | dq_d=1.800 rad/s\nCubic t=1.0 s -> q_d=1.200 rad | dq_d=0.000 rad/s\nCompliant hold at horizontal q=0.0 rad (e=0): tau_cmd=0.9810 N*m (exact gravity balance!)",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test cubic_trajectory boundary conditions at t=0, t=T/2, t=T, and out-of-range t>T clamping",
-      "Test compliant_gravity_command PD + gravity torque at vertical (pi/2) and displaced postures"
+      "Test cubic_trajectory boundary conditions at t=0",
+      "Test t=T/2, t=T and out-of-range t>T clamping",
+      "Test compliant_gravity_command PD + gravity torque at vertical (pi/2)",
+      "Edge case \u2014 Test displaced postures"
     ],
     "instructorTests": "import math\nassert cubic_trajectory(0.2, 1.4, 2.0, 0.0) == (0.2, 0.0)\n_qm, _dqm = cubic_trajectory(0.0, 2.0, 2.0, 1.0)\nassert math.isclose(_qm, 1.0, abs_tol=1e-5) and math.isclose(_dqm, 1.5, abs_tol=1e-5)\nassert cubic_trajectory(0.2, 1.4, 2.0, 5.0) == (1.4, 0.0)\n_tau_vert = compliant_gravity_command(math.pi / 2.0, 0.0, math.pi / 2.0, 0.0, 4.0, 0.5, 1.0, 0.25)\nassert math.isclose(_tau_vert, 0.0, abs_tol=1e-5)"
   },
@@ -1063,8 +1145,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Bring-up check 1 (+u -> +dtheta): PASS_READY_FOR_CLOSED_LOOP\nBring-up check 2 (+u -> -dtheta): ABORT_INVERTED_ENCODER_SIGN\nSine-Sweep SysID -> b_hat=0.0500 N*m*s/rad | J_hat=0.0200 kg*m^2",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test verify_bringup_safety across all 3 safety gates (inverted encoder, rail/current fault, ready)",
-      "Test identify_b_and_j parameter recovery on synthetic plant (b=0.08, J=0.04)"
+      "Test verify_bringup_safety across all 3 safety gates (inverted encoder)",
+      "Test verify_bringup_safety across all 3 safety gates: rail/current fault, ready",
+      "Test identify_b_and_j parameter recovery on synthetic plant (b=0.08)",
+      "Edge case \u2014 J=0.04"
     ],
     "instructorTests": "import math\nassert verify_bringup_safety(1200.0, 0.2, 0.1, -0.05) == \"ABORT_INVERTED_ENCODER_SIGN\"\nassert verify_bringup_safety(50.0, 0.2, 0.1, 0.05) == \"ABORT_RAIL_OR_CURRENT_LIMIT\"\nassert verify_bringup_safety(1200.0, 0.8, 0.1, 0.05) == \"ABORT_RAIL_OR_CURRENT_LIMIT\"\nassert verify_bringup_safety(500.0, 0.3, -0.1, -0.05) == \"PASS_READY_FOR_CLOSED_LOOP\"\n_b_true, _j_true = 0.08, 0.04\n_w_low = 0.5 / _b_true\n_w_high = 0.5 / math.hypot(_b_true, 2.0 * math.pi * 4.0 * _j_true)\n_bh, _jh = identify_b_and_j(0.5, 0.02, _w_low, 4.0, _w_high)\nassert math.isclose(_bh, _b_true, abs_tol=1e-4) and math.isclose(_jh, _j_true, abs_tol=1e-4)"
   },
@@ -1088,8 +1172,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "1 kHz 2-DOF plant (1000 ticks, disturbance at 0.4-0.6 s): IK->FK err=0.0000 mm | Dynamic tip err max=2.40 mm, RMS=0.91 mm\nHorizontal 2-link gravity FF (q1=0, q2=0): tau_g1=0.3188 N*m | tau_g2=0.0736 N*m\n20-byte CRC-8 frame @ 1 kHz (200 kbit/s 8N1): CRC8=0xB2 valid=True | Dropped @115.2k=412, @500k=0\nZero-offset repair (q_true=0.30 rad): tip err 12.00 mm -> 0.0000 mm\nCPR repair (q_true=0.30 rad, 4x scale): tip err 174.0 mm -> 0.0000 mm\nAnti-windup repair: overshoot 37.2% -> 4.7%\nGravity-sign repair: tip err 31.8 mm -> 0.0000 mm",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Test fk_2link / ik_2link round-trip on unseen target (0.12, 0.08), figure8_target from spec, and gravity_ff_2link at vertical posture",
-      "Test diagnose_capstone_fault across all 4 R4 broken versions, infer_encoder_scale on an unfamiliar fifth unit (1.5x, and a constant offset that must not read as a scale), all four repair functions restoring the true tip or cutting overshoot, pack_boss_telemetry 20-byte CRC-8 integrity, and simulate_uart_tx bandwidth drops"
+      "Test fk_2link / ik_2link round-trip on unseen target (0.12, 0.08)",
+      "Test figure8_target from spec and gravity_ff_2link at vertical posture",
+      "Test diagnose_capstone_fault across all 4 R4 broken versions, infer_encoder_scale on an unfamiliar fifth unit (1.5x and a constant offset that must not read as a scale)",
+      "Edge case \u2014 Test all four repair functions restoring the true tip or cutting overshoot, pack_boss_telemetry 20-byte CRC-8 integrity and simulate_uart_tx bandwidth drops"
     ],
     "instructorTests": "import math\n_q1u, _q2u = ik_2link(0.12, 0.08)\n_x1u, _y1u = fk_2link(_q1u, _q2u)\nassert math.hypot(_x1u - 0.12, _y1u - 0.08) < 1e-6\n_fx, _fy = figure8_target(0.25, x0=0.12, y0=0.0, ax=0.03, ay=0.04, freq_hz=0.5)\nassert math.isclose(_fx, 0.12 + 0.03 * math.sin(math.pi / 4.0), abs_tol=1e-6)\n_tg1, _tg2 = gravity_ff_2link(math.pi / 2.0, 0.0)\nassert abs(_tg1) < 1e-6 and abs(_tg2) < 1e-6\nassert diagnose_capstone_fault(-0.22, 1.0, 4.0) == \"gravity_ff_sign_inverted\"\nassert diagnose_capstone_fault(-0.01, 85.0, 4.0) == \"wrong_encoder_cpr\"\nassert diagnose_capstone_fault(-0.01, 12.0, 4.0) == \"encoder_zero_offset\"\nassert diagnose_capstone_fault(-0.01, 1.0, 37.2) == \"missing_anti_windup\"\nassert diagnose_capstone_fault(-0.01, 1.0, 4.0) == \"nominal_ok\"\nassert math.isclose(infer_encoder_scale(0.305, 0.4575), 1.5, abs_tol=1e-9)\nassert math.isclose(infer_encoder_scale(0.305, 1.22), 4.0, abs_tol=1e-6)\nassert math.isclose(infer_encoder_scale(0.30, 0.30), 1.0, abs_tol=1e-12)\nassert not math.isclose(infer_encoder_scale(0.10, 0.16), infer_encoder_scale(1.00, 1.06), abs_tol=1e-6)\nassert math.isclose(repair_encoder_cpr(0.4575, infer_encoder_scale(0.305, 0.4575)), 0.305, abs_tol=1e-12)\n_q_true = 0.30\n_offset_rad = 0.06\n_x_true, _y_true = fk_2link(_q_true, 0.0)\n_x_bad, _y_bad = fk_2link(_q_true + _offset_rad, 0.0)\nassert math.isclose(math.hypot(_x_bad - _x_true, _y_bad - _y_true) * 1000.0, 12.0, abs_tol=0.01)\n_q_fixed = repair_encoder_offset(_q_true + _offset_rad, _offset_rad)\n_x_fixed, _y_fixed = fk_2link(_q_fixed, 0.0)\nassert math.hypot(_x_fixed - _x_true, _y_fixed - _y_true) * 1000.0 < 1e-6\nassert math.isclose(repair_encoder_cpr(1.2, 4.0), 0.30, abs_tol=1e-12)\nassert math.isclose(repair_encoder_cpr(-0.8, 4.0), -0.20, abs_tol=1e-12)\nassert math.isclose(repair_integral_update(0.10, 0.15, 1.0, 1.30, 1.20), 0.10, abs_tol=1e-12)\nassert math.isclose(repair_integral_update(0.10, 0.15, -1.0, -1.30, 1.20), 0.10, abs_tol=1e-12)\nassert math.isclose(repair_integral_update(0.10, 0.15, 1.0, 0.90, 1.20), 0.15, abs_tol=1e-12)\nassert math.isclose(repair_integral_update(0.10, 0.15, 1.0, -1.30, 1.20), 0.15, abs_tol=1e-12)\nassert math.isclose(repair_gravity_sign(0.40), -0.40, abs_tol=1e-12)\nassert math.isclose(repair_gravity_sign(-0.40), 0.40, abs_tol=1e-12)\n_cpr_true = 0.30\n_cpr_scale = 4.0\n_cpr_x, _cpr_y = fk_2link(_cpr_true, 0.0)\n_cpr_bad_x, _cpr_bad_y = fk_2link(_cpr_true * _cpr_scale, 0.0)\nassert math.hypot(_cpr_bad_x - _cpr_x, _cpr_bad_y - _cpr_y) * 1000.0 > 100.0\n_cpr_fixed_x, _cpr_fixed_y = fk_2link(repair_encoder_cpr(_cpr_true * _cpr_scale, _cpr_scale), 0.0)\nassert math.hypot(_cpr_fixed_x - _cpr_x, _cpr_fixed_y - _cpr_y) * 1000.0 < 1e-6\ndef _sim(update):\n    _J, _b, _tg, _umax, _dt = 0.02, 0.05, 0.60, 1.20, 0.001\n    _q = _dq = _i = _peak = 0.0\n    for _ in range(3000):\n        _e = 1.0 - _q\n        _ic = _i + 12.0 * _e * _dt\n        _uraw = 4.0 * _e - 0.4 * _dq + _ic\n        _i = update(_i, _ic, _e, _uraw, _umax)\n        _u = max(-_umax, min(_umax, 4.0 * _e - 0.4 * _dq + _i))\n        _ddq = (_u - _b * _dq - _tg) / _J\n        _dq += _ddq * _dt\n        _q += _dq * _dt\n        _peak = max(_peak, _q)\n    return max(0.0, _peak - 1.0)\ndef _no_repair(i_term, i_candidate, e, u_raw, u_max):\n    return i_candidate\nassert math.isclose(100.0 * _sim(_no_repair), 37.2, abs_tol=0.1)\nassert 100.0 * _sim(repair_integral_update) < 5.0\n_tg1, _ = gravity_ff_2link(0.0, 0.0)\n_grav_u_bad = -_tg1\n_grav_u_fixed = repair_gravity_sign(_grav_u_bad)\n_grav_q_bad = (_grav_u_bad - _tg1) / 4.0\n_grav_q_fixed = (_grav_u_fixed - _tg1) / 4.0\n_grav_x0, _grav_y0 = fk_2link(0.0, 0.0)\n_grav_x_bad, _grav_y_bad = fk_2link(_grav_q_bad, 0.0)\n_grav_x_fixed, _grav_y_fixed = fk_2link(_grav_q_fixed, 0.0)\nassert math.hypot(_grav_x_bad - _grav_x0, _grav_y_bad - _grav_y0) * 1000.0 > 20.0\nassert math.hypot(_grav_x_fixed - _grav_x0, _grav_y_fixed - _grav_y0) * 1000.0 < 1e-6\n_pkt = pack_boss_telemetry(42, 0.1, -0.2, 0.3, -0.4)\nassert len(_pkt) == 20 and _pkt[0] == 0xAA and crc8_ccitt(_pkt[:-1]) == _pkt[-1]\nassert simulate_uart_tx(100, 20, 0.001, 115200) > 0\nassert simulate_uart_tx(100, 20, 0.001, 500000) == 0\nassert 0.5 < max_dyn_err_mm < 5.0 and rms_dyn_err_mm < 2.0"
   },
@@ -1111,8 +1197,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 4 checks - the position update and its step count, the battery sag over range(n), the Skip test's accumulator and clamp, the caught exception's name and the three-decimal format",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 00-foundations.T1.00a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert abs(step_position(0.0, 0.5, 0.25) - 0.125) < 1e-12, \"one 0.25 s tick\"\n    assert abs(step_position(0.25, 0.5, 0.25) - 0.375) < 1e-12, \"right-hand side first\"\n    assert steps_to_target(0.0, 0.5, 0.25, 1.0) == 8, \"eight ticks to 1.0 m\"\n    checks += 1\n\n    assert abs(battery_voltage_after_steps(12.0, 0.15, 10) - 10.5) < 1e-6, \"ten drops\"\n    assert abs(battery_voltage_after_steps(12.0, 0.15, 0) - 12.0) < 1e-12, \"range(0)\"\n    checks += 1\n\n    assert loop_total(4) == 12, \"0 + 2 + 4 + 6\"\n    assert loop_total(0) == 0, \"an empty range\"\n    assert clamp_pwm(1.35, 1.0) == 1.0, \"the skip test's clamp\"\n    assert clamp_pwm(0.40, 1.0) == 0.40, \"inside the ceiling\"\n    checks += 1\n\n    assert safe_divide(1.0, 0.0) == (None, \"ZeroDivisionError\"), \"the caught exception's name\"\n    assert safe_divide(1.0, 0.25) == (4.0, \"\"), \"a clean division\"\n    assert format_position(1.0) == \"1.000\", \"three decimals\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the position update and its step count, the battery sag \"\n          \"over range(n), the Skip test's accumulator and clamp, the caught exception's name and \"\n          \"the three-decimal format\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1134,8 +1222,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 4 checks - the zero-indexed timestamp grid, the dictionary-calibrated trace with its mean and peak-to-peak span, the zip()-paired error list with a squared RMS, and the Git command lookup",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 00-foundations.T1.00b.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, constant time,\none PASS line.\n\"\"\"\n\n\ndef _selfcheck():\n    checks = 0\n\n    window = timestamps(0.0, 0.1, 5)\n    assert len(window) == 5, \"five samples in, five timestamps out\"\n    assert abs(window[-1] - 0.4) < 1e-12, \"the last index is n - 1, not n\"\n    assert abs(timestamps(0.0, 0.002, 501)[500] - 1.0) < 1e-12, \"2 ms grid, sample 500\"\n    checks += 1\n\n    trace = scaled_readings([0.0, 0.1, 0.2, 0.3, 0.4], {\"slope\": 3.0, \"offset\": 0.5})\n    assert abs(trace[0] - 0.5) < 1e-12 and abs(trace[-1] - 1.7) < 1e-12, \"the worked trace\"\n    assert abs(mean_of(trace) - 1.10) < 1e-12, \"worked mean\"\n    assert abs(peak_to_peak(trace) - 1.20) < 1e-12, \"worked span, max minus min\"\n    checks += 1\n\n    err = errors([1.0, 2.0, 3.0, 4.0], [0.9, 2.1, 2.8, 4.2])\n    assert abs(sum(err)) < 1e-12, \"the signed errors cancel to zero\"\n    assert abs(rmse([1.0, 2.0, 3.0, 4.0], [0.9, 2.1, 2.8, 4.2]) - 0.1581139) < 1e-6, \"sqrt(0.025)\"\n    checks += 1\n\n    assert git_command(\"which lines changed\") == \"git diff\", \"the Skip test's answer\"\n    assert git_command(\"which files changed\") == \"git status\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the zero-indexed timestamp grid, the dictionary-calibrated \"\n          \"trace with its mean and peak-to-peak span, the zip()-paired error list with a squared \"\n          \"RMS, and the Git command lookup\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1157,8 +1247,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 5 checks - the RPM-to-rad/s factor, the SI prefixes, the trace's IR drop and I^2 R loss, the RC time constant, shaft power and the loop period in microseconds",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 00-foundations.T1.00c.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    # 2400 RPM is 80*pi rad/s; 60 RPM is one turn per second.\n    assert math.isclose(rpm_to_rad_s(2400.0), 80.0 * math.pi, rel_tol=1e-12), \"RPM to rad/s\"\n    assert math.isclose(rpm_to_rad_s(60.0), 2.0 * math.pi, rel_tol=1e-12), \"one turn per second\"\n    checks += 1\n\n    # 450 mN*m is 0.45 N*m; 100 nF is 1e-7 F.\n    assert math.isclose(prefix_scale(450.0, \"m\"), 0.45, rel_tol=1e-12), \"milli\"\n    assert math.isclose(prefix_scale(100.0, \"n\"), 1e-7, rel_tol=1e-12), \"nano\"\n    assert math.isclose(prefix_scale(10.0, \"k\"), 10e3, rel_tol=1e-12), \"kilo\"\n    checks += 1\n\n    # 15 A through 12 mOhm drops 0.18 V and burns 2.7 W - the square is the difference.\n    assert math.isclose(trace_drop_v(15.0, 12e-3), 0.18, rel_tol=1e-12), \"V = IR\"\n    assert math.isclose(trace_loss_w(15.0, 12e-3), 2.70, rel_tol=1e-12), \"P = I^2 R\"\n    checks += 1\n\n    # 10 kOhm * 100 nF is 1 ms, and 0.45 N*m at 80*pi rad/s is 113.0973355 W.\n    assert math.isclose(rc_time_constant_s(10e3, 100e-9), 1.0e-3, rel_tol=1e-12), \"tau_RC\"\n    assert math.isclose(shaft_power_w(0.45, rpm_to_rad_s(2400.0)), 113.0973355, rel_tol=1e-9), \"P=tw\"\n    checks += 1\n\n    # A 25 kHz FOC loop ticks every 40 us.\n    assert math.isclose(loop_period_us(25_000.0), 40.0, rel_tol=1e-12), \"T_s in us\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the RPM-to-rad/s factor, the SI prefixes, the trace's IR drop \"\n          \"and I^2 R loss, the RC time constant, shaft power and the loop period in microseconds\"\n          % checks)\n\n\n_selfcheck()\n"
   },
@@ -1180,8 +1272,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 5 checks - the calibration line and its inverse, the two unit-circle projections, the Euclidean norm, the four-quadrant heading and the radian conversion",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 00-foundations.T1.00d.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert abs(sensor_voltage(0.20, 5.0, 1.65) - 2.65) < 1e-12, \"calibration line\"\n    assert abs(sensor_current(0.20, 1.70, 0.50) - 6.0) < 1e-9, \"inverse line\"\n    checks += 1\n\n    x, y = polar_to_cartesian(0.40, degrees_to_radians(135.0))\n    assert abs(x + 0.282842712474619) < 1e-12, \"cosine projection\"\n    assert abs(y - 0.282842712474619) < 1e-12, \"sine projection\"\n    checks += 1\n\n    assert abs(link_length(-0.30, -0.40) - 0.50) < 1e-12, \"Euclidean norm\"\n    checks += 1\n\n    assert abs(heading_deg(-0.30, -0.40) + 126.86989764584402) < 1e-9, \"quadrant III heading\"\n    assert abs(heading_deg(0.0, 0.25) - 90.0) < 1e-12, \"straight up\"\n    checks += 1\n\n    assert abs(degrees_to_radians(180.0) - 3.141592653589793) < 1e-12, \"half a turn is pi\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the calibration line and its inverse, the two unit-circle \"\n          \"projections, the Euclidean norm, the four-quadrant heading and the radian conversion\"\n          % checks)\n\n\n_selfcheck()\n"
   },
@@ -1203,8 +1297,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 6 checks - the spring force, the symplectic and damped steps, the two energy stores, the peak speed, the lever torque and the angular acceleration",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 00-foundations.T1.00e.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert abs(spring_force(50.0, 0.10) + 5.0) < 1e-12, \"Hooke's law pulls back\"\n    assert abs(acceleration(-5.0, 2.0) + 2.5) < 1e-15, \"Newton's second law\"\n    checks += 1\n\n    # The Skip test's single 10 ms step: v1 = -0.2 m/s, x1 = 0.198 m.\n    x1, v1 = euler_step(0.20, 0.0, 100.0, 0.0, 1.0, 0.01)\n    assert abs(v1 + 0.2) < 1e-12 and abs(x1 - 0.198) < 1e-12, \"velocity first, then position\"\n    # The exercised damped run: 2 s at b = 4 leaves 0.0046 J of the 0.25 J release energy.\n    x, v = 0.10, 0.0\n    for _ in range(4000):\n        x, v = euler_step(x, v, 50.0, 4.0, 2.0, 0.0005)\n    e_final = mechanical_energy(2.0, v, 50.0, x)\n    assert e_final < 0.0125, \"over 5% of the energy survived: check the -b*v sign\"\n    checks += 1\n\n    assert abs(mechanical_energy(2.0, 0.0, 50.0, 0.10) - 0.25) < 1e-15, \"release energy\"\n    assert abs(mechanical_energy(1.0, 2.0, 40.0, 0.10) - 2.20) < 1e-12, \"both stores add\"\n    checks += 1\n\n    assert abs(peak_speed(0.25, 2.0) - 0.5) < 1e-15, \"peak speed 0.5 m/s\"\n    checks += 1\n\n    assert abs(torque(2.0 * 9.81, 0.30, math.pi / 2.0) - 5.886) < 1e-9, \"holding torque\"\n    assert abs(torque(10.0, 0.40, math.radians(30.0)) - 2.0) < 1e-12, \"sin, not cos\"\n    checks += 1\n\n    assert abs(angular_acceleration(1.5, 0.05) - 30.0) < 1e-9, \"tau = J alpha\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the spring force, the symplectic and damped steps, the two \"\n          \"energy stores, the peak speed, the lever torque and the angular acceleration\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1226,8 +1322,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 4 checks - encoder velocity, wrap, running integral, angle round trip",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 00-foundations.T2.00a.\n\nAppended verbatim to the workbench entry, after the learner's code, so it must be stdlib-only\n(`math` + `mechalab_plant`). Coarser than `test_behavior.py`: one PASS line, because the browser\ngrades on stdout. The full suite in CI is the authority.\n\"\"\"\n\nimport math\n\nimport mechalab_plant as plant\n\n\ndef _selfcheck():\n    checks = 0\n    one_count = 2.0 * math.pi / plant.ENCODER_CPR\n\n    counts = list(range(6))                       # exactly one count per 1 ms sample\n    expected = one_count / 1e-3\n    velocity = joint_velocity(counts, 1e-3)\n    assert velocity[0] == 0.0, \"first velocity has no previous sample\"\n    for value in velocity[1:]:\n        assert abs(value - expected) < 1e-6, \"one count per sample: %.4f rad/s\" % value\n    slow = joint_velocity(counts, 1e-2)\n    assert abs(slow[1] * 10.0 - velocity[1]) < 1e-6, \"velocity does not divide by dt\"\n    checks += 1\n\n    wrapped = joint_velocity([4094, 4095, 0, 1], 1e-3)\n    for value in wrapped[1:]:\n        assert abs(value - 2.0 * math.pi / 4096 / 1e-3) < 1e-6, \"wrap across the encoder zero\"\n    checks += 1\n\n    integral = running_integral([1.0, 2.0, 3.0], 0.1)\n    assert abs(integral[0] - 0.1) < 1e-12 and abs(integral[-1] - 0.6) < 1e-12, \"running integral\"\n    checks += 1\n\n    trace = encoder_trace_angle(counts, 1e-3)\n    for index, value in enumerate(trace):\n        assert abs(value - plant.counts_to_rad(counts[index])) < one_count + 1e-9, \"angle round trip\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - encoder velocity, wrap, running integral, angle round trip\"\n          % checks)\n\n\n_selfcheck()\n"
   },
@@ -1249,8 +1347,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 6 checks - projection, moment, determinant, basis, refusal, arm payload",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 00-foundations.T2.00b.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only (`math` + the\nplant), one PASS line, because the browser grades on stdout.\n\"\"\"\n\nimport math\n\nimport mechalab_plant as plant\n\n\ndef _selfcheck():\n    checks = 0\n    force = [0.0, -20.0, 15.0]\n    lever = [0.30, 0.40, 0.00]\n\n    assert abs(axial_force(force, lever) + 16.0) < 1e-9, \"worked projection\"\n    assert abs(axial_force(force, [3.0, 4.0, 0.0]) + 16.0) < 1e-9, \"projection must not scale with lever length\"\n    checks += 1\n\n    tau = moment(lever, force)\n    for got, want in zip(tau, [6.0, -4.5, -6.0]):\n        assert abs(got - want) < 1e-9, \"worked moment\"\n    assert abs(dot3(tau, lever)) < 1e-12, \"moment is orthogonal to the lever\"\n    back = cross3(force, lever)\n    for got, want in zip(tau, back):\n        assert abs(got + want) < 1e-12, \"cross product is antisymmetric\"\n    checks += 1\n\n    assert abs(det2([3.0, 1.5], [2.0, 4.0]) - 9.0) < 1e-12, \"determinant\"\n    assert abs(det2([1.0, 2.0], [2.0, 4.0])) < 1e-12, \"collinear basis is singular\"\n    checks += 1\n\n    c1, c2 = coordinates_in_basis([5.0, 3.0], [2.0, 0.0], [1.0, 1.0])\n    assert abs(c1 - 1.0) < 1e-12 and abs(c2 - 3.0) < 1e-12, \"coordinates in a basis\"\n    rebuilt = in_basis([4.0, 2.5], [1.2, -0.4], [0.3, 1.7])\n    for got, want in zip(rebuilt, [4.0, 2.5]):\n        assert abs(got - want) < 1e-12, \"round trip\"\n    checks += 1\n\n    refused = False\n    try:\n        coordinates_in_basis([1.0, 1.0], [1.0, 2.0], [2.0, 4.0])\n    except ValueError:\n        refused = True\n    assert refused, \"a singular basis must raise ValueError, not return inf\"\n    checks += 1\n\n    q = plant.ik(0.08, 0.05)\n    x, y = plant.fk(*q)\n    arm_tau = moment([x, y, 0.0], [0.0, -0.20 * plant.G, 0.0])\n    assert abs(arm_tau[2] + 0.20 * plant.G * x) < 1e-12, \"payload moment about the shoulder\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - projection, moment, determinant, basis, refusal, arm payload\"\n          % checks)\n\n\n_selfcheck()\n"
   },
@@ -1272,8 +1372,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 6 checks - first order, wn/zeta, critical damping, settling, simulation, stability limit",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 00-foundations.T2.00c.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert abs(first_order_response(0.010, 0.010) - (1.0 - math.exp(-1))) < 1e-12, \"63.2% at tau\"\n    assert first_order_response(0.0, 0.02) == 0.0, \"starts at zero\"\n    checks += 1\n\n    p = second_order_params(0.02, 8.0, 0.40)\n    assert abs(p[\"wn\"] - 20.0) < 1e-9, \"wn\"\n    assert abs(p[\"zeta\"] - 0.50) < 1e-9, \"zeta\"\n    assert abs(p[\"wd\"] - 20.0 * math.sqrt(0.75)) < 1e-9, \"wd\"\n    assert abs(p[\"mp\"] - 0.16303) < 1e-5, \"overshoot\"\n    checks += 1\n\n    assert abs(critical_damping(0.02, 8.0) - 0.80) < 1e-12, \"b_crit = 2 sqrt(J k)\"\n    assert second_order_params(0.02, 8.0, 0.80)[\"zeta\"] == 1.0 or \\\n        abs(second_order_params(0.02, 8.0, 0.80)[\"zeta\"] - 1.0) < 1e-12, \"critical is zeta = 1\"\n    checks += 1\n\n    assert abs(settling_time(20.0, 0.7) - 4.0 / 14.0) < 1e-12, \"2% settling time\"\n    refused = False\n    try:\n        settling_time(20.0, 0.0)\n    except ValueError:\n        refused = True\n    assert refused, \"an undamped system never settles - refuse it\"\n    checks += 1\n\n    sim = simulate_step(0.02, 8.0, 0.40, 1e-4, 10000)\n    assert abs(sim[\"mp\"] - p[\"mp\"]) < 0.001, \"simulated overshoot matches the formula\"\n    assert abs(simulate_step(0.02, 8.0, 0.80, 1e-4, 20000)[\"mp\"]) < 1e-6, \"critical damping\"\n    checks += 1\n\n    limit = max_stable_dt(0.02, 8.0)\n    assert abs(limit - 0.1) < 1e-12, \"2 / wn\"\n    assert abs(simulate_step(0.02, 8.0, 0.0, 0.9 * limit, 4000)[\"max_theta\"]) < 10.0, \"stable below the limit\"\n    assert abs(simulate_step(0.02, 8.0, 0.0, 1.5 * limit, 4000)[\"max_theta\"]) > 100.0, \"unstable above it\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - first order, wn/zeta, critical damping, settling, \"\n          \"simulation, stability limit\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1295,8 +1397,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 4 checks - hypotenuse, four quadrants, Euler's formula, phasor sums",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 00-foundations.T2.00d.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    mag, phase = to_polar(3.0 + 4.0j)\n    assert abs(mag - 5.0) < 1e-12, \"magnitude is the hypotenuse\"\n    assert abs(phase - math.atan2(4.0, 3.0)) < 1e-12, \"phase of the first quadrant\"\n    checks += 1\n\n    for real, imag, expected in ((1, 1, 45.0), (-1, 1, 135.0), (-1, -1, -135.0), (1, -1, -45.0)):\n        _m, got = to_polar(complex(real, imag))\n        assert abs(math.degrees(got) - expected) < 1e-9, \"all four quadrants: %s\" % ((real, imag),)\n    checks += 1\n\n    z = to_rect(2.0, math.pi / 3.0)\n    assert abs(z.real - 1.0) < 1e-12 and abs(z.imag - math.sqrt(3.0)) < 1e-12, \"Euler's formula\"\n    assert abs(to_rect(1.0, math.pi).real + 1.0) < 1e-12, \"e^{j pi} = -1\"\n    checks += 1\n\n    total = add_phasors(to_rect(1.0, 0.0), to_rect(1.0, math.pi))\n    assert abs(total) < 1e-12, \"opposite phasors cancel\"\n    _m, _p = to_polar(add_phasors(to_rect(1.0, 0.0), to_rect(1.0, math.pi / 3.0)))\n    assert abs(_m - math.sqrt(3.0)) < 1e-12 and abs(_p - math.pi / 6.0) < 1e-12, \"two at 60 degrees\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - hypotenuse, four quadrants, Euler's formula, phasor sums\"\n          % checks)\n\n\n_selfcheck()\n"
   },
@@ -1318,8 +1422,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 8 checks - companion form, eigenvalues, stability incl. saddle and marginal, Euler, Tustin, unit circle, scalar bilinear map, discrete loop",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 00-foundations.T2.00e.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\n\ndef _selfcheck():\n    checks = 0\n\n    a, b = companion_state_matrices(1.0, 100.0, 4.0)\n    assert a == [[0.0, 1.0], [-100.0, -4.0]], \"companion rows\"\n    assert b == [[0.0], [1.0]], \"input vector\"\n    checks += 1\n\n    l1, l2 = eigvals_2x2(a)\n    assert abs(l1.real + 2.0) < 1e-12 and abs(l2.real + 2.0) < 1e-12, \"real part -2\"\n    assert abs(abs(l1.imag) - 96.0 ** 0.5) < 1e-12, \"imaginary part sqrt(96)\"\n    checks += 1\n\n    assert is_stable(a), \"the worked system is stable\"\n    assert not is_stable([[0.0, 1.0], [100.0, -4.0]]), \"a negative stiffness is not\"\n    assert not is_stable([[-3.0, 0.0], [0.0, 1.0]]), \"a saddle has a negative trace and is unstable\"\n    assert not is_stable([[0.0, 1.0], [-4.0, 0.0]]), \"a marginal pole is not stable\"\n    checks += 1\n\n    ad, bd = discretize_euler(a, b, 0.05)\n    assert abs(ad[1][0] + 5.0) < 1e-12, \"Euler stiffness term\"\n    assert abs(ad[1][1] - 0.8) < 1e-12, \"Euler damping term\"\n    assert abs(bd[1][0] - 0.05) < 1e-12, \"Euler input term\"\n    checks += 1\n\n    at, bt = discretize_tustin(a, b, 0.05)\n    assert abs(at[0][0] - 1.0375 / 1.1625) < 1e-12, \"Tustin (1,1) entry\"\n    assert abs(at[1][0] + 5.0 / 1.1625) < 1e-12, \"Tustin (2,1) entry\"\n    assert abs(at[1][1] - 0.8375 / 1.1625) < 1e-12, \"Tustin (2,2) entry\"\n    assert abs(bt[1][0] - 0.05 / 1.1625) < 1e-12, \"Tustin input term\"\n    checks += 1\n\n    det_tustin = at[0][0] * at[1][1] - at[0][1] * at[1][0]\n    det_euler = ad[0][0] * ad[1][1] - ad[0][1] * ad[1][0]\n    assert det_tustin < 1.0, \"a stable Tustin pole stays inside the unit circle\"\n    assert det_euler > 1.0, \"Euler leaves it at the same step size\"\n    checks += 1\n\n    diag, _ = discretize_tustin([[-1.0, 0.0], [0.0, -2.0]], [[0.0], [0.0]], 1.0)\n    assert abs(diag[0][0] - 1.0 / 3.0) < 1e-12, \"scalar bilinear map (1 + Ts a / 2) / (1 - Ts a / 2)\"\n    assert abs(diag[1][1] - 0.0) < 1e-12, \"a pole at -2 maps to zero at Ts = 1\"\n    checks += 1\n\n    final = simulate_discrete([[1.0, 0.1], [0.0, 0.9]], [[0.0], [0.0]], [0.0, 1.0], 0.0, 5)\n    assert abs(final[1] - 0.9 ** 5) < 1e-12, \"the second state decays as 0.9^k\"\n    assert abs(final[0] + final[1] - 1.0) < 1e-12, \"the sum is invariant under this Ad\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - companion form, eigenvalues, stability incl. saddle and \"\n          \"marginal, Euler, Tustin, unit circle, scalar bilinear map, discrete loop\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1341,8 +1447,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 4 checks - Nyquist at two rates, folding and mirroring, the seam, and the refusal of a non-positive rate",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 00-foundations.T2.00f.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert nyquist_hz(4000.0) == 2000.0, \"Nyquist is half the rate\"\n    assert nyquist_hz(1000.0) == 500.0, \"Nyquist scales with the rate\"\n    checks += 1\n\n    assert abs(alias_hz(3150.0, 4000.0) - 850.0) < 1e-12, \"one fold with a mirror\"\n    assert abs(alias_hz(2700.0, 2000.0) - 700.0) < 1e-12, \"a remainder below Nyquist is untouched\"\n    assert abs(alias_hz(9000.0, 4000.0) - 1000.0) < 1e-12, \"a large tone folds back inside\"\n    checks += 1\n\n    assert abs(alias_hz(100.0, 4000.0) - 100.0) < 1e-12, \"below Nyquist passes through\"\n    assert abs(alias_hz(2000.0, 4000.0) - 2000.0) < 1e-12, \"Nyquist itself is unchanged\"\n    assert abs(alias_hz(3000.0, 4000.0) - 1000.0) < 1e-12, \"the mirror half folds down\"\n    assert abs(alias_hz(1000.0, 4000.0) - alias_hz(3000.0, 4000.0)) < 1e-12, \"the seam is exact\"\n    checks += 1\n\n    for bad in (0.0, -1.0):\n        try:\n            nyquist_hz(bad)\n        except ValueError:\n            pass\n        else:\n            raise AssertionError(\"a non-positive sample rate must be refused\")\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - Nyquist at two rates, folding and mirroring, the seam, \"\n          \"and the refusal of a non-positive rate\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1364,8 +1472,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 7 checks - row dot products, shape refusal, matrices, step order, equilibrium, trace, 4-state drivetrain",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 00-foundations.T2.00g.\n\nAppended verbatim to the workbench entry, after the learner's code, so it must be stdlib-only\n(`math` + `mechalab_plant`). Coarser than `test_behavior.py`: one PASS line, because the browser\ngrades on stdout. The full suite in CI is the authority.\n\"\"\"\n\nimport math\n\nimport mechalab_plant as plant\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert mat_vec([[2.0, -1.0], [0.5, 3.0]], [4.0, 2.0]) == [6.0, 8.0]\n    checks += 1\n\n    try:\n        mat_vec([[1.0, 2.0]], [1.0, 2.0, 3.0])\n    except ValueError:\n        checks += 1\n    else:\n        raise AssertionError(\"a column of the wrong length must be refused\")\n\n    Ad, Bd = state_matrices(1.0, 100.0, 10.0, 0.01)\n    assert abs(Ad[0][1] - 0.01) < 1e-12 and abs(Ad[1][0] + 1.0) < 1e-12, \"Ad\"\n    assert abs(Ad[1][1] - 0.9) < 1e-12 and abs(Bd[1] - 0.01) < 1e-12, \"Bd\"\n    checks += 1\n\n    stepped = one_step(Ad, Bd, [0.10, 0.20], 0.0)\n    assert abs(stepped[0] - 0.102) < 1e-12, \"x uses the OLD velocity\"\n    assert abs(stepped[1] - 0.08) < 1e-12, \"v computed from the OLD x\"\n    checks += 1\n\n    final = simulate(Ad, Bd, [0.10, 0.0], 5.0, 500)\n    assert abs(final[0] - 0.05) < 1e-3 and abs(final[1]) < 1e-4, \"equilibrium is u/k = 0.05 m\"\n    checks += 1\n\n    trace = position_trace(Ad, Bd, [0.10, 0.0], 5.0, 3)\n    assert len(trace) == 4 and abs(trace[0] - 0.10) < 1e-12 and abs(trace[1] - 0.10) < 1e-12\n    checks += 1\n\n    A4, B4 = two_mass_matrices(1.0, 2.0, 50.0, 3.0, 0.001)\n    assert len(A4) == 4 and len(A4[0]) == 4 and len(B4) == 4, \"4x4 drivetrain\"\n    assert abs(B4[0]) < 1e-15 and abs(B4[1] - 0.001) < 1e-15, \"the force enters only v1\"\n    moved = simulate(A4, B4, [0.0, 0.0, 0.0, 0.0], 1.0, 2000)\n    assert moved[2] > 1e-3, \"the coupled load must move\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - row dot products, shape refusal, matrices, step order, \"\n          \"equilibrium, trace, 4-state drivetrain\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1387,8 +1497,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 6 checks - winding impedance, first order, resonance, decade rolloff, decibels, peak location",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 00-foundations.T2.00h.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    z = impedance_rl(3.0, 0.004, 1000.0)\n    assert abs(z) - 5.0 < 1e-9 and abs(phase_deg(z) - 53.13010235415598) < 1e-9, \"winding impedance\"\n    checks += 1\n\n    h = first_order_response(0.01, 100.0)\n    assert abs(abs(h) - 1.0 / math.sqrt(2.0)) < 1e-12, \"cutoff magnitude\"\n    assert abs(phase_deg(h) + 45.0) < 1e-9, \"cutoff phase\"\n    assert abs(magnitude_db(h) + 3.0103) < 1e-4, \"cutoff in dB\"\n    checks += 1\n\n    g = second_order_response(100.0, 0.05, 100.0)\n    assert abs(abs(g) - 10.0) < 1e-9, \"resonance gain\"\n    assert abs(magnitude_db(g) - 20.0) < 1e-9, \"resonance dB\"\n    assert abs(phase_deg(g) + 90.0) < 1e-9, \"resonance phase\"\n    checks += 1\n\n    g10 = second_order_response(100.0, 0.05, 1000.0)\n    assert abs(magnitude_db(g10) + 39.9127) < 1e-3, \"a decade above resonance\"\n    assert abs(phase_deg(g10) + 179.4213) < 1e-3, \"phase a decade above\"\n    checks += 1\n\n    assert abs(magnitude_db(10.0) - 20.0) < 1e-12, \"20 log10, not 10 log10\"\n    assert abs(magnitude_db(0.1) + 20.0) < 1e-12, \"amplitude decibels\"\n    assert abs(phase_deg(-1.0j) + 90.0) < 1e-12, \"degrees at the Bode boundary\"\n    checks += 1\n\n    omega_r, peak = resonance_peak(100.0, 0.2)\n    assert abs(omega_r - 100.0 * math.sqrt(1.0 - 2.0 * 0.04)) < 1e-9, \"peak frequency\"\n    at_peak = abs(second_order_response(100.0, 0.2, omega_r))\n    assert abs(at_peak - peak) < 1e-6, \"the peak is a point on the curve\"\n    assert resonance_peak(100.0, 0.9) == (0.0, 1.0), \"no peak when overdamped enough\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - winding impedance, first order, resonance, decade rolloff, \"\n          \"decibels, peak location\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1410,8 +1522,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 6 checks - warping, pre-warp round trip, normalization, the null, DC gain, and the refusals",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 00-foundations.T2.00i.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    landed = tustin_hz(2.0 * math.pi * 850.0, 4000.0)\n    assert abs(landed - 749.4803) < 1e-3, \"unwarped Tustin lands low\"\n    assert abs(850.0 - landed - 100.5197) < 1e-3, \"the missed hertz\"\n    checks += 1\n\n    wa = prewarp_omega(850.0, 4000.0)\n    assert abs(wa - 6306.6915) < 1e-2, \"pre-warped analog frequency\"\n    assert abs(tustin_hz(wa, 4000.0) - 850.0) < 1e-9, \"round trip lands on target\"\n    checks += 1\n\n    assert abs(prewarp_omega(600.0, 2000.0) - 5505.5277) < 1e-3, \"the exercise's own target\"\n    checks += 1\n\n    b0, b1, b2, a1, a2 = notch_coeffs(850.0, 4000.0, 5.0)\n    alpha = math.sin(2.0 * math.pi * 850.0 / 4000.0) / 10.0\n    assert abs(b0 - 1.0 / (1.0 + alpha)) < 1e-12, \"normalized b0\"\n    assert abs(b2 - b0) < 1e-15 and abs(a1 - b1) < 1e-15, \"notch symmetry\"\n    dc = (b0 + b1 + b2) / (1.0 + a1 + a2)\n    assert abs(dc - 1.0) < 1e-12, \"unity DC gain\"\n    checks += 1\n\n    step = apply_biquad((b0, b1, b2, a1, a2), [1.0] * 1000)\n    assert len(step) == 1000 and abs(step[-1] - 1.0) < 1e-9, \"a step passes the notch at DC\"\n    tone = [math.sin(2.0 * math.pi * 850.0 * k / 4000.0) for k in range(4000)]\n    out = apply_biquad((b0, b1, b2, a1, a2), tone)\n    energy_in = sum(v * v for v in tone[2000:])\n    energy_out = sum(v * v for v in out[2000:])\n    assert energy_out < 1e-6 * energy_in, \"a true null at 850 Hz\"\n    checks += 1\n\n    for bad in (0.0, -1.0):\n        try:\n            notch_coeffs(850.0, 4000.0, bad)\n        except ValueError:\n            pass\n        else:\n            raise AssertionError(\"a non-positive quality factor must be refused\")\n    try:\n        apply_biquad((1.0, 0.0), [1.0])\n    except ValueError:\n        pass\n    else:\n        raise AssertionError(\"a two-coefficient biquad must be refused\")\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - warping, pre-warp round trip, normalization, the null, \"\n          \"DC gain, and the refusals\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1433,8 +1547,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 5 checks - the sandwich rule, Q added, symmetry, the module example, and the refusals",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 00-foundations.T2.00j.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\n\ndef _selfcheck():\n    checks = 0\n\n    sigma = covariance_propagate([[1.0, 0.1], [0.0, 1.0]], [[1.0, 0.0], [0.0, 4.0]],\n                                 [[0.0, 0.0], [0.0, 0.0]])\n    assert abs(sigma[0][0] - 1.04) < 1e-12, \"variance grows by the cross term\"\n    assert abs(sigma[0][1] - 0.4) < 1e-12 and abs(sigma[1][0] - 0.4) < 1e-12, \"symmetric\"\n    assert abs(sigma[1][1] - 4.0) < 1e-12, \"the second variance is untouched\"\n    checks += 1\n\n    assert covariance_propagate([[1.0, 0.0], [0.0, 1.0]], [[2.0, 0.5], [0.5, 3.0]],\n                                [[0.25, 0.0], [0.0, 0.75]])[0][0] == 2.25, \"Q is added\"\n    checks += 1\n\n    sy = covariance_propagate([[1.0, 0.1], [0.0, 1.0]], [[0.01, 0.0], [0.0, 0.25]],\n                              [[0.001, 0.0], [0.0, 0.002]])\n    assert abs(sy[0][0] - 0.0135) < 1e-12, \"the module's own example\"\n    assert abs(sy[1][1] - 0.252) < 1e-12, \"the second diagonal\"\n    checks += 1\n\n    assert symmetrize([[1.0, 2.0], [4.0, 3.0]]) == [[1.0, 3.0], [3.0, 3.0]], \"average both sides\"\n    checks += 1\n\n    try:\n        covariance_propagate([[1.0, 0.0, 0.0]], [[1.0, 0.0], [0.0, 1.0]],\n                             [[0.0, 0.0], [0.0, 0.0]])\n    except ValueError:\n        pass\n    else:\n        raise AssertionError(\"a 1x3 matrix must be refused\")\n    try:\n        symmetrize([[1.0, 2.0], [3.0]])\n    except ValueError:\n        pass\n    else:\n        raise AssertionError(\"a ragged matrix must be refused\")\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the sandwich rule, Q added, symmetry, the module example, \"\n          \"and the refusals\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1456,8 +1572,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 7 checks - hat equals cross, vee inverse, the cubic identity, a quarter turn, the nanoradian rotation, the full turn, and the power balance",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 00-foundations.T3.00a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    w = [1.5, -2.0, 3.0]\n    v = [0.4, 0.8, -0.5]\n    moved = mat3_vec(hat(w), v)\n    cross = [w[1] * v[2] - w[2] * v[1], w[2] * v[0] - w[0] * v[2], w[0] * v[1] - w[1] * v[0]]\n    for i in range(3):\n        assert abs(moved[i] - cross[i]) < 1e-12, \"[w]_x v must be w x v\"\n    assert abs(sum(v[i] * moved[i] for i in range(3))) < 1e-15, \"a cross product does no work\"\n    checks += 1\n\n    back = vee(hat(w))\n    assert all(abs(back[i] - w[i]) < 1e-15 for i in range(3)), \"vee inverts hat\"\n    checks += 1\n\n    u = [1.0 / math.sqrt(3.0), -1.0 / math.sqrt(3.0), 1.0 / math.sqrt(3.0)]\n    k = hat(u)\n    k2 = mat3_mul(k, k)\n    k3 = mat3_mul(k2, k)\n    worst = max(abs(k3[i][j] + k[i][j]) for i in range(3) for j in range(3))\n    assert worst < 1e-15, \"for a unit axis [u]_x^3 = -[u]_x\"\n    checks += 1\n\n    r = exp_so3([0.0, 0.0, math.pi / 2.0])\n    out = mat3_vec(r, [1.0, 0.0, 0.0])\n    assert abs(out[0]) < 1e-12 and abs(out[1] - 1.0) < 1e-12, \"a quarter turn about z sends x to y\"\n    checks += 1\n\n    tiny = exp_so3([1e-9, -1e-9, 1e-9])\n    det = (tiny[0][0] * (tiny[1][1] * tiny[2][2] - tiny[1][2] * tiny[2][1])\n           - tiny[0][1] * (tiny[1][0] * tiny[2][2] - tiny[1][2] * tiny[2][0])\n           + tiny[0][2] * (tiny[1][0] * tiny[2][1] - tiny[1][1] * tiny[2][0]))\n    assert abs(det - 1.0) < 1e-14, \"a nanoradian rotation is still a rotation\"\n    rtr = mat3_mul([[tiny[j][i] for j in range(3)] for i in range(3)], tiny)\n    for i in range(3):\n        for j in range(3):\n            assert abs(rtr[i][j] - (1.0 if i == j else 0.0)) < 1e-14, \"R^T R = I at 1e-9 rad\"\n    checks += 1\n\n    turn = exp_so3([0.0, 0.0, 2.0 * math.pi])\n    same = mat3_vec(turn, [0.5, -0.25, 0.0])\n    assert abs(same[0] - 0.5) < 1e-12 and abs(same[1] + 0.25) < 1e-12, \"a full turn is the identity\"\n    checks += 1\n\n    assert abs(energy_rate([1.0, 2.0, 3.0], [4.0, 5.0, 6.0]) - 32.0) < 1e-12, \"dH/dt = grad . x_dot\"\n    assert abs(energy_rate([1.0, 2.0, 3.0], [4.0, 5.0, 6.0], 2.0) - 30.0) < 1e-12, \"dissipation\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - hat equals cross, vee inverse, the cubic identity, a quarter \"\n          \"turn, the nanoradian rotation, the full turn, and the power balance\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1479,8 +1597,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 5 checks - Ohm's law, the loaded divider, Joule heating, the LED's series resistor and the half-rating rule",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 01-electronics.T1.01a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert abs(stall_current(12.0, 3.0) - 4.0) < 1e-12, \"Ohm's law at stall\"\n    assert abs(stall_current(12.0, 2.4) - 5.0) < 1e-12\n    checks += 1\n\n    unloaded = divider_unloaded(24.0, 68_000.0, 10_000.0)\n    loaded = divider_loaded(24.0, 68_000.0, 10_000.0, 100_000.0)\n    assert abs(unloaded - 3.076923) < 1e-6 and unloaded < 3.3, \"the sensing divider\"\n    assert abs(loaded - 2.830189) < 1e-6 and loaded < unloaded, \"the ADC loads the bottom leg\"\n    assert divider_unloaded(24.0, 10_000.0, 68_000.0) > 20.0, \"the swapped legs destroy the pin\"\n    checks += 1\n\n    assert abs(joule_power(5.0, 2.4) - 60.0) < 1e-12, \"P = I^2 R on a stalled winding\"\n    assert abs(joule_power(10.0, 0.050) - 5.0) < 1e-12\n    checks += 1\n\n    r = led_series_resistor(5.0, 2.1, 0.010)\n    assert abs(r - 290.0) < 1e-9, \"KVL first, then divide\"\n    assert abs(led_current(5.0, 2.1, r) - 0.010) < 1e-12\n    assert abs(joule_power(0.010, r) - 0.029) < 1e-9, \"and the resistor's own heat\"\n    checks += 1\n\n    assert within_derating(0.125, 0.25) and not within_derating(0.2, 0.25), \"half the rating\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - Ohm's law, the loaded divider, Joule heating, the LED's \"\n          \"series resistor and the half-rating rule\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1502,8 +1622,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 5 checks - conduction loss, the PWM average, the shoot-through current, the H-bridge's differential drive and the datasheet window",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 01-electronics.T1.01b.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert abs(conduction_loss(5.0, 0.010) - 0.25) < 1e-12, \"I^2 R on-resistance loss\"\n    assert abs(conduction_loss(4.0, 0.020, 0.5) - 0.16) < 1e-12, \"and the duty scales the average\"\n    checks += 1\n\n    assert abs(pwm_effective_voltage(12.0, 0.75) - 9.0) < 1e-12\n    assert abs(pwm_effective_voltage(12.0, 0.65) - 7.8) < 1e-12\n    try:\n        pwm_effective_voltage(12.0, 65.0)\n    except ValueError:\n        pass\n    else:\n        raise AssertionError(\"a percentage is not a duty fraction\")\n    checks += 1\n\n    assert abs(shoot_through_current(12.0, 0.020) - 300.0) < 1e-9, \"two switches in series\"\n    assert abs(shoot_through_current(24.0, 0.010) - 1200.0) < 1e-9\n    checks += 1\n\n    assert abs(h_bridge_voltage(12.0, 1.0, 0.0) - 12.0) < 1e-12, \"forward\"\n    assert abs(h_bridge_voltage(24.0, 0.25, 0.75) + 12.0) < 1e-9, \"reverse at half the bus\"\n    assert abs(bridge_conduction_loss(1.2, 0.18, 0.18) - 0.5184) < 1e-4, \"two switches in the loop\"\n    checks += 1\n\n    assert within_recommended(9.0) and within_recommended(10.8), \"the recommended window\"\n    assert not within_recommended(11.8), \"the absolute maximum is not an operating point\"\n    assert abs(duty_for_effective_voltage(9.0, 12.0) - 0.75) < 1e-12, \"the duty round trip\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - conduction loss, the PWM average, the shoot-through current, \"\n          \"the H-bridge's differential drive and the datasheet window\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1525,8 +1647,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 5 checks - the CV/CC foldback, the critical resistance, both DMM modes, the clip's heat and the power-off short check",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 01-electronics.T1.01c.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\n\ndef _selfcheck():\n    checks = 0\n\n    v_out, i_out, p_out, mode = psu_output(12.0, 0.20, 0.25)\n    assert mode == \"CC\", \"a 0.25 ohm miswire is 48 A asked for, not 0.2\"\n    assert abs(v_out - 0.05) < 1e-12 and abs(i_out - 0.20) < 1e-12 and abs(p_out - 0.01) < 1e-12\n    _v, _i, p_battery, mode_battery = psu_output(12.0, 50.0, 0.25)\n    assert mode_battery == \"CV\" and abs(p_battery - 576.0) < 1e-9, \"no limit, no protection\"\n    checks += 1\n\n    v_cv, i_cv, p_cv, mode_cv = psu_output(12.0, 0.10, 240.0)\n    assert mode_cv == \"CV\" and abs(v_cv - 12.0) < 1e-12 and abs(i_cv - 0.05) < 1e-12\n    assert abs(p_cv - 0.6) < 1e-12, \"a healthy idle board\"\n    assert abs(critical_resistance(12.0, 0.10) - 120.0) < 1e-12\n    checks += 1\n\n    assert abs(dmm_voltage_loading_current(12.0) - 1.2e-6) < 1e-18, \"the voltmeter barely loads\"\n    assert abs(dmm_short_current(12.0) - 1200.0) < 1e-9, \"the current jack is a dead short\"\n    assert abs(dmm_short_current(24.0, 0.010, 0.010) - 1200.0) < 1e-9\n    checks += 1\n\n    assert abs(clip_power(5.0, 0.12) - 3.0) < 1e-9, \"I^2 R in one spring clip\"\n    assert abs(led_current_ma(5.0, 2.0, 300.0) - 10.0) < 1e-9, \"the LED's series current\"\n    checks += 1\n\n    assert is_short(5.0) and not is_short(240.0), \"the power-off resistance check\"\n    assert not is_short(10.0), \"the threshold itself is not a short\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the CV/CC foldback, the critical resistance, both DMM \"\n          \"modes, the clip's heat and the power-off short check\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1548,8 +1672,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 5 checks - the RC time constant and corner, the charging curve, the droop budget, both stored energies and the flyback spike",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 01-electronics.T1.01d.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert abs(rc_time_constant(10_000.0, 0.1e-6) - 1e-3) < 1e-15, \"tau = RC\"\n    assert abs(rc_time_constant(4700.0, 10e-6) - 0.047) < 1e-15\n    assert abs(rc_cutoff_hz(10_000.0, 0.1e-6) - 159.154943) < 1e-5, \"and the corner it sets\"\n    checks += 1\n\n    assert abs(rc_voltage(1e-3, 3.3, 10_000.0, 0.1e-6) - 2.085998) < 1e-6, \"63% at one tau\"\n    assert abs(rc_voltage(5e-3, 3.3, 10_000.0, 0.1e-6) - 3.277765) < 1e-6, \"99.3% at five\"\n    checks += 1\n\n    assert abs(bulk_capacitance_f(3.0, 20e-6, 0.25) - 2.4e-4) < 1e-15, \"the 240 uF budget\"\n    assert abs(bulk_capacitance_f(3.0, 20e-6, 0.6) - 1.0e-4) < 1e-15, \"a 100 uF part sags 0.6 V\"\n    try:\n        bulk_capacitance_f(3.0, 20e-6, 0.0)\n    except ValueError:\n        pass\n    else:\n        raise AssertionError(\"a droop budget must be positive\")\n    checks += 1\n\n    assert abs(capacitor_energy(12.0, 100e-6) - 0.0072) < 1e-15, \"1/2 C V^2\"\n    assert abs(inductor_energy(0.003, 2.0) - 0.006) < 1e-15, \"1/2 L I^2\"\n    checks += 1\n\n    spike = flyback_voltage(0.003, 2.0, 0.5e-6)\n    assert abs(spike - 12_000.0) < 1e-6, \"the unclamped kick\"\n    assert spike > 500.0 * (12.0 + 0.7), \"and the diode clamps it to the bus\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the RC time constant and corner, the charging curve, the \"\n          \"droop budget, both stored energies and the flyback spike\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1571,8 +1697,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 5 checks - the mid-rail shunt stage and its inverse, the current that clips, the 2-terminal Kelvin error, the CMRR residue in volts and amperes, and the 12-bit code",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 01-electronics.T2.01a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert abs(shunt_adc_voltage(0.0, 0.003) - 1.65) < 1e-12, \"zero current sits at the reference\"\n    assert abs(shunt_adc_voltage(25.0, 0.003) - 3.15) < 1e-12, \"+25 A\"\n    assert abs(shunt_adc_voltage(-25.0, 0.003) - 0.15) < 1e-12, \"-25 A\"\n    assert abs(shunt_current_from_adc(0.15, 0.003) + 25.0) < 1e-9, \"the inverse keeps the sign\"\n    checks += 1\n\n    assert abs(max_measurable_current(1.65, 3.30, 50.0, 0.001) - 33.0) < 1e-9, \"the exercise\"\n    assert abs(max_measurable_current(1.65, 3.30, 20.0, 0.005) - 16.5) < 1e-9, \"the skip test\"\n    checks += 1\n\n    assert abs(kelvin_gain_error_pct(0.003, 0.0006) - 40.0) < 1e-9, \"both pads\"\n    assert abs(kelvin_gain_error_pct(0.002, 0.0006) - 60.0) < 1e-9\n    checks += 1\n\n    assert abs(cmrr_input_error_v(48.0, 93.0) - 1.074586147e-3) < 1e-12, \"93 dB of 48 V\"\n    assert abs(cmrr_current_error_a(48.0, 93.0, 0.003) - 0.358195382) < 1e-9\n    checks += 1\n\n    assert adc_code(3.15) == 3909, \"4095 counts, not 4096\"\n    assert adc_code(-1.5) == 0, \"and a negative input clips to zero\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the mid-rail shunt stage and its inverse, the current \"\n          \"that clips, the 2-terminal Kelvin error, the CMRR residue in volts and amperes, and \"\n          \"the 12-bit code\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1594,8 +1722,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 5 checks - the commutation overshoot and its inductance budget, the bootstrap gate voltage and gate current, the pre-charge inrush and settle time, and the stored bus energy",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 01-electronics.T2.01b.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert abs(v_peak_turnoff(48.0, 20.0, 30.0, 20.0) - 78.0) < 1e-6, \"the sloppy 2-layer board\"\n    assert abs(v_peak_turnoff(48.0, 4.0, 30.0, 20.0) - 54.0) < 1e-6, \"the 4-layer plane\"\n    assert v_peak_turnoff(48.0, 20.0, 30.0, 20.0) > 75.0, \"and it would break a 75 V FET\"\n    checks += 1\n\n    assert abs(max_loop_inductance_nh(48.0, 60.0, 30.0, 15.0) - 6.0) < 1e-12, \"80% derating\"\n    checks += 1\n\n    assert abs(gate_drive_current_a(30.0, 30.0) - 1.0) < 1e-12, \"nC/ns is already an amp\"\n    assert abs(bootstrap_gate_v(48.0, 12.0) - 60.0) < 1e-12, \"the gate rides the phase node\"\n    checks += 1\n\n    assert abs(precharge_peak_a(48.0, 48.0) - 1.0) < 1e-12, \"the t=0 inrush\"\n    assert abs(precharge_time_s(48.0, 1000e-6) - 0.24) < 1e-12, \"five time constants\"\n    checks += 1\n\n    assert abs(bus_energy_j(1000e-6, 48.0) - 1.152) < 1e-12, \"1/2 C V^2\"\n    assert abs(bus_energy_j(0.0015, 48.0) - 1.728) < 1e-12\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the commutation overshoot and its inductance budget, the \"\n          \"bootstrap gate voltage and gate current, the pre-charge inrush and settle time, and the \"\n          \"stored bus energy\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1617,8 +1747,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 4 checks - the flux-cancelling loop inductance and its turn-off spike, the Bessel group delay and Q, the SAR charge bucket's droop and settling, and the Cauer junction temperature",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 01-electronics.T3.01a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    six = loop_inductance_nh(0.00010, 0.012, 0.015)\n    two = loop_inductance_nh(0.00160, 0.0020, 0.025)\n    assert abs(six - 0.157079633) < 1e-9, \"0.10 mm prepreg over a 12 mm plane\"\n    assert abs(two - 25.132741229) < 1e-6, \"1.60 mm core over a 2 mm trace\"\n    assert abs(two / six - 160.0) < 1e-9, \"the stackup, not the copper, sets the ratio\"\n    assert abs(turn_off_peak_v(48.0, six, 3.0) - 48.471238898) < 1e-9\n    assert turn_off_peak_v(48.0, two, 3.0) > 120.0, \"a 2-layer loop avalanches an 80 V FET\"\n    assert abs(flux_cancelled_nh(6.0, 6.0, 5.2) - 1.6) < 1e-12, \"6 + 6 - 2(5.2)\"\n    checks += 1\n\n    assert abs(bessel_group_delay_us(250_000.0) - 0.636619772) < 1e-9, \"1 / (2 pi f0)\"\n    assert abs(bessel_group_delay_us(200_000.0) - 0.795774715) < 1e-9\n    assert abs(bessel_q() - 1.0 / math.sqrt(3.0)) < 1e-12, \"Q = 0.5774, not 0.7071\"\n    checks += 1\n\n    assert abs(charge_droop_fraction(6e-12, 114e-12) - 0.05) < 1e-15, \"the capacitors set t = 0+\"\n    late = charge_settling_lsb(12, 6e-12, 114e-12, 50.0, 34.2e-9)\n    assert abs(late - 0.507648446) < 1e-9, \"0.5076 LSB at 34.2 ns - just over budget\"\n    assert charge_settling_lsb(12, 6e-12, 114e-12, 50.0, 35e-9) < 0.5\n    broken = charge_settling_lsb(12, 6e-12, 114e-12, 10_000.0, 34.2e-9)\n    assert abs(broken / late - 391.51) < 0.05, \"a leftover 10 kOhm series resistor\"\n    checks += 1\n\n    stages = [(0.45, 0.005), (2.5, 30.0)]\n    junction = cauer_junction_c(25.0, 120.0, stages, 0.010)\n    assert abs(junction - 71.791878) < 1e-6, \"die +46.7 C, sink +0.1 C\"\n    assert junction < 125.0\n    assert abs(cauer_junction_c(30.0, 20.0, [(0.5, 10.0), (0.2, 100.0), (2.3, 1000.0)], 1e5)\n               - 90.0) < 1e-9, \"steady state is the sum of the R_thetas\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the flux-cancelling loop inductance and its turn-off spike, \"\n          \"the Bessel group delay and Q, the SAR charge bucket's droop and settling, and the Cauer \"\n          \"junction temperature\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1640,8 +1772,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 4 checks - the lever-arm gravity torque, the balancing force, the gear ratio with its speed and torque, power conservation and reflected inertia",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 02-mechanics.T1.02a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert abs(gravity_torque(0.0, 0.40, 0.10, 0.50, 0.20) - 1.3734) < 1e-9, \"horizontal lever\"\n    assert abs(gravity_torque(math.pi / 3.0, 0.40, 0.10, 0.50, 0.20) - 0.6867) < 1e-9\n    assert abs(gravity_torque(math.pi / 2.0, 1.0, 0.30)) < 1e-9, \"overhead has no lever arm\"\n    assert gravity_torque(0.0, 0.8, 0.25) > gravity_torque(math.pi / 4.0, 0.8, 0.25)\n    checks += 1\n\n    assert abs(balance_force(30.0, 0.20, 0.10) - 60.0) < 1e-12, \"static equilibrium\"\n    assert abs(balance_force(30.0, 0.20, 0.40) - 15.0) < 1e-12\n    checks += 1\n\n    assert abs(gear_ratio(72, 16) - 4.5) < 1e-12, \"driven over driver\"\n    assert abs(gear_output_speed(90.0, 4.5) - 20.0) < 1e-12, \"a reducer slows the output\"\n    assert abs(gear_output_torque(0.40, 4.5, 0.95) - 1.71) < 1e-12, \"and multiplies the torque\"\n    checks += 1\n\n    out_torque = gear_output_torque(0.40, 4.5, 0.95)\n    out_speed = gear_output_speed(90.0, 4.5)\n    assert abs(mechanical_power(out_torque, out_speed) - 0.95 * mechanical_power(0.40, 90.0)) < 1e-9\n    assert abs(reflected_inertia(1e-5, 4.5) - 2.025e-4) < 1e-15, \"the ratio is squared\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the lever-arm gravity torque, the balancing force, the gear \"\n          \"ratio with its speed and torque, power conservation and reflected inertia\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1663,8 +1797,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 11 checks - jacobian, J^T, gravity, singular, energy, payload",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 02-mechanics.T2.02a.\n\nThis file is appended verbatim to the exercise entry the workbench loads, after the learner's code.\nThat is why it is stdlib-only and imports nothing but `math` and `mechalab_plant`: Pyodide has both,\nand the runner writes the plant into its filesystem before the program runs.\n\nIt is a coarser check than `test_behavior.py` (no unittest, one PASS line), and deliberately so: the\nbrowser grades by comparing stdout. The full suite is still the CI authority, and both read the same\nfunctions.\n\"\"\"\n\nimport math\n\nimport mechalab_plant as plant\n\n\ndef _selfcheck():\n    checks = 0\n    poses = [(0.0, math.pi / 2.0), (0.37, 1.15), (-1.10, 0.62), (0.0, 0.0), (2.4, -0.9)]\n\n    for q1, q2 in poses:\n        J = jacobian(q1, q2)\n        h = 1e-6\n        x1p, y1p = plant.fk(q1 + h, q2)\n        x1m, y1m = plant.fk(q1 - h, q2)\n        x2p, y2p = plant.fk(q1, q2 + h)\n        x2m, y2m = plant.fk(q1, q2 - h)\n        want = [[(x1p - x1m) / (2 * h), (x2p - x2m) / (2 * h)],\n                [(y1p - y1m) / (2 * h), (y2p - y2m) / (2 * h)]]\n        for r in range(2):\n            for c in range(2):\n                assert abs(J[r][c] - want[r][c]) < 1e-6, \"jacobian at q=(%.3f, %.3f)\" % (q1, q2)\n        checks += 1\n\n    long_arm = jacobian(0.4, 0.9, 0.30, 0.25)\n    assert abs(long_arm[0][0] - jacobian(0.4, 0.9)[0][0]) > 0.15, \"jacobian ignored l1/l2\"\n    checks += 1\n\n    J = jacobian(0.37, 1.15)\n    F = (3.0, -7.0)\n    tau = joint_torques(J, F)\n    assert abs(tau[0] - (J[0][0] * F[0] + J[1][0] * F[1])) < 1e-12, \"tau is not J^T F\"\n    dq = (0.21, -0.13)\n    tip_v = (J[0][0] * dq[0] + J[0][1] * dq[1], J[1][0] * dq[0] + J[1][1] * dq[1])\n    assert abs(tau[0] * dq[0] + tau[1] * dq[1] - (F[0] * tip_v[0] + F[1] * tip_v[1])) < 1e-12, \"virtual work\"\n    checks += 1\n\n    for q1, q2 in ((0.0, 0.0), (0.0, math.pi / 2.0), (math.pi / 2.0, 0.0), (0.55, 1.2)):\n        got = gravity_from_com_jacobians(q1, q2)\n        want = plant.gravity_torque(q1, q2)\n        assert abs(got[0] - want[0]) < 1e-12 and abs(got[1] - want[1]) < 1e-12, \\\n            \"gravity differs from the plant at q=(%.3f, %.3f)\" % (q1, q2)\n    checks += 1\n\n    assert tuple(singular_elbow_angles()) == (0.0, math.pi), \"singular elbow angles\"\n    checks += 1\n\n    for q1, q2 in ((0.0, math.pi / 2.0), (0.30, 0.60)):\n        by_force = joint_torques(jacobian(q1, q2), (0.0, 0.05 * plant.G))\n        by_energy = potential_gradient(q1, q2)\n        assert abs(by_force[0] - by_energy[0]) < 1e-9, \"dU/dq1 vs J^T F\"\n        assert abs(by_force[1] - by_energy[1]) < 1e-9, \"dU/dq2 vs J^T F\"\n    checks += 1\n\n    on = payload_run(0.20, True)\n    off = payload_run(0.20, False)\n    assert on[\"rms_mm\"] < 0.914, \"compensated payload run should match the capstone (%.3f mm)\" % on[\"rms_mm\"]\n    assert off[\"rms_mm\"] > 2.5 * on[\"rms_mm\"], \"uncompensated payload run should be much worse\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - jacobian, J^T, gravity, singular, energy, payload\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1686,8 +1822,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 5 checks - the screw axis with its minus sign, the 6D power, the notch flexure's stiffness and stress, the t^(5/2) scaling, and the two-pass RNEA torques with the passivity form",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 02-mechanics.T3.02a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    axis = screw_axis([0.0, 1.0, 0.0], [0.40, 0.0, 0.10])\n    assert abs(axis[3] + 0.10) < 1e-12, \"v = -omega x q, sign included\"\n    assert abs(axis[5] - 0.40) < 1e-12\n    assert abs(screw_axis([0.0, 0.0, 1.0], [0.30, 0.0, 0.0])[4] + 0.30) < 1e-12\n    checks += 1\n\n    assert abs(spatial_power([0.0, 0.0, 2.0, 0.5, 0.0, 0.0],\n                             [0.0, 0.0, 3.0, 10.0, 0.0, 0.0]) - 11.0) < 1e-12, \"both halves\"\n    assert abs(spatial_power([0.0, 0.0, 1.0, 0.0, 0.0, 0.0],\n                             [0.0, 0.0, 2.0, 3.0, 0.0, 0.0]) - 2.0) < 1e-12, \"pure rotation\"\n    checks += 1\n\n    k = flexure_stiffness(114e9, 0.015, 0.001, 0.005)\n    assert abs(k - 54.0940) < 1e-4, \"Paros-Weisbord\"\n    sigma = flexure_stress(k, math.radians(0.50), 0.015, 0.001, 0.005)\n    assert abs(sigma / 1e6 - 207.706) < 1e-2, \"concentration factor included\"\n    checks += 1\n\n    assert abs(thickness_scale(2.0) - 5.656854249492381) < 1e-12, \"t^(5/2)\"\n    checks += 1\n\n    tau1, tau2 = rnea_2link(0.05, 0.02, 2.0, 1.0)\n    assert abs(tau2 - 0.06) < 1e-12 and abs(tau1 - 0.16) < 1e-12, \"inward pass\"\n    zero = [[0.0, 0.0], [0.0, 0.0]]\n    assert abs(passivity_quadratic_form(zero, zero, [1.5, -2.5])) < 1e-12, \"skew-symmetric form\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the screw axis with its minus sign, the 6D power, the \"\n          \"notch flexure's stiffness and stress, the t^(5/2) scaling, and the two-pass RNEA \"\n          \"torques with the passivity form\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1709,8 +1847,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 4 checks - back-EMF and the current it leaves, pole pairs and the wrapped electrical angle, 4x quadrature counts with their resolution, and the Gray-code step that refuses a two-bit jump",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 03-sensors.T1.03a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, constant time,\none PASS line.\n\"\"\"\n\nimport math\n\nTAU = 2.0 * math.pi\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert abs(back_emf(0.05, 100.0) - 5.0) < 1e-12, \"Ke times omega\"\n    assert abs(winding_current(12.0, 100.0, 0.05, 2.0) - 3.5) < 1e-12, \"the EMF is subtracted\"\n    assert abs(winding_current(12.0, 200.0, 0.06, 4.0)) < 1e-12, \"no-load draws nothing\"\n    assert abs(motor_torque(0.05, 3.5) - 0.175) < 1e-12, \"Kt times i\"\n    checks += 1\n\n    assert pole_pairs(14) == 7, \"14 magnets are 7 pole pairs\"\n    assert pole_pairs(28) == 14\n    assert abs(electrical_angle(math.pi / 7.0, 7) - math.pi) < 1e-12, \"one cycle per seventh\"\n    assert abs(electrical_angle(1.0, 7) - 0.7168146928204138) < 1e-12, \"wrapped into one cycle\"\n    checks += 1\n\n    assert quadrature_cpr(1024) == 4096, \"four edges per line\"\n    assert quadrature_cpr(500) == 2000\n    radians, degrees = angle_resolution(4096)\n    assert abs(degrees - 0.087890625) < 1e-12, \"360 over CPR\"\n    assert abs(radians - TAU / 4096.0) < 1e-18\n    checks += 1\n\n    forward = [0b00, 0b10, 0b11, 0b01, 0b00, 0b10]\n    assert sum(quad_step(a, b) for a, b in zip(forward, forward[1:])) == 5, \"Gray-code forward\"\n    backward = list(reversed(forward))\n    assert sum(quad_step(a, b) for a, b in zip(backward, backward[1:])) == -5\n    assert quad_step(0b00, 0b11) == 0, \"two bits at once is not a step\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - back-EMF and the current it leaves, pole pairs and the \"\n          \"wrapped electrical angle, 4x quadrature counts with their resolution, and the Gray-code \"\n          \"step that refuses a two-bit jump\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1732,8 +1872,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 8 checks - Clarke and the third phase, Park at a quarter turn, quadrature demodulation, the inverse, the wrap, the PLL lock and its rollover, and the averaging law",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 03-sensors.T2.03a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    ia, ib = 6.0, -2.0\n    assert abs(third_phase(ia, ib) + 4.0) < 1e-15, \"the neutral point gives i_c\"\n    alpha, beta = clarke(ia, ib)\n    assert abs(alpha - 6.0) < 1e-12 and abs(beta - 2.0 / math.sqrt(3.0)) < 1e-12, \"Clarke\"\n    assert abs(math.hypot(alpha, beta) - 6.110101) < 1e-5, \"vector magnitude\"\n    checks += 1\n\n    i_d, i_q = park(5.0, 0.0, math.pi / 2.0)\n    assert abs(i_d) < 1e-12 and abs(i_q + 5.0) < 1e-12, \"a quarter turn about the rotor\"\n    checks += 1\n\n    theta = 0.85\n    ia = -10.0 * math.sin(theta)\n    ib = -10.0 * math.sin(theta - 2.0 * math.pi / 3.0)\n    alpha, beta = clarke(ia, ib)\n    i_d, i_q = park(alpha, beta, theta)\n    assert abs(i_d) < 1e-9 and abs(i_q - 10.0) < 1e-9, \"quadrature current demodulates to DC\"\n    checks += 1\n\n    alpha2, beta2 = inverse_park(3.0, -4.0, 1.1)\n    i_d2, i_q2 = park(alpha2, beta2, 1.1)\n    assert abs(i_d2 - 3.0) < 1e-12 and abs(i_q2 + 4.0) < 1e-12, \"Park is a rotation\"\n    checks += 1\n\n    assert abs(wrap_pi(2.0 * math.pi + 0.1) - 0.1) < 1e-12, \"rollover\"\n    assert abs(wrap_pi(-10.0) - (-10.0 + 4.0 * math.pi)) < 1e-9, \"two full turns back\"\n    assert abs(wrap_pi(math.pi) - math.pi) < 1e-12, \"pi is inside (-pi, pi]\"\n    checks += 1\n\n    omega = 100.0\n    zeta, wn = 0.9, 2.0 * math.pi * 30.0\n    kp, ki = 2.0 * zeta * wn, wn * wn\n    dt = 1e-4\n    theta_hat, omega_hat = 0.0, 0.0\n    theta = 0.0\n    for _ in range(3000):\n        theta = wrap_pi(theta + omega * dt)\n        theta_hat, omega_hat = pll_step(theta_hat, omega_hat, theta, kp, ki, dt)\n    assert abs(omega_hat - omega) < 0.01 * omega, \"the loop locks onto the speed\"\n    checks += 1\n\n    tau_hat, omega_hat = pll_step(wrap_pi(2.0 * math.pi - 0.01), 1.0, 0.01, 200.0, 5000.0, 1e-3)\n    assert abs(omega_hat - 1.0) < 0.5, \"a rollover must not spike the velocity\"\n    checks += 1\n\n    assert abs(allan_deviation(0.02, 100.0) - 0.002) < 1e-15, \"tau^-1/2\"\n    assert abs(allan_deviation(0.02, 1.0) / allan_deviation(0.02, 100.0) - 10.0) < 1e-9, \"a decade\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - Clarke and the third phase, Park at a quarter turn, \"\n          \"quadrature demodulation, the inverse, the wrap, the PLL lock and its rollover, \"\n          \"and the averaging law\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1755,8 +1897,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 4 checks - the dq decoupling feedforward, the Min-Max zero-sequence offset with its duties, the hexagonal voltage limit and its gain, and the Fourier encoder fit with its amplitude",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 03-sensors.T3.03a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, fixed cost,\none PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    # The worked example: -1500 * 120e-6 * 20 = -3.60 V, 1500 * 0.008 = 12.00 V.\n    vd_ff, vq_ff = dq_feedforward(1500.0, 120e-6, 120e-6, 0.0, 20.0, 0.008)\n    assert abs(vd_ff + 3.60) < 1e-9, \"d-axis cross-coupling\"\n    assert abs(vq_ff - 12.0) < 1e-9, \"q-axis back-EMF\"\n    assert abs(dq_feedforward(2000.0, 120e-6, 150e-6, 0.0, 15.0, 0.008)[0] + 4.50) < 1e-9\n    checks += 1\n\n    # The exercise: v_0 = -6.0 V, duties (0.875, 0.125, 0.125) on a 48 V bus.\n    assert abs(svpwm_offset(24.0, -12.0, -12.0) + 6.0) < 1e-12, \"min-max offset\"\n    da, db, dc = svpwm_duties(24.0, -12.0, -12.0, 48.0)\n    assert abs(da - 0.875) < 1e-12 and abs(db - 0.125) < 1e-12 and abs(dc - 0.125) < 1e-12\n    assert abs((da - db) - (24.0 - (-12.0)) / 48.0) < 1e-12, \"line-to-line preserved\"\n    checks += 1\n\n    # 48 V / sqrt(3) = 27.7128 V against sine PWM's 24.0 V: +15.47%.\n    assert abs(hexagon_limit(48.0) - 27.712812921102035) < 1e-9\n    assert abs(hexagon_gain() - 1.1547005383792515) < 1e-12\n    assert abs(100.0 * (hexagon_gain() - 1.0) - 15.470053837925155) < 1e-9\n    assert hexagon_limit(48.0) > 24.0\n    checks += 1\n\n    # The worked example's 64-sample fit: a1 = 0.012 rad, b2 = -0.005 rad, amplitude 0.010 rad.\n    angles = [2.0 * math.pi * k / 64 for k in range(64)]\n    errors = [0.012 * math.cos(th) - 0.005 * math.sin(2.0 * th) for th in angles]\n    a1, b1 = harmonic_coefficients(errors, 1)\n    a2, b2 = harmonic_coefficients(errors, 2)\n    assert abs(a1 - 0.012) < 1e-12 and abs(b1) < 1e-12, \"first harmonic\"\n    assert abs(a2) < 1e-12 and abs(b2 + 0.005) < 1e-12, \"second harmonic is orthogonal\"\n    assert abs(harmonic_amplitude(0.008, -0.006) - 0.010) < 1e-12, \"quadrature amplitude\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the dq decoupling feedforward, the Min-Max zero-sequence \"\n          \"offset with its duties, the hexagonal voltage limit and its gain, and the Fourier \"\n          \"encoder fit with its amplitude\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1778,8 +1922,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 4 checks - the fixed-width ranges, the rollover-safe tick difference, the register edit that keeps its neighbours, and the 8-byte little-endian telemetry frame packed and read back",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 04-embedded.T1.04a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert int_range(16, True) == (-32768, 32767), \"2**(bits-1) - 1 at the top\"\n    assert int_range(8) == (0, 255), \"unsigned starts at zero\"\n    checks += 1\n\n    assert wrap_uint(65536, 16) == 0, \"the odometer rolls over\"\n    assert wrap_uint(-1, 16) == 65535\n    assert elapsed_unsigned(4, 65530, 16) == 10, \"the mask is what makes the difference work\"\n    assert elapsed_unsigned(3, 250, 8) == 9\n    checks += 1\n\n    assert apply_bits(0x5A, 1 << 6, 1 << 3) == 0x52, \"set 6, clear 3, neighbours kept\"\n    assert apply_bits(0x0F, 0, 1 << 2) == 11\n    assert bit_is_set(0x52, 6) == 1 and bit_is_set(0x52, 3) == 0\n    checks += 1\n\n    frame = pack_telemetry(1000, -512, 3.25)\n    assert len(frame) == 8, \"2 + 2 + 4 bytes\"\n    assert frame == b\"\\xe8\\x03\\x00\\xfe\\x00\\x00\\x50\\x40\", \"little-endian <Hhf\"\n    assert unpack_telemetry(frame) == (1000, -512, 3.25)\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the fixed-width ranges, the rollover-safe tick \"\n          \"difference, the register edit that keeps its neighbours, and the 8-byte little-endian \"\n          \"telemetry frame packed and read back\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1801,8 +1947,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 3 checks - the rollover-safe timer on its 1 kHz grid, the ISR budget and debounce latency, the latched FAULT state and the tick count",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 04-embedded.T1.04b.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert elapsed_us(12, 65520, 16) == 28, \"the unsigned 16-bit wrap\"\n    assert tick_due(3000, 2000, 1000), \"a tick exactly on the deadline\"\n    assert not tick_due(2999, 2000, 1000)\n    assert next_deadline_us(0xFFFFFFFF, 1000) == 999, \"the grid survives the wrap\"\n    checks += 1\n\n    assert abs(isr_utilization_pct(45.0, 1000.0) - 4.5) < 1e-9, \"45 us in a 1000 us period\"\n    assert abs(max_isr_exec_us(25.0, 10_000.0) - 25.0) < 1e-12, \"the 25 percent budget\"\n    assert abs(fault_latency_us(3, 20_000.0) - 150.0) < 1e-9, \"three samples at 20 kHz\"\n    checks += 1\n\n    assert fsm_step(\"RUN\", 5.5, 5.0, 0.10, 0.4) == (\"FAULT\", 0.0), \"overcurrent cuts the PWM\"\n    assert fsm_step(\"FAULT\", 0.0, 5.0, 0.10, 0.4) == (\"FAULT\", 0.0), \"the fault is a latch\"\n    checks += 1\n\n    assert ticks_in(250_000, 1000) == 250, \"0.25 s of 1 kHz control\"\n\n    print(\"SELF-CHECK PASS: %d checks - the rollover-safe timer on its 1 kHz grid, the ISR budget \"\n          \"and debounce latency, the latched FAULT state and the tick count\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1824,8 +1972,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 4 checks - the SPI shift and frame time, the polled CPU load, the ping-pong window and HT rate, and which half each interrupt may read",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 04-embedded.T2.04a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert abs(spi_shift_us(24, 12e6) - 2.0) < 1e-12, \"bits over clocks\"\n    assert abs(spi_frame_us(16, 10e6) - 2.0) < 1e-12, \"chip-select is part of the frame\"\n    assert abs(spi_frame_us(16, 10e6, 0.0) - 1.6) < 1e-12, \"no overhead, no overhead\"\n    checks += 1\n\n    assert abs(uart_poll_us(320, 1e6) - 320.0) < 1e-9, \"every bit stalls the loop\"\n    assert abs(cpu_load_fraction(322.0, 50.0) - 6.44) < 1e-12, \"over budget\"\n    assert abs(cpu_load_fraction(0.5, 50.0) - 0.01) < 1e-12\n    checks += 1\n\n    assert abs(ping_pong_window_us(16, 200000) - 80.0) < 1e-9, \"half, not the 2N total\"\n    assert abs(ht_frequency_hz(64000, 32) - 2000.0) < 1e-9\n    checks += 1\n\n    assert buffer_slice_for_position(3, 4) == (0, 4), \"HT reads Ping\"\n    assert buffer_slice_for_position(7, 4) == (4, 8), \"TC reads Pong\"\n    assert buffer_slice_for_position(2, 4) is None, \"mid-half is not safe\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the SPI shift and frame time, the polled CPU load, the \"\n          \"ping-pong window and HT rate, and which half each interrupt may read\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1847,8 +1997,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 5 checks - the Rate-Monotonic utilisation sum and its Liu-Layland bound, the priority-inheritance response time against the unbounded inversion, the lowest-CAN-ID arbitration, and the 2^bits - 1 MIT pack with its step",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 04-embedded.T2.04b.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\n\ndef _selfcheck():\n    checks = 0\n\n    tasks = [(\"Ctrl\", 120.0, 1000.0), (\"CAN\", 250.0, 2000.0), (\"Diag\", 800.0, 10000.0)]\n    assert abs(cpu_utilization(tasks) - 0.325) < 1e-12, \"sum C_i / T_i\"\n    assert abs(cpu_utilization([(200.0, 1000.0), (500.0, 2500.0)]) - 0.40) < 1e-12\n    checks += 1\n\n    assert abs(liu_layland_bound(3) - 0.7797631496846196) < 1e-12, \"n (2^(1/n) - 1)\"\n    assert liu_layland_bound(3) > cpu_utilization(tasks), \"0.325 fits 0.7798\"\n    checks += 1\n\n    assert abs(response_time_us(100.0, 40.0, 600.0) - 140.0) < 1e-12, \"the mutex inherits\"\n    assert abs(response_time_us(100.0, 40.0, 600.0, inheritance=False) - 740.0) < 1e-12\n    checks += 1\n\n    assert can_winner([0x105, 0x012, 0x04A]) == 0x012, \"the lowest identifier wins\"\n    assert can_winner([0x7FF, 0x000]) == 0x000\n    checks += 1\n\n    assert encode_fixed(9.0, -18.0, 18.0, 12) == 3071, \"2^bits - 1, not 2^bits\"\n    assert abs(decode_fixed(3071, -18.0, 18.0, 12) - 8.997802197802198) < 1e-12\n    assert abs(quantization_step(-18.0, 18.0, 12) - 0.008791208791208791) < 1e-15\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the Rate-Monotonic utilisation sum and its Liu-Layland \"\n          \"bound, the priority-inheritance response time against the unbounded inversion, the \"\n          \"lowest-CAN-ID arbitration, and the 2^bits - 1 MIT pack with its step\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1870,8 +2022,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 6 checks - the stack alignment, the 6144 B static image, the devicetree-and-Kconfig readiness contract, Zephyr's smaller-number priority order, the min() inheritance elevation and both response bounds",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 04-embedded.T2.04c.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert align_stack(1020) == 1024, \"round up, never down\"\n    assert align_stack(2048) == 2048\n    assert align_stack(1) == 8\n    checks += 1\n\n    assert static_ram_bytes([2048, 1536, 1020], 128, [(16, 72)]) == 6144, \"6.0 KiB, no heap\"\n    assert static_ram_bytes([2048, 1024], 128, [(8, 64)]) == 3840\n    checks += 1\n\n    node = {\"status\": \"okay\", \"kconfig\": \"CONFIG_CAN\"}\n    assert device_dt_ready(node, {\"CONFIG_CAN\": True}) is True\n    assert device_dt_ready(node, {}) is False, \"the driver must be compiled in too\"\n    assert binding_problems({\"fdcan1\": node, \"spi1\": {\"status\": \"okay\", \"kconfig\": \"CONFIG_SPI\"}},\n                            {\"CONFIG_CAN\": True}) == [\"spi1\"]\n    checks += 1\n\n    assert outranks(2, 6) is True, \"smaller number wins\"\n    assert outranks(6, 2) is False\n    assert outranks(3, 3) is False\n    checks += 1\n\n    assert effective_priority(6, 2) == 2, \"min(6, 2), not max\"\n    assert effective_priority(7, 1) == 1\n    checks += 1\n\n    assert worst_case_response_us(110.0, 35.0) == 145.0, \"k_mutex: no inversion\"\n    assert worst_case_response_us(110.0, 35.0, 300.0) == 445.0, \"k_sem: 300 us of inversion\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the stack alignment, the 6144 B static image, the \"\n          \"devicetree-and-Kconfig readiness contract, Zephyr's smaller-number priority order, the \"\n          \"min() inheritance elevation and both response bounds\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1893,8 +2047,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 6 checks - UART and CAN-FD wire time, the utilisation budget, the handle count, the spin WCET, the NTP offset and round trip, and the RTOS load",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 04-embedded.T2.04d.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\n\ndef _selfcheck():\n    checks = 0\n\n    wire = wire_time_us(32, 14, 10, 921600.0)\n    assert abs(wire - 499.1319) < 1e-4, \"the 8N1 exercise\"\n    assert abs(wire_time_us(48, 16, 8, 5_000_000.0) - 102.4) < 1e-9, \"CAN-FD, 64 bytes\"\n    assert abs(wire_time_us(24, 16, 8, 5_000_000.0) - 64.0) < 1e-9, \"CAN-FD, 40 bytes\"\n    checks += 1\n\n    link = link_utilization([(500.0, 48, 16), (500.0, 24, 16)], 8, 5_000_000.0)\n    assert abs(link - 0.0832) < 1e-9, \"8.32% of a 5 Mbps bus\"\n    assert link_utilization([(3000.0, 32, 14)], 10, 921600.0) > 1.0, \"a saturated link\"\n    checks += 1\n\n    assert handle_total(1, 2, 1, 0) == 4, \"static handle count\"\n    assert abs(spin_wcet_us(35.0, [45.0, 30.0, 25.0, 50.0]) - 185.0) < 1e-12, \"spin WCET\"\n    assert spin_wcet_us(35.0, [45.0, 30.0, 25.0, 50.0]) < 2000.0, \"inside a 500 Hz thread\"\n    checks += 1\n\n    rtt = ntp_rtt_us(1000.0, 500120.0, 500150.0, 1270.0)\n    offset = ntp_offset_us(1000.0, 500120.0, 500150.0, 1270.0)\n    assert abs(rtt - 240.0) < 1e-9, \"round trip\"\n    assert abs(offset - 499000.0) < 1e-9, \"clock offset\"\n    assert abs(ntp_offset_us(200.0, 10300.0, 10340.0, 440.0) - 10000.0) < 1e-9, \"the module exercise\"\n    checks += 1\n\n    true_offset, delay, process = 1234.5, 60.0, 15.0\n    t1 = 10.0\n    t2 = t1 + delay + true_offset\n    t3 = t2 + process\n    t4 = t3 + delay - true_offset\n    assert abs(ntp_offset_us(t1, t2, t3, t4) - true_offset) < 1e-9, \"symmetric links are exact\"\n    assert abs(ntp_rtt_us(t1, t2, t3, t4) - 2.0 * delay) < 1e-9, \"rtt without host processing\"\n    # True offset 1000 us, forward delay 100 us, reverse delay 170 us: the midpoint reads 965.\n    assert abs(ntp_offset_us(0.0, 1100.0, 1110.0, 280.0) - 965.0) < 1e-9, \"asymmetric bias\"\n    checks += 1\n\n    util = rtos_utilization([(100.0, 500.0), (300.0, 2000.0), (1000.0, 10000.0)])\n    assert abs(util - 0.45) < 1e-12, \"45% of the CPU\"\n    assert rtos_utilization([(600.0, 1000.0), (600.0, 1000.0)]) > 1.0, \"an overloaded set\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - UART and CAN-FD wire time, the utilisation budget, the \"\n          \"handle count, the spin WCET, the NTP offset and round trip, and the RTOS load\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1916,8 +2072,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 5 checks - the center-aligned ARR and its low-side window, the Q1.31 word with its clamp, the even/odd sequence check, and the fast ISR's share of the CPU",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 04-embedded.T3.04a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert center_aligned_arr(170_000_000.0, 40_000.0) == 2125, \"up-down counts twice\"\n    assert center_aligned_arr(160_000_000.0, 25_000.0) == 3200, \"the exercise register\"\n    assert abs(pwm_frequency(170_000_000.0, 1700) - 50_000.0) < 1e-9, \"the Gate test carrier\"\n    checks += 1\n\n    assert abs(low_side_window_ns(0.88, 250.0, 40_000.0) - 2500.0) < 1e-9, \"two dead times\"\n    assert abs(low_side_window_ns(0.90, 200.0, 40_000.0) - 2100.0) < 1e-9, \"the Skip test window\"\n    checks += 1\n\n    assert q31_encode(0.5) == 1073741824, \"cos(pi/3) is exactly 2^30\"\n    assert angle_to_q31(math.pi / 3.0) == 715827883, \"theta/pi, then 2^31\"\n    assert q31_encode(-0.50) == -1073741824, \"the exercise word\"\n    assert q31_encode(1.0) == (1 << 31) - 1, \"+1.0 clamps, it does not wrap\"\n    assert abs(q31_decode(1073741824) - 0.5) < 1e-15, \"and decoding halves it back\"\n    checks += 1\n\n    assert seqlock_valid(4, 4) is True, \"a clean read\"\n    assert seqlock_valid(5, 5) is False, \"an odd snapshot is mid-write\"\n    assert seqlock_valid(4, 6) is False, \"the writer ran between s1 and s2\"\n    checks += 1\n\n    assert abs(isr_cpu_percent(3.0, 25.0) - 12.0) < 1e-12, \"3 us of 25 us is 12%\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the center-aligned ARR and its low-side window, the Q1.31 \"\n          \"word with its clamp, the even/odd sequence check, and the fast ISR's share of the CPU\"\n          % checks)\n\n\n_selfcheck()\n"
   },
@@ -1939,8 +2097,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 5 checks - the tracking error, the spring-damper-plus-bias demand, the gravity sag, both saturation rails, the integral tick with its anti-windup freeze on both rails, the unwind when the error reverses, the exact-boundary tick, and the arm's acceleration",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 05-control.T1.05a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, no loops, one\nPASS line.\n\"\"\"\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert abs(tracking_error(1.57, 1.27) - 0.30) < 1e-12, \"reference minus measurement\"\n    assert abs(control_effort(1.0, 0.6, 0.5, 0.8, 10.0, 2.0) - 3.8) < 1e-12, \"the worked demand\"\n    assert abs(control_effort(2.0, 1.5, 0.4, 0.0, 10.0, 2.5) - 4.0) < 1e-12, \"the skip test\"\n    checks += 1\n\n    assert abs(steady_state_sag(0.60, 8.0) - 0.075) < 1e-12, \"tau_g / Kp\"\n    assert abs(1.0 - steady_state_sag(0.60, 8.0) - 0.925) < 1e-12, \"the exercise angle\"\n    assert abs(steady_state_sag(0.50, 5.0) - 0.10) < 1e-12\n    checks += 1\n\n    assert abs(saturate(18.5, 12.0) - 12.0) < 1e-12, \"the positive rail\"\n    assert abs(saturate(-18.5, 12.0) + 12.0) < 1e-12, \"the negative rail\"\n    assert abs(saturate(5.0, 12.0) - 5.0) < 1e-15, \"inside the rails\"\n    checks += 1\n\n    assert abs(integral_step(0.0, 20.0, 0.25, 0.001) - 0.005) < 1e-15, \"Ki e dt\"\n    assert abs(anti_windup_integral(0.8, 12.0, 0.4, 0.001, 15.0, 12.0) - 0.8) < 1e-15, \"freeze\"\n    assert abs(anti_windup_integral(0.8, 12.0, 0.4, 0.001, 10.0, 12.0) - 0.8048) < 1e-15\n    # The error has reversed while the demand is still past the rail: the loop is unwinding, so\n    # the tick must land (0.8 - 0.0048) rather than stay frozen at 0.8.\n    assert abs(anti_windup_integral(0.8, 12.0, -0.4, 0.001, 15.0, 12.0) - 0.7952) < 1e-15, \\\n        \"expected 0.7952: the error reversed while the demand is still past the positive rail, so the tick must land (a freeze on every saturation gives 0.8)\"\n    # The same two cases on the negative rail: e = -1 with u_raw = -15 freezes, e = +1 unwinds.\n    assert abs(anti_windup_integral(0.8, 12.0, -0.4, 0.001, -15.0, 12.0) - 0.8) < 1e-15, \\\n        \"expected the freeze at 0.8: 15 N*m of demand past the negative rail with the error still pushing down\"\n    assert abs(anti_windup_integral(0.8, 12.0, 0.4, 0.001, -15.0, 12.0) - 0.8048) < 1e-15, \\\n        \"expected 0.8048: the error opposes the negative demand, so the accumulator must unwind\"\n    # Exactly on the rail is not past it: both boundary ticks land.\n    assert abs(anti_windup_integral(0.8, 12.0, 0.4, 0.001, 12.0, 12.0) - 0.8048) < 1e-15, \\\n        \"expected 0.8048: u_raw == u_max is at the limit, not past it - check the strict comparison\"\n    assert abs(anti_windup_integral(0.8, 12.0, -0.4, 0.001, -12.0, 12.0) - 0.7952) < 1e-15, \\\n        \"expected 0.7952: -u_max is the limit too, so the tick lands\"\n    checks += 1\n\n    assert abs(arm_acceleration(1.20, 0.0, 0.60, 0.02, 0.05) - 30.0) < 1e-12, \"the worked arm\"\n    assert abs(arm_acceleration(1.20, 2.0, 0.60, 0.02, 0.05) - 25.0) < 1e-12, \"damping removed\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the tracking error, the spring-damper-plus-bias demand, the \"\n          \"gravity sag, both saturation rails, the integral tick with its anti-windup freeze on \"\n          \"both rails, the unwind when the error reverses, the exact-boundary tick, and the \"\n          \"arm's acceleration\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1962,8 +2122,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 7 checks - crossover, margin and its unwrap, delay loss, S + T, Bryson weights, observer radius and the LQR gain",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 05-control.T2.05a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport cmath\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    def loop(omega):\n        s = 1j * omega\n        return 100.0 / (s * (0.01 * s + 1.0))\n\n    w_gc = gain_crossover(loop)\n    assert abs(w_gc - 78.6151) < 1e-3, \"gain crossover\"\n    assert abs(abs(loop(w_gc)) - 1.0) < 1e-9, \"the crossover really is unity gain\"\n    checks += 1\n\n    pm = phase_margin_deg(loop(w_gc))\n    assert abs(pm - 51.8273) < 1e-3, \"phase margin\"\n    lagging = cmath.rect(0.9, math.radians(-200.0))\n    assert abs(phase_margin_deg(lagging) + 20.0) < 1e-9, \"a loop past -180 has negative margin\"\n    checks += 1\n\n    loss = phase_loss_deg(78.61514, 0.005)\n    assert abs(loss - 22.5216) < 1e-2, \"5 ms of transport delay\"\n    assert abs(phase_margin_deg(loop(w_gc)) - loss - 29.3057) < 1e-2, \"the margin after the delay\"\n    checks += 1\n\n    s, t = st(loop(w_gc))\n    assert abs((s + t) - 1.0) < 1e-12, \"S + T = 1\"\n    assert abs(abs(s) - 1.1441) < 1e-3, \"sensitivity at crossover\"\n    checks += 1\n\n    q_diag, r = bryson_weights([0.05, 0.10], 5.0)\n    assert abs(q_diag[0] - 400.0) < 1e-9 and abs(q_diag[1] - 100.0) < 1e-9, \"Bryson Q\"\n    assert abs(r - 0.04) < 1e-12, \"Bryson R\"\n    checks += 1\n\n    radius = observer_spectral_radius([[1.0, 0.001], [0.0, 0.99]], [1.0, 0.0], [0.19, 9.0])\n    assert abs(radius - math.sqrt(0.8109)) < 1e-3, \"observer error radius\"\n    assert radius < 1.0, \"the observer must converge\"\n    checks += 1\n\n    ad_model = [[1.0, 0.001], [0.0, 0.99]]\n    b_model = [0.0, 0.001]\n    k = lqr_gain(ad_model, [[0.0], [0.001]], [1.0, 1.0], 1.0)\n    m = [[ad_model[i][j] - b_model[i] * k[j] for j in range(2)] for i in range(2)]\n    tr = m[0][0] + m[1][1]\n    det = m[0][0] * m[1][1] - m[0][1] * m[1][0]\n    disc = cmath.sqrt(tr * tr - 4.0 * det)\n    rho = max(abs(0.5 * (tr + disc)), abs(0.5 * (tr - disc)))\n    assert rho < 1.0, \"the LQR gain stabilises the model\"\n    assert k[0] > 0.0 and k[1] > 0.0, \"both states are fed back\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - crossover, margin and its unwrap, delay loss, S + T, \"\n          \"Bryson weights, observer radius and the LQR gain\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -1985,8 +2147,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 3 checks - the Joseph-form posterior and its bad-gain rescue, and the NEES that measures whether the covariance was honest",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 05-control.T3.05a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert abs(joseph_variance(4.0, 1.0, 1.0, 0.8) - 0.80) < 1e-12, \"the worked posterior\"\n    assert abs(optimal_gain(4.0, 1.0, 1.0) - 0.8) < 1e-12, \"K = P H / (H P H + R)\"\n    assert abs(joseph_variance(10.0, 1.0, 1.0, 1.2) - 1.84) < 1e-9, \"the gate posterior\"\n    checks += 1\n\n    # A gain of 1.5 puts the naive (1 - K H) P^- at -2.0; the Joseph form squares it and adds\n    # K^2 R, so the same bad gain lands at 3.25 instead of a negative variance.\n    naive = (1.0 - 1.5 * 1.0) * 4.0\n    assert abs(naive + 2.0) < 1e-12, \"the naive update goes negative at this gain\"\n    assert abs(joseph_variance(4.0, 1.0, 1.0, 1.5) - 3.25) < 1e-12, \"a bad gain stays positive\"\n    assert joseph_variance(4.0, 1.0, 1.0, 1.5) > 0.0\n    checks += 1\n\n    assert abs(nees_diagonal([0.20, 0.0, 0.0], [0.04, 0.04, 0.04]) - 1.0) < 1e-12\n    assert abs(nees_diagonal([0.20], [0.01]) - 4.0) < 1e-12, \"an overconfident filter flags itself\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the Joseph-form posterior and its bad-gain rescue, and the \"\n          \"NEES that measures whether the covariance was honest\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -2008,8 +2172,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 5 checks - the Rodrigues exponential, its SO(3) injection, the zero-correction no-op, the reset that holds 0.05 rad, and the 0.07 rad second step",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 05-control.T3.05b.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    rotation = exp_so3([0.0, 0.0, 0.05])\n    assert abs(rotation[0][0] - math.cos(0.05)) < 1e-15, \"the worked rotation\"\n    assert abs(rotation[0][1] + math.sin(0.05)) < 1e-15\n    assert abs(rotation[1][0] - math.sin(0.05)) < 1e-15\n    assert abs(rotation[2][2] - 1.0) < 1e-15\n    checks += 1\n\n    moved = inject_rotation([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]], [0.0, 0.0, 0.05])\n    det = (moved[0][0] * (moved[1][1] * moved[2][2] - moved[1][2] * moved[2][1])\n           - moved[0][1] * (moved[1][0] * moved[2][2] - moved[1][2] * moved[2][0])\n           + moved[0][2] * (moved[1][0] * moved[2][1] - moved[1][1] * moved[2][0]))\n    assert abs(det - 1.0) < 1e-12, \"the injection stays in SO(3)\"\n    checks += 1\n\n    still = inject_rotation([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]], [0.0, 0.0, 0.0])\n    assert abs(still[0][0]) < 1e-15 and abs(still[0][1] + 1.0) < 1e-15, \"zero correction is a no-op\"\n    checks += 1\n\n    held = eskf_rotation_update([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],\n                                [0.0, 0.0, 0.05], [0.0, 0.0, 0.0])\n    assert abs(held[1][0] - math.sin(0.05)) < 1e-15, \"the reset holds the consumed correction\"\n    assert abs(held[1][0] - math.sin(0.10)) > 1e-6, \"a stale mean would read 0.10 rad here\"\n    checks += 1\n\n    stepped = eskf_rotation_update([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],\n                                   [0.0, 0.0, 0.05], [0.0, 0.0, 0.02])\n    assert abs(stepped[1][0] - math.sin(0.07)) < 1e-15, \"the next innovation still lands\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the Rodrigues exponential, its SO(3) injection, the \"\n          \"zero-correction no-op, the reset that holds 0.05 rad, and the 0.07 rad second step\"\n          % checks)\n\n\n_selfcheck()\n"
   },
@@ -2031,8 +2197,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 2 checks - the CBF projection at the worked, exercise and skip-test margins, a retreat it leaves alone, and the exponential margin at two times",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 05-control.T3.05c.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert abs(cbf_command(0.80, 0.04, 5.0) - 0.20) < 1e-12, \"the worked brake\"\n    assert abs(cbf_command(1.20, 0.10, 8.0, -2.0, 2.0) - 0.80) < 1e-12, \"the exercise brake\"\n    assert abs(cbf_command(0.80, 0.05, 6.0) - 0.30) < 1e-12, \"the skip-test brake\"\n    assert abs(cbf_command(-0.40, 0.05, 6.0) + 0.40) < 1e-15, \"a retreat is not modified\"\n    checks += 1\n\n    assert abs(barrier_lower_bound(0.20, 2.0, 0.50) - 0.20 * math.exp(-1.0)) < 1e-15\n    assert abs(barrier_lower_bound(0.20, 2.0, 0.0) - 0.20) < 1e-15\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the CBF projection at the worked, exercise and skip-test \"\n          \"margins, a retreat it leaves alone, and the exponential margin at two times\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -2054,8 +2222,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 4 checks - the rest-to-rest cubic, its coefficients, the peak speed and both duration limits, the spring-damper and the compliance yield",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 06-robotics.T1.06a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    q, qd, qdd = cubic_rest_to_rest(1.0, 0.0, 1.2, 2.0)\n    assert abs(q - 0.6) < 1e-12 and abs(qd - 0.9) < 1e-12 and abs(qdd) < 1e-12, \"the midpoint\"\n    assert abs(cubic_rest_to_rest(0.0, 0.0, 1.2, 2.0)[1]) < 1e-12, \"zero starting speed\"\n    assert abs(cubic_rest_to_rest(2.0, 0.0, 1.2, 2.0)[0] - 1.2) < 1e-12, \"the target is reached\"\n    assert abs(cubic_rest_to_rest(9.0, 0.0, 1.2, 2.0)[1]) < 1e-12, \"and held still after\"\n    checks += 1\n\n    a0, a1, a2, a3 = cubic_coefficients(0.3, 1.1, 1.6)\n    for t in (0.0, 0.4, 1.6):\n        poly = a0 + a1 * t + a2 * t * t + a3 * t ** 3\n        assert abs(poly - cubic_rest_to_rest(t, 0.3, 1.1, 1.6)[0]) < 1e-12, \"coefficients agree\"\n    assert abs(a1) < 1e-15 and abs(a1 + 2 * a2 * 1.6 + 3 * a3 * 1.6 ** 2) < 1e-12\n    checks += 1\n\n    assert abs(peak_velocity(2.0, 4.0) - 0.75) < 1e-12, \"peak speed\"\n    assert abs(min_duration_s(2.0, 3.0) - 1.0) < 1e-12, \"speed-limited duration\"\n    assert abs(min_duration_for_acceleration(2.0, 3.0) - 2.0) < 1e-12, \"acceleration limit\"\n    checks += 1\n\n    tau = spring_damper_torque(0.8, 0.7, 0.5, 0.2, 10.0, 1.0, 0.4)\n    assert abs(tau - 1.7) < 1e-12, \"the spring-damper plus gravity\"\n    assert abs(spring_damper_torque(0.4, 0.4, 0.0, 0.0, 8.0, 0.5, -1.2) + 1.2) < 1e-12\n    assert abs(compliance_deflection(0.50, 5.0) - 0.10) < 1e-12, \"the yield\"\n    assert compliance_deflection(0.5, 20.0) < compliance_deflection(0.5, 4.0)\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the rest-to-rest cubic, its coefficients, the peak speed and \"\n          \"both duration limits, the spring-damper and the compliance yield\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -2077,8 +2247,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 7 checks - the QoS rule, a joint matrix, a quarter turn, the tf2 chain, the rigid inverse, the buffer interpolation and the bandwidth budget",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 06-robotics.T2.06a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert qos_compatible(True, True, True, True) is True, \"a match connects\"\n    assert qos_compatible(True, False, False, False) is True, \"reliable feeds best-effort\"\n    assert qos_compatible(False, False, True, False) is False, \"best-effort cannot feed reliable\"\n    assert qos_compatible(True, False, True, True) is False, \"volatile cannot feed transient local\"\n    checks += 1\n\n    t = urdf_revolute_z((0.25, 0.0, 0.10), 0.0)\n    assert t[0] == [1.0, 0.0, 0.0, 0.25], \"a zero joint is a translation\"\n    assert t[3] == [0.0, 0.0, 0.0, 1.0], \"homogeneous bottom row\"\n    checks += 1\n\n    turn = urdf_revolute_z((0.0, 0.0, 0.0), math.pi / 2.0)\n    out = transform_point(turn, [1.0, 0.0, 0.0])\n    assert abs(out[0]) < 1e-12 and abs(out[1] - 1.0) < 1e-12, \"a quarter turn about +Z\"\n    checks += 1\n\n    t_b_l1 = urdf_revolute_z((0.0, 0.0, 0.10), 0.0)\n    t_l1_tool = urdf_revolute_z((0.25, 0.0, 0.0), math.pi / 2.0)\n    p = transform_point(mat4_mul(t_b_l1, t_l1_tool), [0.15, 0.0, 0.0])\n    assert abs(p[0] - 0.25) < 1e-9 and abs(p[1] - 0.15) < 1e-9 and abs(p[2] - 0.10) < 1e-9\n    checks += 1\n\n    pose = mat4_mul(urdf_revolute_z((0.3, -0.2, 0.1), 0.9), urdf_revolute_z((0.1, 0.0, 0.0), -1.4))\n    target = [0.05, -0.07, 0.02]\n    back = transform_point(invert_rigid(pose), transform_point(pose, target))\n    assert all(abs(back[i] - target[i]) < 1e-12 for i in range(3)), \"the rigid inverse round-trips\"\n    checks += 1\n\n    assert abs(interpolate(1.000, 0.20, 1.010, 0.25, 1.004) - 0.22) < 1e-9, \"buffer interpolation\"\n    assert abs(interpolate(2.0, 7.0, 3.0, 9.0, 3.0) - 9.0) < 1e-12, \"the end is the sample\"\n    try:\n        interpolate(1.0, 0.0, 1.1, 1.0, 1.2)\n    except ValueError:\n        pass\n    else:\n        raise AssertionError(\"extrapolation must be refused\")\n    checks += 1\n\n    assert abs(topic_bandwidth_mb_s(3, 1200, 30.0) - 0.108) < 1e-12, \"unicast bandwidth\"\n    assert topic_bandwidth_mb_s(0, 5000, 100.0) == 0.0, \"no subscribers, no traffic\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the QoS rule, a joint matrix, a quarter turn, the tf2 \"\n          \"chain, the rigid inverse, the buffer interpolation and the bandwidth budget\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -2100,8 +2272,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 6 checks - the MCAP budget, the per-message metadata, the simulated clock's ceiling, composable savings, rate-invariant replay and the decimation",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 06-robotics.T2.06b.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    topics = [(\"/joint_states\", 1000.0, 128), (\"/imu/data\", 200.0, 96),\n              (\"/camera/depth\", 30.0, 150_000)]\n    rate = disk_rate_mb_s(topics, meta_bytes=32, compression=0.40)\n    assert abs(rate - 1.874624) < 1e-6, \"zstd recording rate\"\n    assert abs(bag_size_mb(rate, 600.0) - 1124.7744) < 1e-3, \"ten-minute bag\"\n    checks += 1\n\n    bare = disk_rate_mb_s([(\"/j\", 1000.0, 128)], meta_bytes=0)\n    with_meta = disk_rate_mb_s([(\"/j\", 1000.0, 128)], meta_bytes=32)\n    assert abs(bare - 0.128) < 1e-12 and abs(with_meta - 0.160) < 1e-12, \"32 bytes per message\"\n    checks += 1\n\n    assert timer_steps(0.004, 0.001) == 4, \"an exact multiple\"\n    assert timer_steps(0.0045, 0.001) == 5, \"a ceiling\"\n    assert timer_steps(1e-5, 1e-3) == 1, \"a timer faster than the clock\"\n    checks += 1\n\n    assert abs(intra_process_saving_mb_s(5, 128, 1000.0) - 0.64) < 1e-12, \"five subscribers\"\n    assert intra_process_saving_mb_s(0, 128, 1000.0) == 0.0, \"nobody listening\"\n    checks += 1\n\n    for rate in (0.25, 1.0, 4.0):\n        assert abs(replay_derivative(10.000, 0.50, 10.002, 0.54) - 20.0) < 1e-9, \"rate invariant\"\n        assert abs(wall_delay_s(10.000, 10.002, rate) - 0.002 / rate) < 1e-12, \"wall sleep\"\n    checks += 1\n\n    assert control_decimation(1000.0, 500.0) == 2, \"the capstone's 500 Hz controller\"\n    assert control_decimation(1000.0, 100.0) == 10, \"a 100 Hz controller\"\n    try:\n        control_decimation(1000.0, 300.0)\n    except ValueError:\n        pass\n    else:\n        raise AssertionError(\"a non-integral decimation must be refused\")\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the MCAP budget, the per-message metadata, the simulated \"\n          \"clock's ceiling, composable savings, rate-invariant replay and the decimation\"\n          % checks)\n\n\n_selfcheck()\n"
   },
@@ -2123,8 +2297,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 5 checks - the mean loss, the chain rule against a finite difference, a descending step, the z-score guard and a gravity policy cloned from the plant",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 06-robotics.T3.06a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\nimport random\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert abs(mse_loss([[1.0], [3.0]], [[2.0], [1.0]]) - 2.5) < 1e-12, \"the loss is a mean\"\n    checks += 1\n\n    rng = random.Random(3)\n    params = {\n        \"W1\": [[rng.gauss(0.0, 0.4) for _ in range(3)] for _ in range(2)],\n        \"b1\": [rng.gauss(0.0, 0.1) for _ in range(3)],\n        \"W2\": [[rng.gauss(0.0, 0.4)] for _ in range(3)],\n        \"b2\": [rng.gauss(0.0, 0.1)],\n    }\n    X = [[0.4, -0.7], [0.9, 0.2], [-1.1, 0.5]]\n    Y = [[0.5], [-0.2], [0.9]]\n\n    def loss_of(p):\n        _, y_hat = forward(X, p)\n        return mse_loss(y_hat, Y)\n\n    H, y_hat = forward(X, params)\n    grads = backward(X, Y, params, H, y_hat)\n    eps = 1e-6\n    plus = {\"W1\": [r[:] for r in params[\"W1\"]], \"b1\": list(params[\"b1\"]),\n            \"W2\": [r[:] for r in params[\"W2\"]], \"b2\": list(params[\"b2\"])}\n    minus = {\"W1\": [r[:] for r in params[\"W1\"]], \"b1\": list(params[\"b1\"]),\n             \"W2\": [r[:] for r in params[\"W2\"]], \"b2\": list(params[\"b2\"])}\n    plus[\"W2\"][1][0] += eps\n    minus[\"W2\"][1][0] -= eps\n    fd = (loss_of(plus) - loss_of(minus)) / (2.0 * eps)\n    assert abs(grads[\"dW2\"][1][0] - fd) < 1e-7, \"the chain rule matches a finite difference\"\n    checks += 1\n\n    before = loss_of(params)\n    after = loss_of(apply_gradients(params, grads, 0.05))\n    assert after < before, \"one descent step lowers the loss\"\n    checks += 1\n\n    normalised, mean, sigma = z_score([1.0, 2.0, 3.0, 4.0])\n    assert abs(mean - 2.5) < 1e-12 and abs(sigma - math.sqrt(1.25)) < 1e-12\n    assert abs(sum(normalised)) < 1e-12, \"z-scores sum to zero\"\n    try:\n        z_score([2.0, 2.0])\n    except ValueError:\n        pass\n    else:\n        raise AssertionError(\"a constant column must be refused\")\n    checks += 1\n\n    # Small on purpose: the in-page runner stops a script after 400k line steps, so the browser\n    # proves the pipeline trains while the native suite proves it generalises.\n    gen = random.Random(7)\n    Xg = [[gen.uniform(-1.6, 1.6), gen.uniform(-2.6, 2.6)] for _ in range(24)]\n    Yg = [list(plant.gravity_torque(q1, q2)) for q1, q2 in Xg]\n    policy, losses = train_bc(Xg, Yg, hidden=4, lr=0.2, steps=120, seed=0)\n    fit = predict(policy, Xg)\n    err = [math.hypot(a[0] - b[0], a[1] - b[1]) for a, b in zip(fit, Yg)]\n    assert losses[-1] < 0.2 * losses[0], \"the cloned gravity map trains\"\n    assert sum(err) / len(err) < 0.3, \"and lands within a tenth of the 2.5 N*m limit\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the mean loss, the chain rule against a finite difference, \"\n          \"a descending step, the z-score guard and a gravity policy cloned from the plant\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -2146,8 +2322,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 5 checks - returns, the pessimistic PPO clip, the exponential ensemble, the step clamp before the joint limit and the heartbeat watchdog",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 06-robotics.T3.06b.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    returns = discounted_returns([1.0, 2.0, 4.0], gamma=0.9)\n    assert abs(returns[0] - 6.04) < 1e-12 and abs(returns[1] - 5.6) < 1e-12, \"the return recursion\"\n    assert abs(discounted_returns([0.0, 0.0, 10.0], gamma=0.95)[0] - 9.025) < 1e-12\n    checks += 1\n\n    assert abs(ppo_clip_term(1.5, 2.0) - 2.4) < 1e-12, \"a clipped positive advantage\"\n    assert abs(ppo_clip_term(0.6, -3.0) + 2.4) < 1e-12, \"a clipped negative advantage is pessimistic\"\n    assert abs(ppo_clip_term(1.1, 4.0) - 4.4) < 1e-12, \"inside the trust region, untouched\"\n    checks += 1\n\n    assert abs(temporal_ensemble([0.52, 0.50, 0.46], 0.5) - 0.5026767) < 1e-6\n    assert abs(temporal_ensemble([0.52, 0.50, 0.46], 0.0) - 0.4933333) < 1e-6, \"zero decay is a mean\"\n    checks += 1\n\n    assert abs(safety_shield(2.80, 0.50, 0.08) - 0.58) < 1e-12, \"the step clamp\"\n    assert abs(safety_shield(-2.0, -1.45, 0.10, -1.5, 1.5) + 1.50) < 1e-12, \"the joint limit wins\"\n    assert abs(safety_shield(0.53, 0.50, 0.08) - 0.53) < 1e-12, \"a sane command passes\"\n    checks += 1\n\n    assert watchdog_trip(1.0, 1.2, 0.1) is True, \"silence past the timeout trips\"\n    assert watchdog_trip(1.0, 1.5, 0.5) is False, \"exactly at the timeout is alive\"\n    assert watchdog_trip(10.02, 10.04, 0.1) is False, \"a fresh chunk resets the clock\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - returns, the pessimistic PPO clip, the exponential \"\n          \"ensemble, the step clamp before the joint limit and the heartbeat watchdog\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -2169,8 +2347,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 4 checks - the scan rate, the series NC chain, the latching PLC state machine, gain in decibels, phase lag and the lock-in amplitude",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 07-systems.T1.07a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert abs(scan_frequency_hz(0.40, 1.10, 0.50) - 500.0) < 1e-9, \"the scan budget is in ms\"\n    assert safety_chain_ok(1, 1, 1) and not safety_chain_ok(1, 1, 0), \"one open contact drops it\"\n    checks += 1\n\n    state, power = plc_scan_step(\"IDLE\", 1, 1, 1, True, False)\n    assert (state, power) == (\"RUNNING\", True)\n    state, power = plc_scan_step(state, 1, 0, 1, False, False)\n    assert (state, power) == (\"ESTOP_LATCHED\", False), \"a wire break latches\"\n    state, power = plc_scan_step(state, 1, 1, 1, True, False)\n    assert (state, power) == (\"ESTOP_LATCHED\", False), \"no automatic restart\"\n    state, power = plc_scan_step(state, 1, 1, 1, False, True)\n    assert (state, power) == (\"IDLE\", False), \"a reset with Start released clears it\"\n    checks += 1\n\n    assert abs(gain_db(0.10, 0.20) - (-6.0206)) < 1e-3, \"20 log10 of a half\"\n    assert abs(gain_db(1.0, 1.0)) < 1e-12\n    assert abs(phase_lag_deg(8.0, 0.03125) - (-90.0)) < 1e-9, \"a quarter period of lag\"\n    checks += 1\n\n    f, dt, amp = 5.0, 0.001, 0.35\n    samples = [amp * math.sin(2.0 * math.pi * f * k * dt) for k in range(1000)]\n    assert abs(sine_amplitude(samples, f, dt) - amp) < 1e-9, \"the lock-in recovers the amplitude\"\n    assert abs(db_to_ratio(gain_db(0.5, 1.0)) - 0.5) < 1e-12, \"the decibel inverse\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the scan rate, the series NC chain, the latching PLC state \"\n          \"machine, gain in decibels, phase lag and the lock-in amplitude\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -2192,8 +2372,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 5 checks - regen energy, the unclamped bus, the chopper bound and its current, the rolling counter across all five outcomes, the watchdog and HIL coverage",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 07-systems.T2.07a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    energy = regen_energy_j(0.04, 30.0, 0.75)\n    assert abs(energy - 13.5) < 1e-9, \"regenerative energy\"\n    assert abs(regen_energy_j(0.04, 30.0, 1.0) - 18.0) < 1e-9, \"the efficiency matters\"\n    checks += 1\n\n    surge = unclamped_bus_v(24.0, energy, 1000e-6)\n    assert abs(surge - math.sqrt(27576.0)) < 1e-9, \"166 V on a 24 V bus\"\n    assert abs(unclamped_bus_v(24.0, 0.0, 1e-3) - 24.0) < 1e-12, \"no energy, nominal bus\"\n    checks += 1\n\n    bound = brake_resistor_max_ohm(28.0, 180.0)\n    assert abs(bound - 4.3556) < 1e-4, \"the resistor bound\"\n    assert 4.0 <= bound < 4.5, \"4 ohm inside, 4.5 ohm outside\"\n    assert abs(brake_peak_current_a(28.0, 4.0) - 7.0) < 1e-12, \"peak chopper current\"\n    checks += 1\n\n    assert rolling_counter_status(3, 4) == \"OK\", \"a normal step\"\n    assert rolling_counter_status(15, 0) == \"OK\", \"a rollover is normal\"\n    assert rolling_counter_status(7, 7) == \"FAULT_FROZEN\", \"a stuck counter\"\n    assert rolling_counter_status(2, 4) == \"WARN_DROPPED_1\", \"one dropped frame\"\n    assert rolling_counter_status(2, 5) == \"WARN_DROPPED_2\", \"two dropped frames\"\n    assert rolling_counter_status(2, 6) == \"FAULT_SEQ_JUMP\", \"three is past the budget\"\n    checks += 1\n\n    assert abs(watchdog_timeout_s(3, 1e-3) - 3e-3) < 1e-15, \"three frame periods\"\n    assert abs(hil_coverage(4, 5) - 0.8) < 1e-12, \"four of five fault modes\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - regen energy, the unclamped bus, the chopper bound and its \"\n          \"current, the rolling counter across all five outcomes, the watchdog and HIL coverage\"\n          % checks)\n\n\n_selfcheck()\n"
   },
@@ -2215,8 +2397,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 5 checks - the PubSub byte rate, the AAS NodeId map, the PLd band, the filtered dual-channel STO and the manual reset interlock",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 07-systems.T3.06a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\n\ndef _selfcheck():\n    checks = 0\n\n    assert opc_ua_pubsub_rate_bps(8, 250) == 19500, \"eight doubles at 250 Hz\"\n    assert opc_ua_pubsub_rate_bps(2, 1000) == 30000, \"the header is paid once\"\n    checks += 1\n\n    assert abs(diagnostic_coverage_pct(95.0, 5.0) - 95.0) < 1e-9, \"coverage is a percentage\"\n    assert abs(pfh_common_cause(2.0e-7, 0.02) - 4.0e-9) < 1e-15, \"the CCF term is not doubled\"\n    assert pld_ok(2.4e-7) and not pld_ok(1e-6) and pld_ok(1e-7), \"the PLd band\"\n    checks += 1\n\n    welded = sto_evaluate(True, False, 25.0)\n    assert welded[\"torque_removed\"] and welded[\"discrepancy_fault\"] and not welded[\"can_enable\"]\n    skew = sto_evaluate(True, False, 12.0)\n    assert skew[\"torque_removed\"] and not skew[\"discrepancy_fault\"], \"12 ms is bounce, not a fault\"\n    assert sto_evaluate(False, False, 0.0)[\"can_enable\"]\n    checks += 1\n\n    shell = {\"submodels\": [{\"submodelElements\": [\n        {\"opcUaNodeId\": \"ns=2;s=Arm.MaxPayloadKg\"}, {\"opcUaNodeId\": \"ns=2;i=1042\"}]}]}\n    assert aas_opcua_nodes(shell) == [\"ns=2;s=Arm.MaxPayloadKg\", \"ns=2;i=1042\"]\n    try:\n        aas_opcua_nodes({\"submodels\": [{\"submodelElements\": [{\"opcUaNodeId\": \"Arm.X\"}]}]})\n    except ValueError:\n        pass\n    else:\n        raise AssertionError(\"a bare string is not a NodeId\")\n    checks += 1\n\n    assert not reset_interlock(False, False, True, True), \"a latched fault blocks restart\"\n    assert not reset_interlock(False, False, False, False), \"no automatic restart\"\n    assert reset_interlock(False, False, False, True), \"a deliberate press grants restart\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the PubSub byte rate, the AAS NodeId map, the PLd band, \"\n          \"the filtered dual-channel STO and the manual reset interlock\" % checks)\n\n\n_selfcheck()\n"
   },
@@ -2238,8 +2422,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "SELF-CHECK PASS: 4 checks - the RSS spatial budget with its dominant source, the latency chain including the zero-order hold, the phase margin it erodes in degrees, and the five-domain sign-off",
     "outputMatch": "normalized",
     "instructorTestSummary": [
-      "Browser: this package's own `selfcheck.py` runs again as the Instructor Behavioral Tests, from the workbench registry rather than from the editor - editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
-      "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter fails, the reference passes, and every planted fault fails its named test."
+      "Browser: the package's own `selfcheck.py` runs as the Instructor Behavioral Tests, from the workbench registry rather than from the editor.",
+      "Browser: editing the appended copy, deleting it, or printing its PASS line does not verify the exercise.",
+      "CI: scripts/run_exercise.py runs the package's unittest cases - the starter fails and the reference passes.",
+      "Edge case \u2014 CI: every planted fault fails its named test."
     ],
     "instructorTests": "\"\"\"Browser self-check for 08-capstones.T3.07a.\n\nAppended verbatim to the workbench entry, after the learner's code. Stdlib-only, one PASS line.\n\"\"\"\n\nimport math\n\n\ndef _selfcheck():\n    checks = 0\n\n    sigmas = (0.03, 0.06, 0.08, 0.03)\n    assert abs(rss(sigmas) - 0.1086278) < 1e-7, \"root-sum-square, not the linear sum\"\n    assert abs(rss((0.03, 0.04, 0.12)) - 0.13) < 1e-12, \"0.0169 under the root\"\n    assert abs(systematic_sum((0.01, 0.04, 0.03, 0.02)) - 0.10) < 1e-12, \"biases add linearly\"\n    assert abs(error_budget_3sigma((0.05,), (0.06, 0.08)) - 0.35) < 1e-12, \"3 sigma of 0.10\"\n    assert abs(variance_fraction(2, (0.03, 0.04, 0.12)) - 144.0 / 169.0) < 1e-12, \"variance share\"\n    checks += 1\n\n    assert abs(zoh_delay_us(1000.0) - 500.0) < 1e-12, \"half a tick\"\n    assert abs(total_latency_s(20.0, 180.0, 250.0, 150.0, 1000.0) - 0.0011) < 1e-15, \"1100 us\"\n    checks += 1\n\n    assert abs(net_phase_margin_deg(62.0, 150.0, 0.0011) - 52.546196) < 1e-6, \"radians to degrees\"\n    assert abs(net_phase_margin_deg(62.0, 150.0, 0.0034) - 32.779152) < 1e-6, \"the filter swap\"\n    assert abs(max_allowable_delay_ms(0.20, 200.0) - 1.0) < 1e-12, \"0.20 rad at 200 rad/s\"\n    checks += 1\n\n    assert capstone_signoff(0.4258834, 52.546196, 0.42, 60.0, True) is True, \"all five pass\"\n    assert capstone_signoff(0.4258834, 32.779152, 0.42, 60.0, True) is False, \"phase margin\"\n    assert capstone_signoff(0.20, 52.5, 0.42, 60.0, False) is False, \"four out of five is no-go\"\n    assert capstone_signoff(0.20, 52.5, 0.42, 50.0, True) is False, \"termination window\"\n    assert capstone_signoff(0.50, 45.0, 0.70, 65.0, True) is True, \"inclusive boundaries\"\n    checks += 1\n\n    print(\"SELF-CHECK PASS: %d checks - the RSS spatial budget with its dominant source, the \"\n          \"latency chain including the zero-order hold, the phase margin it erodes in degrees, \"\n          \"and the five-domain sign-off\" % checks)\n\n\n_selfcheck()\n"
   }

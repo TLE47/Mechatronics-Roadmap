@@ -264,7 +264,7 @@ export function useWorkflowEditor(lessonId: string, lessonTitle: string) {
   /**
    * One patch for an explicit set of cards, in one history step.
    *
-   * A gesture that names its own targets (the right-click wrap toggle can include the card under
+   * A gesture that names its own targets (the card menu's Wrap text can include the card under
    * the pointer even when it is not the selection) must not have to select first and then write
    * twice: that is two undos for one press.
    */

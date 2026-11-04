@@ -2810,7 +2810,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 // reader was on, and the page's own request is not free.
                 hidden={!phoneLessonVisible}
                 scope={shownLayout === 'study' ? 'study' : 'full'}
-                continueAction={readerContinue(shownLayout, nextLesson, selectLesson, chooseLayout)}
+                continueAction={readerContinue(shownLayout, chooseLayout)}
               />
             )}
 

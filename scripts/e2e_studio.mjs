@@ -47,6 +47,17 @@ function ok(message) {
 async function openFromHome(page, baseUrl) {
   await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });
   await page.getByTestId('home-dashboard').waitFor({ timeout: 30000 });
+  const heroMotion = await page.getByTestId('home-dashboard').evaluate((dashboard) => {
+    const hero = dashboard.querySelector('.home-hero');
+    const headline = hero?.querySelector('.home-gradient-text');
+    return {
+      headline: headline ? getComputedStyle(headline).animationName : 'none',
+      scan: hero ? getComputedStyle(hero, '::after').animationName : 'none',
+    };
+  });
+  assert.notEqual(heroMotion.headline, 'none', 'Home’s hero headline must carry its own motion');
+  assert.notEqual(heroMotion.scan, 'none', 'Home’s hero must carry the one soft scan');
+  ok('Home’s hero carries its own motion');
   await page.getByTestId('home-studio').waitFor({ timeout: 10000 });
   assert.match(
     (await page.getByTestId('home-studio').textContent()) ?? '',
@@ -132,6 +143,31 @@ async function main() {
 
     // ---- 1b. The action tray is a second door to the same tab ----
     await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });
+    const headerStudio = page.getByTestId('btn-open-studio');
+    await headerStudio.waitFor({ timeout: 30000 });
+    const trayOrder = await headerStudio.evaluate((button) => {
+      const tray = button.closest('[role="group"]');
+      return tray
+        ? [...tray.querySelectorAll('button[data-testid]')].map((item) =>
+            item.getAttribute('data-testid')
+          )
+        : [];
+    });
+    assert.deepEqual(
+      trayOrder.slice(0, 3),
+      ['btn-home', 'btn-open-studio', 'btn-open-palette'],
+      'Free study must sit between Home and Search in the Navigate tray'
+    );
+    await headerStudio.click();
+    await page.getByTestId('studio').waitFor({ timeout: 30000 });
+    assert.equal(
+      await page.getByTestId('tab-btn-tab-studio').getAttribute('aria-current'),
+      'page',
+      'the header tray must open the studio tab too'
+    );
+    ok('the header’s Free study button sits between Home and Search and opens the studio');
+
+    await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });
     const trayDoor = page.getByTestId('btn-home-studio-top');
     await trayDoor.waitFor({ timeout: 30000 });
     assert.match(
@@ -148,6 +184,35 @@ async function main() {
     );
     ok('Home’s action tray opens the studio tab too');
 
+    // ---- 1c. The palette marks a lesson that has passed ----
+    // A second page, not a reload of the studio page: seeding progress and reloading this page would
+    // race the studio store's own hydration with the run below.
+    const palettePage = await context.newPage();
+    try {
+      await palettePage.addInitScript(() =>
+        localStorage.setItem('mechalab_pyodide_verified_v1', JSON.stringify({ 'P.1': true }))
+      );
+      await palettePage.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+      const paletteDoor = palettePage.getByTestId('btn-open-palette');
+      await paletteDoor.waitFor({ timeout: 30000 });
+      await paletteDoor.click();
+      await palettePage.getByTestId('command-palette').waitFor({ timeout: 30000 });
+      await palettePage.getByTestId('input-palette-search').fill('P.1');
+      const verifiedMark = palettePage.getByTestId('palette-verified-lesson-P.1');
+      await verifiedMark.waitFor({ timeout: 5000 });
+      assert.match((await verifiedMark.textContent()) ?? '', /Verified/, 'the row must say Verified');
+      assert.match(
+        (await verifiedMark.getAttribute('class')) ?? '',
+        /emerald/,
+        'the verified mark must be the green pill, not the ordinary row'
+      );
+      await palettePage.keyboard.press('Escape');
+      await palettePage.getByTestId('command-palette').waitFor({ state: 'detached', timeout: 5000 });
+    } finally {
+      await palettePage.close();
+    }
+    ok('⌘K marks a passed lesson with a green Verified badge');
+
     // ---- 2. Run prints the program, and Stop recovers to a fresh interpreter ----
     await waitForEditor(page, STUDIO_EDITOR, 30000);
     assert.match(
@@ -161,6 +226,58 @@ async function main() {
       .filter({ hasText: 'studio e2e 42' })
       .waitFor({ timeout: 120000 });
     ok('Run executes a scratch program and prints its output');
+
+    // The find panel is the editor's own, not CodeMirror's stock white one: it has to wrap inside a
+    // narrow pane, and its buttons have to be readable in the palette they are drawn in.
+    await page.locator('[data-editor="editor-studio"] .cm-content').click();
+    await page.keyboard.press(process.platform === 'darwin' ? 'Meta+f' : 'Control+f');
+    await page.locator('.cm-search').waitFor({ timeout: 5000 });
+    const searchTheme = await page.locator('.cm-search').evaluate((panel) => {
+      const style = getComputedStyle(panel);
+      const button = panel.querySelector('button');
+      const buttonStyle = button ? getComputedStyle(button) : null;
+      const effectiveBackground = (node) => {
+        let at = node;
+        while (at) {
+          const bg = getComputedStyle(at).backgroundColor;
+          if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') return bg;
+          at = at.parentElement;
+        }
+        return getComputedStyle(document.body).backgroundColor;
+      };
+      const channel = (value) => {
+        const part = value / 255;
+        return part <= 0.03928 ? part / 12.92 : ((part + 0.055) / 1.055) ** 2.4;
+      };
+      const luminance = (rgb) => {
+        const [r, g, b] = (rgb.match(/[\d.]+/g) ?? ['0', '0', '0']).slice(0, 3).map(Number);
+        return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+      };
+      const background = button ? effectiveBackground(button) : style.backgroundColor;
+      const color = buttonStyle?.color ?? style.color;
+      const [bright, dark] =
+        luminance(background) > luminance(color)
+          ? [luminance(background), luminance(color)]
+          : [luminance(color), luminance(background)];
+      return {
+        display: style.display,
+        wrap: style.flexWrap,
+        contrast: (bright + 0.05) / (dark + 0.05),
+        background,
+        color,
+      };
+    });
+    assert.match(searchTheme.display, /flex/, 'the find panel must lay itself out as a flex row');
+    assert.equal(searchTheme.wrap, 'wrap', 'the find panel must wrap inside a narrow pane');
+    assert.ok(
+      searchTheme.contrast >= 4.5,
+      `the find buttons must be readable (contrast ${searchTheme.contrast.toFixed(2)}, ${searchTheme.color} on ${searchTheme.background})`
+    );
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.querySelector('.cm-search'), undefined, {
+      timeout: 5000,
+    });
+    ok('the editor find panel wraps and keeps its buttons readable');
 
     // ---- 2b. The editor is the runner's own card ----
     // The program and the run output are panes, the split controls belong to the card, and the
@@ -249,6 +366,57 @@ async function main() {
     );
     await page.getByTestId('pane-actual').waitFor({ timeout: 5000 });
     ok('the editor arrangement is the studio’s own, and survives a reload');
+
+    // ---- 2d. Trace and breakpoints belong to the studio too ----
+    await page.getByTestId('studio-more').click();
+    await page.getByTestId('studio-breakpoints').click();
+    await page.getByTestId('breakpoint-panel').waitFor({ timeout: 5000 });
+    assert.equal(
+      await page.getByTestId('breakpoint-panel-empty').count(),
+      1,
+      'the More action must open the breakpoint panel before a dot exists'
+    );
+    const bpCode = 'a = 1\nb = 2\nprint(a + b)\n';
+    await setEditorCode(page, bpCode, STUDIO_EDITOR);
+    await page.getByTestId('breakpoint-slot-3').waitFor({ timeout: 5000 });
+    await page.getByTestId('breakpoint-slot-3').click();
+    await page.getByTestId('breakpoint-row-3').waitFor({ timeout: 5000 });
+    await page.getByTestId('studio-run').click();
+    await page.getByTestId('studio-paused').waitFor({ timeout: 120000 });
+    assert.match(
+      (await page.getByTestId('studio-paused').textContent()) ?? '',
+      /line 3/,
+      'the park must name the line that was armed'
+    );
+    await page.getByTestId('studio-continue').click();
+    await page.getByTestId('studio-output').filter({ hasText: '3' }).waitFor({ timeout: 120000 });
+    assert.equal(
+      (await page.getByTestId('studio-output').textContent())?.trim(),
+      '3',
+      'Continue must finish the parked run'
+    );
+    await page.getByTestId('editor-tab-trace').click();
+    await page.getByTestId('trace-panel').waitFor({ timeout: 5000 });
+    assert.ok(
+      Number(await page.getByTestId('trace-panel').getAttribute('data-trace-steps')) >= 3,
+      'the studio trace must record the lines the run executed'
+    );
+    assert.equal(
+      (await page.getByTestId('trace-code').textContent())?.trim(),
+      'a = 1',
+      'the trace must quote the program the run executed'
+    );
+    await page.getByTestId('trace-next').click();
+    assert.equal(
+      (await page.getByTestId('trace-code').textContent())?.trim(),
+      'b = 2',
+      'stepping the trace must move to the next executed line'
+    );
+    await page.getByTestId('editor-tab-main').click();
+    await page.getByTestId('btn-clear-breakpoint-3').click();
+    await page.getByTestId('studio-more').click();
+    await page.getByTestId('studio-breakpoints').click();
+    ok('a breakpoint in More parks the studio run, and Trace replays it line by line');
 
     // The interpreter is loaded now, so this is a stop in the middle of a loop rather than a stop
     // that happened to win the race with Pyodide's first download.
