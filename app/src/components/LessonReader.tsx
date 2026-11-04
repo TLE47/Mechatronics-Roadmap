@@ -1,6 +1,7 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
+  ArrowRight,
   Bold,
   BookOpen,
   ChevronRight,
@@ -128,6 +129,14 @@ interface LessonReaderProps {
    * workbench below is the doing half. Read (and any other preset) shows the whole page.
    */
   scope?: 'full' | 'study';
+  /**
+   * Where the page goes next: Study continues into Read, Read continues into the next lesson.
+   *
+   * It sits after the last paragraph and before the source link, as a quiet pill rather than a solid
+   * button: reaching the end of a page is not a call to action, and a loud control there would
+   * compete with the exercise the learner has just read.
+   */
+  continueAction?: { label: string; title: string; onClick: () => void } | null;
 }
 
 /** The page up to its exercise section, for the Study preset. */
@@ -258,6 +267,7 @@ export function LessonReader({
   onJumpToEditor,
   hidden = false,
   scope = 'full',
+  continueAction = null,
 }: LessonReaderProps) {
   /** Whether the reader is showing its one-line split-view suggestion. */
   const [splitTip, setSplitTip] = useState(false);
@@ -1161,6 +1171,27 @@ export function LessonReader({
           </article>
         )}
       </div>
+
+      {continueAction && (
+        <div
+          data-testid="reader-continue"
+          className="flex justify-end px-3 pt-3 pb-1"
+        >
+          <button
+            type="button"
+            data-testid="btn-reader-continue"
+            onClick={continueAction.onClick}
+            title={continueAction.title}
+            className="group flex cursor-pointer items-center gap-1.5 rounded-full border border-line bg-panel px-3 py-1.5 font-mono text-[12px] text-muted transition-colors hover:border-accent/60 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            {continueAction.label}
+            <ArrowRight
+              className="h-3 w-3 transition-transform group-hover:translate-x-0.5"
+              aria-hidden="true"
+            />
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line-soft bg-canvas px-3 py-1.5">
         <p className="text-[12px] text-faint">

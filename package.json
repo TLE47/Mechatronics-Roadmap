@@ -117,6 +117,7 @@
     "test:history": "node --experimental-strip-types scripts/test_draft_history.mjs",
     "test:scope": "node --experimental-strip-types scripts/test_scope.mjs",
     "test:checkhints": "node --experimental-strip-types scripts/test_check_hints.mjs",
+    "test:cases": "node --experimental-strip-types scripts/test_lesson_cases.mjs",
     "test:takealong": "node --experimental-strip-types scripts/test_offline_takealong.mjs",
     "test:backup": "node --experimental-strip-types scripts/test_backup.mjs",
     "test:reset": "node --experimental-strip-types scripts/test_reset.mjs",

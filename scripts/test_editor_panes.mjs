@@ -117,7 +117,15 @@ check('the reported views are the slots that exist', () => {
   ]);
 });
 check('the view names are the only names', () => {
-  assert.deepEqual(EDITOR_VIEWS, ['main', 'predict', 'actual', 'expected', 'workflow', 'trace']);
+  assert.deepEqual(EDITOR_VIEWS, [
+    'main',
+    'predict',
+    'actual',
+    'expected',
+    'cases',
+    'workflow',
+    'trace',
+  ]);
   assert.equal(isEditorView('actual'), true);
   assert.equal(isEditorView('predict'), true, 'the prediction gate is a view like any other');
   assert.equal(isEditorView('workflow'), true, 'the learner’s own cards are a view like any other');
@@ -176,7 +184,8 @@ check('splitting from an output brings the editor back beside it', () => {
     'main',
   ]);
   assert.equal(nextView('main'), 'predict', 'Predict sits between the code and its outputs');
-  assert.equal(nextView('expected'), 'workflow', 'Workflow follows Expected');
+  assert.equal(nextView('expected'), 'cases', 'Cases follows Expected');
+  assert.equal(nextView('cases'), 'workflow', 'Workflow follows Cases');
   assert.equal(nextView('workflow'), 'trace', 'Trace follows Workflow');
   assert.equal(nextView('trace'), 'main', 'the list wraps');
 });

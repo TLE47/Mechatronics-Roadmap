@@ -52,10 +52,20 @@ export const MAX_BRANCH_CONDITION_CHARS = 60;
 export const MAX_GROUP_TITLE_CHARS = 40;
 /** The furthest a card may be dragged, so a stray pointer cannot make an unscrollable canvas. */
 export const MAX_NODE_COORD = 4000;
-/** The default width of a card; a saved `width` may be anywhere in the bounds below. */
+/**
+ * The default size of a card, and the bounds a resize may reach.
+ *
+ * The bounds are a share of the default rather than two unrelated pixel counts: a card may shrink to
+ * a quarter of the size it was drawn at and grow to twice it, so the same gesture means the same
+ * thing on a wide card and on a narrow one. `NODE_HEIGHT` is the two-line card's height; a card grows
+ * with its words, so the vertical bound is applied to whatever height the resize started from.
+ */
 export const NODE_WIDTH = 200;
-export const MIN_NODE_WIDTH = 140;
-export const MAX_NODE_WIDTH = 420;
+export const NODE_HEIGHT = 120;
+export const MIN_NODE_WIDTH = Math.round(NODE_WIDTH * 0.25);
+export const MAX_NODE_WIDTH = Math.round(NODE_WIDTH * 2);
+export const MIN_NODE_HEIGHT = Math.round(NODE_HEIGHT * 0.25);
+export const MAX_NODE_HEIGHT = Math.round(NODE_HEIGHT * 2);
 export const NODE_ROW = 172;
 export const NODE_COLUMN = 260;
 export const CANVAS_PAD = 16;
@@ -64,6 +74,12 @@ export const CANVAS_PAD = 16;
 export function nodeWidth(node: Pick<WorkflowNode, 'width'>): number {
   if (typeof node.width !== 'number' || !Number.isFinite(node.width)) return NODE_WIDTH;
   return Math.min(MAX_NODE_WIDTH, Math.max(MIN_NODE_WIDTH, Math.round(node.width)));
+}
+
+/** A learner-chosen card height, clamped; `null` means the card is as tall as its words. */
+export function nodeHeight(node: Pick<WorkflowNode, 'height'>): number | null {
+  if (typeof node.height !== 'number' || !Number.isFinite(node.height)) return null;
+  return Math.min(MAX_NODE_HEIGHT, Math.max(MIN_NODE_HEIGHT, Math.round(node.height)));
 }
 
 /**
@@ -428,6 +444,14 @@ export interface WorkflowNode {
   size?: CardSize;
   /** A learner-chosen card width; absent is the 200 px width every card was drawn at. */
   width?: number;
+  /**
+   * A learner-chosen card height; absent is the height the card's words need.
+   *
+   * Stored only when the learner dragged the corner vertically, for the same reason `width` is: a
+   * card that never used the control keeps exactly the document it had, and its fields still grow
+   * with its text.
+   */
+  height?: number;
   /** False turns wrapping off for this card; absent keeps the wrapped default. */
   wrapText?: boolean;
   /** Text formatting chosen from the card's right-click toolbar. */
@@ -843,6 +867,9 @@ function readNode(value: unknown, mode: WorkflowMode, fallbackId: string, index:
   // used them keeps exactly the bytes it had before the canvas could resize or wrap a card.
   if (typeof record.width === 'number' && Number.isFinite(record.width)) {
     node.width = Math.min(MAX_NODE_WIDTH, Math.max(MIN_NODE_WIDTH, Math.round(record.width)));
+  }
+  if (typeof record.height === 'number' && Number.isFinite(record.height)) {
+    node.height = Math.min(MAX_NODE_HEIGHT, Math.max(MIN_NODE_HEIGHT, Math.round(record.height)));
   }
   if (record.wrapText === false) node.wrapText = false;
   if (record.bold === true) node.bold = true;

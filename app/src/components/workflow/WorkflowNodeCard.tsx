@@ -8,15 +8,20 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { BookOpen, ClipboardCheck, Cpu, Gauge, StickyNote, Trash2 } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import {
   KIND_META,
   MAX_BRANCH_CONDITION_CHARS,
+  MAX_NODE_HEIGHT,
   MAX_NODE_WIDTH,
   MAX_STEP_DETAIL_CHARS,
   MAX_STEP_TITLE_CHARS,
   MAX_STEP_UNIT_CHARS,
+  MIN_NODE_HEIGHT,
   MIN_NODE_WIDTH,
+  NODE_HEIGHT,
   NODE_SHAPE,
+  nodeHeight,
   nodeWidth,
   type NodeShape,
   type SocketKinds,
@@ -32,7 +37,7 @@ import { parseInline, type InlineRun } from '../../readerMarkdown.ts';
 import { cardFill, cardInk, cardType } from './cardStyle.ts';
 import { nudgeCard } from './cardNudge.ts';
 import { WorkflowPorts } from './WorkflowPorts.tsx';
-import { WorkflowTextToolbar } from './WorkflowTextToolbar.tsx';
+import { WorkflowTextToolbar, type TextAnchor } from './WorkflowTextToolbar.tsx';
 import type { LinkDraft } from './useLinking.ts';
 
 /** The badge glyph for each kind; the card is the only surface that draws one. */
@@ -187,12 +192,16 @@ export function WorkflowNodeCard({
   const detailRuns = parseInline(node.detail);
   const titleMath = titleRuns.some((run) => run.k === 'math');
   const detailMath = detailRuns.some((run) => run.k === 'math');
-  const [liveWidth, setLiveWidth] = useState<number | null>(null);
-  const [toolbarAt, setToolbarAt] = useState<{ x: number; y: number } | null>(null);
+  const [liveSize, setLiveSize] = useState<{ width: number; height: number } | null>(null);
+  const [toolbarAt, setToolbarAt] = useState<TextAnchor | null>(null);
+  const [toolbarCard, setToolbarCard] = useState<TextAnchor | null>(null);
   const titleRef = useRef<HTMLTextAreaElement | null>(null);
   const detailRef = useRef<HTMLTextAreaElement | null>(null);
-  const resizeWidth = useRef(nodeWidth(node));
-  const width = liveWidth ?? nodeWidth(node);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const resizeSize = useRef({ width: nodeWidth(node), height: NODE_HEIGHT });
+  const width = liveSize?.width ?? nodeWidth(node);
+  /** A chosen height, or null while the card is as tall as its words. */
+  const height = liveSize?.height ?? nodeHeight(node);
 
   // A wrapped field grows with its words instead of showing a one-line scrollbar. This is the
   // difference between a diagram label and a form control that happens to be on a canvas.
@@ -226,32 +235,74 @@ export function WorkflowNodeCard({
     if (field.selectionStart === field.selectionEnd) return;
     event.preventDefault();
     event.stopPropagation();
-    setToolbarAt({ x: event.clientX, y: event.clientY });
+    const box = field.getBoundingClientRect();
+    // The field decides above/below; the whole card decides whether a bar below it would land on
+    // the card's own next line in a window shorter than the card.
+    const card = field.closest<HTMLElement>('[data-node-id]')?.getBoundingClientRect();
+    setToolbarAt({
+      left: box.left,
+      top: box.top,
+      right: box.right,
+      bottom: box.bottom,
+      width: box.width,
+      height: box.height,
+    });
+    setToolbarCard(
+      card
+        ? {
+            left: card.left,
+            top: card.top,
+            right: card.right,
+            bottom: card.bottom,
+            width: card.width,
+            height: card.height,
+          }
+        : null
+    );
   };
 
-  /** Drag the corner to resize the plate; the document is written once, on release. */
+  /**
+   * Drag the corner to resize the plate in both directions.
+   *
+   * The gesture is one document write, on release, and both axes are clamped to a quarter and twice
+   * the size the drag started from — so a card cannot be dragged into a sliver or an unscrollable
+   * wall, and the same drag means the same thing whatever size the card was.
+   */
   const beginResize = (event: ReactPointerEvent<HTMLButtonElement>) => {
     if (event.button !== 0) return;
     event.preventDefault();
     event.stopPropagation();
     const startX = event.clientX;
+    const startY = event.clientY;
     const startWidth = width;
-    resizeWidth.current = startWidth;
+    const startHeight = cardRef.current?.offsetHeight ?? NODE_HEIGHT;
+    resizeSize.current = { width: startWidth, height: startHeight };
     const move = (pointerEvent: PointerEvent) => {
-      const next = Math.min(
-        MAX_NODE_WIDTH,
-        Math.max(MIN_NODE_WIDTH, Math.round(startWidth + pointerEvent.clientX - startX))
-      );
-      resizeWidth.current = next;
-      setLiveWidth(next);
+      // The bounds are the card's own 25%–200%, not a share of wherever this drag began: a drag
+      // could otherwise ratchet a card smaller — or larger — one gesture at a time.
+      const next = {
+        width: Math.min(
+          MAX_NODE_WIDTH,
+          Math.max(MIN_NODE_WIDTH, startWidth + pointerEvent.clientX - startX)
+        ),
+        height: Math.min(
+          MAX_NODE_HEIGHT,
+          Math.max(MIN_NODE_HEIGHT, startHeight + pointerEvent.clientY - startY)
+        ),
+      };
+      resizeSize.current = next;
+      setLiveSize(next);
     };
     const finish = () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', finish);
       window.removeEventListener('pointercancel', finish);
-      const next = resizeWidth.current;
-      setLiveWidth(null);
-      if (next !== startWidth) onUpdate(node.id, { width: next });
+      const next = resizeSize.current;
+      setLiveSize(null);
+      const patch: Partial<WorkflowNode> = {};
+      if (Math.round(next.width) !== startWidth) patch.width = Math.round(next.width);
+      if (Math.round(next.height) !== startHeight) patch.height = Math.round(next.height);
+      if (patch.width || patch.height) onUpdate(node.id, patch);
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', finish);
@@ -270,6 +321,7 @@ export function WorkflowNodeCard({
   // button. A card being dragged rises above the other cards it is crossing.
   return (
     <div
+      ref={cardRef}
       data-node-id={node.id}
       data-testid={`workflow-node-${index}`}
       data-step={number}
@@ -280,6 +332,10 @@ export function WorkflowNodeCard({
         left: position.x,
         top: position.y,
         width,
+        // A vertical resize is a chosen plate height, not a new layout: the fields keep growing with
+        // their words and a fixed box clips the overflow (with room for the ports and the handle).
+        ...(height ? { height } : {}),
+        ...(height ? ({ overflow: 'clip', overflowClipMargin: '18px' } as CSSProperties) : {}),
         // A shaped plate is clipped inside this box: tinting the box would paint a rectangle behind
         // the diamond. Only the plain rectangle takes the fill here; the plate takes it below.
         ...(shaped ? {} : { backgroundColor: fill }),
@@ -517,21 +573,24 @@ export function WorkflowNodeCard({
       <button
         type="button"
         data-testid={`workflow-node-resize-${index}`}
-        aria-label={`Resize card ${number}: drag left or right`}
-        title="Drag to resize; use Fit text in the inspector to fit the words"
+        aria-label={`Resize card ${number}: drag the corner right or left, down or up`}
+        title="Drag the corner to resize both ways (25%–200%); Fit text in the inspector fits the words"
         onPointerDown={beginResize}
         className="absolute -bottom-1 -right-1 z-30 h-3.5 w-3.5 touch-none cursor-nwse-resize rounded-full border border-accent bg-panel shadow-sm hover:bg-accent/20"
       />
 
-      {toolbarAt && (
-        <WorkflowTextToolbar
-          node={node}
-          x={toolbarAt.x}
-          y={toolbarAt.y}
-          onApply={(patch) => onUpdate(node.id, patch)}
-          onClose={() => setToolbarAt(null)}
-        />
-      )}
+      {toolbarAt &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <WorkflowTextToolbar
+            node={node}
+            anchor={toolbarAt}
+            card={toolbarCard}
+            onApply={(patch) => onUpdate(node.id, patch)}
+            onClose={() => setToolbarAt(null)}
+          />,
+          document.body
+        )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { BookOpen, Scaling, StickyNote, WrapText, X } from 'lucide-react';
+import { BookOpen, Scaling, StickyNote, X } from 'lucide-react';
 import {
   KIND_META,
   MAX_FONT_SIZE,
@@ -46,7 +46,7 @@ export interface WorkflowSelectionInspectorProps {
   /** A look is optional, so `undefined` puts a card back to the theme's own surface and type. */
   onStyle: (
     patch: Partial<
-      Pick<WorkflowNode, 'fill' | 'ink' | 'size' | 'width' | 'wrapText' | 'bold' | 'italic' | 'underline' | 'align'>
+      Pick<WorkflowNode, 'fill' | 'ink' | 'size' | 'width' | 'height' | 'wrapText' | 'bold' | 'italic' | 'underline' | 'align'>
     >
   ) => void;
   onDismiss: () => void;
@@ -202,27 +202,15 @@ export function WorkflowSelectionInspector({
             <button
               type="button"
               data-testid="workflow-fit-text"
-              onClick={() => onStyle({ width: fittedNodeWidth(node), wrapText: true })}
-              title="Widen or narrow this card until its text fits"
+              onClick={() => onStyle({ width: fittedNodeWidth(node), height: undefined, wrapText: true })}
+              title="Widen or narrow this card until its text fits, and return it to its natural height"
               className="flex min-h-8 cursor-pointer items-center gap-1 rounded border border-line bg-panel px-1.5 font-mono text-[10.5px] text-muted hover:border-accent hover:text-accent"
             >
               <Scaling className="h-3 w-3" aria-hidden="true" /> Fit text
             </button>
-            <button
-              type="button"
-              data-testid="workflow-wrap-text"
-              aria-pressed={node.wrapText !== false}
-              aria-label="Wrap card text"
-              onClick={() => onStyle({ wrapText: node.wrapText === false ? undefined : false })}
-              title="Wrap long words inside the card instead of letting them run past its edge"
-              className={`flex min-h-8 cursor-pointer items-center gap-1 rounded border px-1.5 font-mono text-[10.5px] ${
-                node.wrapText !== false
-                  ? 'border-accent/50 bg-accent/10 text-accent'
-                  : 'border-line bg-panel text-muted hover:border-accent'
-              }`}
-            >
-              <WrapText className="h-3 w-3" aria-hidden="true" /> Wrap
-            </button>
+            <span className="font-mono text-[10px] text-faint">
+              Right-click a card to wrap its text
+            </span>
           </>
         )}
       </div>

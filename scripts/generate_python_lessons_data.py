@@ -611,7 +611,8 @@ assert len(_res) == 3 and all(math.isclose(item[3], 0.33, abs_tol=1e-6) for item
     ),
     "02.2": (
         [
-            "Test fk_2link at full extension (0, 0), folded-back origin singularity (0, 180), and orthogonal bend (90, -90)",
+            "fk_2link at the folded-back singularity (0.2 m, 0.2 m, 0°, 180°) returns a finite elbow and tip",
+            "fk_2link at an orthogonal bend (0.2 m, 0.1 m, 90°, -90°) puts the elbow at (0, 0.2) and the tip at (0.1, 0.2)",
         ],
         """import math
 _ex, _ey, _tx, _ty = fk_2link(0.2, 0.2, 0.0, 180.0)

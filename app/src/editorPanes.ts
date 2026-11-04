@@ -28,7 +28,15 @@
  * go through, and `npm run test:panes` pins it.
  */
 
-export const EDITOR_VIEWS = ['main', 'predict', 'actual', 'expected', 'workflow', 'trace'] as const;
+export const EDITOR_VIEWS = [
+  'main',
+  'predict',
+  'actual',
+  'expected',
+  'cases',
+  'workflow',
+  'trace',
+] as const;
 
 export type EditorView = (typeof EDITOR_VIEWS)[number];
 
@@ -38,6 +46,7 @@ export const EDITOR_VIEW_LABELS: Record<EditorView, string> = {
   predict: 'Predict',
   actual: 'Run output',
   expected: 'Expected',
+  cases: 'Cases',
   workflow: 'Workflow',
   trace: 'Trace',
 };
@@ -79,9 +88,27 @@ export function isEditorView(value: unknown): value is EditorView {
     value === 'predict' ||
     value === 'actual' ||
     value === 'expected' ||
+    value === 'cases' ||
     value === 'workflow' ||
     value === 'trace'
   );
+}
+
+/**
+ * The result views a preset really has.
+ *
+ * A preset still owns the regions (`workspaceLayout.ts`), and this is that rule read as tabs. Read
+ * shows the editor's bar but none of its results — its job is the page. Write has the two views a
+ * draft is about, Predict and Workflow, plus the cases the draft will be checked against: no run
+ * output, because that describes code which has already changed. Study and Debug have them all.
+ *
+ * Type-only import: the runtime dependency runs the other way (the runner imports this module), and
+ * a value import here would close the cycle.
+ */
+export function viewsForLayout(layout: 'study' | 'write' | 'read' | 'debug'): EditorView[] {
+  if (layout === 'read') return [];
+  if (layout === 'write') return ['predict', 'cases', 'workflow'];
+  return ['predict', 'actual', 'expected', 'cases', 'workflow', 'trace'];
 }
 
 export function isPaneAxis(value: unknown): value is PaneAxis {

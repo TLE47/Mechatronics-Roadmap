@@ -11,9 +11,11 @@
  *  - **Write** — the editor and nothing beside it. The results of the last run are a mirror of code
  *    that has already changed, and the lesson is read once; while drafting an answer, neither is
  *    what the learner is looking at.
- *  - **Read** — the lesson text alone, at a comfortable measure. This is the preset a learner uses
- *    when they are reading rather than typing, and it is also the honest name for it: the old Read
- *    preset showed the *results*, which was a different task wearing the same word.
+ *  - **Read** — the lesson text at a comfortable measure, with the editor's own bar above it,
+ *    folded. The bar is not decoration: Run, the verdict and the way back into the code are the
+ *    three things a reader needs without leaving the page, and hiding them made Read a dead end
+ *    that could only be escaped with the preset buttons. Its body stays folded exactly as Study's
+ *    does, so the reading is still what the preset is for.
  *  - **Debug** — the editor and the results side by side, which is where a traceback is read. At
  *    1440 px the stacked work area shows the code and the output one above the other, so a run's
  *    verdict sits off-screen while the line it is about is in view. Debug's divider **drags**: the
@@ -75,7 +77,8 @@ export const LAYOUTS: LayoutOption[] = [
     id: 'read',
     label: 'Read',
     shortcut: '⌥2',
-    title: 'Read layout (⌥2): the lesson text only — the editor and the results are hidden',
+    title:
+      'Read layout (⌥2): the lesson text with the editor bar folded above it — the results are hidden',
     arrangement: 'stack',
   },
   {
@@ -274,9 +277,9 @@ export interface DockControl {
 /**
  * The one dock button's words, or null when this preset has nothing beside a panel.
  *
- * Write hides everything but the editor and Read hides everything but the lesson text, so in both
- * there is no second edge to move anything to; a button there would be a control whose press changes
- * nothing on screen.
+ * Write and Read each show one region that a panel could sit beside — the editor and the lesson text
+ * respectively — so in both there is no second edge to move anything to; a button there would be a
+ * control whose press changes nothing on screen.
  */
 export function dockControl(
   dock: WorkspaceDock,
@@ -332,7 +335,8 @@ const SHOWN: Record<WorkspaceLayout, Record<WorkspaceRegion, boolean>> = {
   // Study is the app as it always was; every other preset is defined by what it takes away.
   study: { lesson: true, editor: true, results: true },
   write: { lesson: false, editor: true, results: false },
-  read: { lesson: true, editor: false, results: false },
+  // Read keeps the editor's bar, folded: Run and the way back to the code stay one press away.
+  read: { lesson: true, editor: true, results: false },
   // Debug hides the lesson text and arranges the editor and the results in two columns.
   debug: { lesson: false, editor: true, results: true },
 };

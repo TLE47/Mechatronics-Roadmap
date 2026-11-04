@@ -35,8 +35,11 @@ import {
   MAX_EDGES,
   MAX_FONT_SIZE,
   MAX_NODE_COORD,
+  MAX_NODE_HEIGHT,
   MAX_NODE_WIDTH,
+  MIN_NODE_HEIGHT,
   MIN_NODE_WIDTH,
+  NODE_HEIGHT,
   NODE_WIDTH,
   MAX_PROJECT_REF_CHARS,
   MAX_STEPS,
@@ -70,6 +73,7 @@ import {
   nextEdgeId,
   nextStepId,
   normalizeWorkflow,
+  nodeHeight,
   nodeWidth,
   fittedNodeWidth,
   workflowNumbers,
@@ -2343,6 +2347,26 @@ check('a card reads a saved width, clamps it, and defaults to the old 200 px', (
   }
   const plain = normalizeWorkflow(graph([{ kind: 'given', title: 'a' }]));
   assert.equal('width' in plain.nodes[0], false, 'an untouched card gains no field');
+});
+
+check('both axes resize between 25% and 200% of the card’s own size', () => {
+  // The bounds are a share of the default card, not two unrelated pixel counts: one quarter and
+  // twice, on width and height alike.
+  assert.equal(MIN_NODE_WIDTH, NODE_WIDTH / 4);
+  assert.equal(MAX_NODE_WIDTH, NODE_WIDTH * 2);
+  assert.equal(MIN_NODE_HEIGHT, NODE_HEIGHT / 4);
+  assert.equal(MAX_NODE_HEIGHT, NODE_HEIGHT * 2);
+  assert.equal(nodeHeight({}), null, 'a card with no chosen height is as tall as its words');
+  assert.equal(nodeHeight({ height: 2 }), MIN_NODE_HEIGHT);
+  assert.equal(nodeHeight({ height: 9000 }), MAX_NODE_HEIGHT);
+  assert.equal(nodeHeight({ height: 180.4 }), 180);
+  const doc = normalizeWorkflow(
+    graph([{ kind: 'given', title: 'a', width: 300, height: 500 }])
+  );
+  assert.equal(nodeWidth(doc.nodes[0]), 300);
+  assert.equal(doc.nodes[0].height, MAX_NODE_HEIGHT, 'a stored height is clamped on read');
+  const plain = normalizeWorkflow(graph([{ kind: 'given', title: 'a' }]));
+  assert.equal('height' in plain.nodes[0], false, 'an untouched card gains no height field');
 });
 
 check('fit text widens a long line and keeps short text at the minimum', () => {

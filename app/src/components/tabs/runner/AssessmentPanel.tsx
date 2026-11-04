@@ -1,15 +1,17 @@
-import type { RefObject } from 'react';
+import { useState, type RefObject } from 'react';
 import {
   Activity,
   CheckCircle2,
+  ChevronDown,
   CircleDashed,
+  ListChecks,
   Radar,
   ShieldCheck,
-  Sparkles,
   XCircle,
 } from 'lucide-react';
 import type { FailingCheck } from '../../../checkHints';
 import type { HarnessGate } from '../../../harnessGrading';
+import { CASE_STATE_LABEL, caseSummary, lessonCases } from '../../../lessonCases';
 
 interface AssessmentPanelProps {
   panelRef: RefObject<HTMLDivElement | null>;
@@ -55,6 +57,15 @@ export function AssessmentPanel({
   passStatus,
   harnessResult,
 }: AssessmentPanelProps) {
+  // Collapsed by default: the panel's job is the verdict, and the case list is the evidence a
+  // learner opens when the verdict is red. A press remembers its choice for this visit.
+  const [casesOpen, setCasesOpen] = useState(false);
+  // The panel already holds the summary and the verdict, so it derives the cases itself: the tab
+  // and the panel read one function, and no call site has to pass the same list twice.
+  const cases = lessonCases(
+    { instructorTestSummary: instructorTestSummary ?? [] },
+    { passStatus, instructorError }
+  );
   const behaviorTone =
     behaviorCheck === 'passed'
       ? 'text-emerald'
@@ -147,23 +158,72 @@ export function AssessmentPanel({
           </div>
         </div>
 
-        {instructorTestSummary && instructorTestSummary.length > 0 && (
-          <ul className="mt-3 grid gap-1.5 sm:grid-cols-2" data-testid="assessment-checks">
-            {instructorTestSummary.map((item, idx) => (
-              <li
-                key={idx}
-                data-testid={`assessment-check-${idx}`}
-                title={item}
-                className="group flex items-start gap-2 rounded-lg border border-line-soft bg-canvas/70 px-2.5 py-2 text-[11.5px] leading-snug text-body transition-colors hover:border-accent/40 hover:bg-canvas"
+        {cases.length > 0 && (
+          <div className="mt-3" data-testid="assessment-cases">
+            <button
+              type="button"
+              data-testid="assessment-cases-toggle"
+              aria-expanded={casesOpen}
+              aria-controls="assessment-cases-list"
+              onClick={() => setCasesOpen((open) => !open)}
+              className="flex w-full cursor-pointer items-center gap-2 rounded-lg border border-line-soft bg-canvas/70 px-2.5 py-1.5 text-left font-mono text-[12px] text-body hover:border-accent/40 hover:bg-canvas"
+            >
+              <ListChecks className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />
+              <span className="shrink-0 font-semibold uppercase tracking-[0.06em] text-accent">
+                Cases
+              </span>
+              <span data-testid="assessment-cases-summary" className="min-w-0 truncate text-muted">
+                {caseSummary(cases)}
+              </span>
+              <ChevronDown
+                className={`ml-auto h-3.5 w-3.5 shrink-0 text-faint transition-transform ${
+                  casesOpen ? 'rotate-180' : ''
+                }`}
+                aria-hidden="true"
+              />
+            </button>
+            {casesOpen && (
+              <ul
+                id="assessment-cases-list"
+                data-testid="assessment-checks"
+                className="mt-1.5 grid gap-1.5 sm:grid-cols-2"
               >
-                <Sparkles
-                  className="mt-0.5 h-3 w-3 shrink-0 text-accent transition-transform group-hover:scale-110"
-                  aria-hidden="true"
-                />
-                <span className="min-w-0">{item}</span>
-              </li>
-            ))}
-          </ul>
+                {cases.map((entry, idx) => (
+                  <li
+                    key={entry.id}
+                    data-testid={`assessment-check-${idx}`}
+                    data-state={entry.state}
+                    title={entry.label}
+                    className={`flex items-start gap-2 rounded-lg border px-2.5 py-2 text-[11.5px] leading-snug ${
+                      entry.state === 'failed'
+                        ? 'border-rose/40 bg-rose/[0.06] text-body'
+                        : 'border-line-soft bg-canvas/70 text-body'
+                    }`}
+                  >
+                    {entry.state === 'passed' ? (
+                      <CheckCircle2 className="mt-0.5 h-3 w-3 shrink-0 text-emerald" aria-hidden="true" />
+                    ) : entry.state === 'failed' ? (
+                      <XCircle className="mt-0.5 h-3 w-3 shrink-0 text-rose" aria-hidden="true" />
+                    ) : (
+                      <CircleDashed className="mt-0.5 h-3 w-3 shrink-0 text-faint" aria-hidden="true" />
+                    )}
+                    <span className="min-w-0 flex-1">{entry.label}</span>
+                    <span
+                      className={`shrink-0 font-mono text-[11px] uppercase tracking-[0.06em] ${
+                        entry.state === 'passed'
+                          ? 'text-emerald'
+                          : entry.state === 'failed'
+                            ? 'text-rose'
+                            : 'text-faint'
+                      }`}
+                    >
+                      {CASE_STATE_LABEL[entry.state]}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
 
         <details

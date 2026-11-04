@@ -119,7 +119,7 @@ export function WorkflowPanel({
     selectNodes,
     selectEdge,
     updateNode,
-    updateSelected,
+    updateCards,
     fitSelected,
     removeSelected,
     layoutWorkflowCards,
@@ -167,8 +167,16 @@ export function WorkflowPanel({
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [pendingTemplate, setPendingTemplate] = useState<WorkflowTemplate | null>(null);
   // The workflow has its own find field: the global palette searches lessons, not the cards on the
-  // paper in front of the learner.
+  // paper in front of the learner. It is closed until asked for — the canvas is the surface, and a
+  // permanent search box above it costs a row of paper for a control used once a session.
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchOpenRef = useRef(false);
+  searchOpenRef.current = searchOpen;
+  const searchInput = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    if (searchOpen) searchInput.current?.focus();
+  }, [searchOpen]);
   // The frame gesture is armed, not always on: the same paper pans, and on a phone a plain drag has
   // to keep scrolling.
   const [grouping, setGrouping] = useState(false);
@@ -201,9 +209,21 @@ export function WorkflowPanel({
   steps.current = { undo, redo, copyNode, cutNode, pasteNode, removeSelected, canPaste, selectedId, selectedIds };
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (!root.current?.getClientRects().length) return;
+      // ⌘F / Ctrl+F is the diagram's find, from anywhere in it — including a card's field, where the
+      // browser would otherwise open its own find over the page's prose instead of the cards.
+      if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === 'f') {
+        event.preventDefault();
+        setSearchOpen(true);
+        return;
+      }
+      if (event.key === 'Escape' && searchOpenRef.current) {
+        setSearchOpen(false);
+        setSearchQuery('');
+        return;
+      }
       const target = event.target as Element | null;
       if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
-      if (!root.current?.getClientRects().length) return;
       const actions = steps.current;
       // Delete belongs to the canvas even when no modifier is held; Backspace is the same gesture on
       // a Mac keyboard and is safe here because a text field returned above.
@@ -250,6 +270,10 @@ export function WorkflowPanel({
     setTemplatesOpen(false);
     setGrouping(false);
     setLaning(false);
+    // The find field belongs to the document that was open: the next lesson starts with the paper,
+    // not with the last lesson's query over it.
+    setSearchOpen(false);
+    setSearchQuery('');
     // Seen once means closed from then on, even on a lesson with no workflow: an empty tab is
     // exactly where a learner who dismissed the guide expects the one-press toggle, not the
     // three-item card again.
@@ -352,6 +376,28 @@ export function WorkflowPanel({
       hints: list.filter((issue) => issue.severity === 'hint').length,
     };
   }, [doc]);
+
+  /**
+   * Right-clicking a card is the wrap toggle.
+   *
+   * A card that is part of a multi-selection toggles the whole selection, so a set of cards can be
+   * wrapped — or unwrapped — in one press. The write is one history step, and the press selects the
+   * card it landed on when that card was not already selected.
+   */
+  const toggleWrapCard = (id: string) => {
+    if (!doc) return;
+    const ids = selectedIds.includes(id) ? selectedIds : [id];
+    const targets = doc.nodes.filter((node) => ids.includes(node.id));
+    if (!targets.length) return;
+    const wrapping = targets.every((node) => node.wrapText !== false);
+    if (!selectedIds.includes(id)) selectNode(id);
+    updateCards(ids, { wrapText: wrapping ? false : undefined });
+    setStatus(
+      wrapping
+        ? `Wrapping off${targets.length > 1 ? ` on ${targets.length} cards` : ''} — right-click to wrap`
+        : `Wrapping on${targets.length > 1 ? ` for ${targets.length} cards` : ''}`
+    );
+  };
 
   const dismissGuide = () => {
     markWorkflowGuideSeen();
@@ -584,19 +630,25 @@ export function WorkflowPanel({
         </button>
       </div>
 
+      {searchOpen && (
       <div className="relative mt-2" data-testid="workflow-search-wrap">
         <Search
           className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-faint"
           aria-hidden="true"
         />
         <input
+          ref={searchInput}
           data-testid="workflow-search"
           aria-label="Find a card in this workflow"
+          aria-keyshortcuts="Control+F Meta+F"
           value={searchQuery}
           placeholder="Find a card by title, detail, note, unit or kind…"
           onChange={(event) => setSearchQuery(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === 'Escape') setSearchQuery('');
+            if (event.key === 'Escape') {
+              setSearchQuery('');
+              setSearchOpen(false);
+            }
             if (event.key === 'Enter' && searchHits[0]) {
               selectNode(searchHits[0].node.id);
               revealCard(searchHits[0].node.id);
@@ -617,9 +669,23 @@ export function WorkflowPanel({
             <X className="h-3 w-3" aria-hidden="true" />
           </button>
         )}
+        <button
+          type="button"
+          data-testid="workflow-search-close"
+          aria-label="Close the workflow search"
+          title="Close (Esc)"
+          onClick={() => {
+            setSearchOpen(false);
+            setSearchQuery('');
+          }}
+          className="absolute -right-1 -top-2 grid h-5 w-5 -translate-y-1/2 cursor-pointer place-items-center rounded-full border border-line bg-panel text-faint shadow-sm hover:text-body"
+        >
+          <X className="h-2.5 w-2.5" aria-hidden="true" />
+        </button>
       </div>
+      )}
 
-      {searchQuery.trim() && (
+      {searchOpen && searchQuery.trim() && (
         <div
           data-testid="workflow-search-results"
           className="mt-1 max-h-44 overflow-auto rounded-lg border border-line bg-canvas p-1 shadow-sm"
@@ -701,6 +767,8 @@ export function WorkflowPanel({
         <span>Drag empty canvas to select; Alt-drag or arrow keys pan; Ctrl/⌘-click adds a card</span>
         <span aria-hidden="true">·</span>
         <span>Ctrl/⌘ C, X, V copy, cut and paste; Delete removes the selection</span>
+        <span aria-hidden="true">·</span>
+        <span>Ctrl/⌘ F finds a card; right-click a card toggles wrapping</span>
       </div>
 
       <Suspense
@@ -751,6 +819,7 @@ export function WorkflowPanel({
           focusLane={focusLane}
           onLaneNameFocused={() => setFocusLane(null)}
           onMenu={setMenu}
+          onToggleWrap={toggleWrapCard}
           onCopyNode={copyNode}
           onCutNode={cutNode}
           onPaste={pasteNode}
@@ -796,10 +865,6 @@ export function WorkflowPanel({
         <WorkflowSelectionBar
           count={selectedNodes.length}
           onFit={fitSelected}
-          wrap={selectedNodes.every((node) => node.wrapText !== false)}
-          onWrap={() =>
-            updateSelected({ wrapText: selectedNodes.every((node) => node.wrapText !== false) ? false : undefined })
-          }
           onLayout={layoutWorkflowCards}
           onRemove={removeSelected}
         />      )}

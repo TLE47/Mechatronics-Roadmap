@@ -1,22 +1,18 @@
 import { useEffect, useState, type ReactNode, type RefObject } from 'react';
 import {
-  Activity,
   CheckCircle2,
-  CheckSquare,
   ChevronDown,
   ChevronRight,
   ChevronUp,
   Columns2,
-  GitBranch,
   Lock,
   Rows2,
-  Sparkles,
-  Terminal,
   X,
 } from 'lucide-react';
 import { PythonEditor, type PythonEditorHandle } from '../../PythonEditor';
 import { PredictPane } from './PredictPane';
 import { RunVerdict } from './RunVerdict';
+import { resultTabMeta } from './resultTabMeta';
 import { PythonKeys } from '../../PythonKeys';
 import { MAIN_FILE_NAME, type LessonFile } from '../../../lessonFiles';
 import {
@@ -27,6 +23,7 @@ import {
   showView,
   slotFor,
   splitPane,
+  viewsForLayout,
   visibleViews,
   type EditorPanes,
   type EditorView,
@@ -103,6 +100,7 @@ interface EditorSlots {
   feedback: ReactNode;
   actualOutputPane: ReactNode;
   expectedOutputPane: ReactNode;
+  casesPane?: ReactNode;
   workflowPane: ReactNode;
   tracePane?: ReactNode;
 }
@@ -177,12 +175,14 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
   /** The badge's word, from the mode the editor is reading keys in. */
   const vimModeLabel = vimModeLabelFor(vimMode);
   const { value: panes, onPanes } = props.panes;
-  // Study opens compact: its job is the reading, and the editor is one press away. Write and
-  // Debug open the body because those presets exist for typing and for reading a failure. A phone's
-  // Code surface is the exception: there the editor is the whole task, not a detail below prose.
-  const [bodyCollapsed, setBodyCollapsed] = useState(layout === 'study' && !isPhone);
+  // Study and Read open folded: their job is the reading, and the editor is one press away. Write
+  // and Debug open the body because those presets exist for typing and for reading a failure. A
+  // phone's Code surface is the exception: there the editor is the whole task.
+  const [bodyCollapsed, setBodyCollapsed] = useState(
+    (layout === 'study' || layout === 'read') && !isPhone
+  );
   useEffect(() => {
-    setBodyCollapsed(layout === 'study' && !isPhone);
+    setBodyCollapsed((layout === 'study' || layout === 'read') && !isPhone);
   }, [layout, isPhone]);
   // Opening the trace from More is a request for the editor body even when Study folded it.
   useEffect(() => {
@@ -193,7 +193,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
     gate,
     onClosePredict,
     nextChapter,
-    resultViews = ['predict', 'actual', 'expected', 'workflow', 'trace'],
+    resultViews = ['predict', 'actual', 'expected', 'cases', 'workflow', 'trace'],
   } = props;
   // A held run is a question that has to be visible. Study opens folded, but the gate lives in the
   // body: a Run that opens it must not leave the learner with an invisible question and a held run.
@@ -208,15 +208,23 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
    * falls back to the editor and the stored tab comes back with Study, which is why this is derived
    * here rather than written back to the store.
    */
+  /**
+   * The result views this preset allows. A preset owns the region (Read has no results, Write has
+   * Predict and Workflow but no run output), and the stored arrangement is still the learner's: a
+   * view the preset forbids is not shown and is not written away, so it comes back with Study.
+   */
+  const allowedViews: EditorView[] = layout
+    ? viewsForLayout(layout)
+    : resultsAllowed
+      ? resultViews
+      : [];
   const shownViews = new Set<EditorView>(
-    resultsAllowed
-      ? visibleViews(panes).filter((view) => view === 'main' || resultViews.includes(view))
-      : ['main']
+    visibleViews(panes).filter((view) => view === 'main' || allowedViews.includes(view))
   );
   /** Every view on screen, in slot order: the pane strip and the body read the same list. */
   const views = visibleViews(panes);
   /** Two panes only when two views are really on screen. */
-  const paneSplit = resultsAllowed && isSplit(panes) && shownViews.size > 1;
+  const paneSplit = allowedViews.length > 0 && isSplit(panes) && shownViews.size > 1;
   /** Slot order, so an arrangement opened on an output still reads left to right. */
   const paneOrder = (view: EditorView): number => slotFor(panes, view) ?? 0;
   /** The helper the strip names, from the file the tab picked. */
@@ -259,7 +267,15 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
     if (passStatus === 'untested' || passStatus === 'passed') return;
     setBodyCollapsed(false);
   }, [passStatus]);
-  const { toolbar, feedback, actualOutputPane, expectedOutputPane, workflowPane, tracePane } = props.slots;
+  const {
+    toolbar,
+    feedback,
+    actualOutputPane,
+    expectedOutputPane,
+    casesPane,
+    workflowPane,
+    tracePane,
+  } = props.slots;
   const { coEdit, collabNotice, peerLabel } = props.collab;
 
   return (
@@ -331,43 +347,12 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
                 {file.name}
               </button>
             ))}
-            {resultsAllowed && (
+            {allowedViews.length > 0 && (
               <>
                 <span aria-hidden="true" className="mx-1 h-4 w-px shrink-0 self-center bg-line-soft" />
-                {resultViews.map((view) => {
+                {resultViews.filter((view) => allowedViews.includes(view)).map((view) => {
                   const selected = shownViews.has(view);
-                  const meta =
-                    view === 'predict'
-                      ? {
-                          label: 'Predict',
-                          title:
-                            'The prediction gate: commit to what this will print before the run — tab here, or split it beside the code',
-                          icon: <Sparkles className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
-                        }
-                      : view === 'actual'
-                        ? {
-                            label: 'Run output',
-                            title: 'The last run’s stdout and verdict — tab here, or split it beside the code',
-                            icon: <Terminal className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
-                          }
-                        : view === 'workflow'
-                          ? {
-                              label: 'Workflow',
-                              title:
-                                'How this problem gets solved — given, model, compute, check, with a live checklist',
-                              icon: <GitBranch className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
-                            }
-                          : view === 'trace'
-                            ? {
-                                label: 'Trace',
-                                title: 'The last run replayed line by line, with the values each frame held',
-                                icon: <Activity className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
-                              }
-                          : {
-                              label: 'Expected',
-                              title: 'The lesson’s Expected Output — tab here, or split it beside the code',
-                              icon: <CheckSquare className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
-                            };
+                  const meta = resultTabMeta(view);
                   return (
                     <button
                       key={view}
@@ -402,7 +387,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
               A sibling of the tablist, not a child: a tablist may only own tabs, and axe reports any
               other child role inside it as an aria-required-children violation. Outside it the
               controls also stay put while the tabs scroll. */}
-          {resultsAllowed && (
+          {allowedViews.length > 0 && (
             <div role="group" aria-label="Editor panes" className="ml-1 flex shrink-0 items-center gap-0.5 pl-1">
               {!paneSplit ? (
                 <button
@@ -652,7 +637,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
             />
           )}
         </div>
-        {resultsAllowed && (
+        {allowedViews.length > 0 && (
           <>
             {gate && (
               <div
@@ -694,6 +679,20 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
             >
               {expectedOutputPane}
             </div>
+            {casesPane && (
+              <div
+                data-testid="pane-cases"
+                data-pane="cases"
+                onClick={() => focusPane('cases')}
+                style={{
+                  display: shownViews.has('cases') ? undefined : 'none',
+                  order: paneOrder('cases'),
+                }}
+                className={`min-w-0 flex-1 border-t border-line-soft ${paneBorder('cases')}`}
+              >
+                {casesPane}
+              </div>
+            )}
             <div
               data-testid="pane-workflow"
               data-pane="workflow"

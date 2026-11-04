@@ -1070,17 +1070,27 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     assert.doesNotMatch(writeQuestion, /[`*]/, 'the question is plain text, not raw Markdown');
     await page.keyboard.press('Alt+2');
-    assert.equal(await visible('editor-panel'), false, '⌥2 hides the editor');
+    // Read keeps the editor's bar, folded: Run and the way back into the code stay one press away,
+    // and the page is still what the preset is for.
+    assert.equal(await visible('editor-panel'), true, '⌥2 keeps the editor bar');
+    assert.equal(await visible('editor-tab-main'), true, '⌥2 keeps the way back into the code');
+    assert.equal(await visible('editor-panes'), false, '⌥2 folds the editor body');
     assert.equal(await visible('editor-tab-actual'), false, '⌥2 hides the results with the editor');
     assert.equal(await visible('lesson-reader'), true, '⌥2 is the reading preset: the text stays');
     assert.equal(await visible('lesson-list-card'), false, '⌥2 keeps the chooser hidden');
     // Read is a click here, so the button path is pinned as well as the shortcut.
     await page.getByTestId('layout-read').click();
-    assert.equal(await visible('editor-panel'), false, 'the Read button hides the editor');
+    assert.equal(await visible('editor-panel'), true, 'the Read button keeps the editor bar');
+    assert.equal(await visible('editor-panes'), false, 'the Read button keeps the body folded');
     assert.equal(await visible('lesson-reader'), true, 'the Read button keeps the lesson text');
     await page.reload({ waitUntil: 'networkidle' });
     await waitForEditor(page, 'editor-main');
-    assert.equal(await visible('editor-panel'), false, 'a remembered preset survives the reload');
+    assert.equal(await visible('editor-panel'), true, 'a remembered preset survives the reload');
+    assert.equal(
+      await visible('editor-panes'),
+      false,
+      'a remembered Read preset reopens folded, not with the code body'
+    );
     assert.equal(
       await page.getByTestId('layout-read').getAttribute('aria-pressed'),
       'true',
@@ -2914,16 +2924,26 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         const resizeHandle = page.getByTestId('workflow-node-resize-0');
         await resizeHandle.scrollIntoViewIfNeeded();
         const widthBefore = await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetWidth);
+        const heightBefore = await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetHeight);
         const resizeBox = await resizeHandle.boundingBox();
         await page.mouse.move(resizeBox.x + resizeBox.width / 2, resizeBox.y + resizeBox.height / 2);
         await page.mouse.down();
-        await page.mouse.move(resizeBox.x + resizeBox.width / 2 + 90, resizeBox.y + resizeBox.height / 2, { steps: 6 });
+        await page.mouse.move(
+          resizeBox.x + resizeBox.width / 2 + 90,
+          resizeBox.y + resizeBox.height / 2 + 60,
+          { steps: 6 }
+        );
         await page.mouse.up();
         await page.waitForTimeout(350);
         const widthAfter = await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetWidth);
+        const heightAfter = await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetHeight);
         assert.ok(
           widthAfter >= widthBefore + 60,
           `dragging the corner must widen the card (${widthBefore} → ${widthAfter})`
+        );
+        assert.ok(
+          heightAfter >= heightBefore + 40,
+          `dragging the corner must also make the card taller (${heightBefore} → ${heightAfter})`
         );
         await page.getByTestId('workflow-node-title-0').fill('A deliberately long card title that should fit on one wide line');
         await page.waitForTimeout(200);
@@ -2931,15 +2951,32 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.waitForTimeout(300);
         const fittedWidth = await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetWidth);
         assert.ok(fittedWidth >= widthAfter, `Fit text must lengthen a long line (${widthAfter} → ${fittedWidth})`);
-        await page.getByTestId('workflow-wrap-text').click();
+        // Right-click is the wrap toggle: no control to find, no menu to read.
+        await page.getByTestId('workflow-node-title-0').click({ button: 'right' });
+        await page.waitForTimeout(200);
         assert.equal(
-          await page.getByTestId('workflow-wrap-text').getAttribute('aria-pressed'),
-          'false',
-          'the wrap toggle must be able to turn wrapping off'
+          await page.getByTestId('workflow-node-title-0').getAttribute('wrap'),
+          'off',
+          'right-clicking a card must turn wrapping off'
         );
-        await page.getByTestId('workflow-wrap-text').click();
+        await page.getByTestId('workflow-node-title-0').click({ button: 'right' });
+        await page.waitForTimeout(200);
+        assert.equal(
+          await page.getByTestId('workflow-node-title-0').getAttribute('wrap'),
+          'soft',
+          'right-clicking again must turn wrapping back on'
+        );
 
+        // The find field is not furniture: it appears on ⌘F / Ctrl+F and closes on Escape.
+        assert.equal(
+          await page.getByTestId('workflow-search').count(),
+          0,
+          'the workflow find field must stay hidden until it is asked for'
+        );
+        await page.getByTestId('workflow-node-title-0').click();
+        await page.keyboard.press(process.platform === 'darwin' ? 'Meta+f' : 'Control+f');
         const search = page.getByTestId('workflow-search');
+        await search.waitFor({ timeout: 5000 });
         await search.fill('deliberately');
         await page.getByTestId('workflow-search-hit-0').waitFor({ timeout: 5000 });
         assert.match(
@@ -2954,7 +2991,13 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           '1',
           'a search hit must select the card it names'
         );
-        await search.fill('');
+        await page.getByTestId('workflow-search-close').click();
+        await page.waitForTimeout(150);
+        assert.equal(
+          await page.getByTestId('workflow-search').count(),
+          0,
+          'closing the find field must take it off the canvas again'
+        );
 
         const cardCountBefore = await page.locator('[data-node-id]').count();
         const beforeLayout = await page.locator('[data-node-id]').evaluateAll((cards) =>

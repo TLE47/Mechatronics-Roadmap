@@ -121,6 +121,8 @@ export interface WorkflowCanvasProps {
   onLaneNameFocused: () => void;
   /** A right-click or a keyboard menu press on the paper, a card, a frame, a lane or an arrow. */
   onMenu: (request: WorkflowMenuRequest) => void;
+  /** A right-click on a card's plate toggles its wrapping; the header keeps the card menu. */
+  onToggleWrap: (id: string) => void;
   /** The menu's clipboard items: one card at a time, owned by the panel. */
   onCopyNode: (id: string) => void;
   onCutNode: (id: string) => void;
@@ -166,6 +168,7 @@ export function WorkflowCanvas({
   focusLane,
   onLaneNameFocused,
   onMenu,
+  onToggleWrap,
   onCopyNode,
   onCutNode,
   onPaste,
@@ -352,20 +355,28 @@ export function WorkflowCanvas({
         onPointerUp={marquee.finish}
         onPointerCancel={marquee.finish}
         onContextMenu={(event) => {
-          // A field keeps the browser's own menu: copy and paste are what a learner needs there.
-          if ((event.target as Element).closest('input, textarea, select')) return;
+          const target = event.target as Element;
+          const card = target.closest<HTMLElement>('[data-node-id]');
+          const node = card ? byId.get(card.dataset.nodeId ?? '') : undefined;
+          if (card && node) {
+            event.preventDefault();
+            // The header is the card's handle: its menu is one press away there. Everywhere else on
+            // the card — including a field with no selection in it — the right-click is the wrap
+            // toggle itself. A selection in a field is the one exception: the field opens the
+            // formatting toolbar and stops the event before it reaches here.
+            if (target.closest('[data-testid^="workflow-node-drag-"]')) {
+              if (!selectedIds.includes(node.id)) onSelect(node.id);
+              openMenu(event.clientX, event.clientY, node);
+              return;
+            }
+            onToggleWrap(node.id);
+            return;
+          }
+          // Off a card, a field keeps the browser's own menu: copy and paste are what a learner
+          // needs in a lane name or an arrow's guard.
+          if (target.closest('input, textarea, select, [contenteditable="true"]')) return;
           event.preventDefault();
-          const node = doc.nodes.find(
-            (entry) =>
-              entry.id ===
-              (event.target as Element).closest<HTMLElement>('[data-node-id]')?.dataset.nodeId
-          );
-          openMenu(
-            event.clientX,
-            event.clientY,
-            node ?? null,
-            node ? null : actionAt(event.target as Element)
-          );
+          openMenu(event.clientX, event.clientY, null, actionAt(target));
         }}
         onKeyDown={(event) => {
           // The keyboard's right-click: Shift+F10, or the Menu key, opens the paper's menu where

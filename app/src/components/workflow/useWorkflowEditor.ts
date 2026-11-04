@@ -261,6 +261,21 @@ export function useWorkflowEditor(lessonId: string, lessonTitle: string) {
     commit(next);
   };
 
+  /**
+   * One patch for an explicit set of cards, in one history step.
+   *
+   * A gesture that names its own targets (the right-click wrap toggle can include the card under
+   * the pointer even when it is not the selection) must not have to select first and then write
+   * twice: that is two undos for one press.
+   */
+  const updateCards = (ids: readonly string[], patch: Partial<WorkflowNode>) => {
+    const base = latest.current ?? doc;
+    if (!base || !ids.length) return;
+    let next = base;
+    for (const id of ids) next = edits.editNode(next, id, patch);
+    if (next !== base) commit(next);
+  };
+
   /** Auto layout is a document edit like a drag; undo puts every card back where it was. */
   const layoutWorkflowCards = () => {
     const base = latest.current ?? doc;
@@ -516,6 +531,7 @@ export function useWorkflowEditor(lessonId: string, lessonTitle: string) {
     selectEdge,
     updateNode,
     updateSelected,
+    updateCards,
     fitSelected,
     removeSelected,
     setNodeAnnotation,

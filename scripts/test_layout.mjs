@@ -7,8 +7,8 @@
  * stored value that survives a version bump and blanks the page on load. So:
  *
  * 1. **The table is pinned region by region.** Study shows the lesson text, the editor and the
- *    results; Write hides the lesson text and the results; Read hides the editor and the results;
- *    Debug hides the lesson text and puts the editor and the results in two columns.
+ *    results; Write hides the lesson text and the results; Read hides the results but keeps the
+ *    editor's bar, folded; Debug hides the lesson text and puts the editor and results in columns.
  * 2. **Nothing stored, nothing broken.** No `localStorage` at all (a booted page in a test harness, a
  *    browser that throws on access) reads as the default, and the toggle still returns what to render.
  * 3. **A stored value is validated, not trusted.** `'grid'` from an older build, or a half-written
@@ -110,7 +110,9 @@ check('four presets, each printing its own shortcut', () => {
 check('the table: what each preset shows', () => {
   assert.deepEqual(REGIONS.filter((r) => layoutShows('study', r)), ['lesson', 'editor', 'results']);
   assert.deepEqual(REGIONS.filter((r) => layoutShows('write', r)), ['editor']);
-  assert.deepEqual(REGIONS.filter((r) => layoutShows('read', r)), ['lesson']);
+  // Read keeps the editor's bar (folded) so Run and the way back to the code are one press away;
+  // its results stay hidden, because the preset is the page.
+  assert.deepEqual(REGIONS.filter((r) => layoutShows('read', r)), ['lesson', 'editor']);
   // Debug is the only preset that hides one region and shows the other two in two columns.
   assert.deepEqual(REGIONS.filter((r) => layoutShows('debug', r)), ['editor', 'results']);
 });

@@ -29,7 +29,10 @@ flowchart LR
 | `useProgressFlags.ts` | The verified and self-marked lesson stores, parent-owned or local, and the two writers. |
 | `useRunnerArrangement.ts` | The editor/results split share, which side results sit on, and the persisted layout record. |
 | `RunnerToolbar.tsx` | The run controls: presets and dock, Pause/Stop/Run, Predict, and the More panel's actions. |
-| `RunnerEditorCard.tsx` | The editor surface: main/helper tabs, the pane strip, the split controls, and the editor body beside Predict, Run output, Expected and Workflow. |
+| `RunnerEditorCard.tsx` | The editor surface: main/helper tabs, the pane strip, the split controls, and the editor body beside Predict, Run output, Expected, Cases and Workflow. |
+| `resultTabMeta.tsx` | What each result tab says: its label, its tooltip and its glyph. |
+| `CasesPane.tsx` | The behavioural cases: one row per substituted input, with what the last run proved and which cases it never reached. |
+| `readerContinue.ts` | Where the page goes next: Study into Read, Read into the next lesson. |
 | `LessonChooserRail.tsx` | The Study preset's left column: the lesson chooser, the strip it folds to, and the grid width that follows the fold. |
 | `LessonAmbience.tsx` | The pointer-free atmosphere behind the runner: aurora, instrument grid, orbit and four HUD chips. |
 | `RunnerRuntimeStrip.tsx` | Where the interpreter is while it loads: first-run guide and runtime sentence. |

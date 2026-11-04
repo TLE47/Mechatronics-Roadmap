@@ -89,6 +89,8 @@ import { DraftHistoryPanel } from './runner/DraftHistoryPanel';
 import { BreakpointPanel } from './runner/BreakpointPanel';
 import { RunnerToolbar } from './runner/RunnerToolbar';
 import { RunnerEditorCard } from './runner/RunnerEditorCard';
+import { CasesPane } from './runner/CasesPane';
+import { readerContinue } from './runner/readerContinue';
 import { useRunnerExecution } from './runner/useRunnerExecution';
 import { useFirstRunTour } from './runner/useFirstRunTour';
 import { useCollab } from './runner/useCollab';
@@ -1634,7 +1636,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
    * would be a door into a hidden room, so Study comes back first.
    */
   const openPredictView = () => {
-    if (!editorShown || !resultsAllowed) chooseLayout('study');
+    // Read has no Predict view; Write does, so pressing Predict there stays in Write.
+    if (!editorShown || shownLayout === 'read') chooseLayout('study');
     if (slotFor(panes, 'predict') !== null) {
       commitPanes(showView(panes, 'predict'));
       return;
@@ -2767,6 +2770,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 feedback: runFeedback,
                 actualOutputPane,
                 expectedOutputPane,
+                casesPane: <CasesPane lesson={currentLesson} passStatus={passStatus} instructorError={instructorError} />,
                 workflowPane,
                 tracePane: (
                   <TracePanel
@@ -2806,6 +2810,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 // reader was on, and the page's own request is not free.
                 hidden={!phoneLessonVisible}
                 scope={shownLayout === 'study' ? 'study' : 'full'}
+                continueAction={readerContinue(shownLayout, nextLesson, selectLesson, chooseLayout)}
               />
             )}
 
@@ -2813,7 +2818,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           <ResultsColumn
             split={{
               side: resultsSide,
-              visible: phoneEditorVisible,
+              visible: phoneEditorVisible && resultsAllowed,
               columns: layoutArrangement(layout) === 'columns',
               ratio: splitRatio,
               dragging: draggingSplit,

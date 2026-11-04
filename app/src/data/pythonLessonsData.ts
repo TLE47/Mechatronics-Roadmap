@@ -738,7 +738,8 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "expectedOutput": "Straight Right (q1=   0, q2=   0) -> elbow=(+0.150, +0.000) m | tip=(+0.300, +0.000) m\nL-Bend Up      (q1=   0, q2=  90) -> elbow=(+0.150, +0.000) m | tip=(+0.150, +0.150) m\nStraight Up    (q1=  90, q2=   0) -> elbow=(+0.000, +0.150) m | tip=(+0.000, +0.300) m\nReach Diagonal (q1=  30, q2=  60) -> elbow=(+0.130, +0.075) m | tip=(+0.130, +0.225) m",
     "outputMatch": "exact",
     "instructorTestSummary": [
-      "Test fk_2link at full extension (0, 0), folded-back origin singularity (0, 180), and orthogonal bend (90, -90)"
+      "fk_2link at the folded-back singularity (0.2 m, 0.2 m, 0\u00b0, 180\u00b0) returns a finite elbow and tip",
+      "fk_2link at an orthogonal bend (0.2 m, 0.1 m, 90\u00b0, -90\u00b0) puts the elbow at (0, 0.2) and the tip at (0.1, 0.2)"
     ],
     "instructorTests": "import math\n_ex, _ey, _tx, _ty = fk_2link(0.2, 0.2, 0.0, 180.0)\nassert math.isclose(_ex, 0.2, abs_tol=1e-6) and math.isclose(_tx, 0.0, abs_tol=1e-6) and math.isclose(_ty, 0.0, abs_tol=1e-6)\n_ex2, _ey2, _tx2, _ty2 = fk_2link(0.2, 0.1, 90.0, -90.0)\nassert math.isclose(_ex2, 0.0, abs_tol=1e-6) and math.isclose(_ey2, 0.2, abs_tol=1e-6)\nassert math.isclose(_tx2, 0.1, abs_tol=1e-6) and math.isclose(_ty2, 0.2, abs_tol=1e-6)"
   },
