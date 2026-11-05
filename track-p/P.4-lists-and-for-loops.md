@@ -98,7 +98,7 @@ clamped_commands = []
 total_cmd = 0
 
 for cmd in raw_commands:
-    # TODO 1: Set safe_cmd to the command clamped inside the 8-bit range.
+    # TODO 1: Set safe_cmd to the command clamped inside the allowed range.
     #         Use the inclusive limits 0 and 255; do not type the Expected Output list.
     safe_cmd = cmd
 

@@ -110,7 +110,7 @@ raw_cmd_low = -45
 raw_cmd_normal = 180
 is_estop_pressed = True
 
-# TODO 1: Set clamped_high and clamped_low to their input commands held inside the 8-bit range.
+# TODO 1: Set clamped_high and clamped_low to their input commands held inside the allowed 0-255 range.
 #         Clamp both inputs independently to the inclusive limits 0 and 255; do not type the final values.
 clamped_high = raw_cmd_high  # TODO 1: clamp this input only
 

@@ -30,6 +30,7 @@ flowchart LR
 | `useRunnerArrangement.ts` | The editor/results split share, which side results sit on, and the persisted layout record. |
 | `RunnerToolbar.tsx` | The run controls: presets and dock, Pause/Stop/Run, Predict, and the More panel's actions. |
 | `RunnerEditorCard.tsx` | The editor surface: main/helper tabs, the pane strip, the split controls, and the editor body beside Predict, Run output, Expected, Cases and Workflow. |
+| `EditorRequirements.tsx` | The lesson's pass conditions under the goal: the checklist a learner meets before a run counts. |
 | `resultTabMeta.tsx` | What each result tab says: its label, its tooltip and its glyph. |
 | `CasesPane.tsx` | The behavioural cases: one row per substituted input, with what the last run proved and which cases it never reached. |
 | `readerContinue.ts` | Where the page goes next: Study into Read, Read into Write. |

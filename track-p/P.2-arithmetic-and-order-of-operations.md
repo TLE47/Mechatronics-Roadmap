@@ -34,7 +34,7 @@ Your finished program must satisfy **all** of these conditions:
 - [ ] **Required end state:** the grader checks new_pos_m (2.0625 m), sensor_pin (4.0 V); kinetic_energy_j (9.0 J) within tolerance.
 - [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
 - [ ] **Output:** the printed output matches `### Expected Output`.
-- [ ] **Alternate inputs:** the grader also covers zero speed, a 1:1 voltage divider, and a negative start position; it changes the inputs, so a hardcoded result fails.
+- [ ] **Alternate inputs:** the grader also covers zero speed, a 1:1 ratio, and a negative start position; it changes the inputs, so a hardcoded result fails.
 
 ---
 

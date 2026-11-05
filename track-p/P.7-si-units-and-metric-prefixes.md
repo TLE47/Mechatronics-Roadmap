@@ -31,7 +31,7 @@ Your finished program must satisfy **all** of these conditions:
 
 - [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
 - [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
-- [ ] **Required end state:** the grader checks ma_to_amps, kohms_to_ohms and us_to_seconds at 0, at the page's 15 mA / 0.22 kOhm / 500 us readings, and at large magnitudes; Ohm's law voltage drop.
+- [ ] **Required end state:** the grader checks ma_to_amps, kohms_to_ohms and us_to_seconds at 0, at the page's 15 mA / 0.22 kOhm / 500 us readings, and at large magnitudes.
 - [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
 - [ ] **Output:** the printed output matches `### Expected Output`.
 - [ ] **Alternate inputs:** the grader also covers zero, the nominal readings above, and large boundary readings; it changes the inputs, so a hardcoded result fails.

@@ -12,6 +12,7 @@ import {
 import { PythonEditor, type PythonEditorHandle } from '../../PythonEditor';
 import { PredictPane } from './PredictPane';
 import { RunVerdict } from './RunVerdict';
+import { EditorRequirements } from './EditorRequirements';
 import { resultTabMeta } from './resultTabMeta';
 import { PythonKeys } from '../../PythonKeys';
 import { MAIN_FILE_NAME, type LessonFile } from '../../../lessonFiles';
@@ -33,7 +34,6 @@ import type { AnalysisSession } from '../../../analysisClient';
 import type { HarnessGate } from '../../../harnessGrading';
 import type { PredictGate } from './usePredictGate';
 import { vimModeLabel as vimModeLabelFor } from '../../../vimMode';
-import { inlinePlain } from '../../../readerMarkdown';
 
 /** Which surface the card is on, and what that surface may show. */
 interface EditorSurface {
@@ -541,23 +541,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
           <p className="text-muted">
             <span className="font-semibold text-accent"># Goal:</span> {lessonGoal}
           </p>
-          {lessonRequirements.length > 0 && (
-            <div className="mt-1.5" data-testid="editor-requirements">
-              <p className="text-muted">
-                <span className="font-semibold text-accent"># Requirements:</span>
-              </p>
-              <ul className="mt-0.5 space-y-0.5 text-[11px] leading-snug text-muted" aria-label="Pass conditions">
-                {lessonRequirements.map((item, index) => (
-                  <li key={`${index}-${item}`} className="flex gap-1.5">
-                    <span className="text-accent" aria-hidden="true">
-                      •
-                    </span>
-                    <span>{inlinePlain(item)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <EditorRequirements items={lessonRequirements} />
           <p className="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
             <span className="rounded border border-accent/30 bg-accent/[0.07] px-1.5 py-0.5 font-semibold uppercase tracking-[0.08em] text-accent">
               # Starter Code

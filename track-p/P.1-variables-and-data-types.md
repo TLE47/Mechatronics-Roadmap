@@ -116,7 +116,7 @@ Text wrapped in quotes like `"ARMED"` is a **str** (string), whereas a safety sw
 Copy this starter script into your Python editor. It runs right now without crashing, but prints the initial un-updated values until you complete `TODO 1` and `TODO 2`:
 
 **What each name means** (read this beside the code):
-1. `battery_level` — the pack voltage, starting at `12.60` V (a float). `TODO 1` updates it for a `0.45` V drop.
+1. `battery_level` — the battery reading, starting at `12.60` V (a float). `TODO 1` updates it for a `0.45` V drop.
 1. `encoder_ticks` — the wheel pulse count, starting at `400` pulses (an int). `TODO 1` updates it for a `25`-tick advance.
 1. `robot_mode` — the operating label, starting at `"STANDBY"` (a string). `TODO 2` changes it to the active state.
 1. `is_estop_active` — the emergency-stop switch state, starting `False` (a bool); it must stay `False`.

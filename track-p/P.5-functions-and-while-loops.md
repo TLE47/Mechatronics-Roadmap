@@ -103,7 +103,7 @@ Complete `step_position` (`TODO 1`) and the `while` loop (`TODO 2`) to step a ro
 ```python
 def step_position(pos_m, vel_m_s, dt_s):
     # TODO 1: Return the joint's position after this time step.
-    #         Compute it from the current position, velocity, and time step; do not return a typed-in final value.
+    #         Compute it from the present position, velocity, and time step; do not return a typed-in final value.
     return pos_m
 
 

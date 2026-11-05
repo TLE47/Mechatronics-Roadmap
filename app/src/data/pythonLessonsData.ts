@@ -67,7 +67,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Required end state:** the grader checks new_pos_m (2.0625 m), sensor_pin (4.0 V); kinetic_energy_j (9.0 J) within tolerance.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
       "**Output:** the printed output matches `### Expected Output`.",
-      "**Alternate inputs:** the grader also covers zero speed, a 1:1 voltage divider, and a negative start position; it changes the inputs, so a hardcoded result fails."
+      "**Alternate inputs:** the grader also covers zero speed, a 1:1 ratio, and a negative start position; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "track-p",
     "path": "track-p/P.2-arithmetic-and-order-of-operations.md",
@@ -111,7 +111,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Conditional branching (if/elif/else)",
       "Clamping actuator commands within safe limits"
     ],
-    "starterCode": "raw_cmd_high = 310\nraw_cmd_low = -45\nraw_cmd_normal = 180\nis_estop_pressed = True\n\n# TODO 1: Set clamped_high and clamped_low to their input commands held inside the 8-bit range.\n#         Clamp both inputs independently to the inclusive limits 0 and 255; do not type the final values.\nclamped_high = raw_cmd_high  # TODO 1: clamp this input only\n\n# Clamp raw_cmd_low into [0, 255] the same way:\nclamped_low = raw_cmd_low    # TODO 1: clamp this separate input independently\n\n# TODO 2: Set safe_output to the safe output for this E-stop state.\n#         Compute it from the existing values; do not type the final answer from Expected Output.\nsafe_output = raw_cmd_normal\n\nprint(f\"310 clamped -> {clamped_high} | -45 clamped -> {clamped_low}\")\nprint(f\"E-Stop={is_estop_pressed} -> Safe Output: {safe_output}\")",
+    "starterCode": "raw_cmd_high = 310\nraw_cmd_low = -45\nraw_cmd_normal = 180\nis_estop_pressed = True\n\n# TODO 1: Set clamped_high and clamped_low to their input commands held inside the allowed 0-255 range.\n#         Clamp both inputs independently to the inclusive limits 0 and 255; do not type the final values.\nclamped_high = raw_cmd_high  # TODO 1: clamp this input only\n\n# Clamp raw_cmd_low into [0, 255] the same way:\nclamped_low = raw_cmd_low    # TODO 1: clamp this separate input independently\n\n# TODO 2: Set safe_output to the safe output for this E-stop state.\n#         Compute it from the existing values; do not type the final answer from Expected Output.\nsafe_output = raw_cmd_normal\n\nprint(f\"310 clamped -> {clamped_high} | -45 clamped -> {clamped_low}\")\nprint(f\"E-Stop={is_estop_pressed} -> Safe Output: {safe_output}\")",
     "hints": [
       "Check `if raw_cmd_high > 255:` first, then `elif raw_cmd_high < 0:`, and `else:`. Remember the colon `:` at the end of each `if`/`elif`/`else` line and 4 spaces of indentation on the line below it.",
       "```python if raw_cmd_high > 255: clamped_high = 255 elif raw_cmd_high < 0: clamped_high = 0 else: clamped_high = raw_cmd_high ``` Apply the same pattern to `raw_cmd_low` -> `clamped_low` \u2014 a separate output, not a reuse of `clamped_high` \u2014 and use `if is_estop_pressed:` to set `safe_output = 0`."
@@ -146,7 +146,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Ordered lists with zero-based indexing",
       "Repeating actions with for loops"
     ],
-    "starterCode": "raw_commands = [-30, 0, 64, 128, 200, 310]\nclamped_commands = []\ntotal_cmd = 0\n\nfor cmd in raw_commands:\n    # TODO 1: Set safe_cmd to the command clamped inside the 8-bit range.\n    #         Use the inclusive limits 0 and 255; do not type the Expected Output list.\n    safe_cmd = cmd\n\n    # TODO 2: Inside the loop, update clamped_commands and total_cmd once for every raw command.\n    #         Append the safe command and include it in the running total; do not assume the starter list's length.\n\nmean_cmd = total_cmd / len(raw_commands)\nprint(f\"Clamped list: {clamped_commands}\")\nprint(f\"First={raw_commands[0]} | Last={raw_commands[5]} | Mean Clamped Cmd={mean_cmd:.2f}\")",
+    "starterCode": "raw_commands = [-30, 0, 64, 128, 200, 310]\nclamped_commands = []\ntotal_cmd = 0\n\nfor cmd in raw_commands:\n    # TODO 1: Set safe_cmd to the command clamped inside the allowed range.\n    #         Use the inclusive limits 0 and 255; do not type the Expected Output list.\n    safe_cmd = cmd\n\n    # TODO 2: Inside the loop, update clamped_commands and total_cmd once for every raw command.\n    #         Append the safe command and include it in the running total; do not assume the starter list's length.\n\nmean_cmd = total_cmd / len(raw_commands)\nprint(f\"Clamped list: {clamped_commands}\")\nprint(f\"First={raw_commands[0]} | Last={raw_commands[5]} | Mean Clamped Cmd={mean_cmd:.2f}\")",
     "hints": [
       "Inside the `for cmd in raw_commands:` loop, use the exact same `if cmd > 255:` / `elif cmd < 0:` clamping logic from Lesson P.3, then call `clamped_commands.append(safe_cmd)` and `total_cmd = total_cmd + safe_cmd`.",
       "```python for cmd in raw_commands: if cmd > 255: safe_cmd = 255 elif cmd < 0: safe_cmd = 0 else: safe_cmd = cmd clamped_commands.append(safe_cmd) total_cmd = total_cmd + safe_cmd ```"
@@ -181,7 +181,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Reusable functions (def and return)",
       "Condition-controlled while loops"
     ],
-    "starterCode": "def step_position(pos_m, vel_m_s, dt_s):\n    # TODO 1: Return the joint's position after this time step.\n    #         Compute it from the current position, velocity, and time step; do not return a typed-in final value.\n    return pos_m\n\n\npos_m = 0.0\nvel_m_s = 1.5\ndt_s = 0.2\nstep = 0    # TODO 2: advance the joint once per pass and end after four passes\nwhile step < 4:\n    pos_m = step_position(pos_m, vel_m_s, dt_s)\n    step = 4\n\nprint(f\"After {step} steps: pos_m = {pos_m:.2f} m\")",
+    "starterCode": "def step_position(pos_m, vel_m_s, dt_s):\n    # TODO 1: Return the joint's position after this time step.\n    #         Compute it from the present position, velocity, and time step; do not return a typed-in final value.\n    return pos_m\n\n\npos_m = 0.0\nvel_m_s = 1.5\ndt_s = 0.2\nstep = 0    # TODO 2: advance the joint once per pass and end after four passes\nwhile step < 4:\n    pos_m = step_position(pos_m, vel_m_s, dt_s)\n    step = 4\n\nprint(f\"After {step} steps: pos_m = {pos_m:.2f} m\")",
     "hints": [
       "In `TODO 1`, use `return pos_m + (vel_m_s * dt_s)`. In `TODO 2`, replace `step = 4` with `step = step + 1` so the `while step < 4:` loop counts `0 -> 1 -> 2 -> 3 -> 4`.",
       "```python def step_position(pos_m, vel_m_s, dt_s): return pos_m + (vel_m_s * dt_s) while step < 4: pos_m = step_position(pos_m, vel_m_s, dt_s) step = step + 1 ```"
@@ -239,7 +239,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "requirements": [
       "**Runs:** every TODO is completed and the script finishes without a Python error.",
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
-      "**Required end state:** the grader checks ma_to_amps, kohms_to_ohms and us_to_seconds at 0, at the page's 15 mA / 0.22 kOhm / 500 us readings, and at large magnitudes; Ohm's law voltage drop.",
+      "**Required end state:** the grader checks ma_to_amps, kohms_to_ohms and us_to_seconds at 0, at the page's 15 mA / 0.22 kOhm / 500 us readings, and at large magnitudes.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
       "**Output:** the printed output matches `### Expected Output`.",
       "**Alternate inputs:** the grader also covers zero, the nominal readings above, and large boundary readings; it changes the inputs, so a hardcoded result fails."
@@ -274,7 +274,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "requirements": [
       "**Runs:** every TODO is completed and the script finishes without a Python error.",
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
-      "**Required end state:** the grader checks freq_to_period_ms across 1 Hz, 50 Hz; 490 Hz, 1 kHz and 20 kHz PWM frequencies; max_unsigned_int across 1-bit, 8-bit.",
+      "**Required end state:** the grader checks freq_to_period_ms across 1 Hz, 50 Hz; 490 Hz, 1 kHz and 20 kHz switching frequencies; max_unsigned_int across 1-bit, 8-bit.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
       "**Output:** the printed output matches `### Expected Output`.",
       "**Alternate inputs:** the grader also covers 1-bit, 8-bit, 10-bit, 12-bit, and 16-bit timer widths; it changes the inputs, so a hardcoded result fails."
@@ -312,7 +312,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Required end state:** the grader checks solve_for_speed with forward; stationary (zero delta) and reverse motion inputs; scale10_to_five.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
       "**Output:** the printed output matches `### Expected Output`.",
-      "**Alternate inputs:** the grader also covers the ADC endpoints at 0, 511.5, and 1023; it changes the inputs, so a hardcoded result fails."
+      "**Alternate inputs:** the grader also covers the sensor endpoints at 0, 511.5, and 1023; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "track-p",
     "path": "track-p/P.9-rearranging-formulas-and-scaling.md",
