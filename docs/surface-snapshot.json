@@ -1,5 +1,5 @@
 {
-  "_why": "The painted surface of all 68 surfaces — the fifteen tabs, Home and the Workflow canvas, in four palettes — read by `npm run check:snapshot` (`scripts/snapshot_surfaces.mjs`). Each entry records where the header, activity rail, main pane and its first panel sit, how many buttons, inputs, links, headings, canvases and tables the surface has, and the resolved colours, type and palette tokens. It is **not a pixel diff**: the runner is Linux and the person writing this is on a Mac, and a baseline whose antialiasing does not survive the trip is a gate people learn to skip. Box numbers are compared with a 2 px tolerance, so subpixel rounding is not a finding; counts and resolved styles are exact. The Links tab draws its tables from `app/src/data/linkHistoryData.ts`, which the weekly sweep regenerates: a data refresh that changes a host or run count moves that surface and is a re-record too (`--record --tab tab-links` records all four palettes). The Workflow surface records each card’s box, every port dot, each arrow’s path and the label, kind chip and remove button that hang from its half-way point, and the named frame that groups the cards with its chip — seeded through the panel’s own blank/code/branch/condition path and its Group gesture so every palette records the same authored diagram. Re-record with `npm run check:snapshot -- --record` when a change to the screen is intended, and read the diff: it is a list of what moved.",
+  "_why": "The painted surface of all 72 surfaces — the sixteen tabs, Home and the Workflow canvas, in four palettes — read by `npm run check:snapshot` (`scripts/snapshot_surfaces.mjs`). Each entry records where the header, activity rail, main pane and its first panel sit, how many buttons, inputs, links, headings, canvases and tables the surface has, and the resolved colours, type and palette tokens. It is **not a pixel diff**: the runner is Linux and the person writing this is on a Mac, and a baseline whose antialiasing does not survive the trip is a gate people learn to skip. Box numbers are compared with a 2 px tolerance, so subpixel rounding is not a finding; counts and resolved styles are exact. The Links tab draws its tables from `app/src/data/linkHistoryData.ts`, which the weekly sweep regenerates: a data refresh that changes a host or run count moves that surface and is a re-record too (`--record --tab tab-links` records all four palettes). The Workflow surface records each card’s box, every port dot, each arrow’s path and the label, kind chip and remove button that hang from its half-way point, and the named frame that groups the cards with its chip — seeded through the panel’s own blank/code/branch/condition path and its Group gesture so every palette records the same authored diagram. Re-record with `npm run check:snapshot -- --record` when a change to the screen is intended, and read the diff: it is a list of what moved.",
   "version": 1,
   "viewport": {
     "width": 1440,
@@ -19,7 +19,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -47,7 +47,7 @@
         ]
       },
       "counts": {
-        "buttons": 133,
+        "buttons": 134,
         "inputs": 4,
         "links": 31,
         "headings": 16,
@@ -99,7 +99,7 @@
           0,
           158,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -127,10 +127,10 @@
         ]
       },
       "counts": {
-        "buttons": 208,
+        "buttons": 209,
         "inputs": 22,
         "links": 12,
-        "headings": 10,
+        "headings": 17,
         "canvases": 1,
         "tables": 0
       },
@@ -179,7 +179,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -207,10 +207,90 @@
         ]
       },
       "counts": {
-        "buttons": 77,
+        "buttons": 78,
         "inputs": 2,
         "links": 4,
         "headings": 1,
+        "canvases": 0,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(7, 11, 18)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#070b12",
+          "panel": "#0e1624",
+          "text": "#eef4ff",
+          "accent": "#38bdf8"
+        }
+      }
+    },
+    "dark/tab-micro": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          61
+        ],
+        "rail": [
+          0,
+          239,
+          195,
+          1006
+        ],
+        "main": [
+          196,
+          199,
+          1244,
+          901
+        ],
+        "panel": [
+          216,
+          219,
+          1204,
+          861
+        ],
+        "footer": [
+          0,
+          1100,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1144
+        ]
+      },
+      "counts": {
+        "buttons": 50,
+        "inputs": 1,
+        "links": 4,
+        "headings": 3,
         "canvases": 0,
         "tables": 0
       },
@@ -259,7 +339,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -287,7 +367,7 @@
         ]
       },
       "counts": {
-        "buttons": 68,
+        "buttons": 69,
         "inputs": 1,
         "links": 4,
         "headings": 9,
@@ -339,7 +419,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -367,7 +447,7 @@
         ]
       },
       "counts": {
-        "buttons": 52,
+        "buttons": 53,
         "inputs": 6,
         "links": 4,
         "headings": 3,
@@ -419,7 +499,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -447,7 +527,7 @@
         ]
       },
       "counts": {
-        "buttons": 52,
+        "buttons": 53,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -499,7 +579,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -527,7 +607,7 @@
         ]
       },
       "counts": {
-        "buttons": 51,
+        "buttons": 52,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -579,7 +659,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -607,7 +687,7 @@
         ]
       },
       "counts": {
-        "buttons": 55,
+        "buttons": 56,
         "inputs": 4,
         "links": 4,
         "headings": 4,
@@ -659,7 +739,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -687,7 +767,7 @@
         ]
       },
       "counts": {
-        "buttons": 51,
+        "buttons": 52,
         "inputs": 6,
         "links": 4,
         "headings": 4,
@@ -739,7 +819,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -767,7 +847,7 @@
         ]
       },
       "counts": {
-        "buttons": 56,
+        "buttons": 57,
         "inputs": 2,
         "links": 4,
         "headings": 11,
@@ -819,7 +899,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -847,7 +927,7 @@
         ]
       },
       "counts": {
-        "buttons": 53,
+        "buttons": 54,
         "inputs": 2,
         "links": 4,
         "headings": 12,
@@ -899,7 +979,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -927,7 +1007,7 @@
         ]
       },
       "counts": {
-        "buttons": 52,
+        "buttons": 53,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -977,9 +1057,9 @@
         ],
         "rail": [
           0,
-          239,
+          229,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -1007,7 +1087,7 @@
         ]
       },
       "counts": {
-        "buttons": 52,
+        "buttons": 53,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -1057,9 +1137,9 @@
         ],
         "rail": [
           0,
-          229,
+          94,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -1087,7 +1167,7 @@
         ]
       },
       "counts": {
-        "buttons": 42,
+        "buttons": 43,
         "inputs": 3,
         "links": 5,
         "headings": 3,
@@ -1137,9 +1217,9 @@
         ],
         "rail": [
           0,
-          155,
+          94,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -1167,7 +1247,7 @@
         ]
       },
       "counts": {
-        "buttons": 39,
+        "buttons": 40,
         "inputs": 1,
         "links": 6,
         "headings": 6,
@@ -1220,17 +1300,17 @@
           0,
           61,
           1440,
-          4207
+          4426
         ],
         "panel": [
           208,
           61,
           1024,
-          4207
+          4426
         ],
         "footer": [
           0,
-          4268,
+          4487,
           1440,
           43
         ],
@@ -1238,14 +1318,14 @@
           0,
           0,
           1440,
-          4311
+          4530
         ]
       },
       "counts": {
-        "buttons": 81,
+        "buttons": 84,
         "inputs": 4,
         "links": 3,
-        "headings": 12,
+        "headings": 13,
         "canvases": 0,
         "tables": 0
       },
@@ -1294,7 +1374,7 @@
           0,
           158,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -1502,10 +1582,10 @@
         ]
       },
       "counts": {
-        "buttons": 265,
+        "buttons": 266,
         "inputs": 32,
         "links": 12,
-        "headings": 10,
+        "headings": 17,
         "canvases": 1,
         "tables": 0
       },
@@ -1554,7 +1634,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -1582,7 +1662,7 @@
         ]
       },
       "counts": {
-        "buttons": 133,
+        "buttons": 134,
         "inputs": 4,
         "links": 31,
         "headings": 16,
@@ -1634,7 +1714,7 @@
           0,
           158,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -1662,10 +1742,10 @@
         ]
       },
       "counts": {
-        "buttons": 208,
+        "buttons": 209,
         "inputs": 22,
         "links": 12,
-        "headings": 10,
+        "headings": 17,
         "canvases": 1,
         "tables": 0
       },
@@ -1714,7 +1794,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -1742,10 +1822,90 @@
         ]
       },
       "counts": {
-        "buttons": 77,
+        "buttons": 78,
         "inputs": 2,
         "links": 4,
         "headings": 1,
+        "canvases": 0,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(248, 246, 242)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#f8f6f2",
+          "panel": "#fff",
+          "text": "#141a24",
+          "accent": "#0d6b64"
+        }
+      }
+    },
+    "light/tab-micro": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          61
+        ],
+        "rail": [
+          0,
+          239,
+          195,
+          1006
+        ],
+        "main": [
+          196,
+          199,
+          1244,
+          901
+        ],
+        "panel": [
+          216,
+          219,
+          1204,
+          861
+        ],
+        "footer": [
+          0,
+          1100,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1144
+        ]
+      },
+      "counts": {
+        "buttons": 50,
+        "inputs": 1,
+        "links": 4,
+        "headings": 3,
         "canvases": 0,
         "tables": 0
       },
@@ -1794,7 +1954,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -1822,7 +1982,7 @@
         ]
       },
       "counts": {
-        "buttons": 68,
+        "buttons": 69,
         "inputs": 1,
         "links": 4,
         "headings": 9,
@@ -1874,7 +2034,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -1902,7 +2062,7 @@
         ]
       },
       "counts": {
-        "buttons": 52,
+        "buttons": 53,
         "inputs": 6,
         "links": 4,
         "headings": 3,
@@ -1954,7 +2114,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -1982,7 +2142,7 @@
         ]
       },
       "counts": {
-        "buttons": 52,
+        "buttons": 53,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -2034,7 +2194,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -2062,7 +2222,7 @@
         ]
       },
       "counts": {
-        "buttons": 51,
+        "buttons": 52,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -2114,7 +2274,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -2142,7 +2302,7 @@
         ]
       },
       "counts": {
-        "buttons": 55,
+        "buttons": 56,
         "inputs": 4,
         "links": 4,
         "headings": 4,
@@ -2194,7 +2354,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -2222,7 +2382,7 @@
         ]
       },
       "counts": {
-        "buttons": 51,
+        "buttons": 52,
         "inputs": 6,
         "links": 4,
         "headings": 4,
@@ -2274,7 +2434,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -2302,7 +2462,7 @@
         ]
       },
       "counts": {
-        "buttons": 56,
+        "buttons": 57,
         "inputs": 2,
         "links": 4,
         "headings": 11,
@@ -2354,7 +2514,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -2382,7 +2542,7 @@
         ]
       },
       "counts": {
-        "buttons": 53,
+        "buttons": 54,
         "inputs": 2,
         "links": 4,
         "headings": 12,
@@ -2434,7 +2594,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -2462,7 +2622,7 @@
         ]
       },
       "counts": {
-        "buttons": 52,
+        "buttons": 53,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -2512,9 +2672,9 @@
         ],
         "rail": [
           0,
-          239,
+          229,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -2542,7 +2702,7 @@
         ]
       },
       "counts": {
-        "buttons": 52,
+        "buttons": 53,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -2592,9 +2752,9 @@
         ],
         "rail": [
           0,
-          229,
+          94,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -2622,7 +2782,7 @@
         ]
       },
       "counts": {
-        "buttons": 42,
+        "buttons": 43,
         "inputs": 3,
         "links": 5,
         "headings": 3,
@@ -2672,9 +2832,9 @@
         ],
         "rail": [
           0,
-          155,
+          94,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -2702,7 +2862,7 @@
         ]
       },
       "counts": {
-        "buttons": 39,
+        "buttons": 40,
         "inputs": 1,
         "links": 6,
         "headings": 6,
@@ -2755,17 +2915,17 @@
           0,
           61,
           1440,
-          4207
+          4426
         ],
         "panel": [
           208,
           61,
           1024,
-          4207
+          4426
         ],
         "footer": [
           0,
-          4268,
+          4487,
           1440,
           43
         ],
@@ -2773,14 +2933,14 @@
           0,
           0,
           1440,
-          4311
+          4530
         ]
       },
       "counts": {
-        "buttons": 81,
+        "buttons": 84,
         "inputs": 4,
         "links": 3,
-        "headings": 12,
+        "headings": 13,
         "canvases": 0,
         "tables": 0
       },
@@ -2829,7 +2989,7 @@
           0,
           158,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -3037,10 +3197,10 @@
         ]
       },
       "counts": {
-        "buttons": 265,
+        "buttons": 266,
         "inputs": 32,
         "links": 12,
-        "headings": 10,
+        "headings": 17,
         "canvases": 1,
         "tables": 0
       },
@@ -3089,7 +3249,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -3117,7 +3277,7 @@
         ]
       },
       "counts": {
-        "buttons": 133,
+        "buttons": 134,
         "inputs": 4,
         "links": 31,
         "headings": 16,
@@ -3169,7 +3329,7 @@
           0,
           158,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -3197,10 +3357,10 @@
         ]
       },
       "counts": {
-        "buttons": 208,
+        "buttons": 209,
         "inputs": 22,
         "links": 12,
-        "headings": 10,
+        "headings": 17,
         "canvases": 1,
         "tables": 0
       },
@@ -3249,7 +3409,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -3277,10 +3437,90 @@
         ]
       },
       "counts": {
-        "buttons": 77,
+        "buttons": 78,
         "inputs": 2,
         "links": 4,
         "headings": 1,
+        "canvases": 0,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(239, 228, 208)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#efe4d0",
+          "panel": "#f9f1e2",
+          "text": "#1f1710",
+          "accent": "#0b6157"
+        }
+      }
+    },
+    "paper/tab-micro": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          61
+        ],
+        "rail": [
+          0,
+          239,
+          195,
+          1006
+        ],
+        "main": [
+          196,
+          199,
+          1244,
+          901
+        ],
+        "panel": [
+          216,
+          219,
+          1204,
+          861
+        ],
+        "footer": [
+          0,
+          1100,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1144
+        ]
+      },
+      "counts": {
+        "buttons": 50,
+        "inputs": 1,
+        "links": 4,
+        "headings": 3,
         "canvases": 0,
         "tables": 0
       },
@@ -3329,7 +3569,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -3357,7 +3597,7 @@
         ]
       },
       "counts": {
-        "buttons": 68,
+        "buttons": 69,
         "inputs": 1,
         "links": 4,
         "headings": 9,
@@ -3409,7 +3649,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -3437,7 +3677,7 @@
         ]
       },
       "counts": {
-        "buttons": 52,
+        "buttons": 53,
         "inputs": 6,
         "links": 4,
         "headings": 3,
@@ -3489,7 +3729,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -3517,7 +3757,7 @@
         ]
       },
       "counts": {
-        "buttons": 52,
+        "buttons": 53,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -3569,7 +3809,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -3597,7 +3837,7 @@
         ]
       },
       "counts": {
-        "buttons": 51,
+        "buttons": 52,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -3649,7 +3889,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -3677,7 +3917,7 @@
         ]
       },
       "counts": {
-        "buttons": 55,
+        "buttons": 56,
         "inputs": 4,
         "links": 4,
         "headings": 4,
@@ -3729,7 +3969,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -3757,7 +3997,7 @@
         ]
       },
       "counts": {
-        "buttons": 51,
+        "buttons": 52,
         "inputs": 6,
         "links": 4,
         "headings": 4,
@@ -3809,7 +4049,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -3837,7 +4077,7 @@
         ]
       },
       "counts": {
-        "buttons": 56,
+        "buttons": 57,
         "inputs": 2,
         "links": 4,
         "headings": 11,
@@ -3889,7 +4129,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -3917,7 +4157,7 @@
         ]
       },
       "counts": {
-        "buttons": 53,
+        "buttons": 54,
         "inputs": 2,
         "links": 4,
         "headings": 12,
@@ -3969,7 +4209,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -3997,7 +4237,7 @@
         ]
       },
       "counts": {
-        "buttons": 52,
+        "buttons": 53,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -4047,9 +4287,9 @@
         ],
         "rail": [
           0,
-          239,
+          229,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -4077,7 +4317,7 @@
         ]
       },
       "counts": {
-        "buttons": 52,
+        "buttons": 53,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -4127,9 +4367,9 @@
         ],
         "rail": [
           0,
-          229,
+          94,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -4157,7 +4397,7 @@
         ]
       },
       "counts": {
-        "buttons": 42,
+        "buttons": 43,
         "inputs": 3,
         "links": 5,
         "headings": 3,
@@ -4207,9 +4447,9 @@
         ],
         "rail": [
           0,
-          155,
+          94,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -4237,7 +4477,7 @@
         ]
       },
       "counts": {
-        "buttons": 39,
+        "buttons": 40,
         "inputs": 1,
         "links": 6,
         "headings": 6,
@@ -4290,17 +4530,17 @@
           0,
           61,
           1440,
-          4207
+          4426
         ],
         "panel": [
           208,
           61,
           1024,
-          4207
+          4426
         ],
         "footer": [
           0,
-          4268,
+          4487,
           1440,
           43
         ],
@@ -4308,14 +4548,14 @@
           0,
           0,
           1440,
-          4311
+          4530
         ]
       },
       "counts": {
-        "buttons": 81,
+        "buttons": 84,
         "inputs": 4,
         "links": 3,
-        "headings": 12,
+        "headings": 13,
         "canvases": 0,
         "tables": 0
       },
@@ -4364,7 +4604,7 @@
           0,
           158,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -4572,10 +4812,10 @@
         ]
       },
       "counts": {
-        "buttons": 265,
+        "buttons": 266,
         "inputs": 32,
         "links": 12,
-        "headings": 10,
+        "headings": 17,
         "canvases": 1,
         "tables": 0
       },
@@ -4624,7 +4864,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -4652,7 +4892,7 @@
         ]
       },
       "counts": {
-        "buttons": 133,
+        "buttons": 134,
         "inputs": 4,
         "links": 31,
         "headings": 16,
@@ -4704,7 +4944,7 @@
           0,
           158,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -4732,10 +4972,10 @@
         ]
       },
       "counts": {
-        "buttons": 208,
+        "buttons": 209,
         "inputs": 22,
         "links": 12,
-        "headings": 10,
+        "headings": 17,
         "canvases": 1,
         "tables": 0
       },
@@ -4784,7 +5024,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -4812,10 +5052,90 @@
         ]
       },
       "counts": {
-        "buttons": 77,
+        "buttons": 78,
         "inputs": 2,
         "links": 4,
         "headings": 1,
+        "canvases": 0,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#000",
+          "panel": "#000",
+          "text": "#fff",
+          "accent": "#7dd3fc"
+        }
+      }
+    },
+    "contrast/tab-micro": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          61
+        ],
+        "rail": [
+          0,
+          239,
+          195,
+          1006
+        ],
+        "main": [
+          196,
+          199,
+          1244,
+          901
+        ],
+        "panel": [
+          216,
+          219,
+          1204,
+          861
+        ],
+        "footer": [
+          0,
+          1100,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1144
+        ]
+      },
+      "counts": {
+        "buttons": 50,
+        "inputs": 1,
+        "links": 4,
+        "headings": 3,
         "canvases": 0,
         "tables": 0
       },
@@ -4864,7 +5184,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -4892,7 +5212,7 @@
         ]
       },
       "counts": {
-        "buttons": 68,
+        "buttons": 69,
         "inputs": 1,
         "links": 4,
         "headings": 9,
@@ -4944,7 +5264,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -4972,7 +5292,7 @@
         ]
       },
       "counts": {
-        "buttons": 52,
+        "buttons": 53,
         "inputs": 6,
         "links": 4,
         "headings": 3,
@@ -5024,7 +5344,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -5052,7 +5372,7 @@
         ]
       },
       "counts": {
-        "buttons": 52,
+        "buttons": 53,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -5104,7 +5424,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -5132,7 +5452,7 @@
         ]
       },
       "counts": {
-        "buttons": 51,
+        "buttons": 52,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -5184,7 +5504,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -5212,7 +5532,7 @@
         ]
       },
       "counts": {
-        "buttons": 55,
+        "buttons": 56,
         "inputs": 4,
         "links": 4,
         "headings": 4,
@@ -5264,7 +5584,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -5292,7 +5612,7 @@
         ]
       },
       "counts": {
-        "buttons": 51,
+        "buttons": 52,
         "inputs": 6,
         "links": 4,
         "headings": 4,
@@ -5344,7 +5664,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -5372,7 +5692,7 @@
         ]
       },
       "counts": {
-        "buttons": 56,
+        "buttons": 57,
         "inputs": 2,
         "links": 4,
         "headings": 11,
@@ -5424,7 +5744,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -5452,7 +5772,7 @@
         ]
       },
       "counts": {
-        "buttons": 53,
+        "buttons": 54,
         "inputs": 2,
         "links": 4,
         "headings": 12,
@@ -5504,7 +5824,7 @@
           0,
           239,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -5532,7 +5852,7 @@
         ]
       },
       "counts": {
-        "buttons": 52,
+        "buttons": 53,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -5582,9 +5902,9 @@
         ],
         "rail": [
           0,
-          239,
+          229,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -5612,7 +5932,7 @@
         ]
       },
       "counts": {
-        "buttons": 52,
+        "buttons": 53,
         "inputs": 4,
         "links": 4,
         "headings": 3,
@@ -5662,9 +5982,9 @@
         ],
         "rail": [
           0,
-          229,
+          94,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -5692,7 +6012,7 @@
         ]
       },
       "counts": {
-        "buttons": 42,
+        "buttons": 43,
         "inputs": 3,
         "links": 5,
         "headings": 3,
@@ -5742,9 +6062,9 @@
         ],
         "rail": [
           0,
-          155,
+          94,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -5772,7 +6092,7 @@
         ]
       },
       "counts": {
-        "buttons": 39,
+        "buttons": 40,
         "inputs": 1,
         "links": 6,
         "headings": 6,
@@ -5825,17 +6145,17 @@
           0,
           61,
           1440,
-          4207
+          4426
         ],
         "panel": [
           208,
           61,
           1024,
-          4207
+          4426
         ],
         "footer": [
           0,
-          4268,
+          4487,
           1440,
           43
         ],
@@ -5843,14 +6163,14 @@
           0,
           0,
           1440,
-          4311
+          4530
         ]
       },
       "counts": {
-        "buttons": 81,
+        "buttons": 84,
         "inputs": 4,
         "links": 3,
-        "headings": 12,
+        "headings": 13,
         "canvases": 0,
         "tables": 0
       },
@@ -5899,7 +6219,7 @@
           0,
           158,
           195,
-          944
+          1006
         ],
         "main": [
           196,
@@ -6107,10 +6427,10 @@
         ]
       },
       "counts": {
-        "buttons": 265,
+        "buttons": 266,
         "inputs": 32,
         "links": 12,
-        "headings": 10,
+        "headings": 17,
         "canvases": 1,
         "tables": 0
       },

@@ -13,7 +13,8 @@ export type TabId =
   | 'tab-board'
   | 'tab-pyodide'
   | 'tab-placement'
-  | 'tab-studio';
+  | 'tab-studio'
+  | 'tab-micro';
 
 export interface TourStep {
   tab: TabId;

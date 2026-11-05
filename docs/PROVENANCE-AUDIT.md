@@ -16,7 +16,7 @@ flowchart LR
     C -->|yes| D["Covered"]
     C -->|no| E["Add an ordered reference block"]
     E --> D
-    D --> F["38 gates + 68 surfaces + reader/smoke"]
+    D --> F["40 gates + 72 surfaces + reader/smoke"]
 ```
 
 ## Coverage
@@ -52,8 +52,8 @@ The 50 advanced practice modules (46 with runnable TODO blocks) are the optional
 ## Verification
 
 - Provenance audit: 604 names, 0 unexplained, 0 weak function rules, 0 shadowed names.
-- `scripts/check_all.py`: 38/38 gates.
-- `npm run check:snapshot`: 68/68 surfaces on the existing `docs/surface-snapshot.json` baseline, no re-record.
+- `scripts/check_all.py`: 40/40 fast gates.
+- `npm run check:snapshot`: 72/72 surfaces on the existing `docs/surface-snapshot.json` baseline, no re-record.
 - `npm run test:reader`: 35/35.
 - `scripts/check_term_order.py`: 107 glossary terms, 0 violations.
 - `npm run test:smoke`: passed.

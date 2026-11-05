@@ -1,0 +1,656 @@
+{
+  "version": 1,
+  "lessons": [
+    {
+      "id": "P.1",
+      "subjectId": "python",
+      "title": "Variables and Fundamental Data Types",
+      "path": "track-p/P.1-variables-and-data-types.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "P.2",
+      "subjectId": "python",
+      "title": "Computer Arithmetic and Order of Operations",
+      "path": "track-p/P.2-arithmetic-and-order-of-operations.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "P.3",
+      "subjectId": "python",
+      "title": "Conditional Decisions (if/elif/else) and Command Clamping",
+      "path": "track-p/P.3-decisions-and-clamping.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "P.4",
+      "subjectId": "python",
+      "title": "Ordered Lists and Repeating Actions with for Loops",
+      "path": "track-p/P.4-lists-and-for-loops.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "P.5",
+      "subjectId": "python",
+      "title": "Reusable Functions (def/return) and while Loops",
+      "path": "track-p/P.5-functions-and-while-loops.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "P.6",
+      "subjectId": "python",
+      "title": "Loading Modules (import) and Automated Self-Checks (assert)",
+      "path": "track-p/P.6-modules-and-automated-asserts.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "P.7",
+      "subjectId": "python",
+      "title": "Base SI Units and Metric Prefixes (M, k, m, µ)",
+      "path": "track-p/P.7-si-units-and-metric-prefixes.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "P.8",
+      "subjectId": "python",
+      "title": "Cycle Frequency (Hz), Period (T = 1/f) and Binary Bits (2^N)",
+      "path": "track-p/P.8-frequency-and-binary-bits.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "P.9",
+      "subjectId": "python",
+      "title": "Rearranging Physics Formulas and Linear Range Scaling",
+      "path": "track-p/P.9-rearranging-formulas-and-scaling.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "P.10",
+      "subjectId": "python",
+      "title": "Radians, Rotational Speed (rad/s) and Right-Triangle Trigonometry",
+      "path": "track-p/P.10-radians-and-right-triangle-trig.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "P.11",
+      "subjectId": "python",
+      "title": "Reading Time-Series Graphs — Slope and Area",
+      "path": "track-p/P.11-reading-time-series-graphs.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "P.12",
+      "subjectId": "python",
+      "title": "Linear Forces (F = ma) and Lever Torque (tau = m*g*L*cos(theta))",
+      "path": "track-p/P.12-forces-and-lever-torque.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "P.14",
+      "subjectId": "python",
+      "title": "Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds",
+      "path": "track-p/P.14-reading-a-datasheet-table.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "P.15",
+      "subjectId": "python",
+      "title": "The Analysis Workflow — Given, Unknown, Model, Compute, Check, Answer",
+      "path": "track-p/P.15-analysis-workflow-given-unknown-model-check-answer.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "P.M",
+      "subjectId": "python",
+      "title": "Track P Milestone — Gravity-Holding Robot Arm Link Simulator",
+      "path": "track-p/P.M-track-p-milestone.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "R.1",
+      "subjectId": "python",
+      "title": "Rate of Change — Reading dq/dt From Two Samples, and Why the Interval Matters",
+      "path": "ramp/R.1-rate-of-change.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "R.2",
+      "subjectId": "python",
+      "title": "Accumulation — Recovering Position From Rates, and Why a Small Bias Drifts",
+      "path": "ramp/R.2-accumulation.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "R.3",
+      "subjectId": "python",
+      "title": "Two Numbers That Move Together — State Vectors, One Tick, and Why Separate Commands Add Up",
+      "path": "ramp/R.3-state-vectors.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "R.4",
+      "subjectId": "python",
+      "title": "Tables That Transform — Writing One Tick as a Matrix Multiply, and Reading Rows as Rates",
+      "path": "ramp/R.4-matrix-updates.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "R.5",
+      "subjectId": "python",
+      "title": "Spinning Arrows — Complex Numbers and Phasor Sums, Computed Before Named",
+      "path": "ramp/R.5-phasors.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "R.6",
+      "subjectId": "python",
+      "title": "Wiggle In, Wiggle Out — Shaking the Joint and Reading Gain and Phase",
+      "path": "ramp/R.6-frequency-response.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "S0.0",
+      "subjectId": "python",
+      "title": "Why Electricity Is Like Water Flow — Effort, Flow & Pipe Constriction",
+      "path": "stage-0/S0.0-why-electricity-is-like-flow.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "00.1",
+      "subjectId": "python",
+      "title": "Cross-Domain Power (P = Effort * Flow) and First-Order Lag",
+      "path": "00-foundations/00.1-effort-flow-and-first-order-lag.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "00.2",
+      "subjectId": "python",
+      "title": "Second-Order Motion — Springs (F_s = -k*x), Dampers (F_d = -b*v) and Damping Regimes",
+      "path": "00-foundations/00.2-mass-spring-damper-oscillations.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "00.3",
+      "subjectId": "python",
+      "title": "Engineering Modeling Discipline — 4-Step Workflow, Dimensional Checks and Sign Conventions",
+      "path": "00-foundations/00.3-modeling-discipline-and-sanity-checks.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "01.3",
+      "subjectId": "python",
+      "title": "Multi-Rail Robot Power — Linear (LDO) vs. Switching (Buck) Regulators and Power Budgets",
+      "path": "01-electronics-and-power/01.3-power-regulators-and-power-budget.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "01.4",
+      "subjectId": "python",
+      "title": "Quiet Sensor Signals — Star Grounding and Passive RC Low-Pass Filters (f_c = 1/(2*pi*R*C))",
+      "path": "01-electronics-and-power/01.4-grounding-and-rc-lowpass-filters.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "02.1",
+      "subjectId": "python",
+      "title": "2D Coordinate Frames and 1-Link Planar Arm Forward Kinematics",
+      "path": "02-mechanics-kinematics-dynamics/02.1-1d-link-fk-and-coord-frames.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "02.2",
+      "subjectId": "python",
+      "title": "2-Link Planar Arm Forward Kinematics (theta_1, theta_2 -> x, y)",
+      "path": "02-mechanics-kinematics-dynamics/02.2-2link-planar-forward-kinematics.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "02.3",
+      "subjectId": "python",
+      "title": "2-Link Planar Arm Inverse Kinematics (x, y -> theta_1, theta_2) and Reachability",
+      "path": "02-mechanics-kinematics-dynamics/02.3-2link-planar-inverse-kinematics.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "02.4",
+      "subjectId": "python",
+      "title": "Rotational Dynamics (tau_net = I_rot * alpha), Gear Ratios (N) and Reflected Inertia",
+      "path": "02-mechanics-kinematics-dynamics/02.4-rotational-inertia-and-gear-ratios.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "02.5",
+      "subjectId": "python",
+      "title": "Practical Robot Mechanisms — Double-Shear Bearings, Timing Belts and 3D-Printed Parts",
+      "path": "02-mechanics-kinematics-dynamics/02.5-bearings-belts-and-3d-printing.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "03.1",
+      "subjectId": "python",
+      "title": "Quadrature Encoders (4x Counting) and 12-Bit Magnetic Angle Sensors",
+      "path": "03-sensors-and-actuators/03.1-quadrature-and-magnetic-encoders.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "03.2",
+      "subjectId": "python",
+      "title": "3-Phase Brushless Motors, Pole Pairs and 90-Degree Electrical Torque Lead",
+      "path": "03-sensors-and-actuators/03.2-three-phase-bldc-and-electrical-angle.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "03.3",
+      "subjectId": "python",
+      "title": "Track 02 + 03 Integration Micro-Lab — Read Dual Encoders to Compute 2-Link End-Effector Position",
+      "path": "03-sensors-and-actuators/03.3-encoder-to-fk-integration-microlab.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "04.1",
+      "subjectId": "python",
+      "title": "Fixed-Width C/C++ Types (uint16_t), volatile ISR Flags and 1 kHz Timer Loops",
+      "path": "04-embedded-and-realtime/04.1-c-types-and-hardware-timer-isr.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "04.2",
+      "subjectId": "python",
+      "title": "Packed Binary Telemetry Structs (struct.pack), CRC-8 & UART Bandwidth Budgets",
+      "path": "04-embedded-and-realtime/04.2-packed-structs-and-crc8-telemetry.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "04.3",
+      "subjectId": "python",
+      "title": "Python-to-C Bridge (Part 3) — C Structs as Labeled Boxes & Pointers as Box Addresses",
+      "path": "04-embedded-and-realtime/04.3-structs-and-pointers-labeled-boxes.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "05.1",
+      "subjectId": "python",
+      "title": "PID Virtual Spring-Damper Control and Integrator Anti-Windup Clamping",
+      "path": "05-control-and-estimation/05.1-pid-virtual-spring-damper-and-anti-windup.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "05.2",
+      "subjectId": "python",
+      "title": "Gyroscope Drift, Accelerometer Tilt (atan2) and 2-Line Complementary IMU Fusion",
+      "path": "05-control-and-estimation/05.2-complementary-imu-sensor-fusion.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "06.1",
+      "subjectId": "python",
+      "title": "Rest-to-Rest Cubic Polynomial Trajectories and Joint-Space Gravity Feedforward",
+      "path": "06-robotics-and-autonomy/06.1-cubic-trajectories-and-compliant-joints.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "07.1",
+      "subjectId": "python",
+      "title": "10-Step Smoke-Free Hardware Bring-Up and Single-Tone Sine-Sweep System Identification",
+      "path": "07-systems-hil-and-production/07.1-safe-bringup-and-sine-sweep-sysid.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "08.1",
+      "subjectId": "python",
+      "title": "Tier 1 Boss Milestone — 1 kHz 2-DOF Compliant Arm Plant, Figure-8 PD Control & CRC-8 Telemetry",
+      "path": "08-capstone-projects/08.1-tier1-2dof-compliant-arm-capstone.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.00-foundations.T1.00a",
+      "subjectId": "python",
+      "title": "Variables, loops, functions and the traceback that names its own exception - graded exercise",
+      "path": "modules/00-foundations.T1.00a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.00-foundations.T1.00b",
+      "subjectId": "python",
+      "title": "A recorded window: timestamps, calibrated traces, RMS error and the Git lookup - graded exercise",
+      "path": "modules/00-foundations.T1.00b.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.00-foundations.T1.00c",
+      "subjectId": "python",
+      "title": "SI prefixes, the RPM-to-rad/s factor and the unit algebra of a PCB trace - graded exercise",
+      "path": "modules/00-foundations.T1.00c.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.00-foundations.T1.00d",
+      "subjectId": "python",
+      "title": "The calibration line, the unit circle and the four-quadrant heading - graded exercise",
+      "path": "modules/00-foundations.T1.00d.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.00-foundations.T1.00e",
+      "subjectId": "python",
+      "title": "Symplectic Euler on a spring-mass-damper, energy and lever torque - graded exercise",
+      "path": "modules/00-foundations.T1.00e.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.00-foundations.T2.00a",
+      "subjectId": "python",
+      "title": "Encoder velocity and the running integral that inverts it - graded exercise",
+      "path": "modules/00-foundations.T2.00a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.00-foundations.T2.00b",
+      "subjectId": "python",
+      "title": "Dot and cross products, independence, and change of basis - graded exercise",
+      "path": "modules/00-foundations.T2.00b.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.00-foundations.T2.00c",
+      "subjectId": "python",
+      "title": "First- and second-order response, damping and the stability limit - graded exercise",
+      "path": "modules/00-foundations.T2.00c.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.00-foundations.T2.00d",
+      "subjectId": "python",
+      "title": "Complex numbers, Euler's formula and phasor sums - graded exercise",
+      "path": "modules/00-foundations.T2.00d.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.00-foundations.T2.00e",
+      "subjectId": "python",
+      "title": "State space, poles and the two discretisations - graded exercise",
+      "path": "modules/00-foundations.T2.00e.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.00-foundations.T2.00f",
+      "subjectId": "python",
+      "title": "Sampling, the Nyquist limit and aliasing - graded exercise",
+      "path": "modules/00-foundations.T2.00f.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.00-foundations.T2.00g",
+      "subjectId": "python",
+      "title": "Matrix-vector multiplication and the one-step state update - graded exercise",
+      "path": "modules/00-foundations.T2.00g.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.00-foundations.T2.00h",
+      "subjectId": "python",
+      "title": "Winding impedance, transfer functions, decibels and the resonance peak - graded exercise",
+      "path": "modules/00-foundations.T2.00h.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.00-foundations.T2.00i",
+      "subjectId": "python",
+      "title": "Pre-warped Tustin notches - graded exercise",
+      "path": "modules/00-foundations.T2.00i.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.00-foundations.T2.00j",
+      "subjectId": "python",
+      "title": "Gaussian covariance and the predict step - graded exercise",
+      "path": "modules/00-foundations.T2.00j.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.00-foundations.T3.00a",
+      "subjectId": "python",
+      "title": "The hat map, Rodrigues' formula and the power balance - graded exercise",
+      "path": "modules/00-foundations.T3.00a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.01-electronics.T1.01a",
+      "subjectId": "python",
+      "title": "Ohm's law, loaded voltage dividers, Joule heating and the LED series resistor - graded exercise",
+      "path": "modules/01-electronics.T1.01a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.01-electronics.T1.01b",
+      "subjectId": "python",
+      "title": "MOSFET conduction loss, PWM duty, shoot-through and the H-bridge - graded exercise",
+      "path": "modules/01-electronics.T1.01b.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.01-electronics.T1.01c",
+      "subjectId": "python",
+      "title": "Current-limited bench supply foldback, DMM modes, breadboard heat and the short check - graded exercise",
+      "path": "modules/01-electronics.T1.01c.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.01-electronics.T1.01d",
+      "subjectId": "python",
+      "title": "RC time constants, the -3 dB corner, bulk decoupling, stored energy and inductive flyback - graded exercise",
+      "path": "modules/01-electronics.T1.01d.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.01-electronics.T2.01a",
+      "subjectId": "python",
+      "title": "The bidirectional shunt stage, its clipping current, Kelvin gain error and CMRR - graded exercise",
+      "path": "modules/01-electronics.T2.01a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.01-electronics.T2.01b",
+      "subjectId": "python",
+      "title": "Parasitic loop inductance, bootstrap gate drive and the 48 V pre-charge - graded exercise",
+      "path": "modules/01-electronics.T2.01b.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.01-electronics.T3.01a",
+      "subjectId": "python",
+      "title": "Flux-cancelling loop inductance, Bessel group delay, the SAR charge bucket and the Cauer thermal ladder - graded exercise",
+      "path": "modules/01-electronics.T3.01a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.02-mechanics.T1.02a",
+      "subjectId": "python",
+      "title": "Lever-arm gravity torque, static balance and the gear stage - graded exercise",
+      "path": "modules/02-mechanics.T1.02a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.02-mechanics.T2.02a",
+      "subjectId": "python",
+      "title": "Jacobians, J^T forces and gravity from CoM Jacobians - graded exercise",
+      "path": "modules/02-mechanics.T2.02a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.02-mechanics.T3.02a",
+      "subjectId": "python",
+      "title": "Screw axes, the notch flexure and the two-pass Newton-Euler recursion - graded exercise",
+      "path": "modules/02-mechanics.T3.02a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.03-sensors.T1.03a",
+      "subjectId": "python",
+      "title": "Back-EMF, pole pairs and the quadrature encoder - graded exercise",
+      "path": "modules/03-sensors.T1.03a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.03-sensors.T2.03a",
+      "subjectId": "python",
+      "title": "Clarke, Park, a tracking PLL and the averaging law - graded exercise",
+      "path": "modules/03-sensors.T2.03a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.03-sensors.T3.03a",
+      "subjectId": "python",
+      "title": "Rotating-frame decoupling, Min-Max SVPWM and the Fourier encoder fit - graded exercise",
+      "path": "modules/03-sensors.T3.03a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.04-embedded.T1.04a",
+      "subjectId": "python",
+      "title": "Fixed-width integers, bit masks and the 8-byte telemetry frame - graded exercise",
+      "path": "modules/04-embedded.T1.04a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.04-embedded.T1.04b",
+      "subjectId": "python",
+      "title": "The non-blocking tick scheduler, the ISR budget and the latched fault state - graded exercise",
+      "path": "modules/04-embedded.T1.04b.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.04-embedded.T2.04a",
+      "subjectId": "python",
+      "title": "SPI frame time, polled-versus-DMA CPU load and the ping-pong half an ISR may read - graded exercise",
+      "path": "modules/04-embedded.T2.04a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.04-embedded.T2.04b",
+      "subjectId": "python",
+      "title": "RTOS utilisation, priority inheritance, CAN arbitration and the MIT fixed-point frame - graded exercise",
+      "path": "modules/04-embedded.T2.04b.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.04-embedded.T2.04c",
+      "subjectId": "python",
+      "title": "Zephyr static RAM, devicetree binding, priority order and k_mutex inheritance - graded exercise",
+      "path": "modules/04-embedded.T2.04c.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.04-embedded.T2.04d",
+      "subjectId": "python",
+      "title": "Wire budget, executor handles, the spin WCET and the NTP offset - graded exercise",
+      "path": "modules/04-embedded.T2.04d.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.04-embedded.T3.04a",
+      "subjectId": "python",
+      "title": "Center-aligned ARR, the Q1.31 CORDIC word and a wait-free seqlock - graded exercise",
+      "path": "modules/04-embedded.T3.04a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.05-control.T1.05a",
+      "subjectId": "python",
+      "title": "PID as a virtual spring, damper and bias, with saturation and anti-windup - graded exercise",
+      "path": "modules/05-control.T1.05a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.05-control.T2.05a",
+      "subjectId": "python",
+      "title": "Margins, sensitivity, an observer and an LQR gain - graded exercise",
+      "path": "modules/05-control.T2.05a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.05-control.T3.05a",
+      "subjectId": "python",
+      "title": "Joseph-form covariance update and NEES consistency - graded exercise",
+      "path": "modules/05-control.T3.05a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.05-control.T3.05b",
+      "subjectId": "python",
+      "title": "Tangent-space error injection on SO(3) and the ESKF reset - graded exercise",
+      "path": "modules/05-control.T3.05b.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.05-control.T3.05c",
+      "subjectId": "python",
+      "title": "Control Barrier Function QP safety filter - graded exercise",
+      "path": "modules/05-control.T3.05c.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.06-robotics.T1.06a",
+      "subjectId": "python",
+      "title": "Rest-to-rest cubic trajectory, actuator duration budget and the virtual spring-damper - graded exercise",
+      "path": "modules/06-robotics.T1.06a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.06-robotics.T2.06a",
+      "subjectId": "python",
+      "title": "QoS compatibility, a tf2 chain, its inverse and the buffer - graded exercise",
+      "path": "modules/06-robotics.T2.06a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.06-robotics.T2.06b",
+      "subjectId": "python",
+      "title": "Simulated clock, recording budget, replay scaling and decimation - graded exercise",
+      "path": "modules/06-robotics.T2.06b.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.06-robotics.T3.06a",
+      "subjectId": "python",
+      "title": "MSE, hand-written backpropagation, gradient descent and behaviour cloning - graded exercise",
+      "path": "modules/06-robotics.T3.06a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.06-robotics.T3.06b",
+      "subjectId": "python",
+      "title": "Discounted returns, PPO clipping, temporal ensembling and the safety shield - graded exercise",
+      "path": "modules/06-robotics.T3.06b.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.07-systems.T1.07a",
+      "subjectId": "python",
+      "title": "Cyclic PLC scan, series NC E-stop chain, latching state machine and sine-sweep gain/phase - graded exercise",
+      "path": "modules/07-systems.T1.07a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.07-systems.T2.07a",
+      "subjectId": "python",
+      "title": "Regenerative energy, the chopper bound, the counter and the watchdog - graded exercise",
+      "path": "modules/07-systems.T2.07a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.07-systems.T3.06a",
+      "subjectId": "python",
+      "title": "OPC UA PubSub rate, AAS NodeId map, PLd and the Category 3 STO evaluator - graded exercise",
+      "path": "modules/07-systems.T3.06a.md",
+      "sourceFormat": "markdown"
+    },
+    {
+      "id": "EX.08-capstones.T3.07a",
+      "subjectId": "python",
+      "title": "RSS spatial error budget, end-to-end latency as phase margin, and the five-domain bring-up sign-off - graded exercise",
+      "path": "modules/08-capstones.T3.07a.md",
+      "sourceFormat": "markdown"
+    }
+  ]
+}

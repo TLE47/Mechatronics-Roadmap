@@ -46,10 +46,10 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(ROOT, "app", "public", "lesson-pages")
-# 5 with `reveal` blocks (4 was `graph`, 3 `route`, 2 `figure`): the reader's validator refuses a
-# version it does not know rather than guessing at a shape that changed, and a lesson written before
-# any of them reads the same.
-PAYLOAD_VERSION = 5
+# 6 adds `anchor` (5 was `reveal`, 4 `graph`, 3 `route`, 2 `figure`): the reader's validator
+# refuses a version it does not know rather than guessing at a shape that changed, and a lesson
+# written before any of them reads the same.
+PAYLOAD_VERSION = 6
 
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 import generate_python_lessons_data as registry  # noqa: E402
@@ -76,6 +76,9 @@ HTML_IMG_ALT_AFTER = re.compile(
     r"^\s*<img\s+[^>]*src=\"([^\"]+)\"[^>]*>$", re.I
 )
 DETAILS_LINE = re.compile(r"^\s*</?(?:details|summary)(?:\s[^>]*)?>\s*$", re.I)
+# `<a id="micro-variables"></a>` is a real in-page anchor: a source link or a micro card can land on
+# it. It is lifted before the blanket tag strip below, which would otherwise delete the id.
+ANCHOR_LINE = re.compile(r'^\s*<a\s+id="([A-Za-z0-9][A-Za-z0-9_.:-]*)"\s*>\s*</a>\s*$')
 # `<details>` is the page's own collapse: the hints, every `Check yourself` answer and the full
 # solution are written that way so GitHub hides them until pressed. The reader keeps the shape.
 DETAILS_OPEN = re.compile(r"^\s*<details\b[^>]*>(?:\s*<summary>(.*?)</summary>)?\s*$", re.I)
@@ -501,6 +504,14 @@ def parse_blocks(raw, depth=0):
             index += 1
             if not skip_level:
                 blocks.append({"t": "math", "tex": "\n".join(tex).strip()})
+            continue
+
+        anchor = ANCHOR_LINE.match(line)
+        if anchor:
+            flush_paragraph()
+            if not skip_level:
+                blocks.append({"t": "anchor", "id": anchor.group(1)})
+            index += 1
             continue
 
         if DETAILS_LINE.match(line) or TAG_LINE.match(line):

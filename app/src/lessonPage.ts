@@ -31,8 +31,12 @@
  * Bumped to 5 when `reveal` blocks arrived: the page's own `<details>` (every hint, every answer and
  * the full solution) became a label plus the blocks behind it, instead of being flattened into the
  * prose where a scrolling reader met the solution before the question.
+ *
+ * Bumped to 6 when `anchor` blocks arrived: a page can name a stable fragment (`micro-variables`),
+ * and the reader must keep it rather than stripping the HTML tag. An older payload with the anchor
+ * dropped looks the same as a page that never had one, which is why the version moved.
  */
-export const LESSON_PAGE_VERSION = 5;
+export const LESSON_PAGE_VERSION = 6;
 
 export type ReaderCodeLanguage = string;
 
@@ -50,6 +54,8 @@ export type ReaderBlock =
   | { t: 'table'; head: string[]; rows: string[][] }
   | { t: 'quote'; x: string }
   | { t: 'math'; tex: string }
+  /** An explicit in-page anchor (`<a id="micro-…"></a>`). */
+  | { t: 'anchor'; id: string }
   | { t: 'img'; src: string; alt: string }
   /**
    * A named picture from `visuals/scenes.ts`. The payload carries the id and an optional caption;
@@ -111,6 +117,8 @@ function isBlock(value: unknown, depth = 0): value is ReaderBlock {
       return isText(block.x);
     case 'math':
       return isText(block.tex);
+    case 'anchor':
+      return isText(block.id) && /^[A-Za-z0-9][A-Za-z0-9_.:-]*$/.test(block.id);
     case 'ul':
     case 'ol':
       return (

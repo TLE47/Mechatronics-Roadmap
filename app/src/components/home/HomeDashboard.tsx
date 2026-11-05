@@ -35,6 +35,7 @@ import { LabsPanel, type LabCard } from './LabsPanel';
 import { RoutePanel } from './RoutePanel';
 import { ReviewPanel } from './ReviewPanel';
 import { ToolsPanel } from './ToolsPanel';
+import { MicroHomeCard } from './MicroHomeCard';
 
 export interface HomeDashboardProps {
   email: string | null;
@@ -272,6 +273,8 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = (props) => {
           </div>
         </div>
       </section>
+
+      <MicroHomeCard onOpenTab={props.onOpenTab} />
 
       {/* `items-start`: the two cards are as tall as their own content. Stretched, the short Today
           card wore 230 px of empty panel under its button whenever the mission had no next check to

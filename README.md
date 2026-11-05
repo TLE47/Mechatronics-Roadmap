@@ -108,6 +108,16 @@ The focused hours are targets, not measurements: each page's own estimate, summe
 > [!TIP]
 > **One working arm is a finish line, not a consolation prize.** The [minimum viable finish](#the-minimum-viable-finish) is 48 pages and ≈94–153 focused hours. Everything after it is optional depth.
 
+## Micro-learning (beta)
+
+The workbench also has a small **micro-learning** tab for the first Python lesson: seven P.1
+concepts, one idea at a time, each designed for about two minutes. Two diagnostics choose the
+practice; a review is scheduled for tomorrow and a clean challenge moves it two weeks out. Progress
+stays in this browser, the tab can be hidden at runtime without deleting it, and a micro result
+never marks the parent lesson verified. It is beta until a beginner who has never seen MechaLab
+completes P.1 and reports where they got stuck. The rules, storage keys and self-study protocol are
+in [`docs/MICROLEARNING.md`](docs/MICROLEARNING.md).
+
 ## How long this really takes
 
 The number above is **focused hours**: time with the lesson open, including the reading, the exercise and its checks. It is not elapsed time. Setup, debugging, re-reading, and the days you take off are real, and for a first project they are often the larger part of the calendar.

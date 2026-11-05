@@ -60,6 +60,34 @@ flowchart LR
   - **Key takeaway:** Computers treat whole numbers, decimal numbers, text, and true/false switches differently: **`int`** holds exact whole numbers (`400`, `-5`), **`float`** holds numbers with a decimal point (`12.0`, `0.05`), **`str`** holds text inside quotation marks (`"READY"`), and **`bool`** holds `True` or `False` (capitalized).
   - **Alternative resource:** [futurecoder.io — Chapter 2 (`String Basics`) and Chapter 7 (`f-strings`)](https://futurecoder.io/course/#toc) `[verify in-app]` — Complete **Chapter 2 (`String Basics`)** and the **`f-strings`** page in **Chapter 7 (`A Bit More About Strings`)** `[verify in-app]`.
 
+#### Micro focus: variables
+<a id="micro-variables"></a>
+A **variable** is a named storage box. `battery_level = 12.60` stores the float 12.60 under that name. The single equals sign `=` is the assignment action, not a claim that the two sides are equal.
+
+#### Micro focus: assignment order
+<a id="micro-assignment-order"></a>
+Python evaluates the right-hand side of `=` first, then stores the result. So `encoder_ticks = encoder_ticks + 25` reads the old value, adds 25, and writes the new value back.
+
+#### Micro focus: int and float
+<a id="micro-int-float"></a>
+An **`int`** is a whole number such as `400`; a **`float`** is a decimal number such as `12.60`. Division with `/` produces a float even when the answer is whole: `8 / 2` gives `4.0`, not `4`.
+
+#### Micro focus: strings
+<a id="micro-strings"></a>
+A **`str`** is text wrapped in quotes. `"12"` is text, not the number 12. Joining two strings with `+` concatenates them: `"12" + "5"` produces `"125"`.
+
+#### Micro focus: booleans
+<a id="micro-booleans"></a>
+A **`bool`** is `True` or `False`, with a capital first letter. A comparison produces a bool: `12.15 > 10` is `True`. Write `False`, never `false`.
+
+#### Micro focus: mixed types and TypeError
+<a id="micro-mixed-types"></a>
+Python will not silently mix text and numbers. `"12" + 5` raises `TypeError`; convert one side first, for example `int("12") + 5`, which gives `17`. Numbers of different types can mix: `400 + 2.5` gives `402.5`.
+
+#### Micro focus: f-strings
+<a id="micro-f-strings"></a>
+An **f-string** puts an `f` before the opening quote and evaluates names inside braces: `f"Battery: {battery_level:.2f} V"`. The `.2f` format shows two digits after the decimal point.
+
 ### Bridge Notes
 In mechatronics, every value inside your **program** (an ordered list of instructions executed top-to-bottom) represents a physical measurement or hardware state. When you write `battery_level = 12.60`, the **assignment** operator (`=`) creates a variable named `battery_level` holding the **float** (floating-point decimal number) `12.60`. Because Python always evaluates the right-hand side of `=` before storing it into the name on the left, writing `wheel_ticks = wheel_ticks + 25` reads the stored **int** (integer whole number) in `wheel_ticks`, adds `25`, and saves the updated total back into `wheel_ticks`.
 

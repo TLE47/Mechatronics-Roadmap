@@ -45,12 +45,12 @@ class TableTests(unittest.TestCase):
         with open(TAB_DATA, encoding="utf-8") as handle:
             data = json.load(handle)
         self.assertEqual(
-            len(data["tabs"]), 15,
-            msg="expected the 15 workbench tabs; a missing one means its label has nowhere to come "
+            len(data["tabs"]), 16,
+            msg="expected the 16 workbench tabs; a missing one means its label has nowhere to come "
                 "from and the tab registry would need a hand-typed name again",
         )
         self.assertEqual(
-            len(set(data["tabs"].values())), 15,
+            len(set(data["tabs"].values())), 16,
             msg="expected one unique name per tab; two tabs sharing a name means a page naming one cannot be understood - check workbenchTabs.json",
         )
         self.assertFalse(

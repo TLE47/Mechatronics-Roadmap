@@ -16,6 +16,30 @@ flowchart LR
 
 ---
 
+## [2026-11-05] — Atomic micro-learning for P.1 (beta)
+
+A sixteenth, lazy tab teaches seven P.1 concepts in short units: variables, assignment order,
+int/float, strings, booleans, mixed types/`TypeError`, and f-strings. Each unit has authored
+teaching, a read-only example, two four-option diagnostics, a practice and a deterministic review
+pool; the 2/2, 1/2 and 0/2 paths choose different practice and explanation branches. Review is one
+concept at a time with a 3/7/14/30-day ladder, challenge success at 14 days and failure at one day.
+Evidence is browser-local, versioned and bounded; saves retry against the newest stored state, and
+a newer schema is read-only rather than silently downgraded. The runtime switch hides the tab and
+Home's lab while preserving every stored concept.
+
+P.1 gained seven stable `micro-*` anchors and a matching micro-focus section. The generated lesson
+payload moved to version 6 so an explicit in-page anchor survives the HTML strip, and the reader
+scrolls to a fragment after the page arrives. The parent manifest is generated at build time; the
+runtime never reads Markdown or the filesystem. The catalogue is the only micro lesson in this
+release, and the tab stays **beta** until the documented human self-study is complete.
+
+Run `python3 scripts/generate_micro_lessons.py --stats` for the authored/model timings, then
+`npm run check:micro`, `npm run test:micro` (28 cases), `npm run test:e2e:micro` and
+`npm run check:micro-debug`. The self-study protocol and its remaining beta exit criteria are in
+[`docs/MICROLEARNING.md`](docs/MICROLEARNING.md).
+
+---
+
 ## [2026-11-04] — CI moves its macOS jobs to an allocatable Intel runner
 
 GitHub's hosted arm64 `macos-latest` pool cancelled both macOS jobs before any step ran, twice,
@@ -2329,7 +2353,7 @@ for the landing screen only (+1 heading, +2 buttons, +276 px) and re-checked; la
 the new card was brought to the 11 px metadata / 12 px control floor; weight PASS; `python3 -m
 unittest discover -s tests` and `check_workflows` clean.
 
-The validator's README-size claim moves with this entry: the page is `111 KB $\to$ 21 KB` now that the
+The validator's README-size claim moves with this entry: the page is `111 KB $\to$ 22 KB` now that the
 README carries the 3.0 rows.
 
 Files: `content/**`, `schemas/*.schema.json`, `scripts/build_content.py`, `scripts/test_content.mjs`,

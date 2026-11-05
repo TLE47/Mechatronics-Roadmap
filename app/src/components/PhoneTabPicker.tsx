@@ -6,11 +6,11 @@ import { Sheet } from './Sheet';
 import { InstallOffer } from './InstallOffer';
 
 /**
- * The workbench's twelve tabs on a phone (`components/PhoneTabPicker.tsx`).
+ * The workbench's sixteen tabs on a phone (`components/PhoneTabPicker.tsx`).
  *
- * A twelve-item rail does not fit 390 px, and the rail that did fit was a horizontal scroller whose
+ * A sixteen-item rail does not fit 390 px, and the rail that did fit was a horizontal scroller whose
  * last tabs were off-screen with no sign they existed. This is one row showing where you are and a
- * sheet listing every tab: all fifteen are reachable, the current one is named in the header, and the
+ * sheet listing every tab: all sixteen are reachable, the current one is named in the header, and the
  * row costs 48 px instead of the rail's two lines.
  *
  * The rail stays at `md` and up. The picker is rendered by `App` and hidden from `md` by CSS, so a

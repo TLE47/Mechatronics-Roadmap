@@ -1,4 +1,4 @@
-{"v":5,"path":"track-p/P.2-arithmetic-and-order-of-operations.md","title":"Computer Arithmetic and Order of Operations","blocks":[
+{"v":6,"path":"track-p/P.2-arithmetic-and-order-of-operations.md","title":"Computer Arithmetic and Order of Operations","blocks":[
 {"t":"h","l":2,"x":"Goal"},
 {"t":"p","x":"Translate multi-step physics and circuit formulas into bug-free Python arithmetic using explicit multiplication (`*`), division (`/`), exponents (`**`), and parentheses `()`."},
 {"t":"ul","items":[{"x":"**New ideas (max 2):**","d":0},{"x":"**Computer arithmetic operators**: Performing addition (`+`), subtraction (`-`), multiplication (`*`), float division (`/`), integer floor division (`//`), and exponents (`**`).","d":1},{"x":"**Parentheses and order of operations**: Using parentheses `()` around numerators and denominators so multi-term engineering fractions evaluate in the exact intended order.","d":1},{"x":"**New syntax:** `+`, `-`, `*`, `/`, `//`, `**`, `()`.","d":0},{"x":"**Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–2.5 hours","d":0}]},

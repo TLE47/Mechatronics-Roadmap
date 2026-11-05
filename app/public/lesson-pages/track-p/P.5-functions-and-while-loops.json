@@ -1,4 +1,4 @@
-{"v":5,"path":"track-p/P.5-functions-and-while-loops.md","title":"Reusable Functions (def/return) and while Loops","blocks":[
+{"v":6,"path":"track-p/P.5-functions-and-while-loops.md","title":"Reusable Functions (def/return) and while Loops","blocks":[
 {"t":"h","l":2,"x":"Goal"},
 {"t":"p","x":"Package repeatable engineering calculations into named functions using `def` and `return`, and step physical simulations forward in time using `while` loops."},
 {"t":"ul","items":[{"x":"**New ideas (max 2):**","d":0},{"x":"**Reusable functions (`def` and `return`)**: Defining a named block of code that accepts input parameters, performs a calculation, and hands the numerical answer back via `return`.","d":1},{"x":"**Condition-controlled `while` loops**: Repeating an indented simulation step for as long as a condition (`step < total_steps`) remains `True`.","d":1},{"x":"**New syntax:** `def func_name(param1, param2):`, `return value`, `while condition:`.","d":0},{"x":"**Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours","d":0}]},

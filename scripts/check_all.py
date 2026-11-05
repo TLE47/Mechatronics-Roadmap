@@ -73,6 +73,11 @@ GATES: list[tuple[str, list[str], bool]] = [
     # The lesson text the reader renders, generated from the same pages the registry names: a page
     # edited without regenerating would leave the pane showing last week's explanation.
     ("lesson_pages", ["scripts/generate_lesson_pages.py", "--check"], False),
+    # The micro catalogue and the parent manifest are generated from one authored JSON and the
+    # registry. An edit to either without regenerating would leave the tab teaching last week's
+    # seven concepts, so both are checked before the app is built.
+    ("micro_lessons", ["scripts/generate_micro_lessons.py", "--check"], False),
+    ("parent_lessons", ["scripts/generate_parent_lessons.py", "--check"], False),
     ("error_index", ["scripts/generate_error_index.py", "--check"], False),
     ("run_callouts", ["scripts/generate_run_callouts.py", "--check"], False),
     ("prose_index", ["scripts/generate_prose_index.py", "--check"], False),

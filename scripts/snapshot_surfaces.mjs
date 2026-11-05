@@ -9,7 +9,7 @@
  * token stopped applying: each of those leaves every test green, because every test asks about a
  * feature and none asks what the screen is shaped like.
  *
- * This gate asks that, for **68 surfaces**: the fifteen tabs, Home and the Workflow canvas, in all
+ * This gate asks that, for **72 surfaces**: the sixteen tabs, Home and the Workflow canvas, in all
  * four palettes. The canvas is measured with its connectors included: a node's box, an arrow's path,
  * the label and the remove button that hang from it, a frame and a lane with their chips, and the
  * Fork and Join bars, so a curve or a control that drifts is a finding rather than something only a
@@ -548,7 +548,7 @@ async function main() {
     const merged = FILTERED ? { ...(previous?.surfaces ?? {}), ...surfaces } : surfaces;
     const document = {
       _why:
-        'The painted surface of all 68 surfaces — the fifteen tabs, Home and the Workflow canvas, in ' +
+        'The painted surface of all 72 surfaces — the sixteen tabs, Home and the Workflow canvas, in ' +
         'four palettes — read by ' +
         '`npm run check:snapshot` (`scripts/snapshot_surfaces.mjs`). Each entry records where the header, ' +
         'activity rail, main pane and its first panel sit, how many buttons, inputs, links, headings, ' +

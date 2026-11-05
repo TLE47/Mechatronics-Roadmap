@@ -268,7 +268,13 @@ class EdgeFunctionTests(unittest.TestCase):
         )
 
     def test_the_bundle_reads_only_publishable_build_variables(self):
-        allowed = {"VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY"}
+        allowed = {
+            "VITE_SUPABASE_URL",
+            "VITE_SUPABASE_ANON_KEY",
+            # A public, default-off timing switch. It carries no credential, and the production
+            # bundle is separately checked to contain no readout (`npm run check:micro-debug`).
+            "VITE_MICRO_DEBUG",
+        }
         used = set()
         for folder, _, names in os.walk(APP_SRC):
             for name in names:
@@ -278,7 +284,10 @@ class EdgeFunctionTests(unittest.TestCase):
         self.assertEqual(
             used - allowed,
             set(),
-            msg=f"expected only the publishable Supabase variables in app/src, found {sorted(used - allowed)}",
+            msg=(
+                "expected only publishable build variables (Supabase plus the public micro "
+                f"debug switch) in app/src, found {sorted(used - allowed)}"
+            ),
         )
 
 

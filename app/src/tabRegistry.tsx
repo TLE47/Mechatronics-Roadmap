@@ -18,6 +18,7 @@ import {
   Activity,
   Bot,
   Boxes,
+  Brain,
   CircuitBoard,
   ClipboardCheck,
   Code2,
@@ -33,7 +34,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { TabPyodideRunner } from './components/tabs/TabPyodideRunner';
-import { STUDIO_HOME_DOOR, type HomeDoor } from './homeDoor';
+import { MICRO_HOME_DOOR, STUDIO_HOME_DOOR, type HomeDoor } from './homeDoor';
 import { PYTHON_LESSONS } from './data/pythonLessonsData';
 import { PYTHON_TAB_NAME, TAB_NAMES } from './tabNames';
 import type { ActiveTierPass } from './curriculumData';
@@ -186,6 +187,19 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
     load: () =>
       import('./components/tabs/TabStudio').then((module) => ({ default: module.TabStudio })),
     render: (_context, View) => <View />,
+  },
+  {
+    id: 'tab-micro',
+    Icon: Brain,
+    beginnerLabel: TAB_NAMES['tab-micro'],
+    beginnerSubtitle: 'Seven tiny P.1 concepts, about two minutes each',
+    technicalLabel: 'Atomic Micro-Learning (P.1, beta)',
+    technicalSubtitle: '7 concepts · deterministic diagnostics · local review schedule',
+    isBeginnerCore: true,
+    home: MICRO_HOME_DOOR,
+    load: () =>
+      import('./components/tabs/TabMicro').then((module) => ({ default: module.TabMicro })),
+    render: (context, View) => <View openLesson={context.openLesson} />,
   },
   {
     id: 'tab-placement',

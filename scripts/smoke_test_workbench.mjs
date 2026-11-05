@@ -397,7 +397,7 @@ export async function runSmokeTests(viteServer) {
     // Switch to Advanced View via localStorage and verify all 12 technical tabs render
     globalThis.localStorage.setItem(STORAGE_KEY_VIEW_MODE, 'advanced');
     const htmlAdvanced = cleanSsr(ReactDOMServer.renderToString(React.createElement(App)));
-    assert.equal(WORKBENCH_TABS.length, 15, 'WORKBENCH_TABS must define all 15 tabs');
+    assert.equal(WORKBENCH_TABS.length, 16, 'WORKBENCH_TABS must define all 16 tabs');
     for (const tab of WORKBENCH_TABS) {
       assert(
         htmlAdvanced.includes(`data-testid="tab-btn-${tab.id}"`),

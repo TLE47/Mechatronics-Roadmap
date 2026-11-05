@@ -394,6 +394,27 @@ export function LessonReader({
     return () => cancelAnimationFrame(frame);
   }, [page, lessonId]);
 
+  // A fragment in the address (`?lesson=P.1#micro-variables`) is a request to land on that passage.
+  // The page arrives after the address is read, so the browser's own fragment scroll cannot do it;
+  // this is the one explicit scroll the reader performs after a load. An explicit fragment is the
+  // more recent request, so it wins over a saved reading position for this visit.
+  useEffect(() => {
+    if (!page) return;
+    const id = decodeURIComponent(window.location.hash.replace(/^#/, ''));
+    if (!id) return;
+    const container = scrollRef.current;
+    if (!container) return;
+    const frame = requestAnimationFrame(() => {
+      const target = container.querySelector<HTMLElement>(`[id="${CSS.escape(id)}"]`);
+      if (!target) return;
+      const top = target.getBoundingClientRect().top - container.getBoundingClientRect().top;
+      const furthest = Math.max(0, container.scrollHeight - container.clientHeight);
+      container.scrollTop = Math.min(furthest, Math.max(0, container.scrollTop + top - 8));
+      pendingRef.current = { anchor: id, at: container.scrollTop };
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [page]);
+
   // A split-view resize reflows the page under the reader: the paragraph they were reading has to
   // stay under their eyes. The old pixel offset means nothing after a reflow (lines wrap, a reveal
   // can close), so the recorded block is looked up in the new layout and the distance into it is
@@ -890,6 +911,18 @@ export function LessonReader({
           >
             <Inline text={block.x} marks={marks} onMark={openMark} />
           </blockquote>
+        );
+      case 'anchor':
+        // The page's own fragment (`micro-variables`). A heading gets an id from the generated slug;
+        // an explicit anchor is the stable name a micro card can link to without guessing the slug.
+        return (
+          <span
+            key={key}
+            id={block.id}
+            data-reader-anchor={block.id}
+            data-reader-block={blockKey}
+            className="block scroll-mt-3"
+          />
         );
       case 'math':
         return (

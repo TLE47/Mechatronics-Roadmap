@@ -88,6 +88,7 @@ import {
 import { STORE_RESTORED_EVENT } from './backupBundle';
 import { RESET_EVENT, readResetAt, type ResetReport } from './resetEvent';
 import { FOCUS_EVENT, focusLabel, readFocus, setFocus } from './focusMode';
+import { MICRO_SETTINGS_EVENT, readMicroEnabled } from './micro/settings';
 import { SoundControlLazy } from './components/SoundControlLazy';
 import { SoundClicks } from './components/SoundClicks';
 import { attemptsByLesson, downloadLearningLog, readLearningLog, replaceLearningLog } from './learningLog';
@@ -348,8 +349,22 @@ export const App: React.FC = () => {
   // A newcomer arrives to run the first lesson, not to read the advanced roadmap: open the Python
   // runner by default. The roadmap tab is still one click away for anyone who wants the map.
   const [activeTab, setActiveTab] = useState<TabId>('tab-pyodide');
+  // A runtime beta switch, not a build flag: hiding the tab leaves every micro event in place.
+  const [microEnabled, setMicroEnabled] = useState<boolean>(() => readMicroEnabled());
   // A workflow card cites a part by id; this is the request that opens Project Mode on it. The
   // nonce makes a second press on the same badge a second ask, like the runner's lesson request.
+  useEffect(() => {
+    const sync = () => setMicroEnabled(readMicroEnabled());
+    window.addEventListener(MICRO_SETTINGS_EVENT, sync);
+    window.addEventListener('storage', sync);
+    return () => {
+      window.removeEventListener(MICRO_SETTINGS_EVENT, sync);
+      window.removeEventListener('storage', sync);
+    };
+  }, []);
+  useEffect(() => {
+    if (!microEnabled && activeTab === 'tab-micro') setActiveTab('tab-pyodide');
+  }, [microEnabled, activeTab]);
   const [projectRequest, setProjectRequest] = useState<{ id: string; nonce: number } | null>(null);
   const [requirementRequest, setRequirementRequest] = useState<{ id: string; nonce: number } | null>(null);
   const [tourIndex, setTourIndex] = useState<number>(0);
@@ -1355,23 +1370,25 @@ export const App: React.FC = () => {
     document.getElementById('python-runner')?.scrollIntoView({ block: 'start' });
   }, []);
 
-  const visibleTabs =
+  const visibleLabs = microEnabled ? HOME_LABS : HOME_LABS.filter((lab) => lab.id !== 'tab-micro');
+  const visibleTabs = (
     viewMode === 'beginner'
       ? WORKBENCH_TABS.filter((t) => t.isBeginnerCore || t.id === activeTab)
-      : WORKBENCH_TABS;
+      : WORKBENCH_TABS
+  ).filter((t) => microEnabled || t.id !== 'tab-micro');
 
   // The phone picker lists every tab, not the rail's filtered subset: on a 390 px screen the rail
   // is one row and a beginner's five-tab view would leave seven labs with no way in. The mode still
   // decides the words, which is the promise the mode switch makes.
   const phoneTabItems = useMemo(
     () =>
-      WORKBENCH_TABS.map((tab) => ({
+      WORKBENCH_TABS.filter((tab) => microEnabled || tab.id !== 'tab-micro').map((tab) => ({
         id: tab.id,
         label: viewMode === 'beginner' ? tab.beginnerLabel : tab.technicalLabel,
         subtitle: viewMode === 'beginner' ? tab.beginnerSubtitle : tab.technicalSubtitle,
         Icon: tab.Icon,
       })),
-    [viewMode]
+    [viewMode, microEnabled]
   );
 
   // The tour's own index is what its three buttons *step from*, so it is read at click time rather
@@ -1570,7 +1587,7 @@ export const App: React.FC = () => {
           >
             {wholePage === 'intro' ? (
               <IntroPage
-                labs={HOME_LABS}
+                labs={visibleLabs}
                 signedIn={Boolean(accountEmail)}
                 onOpenHome={() => openPage('home')}
                 onOpenWorkbench={() => openPage('workbench')}
@@ -1595,7 +1612,7 @@ export const App: React.FC = () => {
                 conflicts={workspaceConflicts}
                 syncNote={syncNote}
                 reading={dashboardData?.reading ?? {}}
-                labs={HOME_LABS}
+                labs={visibleLabs}
                 focus={focus}
                 onOpenLesson={openLessonFromHome}
                 onOpenTab={openTabFromHome}

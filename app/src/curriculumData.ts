@@ -1295,9 +1295,10 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
 
 // Reference tabs have no tier guide: Link Health reports on the checker rather than a simulated
 // plant, Board runs a compiled sketch with no tier to widen, Project Mode and Requirements are
-// views of the objects rather than a plant to widen, and the studio is a scratchpad with no lesson
-// to widen. One type and one predicate, so a new reference tab is added here and the banner follows
-// instead of appearing over it.
+// views of the objects rather than a plant to widen, the studio is a scratchpad with no lesson to
+// widen, and micro-learning is a metadata-driven drill with no plant at all. One type and one
+// predicate, so a new reference tab is added here and the banner follows instead of appearing over
+// it.
 export type SimulatorTabId = Exclude<
   TabId,
   | 'tab-arch'
@@ -1308,6 +1309,7 @@ export type SimulatorTabId = Exclude<
   | 'tab-project'
   | 'tab-req'
   | 'tab-studio'
+  | 'tab-micro'
 >;
 
 export function hasTierGuide(id: TabId): id is SimulatorTabId {

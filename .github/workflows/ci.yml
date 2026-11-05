@@ -73,6 +73,10 @@ jobs:
           # The lesson text the workbench renders beside the editor, generated from the same pages
           # the runner's registry names. A page edited without regenerating is stale here.
           python3 scripts/generate_lesson_pages.py --check
+          # The seven micro concepts and the parent-lesson manifest are generated from one authored
+          # source and the registry. A stale bundle is a tab teaching the previous revision.
+          python3 scripts/generate_micro_lessons.py --check
+          python3 scripts/generate_parent_lessons.py --check
           # The app's error index is the explainer page; editing one without the other fails here.
           python3 scripts/generate_error_index.py --check
           python3 scripts/generate_run_callouts.py --check
@@ -113,7 +117,7 @@ jobs:
           python3 scripts/run_exercise.py --verbose \
             --report-file "${RUNNER_TEMP:-/tmp}/run-exercise.json"
           python3 scripts/check_exercise_coverage.py
-          # One discovery run covers all 21 suites in tests/ - including test_sketch_host_verify
+          # One discovery run covers all 22 suites in tests/ - including test_sketch_host_verify
           # and test_module_full_solutions, which the old per-file list never ran - and it is the
           # same command CONTRIBUTING gives a contributor. It runs on the 3.12 interpreter the
           # repo pins in .python-version, so every script a test imports must run there.
@@ -328,6 +332,11 @@ jobs:
       - name: Run the e2e partition (the SSR smoke, the unit batch, the dev-server E2E sweep, the light flows)
         run: npm run test:workbench -- --partition e2e
 
+      # The micro tab has its own browser flow: 2/2, the 0/2 practice branch, a seeded due review,
+      # the runtime switch, the source anchor and a 390 px fit. The reducer itself is in test:micro.
+      - name: "Check micro-learning: Home door, diagnostics, review, runtime switch and a 390 px tab"
+        run: npm run test:e2e:micro
+
   bundle-suites:
     name: Browser suites — the built bundle, control pairs, tour and home
     needs: build-workbench
@@ -442,10 +451,10 @@ jobs:
         run: npx playwright-core install-deps chromium firefox
         timeout-minutes: 10
 
-      - name: "Check light/dark: toggle contract, and WCAG contrast on all fifteen tabs in both modes"
+      - name: "Check light/dark: toggle contract, and WCAG contrast on all sixteen tabs in both modes"
         run: npm run test:theme:e2e
 
-      - name: "Check accessibility: axe over all fifteen tabs in both themes"
+      - name: "Check accessibility: axe over all sixteen tabs in both themes"
         run: npm run check:axe
 
       - name: "Check Lighthouse: best-practices, SEO and accessibility on the built bundle"

@@ -929,7 +929,9 @@ async function main() {
           while (walker.nextNode()) {
             const node = walker.currentNode;
             const value = node.textContent ?? '';
-            if (value.trim().length < 80) continue;
+            // A paragraph can be split into shorter text nodes by inline code; 40 characters is
+            // still a passage, while the placement check below keeps the final >20 guard.
+            if (value.trim().length < 40) continue;
             if (node.parentElement?.closest('a, code, pre, [data-testid="sticky-mark"]')) continue;
             const probe = document.createRange();
             probe.setStart(node, 0);

@@ -1,0 +1,984 @@
+{
+  "subjectId": "python",
+  "parentLessonId": "P.1",
+  "parentPath": "track-p/P.1-variables-and-data-types.md",
+  "title": "Variables and data types in small steps",
+  "version": 1,
+  "concepts": [
+    {
+      "id": "variables",
+      "title": "A variable names a value",
+      "parentLessonId": "P.1",
+      "anchor": "micro-variables",
+      "sourceFocus": [
+        "A **variable** is a named storage box",
+        "The single equals sign `=` is the assignment action"
+      ],
+      "revision": 1,
+      "prerequisites": [],
+      "resources": [
+        {
+          "id": "futurecoder-variables",
+          "title": "futurecoder — The Shell and Variables",
+          "url": "https://futurecoder.io/course/#toc",
+          "type": "course",
+          "role": "primary",
+          "provider": "futurecoder",
+          "lastVerified": "2026-11-04"
+        },
+        {
+          "id": "cs50p-notes",
+          "title": "CS50P Lecture 0 notes",
+          "url": "https://cs50.harvard.edu/python/2022/notes/0/",
+          "type": "notes",
+          "role": "optional",
+          "provider": "Harvard CS50P",
+          "lastVerified": "2026-11-04"
+        }
+      ],
+      "timing": { "learn": 80, "review": 40, "challenge": 50 },
+      "teaching": [
+        "A variable is a name for a value. `battery_level = 12.60` stores 12.60 under the name `battery_level`, and later lines can read that name.",
+        "The single `=` is assignment: evaluate the right side, then store it in the name on the left. It is not a claim that both sides are equal."
+      ],
+      "example": {
+        "code": "battery_level = 12.60\nencoder_ticks = 400\nprint(battery_level, encoder_ticks)",
+        "output": "12.6 400"
+      },
+      "diagnostics": [
+        {
+          "id": "variables-d1",
+          "prompt": "What is the value of encoder_ticks after these two lines?",
+          "code": "encoder_ticks = 400\nencoder_ticks = encoder_ticks + 25",
+          "options": [
+            { "id": "a", "text": "400" },
+            { "id": "b", "text": "425" },
+            { "id": "c", "text": "25" },
+            { "id": "d", "text": "375" }
+          ],
+          "answerId": "b",
+          "explanation": "The second line reads the old 400, adds 25, and stores 425 back into the same name."
+        },
+        {
+          "id": "variables-d2",
+          "prompt": "Which line stores the text ACTIVE in robot_mode?",
+          "options": [
+            { "id": "a", "text": "robot_mode = \"ACTIVE\"" },
+            { "id": "b", "text": "robot_mode == \"ACTIVE\"" },
+            { "id": "c", "text": "\"ACTIVE\" = robot_mode" },
+            { "id": "d", "text": "robot_mode = ACTIVE" }
+          ],
+          "answerId": "a",
+          "explanation": "Assignment uses one `=`, and text needs quotes. The `==` form compares instead of storing, and the bare name ACTIVE is not defined."
+        }
+      ],
+      "practice": {
+        "id": "variables-p1",
+        "prompt": "What is battery_level after the drop?",
+        "code": "battery_level = 12.60\nbattery_level = battery_level - 0.45",
+        "options": [
+          { "id": "a", "text": "12.15" },
+          { "id": "b", "text": "12.05" },
+          { "id": "c", "text": "13.05" },
+          { "id": "d", "text": "0.45" }
+        ],
+        "answerId": "a",
+        "explanation": "12.60 minus 0.45 is 12.15, and the result is stored back in battery_level."
+      },
+      "reviewPool": [
+        {
+          "id": "variables-r1",
+          "prompt": "What does a single `=` do in Python?",
+          "options": [
+            { "id": "a", "text": "Evaluates the right side, then stores it in the left name" },
+            { "id": "b", "text": "Compares two values" },
+            { "id": "c", "text": "Prints the value on the right" },
+            { "id": "d", "text": "Starts a comment" }
+          ],
+          "answerId": "a",
+          "explanation": "Assignment evaluates the right-hand side first, then stores the result in the name on the left."
+        },
+        {
+          "id": "variables-r2",
+          "prompt": "What is printed?",
+          "code": "ticks = 100\nticks = ticks + 50\nprint(ticks)",
+          "options": [
+            { "id": "a", "text": "100" },
+            { "id": "b", "text": "50" },
+            { "id": "c", "text": "150" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "c",
+          "explanation": "The old 100 is read, 50 is added, and 150 is stored back."
+        },
+        {
+          "id": "variables-r3",
+          "prompt": "Which is a valid Python variable name?",
+          "options": [
+            { "id": "a", "text": "wheel_ticks" },
+            { "id": "b", "text": "2wheel" },
+            { "id": "c", "text": "wheel-ticks" },
+            { "id": "d", "text": "wheel ticks" }
+          ],
+          "answerId": "a",
+          "explanation": "A name may contain letters, digits and underscores, but cannot start with a digit or contain spaces or hyphens."
+        },
+        {
+          "id": "variables-r4",
+          "prompt": "What is robot_mode at the end?",
+          "code": "robot_mode = \"STANDBY\"\nrobot_mode = \"ACTIVE\"",
+          "options": [
+            { "id": "a", "text": "STANDBY" },
+            { "id": "b", "text": "ACTIVE" },
+            { "id": "c", "text": "Both values are kept" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "b",
+          "explanation": "The second assignment replaces the first value in the same variable."
+        }
+      ],
+      "challenge": {
+        "id": "variables-c1",
+        "prompt": "After both updates, what are encoder_ticks and battery_level?",
+        "code": "encoder_ticks = 400\nbattery_level = 12.60\nencoder_ticks = encoder_ticks + 25\nbattery_level = battery_level - 0.45",
+        "options": [
+          { "id": "a", "text": "425 and 12.15" },
+          { "id": "b", "text": "400 and 12.60" },
+          { "id": "c", "text": "25 and 0.45" },
+          { "id": "d", "text": "425 and 12.60" }
+        ],
+        "answerId": "a",
+        "explanation": "Each assignment reads its own variable's old value and stores the updated value back."
+      }
+    },
+    {
+      "id": "assignment-order",
+      "title": "Assignment reads the old value first",
+      "parentLessonId": "P.1",
+      "anchor": "micro-assignment-order",
+      "sourceFocus": [
+        "Python evaluates the right-hand side of `=` first, then stores the result",
+        "reads the old value, adds 25"
+      ],
+      "revision": 1,
+      "prerequisites": ["variables"],
+      "resources": [
+        {
+          "id": "futurecoder-variables",
+          "title": "futurecoder — The Shell and Variables",
+          "url": "https://futurecoder.io/course/#toc",
+          "type": "course",
+          "role": "primary",
+          "provider": "futurecoder",
+          "lastVerified": "2026-11-04"
+        }
+      ],
+      "timing": { "learn": 80, "review": 40, "challenge": 50 },
+      "teaching": [
+        "Python evaluates the right-hand side of `=` first, then stores the result. That order is why `x = x + 1` works: the old `x` on the right is read before the new value replaces it.",
+        "Lines run in order. A second assignment sees the result of the first, so tracing one line at a time is the reliable way to follow a program."
+      ],
+      "example": {
+        "code": "x = 10\nx = x + 5\nprint(x)",
+        "output": "15"
+      },
+      "diagnostics": [
+        {
+          "id": "assignment-order-d1",
+          "prompt": "What is x after these lines?",
+          "code": "x = 10\nx = x + 5",
+          "options": [
+            { "id": "a", "text": "5" },
+            { "id": "b", "text": "10" },
+            { "id": "c", "text": "15" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "c",
+          "explanation": "The right side reads the old 10 and adds 5; the result 15 is stored back."
+        },
+        {
+          "id": "assignment-order-d2",
+          "prompt": "What is y at the end?",
+          "code": "x = 3\ny = x\nx = 8",
+          "options": [
+            { "id": "a", "text": "3" },
+            { "id": "b", "text": "8" },
+            { "id": "c", "text": "11" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "a",
+          "explanation": "`y = x` copies the value 3 at that moment. Changing x later does not change y."
+        }
+      ],
+      "practice": {
+        "id": "assignment-order-p1",
+        "prompt": "What is ticks after the update?",
+        "code": "ticks = 100\nticks = ticks + 50",
+        "options": [
+          { "id": "a", "text": "100" },
+          { "id": "b", "text": "150" },
+          { "id": "c", "text": "50" },
+          { "id": "d", "text": "0" }
+        ],
+        "answerId": "b",
+        "explanation": "The old 100 is read, then 50 is added and stored back as 150."
+      },
+      "reviewPool": [
+        {
+          "id": "assignment-order-r1",
+          "prompt": "Which side of `=` is evaluated first?",
+          "options": [
+            { "id": "a", "text": "The right-hand side" },
+            { "id": "b", "text": "The left-hand name" },
+            { "id": "c", "text": "Both at exactly the same time" },
+            { "id": "d", "text": "Neither; `=` only compares" }
+          ],
+          "answerId": "a",
+          "explanation": "The expression on the right is evaluated first; the result is then stored in the name on the left."
+        },
+        {
+          "id": "assignment-order-r2",
+          "prompt": "What is b at the end?",
+          "code": "a = 2\nb = a\na = 7",
+          "options": [
+            { "id": "a", "text": "2" },
+            { "id": "b", "text": "7" },
+            { "id": "c", "text": "9" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "a",
+          "explanation": "b copies the value 2 before a changes to 7."
+        },
+        {
+          "id": "assignment-order-r3",
+          "prompt": "What is count at the end?",
+          "code": "count = 5\ncount = count * 2\ncount = count - 1",
+          "options": [
+            { "id": "a", "text": "9" },
+            { "id": "b", "text": "10" },
+            { "id": "c", "text": "4" },
+            { "id": "d", "text": "5" }
+          ],
+          "answerId": "a",
+          "explanation": "5 becomes 10, then 10 minus 1 is 9."
+        },
+        {
+          "id": "assignment-order-r4",
+          "prompt": "What is x at the end?",
+          "code": "x = 1\nx = x + 1\nx = x * 2",
+          "options": [
+            { "id": "a", "text": "4" },
+            { "id": "b", "text": "3" },
+            { "id": "c", "text": "2" },
+            { "id": "d", "text": "1" }
+          ],
+          "answerId": "a",
+          "explanation": "1 plus 1 is 2, then 2 times 2 is 4."
+        }
+      ],
+      "challenge": {
+        "id": "assignment-order-c1",
+        "prompt": "What are x and y at the end?",
+        "code": "x = 10\ny = x + 5\nx = y\ny = x - 3",
+        "options": [
+          { "id": "a", "text": "x = 15, y = 12" },
+          { "id": "b", "text": "x = 10, y = 12" },
+          { "id": "c", "text": "x = 15, y = 15" },
+          { "id": "d", "text": "x = 12, y = 15" }
+        ],
+        "answerId": "a",
+        "explanation": "y becomes 15; x copies 15; then y becomes 15 minus 3, which is 12."
+      }
+    },
+    {
+      "id": "int-float",
+      "title": "int and float are different boxes",
+      "parentLessonId": "P.1",
+      "anchor": "micro-int-float",
+      "sourceFocus": [
+        "An **`int`** is a whole number",
+        "a **`float`** is a decimal number",
+        "Division with `/` produces a float"
+      ],
+      "revision": 1,
+      "prerequisites": ["variables"],
+      "resources": [
+        {
+          "id": "cs50p-notes",
+          "title": "CS50P Lecture 0 notes",
+          "url": "https://cs50.harvard.edu/python/2022/notes/0/",
+          "type": "notes",
+          "role": "primary",
+          "provider": "Harvard CS50P",
+          "lastVerified": "2026-11-04"
+        }
+      ],
+      "timing": { "learn": 82, "review": 40, "challenge": 55 },
+      "teaching": [
+        "An `int` is a whole number such as `400` or `-5`. A `float` is a number with a decimal point such as `12.60` or `0.0`, even when the decimals are zero.",
+        "The `/` operator produces a float. `8 / 2` is `4.0`, not `4`, because division is allowed to produce a fractional answer."
+      ],
+      "example": {
+        "code": "encoder_ticks = 400\nbattery_level = 12.60\nprint(type(encoder_ticks))\nprint(type(battery_level))",
+        "output": "<class 'int'>\n<class 'float'>"
+      },
+      "diagnostics": [
+        {
+          "id": "int-float-d1",
+          "prompt": "What type is 12.0?",
+          "options": [
+            { "id": "a", "text": "int" },
+            { "id": "b", "text": "float" },
+            { "id": "c", "text": "str" },
+            { "id": "d", "text": "bool" }
+          ],
+          "answerId": "b",
+          "explanation": "The decimal point makes it a float, even though its fractional part is zero."
+        },
+        {
+          "id": "int-float-d2",
+          "prompt": "What is the value of 7 / 2?",
+          "options": [
+            { "id": "a", "text": "3" },
+            { "id": "b", "text": "3.5" },
+            { "id": "c", "text": "4" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "b",
+          "explanation": "Normal division returns the exact result as a float: 3.5."
+        }
+      ],
+      "practice": {
+        "id": "int-float-p1",
+        "prompt": "What type is 400?",
+        "options": [
+          { "id": "a", "text": "int" },
+          { "id": "b", "text": "float" },
+          { "id": "c", "text": "str" },
+          { "id": "d", "text": "bool" }
+        ],
+        "answerId": "a",
+        "explanation": "400 is a whole number with no decimal point, so it is an int."
+      },
+      "reviewPool": [
+        {
+          "id": "int-float-r1",
+          "prompt": "What does 8 / 2 produce?",
+          "options": [
+            { "id": "a", "text": "4.0" },
+            { "id": "b", "text": "4 (int)" },
+            { "id": "c", "text": "2" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "a",
+          "explanation": "Division with `/` returns a float even when the answer is whole."
+        },
+        {
+          "id": "int-float-r2",
+          "prompt": "Which value is a float?",
+          "options": [
+            { "id": "a", "text": "0.5" },
+            { "id": "b", "text": "5" },
+            { "id": "c", "text": "True" },
+            { "id": "d", "text": "\"0.5\"" }
+          ],
+          "answerId": "a",
+          "explanation": "0.5 has a decimal point and is not quoted, so it is a float."
+        },
+        {
+          "id": "int-float-r3",
+          "prompt": "What type is 400?",
+          "options": [
+            { "id": "a", "text": "int" },
+            { "id": "b", "text": "float" },
+            { "id": "c", "text": "str" },
+            { "id": "d", "text": "bool" }
+          ],
+          "answerId": "a",
+          "explanation": "400 is a whole number with no decimal point."
+        },
+        {
+          "id": "int-float-r4",
+          "prompt": "What are the value and type of battery_level?",
+          "code": "battery_level = 12.0\nbattery_level = battery_level - 0.45",
+          "options": [
+            { "id": "a", "text": "11.55, float" },
+            { "id": "b", "text": "11.55, int" },
+            { "id": "c", "text": "12.0, float" },
+            { "id": "d", "text": "0.45, float" }
+          ],
+          "answerId": "a",
+          "explanation": "12.0 minus 0.45 is 11.55; a float minus a float stays a float."
+        }
+      ],
+      "challenge": {
+        "id": "int-float-c1",
+        "prompt": "What is battery_level after the drop?",
+        "code": "battery_level = 12.0\nbattery_level = battery_level - 0.45",
+        "options": [
+          { "id": "a", "text": "11.55" },
+          { "id": "b", "text": "12.45" },
+          { "id": "c", "text": "11" },
+          { "id": "d", "text": "0.45" }
+        ],
+        "answerId": "a",
+        "explanation": "Subtract 0.45 from 12.0 to get 11.55."
+      }
+    },
+    {
+      "id": "strings",
+      "title": "Strings are text in quotes",
+      "parentLessonId": "P.1",
+      "anchor": "micro-strings",
+      "sourceFocus": [
+        "A **`str`** is text wrapped in quotes",
+        "Joining two strings with `+` concatenates them"
+      ],
+      "revision": 1,
+      "prerequisites": ["variables"],
+      "resources": [
+        {
+          "id": "futurecoder-variables",
+          "title": "futurecoder — The Shell and Variables",
+          "url": "https://futurecoder.io/course/#toc",
+          "type": "course",
+          "role": "primary",
+          "provider": "futurecoder",
+          "lastVerified": "2026-11-04"
+        }
+      ],
+      "timing": { "learn": 80, "review": 40, "challenge": 50 },
+      "teaching": [
+        "A string is text inside quotes. `\"ACTIVE\"` is a string; `ACTIVE` without quotes is a name Python tries to look up.",
+        "The `+` operator joins two strings end to end. `\"10\" + \"5\"` produces `\"105\"`, not 15, because both sides are text."
+      ],
+      "example": {
+        "code": "mode = \"ACTIVE\"\nlabel = \"Mode: \" + mode\nprint(label)",
+        "output": "Mode: ACTIVE"
+      },
+      "diagnostics": [
+        {
+          "id": "strings-d1",
+          "prompt": "What does this print?",
+          "code": "print(\"10\" + \"5\")",
+          "options": [
+            { "id": "a", "text": "15" },
+            { "id": "b", "text": "105" },
+            { "id": "c", "text": "10 5" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "b",
+          "explanation": "Quotes make both values strings, so `+` joins them as text: 105."
+        },
+        {
+          "id": "strings-d2",
+          "prompt": "What type is \"400\"?",
+          "options": [
+            { "id": "a", "text": "int" },
+            { "id": "b", "text": "float" },
+            { "id": "c", "text": "str" },
+            { "id": "d", "text": "bool" }
+          ],
+          "answerId": "c",
+          "explanation": "The quotes make it text, even though the characters inside look like a number."
+        }
+      ],
+      "practice": {
+        "id": "strings-p1",
+        "prompt": "What is label after this line?",
+        "code": "label = \"ACTIVE\" + \"!\"",
+        "options": [
+          { "id": "a", "text": "ACTIVE!" },
+          { "id": "b", "text": "ACTIVE" },
+          { "id": "c", "text": "!ACTIVE" },
+          { "id": "d", "text": "An error" }
+        ],
+        "answerId": "a",
+        "explanation": "`+` joins the two strings in order, so the exclamation mark follows ACTIVE."
+      },
+      "reviewPool": [
+        {
+          "id": "strings-r1",
+          "prompt": "Why does \"ACTIVE\" need quotes?",
+          "options": [
+            { "id": "a", "text": "Quotes mark the characters as text instead of a variable name" },
+            { "id": "b", "text": "Quotes turn the text into a number" },
+            { "id": "c", "text": "Quotes make the line a comment" },
+            { "id": "d", "text": "Quotes are only decoration" }
+          ],
+          "answerId": "a",
+          "explanation": "Without quotes Python looks for a variable named ACTIVE; quotes make it a string value."
+        },
+        {
+          "id": "strings-r2",
+          "prompt": "What is \"2\" + \"3\"?",
+          "options": [
+            { "id": "a", "text": "\"23\"" },
+            { "id": "b", "text": "5" },
+            { "id": "c", "text": "\"5\"" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "a",
+          "explanation": "String addition concatenates, so the two characters become \"23\"."
+        },
+        {
+          "id": "strings-r3",
+          "prompt": "Which value is a string?",
+          "options": [
+            { "id": "a", "text": "\"12.15\"" },
+            { "id": "b", "text": "12.15" },
+            { "id": "c", "text": "400" },
+            { "id": "d", "text": "True" }
+          ],
+          "answerId": "a",
+          "explanation": "The quotes make \"12.15\" text; the unquoted 12.15 is a float."
+        },
+        {
+          "id": "strings-r4",
+          "prompt": "What does this print?",
+          "code": "print(\"Battery: \" + \"12.15 V\")",
+          "options": [
+            { "id": "a", "text": "Battery: 12.15 V" },
+            { "id": "b", "text": "Battery: 12.15" },
+            { "id": "c", "text": "12.15 V" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "a",
+          "explanation": "The two strings are joined exactly as written, including the space after the colon."
+        }
+      ],
+      "challenge": {
+        "id": "strings-c1",
+        "prompt": "What is label at the end?",
+        "code": "mode = \"ACTIVE\"\nlabel = \"Mode: \" + mode",
+        "options": [
+          { "id": "a", "text": "Mode: ACTIVE" },
+          { "id": "b", "text": "ACTIVE" },
+          { "id": "c", "text": "Mode: mode" },
+          { "id": "d", "text": "An error" }
+        ],
+        "answerId": "a",
+        "explanation": "The prefix string and the value of mode are concatenated."
+      }
+    },
+    {
+      "id": "booleans",
+      "title": "Booleans are True or False",
+      "parentLessonId": "P.1",
+      "anchor": "micro-booleans",
+      "sourceFocus": [
+        "A **`bool`** is `True` or `False`",
+        "A comparison produces a bool",
+        "Write `False`, never `false`"
+      ],
+      "revision": 1,
+      "prerequisites": ["variables"],
+      "resources": [
+        {
+          "id": "cs50p-notes",
+          "title": "CS50P Lecture 0 notes",
+          "url": "https://cs50.harvard.edu/python/2022/notes/0/",
+          "type": "notes",
+          "role": "primary",
+          "provider": "Harvard CS50P",
+          "lastVerified": "2026-11-04"
+        }
+      ],
+      "timing": { "learn": 78, "review": 40, "challenge": 48 },
+      "teaching": [
+        "A bool has exactly two values: `True` and `False`. Both begin with a capital letter; `true` and `false` are not Python's booleans.",
+        "A comparison produces a bool. `12.15 > 10` evaluates to `True`, which can be stored in a variable such as `is_estop_active = False`."
+      ],
+      "example": {
+        "code": "is_estop_active = False\nbattery_level = 12.15\nprint(is_estop_active, battery_level > 10)",
+        "output": "False True"
+      },
+      "diagnostics": [
+        {
+          "id": "booleans-d1",
+          "prompt": "Which value is a valid Python bool?",
+          "options": [
+            { "id": "a", "text": "False" },
+            { "id": "b", "text": "false" },
+            { "id": "c", "text": "\"False\"" },
+            { "id": "d", "text": "0" }
+          ],
+          "answerId": "a",
+          "explanation": "Python's boolean is spelled False with a capital F. The quoted version is a string."
+        },
+        {
+          "id": "booleans-d2",
+          "prompt": "What is the value of 5 > 3?",
+          "options": [
+            { "id": "a", "text": "5" },
+            { "id": "b", "text": "3" },
+            { "id": "c", "text": "True" },
+            { "id": "d", "text": "False" }
+          ],
+          "answerId": "c",
+          "explanation": "Five is greater than three, so the comparison produces True."
+        }
+      ],
+      "practice": {
+        "id": "booleans-p1",
+        "prompt": "What does this comparison produce?",
+        "code": "robot_mode = \"ACTIVE\"\nrobot_mode == \"ACTIVE\"",
+        "options": [
+          { "id": "a", "text": "True" },
+          { "id": "b", "text": "False" },
+          { "id": "c", "text": "ACTIVE" },
+          { "id": "d", "text": "An error" }
+        ],
+        "answerId": "a",
+        "explanation": "The two strings are equal, so the comparison is True."
+      },
+      "reviewPool": [
+        {
+          "id": "booleans-r1",
+          "prompt": "Which two values can a bool hold?",
+          "options": [
+            { "id": "a", "text": "True and False" },
+            { "id": "b", "text": "true and false" },
+            { "id": "c", "text": "1 and 0 only" },
+            { "id": "d", "text": "Yes and No" }
+          ],
+          "answerId": "a",
+          "explanation": "Python spells the two boolean values True and False, with capital letters."
+        },
+        {
+          "id": "booleans-r2",
+          "prompt": "What is 12.15 > 10?",
+          "options": [
+            { "id": "a", "text": "True" },
+            { "id": "b", "text": "False" },
+            { "id": "c", "text": "12.15" },
+            { "id": "d", "text": "10" }
+          ],
+          "answerId": "a",
+          "explanation": "12.15 is greater than 10, so the comparison is True."
+        },
+        {
+          "id": "booleans-r3",
+          "prompt": "What type is is_estop_active?",
+          "code": "is_estop_active = False",
+          "options": [
+            { "id": "a", "text": "bool" },
+            { "id": "b", "text": "str" },
+            { "id": "c", "text": "int" },
+            { "id": "d", "text": "float" }
+          ],
+          "answerId": "a",
+          "explanation": "False is a boolean value, so the variable holds a bool."
+        },
+        {
+          "id": "booleans-r4",
+          "prompt": "What is the difference between False and \"False\"?",
+          "options": [
+            { "id": "a", "text": "False is a bool; \"False\" is a string" },
+            { "id": "b", "text": "They are the same value" },
+            { "id": "c", "text": "False is a string; \"False\" is a bool" },
+            { "id": "d", "text": "Both are ints" }
+          ],
+          "answerId": "a",
+          "explanation": "The quotes turn the word into text; the unquoted False is the boolean value."
+        }
+      ],
+      "challenge": {
+        "id": "booleans-c1",
+        "prompt": "What does the comparison print?",
+        "code": "battery_level = 12.15\nprint(battery_level > 10)",
+        "options": [
+          { "id": "a", "text": "True" },
+          { "id": "b", "text": "False" },
+          { "id": "c", "text": "12.15" },
+          { "id": "d", "text": "10" }
+        ],
+        "answerId": "a",
+        "explanation": "The comparison is true, so print shows True."
+      }
+    },
+    {
+      "id": "mixed-types",
+      "title": "Mixing text and numbers raises TypeError",
+      "parentLessonId": "P.1",
+      "anchor": "micro-mixed-types",
+      "sourceFocus": [
+        "Python will not silently mix text and numbers",
+        "`\"12\" + 5` raises `TypeError`",
+        "convert one side first"
+      ],
+      "revision": 1,
+      "prerequisites": ["int-float", "strings"],
+      "resources": [
+        {
+          "id": "cs50p-notes",
+          "title": "CS50P Lecture 0 notes",
+          "url": "https://cs50.harvard.edu/python/2022/notes/0/",
+          "type": "notes",
+          "role": "primary",
+          "provider": "Harvard CS50P",
+          "lastVerified": "2026-11-04"
+        }
+      ],
+      "timing": { "learn": 82, "review": 40, "challenge": 55 },
+      "teaching": [
+        "Python will not silently mix text and numbers. `\"12\" + 5` raises `TypeError`, because one side is a string and the other is an int.",
+        "Convert one side first when the value really is text: `int(\"12\") + 5` produces 17. Numbers of different types can mix safely: `400 + 2.5` produces 402.5."
+      ],
+      "example": {
+        "code": "print(int(\"12\") + 5)\nprint(400 + 2.5)",
+        "output": "17\n402.5"
+      },
+      "diagnostics": [
+        {
+          "id": "mixed-types-d1",
+          "prompt": "What happens when this line runs?",
+          "code": "\"12\" + 5",
+          "options": [
+            { "id": "a", "text": "It produces 17" },
+            { "id": "b", "text": "It produces \"125\"" },
+            { "id": "c", "text": "It raises TypeError" },
+            { "id": "d", "text": "It produces 125" }
+          ],
+          "answerId": "c",
+          "explanation": "`+` cannot join a string to an int, so Python raises TypeError."
+        },
+        {
+          "id": "mixed-types-d2",
+          "prompt": "What does this produce?",
+          "code": "int(\"12\") + 5",
+          "options": [
+            { "id": "a", "text": "17" },
+            { "id": "b", "text": "\"125\"" },
+            { "id": "c", "text": "125" },
+            { "id": "d", "text": "TypeError" }
+          ],
+          "answerId": "a",
+          "explanation": "int(\"12\") converts the text to the number 12, then 12 + 5 is 17."
+        }
+      ],
+      "practice": {
+        "id": "mixed-types-p1",
+        "prompt": "What happens when this line runs?",
+        "code": "\"Battery: \" + 12.15",
+        "options": [
+          { "id": "a", "text": "It produces \"Battery: 12.15\"" },
+          { "id": "b", "text": "It produces 12.15" },
+          { "id": "c", "text": "It raises TypeError" },
+          { "id": "d", "text": "It produces True" }
+        ],
+        "answerId": "c",
+        "explanation": "The left side is a string and the right side is a float, so `+` raises TypeError."
+      },
+      "reviewPool": [
+        {
+          "id": "mixed-types-r1",
+          "prompt": "Which expression raises TypeError?",
+          "options": [
+            { "id": "a", "text": "\"12\" + 5" },
+            { "id": "b", "text": "int(\"12\") + 5" },
+            { "id": "c", "text": "400 + 2.5" },
+            { "id": "d", "text": "12 + 5" }
+          ],
+          "answerId": "a",
+          "explanation": "Only the expression that tries to add a string directly to a number raises TypeError."
+        },
+        {
+          "id": "mixed-types-r2",
+          "prompt": "What does str(12) + \" V\" produce?",
+          "options": [
+            { "id": "a", "text": "\"12 V\"" },
+            { "id": "b", "text": "12 V as a number" },
+            { "id": "c", "text": "TypeError" },
+            { "id": "d", "text": "17" }
+          ],
+          "answerId": "a",
+          "explanation": "str(12) turns the number into text, so `+` joins it with the unit."
+        },
+        {
+          "id": "mixed-types-r3",
+          "prompt": "What is 400 + 2.5?",
+          "options": [
+            { "id": "a", "text": "402.5" },
+            { "id": "b", "text": "402" },
+            { "id": "c", "text": "\"4002.5\"" },
+            { "id": "d", "text": "TypeError" }
+          ],
+          "answerId": "a",
+          "explanation": "An int and a float are both numbers, so Python adds them and returns a float."
+        },
+        {
+          "id": "mixed-types-r4",
+          "prompt": "How do you convert the string \"400\" to an int?",
+          "options": [
+            { "id": "a", "text": "int(\"400\")" },
+            { "id": "b", "text": "str(\"400\")" },
+            { "id": "c", "text": "float(\"400\") only" },
+            { "id": "d", "text": "\"400\" + 0" }
+          ],
+          "answerId": "a",
+          "explanation": "`int(...)` converts a number-like string to an integer."
+        }
+      ],
+      "challenge": {
+        "id": "mixed-types-c1",
+        "prompt": "What does this produce?",
+        "code": "int(\"400\") + 25",
+        "options": [
+          { "id": "a", "text": "425" },
+          { "id": "b", "text": "\"40025\"" },
+          { "id": "c", "text": "TypeError" },
+          { "id": "d", "text": "400" }
+        ],
+        "answerId": "a",
+        "explanation": "int(\"400\") is 400, and 400 + 25 is 425."
+      }
+    },
+    {
+      "id": "f-strings",
+      "title": "f-strings insert values into text",
+      "parentLessonId": "P.1",
+      "anchor": "micro-f-strings",
+      "sourceFocus": [
+        "An **f-string** puts an `f` before the opening quote",
+        "evaluates names inside braces",
+        "The `.2f` format shows two digits after the decimal point"
+      ],
+      "revision": 1,
+      "prerequisites": ["strings", "int-float"],
+      "resources": [
+        {
+          "id": "futurecoder-variables",
+          "title": "futurecoder — The Shell and Variables",
+          "url": "https://futurecoder.io/course/#toc",
+          "type": "course",
+          "role": "primary",
+          "provider": "futurecoder",
+          "lastVerified": "2026-11-04"
+        },
+        {
+          "id": "cs50p-notes",
+          "title": "CS50P Lecture 0 notes",
+          "url": "https://cs50.harvard.edu/python/2022/notes/0/",
+          "type": "notes",
+          "role": "optional",
+          "provider": "Harvard CS50P",
+          "lastVerified": "2026-11-04"
+        }
+      ],
+      "timing": { "learn": 80, "review": 40, "challenge": 52 },
+      "teaching": [
+        "An f-string puts an `f` before the opening quote. Names inside braces are replaced by their values: `f\"Mode: {robot_mode}\"`.",
+        "A format spec controls how a value is written. `.2f` shows two digits after the decimal point: `f\"Battery: {battery_level:.2f} V\"`."
+      ],
+      "example": {
+        "code": "robot_mode = \"ACTIVE\"\nbattery_level = 12.15\nprint(f\"Mode: {robot_mode} | Battery: {battery_level:.2f} V\")",
+        "output": "Mode: ACTIVE | Battery: 12.15 V"
+      },
+      "diagnostics": [
+        {
+          "id": "f-strings-d1",
+          "prompt": "What does this print?",
+          "code": "battery_level = 12.15\nprint(f\"Battery: {battery_level:.2f} V\")",
+          "options": [
+            { "id": "a", "text": "Battery: 12.15 V" },
+            { "id": "b", "text": "Battery: {battery_level:.2f} V" },
+            { "id": "c", "text": "Battery: 12.150 V" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "a",
+          "explanation": "The f prefix evaluates the name, and `.2f` writes exactly two decimal places."
+        },
+        {
+          "id": "f-strings-d2",
+          "prompt": "What does this print?",
+          "code": "encoder_ticks = 425\nprint(f\"{encoder_ticks} ticks\")",
+          "options": [
+            { "id": "a", "text": "425 ticks" },
+            { "id": "b", "text": "{encoder_ticks} ticks" },
+            { "id": "c", "text": "encoder_ticks ticks" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "a",
+          "explanation": "The braces hold the name, and the f prefix replaces it with 425."
+        }
+      ],
+      "practice": {
+        "id": "f-strings-p1",
+        "prompt": "What is label after this line?",
+        "code": "robot_mode = \"ACTIVE\"\nlabel = f\"Mode: {robot_mode}\"",
+        "options": [
+          { "id": "a", "text": "Mode: ACTIVE" },
+          { "id": "b", "text": "Mode: {robot_mode}" },
+          { "id": "c", "text": "ACTIVE" },
+          { "id": "d", "text": "An error" }
+        ],
+        "answerId": "a",
+        "explanation": "The f-string substitutes the value of robot_mode inside the braces."
+      },
+      "reviewPool": [
+        {
+          "id": "f-strings-r1",
+          "prompt": "What does the f before a string do?",
+          "options": [
+            { "id": "a", "text": "It enables replacing expressions inside braces" },
+            { "id": "b", "text": "It makes the string a float" },
+            { "id": "c", "text": "It comments out the line" },
+            { "id": "d", "text": "It compares two strings" }
+          ],
+          "answerId": "a",
+          "explanation": "The f prefix makes an f-string, so names and expressions in braces are evaluated."
+        },
+        {
+          "id": "f-strings-r2",
+          "prompt": "What does .2f mean inside an f-string?",
+          "options": [
+            { "id": "a", "text": "Show two digits after the decimal point" },
+            { "id": "b", "text": "Round the whole number to 2" },
+            { "id": "c", "text": "Print the text twice" },
+            { "id": "d", "text": "Use two decimal variables" }
+          ],
+          "answerId": "a",
+          "explanation": "`.2f` is a fixed-point format with two decimal places."
+        },
+        {
+          "id": "f-strings-r3",
+          "prompt": "What can go inside the braces of an f-string?",
+          "options": [
+            { "id": "a", "text": "A name or expression" },
+            { "id": "b", "text": "Only a number written directly" },
+            { "id": "c", "text": "Only a comment" },
+            { "id": "d", "text": "Nothing; braces are literal" }
+          ],
+          "answerId": "a",
+          "explanation": "The braces evaluate a Python expression, including a variable name."
+        },
+        {
+          "id": "f-strings-r4",
+          "prompt": "What is the difference between f\"{x}\" and \"{x}\"?",
+          "options": [
+            { "id": "a", "text": "The f-string inserts x; the plain string keeps the braces literally" },
+            { "id": "b", "text": "They print the same thing" },
+            { "id": "c", "text": "The plain string inserts x; the f-string keeps the braces" },
+            { "id": "d", "text": "Both raise TypeError" }
+          ],
+          "answerId": "a",
+          "explanation": "Without the f prefix, the braces are ordinary characters."
+        }
+      ],
+      "challenge": {
+        "id": "f-strings-c1",
+        "prompt": "What does this print?",
+        "code": "encoder_ticks = 425\nbattery_level = 12.15\nprint(f\"Encoder: {encoder_ticks} | Battery: {battery_level:.2f} V\")",
+        "options": [
+          { "id": "a", "text": "Encoder: 425 | Battery: 12.15 V" },
+          { "id": "b", "text": "Encoder: {encoder_ticks} | Battery: 12.15 V" },
+          { "id": "c", "text": "Encoder: 425 | Battery: 12.150 V" },
+          { "id": "d", "text": "An error" }
+        ],
+        "answerId": "a",
+        "explanation": "Both names are substituted; .2f keeps two decimal places on the battery reading."
+      }
+    }
+  ]
+}
