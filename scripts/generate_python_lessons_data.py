@@ -920,6 +920,22 @@ def extract_goal(text: str) -> str:
     return re.sub(r"\s+", " ", match.group(1)).strip()
 
 
+def extract_requirements(text: str) -> list[str]:
+    """The pass conditions under the Goal, as plain list items for the runner.
+
+    The page keeps the checklist a learner reads; the editor's goal panel gets the same words so
+    the two surfaces cannot disagree about what counts as complete. An exercise package has no
+    Goal page, so it has no requirements block.
+    """
+    match = re.search(
+        r"^### Requirements[^\n]*\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL
+    )
+    if not match:
+        return []
+    items = re.findall(r"^\s*-\s*\[[ xX]\]\s+(.+)$", match.group(1), re.MULTILINE)
+    return [re.sub(r"\s+", " ", item).strip() for item in items if item.strip()]
+
+
 def extract_hints(text: str) -> list[str]:
     diy_m = re.search(r"^## Do it yourself\s*$(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL)
     diy_sec = diy_m.group(1) if diy_m else text
@@ -997,6 +1013,7 @@ def exercise_lessons():
                 "id": entry_id,
                 "title": "%s - graded exercise" % manifest["title"],
                 "goal": goal,
+                "requirements": [],
                 "track": "modules",
                 "path": entry_path,
                 "readerPath": entry_reader,
@@ -1152,6 +1169,7 @@ def build_lessons():
                 "id": lesson_id,
                 "title": title_m.group(1).strip() if title_m else rel,
                 "goal": extract_goal(txt) or (title_m.group(1).strip() if title_m else rel),
+                "requirements": extract_requirements(txt),
                 "track": folder,
                 "path": rel,
                 "readerPath": reader_page_path(lesson_id, rel),
@@ -1184,6 +1202,8 @@ def main():
         "  title: string;\n"
         "  /** One sentence: what the lesson asks for; the Write preset shows it as a comment. */\n"
         "  goal: string;\n"
+        "  /** The pass conditions from under the Goal; the editor shows them below it. */\n"
+        "  requirements: string[];\n"
         "  track: string;\n"
         "  path: string;\n"
         "  /** The Markdown page the reader renders; '' when the entry has no prose page. */\n"

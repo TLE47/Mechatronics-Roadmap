@@ -25,6 +25,17 @@ Read a real hardware **datasheet specification table** (`DRV8833` vs. `TB6612FNG
 - **New syntax:** Python dictionaries (`{"min": 2.7, "max": 10.8}`) for structured datasheet lookup tables.
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 0.75–1.0 hours | Slow-learner: 1.5–2.0 hours
 
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
+- [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
+- [ ] **Required end state:** the grader checks is_within_recommended_bounds and select_safe_driver across 3.3 V; 6.0 V, 10.8 V, 11.5 V and 12.0 V supply rails; datasheet_val_to_base_si across mA.
+- [ ] **Exact strings:** `DRV8833` and `TB6612FNG`.
+- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Alternate inputs:** the grader also covers mV, ms, kHz, and base SI units; it changes the inputs, so a hardcoded result fails.
+
 ---
 
 ## Prerequisites
@@ -78,15 +89,11 @@ Before wiring any part in Stage 0 or Pass 1, you must read its datasheet specifi
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `is_within_recommended_bounds` (`TODO 1`), `select_safe_driver` (`TODO 2`), and `datasheet_val_to_base_si` (`TODO 3`):
 
-**Where each name comes from** (read this beside the code):
-1. `DATASHEET_DRIVERS` — a hardcoded table of driver specifications; it is the source for every lookup below, not a computed result.
-1. `is_within_recommended_bounds` parameters `val`, `min_val`, `max_val` — a value and its inclusive limits; `TODO 1` returns `True` only when the value sits inside them.
-1. `select_safe_driver` parameter `supply_v` — the supply level in volts; `TODO 2` fills `safe`, in table order, with the names whose recommended range covers it.
-1. `safe` — starts as an empty list inside `select_safe_driver`; it is the function's return value.
-1. `datasheet_val_to_base_si` parameters `value` and `unit_str` — a table figure and its unit column; `TODO 3` returns the figure in base SI units (`mA` to A by dividing by `1000`, `kHz` to Hz by multiplying by `1000`).
-1. `drv_6v`, `drv_12v` — results of `select_safe_driver(6.0)` and `select_safe_driver(12.0)`, lists of driver names; here `['DRV8833', 'TB6612FNG']` and `['TB6612FNG']`.
-1. `i_cont_a` — `DATASHEET_DRIVERS["DRV8833"]["i_cont_ma"]` converted from mA to A by `datasheet_val_to_base_si`; here `1.5` A.
-1. `f_pwm_hz` — `25.0` kHz converted to Hz by `datasheet_val_to_base_si`; here `25000` Hz.
+**What each name means** (read this beside the code):
+
+1. **Inputs** — the names set before the TODOs; the starter's inline comments give each one's role and unit.
+1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
+1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
 DATASHEET_DRIVERS = {
@@ -96,19 +103,21 @@ DATASHEET_DRIVERS = {
 
 
 def is_within_recommended_bounds(val, min_val, max_val):
-    # TODO 1: True when the value sits inside the recommended band, inclusive at both ends.
+    # TODO 1: Return True when the value sits inside the recommended band, inclusive at both ends; return False otherwise.
+    #         Use the given minimum and maximum limits; do not change either boundary.
     return False
 
 
 def select_safe_driver(supply_v):
-    # TODO 2: The drivers whose recommended operating range covers the supply safely: their
-    #         names from the table above, in the order the table lists them.
+    # TODO 2: Return the driver names whose recommended operating range covers supply_v.
+    #         Use the table's order and exact names; return an empty list when no driver is safe.
     safe = []
     return safe
 
 
 def datasheet_val_to_base_si(value, unit_str):
-    # TODO 3: the figure in base SI units, read with its unit column
+    # TODO 3: Return the figure in base SI units, read with its unit column.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 

@@ -101,6 +101,16 @@ export async function runSmokeTests(viteServer) {
 
     // 1. Verify Beginner View (default) vs. Advanced View (all 12 technical labs)
     const cleanSsr = (html) => html.replace(/<!--\s*-->/g, '');
+    // React escapes text when it renders on the server (`'` becomes `&#x27;`), so a snippet read
+    // from the lesson data has to be escaped the same way before it can be found in the markup:
+    // a lesson whose hole names "the divider's output" is rendered correctly but not literally.
+    const escapeHtml = (text) =>
+      text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;');
     globalThis.localStorage.clear();
     const htmlBeginner = cleanSsr(ReactDOMServer.renderToString(React.createElement(App)));
     assert(
@@ -835,7 +845,7 @@ export async function runSmokeTests(viteServer) {
       htmlP2.includes('data-testid="first-lesson-guide"') &&
         htmlP2.includes('First run · Lesson P.2') &&
         htmlP2.includes('THE STARTER') &&
-        htmlP2.includes(p2Coach.firstHole.slice(0, 30)),
+        htmlP2.includes(escapeHtml(p2Coach.firstHole.slice(0, 30))),
       'P.2 must get its own coach naming its starter hole, even after P.1 is hidden'
     );
     globalThis.localStorage.clear();

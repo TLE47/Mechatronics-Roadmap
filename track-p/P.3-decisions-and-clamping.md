@@ -25,6 +25,17 @@ Use comparison operators and `if / elif / else` statements to make safety decisi
 - **New syntax:** `==`, `!=`, `<`, `<=`, `>`, `>=`, `if`, `elif`, `else`, colon `:`, 4-space block indentation.
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours
 
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
+- [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
+- [ ] **Required end state:** the grader checks clamped_high (255), clamped_low (0); safe_output (0 when E-Stop active).
+- [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
+- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Alternate inputs:** the grader also covers in-range commands and an E-Stop that has been released; it changes the inputs, so a hardcoded result fails.
+
 ---
 
 ## Prerequisites
@@ -87,19 +98,27 @@ Complete `TODO 1` and `TODO 2` to clamp `raw_cmd_high` (`310`) and `raw_cmd_low`
 
 Neither name is a limit itself: `0` and `255` are the limits, and each name is a command value after those limits are applied. The two clamp names therefore hold different values at the end: `clamped_high == 255` and `clamped_low == 0`.
 
+**What each name means** (read this beside the code):
+
+1. **Inputs** — the names set before the TODOs; the starter's inline comments give each one's role and unit.
+1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
+1. **Given values** — keep every value that a TODO does not name unchanged.
+
 ```python
 raw_cmd_high = 310
 raw_cmd_low = -45
 raw_cmd_normal = 180
 is_estop_pressed = True
 
-# TODO 1: the command held inside its eight-bit range
+# TODO 1: Set clamped_high and clamped_low to their input commands held inside the 8-bit range.
+#         Clamp both inputs independently to the inclusive limits 0 and 255; do not type the final values.
 clamped_high = raw_cmd_high  # TODO 1: clamp this input only
 
 # Clamp raw_cmd_low into [0, 255] the same way:
 clamped_low = raw_cmd_low    # TODO 1: clamp this separate input independently
 
-# TODO 2: the safe output for this E-stop state
+# TODO 2: Set safe_output to the safe output for this E-stop state.
+#         Compute it from the existing values; do not type the final answer from Expected Output.
 safe_output = raw_cmd_normal
 
 print(f"310 clamped -> {clamped_high} | -45 clamped -> {clamped_low}")

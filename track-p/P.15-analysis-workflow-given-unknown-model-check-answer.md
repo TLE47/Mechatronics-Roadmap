@@ -25,6 +25,17 @@ Turn a word problem into an ordered **analysis workflow** — state what is **gi
 - **New syntax:** None — the workflow uses functions, f-strings, and `if / else` from Lessons P.3 and P.5.
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 0.75–1.0 hours | Slow-learner: 1.5–2.0 hours
 
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
+- [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
+- [ ] **Required end state:** the grader checks winding_draw on unseen 24 V/2.4 ohm; 9 V/3 ohm givens; check_against_limit.
+- [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
+- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Alternate inputs:** the grader also covers answer_line on both the inside-limit and clamped branches; it changes the inputs, so a hardcoded result fails.
+
 ---
 
 ## Prerequisites
@@ -73,15 +84,11 @@ Two engineers can compute the same number and only one of them produces a usable
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `winding_draw` (`TODO 1`), `check_against_limit` (`TODO 2`), and `answer_line` (`TODO 3`). Each function is one step of the workflow, so fill them in order:
 
-**Where each name comes from** (read this beside the code):
-1. `SUPPLY_V`, `WINDING_OHM`, `DRIVER_LIMIT_A` — hardcoded inputs: `12.0` V, `2.4` Ω, and `3.2` A.
-1. `winding_draw` parameters `supply_v`, `winding_ohm` — the two inputs to the model; `TODO 1` returns `supply_v / winding_ohm` in amperes.
-1. `check_against_limit` parameters `draw_a`, `limit_a` — the model's draw and the driver limit, both in amperes; `TODO 2` returns `(draw_a <= limit_a, draw_a if it fits else limit_a)`.
-1. `ok` — the boolean from `check_against_limit`: `True` when the draw fits the limit; here it is `False`.
-1. `passable_a` — the second value from `check_against_limit`: the draw when it fits, otherwise the limit; here it is `3.2` A.
-1. `passable` — the value unpacked from the `(ok, passable)` pair; it is passed to `answer_line` as `passable_a`.
-1. `answer_line` parameters `draw_a`, `limit_a`, `ok`, `passable_a` — all four feed the final sentence; `TODO 3` returns that sentence.
-1. `planned_draw` — result of `winding_draw(SUPPLY_V, WINDING_OHM)`, in amperes; here `5.0` A.
+**What each name means** (read this beside the code):
+
+1. **Inputs** — the names set before the TODOs; the starter's inline comments give each one's role and unit.
+1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
+1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
 SUPPLY_V = 12.0
@@ -90,18 +97,21 @@ DRIVER_LIMIT_A = 3.2
 
 
 def winding_draw(supply_v, winding_ohm):
-    # TODO 1: the Model step, one division. Use the parameters, not the numbers.
+    # TODO 1: Return the Model step: the winding draw from the two given parameters.
+    #         Compute it from the parameters, not the demonstration numbers; do not type the Expected Output value.
     return 0.0
 
 
 def check_against_limit(draw_a, limit_a):
-    # TODO 2: the Check step. Return (ok, passable): the draw itself when it is inside the
+    # TODO 2: Return the ok flag and the passable draw: the draw when it fits the limit, and the limit when it does not.
+    #         Compare against the given limit and keep both returned values numeric; do not type the Expected Output tuple.
     # limit, and the limit when it is not.
     return (False, 0.0)
 
 
 def answer_line(draw_a, limit_a, ok, passable_a):
-    # TODO 3: the Answer step. Name the value and its unit; when it was clamped, say so and
+    # TODO 3: Return the Answer sentence with the value, its unit, and a note when the draw was clamped.
+    #         Use the exact wording and number shown in Expected Output; compute both from the function inputs.
     # say what the winding would have drawn.
     return "TODO"
 

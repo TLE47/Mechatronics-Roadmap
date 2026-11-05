@@ -25,6 +25,17 @@ Carry a **rotation and a length together in one number**, rotate by multiplying,
 - **New syntax:** Python's built-in complex literals (`3 + 4j`, `1j`), and `cmath.rect`, `abs`, `cmath.phase` to build an arrow from a length and an angle and read it back.
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 0.75–1.0 hours | Slow-learner: 1.5–2.0 hours
 
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
+- [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
+- [ ] **Required end state:** the grader checks arrow at 0 and 90 degrees, rotate keeping the length; that adding the two parts gives 1 + 1j rather than a length of 2; the empty sum and the four fields of report().
+- [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
+- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Alternate inputs:** the grader also covers the 53.130 degree angle from the 3 + 4j arrow; it changes the inputs, so a hardcoded result fails.
+
 ---
 
 ## Prerequisites
@@ -74,10 +85,11 @@ Tier 2 writes every AC quantity this way: an impedance is one arrow per frequenc
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `arrow` (`TODO 1`), `rotate` (`TODO 2`), `sum_arrows` (`TODO 3`) and `report` (`TODO 4`):
 
-**Where each name comes from** (read this beside the code; numbered for reference, not steps):
-1. `arrow(magnitude, angle_rad)` — `magnitude * cmath.exp(1j*angle_rad)`; `rotate(z, angle_rad)` — `z * cmath.exp(1j*angle_rad)`; `sum_arrows(arrows)` — `sum(arrows)`; `report(name, z)` — prints `z.real`, `z.imag`, `abs(z)`, and `math.degrees(cmath.phase(z))`.
-2. `A` — `3.0 + 0j`; `B` — `4.0j`; `S` — `A + B = 3.0 + 4.0j`, length `5.000`, angle `53.130°`; `Z` — the three unit arrows at `0°`, `120°`, `240°` sum to `0` (rounding crumbs about `1e-17`).
-3. `magnitude` and `angle_rad` are the parameters of `arrow`; `angle_rad` is also the rotation parameter. The printed names are `A`, `B`, `S`, and `Z`.
+**What each name means** (read this beside the code):
+
+1. **Inputs** — the names set before the TODOs; the starter's inline comments give each one's role and unit.
+1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
+1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
 import cmath
@@ -85,22 +97,26 @@ import math
 
 
 def arrow(magnitude, angle_rad):
-    # TODO 1: the arrow this length and angle describe
+    # TODO 1: Return the arrow this length and angle describe.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0j
 
 
 def rotate(z, angle_rad):
-    # TODO 2: the same arrow turned by this angle
+    # TODO 2: Return the same arrow turned by this angle.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return z
 
 
 def sum_arrows(arrows):
-    # TODO 3: the resultant arrow of the list
+    # TODO 3: Return the resultant arrow of the list.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0j
 
 
 def report(name, z):
-    # TODO 4: the real part, the imaginary part, the length and the angle, as the report prints them
+    # TODO 4: Print the real part, imaginary part, length, and angle of z in the report's fixed order.
+    #         Use the exact labels and three-decimal/degree formatting in Expected Output; do not type in a fixed report.
     return name
 
 

@@ -25,6 +25,17 @@ Rearrange physics formulas to isolate any unknown variable on the left side of `
 - **New syntax:** None (uses Python functions and arithmetic from Lessons P.2 and P.5).
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–3.0 hours
 
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
+- [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
+- [ ] **Required end state:** the grader checks solve_for_speed with forward; stationary (zero delta) and reverse motion inputs; scale10_to_five.
+- [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
+- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Alternate inputs:** the grader also covers the ADC endpoints at 0, 511.5, and 1023; it changes the inputs, so a hardcoded result fails.
+
 ---
 
 ## Prerequisites
@@ -82,27 +93,28 @@ The exact same algebra powers **linear range scaling**. Whenever you map a 10-bi
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `solve_for_speed` (`TODO 1`), `scale10_to_five` (`TODO 2`), and `scale10_to_cmd8` (`TODO 3`):
 
-**Where each name comes from** (read this beside the code):
-1. `solve_for_speed` parameters `x_final`, `x_start` (metres), and `time_s` (seconds); `TODO 1` returns the average speed in m/s.
-1. `scale10_to_five` parameter `raw_10bit` — a 10-bit reading in `[0, 1023]`; `TODO 2` maps it onto the 5-volt scale with `raw_10bit / 1023 * 5.0`.
-1. `scale10_to_cmd8` parameter `raw_10bit` — the same 10-bit reading; `TODO 3` maps it onto the 8-bit command range `[0, 255]` with `raw_10bit / 1023 * 255.0`.
-1. `speed_val` — result of `solve_for_speed(5.0, 2.0, 0.015)`, in m/s; here `200.0` m/s.
-1. `out_mid` — result of `scale10_to_five(511.5)`, in volts; here `2.5` V.
-1. `cmd_mid` — result of `scale10_to_cmd8(511.5)`, in command counts; here `127.5`.
+**What each name means** (read this beside the code):
+
+1. **Inputs** — the names set before the TODOs; the starter's inline comments give each one's role and unit.
+1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
+1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
 def solve_for_speed(x_final, x_start, time_s):
-    # TODO 1: the average speed that covers this distance in this time
+    # TODO 1: Return the average speed that covers this distance in this time.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 
 def scale10_to_five(raw_10bit):
-    # TODO 2: this ten-bit reading on the five-volt scale
+    # TODO 2: Return this ten-bit reading on the five-volt scale.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 
 def scale10_to_cmd8(raw_10bit):
-    # TODO 3: the same reading expressed as an eight-bit command
+    # TODO 3: Return the same reading expressed as an eight-bit command.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 

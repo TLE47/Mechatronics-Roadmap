@@ -106,14 +106,46 @@ async function main() {
 
     // ---- 1. Home's door and the clean diagnostic path ----
     await openMicro(page, baseUrl);
+    await page.evaluate(() => {
+      window.__microSounds = [];
+      window.addEventListener('mechalab:sound', (event) => {
+        window.__microSounds.push(event.detail);
+      });
+    });
     assert.equal(await page.getByTestId('micro-next').count(), 1, 'an empty store offers the first concept');
     const variables = concept('variables');
     await page.getByTestId('micro-learn-variables').click();
     const walkthroughLines = page.locator('.micro-walkthrough-line');
     assert.equal(await walkthroughLines.count(), 1, 'the walkthrough starts with one line');
+    await page.keyboard.press('t');
+    assert.equal(
+      await page.getByTestId('micro-diagnostics').count(),
+      0,
+      'the test key is inert until the trace is complete'
+    );
     await page.keyboard.press('ArrowRight');
     await walkthroughLines.nth(1).waitFor({ timeout: 2000 });
     assert.equal(await walkthroughLines.count(), 2, 'the next key reveals one more line');
+    const keyMotion = await walkthroughLines.last().evaluate((line) => {
+      const walkthrough = line.closest('[data-testid="micro-walkthrough"]');
+      const style = getComputedStyle(line);
+      const frames = line.getAnimations()[0]?.effect?.getKeyframes?.() ?? [];
+      return {
+        input: walkthrough?.getAttribute('data-input'),
+        duration: Number.parseFloat(style.animationDuration),
+        animation: style.animationName,
+        startsTransparent: frames[0]?.opacity === 0 || frames[0]?.opacity === '0',
+      };
+    });
+    assert.equal(keyMotion.input, 'key', 'a key-driven reveal marks the keyboard input mode');
+    assert.ok(keyMotion.duration >= 0.5, `the key transition should be slower than a click (${keyMotion.duration}s)`);
+    assert.match(keyMotion.animation, /micro-line-in/);
+    assert.ok(keyMotion.startsTransparent, 'the key-driven line fades in from transparent');
+    assert.deepEqual(
+      await page.evaluate(() => window.__microSounds.at(-1)),
+      { kind: 'ui', role: 'nav', pan: 0 },
+      'the next key also sounds the UI bus'
+    );
     await page.keyboard.press('ArrowLeft');
     await page.waitForFunction(() => document.querySelectorAll('.micro-walkthrough-line').length === 1);
     assert.equal(await walkthroughLines.count(), 1, 'the previous key goes back one line');
@@ -139,17 +171,92 @@ async function main() {
     assert.equal(await walkthroughLines.count(), 1, 'the custom previous key goes back');
     await page.getByTestId('micro-keybind-toggle').click();
     await revealWalkthrough(page, variables);
-    assert.equal(await page.getByTestId('micro-answer-preview').count(), 0, 'no answer comparison before a choice');
-    await page.getByTestId('micro-start-diagnostics').click();
-    for (const question of variables.diagnostics) await answer(page, question, true);
+    await page.getByTestId('micro-keybind-toggle').click();
+    await page.getByTestId('micro-keybind-test').click();
+    await page.locator('[data-testid="micro-keybind-panel"][data-capture="test"]').waitFor();
+    await page.keyboard.press('x');
+    await page.waitForFunction(
+      () => document.querySelector('[data-testid="micro-keybind-panel"]')?.getAttribute('data-capture') === null
+    );
+    assert.match((await page.getByTestId('micro-keybind-test').textContent()) ?? '', /X/);
+    await page.getByTestId('micro-keybind-toggle').click();
+    // The binding is stored, not just remembered by this mount: a reload keeps it.
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await openMicro(page, baseUrl);
+    await page.evaluate(() => {
+      window.__microSounds = [];
+      window.addEventListener('mechalab:sound', (event) => window.__microSounds.push(event.detail));
+    });
+    await page.getByTestId('micro-learn-variables').click();
+    await page.getByTestId('micro-keybind-toggle').click();
+    assert.match(
+      (await page.getByTestId('micro-keybind-test').textContent()) ?? '',
+      /X/,
+      'the custom test key survives a reload'
+    );
+    await page.getByTestId('micro-keybind-toggle').click();
+    await revealWalkthrough(page, variables);
+    // The badge commits before React re-registers the key listener with `testReady`; wait for the
+    // button that reads that flag to enable, not just for the trace to finish painting.
+    await page.waitForFunction(
+      () => !document.querySelector('[data-testid="micro-start-diagnostics"]')?.hasAttribute('disabled')
+    );
+    assert.match(
+      (await page.getByTestId('micro-start-diagnostics').textContent()) ?? '',
+      /X/,
+      'the test button prints its custom shortcut'
+    );
+    const soundsBeforeTest = await page.evaluate(() => window.__microSounds.length);
+    await page.keyboard.press('x');
+    await page.getByTestId('micro-diagnostics').waitFor({ timeout: 5000 });
+    const keyStage = await page.getByTestId('micro-diagnostics').evaluate((node) => {
+      const style = getComputedStyle(node);
+      const frames = node.getAnimations()[0]?.effect?.getKeyframes?.() ?? [];
+      return {
+        input: node.getAttribute('data-input'),
+        duration: Number.parseFloat(style.animationDuration),
+        animation: style.animationName,
+        startsTransparent: frames[0]?.opacity === 0 || frames[0]?.opacity === '0',
+      };
+    });
+    assert.equal(keyStage.input, 'key', 'the test key marks the stage change as key-driven');
+    assert.match(keyStage.animation, /micro-reveal/);
+    assert.ok(keyStage.duration >= 0.52, `the key stage change should be paced slower (${keyStage.duration}s)`);
+    assert.ok(keyStage.startsTransparent, 'the key stage change fades in from transparent');
+    const testSounds = await page.evaluate((from) => window.__microSounds.slice(from), soundsBeforeTest);
+    assert.ok(
+      testSounds.some((message) => message.kind === 'ui' && message.role === 'primary'),
+      'the test key sounds the primary UI voice'
+    );
+    await answer(page, variables.diagnostics[0], true);
     await page.getByTestId('micro-answer-preview').first().waitFor({ timeout: 5000 });
     assert.equal(await page.getByTestId('micro-answer-preview').first().getAttribute('data-state'), 'pending');
+    assert.equal(await page.getByTestId('micro-answer-result').count(), 0, 'the Python result starts hidden');
+    await page.getByTestId('micro-answer-result-hidden').first().waitFor();
     const equation = page.getByTestId('micro-answer-equation').first();
     await equation.waitFor({ timeout: 5000 });
     assert.match((await equation.textContent()) ?? '', /sticker_count = 400 \+ 25/);
+    const tone = await equation.evaluate((node) => {
+      const original = node.querySelector('[data-token="number"]');
+      const plugged = node.querySelector('.micro-plugged-value');
+      return {
+        original: original ? getComputedStyle(original).color : null,
+        plugged: plugged ? getComputedStyle(plugged).color : null,
+      };
+    });
+    assert.ok(tone.plugged, 'the plugged-in value has the substituted-value class');
+    assert.notEqual(tone.plugged, tone.original, 'plugged values use a different colour from authored values');
+    await page.getByTestId('micro-answer-reveal').first().click();
     const result = page.getByTestId('micro-answer-result').first();
     await result.waitFor({ timeout: 5000 });
     assert.match((await result.textContent()) ?? '', /sticker_count = 425/);
+    await page.getByTestId('micro-answer-trace').first().click();
+    const trace = page.getByTestId('micro-answer-trace-panel').first();
+    await trace.waitFor({ timeout: 5000 });
+    const traceText = (await trace.textContent()) ?? '';
+    assert.match(traceText, /sticker_count = 400 \+ 25/);
+    assert.match(traceText, /sticker_count = 425/);
+    for (const question of variables.diagnostics.slice(1)) await answer(page, question, true);
     await page.getByTestId('micro-submit-diagnostics').click();
     await page.locator('[data-testid="micro-answer-preview"][data-state="correct"]').first().waitFor({ timeout: 5000 });
     assert.match((await result.textContent()) ?? '', /sticker_count = 425/);
@@ -172,6 +279,15 @@ async function main() {
     await page.getByTestId('micro-learn-variables').click();
     await revealWalkthrough(page, variables);
     await page.getByTestId('micro-start-diagnostics').click();
+    const pointerStage = await page.getByTestId('micro-diagnostics').evaluate((node) => ({
+      input: node.getAttribute('data-input'),
+      duration: Number.parseFloat(getComputedStyle(node).animationDuration),
+    }));
+    assert.equal(pointerStage.input, 'pointer', 'a click marks the stage change as pointer-driven');
+    assert.ok(
+      pointerStage.duration < keyStage.duration,
+      `a click should pace the stage faster than the key (${pointerStage.duration}s vs ${keyStage.duration}s)`
+    );
     for (const question of variables.diagnostics) await answer(page, question, false);
     await page.getByTestId('micro-submit-diagnostics').click();
     await page.locator('[data-testid="micro-answer-preview"][data-state="wrong"]').first().waitFor({ timeout: 5000 });
@@ -236,13 +352,121 @@ async function main() {
     const width = await page.evaluate(() => ({
       scroll: document.documentElement.scrollWidth,
       client: document.documentElement.clientWidth,
+      heroPadding: Number.parseFloat(
+        getComputedStyle(document.querySelector('[data-testid="micro-hero"]')).paddingTop
+      ),
+      titleSize: Number.parseFloat(
+        getComputedStyle(document.querySelector('[data-testid="tab-micro"] h1')).fontSize
+      ),
     }));
     assert.equal(width.scroll, width.client, `micro must not scroll sideways at 390 px (${width.scroll} > ${width.client})`);
-    console.log('  ok the micro tab stays inside a 390 px viewport');
+    assert.ok(width.heroPadding <= 14.5, `the phone hero should use compact padding (${width.heroPadding}px)`);
+    assert.ok(width.titleSize <= 25, `the phone title should be one compact step (${width.titleSize}px)`);
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.waitForFunction(() => window.matchMedia('(min-width: 1280px)').matches);
+    const wideOverview = await page.evaluate(() => ({
+      scroll: document.documentElement.scrollWidth,
+      client: document.documentElement.clientWidth,
+      heroPadding: Number.parseFloat(
+        getComputedStyle(document.querySelector('[data-testid="micro-hero"]')).paddingTop
+      ),
+      titleSize: Number.parseFloat(
+        getComputedStyle(document.querySelector('[data-testid="tab-micro"] h1')).fontSize
+      ),
+    }));
+    assert.equal(wideOverview.scroll, wideOverview.client, 'the wide layout must not scroll sideways');
+    assert.ok(
+      wideOverview.heroPadding > width.heroPadding,
+      `the wide hero should loosen its padding (${wideOverview.heroPadding}px > ${width.heroPadding}px)`
+    );
+    assert.ok(
+      wideOverview.titleSize > width.titleSize,
+      `the wide title should grow (${wideOverview.titleSize}px > ${width.titleSize}px)`
+    );
+    await page.getByTestId('micro-learn-variables').click();
+    await page.getByTestId('micro-walkthrough').waitFor({ timeout: 5000 });
+    const wideColumns = await page.evaluate(
+      () =>
+        getComputedStyle(
+          document.querySelector('[data-testid="micro-walkthrough"] > div.grid')
+        ).gridTemplateColumns.split(' ').length
+    );
+    assert.ok(wideColumns >= 2, `the wide walkthrough should split into two columns (${wideColumns})`);
+    await page.setViewportSize({ width: 1024, height: 900 });
+    await page.waitForFunction(() => window.matchMedia('(min-width: 1024px)').matches);
+    const tabletColumns = await page.evaluate(() => {
+      const grid = document.querySelector('[data-testid="micro-walkthrough"] > div.grid');
+      return {
+        columns: getComputedStyle(grid).gridTemplateColumns.split(' ').length,
+        borderLeft: getComputedStyle(grid.lastElementChild).borderLeftWidth,
+        scroll: document.documentElement.scrollWidth,
+        client: document.documentElement.clientWidth,
+      };
+    });
+    assert.ok(
+      tabletColumns.columns >= 2,
+      `the 1024 px walkthrough should split into two columns (${tabletColumns.columns})`
+    );
+    assert.notEqual(tabletColumns.borderLeft, '0px', 'the split panel should take a left border at 1024 px');
+    assert.equal(tabletColumns.scroll, tabletColumns.client, 'the 1024 px walkthrough must not scroll sideways');
+    // The f-strings trace is the widest authored line; at 1024 it must still fit on one row.
+    await page.getByTestId('micro-back').click();
+    await page.getByTestId('micro-learn-f-strings').click();
+    await page.getByTestId('micro-walkthrough').waitFor({ timeout: 5000 });
+    await revealWalkthrough(page, concept('f-strings'));
+    const longestLine = await page.evaluate(() => {
+      const line = [...document.querySelectorAll('.micro-walkthrough-line')].find((node) =>
+        node.textContent.includes('Weather:')
+      );
+      const code = line.querySelector('code');
+      return {
+        text: code.textContent.trim(),
+        wrapped: code.getBoundingClientRect().height > Number.parseFloat(getComputedStyle(code).lineHeight) * 1.6,
+      };
+    });
+    assert.equal(
+      longestLine.wrapped,
+      false,
+      `the longest walkthrough line must not wrap at 1024 px (${longestLine.text})`
+    );
+    await page.setViewportSize({ width: 768, height: 900 });
+    await page.waitForFunction(() => window.innerWidth === 768);
+    const tabletOneColumn = await page.evaluate(() => {
+      const grid = document.querySelector('[data-testid="micro-walkthrough"] > div.grid');
+      const tracks = getComputedStyle(grid).gridTemplateColumns;
+      return {
+        columns: tracks === 'none' ? 1 : tracks.split(' ').length,
+        borderLeft: getComputedStyle(grid.lastElementChild).borderLeftWidth,
+        borderTop: getComputedStyle(grid.lastElementChild).borderTopWidth,
+        scroll: document.documentElement.scrollWidth,
+        client: document.documentElement.clientWidth,
+      };
+    });
+    assert.equal(tabletOneColumn.columns, 1, 'the 768 px walkthrough should stay single-column');
+    assert.equal(tabletOneColumn.borderLeft, '0px', 'the single-column panel should not take a left border');
+    assert.notEqual(tabletOneColumn.borderTop, '0px', 'the single-column panel should use a top border');
+    assert.equal(tabletOneColumn.scroll, tabletOneColumn.client, 'the 768 px walkthrough must not scroll sideways');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForFunction(() => window.innerWidth <= 390);
+    const phoneColumns = await page.evaluate(
+      () =>
+        getComputedStyle(
+          document.querySelector('[data-testid="micro-walkthrough"] > div.grid')
+        ).gridTemplateColumns.split(' ').length
+    );
+    assert.equal(phoneColumns, 1, 'the walkthrough returns to one column when the viewport shrinks again');
+    const compactAgain = await page.evaluate(() => ({
+      scroll: document.documentElement.scrollWidth,
+      client: document.documentElement.clientWidth,
+    }));
+    assert.equal(compactAgain.scroll, compactAgain.client, 'the compact layout still fits after resizing back');
+    console.log(
+      '  ok the micro tab responds to viewport changes: compact at 390 px, one column at 768 px, two columns at 1024 and 1280 px, compact again'
+    );
 
     assert.deepEqual(pageErrors, [], `the micro tab threw: ${pageErrors.join('; ')}`);
     await context.close();
-    console.log('\nmicro e2e: 8 checks passed');
+    console.log('\nmicro e2e: passed');
   } finally {
     await browser.close();
     if (own) await own.viteServer.close();

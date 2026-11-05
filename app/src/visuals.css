@@ -254,25 +254,42 @@
 
 /* Micro-learning's staged lesson and answer comparison: one piece arrives at a time. */
 .micro-reveal {
-  animation: micro-reveal 420ms var(--ease-out) both;
+  animation: micro-reveal var(--micro-reveal-ms, 420ms) var(--ease-out) both;
 }
 .micro-walkthrough-line {
-  animation: micro-line-in 360ms var(--ease-out) both;
+  animation: micro-line-in var(--micro-line-ms, 360ms) var(--ease-out) both;
 }
 .micro-answer-value {
-  animation: micro-value-in 460ms var(--ease-spring) both;
+  animation: micro-value-in var(--micro-value-ms, 460ms) var(--ease-spring) both;
+}
+/* A keyboard move is deliberately a little slower than a click, so the eye can follow the
+   line that just arrived and the value it changed. */
+.micro-walkthrough[data-input='key'] {
+  --micro-reveal-ms: 560ms;
+  --micro-line-ms: 520ms;
+  --micro-value-ms: 600ms;
+}
+/* The stage a key opens uses the same slower pace, so the whole move reads as one press. */
+.micro-stage[data-input='key'] {
+  animation-duration: 560ms;
+}
+.micro-plugged-value {
+  font-weight: 600;
 }
 @keyframes micro-reveal {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  0% { opacity: 0; transform: translateY(10px); }
+  55% { opacity: 0.72; }
+  100% { opacity: 1; transform: translateY(0); }
 }
 @keyframes micro-line-in {
-  from { opacity: 0; transform: translateX(-6px); }
-  to { opacity: 1; transform: translateX(0); }
+  0% { opacity: 0; transform: translateX(-8px); }
+  55% { opacity: 0.72; }
+  100% { opacity: 1; transform: translateX(0); }
 }
 @keyframes micro-value-in {
-  from { opacity: 0; transform: translateY(6px) scale(0.9); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  0% { opacity: 0; transform: translateY(6px) scale(0.9); }
+  55% { opacity: 0.72; }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {

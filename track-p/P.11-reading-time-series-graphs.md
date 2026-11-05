@@ -25,6 +25,17 @@ Read position-vs-time and velocity-vs-time telemetry plots by connecting **slope
 - **New syntax:** None (uses Python `for` loops and functions from Lessons P.4 and P.5).
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours
 
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
+- [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
+- [ ] **Required end state:** the grader checks slope_velocity on positive, zero; negative displacement steps; accumulate_positions on empty list.
+- [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
+- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Alternate inputs:** the grader also covers symmetric cancellation with 1.0 and -1.0, and the five-step profile; it changes the inputs, so a hardcoded result fails.
+
 ---
 
 ## Prerequisites
@@ -80,18 +91,16 @@ Every telemetry plot in robotics puts **time ($t$, in seconds)** on the horizont
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `slope_velocity` (`TODO 1`) and `accumulate_positions` (`TODO 2`) to compute velocity from two position readings and accumulate position across 5 velocity steps of $\Delta t = 0.5\text{ s}$:
 
-**Where each name comes from** (read this beside the code):
-1. `slope_velocity` parameters `pos_prev_m`, `pos_now_m` (metres), and `dt_s` (seconds); `TODO 1` returns the implied velocity in m/s.
-1. `accumulate_positions` parameters: `velocities_m_s` is a list of velocities in m/s, and `dt_s` is the time per step in seconds.
-1. `pos_m` inside `accumulate_positions` — starts at `0.0` m and carries the running position forward across the loop with `pos_m = pos_m + v * dt_s`.
-1. `history` — starts as an empty list; `TODO 2` appends the running position after each step, rounded to two places.
-1. `v` — the loop variable; each pass takes the next velocity from `velocities_m_s`.
-1. `v_est` — result of `slope_velocity(1.20, 2.20, 0.5)`, in m/s; here `2.0` m/s.
-1. `pos_trace` — result of `accumulate_positions([2.0, 2.0, 4.0, 0.0, -2.0], 0.5)`, a five-item position list in metres; here `[1.0, 2.0, 4.0, 4.0, 3.0]`.
+**What each name means** (read this beside the code):
+
+1. **Inputs** — the names set before the TODOs; the starter's inline comments give each one's role and unit.
+1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
+1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
 def slope_velocity(pos_prev_m, pos_now_m, dt_s):
-    # TODO 1: the velocity the two readings imply
+    # TODO 1: Return the velocity the two readings imply.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 
@@ -99,8 +108,8 @@ def accumulate_positions(velocities_m_s, dt_s):
     pos_m = 0.0
     history = []
     for v in velocities_m_s:
-        # TODO 2: the position after this step, carried forward, with the running
-        #         history kept rounded to two places
+        # TODO 2: Append the running position after each step to history, rounded to two places.
+        #         Use the updated position in the loop; do not type the Expected Output trace.
         history.append(round(pos_m, 2))
     return history
 

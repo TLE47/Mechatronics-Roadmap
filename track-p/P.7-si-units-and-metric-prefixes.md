@@ -25,6 +25,17 @@ Identify the base SI units (`m`, `kg`, `s`) and unit symbols (`A`, `V`, `Ω`) us
 - **New syntax:** Python scientific notation `1e6`, `1e3`, `1e-3`, `1e-6`.
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–2.5 hours
 
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
+- [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
+- [ ] **Required end state:** the grader checks ma_to_amps, kohms_to_ohms and us_to_seconds at 0, at the page's 15 mA / 0.22 kOhm / 500 us readings, and at large magnitudes; Ohm's law voltage drop.
+- [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
+- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Alternate inputs:** the grader also covers zero, the nominal readings above, and large boundary readings; it changes the inputs, so a hardcoded result fails.
+
 ---
 
 ## Prerequisites
@@ -83,28 +94,28 @@ For example, if a datasheet says a sensor is $15\text{ mm}$ (millimeters) wide o
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `ma_to_amps` (`TODO 1`), `kohms_to_ohms` (`TODO 2`), and `us_to_seconds` (`TODO 3`) to convert prefixed hardware values into base SI units:
 
-**Where each name comes from** (read this beside the code):
-1. `ma_to_amps` parameter `val_ma` — a reading in milliamperes; `TODO 1` returns the same reading in amperes.
-1. `kohms_to_ohms` parameter `r_kohms` — a reading in kilo-ohms; `TODO 2` returns it in ohms.
-1. `us_to_seconds` parameter `time_us` — a time in microseconds; `TODO 3` returns it in seconds.
-1. `i_a` — result of `ma_to_amps(15.0)`, in amperes; here `0.015` A.
-1. `r_ohm` — result of `kohms_to_ohms(0.22)`, in ohms; here `220.0` Ω.
-1. `v_drop` — `i_a * r_ohm`, the product in volts; it uses the two converted values and is `3.30` V here.
-1. `t_sec` — result of `us_to_seconds(500.0)`, in seconds; here `0.0005` s.
+**What each name means** (read this beside the code):
+
+1. **Inputs** — the names set before the TODOs; the starter's inline comments give each one's role and unit.
+1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
+1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
 def ma_to_amps(val_ma):
-    # TODO 1: the same reading in amperes
+    # TODO 1: Return the same reading in amperes.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 
 def kohms_to_ohms(r_kohms):
-    # TODO 2: the same reading in ohms
+    # TODO 2: Return the same reading in ohms.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 
 def us_to_seconds(time_us):
-    # TODO 3: the time in seconds
+    # TODO 3: Return the time in seconds.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 

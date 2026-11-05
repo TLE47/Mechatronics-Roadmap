@@ -26,6 +26,17 @@ Command the joint with a **sine wave** instead of a step, wait for the transient
 - **New syntax:** sampling one steady period at a fixed `dt`, then projecting it onto `sin(ωt)` and `cos(ωt)` to recover amplitude and phase; `math.atan2` for the angle, and `math.hypot` for the length.
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 0.75–1.0 hours | Slow-learner: 1.5–2.0 hours
 
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
+- [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
+- [ ] **Required end state:** the grader checks the gain and phase at DC, the corner 1/tau and 200 rad/s; plus one period's sample count at 20 and 200 rad/s; the simulated gain and phase against the formula.
+- [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
+- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Alternate inputs:** the grader also covers measure() on a synthetic trace built from a known gain and phase; it changes the inputs, so a hardcoded result fails.
+
 ---
 
 ## Prerequisites
@@ -77,10 +88,11 @@ Tier 2 asks for the response at many frequencies and calls the picture a Bode pl
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `gain` (`TODO 1`), `phase_deg` (`TODO 2`), `simulate` (`TODO 3`) and `measure` (`TODO 4`). The print loop and the 1% assertion are given:
 
-**Where each name comes from** (read this beside the code; numbered for reference, not steps):
-1. `TAU` — `0.05` s first-order lag; `DT_S` — `0.001` s simulation step; `SETTLE_S` — `1.0` s of settling before the measured period.
-2. `gain(omega, tau=TAU)` — `1 / sqrt(1 + (omega*tau)**2)`; `phase_deg` — `-degrees(atan(omega*tau))`; `simulate` — one settled period of command and response at `dt_s`; `measure(samples, omega)` — amplitude ratio and phase difference from that period.
-3. `samples` — the command/response arrays returned by `simulate`; `settle_s` — the settling time passed to it; `m_gain` and `m_phase` — the measured pair. At `20 rad/s`, the formula is `0.7071` at `-45.000°`; the measured pair is `0.7074` at `-44.426°`.
+**What each name means** (read this beside the code):
+
+1. **Inputs** — the names set before the TODOs; the starter's inline comments give each one's role and unit.
+1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
+1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
 import math
@@ -91,22 +103,26 @@ SETTLE_S = 1.0
 
 
 def gain(omega, tau=TAU):
-    # TODO 1: the gain of this lag at the given frequency
+    # TODO 1: Return the gain of this lag at the given frequency.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 1.0
 
 
 def phase_deg(omega, tau=TAU):
-    # TODO 2: the phase delay of this lag at the given frequency, in degrees
+    # TODO 2: Return the phase delay of this lag at the given frequency, in degrees.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 
 def simulate(omega, tau=TAU, dt_s=DT_S, settle_s=SETTLE_S):
-    # TODO 3: one settled period of the command and the response
+    # TODO 3: Return one settled period of the command and the response.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return []
 
 
 def measure(samples, omega):
-    # TODO 4: the gain and phase the recorded period shows
+    # TODO 4: Return the gain and phase the recorded period shows.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0, 0.0
 
 

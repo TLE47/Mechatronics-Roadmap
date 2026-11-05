@@ -16,6 +16,8 @@ import {
 
 type TokenKind = Exclude<InlineCodeToken['kind'], 'space'>;
 
+export type MicroCodeTone = 'lesson' | 'plugged';
+
 const INLINE_TONE: Record<TokenKind, string> = {
   name: 'border-accent/30 bg-accent/15 text-accent',
   number: 'border-amber/30 bg-amber/15 text-amber',
@@ -36,8 +38,24 @@ const BLOCK_TONE: Record<TokenKind, string> = {
   punctuation: 'text-faint',
 };
 
-function CodeTokens({ code, mode }: { code: string; mode: 'inline' | 'block' }) {
-  const tones = mode === 'inline' ? INLINE_TONE : BLOCK_TONE;
+/** Values the tracer substituted are green, distinct from the authored numbers and strings. */
+const PLUGGED_BLOCK_TONE: Record<TokenKind, string> = {
+  ...BLOCK_TONE,
+  number: 'rounded-sm bg-emerald/10 px-0.5 text-emerald',
+  string: 'rounded-sm bg-emerald/10 px-0.5 text-emerald',
+  boolean: 'rounded-sm bg-emerald/10 px-0.5 text-emerald',
+};
+
+function CodeTokens({
+  code,
+  mode,
+  tone = 'lesson',
+}: {
+  code: string;
+  mode: 'inline' | 'block';
+  tone?: MicroCodeTone;
+}) {
+  const tones = mode === 'inline' ? INLINE_TONE : tone === 'plugged' ? PLUGGED_BLOCK_TONE : BLOCK_TONE;
   return (
     <>
       {tokenizeInlineCode(code).map((token, index) =>
@@ -48,7 +66,21 @@ function CodeTokens({ code, mode }: { code: string; mode: 'inline' | 'block' }) 
         ) : (
           <span
             key={`${token.text}-${index}`}
-            className={`${mode === 'inline' ? 'rounded px-1 py-0.5' : ''} ${tones[token.kind]}`}
+            data-token={token.kind}
+            data-substituted={
+              mode === 'block' &&
+              tone === 'plugged' &&
+              (token.kind === 'number' || token.kind === 'string' || token.kind === 'boolean')
+                ? 'true'
+                : undefined
+            }
+            className={`${mode === 'inline' ? 'rounded px-1 py-0.5' : ''} ${tones[token.kind]} ${
+              mode === 'block' &&
+              tone === 'plugged' &&
+              (token.kind === 'number' || token.kind === 'string' || token.kind === 'boolean')
+                ? 'micro-plugged-value'
+                : ''
+            }`}
           >
             {token.text}
           </span>
@@ -67,10 +99,18 @@ function InlineCode({ code }: { code: string }) {
 }
 
 /** A single colourful code-shaped line, used by comparisons and code-like options. */
-export function MicroCodeLine({ code, className = '' }: { code: string; className?: string }) {
+export function MicroCodeLine({
+  code,
+  className = '',
+  tone = 'lesson',
+}: {
+  code: string;
+  className?: string;
+  tone?: MicroCodeTone;
+}) {
   return (
-    <code className={`inline-flex max-w-full flex-wrap items-baseline gap-x-0.5 gap-y-0.5 font-mono text-[12.5px] leading-relaxed ${className}`}>
-      <CodeTokens code={code} mode="block" />
+    <code className={`inline-flex max-w-full flex-wrap items-baseline gap-x-0.5 gap-y-0.5 break-words font-mono text-[12.5px] leading-relaxed ${className}`}>
+      <CodeTokens code={code} mode="block" tone={tone} />
     </code>
   );
 }

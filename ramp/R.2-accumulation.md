@@ -25,6 +25,17 @@ Go the other way from R.1 and recover **position from a series of rates** by add
 - **New syntax:** an accumulator that lives across a loop (`q = q + ...` inside `for`), and a function that returns the *estimate* rather than the last sample.
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 0.75–1.0 hours | Slow-learner: 1.5–2.0 hours
 
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
+- [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
+- [ ] **Required end state:** the grader checks the left, right and trapezoid rules on a three-sample trace where all three differ; a constant rate over 0.75 s; that q0 is added rather than replaced, and that bias drift accumulates.
+- [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
+- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Alternate inputs:** the grader also refuses a single sample and a negative duration with ValueError; it changes the inputs, so a hardcoded result fails.
+
 ---
 
 ## Prerequisites
@@ -75,10 +86,11 @@ The two ideas in this lesson are the two halves of a Tier 2 integrator state. Wh
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `left_rule_rad` (`TODO 1`), `right_rule_rad` (`TODO 2`), `trapezoid_rad` (`TODO 3`), `accumulate_rad` (`TODO 4`) and `drift_rad` (`TODO 5`):
 
-**Where each name comes from** (read this beside the code; numbered for reference, not steps):
-1. `DT_S` — `0.01` s between samples (100 Hz); `V_RAD_S` — the nine recorded rates `[0.0, 2.0, 4.0, 6.0, 6.0, 6.0, 4.0, 2.0, -2.0]` rad/s.
-2. `left_rule_rad(v, dt_s=DT_S)` — `dt_s * sum(v[:-1])`, which is `0.300` rad here; `right_rule_rad` — `dt_s * sum(v[1:])`, `0.280` rad; `trapezoid_rad` — `dt_s * (0.5*v[0] + sum(v[1:-1]) + 0.5*v[-1])`, `0.290` rad.
-3. `accumulate_rad(v, q0=0.0, dt_s=DT_S)` — starts at `q0` and adds each trapezoid interval; with `q0=0.5` it ends at `0.790` rad. `drift_rad(bias_rad_s, seconds)` — `bias_rad_s * seconds`; `0.02 * 30 = 0.600` rad.
+**What each name means** (read this beside the code):
+
+1. **Inputs** — the names set before the TODOs; the starter's inline comments give each one's role and unit.
+1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
+1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
 DT_S = 0.01  # 100 Hz rate samples
@@ -86,27 +98,32 @@ V_RAD_S = [0.0, 2.0, 4.0, 6.0, 6.0, 6.0, 4.0, 2.0, -2.0]
 
 
 def left_rule_rad(v, dt_s=DT_S):
-    # TODO 1: the angle by the left-edge estimate over this trace
+    # TODO 1: Return the angle by the left-edge estimate over this trace.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 
 def right_rule_rad(v, dt_s=DT_S):
-    # TODO 2: the angle by the right-edge estimate over this trace
+    # TODO 2: Return the angle by the right-edge estimate over this trace.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 
 def trapezoid_rad(v, dt_s=DT_S):
-    # TODO 3: the angle by the trapezoid estimate over this trace
+    # TODO 3: Return the angle by the trapezoid estimate over this trace.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 
 def accumulate_rad(v, q0=0.0, dt_s=DT_S):
-    # TODO 4: the running angle from q0, using the trapezoid estimate at each sample
+    # TODO 4: Return the running angle from q0, using the trapezoid estimate at each sample.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 
 def drift_rad(bias_rad_s, seconds):
-    # TODO 5: the angle error a constant bias builds over this many seconds
+    # TODO 5: Return the angle error a constant bias builds over this many seconds.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 

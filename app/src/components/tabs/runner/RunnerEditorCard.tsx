@@ -33,6 +33,7 @@ import type { AnalysisSession } from '../../../analysisClient';
 import type { HarnessGate } from '../../../harnessGrading';
 import type { PredictGate } from './usePredictGate';
 import { vimModeLabel as vimModeLabelFor } from '../../../vimMode';
+import { inlinePlain } from '../../../readerMarkdown';
 
 /** Which surface the card is on, and what that surface may show. */
 interface EditorSurface {
@@ -63,7 +64,7 @@ interface EditorDraft {
   symbolMiss: string | null;
   sliderCount: number;
   vim: { on: boolean; mode: string; onMode: (mode: string) => void };
-  lesson: { id: string; question: string; goal: string };
+  lesson: { id: string; question: string; goal: string; requirements: string[] };
   onSliderCommit: () => void;
   /** Null in a workspace with no interpreter to ask; the free-study editor has no lesson files. */
   getAnalysis?: () => AnalysisSession | null;
@@ -164,7 +165,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
     symbolMiss,
     sliderCount,
     vim: { on: vimOn, mode: vimMode, onMode: onVimMode },
-    lesson: { id: lessonId, question: writeQuestion, goal: lessonGoal },
+    lesson: { id: lessonId, question: writeQuestion, goal: lessonGoal, requirements: lessonRequirements },
     onSliderCommit,
     getAnalysis,
     onGoToDefinition,
@@ -540,6 +541,23 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
           <p className="text-muted">
             <span className="font-semibold text-accent"># Goal:</span> {lessonGoal}
           </p>
+          {lessonRequirements.length > 0 && (
+            <div className="mt-1.5" data-testid="editor-requirements">
+              <p className="text-muted">
+                <span className="font-semibold text-accent"># Requirements:</span>
+              </p>
+              <ul className="mt-0.5 space-y-0.5 text-[11px] leading-snug text-muted" aria-label="Pass conditions">
+                {lessonRequirements.map((item, index) => (
+                  <li key={`${index}-${item}`} className="flex gap-1.5">
+                    <span className="text-accent" aria-hidden="true">
+                      •
+                    </span>
+                    <span>{inlinePlain(item)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <p className="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
             <span className="rounded border border-accent/30 bg-accent/[0.07] px-1.5 py-0.5 font-semibold uppercase tracking-[0.08em] text-accent">
               # Starter Code

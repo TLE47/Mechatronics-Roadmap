@@ -25,6 +25,17 @@ Convert angles between degrees and **radians** ($\pi\text{ rad} = 180^\circ$) an
 - **New syntax:** `math.pi`, `math.radians(deg)`, `math.degrees(rad)`, `math.cos(rad)`, `math.sin(rad)`, `math.atan2(y, x)`.
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours
 
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
+- [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
+- [ ] **Required end state:** the grader checks rpm_to_rad_s at 0 RPM, 60 RPM; -30 RPM (reverse rotation); arm_tip_xy.
+- [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
+- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Alternate inputs:** the grader also covers angles in all four Cartesian quadrants, plus the 0 and 180 degree axis cases; it changes the inputs, so a hardcoded result fails.
+
 ---
 
 ## Prerequisites
@@ -82,30 +93,31 @@ Across this entire roadmap, we measure a robot arm link's angle $\theta$ upward 
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `rpm_to_rad_s` (`TODO 1`), `arm_tip_xy` (`TODO 2`), and `target_angle_deg` (`TODO 3`):
 
-**Where each name comes from** (read this beside the code):
-1. `rpm_to_rad_s` parameter `rpm` — a rotation rate in revolutions per minute; `TODO 1` returns `rpm * 2 * math.pi / 60` in radians per second, so `60.0` becomes `6.2832 rad/s`.
-1. `arm_tip_xy` parameters `length_m` (link length in metres) and `angle_deg` (joint angle in degrees); `TODO 2` returns `[length_m * cos(rad), length_m * sin(rad)]` in metres, so `0.20 m` at `60°` becomes `[0.1000, 0.1732] m`.
-1. `target_angle_deg` parameters `x_m`, `y_m` — a point's coordinates in metres; `TODO 3` returns `math.degrees(math.atan2(y_m, x_m))`, so `(-0.10, 0.10)` becomes `135.0°`.
-1. `omega` — result of `rpm_to_rad_s(60.0)`, in rad/s.
-1. `tip` — result of `arm_tip_xy(0.20, 60.0)`, a two-item `[x, y]` list in metres.
-1. `ang` — result of `target_angle_deg(-0.10, 0.10)`, in degrees.
+**What each name means** (read this beside the code):
+
+1. **Inputs** — the names set before the TODOs; the starter's inline comments give each one's role and unit.
+1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
+1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
 import math
 
 
 def rpm_to_rad_s(rpm):
-    # TODO 1: the same rotation rate in radians per second
+    # TODO 1: Return the same rotation rate in radians per second.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 
 def arm_tip_xy(length_m, angle_deg):
-    # TODO 2: the tip's x and y for the given angle, in metres
+    # TODO 2: Return the tip's x and y for the given angle, in metres.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return [0.0, 0.0]
 
 
 def target_angle_deg(x_m, y_m):
-    # TODO 3: the direction of the point (x, y) measured from +x, in degrees
+    # TODO 3: Return the direction of the point (x, y) measured from +x, in degrees.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 

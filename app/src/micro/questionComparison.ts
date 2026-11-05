@@ -63,6 +63,13 @@ export interface ComparisonLine {
 
 export type ComparisonResultKind = 'value' | 'output' | 'error';
 
+export interface ComparisonTraceStep {
+  source: string;
+  plugged: string;
+  result: string | null;
+  resultKind: ComparisonResultKind | null;
+}
+
 export interface ComparisonPreview {
   target: string | null;
   targets: string[];
@@ -70,6 +77,7 @@ export interface ComparisonPreview {
   lines: ComparisonLine[];
   result: string | null;
   resultKind: ComparisonResultKind | null;
+  trace: ComparisonTraceStep[];
 }
 
 function recordResult(record: PreviewRecord): { text: string; kind: ComparisonResultKind } | null {
@@ -101,25 +109,25 @@ export function comparisonPreview(
   const target = targets[0] ?? null;
   const code = question.code?.trim() ?? '';
   if (!code) {
-    return { target, targets, selectedText, lines: [], result: null, resultKind: null };
+    return { target, targets, selectedText, lines: [], result: null, resultKind: null, trace: [] };
   }
 
-  const trace = tracePython(code);
+  const traced = tracePython(code);
   const wantsPrint = /\b(?:print|printed|prints|output|produce|produces|display|shown)\b/i.test(
     question.prompt
   );
   let focus: PreviewRecord[] = [];
-  if (wantsPrint && trace.lastPrint) {
-    focus = [trace.lastPrint];
-  } else if (trace.last?.kind === 'expression') {
-    focus = [trace.last];
+  if (wantsPrint && traced.lastPrint) {
+    focus = [traced.lastPrint];
+  } else if (traced.last?.kind === 'expression') {
+    focus = [traced.last];
   } else if (targets.length) {
     focus = targets
-      .map((name) => trace.lastByName[name])
+      .map((name) => traced.lastByName[name])
       .filter((record): record is PreviewRecord => Boolean(record));
-    if (!focus.length && trace.last) focus = [trace.last];
-  } else if (trace.last) {
-    focus = [trace.last];
+    if (!focus.length && traced.last) focus = [traced.last];
+  } else if (traced.last) {
+    focus = [traced.last];
   }
 
   const unique = Array.from(new Set(focus));
@@ -138,6 +146,15 @@ export function comparisonPreview(
         ? 'output'
         : 'value'
     : null;
+  const traceSteps = traced.records.map((record) => {
+    const stepResult = recordResult(record);
+    return {
+      source: record.source,
+      plugged: record.plugged,
+      result: stepResult?.text ?? null,
+      resultKind: stepResult?.kind ?? null,
+    };
+  });
 
-  return { target, targets, selectedText, lines, result, resultKind };
+  return { target, targets, selectedText, lines, result, resultKind, trace: traceSteps };
 }

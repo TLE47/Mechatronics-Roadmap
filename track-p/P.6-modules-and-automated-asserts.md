@@ -25,6 +25,17 @@ Load built-in math tools (`math.sqrt`, `math.pi`) using `import math`, and write
 - **New syntax:** `import math`, `math.sqrt(x)`, `round(val, digits)`, `assert condition`.
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–3.0 hours
 
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
+- [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
+- [ ] **Required end state:** the grader checks distance_2d(x_m, y_m) at origin (0,0), (3,4); negative quadrant (-5,-12) and (0.6,0.8); clamp_cmd(cmd) across lower/upper.
+- [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
+- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Alternate inputs:** the grader also covers the saturation boundaries at -999, -1, 0, 1, 128, 255, 256, and 999; it changes the inputs, so a hardcoded result fails.
+
 ---
 
 ## Prerequisites
@@ -75,31 +86,33 @@ runs an automatic safety check every time the script starts. When comparing deci
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `distance_2d` (`TODO 1`) and `clamp_cmd` (`TODO 2`), then write the `assert` self-checks in `TODO 3`:
 
-**Where each name comes from** (read this beside the code):
-1. `distance_2d` parameters `x_m`, `y_m` — the point's coordinates in metres; `TODO 1` returns their straight-line distance from the origin.
-1. `clamp_cmd` parameter `cmd` — the raw command; `TODO 2` returns it clamped into `[0, 255]`.
-1. `d1`, `d2` — results of `distance_2d(3.0, 4.0)` and `distance_2d(0.6, 0.8)`, in metres; here `5.0` m and `1.0` m.
-1. `TODO 3` asserts compare `d1`/`d2` and direct `clamp_cmd(...)` calls at `-20`, `128`, and `300`; the assertions create no new named value.
-1. The `print` lines read `d1`, `d2`, and three direct `clamp_cmd(...)` results.
+**What each name means** (read this beside the code):
+
+1. **Inputs** — the names set before the TODOs; the starter's inline comments give each one's role and unit.
+1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
+1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
 import math
 
 
 def distance_2d(x_m, y_m):
-    # TODO 1: the straight-line distance from the origin to this point
+    # TODO 1: Return the straight-line distance from the origin to this point.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 
 def clamp_cmd(cmd):
-    # TODO 2: the command, kept inside its eight-bit range
+    # TODO 2: Return the command, kept inside its eight-bit range.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0
 
 
 d1 = distance_2d(3.0, 4.0)
 d2 = distance_2d(0.6, 0.8)
 
-# TODO 3: Write the two self-checks this lesson teaches: the straight-line
+# TODO 3: Write the two self-checks this lesson teaches: one for the distance results and one for the clamp bounds.
+#         Keep the existing print pass line; use the values already computed above, not typed-in Expected Output.
 # result, and the command's eight-bit range. Then print the pass line.
 
 print(f"Distance (3, 4): {d1:.2f} m | Distance (0.6, 0.8): {d2:.2f} m")

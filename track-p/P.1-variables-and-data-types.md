@@ -19,13 +19,25 @@ slow_learner_hours: "2.0-3.0"
 **Step 1 of the Python on-ramp — start here.** The callout above opens this entry directly; the roadmap shows the same on-ramp above Level 0, with a count of the entries you have actually run and passed. Read on if you prefer to work in your own Python 3.
 
 ## Goal
-Store robot measurements such as battery charge level, wheel pulse counts, and safety status flags in named Python variables, and distinguish the four fundamental data types (`int`, `float`, `str`, `bool`).
+Update three robot-state values in place: `encoder_ticks` must end 25 ticks above its starting value, `battery_level` must end 0.45 V below its starting value, and `robot_mode` must become the active mode string. Keep every type unchanged, leave `is_estop_active` alone, and compute both numeric updates from the variable's own previous value so they also work on unseen starting states.
 
 - **New ideas (max 2):**
   1. **Storing values in named variables**: Using the assignment operator (`=`) to evaluate the right-hand side first and store the result inside a named memory box on the left.
   2. **Fundamental data types (`int`, `float`, `str`, `bool`)**: Distinguishing whole numbers (`int`), decimal measurements (`float`), quoted text (`str`), and truth flags (`bool`).
 - **New syntax:** `=`, `#` comments, `print()`, `f"{value:.2f}"` formatted strings (`f-strings`).
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–3.0 hours
+
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] The script runs without a Python error.
+- [ ] `encoder_ticks` is still an `int`, and its final reading is `25` ticks above its starting value.
+- [ ] `battery_level` is still a `float`, and its final reading is `0.45` V below its starting value.
+- [ ] `robot_mode` is exactly the active mode string shown in Expected Output.
+- [ ] `is_estop_active` is still `False` and still a `bool`.
+- [ ] Both numeric updates use the variable's own previous value; typing a final number fails the grader's two other starting states.
+- [ ] The two printed lines match Expected Output.
 
 ---
 
@@ -103,11 +115,11 @@ Text wrapped in quotes like `"ARMED"` is a **str** (string), whereas a safety sw
 ### Starter Code (runs as-is — fill in the TODOs)
 Copy this starter script into your Python editor. It runs right now without crashing, but prints the initial un-updated values until you complete `TODO 1` and `TODO 2`:
 
-**Where each name comes from** (read this beside the code):
-1. `battery_level` — hardcoded `12.60` V (a float). `TODO 1` replaces it with `battery_level - 0.45`, using its own existing value; it becomes `12.15` V here.
-1. `encoder_ticks` — hardcoded `400` pulses (an int). `TODO 1` replaces it with `encoder_ticks + 25`, using its own existing value; it becomes `425` pulses here.
-1. `robot_mode` — hardcoded `"STANDBY"` (a string). `TODO 2` replaces it with `"ACTIVE"`; it does not depend on the other variables.
-1. `is_estop_active` — hardcoded `False` (a bool); it stays `False` throughout.
+**What each name means** (read this beside the code):
+1. `battery_level` — the pack voltage, starting at `12.60` V (a float). `TODO 1` updates it for a `0.45` V drop.
+1. `encoder_ticks` — the wheel pulse count, starting at `400` pulses (an int). `TODO 1` updates it for a `25`-tick advance.
+1. `robot_mode` — the operating label, starting at `"STANDBY"` (a string). `TODO 2` changes it to the active state.
+1. `is_estop_active` — the emergency-stop switch state, starting `False` (a bool); it must stay `False`.
 1. Both `print` lines read the four names after the TODOs; they do not create new values.
 
 ```python
@@ -117,12 +129,16 @@ encoder_ticks = 400          # int: wheel sensor pulse count
 robot_mode = "STANDBY"       # str: active status label
 is_estop_active = False      # bool: emergency stop switch state
 
-# TODO 1: Give encoder_ticks its reading after a 25-tick advance,
-#         and battery_level its reading after a 0.45 V drop.
+# TODO 1: Update both numeric readings for this one event.
+#         encoder_ticks ends 25 ticks higher than it started.
+#         battery_level ends 0.45 V lower than it started.
+#         Use each variable's own old value, not a typed-in final number.
 encoder_ticks = encoder_ticks
 battery_level = battery_level
 
-# TODO 2: Set robot_mode to the active state (a string), leaving the E-stop flag alone.
+# TODO 2: Change robot_mode to the active mode string.
+#         The exact spelling is in Expected Output.
+#         Leave is_estop_active unchanged.
 robot_mode = robot_mode
 
 print(f"Mode: {robot_mode} | E-Stop: {is_estop_active}")
@@ -138,15 +154,9 @@ Encoder Ticks: 425 | Battery: 12.15 V
 ```
 
 ### Test more than one case
-The graded check does not stop at the starter's numbers. It re-runs your two update lines with different starting state, so a hardcoded `425` or `12.15` is caught. The inputs in the lesson text are only the first row:
+The graded check does not stop at the starter's numbers. It re-runs your two update lines with different starting states, so a hardcoded final number is caught. The alternate starting states stay in the hidden check; solve each update from the variable's old value, not from the first row.
 
-| `encoder_ticks` before | `battery_level` before | `encoder_ticks` after `+25` | `battery_level` after `-0.45` |
-| --- | --- | --- | --- |
-| `400` | `12.60` | `425` | `12.15` |
-| `1000` | `24.00` | `1025` | `23.55` |
-| `3` | `7.05` | `28` | `6.60` |
-
-To try another case yourself, change the two starter assignments at the top (not the `TODO` lines) and re-run. Your `TODO` lines must keep reading the old value on the right, which is what makes them work for every row.
+To try another case yourself, change the two starter assignments at the top (not the `TODO` lines) and re-run. Your `TODO` lines must keep reading the old value on the right, which is what makes them work on every run.
 
 ### Hint Ladder
 

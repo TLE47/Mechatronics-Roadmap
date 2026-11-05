@@ -2,8 +2,8 @@
  * Individual walkthrough shortcuts (`app/src/micro/walkthroughKeys.ts`).
  *
  * These keys belong to the walkthrough, not the workbench, so a bare arrow or letter is safe here:
- * the walkthrough has no editor. The two bindings are stored beside the other micro preferences,
- * validated as a pair, and always leave a usable default when storage is blocked or corrupt.
+ * the walkthrough has no editor. The three bindings are stored beside the other micro preferences,
+ * validated as a set, and always leave a usable default when storage is blocked or corrupt.
  */
 
 import {
@@ -14,11 +14,14 @@ import {
   type KeyChord,
 } from '../keymap.ts';
 
-export type WalkthroughKeyAction = 'next' | 'previous';
+export const WALKTHROUGH_KEY_ACTIONS = ['next', 'previous', 'test'] as const;
+
+export type WalkthroughKeyAction = (typeof WALKTHROUGH_KEY_ACTIONS)[number];
 
 export interface WalkthroughKeys {
   next: KeyChord;
   previous: KeyChord;
+  test: KeyChord;
 }
 
 export const WALKTHROUGH_KEYS_KEY = 'mechalab_micro_walkthrough_keys_v1';
@@ -26,13 +29,24 @@ export const WALKTHROUGH_KEYS_KEY = 'mechalab_micro_walkthrough_keys_v1';
 export const DEFAULT_WALKTHROUGH_KEYS: WalkthroughKeys = {
   next: { code: 'ArrowRight', mod: false, alt: false, shift: false },
   previous: { code: 'ArrowLeft', mod: false, alt: false, shift: false },
+  test: { code: 'KeyT', mod: false, alt: false, shift: false },
+};
+
+const ACTION_LABEL: Record<WalkthroughKeyAction, string> = {
+  next: 'next',
+  previous: 'previous',
+  test: 'test',
 };
 
 const RESERVED_CODES = new Set(['Escape', 'Tab', 'Enter', 'Space', 'F5', 'F9', 'F12']);
 const BROWSER_CODES = new Set(['KeyW', 'KeyT', 'KeyN', 'KeyQ', 'KeyR', 'KeyL', 'KeyS']);
 
 function clone(keys: WalkthroughKeys): WalkthroughKeys {
-  return { next: { ...keys.next }, previous: { ...keys.previous } };
+  return {
+    next: { ...keys.next },
+    previous: { ...keys.previous },
+    test: { ...keys.test },
+  };
 }
 
 export function defaultWalkthroughKeys(): WalkthroughKeys {
@@ -77,8 +91,12 @@ export function normalizeWalkthroughKeys(value: unknown): WalkthroughKeys {
   const record = value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
   const next = normalizeChord(record.next, DEFAULT_WALKTHROUGH_KEYS.next);
   const previous = normalizeChord(record.previous, DEFAULT_WALKTHROUGH_KEYS.previous);
-  if (chordsEqual(next, previous)) return defaultWalkthroughKeys();
-  return { next, previous };
+  const test = normalizeChord(record.test, DEFAULT_WALKTHROUGH_KEYS.test);
+  const chords = [next, previous, test];
+  if (chords.some((chord, index) => chords.slice(index + 1).some((other) => chordsEqual(chord, other)))) {
+    return defaultWalkthroughKeys();
+  }
+  return { next, previous, test };
 }
 
 function storageOrNull(): Storage | null {
@@ -126,11 +144,13 @@ export function updateWalkthroughKey(
 ): WalkthroughRebind {
   const issue = walkthroughKeyIssue(chord);
   if (issue) return { keys, error: issue };
-  const other = action === 'next' ? keys.previous : keys.next;
-  if (chordsEqual(chord, other)) {
+  const other = WALKTHROUGH_KEY_ACTIONS.find(
+    (candidate) => candidate !== action && chordsEqual(chord, keys[candidate])
+  );
+  if (other) {
     return {
       keys,
-      error: `${formatWalkthroughChord(chord)} is already the ${action === 'next' ? 'previous' : 'next'} key.`,
+      error: `${formatWalkthroughChord(chord)} is already the ${ACTION_LABEL[other]} key.`,
     };
   }
   const next = writeWalkthroughKeys({ ...keys, [action]: { ...chord } }, storage);

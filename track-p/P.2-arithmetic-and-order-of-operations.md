@@ -25,6 +25,17 @@ Translate multi-step physics and circuit formulas into bug-free Python arithmeti
 - **New syntax:** `+`, `-`, `*`, `/`, `//`, `**`, `()`.
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–2.5 hours
 
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
+- [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
+- [ ] **Required end state:** the grader checks new_pos_m (2.0625 m), sensor_pin (4.0 V); kinetic_energy_j (9.0 J) within tolerance.
+- [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
+- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Alternate inputs:** the grader also covers zero speed, a 1:1 voltage divider, and a negative start position; it changes the inputs, so a hardcoded result fails.
+
 ---
 
 ## Prerequisites
@@ -78,16 +89,11 @@ Similarly, when squaring a speed in $E_k = \frac{1}{2} m s^2$ in Python, write `
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `TODO 1`, `TODO 2`, and `TODO 3` to calculate a robot's updated position, a scaled sensor reading, and the motion energy of a moving cart:
 
-**Where each name comes from** (read this beside the code):
-1. `wheel_speed` — hardcoded `1.25` m/s; feeds `new_pos_m`.
-1. `elapsed_sec` — hardcoded `0.05` s; feeds `new_pos_m`.
-1. `start_pos_m` — hardcoded `2.0` m; feeds `new_pos_m`.
-1. `new_pos_m` — `TODO 1` result of `start_pos_m + wheel_speed * elapsed_sec`, in metres; here it is `2.0625` m.
-1. `supply_level` — hardcoded `12.0` V; feeds `sensor_pin`.
-1. `part_a`, `part_b` — hardcoded `20000` Ω and `10000` Ω; they form the divider that feeds `sensor_pin`.
-1. `sensor_pin` — `TODO 2` result of `supply_level * part_b / (part_a + part_b)`, in volts; here it is `4.0` V.
-1. `cart_mass`, `cart_speed` — hardcoded `2.0` kg and `3.0` m/s; both feed `kinetic_energy_j`.
-1. `kinetic_energy_j` — `TODO 3` result of `0.5 * cart_mass * cart_speed ** 2`, in joules; here it is `9.0` J.
+**What each name means** (read this beside the code):
+
+1. **Inputs** — the names set before the TODOs; the starter's inline comments give each one's role and unit.
+1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
+1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
 wheel_speed = 1.25
@@ -101,13 +107,16 @@ part_b = 10000
 cart_mass = 2.0
 cart_speed = 3.0
 
-# TODO 1: Where is the wheel after this tick?
+# TODO 1: Set new_pos_m to the position of the wheel after this tick.
+#         Use the start position, speed, and elapsed time already in the starter; do not type the Expected Output position.
 new_pos_m = 0.0
 
-# TODO 2: The divider's output at the sense pin.
+# TODO 2: Set sensor_pin to the divider's output at the sense pin.
+#         Compute it from the existing values; do not type the final answer from Expected Output.
 sensor_pin = 0.0
 
-# TODO 3: The energy the moving cart carries.
+# TODO 3: Set kinetic_energy_j to the energy the moving cart carries.
+#         Compute it from the existing values; do not type the final answer from Expected Output.
 kinetic_energy_j = 0.0
 
 print(f"New Position: {new_pos_m:.4f} m")

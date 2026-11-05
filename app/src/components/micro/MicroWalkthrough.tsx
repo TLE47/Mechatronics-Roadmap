@@ -1,6 +1,7 @@
 import { ArrowLeft, ArrowRight, Check, Keyboard, RotateCcw, Sparkles } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { MicroConcept } from '../../data/microLessons';
+import { playUi } from '../../audio/facade.ts';
 import { chordMatches } from '../../keymap.ts';
 import {
   defaultWalkthroughKeys,
@@ -27,17 +28,29 @@ import { MicroRichText, MicroCodeLine } from './MicroText.tsx';
 export function MicroWalkthrough({
   concept,
   onComplete,
+  onTest,
+  testReady = false,
+  onKeysChange,
 }: {
   concept: MicroConcept;
   onComplete: () => void;
+  onTest?: (input: 'pointer' | 'key') => void;
+  testReady?: boolean;
+  onKeysChange?: (keys: WalkthroughKeys) => void;
 }) {
   const steps = concept.walkthrough;
   const [visible, setVisible] = useState(1);
+  const [input, setInput] = useState<'pointer' | 'key'>('pointer');
   const [keys, setKeys] = useState<WalkthroughKeys>(() => readWalkthroughKeys());
   const [keysOpen, setKeysOpen] = useState(false);
   const [capture, setCapture] = useState<WalkthroughKeyAction | null>(null);
   const [keyError, setKeyError] = useState('');
   const completed = useRef(false);
+
+  const applyKeys = (next: WalkthroughKeys) => {
+    setKeys(next);
+    onKeysChange?.(next);
+  };
 
   useEffect(() => {
     if (visible < steps.length || completed.current) return;
@@ -47,15 +60,19 @@ export function MicroWalkthrough({
 
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
-      if (!event.key || event.key === WALKTHROUGH_KEYS_KEY) setKeys(readWalkthroughKeys());
+      if (!event.key || event.key === WALKTHROUGH_KEYS_KEY) {
+        const next = readWalkthroughKeys();
+        setKeys(next);
+        onKeysChange?.(next);
+      }
     };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
-  }, []);
+  }, [onKeysChange]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || event.isComposing) return;
+      if (event.defaultPrevented || event.isComposing || event.repeat) return;
 
       if (capture) {
         if (event.key === 'Escape') {
@@ -72,7 +89,7 @@ export function MicroWalkthrough({
           setKeyError(result.error);
           return;
         }
-        setKeys(result.keys);
+        applyKeys(result.keys);
         setCapture(null);
         setKeyError('');
         return;
@@ -91,15 +108,31 @@ export function MicroWalkthrough({
 
       if (chordMatches(keys.next, event)) {
         event.preventDefault();
+        if (visible >= steps.length) return;
+        setInput('key');
+        playUi('nav');
         setVisible((count) => Math.min(steps.length, count + 1));
-      } else if (chordMatches(keys.previous, event)) {
+        return;
+      }
+      if (chordMatches(keys.previous, event)) {
         event.preventDefault();
+        if (visible <= 1) return;
+        setInput('key');
+        playUi('nav');
         setVisible((count) => Math.max(1, count - 1));
+        return;
+      }
+      if (chordMatches(keys.test, event)) {
+        event.preventDefault();
+        if (!testReady || !onTest) return;
+        setInput('key');
+        playUi('primary');
+        onTest('key');
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [capture, keys, steps.length]);
+  }, [capture, keys, steps.length, visible, testReady, onTest]);
 
   const startCapture = (action: WalkthroughKeyAction) => {
     setCapture(action);
@@ -107,10 +140,19 @@ export function MicroWalkthrough({
   };
 
   const resetKeys = () => {
-    const next = writeWalkthroughKeys(defaultWalkthroughKeys());
-    setKeys(next);
+    applyKeys(writeWalkthroughKeys(defaultWalkthroughKeys()));
     setCapture(null);
     setKeyError('');
+  };
+
+  const revealPrevious = () => {
+    setInput('pointer');
+    setVisible((count) => Math.max(1, count - 1));
+  };
+
+  const revealNext = () => {
+    setInput('pointer');
+    setVisible((count) => Math.min(steps.length, count + 1));
   };
 
   if (!steps.length) return null;
@@ -119,16 +161,17 @@ export function MicroWalkthrough({
 
   return (
     <section
-      className="overflow-hidden rounded-2xl border border-accent/30 bg-canvas/75 shadow-sm"
+      className="micro-walkthrough overflow-hidden rounded-2xl border border-accent/30 bg-canvas/75 shadow-sm"
       data-testid="micro-walkthrough"
+      data-input={input}
     >
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line-soft bg-accent/5 px-3.5 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line-soft bg-accent/5 px-3 py-2.5 sm:px-3.5 sm:py-3">
         <div className="min-w-0">
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent">
             Trace it, one line at a time
           </p>
-          <p className="mt-0.5 text-[13px] leading-relaxed text-muted">
-            Read the code first. Use the buttons or your own keys for the next piece.
+          <p className="mt-0.5 text-[11.5px] leading-relaxed text-muted sm:text-[13px]">
+            Read the code first. Use the buttons or your own keys for the next line, then test.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -175,7 +218,7 @@ export function MicroWalkthrough({
               Reset
             </button>
           </div>
-          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          <div className="mt-2 grid gap-2 sm:grid-cols-3">
             <KeyChoice
               action="next"
               label="Reveal next line"
@@ -192,10 +235,23 @@ export function MicroWalkthrough({
               onClick={() => startCapture('previous')}
               testId="micro-keybind-previous"
             />
+            <KeyChoice
+              action="test"
+              label="Let me test that"
+              chord={keys.test}
+              capture={capture}
+              onClick={() => startCapture('test')}
+              testId="micro-keybind-test"
+            />
           </div>
           {capture ? (
             <p role="status" className="mt-2 text-[11.5px] text-accent">
-              Press a key for {capture === 'next' ? 'reveal next line' : 'previous line'}.
+              Press a key for{' '}
+              {capture === 'next'
+                ? 'reveal next line'
+                : capture === 'previous'
+                  ? 'previous line'
+                  : 'let me test that'}.
             </p>
           ) : null}
           {keyError ? (
@@ -206,13 +262,13 @@ export function MicroWalkthrough({
         </div>
       ) : null}
 
-      <div className="grid gap-0 xl:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)]">
-        <div className="min-w-0 p-3.5">
-          <div className="space-y-1.5 rounded-xl border border-line-soft bg-panel p-2.5 font-mono text-[13px] leading-relaxed">
+      <div className="grid gap-0 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)]">
+        <div className="min-w-0 p-2.5 sm:p-3.5">
+          <div className="space-y-1.5 rounded-xl border border-line-soft bg-panel p-2 font-mono text-[11.5px] leading-relaxed sm:p-2.5 sm:text-[13px]">
             {steps.slice(0, visible).map((step, index) => (
               <div
                 key={`${step.code}-${index}`}
-                className={`micro-walkthrough-line flex items-start gap-2 rounded-lg px-2 py-1.5 ${
+                className={`micro-walkthrough-line flex items-start gap-1.5 rounded-lg px-1.5 py-1 sm:gap-2 sm:px-2 sm:py-1.5 ${
                   index === visible - 1 ? 'bg-accent/10 text-ink' : 'text-muted'
                 }`}
               >
@@ -224,16 +280,17 @@ export function MicroWalkthrough({
             ))}
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 sm:mt-3">
             <button
               type="button"
               disabled={visible <= 1}
-              onClick={() => setVisible((count) => Math.max(1, count - 1))}
-              className="inline-flex items-center gap-2 rounded-xl border border-line bg-panel px-3.5 py-2.5 text-[13px] font-bold text-muted hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+              onClick={revealPrevious}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-panel px-2.5 py-2 text-[11.5px] font-bold text-muted hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 sm:gap-2 sm:px-3.5 sm:py-2.5 sm:text-[13px]"
               data-testid="micro-reveal-previous"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              Previous line
+              <span className="sm:hidden">Previous</span>
+              <span className="hidden sm:inline">Previous line</span>
               <kbd className="rounded border border-line-soft bg-canvas px-1.5 py-0.5 font-mono text-[10.5px] text-faint">
                 {formatWalkthroughChord(keys.previous)}
               </kbd>
@@ -242,11 +299,12 @@ export function MicroWalkthrough({
             {visible < steps.length ? (
               <button
                 type="button"
-                onClick={() => setVisible((count) => Math.min(steps.length, count + 1))}
-                className="ml-auto inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-[14px] font-bold text-inverse shadow-sm hover:bg-accent/80"
+                onClick={revealNext}
+                className="ml-auto inline-flex items-center gap-1.5 rounded-xl bg-accent px-2.5 py-2 text-[12px] font-bold text-inverse shadow-sm hover:bg-accent/80 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-[14px]"
                 data-testid="micro-reveal-next"
               >
-                Reveal next line
+                <span className="sm:hidden">Next</span>
+                <span className="hidden sm:inline">Reveal next line</span>
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 <kbd className="rounded border border-inverse/25 bg-inverse/10 px-1.5 py-0.5 font-mono text-[10.5px] text-inverse/80">
                   {formatWalkthroughChord(keys.next)}
@@ -264,7 +322,7 @@ export function MicroWalkthrough({
           </div>
         </div>
 
-        <div className="border-t border-line-soft bg-panel/65 p-3.5 xl:border-l xl:border-t-0">
+        <div className="border-t border-line-soft bg-panel/65 p-2.5 sm:p-3.5 lg:border-l lg:border-t-0">
           <div
             key={`${visible}-${current.code}`}
             className="micro-reveal"
@@ -276,7 +334,7 @@ export function MicroWalkthrough({
               What changes
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="rounded-md border border-accent/35 bg-accent/10 px-2 py-1 font-mono text-[13px] font-bold text-accent">
+              <span className="rounded-md border border-accent/35 bg-accent/10 px-2 py-1 font-mono text-[12px] font-bold text-accent sm:text-[13px]">
                 {current.variable ?? 'result'}
               </span>
               {current.before ? (
@@ -289,7 +347,7 @@ export function MicroWalkthrough({
               ) : null}
               <span
                 key={`${visible}-${value}`}
-                className="micro-answer-value rounded-md border border-emerald/40 bg-emerald/10 px-2.5 py-1 font-mono text-[15px] font-bold text-emerald"
+                className="micro-answer-value rounded-md border border-emerald/40 bg-emerald/10 px-2.5 py-1 font-mono text-[13.5px] font-bold text-emerald sm:text-[15px]"
               >
                 {value}
               </span>
@@ -334,7 +392,7 @@ function KeyChoice({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-[12px] ${
+      className={`flex items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-left text-[11.5px] sm:px-3 sm:text-[12px] ${
         capture === action
           ? 'border-accent bg-accent-soft text-ink'
           : 'border-line-soft bg-canvas text-muted hover:border-accent/50'

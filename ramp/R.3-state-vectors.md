@@ -25,6 +25,17 @@ Stop tracking a joint as loose variables and hold it as **one state with two nam
 - **New syntax:** unpacking a two-item list (`q, qd = state`) and returning a **fresh list** each tick instead of editing one in place.
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 0.75–1.0 hours | Slow-learner: 1.5–2.0 hours
 
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
+- [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
+- [ ] **Required end state:** the grader checks accel_rad_s2 and one step from rest and from a moving state; including that position uses the OLD speed; ten single steps match one repeated run, and superposition holds on unseen torques.
+- [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
+- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Alternate inputs:** the grader also covers element-wise add and scale, a length mismatch, and a step that does not mutate its input; it changes the inputs, so a hardcoded result fails.
+
 ---
 
 ## Prerequisites
@@ -76,10 +87,11 @@ Tier 2's first page writes exactly this state as a column and calls it `x`. The 
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `accel_rad_s2` (`TODO 1`), `step` (`TODO 2`), `run` (`TODO 3`), `add` (`TODO 4`) and `scale` (`TODO 5`). The prints and asserts at the bottom are given:
 
-**Where each name comes from** (read this beside the code; numbered for reference, not steps):
-1. `DT_S` — `0.01` s per tick; `J` — `0.02` kg·m² joint inertia; `B` — `0.05` N·m·s/rad viscous friction; `TAU` — `0.40` N·m constant command.
-2. `accel_rad_s2(state, tau=TAU, j=J, b=B)` — `(tau - b*state[1]) / j`; `step` — one Euler tick: `q += qd*dt_s`, then `qd += accel*dt_s`; `run` — repeats `step` for `ticks`; `add` — component-wise sum; `scale` — multiplies both components by `k`.
-3. `half` — 30 ticks at `TAU/2`: `0.348615` rad, `2.128463` rad/s; `rest` — the other half-command run; `both` — 30 ticks at `TAU`: `0.697230` rad, `4.256926` rad/s; `summed` — `add(half, rest)`, equal to `both`; `scale(half, 2.0)` — also equal to `both`.
+**What each name means** (read this beside the code):
+
+1. **Inputs** — the names set before the TODOs; the starter's inline comments give each one's role and unit.
+1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
+1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
 DT_S = 0.01
@@ -89,27 +101,32 @@ TAU = 0.40  # constant commanded torque, N m
 
 
 def accel_rad_s2(state, tau=TAU, j=J, b=B):
-    # TODO 1: The joint's angular acceleration at this state
+    # TODO 1: Return the joint's angular acceleration at this state.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 
 def step(state, dt_s=DT_S, tau=TAU, j=J, b=B):
-    # TODO 2: The next state after one tick
+    # TODO 2: Return the next state after one tick.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return list(state)
 
 
 def run(state, ticks, dt_s=DT_S, tau=TAU, j=J, b=B):
-    # TODO 3: The state after the requested number of ticks
+    # TODO 3: Return the state after the requested number of ticks.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return state
 
 
 def add(a, b):
-    # TODO 4: The component-wise combination of the two states
+    # TODO 4: Return the component-wise combination of the two states.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return list(a)
 
 
 def scale(a, k):
-    # TODO 5: The state with every component scaled by k
+    # TODO 5: Return the state with every component scaled by k.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return list(a)
 
 

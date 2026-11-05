@@ -25,6 +25,17 @@ Calculate linear forces ($F = ma$) and gravitational weight ($W = mg$), and comp
 - **New syntax:** None (uses `math.cos(math.radians(theta_deg))` from Lesson P.10).
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours
 
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
+- [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
+- [ ] **Required end state:** the grader checks weight_newtons at 0 kg; 0.5 kg and 2.5 kg; gravity_torque_nm at 0 deg (max lever arm).
+- [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
+- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Alternate inputs:** the grader also covers the 60, 90, and 180 degree lever angles; it changes the inputs, so a hardcoded result fails.
+
 ---
 
 ## Prerequisites
@@ -84,24 +95,25 @@ Check the two physical extremes:
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `weight_newtons` (`TODO 1`) and `gravity_torque_nm` (`TODO 2`) using $\tau = m \cdot g \cdot L \cdot \cos(\theta)$ where `angle_from_horiz_deg` is measured from the horizontal:
 
-**Where each name comes from** (read this beside the code):
-1. `weight_newtons` parameter `mass_kg` — a mass in kilograms; `TODO 1` returns `mass_kg * 9.81` in newtons.
-1. `gravity_torque_nm` parameters `mass_kg` (kg), `length_m` (lever length in metres), and `angle_from_horiz_deg` (degrees from horizontal); `TODO 2` returns `weight_newtons(mass_kg) * length_m * cos(rad)` in N·m.
-1. `angle_deg` — the loop variable; each pass takes the next angle from the hardcoded list `[0.0, 60.0, 90.0]`.
-1. `tau` — the `gravity_torque_nm(0.50, 0.30, angle_deg)` result for the angle of this pass, in N·m.
+**What each name means** (read this beside the code):
+
+1. **Inputs** — the names set before the TODOs; the starter's inline comments give each one's role and unit.
+1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
+1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
 import math
 
 
 def weight_newtons(mass_kg):
-    # TODO 1: the downward weight of this mass, in newtons
+    # TODO 1: Return the downward weight of this mass, in newtons.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 
 def gravity_torque_nm(mass_kg, length_m, angle_from_horiz_deg):
-    # TODO 2: the gravity torque this link must hold at the given angle from horizontal —
-    #   the page's lever-arm picture shows what the angle does to that arm
+    # TODO 2: Return the gravity torque this link must hold at the given angle from horizontal — the page's lever-arm picture shows what the angle does to that arm.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 

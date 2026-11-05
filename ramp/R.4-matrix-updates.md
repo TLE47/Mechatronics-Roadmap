@@ -25,6 +25,17 @@ Take the two-line tick from R.3 and store its **coefficients in a table**, so on
 - **New syntax:** a matrix as a list of rows (`A = [[...], [...]]`), `A[i][j]` for one coefficient, and a nested loop or generator that builds one output slot per row.
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 0.75–1.0 hours | Slow-learner: 1.5–2.0 hours
 
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
+- [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
+- [ ] **Required end state:** the grader checks mat_vec on the lesson's [2, 3] state (rows are rates: [3, -7.5]); on a B u multiplication; step_matrix against step_two_lines for one tick and for thirty.
+- [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
+- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Alternate inputs:** the grader also covers a row/vector shape mismatch raising ValueError; it changes the inputs, so a hardcoded result fails.
+
 ---
 
 ## Prerequisites
@@ -74,10 +85,11 @@ This is the page where `x_dot = Ax + Bu` stops being a formula to memorise. Ever
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `mat_vec` (`TODO 1`), `step_matrix` (`TODO 2`) and `step_two_lines` (`TODO 3`). `A` and `B_IN` are given, and so is the comparison loop:
 
-**Where each name comes from** (read this beside the code; numbered for reference, not steps):
-1. `DT_S` — `0.01` s; `J` — `0.02` kg·m²; `B` — `0.05` N·m·s/rad; `TAU` — `0.40` N·m; `A` — `[[0.0, 1.0], [0.0, -2.5]]` because `-B/J = -2.5`; `B_IN` — `[[0.0], [50.0]]` because `1/J = 50`.
-2. `mat_vec(matrix, vector)` — row-by-row dot product; `step_matrix` — `state + dt_s*(A*state + B_IN*tau)`; `step_two_lines` — the same update written as `q += qd*dt_s` and `qd += (-2.5*qd + 50*tau)*dt_s`.
-3. `matrix_path` and `line_path` — both start `[0.0, 0.0]`; after 30 ticks both are `0.697230` rad and `4.256926` rad/s. `velocity_only` — `[0.0, 1.0]`; `first_row` — `mat_vec(A, velocity_only) = [1.0, -2.5]`; `tau` — the function parameter defaulting to `TAU`.
+**What each name means** (read this beside the code):
+
+1. **Inputs** — the names set before the TODOs; the starter's inline comments give each one's role and unit.
+1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
+1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
 DT_S = 0.01
@@ -92,17 +104,20 @@ B_IN = [[0.0], [1.0 / J]]
 
 
 def mat_vec(matrix, vector):
-    # TODO 1: the matrix applied to this vector
+    # TODO 1: Return the matrix applied to this vector.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return [0.0 for _ in matrix]
 
 
 def step_matrix(state, dt_s=DT_S, tau=TAU):
-    # TODO 2: the state after one tick, through the matrix
+    # TODO 2: Return the state after one tick, through the matrix.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return list(state)
 
 
 def step_two_lines(state, dt_s=DT_S, tau=TAU):
-    # TODO 3: the same tick through the two line-by-line updates
+    # TODO 3: Return the same tick through the two line-by-line updates.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return list(state)
 
 

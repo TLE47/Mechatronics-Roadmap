@@ -31,6 +31,7 @@ import {
 } from '../../micro/timer';
 import type { MicroEvent, MicroStore } from '../../micro/types';
 import { optionalResources, resourcesFor } from '../../micro/resources';
+import { formatWalkthroughChord, readWalkthroughKeys } from '../../micro/walkthroughKeys.ts';
 import { lessonPageUrl } from '../../startHere';
 import { MicroVisual } from '../micro/MicroVisual.tsx';
 import { MicroWalkthrough } from '../micro/MicroWalkthrough.tsx';
@@ -96,7 +97,7 @@ function outcomeCopy(result: Result | null): string {
     : 'Challenge missed. Your mastery was kept; the next review is tomorrow.';
 }
 
-const CARD = 'rounded-2xl border border-line bg-panel p-5 shadow-sm';
+const CARD = 'rounded-2xl border border-line bg-panel p-3.5 shadow-sm sm:p-5';
 const OPTION_TONE = ['bg-accent', 'bg-emerald', 'bg-amber', 'bg-purple'];
 
 /** The colour family a concept uses in the list and the lesson header. */
@@ -118,6 +119,8 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [gradedAnswers, setGradedAnswers] = useState<Record<string, boolean>>({});
   const [walkthroughDone, setWalkthroughDone] = useState(false);
+  const [testChord, setTestChord] = useState(() => readWalkthroughKeys().test);
+  const [inputMode, setInputMode] = useState<'pointer' | 'key'>('pointer');
   const [diagnosticScore, setDiagnosticScore] = useState<0 | 1 | 2>(0);
   const [missed, setMissed] = useState<string[]>([]);
   const [result, setResult] = useState<Result | null>(null);
@@ -206,6 +209,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
     setNote('');
     setMissed([]);
     setDiagnosticScore(0);
+    setInputMode('pointer');
     if (concept.id === activeId) clockRef.current?.resume();
   };
 
@@ -216,6 +220,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
     }
     setActiveId(null);
     setStage('overview');
+    setInputMode('pointer');
     setAnswers({});
     setGradedAnswers({});
     setWalkthroughDone(false);
@@ -228,6 +233,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
     if (next) setReading(next);
     clockRef.current?.pause();
     if (result?.kind === 'review') setReviewAttempt((attempt) => attempt + 1);
+    setInputMode('pointer');
     setStage('done');
   };
 
@@ -238,7 +244,18 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
   };
 
   const continueToPractice = () => {
+    setInputMode('pointer');
     setStage('practice');
+    setAnswers({});
+    setGradedAnswers({});
+    setNote('');
+    clockRef.current?.resume();
+  };
+
+  const startDiagnostics = (input: 'pointer' | 'key' = 'pointer') => {
+    if (!active || !walkthroughDone) return;
+    setInputMode(input);
+    setStage('diagnostics');
     setAnswers({});
     setGradedAnswers({});
     setNote('');
@@ -386,15 +403,15 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
     return (
       <fieldset
         key={question.id}
-        className="rounded-xl border border-line-soft bg-canvas p-3.5"
+        className="rounded-xl border border-line-soft bg-canvas p-2.5 sm:p-3.5"
         data-testid={`micro-question-${question.id}`}
       >
         <legend className="px-1 font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
           {index + 1} / {question.type === 'choice' ? 'choose one' : 'short answer'}
         </legend>
-        <div className={hasPreview ? 'grid gap-4 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:items-start' : ''}>
+        <div className={hasPreview ? 'grid gap-3 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:items-start lg:gap-4' : ''}>
           <div className="min-w-0">
-            <p className="text-[15.5px] font-semibold leading-relaxed text-ink">
+            <p className="text-[14px] font-semibold leading-relaxed text-ink sm:text-[15.5px]">
               <MicroRichText text={question.prompt} />
             </p>
             {question.code ? <MicroCodeBlock code={question.code} compact className="mt-2" /> : null}
@@ -411,7 +428,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
                 {(question.options ?? []).map((option, optionIndex) => (
                   <label
                     key={option.id}
-                    className={`flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 text-[14.5px] leading-relaxed ${
+                    className={`flex cursor-pointer items-start gap-2 rounded-lg border px-2.5 py-2 text-[13.5px] leading-relaxed sm:gap-2.5 sm:px-3 sm:py-2.5 sm:text-[14.5px] ${
                       selected === option.id
                         ? isGraded
                           ? isCorrect
@@ -444,6 +461,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
           </div>
           {hasPreview ? (
             <MicroAnswerPreview
+              key={`${question.id}-${selected}`}
               question={question}
               selected={selected}
               graded={isGraded}
@@ -489,27 +507,27 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
   };
 
   const overview = (
-    <div className="space-y-3" data-testid="micro-overview">
-      <section className={`${CARD} relative overflow-hidden border-accent/30`}>
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_92%_8%,var(--accent-soft),transparent_38%),radial-gradient(circle_at_8%_92%,var(--emerald),transparent_32%)] opacity-70" />        <div className="relative grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+    <div className="space-y-2.5 sm:space-y-3" data-testid="micro-overview">
+      <section className={`${CARD} relative overflow-hidden border-accent/30`} data-testid="micro-hero">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_92%_8%,var(--accent-soft),transparent_38%),radial-gradient(circle_at_8%_92%,var(--emerald),transparent_32%)] opacity-70" />        <div className="relative grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start sm:gap-4">
           <div className="min-w-0">
-            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-accent">P.1 · seven tiny concepts</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-accent sm:text-[11px]">P.1 · seven tiny concepts</p>
             <h2 className="mt-1 font-display text-2xl font-bold leading-tight text-ink sm:text-3xl">
               Follow the question. The answer can wait.
             </h2>
-            <p className="mt-2 max-w-[62ch] text-[15px] leading-relaxed text-muted">
+            <p className="mt-1.5 max-w-[62ch] text-[13.5px] leading-relaxed text-muted sm:mt-2 sm:text-[15px]">
               One small idea, two quick checks, then a review that returns tomorrow. A clean diagnostic
               is provisional; a review or challenge makes it stick. The parent lesson P.1 is never
               marked verified from here.
             </p>
           </div>
-          <div className="w-full rounded-xl border border-line-soft bg-canvas/90 px-4 py-3 text-left sm:w-auto sm:text-right">
+          <div className="w-full rounded-xl border border-line-soft bg-canvas/90 px-3 py-2.5 text-left sm:w-auto sm:px-4 sm:py-3 sm:text-right">
             <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-faint">Due now</p>
             <p className="font-mono text-3xl font-bold tabular-nums text-ink">{due.length}</p>
             <p className="font-mono text-[10px] text-faint">{due.length === 0 ? 'all caught up' : 'ready for you'}</p>
           </div>
         </div>
-        <div className="relative mt-4 grid gap-2 sm:grid-cols-3">
+        <div className="relative mt-3 grid gap-2 sm:mt-4 sm:grid-cols-3">
           <div className="rounded-lg border border-line-soft bg-canvas/80 px-3 py-2">
             <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-faint">Ideas unlocked</p>
             <p className="mt-0.5 text-[15px] font-bold text-ink">
@@ -531,7 +549,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
             style={{ width: `${Math.round((learnedCount / MICRO_CONCEPTS.length) * 100)}%` }}
           />
         </div>
-        <div className="relative mt-4">
+        <div className="relative mt-3 sm:mt-4">
           <MicroVisual conceptId="variables" />
         </div>
         {suggested ? (
@@ -660,8 +678,8 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
   );
 
   const detail = active ? (
-    <div className="space-y-3" data-testid="micro-detail">
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+    <div className="space-y-2.5 sm:space-y-3" data-testid="micro-detail">
+      <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
@@ -697,8 +715,8 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
           </span>
           <span className="font-mono text-[11px] text-faint">P.1 · {active.title}</span>
         </div>
-        <h2 className="mt-2 font-display text-2xl font-bold leading-tight text-ink">{active.title}</h2>
-        <p className="mt-1 text-[13px] text-muted">{MICRO_CATALOG.title}</p>
+        <h2 className="mt-2 font-display text-xl font-bold leading-tight text-ink sm:text-2xl">{active.title}</h2>
+        <p className="mt-1 text-[12px] text-muted sm:text-[13px]">{MICRO_CATALOG.title}</p>
         {reading.overTarget ? (
           <p
             role="status"
@@ -713,11 +731,11 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
       </section>
 
       {stage === 'learn' ? (
-        <section className={`${CARD} space-y-4`} data-testid="micro-teaching">
+        <section className={`${CARD} micro-stage micro-reveal space-y-3 sm:space-y-4`} data-testid="micro-teaching" data-input={inputMode}>
           <MicroVisual conceptId={active.id} />
           <div className="max-w-[72ch]">
             {active.teaching[0] ? (
-              <p className="text-[16px] font-medium leading-8 text-ink">
+              <p className="text-[14.5px] font-medium leading-7 text-ink sm:text-[16px] sm:leading-8">
                 <MicroRichText text={active.teaching[0]} />
               </p>
             ) : null}
@@ -726,11 +744,14 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
             key={active.id}
             concept={active}
             onComplete={() => setWalkthroughDone(true)}
+            onTest={startDiagnostics}
+            testReady={walkthroughDone}
+            onKeysChange={(next) => setTestChord(next.test)}
           />
           {walkthroughDone ? (
             <div className="micro-reveal space-y-3">
               {active.teaching.slice(1).map((paragraph) => (
-                <p key={paragraph} className="max-w-[72ch] text-[16px] leading-8 text-body">
+                <p key={paragraph} className="max-w-[72ch] text-[14.5px] leading-7 text-body sm:text-[16px] sm:leading-8">
                   <MicroRichText text={paragraph} />
                 </p>
               ))}
@@ -749,25 +770,22 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
           <button
             type="button"
             disabled={!walkthroughDone}
-            onClick={() => {
-              setStage('diagnostics');
-              setAnswers({});
-              setGradedAnswers({});
-              setNote('');
-              clockRef.current?.resume();
-            }}
-            className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-[14px] font-bold text-inverse shadow-sm hover:bg-accent/80 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => startDiagnostics('pointer')}
+            className="inline-flex flex-wrap items-center gap-2 rounded-xl bg-accent px-3.5 py-2.5 text-[13px] font-bold text-inverse shadow-sm hover:bg-accent/80 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-[14px]"
             data-testid="micro-start-diagnostics"
           >
             Let me test that
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            <kbd className="rounded border border-inverse/25 bg-inverse/10 px-1.5 py-0.5 font-mono text-[10px] text-inverse/80">
+              {formatWalkthroughChord(testChord)}
+            </kbd>
           </button>
           {renderResources(active)}
         </section>
       ) : null}
 
       {stage === 'diagnostics' ? (
-        <section className={`${CARD} space-y-3`} data-testid="micro-diagnostics">
+        <section className={`${CARD} micro-stage micro-reveal space-y-3`} data-testid="micro-diagnostics" data-input={inputMode}>
           <p className="text-[14px] leading-relaxed text-muted">
             Two checks, no timer pressure. A wrong answer is a clue for the next step, not a score.
           </p>
@@ -803,7 +821,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
       ) : null}
 
       {stage === 'practice' ? (
-        <section className={`${CARD} space-y-3`} data-testid="micro-practice">
+        <section className={`${CARD} micro-stage micro-reveal space-y-3`} data-testid="micro-practice" data-input={inputMode}>
           <div className="rounded-xl border border-amber/25 bg-amber/5 p-3.5">
             <p className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-amber">
               A closer look · {diagnosticScore}/2
@@ -868,7 +886,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
       ) : null}
 
       {stage === 'review' ? (
-        <section className={`${CARD} space-y-3`} data-testid="micro-review-stage">
+        <section className={`${CARD} micro-stage micro-reveal space-y-3`} data-testid="micro-review-stage" data-input={inputMode}>
           <p className="text-[14px] leading-relaxed text-muted">
             A review is one concept at a time, two questions, all correct to consolidate.
           </p>
@@ -897,7 +915,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
       ) : null}
 
       {stage === 'challenge' ? (
-        <section className={`${CARD} space-y-3`} data-testid="micro-challenge-stage">
+        <section className={`${CARD} micro-stage micro-reveal space-y-3`} data-testid="micro-challenge-stage" data-input={inputMode}>
           <p className="text-[14px] leading-relaxed text-muted">
             One transfer question. A pass consolidates the concept for two weeks; a miss keeps what you
             have learned and schedules tomorrow.
@@ -927,7 +945,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
       ) : null}
 
       {stage === 'done' && result ? (
-        <section className={`${CARD} space-y-4`} data-testid="micro-result">
+        <section className={`${CARD} micro-stage micro-reveal space-y-4`} data-testid="micro-result" data-input={inputMode}>
           <div className="flex items-start gap-3">
             <span className="rounded-full border border-emerald/40 bg-emerald/10 p-2 text-emerald">
               {result.kind === 'review' && result.correct !== result.total ? (
@@ -999,16 +1017,16 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
   ) : null;
 
   return (
-    <div data-testid="tab-micro" className="space-y-4">
+    <div data-testid="tab-micro" className="micro-shell space-y-3 sm:space-y-4">
       <section className={`${CARD} relative overflow-hidden border-accent/30`}>
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_18%,var(--accent-soft),transparent_36%),radial-gradient(circle_at_12%_90%,var(--purple),transparent_30%)] opacity-80" />
-        <div className="relative grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+        <div className="relative grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start sm:gap-4">
           <div className="min-w-0">
-            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-accent">Beta · subject-agnostic engine</p>
-            <h1 className="mt-1 font-display text-3xl font-bold leading-tight text-ink sm:text-4xl">
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-accent sm:text-[11px]">Beta · subject-agnostic engine</p>
+            <h1 className="mt-1 font-display text-2xl font-bold leading-tight text-ink sm:text-3xl md:text-4xl">
               Micro-learning
             </h1>
-            <p className="mt-2 max-w-[62ch] text-[15px] leading-relaxed text-muted">
+            <p className="mt-1.5 max-w-[62ch] text-[13.5px] leading-relaxed text-muted sm:mt-2 sm:text-[15px]">
               Seven P.1 concepts, each about two minutes. Local-only progress; no account, no cloud,
               no generated content. Follow one curious thread at a time and let the small wins stack up.
             </p>

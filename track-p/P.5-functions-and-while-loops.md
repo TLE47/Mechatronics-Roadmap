@@ -25,6 +25,17 @@ Package repeatable engineering calculations into named functions using `def` and
 - **New syntax:** `def func_name(param1, param2):`, `return value`, `while condition:`.
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours
 
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
+- [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
+- [ ] **Required end state:** the grader checks step_position(pos_m, vel_m_s, dt_s) for positive and negative velocity and for a zero time step; 4-step while-loop state (step == 4).
+- [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
+- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Alternate inputs:** the grader also covers a target at pos_m = 1.20 m; it changes the inputs, so a hardcoded result fails.
+
 ---
 
 ## Prerequisites
@@ -83,16 +94,16 @@ Functions pair naturally with **`while` loops** when simulating motion or contro
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `step_position` (`TODO 1`) and the `while` loop (`TODO 2`) to step a robot forward 4 times with velocity `1.5 m/s` and time step `dt_s = 0.2 s`:
 
-**Where each name comes from** (read this beside the code):
-1. `step_position` parameters: `pos_m` is the position at the start of the step in metres, `vel_m_s` the velocity in m/s, and `dt_s` the step in seconds. `TODO 1` returns `pos_m + vel_m_s * dt_s`. The parameter is a local name; assigning it inside the function does not rename the outer `pos_m`.
-1. `pos_m` — starts at `0.0` m outside the function; each loop pass replaces it with the value returned by `step_position`, so it reaches `1.20` m after four passes.
-1. `vel_m_s`, `dt_s` — hardcoded `1.5` m/s and `0.2` s; both feed every `step_position` call.
-1. `step` — starts at `0`; `TODO 2` increments it once per pass, so the `while step < 4` loop stops after four passes.
-1. The final `print` reads `step` and `pos_m`; it creates neither value.
+**What each name means** (read this beside the code):
+
+1. **Inputs** — the names set before the TODOs; the starter's inline comments give each one's role and unit.
+1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
+1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
 def step_position(pos_m, vel_m_s, dt_s):
-    # TODO 1: where the joint is after this time step
+    # TODO 1: Return the joint's position after this time step.
+    #         Compute it from the current position, velocity, and time step; do not return a typed-in final value.
     return pos_m
 
 

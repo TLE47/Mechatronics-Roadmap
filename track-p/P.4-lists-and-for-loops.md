@@ -25,6 +25,17 @@ Store sequences of sensor readings in zero-indexed Python `lists` (`[a, b, c]`) 
 - **New syntax:** `[a, b, c]`, `items[0]`, `items.append(x)`, `len(items)`, `for x in items:`, `range(n)`.
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours
 
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
+- [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
+- [ ] **Required end state:** the grader checks clamped_commands list; total_cmd and mean_cmd within tolerance.
+- [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
+- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Alternate inputs:** the grader also covers an unseen five-element boundary list: -100, 0, 100, 255, 500; it changes the inputs, so a hardcoded result fails.
+
 ---
 
 ## Prerequisites
@@ -75,13 +86,11 @@ Sensors on a robot produce streams of measurements over time. Instead of inventi
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `TODO 1` and `TODO 2` to loop through `raw_commands`, clamp each value into `[0, 255]`, append it to `clamped_commands`, and compute `total_cmd`:
 
-**Where each name comes from** (read this beside the code):
-1. `raw_commands` — hardcoded list of six commands; it is the loop's source, not a result.
-1. `clamped_commands` — starts as an empty list; `TODO 2` appends each safe command, so its length grows to `6`.
-1. `total_cmd` — starts at `0`; `TODO 2` adds each safe command to it; here it ends at `647`.
-1. `cmd` — the loop variable; each pass takes the next value from `raw_commands`.
-1. `safe_cmd` — `TODO 1` local result of `cmd` clamped into `[0, 255]`; it is appended and added to the total.
-1. `mean_cmd` — computed after the loop as `total_cmd / len(raw_commands)`, using the six-item list; here `647 / 6 ≈ 107.83`.
+**What each name means** (read this beside the code):
+
+1. **Inputs** — the names set before the TODOs; the starter's inline comments give each one's role and unit.
+1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
+1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
 raw_commands = [-30, 0, 64, 128, 200, 310]
@@ -89,10 +98,12 @@ clamped_commands = []
 total_cmd = 0
 
 for cmd in raw_commands:
-    # TODO 1: the command held inside the byte range
+    # TODO 1: Set safe_cmd to the command clamped inside the 8-bit range.
+    #         Use the inclusive limits 0 and 255; do not type the Expected Output list.
     safe_cmd = cmd
 
-    # TODO 2: the running list and total this loop keeps
+    # TODO 2: Inside the loop, update clamped_commands and total_cmd once for every raw command.
+    #         Append the safe command and include it in the running total; do not assume the starter list's length.
 
 mean_cmd = total_cmd / len(raw_commands)
 print(f"Clamped list: {clamped_commands}")

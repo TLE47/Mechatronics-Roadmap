@@ -25,6 +25,17 @@ Turn two encoder samples into a **joint speed** (`dq/dt` in rad/s) without guess
 - **New syntax:** `enumerate`-free index windows — `samples[i - 1]`, `samples[i]`, `samples[i + 1]` — for reading a value together with its two neighbours.
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 0.75–1.0 hours | Slow-learner: 1.5–2.0 hours
 
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
+- [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
+- [ ] **Required end state:** the grader checks counts_to_rad on a full turn and a quarter turn, rate_rad_s forwards; backwards and the average/central rates on unseen traces; and that a single-sample rate is refused with ValueError.
+- [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
+- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Alternate inputs:** the grader also covers the first sample with no central difference, and a rising trace with no reversal; it changes the inputs, so a hardcoded result fails.
+
 ---
 
 ## Prerequisites
@@ -75,10 +86,11 @@ Tier 2 begins with $\dot{x} = Ax + Bu$, and the dot is exactly the quotient you 
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `counts_to_rad` (`TODO 1`), `rate_rad_s` (`TODO 2`), `average_rate_rad_s` (`TODO 3`) and `central_rate_rad_s` (`TODO 4`). `peak_index` and `reversal_tick` are given:
 
-**Where each name comes from** (read this beside the code; numbered for reference, not steps):
-1. `COUNTS_PER_TURN` — `4096.0` encoder counts in one full turn; `DT_S` — `0.01` s between samples (100 Hz); `COUNTS` — the recorded ten-sample trace.
-2. `first`/`last` — endpoint rates from `rate_rad_s(COUNTS[1], COUNTS[0])` and `rate_rad_s(COUNTS[-1], COUNTS[-2])`; `whole` — the average over all nine ticks; `peak` — the index of the largest count (`6` here); `at_peak` — the central rate at that index.
-3. `counts_to_rad(counts)` — `counts * 2*pi / COUNTS_PER_TURN`; `rate_rad_s(now_counts, prev_counts, dt)` — `(counts_to_rad(now_counts) - counts_to_rad(prev_counts)) / dt`; `average_rate_rad_s(samples, dt)` — `(counts_to_rad(samples[-1]) - counts_to_rad(samples[0])) / ((len(samples)-1)*dt)`; `central_rate_rad_s(samples, i, dt)` — `(counts_to_rad(samples[i+1]) - counts_to_rad(samples[i-1])) / (2*dt)`.
+**What each name means** (read this beside the code):
+
+1. **Inputs** — the names set before the TODOs; the starter's inline comments give each one's role and unit.
+1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
+1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
 import math
@@ -90,22 +102,26 @@ COUNTS = [0, 120, 235, 330, 400, 440, 450, 425, 370, 290]
 
 
 def counts_to_rad(counts):
-    # TODO 1: the angle these encoder counts represent
+    # TODO 1: Return the angle these encoder counts represent.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 
 def rate_rad_s(now_counts, prev_counts, dt_s=DT_S):
-    # TODO 2: the joint's speed between these two samples
+    # TODO 2: Return the joint's speed between these two samples.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 
 def average_rate_rad_s(samples, dt_s=DT_S):
-    # TODO 3: the average speed over the whole trace
+    # TODO 3: Return the average speed over the whole trace.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 
 def central_rate_rad_s(samples, i, dt_s=DT_S):
-    # TODO 4: the speed at this sample, using the samples either side of it
+    # TODO 4: Return the speed at this sample, using the samples either side of it.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 

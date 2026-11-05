@@ -23,6 +23,17 @@ Combine everything from Track P (variables, clamping, loops, functions, `assert`
 - **New syntax:** None (integrates Lessons P.1 through P.14).
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–2.5 hours
 
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
+- [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
+- [ ] **Required end state:** the grader checks cmd10_to_torque saturation at negative (-50); zero, midpoint (511.5) and overflow (2048) inputs; holding_torque_nm across radian angles (0, pi/3, pi/2).
+- [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
+- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Alternate inputs:** the grader also covers the three-step trajectory state; it changes the inputs, so a hardcoded result fails.
+
 ---
 
 ## Prerequisites
@@ -69,35 +80,31 @@ Here is the physical system you are modeling using our consistent horizontal-ang
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `TODO 1`, `TODO 2`, `TODO 3`, and `TODO 4` so the milestone script converts units, scales the 10-bit command, computes horizontal-angle gravity torque $\tau_{\text{grav}} = m \cdot g \cdot L \cdot \cos(\theta)$, and steps the arm angle forward over 3 ticks of `100 ms`:
 
-**Where each name comes from** (read this beside the code):
-1. `cmd10_to_torque` parameters `cmd_10bit` (a 10-bit command in `[0, 1023]`) and `max_torque_nm` (the full-scale torque in N·m); `TODO 1` clamps the command to `[0, 1023]`, then returns `cmd_10bit / 1023 * max_torque_nm`.
-1. `holding_torque_nm` parameters `length_m` (metres), `mass_kg` (kilograms), and `angle_from_horiz_rad` (radians); `TODO 2` returns `mass_kg * 9.81 * length_m * cos(angle_from_horiz_rad)` in N·m.
-1. `length_m`, `dt_s`, `omega_rad_s` — start at `0.0` and are filled by `TODO 3` from `250.0 mm` (`0.25 m`), `100.0 ms` (`0.10 s`), and `30.0 RPM` (`30 * 2 * math.pi / 60` rad/s).
-1. `mass_kg` — hardcoded `0.40` kg; it feeds every `holding_torque_nm` call.
-1. `motor_tau` — result of `cmd10_to_torque(767.25, 2.0)`, in N·m; here `1.50` N·m.
-1. `grav_tau_0` — result of `holding_torque_nm(length_m, mass_kg, 0.0)`, in N·m; here `0.9810` N·m.
-1. `can_lift` — the boolean comparison `motor_tau > grav_tau_0`; here `True`.
-1. `angle_rad` — starts at `0.0`; each of the three loop passes adds `omega_rad_s * dt_s` (`TODO 4`).
-1. `step` — the loop variable from `range(3)`.
-1. `tip_x`, `tip_y`, `tau_g` — computed inside each pass from `length_m`, `angle_rad`, and `mass_kg`; they are printed, not carried to the next pass.
+**What each name means** (read this beside the code):
+
+1. **Inputs** — the names set before the TODOs; the starter's inline comments give each one's role and unit.
+1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
+1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
 import math
 
 
 def cmd10_to_torque(cmd_10bit, max_torque_nm):
-    # TODO 1: the torque this ten-bit command asks for, held inside the command's own range
+    # TODO 1: Return the torque this ten-bit command asks for, held inside the command's own range.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 
 def holding_torque_nm(length_m, mass_kg, angle_from_horiz_rad):
-    # TODO 2: the torque gravity demands at this angle from horizontal
+    # TODO 2: Return the torque gravity demands at this angle from horizontal.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 
 # Arm parameters (convert 250 mm and 100 ms to base SI units!)
-# TODO 3: the arm's length in metres, the tick in seconds, and the joint
-#         speed in radians per second
+# TODO 3: Set length_m, dt_s, and omega_rad_s to the arm length, tick, and joint speed in base SI units.
+#         Convert the millimetres, milliseconds, and RPM values already in the starter; leave mass_kg at its given value.
 length_m = 0.0
 dt_s = 0.0
 omega_rad_s = 0.0
@@ -110,7 +117,8 @@ print(f"Motor torque: {motor_tau:.2f} N*m | Gravity at 0 deg: {grav_tau_0:.4f} N
 
 angle_rad = 0.0
 for step in range(3):
-    # TODO 4: where the arm points after this tick at that angular speed
+    # TODO 4: Advance angle_rad by the joint's angular speed for one tick before computing the tip.
+    #         Use the existing angle and the given speed and tick; do not type the Expected Output angle.
     angle_rad = angle_rad
     tip_x = length_m * math.cos(angle_rad)
     tip_y = length_m * math.sin(angle_rad)

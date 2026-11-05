@@ -25,6 +25,17 @@ Convert between a repeating signal's **frequency** ($f$, in Hertz `Hz`) and its 
 - **New syntax:** `1.0 / freq_hz`, `(2 ** n_bits) - 1`.
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–3.0 hours
 
+### Requirements (what counts as complete)
+
+Your finished program must satisfy **all** of these conditions:
+
+- [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
+- [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
+- [ ] **Required end state:** the grader checks freq_to_period_ms across 1 Hz, 50 Hz; 490 Hz, 1 kHz and 20 kHz PWM frequencies; max_unsigned_int across 1-bit, 8-bit.
+- [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
+- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Alternate inputs:** the grader also covers 1-bit, 8-bit, 10-bit, 12-bit, and 16-bit timer widths; it changes the inputs, so a hardcoded result fails.
+
 ---
 
 ## Prerequisites
@@ -86,19 +97,22 @@ Because counting starts at `0`, the maximum integer is always **$2^N - 1$**.
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `freq_to_period_ms` (`TODO 1`) and `max_unsigned_int` (`TODO 2`) to compute the period in milliseconds (`ms`) and the maximum integer value of 8-bit, 10-bit, and 12-bit registers:
 
-**Where each name comes from** (read this beside the code):
-1. `freq_to_period_ms` parameter `freq_hz` — a frequency in hertz; `TODO 1` returns `1000 / freq_hz` in milliseconds, so `50 Hz` becomes `20.0 ms`.
-1. `max_unsigned_int` parameter `n_bits` — a register width in bits; `TODO 2` returns `2 ** n_bits - 1`, so `8` bits becomes `255`.
-1. The two `print` lines call both functions directly with `50.0`/`490.0` Hz and `8`/`10`/`12` bits; no other named values are created.
+**What each name means** (read this beside the code):
+
+1. **Inputs** — the names set before the TODOs; the starter's inline comments give each one's role and unit.
+1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
+1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
 def freq_to_period_ms(freq_hz):
-    # TODO 1: the period this frequency gives, in milliseconds
+    # TODO 1: Return the period this frequency gives, in milliseconds.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0.0
 
 
 def max_unsigned_int(n_bits):
-    # TODO 2: the top count an n-bit unsigned register holds
+    # TODO 2: Return the top count an n-bit unsigned register holds.
+    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
     return 0
 
 

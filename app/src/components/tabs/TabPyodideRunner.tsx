@@ -2755,7 +2755,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 symbolMiss,
                 sliderCount,
                 vim: { on: vim.on, mode: vim.mode, onMode: vim.setMode },
-                lesson: { id: selectedId, question: writeQuestion, goal: currentLesson.goal },
+                lesson: {
+                  id: selectedId,
+                  question: writeQuestion,
+                  goal: currentLesson.goal,
+                  requirements: currentLesson.requirements,
+                },
                 onSliderCommit: handleSliderCommit,
                 getAnalysis: getReadyAnalysis,
                 onGoToDefinition: goToDefinition,

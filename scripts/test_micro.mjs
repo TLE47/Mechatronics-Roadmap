@@ -50,6 +50,7 @@ import { comparisonPreview, questionTarget } from '../app/src/micro/questionComp
 import {
   DEFAULT_WALKTHROUGH_KEYS,
   formatWalkthroughChord,
+  normalizeWalkthroughKeys,
   readWalkthroughKeys,
   updateWalkthroughKey,
 } from '../app/src/micro/walkthroughKeys.ts';
@@ -192,6 +193,12 @@ check('walkthrough shortcuts are customizable, persisted and refused on a clash'
   const defaults = readWalkthroughKeys(storage);
   assert.deepEqual(defaults, DEFAULT_WALKTHROUGH_KEYS);
   assert.equal(formatWalkthroughChord(defaults.next), '→');
+  assert.equal(formatWalkthroughChord(defaults.test), 'T');
+  const migrated = normalizeWalkthroughKeys({
+    next: defaults.next,
+    previous: defaults.previous,
+  });
+  assert.equal(formatWalkthroughChord(migrated.test), 'T', 'an older two-key store gains the test key');
   const custom = updateWalkthroughKey(
     defaults,
     'next',
@@ -211,6 +218,17 @@ check('walkthrough shortcuts are customizable, persisted and refused on a clash'
   );
   assert.equal(previous.error, null);
   assert.deepEqual(readWalkthroughKeys(storage), previous.keys);
+  const test = updateWalkthroughKey(
+    previous.keys,
+    'test',
+    { code: 'KeyX', mod: false, alt: false, shift: false },
+    storage
+  );
+  assert.equal(test.error, null);
+  assert.equal(formatWalkthroughChord(test.keys.test), 'X');
+  assert.deepEqual(readWalkthroughKeys(storage), test.keys);
+  const testClash = updateWalkthroughKey(test.keys, 'test', test.keys.next, storage);
+  assert.match(testClash.error, /already the next key/);
   const reserved = updateWalkthroughKey(
     defaults,
     'next',
@@ -229,6 +247,8 @@ check('the quiz comparison plugs known values into the equation', () => {
   ]);
   assert.equal(preview.selectedText, '425');
   assert.equal(preview.result, 'sticker_count = 425');
+  assert.ok(preview.trace.some((step) => step.plugged === 'sticker_count = 400 + 25'));
+  assert.equal(preview.trace.at(-1)?.result, 'sticker_count = 425');
 });
 
 check('the quiz comparison follows print and evaluates arithmetic', () => {
@@ -237,6 +257,7 @@ check('the quiz comparison follows print and evaluates arithmetic', () => {
   const preview = comparisonPreview(printed, 'c');
   assert.deepEqual(preview.lines, [{ original: 'print(steps)', plugged: 'print(150)' }]);
   assert.equal(preview.result, '150');
+  assert.ok(preview.trace.some((step) => step.plugged === 'print(150)' && step.result === '150'));
   const order = MICRO_CONCEPTS.find((concept) => concept.id === 'assignment-order').diagnostics[0];
   const arithmetic = comparisonPreview(order, 'c');
   assert.deepEqual(arithmetic.lines, [{ original: 'x = x + 5', plugged: 'x = 10 + 5' }]);
