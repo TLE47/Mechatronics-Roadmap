@@ -66,19 +66,19 @@ export const MICRO_LESSONS: MicroCatalog = {
   "concepts": [
     {
       "id": "variables",
-      "title": "A variable names a value",
+      "title": "A name is a tiny handle for a value",
       "parentLessonId": "P.1",
       "anchor": "micro-variables",
       "sourceFocus": [
         "A **variable** is a named storage box",
         "The single equals sign `=` is the assignment action"
       ],
-      "revision": 1,
+      "revision": 2,
       "prerequisites": [],
       "resources": [
         {
           "id": "futurecoder-variables",
-          "title": "futurecoder — The Shell and Variables",
+          "title": "futurecoder — The Shell and cmariables",
           "url": "https://futurecoder.io/course/#toc",
           "type": "course",
           "role": "primary",
@@ -98,7 +98,7 @@ export const MICRO_LESSONS: MicroCatalog = {
       "timing": {
         "learn": {
           "estimatedSeconds": 80,
-          "modeledSeconds": 74.6
+          "modeledSeconds": 80.2
         },
         "review": {
           "estimatedSeconds": 40,
@@ -110,18 +110,18 @@ export const MICRO_LESSONS: MicroCatalog = {
         }
       },
       "teaching": [
-        "A variable is a name for a value. `battery_level = 12.60` stores 12.60 under the name `battery_level`, and later lines can read that name.",
-        "The single `=` is assignment: evaluate the right side, then store it in the name on the left. It is not a claim that both sides are equal."
+        "A variable is a sticky note for a value. `plant_height = 12.60` writes **12.60** on a note called `plant_height`, so later lines can read the note instead of repeating the number.",
+        "The single `=` is assignment: work out the right side, then stick the result on the name at the left. It is not a claim that the two sides are equal. What would you label in your own day?"
       ],
       "example": {
-        "code": "battery_level = 12.60\nencoder_ticks = 400\nprint(battery_level, encoder_ticks)",
+        "code": "plant_height = 12.60\nsticker_count = 400\nprint(plant_height, sticker_count)",
         "output": "12.6 400"
       },
       "diagnostics": [
         {
           "id": "variables-d1",
-          "prompt": "What is the value of encoder_ticks after these two lines?",
-          "code": "encoder_ticks = 400\nencoder_ticks = encoder_ticks + 25",
+          "prompt": "What is the value of sticker_count after these two lines?",
+          "code": "sticker_count = 400\nsticker_count = sticker_count + 25",
           "options": [
             {
               "id": "a",
@@ -146,34 +146,34 @@ export const MICRO_LESSONS: MicroCatalog = {
         },
         {
           "id": "variables-d2",
-          "prompt": "Which line stores the text ACTIVE in robot_mode?",
+          "prompt": "Which line stores the text sunny in weather?",
           "options": [
             {
               "id": "a",
-              "text": "robot_mode = \"ACTIVE\""
+              "text": "weather = \"sunny\""
             },
             {
               "id": "b",
-              "text": "robot_mode == \"ACTIVE\""
+              "text": "weather == \"sunny\""
             },
             {
               "id": "c",
-              "text": "\"ACTIVE\" = robot_mode"
+              "text": "\"sunny\" = weather"
             },
             {
               "id": "d",
-              "text": "robot_mode = ACTIVE"
+              "text": "weather = sunny"
             }
           ],
           "answerId": "a",
-          "explanation": "Assignment uses one `=`, and text needs quotes. The `==` form compares instead of storing, and the bare name ACTIVE is not defined.",
+          "explanation": "Assignment uses one `=`, and text needs quotes. The `==` form compares instead of storing, and the bare name sunny is not defined.",
           "type": "choice"
         }
       ],
       "practice": {
         "id": "variables-p1",
-        "prompt": "What is battery_level after the drop?",
-        "code": "battery_level = 12.60\nbattery_level = battery_level - 0.45",
+        "prompt": "What is plant_height after the drop?",
+        "code": "plant_height = 12.60\nplant_height = plant_height - 0.45",
         "options": [
           {
             "id": "a",
@@ -193,7 +193,7 @@ export const MICRO_LESSONS: MicroCatalog = {
           }
         ],
         "answerId": "a",
-        "explanation": "12.60 minus 0.45 is 12.15, and the result is stored back in battery_level.",
+        "explanation": "12.60 minus 0.45 is 12.15, and the result is stored back in plant_height.",
         "type": "choice"
       },
       "reviewPool": [
@@ -225,7 +225,7 @@ export const MICRO_LESSONS: MicroCatalog = {
         {
           "id": "variables-r2",
           "prompt": "What is printed?",
-          "code": "ticks = 100\nticks = ticks + 50\nprint(ticks)",
+          "code": "steps = 100\nsteps = steps + 50\nprint(steps)",
           "options": [
             {
               "id": "a",
@@ -254,7 +254,7 @@ export const MICRO_LESSONS: MicroCatalog = {
           "options": [
             {
               "id": "a",
-              "text": "wheel_ticks"
+              "text": "sticker_count"
             },
             {
               "id": "b",
@@ -262,11 +262,11 @@ export const MICRO_LESSONS: MicroCatalog = {
             },
             {
               "id": "c",
-              "text": "wheel-ticks"
+              "text": "wheel-steps"
             },
             {
               "id": "d",
-              "text": "wheel ticks"
+              "text": "wheel steps"
             }
           ],
           "answerId": "a",
@@ -275,16 +275,16 @@ export const MICRO_LESSONS: MicroCatalog = {
         },
         {
           "id": "variables-r4",
-          "prompt": "What is robot_mode at the end?",
-          "code": "robot_mode = \"STANDBY\"\nrobot_mode = \"ACTIVE\"",
+          "prompt": "What is weather at the end?",
+          "code": "weather = \"cloudy\"\nweather = \"sunny\"",
           "options": [
             {
               "id": "a",
-              "text": "STANDBY"
+              "text": "cloudy"
             },
             {
               "id": "b",
-              "text": "ACTIVE"
+              "text": "sunny"
             },
             {
               "id": "c",
@@ -302,8 +302,8 @@ export const MICRO_LESSONS: MicroCatalog = {
       ],
       "challenge": {
         "id": "variables-c1",
-        "prompt": "After both updates, what are encoder_ticks and battery_level?",
-        "code": "encoder_ticks = 400\nbattery_level = 12.60\nencoder_ticks = encoder_ticks + 25\nbattery_level = battery_level - 0.45",
+        "prompt": "After both updates, what are sticker_count and plant_height?",
+        "code": "sticker_count = 400\nplant_height = 12.60\nsticker_count = sticker_count + 25\nplant_height = plant_height - 0.45",
         "options": [
           {
             "id": "a",
@@ -329,21 +329,21 @@ export const MICRO_LESSONS: MicroCatalog = {
     },
     {
       "id": "assignment-order",
-      "title": "Assignment reads the old value first",
+      "title": "Why x = x + 1 is not a paradox",
       "parentLessonId": "P.1",
       "anchor": "micro-assignment-order",
       "sourceFocus": [
         "Python evaluates the right-hand side of `=` first, then stores the result",
         "reads the old value, adds 25"
       ],
-      "revision": 1,
+      "revision": 2,
       "prerequisites": [
         "variables"
       ],
       "resources": [
         {
           "id": "futurecoder-variables",
-          "title": "futurecoder — The Shell and Variables",
+          "title": "futurecoder — The Shell and cmariables",
           "url": "https://futurecoder.io/course/#toc",
           "type": "course",
           "role": "primary",
@@ -354,7 +354,7 @@ export const MICRO_LESSONS: MicroCatalog = {
       "timing": {
         "learn": {
           "estimatedSeconds": 80,
-          "modeledSeconds": 78.3
+          "modeledSeconds": 83.3
         },
         "review": {
           "estimatedSeconds": 40,
@@ -366,8 +366,8 @@ export const MICRO_LESSONS: MicroCatalog = {
         }
       },
       "teaching": [
-        "Python evaluates the right-hand side of `=` first, then stores the result. That order is why `x = x + 1` works: the old `x` on the right is read before the new value replaces it.",
-        "Lines run in order. A second assignment sees the result of the first, so tracing one line at a time is the reliable way to follow a program."
+        "Python reads the right-hand side of `=` first, then writes the result. That order is why `x = x + 1` is not a paradox: the old `x` on the right is read before the new value replaces it.",
+        "Lines run in order. A second assignment sees the result of the first, so tracing one line at a time is the reliable way to follow a program — like following a recipe instead of reading the whole page at once."
       ],
       "example": {
         "code": "x = 10\nx = x + 5\nprint(x)",
@@ -429,8 +429,8 @@ export const MICRO_LESSONS: MicroCatalog = {
       ],
       "practice": {
         "id": "assignment-order-p1",
-        "prompt": "What is ticks after the update?",
-        "code": "ticks = 100\nticks = ticks + 50",
+        "prompt": "What is steps after the update?",
+        "code": "steps = 100\nsteps = steps + 50",
         "options": [
           {
             "id": "a",
@@ -587,7 +587,7 @@ export const MICRO_LESSONS: MicroCatalog = {
     },
     {
       "id": "int-float",
-      "title": "int and float are different boxes",
+      "title": "Whole numbers and decimals live in different boxes",
       "parentLessonId": "P.1",
       "anchor": "micro-int-float",
       "sourceFocus": [
@@ -595,7 +595,7 @@ export const MICRO_LESSONS: MicroCatalog = {
         "a **`float`** is a decimal number",
         "Division with `/` produces a float"
       ],
-      "revision": 1,
+      "revision": 2,
       "prerequisites": [
         "variables"
       ],
@@ -613,7 +613,7 @@ export const MICRO_LESSONS: MicroCatalog = {
       "timing": {
         "learn": {
           "estimatedSeconds": 82,
-          "modeledSeconds": 76.1
+          "modeledSeconds": 82.9
         },
         "review": {
           "estimatedSeconds": 40,
@@ -625,11 +625,11 @@ export const MICRO_LESSONS: MicroCatalog = {
         }
       },
       "teaching": [
-        "An `int` is a whole number such as `400` or `-5`. A `float` is a number with a decimal point such as `12.60` or `0.0`, even when the decimals are zero.",
-        "The `/` operator produces a float. `8 / 2` is `4.0`, not `4`, because division is allowed to produce a fractional answer."
+        "An `int` is a whole number such as `400` or `-5`. A `float` is a number with a decimal point such as `12.60` or `0.0`, even when the decimals are zero. The box matters even when two numbers look similar.",
+        "The `/` operator produces a float. `8 / 2` is `4.0`, not `4`, because division is always allowed to produce a fractional answer. That little `.0` is a clue about which box you are holding."
       ],
       "example": {
-        "code": "encoder_ticks = 400\nbattery_level = 12.60\nprint(type(encoder_ticks))\nprint(type(battery_level))",
+        "code": "sticker_count = 400\nplant_height = 12.60\nprint(type(sticker_count))\nprint(type(plant_height))",
         "output": "<class 'int'>\n<class 'float'>"
       },
       "diagnostics": [
@@ -787,8 +787,8 @@ export const MICRO_LESSONS: MicroCatalog = {
         },
         {
           "id": "int-float-r4",
-          "prompt": "What are the value and type of battery_level?",
-          "code": "battery_level = 12.0\nbattery_level = battery_level - 0.45",
+          "prompt": "What are the value and type of plant_height?",
+          "code": "plant_height = 12.0\nplant_height = plant_height - 0.45",
           "options": [
             {
               "id": "a",
@@ -814,8 +814,8 @@ export const MICRO_LESSONS: MicroCatalog = {
       ],
       "challenge": {
         "id": "int-float-c1",
-        "prompt": "What is battery_level after the drop?",
-        "code": "battery_level = 12.0\nbattery_level = battery_level - 0.45",
+        "prompt": "What is plant_height after the drop?",
+        "code": "plant_height = 12.0\nplant_height = plant_height - 0.45",
         "options": [
           {
             "id": "a",
@@ -841,21 +841,21 @@ export const MICRO_LESSONS: MicroCatalog = {
     },
     {
       "id": "strings",
-      "title": "Strings are text in quotes",
+      "title": "Quotes turn a word into text",
       "parentLessonId": "P.1",
       "anchor": "micro-strings",
       "sourceFocus": [
         "A **`str`** is text wrapped in quotes",
         "Joining two strings with `+` concatenates them"
       ],
-      "revision": 1,
+      "revision": 2,
       "prerequisites": [
         "variables"
       ],
       "resources": [
         {
           "id": "futurecoder-variables",
-          "title": "futurecoder — The Shell and Variables",
+          "title": "futurecoder — The Shell and cmariables",
           "url": "https://futurecoder.io/course/#toc",
           "type": "course",
           "role": "primary",
@@ -866,7 +866,7 @@ export const MICRO_LESSONS: MicroCatalog = {
       "timing": {
         "learn": {
           "estimatedSeconds": 80,
-          "modeledSeconds": 71.4
+          "modeledSeconds": 79.2
         },
         "review": {
           "estimatedSeconds": 40,
@@ -878,12 +878,12 @@ export const MICRO_LESSONS: MicroCatalog = {
         }
       },
       "teaching": [
-        "A string is text inside quotes. `\"ACTIVE\"` is a string; `ACTIVE` without quotes is a name Python tries to look up.",
-        "The `+` operator joins two strings end to end. `\"10\" + \"5\"` produces `\"105\"`, not 15, because both sides are text."
+        "A string is text inside quotes. `\"sunny\"` is a string; `sunny` without quotes is a name Python tries to look up. Quotes are the difference between the word and the thing itself.",
+        "The `+` operator joins two strings end to end. `\"10\" + \"5\"` produces `\"105\"`, not 15, because both sides are text. Notice how the same symbol means something different depending on the boxes around it."
       ],
       "example": {
-        "code": "mode = \"ACTIVE\"\nlabel = \"Mode: \" + mode\nprint(label)",
-        "output": "Mode: ACTIVE"
+        "code": "weather = \"sunny\"\nlabel = \"Weather: \" + weather\nprint(label)",
+        "output": "Weather: sunny"
       },
       "diagnostics": [
         {
@@ -941,19 +941,19 @@ export const MICRO_LESSONS: MicroCatalog = {
       "practice": {
         "id": "strings-p1",
         "prompt": "What is label after this line?",
-        "code": "label = \"ACTIVE\" + \"!\"",
+        "code": "label = \"sunny\" + \"!\"",
         "options": [
           {
             "id": "a",
-            "text": "ACTIVE!"
+            "text": "sunny!"
           },
           {
             "id": "b",
-            "text": "ACTIVE"
+            "text": "sunny"
           },
           {
             "id": "c",
-            "text": "!ACTIVE"
+            "text": "!sunny"
           },
           {
             "id": "d",
@@ -961,13 +961,13 @@ export const MICRO_LESSONS: MicroCatalog = {
           }
         ],
         "answerId": "a",
-        "explanation": "`+` joins the two strings in order, so the exclamation mark follows ACTIVE.",
+        "explanation": "`+` joins the two strings in order, so the exclamation mark follows sunny.",
         "type": "choice"
       },
       "reviewPool": [
         {
           "id": "strings-r1",
-          "prompt": "Why does \"ACTIVE\" need quotes?",
+          "prompt": "Why does \"sunny\" need quotes?",
           "options": [
             {
               "id": "a",
@@ -987,7 +987,7 @@ export const MICRO_LESSONS: MicroCatalog = {
             }
           ],
           "answerId": "a",
-          "explanation": "Without quotes Python looks for a variable named ACTIVE; quotes make it a string value.",
+          "explanation": "Without quotes Python looks for a variable named sunny; quotes make it a string value.",
           "type": "choice"
         },
         {
@@ -1043,19 +1043,19 @@ export const MICRO_LESSONS: MicroCatalog = {
         {
           "id": "strings-r4",
           "prompt": "What does this print?",
-          "code": "print(\"Battery: \" + \"12.15 V\")",
+          "code": "print(\"Plant: \" + \"12.15 cm\")",
           "options": [
             {
               "id": "a",
-              "text": "Battery: 12.15 V"
+              "text": "Plant: 12.15 cm"
             },
             {
               "id": "b",
-              "text": "Battery: 12.15"
+              "text": "Plant: 12.15"
             },
             {
               "id": "c",
-              "text": "12.15 V"
+              "text": "12.15 cm"
             },
             {
               "id": "d",
@@ -1070,19 +1070,19 @@ export const MICRO_LESSONS: MicroCatalog = {
       "challenge": {
         "id": "strings-c1",
         "prompt": "What is label at the end?",
-        "code": "mode = \"ACTIVE\"\nlabel = \"Mode: \" + mode",
+        "code": "weather = \"sunny\"\nlabel = \"Weather: \" + weather",
         "options": [
           {
             "id": "a",
-            "text": "Mode: ACTIVE"
+            "text": "Weather: sunny"
           },
           {
             "id": "b",
-            "text": "ACTIVE"
+            "text": "sunny"
           },
           {
             "id": "c",
-            "text": "Mode: mode"
+            "text": "Weather: mode"
           },
           {
             "id": "d",
@@ -1090,13 +1090,13 @@ export const MICRO_LESSONS: MicroCatalog = {
           }
         ],
         "answerId": "a",
-        "explanation": "The prefix string and the value of mode are concatenated.",
+        "explanation": "The prefix string and the value of weather are concatenated.",
         "type": "choice"
       }
     },
     {
       "id": "booleans",
-      "title": "Booleans are True or False",
+      "title": "Yes or no — that is a bool",
       "parentLessonId": "P.1",
       "anchor": "micro-booleans",
       "sourceFocus": [
@@ -1104,7 +1104,7 @@ export const MICRO_LESSONS: MicroCatalog = {
         "A comparison produces a bool",
         "Write `False`, never `false`"
       ],
-      "revision": 1,
+      "revision": 2,
       "prerequisites": [
         "variables"
       ],
@@ -1122,7 +1122,7 @@ export const MICRO_LESSONS: MicroCatalog = {
       "timing": {
         "learn": {
           "estimatedSeconds": 78,
-          "modeledSeconds": 72.4
+          "modeledSeconds": 78.6
         },
         "review": {
           "estimatedSeconds": 40,
@@ -1134,11 +1134,11 @@ export const MICRO_LESSONS: MicroCatalog = {
         }
       },
       "teaching": [
-        "A bool has exactly two values: `True` and `False`. Both begin with a capital letter; `true` and `false` are not Python's booleans.",
-        "A comparison produces a bool. `12.15 > 10` evaluates to `True`, which can be stored in a variable such as `is_estop_active = False`."
+        "A bool has exactly two values: `True` and `False`. Both begin with a capital letter; `true` and `false` are not Python's booleans. Think of a light switch that can only be on or off.",
+        "A comparison produces a bool. `12.15 > 10` evaluates to `True`, which can be stored in a variable such as `is_raining = False`. The question becomes a value you can reuse."
       ],
       "example": {
-        "code": "is_estop_active = False\nbattery_level = 12.15\nprint(is_estop_active, battery_level > 10)",
+        "code": "is_raining = False\nplant_height = 12.15\nprint(is_raining, plant_height > 10)",
         "output": "False True"
       },
       "diagnostics": [
@@ -1196,7 +1196,7 @@ export const MICRO_LESSONS: MicroCatalog = {
       "practice": {
         "id": "booleans-p1",
         "prompt": "What does this comparison produce?",
-        "code": "robot_mode = \"ACTIVE\"\nrobot_mode == \"ACTIVE\"",
+        "code": "weather = \"sunny\"\nweather == \"sunny\"",
         "options": [
           {
             "id": "a",
@@ -1208,7 +1208,7 @@ export const MICRO_LESSONS: MicroCatalog = {
           },
           {
             "id": "c",
-            "text": "ACTIVE"
+            "text": "sunny"
           },
           {
             "id": "d",
@@ -1272,8 +1272,8 @@ export const MICRO_LESSONS: MicroCatalog = {
         },
         {
           "id": "booleans-r3",
-          "prompt": "What type is is_estop_active?",
-          "code": "is_estop_active = False",
+          "prompt": "What type is is_raining?",
+          "code": "is_raining = False",
           "options": [
             {
               "id": "a",
@@ -1325,7 +1325,7 @@ export const MICRO_LESSONS: MicroCatalog = {
       "challenge": {
         "id": "booleans-c1",
         "prompt": "What does the comparison print?",
-        "code": "battery_level = 12.15\nprint(battery_level > 10)",
+        "code": "plant_height = 12.15\nprint(plant_height > 10)",
         "options": [
           {
             "id": "a",
@@ -1351,7 +1351,7 @@ export const MICRO_LESSONS: MicroCatalog = {
     },
     {
       "id": "mixed-types",
-      "title": "Mixing text and numbers raises TypeError",
+      "title": "When types refuse to shake hands",
       "parentLessonId": "P.1",
       "anchor": "micro-mixed-types",
       "sourceFocus": [
@@ -1359,7 +1359,7 @@ export const MICRO_LESSONS: MicroCatalog = {
         "`\"12\" + 5` raises `TypeError`",
         "convert one side first"
       ],
-      "revision": 1,
+      "revision": 2,
       "prerequisites": [
         "int-float",
         "strings"
@@ -1378,7 +1378,7 @@ export const MICRO_LESSONS: MicroCatalog = {
       "timing": {
         "learn": {
           "estimatedSeconds": 82,
-          "modeledSeconds": 73.3
+          "modeledSeconds": 79.9
         },
         "review": {
           "estimatedSeconds": 40,
@@ -1390,8 +1390,8 @@ export const MICRO_LESSONS: MicroCatalog = {
         }
       },
       "teaching": [
-        "Python will not silently mix text and numbers. `\"12\" + 5` raises `TypeError`, because one side is a string and the other is an int.",
-        "Convert one side first when the value really is text: `int(\"12\") + 5` produces 17. Numbers of different types can mix safely: `400 + 2.5` produces 402.5."
+        "Python will not silently mix text and numbers. `\"12\" + 5` raises `TypeError`, because one side is a string and the other is an int. The refusal is a guardrail, not a punishment.",
+        "Convert one side first when the value really is text: `int(\"12\") + 5` produces 17. Numbers of different types can mix safely: `400 + 2.5` produces 402.5. Ask “what kind of thing is this?” before asking “what does it equal?”"
       ],
       "example": {
         "code": "print(int(\"12\") + 5)\nprint(400 + 2.5)",
@@ -1454,11 +1454,11 @@ export const MICRO_LESSONS: MicroCatalog = {
       "practice": {
         "id": "mixed-types-p1",
         "prompt": "What happens when this line runs?",
-        "code": "\"Battery: \" + 12.15",
+        "code": "\"Plant: \" + 12.15",
         "options": [
           {
             "id": "a",
-            "text": "It produces \"Battery: 12.15\""
+            "text": "It produces \"Plant: 12.15\""
           },
           {
             "id": "b",
@@ -1505,15 +1505,15 @@ export const MICRO_LESSONS: MicroCatalog = {
         },
         {
           "id": "mixed-types-r2",
-          "prompt": "What does str(12) + \" V\" produce?",
+          "prompt": "What does str(12) + \" cm\" produce?",
           "options": [
             {
               "id": "a",
-              "text": "\"12 V\""
+              "text": "\"12 cm\""
             },
             {
               "id": "b",
-              "text": "12 V as a number"
+              "text": "12 cm as a number"
             },
             {
               "id": "c",
@@ -1608,7 +1608,7 @@ export const MICRO_LESSONS: MicroCatalog = {
     },
     {
       "id": "f-strings",
-      "title": "f-strings insert values into text",
+      "title": "Sentences with slots for your data",
       "parentLessonId": "P.1",
       "anchor": "micro-f-strings",
       "sourceFocus": [
@@ -1616,7 +1616,7 @@ export const MICRO_LESSONS: MicroCatalog = {
         "evaluates names inside braces",
         "The `.2f` format shows two digits after the decimal point"
       ],
-      "revision": 1,
+      "revision": 2,
       "prerequisites": [
         "strings",
         "int-float"
@@ -1624,7 +1624,7 @@ export const MICRO_LESSONS: MicroCatalog = {
       "resources": [
         {
           "id": "futurecoder-variables",
-          "title": "futurecoder — The Shell and Variables",
+          "title": "futurecoder — The Shell and cmariables",
           "url": "https://futurecoder.io/course/#toc",
           "type": "course",
           "role": "primary",
@@ -1644,7 +1644,7 @@ export const MICRO_LESSONS: MicroCatalog = {
       "timing": {
         "learn": {
           "estimatedSeconds": 80,
-          "modeledSeconds": 70.5
+          "modeledSeconds": 78.0
         },
         "review": {
           "estimatedSeconds": 40,
@@ -1656,30 +1656,30 @@ export const MICRO_LESSONS: MicroCatalog = {
         }
       },
       "teaching": [
-        "An f-string puts an `f` before the opening quote. Names inside braces are replaced by their values: `f\"Mode: {robot_mode}\"`.",
-        "A format spec controls how a value is written. `.2f` shows two digits after the decimal point: `f\"Battery: {battery_level:.2f} V\"`."
+        "An f-string puts an `f` before the opening quote. Names inside braces are replaced by their values: `f\"Weather: {weather}\"`. It is a sentence with a labelled slot for your data.",
+        "A format spec controls how a value is written. `.2f` shows two digits after the decimal point: `f\"Plant: {plant_height:.2f} cm\"`. Small controls like this turn raw numbers into something a person can read."
       ],
       "example": {
-        "code": "robot_mode = \"ACTIVE\"\nbattery_level = 12.15\nprint(f\"Mode: {robot_mode} | Battery: {battery_level:.2f} V\")",
-        "output": "Mode: ACTIVE | Battery: 12.15 V"
+        "code": "weather = \"sunny\"\nplant_height = 12.15\nprint(f\"Weather: {weather} | Plant: {plant_height:.2f} cm\")",
+        "output": "Weather: sunny | Plant: 12.15 cm"
       },
       "diagnostics": [
         {
           "id": "f-strings-d1",
           "prompt": "What does this print?",
-          "code": "battery_level = 12.15\nprint(f\"Battery: {battery_level:.2f} V\")",
+          "code": "plant_height = 12.15\nprint(f\"Plant: {plant_height:.2f} cm\")",
           "options": [
             {
               "id": "a",
-              "text": "Battery: 12.15 V"
+              "text": "Plant: 12.15 cm"
             },
             {
               "id": "b",
-              "text": "Battery: {battery_level:.2f} V"
+              "text": "Plant: {plant_height:.2f} cm"
             },
             {
               "id": "c",
-              "text": "Battery: 12.150 V"
+              "text": "Plant: 12.150 cm"
             },
             {
               "id": "d",
@@ -1693,19 +1693,19 @@ export const MICRO_LESSONS: MicroCatalog = {
         {
           "id": "f-strings-d2",
           "prompt": "What does this print?",
-          "code": "encoder_ticks = 425\nprint(f\"{encoder_ticks} ticks\")",
+          "code": "sticker_count = 425\nprint(f\"{sticker_count} steps\")",
           "options": [
             {
               "id": "a",
-              "text": "425 ticks"
+              "text": "425 steps"
             },
             {
               "id": "b",
-              "text": "{encoder_ticks} ticks"
+              "text": "{sticker_count} steps"
             },
             {
               "id": "c",
-              "text": "encoder_ticks ticks"
+              "text": "sticker_count steps"
             },
             {
               "id": "d",
@@ -1720,19 +1720,19 @@ export const MICRO_LESSONS: MicroCatalog = {
       "practice": {
         "id": "f-strings-p1",
         "prompt": "What is label after this line?",
-        "code": "robot_mode = \"ACTIVE\"\nlabel = f\"Mode: {robot_mode}\"",
+        "code": "weather = \"sunny\"\nlabel = f\"Weather: {weather}\"",
         "options": [
           {
             "id": "a",
-            "text": "Mode: ACTIVE"
+            "text": "Weather: sunny"
           },
           {
             "id": "b",
-            "text": "Mode: {robot_mode}"
+            "text": "Weather: {weather}"
           },
           {
             "id": "c",
-            "text": "ACTIVE"
+            "text": "sunny"
           },
           {
             "id": "d",
@@ -1740,7 +1740,7 @@ export const MICRO_LESSONS: MicroCatalog = {
           }
         ],
         "answerId": "a",
-        "explanation": "The f-string substitutes the value of robot_mode inside the braces.",
+        "explanation": "The f-string substitutes the value of weather inside the braces.",
         "type": "choice"
       },
       "reviewPool": [
@@ -1848,19 +1848,19 @@ export const MICRO_LESSONS: MicroCatalog = {
       "challenge": {
         "id": "f-strings-c1",
         "prompt": "What does this print?",
-        "code": "encoder_ticks = 425\nbattery_level = 12.15\nprint(f\"Encoder: {encoder_ticks} | Battery: {battery_level:.2f} V\")",
+        "code": "sticker_count = 425\nplant_height = 12.15\nprint(f\"Stickers: {sticker_count} | Plant: {plant_height:.2f} cm\")",
         "options": [
           {
             "id": "a",
-            "text": "Encoder: 425 | Battery: 12.15 V"
+            "text": "Stickers: 425 | Plant: 12.15 cm"
           },
           {
             "id": "b",
-            "text": "Encoder: {encoder_ticks} | Battery: 12.15 V"
+            "text": "Stickers: {sticker_count} | Plant: 12.15 cm"
           },
           {
             "id": "c",
-            "text": "Encoder: 425 | Battery: 12.150 V"
+            "text": "Stickers: 425 | Plant: 12.150 cm"
           },
           {
             "id": "d",
@@ -1868,7 +1868,7 @@ export const MICRO_LESSONS: MicroCatalog = {
           }
         ],
         "answerId": "a",
-        "explanation": "Both names are substituted; .2f keeps two decimal places on the battery reading.",
+        "explanation": "Both names are substituted; .2f keeps two decimal places on the plant height.",
         "type": "choice"
       }
     }

@@ -23,8 +23,12 @@ import {
   NODE_SHAPE,
   nodeHeight,
   nodeWidth,
+  textFormatSegments,
+  toggleTextFormat,
   type NodeShape,
   type SocketKinds,
+  type TextFormatRange,
+  type TextFormatStyle,
   type WorkflowIssue,
   type WorkflowNode,
   type WorkflowSide,
@@ -33,7 +37,7 @@ import { missingProjectObject, type ProjectObject } from '../../projectRef.ts';
 import { PROJECT_WORDS } from '../../projectPresentation.ts';
 import { iconForKind } from '../workflowIcons.ts';
 import { MathView } from '../MathView.tsx';
-import { parseInline, type InlineRun } from '../../readerMarkdown.ts';
+import { parseInline } from '../../readerMarkdown.ts';
 import { cardFill, cardInk, cardType } from './cardStyle.ts';
 import { nudgeCard } from './cardNudge.ts';
 import { WorkflowPorts } from './WorkflowPorts.tsx';
@@ -86,19 +90,51 @@ const SHAPE_INSET: Partial<Record<NodeShape, string>> = {
 };
 
 /**
- * A field's words with `$…$` drawn as maths.
+ * A field's words with `$…$` drawn as maths and selected ranges painted as emphasis.
  *
  * The runs come from the reader's own inline parser (`readerMarkdown.ts`), so a formula on a card is
- * split by the same rule as a formula in a lesson — one parser, not a second weaker one. Only the
- * maths runs are drawn differently: a card is a diagram label, so its emphasis stays the plain text
- * it already is.
+ * split by the same rule as a formula in a lesson — one parser, not a second weaker one. Formatting
+ * is applied to the plain text slices first, which keeps the stored value searchable and copyable.
  */
-function CardWords({ runs }: { runs: InlineRun[] }) {
+function CardWords({
+  text,
+  formats,
+  legacy,
+}: {
+  text: string;
+  formats?: TextFormatRange[];
+  legacy?: { bold?: boolean; italic?: boolean; underline?: boolean };
+}) {
+  const hasFormatting =
+    (formats?.length ?? 0) > 0 || Boolean(legacy?.bold || legacy?.italic || legacy?.underline);
+  if (!hasFormatting) {
+    return (
+      <>
+        {parseInline(text).map((run, index) =>
+          run.k === 'math' ? <MathView key={index} math={run.v} /> : <span key={index}>{run.v}</span>
+        )}
+      </>
+    );
+  }
   return (
     <>
-      {runs.map((run, index) =>
-        run.k === 'math' ? <MathView key={index} math={run.v} /> : <span key={index}>{run.v}</span>
-      )}
+      {textFormatSegments(text, formats, legacy).map((segment) => {
+        const style: CSSProperties = {
+          ...(segment.bold ? { fontWeight: 700 } : {}),
+          ...(segment.italic ? { fontStyle: 'italic' } : {}),
+          ...(segment.underline ? { textDecorationLine: 'underline' } : {}),
+        };
+        const label = [segment.bold && 'bold', segment.italic && 'italic', segment.underline && 'underline']
+          .filter(Boolean)
+          .join(' ');
+        return (
+          <span key={segment.start} data-format={label || undefined} style={style}>
+            {parseInline(segment.text).map((run, index) =>
+              run.k === 'math' ? <MathView key={index} math={run.v} /> : <span key={index}>{run.v}</span>
+            )}
+          </span>
+        );
+      })}
     </>
   );
 }
@@ -188,14 +224,15 @@ export function WorkflowNodeCard({
   // colour the learner asked the card's words to be, so both fields take it.
   const detailInk = node.ink ? ink : 'var(--muted)';
   const fill = cardFill(node.fill);
-  const titleRuns = parseInline(node.title);
-  const detailRuns = parseInline(node.detail);
-  const titleMath = titleRuns.some((run) => run.k === 'math');
-  const detailMath = detailRuns.some((run) => run.k === 'math');
+  const titleMath = parseInline(node.title).some((run) => run.k === 'math');
+  const detailMath = parseInline(node.detail).some((run) => run.k === 'math');
+  const titleFormatted = (node.titleFormats?.length ?? 0) > 0;
+  const detailFormatted = (node.detailFormats?.length ?? 0) > 0;
   const [liveSize, setLiveSize] = useState<{ width: number; height: number } | null>(null);
   const [toolbarAt, setToolbarAt] = useState<TextAnchor | null>(null);
   const [toolbarCard, setToolbarCard] = useState<TextAnchor | null>(null);
   const [toolbarField, setToolbarField] = useState<'title' | 'detail'>('title');
+  const [toolbarSelection, setToolbarSelection] = useState<{ start: number; end: number } | null>(null);
   const titleRef = useRef<HTMLTextAreaElement | null>(null);
   const detailRef = useRef<HTMLTextAreaElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
@@ -236,6 +273,14 @@ export function WorkflowNodeCard({
     ...(node.detailAlign ? { textAlign: node.detailAlign } : {}),
     ...(node.wrapText === false ? { whiteSpace: 'nowrap' } : {}),
   };
+  const titleLayoutStyle: CSSProperties = {
+    ...(node.align ? { textAlign: node.align } : {}),
+    ...(node.wrapText === false ? { whiteSpace: 'nowrap' } : {}),
+  };
+  const detailLayoutStyle: CSSProperties = {
+    ...(node.detailAlign ? { textAlign: node.detailAlign } : {}),
+    ...(node.wrapText === false ? { whiteSpace: 'nowrap' } : {}),
+  };
 
   /** A selected range in a field is the request for the formatting toolbar. */
   const openTextMenu = (event: ReactMouseEvent<HTMLTextAreaElement>) => {
@@ -245,6 +290,7 @@ export function WorkflowNodeCard({
     event.stopPropagation();
     const box = field.getBoundingClientRect();
     setToolbarField(field === titleRef.current ? 'title' : 'detail');
+    setToolbarSelection({ start: field.selectionStart, end: field.selectionEnd });
     // The field decides above/below; the whole card decides whether a bar below it would land on
     // the card's own next line in a window shorter than the card.
     const card = field.closest<HTMLElement>('[data-node-id]')?.getBoundingClientRect();
@@ -268,6 +314,23 @@ export function WorkflowNodeCard({
           }
         : null
     );
+  };
+
+  /** Apply one style to the captured selection, never to the whole field. */
+  const applyFormat = (style: TextFormatStyle) => {
+    if (!toolbarSelection) return;
+    const current = toolbarField === 'title' ? node.titleFormats : node.detailFormats;
+    const next = toggleTextFormat(
+      current ?? [],
+      toolbarSelection.start,
+      toolbarSelection.end,
+      style
+    );
+    if (toolbarField === 'title') {
+      onUpdate(node.id, { titleFormats: next.length ? next : undefined });
+    } else {
+      onUpdate(node.id, { detailFormats: next.length ? next : undefined });
+    }
   };
 
   /**
@@ -465,18 +528,25 @@ export function WorkflowNodeCard({
             onContextMenu={openTextMenu}
             className={`peer block w-full resize-none overflow-hidden rounded border border-transparent bg-transparent px-1 py-0.5 font-semibold outline-none hover:bg-raise focus:border-line focus:bg-canvas ${
               node.wrapText === false ? 'whitespace-nowrap' : 'break-words'
-            } ${titleMath ? 'opacity-0 focus:opacity-100' : ''}`}
+            } ${titleMath || titleFormatted ? 'opacity-0 focus:opacity-100' : ''}`}
             style={{ color: ink, fontSize: type.title, ...titleFormatStyle }}
           />
           {/* A formula is taller than a line of text (a fraction is two), so the rendering gets a
               little room above and below the input's box rather than being clipped to it. */}
-          {titleMath && (
+          {(titleMath || titleFormatted) && (
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 -inset-y-1 flex items-center overflow-hidden px-1 py-0.5 peer-focus:hidden"
-              style={{ color: ink, fontSize: type.title }}
+              data-testid={`workflow-node-title-format-${index}`}
+              className={`pointer-events-none absolute inset-x-0 -inset-y-1 overflow-hidden px-1 py-0.5 peer-focus:hidden ${
+                node.wrapText === false ? 'whitespace-nowrap' : 'whitespace-pre-wrap break-words'
+              }`}
+              style={{ color: ink, fontSize: type.title, ...titleLayoutStyle }}
             >
-              <CardWords runs={titleRuns} />
+              <CardWords
+                text={node.title}
+                formats={node.titleFormats}
+                legacy={{ bold: node.bold, italic: node.italic, underline: node.underline }}
+              />
             </span>
           )}
         </div>
@@ -495,16 +565,27 @@ export function WorkflowNodeCard({
             onContextMenu={openTextMenu}
             className={`peer block w-full resize-none overflow-hidden rounded border border-transparent bg-transparent px-1 py-0.5 font-mono leading-snug outline-none hover:bg-raise focus:border-line focus:bg-canvas ${
               node.wrapText === false ? 'whitespace-nowrap' : 'break-words'
-            } ${detailMath ? 'opacity-0 focus:opacity-100' : ''}`}
+            } ${detailMath || detailFormatted ? 'opacity-0 focus:opacity-100' : ''}`}
             style={{ color: detailInk, fontSize: type.detail, ...detailFormatStyle }}
           />
-          {detailMath && (
+          {(detailMath || detailFormatted) && (
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 -inset-y-1 overflow-hidden whitespace-pre-wrap px-1 py-0.5 font-mono leading-snug peer-focus:hidden"
-              style={{ color: detailInk, fontSize: type.detail }}
+              data-testid={`workflow-node-detail-format-${index}`}
+              className={`pointer-events-none absolute inset-x-0 -inset-y-1 overflow-hidden px-1 py-0.5 font-mono leading-snug peer-focus:hidden ${
+                node.wrapText === false ? 'whitespace-nowrap' : 'whitespace-pre-wrap break-words'
+              }`}
+              style={{ color: detailInk, fontSize: type.detail, ...detailLayoutStyle }}
             >
-              <CardWords runs={detailRuns} />
+              <CardWords
+                text={node.detail}
+                formats={node.detailFormats}
+                legacy={{
+                  bold: node.detailBold,
+                  italic: node.detailItalic,
+                  underline: node.detailUnderline,
+                }}
+              />
             </span>
           )}
         </div>
@@ -589,6 +670,7 @@ export function WorkflowNodeCard({
       />
 
       {toolbarAt &&
+        toolbarSelection &&
         typeof document !== 'undefined' &&
         createPortal(
           <WorkflowTextToolbar
@@ -596,8 +678,12 @@ export function WorkflowNodeCard({
             field={toolbarField}
             anchor={toolbarAt}
             card={toolbarCard}
-            onApply={(patch) => onUpdate(node.id, patch)}
-            onClose={() => setToolbarAt(null)}
+            selection={toolbarSelection}
+            onFormat={applyFormat}
+            onClose={() => {
+              setToolbarAt(null);
+              setToolbarSelection(null);
+            }}
           />,
           document.body
         )}

@@ -32,6 +32,7 @@ import {
 import type { MicroEvent, MicroStore } from '../../micro/types';
 import { optionalResources, resourcesFor } from '../../micro/resources';
 import { lessonPageUrl } from '../../startHere';
+import { MicroVisual } from '../micro/MicroVisual.tsx';
 
 export interface TabMicroProps {
   /** Return to the runner with the parent lesson selected. */
@@ -92,7 +93,18 @@ function outcomeCopy(result: Result | null): string {
     : 'Challenge missed. Your mastery was kept; the next review is tomorrow.';
 }
 
-const CARD = 'rounded-xl border border-line bg-panel p-4';
+const CARD = 'rounded-2xl border border-line bg-panel p-5 shadow-sm';
+
+/** The colour family a concept uses in the list and the lesson header. */
+const TONE: Record<string, { dot: string; chip: string }> = {
+  variables: { dot: 'bg-accent', chip: 'border-accent/40 bg-accent/10 text-accent' },
+  'assignment-order': { dot: 'bg-emerald', chip: 'border-emerald/40 bg-emerald/10 text-emerald' },
+  'int-float': { dot: 'bg-amber', chip: 'border-amber/40 bg-amber/10 text-amber' },
+  strings: { dot: 'bg-purple', chip: 'border-purple/40 bg-purple/10 text-purple' },
+  booleans: { dot: 'bg-rose', chip: 'border-rose/40 bg-rose/10 text-rose' },
+  'mixed-types': { dot: 'bg-amber', chip: 'border-amber/40 bg-amber/10 text-amber' },
+  'f-strings': { dot: 'bg-accent', chip: 'border-accent/40 bg-accent/10 text-accent' },
+};
 
 export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
   const [store, setStore] = useState<MicroStore>(() => microProgress.read());
@@ -166,6 +178,11 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
   }, []);
 
   const state = active ? store.concepts[active.id] : undefined;
+  const learnedCount = MICRO_CONCEPTS.filter((concept) => store.concepts[concept.id]?.learnCompletedAt).length;
+  const consolidatedCount = MICRO_CONCEPTS.filter(
+    (concept) => store.concepts[concept.id]?.mastery === 'consolidated'
+  ).length;
+  const evidenceDays = new Set(store.events.map((event) => new Date(event.timestamp).toDateString())).size;
   const due = useMemo(() => dueConceptIds(store, MICRO_CONCEPTS, Date.now()), [store]);
   const suggested = useMemo(() => nextConceptId(store, MICRO_CONCEPTS, Date.now()), [store]);
   const reviewQuestions = useMemo(
@@ -331,13 +348,13 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
   const renderQuestion = (question: MicroQuestion, index: number) => {
     const selected = answers[question.id] ?? '';
     return (
-      <fieldset key={question.id} className="rounded-lg border border-line-soft bg-canvas p-3">
-        <legend className="px-1 font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+      <fieldset key={question.id} className="rounded-xl border border-line-soft bg-canvas p-4">
+        <legend className="px-1 font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
           {index + 1} / {question.type === 'choice' ? 'choose one' : 'short answer'}
         </legend>
-        <p className="text-[13px] font-semibold text-ink">{question.prompt}</p>
+        <p className="text-[15.5px] font-semibold leading-relaxed text-ink">{question.prompt}</p>
         {question.code ? (
-          <pre className="mt-2 overflow-x-auto rounded-md border border-line-soft bg-panel p-2 font-mono text-[11.5px] text-body">
+          <pre className="mt-2.5 overflow-x-auto rounded-lg border border-line-soft bg-panel p-3 font-mono text-[13px] leading-relaxed text-body">
             {question.code}
           </pre>
         ) : null}
@@ -346,17 +363,17 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
             value={selected}
             onChange={(event) => setAnswers((previous) => ({ ...previous, [question.id]: event.target.value }))}
             aria-label={question.prompt}
-            className="mt-2 w-full rounded-md border border-line bg-panel px-2.5 py-1.5 font-mono text-[12px] text-ink"
+            className="mt-2.5 w-full rounded-lg border border-line bg-panel px-3 py-2 font-mono text-[14px] text-ink"
           />
         ) : (
-          <div className="mt-2 grid gap-1.5">
+          <div className="mt-2.5 grid gap-2">
             {(question.options ?? []).map((option) => (
               <label
                 key={option.id}
-                className={`flex cursor-pointer items-start gap-2 rounded-md border px-2.5 py-2 text-[12.5px] ${
+                className={`flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 text-[14.5px] leading-relaxed ${
                   selected === option.id
                     ? 'border-accent bg-accent-soft text-ink'
-                    : 'border-line-soft bg-panel text-body hover:border-line'
+                    : 'border-line-soft bg-panel text-body hover:border-accent/50'
                 }`}
               >
                 <input
@@ -380,9 +397,9 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
     const resources = resourcesFor(concept);
     if (!resources.length) return null;
     return (
-      <div className="rounded-lg border border-line-soft bg-canvas p-3" data-testid="micro-resources">
-        <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">Go deeper (optional)</p>
-        <ul className="mt-2 space-y-1.5">
+      <div className="rounded-xl border border-line-soft bg-canvas p-3.5" data-testid="micro-resources">
+        <p className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-faint">Go deeper (optional)</p>
+        <ul className="mt-2 space-y-2">
           {resources.map((resource) => (
             <li key={resource.id} className="flex items-start gap-2">
               <ExternalLink className="mt-0.5 h-3 w-3 shrink-0 text-accent" aria-hidden="true" />
@@ -395,7 +412,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
                 >
                   {resource.title}
                 </a>
-                <span className="ml-1 text-[10px] text-faint">
+                <span className="ml-1 text-[11px] text-faint">
                   {resource.role === 'primary' ? 'primary' : 'optional'} · {resource.lastVerified}
                 </span>
               </span>
@@ -403,7 +420,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
           ))}
         </ul>
         {optionalResources(concept).length === 0 ? (
-          <p className="mt-1 text-[11px] text-muted">The parent lesson is the only required reading.</p>
+          <p className="mt-1 text-[12px] text-muted">The parent lesson is the only required reading.</p>
         ) : null}
       </div>
     );
@@ -411,21 +428,50 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
 
   const overview = (
     <div className="space-y-3" data-testid="micro-overview">
-      <section className={`${CARD} border-accent/30`}>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-accent">P.1 · seven tiny concepts</p>
-            <h2 className="mt-1 text-base font-bold text-ink">One idea, then a check that cannot be guessed</h2>
-            <p className="mt-1 max-w-[65ch] text-[12.5px] leading-relaxed text-muted">
-              Learn a single concept in about two minutes, answer two diagnostics, then review it
-              tomorrow. A clean diagnostic is provisional; a review or challenge consolidates it. The
-              parent lesson P.1 is never marked verified from here.
+      <section className={`${CARD} relative overflow-hidden border-accent/30`}>
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_92%_8%,var(--accent-soft),transparent_38%),radial-gradient(circle_at_8%_92%,var(--emerald),transparent_32%)] opacity-70" />
+        <div className="relative flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-accent">P.1 · seven tiny concepts</p>
+            <h2 className="mt-1 font-display text-2xl font-bold leading-tight text-ink sm:text-3xl">
+              Follow the question. The answer can wait.
+            </h2>
+            <p className="mt-2 max-w-[62ch] text-[15px] leading-relaxed text-muted">
+              One small idea, two quick checks, then a review that returns tomorrow. A clean diagnostic
+              is provisional; a review or challenge makes it stick. The parent lesson P.1 is never
+              marked verified from here.
             </p>
           </div>
-          <div className="rounded-lg border border-line-soft bg-canvas px-3 py-2 text-right">
+          <div className="rounded-xl border border-line-soft bg-canvas/90 px-4 py-3 text-right">
             <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-faint">Due now</p>
-            <p className="font-mono text-2xl font-bold tabular-nums text-ink">{due.length}</p>
+            <p className="font-mono text-3xl font-bold tabular-nums text-ink">{due.length}</p>
+            <p className="font-mono text-[10px] text-faint">{due.length === 0 ? 'all caught up' : 'ready for you'}</p>
           </div>
+        </div>
+        <div className="relative mt-4 grid gap-2 sm:grid-cols-3">
+          <div className="rounded-lg border border-line-soft bg-canvas/80 px-3 py-2">
+            <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-faint">Ideas unlocked</p>
+            <p className="mt-0.5 text-[15px] font-bold text-ink">
+              {learnedCount} <span className="text-[12px] font-normal text-muted">/ {MICRO_CONCEPTS.length}</span>
+            </p>
+          </div>
+          <div className="rounded-lg border border-line-soft bg-canvas/80 px-3 py-2">
+            <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-faint">Consolidated</p>
+            <p className="mt-0.5 text-[15px] font-bold text-emerald">{consolidatedCount}</p>
+          </div>
+          <div className="rounded-lg border border-line-soft bg-canvas/80 px-3 py-2">
+            <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-faint">Curiosity days</p>
+            <p className="mt-0.5 text-[15px] font-bold text-accent">{evidenceDays}</p>
+          </div>
+        </div>
+        <div className="relative mt-3 h-2 overflow-hidden rounded-full bg-raise" aria-hidden="true">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-accent via-emerald to-purple transition-[width] duration-500"
+            style={{ width: `${Math.round((learnedCount / MICRO_CONCEPTS.length) * 100)}%` }}
+          />
+        </div>
+        <div className="relative mt-4">
+          <MicroVisual conceptId="variables" />
         </div>
         {suggested ? (
           <button
@@ -434,18 +480,18 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
               const concept = MICRO_CONCEPTS.find((entry) => entry.id === suggested);
               if (concept) begin(concept, 'learn');
             }}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-accent px-3.5 py-2 text-[12.5px] font-bold text-inverse hover:bg-accent/80"
+            className="mt-3 inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-[14px] font-bold text-inverse shadow-sm hover:bg-accent/80"
             data-testid="micro-next"
           >
-            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+            <Sparkles className="h-4 w-4" aria-hidden="true" />
             {suggested && store.concepts[suggested] ? 'Continue with' : 'Start with'}{' '}
             {MICRO_CONCEPTS.find((concept) => concept.id === suggested)?.title}
             <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
         ) : (
-          <p className="mt-3 rounded-lg border border-emerald/30 bg-emerald/5 px-3 py-2 text-[12px] text-emerald">
+          <p className="mt-3 rounded-xl border border-emerald/30 bg-emerald/5 px-3.5 py-2.5 text-[13.5px] leading-relaxed text-emerald">
             All seven P.1 concepts have been learned. Reviews return on their own schedule; start
-            any concept from the list whenever you want.
+            any concept from the list whenever you want. Curiosity does not expire.
           </p>
         )}
       </section>
@@ -454,7 +500,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
         <section className={CARD} data-testid="micro-due">
           <div className="flex items-center gap-2">
             <Clock3 className="h-4 w-4 text-accent" aria-hidden="true" />
-            <h2 className="text-sm font-bold text-ink">Due now</h2>
+            <h2 className="text-base font-bold text-ink">Due now</h2>
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             {due.map((id) => {
@@ -464,7 +510,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
                   key={id}
                   type="button"
                   onClick={() => begin(concept, 'review')}
-                  className="rounded-full border border-accent/50 bg-accent-soft px-3 py-1 text-[11.5px] font-semibold text-accent"
+                  className="rounded-full border border-accent/50 bg-accent-soft px-3.5 py-1.5 text-[13px] font-semibold text-accent"
                 >
                   Review {concept.title}
                 </button>
@@ -477,7 +523,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
       <section className={CARD}>
         <div className="flex items-center gap-2">
           <BookOpen className="h-4 w-4 text-accent" aria-hidden="true" />
-          <h2 className="text-sm font-bold text-ink">Seven P.1 concepts</h2>
+          <h2 className="text-base font-bold text-ink">Seven P.1 concepts</h2>
         </div>
         <ul className="mt-2 divide-y divide-line-soft">
           {MICRO_CONCEPTS.map((concept, index) => {
@@ -485,20 +531,21 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
             const label = statusLabel(conceptState, concept, Date.now());
             const canReview = Boolean(conceptState?.learnCompletedAt);
             return (
-              <li key={concept.id} className="flex flex-wrap items-center gap-2 py-2.5" data-testid={`micro-concept-${concept.id}`}>
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-line-soft font-mono text-[10px] text-faint">
+              <li key={concept.id} className="flex flex-wrap items-center gap-2.5 py-3" data-testid={`micro-concept-${concept.id}`}>
+                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${TONE[concept.id]?.dot ?? 'bg-accent'}`} aria-hidden="true" />
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-line-soft font-mono text-[11px] text-faint">
                   {index + 1}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[12.5px] font-semibold text-ink">{concept.title}</p>
-                  <p className="text-[10.5px] text-muted">
+                  <p className="text-[14.5px] font-semibold leading-snug text-ink">{concept.title}</p>
+                  <p className="mt-0.5 text-[12px] text-muted">
                     {label} · {concept.timing.learn.estimatedSeconds}s designed
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => begin(concept, 'learn')}
-                  className="rounded-md border border-line bg-panel px-2.5 py-1 text-[11px] font-semibold text-ink hover:border-accent/60 hover:text-accent"
+                  className="rounded-lg border border-line bg-panel px-3 py-1.5 text-[12.5px] font-semibold text-ink hover:border-accent/60 hover:text-accent"
                   data-testid={`micro-learn-${concept.id}`}
                 >
                   {canReview ? 'Learn again' : 'Learn'}
@@ -508,7 +555,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
                     <button
                       type="button"
                       onClick={() => begin(concept, 'review')}
-                      className="rounded-md border border-line bg-panel px-2.5 py-1 text-[11px] font-semibold text-ink hover:border-accent/60 hover:text-accent"
+                      className="rounded-lg border border-line bg-panel px-3 py-1.5 text-[12.5px] font-semibold text-ink hover:border-accent/60 hover:text-accent"
                       data-testid={`micro-review-${concept.id}`}
                     >
                       Review
@@ -516,7 +563,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
                     <button
                       type="button"
                       onClick={() => begin(concept, 'challenge')}
-                      className="rounded-md border border-line bg-panel px-2.5 py-1 text-[11px] font-semibold text-ink hover:border-accent/60 hover:text-accent"
+                      className="rounded-lg border border-line bg-panel px-3 py-1.5 text-[12.5px] font-semibold text-ink hover:border-accent/60 hover:text-accent"
                       data-testid={`micro-challenge-${concept.id}`}
                     >
                       Challenge
@@ -558,7 +605,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
           <button
             type="button"
             onClick={back}
-            className="inline-flex items-center gap-1 text-[12px] text-muted hover:text-ink"
+            className="inline-flex items-center gap-1.5 text-[13.5px] text-muted hover:text-ink"
             data-testid="micro-back"
           >
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
@@ -568,25 +615,29 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
             href={`${lessonPageUrl(MICRO_CATALOG.parentPath)}#${active.anchor}`}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1 text-[11.5px] text-muted underline decoration-dotted underline-offset-2 hover:text-accent"
+            className="inline-flex items-center gap-1 text-[13px] text-muted underline decoration-dotted underline-offset-2 hover:text-accent"
             data-testid="micro-source-anchor"
           >
             Read this section in P.1
             <ExternalLink className="h-3 w-3" aria-hidden="true" />
           </a>
         </div>
-        <div className="flex items-center gap-2 font-mono text-[11px] text-muted" data-testid="micro-timer">
-          <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+        <div className="flex items-center gap-2 font-mono text-[12.5px] text-muted" data-testid="micro-timer">
+          <Clock3 className="h-4 w-4" aria-hidden="true" />
           <span>{formatClock(reading.adjustedSeconds)}</span>
           <span className="text-faint">/ target {active.timing.learn.estimatedSeconds}s</span>
         </div>
       </div>
 
       <section className={`${CARD} border-accent/30`}>
-        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent">
-          {stageTitle(stage)} · P.1 · {active.title}
-        </p>
-        <p className="mt-1 text-[12px] text-muted">{MICRO_CATALOG.title}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={`rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${TONE[active.id]?.chip ?? 'border-accent/40 bg-accent/10 text-accent'}`}>
+            {stageTitle(stage)}
+          </span>
+          <span className="font-mono text-[11px] text-faint">P.1 · {active.title}</span>
+        </div>
+        <h2 className="mt-2 font-display text-2xl font-bold leading-tight text-ink">{active.title}</h2>
+        <p className="mt-1 text-[13px] text-muted">{MICRO_CATALOG.title}</p>
         {reading.overTarget ? (
           <p
             role="status"
@@ -601,18 +652,26 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
       </section>
 
       {stage === 'learn' ? (
-        <section className={`${CARD} space-y-3`} data-testid="micro-teaching">
-          {active.teaching.map((paragraph) => (
-            <p key={paragraph} className="text-[13px] leading-relaxed text-body">
-              {paragraph}
-            </p>
-          ))}
-          <pre className="overflow-x-auto rounded-lg border border-line-soft bg-canvas p-3 font-mono text-[12px] text-body">
+        <section className={`${CARD} space-y-4`} data-testid="micro-teaching">
+          <MicroVisual conceptId={active.id} />
+          <div className="space-y-3">
+            {active.teaching.map((paragraph, index) => (
+              <p
+                key={paragraph}
+                className={`text-[16px] leading-8 text-body ${index === 0 ? 'font-medium text-ink' : ''}`}
+              >
+                {paragraph}
+              </p>
+            ))}
+          </div>
+          <pre className="overflow-x-auto rounded-xl border border-line-soft bg-canvas p-4 font-mono text-[13.5px] leading-relaxed text-body">
             {active.example.code}
           </pre>
-          <div className="rounded-lg border border-line-soft bg-canvas p-2.5">
-            <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-faint">Output</p>
-            <pre className="mt-1 whitespace-pre-wrap font-mono text-[12px] text-emerald">{active.example.output}</pre>
+          <div className="rounded-xl border border-emerald/25 bg-emerald/5 p-3.5">
+            <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-emerald">What Python says</p>
+            <pre className="mt-1 whitespace-pre-wrap font-mono text-[13.5px] leading-relaxed text-emerald">
+              {active.example.output}
+            </pre>
           </div>
           <button
             type="button"
@@ -622,11 +681,11 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
               setNote('');
               clockRef.current?.resume();
             }}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3.5 py-2 text-[12.5px] font-bold text-inverse hover:bg-accent/80"
+            className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-[14px] font-bold text-inverse shadow-sm hover:bg-accent/80"
             data-testid="micro-start-diagnostics"
           >
-            Start the two checks
-            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            Let me test that
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </button>
           {renderResources(active)}
         </section>
@@ -634,15 +693,15 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
 
       {stage === 'diagnostics' ? (
         <section className={`${CARD} space-y-3`} data-testid="micro-diagnostics">
-          <p className="text-[12.5px] text-muted">
-            Two checks, no timer pressure. A wrong answer is used to choose the practice, not to score you.
+          <p className="text-[14px] leading-relaxed text-muted">
+            Two checks, no timer pressure. A wrong answer is a clue for the next step, not a score.
           </p>
           {active.diagnostics.map((question, index) => renderQuestion(question, index))}
           <button
             type="button"
             disabled={busy || active.diagnostics.some((question) => !answers[question.id])}
             onClick={() => void submitDiagnostics()}
-            className="rounded-lg bg-accent px-3.5 py-2 text-[12.5px] font-bold text-inverse disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl bg-accent px-4 py-2.5 text-[14px] font-bold text-inverse disabled:cursor-not-allowed disabled:opacity-50"
             data-testid="micro-submit-diagnostics"
           >
             Check both answers
@@ -652,24 +711,24 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
 
       {stage === 'practice' ? (
         <section className={`${CARD} space-y-3`} data-testid="micro-practice">
-          <div className="rounded-lg border border-line-soft bg-canvas p-3">
-            <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent">
-              Targeted note · {diagnosticScore}/2
+          <div className="rounded-xl border border-amber/25 bg-amber/5 p-3.5">
+            <p className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-amber">
+              A closer look · {diagnosticScore}/2
             </p>
             {diagnosticScore === 0 ? (
               <>
-                <p className="mt-1 text-[12.5px] text-body">
+                <p className="mt-1 text-[14px] leading-relaxed text-body">
                   Let's slow down and walk the worked example once more before the practice.
                 </p>
-                <pre className="mt-2 overflow-x-auto rounded-md border border-line-soft bg-panel p-2 font-mono text-[11.5px] text-body">
+                <pre className="mt-2 overflow-x-auto rounded-lg border border-line-soft bg-panel p-2.5 font-mono text-[13px] text-body">
                   {active.example.code}
                 </pre>
               </>
             ) : (
-              <ul className="mt-2 space-y-1 text-[12px] text-body">
+              <ul className="mt-2 space-y-1.5 text-[13.5px] leading-relaxed text-body">
                 {missed.map((explanation) => (
                   <li key={explanation} className="flex gap-1.5">
-                    <ChevronRight className="mt-0.5 h-3 w-3 shrink-0 text-accent" aria-hidden="true" />
+                    <ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber" aria-hidden="true" />
                     {explanation}
                   </li>
                 ))}
@@ -682,7 +741,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
               type="button"
               disabled={busy || !answers[active.practice.id]}
               onClick={() => void submitPractice()}
-              className="rounded-lg bg-accent px-3.5 py-2 text-[12.5px] font-bold text-inverse disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-xl bg-accent px-4 py-2.5 text-[14px] font-bold text-inverse disabled:cursor-not-allowed disabled:opacity-50"
               data-testid="micro-submit-practice"
             >
               Check the practice
@@ -695,7 +754,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
                 setStage('diagnostics');
                 setAnswers({});
               }}
-              className="rounded-lg border border-line bg-panel px-3 py-2 text-[12px] font-semibold text-muted hover:text-ink"
+              className="rounded-xl border border-line bg-panel px-3 py-2 text-[13.5px] font-semibold text-muted hover:text-ink"
             >
               Re-read the diagnostics
             </button>
@@ -705,7 +764,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
 
       {stage === 'review' ? (
         <section className={`${CARD} space-y-3`} data-testid="micro-review-stage">
-          <p className="text-[12.5px] text-muted">
+          <p className="text-[14px] leading-relaxed text-muted">
             A review is one concept at a time, two questions, all correct to consolidate.
           </p>
           {reviewQuestions.map((question, index) => renderQuestion(question, index))}
@@ -713,7 +772,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
             type="button"
             disabled={busy || reviewQuestions.some((question) => !answers[question.id])}
             onClick={() => void submitReview()}
-            className="rounded-lg bg-accent px-3.5 py-2 text-[12.5px] font-bold text-inverse disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl bg-accent px-4 py-2.5 text-[14px] font-bold text-inverse disabled:cursor-not-allowed disabled:opacity-50"
             data-testid="micro-submit-review"
           >
             Check both answers
@@ -723,7 +782,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
 
       {stage === 'challenge' ? (
         <section className={`${CARD} space-y-3`} data-testid="micro-challenge-stage">
-          <p className="text-[12.5px] text-muted">
+          <p className="text-[14px] leading-relaxed text-muted">
             One transfer question. A pass consolidates the concept for two weeks; a miss keeps what you
             have learned and schedules tomorrow.
           </p>
@@ -732,7 +791,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
             type="button"
             disabled={busy || !answers[active.challenge.id]}
             onClick={() => void submitChallenge()}
-            className="rounded-lg bg-accent px-3.5 py-2 text-[12.5px] font-bold text-inverse disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl bg-accent px-4 py-2.5 text-[14px] font-bold text-inverse disabled:cursor-not-allowed disabled:opacity-50"
             data-testid="micro-submit-challenge"
           >
             Check the challenge
@@ -741,9 +800,9 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
       ) : null}
 
       {stage === 'done' && result ? (
-        <section className={`${CARD} space-y-3`} data-testid="micro-result">
-          <div className="flex items-start gap-2">
-            <span className="rounded-full border border-emerald/40 bg-emerald/10 p-1.5 text-emerald">
+        <section className={`${CARD} space-y-4`} data-testid="micro-result">
+          <div className="flex items-start gap-3">
+            <span className="rounded-full border border-emerald/40 bg-emerald/10 p-2 text-emerald">
               {result.kind === 'review' && result.correct !== result.total ? (
                 <CircleHelp className="h-4 w-4" aria-hidden="true" />
               ) : result.kind === 'challenge' && !result.passed ? (
@@ -755,14 +814,14 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
               )}
             </span>
             <div>
-              <p className="text-[13px] font-bold text-ink">{outcomeCopy(result)}</p>
+              <p className="text-[16px] font-bold leading-relaxed text-ink">{outcomeCopy(result)}</p>
               {result.kind === 'learn' && result.score !== 2 && result.practice === false ? (
-                <p className="mt-1 text-[12px] text-muted">
+                <p className="mt-1 text-[13px] leading-relaxed text-muted">
                   The parent lesson P.1 remains unverified. This micro result is not a lesson pass.
                 </p>
               ) : null}
               {result.kind === 'review' && result.correct !== result.total ? (
-                <p className="mt-1 text-[12px] text-muted">
+                <p className="mt-1 text-[13px] leading-relaxed text-muted">
                   Your mastery and skip decision are unchanged; the review is simply due again tomorrow.
                 </p>
               ) : null}
@@ -777,7 +836,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
                 setNote('');
                 clockRef.current?.resume();
               }}
-              className="rounded-lg border border-line bg-panel px-3 py-2 text-[12px] font-semibold text-ink hover:border-accent/60"
+              className="rounded-xl border border-line bg-panel px-3.5 py-2.5 text-[13.5px] font-semibold text-ink hover:border-accent/60"
             >
               Try the practice once more
             </button>
@@ -791,7 +850,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
                 if (concept && concept.id !== active.id) begin(concept, 'learn');
                 else back();
               }}
-              className="rounded-lg bg-accent px-3.5 py-2 text-[12.5px] font-bold text-inverse hover:bg-accent/80"
+              className="rounded-xl bg-accent px-4 py-2.5 text-[14px] font-bold text-inverse shadow-sm hover:bg-accent/80"
               data-testid="micro-next-concept"
             >
               {nextConceptId(store, MICRO_CONCEPTS, Date.now()) ? 'Next concept' : 'Back to all concepts'}
@@ -799,7 +858,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
             <button
               type="button"
               onClick={back}
-              className="rounded-lg border border-line bg-panel px-3 py-2 text-[12px] font-semibold text-muted hover:text-ink"
+              className="rounded-xl border border-line bg-panel px-3.5 py-2.5 text-[13.5px] font-semibold text-muted hover:text-ink"
             >
               All concepts
             </button>
@@ -814,18 +873,19 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
   return (
     <div data-testid="tab-micro" className="space-y-4">
       <section className={`${CARD} relative overflow-hidden border-accent/30`}>
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_20%,var(--accent-soft),transparent_42%)]" />
-        <div className="relative flex flex-wrap items-start justify-between gap-3">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_18%,var(--accent-soft),transparent_36%),radial-gradient(circle_at_12%_90%,var(--purple),transparent_30%)] opacity-80" />
+        <div className="relative flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-accent">Beta · subject-agnostic engine</p>
-            <h1 className="mt-1 font-display text-xl font-bold text-ink">Micro-learning</h1>
-            <p className="mt-1 max-w-[62ch] text-[12.5px] leading-relaxed text-muted">
+            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-accent">Beta · subject-agnostic engine</p>
+            <h1 className="mt-1 font-display text-3xl font-bold leading-tight text-ink sm:text-4xl">
+              Micro-learning
+            </h1>
+            <p className="mt-2 max-w-[62ch] text-[15px] leading-relaxed text-muted">
               Seven P.1 concepts, each about two minutes. Local-only progress; no account, no cloud,
-              no generated content. The tab stays beta until a beginner who has never seen MechaLab
-              completes P.1 and reports where they got stuck.
+              no generated content. Follow one curious thread at a time and let the small wins stack up.
             </p>
           </div>
-          <div className="rounded-lg border border-line-soft bg-canvas px-3 py-2 font-mono text-[10px] text-muted">
+          <div className="rounded-xl border border-line-soft bg-canvas/90 px-3.5 py-2.5 font-mono text-[11px] text-muted">
             <p>{MICRO_CONCEPTS.length} concepts</p>
             <p>{store.events.length} evidence events</p>
             <p>{persistent ? 'saved on this device' : 'not saved'}</p>
@@ -834,12 +894,12 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
       </section>
 
       {!persistent ? (
-        <p role="status" className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[12px] text-amber-200">
+        <p role="status" className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3.5 py-2.5 text-[13px] text-amber-200">
           Progress won't be saved — this browser's storage is blocked or full. The activities still work.
         </p>
       ) : null}
       {note ? (
-        <p role="status" className="rounded-lg border border-line bg-panel px-3 py-2 text-[12px] text-muted">
+        <p role="status" className="rounded-xl border border-line bg-panel px-3.5 py-2.5 text-[13px] text-muted">
           {note}
         </p>
       ) : null}

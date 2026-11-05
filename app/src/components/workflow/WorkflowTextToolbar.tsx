@@ -1,17 +1,18 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { AlignCenter, AlignLeft, AlignRight, Bold, Italic, Underline, X } from 'lucide-react';
-import type { WorkflowNode } from '../../workflow.ts';
+import { Bold, Italic, Underline, X } from 'lucide-react';
+import type { TextFormatRange, TextFormatStyle, WorkflowNode } from '../../workflow.ts';
 
 /**
  * The card-text toolbar (`components/workflow/WorkflowTextToolbar.tsx`).
  *
  * A learner selects words in a card's title or detail, then right-clicks: the browser's menu would
  * offer Copy and Paste, neither of which changes the diagram. This small overlay replaces it with
- * the formatting the card can actually keep — bold, italic, underline and alignment.
+ * the formatting the card can actually keep — bold, italic and underline on the selected words.
  *
- * It applies to the whole card, because a card's words are one plain-text field rather than a rich
- * document. That is a deliberate boundary: the field stays searchable, exportable and copyable as
- * plain text, while the learner still gets the visual emphasis a diagram needs.
+ * Formatting is a list of character ranges stored beside the plain text, never a style on the whole
+ * field. The words a search, an export or a copy sees stay exactly what the learner typed, while the
+ * selected phrase gets the emphasis a diagram needs. Alignment stays a field-level choice in the
+ * inspector because CSS cannot align part of a line.
  *
  * **Where it sits is a decision, not a pointer offset.** The toolbar belongs to the field it
  * formats, so it is placed against that field's rect: above when there is room, below when the field
@@ -42,7 +43,9 @@ export interface WorkflowTextToolbarProps {
   anchor: TextAnchor;
   /** The field's whole card, when it is known: a card taller than the window changes the fit. */
   card?: TextAnchor | null;
-  onApply: (patch: Partial<WorkflowNode>) => void;
+  /** The selected character range, captured when the menu opened. */
+  selection: { start: number; end: number };
+  onFormat: (style: TextFormatStyle) => void;
   onClose: () => void;
 }
 
@@ -100,24 +103,21 @@ export function toolbarPlacement(
   return side();
 }
 
-export function WorkflowTextToolbar({ node, field, anchor, card = null, onApply, onClose }: WorkflowTextToolbarProps) {
-  type FormatKind = 'bold' | 'italic' | 'underline';
-  const detailKey: Record<FormatKind, 'detailBold' | 'detailItalic' | 'detailUnderline'> = {
-    bold: 'detailBold',
-    italic: 'detailItalic',
-    underline: 'detailUnderline',
-  };
-  const isOn = (kind: FormatKind) =>
-    Boolean(field === 'title' ? node[kind] : node[detailKey[kind]]);
-  const toggle = (kind: FormatKind) => {
-    const on = isOn(kind);
-    onApply(
-      field === 'title'
-        ? { [kind]: on ? undefined : true }
-        : { [detailKey[kind]]: on ? undefined : true }
+export function WorkflowTextToolbar({
+  node,
+  field,
+  anchor,
+  card = null,
+  selection,
+  onFormat,
+  onClose,
+}: WorkflowTextToolbarProps) {
+  const formats: TextFormatRange[] = field === 'title' ? node.titleFormats ?? [] : node.detailFormats ?? [];
+  const isOn = (style: TextFormatStyle) =>
+    formats.some(
+      (range) => range.style === style && range.start <= selection.start && range.end >= selection.end
     );
-  };
-  const alignValue = field === 'title' ? node.align : node.detailAlign;
+  const toggle = (style: TextFormatStyle) => onFormat(style);
   const barRef = useRef<HTMLDivElement | null>(null);
   // Placed only after it has been measured: painting it at the corner for one frame and then
   // jumping to the field is worse than not painting it at all.
@@ -173,7 +173,7 @@ export function WorkflowTextToolbar({ node, field, anchor, card = null, onApply,
         }}
       >
         <span className="px-1 font-mono text-[9.5px] uppercase tracking-[0.1em] text-faint">
-          Text · {field}
+          Selected · {field}
         </span>
         <button
           type="button"
@@ -206,31 +206,6 @@ export function WorkflowTextToolbar({ node, field, anchor, card = null, onApply,
           <Underline className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
         <span aria-hidden="true" className="mx-0.5 h-4 w-px bg-line" />
-        {(
-          [
-            ['left', AlignLeft],
-            ['center', AlignCenter],
-            ['right', AlignRight],
-          ] as const
-        ).map(([align, Icon]) => (
-          <button
-            key={align}
-            type="button"
-            data-testid={`workflow-format-align-${align}`}
-            aria-label={`Align the selected ${field} text ${align}`}
-            aria-pressed={(alignValue ?? 'left') === align}
-            onClick={() =>
-              onApply(
-                field === 'title'
-                  ? { align: align === 'left' ? undefined : align }
-                  : { detailAlign: align === 'left' ? undefined : align }
-              )
-            }
-            className={`grid h-7 w-7 cursor-pointer place-items-center rounded ${(alignValue ?? 'left') === align ? 'bg-accent/15 text-accent' : 'text-muted hover:bg-raise'}`}
-          >
-            <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-          </button>
-        ))}
         <button
           type="button"
           aria-label="Close the text toolbar"

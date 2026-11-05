@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { BookOpen, Scaling, StickyNote, X } from 'lucide-react';
+import { AlignCenter, AlignLeft, AlignRight, BookOpen, Scaling, StickyNote, X } from 'lucide-react';
 import {
   KIND_META,
   MAX_FONT_SIZE,
@@ -46,7 +46,20 @@ export interface WorkflowSelectionInspectorProps {
   /** A look is optional, so `undefined` puts a card back to the theme's own surface and type. */
   onStyle: (
     patch: Partial<
-      Pick<WorkflowNode, 'fill' | 'ink' | 'size' | 'width' | 'height' | 'wrapText' | 'bold' | 'italic' | 'underline' | 'align'>
+      Pick<
+        WorkflowNode,
+        | 'fill'
+        | 'ink'
+        | 'size'
+        | 'width'
+        | 'height'
+        | 'wrapText'
+        | 'bold'
+        | 'italic'
+        | 'underline'
+        | 'align'
+        | 'detailAlign'
+      >
     >
   ) => void;
   onDismiss: () => void;
@@ -199,6 +212,33 @@ export function WorkflowSelectionInspector({
             </div>
             {/* Fit is the one-press version of dragging the corner until the longest line stops
                 wrapping; the corner stays exact for a shape the learner wants by eye. */}
+            {(['title', 'detail'] as const).map((part) => {
+              const value = part === 'title' ? node.align : node.detailAlign;
+              return (
+                <div key={part} role="group" aria-label={`${part} alignment`} className="flex items-center gap-0.5">
+                  <span className="font-mono text-[10px] text-faint">{part === 'title' ? 'Title' : 'Detail'}</span>
+                  {([['left', AlignLeft], ['center', AlignCenter], ['right', AlignRight]] as const).map(
+                    ([align, Icon]) => (
+                      <button
+                        key={align}
+                        type="button"
+                        data-testid={`workflow-align-${part}-${align}`}
+                        aria-label={`Align ${part} ${align}`}
+                        aria-pressed={(value ?? 'left') === align}
+                        onClick={() =>
+                          part === 'title'
+                            ? onStyle({ align: align === 'left' ? undefined : align })
+                            : onStyle({ detailAlign: align === 'left' ? undefined : align })
+                        }
+                        className={`grid h-6 w-6 cursor-pointer place-items-center rounded ${(value ?? 'left') === align ? 'bg-accent/15 text-accent' : 'text-muted hover:bg-raise'}`}
+                      >
+                        <Icon className="h-3 w-3" aria-hidden="true" />
+                      </button>
+                    )
+                  )}
+                </div>
+              );
+            })}
             <button
               type="button"
               data-testid="workflow-fit-text"

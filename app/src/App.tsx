@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Header } from './components/Header';
+import { StudyTips } from './components/StudyTips';
 import { GuidedTourBar, TourStepInfo } from './components/GuidedTourBar';
 import { CheatSheetModal } from './components/CheatSheetModal';
 import { CommandPalette } from './components/CommandPalette';
@@ -2180,6 +2181,8 @@ export const App: React.FC = () => {
           </button>
         </div>
       )}
+
+      <StudyTips />
 
       <SiteFooter onOpenIntro={() => openPage('intro')} />
     </div>

@@ -62,11 +62,11 @@ flowchart LR
 
 #### Micro focus: variables
 <a id="micro-variables"></a>
-A **variable** is a named storage box. `battery_level = 12.60` stores the float 12.60 under that name. The single equals sign `=` is the assignment action, not a claim that the two sides are equal.
+A **variable** is a named storage box. `plant_height = 12.60` stores the float 12.60 under that name. The single equals sign `=` is the assignment action, not a claim that the two sides are equal.
 
 #### Micro focus: assignment order
 <a id="micro-assignment-order"></a>
-Python evaluates the right-hand side of `=` first, then stores the result. So `encoder_ticks = encoder_ticks + 25` reads the old value, adds 25, and writes the new value back.
+Python evaluates the right-hand side of `=` first, then stores the result. So `sticker_count = sticker_count + 25` reads the old value, adds 25, and writes the new value back.
 
 #### Micro focus: int and float
 <a id="micro-int-float"></a>
@@ -74,7 +74,7 @@ An **`int`** is a whole number such as `400`; a **`float`** is a decimal number 
 
 #### Micro focus: strings
 <a id="micro-strings"></a>
-A **`str`** is text wrapped in quotes. `"12"` is text, not the number 12. Joining two strings with `+` concatenates them: `"12" + "5"` produces `"125"`.
+A **`str`** is text wrapped in quotes. `"sunny"` is text, not the weather itself. Joining two strings with `+` concatenates them: `"12" + "5"` produces `"125"`.
 
 #### Micro focus: booleans
 <a id="micro-booleans"></a>
@@ -86,7 +86,7 @@ Python will not silently mix text and numbers. `"12" + 5` raises `TypeError`; co
 
 #### Micro focus: f-strings
 <a id="micro-f-strings"></a>
-An **f-string** puts an `f` before the opening quote and evaluates names inside braces: `f"Battery: {battery_level:.2f} V"`. The `.2f` format shows two digits after the decimal point.
+An **f-string** puts an `f` before the opening quote and evaluates names inside braces: `f"Plant: {plant_height:.2f} cm"`. The `.2f` format shows two digits after the decimal point.
 
 ### Bridge Notes
 In mechatronics, every value inside your **program** (an ordered list of instructions executed top-to-bottom) represents a physical measurement or hardware state. When you write `battery_level = 12.60`, the **assignment** operator (`=`) creates a variable named `battery_level` holding the **float** (floating-point decimal number) `12.60`. Because Python always evaluates the right-hand side of `=` before storing it into the name on the left, writing `wheel_ticks = wheel_ticks + 25` reads the stored **int** (integer whole number) in `wheel_ticks`, adds `25`, and saves the updated total back into `wheel_ticks`.

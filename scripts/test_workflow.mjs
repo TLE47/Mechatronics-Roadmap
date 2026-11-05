@@ -61,6 +61,8 @@ import {
   STEPS_BY_MODE,
   addWorkflowNode,
   autoNodePosition,
+  textFormatSegments,
+  toggleTextFormat,
   edgeCaption,
   edgeLabelFor,
   edgePortOf,
@@ -2419,6 +2421,64 @@ check('wrap and formatting survive a read, and defaults stay absent', () => {
   ]) {
     assert.equal(field in plain.nodes[0], false, `${field} must not be stored on a default card`);
   }
+});
+
+check('selection formatting stores ranges and only paints the selected words', () => {
+  const doc = normalizeWorkflow(
+    graph([
+      {
+        kind: 'given',
+        title: 'Plant height 12.60',
+        detail: 'read the leaves',
+        titleFormats: [
+          { start: 0, end: 12, style: 'bold' },
+          { start: 13, end: 18, style: 'italic' },
+        ],
+        detailFormats: [{ start: 0, end: 4, style: 'underline' }],
+      },
+    ])
+  );
+  assert.deepEqual(doc.nodes[0].titleFormats, [
+    { start: 0, end: 12, style: 'bold' },
+    { start: 13, end: 18, style: 'italic' },
+  ]);
+  assert.equal(doc.nodes[0].title, 'Plant height 12.60', 'the plain text must not change');
+  assert.deepEqual(doc.nodes[0].detailFormats, [{ start: 0, end: 4, style: 'underline' }]);
+
+  const clamped = normalizeWorkflow(
+    graph([
+      {
+        kind: 'given',
+        title: 'abc',
+        titleFormats: [
+          { start: 0, end: 99, style: 'bold' },
+          { start: 2, end: 1, style: 'italic' },
+          { start: 0, end: 1, style: 'nope' },
+        ],
+      },
+    ])
+  );
+  assert.deepEqual(clamped.nodes[0].titleFormats, [{ start: 0, end: 3, style: 'bold' }]);
+
+  const selected = toggleTextFormat([], 6, 12, 'bold');
+  assert.deepEqual(selected, [{ start: 6, end: 12, style: 'bold' }]);
+  const removed = toggleTextFormat(selected, 6, 12, 'bold');
+  assert.deepEqual(removed, []);
+  const split = toggleTextFormat(selected, 8, 10, 'bold');
+  assert.deepEqual(split, [
+    { start: 6, end: 8, style: 'bold' },
+    { start: 10, end: 12, style: 'bold' },
+  ]);
+
+  const segments = textFormatSegments('Plant height', [
+    { start: 0, end: 5, style: 'bold' },
+  ]);
+  assert.deepEqual(
+    segments.map((segment) => `${segment.text}:${segment.bold ? 'b' : '-'}`),
+    ['Plant:b', ' height:-']
+  );
+  const plain = normalizeWorkflow(graph([{ kind: 'given', title: 'plain' }]));
+  assert.equal('titleFormats' in plain.nodes[0], false, 'a plain card gains no range fields');
 });
 
 check('search finds title, detail, note, unit and kind, one row per card', () => {

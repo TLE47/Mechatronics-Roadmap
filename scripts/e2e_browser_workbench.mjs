@@ -3056,12 +3056,30 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           );
         }, { x: titleBox.x + 16, y: titleBox.y + 8 });
         await page.getByTestId('workflow-text-toolbar').waitFor({ timeout: 5000 });
+        const titleText = await titleField.inputValue();
         await page.getByTestId('workflow-format-bold').click();
         await page.waitForTimeout(300);
+        const selectedWords = titleText.slice(0, 12);
         assert.equal(
-          await titleField.evaluate((field) => getComputedStyle(field).fontWeight),
-          '700',
-          'Bold from the text toolbar must reach the selected field'
+          await titleField.inputValue(),
+          titleText,
+          'Formatting must not change the plain text a search or export reads'
+        );
+        assert.equal(
+          await page
+            .getByTestId('workflow-node-title-format-0')
+            .locator('[data-format="bold"]')
+            .innerText(),
+          selectedWords,
+          'Bold must paint only the selected words'
+        );
+        assert.equal(
+          await page
+            .getByTestId('workflow-node-title-format-0')
+            .locator('[data-format="bold"]')
+            .count(),
+          1,
+          'Bold must be one selected range, not a whole-field switch'
         );
         assert.notEqual(
           await page

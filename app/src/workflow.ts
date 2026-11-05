@@ -99,6 +99,25 @@ export function fittedNodeWidth(node: Pick<WorkflowNode, 'title' | 'detail'>): n
 export type TextAlign = 'left' | 'center' | 'right';
 export const TEXT_ALIGNS: readonly TextAlign[] = ['left', 'center', 'right'];
 
+/**
+ * A character range the text toolbar formatted.
+ *
+ * A card's field is plain text, so formatting is stored beside it rather than inside it: the value
+ * a search, an export or a copy sees stays the words the learner typed. Ranges are half-open
+ * (`start` included, `end` excluded) and are clamped when a document is read, so an edited title
+ * can never paint past its own last character.
+ */
+export type TextFormatStyle = 'bold' | 'italic' | 'underline';
+export const TEXT_FORMAT_STYLES: readonly TextFormatStyle[] = ['bold', 'italic', 'underline'];
+export interface TextFormatRange {
+  start: number;
+  end: number;
+  style: TextFormatStyle;
+}
+
+/** A document may carry a useful amount of emphasis, but not an unbounded list of ranges. */
+export const MAX_TEXT_FORMAT_RANGES = 128;
+
 const BASE_STEP_KINDS = [
   'given',
   'unknown',
@@ -462,6 +481,10 @@ export interface WorkflowNode {
   detailBold?: boolean;
   detailItalic?: boolean;
   detailUnderline?: boolean;
+  /** Selection-only title formatting; absent means the title has no ranged emphasis. */
+  titleFormats?: TextFormatRange[];
+  /** Selection-only detail formatting; absent means the detail has no ranged emphasis. */
+  detailFormats?: TextFormatRange[];
   /** Where the card's title sits; absent is the left edge every card had. */
   align?: TextAlign;
   /** Where the detail sits; absent is the left edge. */
@@ -562,6 +585,112 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 function clean(value: unknown, max: number): string {
   if (typeof value !== 'string') return '';
   return value.replace(/^\s+|\s+$/g, '').slice(0, max);
+}
+
+function isTextFormatStyle(value: unknown): value is TextFormatStyle {
+  return typeof value === 'string' && (TEXT_FORMAT_STYLES as readonly string[]).includes(value);
+}
+
+/** Read a stored range list against the field it belongs to, rejecting junk and clamping edits. */
+export function normalizeTextFormats(value: unknown, length: number): TextFormatRange[] {
+  if (!Array.isArray(value) || length <= 0) return [];
+  const out: TextFormatRange[] = [];
+  const seen = new Set<string>();
+  for (const entry of value) {
+    if (out.length >= MAX_TEXT_FORMAT_RANGES) break;
+    const record = asRecord(entry);
+    if (!record || !isTextFormatStyle(record.style)) continue;
+    if (typeof record.start !== 'number' || typeof record.end !== 'number') continue;
+    if (!Number.isFinite(record.start) || !Number.isFinite(record.end)) continue;
+    const start = Math.min(length, Math.max(0, Math.trunc(record.start)));
+    const end = Math.min(length, Math.max(0, Math.trunc(record.end)));
+    if (start >= end) continue;
+    const key = `${record.style}:${start}:${end}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ start, end, style: record.style });
+  }
+  return out.sort((a, b) => a.start - b.start || a.end - b.end || a.style.localeCompare(b.style));
+}
+
+/**
+ * Add or remove one style over a selected range.
+ *
+ * A press removes the style when the selection is already covered; otherwise it adds it. Removal
+ * splits any range the selection crosses, so the words either side keep the emphasis they had.
+ */
+export function toggleTextFormat(
+  ranges: readonly TextFormatRange[],
+  start: number,
+  end: number,
+  style: TextFormatStyle
+): TextFormatRange[] {
+  const from = Math.min(start, end);
+  const to = Math.max(start, end);
+  if (from >= to) return [...ranges];
+  const covered = ranges.some(
+    (range) => range.style === style && range.start <= from && range.end >= to
+  );
+  if (!covered) {
+    return [...ranges, { start: from, end: to, style }].sort(
+      (a, b) => a.start - b.start || a.end - b.end || a.style.localeCompare(b.style)
+    );
+  }
+  const next: TextFormatRange[] = [];
+  for (const range of ranges) {
+    if (range.style !== style || range.end <= from || range.start >= to) {
+      next.push(range);
+      continue;
+    }
+    if (range.start < from) next.push({ ...range, end: from });
+    if (range.end > to) next.push({ ...range, start: to });
+  }
+  return next.sort((a, b) => a.start - b.start || a.end - b.end || a.style.localeCompare(b.style));
+}
+
+/** One plain-text slice with the emphasis that applies to it. */
+export interface TextFormatSegment {
+  text: string;
+  start: number;
+  end: number;
+  bold: boolean;
+  italic: boolean;
+  underline: boolean;
+}
+
+/** Split a field at every formatting boundary, ready for the card to paint as spans. */
+export function textFormatSegments(
+  text: string,
+  ranges: readonly TextFormatRange[] | undefined,
+  legacy?: { bold?: boolean; italic?: boolean; underline?: boolean }
+): TextFormatSegment[] {
+  const valid = (ranges ?? []).filter(
+    (range) => range.start >= 0 && range.end <= text.length && range.start < range.end
+  );
+  const boundaries = new Set<number>([0, text.length]);
+  for (const range of valid) {
+    boundaries.add(range.start);
+    boundaries.add(range.end);
+  }
+  const points = [...boundaries].sort((a, b) => a - b);
+  const segments: TextFormatSegment[] = [];
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const start = points[index];
+    const end = points[index + 1];
+    if (start >= end) continue;
+    const active = (style: TextFormatStyle) =>
+      Boolean(legacy?.[style]) ||
+      valid.some((range) => range.style === style && range.start <= start && range.end >= end);
+    segments.push({
+      text: text.slice(start, end),
+      start,
+      end,
+      bold: active('bold'),
+      italic: active('italic'),
+      underline: active('underline'),
+    });
+  }
+  return segments;
 }
 
 function isKind(value: unknown): value is StepKind {
@@ -884,6 +1013,10 @@ function readNode(value: unknown, mode: WorkflowMode, fallbackId: string, index:
   if (record.detailBold === true) node.detailBold = true;
   if (record.detailItalic === true) node.detailItalic = true;
   if (record.detailUnderline === true) node.detailUnderline = true;
+  const titleFormats = normalizeTextFormats(record.titleFormats, node.title.length);
+  const detailFormats = normalizeTextFormats(record.detailFormats, node.detail.length);
+  if (titleFormats.length) node.titleFormats = titleFormats;
+  if (detailFormats.length) node.detailFormats = detailFormats;
   if (record.align === 'center' || record.align === 'right') node.align = record.align;
   if (record.detailAlign === 'center' || record.detailAlign === 'right') {
     node.detailAlign = record.detailAlign;
