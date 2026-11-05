@@ -35,7 +35,7 @@ import { lessonPageUrl } from '../../startHere';
 import { MicroVisual } from '../micro/MicroVisual.tsx';
 import { MicroWalkthrough } from '../micro/MicroWalkthrough.tsx';
 import { MicroAnswerPreview } from '../micro/MicroAnswerPreview.tsx';
-import { MicroRichText } from '../micro/MicroText.tsx';
+import { MicroCodeBlock, MicroOptionText, MicroRichText } from '../micro/MicroText.tsx';
 
 export interface TabMicroProps {
   /** Return to the runner with the parent lesson selected. */
@@ -97,6 +97,7 @@ function outcomeCopy(result: Result | null): string {
 }
 
 const CARD = 'rounded-2xl border border-line bg-panel p-5 shadow-sm';
+const OPTION_TONE = ['bg-accent', 'bg-emerald', 'bg-amber', 'bg-purple'];
 
 /** The colour family a concept uses in the list and the lesson header. */
 const TONE: Record<string, { dot: string; chip: string }> = {
@@ -385,7 +386,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
     return (
       <fieldset
         key={question.id}
-        className="rounded-xl border border-line-soft bg-canvas p-4"
+        className="rounded-xl border border-line-soft bg-canvas p-3.5"
         data-testid={`micro-question-${question.id}`}
       >
         <legend className="px-1 font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
@@ -393,14 +394,10 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
         </legend>
         <div className={hasPreview ? 'grid gap-4 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:items-start' : ''}>
           <div className="min-w-0">
-            <p className="text-[16px] font-semibold leading-relaxed text-ink">
+            <p className="text-[15.5px] font-semibold leading-relaxed text-ink">
               <MicroRichText text={question.prompt} />
             </p>
-            {question.code ? (
-              <pre className="mt-2.5 overflow-x-auto rounded-lg border border-line-soft bg-panel p-3 font-mono text-[13px] leading-relaxed text-body">
-                {question.code}
-              </pre>
-            ) : null}
+            {question.code ? <MicroCodeBlock code={question.code} compact className="mt-2" /> : null}
             {question.type === 'short' ? (
               <input
                 value={selected}
@@ -411,7 +408,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
               />
             ) : (
               <div className="mt-2.5 grid gap-2">
-                {(question.options ?? []).map((option) => (
+                {(question.options ?? []).map((option, optionIndex) => (
                   <label
                     key={option.id}
                     className={`flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 text-[14.5px] leading-relaxed ${
@@ -433,7 +430,13 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
                       onChange={() => setAnswers((previous) => ({ ...previous, [question.id]: option.id }))}
                       className="mt-0.5"
                     />
-                    <span>{option.text}</span>
+                    <span
+                      aria-hidden="true"
+                      className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${OPTION_TONE[optionIndex % OPTION_TONE.length]}`}
+                    />
+                    <span className="min-w-0">
+                      <MicroOptionText text={option.text} />
+                    </span>
                   </label>
                 ))}
               </div>

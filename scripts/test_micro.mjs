@@ -45,8 +45,14 @@ import {
 } from '../app/src/micro/store.ts';
 import { createMicroProgress } from '../app/src/micro/progress.ts';
 import { readMicroEnabled, writeMicroEnabled } from '../app/src/micro/settings.ts';
-import { tokenizeInlineCode } from '../app/src/micro/inlineCode.ts';
-import { comparisonCode, questionTarget } from '../app/src/micro/questionComparison.ts';
+import { isCodeLikeText, tokenizeInlineCode } from '../app/src/micro/inlineCode.ts';
+import { comparisonPreview, questionTarget } from '../app/src/micro/questionComparison.ts';
+import {
+  DEFAULT_WALKTHROUGH_KEYS,
+  formatWalkthroughChord,
+  readWalkthroughKeys,
+  updateWalkthroughKey,
+} from '../app/src/micro/walkthroughKeys.ts';
 import {
   ActivityClock,
   MICRO_OVER_TARGET_SECONDS,
@@ -181,12 +187,88 @@ check('every concept has a progressive walkthrough', () => {
   }
 });
 
-check('the answer comparison names the variable and the selected value', () => {
-  const question = MICRO_CONCEPTS.find((concept) => concept.id === 'assignment-order').diagnostics[0];
-  assert.equal(questionTarget(question), 'x');
-  assert.match(comparisonCode(question, 'c'), /x = 15/);
-  assert.equal(questionTarget(MICRO_CONCEPTS[5].diagnostics[0]), null);
-  assert.match(comparisonCode(MICRO_CONCEPTS[5].diagnostics[0], 'c'), /# It raises TypeError/);
+check('walkthrough shortcuts are customizable, persisted and refused on a clash', () => {
+  const storage = fakeStorage();
+  const defaults = readWalkthroughKeys(storage);
+  assert.deepEqual(defaults, DEFAULT_WALKTHROUGH_KEYS);
+  assert.equal(formatWalkthroughChord(defaults.next), '→');
+  const custom = updateWalkthroughKey(
+    defaults,
+    'next',
+    { code: 'KeyN', mod: false, alt: false, shift: false },
+    storage
+  );
+  assert.equal(custom.error, null);
+  assert.equal(formatWalkthroughChord(custom.keys.next), 'N');
+  assert.deepEqual(readWalkthroughKeys(storage), custom.keys);
+  const clash = updateWalkthroughKey(custom.keys, 'previous', custom.keys.next, storage);
+  assert.match(clash.error, /already the next key/);
+  const previous = updateWalkthroughKey(
+    custom.keys,
+    'previous',
+    { code: 'KeyP', mod: false, alt: false, shift: false },
+    storage
+  );
+  assert.equal(previous.error, null);
+  assert.deepEqual(readWalkthroughKeys(storage), previous.keys);
+  const reserved = updateWalkthroughKey(
+    defaults,
+    'next',
+    { code: 'Tab', mod: false, alt: false, shift: false },
+    storage
+  );
+  assert.match(reserved.error, /Escape, Tab, Enter/);
+});
+
+check('the quiz comparison plugs known values into the equation', () => {
+  const question = MICRO_CONCEPTS.find((concept) => concept.id === 'variables').diagnostics[0];
+  const preview = comparisonPreview(question, 'b');
+  assert.equal(questionTarget(question), 'sticker_count');
+  assert.deepEqual(preview.lines, [
+    { original: 'sticker_count = sticker_count + 25', plugged: 'sticker_count = 400 + 25' },
+  ]);
+  assert.equal(preview.selectedText, '425');
+  assert.equal(preview.result, 'sticker_count = 425');
+});
+
+check('the quiz comparison follows print and evaluates arithmetic', () => {
+  const variables = MICRO_CONCEPTS.find((concept) => concept.id === 'variables');
+  const printed = variables.reviewPool.find((question) => question.id === 'variables-r2');
+  const preview = comparisonPreview(printed, 'c');
+  assert.deepEqual(preview.lines, [{ original: 'print(steps)', plugged: 'print(150)' }]);
+  assert.equal(preview.result, '150');
+  const order = MICRO_CONCEPTS.find((concept) => concept.id === 'assignment-order').diagnostics[0];
+  const arithmetic = comparisonPreview(order, 'c');
+  assert.deepEqual(arithmetic.lines, [{ original: 'x = x + 5', plugged: 'x = 10 + 5' }]);
+  assert.equal(arithmetic.result, 'x = 15');
+});
+
+check('the quiz comparison handles comparisons, mixed types and f-strings', () => {
+  const bool = MICRO_CONCEPTS.find((concept) => concept.id === 'booleans').practice;
+  const comparison = comparisonPreview(bool, 'a');
+  assert.deepEqual(comparison.lines, [
+    { original: 'weather == "sunny"', plugged: '"sunny" == "sunny"' },
+  ]);
+  assert.equal(comparison.result, 'True');
+  const mixed = MICRO_CONCEPTS.find((concept) => concept.id === 'mixed-types').diagnostics[0];
+  const failure = comparisonPreview(mixed, 'c');
+  assert.equal(failure.result, 'TypeError');
+  assert.equal(failure.resultKind, 'error');
+  const fstring = MICRO_CONCEPTS.find((concept) => concept.id === 'f-strings').diagnostics[0];
+  const formatted = comparisonPreview(fstring, 'a');
+  assert.equal(formatted.result, 'Plant: 12.15 cm');
+  const conceptual = MICRO_CONCEPTS.find((concept) => concept.id === 'variables').diagnostics[1];
+  const none = comparisonPreview(conceptual, 'a');
+  assert.deepEqual(none.lines, []);
+  assert.equal(none.result, null);
+});
+
+check('code-like quiz options get the lesson token treatment', () => {
+  assert.equal(isCodeLikeText('weather = "sunny"'), true);
+  assert.equal(isCodeLikeText('425'), true);
+  assert.equal(isCodeLikeText('sticker_count'), true);
+  assert.equal(isCodeLikeText('It produces "125"'), false);
+  assert.equal(isCodeLikeText('Evaluates the right side, then stores it in the left name'), false);
 });
 
 check('every diagnostic is graded deterministically', () => {

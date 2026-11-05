@@ -109,14 +109,50 @@ async function main() {
     assert.equal(await page.getByTestId('micro-next').count(), 1, 'an empty store offers the first concept');
     const variables = concept('variables');
     await page.getByTestId('micro-learn-variables').click();
+    const walkthroughLines = page.locator('.micro-walkthrough-line');
+    assert.equal(await walkthroughLines.count(), 1, 'the walkthrough starts with one line');
+    await page.keyboard.press('ArrowRight');
+    await walkthroughLines.nth(1).waitFor({ timeout: 2000 });
+    assert.equal(await walkthroughLines.count(), 2, 'the next key reveals one more line');
+    await page.keyboard.press('ArrowLeft');
+    await page.waitForFunction(() => document.querySelectorAll('.micro-walkthrough-line').length === 1);
+    assert.equal(await walkthroughLines.count(), 1, 'the previous key goes back one line');
+    await page.getByTestId('micro-keybind-toggle').click();
+    await page.getByTestId('micro-keybind-next').click();
+    await page.locator('[data-testid="micro-keybind-panel"][data-capture="next"]').waitFor();
+    await page.keyboard.press('n');
+    await page.waitForFunction(
+      () => document.querySelector('[data-testid="micro-keybind-panel"]')?.getAttribute('data-capture') === null
+    );
+    assert.match((await page.getByTestId('micro-keybind-next').textContent()) ?? '', /N/);
+    await page.keyboard.press('n');
+    await walkthroughLines.nth(1).waitFor({ timeout: 2000 });
+    assert.equal(await walkthroughLines.count(), 2, 'the custom next key reveals a line');
+    await page.getByTestId('micro-keybind-previous').click();
+    await page.locator('[data-testid="micro-keybind-panel"][data-capture="previous"]').waitFor();
+    await page.keyboard.press('p');
+    await page.waitForFunction(
+      () => document.querySelector('[data-testid="micro-keybind-panel"]')?.getAttribute('data-capture') === null
+    );
+    await page.keyboard.press('p');
+    await page.waitForFunction(() => document.querySelectorAll('.micro-walkthrough-line').length === 1);
+    assert.equal(await walkthroughLines.count(), 1, 'the custom previous key goes back');
+    await page.getByTestId('micro-keybind-toggle').click();
     await revealWalkthrough(page, variables);
     assert.equal(await page.getByTestId('micro-answer-preview').count(), 0, 'no answer comparison before a choice');
     await page.getByTestId('micro-start-diagnostics').click();
     for (const question of variables.diagnostics) await answer(page, question, true);
     await page.getByTestId('micro-answer-preview').first().waitFor({ timeout: 5000 });
     assert.equal(await page.getByTestId('micro-answer-preview').first().getAttribute('data-state'), 'pending');
+    const equation = page.getByTestId('micro-answer-equation').first();
+    await equation.waitFor({ timeout: 5000 });
+    assert.match((await equation.textContent()) ?? '', /sticker_count = 400 \+ 25/);
+    const result = page.getByTestId('micro-answer-result').first();
+    await result.waitFor({ timeout: 5000 });
+    assert.match((await result.textContent()) ?? '', /sticker_count = 425/);
     await page.getByTestId('micro-submit-diagnostics').click();
     await page.locator('[data-testid="micro-answer-preview"][data-state="correct"]').first().waitFor({ timeout: 5000 });
+    assert.match((await result.textContent()) ?? '', /sticker_count = 425/);
     await page.getByTestId('micro-see-result').click();
     await page.getByTestId('micro-result').waitFor({ timeout: 15000 });
     assert.match((await page.getByTestId('micro-result').textContent()) ?? '', /Clean sweep/i);
