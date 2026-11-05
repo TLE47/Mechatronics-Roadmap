@@ -113,8 +113,28 @@ class MicroContentTests(unittest.TestCase):
                 f"{concept['id']} expected a stepped walkthrough; check micro/P.1.json",
             )
             for step in steps:
-                self.assertTrue(step.get("code"), f"{concept['id']} walkthrough expected a code line")
-                self.assertTrue(step.get("note"), f"{concept['id']} walkthrough expected a note")
+                code = step.get("code")
+                note = step.get("note")
+                self.assertIsInstance(
+                    code,
+                    str,
+                    f"{concept['id']} walkthrough expected code text; check micro/P.1.json",
+                )
+                self.assertNotEqual(
+                    code.strip(),
+                    "",
+                    f"{concept['id']} walkthrough expected a code line; check micro/P.1.json",
+                )
+                self.assertIsInstance(
+                    note,
+                    str,
+                    f"{concept['id']} walkthrough expected note text; check micro/P.1.json",
+                )
+                self.assertNotEqual(
+                    note.strip(),
+                    "",
+                    f"{concept['id']} walkthrough expected a note; check micro/P.1.json",
+                )
 
     def test_the_generated_bundle_is_current(self):
         output = micro.build(self.source)
