@@ -45,6 +45,8 @@ import {
 } from '../app/src/micro/store.ts';
 import { createMicroProgress } from '../app/src/micro/progress.ts';
 import { readMicroEnabled, writeMicroEnabled } from '../app/src/micro/settings.ts';
+import { tokenizeInlineCode } from '../app/src/micro/inlineCode.ts';
+import { comparisonCode, questionTarget } from '../app/src/micro/questionComparison.ts';
 import {
   ActivityClock,
   MICRO_OVER_TARGET_SECONDS,
@@ -150,6 +152,41 @@ check('seven concepts in teaching order, each with two four-option diagnostics',
       }
     }
   }
+});
+
+check('inline code keeps a variable, operator and value as separate colourful tokens', () => {
+  const tokens = tokenizeInlineCode('x + 1');
+  assert.deepEqual(
+    tokens.map((token) => [token.kind, token.text]),
+    [
+      ['name', 'x'],
+      ['space', ' '],
+      ['operator', '+'],
+      ['space', ' '],
+      ['number', '1'],
+    ]
+  );
+  assert.equal(tokenizeInlineCode('plant_height = 12.60')[0].kind, 'name');
+  assert.equal(tokenizeInlineCode('"sunny"')[0].kind, 'string');
+  assert.equal(tokenizeInlineCode('False')[0].kind, 'boolean');
+});
+
+check('every concept has a progressive walkthrough', () => {
+  for (const concept of MICRO_CONCEPTS) {
+    assert.ok(concept.walkthrough.length >= 2, `${concept.id} needs at least two walkthrough lines`);
+    for (const step of concept.walkthrough) {
+      assert.ok(step.code.trim(), `${concept.id} walkthrough line needs code`);
+      assert.ok(step.note.trim(), `${concept.id} walkthrough line needs a note`);
+    }
+  }
+});
+
+check('the answer comparison names the variable and the selected value', () => {
+  const question = MICRO_CONCEPTS.find((concept) => concept.id === 'assignment-order').diagnostics[0];
+  assert.equal(questionTarget(question), 'x');
+  assert.match(comparisonCode(question, 'c'), /x = 15/);
+  assert.equal(questionTarget(MICRO_CONCEPTS[5].diagnostics[0]), null);
+  assert.match(comparisonCode(MICRO_CONCEPTS[5].diagnostics[0], 'c'), /# It raises TypeError/);
 });
 
 check('every diagnostic is graded deterministically', () => {

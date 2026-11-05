@@ -51,6 +51,13 @@ async function answer(page, question, correct = true) {
   await page.locator(`input[name="${question.id}"][value="${value}"]`).check();
 }
 
+async function revealWalkthrough(page, concept) {
+  for (let index = 1; index < concept.walkthrough.length; index += 1) {
+    await page.getByTestId('micro-reveal-next').click();
+  }
+  await page.getByTestId('micro-walkthrough-done').waitFor({ timeout: 5000 });
+}
+
 async function openMicro(page, baseUrl) {
   await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });
   await page.getByTestId('home-micro').waitFor({ timeout: 30000 });
@@ -100,11 +107,17 @@ async function main() {
     // ---- 1. Home's door and the clean diagnostic path ----
     await openMicro(page, baseUrl);
     assert.equal(await page.getByTestId('micro-next').count(), 1, 'an empty store offers the first concept');
-    await page.getByTestId('micro-learn-variables').click();
-    await page.getByTestId('micro-start-diagnostics').click();
     const variables = concept('variables');
+    await page.getByTestId('micro-learn-variables').click();
+    await revealWalkthrough(page, variables);
+    assert.equal(await page.getByTestId('micro-answer-preview').count(), 0, 'no answer comparison before a choice');
+    await page.getByTestId('micro-start-diagnostics').click();
     for (const question of variables.diagnostics) await answer(page, question, true);
+    await page.getByTestId('micro-answer-preview').first().waitFor({ timeout: 5000 });
+    assert.equal(await page.getByTestId('micro-answer-preview').first().getAttribute('data-state'), 'pending');
     await page.getByTestId('micro-submit-diagnostics').click();
+    await page.locator('[data-testid="micro-answer-preview"][data-state="correct"]').first().waitFor({ timeout: 5000 });
+    await page.getByTestId('micro-see-result').click();
     await page.getByTestId('micro-result').waitFor({ timeout: 15000 });
     assert.match((await page.getByTestId('micro-result').textContent()) ?? '', /Clean sweep/i);
     const anchor = await page.getByTestId('micro-source-anchor').getAttribute('href');
@@ -121,12 +134,17 @@ async function main() {
     page.once('dialog', (dialog) => void dialog.accept());
     await page.getByTestId('micro-reset').click();
     await page.getByTestId('micro-learn-variables').click();
+    await revealWalkthrough(page, variables);
     await page.getByTestId('micro-start-diagnostics').click();
     for (const question of variables.diagnostics) await answer(page, question, false);
     await page.getByTestId('micro-submit-diagnostics').click();
+    await page.locator('[data-testid="micro-answer-preview"][data-state="wrong"]').first().waitFor({ timeout: 5000 });
+    await page.getByTestId('micro-continue-practice').click();
     await page.getByTestId('micro-practice').waitFor({ timeout: 15000 });
     await answer(page, variables.practice, false);
     await page.getByTestId('micro-submit-practice').click();
+    await page.locator('[data-testid="micro-answer-preview"][data-state="wrong"]').waitFor({ timeout: 5000 });
+    await page.getByTestId('micro-see-result').click();
     await page.getByTestId('micro-result').waitFor({ timeout: 15000 });
     assert.match((await page.getByTestId('micro-result').textContent()) ?? '', /still learning/i);
     assert.equal(
@@ -146,6 +164,8 @@ async function main() {
     const reviewQuestions = reviewSet(variables, 0);
     for (const question of reviewQuestions) await answer(page, question, true);
     await page.getByTestId('micro-submit-review').click();
+    await page.locator('[data-testid="micro-answer-preview"][data-state="correct"]').first().waitFor({ timeout: 5000 });
+    await page.getByTestId('micro-see-result').click();
     await page.getByTestId('micro-result').waitFor({ timeout: 15000 });
     assert.match((await page.getByTestId('micro-result').textContent()) ?? '', /Consolidated/i);
     const saved = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '{}'), MICRO_KEY);

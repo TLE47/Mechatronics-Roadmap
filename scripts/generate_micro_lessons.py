@@ -226,6 +226,20 @@ def validate(source: dict) -> tuple[list[str], list[str], dict]:
             findings.append(f"{cid} has no teaching paragraphs")
         if not (concept.get("example") or {}).get("code"):
             findings.append(f"{cid} has no worked example")
+        walkthrough = concept.get("walkthrough")
+        if not isinstance(walkthrough, list) or len(walkthrough) < 2:
+            findings.append(f"{cid} needs a walkthrough of at least two steps")
+        else:
+            for index, step in enumerate(walkthrough, 1):
+                if not isinstance(step, dict):
+                    findings.append(f"{cid} walkthrough step {index} is not an object")
+                    continue
+                for field in ("code", "note"):
+                    if not isinstance(step.get(field), str) or not step.get(field, "").strip():
+                        findings.append(f"{cid} walkthrough step {index} has no {field}")
+                for field in ("variable", "before", "after", "expression", "output"):
+                    if field in step and not isinstance(step[field], str):
+                        findings.append(f"{cid} walkthrough step {index} has a non-string {field}")
         findings.extend(timing.validate_timing(concept))
         warnings.extend(timing.validate_divergence(concept))
     findings.extend(_cycle(concepts))
@@ -293,6 +307,16 @@ export interface MicroTiming {{
   modeledSeconds: number;
 }}
 
+export interface MicroWalkthroughStep {{
+  code: string;
+  note: string;
+  variable?: string;
+  before?: string;
+  after?: string;
+  expression?: string;
+  output?: string;
+}}
+
 export interface MicroConcept {{
   id: string;
   title: string;
@@ -305,6 +329,7 @@ export interface MicroConcept {{
   timing: {{ learn: MicroTiming; review: MicroTiming; challenge: MicroTiming }};
   teaching: string[];
   example: {{ code: string; output: string }};
+  walkthrough: MicroWalkthroughStep[];
   diagnostics: MicroQuestion[];
   practice: MicroQuestion;
   reviewPool: MicroQuestion[];

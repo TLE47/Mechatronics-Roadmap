@@ -30,6 +30,16 @@ export interface MicroTiming {
   modeledSeconds: number;
 }
 
+export interface MicroWalkthroughStep {
+  code: string;
+  note: string;
+  variable?: string;
+  before?: string;
+  after?: string;
+  expression?: string;
+  output?: string;
+}
+
 export interface MicroConcept {
   id: string;
   title: string;
@@ -42,6 +52,7 @@ export interface MicroConcept {
   timing: { learn: MicroTiming; review: MicroTiming; challenge: MicroTiming };
   teaching: string[];
   example: { code: string; output: string };
+  walkthrough: MicroWalkthroughStep[];
   diagnostics: MicroQuestion[];
   practice: MicroQuestion;
   reviewPool: MicroQuestion[];
@@ -117,6 +128,27 @@ export const MICRO_LESSONS: MicroCatalog = {
         "code": "plant_height = 12.60\nsticker_count = 400\nprint(plant_height, sticker_count)",
         "output": "12.6 400"
       },
+      "walkthrough": [
+        {
+          "code": "plant_height = 12.60",
+          "variable": "plant_height",
+          "after": "12.60",
+          "note": "The name plant_height is written on a sticky note, and 12.60 is the value on it."
+        },
+        {
+          "code": "sticker_count = 400",
+          "variable": "sticker_count",
+          "after": "400",
+          "note": "A second name gets its own value. The two names do not share a box."
+        },
+        {
+          "code": "print(plant_height, sticker_count)",
+          "variable": "plant_height",
+          "after": "12.60",
+          "output": "12.6 400",
+          "note": "print reads each name and shows its current value. Python drops the trailing zero in 12.60."
+        }
+      ],
       "diagnostics": [
         {
           "id": "variables-d1",
@@ -373,6 +405,29 @@ export const MICRO_LESSONS: MicroCatalog = {
         "code": "x = 10\nx = x + 5\nprint(x)",
         "output": "15"
       },
+      "walkthrough": [
+        {
+          "code": "x = 10",
+          "variable": "x",
+          "after": "10",
+          "note": "Start with 10 in x. The name is the handle; 10 is what it points at."
+        },
+        {
+          "code": "x = x + 5",
+          "variable": "x",
+          "before": "10",
+          "expression": "10 + 5",
+          "after": "15",
+          "note": "Python reads the right side first: 10 + 5 is 15. Then 15 is written back into x."
+        },
+        {
+          "code": "print(x)",
+          "variable": "x",
+          "after": "15",
+          "output": "15",
+          "note": "The print line sees the newest value, 15, not the old 10."
+        }
+      ],
       "diagnostics": [
         {
           "id": "assignment-order-d1",
@@ -632,6 +687,34 @@ export const MICRO_LESSONS: MicroCatalog = {
         "code": "sticker_count = 400\nplant_height = 12.60\nprint(type(sticker_count))\nprint(type(plant_height))",
         "output": "<class 'int'>\n<class 'float'>"
       },
+      "walkthrough": [
+        {
+          "code": "sticker_count = 400",
+          "variable": "sticker_count",
+          "after": "400",
+          "note": "400 has no decimal point, so this value is an int."
+        },
+        {
+          "code": "plant_height = 12.60",
+          "variable": "plant_height",
+          "after": "12.60",
+          "note": "12.60 has a decimal point, so this value is a float."
+        },
+        {
+          "code": "print(type(sticker_count))",
+          "variable": "sticker_count",
+          "after": "400",
+          "output": "<class 'int'>",
+          "note": "type tells you which box the value lives in."
+        },
+        {
+          "code": "print(type(plant_height))",
+          "variable": "plant_height",
+          "after": "12.60",
+          "output": "<class 'float'>",
+          "note": "Same-looking numbers can still live in different boxes."
+        }
+      ],
       "diagnostics": [
         {
           "id": "int-float-d1",
@@ -885,6 +968,28 @@ export const MICRO_LESSONS: MicroCatalog = {
         "code": "weather = \"sunny\"\nlabel = \"Weather: \" + weather\nprint(label)",
         "output": "Weather: sunny"
       },
+      "walkthrough": [
+        {
+          "code": "weather = \"sunny\"",
+          "variable": "weather",
+          "after": "\"sunny\"",
+          "note": "The quotes make the characters a string. Without them, Python would look for a name called sunny."
+        },
+        {
+          "code": "label = \"Weather: \" + weather",
+          "variable": "label",
+          "expression": "\"Weather: \" + \"sunny\"",
+          "after": "\"Weather: sunny\"",
+          "note": "The plus sign joins the two strings end to end."
+        },
+        {
+          "code": "print(label)",
+          "variable": "label",
+          "after": "\"Weather: sunny\"",
+          "output": "Weather: sunny",
+          "note": "print shows the text without its quotes."
+        }
+      ],
       "diagnostics": [
         {
           "id": "strings-d1",
@@ -1141,6 +1246,27 @@ export const MICRO_LESSONS: MicroCatalog = {
         "code": "is_raining = False\nplant_height = 12.15\nprint(is_raining, plant_height > 10)",
         "output": "False True"
       },
+      "walkthrough": [
+        {
+          "code": "is_raining = False",
+          "variable": "is_raining",
+          "after": "False",
+          "note": "False is one of the two bool values. The capital F matters."
+        },
+        {
+          "code": "plant_height = 12.15",
+          "variable": "plant_height",
+          "after": "12.15",
+          "note": "A float can be compared with a whole number."
+        },
+        {
+          "code": "print(is_raining, plant_height > 10)",
+          "variable": "plant_height",
+          "after": "12.15",
+          "output": "False True",
+          "note": "12.15 > 10 produces True. The comparison itself is a bool."
+        }
+      ],
       "diagnostics": [
         {
           "id": "booleans-d1",
@@ -1397,6 +1523,22 @@ export const MICRO_LESSONS: MicroCatalog = {
         "code": "print(int(\"12\") + 5)\nprint(400 + 2.5)",
         "output": "17\n402.5"
       },
+      "walkthrough": [
+        {
+          "code": "print(int(\"12\") + 5)",
+          "variable": "result",
+          "after": "17",
+          "output": "17",
+          "note": "int(\"12\") converts the text to the number 12 first, so 12 + 5 can produce 17."
+        },
+        {
+          "code": "print(400 + 2.5)",
+          "variable": "result",
+          "after": "402.5",
+          "output": "402.5",
+          "note": "An int and a float are both numbers, so Python can add them without a conversion."
+        }
+      ],
       "diagnostics": [
         {
           "id": "mixed-types-d1",
@@ -1663,6 +1805,27 @@ export const MICRO_LESSONS: MicroCatalog = {
         "code": "weather = \"sunny\"\nplant_height = 12.15\nprint(f\"Weather: {weather} | Plant: {plant_height:.2f} cm\")",
         "output": "Weather: sunny | Plant: 12.15 cm"
       },
+      "walkthrough": [
+        {
+          "code": "weather = \"sunny\"",
+          "variable": "weather",
+          "after": "\"sunny\"",
+          "note": "The sentence has a slot for the weather value."
+        },
+        {
+          "code": "plant_height = 12.15",
+          "variable": "plant_height",
+          "after": "12.15",
+          "note": "The number is stored first; the f-string reads it later."
+        },
+        {
+          "code": "print(f\"Weather: {weather} | Plant: {plant_height:.2f} cm\")",
+          "variable": "plant_height",
+          "after": "12.15",
+          "output": "Weather: sunny | Plant: 12.15 cm",
+          "note": "The f prefix fills each brace with the current value. The .2f format keeps two decimal places."
+        }
+      ],
       "diagnostics": [
         {
           "id": "f-strings-d1",

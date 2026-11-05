@@ -104,6 +104,18 @@ class MicroContentTests(unittest.TestCase):
                 "expected every review set to hold two questions; check the rotation helper",
             )
 
+    def test_every_concept_has_a_progressive_walkthrough(self):
+        for concept in self.concepts:
+            steps = concept.get("walkthrough", [])
+            self.assertGreaterEqual(
+                len(steps),
+                2,
+                f"{concept['id']} expected a stepped walkthrough; check micro/P.1.json",
+            )
+            for step in steps:
+                self.assertTrue(step.get("code"), f"{concept['id']} walkthrough expected a code line")
+                self.assertTrue(step.get("note"), f"{concept['id']} walkthrough expected a note")
+
     def test_the_generated_bundle_is_current(self):
         output = micro.build(self.source)
         with open(micro.OUT, encoding="utf-8") as handle:

@@ -252,6 +252,29 @@
   to { transform: translate3d(0, 0, 0); }
 }
 
+/* Micro-learning's staged lesson and answer comparison: one piece arrives at a time. */
+.micro-reveal {
+  animation: micro-reveal 420ms var(--ease-out) both;
+}
+.micro-walkthrough-line {
+  animation: micro-line-in 360ms var(--ease-out) both;
+}
+.micro-answer-value {
+  animation: micro-value-in 460ms var(--ease-spring) both;
+}
+@keyframes micro-reveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes micro-line-in {
+  from { opacity: 0; transform: translateX(-6px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes micro-value-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .home-hero-aurora,
   .home-live-dot,
@@ -264,7 +287,10 @@
   .home-gradient-text,
   .home-hero::after,
   .lesson-aurora,
-  .lesson-orbit {
+  .lesson-orbit,
+  .micro-reveal,
+  .micro-walkthrough-line,
+  .micro-answer-value {
     animation: none;
   }
 }
