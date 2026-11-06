@@ -293,12 +293,14 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
       className="bg-panel border border-line rounded-xl overflow-hidden scroll-mt-4"
     >
       <div className="bg-canvas border-b border-line-soft px-3 py-1.5">
-        <div className="flex min-w-0 items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
           {/* The strip takes the row's spare width and wraps when its tabs do not fit, at any width:
               a second header row costs less than a view nobody can see, and a helper file is what
               makes the six tabs overrun a 1280 px card. No sideways scroll, so every view is on
-              screen on a phone and on a desktop. */}
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1" role="tablist" aria-label="Editor tabs">
+              screen on a phone and on a desktop. The 12rem floor is what keeps the arrangement
+              controls from squeezing the strip into one tab per line on a phone: when both cannot
+              fit, the controls wrap below the tabs instead of drawing over them. */}
+          <div className="flex min-w-[12rem] flex-1 flex-wrap items-center gap-1" role="tablist" aria-label="Editor tabs">
             <button
               role="tab"
               aria-selected={openHelper === null && shownViews.has('main')}
