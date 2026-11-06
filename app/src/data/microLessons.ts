@@ -59,21 +59,52 @@ export interface MicroConcept {
   challenge: MicroQuestion;
 }
 
-export interface MicroCatalog {
-  version: number;
-  subjectId: string;
+/** One parent lesson's slice of the catalogue: where its concepts live and in what order. */
+export interface MicroParent {
   parentLessonId: string;
   parentPath: string;
   title: string;
+  conceptIds: string[];
+}
+
+export interface MicroCatalog {
+  version: number;
+  subjectId: string;
+  title: string;
+  parents: MicroParent[];
   concepts: MicroConcept[];
 }
 
 export const MICRO_LESSONS: MicroCatalog = {
-  "version": 1,
+  "version": 2,
   "subjectId": "python",
-  "parentLessonId": "P.1",
-  "parentPath": "track-p/P.1-variables-and-data-types.md",
-  "title": "Variables and data types in small steps",
+  "title": "Python in small steps",
+  "parents": [
+    {
+      "parentLessonId": "P.1",
+      "parentPath": "track-p/P.1-variables-and-data-types.md",
+      "title": "Variables and data types in small steps",
+      "conceptIds": [
+        "variables",
+        "assignment-order",
+        "int-float",
+        "strings",
+        "booleans",
+        "mixed-types",
+        "f-strings"
+      ]
+    },
+    {
+      "parentLessonId": "P.2",
+      "parentPath": "track-p/P.2-arithmetic-and-order-of-operations.md",
+      "title": "Computer arithmetic and order of operations in small steps",
+      "conceptIds": [
+        "operators",
+        "floor-division",
+        "order-of-operations"
+      ]
+    }
+  ],
   "concepts": [
     {
       "id": "variables",
@@ -2032,6 +2063,838 @@ export const MICRO_LESSONS: MicroCatalog = {
         ],
         "answerId": "a",
         "explanation": "Both names are substituted; .2f keeps two decimal places on the plant height.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "operators",
+      "title": "Five symbols, five jobs",
+      "parentLessonId": "P.2",
+      "anchor": "micro-operators",
+      "sourceFocus": [
+        "multiplication always requires an explicit asterisk `*`",
+        "standard division `/` always produces a decimal `float`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "int-float"
+      ],
+      "resources": [
+        {
+          "id": "python-tutorial-numbers",
+          "title": "Python 3 tutorial — Using Python as a calculator",
+          "url": "https://docs.python.org/3/tutorial/introduction.html",
+          "type": "docs",
+          "role": "primary",
+          "provider": "Python Software Foundation",
+          "lastVerified": "2026-11-06"
+        },
+        {
+          "id": "cs50p-notes",
+          "title": "CS50P Lecture 0 notes",
+          "url": "https://cs50.harvard.edu/python/2022/notes/0/",
+          "type": "notes",
+          "role": "optional",
+          "provider": "Harvard CS50P",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 80,
+          "modeledSeconds": 80.1
+        },
+        "review": {
+          "estimatedSeconds": 40,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 50,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "A computer has no handwriting shorthand. Multiplication needs its own symbol, `*`, so `2 * 3` is six while `2(3)` is not a multiplication at all. Powers use `**`: `3 ** 2` is nine.",
+        "Division surprises beginners because `/` always answers with a decimal, so `8 / 2` prints `4.0` and `2 / 3` prints a long fraction. Read the operator before you guess the answer."
+      ],
+      "example": {
+        "code": "voltage = 24\ncurrent = 2\nprint(voltage / current)\nprint(voltage * current)",
+        "output": "12.0\n48"
+      },
+      "walkthrough": [
+        {
+          "code": "voltage = 24",
+          "variable": "voltage",
+          "after": "24",
+          "note": "A whole number with no decimal point, stored in an int."
+        },
+        {
+          "code": "print(voltage / current)",
+          "variable": "voltage",
+          "expression": "24 / 2",
+          "output": "12.0",
+          "note": "Slash division gives the exact answer as a float, so the trailing .0 appears."
+        },
+        {
+          "code": "print(voltage * current)",
+          "variable": "voltage",
+          "expression": "24 * 2",
+          "output": "48",
+          "note": "An asterisk multiplies, and int times int stays an int."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "operators-d1",
+          "prompt": "What does this print?",
+          "code": "print(8 / 2)",
+          "options": [
+            {
+              "id": "a",
+              "text": "4.0"
+            },
+            {
+              "id": "b",
+              "text": "4"
+            },
+            {
+              "id": "c",
+              "text": "2"
+            },
+            {
+              "id": "d",
+              "text": "An error"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Slash division always produces a float, even when the result is a whole number.",
+          "type": "choice"
+        },
+        {
+          "id": "operators-d2",
+          "prompt": "Which line multiplies voltage by two?",
+          "options": [
+            {
+              "id": "a",
+              "text": "voltage * 2"
+            },
+            {
+              "id": "b",
+              "text": "voltage2"
+            },
+            {
+              "id": "c",
+              "text": "2voltage"
+            },
+            {
+              "id": "d",
+              "text": "voltage ** 2"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Multiplication needs the asterisk. `2voltage` is not valid, and `**` would square the value instead.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "operators-p1",
+        "prompt": "What does 3 ** 2 compute?",
+        "options": [
+          {
+            "id": "a",
+            "text": "9"
+          },
+          {
+            "id": "b",
+            "text": "6"
+          },
+          {
+            "id": "c",
+            "text": "32"
+          },
+          {
+            "id": "d",
+            "text": "5"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "A double asterisk raises to a power: 3 squared is 9.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "operators-r1",
+          "prompt": "What does 7 * 3 produce?",
+          "options": [
+            {
+              "id": "a",
+              "text": "21"
+            },
+            {
+              "id": "b",
+              "text": "73"
+            },
+            {
+              "id": "c",
+              "text": "10"
+            },
+            {
+              "id": "d",
+              "text": "An error"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The asterisk multiplies, so seven times three is 21.",
+          "type": "choice"
+        },
+        {
+          "id": "operators-r2",
+          "prompt": "What does 6 / 3 produce?",
+          "options": [
+            {
+              "id": "a",
+              "text": "2.0"
+            },
+            {
+              "id": "b",
+              "text": "2"
+            },
+            {
+              "id": "c",
+              "text": "1.5"
+            },
+            {
+              "id": "d",
+              "text": "An error"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Slash division returns a float, so the whole answer is printed as 2.0.",
+          "type": "choice"
+        },
+        {
+          "id": "operators-r3",
+          "prompt": "Which symbol raises a number to a power?",
+          "options": [
+            {
+              "id": "a",
+              "text": "**"
+            },
+            {
+              "id": "b",
+              "text": "^"
+            },
+            {
+              "id": "c",
+              "text": "*"
+            },
+            {
+              "id": "d",
+              "text": "//"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Python uses `**` for powers; `^` is a different operator, and `//` divides and rounds down.",
+          "type": "choice"
+        },
+        {
+          "id": "operators-r4",
+          "prompt": "What does 2 * (3 + 1) produce?",
+          "options": [
+            {
+              "id": "a",
+              "text": "8"
+            },
+            {
+              "id": "b",
+              "text": "7"
+            },
+            {
+              "id": "c",
+              "text": "6"
+            },
+            {
+              "id": "d",
+              "text": "4"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Parentheses go first: 3 + 1 is 4, then 2 * 4 is 8.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "operators-c1",
+        "prompt": "What is span at the end?",
+        "code": "span = 10\nspan = span * 2 + 3",
+        "options": [
+          {
+            "id": "a",
+            "text": "23"
+          },
+          {
+            "id": "b",
+            "text": "26"
+          },
+          {
+            "id": "c",
+            "text": "13"
+          },
+          {
+            "id": "d",
+            "text": "20"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Multiplication happens before addition: 10 * 2 is 20, then 20 + 3 is 23.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "floor-division",
+      "title": "`//` throws the remainder away",
+      "parentLessonId": "P.2",
+      "anchor": "micro-floor-division",
+      "sourceFocus": [
+        "floor division `//` drops the fractional remainder (`1023 // 4` gives `255`)"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "operators"
+      ],
+      "resources": [
+        {
+          "id": "python-tutorial-numbers",
+          "title": "Python 3 tutorial — Using Python as a calculator",
+          "url": "https://docs.python.org/3/tutorial/introduction.html",
+          "type": "docs",
+          "role": "primary",
+          "provider": "Python Software Foundation",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 78,
+          "modeledSeconds": 78.9
+        },
+        "review": {
+          "estimatedSeconds": 40,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 48,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "Floor division writes two slashes, `//`, and walks down to the nearest whole number. `7 // 2` is `3`, and `1023 // 4` is `255`, because four fits into 1023 only 255 whole times.",
+        "This is not rounding: `7 // 2` does not become 4. The leftover is simply dropped, which is what you want when counting whole things such as completed cycles or full boxes."
+      ],
+      "example": {
+        "code": "samples = 1023\nper_window = 4\nprint(samples // per_window)",
+        "output": "255"
+      },
+      "walkthrough": [
+        {
+          "code": "samples = 1023",
+          "variable": "samples",
+          "after": "1023",
+          "note": "The whole number of samples collected."
+        },
+        {
+          "code": "per_window = 4",
+          "variable": "per_window",
+          "after": "4",
+          "note": "Each window holds four samples."
+        },
+        {
+          "code": "print(samples // per_window)",
+          "variable": "samples",
+          "expression": "1023 // 4",
+          "output": "255",
+          "note": "255 full windows fit, and the three leftover samples are discarded by `//`."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "floor-division-d1",
+          "prompt": "What is 7 // 2?",
+          "options": [
+            {
+              "id": "a",
+              "text": "3"
+            },
+            {
+              "id": "b",
+              "text": "3.5"
+            },
+            {
+              "id": "c",
+              "text": "4"
+            },
+            {
+              "id": "d",
+              "text": "An error"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Floor division keeps the whole number of groups and drops the remainder.",
+          "type": "choice"
+        },
+        {
+          "id": "floor-division-d2",
+          "prompt": "Which operator answers with a whole number of whole groups?",
+          "options": [
+            {
+              "id": "a",
+              "text": "//"
+            },
+            {
+              "id": "b",
+              "text": "/"
+            },
+            {
+              "id": "c",
+              "text": "**"
+            },
+            {
+              "id": "d",
+              "text": "*"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "`//` is the floor division; `/` would keep the decimal remainder.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "floor-division-p1",
+        "prompt": "What is 9 // 4?",
+        "options": [
+          {
+            "id": "a",
+            "text": "2"
+          },
+          {
+            "id": "b",
+            "text": "2.25"
+          },
+          {
+            "id": "c",
+            "text": "3"
+          },
+          {
+            "id": "d",
+            "text": "1"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Four fits into nine twice, so the answer is 2 and the leftover is dropped.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "floor-division-r1",
+          "prompt": "What is 10 // 3?",
+          "options": [
+            {
+              "id": "a",
+              "text": "3"
+            },
+            {
+              "id": "b",
+              "text": "3.33"
+            },
+            {
+              "id": "c",
+              "text": "4"
+            },
+            {
+              "id": "d",
+              "text": "1"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Three whole groups of three fit into ten, and the remainder is dropped.",
+          "type": "choice"
+        },
+        {
+          "id": "floor-division-r2",
+          "prompt": "What do 8 / 4 and 8 // 4 produce?",
+          "options": [
+            {
+              "id": "a",
+              "text": "2.0 and 2"
+            },
+            {
+              "id": "b",
+              "text": "2 and 2.0"
+            },
+            {
+              "id": "c",
+              "text": "2.0 and 2.0"
+            },
+            {
+              "id": "d",
+              "text": "2 and 2"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Slash division returns a float, and floor division returns an int when both sides are ints.",
+          "type": "choice"
+        },
+        {
+          "id": "floor-division-r3",
+          "prompt": "What is 5 // 10?",
+          "options": [
+            {
+              "id": "a",
+              "text": "0"
+            },
+            {
+              "id": "b",
+              "text": "0.5"
+            },
+            {
+              "id": "c",
+              "text": "1"
+            },
+            {
+              "id": "d",
+              "text": "An error"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Ten does not fit into five even once, so zero whole groups fit.",
+          "type": "choice"
+        },
+        {
+          "id": "floor-division-r4",
+          "prompt": "A robot moves 17 steps in groups of 5. How many complete groups does it finish?",
+          "options": [
+            {
+              "id": "a",
+              "text": "3"
+            },
+            {
+              "id": "b",
+              "text": "4"
+            },
+            {
+              "id": "c",
+              "text": "2"
+            },
+            {
+              "id": "d",
+              "text": "3.4"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "17 // 5 is 3: three complete groups, with two steps left over.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "floor-division-c1",
+        "prompt": "How many complete 4-second windows fit into 15 seconds?",
+        "code": "total = 15\nwindow = 4\nprint(total // window)",
+        "options": [
+          {
+            "id": "a",
+            "text": "3"
+          },
+          {
+            "id": "b",
+            "text": "4"
+          },
+          {
+            "id": "c",
+            "text": "3.75"
+          },
+          {
+            "id": "d",
+            "text": "2"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Three full windows fit into 15 seconds, and the remaining three seconds are dropped.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "order-of-operations",
+      "title": "Parentheses are the shape of the formula",
+      "parentLessonId": "P.2",
+      "anchor": "micro-order-of-operations",
+      "sourceFocus": [
+        "Python evaluates **Parentheses `()`** first",
+        "then **Exponents `**`**"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "operators"
+      ],
+      "resources": [
+        {
+          "id": "mathisfun-order",
+          "title": "MathsIsFun — Order of operations",
+          "url": "https://www.mathsisfun.com/operation-order-pemdas.html",
+          "type": "reference",
+          "role": "primary",
+          "provider": "MathsIsFun",
+          "lastVerified": "2026-11-06"
+        },
+        {
+          "id": "python-tutorial-numbers",
+          "title": "Python 3 tutorial — Using Python as a calculator",
+          "url": "https://docs.python.org/3/tutorial/introduction.html",
+          "type": "docs",
+          "role": "optional",
+          "provider": "Python Software Foundation",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 85,
+          "modeledSeconds": 81.7
+        },
+        "review": {
+          "estimatedSeconds": 40,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 52,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "Two readings of `2 + 3 * 4` give different answers, so Python fixes the order: brackets, then powers, then multiplication and division, then addition and subtraction. That makes `2 + 3 * 4` equal 14.",
+        "A fraction with a horizontal bar is two expressions stacked, and on one line the bar becomes brackets: `(top) / (bottom)`. Without them the division grabs only the first term, which is a different formula."
+      ],
+      "example": {
+        "code": "gain = 1.5\na = 2\nb = 3\nprint(gain * (a / (a + b)))",
+        "output": "0.6"
+      },
+      "walkthrough": [
+        {
+          "code": "gain = 1.5",
+          "variable": "gain",
+          "after": "1.5",
+          "note": "A float gain factor for the formula."
+        },
+        {
+          "code": "print(gain * (a / (a + b)))",
+          "variable": "gain",
+          "expression": "1.5 * (2 / (2 + 3))",
+          "output": "0.6",
+          "note": "The innermost bracket adds first, then the division, and the multiplication comes last."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "order-of-operations-d1",
+          "prompt": "What is 2 + 3 * 4?",
+          "options": [
+            {
+              "id": "a",
+              "text": "14"
+            },
+            {
+              "id": "b",
+              "text": "20"
+            },
+            {
+              "id": "c",
+              "text": "24"
+            },
+            {
+              "id": "d",
+              "text": "9"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Multiplication runs before addition: 3 * 4 is 12, then 2 + 12 is 14.",
+          "type": "choice"
+        },
+        {
+          "id": "order-of-operations-d2",
+          "prompt": "Which line computes a divided by the whole of a + b?",
+          "options": [
+            {
+              "id": "a",
+              "text": "a / (a + b)"
+            },
+            {
+              "id": "b",
+              "text": "a / a + b"
+            },
+            {
+              "id": "c",
+              "text": "(a / a) + b"
+            },
+            {
+              "id": "d",
+              "text": "a + b / a"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The brackets keep the denominator together; the other forms add b after the division or divide a by itself.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "order-of-operations-p1",
+        "prompt": "What is (2 + 3) * 4?",
+        "options": [
+          {
+            "id": "a",
+            "text": "20"
+          },
+          {
+            "id": "b",
+            "text": "14"
+          },
+          {
+            "id": "c",
+            "text": "24"
+          },
+          {
+            "id": "d",
+            "text": "9"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The brackets add first: 5 * 4 is 20.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "order-of-operations-r1",
+          "prompt": "In 2 + 3 * 4, which operation happens first?",
+          "options": [
+            {
+              "id": "a",
+              "text": "3 * 4"
+            },
+            {
+              "id": "b",
+              "text": "2 + 3"
+            },
+            {
+              "id": "c",
+              "text": "Both at the same time"
+            },
+            {
+              "id": "d",
+              "text": "The rightmost number is copied first"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Multiplication outranks addition, so 3 * 4 is evaluated first.",
+          "type": "choice"
+        },
+        {
+          "id": "order-of-operations-r2",
+          "prompt": "What is 10 - 2 * 3?",
+          "options": [
+            {
+              "id": "a",
+              "text": "4"
+            },
+            {
+              "id": "b",
+              "text": "24"
+            },
+            {
+              "id": "c",
+              "text": "6"
+            },
+            {
+              "id": "d",
+              "text": "30"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "2 * 3 is 6, then 10 - 6 is 4.",
+          "type": "choice"
+        },
+        {
+          "id": "order-of-operations-r3",
+          "prompt": "What is (10 - 2) * 3?",
+          "options": [
+            {
+              "id": "a",
+              "text": "24"
+            },
+            {
+              "id": "b",
+              "text": "4"
+            },
+            {
+              "id": "c",
+              "text": "12"
+            },
+            {
+              "id": "d",
+              "text": "30"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The brackets subtract first: 8 * 3 is 24.",
+          "type": "choice"
+        },
+        {
+          "id": "order-of-operations-r4",
+          "prompt": "What is 2 * 3 ** 2?",
+          "options": [
+            {
+              "id": "a",
+              "text": "18"
+            },
+            {
+              "id": "b",
+              "text": "36"
+            },
+            {
+              "id": "c",
+              "text": "12"
+            },
+            {
+              "id": "d",
+              "text": "64"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The power runs before the multiplication: 3 ** 2 is 9, then 2 * 9 is 18.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "order-of-operations-c1",
+        "prompt": "What is ratio at the end?",
+        "code": "ratio = (4 + 6) / (2 * 5)",
+        "options": [
+          {
+            "id": "a",
+            "text": "1.0"
+          },
+          {
+            "id": "b",
+            "text": "10.0"
+          },
+          {
+            "id": "c",
+            "text": "0.2"
+          },
+          {
+            "id": "d",
+            "text": "5.0"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Each bracket finishes first: 10 / 10 is 1.0, and slash division keeps it a float.",
         "type": "choice"
       }
     }

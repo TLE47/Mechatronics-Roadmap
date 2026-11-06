@@ -1564,6 +1564,8 @@ export const App: React.FC = () => {
           onOpenPalette={() => setIsPaletteOpen(true)}
           onOpenHome={() => openPage('home')}
           onOpenStudio={() => openTabFromHome('tab-studio')}
+          // Hidden with the beta tab itself: the tray never offers a door to a tab it hides.
+          onOpenMicro={microEnabled ? () => openTabFromHome('tab-micro') : undefined}
           onOpenIntro={() => openPage('intro')}
           focus={focus}
           onToggleFocus={toggleFocusMode}
@@ -1671,6 +1673,8 @@ export const App: React.FC = () => {
           onOpenPalette={() => setIsPaletteOpen(true)}
           onOpenHome={() => openPage('home')}
           onOpenStudio={() => openTabFromHome('tab-studio')}
+          // Hidden with the beta tab itself: the tray never offers a door to a tab it hides.
+          onOpenMicro={microEnabled ? () => openTabFromHome('tab-micro') : undefined}
           onOpenIntro={() => openPage('intro')}
         />
         <main

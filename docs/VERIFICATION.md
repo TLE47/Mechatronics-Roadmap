@@ -141,7 +141,7 @@ python3.12 scripts/check_all.py --full  # + the 48-package exercise sweep and th
 python3.12 scripts/run_all_labs.py      # the 13 reference simulations and labs
 npm run test:practice                   # roadmap <-> workbench join
 npm run test:home                       # the landing rule (explicit view, lesson link, first visit, sitting, new sitting) and Home's joins
-npm run check:micro                     # the seven P.1 micro units, anchors, timings, parent manifest and generated bundle
+npm run check:micro                     # the ten micro units from P.1 and P.2, anchors, timings, parent manifest and generated bundle
 npm run test:micro                      # the micro reducer, review rotation, two clocks, versioned store and save races
 npm run test:e2e:micro                  # the micro Home door, 2/2 and 0/2 paths, a due review, the switch and 390 px
 npm run check:micro-debug                # the VITE_MICRO_DEBUG readout is absent from the built bundle

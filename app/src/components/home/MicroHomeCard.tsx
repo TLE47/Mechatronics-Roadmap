@@ -70,7 +70,7 @@ export const MicroHomeCard: React.FC<MicroHomeCardProps> = ({ onOpenTab }) => {
         </button>
       </div>
       <p className="text-[14px] leading-relaxed text-muted">
-        Seven P.1 ideas in about two minutes each. Follow one curious question, test it twice, then
+        Ten ideas from P.1 and P.2, about two minutes each. Follow one curious question, test it twice, then
         let a review bring it back tomorrow. Progress stays in this browser.
       </p>
       <div className="flex flex-wrap items-center gap-2">

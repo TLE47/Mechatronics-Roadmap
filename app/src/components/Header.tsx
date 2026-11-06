@@ -1,5 +1,5 @@
 import React from 'react';
-import { Printer, Download, FileJson, User, ChevronRight, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, House, Pause, Play, RotateCcw, FlaskConical } from 'lucide-react';
+import { Printer, Download, FileJson, User, ChevronRight, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, House, Pause, Play, RotateCcw, FlaskConical, Brain } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
 import { downloadLearningLog } from '../learningLog';
 import { BackupControls } from './BackupControls';
@@ -48,6 +48,11 @@ interface HeaderProps {
   onOpenHome?: () => void;
   /** Opens Free study, the ungraded scratch editor, between Home and Search in the Navigate tray. */
   onOpenStudio?: () => void;
+  /**
+   * Opens Micro-learning, one concept at a time. Absent while the beta switch is off: the tab is
+   * hidden then, and a door to a hidden tab would only look broken.
+   */
+  onOpenMicro?: () => void;
   /**
    * The wordmark's destination: the introduction page. Optional in the same way `onOpenHome` is —
    * the token page passes neither, and the lockup then falls back to its plain `href`.
@@ -101,6 +106,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenPalette,
   onOpenHome,
   onOpenStudio,
+  onOpenMicro,
   onOpenIntro,
   focus = false,
   onToggleFocus,
@@ -288,6 +294,18 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <FlaskConical className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 <span className="hidden 2xl:inline">Free study</span>
+              </button>
+            )}
+            {onOpenMicro && (
+              <button
+                onClick={onOpenMicro}
+                data-testid="btn-open-micro"
+                aria-label="Micro-learning"
+                data-tip="Micro-learning — one tiny concept at a time, about two minutes each"
+                className="btn"
+              >
+                <Brain className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span className="hidden 2xl:inline">Micro</span>
               </button>
             )}
             {/* The palette is a shortcut first, but a shortcut nobody can see is a secret. */}

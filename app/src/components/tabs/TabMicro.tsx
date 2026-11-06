@@ -12,7 +12,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import type { MicroConcept, MicroQuestion } from '../../data/microLessons';
-import { MICRO_CONCEPTS, MICRO_CATALOG } from '../../micro/catalog';
+import { MICRO_CONCEPTS, MICRO_PARENTS, parentOf } from '../../micro/catalog';
 import {
   dueConceptIds,
   gradeAnswer,
@@ -523,13 +523,13 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
       <section className={`${CARD} relative overflow-hidden border-accent/30`} data-testid="micro-hero">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_92%_8%,var(--accent-soft),transparent_38%),radial-gradient(circle_at_8%_92%,var(--emerald),transparent_32%)] opacity-70" />        <div className="relative grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start sm:gap-4">
           <div className="min-w-0">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-accent sm:text-[11px]">P.1 · seven tiny concepts</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-accent sm:text-[11px]">{MICRO_PARENTS.map((parent) => parent.parentLessonId).join(' + ')} · {MICRO_CONCEPTS.length} tiny concepts</p>
             <h2 className="mt-1 font-display text-2xl font-bold leading-tight text-ink sm:text-3xl">
               Follow the question. The answer can wait.
             </h2>
             <p className="mt-1.5 max-w-[62ch] text-[13.5px] leading-relaxed text-muted sm:mt-2 sm:text-[15px]">
               One small idea, two quick checks, then a review that returns tomorrow. A clean diagnostic
-              is provisional; a review or challenge makes it stick. The parent lesson P.1 is never
+              is provisional; a review or challenge makes it stick. A parent lesson is never
               marked verified from here.
             </p>
           </div>
@@ -581,7 +581,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
           </button>
         ) : (
           <p className="mt-3 rounded-xl border border-emerald/30 bg-emerald/5 px-3.5 py-2.5 text-[13.5px] leading-relaxed text-emerald">
-            All seven P.1 concepts have been learned. Reviews return on their own schedule; start
+            All {MICRO_CONCEPTS.length} concepts have been learned. Reviews return on their own schedule; start
             any concept from the list whenever you want. Curiosity does not expire.
           </p>
         )}
@@ -614,10 +614,20 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
       <section className={CARD}>
         <div className="flex items-center gap-2">
           <BookOpen className="h-4 w-4 text-accent" aria-hidden="true" />
-          <h2 className="text-base font-bold text-ink">Seven P.1 concepts</h2>
+          <h2 className="text-base font-bold text-ink">All {MICRO_CONCEPTS.length} concepts</h2>
         </div>
-        <ul className="mt-2 divide-y divide-line-soft">
-          {MICRO_CONCEPTS.map((concept, index) => {
+        <div className="mt-2 space-y-3">
+          {MICRO_PARENTS.map((parent) => {
+            const concepts = MICRO_CONCEPTS.filter((concept) => concept.parentLessonId === parent.parentLessonId);
+            if (!concepts.length) return null;
+            return (
+              <div key={parent.parentLessonId} data-testid={`micro-group-${parent.parentLessonId}`}>
+                <p className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-faint">
+                  {parent.parentLessonId} · {parent.title}
+                </p>
+                <ul className="divide-y divide-line-soft">
+          {concepts.map((concept) => {
+            const index = MICRO_CONCEPTS.indexOf(concept);
             const conceptState = store.concepts[concept.id];
             const label = statusLabel(conceptState, concept, Date.now());
             const canReview = Boolean(conceptState?.learnCompletedAt);
@@ -664,18 +674,27 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
               </li>
             );
           })}
-        </ul>
+                </ul>
+              </div>
+            );
+          })}
+        </div>
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted">
-        <button
-          type="button"
-          onClick={() => openLesson('P.1')}
-          className="inline-flex items-center gap-1.5 text-muted underline decoration-dotted underline-offset-2 hover:text-ink"
-        >
-          Open the full P.1 lesson
-          <ArrowRight className="h-3 w-3" aria-hidden="true" />
-        </button>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          {MICRO_PARENTS.map((parent) => (
+            <button
+              key={parent.parentLessonId}
+              type="button"
+              onClick={() => openLesson(parent.parentLessonId)}
+              className="inline-flex items-center gap-1.5 text-muted underline decoration-dotted underline-offset-2 hover:text-ink"
+            >
+              Open the full {parent.parentLessonId} lesson
+              <ArrowRight className="h-3 w-3" aria-hidden="true" />
+            </button>
+          ))}
+        </div>
         <button
           type="button"
           onClick={resetProgress}
@@ -703,13 +722,13 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
             All concepts
           </button>
           <a
-            href={`${lessonPageUrl(MICRO_CATALOG.parentPath)}#${active.anchor}`}
+            href={`${lessonPageUrl(parentOf(active).parentPath)}#${active.anchor}`}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-1 text-[13px] text-muted underline decoration-dotted underline-offset-2 hover:text-accent"
             data-testid="micro-source-anchor"
           >
-            Read this section in P.1
+            Read this section in {parentOf(active).parentLessonId}
             <ExternalLink className="h-3 w-3" aria-hidden="true" />
           </a>
         </div>
@@ -725,10 +744,10 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
           <span className={`rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${TONE[active.id]?.chip ?? 'border-accent/40 bg-accent/10 text-accent'}`}>
             {stageTitle(stage)}
           </span>
-          <span className="font-mono text-[11px] text-faint">P.1 · {active.title}</span>
+          <span className="font-mono text-[11px] text-faint">{parentOf(active).parentLessonId} · {active.title}</span>
         </div>
         <h2 className="mt-2 font-display text-xl font-bold leading-tight text-ink sm:text-2xl">{active.title}</h2>
-        <p className="mt-1 text-[12px] text-muted sm:text-[13px]">{MICRO_CATALOG.title}</p>
+        <p className="mt-1 text-[12px] text-muted sm:text-[13px]">{parentOf(active).title}</p>
         {reading.overTarget ? (
           <p
             role="status"
@@ -974,7 +993,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
               <p className="text-[16px] font-bold leading-relaxed text-ink">{outcomeCopy(result)}</p>
               {result.kind === 'learn' && result.score !== 2 && result.practice === false ? (
                 <p className="mt-1 text-[13px] leading-relaxed text-muted">
-                  The parent lesson P.1 remains unverified. This micro result is not a lesson pass.
+                  The parent lesson {parentOf(active).parentLessonId} remains unverified. This micro result is not a lesson pass.
                 </p>
               ) : null}
               {result.kind === 'review' && result.correct !== result.total ? (
@@ -1039,7 +1058,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
               Micro-learning
             </h1>
             <p className="mt-1.5 max-w-[62ch] text-[13.5px] leading-relaxed text-muted sm:mt-2 sm:text-[15px]">
-              Seven P.1 concepts, each about two minutes. Local-only progress; no account, no cloud,
+              {MICRO_CONCEPTS.length} concepts across {MICRO_PARENTS.length} lessons, each about two minutes. Local-only progress; no account, no cloud,
               no generated content. Follow one curious thread at a time and let the small wins stack up.
             </p>
           </div>

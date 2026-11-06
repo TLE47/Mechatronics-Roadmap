@@ -154,9 +154,9 @@ async function main() {
         : [];
     });
     assert.deepEqual(
-      trayOrder.slice(0, 3),
-      ['btn-home', 'btn-open-studio', 'btn-open-palette'],
-      'Free study must sit between Home and Search in the Navigate tray'
+      trayOrder.slice(0, 4),
+      ['btn-home', 'btn-open-studio', 'btn-open-micro', 'btn-open-palette'],
+      'Free study and micro-learning must sit between Home and Search in the Navigate tray'
     );
     await headerStudio.click();
     await page.getByTestId('studio').waitFor({ timeout: 30000 });

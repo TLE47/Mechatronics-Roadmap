@@ -60,6 +60,24 @@ const TONE: Record<string, { border: string; bg: string; text: string; label: st
     text: 'text-accent',
     label: 'A sentence with a fill-in-the-blank',
   },
+  operators: {
+    border: 'border-accent/40',
+    bg: 'bg-accent/10',
+    text: 'text-accent',
+    label: 'Each arithmetic symbol has one job',
+  },
+  'floor-division': {
+    border: 'border-emerald/40',
+    bg: 'bg-emerald/10',
+    text: 'text-emerald',
+    label: 'Whole groups, remainder dropped',
+  },
+  'order-of-operations': {
+    border: 'border-amber/40',
+    bg: 'bg-amber/10',
+    text: 'text-amber',
+    label: 'Brackets first, then powers',
+  },
 };
 
 function Variables({ sample }: { sample?: PrimitiveSample }) {
@@ -168,6 +186,54 @@ function FStrings() {
   );
 }
 
+function Operators() {
+  return (
+    <div className="flex flex-wrap items-center gap-2 font-mono text-[13px]">
+      {[
+        ['*', 'multiply'],
+        ['/', 'float divide'],
+        ['**', 'power'],
+      ].map(([symbol, meaning]) => (
+        <span
+          key={symbol}
+          className="inline-flex items-center gap-2 rounded-lg border border-accent/40 bg-accent/10 px-2.5 py-1.5"
+        >
+          <span className="text-[15px] font-bold text-accent">{symbol}</span>
+          <span className="text-[11px] text-muted">{meaning}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function FloorDivision() {
+  return (
+    <div className="flex flex-wrap items-center gap-2 font-mono text-[13px]">
+      <span className="rounded-md border border-line bg-panel px-2 py-1 text-muted">1023</span>
+      <span className="text-[15px] font-bold text-emerald">//</span>
+      <span className="rounded-md border border-line bg-panel px-2 py-1 text-muted">4</span>
+      <span className="text-faint">→</span>
+      <span className="rounded-md border border-emerald/40 bg-emerald/10 px-2 py-1 text-emerald">255</span>
+      <span className="text-[11px] text-muted">whole groups; 3 left over</span>
+    </div>
+  );
+}
+
+function OrderOfOperations() {
+  return (
+    <div className="flex flex-wrap items-center gap-2 font-mono text-[13px]">
+      <span className="rounded-md border border-accent/40 bg-accent/10 px-2 py-1 text-accent">( )</span>
+      <span className="text-faint">→</span>
+      <span className="rounded-md border border-amber/40 bg-amber/10 px-2 py-1 text-amber">**</span>
+      <span className="text-faint">→</span>
+      <span className="rounded-md border border-emerald/40 bg-emerald/10 px-2 py-1 text-emerald">* /</span>
+      <span className="text-faint">→</span>
+      <span className="rounded-md border border-line bg-panel px-2 py-1 text-muted">+ -</span>
+      <span className="text-[11px] text-muted">left to right</span>
+    </div>
+  );
+}
+
 export function MicroVisual({ conceptId, sample }: { conceptId: string; sample?: PrimitiveSample }) {
   const tone = TONE[conceptId] ?? TONE.variables;
   const body =
@@ -183,6 +249,12 @@ export function MicroVisual({ conceptId, sample }: { conceptId: string; sample?:
       <MixedTypes />
     ) : conceptId === 'f-strings' ? (
       <FStrings />
+    ) : conceptId === 'operators' ? (
+      <Operators />
+    ) : conceptId === 'floor-division' ? (
+      <FloorDivision />
+    ) : conceptId === 'order-of-operations' ? (
+      <OrderOfOperations />
     ) : (
       <Variables sample={sample} />
     );

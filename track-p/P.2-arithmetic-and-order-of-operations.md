@@ -68,6 +68,18 @@ flowchart LR
   - **Key takeaway:** Python evaluates **Parentheses `()`** first, then **Exponents `**`**, then **Multiplication `*` and Division `/` / `//`** (from left to right), and finally **Addition `+` and Subtraction `-`** (from left to right). Whenever a printed fraction has a horizontal bar with multiple terms on top or bottom, you must wrap the numerator and denominator in parentheses: `(top) / (bottom)`.
   - **Alternative resource:** [Official Python 3 Tutorial — Section 3.1.1: Numbers](https://docs.python.org/3/tutorial/introduction.html) `[HTTP 200 — Verified by scripts/check_links.py]` — Review the parentheses examples under **`3.1.1. Numbers`**.
 
+#### Micro focus: five arithmetic operators
+<a id="micro-operators"></a>
+In Python, multiplication always requires an explicit asterisk `*` — write `2 * 3`, never `2(3)`. Addition uses `+`, subtraction `-`, and standard division `/` always produces a decimal `float`: `8 / 2` gives `4.0`, not `4`. Powers use a double asterisk `**`, so `3 ** 2` computes $3^2 = 9$.
+
+#### Micro focus: floor division
+<a id="micro-floor-division"></a>
+Floor division `//` divides and then rounds down to a whole number, so floor division `//` drops the fractional remainder (`1023 // 4` gives `255`). Use it when the answer must be a whole count of whole things — completed cycles, full boxes, finished steps — rather than the exact decimal.
+
+#### Micro focus: parentheses and order
+<a id="micro-order-of-operations"></a>
+Python evaluates **Parentheses `()`** first, then **Exponents `**`**, then multiplication and division from left to right, and finally addition and subtraction. That fixed order is why `2 + 3 * 4` is 14, and why a fraction needs its own brackets: `(top) / (bottom)` keeps the denominator together.
+
 ### Bridge Notes
 On paper, engineers write multiplication by placing letters side by side ($d = s \cdot t$) and write fractions with a horizontal bar:
 

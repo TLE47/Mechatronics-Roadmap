@@ -13,7 +13,7 @@
 
 import assert from 'node:assert/strict';
 import { Window } from 'happy-dom';
-import { MICRO_CONCEPTS } from '../app/src/micro/catalog.ts';
+import { MICRO_CONCEPTS, MICRO_PARENTS } from '../app/src/micro/catalog.ts';
 import { randomizeConcept, samplePrimitiveData } from '../app/src/micro/randomize.ts';
 import {
   CHALLENGE_SUCCESS_DAYS,
@@ -150,13 +150,24 @@ function challengeEvent(concept, correct, overrides = {}) {
   };
 }
 
-section('the content is the seven P.1 concepts');
+section('the content is ten concepts from P.1 and P.2');
 
-check('seven concepts in teaching order, each with two four-option diagnostics', () => {
-  assert.equal(MICRO_CONCEPTS.length, 7);
+check('ten concepts in teaching order, each with two four-option diagnostics', () => {
+  assert.equal(MICRO_CONCEPTS.length, 10);
   assert.deepEqual(
     MICRO_CONCEPTS.map((concept) => concept.id),
-    ['variables', 'assignment-order', 'int-float', 'strings', 'booleans', 'mixed-types', 'f-strings']
+    [
+      'variables',
+      'assignment-order',
+      'int-float',
+      'strings',
+      'booleans',
+      'mixed-types',
+      'f-strings',
+      'operators',
+      'floor-division',
+      'order-of-operations',
+    ]
   );
   for (const concept of MICRO_CONCEPTS) {
     assert.equal(concept.diagnostics.length, 2, `${concept.id} must have two diagnostics`);
@@ -171,6 +182,31 @@ check('seven concepts in teaching order, each with two four-option diagnostics',
       }
     }
   }
+});
+
+check('every concept belongs to a parent lesson whose path is the one it cites', () => {
+  assert.equal(MICRO_PARENTS.length, 2, 'P.1 and P.2 both teach micro lessons');
+  assert.deepEqual(
+    MICRO_PARENTS.map((parent) => parent.parentLessonId),
+    ['P.1', 'P.2']
+  );
+  for (const parent of MICRO_PARENTS) {
+    assert.match(parent.parentPath, /^track-p\/P\.\d+-.+\.md$/, `${parent.parentLessonId} needs its markdown path`);
+    assert.ok(parent.title, `${parent.parentLessonId} needs its own title`);
+    assert.deepEqual(
+      parent.conceptIds,
+      MICRO_CONCEPTS.filter((concept) => concept.parentLessonId === parent.parentLessonId).map(
+        (concept) => concept.id
+      ),
+      `${parent.parentLessonId} must carry exactly its own concepts, in order`
+    );
+    assert.ok(parent.conceptIds.length >= 3, `${parent.parentLessonId} needs at least three units`);
+  }
+  assert.equal(
+    MICRO_PARENTS.reduce((total, parent) => total + parent.conceptIds.length, 0),
+    MICRO_CONCEPTS.length,
+    'every concept must appear under exactly one parent lesson'
+  );
 });
 
 check('inline code keeps a variable, operator and value as separate colourful tokens', () => {

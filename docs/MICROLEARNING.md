@@ -1,12 +1,12 @@
 # Atomic micro-learning (beta)
 
-Micro-learning is the workbench's sixteenth tab. It teaches one P.1 concept per unit in roughly two
-minutes, asks two diagnostics, chooses the practice from the answers, and schedules a review. It is
-**beta** until a person who has never seen the workbench completes P.1 and reports where they got
-stuck.
+Micro-learning is the workbench's sixteenth tab. It teaches one concept per unit, drawn from a P.1 or
+P.2 parent lesson, in roughly two minutes: it asks two diagnostics, chooses the practice from the
+answers, and schedules a review. It is **beta** until a person who has never seen the workbench
+completes both lessons and reports where they got stuck.
 
 It never marks the parent lesson verified. A micro result is evidence for the micro store only; the
-P.1 verified/completed maps and the lesson runner are untouched.
+parent lesson's verified/completed maps and the lesson runner are untouched.
 
 ```mermaid
 flowchart LR
@@ -17,7 +17,9 @@ flowchart LR
     Review --> Ladder["3 -> 7 -> 14 -> 30 days"]
 ```
 
-## The seven P.1 units
+## The ten units
+
+### P.1 — variables and data types
 
 | Unit | Parent anchor | The one idea |
 | :--- | :--- | :--- |
@@ -29,14 +31,23 @@ flowchart LR
 | `mixed-types` | `#micro-mixed-types` | Mixing incompatible types raises `TypeError`. |
 | `f-strings` | `#micro-f-strings` | An f-string inserts a value into text. |
 
+### P.2 — computer arithmetic and order of operations
+
+| Unit | Parent anchor | The one idea |
+| :--- | :--- | :--- |
+| `operators` | `#micro-operators` | `*`, `/` and `**` each answer a different question. |
+| `floor-division` | `#micro-floor-division` | `//` keeps the whole groups and drops the remainder. |
+| `order-of-operations` | `#micro-order-of-operations` | Brackets, then powers, then `*` and `/`, then `+` and `-`. |
+
 Each unit has an authored teaching passage, a read-only worked example, two four-option diagnostics
 (or normalized short answers), a practice, a four-question review pool and one transfer challenge.
 Answers are graded locally and deterministically: no model, no network, no code execution.
 
 ## Design and evidence
 
-`micro/P.1.json` is the authored source. `scripts/generate_micro_lessons.py` validates it and writes
-`app/src/data/microLessons.ts`; `scripts/generate_parent_lessons.py` writes the metadata-only
+`micro/P.<n>.json` is the authored source, one file per parent lesson. `scripts/generate_micro_lessons.py`
+validates every file and concatenates them, in filename order, into `app/src/data/microLessons.ts` with
+one `parents` entry per lesson; `scripts/generate_parent_lessons.py` writes the metadata-only
 `app/src/data/parentLessons.json`. `scripts/micro_timing.py` is the one time model. Every activity
 models at **≤120 seconds**; an author/model gap over 20% is a warning, not a build failure, because
 both are estimates. The live clock is separate:
@@ -82,7 +93,7 @@ build-time check; `npm run check:micro-debug` proves the production bundle does 
 
 ## Self-study protocol
 
-Day 1: all seven Learn units. Deliberately answer some diagnostics wrong so the 1/2 and 0/2 paths,
+Day 1: all ten Learn units, P.1 then P.2. Deliberately answer some diagnostics wrong so the 1/2 and 0/2 paths,
 the targeted notes and the practice branches are exercised. Scripted browser runs are allowed.
 
 Day 2, at least 18 hours later: reviews (launched manually if not due) plus challenges on variables

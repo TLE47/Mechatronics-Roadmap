@@ -26,7 +26,7 @@ export const STUDIO_HOME_DOOR: HomeDoor = {
 export const MICRO_HOME_DOOR: HomeDoor = {
   title: 'Micro-learning (beta)',
   blurb:
-    'Seven P.1 concepts, one at a time, each about two minutes. Two diagnostics choose the practice; a review is scheduled tomorrow.',
+    'Ten concepts from P.1 and P.2, one at a time, each about two minutes. Two diagnostics choose the practice; a review is scheduled tomorrow.',
   action: 'Open micro-learning',
   testId: 'home-micro-door',
 };

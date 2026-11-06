@@ -104,6 +104,30 @@ async function main() {
     const pageErrors = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));
 
+    // ---- 0. The header tray is a second door to the same tab ----
+    await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });
+    const headerMicro = page.getByTestId('btn-open-micro');
+    await headerMicro.waitFor({ timeout: 30000 });
+    const headerTray = await headerMicro.evaluate((button) => {
+      const tray = button.closest('[role="group"]');
+      return tray
+        ? [...tray.querySelectorAll('button[data-testid]')].map((item) => item.getAttribute('data-testid'))
+        : [];
+    });
+    assert.deepEqual(
+      headerTray.slice(0, 4),
+      ['btn-home', 'btn-open-studio', 'btn-open-micro', 'btn-open-palette'],
+      'Micro-learning must sit between Free study and Search in the Navigate tray'
+    );
+    await headerMicro.click();
+    await page.getByTestId('tab-micro').waitFor({ timeout: 30000 });
+    assert.equal(
+      await page.getByTestId('tab-btn-tab-micro').getAttribute('aria-current'),
+      'page',
+      'the header tray must open the micro tab too'
+    );
+    console.log('  ok the header tray opens micro-learning');
+
     // ---- 1. Home's door and the clean diagnostic path ----
     await openMicro(page, baseUrl);
     await page.evaluate(() => {
@@ -322,6 +346,19 @@ async function main() {
       'micro must not verify P.1'
     );
     console.log('  ok Home opens micro; 2/2 is provisional and leaves P.1 unverified');
+
+    // ---- 1b. A P.2 concept cites its own parent lesson ----
+    await page.getByTestId('micro-back').click();
+    const p2 = concept('floor-division');
+    assert.equal(await page.getByTestId('micro-group-P.2').count(), 1, 'the list must group P.2 under its own heading');
+    await page.getByTestId('micro-learn-floor-division').click();
+    const p2Anchor = await page.getByTestId('micro-source-anchor').getAttribute('href');
+    assert.match(
+      p2Anchor ?? '',
+      new RegExp(`P\\.2-arithmetic-and-order-of-operations\\.md#${p2.anchor}$`),
+      'a P.2 concept must link to its own anchored section'
+    );
+    console.log('  ok a P.2 concept links to its own parent section');
 
     // ---- 2. The wrong-diagnostic path, including a failed practice ----
     await page.getByTestId('micro-back').click();
