@@ -232,6 +232,9 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
     setBodyCollapsed(false);
   }, [passStatus]);
   const { toolbar, feedback } = props.slots;
+  // A preset owns a bounded workbench; a lesson-less surface such as the studio lets its card size
+  // itself to its content. Only a bounded body may make its panes shrink and scroll inside it.
+  const boundedBody = layout !== undefined;
 
   return (
     <div
@@ -470,6 +473,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
         shownViews={shownViews}
         allowedViews={allowedViews}
         collapsed={bodyCollapsed}
+        boundedBody={boundedBody}
         isPhone={isPhone}
         deferPhoneEditor={deferPhoneEditor}
         draft={props.draft}

@@ -55,7 +55,7 @@ import { resolveChromiumExecutable } from './e2e_browser_workbench.mjs';
 import { getEditorCode, setEditorCode } from './editor-code.mjs';
 import { nameStale, staleBuild } from './buildFreshness.mjs';
 import { seedTourSeen } from './tour_seed.mjs';
-import { auditNarrowWorkbench, auditPaneLayouts } from './narrow_workbench_audit.mjs';
+import { auditNarrowWorkbench, auditPaneLayouts, auditStackedCodeRows } from './narrow_workbench_audit.mjs';
 
 const repoRoot = process.cwd();
 export const BASE = (process.env.PAGES_BASE ?? '/Mechatronics-Roadmap/').replace(/\/?$/, '/');
@@ -1617,6 +1617,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     await tablet.close();
     await auditNarrowWorkbench(browser, baseUrl, name);
     await auditPaneLayouts(browser, baseUrl, name);
+    await auditStackedCodeRows(browser, baseUrl, name);
     return 'pass';
   } finally {
     await browser.close();

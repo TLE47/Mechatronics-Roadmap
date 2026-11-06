@@ -451,3 +451,180 @@ export async function auditPaneLayouts(browser, baseUrl, name) {
     await context.close();
   }
 }
+
+/** The actual split between the two stacked panes, read from the rendered boxes. */
+function rowSplitBoxes(page) {
+  return page.evaluate(() => {
+    const bodyNode = document.querySelector('[data-testid="editor-panes"]');
+    const rect = (node) => {
+      const box = node.getBoundingClientRect();
+      return { x: box.x, y: box.y, w: box.width, h: box.height };
+    };
+    const divider = document.querySelector('[data-testid="pane-divider-row"]');
+    return {
+      body: {
+        ...rect(bodyNode),
+        views: bodyNode.getAttribute('data-views'),
+      },
+      panes: [...bodyNode.querySelectorAll('[data-pane]')]
+        .filter((node) => node.getClientRects().length > 0)
+        .map((node) => ({ name: node.getAttribute('data-pane'), ...rect(node) })),
+      divider: divider ? rect(divider) : null,
+    };
+  });
+}
+
+/**
+ * The swapped mixed layout: Requirements full height, the code and Predict stacked beside it.
+ *
+ * The first audit above gives the full-height slot to `main`, where the stacked output panes are short
+ * enough that their content minima never disagree with the stored share. The learner can swap those
+ * views, and with the code in the stack its editor minimum used to win over the share: the handle
+ * moved but the two panes did not. This test holds the rendered geometry to the share, not just the
+ * stored value, and drags the handle with a real pointer.
+ */
+export async function auditStackedCodeRows(browser, baseUrl, name) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 950 } });
+  await seedTourSeen(context);
+  const page = await context.newPage();
+  const pageErrors = [];
+  page.on('pageerror', (error) => pageErrors.push(String(error)));
+
+  const assertBoundary = (state, label) => {
+    const main = state.panes.find((pane) => pane.name === 'main');
+    const predict = state.panes.find((pane) => pane.name === 'predict');
+    assert.ok(main, `${name}: ${label}: the stacked code pane is missing`);
+    assert.ok(predict, `${name}: ${label}: the stacked Predict pane is missing`);
+    assert.ok(state.divider, `${name}: ${label}: the stacked pane divider is missing`);
+    const boundary = main.y + main.h;
+    const dividerCenter = state.divider.y + state.divider.h / 2;
+    assert.ok(
+      Math.abs(dividerCenter - boundary) <= 2,
+      `${name}: ${label}: the divider is at ${dividerCenter.toFixed(1)}px but the panes meet at ` +
+        `${boundary.toFixed(1)}px`
+    );
+    return { main, predict };
+  };
+
+  try {
+    await page.goto(`${baseUrl}?lesson=P.6`, { waitUntil: 'networkidle', timeout: 45000 });
+    await page.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, {
+      timeout: 20000,
+    });
+    await page.keyboard.press('Alt+1');
+    await page.waitForFunction(
+      () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'study',
+      undefined,
+      { timeout: 10000 }
+    );
+    await expandEditorBody(page);
+    await page.getByTestId('editor-tab-requirements').click();
+    await page.getByTestId('pane-requirements').waitFor({ state: 'visible', timeout: 15000 });
+    await page.getByTestId('btn-pane-split').click();
+    await page.waitForFunction(
+      () => document.querySelector('[data-testid="editor-panes"]')?.getAttribute('data-count') === '2',
+      undefined,
+      { timeout: 10000 }
+    );
+    await page.getByTestId('btn-pane-add').click();
+    await page.waitForFunction(
+      () => document.querySelector('[data-testid="editor-panes"]')?.getAttribute('data-count') === '3',
+      undefined,
+      { timeout: 10000 }
+    );
+    const columns = page.getByTestId('btn-pane-columns');
+    if ((await columns.getAttribute('aria-pressed')) !== 'true') await columns.click();
+    await page.waitForTimeout(250);
+
+    const before = await rowSplitBoxes(page);
+    assert.equal(
+      before.body.views,
+      'requirements,main,predict',
+      `${name}: the swapped fixture must keep Requirements, the code and Predict in that order`
+    );
+    const requirements = before.panes.find((pane) => pane.name === 'requirements');
+    assert.ok(requirements, `${name}: the full-height Requirements pane is missing`);
+    assert.ok(
+      requirements.h >= before.body.h - 5,
+      `${name}: Requirements is ${requirements.h}px in a ${before.body.h}px body; it must stay full height`
+    );
+    const beforeRows = assertBoundary(before, 'at rest');
+    assert.ok(
+      Math.abs(beforeRows.main.w - beforeRows.predict.w) < 3 &&
+        Math.abs(beforeRows.main.x - beforeRows.predict.x) < 3,
+      `${name}: the code and Predict panes must share the right-hand column`
+    );
+    assert.ok(
+      beforeRows.predict.y >= beforeRows.main.y + beforeRows.main.h - 3,
+      `${name}: Predict must sit below the code pane`
+    );
+
+    const divider = page.getByTestId('pane-divider-row');
+    await page.getByTestId('editor-panes').scrollIntoViewIfNeeded();
+    await divider.scrollIntoViewIfNeeded();
+    const handle = await divider.boundingBox();
+    assert.ok(handle, `${name}: the stacked pane divider has no pointer handle`);
+    const scrolledBody = await page.getByTestId('editor-panes').boundingBox();
+    assert.ok(scrolledBody, `${name}: the stacked pane body has no box after scrolling`);
+    const x = handle.x + 20;
+    const startY = handle.y + handle.height / 2;
+    // Read the body again after scrolling: the page can move by hundreds of pixels, and a target
+    // captured before it would put the pointer below the viewport.
+    const targetY = Math.min(
+      Math.max(scrolledBody.y + scrolledBody.height * 0.32, 20),
+      page.viewportSize().height - 20
+    );
+    await page.mouse.move(x, startY);
+    await page.mouse.down();
+    await page.mouse.move(x, targetY, { steps: 10 });
+    await page.mouse.up();
+    await page.waitForTimeout(250);
+
+    const after = await rowSplitBoxes(page);
+    const afterRows = assertBoundary(after, 'after the drag');
+    const topShare = afterRows.main.h / (afterRows.main.h + afterRows.predict.h);
+    assert.ok(
+      Math.abs(topShare - 0.32) < 0.06,
+      `${name}: dragging to 32% left the code pane at ${(topShare * 100).toFixed(1)}%`
+    );
+    assert.ok(
+      beforeRows.main.h - afterRows.main.h > 60 &&
+        afterRows.predict.h - beforeRows.predict.h > 60,
+      `${name}: the row drag moved the divider but not both panes ` +
+        `(${beforeRows.main.h.toFixed(1)}/${beforeRows.predict.h.toFixed(1)} -> ` +
+        `${afterRows.main.h.toFixed(1)}/${afterRows.predict.h.toFixed(1)})`
+    );
+    assert.ok(
+      Math.min(afterRows.main.h, afterRows.predict.h) >= before.body.h * 0.15 - 3,
+      `${name}: the drag left a pane below the 15% usability floor`
+    );
+
+    await page.reload({ waitUntil: 'networkidle', timeout: 45000 });
+    await page.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, {
+      timeout: 20000,
+    });
+    await page.keyboard.press('Alt+1');
+    await expandEditorBody(page);
+    await page.waitForFunction(
+      () => document.querySelector('[data-testid="editor-panes"]')?.getAttribute('data-count') === '3',
+      undefined,
+      { timeout: 10000 }
+    );
+    const restored = await rowSplitBoxes(page);
+    const restoredRows = assertBoundary(restored, 'after the reload');
+    const restoredShare = restoredRows.main.h / (restoredRows.main.h + restoredRows.predict.h);
+    assert.ok(
+      Math.abs(restoredShare - topShare) < 0.06,
+      `${name}: the stacked row share did not survive the reload ` +
+        `(${(topShare * 100).toFixed(1)}% -> ${(restoredShare * 100).toFixed(1)}%)`
+    );
+    assert.equal(pageErrors.length, 0, `${name}: stacked row page errors: ${pageErrors.join(' | ')}`);
+
+    console.log(
+      `  ok ${name}: swapped stacks keep Requirements full height and drag the code/predict ` +
+        `boundary to ${(restoredShare * 100).toFixed(0)}% with the handle on it`
+    );
+  } finally {
+    await context.close();
+  }
+}
