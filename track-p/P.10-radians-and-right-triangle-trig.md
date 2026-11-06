@@ -33,7 +33,7 @@ Your finished program must satisfy **all** of these conditions:
 - [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
 - [ ] **Required end state:** the grader checks rpm_to_rad_s at 0 RPM, 60 RPM; -30 RPM (reverse rotation); arm_tip_xy.
 - [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
-- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Output:** the printed output matches the Expected Output block.
 - [ ] **Alternate inputs:** the grader also covers angles in all four Cartesian quadrants, plus the 0 and 180 degree axis cases; it changes the inputs, so a hardcoded result fails.
 
 ---

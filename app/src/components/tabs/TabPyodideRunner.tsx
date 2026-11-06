@@ -78,6 +78,8 @@ import { readBreakpoints, setBreakpointCondition, toggleBreakpoint, writeBreakpo
 import { readWatches } from '../../editor/watches';
 
 import { useRunnerArrangement } from './runner/useRunnerArrangement';
+import { useGuideFold } from './runner/useGuideFold';
+import { GuideOffer, GuideToggle } from './runner/GuideToggle';
 import { usePredictGate } from './runner/usePredictGate';
 
 import { RunnerRuntimeStrip } from './runner/RunnerRuntimeStrip';
@@ -245,6 +247,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // because the lesson text is what a returning learner came for and the guide is for the first
   // visit only. On a desktop it opens as it always did.
   const [guideOpen, setGuideOpen] = useState<boolean>(() => !isPhone);
+  const { hidden: guideHidden, toggle: toggleGuide } = useGuideFold();
   // The full brief is a desktop card: metadata, the clock and the lesson's two new ideas. On a
   // phone it is behind Details, because the paragraph a learner came to read must be the first
   // thing under the strip rather than the fourth.
@@ -1989,23 +1992,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         offline={offline}
         onTakeOffline={takeOffline}
       />
-      {showFirstGuide && isPhone && !guideOpen && (
-        <button
-          type="button"
-          onClick={() => setGuideOpen(true)}
-          data-testid="btn-guide-open"
-          className="flex w-full items-center gap-2 rounded-xl border border-emerald/50 bg-emerald/10 px-3 py-2.5 text-left text-[12.5px] text-body cursor-pointer"
-        >
-          <Sparkles className="h-3.5 w-3.5 shrink-0 text-emerald" aria-hidden="true" />
-          <span className="min-w-0 flex-1">
-            First time here? The loop in three steps — starter, predict, finish line.
-          </span>
-          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted" aria-hidden="true" />
-        </button>
+      {showFirstGuide && isPhone && !guideOpen && !guideHidden && (
+        <GuideOffer onOpen={() => setGuideOpen(true)} />
       )}
 
-      {showFirstGuide && (!isPhone || guideOpen) && (
+      {showFirstGuide && !guideHidden && (!isPhone || guideOpen) && (
         <section
+          id="first-lesson-guide"
           data-testid="first-lesson-guide"
           className="bg-emerald/10 border border-emerald/50 rounded-xl p-5"
         >
@@ -2273,6 +2266,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 >
                   {phoneBriefOpen ? 'Hide' : 'Details'}
                 </button>
+                {showFirstGuide && <GuideToggle hidden={guideHidden} onToggle={toggleGuide} phone />}
               </div>
               <div className="overflow-x-auto">
                 <StudyTimerRow lessonId={selectedId} compact />
@@ -2418,6 +2412,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 <LessonRailToggle folded={chooserFold.folded} count={filteredLessons.length} onToggle={chooserFold.toggle} />
               </div>
 
+              {showFirstGuide && <GuideToggle hidden={guideHidden} onToggle={toggleGuide} />}
               {editorShown ? null : runnerToolbar}
             </div>
 

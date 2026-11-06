@@ -31,9 +31,9 @@ Your finished program must satisfy **all** of these conditions:
 
 - [ ] **Runs:** every TODO is completed and the script finishes without a Python error.
 - [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
-- [ ] **Required end state:** the grader checks distance_2d(x_m, y_m) at origin (0,0), (3,4); negative quadrant (-5,-12) and (0.6,0.8); clamp_cmd(cmd) across lower/upper.
+- [ ] **Required end state:** the grader checks `distance_2d(x_m, y_m)` at origin (0,0), (3,4); negative quadrant (-5,-12) and (0.6,0.8); `clamp_cmd(cmd)` across lower/upper.
 - [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
-- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Output:** the printed output matches the Expected Output block.
 - [ ] **Alternate inputs:** the grader also covers the saturation boundaries at -999, -1, 0, 1, 128, 255, 256, and 999; it changes the inputs, so a hardcoded result fails.
 
 ---

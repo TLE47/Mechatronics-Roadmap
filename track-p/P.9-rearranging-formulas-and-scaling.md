@@ -33,7 +33,7 @@ Your finished program must satisfy **all** of these conditions:
 - [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
 - [ ] **Required end state:** the grader checks solve_for_speed with forward; stationary (zero delta) and reverse motion inputs; scale10_to_five.
 - [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
-- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Output:** the printed output matches the Expected Output block.
 - [ ] **Alternate inputs:** the grader also covers the sensor endpoints at 0, 511.5, and 1023; it changes the inputs, so a hardcoded result fails.
 
 ---

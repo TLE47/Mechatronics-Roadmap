@@ -33,7 +33,7 @@ Your finished program must satisfy **all** of these conditions:
 - [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
 - [ ] **Required end state:** the grader checks counts_to_rad on a full turn and a quarter turn, rate_rad_s forwards; backwards and the average/central rates on unseen traces; and that a single-sample rate is refused with ValueError.
 - [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
-- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Output:** the printed output matches the Expected Output block.
 - [ ] **Alternate inputs:** the grader also covers the first sample with no central difference, and a rising trace with no reversal; it changes the inputs, so a hardcoded result fails.
 
 ---

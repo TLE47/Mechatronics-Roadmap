@@ -33,7 +33,7 @@ Your finished program must satisfy **all** of these conditions:
 - [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
 - [ ] **Required end state:** the grader checks step_position(pos_m, vel_m_s, dt_s) for positive and negative velocity and for a zero time step; 4-step while-loop state (step == 4).
 - [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
-- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Output:** the printed output matches the Expected Output block.
 - [ ] **Alternate inputs:** the grader also covers a target at pos_m = 1.20 m; it changes the inputs, so a hardcoded result fails.
 
 ---

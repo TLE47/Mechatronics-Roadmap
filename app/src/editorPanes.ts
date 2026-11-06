@@ -64,9 +64,22 @@ export interface EditorPanes {
   views: EditorView[];
   axis: PaneAxis;
   focus: number;
+  /**
+   * Share of the width the first column gets when panes sit side by side. A drag writes it; a swap
+   * keeps it, because the shape belongs to a slot and the view belongs to a pane.
+   */
+  colShare?: number;
+  /** Height shares of the stacked rows, top to bottom. Empty means equal rows. */
+  rowShares?: number[];
 }
 
-export const DEFAULT_PANES: EditorPanes = { views: ['main'], axis: 'columns', focus: 0 };
+export const DEFAULT_PANES: EditorPanes = {
+  views: ['main'],
+  axis: 'columns',
+  focus: 0,
+  colShare: 0.5,
+  rowShares: [],
+};
 
 /** Where the lesson editor keeps its arrangement. */
 export const STORAGE_KEY_EDITOR_PANES = 'mechalab_editor_panes_v1';
@@ -77,7 +90,46 @@ export const STORAGE_KEY_EDITOR_PANES = 'mechalab_editor_panes_v1';
  * move the other's split.
  */
 export const STORAGE_KEY_STUDIO_PANES = 'mechalab_studio_panes_v1';
-export const STUDIO_PANES: EditorPanes = { views: ['main', 'actual'], axis: 'rows', focus: 0 };
+export const STUDIO_PANES: EditorPanes = {
+  views: ['main', 'actual'],
+  axis: 'rows',
+  focus: 0,
+  colShare: 0.5,
+  rowShares: [],
+};
+
+/** The narrowest a dragged pane may get, so a divider can never erase the pane beside it. */
+export const MIN_PANE_SHARE = 0.15;
+/** The column divider keeps the first column between these shares. */
+export const MIN_COLUMN_SHARE = 0.2;
+export const MAX_COLUMN_SHARE = 0.8;
+
+function clamp(value: number, low: number, high: number): number {
+  return Math.min(high, Math.max(low, value));
+}
+
+/** Positive row shares, normalized to one, or no shares at all. */
+function normalizeShares(value: unknown): number[] {
+  if (!Array.isArray(value)) return [];
+  const raw = value.filter(
+    (entry): entry is number => typeof entry === 'number' && Number.isFinite(entry) && entry > 0
+  );
+  if (raw.length < 2) return [];
+  // Every pane gets the floor first, and the rest is shared in proportion. Clamping after a plain
+  // normalization does not work: dividing the clamped values again pushes the small one back under
+  // the floor (0.98/0.01/0.01 came out at 0.117 for the small panes).
+  const shares = raw.slice(0, MAX_PANES);
+  const total = shares.reduce((sum, entry) => sum + entry, 0);
+  const normalized = shares.map((entry) => entry / total);
+  const floor = MIN_PANE_SHARE;
+  // A drag already keeps every share above the floor, and its proportions should survive a reload
+  // untouched. Only a stored value with a sliver (or junk proportions) needs the floor applied, and
+  // then the floor comes out first and the remainder is shared in proportion.
+  if (normalized.every((entry) => entry >= floor)) return normalized;
+  const free = 1 - floor * shares.length;
+  if (free <= 0) return shares.map(() => 1 / shares.length);
+  return shares.map((entry) => floor + (entry / total) * free);
+}
 
 /** The most panes the body will hold. A screen's capacity is at most this, never more. */
 export const MAX_PANES = 4;
@@ -142,7 +194,12 @@ export function normalizePanes(value: unknown, fallback: EditorPanes = DEFAULT_P
   const axis: PaneAxis = isPaneAxis(record.axis) ? record.axis : fallback.axis;
   const focusValue = typeof record.focus === 'number' ? record.focus : fallback.focus;
   const focus = Number.isInteger(focusValue) && focusValue >= 0 && focusValue < views.length ? focusValue : 0;
-  return { views, axis, focus };
+  const colShare =
+    typeof record.colShare === 'number' && Number.isFinite(record.colShare)
+      ? clamp(record.colShare, MIN_COLUMN_SHARE, MAX_COLUMN_SHARE)
+      : (fallback.colShare ?? 0.5);
+  const rowShares = Array.isArray(record.rowShares) ? normalizeShares(record.rowShares) : (fallback.rowShares ?? []);
+  return { views, axis, focus, colShare, rowShares };
 }
 
 /** Every view on screen, in slot order. Never empty, never a duplicate. */
@@ -231,6 +288,16 @@ export function closeView(panes: EditorPanes, view: EditorView): EditorPanes {
 /** Choose which way the panes divide. Remembered even while there is only one pane. */
 export function setAxis(panes: EditorPanes, axis: PaneAxis): EditorPanes {
   return normalizePanes({ ...panes, axis });
+}
+
+/** One drag of the divider between the columns, written as a share of the body's width. */
+export function resizeColumn(panes: EditorPanes, share: number): EditorPanes {
+  return normalizePanes({ ...panes, colShare: clamp(share, MIN_COLUMN_SHARE, MAX_COLUMN_SHARE) });
+}
+
+/** One drag of a divider between stacked panes, written as the new row heights. */
+export function resizeRows(panes: EditorPanes, shares: readonly number[]): EditorPanes {
+  return normalizePanes({ ...panes, rowShares: [...shares] });
 }
 
 /** Focus a slot that exists; a focus on an empty slot is not a state. */

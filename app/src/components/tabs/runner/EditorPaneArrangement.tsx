@@ -49,7 +49,7 @@ export function EditorPaneArrangement({
         aria-pressed={panes.axis === 'columns'}
         aria-label="Divide the panes horizontally"
         onClick={() => onPanes(setAxis(panes, 'columns'))}
-        title="Divide the panes horizontally; three or more use a two-column grid"
+        title="Side by side; with three panes the first runs full height and the others stack beside it, so no cell is left empty"
         className={`cursor-pointer rounded border px-1.5 py-0.5 ${
           panes.axis === 'columns'
             ? 'border-accent/60 bg-accent/10 text-accent'
@@ -65,7 +65,7 @@ export function EditorPaneArrangement({
         aria-pressed={panes.axis === 'rows'}
         aria-label="Divide the panes vertically"
         onClick={() => onPanes(setAxis(panes, 'rows'))}
-        title="Divide the panes vertically, one above the other"
+        title="One above the other, each pane taking its own share of the height"
         className={`cursor-pointer rounded border px-1.5 py-0.5 ${
           panes.axis === 'rows'
             ? 'border-accent/60 bg-accent/10 text-accent'
@@ -108,7 +108,7 @@ export function EditorPaneArrangement({
             <option value="">Swap {focused + 1} with…</option>
             {others.map((entry) => (
               <option key={entry.view} value={entry.index}>
-                {entry.index + 1}: {entry.label}
+                Pane {entry.index + 1} · {entry.label}
               </option>
             ))}
           </select>

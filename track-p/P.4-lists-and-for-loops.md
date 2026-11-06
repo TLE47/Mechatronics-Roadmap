@@ -33,7 +33,7 @@ Your finished program must satisfy **all** of these conditions:
 - [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
 - [ ] **Required end state:** the grader checks clamped_commands list; total_cmd and mean_cmd within tolerance.
 - [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
-- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Output:** the printed output matches the Expected Output block.
 - [ ] **Alternate inputs:** the grader also covers an unseen five-element boundary list: -100, 0, 100, 255, 500; it changes the inputs, so a hardcoded result fails.
 
 ---

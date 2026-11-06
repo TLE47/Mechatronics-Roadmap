@@ -33,7 +33,7 @@ Your finished program must satisfy **all** of these conditions:
 - [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
 - [ ] **Required end state:** the grader checks is_within_recommended_bounds and select_safe_driver across 3.3 V; 6.0 V, 10.8 V, 11.5 V and 12.0 V supply rails; datasheet_val_to_base_si across mA.
 - [ ] **Exact strings:** `DRV8833` and `TB6612FNG`.
-- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Output:** the printed output matches the Expected Output block.
 - [ ] **Alternate inputs:** the grader also covers mV, ms, kHz, and base SI units; it changes the inputs, so a hardcoded result fails.
 
 ---

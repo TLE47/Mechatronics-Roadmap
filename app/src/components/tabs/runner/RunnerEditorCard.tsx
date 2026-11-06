@@ -1,18 +1,15 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode, type RefObject } from 'react';
 import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Lock } from 'lucide-react';
-import { PythonEditor, type PythonEditorHandle } from '../../PythonEditor';
-import { PredictPane } from './PredictPane';
+import type { PythonEditorHandle } from '../../PythonEditor';
 import { RunVerdict } from './RunVerdict';
 import { EditorGoalCard } from './EditorGoal';
+import { EditorPaneBody } from './EditorPaneBody';
 import { resultTabMeta } from './resultTabMeta';
-import { PythonKeys } from '../../PythonKeys';
 import { MAIN_FILE_NAME, type LessonFile } from '../../../lessonFiles';
 import {
-  focusSlot,
   isSplit,
   showView,
   splitPane,
-  slotFor,
   viewsForLayout,
   visibleViews,
   type EditorPanes,
@@ -24,11 +21,6 @@ import type { HarnessGate } from '../../../harnessGrading';
 import type { PredictGate } from './usePredictGate';
 import { vimModeLabel as vimModeLabelFor } from '../../../vimMode';
 
-// The pass conditions are only read when their tab is opened, so they do not belong in the first
-// paint's chunk. The editor itself stays eager: it is the surface this card exists for.
-const EditorRequirements = lazy(() =>
-  import('./EditorRequirements').then((module) => ({ default: module.EditorRequirements }))
-);
 // Axis, Add, Swap and Close only exist after a split, so the arrangement is a second lazy boundary.
 const EditorPaneArrangement = lazy(() =>
   import('./EditorPaneArrangement').then((module) => ({ default: module.EditorPaneArrangement }))
@@ -225,35 +217,8 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
   const views = visibleViews(panes);
   /** A split only when two or more views are really on screen. */
   const paneSplit = allowedViews.length > 0 && isSplit(panes) && shownViews.size > 1;
-  const paneCount = shownViews.size;
-  /** Slot order, so an arrangement opened on an output still reads left to right. */
-  const paneOrder = (view: EditorView): number => slotFor(panes, view) ?? 0;
   /** The helper the strip names, from the file the tab picked. */
   const openHelperFile = helperFiles.find((file) => file.name === openHelper) ?? null;
-  /**
-   * A pane's surface and, when split, the faint inset ring that makes the focused one visible. A
-   * split is a keyboard-and-pointer workspace: the tab press fills the pane the learner last
-   * clicked, so which pane that is has to be visible rather than remembered. The rules between
-   * panes are the body's one-pixel gap showing the line colour through, which works for a row and
-   * a grid without a border class per pane.
-   */
-  const paneClass = (view: EditorView): string =>
-    `min-w-0 flex-1 bg-panel ${
-      paneSplit && panes.focus === paneOrder(view) ? 'ring-1 ring-inset ring-accent/20' : ''
-    }`;
-  /**
-   * Clicking a pane makes it the one a tab press fills.
-   *
-   * Without this the focused slot was only ever the one last opened, so putting Run output and
-   * Expected side by side took a tab press nobody could be expected to guess: the first click
-   * replaces the pane that already has focus. Click the pane you want to change, then its tab - the
-   * way a terminal multiplexer's active pane owns the next command.
-   */
-  const focusPane = (view: EditorView) => {
-    if (!paneSplit) return;
-    const slot = slotFor(panes, view);
-    if (slot !== null && panes.focus !== slot) onPanes(focusSlot(panes, slot));
-  };
   /** One writer for every tab press and every arrangement control below. */
   const onShowView = (view: EditorView) => {
     setBodyCollapsed(false);
@@ -266,16 +231,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
     if (passStatus === 'untested' || passStatus === 'passed') return;
     setBodyCollapsed(false);
   }, [passStatus]);
-  const {
-    toolbar,
-    feedback,
-    actualOutputPane,
-    expectedOutputPane,
-    casesPane,
-    workflowPane,
-    tracePane,
-  } = props.slots;
-  const { coEdit, collabNotice, peerLabel } = props.collab;
+  const { toolbar, feedback } = props.slots;
 
   return (
     <div
@@ -507,202 +463,25 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
           <EditorGoalCard goal={lessonGoal} />
         </div>
       )}
-      <div
-        id="editor-panes-body"
-        data-testid="editor-panes"
-        style={{ display: bodyCollapsed ? 'none' : undefined }}
-        data-axis={panes.axis}
-        data-split={paneSplit ? 'split' : 'single'}
-        data-focus={paneSplit ? panes.focus : 0}
-        data-views={views.join(',')}
-        data-count={paneCount}
-        className={
-          !paneSplit
-            ? 'flex flex-col'
-            : `${
-                panes.axis === 'rows'
-                  ? 'flex flex-col'
-                  : paneCount > 2
-                    ? 'grid grid-cols-1 items-stretch md:grid-cols-2'
-                    : 'grid grid-cols-1 items-start lg:grid-cols-2'
-              } gap-px bg-line-soft`
-        }
-      >
-        <div
-          data-testid="pane-main"
-          data-pane="main"
-          onClick={() => focusPane('main')}
-          style={{ display: shownViews.has('main') ? undefined : 'none', order: paneOrder('main') }}
-          className={paneClass('main')}
-        >
-          {coEdit && (
-            <p
-              role="status"
-              data-testid="coedit-status"
-              className="border-b px-3 py-1.5 text-[11px]"
-              style={{ borderColor: 'var(--border)', color: 'var(--emerald, var(--accent))', backgroundColor: 'var(--bg)' }}
-            >
-              Co-editing {coEdit.lesson} with {peerLabel ?? 'the other workbench'} ·{' '}
-              {coEdit.remote === 0 ? 'no edits from them yet' : `${coEdit.remote} of their edits`} · undo is yours
-            </p>
-          )}
-          {!coEdit && collabNotice && (
-            <p
-              role="status"
-              data-testid="coedit-notice"
-              className="border-b px-3 py-1.5 text-[11px]"
-              style={{ borderColor: 'var(--border)', color: 'var(--muted)', backgroundColor: 'var(--bg)' }}
-            >
-              {collabNotice}
-            </p>
-          )}
-          {/* The phone's punctuation strip: a phone keyboard has no colon, bracket or underscore on
-              its first pane, and every Python line has at least one of them. */}
-          {!deferPhoneEditor && isPhone && !openHelperFile && (
-            <PythonKeys onInsert={(text) => mainEditorRef.current?.insertText(text)} />
-          )}
-          {deferPhoneEditor ? null : openHelperFile ? (
-            <>
-              <p
-                className="border-b px-3 py-1.5 text-[11px]"
-                style={{ borderColor: 'var(--border)', color: 'var(--muted)', backgroundColor: 'var(--bg)' }}
-              >
-                Read-only helper. Your code imports this file; edit{' '}
-                <span className="font-mono" style={{ color: 'var(--accent)' }}>
-                  {MAIN_FILE_NAME}
-                </span>{' '}
-                to change the answer.
-              </p>
-              <PythonEditor
-                key={`${lessonId}:${openHelperFile.name}`}
-                ref={helperEditorRef}
-                value={openHelperFile.content}
-                readOnly
-                ariaLabel={`${openHelperFile.name}, read-only lesson helper`}
-                testId="editor-helper"
-                onGoToDefinition={onGoToDefinition}
-                initialLine={pendingJump?.file === openHelperFile.name ? pendingJump.line : undefined}
-              />
-            </>
-          ) : (
-            <PythonEditor
-              key={`main:${lessonId}`}
-              ref={mainEditorRef}
-              value={code}
-              onChange={commitCode}
-              ariaLabel="Python code editor"
-              testId={editorTestId}
-              onSliderCommit={onSliderCommit}
-              getAnalysis={getAnalysis}
-              onGoToDefinition={onGoToDefinition}
-              onRunCell={onRunCell}
-              onToggleBreakpoint={breakpoints?.onToggle}
-              onBreakpointsMoved={breakpoints?.onMoved}
-              breakpoints={breakpoints?.entries}
-              vimMode={vimOn}
-              onVimMode={onVimMode}
-              initialLine={pendingJump?.file === MAIN_FILE_NAME ? pendingJump.line : undefined}
-            />
-          )}
-        </div>
-        {allowedViews.length > 0 && (
-          <>
-            {allowedViews.includes('requirements') && lessonRequirements.length > 0 && (
-              <div
-                data-testid="pane-requirements"
-                data-pane="requirements"
-                onClick={() => focusPane('requirements')}
-                style={{
-                  display: shownViews.has('requirements') ? undefined : 'none',
-                  order: paneOrder('requirements'),
-                }}
-                className={paneClass('requirements')}
-              >
-                {shownViews.has('requirements') && (
-                  <Suspense fallback={null}>
-                    <EditorRequirements items={lessonRequirements} />
-                  </Suspense>
-                )}
-              </div>
-            )}
-            {gate && (
-              <div
-                data-testid="pane-predict"
-                data-pane="predict"
-                onClick={() => focusPane('predict')}
-                style={{ display: shownViews.has('predict') ? undefined : 'none', order: paneOrder('predict') }}
-                className={paneClass('predict')}
-              >
-                <PredictPane
-                  record={gate.record}
-                  text={gate.text}
-                  onText={gate.setText}
-                  onCommit={gate.commit}
-                  onSkip={gate.skip}
-                  onAgain={gate.again}
-                  onClose={() => onClosePredict?.()}
-                  asksForFinish={asksForFinish}
-                  held={gate.holding}
-                  running={isRunning}
-                />
-              </div>
-            )}
-            <div
-              data-testid="pane-actual"
-              data-pane="actual"
-              onClick={() => focusPane('actual')}
-              style={{ display: shownViews.has('actual') ? undefined : 'none', order: paneOrder('actual') }}
-              className={paneClass('actual')}
-            >
-              {actualOutputPane}
-            </div>
-            <div
-              data-testid="pane-expected"
-              data-pane="expected"
-              onClick={() => focusPane('expected')}
-              style={{ display: shownViews.has('expected') ? undefined : 'none', order: paneOrder('expected') }}
-              className={paneClass('expected')}
-            >
-              {expectedOutputPane}
-            </div>
-            {casesPane && (
-              <div
-                data-testid="pane-cases"
-                data-pane="cases"
-                onClick={() => focusPane('cases')}
-                style={{
-                  display: shownViews.has('cases') ? undefined : 'none',
-                  order: paneOrder('cases'),
-                }}
-                className={paneClass('cases')}
-              >
-                {casesPane}
-              </div>
-            )}
-            <div
-              data-testid="pane-workflow"
-              data-pane="workflow"
-              onClick={() => focusPane('workflow')}
-              style={{ display: shownViews.has('workflow') ? undefined : 'none', order: paneOrder('workflow') }}
-              className={paneClass('workflow')}
-            >
-              {workflowPane}
-            </div>
-            {tracePane && (
-              <div
-                data-testid="pane-trace"
-                data-pane="trace"
-                onClick={() => focusPane('trace')}
-                style={{ display: shownViews.has('trace') ? undefined : 'none', order: paneOrder('trace') }}
-                className={paneClass('trace')}
-              >
-                {tracePane}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-      {!bodyCollapsed && feedback}
+      <EditorPaneBody
+        panes={panes}
+        onPanes={onPanes}
+        views={views}
+        shownViews={shownViews}
+        allowedViews={allowedViews}
+        collapsed={bodyCollapsed}
+        isPhone={isPhone}
+        deferPhoneEditor={deferPhoneEditor}
+        draft={props.draft}
+        gate={gate}
+        requirements={lessonRequirements}
+        asksForFinish={asksForFinish}
+        running={isRunning}
+        slots={props.slots}
+        collab={props.collab}
+        onClosePredict={onClosePredict}
+      />
+      {!bodyCollapsed && feedback}      {!bodyCollapsed && feedback}
     </div>
   );
 }

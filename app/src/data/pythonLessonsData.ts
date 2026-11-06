@@ -66,7 +66,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks new_pos_m (2.0625 m), sensor_pin (4.0 V); kinetic_energy_j (9.0 J) within tolerance.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers zero speed, a 1:1 ratio, and a negative start position; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "track-p",
@@ -101,7 +101,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks clamped_high (255), clamped_low (0); safe_output (0 when E-Stop active).",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers in-range commands and an E-Stop that has been released; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "track-p",
@@ -136,7 +136,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks clamped_commands list; total_cmd and mean_cmd within tolerance.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers an unseen five-element boundary list: -100, 0, 100, 255, 500; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "track-p",
@@ -171,7 +171,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks step_position(pos_m, vel_m_s, dt_s) for positive and negative velocity and for a zero time step; 4-step while-loop state (step == 4).",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers a target at pos_m = 1.20 m; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "track-p",
@@ -204,9 +204,9 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "requirements": [
       "**Runs:** every TODO is completed and the script finishes without a Python error.",
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
-      "**Required end state:** the grader checks distance_2d(x_m, y_m) at origin (0,0), (3,4); negative quadrant (-5,-12) and (0.6,0.8); clamp_cmd(cmd) across lower/upper.",
+      "**Required end state:** the grader checks `distance_2d(x_m, y_m)` at origin (0,0), (3,4); negative quadrant (-5,-12) and (0.6,0.8); `clamp_cmd(cmd)` across lower/upper.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers the saturation boundaries at -999, -1, 0, 1, 128, 255, 256, and 999; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "track-p",
@@ -241,7 +241,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks ma_to_amps, kohms_to_ohms and us_to_seconds at 0, at the page's 15 mA / 0.22 kOhm / 500 us readings, and at large magnitudes.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers zero, the nominal readings above, and large boundary readings; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "track-p",
@@ -276,7 +276,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks freq_to_period_ms across 1 Hz, 50 Hz; 490 Hz, 1 kHz and 20 kHz switching frequencies; max_unsigned_int across 1-bit, 8-bit.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers 1-bit, 8-bit, 10-bit, 12-bit, and 16-bit timer widths; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "track-p",
@@ -311,7 +311,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks solve_for_speed with forward; stationary (zero delta) and reverse motion inputs; scale10_to_five.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers the sensor endpoints at 0, 511.5, and 1023; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "track-p",
@@ -346,7 +346,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks rpm_to_rad_s at 0 RPM, 60 RPM; -30 RPM (reverse rotation); arm_tip_xy.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers angles in all four Cartesian quadrants, plus the 0 and 180 degree axis cases; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "track-p",
@@ -381,7 +381,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks slope_velocity on positive, zero; negative displacement steps; accumulate_positions on empty list.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers symmetric cancellation with 1.0 and -1.0, and the five-step profile; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "track-p",
@@ -416,7 +416,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks weight_newtons at 0 kg; 0.5 kg and 2.5 kg; gravity_torque_nm at 0 deg (max lever arm).",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers the 60, 90, and 180 degree lever angles; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "track-p",
@@ -451,7 +451,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks is_within_recommended_bounds and select_safe_driver across 3.3 V; 6.0 V, 10.8 V, 11.5 V and 12.0 V supply rails; datasheet_val_to_base_si across mA.",
       "**Exact strings:** `DRV8833` and `TB6612FNG`.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers mV, ms, kHz, and base SI units; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "track-p",
@@ -486,7 +486,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks winding_draw on unseen 24 V/2.4 ohm; 9 V/3 ohm givens; check_against_limit.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers answer_line on both the inside-limit and clamped branches; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "track-p",
@@ -521,7 +521,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks cmd10_to_torque saturation at negative (-50); zero, midpoint (511.5) and overflow (2048) inputs; holding_torque_nm across radian angles (0, pi/3, pi/2).",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers the three-step trajectory state; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "track-p",
@@ -555,7 +555,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks counts_to_rad on a full turn and a quarter turn, rate_rad_s forwards; backwards and the average/central rates on unseen traces; and that a single-sample rate is refused with ValueError.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers the first sample with no central difference, and a rising trace with no reversal; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "ramp",
@@ -590,7 +590,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks the left, right and trapezoid rules on a three-sample trace where all three differ; a constant rate over 0.75 s; that q0 is added rather than replaced, and that bias drift accumulates.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also refuses a single sample and a negative duration with ValueError; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "ramp",
@@ -625,7 +625,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks accel_rad_s2 and one step from rest and from a moving state; including that position uses the OLD speed; ten single steps match one repeated run, and superposition holds on unseen torques.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers element-wise add and scale, a length mismatch, and a step that does not mutate its input; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "ramp",
@@ -660,7 +660,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks mat_vec on the lesson's [2, 3] state (rows are rates: [3, -7.5]); on a B u multiplication; step_matrix against step_two_lines for one tick and for thirty.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers a row/vector shape mismatch raising ValueError; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "ramp",
@@ -695,7 +695,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks arrow at 0 and 90 degrees, rotate keeping the length; that adding the two parts gives 1 + 1j rather than a length of 2; the empty sum and the four fields of report().",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers the 53.130 degree angle from the 3 + 4j arrow; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "ramp",
@@ -730,7 +730,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks the gain and phase at DC, the corner 1/tau and 200 rad/s; plus one period's sample count at 20 and 200 rad/s; the simulated gain and phase against the formula.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers measure() on a synthetic trace built from a known gain and phase; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "ramp",
@@ -765,7 +765,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks compute_flow inversely proportional to opposition; ValueError at opposition <= 0; compute_effort_flow_power (Effort * Flow) across active.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers zero-flow (open-loop) states; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "stage-0",
@@ -800,7 +800,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks cross_domain_power on unseen 24V/3A; electrical to 0.5 N*m @ 108 rad/s mechanical operating point; simulate_first_order_lag at 0 target, 1*tau (63.2%).",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers five time constants (99.3%) with a custom time constant; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "00-foundations",
@@ -835,7 +835,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks damping_metrics classification across underdamped (zeta=0.1); critically_damped (zeta=1.0) and overdamped (zeta=2.0); simulate_spring_damper overshoot behavior.",
       "**Exact strings:** `underdamped`, `critically_damped`, and `overdamped`.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers the underdamped, critically damped, and overdamped regimes; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "00-foundations",
@@ -870,7 +870,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks holding_torque_nm at zero mass, 0 deg horizontal; 60 deg, 90 deg vertical and 180 deg inverted; run_sanity_checks() returns.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers the boundary torques 1.962, 0.981, and 0.0 within tolerance; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "00-foundations",
@@ -905,7 +905,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks compare_ldo_vs_buck; unseen 24V->5V @ 1.0A load with 80% buck efficiency; worst_case_battery_budget.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers a custom 1.5x safety factor; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "01-electronics-and-power",
@@ -940,7 +940,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks ground_bounce_adc_error at 0A stall; on 3.3V ADC reference rail; rc_lowpass_response at DC (0 Hz -> 1.0 gain).",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers cutoff f_c at 0.7071 gain and the high-frequency stopband; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "01-electronics-and-power",
@@ -975,7 +975,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks fk_1link at 0 deg; 90 deg and -90 deg; verify_circular_workspace invariant r == l1_m on unseen link length.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers negative and obtuse joint angles; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "02-mechanics-kinematics-dynamics",
@@ -1010,7 +1010,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks fk_2link at the folded-back singularity (0.2 m, 0.2 m, 0\u00b0, 180\u00b0) returns a finite elbow; tip; fk_2link at an orthogonal bend (0.2 m, 0.1 m, 90\u00b0, -90\u00b0) returns finite elbow and tip positions.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers an unseen pose with both joints non-zero; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "02-mechanics-kinematics-dynamics",
@@ -1045,7 +1045,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks ik_2link_elbow_down -> fk_2link round-trip accuracy (< 1e-5 m); unseen quadrant targets; out-of-reach target (0.50).",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers an out-of-reach target at 0.50 and a target at 0.0; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "02-mechanics-kinematics-dynamics",
@@ -1080,7 +1080,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks point_mass_inertia_and_accel; unseen mass/radius/torque inputs; gearmotor_output torque amplification.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers speed reduction and reflected inertia scaling with the square of the ratio; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "02-mechanics-kinematics-dynamics",
@@ -1115,7 +1115,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks gt2_belt_drive ratio, driven pitch radius; belt tension on 16T->64T pulley pair; cad_hole_diameters_mm press-fit (+0.10 mm).",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers the +0.20 mm clearance allowances; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "02-mechanics-kinematics-dynamics",
@@ -1150,7 +1150,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks quadrature_resolution 4x decoding; angular resolution on 256-line disk with 20:1 gearbox; as5600_to_angle at 0, 512, and 4095.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers 4096 counts, a full 360 degree turn; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "03-sensors-and-actuators",
@@ -1185,7 +1185,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks mech_to_elec_deg modulo-360 wraparound for an 11-pole-pair motor and for a 4-pole-pair rotor; three_phase_voltages balanced sum (va + vb + vc == 0).",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers multiple electrical angles, including the 11-pole-pair wraparound; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "03-sensors-and-actuators",
@@ -1220,7 +1220,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks encoders_to_tip_xy at horizontal stretch (0, 0); orthogonal bend (1024, -1024); diagnose_encoder_fk_fault across ok.",
       "**Exact strings:** `ok`, `inverted_elbow_sign`, and `missing_4x_cpr`.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers the inverted_elbow_sign and missing_4x_cpr fault modes; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "03-sensors-and-actuators",
@@ -1255,7 +1255,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks uint16_tick_delta at zero elapsed, normal step; 16-bit wraparound boundary (65535 -> 0); velocity_from_step jitter amplification.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers diagnose_uint8_wrap_bug at 255, 256, and 300; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "04-embedded-and-realtime",
@@ -1290,7 +1290,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks crc8_ccitt on the standard check string b'123456789'; 2-bit burst detection over xor_checksum; pack_telemetry_10b / unpack_and_verify_10b on uint16 + signed float payloads.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers the 88% bandwidth ceiling at 80% utilization; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "04-embedded-and-realtime",
@@ -1325,7 +1325,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks make_joint_box; update_joint_in_place mutation vs update_joint_copy_bug pass-by-value behavior; diagnose_struct_update_bug distinguishing a copy from an in-place update.",
       "**Exact strings:** `pass_by_value_copy_bug` and `updated_in_place_ok`.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers pass_by_value_copy_bug and updated_in_place_ok; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "04-embedded-and-realtime",
@@ -1360,7 +1360,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks sim_pid_arm; steady-state gravity sag when ki=0.0; anti_windup=True drastically reduces integral windup overshoot.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers an unseen ki = 15.0 gain; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "05-control-and-estimation",
@@ -1395,7 +1395,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks accel_tilt_rad at 0 deg; -90 deg and +45 deg; run_complementary_imu drift rejection with unseen gyro_bias=0.10 rad/s.",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers alpha = 0.95; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "05-control-and-estimation",
@@ -1430,7 +1430,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks cubic_trajectory boundary conditions at t=0; t=T/2, t=T and out-of-range t>T clamping; compliant_gravity_command PD + gravity torque at vertical (pi/2).",
       "**Exact strings:** any label, name, or unit in the checks above must match its exact spelling.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers displaced postures; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "06-robotics-and-autonomy",
@@ -1465,7 +1465,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks verify_bringup_safety at each of the three gates (inverted encoder, rail/current fault, ready); identify_b_and_j parameter recovery on a synthetic plant with an unseen true b and J.",
       "**Exact strings:** `PASS_READY_FOR_CLOSED_LOOP`, `ABORT_INVERTED_ENCODER_SIGN`, and `ABORT_RAIL_OR_CURRENT_LIMIT`.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers an unseen inertia value; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "07-systems-hil-and-production",
@@ -1500,7 +1500,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
       "**Required end state:** the grader checks fk_2link / ik_2link round-trip on unseen target (0.12, 0.08); figure8_target from spec and gravity_ff_2link at vertical posture; diagnose_capstone_fault across all 4 R4 broken versions, infer_encoder_scale on an unfamiliar fifth unit (1.5x and a constant offset that must not read as a scale).",
       "**Exact strings:** `gravity_ff_sign_inverted`, `wrong_encoder_cpr`, `encoder_zero_offset`, `missing_anti_windup`, and `nominal_ok`.",
-      "**Output:** the printed output matches `### Expected Output`.",
+      "**Output:** the printed output matches the Expected Output block.",
       "**Alternate inputs:** the grader also covers all four repair functions restoring the true tip or cutting overshoot, 20-byte CRC-8 integrity, and UART bandwidth drops; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "08-capstone-projects",

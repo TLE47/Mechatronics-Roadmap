@@ -31,7 +31,7 @@ Your finished program must satisfy **all** of these conditions:
 - [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
 - [ ] **Required end state:** the grader checks cmd10_to_torque saturation at negative (-50); zero, midpoint (511.5) and overflow (2048) inputs; holding_torque_nm across radian angles (0, pi/3, pi/2).
 - [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
-- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Output:** the printed output matches the Expected Output block.
 - [ ] **Alternate inputs:** the grader also covers the three-step trajectory state; it changes the inputs, so a hardcoded result fails.
 
 ---

@@ -7,7 +7,11 @@
  *  - P.6's Requirements view is reachable, has its cards, and stays inside its pane;
  *  - a two-pane split mounts the arrangement controls, while the editor tab strip keeps a readable
  *    floor and keeps every tab clear of those controls;
- *  - the reader's saved heading survives a reload.
+ *  - the reader's saved heading survives a reload;
+ *  - the tablet's brief can fold the first-run guide away, and the fold survives a reload.
+ *
+ * `auditPaneLayouts` is the wide companion: three panes must use both axes with no empty cell, and
+ * the dividers between them must move the boundary and remember it after a reload.
  *
  * The header case is the one that regressed: the arrangement controls were fixed-size siblings of a
  * zero-min-width tablist, so at 390 px the strip was squeezed to ~50 px, the tabs stacked one per
@@ -55,6 +59,32 @@ async function auditAtWidth(browser, baseUrl, name, { label, width, height }) {
       { timeout: 10000 }
     );
 
+    if (width > 767) {
+      // The brief's guide switch is one remembered cell for every lesson. Hide it, prove a reload
+      // still has it hidden, then put it back so the rest of the audit is unchanged.
+      await page.getByTestId('first-lesson-guide').waitFor({ state: 'visible', timeout: 15000 });
+      await page.getByTestId('btn-guide-toggle').click();
+      await page.getByTestId('first-lesson-guide').waitFor({ state: 'detached', timeout: 5000 });
+      assert.equal(
+        await page.evaluate(() => localStorage.getItem('mechalab_guide_hidden_v1')),
+        '1',
+        `${name}/${label}: hiding the guide did not remember the choice`
+      );
+      await page.reload({ waitUntil: 'networkidle', timeout: 45000 });
+      await page.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, {
+        timeout: 20000,
+      });
+      const showGuide = page.getByTestId('btn-guide-toggle');
+      await showGuide.waitFor({ state: 'visible', timeout: 20000 });
+      assert.equal(
+        await page.getByTestId('first-lesson-guide').count(),
+        0,
+        `${name}/${label}: the guide came back after a reload despite being hidden`
+      );
+      await showGuide.click();
+      await page.getByTestId('first-lesson-guide').waitFor({ state: 'visible', timeout: 10000 });
+    }
+
     if (width <= 767) {
       await page.getByTestId('phone-surface-code').waitFor({ state: 'visible', timeout: 20000 });
       await page.getByTestId('phone-surface-code').click();
@@ -71,6 +101,7 @@ async function auditAtWidth(browser, baseUrl, name, { label, width, height }) {
       const paneBox = pane.getBoundingClientRect();
       return {
         cards: cards.length,
+        text: pane.innerText,
         tokens: pane.querySelectorAll('[data-token]').length,
         columns: new Set(cards.map((card) => Math.round(card.getBoundingClientRect().left))).size,
         outside: cards.filter((card) => {
@@ -81,7 +112,18 @@ async function auditAtWidth(browser, baseUrl, name, { label, width, height }) {
       };
     });
     assert.equal(requirements.cards, 6, `${name}/${label}: P.6 must show all six Requirements cards`);
-    assert.ok(requirements.tokens >= 5, `${name}/${label}: Requirements rendered ${requirements.tokens} tokens, not the five the page carries`);
+    assert.ok(
+      requirements.tokens >= 2,
+      `${name}/${label}: Requirements rendered ${requirements.tokens} tokens; P.6 names two functions in backticks`
+    );
+    assert.ok(
+      requirements.text.includes('the printed output matches the Expected Output block.'),
+      `${name}/${label}: the Output requirement does not name the Expected Output block`
+    );
+    assert.ok(
+      !requirements.text.includes('###'),
+      `${name}/${label}: a literal ### leaked into the Requirements pane`
+    );
     assert.equal(requirements.outside, 0, `${name}/${label}: a Requirements card escaped its pane`);
     assert.equal(requirements.overflow, 0, `${name}/${label}: the Requirements pane scrolls sideways`);
     if (width <= 767) {
@@ -244,5 +286,168 @@ async function auditAtWidth(browser, baseUrl, name, { label, width, height }) {
 export async function auditNarrowWorkbench(browser, baseUrl, name) {
   for (const viewport of NARROW_VIEWPORTS) {
     await auditAtWidth(browser, baseUrl, name, viewport);
+  }
+}
+
+/** Geometry of the three-pane body, read from the page rather than from the arrangement state. */
+function paneBoxes(page) {
+  return page.evaluate(() => {
+      const bodyNode = document.querySelector('[data-testid="editor-panes"]');
+      if (!bodyNode) return { body: null, panes: [] };
+      const rect = bodyNode.getBoundingClientRect();
+      return {
+        body: { x: rect.x, y: rect.y, w: rect.width, h: rect.height },
+        panes: [...bodyNode.querySelectorAll('[data-pane]')]
+          .filter((node) => node.getClientRects().length > 0)
+          .map((node) => {
+            const pane = node.getBoundingClientRect();
+            return {
+              name: node.getAttribute('data-pane'),
+              x: pane.x,
+              y: pane.y,
+              w: pane.width,
+              h: pane.height,
+            };
+          }),
+      };
+    });
+}
+
+/**
+ * A wide screen's mixed layout (`runner/EditorPaneBody.tsx`). Three panes use both axes: the first is
+ * full height on the left, the other two stack on the right. Without that, the third pane sat under a
+ * two-column grid with an empty fourth cell beside it. The drag and the reload are measured as
+ * geometry: a share that only lived in React state would come back at half.
+ */
+export async function auditPaneLayouts(browser, baseUrl, name) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 950 } });
+  await seedTourSeen(context);
+  const page = await context.newPage();
+  const pageErrors = [];
+  page.on('pageerror', (error) => pageErrors.push(String(error)));
+
+
+  try {
+    await page.goto(`${baseUrl}?lesson=P.6`, { waitUntil: 'networkidle', timeout: 45000 });
+    await page.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, {
+      timeout: 20000,
+    });
+    await page.keyboard.press('Alt+1');
+    await expandEditorBody(page);
+    await page.getByTestId('btn-pane-split').click();
+    await page.waitForFunction(
+      () => document.querySelector('[data-testid="editor-panes"]')?.getAttribute('data-count') === '2',
+      undefined,
+      { timeout: 10000 }
+    );
+    await page.getByTestId('btn-pane-add').click();
+    await page.waitForFunction(
+      () => document.querySelector('[data-testid="editor-panes"]')?.getAttribute('data-count') === '3',
+      undefined,
+      { timeout: 10000 }
+    );
+
+    const mixed = await paneBoxes(page);
+    assert.equal(mixed.panes.length, 3, `${name}: the three-pane body drew ${mixed.panes.length} panes`);
+    const first = mixed.panes.find((pane) => pane.name === 'main');
+    const right = mixed.panes.filter((pane) => pane.name !== 'main').sort((a, b) => a.y - b.y);
+    assert.ok(first, `${name}: the main pane is missing`);
+    assert.equal(right.length, 2, `${name}: the right column holds ${right.length} panes`);
+    const [second, third] = right;
+    assert.ok(
+      first.h >= mixed.body.h - 5,
+      `${name}: the first pane is ${first.h}px in a ${mixed.body.h}px body; it must span both rows`
+    );
+    assert.ok(
+      Math.abs(second.y - mixed.body.y) < 3 && third.y >= second.y + second.h - 3,
+      `${name}: the second and third panes must stack in the right column (${second.y}+${second.h} vs ${third.y})`
+    );
+    assert.ok(
+      second.h + third.h >= mixed.body.h - 5,
+      `${name}: the right column leaves ${Math.round(mixed.body.h - second.h - third.h)}px empty`
+    );
+    assert.ok(
+      Math.abs(second.w - third.w) < 3 && Math.abs(second.x - (first.x + first.w)) < 4,
+      `${name}: the mixed layout did not give the first pane its own column ` +
+        `(first ${first.x}+${first.w}, right ${second.x}/${third.x} at ${second.w}/${third.w})`
+    );
+
+    const divider = page.getByTestId('pane-divider-column');
+    await divider.scrollIntoViewIfNeeded();
+    const handle = await divider.boundingBox();
+    assert.ok(handle, `${name}: the three-pane body has no column divider`);
+    const viewport = page.viewportSize();
+    // The divider is as tall as the body; its middle can be below the window even after the body is
+    // scrolled into view, and the row divider crosses it at mid-height. Grab it near its top edge so
+    // the pointer is on the column boundary, not on the crossing.
+    const dragY = Math.min(Math.max(handle.y + 40, 20), viewport.height - 20);
+    const target = mixed.body.x + mixed.body.w * 0.35;
+    await page.mouse.move(handle.x + handle.width / 2, dragY);
+    await page.mouse.down();
+    await page.mouse.move(target, dragY, { steps: 10 });
+    await page.mouse.up();
+    await page.waitForTimeout(200);
+    const dragged = await paneBoxes(page);
+    const mainAfter = dragged.panes.find((pane) => pane.name === 'main');
+    const share = mainAfter.w / dragged.body.w;
+    assert.ok(
+      Math.abs(share - 0.35) < 0.06,
+      `${name}: dragging to 35% left the first pane at ${(share * 100).toFixed(1)}%`
+    );
+
+    const rowDivider = page.getByTestId('pane-divider-row');
+    await rowDivider.scrollIntoViewIfNeeded();
+    const rowHandle = await rowDivider.boundingBox();
+    assert.ok(rowHandle, `${name}: the three-pane body has no row divider`);
+    const rowY = Math.min(Math.max(rowHandle.y + rowHandle.height / 2, 20), viewport.height - 20);
+    await page.mouse.move(rowHandle.x + 20, rowY);
+    await page.mouse.down();
+    await page.mouse.move(
+      rowHandle.x + 20,
+      Math.min(Math.max(dragged.body.y + dragged.body.h * 0.3, 20), viewport.height - 20),
+      { steps: 10 }
+    );
+    await page.mouse.up();
+    await page.waitForTimeout(200);
+    const rowDragged = await paneBoxes(page);
+    const rightRows = rowDragged.panes
+      .filter((pane) => pane.name !== 'main')
+      .sort((a, b) => a.y - b.y);
+    const topShare = rightRows[0].h / (rightRows[0].h + rightRows[1].h);
+    assert.ok(
+      Math.abs(topShare - 0.3) < 0.06,
+      `${name}: dragging the row divider to 30% left the top pane at ${(topShare * 100).toFixed(1)}%`
+    );
+
+    await page.reload({ waitUntil: 'networkidle', timeout: 45000 });
+    await page.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, {
+      timeout: 20000,
+    });
+    await page.keyboard.press('Alt+1');
+    await expandEditorBody(page);
+    await page.waitForFunction(
+      () => document.querySelector('[data-testid="editor-panes"]')?.getAttribute('data-count') === '3',
+      undefined,
+      { timeout: 10000 }
+    );
+    const restored = await paneBoxes(page);
+    const restoredMain = restored.panes.find((pane) => pane.name === 'main');
+    assert.ok(
+      Math.abs(restoredMain.w / restored.body.w - 0.35) < 0.08,
+      `${name}: the column share did not survive the reload`
+    );
+    const restoredRows = restored.panes
+      .filter((pane) => pane.name !== 'main')
+      .sort((a, b) => a.y - b.y);
+    const restoredStack = restoredRows[0].h / (restoredRows[0].h + restoredRows[1].h);
+    assert.ok(Math.abs(restoredStack - 0.3) < 0.08, `${name}: the row share did not survive the reload`);
+    assert.equal(pageErrors.length, 0, `${name}: page errors: ${pageErrors.join(' | ')}`);
+
+    console.log(
+      `  ok ${name}: three panes mix axes (first ${Math.round(restoredMain.w)}px full-height, ` +
+        `stack ${(restoredStack * 100).toFixed(0)}%) and both divider shares survive a reload`
+    );
+  } finally {
+    await context.close();
   }
 }

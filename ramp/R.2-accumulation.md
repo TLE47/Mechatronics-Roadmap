@@ -33,7 +33,7 @@ Your finished program must satisfy **all** of these conditions:
 - [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
 - [ ] **Required end state:** the grader checks the left, right and trapezoid rules on a three-sample trace where all three differ; a constant rate over 0.75 s; that q0 is added rather than replaced, and that bias drift accumulates.
 - [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
-- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Output:** the printed output matches the Expected Output block.
 - [ ] **Alternate inputs:** the grader also refuses a single sample and a negative duration with ValueError; it changes the inputs, so a hardcoded result fails.
 
 ---

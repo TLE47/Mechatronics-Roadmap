@@ -33,7 +33,7 @@ Your finished program must satisfy **all** of these conditions:
 - [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
 - [ ] **Required end state:** the grader checks arrow at 0 and 90 degrees, rotate keeping the length; that adding the two parts gives 1 + 1j rather than a length of 2; the empty sum and the four fields of report().
 - [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
-- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Output:** the printed output matches the Expected Output block.
 - [ ] **Alternate inputs:** the grader also covers the 53.130 degree angle from the 3 + 4j arrow; it changes the inputs, so a hardcoded result fails.
 
 ---

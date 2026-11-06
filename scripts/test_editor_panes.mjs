@@ -29,6 +29,8 @@ import {
   normalizePanes,
   paneCapacity,
   readPanes,
+  resizeColumn,
+  resizeRows,
   setAxis,
   showView,
   slotFor,
@@ -84,7 +86,13 @@ function fakeStorage(seed = {}) {
 
 section('1. One view is the floor and four is the ceiling');
 check('the default is the editor alone, side-by-side when split', () => {
-  assert.deepEqual(DEFAULT_PANES, { views: ['main'], axis: 'columns', focus: 0 });
+  assert.deepEqual(DEFAULT_PANES, {
+    views: ['main'],
+    axis: 'columns',
+    focus: 0,
+    colShare: 0.5,
+    rowShares: [],
+  });
   assert.equal(isSplit(DEFAULT_PANES), false);
   assert.deepEqual(visibleViews(DEFAULT_PANES), ['main']);
 });
@@ -241,6 +249,47 @@ check('a bad swap is a no-op, not a duplicate', () => {
   assert.deepEqual(swapPanes(panes, 0, 0).views, ['main', 'actual']);
   assert.deepEqual(swapPanes(panes, 0, 4).views, ['main', 'actual']);
   assert.deepEqual(swapPanes(panes, -1, 1).views, ['main', 'actual']);
+});
+check('a dragged column divider writes a usable share', () => {
+  const panes = { views: ['main', 'actual'], axis: 'columns', focus: 0 };
+  assert.equal(resizeColumn(panes, 0.62).colShare, 0.62);
+  assert.equal(resizeColumn(panes, 0.02).colShare, 0.2, 'the first column cannot vanish');
+  assert.equal(resizeColumn(panes, 0.98).colShare, 0.8, 'nor can the second');
+  assert.equal(resizeColumn(panes, Number.NaN).colShare, 0.5, 'junk keeps the equal split');
+});
+check('row shares normalize, and a stray tiny pane is lifted to a usable height', () => {
+  const panes = { views: ['main', 'actual', 'expected'], axis: 'rows', focus: 0 };
+  const dragged = resizeRows(panes, [0.6, 0.25, 0.15]);
+  assert.deepEqual(dragged.rowShares, [0.6, 0.25, 0.15]);
+  const tiny = resizeRows(panes, [0.98, 0.01, 0.01]);
+  for (const share of tiny.rowShares) assert.ok(share >= 0.149, `share ${share} stayed usable`);
+  assert.ok(Math.abs(tiny.rowShares.reduce((sum, share) => sum + share, 0) - 1) < 1e-9);
+  assert.deepEqual(resizeRows(panes, [1]).rowShares, [], 'one share is not a split');
+});
+check('a stored share survives a reload and junk falls back to equal', () => {
+  globalThis.localStorage = fakeStorage();
+  try {
+    const written = writePanes({ views: ['main', 'actual'], axis: 'columns', focus: 0, colShare: 0.35 });
+    assert.equal(readPanes().colShare, 0.35);
+    assert.equal(written.colShare, 0.35);
+  } finally {
+    delete globalThis.localStorage;
+  }
+  globalThis.localStorage = fakeStorage({
+    [STORAGE_KEY_EDITOR_PANES]: JSON.stringify({
+      views: ['main', 'actual'],
+      axis: 'columns',
+      colShare: 'half',
+      rowShares: [0, 'x'],
+    }),
+  });
+  try {
+    const panes = readPanes();
+    assert.equal(panes.colShare, 0.5);
+    assert.deepEqual(panes.rowShares, []);
+  } finally {
+    delete globalThis.localStorage;
+  }
 });
 check('the viewport capacity follows width and height', () => {
   assert.equal(paneCapacity(390, 844), 2, 'a phone keeps two');

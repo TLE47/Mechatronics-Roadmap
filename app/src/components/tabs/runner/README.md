@@ -30,6 +30,7 @@ flowchart LR
 | `useRunnerArrangement.ts` | The editor/results split share, which side results sit on, and the persisted layout record. |
 | `RunnerToolbar.tsx` | The run controls: presets and dock, Pause/Stop/Run, Predict, and the More panel's actions. |
 | `RunnerEditorCard.tsx` | The editor surface: main/helper tabs, the pane strip, and the editor body beside Requirements, Predict, Run output, Expected, Cases and Workflow. |
+| `EditorPaneBody.tsx` | The pane body: up to four panes in a mixed grid (three side by side put the first at full height and stack the other two beside it, so no cell is empty), the same arrangement stacked on a phone, and the dividers a pointer drags to resize them. |
 | `EditorPaneArrangement.tsx` | Horizontal/vertical axis, Add pane, pane swapping and Close — the split's controls, lazy beside the eager Split door and outside the tablist. It also reads how many panes the viewport allows: two on a phone, three on a laptop, four on a large desktop, re-read on resize. |
 | `EditorGoal.tsx` | The lesson's goal as a labelled prompt card, folded with the editor body. |
 | `EditorRequirements.tsx` | The lesson's pass conditions as their own editor tab: numbered colourful cards with the micro lessons' token styling. |
@@ -47,6 +48,8 @@ flowchart LR
 | `DraftHistoryPanel.tsx` | The filed runs behind a draft, and restoring one. |
 | `BreakpointPanel.tsx` | Armed breakpoints and their conditions. |
 | `useFirstRunTour.ts` | The first-run tour: record, offer/chip, gates, focus and dismissal. |
+| `useGuideFold.ts` | The brief's remembered hide/show switch for the first-run guide, one value for every lesson. |
+| `GuideToggle.tsx` | The brief's and the phone strip's door onto that switch, in two target sizes and one behaviour. |
 
 Wiring rule: a region takes exactly the state and callbacks it renders; it never reaches into the tab.
 A region with more than a handful of inputs takes them as named concern objects — `RunnerEditorCard`

@@ -181,7 +181,7 @@ export function LessonChooser({
 
       <div className="flex min-w-0 items-center justify-between gap-2 px-3 pt-2 pb-1">
         <span className="min-w-0 truncate font-mono text-[11px] uppercase tracking-[0.1em] text-faint">
-          {query ? 'Matches' : 'Lessons & exercises'}
+          {query ? 'Matches' : 'Units'}
           <span className="ml-1 tabular-nums text-body">{filteredLessons.length}</span>
         </span>
         {verifiedCount > 0 && (

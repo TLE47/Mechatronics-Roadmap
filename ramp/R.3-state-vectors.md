@@ -33,7 +33,7 @@ Your finished program must satisfy **all** of these conditions:
 - [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
 - [ ] **Required end state:** the grader checks accel_rad_s2 and one step from rest and from a moving state; including that position uses the OLD speed; ten single steps match one repeated run, and superposition holds on unseen torques.
 - [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
-- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Output:** the printed output matches the Expected Output block.
 - [ ] **Alternate inputs:** the grader also covers element-wise add and scale, a length mismatch, and a step that does not mutate its input; it changes the inputs, so a hardcoded result fails.
 
 ---

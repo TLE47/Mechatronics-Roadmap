@@ -33,7 +33,7 @@ Your finished program must satisfy **all** of these conditions:
 - [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
 - [ ] **Required end state:** the grader checks freq_to_period_ms across 1 Hz, 50 Hz; 490 Hz, 1 kHz and 20 kHz switching frequencies; max_unsigned_int across 1-bit, 8-bit.
 - [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
-- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Output:** the printed output matches the Expected Output block.
 - [ ] **Alternate inputs:** the grader also covers 1-bit, 8-bit, 10-bit, 12-bit, and 16-bit timer widths; it changes the inputs, so a hardcoded result fails.
 
 ---

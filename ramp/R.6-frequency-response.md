@@ -34,7 +34,7 @@ Your finished program must satisfy **all** of these conditions:
 - [ ] **Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.
 - [ ] **Required end state:** the grader checks the gain and phase at DC, the corner 1/tau and 200 rad/s; plus one period's sample count at 20 and 200 rad/s; the simulated gain and phase against the formula.
 - [ ] **Exact strings:** any label, name, or unit in the checks above must match its exact spelling.
-- [ ] **Output:** the printed output matches `### Expected Output`.
+- [ ] **Output:** the printed output matches the Expected Output block.
 - [ ] **Alternate inputs:** the grader also covers measure() on a synthetic trace built from a known gain and phase; it changes the inputs, so a hardcoded result fails.
 
 ---
