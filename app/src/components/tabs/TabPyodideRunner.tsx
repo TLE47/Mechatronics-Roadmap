@@ -71,7 +71,7 @@ import {
 import { actionForEvent } from '../../keymap';
 import { useKeymapRef } from '../../useKeymap';
 import { STORAGE_KEY_CHOOSER_COLLAPSED, useFold } from '../../fold';
-import { LessonChooserRail, studyGridColumns } from './runner/LessonChooserRail';
+import { LessonChooserRail, LessonRailToggle, studyGridColumns } from './runner/LessonChooserRail';
 import { markPaintReady } from '../../paintTiming';
 import { parseSliders } from '../../editor/sliderModel';
 import { readBreakpoints, setBreakpointCondition, toggleBreakpoint, writeBreakpoints, type Breakpoint } from '../../editor/breakpoints';
@@ -2213,12 +2213,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           away while the lesson text and the editor share the width the chooser used to take. Read,
           Write and Debug hide it, because each of them is about one panel and nothing else. */}
       <div className={`grid grid-cols-1 gap-5 ${shownLayout === 'study' ? studyGridColumns(chooserFold.folded) : ''}`}>
-        {shownLayout === 'study' && (
+        {shownLayout === 'study' && !chooserFold.folded && (
           <LessonChooserRail
             chooser={chooser}
             folded={chooserFold.folded}
             onToggle={chooserFold.toggle}
-            count={filteredLessons.length}
           />
         )}
 
@@ -2415,6 +2414,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 >
                   {currentLesson.title}
                 </h2>
+                {/* The brief, not a 48 px strip, is the way back to a folded rail. */}
+                <LessonRailToggle folded={chooserFold.folded} count={filteredLessons.length} onToggle={chooserFold.toggle} />
               </div>
 
               {editorShown ? null : runnerToolbar}

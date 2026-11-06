@@ -1660,7 +1660,7 @@ npm run test:e2e:pages       # built bundle at the Pages base path: every graded
 npm run test:offline         # the service worker: isolation without host headers, the take-offline button, offline reload, run + deep link, formulas from the cache
 npm run test:takealong       # the offline button's rules: URL list, size wording, what "ready" may claim
 npm run test:backup          # the archive: CRC, round trip, the three refusals, and a merge that never deletes
-npm run test:reset           # erasing progress: the eleven parts, one part vs the rest, one item inside a part, and the cloud watermark
+npm run test:reset           # erasing progress: the thirteen parts, one part vs the rest, one item inside a part, and the cloud watermark
 npm run test:e2e:reset       # the same panel in Chromium: a backup first, a part opened to one lesson, one part, two parts, everything, preferences kept
 npm run test:study           # notes and highlights: what is kept, deduped, refused by the store, and what a restore merges
 npm run test:review          # FSRS: 0.9-at-stability, grade order, lapses, the year cap, and the card join

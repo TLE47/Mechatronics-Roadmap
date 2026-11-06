@@ -43,6 +43,9 @@ const TODAY_TITLE = PYTHON_LESSONS.find((lesson) => lesson.id === TODAY_ENTRY?.i
 /** Wait until the lazy whole-page chunk has painted, not the Suspense line. */
 async function waitForHome(page) {
   await page.getByTestId('home-dashboard').waitFor({ timeout: 30000 });
+  // The year's shape is a real surface, not a conditional decoration: if the log cannot feed it,
+  // the page says so with an empty grid rather than dropping the section.
+  await page.getByTestId('home-heatmap').waitFor({ timeout: 30000 });
 }
 
 async function main() {

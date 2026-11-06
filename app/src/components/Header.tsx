@@ -48,6 +48,8 @@ interface HeaderProps {
   onOpenHome?: () => void;
   /** Opens Free study, the ungraded scratch editor, between Home and Search in the Navigate tray. */
   onOpenStudio?: () => void;
+  /** Opens the lesson runner: the lesson list, the brief and the editor in one press. */
+  onOpenLessons?: () => void;
   /**
    * Opens Micro-learning, one concept at a time. Absent while the beta switch is off: the tab is
    * hidden then, and a door to a hidden tab would only look broken.
@@ -106,6 +108,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenPalette,
   onOpenHome,
   onOpenStudio,
+  onOpenLessons,
   onOpenMicro,
   onOpenIntro,
   focus = false,
@@ -282,6 +285,18 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <House className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 <span className="hidden 2xl:inline">Home</span>
+              </button>
+            )}
+            {onOpenLessons && (
+              <button
+                onClick={onOpenLessons}
+                data-testid="btn-open-lessons"
+                aria-label="Lessons"
+                data-tip="Lessons — the runner, its lesson list and the open lesson"
+                className="btn"
+              >
+                <BookOpen className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span className="hidden 2xl:inline">Lessons</span>
               </button>
             )}
             {onOpenStudio && (

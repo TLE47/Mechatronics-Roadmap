@@ -1564,6 +1564,7 @@ export const App: React.FC = () => {
           onOpenPalette={() => setIsPaletteOpen(true)}
           onOpenHome={() => openPage('home')}
           onOpenStudio={() => openTabFromHome('tab-studio')}
+          onOpenLessons={() => openTabFromHome('tab-pyodide')}
           // Hidden with the beta tab itself: the tray never offers a door to a tab it hides.
           onOpenMicro={microEnabled ? () => openTabFromHome('tab-micro') : undefined}
           onOpenIntro={() => openPage('intro')}
@@ -1673,6 +1674,7 @@ export const App: React.FC = () => {
           onOpenPalette={() => setIsPaletteOpen(true)}
           onOpenHome={() => openPage('home')}
           onOpenStudio={() => openTabFromHome('tab-studio')}
+          onOpenLessons={() => openTabFromHome('tab-pyodide')}
           // Hidden with the beta tab itself: the tray never offers a door to a tab it hides.
           onOpenMicro={microEnabled ? () => openTabFromHome('tab-micro') : undefined}
           onOpenIntro={() => openPage('intro')}
@@ -1776,6 +1778,10 @@ export const App: React.FC = () => {
         onOpenPalette={() => setIsPaletteOpen(true)}
         onOpenHome={() => openPage('home')}
         onOpenStudio={() => openTabFromHome('tab-studio')}
+        onOpenLessons={() => openTabFromHome('tab-pyodide')}
+        // The workbench renders its own header branch; without this line the tray's Micro door
+        // vanished the moment a learner left Home for a lesson.
+        onOpenMicro={microEnabled ? () => openTabFromHome('tab-micro') : undefined}
         onOpenIntro={() => openPage('intro')}
         focus={focus}
         onToggleFocus={toggleFocusMode}

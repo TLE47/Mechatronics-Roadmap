@@ -30,11 +30,12 @@ flowchart LR
 | `useRunnerArrangement.ts` | The editor/results split share, which side results sit on, and the persisted layout record. |
 | `RunnerToolbar.tsx` | The run controls: presets and dock, Pause/Stop/Run, Predict, and the More panel's actions. |
 | `RunnerEditorCard.tsx` | The editor surface: main/helper tabs, the pane strip, the split controls, and the editor body beside Predict, Run output, Expected, Cases and Workflow. |
+| `EditorGoal.tsx` | The lesson's goal as a labelled prompt card, folded with the editor body. |
 | `EditorRequirements.tsx` | The lesson's pass conditions under the goal: the checklist a learner meets before a run counts. |
 | `resultTabMeta.tsx` | What each result tab says: its label, its tooltip and its glyph. |
 | `CasesPane.tsx` | The behavioural cases: one row per substituted input, with what the last run proved and which cases it never reached. |
 | `readerContinue.ts` | Where the page goes next: Study into Read, Read into Write. |
-| `LessonChooserRail.tsx` | The Study preset's left column: the lesson chooser, the strip it folds to, and the grid width that follows the fold. |
+| `LessonChooserRail.tsx` | The Study preset's left column, the brief's button that brings a folded rail back, and the grid width that follows the fold. |
 | `LessonAmbience.tsx` | The pointer-free atmosphere behind the runner: aurora, instrument grid, orbit and four HUD chips. |
 | `RunnerRuntimeStrip.tsx` | Where the interpreter is while it loads: first-run guide and runtime sentence. |
 | `RunVerdict.tsx` | The one-line verdict under the run controls, from the last outcome. |

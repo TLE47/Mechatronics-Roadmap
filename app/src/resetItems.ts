@@ -40,6 +40,7 @@ import {
   readFlagMap,
 } from './progressKeys.ts';
 import { RESET_AREAS } from './progressReset.ts';
+import { readMicroStore, writeMicroStore } from './micro/store.ts';
 
 /** The first-run guide's dismissal and the Start Here card's, repeated from `progressReset.ts`. */
 const FIRST_GUIDE_KEY = 'mechalab_first_guide_dismissed_v1';
@@ -335,6 +336,31 @@ function resumeItems(): ResetItem[] {
   return items;
 }
 
+function microItems(): ResetItem[] {
+  const { store } = readMicroStore();
+  return Object.values(store.concepts)
+    .filter((state) => state.learnCompletedAt !== null || state.lastReviewedAt !== null)
+    .sort((a, b) => a.conceptId.localeCompare(b.conceptId))
+    .map((state) => ({
+      id: `micro:${state.conceptId}`,
+      label: state.conceptId,
+      detail: `${state.mastery} · ${plural(state.successCount, 'successful review')}`,
+      n: 1,
+      clear: () => {
+        const current = readMicroStore().store;
+        const concepts = { ...current.concepts };
+        delete concepts[state.conceptId];
+        writeMicroStore({
+          ...current,
+          revision: current.revision + 1,
+          updatedAt: Date.now(),
+          concepts,
+          events: current.events.filter((event) => event.conceptId !== state.conceptId),
+        });
+      },
+    }));
+}
+
 function checkItems(): ResetItem[] {
   return Object.entries(readChecks())
     .filter(([, lesson]) => lesson.done.length > 0)
@@ -353,6 +379,7 @@ const ITEM_READERS: Record<ResetAreaId, () => ResetItem[]> = {
   milestones: milestoneItems,
   awards: awardItems,
   cards: cardItems,
+  micro: microItems,
   notes: noteItems,
   drafts: draftItems,
   log: logItems,

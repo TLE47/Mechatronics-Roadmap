@@ -335,3 +335,167 @@
     animation: none;
   }
 }
+
+/* Home, lifted to the introduction's register: a tinted canvas, panels with a lit edge, and a
+   study heatmap that carries the year's shape rather than another row of numbers. */
+.home-canvas {
+  position: relative;
+}
+.home-canvas::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 420px;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 12% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 55%),
+    radial-gradient(ellipse at 88% 8%, color-mix(in srgb, var(--purple) 10%, transparent), transparent 52%);
+  mask-image: linear-gradient(to bottom, black, transparent);
+}
+.home-page-title {
+  letter-spacing: -0.035em;
+}
+.home-panel {
+  position: relative;
+  background:
+    linear-gradient(155deg, color-mix(in srgb, var(--panel) 92%, var(--accent) 8%), var(--panel) 46%),
+    var(--panel);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--text) 5%, transparent) inset,
+    0 18px 44px -34px color-mix(in srgb, var(--bg) 80%, transparent);
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+.home-panel:hover {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--text) 7%, transparent) inset,
+    0 22px 52px -30px color-mix(in srgb, var(--accent) 32%, transparent);
+  transform: translateY(-1px);
+}
+.home-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--accent) 9%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--accent) 9%, transparent) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse at 40% 18%, black, transparent 70%);
+  opacity: 0.6;
+}
+
+.home-heat-card {
+  overflow: hidden;
+}
+.home-heat-card::after {
+  content: '';
+  position: absolute;
+  inset: auto -10% -60% 45%;
+  height: 200px;
+  pointer-events: none;
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--purple) 14%, transparent), transparent 65%);
+}
+.study-heat-scroll {
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.study-heat-inner {
+  min-width: 620px;
+}
+.study-heat-months {
+  display: grid;
+  margin: 0 0 5px 30px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint, var(--dim));
+}
+.study-heat-months span {
+  white-space: nowrap;
+}
+.study-heat-body {
+  display: flex;
+  gap: 6px;
+}
+.study-heat-weekdays {
+  display: grid;
+  width: 24px;
+  grid-template-rows: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 9px;
+  color: var(--faint, var(--dim));
+}
+.study-heat-weekdays span {
+  display: flex;
+  align-items: center;
+}
+.study-heat-grid {
+  display: grid;
+  flex: 1;
+  grid-auto-flow: column;
+  gap: 3px;
+}
+.study-heat-cell {
+  aspect-ratio: 1;
+  min-height: 7px;
+  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--panel-2) 72%, var(--bg));
+}
+.study-heat-cell[data-level='1'] {
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  background: color-mix(in srgb, var(--accent) 30%, var(--panel));
+}
+.study-heat-cell[data-level='2'] {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  background: color-mix(in srgb, var(--accent) 58%, var(--panel));
+}
+.study-heat-cell[data-level='3'] {
+  border-color: color-mix(in srgb, var(--emerald) 55%, transparent);
+  background: color-mix(in srgb, var(--emerald) 62%, var(--panel));
+}
+.study-heat-cell[data-level='4'] {
+  border-color: color-mix(in srgb, var(--purple) 70%, transparent);
+  background: color-mix(in srgb, var(--purple) 76%, var(--panel));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--purple) 42%, transparent);
+}
+.study-heat-grid .study-heat-cell:hover {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.study-heat-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint, var(--dim));
+}
+.study-heat-legend .study-heat-cell {
+  width: 11px;
+  min-height: 11px;
+  aspect-ratio: 1;
+}
+
+/* The editor's goal, styled as a micro lesson asks its question: a labelled prompt, then the
+   requirements as readable answers rather than a mono comment above the code. */
+.editor-goal-card {
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
+  border-radius: 12px;
+  background:
+    radial-gradient(ellipse at 0% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 55%),
+    linear-gradient(150deg, color-mix(in srgb, var(--panel) 88%, var(--accent) 12%), var(--panel) 58%);
+  padding: 12px 14px;
+  box-shadow: 0 12px 30px -26px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-panel {
+    transition: none;
+  }
+  .home-panel:hover {
+    transform: none;
+  }
+}

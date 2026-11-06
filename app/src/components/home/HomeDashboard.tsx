@@ -36,6 +36,7 @@ import { RoutePanel } from './RoutePanel';
 import { ReviewPanel } from './ReviewPanel';
 import { ToolsPanel } from './ToolsPanel';
 import { MicroHomeCard } from './MicroHomeCard';
+import { StudyHeatmap } from './StudyHeatmap';
 
 export interface HomeDashboardProps {
   email: string | null;
@@ -71,7 +72,7 @@ export interface HomeDashboardProps {
   onExportLog: () => void;
 }
 
-const card = 'rounded-xl border border-line bg-panel p-4 space-y-2.5';
+const card = 'home-panel rounded-2xl border border-line bg-panel p-4 space-y-2.5';
 const sectionHeading = 'flex items-center gap-1.5 text-sm font-bold text-ink';
 
 /**
@@ -127,7 +128,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = (props) => {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 space-y-5" data-testid="home-dashboard">
+    <div className="home-canvas mx-auto max-w-6xl px-4 py-6 space-y-5" data-testid="home-dashboard">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2">
@@ -152,7 +153,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = (props) => {
               What is this?
             </button>
           </div>
-          <h1 className="mt-1 flex items-center gap-2 text-xl font-bold text-ink">
+          <h1 className="home-page-title mt-1 flex items-center gap-2 font-display text-3xl font-bold text-ink sm:text-4xl">
             <Sparkles className="h-5 w-5 text-accent" aria-hidden="true" />
             Home
           </h1>
@@ -197,6 +198,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = (props) => {
         className="home-hero relative isolate overflow-hidden rounded-2xl border border-line p-5 sm:p-7"
       >
         <div aria-hidden="true" className="home-hero-aurora pointer-events-none absolute inset-0 -z-10" />
+        <div aria-hidden="true" className="home-grid pointer-events-none absolute inset-0 -z-10" />
         <div className="grid gap-6 lg:grid-cols-[1.12fr_0.88fr] lg:items-center">
           <div className="min-w-0">
             <p className="home-kicker">
@@ -273,6 +275,8 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = (props) => {
           </div>
         </div>
       </section>
+
+      <StudyHeatmap events={props.events} />
 
       <MicroHomeCard onOpenTab={props.onOpenTab} />
 

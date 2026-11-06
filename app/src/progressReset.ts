@@ -7,9 +7,10 @@
  * way to say that. The only lever was the browser's own "clear site data", which also takes the theme,
  * the sound choice and the layout with it.
  *
- * So this is the deliberate opposite of `backupBundle.ts`, in the same vocabulary. Eleven parts, each
- * one the unit a learner would name — Lessons, Milestones, XP and awards, Practice cards, Notes and
- * highlights, Drafts and versions, Learning log, Sittings, Predictions, Onboarding, Where I was — and
+ * So this is the deliberate opposite of `backupBundle.ts`, in the same vocabulary. Thirteen parts, each
+ * one the unit a learner would name — Lessons, Milestones, XP and awards, Practice cards,
+ * Micro-learning, Notes and highlights, Drafts and versions, Learning log, Sittings, Predictions,
+ * Onboarding, Where I was — and
  * a reset is per part or all of them. Preferences are deliberately absent: a theme is a choice about a
  * screen, it has its own control, and a reset that silently flipped it back to dark would be a second,
  * unasked-for change.
@@ -49,6 +50,7 @@ import { readDrafts, replaceDrafts } from './lessonDraft.ts';
 import { replaceStudy, studyCounts } from './studyNotes.ts';
 import { clearAllTicks, tickCounts } from './lessonChecks.ts';
 import { readCardList, replaceCards } from './studyCards.ts';
+import { clearMicroStore, readMicroStore } from './micro/store.ts';
 import { RESET_EVENT, STORAGE_KEY_RESET_AT, announceReset, type ResetAreaId, type ResetReport } from './resetEvent.ts';
 import {
   STORAGE_KEY_COMPLETED,
@@ -219,6 +221,23 @@ export const RESET_AREAS: readonly ResetArea[] = [
       return { n, text: n ? `${plural(n, 'card')} scheduled` : 'none yet' };
     },
     clear: () => replaceCards({}),
+  },
+  {
+    id: 'micro',
+    label: 'Micro-learning',
+    hint: 'The concepts you met, their review dates and the events behind them. The beta switch and every other progress store stay.',
+    group: 'local',
+    count: () => {
+      // Read the store, not the catalogue: the reset chunk must not pull the lessons in with it.
+      const { store } = readMicroStore();
+      const n = Object.values(store.concepts).filter(
+        (state) => state.learnCompletedAt !== null || state.lastReviewedAt !== null
+      ).length;
+      return { n, text: n ? `${plural(n, 'concept')} touched` : 'none yet' };
+    },
+    clear: () => {
+      clearMicroStore();
+    },
   },
   {
     id: 'notes',

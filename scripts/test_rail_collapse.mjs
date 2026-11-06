@@ -152,12 +152,15 @@ check('the chooser card folds from its own header, and only where a strip can re
   assert.match(chooserSource, /onCollapse\?: \(\) => void;/);
 });
 
-check('a folded chooser leaves a strip in the same column, with the way back', () => {
+check('a folded chooser leaves no strip; the brief carries the way back', () => {
   assert.match(chooserRailSource, /id="lesson-chooser-rail"/);
   assert.match(chooserRailSource, /data-collapsed=\{folded \? 'true' : 'false'\}/);
-  assert.match(chooserRailSource, /data-testid="btn-lessons-unfold"/);
-  assert.match(chooserRailSource, /lg:grid-cols-\[48px_minmax\(0,1fr\)\]/);
+  assert.doesNotMatch(chooserRailSource, /btn-lessons-unfold/);
+  assert.match(chooserRailSource, /lg:grid-cols-\[minmax\(0,1fr\)\]/);
   assert.match(chooserRailSource, /lg:grid-cols-\[224px_minmax\(0,1fr\)\]/);
+  assert.match(chooserRailSource, /data-testid="btn-lessons-toggle"/);
+  assert.match(runnerSource, /<LessonRailToggle/);
+  assert.match(runnerSource, /shownLayout === 'study' && !chooserFold\.folded/);
 });
 
 console.log(`\nrail collapse: ${passed} passed, ${failures.length} failed`);

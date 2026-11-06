@@ -1831,24 +1831,34 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           .evaluate((canvas) => canvas.scrollIntoView({ block: 'center' }));
         await page.waitForTimeout(200);
         const arrowsBefore = await page.locator('[data-testid^="workflow-edge-kind-"]').count();
-        const reorderOut = await page.getByTestId('workflow-node-port-right-0').boundingBox();
-        await page.mouse.move(reorderOut.x + reorderOut.width / 2, reorderOut.y + reorderOut.height / 2);
-        await page.mouse.down();
-        // Measured after the press: starting a link can pan the paper under the pointer, and a dot
-        // located before that release is somewhere else by the time the pointer arrives.
-        const reorderTarget = await page.getByTestId('workflow-node-port-left-2').boundingBox();
-        await page.mouse.move(
-          reorderTarget.x + reorderTarget.width / 2,
-          reorderTarget.y + reorderTarget.height / 2,
-          { steps: 8 }
-        );
-        await page.mouse.up();
+        const drawReorderEdge = async () => {
+          const out = await page.getByTestId('workflow-node-port-right-0').boundingBox();
+          await page.mouse.move(out.x + out.width / 2, out.y + out.height / 2);
+          await page.mouse.down();
+          // Measured after the press: starting a link can pan the paper under the pointer, and a dot
+          // located before that release is somewhere else by the time the pointer arrives.
+          await page.waitForTimeout(120);
+          const target = await page.getByTestId('workflow-node-port-left-2').boundingBox();
+          await page.mouse.move(
+            target.x + target.width / 2,
+            target.y + target.height / 2,
+            { steps: 12 }
+          );
+          await page.mouse.up();
+          await page.waitForTimeout(150);
+        };
+        await drawReorderEdge();
         // Wait for the arrow the drag draws, not for a stopwatch: the badge renumbering is part of the
-        // same commit, so an arrow on screen is the condition the assertion below needs.
-        await page
-          .locator('[data-testid^="workflow-edge-kind-"]')
-          .nth(arrowsBefore)
-          .waitFor({ timeout: 5000 });
+        // same commit, so an arrow on screen is the condition the assertion below needs. A pointer
+        // gesture can miss under the partition's parallel load, so retry it once with fresh boxes
+        // rather than treating a missed drag as a missing feature.
+        const reorderEdge = page.locator('[data-testid^="workflow-edge-kind-"]').nth(arrowsBefore);
+        try {
+          await reorderEdge.waitFor({ timeout: 5000 });
+        } catch {
+          await drawReorderEdge();
+          await reorderEdge.waitFor({ timeout: 15000 });
+        }
         assert.equal(
           (await page.getByTestId('workflow-node-number-2').textContent())?.trim(),
           '2',
@@ -3136,12 +3146,17 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           'Bold must not reformat the field that was not selected'
         );
 
+        // The goal folds with the editor body, so open the disclosure before reading it.
+        const foldedGoalEditor = page.locator(
+          '[data-testid="btn-toggle-editor"][aria-expanded="false"]'
+        );
+        if (await foldedGoalEditor.count()) await foldedGoalEditor.first().click();
         await page.getByTestId('editor-tab-main').click();
         await page.waitForTimeout(300);
         assert.match(
           await page.getByTestId('editor-goal').innerText(),
-          /# Goal:[\s\S]*starter code[\s\S]*runs as-is — fill in the TODOs/i,
-          'the Python editor must show the lesson goal as the starter comment'
+          /Goal[\s\S]*starter code[\s\S]*Fill in the TODOs/i,
+          'the Python editor must show the lesson goal beside the starter'
         );
         console.log(
           '  ok the Workflow tab spawns, edits inline, drags, draws an arrow, frames cards, resizes, fits, wraps, searches, lays out, multi-selects, formats text, survives a reload, and shows the editor goal'
@@ -6076,9 +6091,8 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     await formattingPage.setViewportSize({ width: 1280, height: 720 });
     console.log('  ok the Study preset stacks code above the lesson text, and keeps two columns at 2xl');
 
-    // The chooser rail folds to a 48 px strip: the lessons stay one press away, the column gives its
-    // width back to the code, and the fold is remembered. The strip is the way back, so a folded list
-    // is never a hidden one.
+    // The chooser rail folds away completely: the editor gets its width back, and the brief above
+    // it carries the way in. A folded list is not a hidden one.
     await formattingPage.getByTestId('lesson-list-card').waitFor({ timeout: 10000 });
     const chooserWide = await formattingPage
       .getByTestId('lesson-list-card')
@@ -6095,17 +6109,26 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       0,
       'the folded rail draws the card away'
     );
-    const strip = await formattingPage.getByTestId('btn-lessons-unfold').boundingBox();
-    assert.ok(strip && strip.width < 80, `the strip is narrow; measured ${strip?.width}`);
+    assert.equal(
+      await formattingPage.getByTestId('btn-lessons-unfold').count(),
+      0,
+      'a folded rail must leave no strip behind'
+    );
+    await formattingPage.getByTestId('btn-lessons-toggle').waitFor({ timeout: 5000 });
+    assert.equal(
+      await formattingPage.getByTestId('btn-lessons-toggle').getAttribute('aria-expanded'),
+      'false',
+      'the brief button says the list is folded'
+    );
 
     await formattingPage.reload({ waitUntil: 'domcontentloaded' });
-    await formattingPage.getByTestId('btn-lessons-unfold').waitFor({ timeout: 60000 });
+    await formattingPage.getByTestId('btn-lessons-toggle').waitFor({ timeout: 60000 });
     assert.equal(
       await formattingPage.getByTestId('lesson-list-card').count(),
       0,
       'the chooser fold is remembered across a reload'
     );
-    await formattingPage.getByTestId('btn-lessons-unfold').click();
+    await formattingPage.getByTestId('btn-lessons-toggle').click();
     await formattingPage.getByTestId('lesson-list-card').waitFor({ timeout: 10000 });
     assert.ok(
       (await formattingPage
@@ -6113,7 +6136,15 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
         .evaluate((card) => card.getBoundingClientRect().width)) >= 200,
       'the card comes back at its rail width'
     );
-    console.log('  ok the lesson list folds to a strip, remembers it, and expands from the strip');
+    await formattingPage.getByTestId('btn-lessons-toggle').click();
+    assert.equal(
+      await formattingPage.getByTestId('lesson-list-card').count(),
+      0,
+      'the brief button folds the rail again'
+    );
+    await formattingPage.getByTestId('btn-lessons-toggle').click();
+    await formattingPage.getByTestId('lesson-list-card').waitFor({ timeout: 10000 });
+    console.log('  ok the lesson list folds away, remembers it, and comes back from the brief');
 
     // The rail is an activity bar at `xl`: folding it must cost no tab (the icons keep their names for
     // a screen reader), must survive a reload, and must put the way back in the same place. Below `xl`

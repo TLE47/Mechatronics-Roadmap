@@ -115,8 +115,8 @@ async function main() {
         : [];
     });
     assert.deepEqual(
-      headerTray.slice(0, 4),
-      ['btn-home', 'btn-open-studio', 'btn-open-micro', 'btn-open-palette'],
+      headerTray.slice(0, 5),
+      ['btn-home', 'btn-open-lessons', 'btn-open-studio', 'btn-open-micro', 'btn-open-palette'],
       'Micro-learning must sit between Free study and Search in the Navigate tray'
     );
     await headerMicro.click();
@@ -126,7 +126,16 @@ async function main() {
       'page',
       'the header tray must open the micro tab too'
     );
-    console.log('  ok the header tray opens micro-learning');
+    // Leaving Home for a lesson must not take the Micro door with it: the workbench header has
+    // its own branch, and that branch once forgot this prop.
+    await page.getByTestId('btn-open-lessons').click();
+    await page.getByTestId('lesson-brief').waitFor({ timeout: 30000 });
+    assert.equal(
+      await page.getByTestId('btn-open-micro').count(),
+      1,
+      'the Micro door must still be in the action tray on the lesson runner'
+    );
+    console.log('  ok the header tray opens micro-learning and keeps its door on the runner');
 
     // ---- 1. Home's door and the clean diagnostic path ----
     await openMicro(page, baseUrl);

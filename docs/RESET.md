@@ -14,7 +14,7 @@ lazy boundary so a learner who never opens it never downloads it.
 
 ```mermaid
 flowchart TB
-    Door["Reset… in the Export and backup tray"] --> Panel["Twelve named parts, each printing what it holds now"]
+    Door["Reset… in the Export and backup tray"] --> Panel["Thirteen named parts, each printing what it holds now"]
     Panel --> One["Reset this part"]
     Panel --> All["Reset everything"]
     One --> Armed["First press arms the button: Press again, 4 s"]
@@ -30,7 +30,7 @@ flowchart TB
     Erase --> Workspace["Drafts, notes, ticks: named parts cleared, never a merge"]
 ```
 
-## The twelve parts
+## The thirteen parts
 
 | Part | What it erases | The copy it also clears |
 | :--- | :--- | :--- |
@@ -39,6 +39,7 @@ flowchart TB
 | Milestones | the roadmap ticks; the roadmap and the lessons stay | the account's progress row |
 | XP and awards | the ledger: levels, proof marks, the Scrap they paid for | this browser only |
 | Practice cards | the review schedule and its history; the cards return from your highlights | this browser only |
+| Micro-learning | the concepts you met, their review dates and the events behind them; the beta switch stays | this browser only |
 | Notes and highlights | what you wrote beside a lesson and the passages you marked | the account's workspace row (opt-in) |
 | Drafts and versions | the unfinished editor text per lesson and the versions each Run filed | the account's workspace row (opt-in) |
 | Learning log | every open, run, hint and verdict — what the exports and the trail read | the account's progress row |
@@ -86,6 +87,7 @@ its items, and an item is the unit a learner would name:
 | Milestones | one roadmap tick |
 | XP and awards | one award in the ledger |
 | Practice cards | one review card, labelled with its quote |
+| Micro-learning | one concept, with its mastery, review ladder and events |
 | Notes and highlights | one lesson's note and every highlight on it |
 | Drafts and versions | one lesson's draft and the versions each Run filed |
 | Learning log | **one day** of events — a list of five thousand rows is not a list |

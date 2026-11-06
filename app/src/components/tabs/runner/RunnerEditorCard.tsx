@@ -12,7 +12,7 @@ import {
 import { PythonEditor, type PythonEditorHandle } from '../../PythonEditor';
 import { PredictPane } from './PredictPane';
 import { RunVerdict } from './RunVerdict';
-import { EditorRequirements } from './EditorRequirements';
+import { EditorGoalCard } from './EditorGoal';
 import { resultTabMeta } from './resultTabMeta';
 import { PythonKeys } from '../../PythonKeys';
 import { MAIN_FILE_NAME, type LessonFile } from '../../../lessonFiles';
@@ -452,8 +452,8 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
             data-testid="btn-toggle-editor"
             aria-expanded={!bodyCollapsed}
             aria-controls="editor-panes-body"
-            aria-label={bodyCollapsed ? 'Expand editor' : 'Collapse editor'}
-            title={bodyCollapsed ? 'Expand the editor body' : 'Collapse the editor body'}
+            aria-label={bodyCollapsed ? 'Expand editor and goal' : 'Collapse editor and goal'}
+            title={bodyCollapsed ? 'Expand the editor and the goal' : 'Collapse the editor and the goal'}
             onClick={() => setBodyCollapsed((open) => !open)}
             className="flex shrink-0 items-center gap-1 rounded border border-line bg-canvas px-1.5 py-0.5 text-[12px] font-mono text-muted hover:border-accent hover:text-accent cursor-pointer"
           >
@@ -533,21 +533,13 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
       {/* The lesson's own goal as the comment the file would carry, before the first line of code.
           It gives the starter a direction without changing a byte of the starter: drafts, checks
           and the learner's undo history all still compare against exactly the text the lesson ships. */}
-      {editorShown && lessonGoal && (
-        <div
-          data-testid="editor-goal"
-          className="border-b border-line-soft bg-canvas px-3 py-2 font-mono text-[11.5px] leading-relaxed"
-        >
-          <p className="text-muted">
-            <span className="font-semibold text-accent"># Goal:</span> {lessonGoal}
-          </p>
-          <EditorRequirements items={lessonRequirements} />
-          <p className="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
-            <span className="rounded border border-accent/30 bg-accent/[0.07] px-1.5 py-0.5 font-semibold uppercase tracking-[0.08em] text-accent">
-              # Starter Code
-            </span>
-            <span className="text-faint">runs as-is — fill in the TODOs</span>
-          </p>
+      {/* The goal belongs to the editor, so the editor's one disclosure owns it too: collapsed, the
+          card keeps its header and hides the goal with the body rather than leaving a paragraph
+          floating above a closed pane. Styled as the micro lessons ask a question — a label, a
+          readable prompt, then the requirements as answers, not a mono comment block. */}
+      {editorShown && lessonGoal && !bodyCollapsed && (
+        <div data-testid="editor-goal" className="border-b border-line-soft p-3">
+          <EditorGoalCard goal={lessonGoal} requirements={lessonRequirements} />
         </div>
       )}
       <div

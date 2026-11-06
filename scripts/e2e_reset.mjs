@@ -203,11 +203,11 @@ async function main() {
       'the seeded milestone must still read as ticked before the reset'
     );
 
-    // ---- The panel: twelve parts, with the counts the stores actually hold ----
+    // ---- The panel: thirteen parts, with the counts the stores actually hold ----
     await openReset(page);
     assert.equal(
       await page.locator('[data-testid^="reset-row-"]').count(),
-      12,
+      13,
       'the panel must offer every part'
     );
     assert.match(await page.getByTestId('reset-count-lessons').textContent(), /2 verified/, 'lessons count');

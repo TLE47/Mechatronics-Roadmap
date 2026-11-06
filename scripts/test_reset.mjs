@@ -95,6 +95,30 @@ function seedEverything() {
   syncCards(1_700_000_000_000);
   logEvent({ kind: 'run', lesson: 'P.1', outcome: 'verified' });
   recordSittingEvent({ at: 1_700_000_000_000, kind: 'run', lesson: 'P.1' });
+  localStorage.setItem(
+    'mechalab_micro_progress_v1',
+    JSON.stringify({
+      version: 1,
+      revision: 1,
+      updatedAt: 1000,
+      concepts: {
+        'P.1.radians': {
+          conceptId: 'P.1.radians',
+          revision: 1,
+          mastery: 'learning',
+          stale: false,
+          skipEligible: false,
+          successCount: 0,
+          dueAt: null,
+          lastReviewedAt: null,
+          learnCompletedAt: 1000,
+          diagnosticCorrect: 2,
+          practiceCorrect: true,
+        },
+      },
+      events: [],
+    })
+  );
   savePrediction({
     lessonId: 'P.1',
     text: '42',
@@ -114,8 +138,8 @@ function seedEverything() {
 
 console.log('reset registry');
 
-check('twelve parts, each with a label, a hint and one group', () => {
-  assert.equal(RESET_AREAS.length, 12);
+check('thirteen parts, each with a label, a hint and one group', () => {
+  assert.equal(RESET_AREAS.length, 13);
   const ids = RESET_AREAS.map((entry) => entry.id);
   assert.deepEqual(ids, [
     'lessons',
@@ -123,6 +147,7 @@ check('twelve parts, each with a label, a hint and one group', () => {
     'milestones',
     'awards',
     'cards',
+    'micro',
     'notes',
     'drafts',
     'log',
@@ -159,6 +184,7 @@ check('every part counts what its own store holds', () => {
     milestones: 2,
     awards: 1,
     cards: 1,
+    micro: 1,
     notes: 2,
     drafts: 2,
     log: 1,
@@ -174,6 +200,7 @@ check('every part counts what its own store holds', () => {
   assert.match(area('lessons').count().text, /2 verified · 1 self-marked/);
   assert.match(area('checks').count().text, /2 ticks in 1 lesson/);
   assert.match(area('notes').count().text, /1 note · 1 highlight/);
+  assert.match(area('micro').count().text, /1 concept touched/);
   assert.match(area('drafts').count().text, /1 draft · 1 version/);
 });
 
@@ -209,6 +236,18 @@ check('resetting checklists erases the ticks, and leaves the notes and verdicts'
   assert.deepEqual(tickCounts(), { lessons: 0, ticks: 0 });
   assert.equal(area('lessons').count().n, 3, 'the verdicts are untouched');
   assert.equal(area('notes').count().n, 2);
+});
+
+check('resetting micro-learning clears its store and leaves the lesson record', () => {
+  freshBrowser();
+  seedEverything();
+  const report = resetAreas(['micro']);
+  assert.deepEqual(report.areas, ['micro']);
+  assert.equal(report.items, 1);
+  assert.equal(report.progress, false, 'micro progress never leaves this browser');
+  assert.equal(localStorage.getItem('mechalab_micro_progress_v1'), null);
+  assert.equal(area('lessons').count().n, 3, 'the lesson verdicts are untouched');
+  assert.equal(area('log').count().n, 1, 'the learning log is untouched');
 });
 
 check('resetting drafts keeps the notes, and the other way round', () => {
@@ -288,7 +327,7 @@ check('reset everything empties every part and leaves the preferences alone', ()
   localStorage.setItem('mechalab_theme_v1', 'paper');
   localStorage.setItem('mechalab_sound_v1', '{"master":0.4}');
   const report = resetEverything(10_000);
-  assert.equal(report.areas.length, 12);
+  assert.equal(report.areas.length, 13);
   for (const entry of RESET_AREAS) {
     assert.equal(entry.count().n, 0, `${entry.id} should be empty after everything`);
   }

@@ -48,7 +48,7 @@ export const MicroHomeCard: React.FC<MicroHomeCardProps> = ({ onOpenTab }) => {
   };
 
   return (
-    <section className="space-y-3 rounded-2xl border border-accent/30 bg-gradient-to-br from-panel via-panel to-accent/5 p-5 shadow-sm" data-testid="home-micro">
+    <section className="home-panel space-y-3 rounded-2xl border border-accent/30 bg-gradient-to-br from-panel via-panel to-accent/5 p-5 shadow-sm" data-testid="home-micro">
       <div className="flex items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
           <span className="grid h-8 w-8 place-items-center rounded-full bg-accent/15 text-accent">
