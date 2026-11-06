@@ -262,12 +262,24 @@
 .micro-answer-value {
   animation: micro-value-in var(--micro-value-ms, 460ms) var(--ease-spring) both;
 }
+/* The variable and its value land first; the explanation underneath follows once the eye has
+   found them, so a reveal reads as a sentence being built rather than a card being replaced. */
+.micro-walkthrough-values {
+  animation: micro-values-in var(--micro-values-ms, 420ms) var(--ease-out) both;
+}
+.micro-walkthrough-note {
+  animation: micro-note-in var(--micro-note-ms, 440ms) var(--ease-out) both;
+  animation-delay: var(--micro-note-delay, 280ms);
+}
 /* A keyboard move is deliberately a little slower than a click, so the eye can follow the
    line that just arrived and the value it changed. */
 .micro-walkthrough[data-input='key'] {
   --micro-reveal-ms: 560ms;
   --micro-line-ms: 520ms;
   --micro-value-ms: 600ms;
+  --micro-values-ms: 520ms;
+  --micro-note-ms: 560ms;
+  --micro-note-delay: 360ms;
 }
 /* The stage a key opens uses the same slower pace, so the whole move reads as one press. */
 .micro-stage[data-input='key'] {
@@ -291,6 +303,15 @@
   55% { opacity: 0.72; }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
+@keyframes micro-values-in {
+  0% { opacity: 0; transform: translateY(8px); }
+  55% { opacity: 0.78; }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes micro-note-in {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .home-hero-aurora,
@@ -307,7 +328,9 @@
   .lesson-orbit,
   .micro-reveal,
   .micro-walkthrough-line,
-  .micro-answer-value {
+  .micro-answer-value,
+  .micro-walkthrough-values,
+  .micro-walkthrough-note {
     animation: none;
   }
 }

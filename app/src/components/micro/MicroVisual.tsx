@@ -8,6 +8,7 @@ import {
   ToggleLeft,
   TriangleAlert,
 } from 'lucide-react';
+import type { PrimitiveSample } from '../../micro/randomize.ts';
 
 /**
  * A tiny, concept-specific picture for micro-learning (`components/micro/MicroVisual.tsx`).
@@ -61,7 +62,7 @@ const TONE: Record<string, { border: string; bg: string; text: string; label: st
   },
 };
 
-function Variables() {
+function Variables({ sample }: { sample?: PrimitiveSample }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div className="rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-center">
@@ -71,10 +72,10 @@ function Variables() {
       <ArrowRight className="h-4 w-4 text-accent" aria-hidden="true" />
       <div className="rounded-lg border border-emerald/40 bg-emerald/10 px-3 py-2 text-center">
         <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-emerald">value</p>
-        <p className="mt-0.5 font-mono text-[15px] font-bold text-ink">12.60</p>
+        <p className="mt-0.5 font-mono text-[15px] font-bold text-ink">{sample?.floatText ?? '12.60'}</p>
       </div>
       <span className="rounded-full border border-line bg-panel px-2 py-1 font-mono text-[10px] text-muted">
-        “twelve point six”
+        a float value
       </span>
     </div>
   );
@@ -94,16 +95,16 @@ function AssignmentOrder() {
   );
 }
 
-function IntFloat() {
+function IntFloat({ sample }: { sample?: PrimitiveSample }) {
   return (
     <div className="grid gap-2 sm:grid-cols-2">
       <div className="rounded-lg border border-amber/40 bg-amber/10 p-2.5">
         <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber">int · whole</p>
-        <p className="font-mono text-xl font-bold text-ink">400</p>
+        <p className="font-mono text-xl font-bold text-ink">{sample?.intText ?? '400'}</p>
       </div>
       <div className="rounded-lg border border-accent/40 bg-accent/10 p-2.5">
         <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent">float · decimal</p>
-        <p className="font-mono text-xl font-bold text-ink">12.60</p>
+        <p className="font-mono text-xl font-bold text-ink">{sample?.floatText ?? '12.60'}</p>
       </div>
     </div>
   );
@@ -167,13 +168,13 @@ function FStrings() {
   );
 }
 
-export function MicroVisual({ conceptId }: { conceptId: string }) {
+export function MicroVisual({ conceptId, sample }: { conceptId: string; sample?: PrimitiveSample }) {
   const tone = TONE[conceptId] ?? TONE.variables;
   const body =
     conceptId === 'assignment-order' ? (
       <AssignmentOrder />
     ) : conceptId === 'int-float' ? (
-      <IntFloat />
+      <IntFloat sample={sample} />
     ) : conceptId === 'strings' ? (
       <Strings />
     ) : conceptId === 'booleans' ? (
@@ -183,7 +184,7 @@ export function MicroVisual({ conceptId }: { conceptId: string }) {
     ) : conceptId === 'f-strings' ? (
       <FStrings />
     ) : (
-      <Variables />
+      <Variables sample={sample} />
     );
   return (
     <figure

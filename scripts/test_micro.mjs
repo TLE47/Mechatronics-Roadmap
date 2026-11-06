@@ -14,6 +14,7 @@
 import assert from 'node:assert/strict';
 import { Window } from 'happy-dom';
 import { MICRO_CONCEPTS } from '../app/src/micro/catalog.ts';
+import { randomizeConcept, samplePrimitiveData } from '../app/src/micro/randomize.ts';
 import {
   CHALLENGE_SUCCESS_DAYS,
   FAILURE_RETRY_DAYS,
@@ -79,6 +80,17 @@ function check(name, fn) {
 
 function section(title) {
   console.log(`\n${title}`);
+}
+
+function seeded(seed) {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let value = state;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
 }
 
 function fakeStorage(initial = {}) {
@@ -282,6 +294,49 @@ check('the quiz comparison handles comparisons, mixed types and f-strings', () =
   const none = comparisonPreview(conceptual, 'a');
   assert.deepEqual(none.lines, []);
   assert.equal(none.result, null);
+});
+
+check('primitive data is sampled per visit and the quiz follows the sample', () => {
+  const random = seeded(0x5eed);
+  const first = samplePrimitiveData(random);
+  const second = samplePrimitiveData(random, first);
+  assert.notDeepEqual(
+    [first.intValue, first.floatValue],
+    [second.intValue, second.floatValue],
+    'a revisit should draw a different primitive pair'
+  );
+  assert.match(first.floatText, /^\d+\.\d0$/, 'the coded float still ends in a zero');
+  assert.match(first.floatShort, /^\d+\.\d$/, 'Python prints one decimal');
+
+  const variables = MICRO_CONCEPTS.find((concept) => concept.id === 'variables');
+  const fresh = randomizeConcept(variables, first, random);
+  assert.match(fresh.walkthrough[0].code, new RegExp(`plant_height = ${first.floatText}`));
+  assert.equal(variables.walkthrough[0].code, 'plant_height = 12.60', 'the authored catalogue is untouched');
+  const diagnostic = fresh.diagnostics[0];
+  const match = /sticker_count = (\d+)\nsticker_count = sticker_count \+ (\d+)/.exec(diagnostic.code);
+  assert.ok(match, 'the diagnostic still shows two assignment lines');
+  const total = Number(match[1]) + Number(match[2]);
+  assert.equal(diagnostic.options.find((option) => option.id === diagnostic.answerId).text, String(total));
+  const preview = comparisonPreview(diagnostic, diagnostic.answerId);
+  assert.equal(preview.result, `sticker_count = ${total}`);
+  assert.ok(preview.trace.some((step) => step.plugged === `sticker_count = ${match[1]} + ${match[2]}`));
+  for (const option of fresh.practice.options) {
+    assert.match(option.text, /^\d+\.\d{1,2}$/, `the practice option ${option.text} is a clean float`);
+  }
+
+  const intFloat = randomizeConcept(
+    MICRO_CONCEPTS.find((concept) => concept.id === 'int-float'),
+    first,
+    random
+  );
+  assert.match(intFloat.walkthrough[0].code, new RegExp(`sticker_count = ${first.intText}`));
+  assert.ok(intFloat.practice.prompt.includes(first.intText));
+  assert.ok(intFloat.diagnostics[0].prompt.includes(first.floatText));
+  assert.equal(gradeAnswer(intFloat.practice, intFloat.practice.answerId), true);
+  const r4 = intFloat.reviewPool.find((question) => question.id === 'int-float-r4');
+  const r4Preview = comparisonPreview(r4, r4.answerId);
+  const expected = r4.options.find((option) => option.id === r4.answerId).text.split(',')[0];
+  assert.ok(r4Preview.result.includes(expected), `${r4Preview.result} should include ${expected}`);
 });
 
 check('code-like quiz options get the lesson token treatment', () => {

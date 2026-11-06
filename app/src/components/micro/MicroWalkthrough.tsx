@@ -1,7 +1,7 @@
 import { ArrowLeft, ArrowRight, Check, Keyboard, RotateCcw, Sparkles } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { MicroConcept } from '../../data/microLessons';
-import { playUi } from '../../audio/facade.ts';
+import { playCue, playUi } from '../../audio/facade.ts';
 import { chordMatches } from '../../keymap.ts';
 import {
   defaultWalkthroughKeys,
@@ -53,8 +53,12 @@ export function MicroWalkthrough({
   };
 
   useEffect(() => {
-    if (visible < steps.length || completed.current) return;
+    if (!steps.length || visible < steps.length || completed.current) return;
     completed.current = true;
+    // The last line lands with the verification stinger, so the end of the trace is a moment, not
+    // just a button that disappears. It plays once per walkthrough; going back and forward again
+    // does not repeat the reward.
+    playCue('verify');
     onComplete();
   }, [onComplete, steps.length, visible]);
 
@@ -325,47 +329,50 @@ export function MicroWalkthrough({
         <div className="border-t border-line-soft bg-panel/65 p-2.5 sm:p-3.5 lg:border-l lg:border-t-0">
           <div
             key={`${visible}-${current.code}`}
-            className="micro-reveal"
             aria-live="polite"
             data-testid={`micro-walkthrough-step-${visible}`}
           >
-            <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-              <Sparkles className="h-3 w-3 text-accent" aria-hidden="true" />
-              What changes
-            </p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="rounded-md border border-accent/35 bg-accent/10 px-2 py-1 font-mono text-[12px] font-bold text-accent sm:text-[13px]">
-                {current.variable ?? 'result'}
-              </span>
-              {current.before ? (
-                <>
-                  <span className="rounded-md border border-line bg-canvas px-2 py-1 font-mono text-[12px] text-muted line-through decoration-rose/60">
-                    {current.before}
-                  </span>
-                  <ArrowRight className="h-3.5 w-3.5 text-faint" aria-hidden="true" />
-                </>
-              ) : null}
-              <span
-                key={`${visible}-${value}`}
-                className="micro-answer-value rounded-md border border-emerald/40 bg-emerald/10 px-2.5 py-1 font-mono text-[13.5px] font-bold text-emerald sm:text-[15px]"
-              >
-                {value}
-              </span>
-            </div>
-            {current.expression ? (
-              <p className="mt-2 font-mono text-[12px] text-muted">reads {current.expression}</p>
-            ) : null}
-            <p className="mt-2 text-[13.5px] leading-relaxed text-body">
-              <MicroRichText text={current.note} />
-            </p>
-            {current.output ? (
-              <div className="mt-2.5 rounded-lg border border-line-soft bg-canvas p-2.5">
-                <p className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-faint">output</p>
-                <pre className="mt-0.5 whitespace-pre-wrap font-mono text-[12.5px] leading-relaxed text-emerald">
-                  {current.output}
-                </pre>
+            <div className="micro-walkthrough-values" data-testid="micro-walkthrough-values">
+              <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+                <Sparkles className="h-3 w-3 text-accent" aria-hidden="true" />
+                What changes
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span className="rounded-md border border-accent/35 bg-accent/10 px-2 py-1 font-mono text-[12px] font-bold text-accent sm:text-[13px]">
+                  {current.variable ?? 'result'}
+                </span>
+                {current.before ? (
+                  <>
+                    <span className="rounded-md border border-line bg-canvas px-2 py-1 font-mono text-[12px] text-muted line-through decoration-rose/60">
+                      {current.before}
+                    </span>
+                    <ArrowRight className="h-3.5 w-3.5 text-faint" aria-hidden="true" />
+                  </>
+                ) : null}
+                <span
+                  key={`${visible}-${value}`}
+                  className="micro-answer-value rounded-md border border-emerald/40 bg-emerald/10 px-2.5 py-1 font-mono text-[13.5px] font-bold text-emerald sm:text-[15px]"
+                >
+                  {value}
+                </span>
               </div>
-            ) : null}
+            </div>
+            <div className="micro-walkthrough-note" data-testid="micro-walkthrough-note">
+              {current.expression ? (
+                <p className="mt-2 font-mono text-[12px] text-muted">reads {current.expression}</p>
+              ) : null}
+              <p className="mt-2 text-[13.5px] leading-relaxed text-body">
+                <MicroRichText text={current.note} />
+              </p>
+              {current.output ? (
+                <div className="mt-2.5 rounded-lg border border-line-soft bg-canvas p-2.5">
+                  <p className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-faint">output</p>
+                  <pre className="mt-0.5 whitespace-pre-wrap font-mono text-[12.5px] leading-relaxed text-emerald">
+                    {current.output}
+                  </pre>
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>

@@ -141,6 +141,24 @@ async function main() {
     assert.ok(keyMotion.duration >= 0.5, `the key transition should be slower than a click (${keyMotion.duration}s)`);
     assert.match(keyMotion.animation, /micro-line-in/);
     assert.ok(keyMotion.startsTransparent, 'the key-driven line fades in from transparent');
+    const revealSequence = await page.evaluate(() => {
+      const values = document.querySelector('.micro-walkthrough-values');
+      const note = document.querySelector('.micro-walkthrough-note');
+      if (!values || !note) return null;
+      const valuesStyle = getComputedStyle(values);
+      const noteStyle = getComputedStyle(note);
+      return {
+        valuesAnimation: valuesStyle.animationName,
+        noteAnimation: noteStyle.animationName,
+        valuesDuration: Number.parseFloat(valuesStyle.animationDuration),
+        noteDelay: Number.parseFloat(noteStyle.animationDelay),
+      };
+    });
+    assert.ok(revealSequence, 'the reveal should separate the value block from the explanation');
+    assert.match(revealSequence.valuesAnimation, /micro-values-in/);
+    assert.match(revealSequence.noteAnimation, /micro-note-in/);
+    assert.ok(revealSequence.valuesDuration >= 0.35, `the values should have their own fade (${revealSequence.valuesDuration}s)`);
+    assert.ok(revealSequence.noteDelay >= 0.2, `the explanation should follow the values (${revealSequence.noteDelay}s)`);
     assert.deepEqual(
       await page.evaluate(() => window.__microSounds.at(-1)),
       { kind: 'ui', role: 'nav', pan: 0 },
@@ -196,6 +214,9 @@ async function main() {
     );
     await page.getByTestId('micro-keybind-toggle').click();
     await revealWalkthrough(page, variables);
+    await page.waitForFunction(() =>
+      window.__microSounds.some((message) => message.kind === 'cue' && message.cue === 'verify')
+    );
     // The badge commits before React re-registers the key listener with `testReady`; wait for the
     // button that reads that flag to enable, not just for the trace to finish painting.
     await page.waitForFunction(
@@ -233,9 +254,23 @@ async function main() {
     assert.equal(await page.getByTestId('micro-answer-preview').first().getAttribute('data-state'), 'pending');
     assert.equal(await page.getByTestId('micro-answer-result').count(), 0, 'the Python result starts hidden');
     await page.getByTestId('micro-answer-result-hidden').first().waitFor();
+    const diagnosticCode = await page
+      .getByTestId('micro-question-variables-d1')
+      .locator('pre')
+      .innerText();
+    const diagnosticMatch = /sticker_count = (\d+)\s+sticker_count = sticker_count \+ (\d+)/.exec(
+      diagnosticCode
+    );
+    assert.ok(diagnosticMatch, `the diagnostic should show two assignments: ${diagnosticCode}`);
+    const stickerStart = Number(diagnosticMatch[1]);
+    const stickerStep = Number(diagnosticMatch[2]);
+    const stickerTotal = stickerStart + stickerStep;
     const equation = page.getByTestId('micro-answer-equation').first();
     await equation.waitFor({ timeout: 5000 });
-    assert.match((await equation.textContent()) ?? '', /sticker_count = 400 \+ 25/);
+    assert.match(
+      (await equation.textContent()) ?? '',
+      new RegExp(`sticker_count\\s*=\\s*${stickerStart}\\s*\\+\\s*${stickerStep}`)
+    );
     const tone = await equation.evaluate((node) => {
       const original = node.querySelector('[data-token="number"]');
       const plugged = node.querySelector('.micro-plugged-value');
@@ -249,17 +284,26 @@ async function main() {
     await page.getByTestId('micro-answer-reveal').first().click();
     const result = page.getByTestId('micro-answer-result').first();
     await result.waitFor({ timeout: 5000 });
-    assert.match((await result.textContent()) ?? '', /sticker_count = 425/);
+    assert.match((await result.textContent()) ?? '', new RegExp(`sticker_count\\s*=\\s*${stickerTotal}`));
     await page.getByTestId('micro-answer-trace').first().click();
     const trace = page.getByTestId('micro-answer-trace-panel').first();
     await trace.waitFor({ timeout: 5000 });
     const traceText = (await trace.textContent()) ?? '';
-    assert.match(traceText, /sticker_count = 400 \+ 25/);
-    assert.match(traceText, /sticker_count = 425/);
+    assert.match(traceText, new RegExp(`sticker_count\\s*=\\s*${stickerStart}\\s*\\+\\s*${stickerStep}`));
+    assert.match(traceText, new RegExp(`sticker_count\\s*=\\s*${stickerTotal}`));
     for (const question of variables.diagnostics.slice(1)) await answer(page, question, true);
+    const soundsBeforeDiagnostics = await page.evaluate(() => window.__microSounds.length);
     await page.getByTestId('micro-submit-diagnostics').click();
     await page.locator('[data-testid="micro-answer-preview"][data-state="correct"]').first().waitFor({ timeout: 5000 });
-    assert.match((await result.textContent()) ?? '', /sticker_count = 425/);
+    assert.ok(
+      await page.evaluate(
+        (from) =>
+          window.__microSounds.slice(from).some((message) => message.kind === 'cue' && message.cue === 'run-pass'),
+        soundsBeforeDiagnostics
+      ),
+      'a clean pair should sound the pass cue'
+    );
+    assert.match((await result.textContent()) ?? '', new RegExp(`sticker_count\\s*=\\s*${stickerTotal}`));
     await page.getByTestId('micro-see-result').click();
     await page.getByTestId('micro-result').waitFor({ timeout: 15000 });
     assert.match((await page.getByTestId('micro-result').textContent()) ?? '', /Clean sweep/i);
@@ -289,8 +333,17 @@ async function main() {
       `a click should pace the stage faster than the key (${pointerStage.duration}s vs ${keyStage.duration}s)`
     );
     for (const question of variables.diagnostics) await answer(page, question, false);
+    const soundsBeforeWrong = await page.evaluate(() => window.__microSounds.length);
     await page.getByTestId('micro-submit-diagnostics').click();
     await page.locator('[data-testid="micro-answer-preview"][data-state="wrong"]').first().waitFor({ timeout: 5000 });
+    assert.ok(
+      await page.evaluate(
+        (from) =>
+          window.__microSounds.slice(from).some((message) => message.kind === 'cue' && message.cue === 'run-fail'),
+        soundsBeforeWrong
+      ),
+      'a missed pair should sound the neutral fail cue'
+    );
     await page.getByTestId('micro-continue-practice').click();
     await page.getByTestId('micro-practice').waitFor({ timeout: 15000 });
     await answer(page, variables.practice, false);
@@ -310,13 +363,26 @@ async function main() {
     await page.getByTestId('micro-back').click();
     await seedDueReview(page);
     await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });
+    await page.evaluate(() => {
+      window.__microSounds = [];
+      window.addEventListener('mechalab:sound', (event) => window.__microSounds.push(event.detail));
+    });
     await page.getByTestId('home-micro-open').click();
     await page.getByTestId('micro-due').waitFor({ timeout: 15000 });
     await page.getByTestId('micro-review-variables').click();
     const reviewQuestions = reviewSet(variables, 0);
     for (const question of reviewQuestions) await answer(page, question, true);
+    const soundsBeforeReview = await page.evaluate(() => window.__microSounds.length);
     await page.getByTestId('micro-submit-review').click();
     await page.locator('[data-testid="micro-answer-preview"][data-state="correct"]').first().waitFor({ timeout: 5000 });
+    assert.ok(
+      await page.evaluate(
+        (from) =>
+          window.__microSounds.slice(from).some((message) => message.kind === 'cue' && message.cue === 'run-pass'),
+        soundsBeforeReview
+      ),
+      'a clean review should sound the pass cue'
+    );
     await page.getByTestId('micro-see-result').click();
     await page.getByTestId('micro-result').waitFor({ timeout: 15000 });
     assert.match((await page.getByTestId('micro-result').textContent()) ?? '', /Consolidated/i);

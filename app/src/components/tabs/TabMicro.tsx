@@ -33,6 +33,8 @@ import type { MicroEvent, MicroStore } from '../../micro/types';
 import { optionalResources, resourcesFor } from '../../micro/resources';
 import { formatWalkthroughChord, readWalkthroughKeys } from '../../micro/walkthroughKeys.ts';
 import { lessonPageUrl } from '../../startHere';
+import { playCue } from '../../audio/facade';
+import { randomizeConcept, samplePrimitiveData, type PrimitiveSample } from '../../micro/randomize.ts';
 import { MicroVisual } from '../micro/MicroVisual.tsx';
 import { MicroWalkthrough } from '../micro/MicroWalkthrough.tsx';
 import { MicroAnswerPreview } from '../micro/MicroAnswerPreview.tsx';
@@ -119,6 +121,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [gradedAnswers, setGradedAnswers] = useState<Record<string, boolean>>({});
   const [walkthroughDone, setWalkthroughDone] = useState(false);
+  const [sample, setSample] = useState<PrimitiveSample>(() => samplePrimitiveData());
   const [testChord, setTestChord] = useState(() => readWalkthroughKeys().test);
   const [inputMode, setInputMode] = useState<'pointer' | 'key'>('pointer');
   const [diagnosticScore, setDiagnosticScore] = useState<0 | 1 | 2>(0);
@@ -130,7 +133,11 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
   const [reading, setReading] = useState<ClockReading>(EMPTY_READING);
   const [debugReadout, setDebugReadout] = useState<React.ComponentType | null>(null);
   const clockRef = useRef<ActivityClock | null>(null);
-  const active = activeId ? MICRO_CONCEPTS.find((concept) => concept.id === activeId) ?? null : null;
+  const active = useMemo(() => {
+    if (!activeId) return null;
+    const base = MICRO_CONCEPTS.find((concept) => concept.id === activeId) ?? null;
+    return base ? randomizeConcept(base, sample) : null;
+  }, [activeId, sample]);
 
   const refresh = useCallback(() => {
     setStore(microProgress.read());
@@ -200,6 +207,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
   );
 
   const begin = (concept: MicroConcept, next: Exclude<Stage, 'overview'>) => {
+    setSample((previous) => samplePrimitiveData(Math.random, previous));
     setActiveId(concept.id);
     setStage(next);
     setAnswers({});
@@ -304,6 +312,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
     }
     const correct = active.diagnostics.filter((question) => grades[question.id]).length;
     const score = correct as 0 | 1 | 2;
+    playCue(score === 2 ? 'run-pass' : 'run-fail');
     const missedQuestions = active.diagnostics
       .filter((question) => !grades[question.id])
       .map((question) => question.explanation);
@@ -329,6 +338,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
   const submitPractice = async () => {
     if (!active) return;
     const correct = gradeAnswer(active.practice, answers[active.practice.id] ?? '');
+    playCue(correct ? 'run-pass' : 'run-fail');
     const event: MicroEvent = {
       ...clockEvent(active),
       conceptId: active.id,
@@ -347,6 +357,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
   const submitReview = async () => {
     if (!active) return;
     const correct = reviewQuestions.filter((question) => gradeAnswer(question, answers[question.id] ?? '')).length;
+    playCue(correct === reviewQuestions.length ? 'run-pass' : 'run-fail');
     const event: MicroEvent = {
       ...clockEvent(active),
       conceptId: active.id,
@@ -368,6 +379,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
   const submitChallenge = async () => {
     if (!active) return;
     const correct = gradeAnswer(active.challenge, answers[active.challenge.id] ?? '');
+    playCue(correct ? 'run-pass' : 'run-fail');
     const event: MicroEvent = {
       ...clockEvent(active),
       conceptId: active.id,
@@ -732,7 +744,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
 
       {stage === 'learn' ? (
         <section className={`${CARD} micro-stage micro-reveal space-y-3 sm:space-y-4`} data-testid="micro-teaching" data-input={inputMode}>
-          <MicroVisual conceptId={active.id} />
+          <MicroVisual conceptId={active.id} sample={sample} />
           <div className="max-w-[72ch]">
             {active.teaching[0] ? (
               <p className="text-[14.5px] font-medium leading-7 text-ink sm:text-[16px] sm:leading-8">
@@ -741,7 +753,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
             ) : null}
           </div>
           <MicroWalkthrough
-            key={active.id}
+            key={`${active.id}-${sample.intText}-${sample.floatText}`}
             concept={active}
             onComplete={() => setWalkthroughDone(true)}
             onTest={startDiagnostics}
