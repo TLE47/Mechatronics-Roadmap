@@ -404,7 +404,7 @@
   display: grid;
   margin: 0 0 5px 30px;
   font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 9.5px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--faint, var(--dim));
@@ -422,7 +422,7 @@
   grid-template-rows: repeat(7, minmax(0, 1fr));
   gap: 3px;
   font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 9px;
+  font-size: 11px;
   color: var(--faint, var(--dim));
 }
 .study-heat-weekdays span {
@@ -468,7 +468,7 @@
   align-items: center;
   gap: 4px;
   font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 9.5px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--faint, var(--dim));

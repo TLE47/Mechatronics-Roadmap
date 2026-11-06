@@ -122,7 +122,7 @@ export const StudyHeatmap: React.FC<{ events: readonly DashboardEvent[] }> = ({ 
               <Flame className="h-4 w-4" aria-hidden="true" />
             </span>
             Study rhythm
-            <span className="rounded-full border border-line-soft bg-canvas px-2 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted">
+            <span className="rounded-full border border-line-soft bg-canvas px-2 py-0.5 font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
               last 12 months
             </span>
           </h2>
@@ -138,7 +138,7 @@ export const StudyHeatmap: React.FC<{ events: readonly DashboardEvent[] }> = ({ 
             { Icon: Sparkles, label: 'Events', value: `${total}` },
           ].map(({ Icon, label, value }) => (
             <div key={label} className="rounded-xl border border-line-soft bg-canvas/70 px-2.5 py-1.5">
-              <dt className="flex items-center gap-1 text-[10px] uppercase tracking-[0.1em] text-faint">
+              <dt className="flex items-center gap-1 text-[11px] uppercase tracking-[0.1em] text-faint">
                 <Icon className="h-3 w-3" aria-hidden="true" />
                 {label}
               </dt>

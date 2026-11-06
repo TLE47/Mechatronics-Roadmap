@@ -31,11 +31,11 @@ export const LessonRailToggle: React.FC<{
     data-testid="btn-lessons-toggle"
     aria-expanded={!folded}
     aria-controls={folded ? undefined : 'lesson-chooser-rail'}
-    className="mt-1.5 hidden items-center gap-1.5 rounded-lg border border-line bg-canvas px-2.5 py-1 text-[11.5px] font-semibold text-body transition-colors hover:border-accent/50 hover:text-accent lg:inline-flex"
+    className="mt-1.5 hidden items-center gap-1.5 rounded-lg border border-line bg-canvas px-2.5 py-1 text-[12px] font-semibold text-body transition-colors hover:border-accent/50 hover:text-accent lg:inline-flex"
   >
     <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
     {folded ? 'Show lesson list' : 'Hide lesson list'}
-    <span className="font-mono text-[10.5px] tabular-nums text-faint">{count}</span>
+    <span className="font-mono text-[11px] tabular-nums text-faint">{count}</span>
   </button>
 );
 
