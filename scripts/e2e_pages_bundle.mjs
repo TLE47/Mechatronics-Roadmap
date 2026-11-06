@@ -1181,6 +1181,9 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       undefined,
       { timeout: 5000 }
     );
+    // The layout attribute can commit before the reader has rendered the exercise half that holds
+    // this map. Wait for the figure itself; the content assertions below still grade it.
+    await wide.getByTestId('diagram-graph').waitFor({ state: 'attached', timeout: 15000 });
     const branchMap = await wide.evaluate(() => {
       const figure = document.querySelector('[data-testid="diagram-graph"]');
       if (!figure) return null;

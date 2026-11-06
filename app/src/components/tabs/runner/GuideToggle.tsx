@@ -27,7 +27,7 @@ export function GuideToggle({
       className={
         phone
           ? 'btn min-h-[44px] shrink-0 px-2.5 text-[12.5px]'
-          : 'min-h-[32px] shrink-0 cursor-pointer rounded border border-line bg-canvas px-2 py-1 font-mono text-[11.5px] text-muted hover:border-accent hover:text-accent'
+          : 'min-h-[32px] shrink-0 cursor-pointer rounded border border-line bg-canvas px-2 py-1 font-mono text-[12px] text-muted hover:border-accent hover:text-accent'
       }
     >
       {phone ? (hidden ? 'Guide' : 'Hide') : hidden ? 'Show guide' : 'Hide guide'}
