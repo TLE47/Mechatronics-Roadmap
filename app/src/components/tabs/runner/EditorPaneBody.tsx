@@ -92,6 +92,7 @@ export function EditorPaneBody({
   shownViews,
   allowedViews,
   collapsed,
+  boundedBody,
   isPhone,
   deferPhoneEditor,
   draft,
@@ -109,6 +110,8 @@ export function EditorPaneBody({
   shownViews: Set<EditorView>;
   allowedViews: EditorView[];
   collapsed: boolean;
+  /** A preset owns a split body whose panes may shrink; the studio keeps a content-sized card. */
+  boundedBody: boolean;
   isPhone: boolean;
   deferPhoneEditor: boolean;
   draft: PaneDraft;
@@ -251,7 +254,7 @@ export function EditorPaneBody({
 
   const paneClass = (view: EditorView): string =>
     `min-w-0 flex-1 bg-panel ${
-      paneSplit ? 'min-h-0 overflow-x-hidden overflow-y-auto' : ''
+      paneSplit && boundedBody ? 'min-h-0 overflow-x-hidden overflow-y-auto' : ''
     } ${
       paneSplit && panes.focus === slotFor(panes, view) ? 'ring-1 ring-inset ring-accent/20' : ''
     }`;
@@ -270,10 +273,11 @@ export function EditorPaneBody({
       style={{
         display: collapsed ? 'none' : undefined,
         position: 'relative',
-        // A split needs a definite body height: a card that sizes itself to its content would let
-        // every `flex-basis: 0` pane collapse to nothing. A preset body taller than this floor keeps
-        // its own height; a content-sized one gets a usable, screen-sized body.
-        minHeight: paneSplit ? (isPhone ? '20rem' : 'min(65vh, 36rem)') : undefined,
+        // A preset's split needs a definite body height: at some widths its card sizes itself to
+        // content, and every `flex-basis: 0` pane would collapse to nothing. A body taller than this
+        // floor keeps its own height; a content-sized preset gets a usable, screen-sized one.
+        minHeight:
+          paneSplit && boundedBody ? (isPhone ? '20rem' : 'min(65vh, 36rem)') : undefined,
         gridTemplateColumns: sideBySide ? `${colShare}fr ${1 - colShare}fr` : undefined,
         gridTemplateRows:
           sideBySide && rowCount > 1
