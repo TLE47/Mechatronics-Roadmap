@@ -481,7 +481,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
         collab={props.collab}
         onClosePredict={onClosePredict}
       />
-      {!bodyCollapsed && feedback}      {!bodyCollapsed && feedback}
+      {!bodyCollapsed && feedback}
     </div>
   );
 }
