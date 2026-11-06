@@ -758,6 +758,31 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
 
     await page.getByTestId('lesson-item-P.6').click();
 
+    // The goal is the editor's, and the pass conditions are a tab of their own, tokenised the way
+    // the micro lessons colour their variables rather than printed as a bracketed list.
+    await page.getByTestId('editor-tab-requirements').click();
+    await page.getByTestId('pane-requirements').waitFor({ timeout: 5000 });
+    assert.equal(
+      await page.getByTestId('pane-requirements').isVisible(),
+      true,
+      'Requirements must be its own editor tab'
+    );
+    await page
+      .getByTestId('editor-requirements')
+      .locator('[data-token]')
+      .first()
+      .waitFor({ timeout: 5000 });
+    assert.match(
+      await page.getByTestId('editor-requirements').innerText(),
+      /Runs:[\s\S]*Required end state:/,
+      'the Requirements tab must carry the pass conditions'
+    );
+    assert.ok(
+      (await page.getByTestId('editor-requirements').locator('[data-token]').count()) > 0,
+      'requirements must use the micro lessons’ colourful variable tokens'
+    );
+    await page.getByTestId('editor-tab-main').click();
+
     // 4. Accidental infinite loop (while True:) is recoverable without losing editor work
     await page.evaluate(() => {
       window.__mechalabMaxTraceSteps = 5000;
@@ -3153,13 +3178,24 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         if (await foldedGoalEditor.count()) await foldedGoalEditor.first().click();
         await page.getByTestId('editor-tab-main').click();
         await page.waitForTimeout(300);
+        const goalText = await page.getByTestId('editor-goal').innerText();
         assert.match(
-          await page.getByTestId('editor-goal').innerText(),
+          goalText,
           /Goal[\s\S]*starter code[\s\S]*Fill in the TODOs/i,
           'the Python editor must show the lesson goal beside the starter'
         );
+        assert.doesNotMatch(
+          goalText,
+          /The script runs without a Python error/i,
+          'the goal card must not carry the requirements list any more'
+        );
+        assert.equal(
+          await page.getByTestId('editor-tab-requirements').count(),
+          0,
+          'an exercise without pass conditions must not grow an empty Requirements tab'
+        );
         console.log(
-          '  ok the Workflow tab spawns, edits inline, drags, draws an arrow, frames cards, resizes, fits, wraps, searches, lays out, multi-selects, formats text, survives a reload, and shows the editor goal'
+          '  ok the Workflow tab spawns, edits inline, drags, draws an arrow, frames cards, resizes, fits, wraps, searches, lays out, multi-selects, formats text, survives a reload, and shows a goal-only editor'
         );
       }
 

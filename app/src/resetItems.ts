@@ -41,6 +41,7 @@ import {
 } from './progressKeys.ts';
 import { RESET_AREAS } from './progressReset.ts';
 import { readMicroStore, writeMicroStore } from './micro/store.ts';
+import { microLessonId } from './micro/resetUnits.ts';
 
 /** The first-run guide's dismissal and the Start Here card's, repeated from `progressReset.ts`. */
 const FIRST_GUIDE_KEY = 'mechalab_first_guide_dismissed_v1';
@@ -338,24 +339,31 @@ function resumeItems(): ResetItem[] {
 
 function microItems(): ResetItem[] {
   const { store } = readMicroStore();
-  return Object.values(store.concepts)
-    .filter((state) => state.learnCompletedAt !== null || state.lastReviewedAt !== null)
-    .sort((a, b) => a.conceptId.localeCompare(b.conceptId))
-    .map((state) => ({
-      id: `micro:${state.conceptId}`,
-      label: state.conceptId,
-      detail: `${state.mastery} · ${plural(state.successCount, 'successful review')}`,
+  const touched = Object.values(store.concepts).filter(
+    (state) => state.learnCompletedAt !== null || state.lastReviewedAt !== null
+  );
+  const byLesson = new Map<string, typeof touched>();
+  for (const state of touched) {
+    const lessonId = microLessonId(state.conceptId);
+    byLesson.set(lessonId, [...(byLesson.get(lessonId) ?? []), state]);
+  }
+  return [...byLesson.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([lessonId, concepts]) => ({
+      id: `micro:${lessonId}`,
+      label: lessonId,
+      detail: `${plural(concepts.length, 'concept')} in this lesson`,
       n: 1,
       clear: () => {
         const current = readMicroStore().store;
-        const concepts = { ...current.concepts };
-        delete concepts[state.conceptId];
+        const nextConcepts = { ...current.concepts };
+        for (const state of concepts) delete nextConcepts[state.conceptId];
         writeMicroStore({
           ...current,
           revision: current.revision + 1,
           updatedAt: Date.now(),
-          concepts,
-          events: current.events.filter((event) => event.conceptId !== state.conceptId),
+          concepts: nextConcepts,
+          events: current.events.filter((event) => microLessonId(event.conceptId) !== lessonId),
         });
       },
     }));

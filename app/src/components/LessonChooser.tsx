@@ -179,13 +179,13 @@ export function LessonChooser({
         </div>
       </div>
 
-      <div className="flex items-baseline justify-between gap-2 px-3 pt-2 pb-1">
-        <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-faint">
+      <div className="flex min-w-0 items-center justify-between gap-2 px-3 pt-2 pb-1">
+        <span className="min-w-0 truncate font-mono text-[11px] uppercase tracking-[0.1em] text-faint">
           {query ? 'Matches' : 'Lessons & exercises'}
           <span className="ml-1 tabular-nums text-body">{filteredLessons.length}</span>
         </span>
         {verifiedCount > 0 && (
-          <span className="flex items-center gap-1 font-mono text-[11px] text-emerald">
+          <span className="flex shrink-0 items-center gap-1 font-mono text-[11px] text-emerald">
             <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
             {verifiedCount} verified
           </span>

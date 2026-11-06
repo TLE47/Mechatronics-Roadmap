@@ -39,7 +39,7 @@ flowchart TB
 | Milestones | the roadmap ticks; the roadmap and the lessons stay | the account's progress row |
 | XP and awards | the ledger: levels, proof marks, the Scrap they paid for | this browser only |
 | Practice cards | the review schedule and its history; the cards return from your highlights | this browser only |
-| Micro-learning | the concepts you met, their review dates and the events behind them; the beta switch stays | this browser only |
+| Micro-learning | the lesson units you met, every concept inside them, their review dates and events; the beta switch stays | this browser only |
 | Notes and highlights | what you wrote beside a lesson and the passages you marked | the account's workspace row (opt-in) |
 | Drafts and versions | the unfinished editor text per lesson and the versions each Run filed | the account's workspace row (opt-in) |
 | Learning log | every open, run, hint and verdict — what the exports and the trail read | the account's progress row |
@@ -87,7 +87,7 @@ its items, and an item is the unit a learner would name:
 | Milestones | one roadmap tick |
 | XP and awards | one award in the ledger |
 | Practice cards | one review card, labelled with its quote |
-| Micro-learning | one concept, with its mastery, review ladder and events |
+| Micro-learning | one parent lesson unit, with every concept, review ladder and event it contains |
 | Notes and highlights | one lesson's note and every highlight on it |
 | Drafts and versions | one lesson's draft and the versions each Run filed |
 | Learning log | **one day** of events — a list of five thousand rows is not a list |
@@ -97,10 +97,13 @@ its items, and an item is the unit a learner would name:
 | Where I was | the last lesson, the last page, or one lesson's reading place |
 
 The items always add up to the row: `scripts/test_reset.mjs` asserts, for every part, that the sum of
-its item counts is the number on the row, so a second counting model cannot drift from the first. One
-item still takes two presses, and an item the store does not have erases nothing and stays quiet. A
-single lesson or milestone still writes the watermark, because it is a part the account holds; a single
-note, draft or checklist reports the workspace copy instead.
+its item counts is the number on the row, so a second counting model cannot drift from the first. A
+micro row counts parent lessons, not concepts: two concepts from P.1 are one item, and erasing that
+item takes both. The chooser gives its item list its own scrollbar (`.reset-item-scroll`) so a lesson
+with hundreds of units does not stretch the dialog. One item still takes two presses, and an item the
+store does not have erases nothing and stays quiet. A single lesson or milestone still writes the
+watermark, because it is a part the account holds; a single note, draft or checklist reports the
+workspace copy instead.
 
 ## The watermark, and why an empty map is not enough
 

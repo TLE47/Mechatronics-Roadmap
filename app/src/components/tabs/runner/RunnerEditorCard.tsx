@@ -1,14 +1,5 @@
-import { useEffect, useState, type ReactNode, type RefObject } from 'react';
-import {
-  CheckCircle2,
-  ChevronDown,
-  ChevronRight,
-  ChevronUp,
-  Columns2,
-  Lock,
-  Rows2,
-  X,
-} from 'lucide-react';
+import { lazy, Suspense, useEffect, useState, type ReactNode, type RefObject } from 'react';
+import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Lock } from 'lucide-react';
 import { PythonEditor, type PythonEditorHandle } from '../../PythonEditor';
 import { PredictPane } from './PredictPane';
 import { RunVerdict } from './RunVerdict';
@@ -17,13 +8,11 @@ import { resultTabMeta } from './resultTabMeta';
 import { PythonKeys } from '../../PythonKeys';
 import { MAIN_FILE_NAME, type LessonFile } from '../../../lessonFiles';
 import {
-  closeSplit,
   focusSlot,
   isSplit,
-  setAxis,
   showView,
-  slotFor,
   splitPane,
+  slotFor,
   viewsForLayout,
   visibleViews,
   type EditorPanes,
@@ -34,6 +23,16 @@ import type { AnalysisSession } from '../../../analysisClient';
 import type { HarnessGate } from '../../../harnessGrading';
 import type { PredictGate } from './usePredictGate';
 import { vimModeLabel as vimModeLabelFor } from '../../../vimMode';
+
+// The pass conditions are only read when their tab is opened, so they do not belong in the first
+// paint's chunk. The editor itself stays eager: it is the surface this card exists for.
+const EditorRequirements = lazy(() =>
+  import('./EditorRequirements').then((module) => ({ default: module.EditorRequirements }))
+);
+// Axis, Add, Swap and Close only exist after a split, so the arrangement is a second lazy boundary.
+const EditorPaneArrangement = lazy(() =>
+  import('./EditorPaneArrangement').then((module) => ({ default: module.EditorPaneArrangement }))
+);
 
 /** Which surface the card is on, and what that surface may show. */
 interface EditorSurface {
@@ -194,7 +193,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
     gate,
     onClosePredict,
     nextChapter,
-    resultViews = ['predict', 'actual', 'expected', 'cases', 'workflow', 'trace'],
+    resultViews = ['requirements', 'predict', 'actual', 'expected', 'cases', 'workflow', 'trace'],
   } = props;
   // A held run is a question that has to be visible. Study opens folded, but the gate lives in the
   // body: a Run that opens it must not leave the learner with an invisible question and a held run.
@@ -224,25 +223,24 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
   );
   /** Every view on screen, in slot order: the pane strip and the body read the same list. */
   const views = visibleViews(panes);
-  /** Two panes only when two views are really on screen. */
+  /** A split only when two or more views are really on screen. */
   const paneSplit = allowedViews.length > 0 && isSplit(panes) && shownViews.size > 1;
+  const paneCount = shownViews.size;
   /** Slot order, so an arrangement opened on an output still reads left to right. */
   const paneOrder = (view: EditorView): number => slotFor(panes, view) ?? 0;
   /** The helper the strip names, from the file the tab picked. */
   const openHelperFile = helperFiles.find((file) => file.name === openHelper) ?? null;
   /**
-   * The rule between two side-by-side panes, on whichever one is second, plus a faint inset ring on
-   * the focused one. A split is a keyboard-and-pointer workspace: the tab press fills the pane the
-   * learner last clicked, so which pane that is has to be visible rather than remembered.
+   * A pane's surface and, when split, the faint inset ring that makes the focused one visible. A
+   * split is a keyboard-and-pointer workspace: the tab press fills the pane the learner last
+   * clicked, so which pane that is has to be visible rather than remembered. The rules between
+   * panes are the body's one-pixel gap showing the line colour through, which works for a row and
+   * a grid without a border class per pane.
    */
-  const paneBorder = (view: EditorView): string => {
-    if (!paneSplit) return '';
-    const focused = panes.focus === paneOrder(view) ? 'ring-1 ring-inset ring-accent/20' : '';
-    if (panes.axis !== 'columns') return focused;
-    const rule =
-      paneOrder(view) === 0 ? 'lg:border-t-0' : 'lg:border-l lg:border-line-soft lg:border-t-0';
-    return `${rule} ${focused}`;
-  };
+  const paneClass = (view: EditorView): string =>
+    `min-w-0 flex-1 bg-panel ${
+      paneSplit && panes.focus === paneOrder(view) ? 'ring-1 ring-inset ring-accent/20' : ''
+    }`;
   /**
    * Clicking a pane makes it the one a tab press fills.
    *
@@ -351,7 +349,13 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
             {allowedViews.length > 0 && (
               <>
                 <span aria-hidden="true" className="mx-1 h-4 w-px shrink-0 self-center bg-line-soft" />
-                {resultViews.filter((view) => allowedViews.includes(view)).map((view) => {
+                {resultViews
+                  .filter(
+                    (view) =>
+                      allowedViews.includes(view) &&
+                      (view !== 'requirements' || lessonRequirements.length > 0)
+                  )
+                  .map((view) => {
                   const selected = shownViews.has(view);
                   const meta = resultTabMeta(view);
                   return (
@@ -389,61 +393,20 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
               other child role inside it as an aria-required-children violation. Outside it the
               controls also stay put while the tabs scroll. */}
           {allowedViews.length > 0 && (
-            <div role="group" aria-label="Editor panes" className="ml-1 flex shrink-0 items-center gap-0.5 pl-1">
+            <div className="ml-1 flex shrink-0 items-center gap-0.5 pl-1">
               {!paneSplit ? (
                 <button
                   type="button"
                   data-testid="btn-pane-split"
-                  onClick={() => onPanes(splitPane(panes))}
-                  title="Split the editor: show two views, like a terminal"
-                  className="flex items-center gap-1 rounded border border-line bg-canvas px-2 py-0.5 text-[12px] font-mono text-body hover:bg-raise cursor-pointer"
+                  onClick={() => onPanes(splitPane(panes, undefined, allowedViews))}
+                  className="cursor-pointer rounded border border-line bg-canvas px-2 py-0.5 text-[12px] font-mono text-body hover:bg-raise"
                 >
-                  <Columns2 className="h-3 w-3" aria-hidden="true" />
-                  <span className="hidden sm:inline">Split</span>
+                  Split
                 </button>
               ) : (
-                <>
-                  <button
-                    type="button"
-                    data-testid="btn-pane-columns"
-                    aria-pressed={panes.axis === 'columns'}
-                    onClick={() => onPanes(setAxis(panes, 'columns'))}
-                    title="Divide the panes side by side"
-                    className={`rounded border px-1.5 py-0.5 cursor-pointer ${
-                      panes.axis === 'columns'
-                        ? 'border-accent/60 bg-accent/10 text-accent'
-                        : 'border-line bg-canvas text-muted hover:bg-raise'
-                    }`}
-                  >
-                    <Columns2 className="h-3 w-3" aria-hidden="true" />
-                    <span className="sr-only">Side by side</span>
-                  </button>
-                  <button
-                    type="button"
-                    data-testid="btn-pane-rows"
-                    aria-pressed={panes.axis === 'rows'}
-                    onClick={() => onPanes(setAxis(panes, 'rows'))}
-                    title="Divide the panes one above the other"
-                    className={`rounded border px-1.5 py-0.5 cursor-pointer ${
-                      panes.axis === 'rows'
-                        ? 'border-accent/60 bg-accent/10 text-accent'
-                        : 'border-line bg-canvas text-muted hover:bg-raise'
-                    }`}
-                  >
-                    <Rows2 className="h-3 w-3" aria-hidden="true" />
-                    <span className="sr-only">One above the other</span>
-                  </button>
-                  <button
-                    type="button"
-                    data-testid="btn-pane-close"
-                    onClick={() => onPanes(closeSplit(panes))}
-                    title="Close the second pane"
-                    aria-label="Close the second pane"
-                    className="rounded border border-line bg-canvas px-1.5 py-0.5 text-muted hover:bg-raise hover:text-body cursor-pointer"
-                  >
-                    <X className="h-3 w-3" aria-hidden="true" />
-                  </button>
-                </>
+                <Suspense fallback={null}>
+                  <EditorPaneArrangement panes={panes} onPanes={onPanes} candidates={allowedViews} />
+                </Suspense>
               )}
             </div>
           )}
@@ -539,7 +502,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
           readable prompt, then the requirements as answers, not a mono comment block. */}
       {editorShown && lessonGoal && !bodyCollapsed && (
         <div data-testid="editor-goal" className="border-b border-line-soft p-3">
-          <EditorGoalCard goal={lessonGoal} requirements={lessonRequirements} />
+          <EditorGoalCard goal={lessonGoal} />
         </div>
       )}
       <div
@@ -550,16 +513,25 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
         data-split={paneSplit ? 'split' : 'single'}
         data-focus={paneSplit ? panes.focus : 0}
         data-views={views.join(',')}
-        role="group"
-        aria-label="Editor panes: a tab press fills the pane you last clicked"
-        className={paneSplit && panes.axis === 'columns' ? 'flex flex-col lg:flex-row lg:items-start' : 'flex flex-col'}
+        data-count={paneCount}
+        className={
+          !paneSplit
+            ? 'flex flex-col'
+            : `${
+                panes.axis === 'rows'
+                  ? 'flex flex-col'
+                  : paneCount > 2
+                    ? 'grid grid-cols-1 items-stretch md:grid-cols-2'
+                    : 'grid grid-cols-1 items-start lg:grid-cols-2'
+              } gap-px bg-line-soft`
+        }
       >
         <div
           data-testid="pane-main"
           data-pane="main"
           onClick={() => focusPane('main')}
           style={{ display: shownViews.has('main') ? undefined : 'none', order: paneOrder('main') }}
-          className={`min-w-0 flex-1 ${paneBorder('main')}`}
+          className={paneClass('main')}
         >
           {coEdit && (
             <p
@@ -633,13 +605,31 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
         </div>
         {allowedViews.length > 0 && (
           <>
+            {allowedViews.includes('requirements') && lessonRequirements.length > 0 && (
+              <div
+                data-testid="pane-requirements"
+                data-pane="requirements"
+                onClick={() => focusPane('requirements')}
+                style={{
+                  display: shownViews.has('requirements') ? undefined : 'none',
+                  order: paneOrder('requirements'),
+                }}
+                className={paneClass('requirements')}
+              >
+                {shownViews.has('requirements') && (
+                  <Suspense fallback={null}>
+                    <EditorRequirements items={lessonRequirements} />
+                  </Suspense>
+                )}
+              </div>
+            )}
             {gate && (
               <div
                 data-testid="pane-predict"
                 data-pane="predict"
                 onClick={() => focusPane('predict')}
                 style={{ display: shownViews.has('predict') ? undefined : 'none', order: paneOrder('predict') }}
-                className={`min-w-0 flex-1 border-t border-line-soft ${paneBorder('predict')}`}
+                className={paneClass('predict')}
               >
                 <PredictPane
                   record={gate.record}
@@ -660,7 +650,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
               data-pane="actual"
               onClick={() => focusPane('actual')}
               style={{ display: shownViews.has('actual') ? undefined : 'none', order: paneOrder('actual') }}
-              className={`min-w-0 flex-1 border-t border-line-soft ${paneBorder('actual')}`}
+              className={paneClass('actual')}
             >
               {actualOutputPane}
             </div>
@@ -669,7 +659,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
               data-pane="expected"
               onClick={() => focusPane('expected')}
               style={{ display: shownViews.has('expected') ? undefined : 'none', order: paneOrder('expected') }}
-              className={`min-w-0 flex-1 border-t border-line-soft ${paneBorder('expected')}`}
+              className={paneClass('expected')}
             >
               {expectedOutputPane}
             </div>
@@ -682,7 +672,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
                   display: shownViews.has('cases') ? undefined : 'none',
                   order: paneOrder('cases'),
                 }}
-                className={`min-w-0 flex-1 border-t border-line-soft ${paneBorder('cases')}`}
+                className={paneClass('cases')}
               >
                 {casesPane}
               </div>
@@ -692,7 +682,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
               data-pane="workflow"
               onClick={() => focusPane('workflow')}
               style={{ display: shownViews.has('workflow') ? undefined : 'none', order: paneOrder('workflow') }}
-              className={`min-w-0 flex-1 border-t border-line-soft ${paneBorder('workflow')}`}
+              className={paneClass('workflow')}
             >
               {workflowPane}
             </div>
@@ -702,7 +692,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
                 data-pane="trace"
                 onClick={() => focusPane('trace')}
                 style={{ display: shownViews.has('trace') ? undefined : 'none', order: paneOrder('trace') }}
-                className={`min-w-0 flex-1 border-t border-line-soft ${paneBorder('trace')}`}
+                className={paneClass('trace')}
               >
                 {tracePane}
               </div>

@@ -29,9 +29,10 @@ flowchart LR
 | `useProgressFlags.ts` | The verified and self-marked lesson stores, parent-owned or local, and the two writers. |
 | `useRunnerArrangement.ts` | The editor/results split share, which side results sit on, and the persisted layout record. |
 | `RunnerToolbar.tsx` | The run controls: presets and dock, Pause/Stop/Run, Predict, and the More panel's actions. |
-| `RunnerEditorCard.tsx` | The editor surface: main/helper tabs, the pane strip, the split controls, and the editor body beside Predict, Run output, Expected, Cases and Workflow. |
+| `RunnerEditorCard.tsx` | The editor surface: main/helper tabs, the pane strip, and the editor body beside Requirements, Predict, Run output, Expected, Cases and Workflow. |
+| `EditorPaneArrangement.tsx` | Horizontal/vertical axis, Add pane, pane swapping and Close — the split's controls, lazy beside the eager Split door and outside the tablist. It also reads how many panes the viewport allows: two on a phone, three on a laptop, four on a large desktop, re-read on resize. |
 | `EditorGoal.tsx` | The lesson's goal as a labelled prompt card, folded with the editor body. |
-| `EditorRequirements.tsx` | The lesson's pass conditions under the goal: the checklist a learner meets before a run counts. |
+| `EditorRequirements.tsx` | The lesson's pass conditions as their own editor tab: numbered colourful cards with the micro lessons' token styling. |
 | `resultTabMeta.tsx` | What each result tab says: its label, its tooltip and its glyph. |
 | `CasesPane.tsx` | The behavioural cases: one row per substituted input, with what the last run proved and which cases it never reached. |
 | `readerContinue.ts` | Where the page goes next: Study into Read, Read into Write. |
@@ -64,7 +65,7 @@ chooser's fold and strip live in `LessonChooserRail.tsx`, which is also why the 
 line budget.
 
 Size rule, held by `npm run test:runner` (`scripts/test_runner_shape.mjs`): the tab's budget is
-**2,986 lines with 28 state cells and 24 refs**, a state-owning hook stays under 400 lines except
-`useRunnerExecution.ts` (one noun, so it is one module), and a view under 650. Those numbers are
+**3,020 lines with 28 state cells and 24 refs**, a state-owning hook stays under 400 lines except
+`useRunnerExecution.ts` (one noun, so it is one module), and a view under 730. Those numbers are
 measured, not chosen; the check fails when one rises, and a pass that raises one owes the reason in
 the commit that raises it.

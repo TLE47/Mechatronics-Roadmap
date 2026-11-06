@@ -51,6 +51,7 @@ import { replaceStudy, studyCounts } from './studyNotes.ts';
 import { clearAllTicks, tickCounts } from './lessonChecks.ts';
 import { readCardList, replaceCards } from './studyCards.ts';
 import { clearMicroStore, readMicroStore } from './micro/store.ts';
+import { microLessonId } from './micro/resetUnits.ts';
 import { RESET_EVENT, STORAGE_KEY_RESET_AT, announceReset, type ResetAreaId, type ResetReport } from './resetEvent.ts';
 import {
   STORAGE_KEY_COMPLETED,
@@ -229,11 +230,16 @@ export const RESET_AREAS: readonly ResetArea[] = [
     group: 'local',
     count: () => {
       // Read the store, not the catalogue: the reset chunk must not pull the lessons in with it.
+      // A concept is evidence inside a lesson, so the row counts the lesson units a learner can
+      // name and the chooser clears all of that lesson's concepts together.
       const { store } = readMicroStore();
-      const n = Object.values(store.concepts).filter(
-        (state) => state.learnCompletedAt !== null || state.lastReviewedAt !== null
-      ).length;
-      return { n, text: n ? `${plural(n, 'concept')} touched` : 'none yet' };
+      const lessons = new Set(
+        Object.values(store.concepts)
+          .filter((state) => state.learnCompletedAt !== null || state.lastReviewedAt !== null)
+          .map((state) => microLessonId(state.conceptId))
+      );
+      const n = lessons.size;
+      return { n, text: n ? `${plural(n, 'lesson')} touched` : 'none yet' };
     },
     clear: () => {
       clearMicroStore();

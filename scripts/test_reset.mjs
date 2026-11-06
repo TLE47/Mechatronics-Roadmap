@@ -47,6 +47,7 @@ import { rememberLastLesson } from '../app/src/lastLesson.ts';
 import { noteVisit } from '../app/src/homeLanding.ts';
 import { writeReadingPosition } from '../app/src/readingPosition.ts';
 import { areaItemCount, areaItems, resetItem } from '../app/src/resetItems.ts';
+import { readMicroStore } from '../app/src/micro/store.ts';
 
 let passed = 0;
 let failed = 0;
@@ -200,7 +201,7 @@ check('every part counts what its own store holds', () => {
   assert.match(area('lessons').count().text, /2 verified · 1 self-marked/);
   assert.match(area('checks').count().text, /2 ticks in 1 lesson/);
   assert.match(area('notes').count().text, /1 note · 1 highlight/);
-  assert.match(area('micro').count().text, /1 concept touched/);
+  assert.match(area('micro').count().text, /1 lesson touched/);
   assert.match(area('drafts').count().text, /1 draft · 1 version/);
 });
 
@@ -372,6 +373,49 @@ check("every part's items add up to the count its row shows", () => {
       assert.ok(item.n > 0, `${entry.id}/${item.id} should erase something or not be listed`);
     }
   }
+});
+
+check('micro items are lesson units, and one lesson leaves its neighbours', () => {
+  freshBrowser();
+  seedEverything();
+  const state = (conceptId) => ({
+    conceptId,
+    revision: 1,
+    mastery: 'learning',
+    stale: false,
+    skipEligible: false,
+    successCount: 0,
+    dueAt: null,
+    lastReviewedAt: null,
+    learnCompletedAt: 1000,
+    diagnosticCorrect: 2,
+    practiceCorrect: true,
+  });
+  localStorage.setItem(
+    'mechalab_micro_progress_v1',
+    JSON.stringify({
+      version: 1,
+      revision: 4,
+      updatedAt: 1000,
+      concepts: {
+        'P.1.radians': state('P.1.radians'),
+        'P.1.variables': state('P.1.variables'),
+        'P.2.operators': state('P.2.operators'),
+      },
+      events: [],
+    })
+  );
+  assert.equal(area('micro').count().n, 2, 'two concepts in P.1 are one lesson unit');
+  assert.match(area('micro').count().text, /2 lessons touched/);
+  const items = areaItems('micro');
+  assert.deepEqual(items.map((item) => item.id), ['micro:P.1', 'micro:P.2']);
+  const p1 = items.find((item) => item.id === 'micro:P.1');
+  assert.equal(p1.n, 1, 'the item counts the lesson it erases, not its concepts');
+  assert.match(p1.detail, /2 concepts in this lesson/);
+  const report = resetItem('micro', 'micro:P.1');
+  assert.equal(report.items, 1);
+  assert.equal(area('micro').count().n, 1, 'P.2 is still there');
+  assert.deepEqual(Object.keys(readMicroStore().store.concepts), ['P.2.operators']);
 });
 
 check('one lesson is erased without the lesson beside it', () => {

@@ -305,6 +305,29 @@ async function main() {
       'rows',
       'and back above the output'
     );
+    // A laptop-sized viewport can hold a third pane. Add chooses a view this studio really has,
+    // then the swap menu exchanges slots without duplicating either view.
+    await page.getByTestId('btn-pane-add').click();
+    await page.waitForFunction(
+      () => document.querySelector('[data-testid="editor-panes"]')?.getAttribute('data-count') === '3',
+      undefined,
+      { timeout: 5000 }
+    );
+    const threeViews = await page.getByTestId('editor-panes').getAttribute('data-views');
+    assert.equal(threeViews, 'main,actual,workflow', 'Add pane must use a view the studio offers');
+    await page.getByTestId('pane-main').click();
+    await page.getByTestId('select-pane-swap').selectOption('2');
+    assert.equal(
+      await page.getByTestId('editor-panes').getAttribute('data-views'),
+      'workflow,actual,main',
+      'the first pane must be able to swap with the third'
+    );
+    await page.getByTestId('select-pane-swap').selectOption('2');
+    assert.equal(
+      await page.getByTestId('editor-panes').getAttribute('data-views'),
+      'main,actual,workflow',
+      'the swap menu must be reversible'
+    );
     await page.getByTestId('studio-vim').click();
     assert.equal(
       await page.getByTestId('studio-vim').getAttribute('aria-pressed'),
@@ -335,7 +358,7 @@ async function main() {
       'closing the output pane leaves one pane'
     );
     await page.waitForFunction(
-      () => (localStorage.getItem('mechalab_studio_panes_v1') ?? '').includes('["main",null]'),
+      () => (localStorage.getItem('mechalab_studio_panes_v1') ?? '').includes('["main"]'),
       undefined,
       { timeout: 5000 }
     );

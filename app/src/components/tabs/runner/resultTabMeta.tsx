@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Activity, CheckSquare, GitBranch, ListChecks, Sparkles, Terminal } from 'lucide-react';
+import { Activity, CheckSquare, ClipboardList, GitBranch, ListChecks, Sparkles, Terminal } from 'lucide-react';
 import type { EditorView } from '../../../editorPanes';
 
 /**
@@ -21,6 +21,12 @@ export interface ResultTabMeta {
 
 export function resultTabMeta(view: EditorView): ResultTabMeta {
   switch (view) {
+    case 'requirements':
+      return {
+        label: 'Requirements',
+        title: 'The pass conditions this lesson is graded against, as individual cards',
+        icon: <ClipboardList className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
+      };
     case 'predict':
       return {
         label: 'Predict',

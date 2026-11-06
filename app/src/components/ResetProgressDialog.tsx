@@ -280,7 +280,9 @@ export const ResetProgressDialog: React.FC<ResetProgressDialogProps> = ({ isOpen
                   <ul
                     id={`reset-items-${area.id}`}
                     data-testid={`reset-items-${area.id}`}
-                    className="mt-1.5 max-h-[30vh] space-y-0.5 overflow-y-auto border-t pt-1.5"
+                    tabIndex={0}
+                    aria-label={`${area.label} items`}
+                    className="reset-item-scroll mt-1.5 max-h-[30vh] space-y-0.5 overflow-y-scroll border-t pt-1.5 pr-1"
                     style={{ borderColor: 'var(--border)' }}
                   >
                     {openItems.length === 0 && (

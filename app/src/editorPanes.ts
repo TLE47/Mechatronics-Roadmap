@@ -7,19 +7,18 @@
  * This module is the small state machine behind the tabs that replaced it:
  *
  *  - a **view** is what a pane can show: `main` (the lesson's Python, or its read-only helper),
- *    `predict` (the forecast gate: what the learner thinks it will print), `actual` (the last run's
- *    stdout and verdict), `expected` (the presentation check) and `workflow` (the learner's own
- *    cards for how the problem is solved);
- *  - a **pane** is one slot of the editor body. One slot is the normal editor; a second slot makes
- *    the body a split, side by side (`columns`) or one above the other (`rows`), the way a terminal
- *    multiplexer is arranged;
+ *    `requirements` (the pass conditions), `predict` (the forecast gate), `actual` (the last run's
+ *    stdout), `expected` (the presentation check), `cases`, `workflow` and `trace`;
+ *  - a **pane** is one slot of the editor body. Slots share the body side by side (`columns`) or one
+ *    above the other (`rows`); with three or more, columns become a two-column grid so both axes are
+ *    used instead of squeezing every pane into one strip;
  *  - a **focus** says which slot the next tab press fills. Pressing the tab of a view already open
- *    in the other slot focuses that slot instead of opening the same view twice.
+ *    in another slot focuses that slot instead of opening the same view twice.
  *
- * Two panes is the bound, deliberately. Three tabs at a 1280 px window are three 380 px columns of
- * Python, which is narrower than the code's own line length; a third pane would be a feature that
- * looks free in a menu and costs the answer. The tabs themselves are unbounded: every output view is
- * one press away without being on screen.
+ * Four panes is the ceiling. A screen decides how many of those four it can usefully show
+ * (`paneCapacity`), and the controls in `EditorPaneArrangement.tsx` never add beyond that: a phone gets
+ * two, a laptop three, a large desktop four. The stored arrangement is not rewritten when the window
+ * shrinks, so a pane arranged on a monitor comes back when the monitor does.
  *
  * Everything here is pure and validated at the edge, because the two failures that matter are
  * invisible in a happy-path screenshot: a stored pane that no view can fill (a blank editor card on
@@ -30,6 +29,7 @@
 
 export const EDITOR_VIEWS = [
   'main',
+  'requirements',
   'predict',
   'actual',
   'expected',
@@ -43,6 +43,7 @@ export type EditorView = (typeof EDITOR_VIEWS)[number];
 /** What each pane's tab says. `main` is the file's own name, added by the runner. */
 export const EDITOR_VIEW_LABELS: Record<EditorView, string> = {
   main: 'main.py',
+  requirements: 'Requirements',
   predict: 'Predict',
   actual: 'Run output',
   expected: 'Expected',
@@ -51,22 +52,21 @@ export const EDITOR_VIEW_LABELS: Record<EditorView, string> = {
   trace: 'Trace',
 };
 
-/** Which way two panes divide the body. */
+/** Which way the panes divide the body. Columns become a grid at three or more. */
 export type PaneAxis = 'columns' | 'rows';
 
 /**
- * One or two slots, which way a split divides, and which slot the next tab press fills.
+ * One or more slots, which way a split divides, and which slot the next tab press fills.
  *
- * `views[0]` is never null: a body with no pane is not an arrangement, it is a blank card. Slot 1
- * holds the second pane, or null when there is no split.
+ * `views[0]` is never absent: a body with no pane is not an arrangement, it is a blank card.
  */
 export interface EditorPanes {
-  views: [EditorView, EditorView | null];
+  views: EditorView[];
   axis: PaneAxis;
-  focus: 0 | 1;
+  focus: number;
 }
 
-export const DEFAULT_PANES: EditorPanes = { views: ['main', null], axis: 'columns', focus: 0 };
+export const DEFAULT_PANES: EditorPanes = { views: ['main'], axis: 'columns', focus: 0 };
 
 /** Where the lesson editor keeps its arrangement. */
 export const STORAGE_KEY_EDITOR_PANES = 'mechalab_editor_panes_v1';
@@ -79,27 +79,34 @@ export const STORAGE_KEY_EDITOR_PANES = 'mechalab_editor_panes_v1';
 export const STORAGE_KEY_STUDIO_PANES = 'mechalab_studio_panes_v1';
 export const STUDIO_PANES: EditorPanes = { views: ['main', 'actual'], axis: 'rows', focus: 0 };
 
-/** The most panes the body will hold. A split is the feature; a wall of 200 px columns is not. */
-export const MAX_PANES = 2;
+/** The most panes the body will hold. A screen's capacity is at most this, never more. */
+export const MAX_PANES = 4;
 
 export function isEditorView(value: unknown): value is EditorView {
-  return (
-    value === 'main' ||
-    value === 'predict' ||
-    value === 'actual' ||
-    value === 'expected' ||
-    value === 'cases' ||
-    value === 'workflow' ||
-    value === 'trace'
-  );
+  return (EDITOR_VIEWS as readonly unknown[]).includes(value);
+}
+
+/**
+ * How many panes this screen can show without turning into a column of slivers.
+ *
+ * Width is the first constraint; height matters once a stacked arrangement is possible. The numbers
+ * are deliberately conservative: three panes at 1280 px still leave each one wider than the editor's
+ * comfortable line length, and four wait for a 1440 px monitor with room below for the output.
+ */
+export function paneCapacity(width: number, height: number): number {
+  const w = width > 0 ? width : 1280;
+  const h = height > 0 ? height : 800;
+  if (w >= 1440 && h >= 800) return 4;
+  if (w >= 1100 && h >= 700) return 3;
+  return 2;
 }
 
 /**
  * The result views a preset really has.
  *
  * A preset still owns the regions (`workspaceLayout.ts`), and this is that rule read as tabs. Read
- * shows the editor's bar but none of its results — its job is the page. Write has the two views a
- * draft is about, Predict and Workflow, plus the cases the draft will be checked against: no run
+ * shows the editor's bar but none of its results — its job is the page. Write has the views a draft
+ * is about: requirements, Predict, Workflow and the cases the draft will be checked against — no run
  * output, because that describes code which has already changed. Study and Debug have them all.
  *
  * Type-only import: the runtime dependency runs the other way (the runner imports this module), and
@@ -107,8 +114,8 @@ export function isEditorView(value: unknown): value is EditorView {
  */
 export function viewsForLayout(layout: 'study' | 'write' | 'read' | 'debug'): EditorView[] {
   if (layout === 'read') return [];
-  if (layout === 'write') return ['predict', 'cases', 'workflow'];
-  return ['predict', 'actual', 'expected', 'cases', 'workflow', 'trace'];
+  if (layout === 'write') return ['requirements', 'predict', 'cases', 'workflow'];
+  return ['requirements', 'predict', 'actual', 'expected', 'cases', 'workflow', 'trace'];
 }
 
 export function isPaneAxis(value: unknown): value is PaneAxis {
@@ -131,33 +138,27 @@ export function normalizePanes(value: unknown, fallback: EditorPanes = DEFAULT_P
     if (isEditorView(entry) && !views.includes(entry)) views.push(entry);
     if (views.length === MAX_PANES) break;
   }
-  if (views.length === 0) views.push(fallback.views[0]);
+  if (views.length === 0) views.push(fallback.views[0] ?? DEFAULT_PANES.views[0]);
   const axis: PaneAxis = isPaneAxis(record.axis) ? record.axis : fallback.axis;
-  const split = views.length > 1;
-  // A focus on an empty slot would make the next tab press write nowhere; it follows the split.
-  const focus: 0 | 1 = split && record.focus === 1 ? 1 : 0;
-  return {
-    views: [views[0], split ? views[1] : null],
-    axis,
-    focus,
-  };
+  const focusValue = typeof record.focus === 'number' ? record.focus : fallback.focus;
+  const focus = Number.isInteger(focusValue) && focusValue >= 0 && focusValue < views.length ? focusValue : 0;
+  return { views, axis, focus };
 }
 
 /** Every view on screen, in slot order. Never empty, never a duplicate. */
 export function visibleViews(panes: EditorPanes): EditorView[] {
-  return panes.views[1] ? [panes.views[0], panes.views[1]] : [panes.views[0]];
+  return [...panes.views];
 }
 
 /** The slot a view occupies, or null when it is not on screen. */
-export function slotFor(panes: EditorPanes, view: EditorView): 0 | 1 | null {
-  if (panes.views[0] === view) return 0;
-  if (panes.views[1] === view) return 1;
-  return null;
+export function slotFor(panes: EditorPanes, view: EditorView): number | null {
+  const slot = panes.views.indexOf(view);
+  return slot === -1 ? null : slot;
 }
 
-/** Whether the body is split into two panes. */
+/** Whether the body is split into more than one pane. */
 export function isSplit(panes: EditorPanes): boolean {
-  return panes.views[1] !== null;
+  return panes.views.length > 1;
 }
 
 /** The view to offer for a new pane: the next one that is not the editor's own. */
@@ -170,68 +171,87 @@ export function nextView(current: EditorView): EditorView {
 export function showView(panes: EditorPanes, view: EditorView): EditorPanes {
   const slot = slotFor(panes, view);
   if (slot !== null) return { ...panes, focus: slot };
-  const target = panes.views[1] && panes.focus === 1 ? 1 : 0;
-  const views: [EditorView, EditorView | null] =
-    target === 1 && panes.views[1]
-      ? [panes.views[0], view]
-      : [view, panes.views[1]];
+  const target = panes.views.length > 1 && panes.focus < panes.views.length ? panes.focus : 0;
+  const views = [...panes.views];
+  views[target] = view;
   return normalizePanes({ ...panes, views, focus: target });
 }
 
 /**
- * Open a second pane, showing `view` (or a sensible next view) beside the editor's.
+ * Add a pane, showing `view` (or the next useful view) in the new slot.
  *
- * Pressed with no view in mind it offers the pair that makes a split useful: from the editor, the
- * run output; from an output, the editor. Pressed while already split, it only focuses the second
- * pane when the requested view is the one it already shows; asking for a different view replaces
- * that pane's view rather than stacking a third.
+ * The first split from the editor opens the run output; from an output it brings the editor back
+ * beside it. Later presses add a third or fourth pane rather than replacing one: a learner reaches
+ * for Add pane when they want another view on screen, not another tab.
  */
-export function splitPane(panes: EditorPanes, view?: EditorView): EditorPanes {
-  const wanted = view && view !== panes.views[0] ? view : null;
-  if (panes.views[1]) {
-    if (!wanted || wanted === panes.views[1]) return { ...panes, focus: 1 };
-    return normalizePanes({ ...panes, views: [panes.views[0], wanted], focus: 1 });
-  }
-  // From the editor, a split opens on the run output; from an output, it opens on the editor. The
-  // pair a learner asks for when they press Split is code-and-result, whichever half they were
-  // looking at, not whichever view happens to be next in the list.
-  const second = wanted ?? (panes.views[0] === 'main' ? 'actual' : 'main');
-  return normalizePanes({ ...panes, views: [panes.views[0], second], focus: 1 });
+export function splitPane(
+  panes: EditorPanes,
+  view?: EditorView,
+  candidates: readonly EditorView[] = EDITOR_VIEWS
+): EditorPanes {
+  const views = [...panes.views];
+  if (view && views.includes(view)) return { ...normalizePanes(panes), focus: views.indexOf(view) };
+  if (views.length >= MAX_PANES) return normalizePanes(panes);
+  const preferred = view ?? (views[0] === 'main' ? 'actual' : 'main');
+  // The editor is always a legal pane, even when Study's result list does not repeat it. A split
+  // from an output therefore brings the code back before it considers another output tab.
+  const allowed: readonly EditorView[] = candidates.length ? ['main', ...candidates] : EDITOR_VIEWS;
+  if (view && !allowed.includes(view)) return normalizePanes(panes);
+  const chosen =
+    !views.includes(preferred) && allowed.includes(preferred)
+      ? preferred
+      : allowed.find((entry) => !views.includes(entry));
+  if (!chosen) return normalizePanes(panes);
+  return normalizePanes({ ...panes, views: [...views, chosen], focus: views.length });
 }
 
 /**
- * Close the second pane.
+ * Close every pane after the first.
  *
  * The first slot is kept, not the focused one: closing a pane should leave the editor where it was,
  * and a tab that was only open in the pane being closed is one press away again.
  */
 export function closeSplit(panes: EditorPanes): EditorPanes {
-  return normalizePanes({ ...panes, views: [panes.views[0], null], focus: 0 });
+  return normalizePanes({ ...panes, views: [panes.views[0]], focus: 0 });
 }
 
 /**
  * Take one view off the screen, keeping the other half of a split.
  *
  * Closing a split and closing a tab are different intents: the first says "one pane", the second
- * says "not this view". With two panes open, closing the first promotes the second rather than
- * throwing away a split the learner asked for; closing the only view falls back to the editor,
- * because a body with no view is a blank card.
+ * says "not this view". With several panes open, closing one leaves the rest in order; closing the
+ * only view falls back to the editor, because a body with no view is a blank card.
  */
 export function closeView(panes: EditorPanes, view: EditorView): EditorPanes {
-  const kept = visibleViews(panes).filter((entry) => entry !== view);
-  if (kept.length === 0) return { ...panes, views: ['main', null], focus: 0 };
-  return normalizePanes({ ...panes, views: [kept[0], kept[1] ?? null], focus: 0 });
+  const kept = panes.views.filter((entry) => entry !== view);
+  if (kept.length === 0) return { ...panes, views: ['main'], focus: 0 };
+  return normalizePanes({ ...panes, views: kept, focus: 0 });
 }
 
-/** Choose which way two panes divide. Remembered even while there is no split. */
+/** Choose which way the panes divide. Remembered even while there is only one pane. */
 export function setAxis(panes: EditorPanes, axis: PaneAxis): EditorPanes {
   return normalizePanes({ ...panes, axis });
 }
 
 /** Focus a slot that exists; a focus on an empty slot is not a state. */
-export function focusSlot(panes: EditorPanes, slot: 0 | 1): EditorPanes {
-  if (slot === 1 && !panes.views[1]) return panes;
+export function focusSlot(panes: EditorPanes, slot: number): EditorPanes {
+  if (!Number.isInteger(slot) || slot < 0 || slot >= panes.views.length) return panes;
   return { ...panes, focus: slot };
+}
+
+/**
+ * Exchange two panes without moving the focus.
+ *
+ * The controls name the slots ("Pane 1 ↔ Pane 3") rather than the views, because that is what a
+ * learner is looking at. Keeping the focus on the same slot means the next tab press still changes
+ * the pane the pointer last selected; the view that was there simply moved.
+ */
+export function swapPanes(panes: EditorPanes, a: number, b: number): EditorPanes {
+  if (a === b || !Number.isInteger(a) || !Number.isInteger(b)) return normalizePanes(panes);
+  if (a < 0 || b < 0 || a >= panes.views.length || b >= panes.views.length) return normalizePanes(panes);
+  const views = [...panes.views];
+  [views[a], views[b]] = [views[b], views[a]];
+  return normalizePanes({ ...panes, views });
 }
 
 function storage(): Storage | null {
@@ -266,15 +286,15 @@ export function readPanes(
   fallback: EditorPanes = DEFAULT_PANES
 ): EditorPanes {
   const store = storage();
-  if (!store) return { ...fallback };
+  if (!store) return normalizePanes(fallback, fallback);
   try {
     const raw = store.getItem(key);
-    if (raw === null || raw.trim() === '') return { ...fallback };
+    if (raw === null || raw.trim() === '') return normalizePanes(fallback, fallback);
     const parsed: unknown = JSON.parse(raw);
-    if (!holdsAnArrangement(parsed)) return { ...fallback };
+    if (!holdsAnArrangement(parsed)) return normalizePanes(fallback, fallback);
     return normalizePanes(parsed, fallback);
   } catch {
-    return { ...fallback };
+    return normalizePanes(fallback, fallback);
   }
 }
 

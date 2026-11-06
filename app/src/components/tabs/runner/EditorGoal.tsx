@@ -1,19 +1,14 @@
 import { Target } from 'lucide-react';
-import { EditorRequirements } from './EditorRequirements';
+import { MicroRichText } from '../../micro/MicroText';
 
 /**
  * The lesson's goal, above its first line of code (`runner/EditorGoal.tsx`).
  *
- * Styled as the micro lessons ask a question: a label, a readable prompt, then the pass conditions
- * as answers. The starter still runs unchanged; this card only explains what the file is for.
+ * The goal is the only prompt the editor keeps: the pass conditions live in their own tab, so this
+ * card can stay one readable sentence. Backticked variables use the micro lessons' colourful token
+ * boxes rather than a monospace wash or a bracketed list.
  */
-export function EditorGoalCard({
-  goal,
-  requirements,
-}: {
-  goal: string;
-  requirements: string[];
-}) {
+export function EditorGoalCard({ goal }: { goal: string }) {
   return (
     <div className="editor-goal-card">
       <div className="flex flex-wrap items-center gap-2">
@@ -27,10 +22,9 @@ export function EditorGoalCard({
           Starter code · runs as-is
         </span>
       </div>
-      <p className="mt-2.5 text-[14.5px] font-semibold leading-relaxed text-ink sm:text-[15.5px]">
-        {goal}
+      <p className="editor-goal-text mt-2.5 text-[14.5px] font-semibold leading-relaxed text-ink sm:text-[15.5px]">
+        <MicroRichText text={goal} />
       </p>
-      <EditorRequirements items={requirements} />
       <p className="mt-2 text-[11.5px] text-muted">
         Fill in the TODOs. The checks grade behaviour, not the shape of your code.
       </p>
