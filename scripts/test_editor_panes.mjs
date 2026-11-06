@@ -22,16 +22,21 @@ import {
   STUDIO_PANES,
   closeSplit,
   closeView,
+  defaultOrientations,
   focusSlot,
   isEditorView,
   isSplit,
   nextView,
   normalizePanes,
   paneCapacity,
+  paneColumns,
+  paneWidths,
   readPanes,
   resizeColumn,
+  resizeColumns,
   resizeRows,
   setAxis,
+  setPaneOrientation,
   showView,
   slotFor,
   splitPane,
@@ -92,6 +97,8 @@ check('the default is the editor alone, side-by-side when split', () => {
     focus: 0,
     colShare: 0.5,
     rowShares: [],
+    orientations: [],
+    colShares: [],
   });
   assert.equal(isSplit(DEFAULT_PANES), false);
   assert.deepEqual(visibleViews(DEFAULT_PANES), ['main']);
@@ -414,6 +421,121 @@ check('arranging one editor never moves the other', () => {
   } finally {
     delete globalThis.localStorage;
   }
+});
+
+section('6. Each pane chooses how it joins the layout');
+const three = normalizePanes({ views: ['main', 'actual', 'expected'], axis: 'columns' });
+check('the mixed three-pane body is the canonical column layout', () => {
+  assert.deepEqual(three.orientations, ['columns', 'rows']);
+  assert.deepEqual(paneColumns(three), [[0], [1, 2]]);
+  assert.deepEqual(defaultOrientations(3, 'columns'), ['columns', 'rows']);
+  assert.deepEqual(defaultOrientations(2, 'columns'), ['columns']);
+  assert.deepEqual(defaultOrientations(1, 'columns'), []);
+});
+check('four columns keep the 2x2 grid, and rows stack everything', () => {
+  const four = normalizePanes({
+    views: ['main', 'actual', 'expected', 'cases'],
+    axis: 'columns',
+  });
+  assert.deepEqual(four.orientations, ['rows', 'columns', 'rows']);
+  assert.deepEqual(paneColumns(four), [
+    [0, 1],
+    [2, 3],
+  ]);
+  assert.deepEqual(defaultOrientations(4, 'rows'), ['rows', 'rows', 'rows']);
+  assert.deepEqual(
+    paneColumns(normalizePanes({ views: ['main', 'actual', 'expected'], axis: 'rows' })),
+    [[0, 1, 2]],
+    'the rows axis is one column of three'
+  );
+});
+check('a pane flips from beside to below without touching its neighbours', () => {
+  const flipped = setPaneOrientation(three, 1, 'rows');
+  assert.deepEqual(flipped.orientations, ['rows', 'rows'], 'pane 3 keeps the boundary it had');
+  assert.deepEqual(paneColumns(flipped), [[0, 1, 2]], 'both boundaries are rows, so the body stacks');
+  assert.deepEqual(flipped.views, three.views, 'a placement never changes which views are open');
+  const thirdColumn = setPaneOrientation(three, 2, 'columns');
+  assert.deepEqual(paneColumns(thirdColumn), [[0], [1], [2]], 'pane 3 alone opens the third column');
+});
+check('the third pane can open a third column', () => {
+  const third = setPaneOrientation(three, 2, 'columns');
+  assert.deepEqual(third.orientations, ['columns', 'columns']);
+  assert.deepEqual(paneColumns(third), [[0], [1], [2]]);
+  const widths = paneWidths(third, 3);
+  assert.equal(widths.length, 3);
+  for (const width of widths) assert.ok(Math.abs(width - 1 / 3) < 1e-9, 'three columns start equal');
+});
+check('the first pane has no boundary, and only real slots can move', () => {
+  assert.deepEqual(setPaneOrientation(three, 0, 'rows').orientations, three.orientations);
+  assert.deepEqual(setPaneOrientation(three, 3, 'rows').orientations, three.orientations);
+  assert.deepEqual(setPaneOrientation(three, -1, 'rows').orientations, three.orientations);
+  assert.deepEqual(setPaneOrientation(three, 1.5, 'rows').orientations, three.orientations);
+});
+check('the whole-axis control resets the hand-set boundaries', () => {
+  const flipped = setPaneOrientation(three, 1, 'rows');
+  assert.deepEqual(setAxis(flipped, 'columns').orientations, ['columns', 'rows']);
+  assert.deepEqual(setAxis(flipped, 'rows').orientations, ['rows', 'rows']);
+});
+check('adding a pane returns to the canonical shape, and closing takes its boundary', () => {
+  const custom = setPaneOrientation(three, 1, 'rows');
+  const four = splitPane(custom, 'cases');
+  assert.deepEqual(four.orientations, ['rows', 'columns', 'rows'], 'Add pane redraws the canonical grid');
+  assert.deepEqual(closeView(four, 'actual').orientations, ['rows', 'rows']);
+  assert.deepEqual(closeView(four, 'cases').orientations, ['rows', 'columns']);
+  assert.deepEqual(closeSplit(four).orientations, []);
+});
+check('two columns keep the dragged colShare, three columns store their own widths', () => {
+  const two = normalizePanes({ views: ['main', 'actual'], axis: 'columns', colShare: 0.62 });
+  assert.deepEqual(paneWidths(two, 2), [0.62, 0.38]);
+  const custom = resizeColumns(three, [0.5, 0.25, 0.25]);
+  assert.deepEqual(custom.colShares, [0.5, 0.25, 0.25]);
+  assert.deepEqual(paneWidths(custom, 3), [0.5, 0.25, 0.25]);
+  assert.deepEqual(paneWidths(three, 3), [1 / 3, 1 / 3, 1 / 3], 'an undragged body starts equal');
+  const floored = resizeColumns(three, [0.02, 0.49, 0.49]);
+  for (const share of floored.colShares) assert.ok(share >= 0.149, `share ${share} stayed usable`);
+  assert.ok(Math.abs(floored.colShares.reduce((sum, share) => sum + share, 0) - 1) < 1e-9);
+});
+check('a hidden pane leaves no empty column behind', () => {
+  const four = normalizePanes({
+    views: ['main', 'actual', 'expected', 'cases'],
+    axis: 'columns',
+  });
+  assert.deepEqual(paneColumns(four, [0, 2, 3]), [
+    [0],
+    [2, 3],
+  ]);
+});
+check('the boundaries and multi-column widths survive a reload', () => {
+  globalThis.localStorage = fakeStorage();
+  try {
+    const written = writePanes(setPaneOrientation(three, 1, 'rows'));
+    assert.deepEqual(written.orientations, ['rows', 'rows']);
+    assert.deepEqual(readPanes().orientations, ['rows', 'rows']);
+    const wide = writePanes(resizeColumns(three, [0.4, 0.3, 0.3]));
+    assert.deepEqual(readPanes().colShares, wide.colShares);
+  } finally {
+    delete globalThis.localStorage;
+  }
+});
+check('a junk boundary is repaired to the canonical one', () => {
+  const repaired = normalizePanes({
+    views: ['main', 'actual', 'expected'],
+    axis: 'columns',
+    orientations: ['diagonal', null],
+  });
+  assert.deepEqual(repaired.orientations, ['columns', 'rows']);
+  const partial = normalizePanes({
+    views: ['main', 'actual', 'expected'],
+    axis: 'columns',
+    orientations: ['rows'],
+  });
+  assert.deepEqual(partial.orientations, ['rows', 'rows'], 'a short list keeps its boundary and borrows the rest');
+  const extra = normalizePanes({
+    views: ['main', 'actual'],
+    axis: 'columns',
+    orientations: ['rows', 'columns'],
+  });
+  assert.deepEqual(extra.orientations, ['rows'], 'a boundary with no pane after it is dropped');
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

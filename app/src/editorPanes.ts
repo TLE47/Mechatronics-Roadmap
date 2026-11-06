@@ -9,9 +9,10 @@
  *  - a **view** is what a pane can show: `main` (the lesson's Python, or its read-only helper),
  *    `requirements` (the pass conditions), `predict` (the forecast gate), `actual` (the last run's
  *    stdout), `expected` (the presentation check), `cases`, `workflow` and `trace`;
- *  - a **pane** is one slot of the editor body. Slots share the body side by side (`columns`) or one
- *    above the other (`rows`); with three or more, columns become a two-column grid so both axes are
- *    used instead of squeezing every pane into one strip;
+ *  - a **pane** is one slot of the editor body. A boundary after each pane says how the next one
+ *    joins: a `columns` boundary opens a new column beside it, a `rows` boundary stacks it under it
+ *    in the same column. The mixed three-pane body is `columns, rows` (the first pane runs full
+ *    height, the next two stack beside it) and four columns are `rows, columns, rows` (a 2×2 grid);
  *  - a **focus** says which slot the next tab press fills. Pressing the tab of a view already open
  *    in another slot focuses that slot instead of opening the same view twice.
  *
@@ -71,6 +72,16 @@ export interface EditorPanes {
   colShare?: number;
   /** Height shares of the stacked rows, top to bottom. Empty means equal rows. */
   rowShares?: number[];
+  /**
+   * How each pane after the first joins the arrangement, one entry per boundary: `columns` opens a
+   * new column beside the pane before it, `rows` stacks it under that pane in the same column. The
+   * first pane has no boundary of its own, so a body of n panes stores n-1 orientations. Whole-body
+   * presets (`axis`) write the boundaries this module calls canonical; a pane's own control
+   * overrides just its boundary.
+   */
+  orientations?: PaneAxis[];
+  /** Width shares of three or four columns, left to right. Two columns still use `colShare`. */
+  colShares?: number[];
 }
 
 export const DEFAULT_PANES: EditorPanes = {
@@ -79,6 +90,8 @@ export const DEFAULT_PANES: EditorPanes = {
   focus: 0,
   colShare: 0.5,
   rowShares: [],
+  orientations: [],
+  colShares: [],
 };
 
 /** Where the lesson editor keeps its arrangement. */
@@ -96,6 +109,8 @@ export const STUDIO_PANES: EditorPanes = {
   focus: 0,
   colShare: 0.5,
   rowShares: [],
+  orientations: ['rows'],
+  colShares: [],
 };
 
 /** The narrowest a dragged pane may get, so a divider can never erase the pane beside it. */
@@ -175,6 +190,21 @@ export function isPaneAxis(value: unknown): value is PaneAxis {
 }
 
 /**
+ * The boundaries a whole-body preset writes for `count` panes.
+ *
+ * These are the layouts the editor drew before a pane had a control of its own, and they stay the
+ * canonical answer: `columns` is the mixed body at three panes and the 2×2 grid at four, `rows`
+ * stacks every pane. The per-pane control starts from here and overrides one boundary.
+ */
+export function defaultOrientations(count: number, axis: PaneAxis): PaneAxis[] {
+  if (count < 2) return [];
+  if (axis === 'rows') return Array.from({ length: count - 1 }, () => 'rows' as PaneAxis);
+  if (count === 2) return ['columns'];
+  if (count === 3) return ['columns', 'rows'];
+  return (['rows', 'columns', 'rows'] as PaneAxis[]).slice(0, count - 1);
+}
+
+/**
  * A usable arrangement from anything: a stored object, a half-written one, or nothing.
  *
  * Junk is dropped view by view rather than taking the whole object's default, so one bad slot does
@@ -199,7 +229,17 @@ export function normalizePanes(value: unknown, fallback: EditorPanes = DEFAULT_P
       ? clamp(record.colShare, MIN_COLUMN_SHARE, MAX_COLUMN_SHARE)
       : (fallback.colShare ?? 0.5);
   const rowShares = Array.isArray(record.rowShares) ? normalizeShares(record.rowShares) : (fallback.rowShares ?? []);
-  return { views, axis, focus, colShare, rowShares };
+  // A stored boundary that is missing or junk borrows the canonical one for its slot, so an
+  // arrangement written before panes had their own control keeps the layout it was drawn in.
+  const canonical = defaultOrientations(views.length, axis);
+  const storedOrientations = Array.isArray(record.orientations) ? record.orientations : [];
+  const orientations = canonical.map((entry, index) =>
+    isPaneAxis(storedOrientations[index]) ? storedOrientations[index] : entry
+  );
+  const colShares = Array.isArray(record.colShares)
+    ? normalizeShares(record.colShares)
+    : (fallback.colShares ?? []);
+  return { views, axis, focus, colShare, rowShares, orientations, colShares };
 }
 
 /** Every view on screen, in slot order. Never empty, never a duplicate. */
@@ -259,7 +299,14 @@ export function splitPane(
       ? preferred
       : allowed.find((entry) => !views.includes(entry));
   if (!chosen) return normalizePanes(panes);
-  return normalizePanes({ ...panes, views: [...views, chosen], focus: views.length });
+  // Adding a pane returns to the canonical shape for the new count: the alternative is a body that
+  // grows by one arbitrary boundary, which no preset or audit can predict.
+  return normalizePanes({
+    ...panes,
+    views: [...views, chosen],
+    focus: views.length,
+    orientations: defaultOrientations(views.length + 1, panes.axis),
+  });
 }
 
 /**
@@ -280,19 +327,98 @@ export function closeSplit(panes: EditorPanes): EditorPanes {
  * only view falls back to the editor, because a body with no view is a blank card.
  */
 export function closeView(panes: EditorPanes, view: EditorView): EditorPanes {
+  const slot = panes.views.indexOf(view);
   const kept = panes.views.filter((entry) => entry !== view);
   if (kept.length === 0) return { ...panes, views: ['main'], focus: 0 };
-  return normalizePanes({ ...panes, views: kept, focus: 0 });
+  // The pane takes its own boundary with it: the one after it, or the last one when it was last.
+  const orientations = [...(panes.orientations ?? [])];
+  if (slot !== -1 && orientations.length > 0) {
+    orientations.splice(Math.min(slot, orientations.length - 1), 1);
+  }
+  return normalizePanes({ ...panes, views: kept, focus: 0, orientations });
 }
 
-/** Choose which way the panes divide. Remembered even while there is only one pane. */
+/**
+ * Choose which way the whole body divides. Remembered even while there is only one pane.
+ *
+ * A preset also resets the per-pane boundaries to the canonical shape for the current count: that
+ * is the one control a learner has for putting a hand-arranged body back the way it started.
+ */
 export function setAxis(panes: EditorPanes, axis: PaneAxis): EditorPanes {
-  return normalizePanes({ ...panes, axis });
+  return normalizePanes({
+    ...panes,
+    axis,
+    orientations: defaultOrientations(panes.views.length, axis),
+    // Three- and four-column widths belong to the layout they were dragged in.
+    colShares: [],
+  });
+}
+
+/**
+ * Place one pane relative to the pane before it, leaving every other boundary alone.
+ *
+ * `slot` is the pane's own slot (1..n-1); the first pane has nothing before it, so it has no
+ * boundary and this is a no-op for slot 0. `columns` opens a new column beside the previous pane,
+ * `rows` stacks it under that pane — the two choices a per-pane control offers.
+ */
+export function setPaneOrientation(panes: EditorPanes, slot: number, orientation: PaneAxis): EditorPanes {
+  if (!Number.isInteger(slot) || slot < 1 || slot >= panes.views.length) return normalizePanes(panes);
+  const orientations = [
+    ...(panes.orientations ?? defaultOrientations(panes.views.length, panes.axis)),
+  ];
+  orientations[slot - 1] = orientation;
+  return normalizePanes({ ...panes, orientations });
+}
+
+/**
+ * The panes grouped into the columns the body draws, left to right.
+ *
+ * A `columns` boundary starts a new group; a `rows` boundary appends to the group before it. The
+ * slots are the arrangement's own indices, so a caller showing a subset passes those indices and a
+ * hidden pane cannot leave an empty column behind.
+ */
+export function paneColumns(panes: EditorPanes, slots?: readonly number[]): number[][] {
+  const order = slots ?? panes.views.map((_, index) => index);
+  const columns: number[][] = [];
+  for (const slot of order) {
+    if (!Number.isInteger(slot) || slot < 0 || slot >= panes.views.length) continue;
+    if (columns.length === 0) {
+      columns.push([slot]);
+      continue;
+    }
+    const boundary =
+      panes.orientations?.[slot - 1] ?? (panes.axis === 'rows' ? 'rows' : 'columns');
+    if (boundary === 'rows') columns[columns.length - 1].push(slot);
+    else columns.push([slot]);
+  }
+  return columns;
+}
+
+/**
+ * Width shares for `count` columns: two columns keep the dragged `colShare`, three or four use their
+ * own stored widths and fall back to equal columns.
+ */
+export function paneWidths(panes: EditorPanes, count: number): number[] {
+  if (count < 2) return [1];
+  if (count === 2) {
+    const first = clamp(panes.colShare ?? 0.5, MIN_COLUMN_SHARE, MAX_COLUMN_SHARE);
+    return [first, 1 - first];
+  }
+  const stored = panes.colShares ?? [];
+  if (stored.length === count) return [...stored];
+  return Array.from({ length: count }, () => 1 / count);
 }
 
 /** One drag of the divider between the columns, written as a share of the body's width. */
 export function resizeColumn(panes: EditorPanes, share: number): EditorPanes {
   return normalizePanes({ ...panes, colShare: clamp(share, MIN_COLUMN_SHARE, MAX_COLUMN_SHARE) });
+}
+
+/** One drag between two columns of a three- or four-column body, written as every column's width. */
+export function resizeColumns(panes: EditorPanes, shares: readonly number[]): EditorPanes {
+  const widths = normalizeShares(shares);
+  if (widths.length < 2) return normalizePanes(panes);
+  return normalizePanes({ ...panes, colShares: widths, colShare: widths[0] });
 }
 
 /** One drag of a divider between stacked panes, written as the new row heights. */

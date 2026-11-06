@@ -8,13 +8,19 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
+import { Columns2, Rows2 } from 'lucide-react';
 import { PythonKeys } from '../../PythonKeys';
 import { PythonEditor, type PythonEditorHandle } from '../../PythonEditor';
 import { MAIN_FILE_NAME, type LessonFile } from '../../../lessonFiles';
 import {
+  EDITOR_VIEWS,
   focusSlot,
+  paneColumns,
+  paneWidths,
   resizeColumn,
+  resizeColumns,
   resizeRows,
+  setPaneOrientation,
   slotFor,
   type EditorPanes,
   type EditorView,
@@ -76,14 +82,21 @@ function sharesFor(count: number, stored: number[] | undefined): number[] {
 }
 
 /**
- * The editor's body: up to four panes, mixed side-by-side and stacked (`runner/EditorPaneBody.tsx`).
+ * The editor's body: up to four panes, grouped into columns of stacks
+ * (`runner/EditorPaneBody.tsx`).
  *
- * Three panes side by side use both axes — the first runs full height and the other two stack beside
- * it — so a third pane never leaves an empty grid cell under it. Each boundary is a divider the
- * learner can drag; the release writes the shares once, not once per pointer move, and the release
- * position is the one that counts because a pointermove's state can still be queued.
+ * The arrangement is a list of boundaries (`editorPanes.ts`): each pane after the first joins the
+ * body beside the one before it (a new column) or under it (a stack in that column). The default
+ * mixed three-pane body is one full-height column and a stack of two beside it; the 2×2 four-pane
+ * body is two stacks side by side, and a learner can flip any single boundary with the chip in the
+ * corner of the pane it moves without disturbing the others.
  *
- * A phone stacks a side-by-side arrangement: two 195 px columns are narrower than a line of Python.
+ * Every boundary is a divider the learner can drag; the release writes the shares once, not once
+ * per pointer move, and the release position is the one that counts because a pointermove's state
+ * can still be queued. Every view stays mounted and an unshown pane is `display:none`, which keeps
+ * exactly one `pre-actual-stdout` on the page.
+ *
+ * A phone stacks every arrangement: two 195 px columns are narrower than a line of Python.
  */
 export function EditorPaneBody({
   panes,
@@ -144,31 +157,42 @@ export function EditorPaneBody({
   const { actualOutputPane, expectedOutputPane, casesPane, workflowPane, tracePane } = slots;
   const paneSplit = allowedViews.length > 0 && views.length > 1 && shownViews.size > 1;
   const paneSlots = views.filter((view) => shownViews.has(view));
-  const sideBySide = panes.axis === 'columns' && !isPhone && paneSlots.length > 1;
-  const rowCount = sideBySide ? (paneSlots.length > 2 ? 2 : 1) : paneSlots.length;
-  const [preview, setPreview] = useState<{ col?: number; rows?: number[] }>({});
+  /** The arrangement's own slot numbers for the panes on screen, which is what boundaries index. */
+  const slotNumbers = paneSlots.map((view) => slotFor(panes, view) ?? 0);
+  const groups =
+    !paneSplit || isPhone ? (slotNumbers.length ? [slotNumbers] : []) : paneColumns(panes, slotNumbers);
+  const [preview, setPreview] = useState<{ columns?: number[]; rows?: number[] }>({});
   const dragRef = useRef<{
     axis: 'column' | 'row';
     index: number;
     from: number;
     span: number;
-    col: number;
+    columns: number[];
     rows: number[];
   } | null>(null);
   const bodyRef = useRef<HTMLDivElement | null>(null);
-  const colShare = preview.col ?? panes.colShare ?? 0.5;
-  const rowShares = preview.rows ?? sharesFor(rowCount, panes.rowShares);
+  const columnWidths = paneWidths(panes, Math.max(groups.length, 1));
+  const shownWidths = preview.columns ?? columnWidths;
+  const rowSharesFor = (count: number) => preview.rows ?? sharesFor(count, panes.rowShares);
   const openHelperFile = helperFiles.find((file) => file.name === openHelper) ?? null;
 
   const resizeMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const drag = dragRef.current;
     if (!drag) return;
-    const delta =
-      (drag.axis === 'column' ? event.clientX - drag.from : event.clientY - drag.from) / drag.span;
     if (drag.axis === 'column') {
-      setPreview({ col: Math.min(0.8, Math.max(0.2, drag.col + delta)) });
+      const delta = (event.clientX - drag.from) / drag.span;
+      const next = [...drag.columns];
+      const first = next[drag.index] + delta;
+      const second = next[drag.index + 1] - delta;
+      // Two columns keep the editor's 20% floor; three or four columns may be thinner.
+      const floor = drag.columns.length === 2 ? 0.2 : 0.15;
+      if (first < floor || second < floor) return;
+      next[drag.index] = first;
+      next[drag.index + 1] = second;
+      setPreview({ columns: next });
       return;
     }
+    const delta = (event.clientY - drag.from) / drag.span;
     const next = [...drag.rows];
     const first = drag.rows[drag.index] + delta;
     const second = drag.rows[drag.index + 1] - delta;
@@ -187,16 +211,22 @@ export function EditorPaneBody({
     }
     // The release position, not the last rendered preview: a pointermove's setState can still be
     // queued when the release arrives, and committing that would leave the divider a step behind.
-    const delta =
-      (drag.axis === 'column' ? event.clientX - drag.from : event.clientY - drag.from) / drag.span;
-    setPreview({});
     if (drag.axis === 'column') {
-      onPanes(resizeColumn(panes, drag.col + delta));
+      const delta = (event.clientX - drag.from) / drag.span;
+      const next = [...drag.columns];
+      next[drag.index] = drag.columns[drag.index] + delta;
+      next[drag.index + 1] = drag.columns[drag.index + 1] - delta;
+      setPreview({});
+      onPanes(
+        drag.columns.length === 2 ? resizeColumn(panes, next[0]) : resizeColumns(panes, next)
+      );
       return;
     }
+    const delta = (event.clientY - drag.from) / drag.span;
     const next = [...drag.rows];
     next[drag.index] = drag.rows[drag.index] + delta;
     next[drag.index + 1] = drag.rows[drag.index + 1] - delta;
+    setPreview({});
     onPanes(resizeRows(panes, next));
   };
 
@@ -204,6 +234,7 @@ export function EditorPaneBody({
     event: ReactPointerEvent<HTMLDivElement>,
     axis: 'column' | 'row',
     index: number,
+    columns: number[],
     rows: number[]
   ) => {
     if (event.button !== 0) return;
@@ -214,43 +245,39 @@ export function EditorPaneBody({
       index,
       from: axis === 'column' ? event.clientX : event.clientY,
       span: (axis === 'column' ? box.width : box.height) || 1,
-      col: panes.colShare ?? 0.5,
+      columns,
       rows,
     };
     event.currentTarget.setPointerCapture(event.pointerId);
     event.preventDefault();
   };
 
-  /** Where a pane sits in the mixed grid, or in the stack on a phone and a rows split. */
-  const paneLayout = (view: EditorView): CSSProperties => {
-    const slot = paneSlots.indexOf(view);
-    if (slot === -1) return { display: 'none' };
-    if (!sideBySide) return { order: slot, flexGrow: rowShares[slot] ?? 1, flexBasis: 0 };
-    if (paneSlots.length === 2) return { order: slot, gridColumnStart: slot + 1, gridRowStart: 1 };
-    if (paneSlots.length === 3) {
-      return slot === 0
-        ? { order: slot, gridColumnStart: 1, gridRowStart: 1, gridRowEnd: 3 }
-        : { order: slot, gridColumnStart: 2, gridRowStart: slot };
-    }
-    return {
-      order: slot,
-      gridColumnStart: (slot % 2) + 1,
-      gridRowStart: Math.floor(slot / 2) + 1,
-    };
-  };
-
-  const dividerStyle = (axis: 'column' | 'row', offset: string, left = '0%'): CSSProperties => ({
-    position: 'absolute',
-    top: axis === 'column' ? 0 : `calc(${offset} - 5px)`,
-    bottom: axis === 'column' ? 0 : undefined,
-    left: axis === 'column' ? `calc(${offset} - 5px)` : left,
-    right: axis === 'column' ? undefined : 0,
-    width: axis === 'column' ? 10 : undefined,
-    height: axis === 'row' ? 10 : undefined,
-    cursor: axis === 'column' ? 'col-resize' : 'row-resize',
-    touchAction: 'none',
-    zIndex: 2,
-  });
+  const dividerStyle = (
+    axis: 'column' | 'row',
+    offset: string,
+    span?: { left: number; width: number }
+  ): CSSProperties =>
+    axis === 'column'
+      ? {
+          position: 'absolute',
+          top: 0,
+          bottom: 0,
+          left: `calc(${offset} - 5px)`,
+          width: 10,
+          cursor: 'col-resize',
+          touchAction: 'none',
+          zIndex: 2,
+        }
+      : {
+          position: 'absolute',
+          top: `calc(${offset} - 5px)`,
+          height: 10,
+          left: `${(span?.left ?? 0) * 100}%`,
+          width: `${(span?.width ?? 1) * 100}%`,
+          cursor: 'row-resize',
+          touchAction: 'none',
+          zIndex: 2,
+        };
 
   const paneClass = (view: EditorView): string =>
     `min-w-0 flex-1 bg-panel ${
@@ -265,6 +292,204 @@ export function EditorPaneBody({
     if (slot !== null && panes.focus !== slot) onPanes(focusSlot(panes, slot));
   };
 
+  /** Whether a view has something to draw at all, which is also whether it stays mounted hidden. */
+  const paneAvailable = (view: EditorView): boolean => {
+    if (view === 'main') return true;
+    if (allowedViews.length === 0) return false;
+    if (view === 'requirements') {
+      return allowedViews.includes('requirements') && requirements.length > 0;
+    }
+    if (view === 'predict') return Boolean(gate);
+    if (view === 'cases') return Boolean(casesPane);
+    if (view === 'trace') return Boolean(tracePane);
+    return true;
+  };
+
+  const paneContent = (view: EditorView): ReactNode => {
+    if (view === 'main') {
+      return (
+        <>
+          {coEdit && (
+            <p
+              role="status"
+              data-testid="coedit-status"
+              className="border-b px-3 py-1.5 text-[11px]"
+              style={{ borderColor: 'var(--border)', color: 'var(--emerald, var(--accent))', backgroundColor: 'var(--bg)' }}
+            >
+              Co-editing {coEdit.lesson} with {peerLabel ?? 'the other workbench'} ·{' '}
+              {coEdit.remote === 0 ? 'no edits from them yet' : `${coEdit.remote} of their edits`} · undo is yours
+            </p>
+          )}
+          {!coEdit && collabNotice && (
+            <p
+              role="status"
+              data-testid="coedit-notice"
+              className="border-b px-3 py-1.5 text-[11px]"
+              style={{ borderColor: 'var(--border)', color: 'var(--muted)', backgroundColor: 'var(--bg)' }}
+            >
+              {collabNotice}
+            </p>
+          )}
+          {!deferPhoneEditor && isPhone && !openHelperFile && (
+            <PythonKeys onInsert={(text) => mainEditorRef.current?.insertText(text)} />
+          )}
+          {deferPhoneEditor ? null : openHelperFile ? (
+            <>
+              <p
+                className="border-b px-3 py-1.5 text-[11px]"
+                style={{ borderColor: 'var(--border)', color: 'var(--muted)', backgroundColor: 'var(--bg)' }}
+              >
+                Read-only helper. Your code imports this file; edit{' '}
+                <span className="font-mono" style={{ color: 'var(--accent)' }}>
+                  {MAIN_FILE_NAME}
+                </span>{' '}
+                to change the answer.
+              </p>
+              <PythonEditor
+                key={`${lessonId}:${openHelperFile.name}`}
+                ref={helperEditorRef}
+                value={openHelperFile.content}
+                readOnly
+                ariaLabel={`${openHelperFile.name}, read-only lesson helper`}
+                testId="editor-helper"
+                onGoToDefinition={onGoToDefinition}
+                initialLine={pendingJump?.file === openHelperFile.name ? pendingJump.line : undefined}
+              />
+            </>
+          ) : (
+            <PythonEditor
+              key={`main:${lessonId}`}
+              ref={mainEditorRef}
+              value={code}
+              onChange={commitCode}
+              ariaLabel="Python code editor"
+              testId={editorTestId}
+              onSliderCommit={onSliderCommit}
+              getAnalysis={getAnalysis}
+              onGoToDefinition={onGoToDefinition}
+              onRunCell={onRunCell}
+              onToggleBreakpoint={breakpoints?.onToggle}
+              onBreakpointsMoved={breakpoints?.onMoved}
+              breakpoints={breakpoints?.entries}
+              vimMode={vimOn}
+              onVimMode={onVimMode}
+              initialLine={pendingJump?.file === MAIN_FILE_NAME ? pendingJump.line : undefined}
+            />
+          )}
+        </>
+      );
+    }
+    if (view === 'requirements') {
+      return shownViews.has('requirements') ? (
+        <Suspense fallback={null}>
+          <EditorRequirements items={requirements} />
+        </Suspense>
+      ) : null;
+    }
+    if (view === 'predict') {
+      return gate ? (
+        <PredictPane
+          record={gate.record}
+          text={gate.text}
+          onText={gate.setText}
+          onCommit={gate.commit}
+          onSkip={gate.skip}
+          onAgain={gate.again}
+          onClose={() => onClosePredict?.()}
+          asksForFinish={asksForFinish}
+          held={gate.holding}
+          running={running}
+        />
+      ) : null;
+    }
+    if (view === 'actual') return actualOutputPane;
+    if (view === 'expected') return expectedOutputPane;
+    if (view === 'cases') return casesPane ?? null;
+    if (view === 'workflow') return workflowPane;
+    return tracePane ?? null;
+  };
+
+  const renderPane = (
+    view: EditorView,
+    slot: number,
+    options: { hidden: boolean; rowIndex?: number; rows?: number[] }
+  ) => {
+    const { hidden, rowIndex = 0, rows } = options;
+    // Only a pane that has a pane before it has a placement to choose, and the choice is worth a
+    // control only once the body has a third pane: a two-pane body's axis is the whole answer.
+    const showPlacement = !hidden && paneSplit && !isPhone && paneSlots.length >= 3 && slot > 0;
+    const boundary =
+      panes.orientations?.[slot - 1] ?? (panes.axis === 'rows' ? 'rows' : 'columns');
+    const placement = (choice: 'columns' | 'rows') => {
+      const selected = boundary === choice;
+      const Icon = choice === 'columns' ? Columns2 : Rows2;
+      return (
+        <button
+          type="button"
+          data-testid={`btn-pane-orient-${slot + 1}-${choice}`}
+          aria-pressed={selected}
+          aria-label={`Place pane ${slot + 1} ${choice === 'columns' ? 'beside' : 'below'} pane ${slot}`}
+          title={
+            choice === 'columns'
+              ? `Pane ${slot + 1}: open a new column beside pane ${slot}`
+              : `Pane ${slot + 1}: stack under pane ${slot} in its column`
+          }
+          onClick={(event) => {
+            event.stopPropagation();
+            onPanes(setPaneOrientation(panes, slot, choice));
+          }}
+          className={`flex h-4 w-4 cursor-pointer items-center justify-center rounded-sm ${
+            selected ? 'bg-accent/15 text-accent' : 'text-muted hover:bg-raise hover:text-body'
+          }`}
+        >
+          <Icon className="h-2.5 w-2.5" aria-hidden="true" />
+        </button>
+      );
+    };
+    return (
+      <div
+        key={view}
+        data-testid={`pane-${view}`}
+        data-pane={view}
+        data-slot={slot}
+        data-hidden={hidden ? '1' : undefined}
+        onClick={() => focusPane(view)}
+        style={
+          hidden
+            ? { display: 'none' }
+            : {
+                position: 'relative',
+                minWidth: 0,
+                // Only a bounded split may shrink its panes. A content-sized card keeps the flex
+                // item's automatic content floor, which is what stops a Requirements-only body
+                // from collapsing to zero height.
+                minHeight: paneSplit && boundedBody ? 0 : undefined,
+                order: rowIndex,
+                flexGrow: rows?.[rowIndex] ?? 1,
+                flexBasis: 0,
+              }
+        }
+        className={paneClass(view)}
+      >
+        {showPlacement && (
+          <div
+            data-testid={`pane-orientation-${slot + 1}`}
+            className="absolute right-1 top-1 z-[1] flex items-center gap-0.5 rounded border border-line bg-canvas/95 p-0.5 shadow-sm"
+          >
+            {placement('columns')}
+            {placement('rows')}
+          </div>
+        )}
+        {paneContent(view)}
+      </div>
+    );
+  };
+
+  /** Panes the arrangement does not show still mount, so their content and scroll survive a switch. */
+  const hiddenViews = EDITOR_VIEWS.filter(
+    (view) => !shownViews.has(view) && paneAvailable(view)
+  );
+
   return (
     <div
       ref={bodyRef}
@@ -273,238 +498,102 @@ export function EditorPaneBody({
       style={{
         display: collapsed ? 'none' : undefined,
         position: 'relative',
+        flexDirection: groups.length > 1 ? 'row' : 'column',
         // A preset's split needs a definite body height: at some widths its card sizes itself to
         // content, and every `flex-basis: 0` pane would collapse to nothing. A body taller than this
         // floor keeps its own height; a content-sized preset gets a usable, screen-sized one.
         minHeight:
           paneSplit && boundedBody ? (isPhone ? '20rem' : 'min(65vh, 36rem)') : undefined,
-        gridTemplateColumns: sideBySide ? `${colShare}fr ${1 - colShare}fr` : undefined,
-        gridTemplateRows:
-          sideBySide && rowCount > 1
-            ? rowShares.map((share) => `${share}fr`).join(' ')
-            : undefined,
       }}
       data-axis={panes.axis}
+      data-orientations={(panes.orientations ?? []).join(',')}
       data-split={paneSplit ? 'split' : 'single'}
       data-focus={paneSplit ? panes.focus : 0}
       data-views={views.join(',')}
       data-count={shownViews.size}
-      className={`${!paneSplit ? 'flex flex-col' : `${sideBySide ? 'grid' : 'flex flex-col'} gap-px bg-line-soft`}`}
+      className={`${!paneSplit ? 'flex flex-col' : 'flex gap-px bg-line-soft'}`}
     >
-      {paneSplit && sideBySide && (
-        <div
-          role="separator"
-          aria-orientation="vertical"
-          aria-label="Drag to resize the left and right panes"
-          data-testid="pane-divider-column"
-          onPointerDown={(event) => beginResize(event, 'column', 0, rowShares)}
-          onPointerMove={resizeMove}
-          onPointerUp={resizeEnd}
-          onPointerCancel={resizeEnd}
-          style={dividerStyle('column', `${colShare * 100}%`)}
-        />
-      )}
       {paneSplit &&
-        !sideBySide &&
-        rowShares.slice(0, -1).map((_, index) => (
+        groups.length > 1 &&
+        shownWidths.slice(0, -1).map((_, index) => (
           <div
-            key={index}
+            key={`column-divider-${index}`}
             role="separator"
-            aria-orientation="horizontal"
-            aria-label={`Drag to resize panes ${index + 1} and ${index + 2}`}
-            data-testid="pane-divider-row"
+            aria-orientation="vertical"
+            aria-label={`Drag to resize columns ${index + 1} and ${index + 2}`}
+            data-testid="pane-divider-column"
             data-index={index}
-            onPointerDown={(event) => beginResize(event, 'row', index, rowShares)}
+            onPointerDown={(event) =>
+              beginResize(event, 'column', index, shownWidths, rowSharesFor(1))
+            }
             onPointerMove={resizeMove}
             onPointerUp={resizeEnd}
             onPointerCancel={resizeEnd}
             style={dividerStyle(
-              'row',
-              `${rowShares.slice(0, index + 1).reduce((sum, share) => sum + share, 0) * 100}%`
+              'column',
+              `${shownWidths.slice(0, index + 1).reduce((sum, share) => sum + share, 0) * 100}%`
             )}
           />
         ))}
-      {paneSplit && sideBySide && paneSlots.length >= 3 && (
-        <div
-          role="separator"
-          aria-orientation="horizontal"
-          aria-label="Drag to resize the stacked panes"
-          data-testid="pane-divider-row"
-          onPointerDown={(event) => beginResize(event, 'row', 0, rowShares)}
-          onPointerMove={resizeMove}
-          onPointerUp={resizeEnd}
-          onPointerCancel={resizeEnd}
-          style={dividerStyle(
-            'row',
-            `${(rowShares[0] ?? 0.5) * 100}%`,
-            paneSlots.length === 3 ? `${colShare * 100}%` : '0%'
-          )}
-        />
-      )}
-      <div
-        data-testid="pane-main"
-        data-pane="main"
-        onClick={() => focusPane('main')}
-        style={paneLayout('main')}
-        className={paneClass('main')}
-      >
-        {coEdit && (
-          <p
-            role="status"
-            data-testid="coedit-status"
-            className="border-b px-3 py-1.5 text-[11px]"
-            style={{ borderColor: 'var(--border)', color: 'var(--emerald, var(--accent))', backgroundColor: 'var(--bg)' }}
-          >
-            Co-editing {coEdit.lesson} with {peerLabel ?? 'the other workbench'} ·{' '}
-            {coEdit.remote === 0 ? 'no edits from them yet' : `${coEdit.remote} of their edits`} · undo is yours
-          </p>
-        )}
-        {!coEdit && collabNotice && (
-          <p
-            role="status"
-            data-testid="coedit-notice"
-            className="border-b px-3 py-1.5 text-[11px]"
-            style={{ borderColor: 'var(--border)', color: 'var(--muted)', backgroundColor: 'var(--bg)' }}
-          >
-            {collabNotice}
-          </p>
-        )}
-        {!deferPhoneEditor && isPhone && !openHelperFile && (
-          <PythonKeys onInsert={(text) => mainEditorRef.current?.insertText(text)} />
-        )}
-        {deferPhoneEditor ? null : openHelperFile ? (
-          <>
-            <p
-              className="border-b px-3 py-1.5 text-[11px]"
-              style={{ borderColor: 'var(--border)', color: 'var(--muted)', backgroundColor: 'var(--bg)' }}
-            >
-              Read-only helper. Your code imports this file; edit{' '}
-              <span className="font-mono" style={{ color: 'var(--accent)' }}>
-                {MAIN_FILE_NAME}
-              </span>{' '}
-              to change the answer.
-            </p>
-            <PythonEditor
-              key={`${lessonId}:${openHelperFile.name}`}
-              ref={helperEditorRef}
-              value={openHelperFile.content}
-              readOnly
-              ariaLabel={`${openHelperFile.name}, read-only lesson helper`}
-              testId="editor-helper"
-              onGoToDefinition={onGoToDefinition}
-              initialLine={pendingJump?.file === openHelperFile.name ? pendingJump.line : undefined}
-            />
-          </>
-        ) : (
-          <PythonEditor
-            key={`main:${lessonId}`}
-            ref={mainEditorRef}
-            value={code}
-            onChange={commitCode}
-            ariaLabel="Python code editor"
-            testId={editorTestId}
-            onSliderCommit={onSliderCommit}
-            getAnalysis={getAnalysis}
-            onGoToDefinition={onGoToDefinition}
-            onRunCell={onRunCell}
-            onToggleBreakpoint={breakpoints?.onToggle}
-            onBreakpointsMoved={breakpoints?.onMoved}
-            breakpoints={breakpoints?.entries}
-            vimMode={vimOn}
-            onVimMode={onVimMode}
-            initialLine={pendingJump?.file === MAIN_FILE_NAME ? pendingJump.line : undefined}
-          />
-        )}
-      </div>
-      {allowedViews.length > 0 && (
-        <>
-          {allowedViews.includes('requirements') && requirements.length > 0 && (
+      {paneSplit &&
+        groups.map((group, columnIndex) => {
+          if (group.length < 2) return null;
+          const rows = rowSharesFor(group.length);
+          const left = shownWidths
+            .slice(0, columnIndex)
+            .reduce((sum, share) => sum + share, 0);
+          const width = shownWidths[columnIndex] ?? 1;
+          return rows.slice(0, -1).map((_, index) => (
             <div
-              data-testid="pane-requirements"
-              data-pane="requirements"
-              onClick={() => focusPane('requirements')}
-              style={paneLayout('requirements')}
-              className={paneClass('requirements')}
-            >
-              {shownViews.has('requirements') && (
-                <Suspense fallback={null}>
-                  <EditorRequirements items={requirements} />
-                </Suspense>
+              key={`row-divider-${columnIndex}-${index}`}
+              role="separator"
+              aria-orientation="horizontal"
+              aria-label={`Drag to resize panes ${index + 1} and ${index + 2} in column ${columnIndex + 1}`}
+              data-testid="pane-divider-row"
+              data-column={columnIndex}
+              data-index={index}
+              onPointerDown={(event) =>
+                beginResize(event, 'row', index, [], rows)
+              }
+              onPointerMove={resizeMove}
+              onPointerUp={resizeEnd}
+              onPointerCancel={resizeEnd}
+              style={dividerStyle(
+                'row',
+                `${rows.slice(0, index + 1).reduce((sum, share) => sum + share, 0) * 100}%`,
+                { left, width }
               )}
-            </div>
-          )}
-          {gate && (
-            <div
-              data-testid="pane-predict"
-              data-pane="predict"
-              onClick={() => focusPane('predict')}
-              style={paneLayout('predict')}
-              className={paneClass('predict')}
-            >
-              <PredictPane
-                record={gate.record}
-                text={gate.text}
-                onText={gate.setText}
-                onCommit={gate.commit}
-                onSkip={gate.skip}
-                onAgain={gate.again}
-                onClose={() => onClosePredict?.()}
-                asksForFinish={asksForFinish}
-                held={gate.holding}
-                running={running}
-              />
-            </div>
-          )}
+            />
+          ));
+        })}
+      {groups.map((group, columnIndex) => {
+        const rows = rowSharesFor(group.length);
+        return (
           <div
-            data-testid="pane-actual"
-            data-pane="actual"
-            onClick={() => focusPane('actual')}
-            style={paneLayout('actual')}
-            className={paneClass('actual')}
+            key={`pane-column-${columnIndex}`}
+            data-testid="pane-column"
+            data-column={columnIndex}
+            data-column-panes={group.length}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              flexGrow: shownWidths[columnIndex] ?? 1,
+              // A column is a width share only when there is more than one; a lone column must let
+              // its panes size the body instead of collapsing it to its zero flex-basis.
+              flexBasis: groups.length > 1 ? 0 : 'auto',
+              minWidth: 0,
+              minHeight: paneSplit && boundedBody ? 0 : undefined,
+              gap: 1,
+            }}
           >
-            {actualOutputPane}
+            {group.map((slot, rowIndex) =>
+              renderPane(panes.views[slot], slot, { hidden: false, rowIndex, rows })
+            )}
           </div>
-          <div
-            data-testid="pane-expected"
-            data-pane="expected"
-            onClick={() => focusPane('expected')}
-            style={paneLayout('expected')}
-            className={paneClass('expected')}
-          >
-            {expectedOutputPane}
-          </div>
-          {casesPane && (
-            <div
-              data-testid="pane-cases"
-              data-pane="cases"
-              onClick={() => focusPane('cases')}
-              style={paneLayout('cases')}
-              className={paneClass('cases')}
-            >
-              {casesPane}
-            </div>
-          )}
-          <div
-            data-testid="pane-workflow"
-            data-pane="workflow"
-            onClick={() => focusPane('workflow')}
-            style={paneLayout('workflow')}
-            className={paneClass('workflow')}
-          >
-            {workflowPane}
-          </div>
-          {tracePane && (
-            <div
-              data-testid="pane-trace"
-              data-pane="trace"
-              onClick={() => focusPane('trace')}
-              style={paneLayout('trace')}
-              className={paneClass('trace')}
-            >
-              {tracePane}
-            </div>
-          )}
-        </>
+        );
+      })}
+      {hiddenViews.map((view) =>
+        renderPane(view, slotFor(panes, view) ?? panes.views.length, { hidden: true })
       )}
     </div>
   );
