@@ -1,0 +1,475 @@
+{
+  "subjectId": "python",
+  "parentLessonId": "P.9",
+  "parentPath": "track-p/P.9-rearranging-formulas-and-scaling.md",
+  "title": "Rearranging and scaling in small steps",
+  "version": 1,
+  "concepts": [
+    {
+      "id": "rearranging",
+      "title": "Undo an operation on both sides",
+      "parentLessonId": "P.9",
+      "anchor": "micro-rearranging",
+      "sourceFocus": [
+        "undo whatever is attached to it by performing the **opposite operation on both sides**",
+        "`s = d / t`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "operators"
+      ],
+      "resources": [
+        {
+          "id": "mathsisfun-algebra",
+          "title": "MathsIsFun — Algebra: Balance when Adding and Multiplying",
+          "url": "https://www.mathsisfun.com/algebra/introduction-multiply.html",
+          "type": "reference",
+          "role": "primary",
+          "provider": "MathsIsFun",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": 94,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "An equation is a balanced scale. To isolate an unknown, undo whatever is attached to it by performing the opposite operation on both sides: if the unknown is multiplied by `t`, divide both sides by `t`.",
+        "From `d = s * t`, dividing both sides by `t` gives `s = d / t`; dividing by `s` instead gives `t = d / s`. When an offset is added, remove it first: from `x = s * t + x0`, subtract `x0` and then divide by `t`."
+      ],
+      "example": {
+        "code": "d = 12.0\nt = 3.0\ns = d / t\nprint(s)",
+        "output": "4.0"
+      },
+      "walkthrough": [
+        {
+          "code": "d = 12.0",
+          "variable": "d",
+          "after": "12.0",
+          "note": "The distance the formula starts with."
+        },
+        {
+          "code": "s = d / t",
+          "expression": "12.0 / 3.0",
+          "output": "s = 4.0",
+          "note": "Distance divided by time is the rearranged form for speed."
+        },
+        {
+          "code": "print(s)",
+          "output": "4.0",
+          "note": "The isolated unknown is now a value the program can use."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "rearranging-d1",
+          "prompt": "From d = v * t, how do you solve for t?",
+          "options": [
+            { "id": "a", "text": "t = d / v" },
+            { "id": "b", "text": "t = d * v" },
+            { "id": "c", "text": "t = v / d" },
+            { "id": "d", "text": "t = d - v" }
+          ],
+          "answerId": "a",
+          "explanation": "v is multiplied into t, so dividing both sides by v isolates t."
+        },
+        {
+          "id": "rearranging-d2",
+          "prompt": "From x = s * t + x0, which line isolates s?",
+          "options": [
+            { "id": "a", "text": "s = (x - x0) / t" },
+            { "id": "b", "text": "s = x / t - x0" },
+            { "id": "c", "text": "s = x - x0 / t" },
+            { "id": "d", "text": "s = (x + x0) / t" }
+          ],
+          "answerId": "a",
+          "explanation": "Subtract the offset x0 from both sides first, then divide the whole left side by t."
+        }
+      ],
+      "practice": {
+        "id": "rearranging-p1",
+        "prompt": "What does this print?",
+        "code": "s = 8.0\nt = 2.0\nprint(s * t)",
+        "options": [
+          { "id": "a", "text": "16.0" },
+          { "id": "b", "text": "4.0" },
+          { "id": "c", "text": "10.0" },
+          { "id": "d", "text": "6.0" }
+        ],
+        "answerId": "a",
+        "explanation": "This is the original distance form: speed times time is 16.0 m."
+      },
+      "reviewPool": [
+        {
+          "id": "rearranging-r1",
+          "prompt": "What undoes multiplication?",
+          "options": [
+            { "id": "a", "text": "division" },
+            { "id": "b", "text": "subtraction" },
+            { "id": "c", "text": "addition" },
+            { "id": "d", "text": "squaring" }
+          ],
+          "answerId": "a",
+          "explanation": "Division is the opposite operation, applied to both sides."
+        },
+        {
+          "id": "rearranging-r2",
+          "prompt": "What undoes addition?",
+          "options": [
+            { "id": "a", "text": "subtraction" },
+            { "id": "b", "text": "division" },
+            { "id": "c", "text": "multiplication" },
+            { "id": "d", "text": "a square root" }
+          ],
+          "answerId": "a",
+          "explanation": "Subtracting the same value from both sides removes an added term."
+        },
+        {
+          "id": "rearranging-r3",
+          "prompt": "When you change one side of an equation, what must happen to the other?",
+          "options": [
+            { "id": "a", "text": "The same operation happens to it" },
+            { "id": "b", "text": "It stays unchanged" },
+            { "id": "c", "text": "It is divided by two" },
+            { "id": "d", "text": "It is discarded" }
+          ],
+          "answerId": "a",
+          "explanation": "The balance holds only when both sides receive the same operation."
+        },
+        {
+          "id": "rearranging-r4",
+          "prompt": "Which rearranged form finds speed from distance and time?",
+          "options": [
+            { "id": "a", "text": "s = d / t" },
+            { "id": "b", "text": "s = d * t" },
+            { "id": "c", "text": "s = t / d" },
+            { "id": "d", "text": "s = d + t" }
+          ],
+          "answerId": "a",
+          "explanation": "Distance over time is the speed form of d = s * t."
+        }
+      ],
+      "challenge": {
+        "id": "rearranging-c1",
+        "prompt": "What does this print?",
+        "code": "x = 10.0\nx0 = 4.0\nt = 3.0\nprint((x - x0) / t)",
+        "options": [
+          { "id": "a", "text": "2.0" },
+          { "id": "b", "text": "4.67" },
+          { "id": "c", "text": "3.33" },
+          { "id": "d", "text": "6.0" }
+        ],
+        "answerId": "a",
+        "explanation": "Subtract the offset (6.0) and divide by time: 6.0 / 3.0 = 2.0."
+      }
+    },
+    {
+      "id": "linear-scaling",
+      "title": "Scale by the fraction of full range",
+      "parentLessonId": "P.9",
+      "anchor": "micro-linear-scaling",
+      "sourceFocus": [
+        "fraction of full scale",
+        "`y = (x / 1023.0) * 5.0`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "rearranging"
+      ],
+      "resources": [
+        {
+          "id": "mathsisfun-proportions",
+          "title": "MathsIsFun — Proportions",
+          "url": "https://www.mathsisfun.com/algebra/proportions.html",
+          "type": "reference",
+          "role": "primary",
+          "provider": "MathsIsFun",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": 95,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "A proportion says two ratios are equal. A sensor reading of `x` counts out of a full-scale count of 1023 has the same fraction of full scale as the output voltage has of 5.0 V: `x / 1023.0 = y / 5.0`.",
+        "Multiplying both sides by 5.0 gives `y = (x / 1023.0) * 5.0`. The fraction is a number between 0.0 and 1.0, so a reading of 0 counts gives 0.0 V, the full count gives 5.0 V, and half the counts give half the volts."
+      ],
+      "example": {
+        "code": "counts = 512\nvolts = (counts / 1023.0) * 5.0\nprint(round(volts, 2))",
+        "output": "2.5"
+      },
+      "walkthrough": [
+        {
+          "code": "counts / 1023.0",
+          "expression": "512 / 1023.0",
+          "output": "0.5005",
+          "note": "The reading as a fraction of full scale, between 0 and 1."
+        },
+        {
+          "code": "* 5.0",
+          "expression": "0.5005 × 5.0",
+          "output": "2.5024",
+          "note": "The fraction of the output range, in volts."
+        },
+        {
+          "code": "round(volts, 2)",
+          "output": "2.5",
+          "note": "Rounding keeps the displayed value honest to two decimals."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "linear-scaling-d1",
+          "prompt": "What voltage does a count of 0 give?",
+          "options": [
+            { "id": "a", "text": "0.0 V" },
+            { "id": "b", "text": "5.0 V" },
+            { "id": "c", "text": "2.5 V" },
+            { "id": "d", "text": "1023 V" }
+          ],
+          "answerId": "a",
+          "explanation": "Zero counts is the bottom of the range, so the fraction is 0."
+        },
+        {
+          "id": "linear-scaling-d2",
+          "prompt": "What voltage does a count of 1023 give?",
+          "options": [
+            { "id": "a", "text": "5.0 V" },
+            { "id": "b", "text": "0.0 V" },
+            { "id": "c", "text": "1023 V" },
+            { "id": "d", "text": "2.5 V" }
+          ],
+          "answerId": "a",
+          "explanation": "The full count is the top of the range, so the fraction is 1 and the output is the full 5.0 V."
+        }
+      ],
+      "practice": {
+        "id": "linear-scaling-p1",
+        "prompt": "What does this print?",
+        "code": "counts = 1023\nprint(round((counts / 1023.0) * 5.0, 2))",
+        "options": [
+          { "id": "a", "text": "5.0" },
+          { "id": "b", "text": "0.0" },
+          { "id": "c", "text": "2.5" },
+          { "id": "d", "text": "1023" }
+        ],
+        "answerId": "a",
+        "explanation": "The fraction is exactly 1 at full scale, so the output is the full 5.0 V."
+      },
+      "reviewPool": [
+        {
+          "id": "linear-scaling-r1",
+          "prompt": "What is the full-scale count in the lesson's 10-bit example?",
+          "options": [
+            { "id": "a", "text": "1023" },
+            { "id": "b", "text": "1024" },
+            { "id": "c", "text": "255" },
+            { "id": "d", "text": "5" }
+          ],
+          "answerId": "a",
+          "explanation": "Ten bits hold values from 0 to 1023, so 1023 is the full-scale count."
+        },
+        {
+          "id": "linear-scaling-r2",
+          "prompt": "What range does the output voltage span?",
+          "options": [
+            { "id": "a", "text": "0.0 to 5.0 V" },
+            { "id": "b", "text": "0.0 to 1023 V" },
+            { "id": "c", "text": "1.0 to 5.0 V" },
+            { "id": "d", "text": "0.0 to 10.0 V" }
+          ],
+          "answerId": "a",
+          "explanation": "The example maps the counts onto a 0–5 V output."
+        },
+        {
+          "id": "linear-scaling-r3",
+          "prompt": "What does the ratio counts / 1023.0 represent?",
+          "options": [
+            { "id": "a", "text": "The fraction of full scale" },
+            { "id": "b", "text": "The voltage in volts" },
+            { "id": "c", "text": "The time in seconds" },
+            { "id": "d", "text": "The bit count" }
+          ],
+          "answerId": "a",
+          "explanation": "It places the reading between 0 and 1 on its own range."
+        },
+        {
+          "id": "linear-scaling-r4",
+          "prompt": "Which expression scales counts to a 5.0 V output?",
+          "options": [
+            { "id": "a", "text": "(counts / 1023.0) * 5.0" },
+            { "id": "b", "text": "counts * 5.0" },
+            { "id": "c", "text": "counts / 5.0" },
+            { "id": "d", "text": "(counts / 5.0) * 1023.0" }
+          ],
+          "answerId": "a",
+          "explanation": "The fraction of full scale is multiplied by the output range."
+        }
+      ],
+      "challenge": {
+        "id": "linear-scaling-c1",
+        "prompt": "What does this print?",
+        "code": "counts = 1023\nprint(round((counts / 1023.0) * 3.3, 2))",
+        "options": [
+          { "id": "a", "text": "3.3" },
+          { "id": "b", "text": "5.0" },
+          { "id": "c", "text": "1.65" },
+          { "id": "d", "text": "1023" }
+        ],
+        "answerId": "a",
+        "explanation": "Full scale is a fraction of 1, so the output is the whole 3.3 V range."
+      }
+    },
+    {
+      "id": "scale-output",
+      "title": "The output range sets the top",
+      "parentLessonId": "P.9",
+      "anchor": "micro-scale-output",
+      "sourceFocus": [
+        "the multiplier is the output's top value",
+        "a 3.3 V board maps full scale to 3.3"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "linear-scaling"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": 86,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "The fraction of full scale is a number between 0 and 1; what changes between boards is the top of the output range. In `y = (x / 1023.0) * top`, the multiplier is the output's top value.",
+        "A 5 V sensor chain maps full scale to 5.0, and a 3.3 V board maps full scale to 3.3. The same counts therefore describe different voltages, so read the board's supply before choosing the number."
+      ],
+      "example": {
+        "code": "counts = 1023\nvolts = (counts / 1023.0) * 3.3\nprint(round(volts, 1))",
+        "output": "3.3"
+      },
+      "walkthrough": [
+        {
+          "code": "counts / 1023.0",
+          "expression": "1023 / 1023.0",
+          "output": "1.0",
+          "note": "Full scale is the fraction 1."
+        },
+        {
+          "code": "* 3.3",
+          "expression": "1.0 × 3.3",
+          "output": "3.3",
+          "note": "The fraction of the 3.3 V range."
+        },
+        {
+          "code": "round(volts, 1)",
+          "output": "3.3",
+          "note": "The displayed value matches the board's supply."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "scale-output-d1",
+          "prompt": "On a 3.3 V board, what does a count of 0 give?",
+          "options": [
+            { "id": "a", "text": "0.0 V" },
+            { "id": "b", "text": "3.3 V" },
+            { "id": "c", "text": "1.65 V" },
+            { "id": "d", "text": "5.0 V" }
+          ],
+          "answerId": "a",
+          "explanation": "Zero counts is the bottom of any range."
+        },
+        {
+          "id": "scale-output-d2",
+          "prompt": "Which number is the multiplier for a 3.3 V board?",
+          "options": [
+            { "id": "a", "text": "3.3" },
+            { "id": "b", "text": "5.0" },
+            { "id": "c", "text": "1023.0" },
+            { "id": "d", "text": "0.5" }
+          ],
+          "answerId": "a",
+          "explanation": "The multiplier is the output range's top value, which is 3.3 V here."
+        }
+      ],
+      "practice": {
+        "id": "scale-output-p1",
+        "prompt": "What does full scale give on a 5.0 V board?",
+        "options": [
+          { "id": "a", "text": "5.0 V" },
+          { "id": "b", "text": "3.3 V" },
+          { "id": "c", "text": "2.5 V" },
+          { "id": "d", "text": "1023 V" }
+        ],
+        "answerId": "a",
+        "explanation": "The fraction is 1, so the output is the whole 5.0 V range."
+      },
+      "reviewPool": [
+        {
+          "id": "scale-output-r1",
+          "prompt": "What does the multiplier in a scaling formula represent?",
+          "options": [
+            { "id": "a", "text": "The output range's top value" },
+            { "id": "b", "text": "The sensor's count" },
+            { "id": "c", "text": "The number of bits" },
+            { "id": "d", "text": "The sample time" }
+          ],
+          "answerId": "a",
+          "explanation": "The fraction of full scale is multiplied by the range it maps onto."
+        },
+        {
+          "id": "scale-output-r2",
+          "prompt": "Half the full-scale counts on a 3.3 V board give…",
+          "options": [
+            { "id": "a", "text": "1.65 V" },
+            { "id": "b", "text": "2.5 V" },
+            { "id": "c", "text": "3.3 V" },
+            { "id": "d", "text": "0.0 V" }
+          ],
+          "answerId": "a",
+          "explanation": "Half of 3.3 is 1.65."
+        },
+        {
+          "id": "scale-output-r3",
+          "prompt": "Why can the same counts give different volts?",
+          "options": [
+            { "id": "a", "text": "The boards have different supply voltages" },
+            { "id": "b", "text": "The counts are random" },
+            { "id": "c", "text": "Python rounds differently" },
+            { "id": "d", "text": "The sensor changes its range" }
+          ],
+          "answerId": "a",
+          "explanation": "The fraction maps onto the board's own output range."
+        },
+        {
+          "id": "scale-output-r4",
+          "prompt": "What is the fraction at half of 1023 counts (about 511)?",
+          "options": [
+            { "id": "a", "text": "about 0.5" },
+            { "id": "b", "text": "about 1.0" },
+            { "id": "c", "text": "about 2.0" },
+            { "id": "d", "text": "0.0" }
+          ],
+          "answerId": "a",
+          "explanation": "511 / 1023 is just under one half."
+        }
+      ],
+      "challenge": {
+        "id": "scale-output-c1",
+        "prompt": "What does this print?",
+        "code": "counts = 1023\nprint(round((counts / 1023.0) * 3.3, 2))",
+        "options": [
+          { "id": "a", "text": "3.3" },
+          { "id": "b", "text": "5.0" },
+          { "id": "c", "text": "1.65" },
+          { "id": "d", "text": "1023" }
+        ],
+        "answerId": "a",
+        "explanation": "Full scale is a fraction of 1, so the output is the whole 3.3 V range."
+      }
+    }
+  ]
+}

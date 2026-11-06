@@ -111,11 +111,11 @@ The focused hours are targets, not measurements: each page's own estimate, summe
 ## Micro-learning (beta)
 
 The workbench also has a small **micro-learning** tab covering the first two Python lessons: ten
-concepts from P.1 and P.2, one idea at a time, each designed for about two minutes. Two diagnostics
+concepts from P.1 through P.9, one idea at a time, each designed for about two minutes. Two diagnostics
 choose the practice; a review is scheduled for tomorrow and a clean challenge moves it two weeks
 out. Progress stays in this browser, the tab can be hidden at runtime without deleting it, and a
 micro result never marks the parent lesson verified. It is beta until a beginner who has never seen
-MechaLab completes both lessons and reports where they got stuck. The rules, storage keys and self-study protocol are
+MechaLab completes the lessons and reports where they got stuck. The rules, storage keys and self-study protocol are
 in [`docs/MICROLEARNING.md`](docs/MICROLEARNING.md).
 
 ## How long this really takes

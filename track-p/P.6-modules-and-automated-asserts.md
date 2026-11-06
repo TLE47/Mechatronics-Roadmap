@@ -65,6 +65,18 @@ flowchart LR
   - **What to skip:** Skip **`pytest`**, **`Testing Strings`**, and **`Organizing Tests into Folders`**.
   - **Key takeaway:** Instead of checking printed numbers by eye every time you edit a script, `assert condition` tests your code automatically: if `condition` is `True`, Python continues silently; if `False`, Python stops immediately on that line with an `AssertionError`.
 
+#### Micro focus: a module is a toolbox
+<a id="micro-imports"></a>
+A module is a file of ready-made tools, and `import math` at the top of a script makes its tools reachable by dot notation: `math.sqrt(25.0)` takes a square root, and `math.pi` is the constant pi. Importing loads the name, so `sqrt(25.0)` without the `math.` prefix raises `NameError`.
+
+#### Micro focus: an assert is a self-check
+<a id="micro-asserts"></a>
+An `assert condition` tests your code automatically: a True condition continues silently, and a False one stops immediately on that line with an `AssertionError`. Keep each check small and specific — `assert distance_2d(3.0, 4.0) == 5.0` names one known case — so a wrong answer fails loudly where it happened rather than at a number you inspect by eye later.
+
+#### Micro focus: an assert that explains
+<a id="micro-assert-message"></a>
+An assert can carry its reason: `assert condition, "message"` stays silent when it passes, and the message is shown with the `AssertionError` when it fails. Write the message as the rule that broke, such as `assert cmd <= 255, "command above the limit"`.
+
 ### Bridge Notes
 When calculating the straight-line distance from a robot's shoulder joint at $(0, 0)$ to a target at $(x, y)$, we use the Pythagorean theorem $d = \sqrt{x^2 + y^2}$. Instead of raising to the $0.5$ power, we load Python's built-in **`math` module** at the top of our file with `import math` and call `math.sqrt((x ** 2) + (y ** 2))`.
 

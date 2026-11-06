@@ -1,0 +1,467 @@
+{
+  "subjectId": "python",
+  "parentLessonId": "P.5",
+  "parentPath": "track-p/P.5-functions-and-while-loops.md",
+  "title": "Functions and while loops in small steps",
+  "version": 1,
+  "concepts": [
+    {
+      "id": "functions",
+      "title": "A function you can call twice",
+      "parentLessonId": "P.5",
+      "anchor": "micro-functions",
+      "sourceFocus": [
+        "A **function** (`def clamp_cmd(cmd):`)",
+        "The `return` keyword hands the computed answer back to the caller"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "int-float"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": 96,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "A function is a named block you can call more than once. `def double(value):` names it and declares one parameter; the indented body runs only when the call happens, and `double(4)` supplies 4 as `value`. Without the call, the body waits.",
+        "The `return` keyword hands the computed answer back to the caller, so it can be stored or printed. A function that only prints hands back `None`; that is why `print` and `return` are not interchangeable."
+      ],
+      "example": {
+        "code": "def double(value):\n    return value * 2\n\nprint(double(4))\nprint(double(5))",
+        "output": "8\n10"
+      },
+      "walkthrough": [
+        {
+          "code": "def double(value):",
+          "note": "This line only builds the function and names its one parameter."
+        },
+        {
+          "code": "return value * 2",
+          "expression": "4 * 2, then 5 * 2",
+          "output": "8, then 10",
+          "note": "Each call runs the body with its own value and hands the product back."
+        },
+        {
+          "code": "print(double(4))",
+          "output": "8",
+          "note": "The returned value is what print receives; the call itself is the argument."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "functions-d1",
+          "prompt": "What does this print?",
+          "code": "def add_one(value):\n    value + 1\n\nprint(add_one(4))",
+          "options": [
+            { "id": "a", "text": "None" },
+            { "id": "b", "text": "5" },
+            { "id": "c", "text": "4" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "a",
+          "explanation": "The body computes 5 and throws it away, because nothing returns it; a function without `return` hands back None."
+        },
+        {
+          "id": "functions-d2",
+          "prompt": "Which keyword hands a value back to the caller?",
+          "options": [
+            { "id": "a", "text": "return" },
+            { "id": "b", "text": "print" },
+            { "id": "c", "text": "def" },
+            { "id": "d", "text": "call" }
+          ],
+          "answerId": "a",
+          "explanation": "`return` ends the function and passes its value out; `print` only writes to the screen."
+        }
+      ],
+      "practice": {
+        "id": "functions-p1",
+        "prompt": "What does this print?",
+        "code": "def clamp(cmd):\n    if cmd > 255:\n        return 255\n    return cmd\n\nprint(clamp(300))",
+        "options": [
+          { "id": "a", "text": "255" },
+          { "id": "b", "text": "300" },
+          { "id": "c", "text": "None" },
+          { "id": "d", "text": "An error" }
+        ],
+        "answerId": "a",
+        "explanation": "300 is over the ceiling, so the first return hands back 255 and the second return never runs."
+      },
+      "reviewPool": [
+        {
+          "id": "functions-r1",
+          "prompt": "What does `def` do?",
+          "options": [
+            { "id": "a", "text": "Names a function and its parameters" },
+            { "id": "b", "text": "Calls the function immediately" },
+            { "id": "c", "text": "Prints the function's result" },
+            { "id": "d", "text": "Imports a module" }
+          ],
+          "answerId": "a",
+          "explanation": "`def` defines the block; the body runs only when a call happens."
+        },
+        {
+          "id": "functions-r2",
+          "prompt": "A function that only prints its answer returns…",
+          "options": [
+            { "id": "a", "text": "None" },
+            { "id": "b", "text": "the printed text" },
+            { "id": "c", "text": "0" },
+            { "id": "d", "text": "an error" }
+          ],
+          "answerId": "a",
+          "explanation": "Printing is a side effect, not a return value."
+        },
+        {
+          "id": "functions-r3",
+          "prompt": "In `def area(width, height):`, what are width and height?",
+          "options": [
+            { "id": "a", "text": "Parameters filled by each call" },
+            { "id": "b", "text": "Global variables" },
+            { "id": "c", "text": "Return values" },
+            { "id": "d", "text": "Module names" }
+          ],
+          "answerId": "a",
+          "explanation": "Each call supplies the values its parameters receive."
+        },
+        {
+          "id": "functions-r4",
+          "prompt": "What does a return statement do to the rest of the function?",
+          "options": [
+            { "id": "a", "text": "Ends the function immediately" },
+            { "id": "b", "text": "Repeats it" },
+            { "id": "c", "text": "Pauses it" },
+            { "id": "d", "text": "Prints the value" }
+          ],
+          "answerId": "a",
+          "explanation": "Code after a return in that call is never reached."
+        }
+      ],
+      "challenge": {
+        "id": "functions-c1",
+        "prompt": "What does this print?",
+        "code": "def area(width, height):\n    return width * height\n\nprint(area(3, 4))",
+        "options": [
+          { "id": "a", "text": "12" },
+          { "id": "b", "text": "7" },
+          { "id": "c", "text": "(3, 4)" },
+          { "id": "d", "text": "None" }
+        ],
+        "answerId": "a",
+        "explanation": "The call fills width with 3 and height with 4, and return hands back 12."
+      }
+    },
+    {
+      "id": "while-loops",
+      "title": "A while loop checks before every pass",
+      "parentLessonId": "P.5",
+      "anchor": "micro-while-loops",
+      "sourceFocus": [
+        "checks its condition before every pass",
+        "You must always update the loop counter"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "functions"
+      ],
+      "resources": [
+        {
+          "id": "cs50p-notes-2",
+          "title": "CS50P Lecture 2 notes",
+          "url": "https://cs50.harvard.edu/python/2022/notes/2/",
+          "type": "notes",
+          "role": "primary",
+          "provider": "Harvard CS50P",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": 92,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "A `while` loop checks its condition before every pass. While the condition is True the indented body runs, and then the condition is checked again; when it is False the loop ends and the first unindented line continues.",
+        "You must always update the loop counter inside the body, for example `step = step + 1`. That update is what eventually makes the condition False; a body that never changes it repeats forever."
+      ],
+      "example": {
+        "code": "step = 0\nwhile step < 3:\n    print(step)\n    step = step + 1",
+        "output": "0\n1\n2"
+      },
+      "walkthrough": [
+        {
+          "code": "step = 0",
+          "variable": "step",
+          "after": "0",
+          "note": "The counter starts below the limit, so the first check will pass."
+        },
+        {
+          "code": "while step < 3:",
+          "expression": "0 < 3, 1 < 3, 2 < 3, then 3 < 3",
+          "output": "True, True, True, then False",
+          "note": "The condition is tested before each pass; the fourth test ends the loop."
+        },
+        {
+          "code": "step = step + 1",
+          "variable": "step",
+          "before": "0, 1, 2",
+          "after": "1, 2, 3",
+          "note": "The counter moves towards the limit on every pass."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "while-loops-d1",
+          "prompt": "What does this print?",
+          "code": "step = 0\nwhile step < 3:\n    print(step)\n    step = step + 1",
+          "options": [
+            { "id": "a", "text": "0, 1, 2" },
+            { "id": "b", "text": "1, 2, 3" },
+            { "id": "c", "text": "0, 1, 2, 3" },
+            { "id": "d", "text": "3" }
+          ],
+          "answerId": "a",
+          "explanation": "The body prints before it increments, and the condition stops the loop once step reaches 3."
+        },
+        {
+          "id": "while-loops-d2",
+          "prompt": "What happens if the increment line is removed?",
+          "options": [
+            { "id": "a", "text": "The loop never ends" },
+            { "id": "b", "text": "It runs zero times" },
+            { "id": "c", "text": "It prints 0, 1, 2 once" },
+            { "id": "d", "text": "Python adds the counter for you" }
+          ],
+          "answerId": "a",
+          "explanation": "The condition stays True forever, because nothing moves the counter."
+        }
+      ],
+      "practice": {
+        "id": "while-loops-p1",
+        "prompt": "What is step at the end?",
+        "code": "step = 0\nwhile step < 5:\n    step = step + 1\nprint(step)",
+        "options": [
+          { "id": "a", "text": "5" },
+          { "id": "b", "text": "4" },
+          { "id": "c", "text": "0" },
+          { "id": "d", "text": "An error" }
+        ],
+        "answerId": "a",
+        "explanation": "The body increments until the test 5 < 5 fails, and the counter that failed the test is 5."
+      },
+      "reviewPool": [
+        {
+          "id": "while-loops-r1",
+          "prompt": "When is a while loop's condition checked?",
+          "options": [
+            { "id": "a", "text": "Before every pass" },
+            { "id": "b", "text": "Only once, at the start" },
+            { "id": "c", "text": "After every pass, never before" },
+            { "id": "d", "text": "Only when the loop breaks" }
+          ],
+          "answerId": "a",
+          "explanation": "Each pass begins with the test; a False test means the body does not run again."
+        },
+        {
+          "id": "while-loops-r2",
+          "prompt": "What does the body have to do for a counted while loop to end?",
+          "options": [
+            { "id": "a", "text": "Move the counter towards the limit" },
+            { "id": "b", "text": "Print the counter" },
+            { "id": "c", "text": "Reset the counter to zero" },
+            { "id": "d", "text": "Nothing; the loop ends itself" }
+          ],
+          "answerId": "a",
+          "explanation": "The condition only becomes False when the counter changes."
+        },
+        {
+          "id": "while-loops-r3",
+          "prompt": "How many times does `while step < 3` run with step starting at 0?",
+          "options": [
+            { "id": "a", "text": "3" },
+            { "id": "b", "text": "2" },
+            { "id": "c", "text": "4" },
+            { "id": "d", "text": "1" }
+          ],
+          "answerId": "a",
+          "explanation": "The passes run for step 0, 1 and 2, then the test fails at 3."
+        },
+        {
+          "id": "while-loops-r4",
+          "prompt": "Where does execution go when the condition is False?",
+          "options": [
+            { "id": "a", "text": "To the first line after the loop" },
+            { "id": "b", "text": "Back to the loop's first line" },
+            { "id": "c", "text": "To the file's first line" },
+            { "id": "d", "text": "Nowhere; the program stops" }
+          ],
+          "answerId": "a",
+          "explanation": "A False test skips the body and continues below the loop."
+        }
+      ],
+      "challenge": {
+        "id": "while-loops-c1",
+        "prompt": "What does this print?",
+        "code": "step = 2\nwhile step < 6:\n    step = step + 2\nprint(step)",
+        "options": [
+          { "id": "a", "text": "6" },
+          { "id": "b", "text": "4" },
+          { "id": "c", "text": "8" },
+          { "id": "d", "text": "2" }
+        ],
+        "answerId": "a",
+        "explanation": "The counter runs 2, 4, 6; at 6 the test 6 < 6 is False, so the loop ends and prints 6."
+      }
+    },
+    {
+      "id": "none",
+      "title": "None is the answer when nothing returns",
+      "parentLessonId": "P.5",
+      "anchor": "micro-none",
+      "sourceFocus": [
+        "`None` is a value of its own",
+        "a function without `return` hands back `None`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "functions"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": 87,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "`None` is a value of its own: it means there is no answer here. A function without `return` hands back `None` even when its body prints something, so the printout and the return value are two different things.",
+        "Test for it with `is None`, as in `if result is None:`. Printing `None` and returning it look similar on screen, but only the returned value can be stored, compared or passed on."
+      ],
+      "example": {
+        "code": "def show(value):\n    print(value)\n\nresult = show(7)\nprint(result)",
+        "output": "7\nNone"
+      },
+      "walkthrough": [
+        {
+          "code": "show(7)",
+          "note": "The call runs the body, which prints 7."
+        },
+        {
+          "code": "result = show(7)",
+          "variable": "result",
+          "after": "None",
+          "note": "No return statement, so the call's value is None."
+        },
+        {
+          "code": "print(result)",
+          "output": "None",
+          "note": "The second line shows what the call handed back, which is nothing."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "none-d1",
+          "prompt": "What does this print?",
+          "code": "def f():\n    pass\n\nprint(f())",
+          "options": [
+            { "id": "a", "text": "None" },
+            { "id": "b", "text": "0" },
+            { "id": "c", "text": "An empty line" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "a",
+          "explanation": "A function with no return hands back None, and printing it shows the word None."
+        },
+        {
+          "id": "none-d2",
+          "prompt": "How should a result be tested for None?",
+          "options": [
+            { "id": "a", "text": "result is None" },
+            { "id": "b", "text": "result == 0" },
+            { "id": "c", "text": "result = None" },
+            { "id": "d", "text": "result.print()" }
+          ],
+          "answerId": "a",
+          "explanation": "`is None` asks whether the value is exactly None; `=` would store it."
+        }
+      ],
+      "practice": {
+        "id": "none-p1",
+        "prompt": "What does this print?",
+        "code": "def f():\n    return\n\nprint(f())",
+        "options": [
+          { "id": "a", "text": "None" },
+          { "id": "b", "text": "0" },
+          { "id": "c", "text": "An error" },
+          { "id": "d", "text": "Nothing" }
+        ],
+        "answerId": "a",
+        "explanation": "A bare return hands back None, and print shows it."
+      },
+      "reviewPool": [
+        {
+          "id": "none-r1",
+          "prompt": "What does a function without a return hand back?",
+          "options": [
+            { "id": "a", "text": "None" },
+            { "id": "b", "text": "0" },
+            { "id": "c", "text": "its last printed line" },
+            { "id": "d", "text": "an error" }
+          ],
+          "answerId": "a",
+          "explanation": "The language defines the missing return value as None."
+        },
+        {
+          "id": "none-r2",
+          "prompt": "What does None mean?",
+          "options": [
+            { "id": "a", "text": "no value here" },
+            { "id": "b", "text": "zero" },
+            { "id": "c", "text": "an empty string" },
+            { "id": "d", "text": "False" }
+          ],
+          "answerId": "a",
+          "explanation": "None is its own value, distinct from 0, an empty string and False."
+        },
+        {
+          "id": "none-r3",
+          "prompt": "Does printing a value return it?",
+          "options": [
+            { "id": "a", "text": "No; printing is a side effect" },
+            { "id": "b", "text": "Yes, print returns its argument" },
+            { "id": "c", "text": "Only inside a function" },
+            { "id": "d", "text": "Only for numbers" }
+          ],
+          "answerId": "a",
+          "explanation": "print writes to the screen; the value must be returned to be reused."
+        },
+        {
+          "id": "none-r4",
+          "prompt": "What does `print(f())` show for a function that returns None?",
+          "options": [
+            { "id": "a", "text": "None" },
+            { "id": "b", "text": "nothing at all" },
+            { "id": "c", "text": "0" },
+            { "id": "d", "text": "an error" }
+          ],
+          "answerId": "a",
+          "explanation": "print renders None as the word None."
+        }
+      ],
+      "challenge": {
+        "id": "none-c1",
+        "prompt": "What does this print?",
+        "code": "def double(value):\n    value * 2\n\nresult = double(4)\nprint(result is None)",
+        "options": [
+          { "id": "a", "text": "True" },
+          { "id": "b", "text": "False" },
+          { "id": "c", "text": "8" },
+          { "id": "d", "text": "None" }
+        ],
+        "answerId": "a",
+        "explanation": "The body computes 8 and discards it, so the call returns None and `is None` is True."
+      }
+    }
+  ]
+}

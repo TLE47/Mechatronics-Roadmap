@@ -68,6 +68,18 @@ flowchart LR
   - **Key takeaway:** Instead of copy-pasting the same calculation ten times, a **`for` loop** (`for x in items:`) visits each element of a list one by one and runs its indented block. When you want to run a loop a specific number of times $N$, `for step in range(N):` counts `step` through `0, 1, 2, ..., N - 1`.
   - **Alternative resource:** [futurecoder.io — Chapter 4 (`For Loops`)](https://futurecoder.io/course/#toc) `[verify in-app]` — Complete **Chapter 4 (`For Loops`)** `[verify in-app]`.
 
+#### Micro focus: one name, many ordered values
+<a id="micro-lists"></a>
+A list holds an ordered sequence inside square brackets, so `samples = [12.1, 11.9, 11.8]` keeps three readings under one name. Python uses zero-based indexing — `samples[0]` is the first item and `samples[2]` is the third — and `len(samples)` returns the count. `.append()` adds one item to the end; an index past the end raises `IndexError`.
+
+#### Micro focus: a loop visits every item
+<a id="micro-for-loops"></a>
+A **`for` loop** (`for x in items:`) visits each item of a list once, in order, running its indented body on every pass. For a fixed count, `for step in range(N):` counts `0, 1, 2, ..., N - 1`, so the body runs exactly N times. Build a total by creating the accumulator before the loop and updating it inside; after the loop, divide by `len()` for the average.
+
+#### Micro focus: the last index
+<a id="micro-index-error"></a>
+Because counting starts at zero, the last item sits at `len(samples) - 1`, and `samples[len(samples)]` raises `IndexError` by asking for the item after the last one. Read an index as a distance from the start: index 2 is two steps in, which is the third item.
+
 ### Bridge Notes
 Sensors on a robot produce streams of measurements over time. Instead of inventing separate variable names like `s0`, `s1`, `s2`, `s3`, we store a sequence inside a **list**: `samples = [12.2, 12.0, 11.8, 11.6]`. Because computers count offsets from the beginning of memory, **zero-based indexing** means:
 - `samples[0]` is the 1st item (`12.2`),

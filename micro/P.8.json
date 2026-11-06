@@ -1,0 +1,473 @@
+{
+  "subjectId": "python",
+  "parentLessonId": "P.8",
+  "parentPath": "track-p/P.8-frequency-and-binary-bits.md",
+  "title": "Frequency and bits in small steps",
+  "version": 1,
+  "concepts": [
+    {
+      "id": "frequency-period",
+      "title": "Frequency and period are reciprocals",
+      "parentLessonId": "P.8",
+      "anchor": "micro-frequency-period",
+      "sourceFocus": [
+        "Frequency (`f`, in hertz `Hz`)",
+        "`T = 1 / f`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "operators"
+      ],
+      "resources": [
+        {
+          "id": "physics-classroom-frequency",
+          "title": "The Physics Classroom — Frequency and Period of a Wave",
+          "url": "https://www.physicsclassroom.com/class/waves/Lesson-2/Frequency-and-Period-of-a-Wave",
+          "type": "reference",
+          "role": "primary",
+          "provider": "The Physics Classroom",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": 92,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "Frequency (`f`, in hertz `Hz`) counts how many complete cycles happen each second. A control loop at 50 Hz repeats fifty times per second; 1 Hz is one cycle per second.",
+        "Period (`T`) is the time one cycle takes, measured in seconds. The two describe the same tick, so each is the other's reciprocal: `T = 1 / f` and `f = 1 / T`. A 50 Hz signal has a period of 0.02 s, or 20 ms."
+      ],
+      "example": {
+        "code": "frequency = 50\nperiod = 1 / frequency\nprint(period)",
+        "output": "0.02"
+      },
+      "walkthrough": [
+        {
+          "code": "frequency = 50",
+          "variable": "frequency",
+          "after": "50",
+          "note": "Fifty cycles per second, the standard hobby-servo pulse rate."
+        },
+        {
+          "code": "1 / frequency",
+          "expression": "1 / 50",
+          "output": "0.02",
+          "note": "Slash division returns the seconds per cycle as a float."
+        },
+        {
+          "code": "print(period)",
+          "output": "0.02",
+          "note": "0.02 s is the same claim as 20 ms; only the unit changes."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "frequency-period-d1",
+          "prompt": "What is the period of a 20 Hz signal?",
+          "options": [
+            { "id": "a", "text": "0.05 s" },
+            { "id": "b", "text": "20 s" },
+            { "id": "c", "text": "0.2 s" },
+            { "id": "d", "text": "5 s" }
+          ],
+          "answerId": "a",
+          "explanation": "T = 1 / f = 1 / 20 = 0.05 s."
+        },
+        {
+          "id": "frequency-period-d2",
+          "prompt": "What is the frequency of a signal whose period is 0.01 s?",
+          "options": [
+            { "id": "a", "text": "100 Hz" },
+            { "id": "b", "text": "10 Hz" },
+            { "id": "c", "text": "0.01 Hz" },
+            { "id": "d", "text": "1000 Hz" }
+          ],
+          "answerId": "a",
+          "explanation": "f = 1 / T = 1 / 0.01 = 100 cycles per second."
+        }
+      ],
+      "practice": {
+        "id": "frequency-period-p1",
+        "prompt": "What does this print?",
+        "code": "frequency = 100\nprint(1 / frequency)",
+        "options": [
+          { "id": "a", "text": "0.01" },
+          { "id": "b", "text": "100" },
+          { "id": "c", "text": "0.1" },
+          { "id": "d", "text": "1.0" }
+        ],
+        "answerId": "a",
+        "explanation": "One cycle at 100 Hz takes 0.01 s, and slash division returns a float."
+      },
+      "reviewPool": [
+        {
+          "id": "frequency-period-r1",
+          "prompt": "Which unit measures frequency?",
+          "options": [
+            { "id": "a", "text": "hertz" },
+            { "id": "b", "text": "second" },
+            { "id": "c", "text": "meter" },
+            { "id": "d", "text": "volt" }
+          ],
+          "answerId": "a",
+          "explanation": "Hertz counts cycles per second; seconds measure the period."
+        },
+        {
+          "id": "frequency-period-r2",
+          "prompt": "Which formula gives the period from the frequency?",
+          "options": [
+            { "id": "a", "text": "T = 1 / f" },
+            { "id": "b", "text": "T = f" },
+            { "id": "c", "text": "T = f / 2" },
+            { "id": "d", "text": "T = 2 * f" }
+          ],
+          "answerId": "a",
+          "explanation": "Period is the reciprocal of frequency."
+        },
+        {
+          "id": "frequency-period-r3",
+          "prompt": "What does 1 Hz mean?",
+          "options": [
+            { "id": "a", "text": "one cycle per second" },
+            { "id": "b", "text": "one second per cycle" },
+            { "id": "c", "text": "one thousand cycles per second" },
+            { "id": "d", "text": "one volt per second" }
+          ],
+          "answerId": "a",
+          "explanation": "Hertz counts repetitions in a second, so 1 Hz is one repetition per second."
+        },
+        {
+          "id": "frequency-period-r4",
+          "prompt": "Which unit measures period?",
+          "options": [
+            { "id": "a", "text": "second" },
+            { "id": "b", "text": "hertz" },
+            { "id": "c", "text": "ohm" },
+            { "id": "d", "text": "ampere" }
+          ],
+          "answerId": "a",
+          "explanation": "Period is a duration, so it is measured in seconds."
+        }
+      ],
+      "challenge": {
+        "id": "frequency-period-c1",
+        "prompt": "What does this print?",
+        "code": "frequency = 250\nprint(round(1 / frequency, 4))",
+        "options": [
+          { "id": "a", "text": "0.004" },
+          { "id": "b", "text": "0.04" },
+          { "id": "c", "text": "4.0" },
+          { "id": "d", "text": "250" }
+        ],
+        "answerId": "a",
+        "explanation": "1 / 250 is 0.004 s, already exact at four decimal places."
+      }
+    },
+    {
+      "id": "binary-bits",
+      "title": "Each bit doubles the states",
+      "parentLessonId": "P.8",
+      "anchor": "micro-binary-bits",
+      "sourceFocus": [
+        "an N-bit register has 2^N states",
+        "0 to 2^N - 1"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "int-float"
+      ],
+      "resources": [
+        {
+          "id": "sparkfun-binary",
+          "title": "SparkFun — Binary",
+          "url": "https://learn.sparkfun.com/tutorials/binary",
+          "type": "tutorial",
+          "role": "primary",
+          "provider": "SparkFun",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": 93,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "A bit is a binary digit: 0 for off, 1 for on. Two bits can be 00, 01, 10 or 11, so each extra bit doubles the number of combinations an N-bit register has 2^N states.",
+        "Those states are numbered from 0 to 2^N - 1. Eight bits give 2^8 = 256 states, so a byte holds 0 through 255, which is exactly why a clamped motor command stops at 255."
+      ],
+      "example": {
+        "code": "bits = 4\nprint(2 ** bits)\nprint(2 ** bits - 1)",
+        "output": "16\n15"
+      },
+      "walkthrough": [
+        {
+          "code": "bits = 4",
+          "variable": "bits",
+          "after": "4",
+          "note": "Four switches, each with two positions."
+        },
+        {
+          "code": "2 ** bits",
+          "expression": "2 ** 4",
+          "output": "16",
+          "note": "The number of distinct on/off patterns."
+        },
+        {
+          "code": "2 ** bits - 1",
+          "expression": "16 - 1",
+          "output": "15",
+          "note": "Counting from zero, the highest value is one less than the number of states."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "binary-bits-d1",
+          "prompt": "How many states does a 3-bit register have?",
+          "options": [
+            { "id": "a", "text": "8" },
+            { "id": "b", "text": "6" },
+            { "id": "c", "text": "3" },
+            { "id": "d", "text": "9" }
+          ],
+          "answerId": "a",
+          "explanation": "2^3 = 8 patterns, numbered 0 through 7."
+        },
+        {
+          "id": "binary-bits-d2",
+          "prompt": "What is the largest value an 8-bit register holds?",
+          "options": [
+            { "id": "a", "text": "255" },
+            { "id": "b", "text": "256" },
+            { "id": "c", "text": "128" },
+            { "id": "d", "text": "1024" }
+          ],
+          "answerId": "a",
+          "explanation": "Eight bits give 256 states from 0 to 255, so 255 is the highest value."
+        }
+      ],
+      "practice": {
+        "id": "binary-bits-p1",
+        "prompt": "What is the largest value a 4-bit register holds?",
+        "options": [
+          { "id": "a", "text": "15" },
+          { "id": "b", "text": "16" },
+          { "id": "c", "text": "8" },
+          { "id": "d", "text": "4" }
+        ],
+        "answerId": "a",
+        "explanation": "2^4 = 16 states numbered from 0, so the highest is 15."
+      },
+      "reviewPool": [
+        {
+          "id": "binary-bits-r1",
+          "prompt": "What values can one bit hold?",
+          "options": [
+            { "id": "a", "text": "0 or 1" },
+            { "id": "b", "text": "0 to 9" },
+            { "id": "c", "text": "any number" },
+            { "id": "d", "text": "true or false only in Python" }
+          ],
+          "answerId": "a",
+          "explanation": "A bit is a single binary digit: off or on, 0 or 1."
+        },
+        {
+          "id": "binary-bits-r2",
+          "prompt": "How many states does an N-bit register have?",
+          "options": [
+            { "id": "a", "text": "2^N" },
+            { "id": "b", "text": "N^2" },
+            { "id": "c", "text": "2 * N" },
+            { "id": "d", "text": "N" }
+          ],
+          "answerId": "a",
+          "explanation": "Each bit doubles the combinations, so N bits give 2 to the power N."
+        },
+        {
+          "id": "binary-bits-r3",
+          "prompt": "How many states does a byte have?",
+          "options": [
+            { "id": "a", "text": "256" },
+            { "id": "b", "text": "255" },
+            { "id": "c", "text": "128" },
+            { "id": "d", "text": "8" }
+          ],
+          "answerId": "a",
+          "explanation": "A byte is eight bits, and 2^8 = 256."
+        },
+        {
+          "id": "binary-bits-r4",
+          "prompt": "Why is a byte's highest value 255, not 256?",
+          "options": [
+            { "id": "a", "text": "Counting starts at 0" },
+            { "id": "b", "text": "One state is reserved" },
+            { "id": "c", "text": "Bits start at 1" },
+            { "id": "d", "text": "It is a rounding rule" }
+          ],
+          "answerId": "a",
+          "explanation": "256 states numbered from zero end at 255."
+        }
+      ],
+      "challenge": {
+        "id": "binary-bits-c1",
+        "prompt": "What does this print?",
+        "code": "bits = 10\nprint(2 ** bits)",
+        "options": [
+          { "id": "a", "text": "1024" },
+          { "id": "b", "text": "100" },
+          { "id": "c", "text": "512" },
+          { "id": "d", "text": "20" }
+        ],
+        "answerId": "a",
+        "explanation": "2^10 = 1024, which is why ten bits hold values from 0 to 1023."
+      }
+    },
+    {
+      "id": "place-values",
+      "title": "Read binary by its place values",
+      "parentLessonId": "P.8",
+      "anchor": "micro-place-values",
+      "sourceFocus": [
+        "the place values are `1, 2, 4, 8, ...`",
+        "a 1 adds that value"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "binary-bits"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": 90,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "Read a binary number from left to right with its place values: the place values are `1, 2, 4, 8, ...`, doubling each step to the left. A 1 adds that value and a 0 adds nothing, so 1011 is 8 + 0 + 2 + 1 = 11.",
+        "The leftmost 1 decides how many bits the number needs. 1000 is 8, because the four-bit places are 8, 4, 2 and 1, and only the eight is switched on."
+      ],
+      "example": {
+        "code": "bits = [1, 0, 1, 1]\ntotal = 0\nfor bit in bits:\n    total = total * 2 + bit\nprint(total)",
+        "output": "11"
+      },
+      "walkthrough": [
+        {
+          "code": "total = total * 2 + bit",
+          "expression": "0*2+1, 1*2+0, 2*2+1, 5*2+1",
+          "output": "1, 2, 5, 11",
+          "note": "Each new bit shifts the total left and then adds itself."
+        },
+        {
+          "code": "bits = [1, 0, 1, 1]",
+          "note": "The places are 8, 4, 2 and 1 from left to right."
+        },
+        {
+          "code": "print(total)",
+          "output": "11",
+          "note": "8 + 2 + 1, which is the value the four bits spell."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "place-values-d1",
+          "prompt": "What is binary 1101 in decimal?",
+          "options": [
+            { "id": "a", "text": "13" },
+            { "id": "b", "text": "11" },
+            { "id": "c", "text": "14" },
+            { "id": "d", "text": "7" }
+          ],
+          "answerId": "a",
+          "explanation": "8 + 4 + 0 + 1 = 13."
+        },
+        {
+          "id": "place-values-d2",
+          "prompt": "What value does binary 1000 represent?",
+          "options": [
+            { "id": "a", "text": "8" },
+            { "id": "b", "text": "1" },
+            { "id": "c", "text": "4" },
+            { "id": "d", "text": "16" }
+          ],
+          "answerId": "a",
+          "explanation": "Only the eight's place is on, so the value is 8."
+        }
+      ],
+      "practice": {
+        "id": "place-values-p1",
+        "prompt": "What is binary 1010 in decimal?",
+        "options": [
+          { "id": "a", "text": "10" },
+          { "id": "b", "text": "5" },
+          { "id": "c", "text": "12" },
+          { "id": "d", "text": "8" }
+        ],
+        "answerId": "a",
+        "explanation": "8 + 0 + 2 + 0 = 10."
+      },
+      "reviewPool": [
+        {
+          "id": "place-values-r1",
+          "prompt": "What are the first four binary place values from the right?",
+          "options": [
+            { "id": "a", "text": "1, 2, 4, 8" },
+            { "id": "b", "text": "1, 2, 3, 4" },
+            { "id": "c", "text": "2, 4, 6, 8" },
+            { "id": "d", "text": "1, 10, 100, 1000" }
+          ],
+          "answerId": "a",
+          "explanation": "Each place doubles as it moves left."
+        },
+        {
+          "id": "place-values-r2",
+          "prompt": "How much does a 1 add in the third place from the right?",
+          "options": [
+            { "id": "a", "text": "4" },
+            { "id": "b", "text": "3" },
+            { "id": "c", "text": "8" },
+            { "id": "d", "text": "2" }
+          ],
+          "answerId": "a",
+          "explanation": "The places are 1, 2, 4, so the third is 4."
+        },
+        {
+          "id": "place-values-r3",
+          "prompt": "What is binary 1111 in decimal?",
+          "options": [
+            { "id": "a", "text": "15" },
+            { "id": "b", "text": "16" },
+            { "id": "c", "text": "8" },
+            { "id": "d", "text": "11" }
+          ],
+          "answerId": "a",
+          "explanation": "8 + 4 + 2 + 1 = 15, the largest four-bit value."
+        },
+        {
+          "id": "place-values-r4",
+          "prompt": "A 0 in a place contributes…",
+          "options": [
+            { "id": "a", "text": "nothing" },
+            { "id": "b", "text": "one" },
+            { "id": "c", "text": "that place's value" },
+            { "id": "d", "text": "a negative value" }
+          ],
+          "answerId": "a",
+          "explanation": "Only the 1s are summed; a 0 switches its place off."
+        }
+      ],
+      "challenge": {
+        "id": "place-values-c1",
+        "prompt": "What is binary 1111 in decimal?",
+        "code": "print(8 + 4 + 2 + 1)",
+        "options": [
+          { "id": "a", "text": "15" },
+          { "id": "b", "text": "16" },
+          { "id": "c", "text": "14" },
+          { "id": "d", "text": "8" }
+        ],
+        "answerId": "a",
+        "explanation": "All four places are on, and their sum is 15."
+      }
+    }
+  ]
+}

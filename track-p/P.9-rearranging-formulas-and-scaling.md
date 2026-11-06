@@ -67,6 +67,18 @@ flowchart LR
   - **What to skip:** Skip **`Using Proportions to Solve Triangles`** at the bottom of the page.
   - **Key takeaway:** A proportion like $\frac{x}{1023} = \frac{y}{5.0}$ says that the sensor reading's **fraction of full scale** (`x / 1023.0`, a number between `0.0` and `1.0`) equals the output's fraction of $5.0$. Multiplying both sides by $5.0$ gives $y = \left(\frac{x}{1023.0}\right) \times 5.0$.
 
+#### Micro focus: undo an operation on both sides
+<a id="micro-rearranging"></a>
+An equation is a balanced scale, so you undo whatever is attached to it by performing the **opposite operation on both sides**. From `d = s * t`, dividing both sides by `t` isolates the unknown as `s = d / t`; when an offset is added, remove it first and then divide.
+
+#### Micro focus: scale by the fraction of full range
+<a id="micro-linear-scaling"></a>
+A proportion keeps two ratios equal: a reading's fraction of full scale (`x / 1023.0`, between 0.0 and 1.0) equals the output's fraction of its range. Multiplying by the output range gives `y = (x / 1023.0) * 5.0`, so zero counts is 0.0 V and the full count is 5.0 V.
+
+#### Micro focus: the output range sets the top
+<a id="micro-scale-output"></a>
+The fraction of full scale is between 0 and 1; the multiplier is the output's top value, so a 3.3 V board maps full scale to 3.3 and a 5 V chain maps it to 5.0. The same counts describe different volts on different boards.
+
 ### Bridge Notes
 In mechatronics, you do not need to memorize three separate formulas for every physical law—you only need one formula and the balance rule:
 - Start with distance equals speed times time: $d = s \cdot t$.

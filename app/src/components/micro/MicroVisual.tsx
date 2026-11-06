@@ -78,6 +78,157 @@ const TONE: Record<string, { border: string; bg: string; text: string; label: st
     text: 'text-amber',
     label: 'Brackets first, then powers',
   },
+  comparisons: {
+    border: 'border-accent/40',
+    bg: 'bg-accent/10',
+    text: 'text-accent',
+    label: 'A question with a yes-or-no answer',
+  },
+  clamping: {
+    border: 'border-rose/40',
+    bg: 'bg-rose/10',
+    text: 'text-rose',
+    label: 'Pinned to the nearest limit',
+  },
+  logic: {
+    border: 'border-purple/40',
+    bg: 'bg-purple/10',
+    text: 'text-purple',
+    label: 'Two questions, one answer',
+  },
+  lists: {
+    border: 'border-emerald/40',
+    bg: 'bg-emerald/10',
+    text: 'text-emerald',
+    label: 'One name, many ordered values',
+  },
+  'for-loops': {
+    border: 'border-amber/40',
+    bg: 'bg-amber/10',
+    text: 'text-amber',
+    label: 'One pass per item',
+  },
+  'index-error': {
+    border: 'border-rose/40',
+    bg: 'bg-rose/10',
+    text: 'text-rose',
+    label: 'The last index is one less than the count',
+  },
+  functions: {
+    border: 'border-accent/40',
+    bg: 'bg-accent/10',
+    text: 'text-accent',
+    label: 'A named block that hands a value back',
+  },
+  'while-loops': {
+    border: 'border-emerald/40',
+    bg: 'bg-emerald/10',
+    text: 'text-emerald',
+    label: 'Test, body, test again',
+  },
+  none: {
+    border: 'border-amber/40',
+    bg: 'bg-amber/10',
+    text: 'text-amber',
+    label: 'No answer at all',
+  },
+  imports: {
+    border: 'border-purple/40',
+    bg: 'bg-purple/10',
+    text: 'text-purple',
+    label: 'A toolbox reached by its name',
+  },
+  asserts: {
+    border: 'border-rose/40',
+    bg: 'bg-rose/10',
+    text: 'text-rose',
+    label: 'A known answer checked in code',
+  },
+  'assert-message': {
+    border: 'border-rose/40',
+    bg: 'bg-rose/10',
+    text: 'text-rose',
+    label: 'A failure that says why',
+  },
+  'si-units': {
+    border: 'border-accent/40',
+    bg: 'bg-accent/10',
+    text: 'text-accent',
+    label: 'Convert first, then calculate',
+  },
+  'metric-prefixes': {
+    border: 'border-emerald/40',
+    bg: 'bg-emerald/10',
+    text: 'text-emerald',
+    label: 'A multiplier in front of the unit',
+  },
+  'unit-cancel': {
+    border: 'border-amber/40',
+    bg: 'bg-amber/10',
+    text: 'text-amber',
+    label: 'The unit that survives the arithmetic',
+  },
+  'frequency-period': {
+    border: 'border-purple/40',
+    bg: 'bg-purple/10',
+    text: 'text-purple',
+    label: 'Two ways to say the same tick',
+  },
+  'binary-bits': {
+    border: 'border-accent/40',
+    bg: 'bg-accent/10',
+    text: 'text-accent',
+    label: 'Each bit doubles the states',
+  },
+  'place-values': {
+    border: 'border-emerald/40',
+    bg: 'bg-emerald/10',
+    text: 'text-emerald',
+    label: 'Sum the places that are on',
+  },
+  rearranging: {
+    border: 'border-amber/40',
+    bg: 'bg-amber/10',
+    text: 'text-amber',
+    label: 'Undo an operation on both sides',
+  },
+  'linear-scaling': {
+    border: 'border-purple/40',
+    bg: 'bg-purple/10',
+    text: 'text-purple',
+    label: 'A fraction of full scale',
+  },
+  'scale-output': {
+    border: 'border-rose/40',
+    bg: 'bg-rose/10',
+    text: 'text-rose',
+    label: 'The board sets the top',
+  },
+};
+
+/** One literal row per concept that has no hand-drawn figure of its own. */
+const PICTURE: Record<string, { chips: string[]; note: string }> = {
+  comparisons: { chips: ['12 > 80', 'False'], note: 'a comparison answers True or False' },
+  clamping: { chips: ['310', '255 (limit)'], note: 'the nearest allowed value' },
+  logic: { chips: ['True and False', 'False'], note: 'both sides must agree' },
+  lists: { chips: ['[12.1, 11.9]', '[0] = 12.1'], note: 'counting starts at zero' },
+  'for-loops': { chips: ['for value in readings:', 'each once'], note: 'the body runs per item' },
+  'index-error': { chips: ['len = 3', 'last index 2'], note: 'one less than the count' },
+  functions: { chips: ['double(4)', '8'], note: 'return hands the value back' },
+  'while-loops': { chips: ['step < 3', 'body, then test'], note: 'the update ends the loop' },
+  none: { chips: ['print(7)', 'None'], note: 'printing is not returning' },
+  imports: { chips: ['import math', 'math.sqrt(25)'], note: 'module name, dot, function' },
+  asserts: { chips: ['assert 2 + 2 == 4', 'silent'], note: 'a known case checked in code' },
+  'assert-message': { chips: ['assert x < 10', '"too large"'], note: 'the rule travels with the error' },
+  'si-units': { chips: ['250 mm', '0.25 m'], note: 'convert before the formula' },
+  'metric-prefixes': { chips: ['15 mA', '0.015 A'], note: 'milli is a thousandth' },
+  'unit-cancel': { chips: ['m / s', 'm/s'], note: 'the unit is part of the answer' },
+  'frequency-period': { chips: ['50 Hz', '0.02 s'], note: 'T = 1 / f' },
+  'binary-bits': { chips: ['8 bits', '256 states'], note: '2 to the power of the bits' },
+  'place-values': { chips: ['1011', '8 + 2 + 1'], note: 'sum the places that are on' },
+  rearranging: { chips: ['d = s * t', 's = d / t'], note: 'the same operation on both sides' },
+  'linear-scaling': { chips: ['512 / 1023', 'about 0.5'], note: 'the fraction of full scale' },
+  'scale-output': { chips: ['full scale', '3.3 V'], note: 'the output range sets the top' },
 };
 
 function Variables({ sample }: { sample?: PrimitiveSample }) {
@@ -234,6 +385,21 @@ function OrderOfOperations() {
   );
 }
 
+function Picture({ conceptId }: { conceptId: string }) {
+  const picture = PICTURE[conceptId];
+  return (
+    <div className="flex flex-wrap items-center gap-2 font-mono text-[12px]">
+      {picture.chips.map((chip, index) => (
+        <span key={`${chip}-${index}`} className="flex items-center gap-2">
+          {index > 0 ? <span className="text-faint">→</span> : null}
+          <span className="rounded-md border border-line bg-panel px-2 py-1 text-ink">{chip}</span>
+        </span>
+      ))}
+      <span className="text-[11px] text-muted">{picture.note}</span>
+    </div>
+  );
+}
+
 export function MicroVisual({ conceptId, sample }: { conceptId: string; sample?: PrimitiveSample }) {
   const tone = TONE[conceptId] ?? TONE.variables;
   const body =
@@ -255,6 +421,8 @@ export function MicroVisual({ conceptId, sample }: { conceptId: string; sample?:
       <FloorDivision />
     ) : conceptId === 'order-of-operations' ? (
       <OrderOfOperations />
+    ) : PICTURE[conceptId] ? (
+      <Picture conceptId={conceptId} />
     ) : (
       <Variables sample={sample} />
     );

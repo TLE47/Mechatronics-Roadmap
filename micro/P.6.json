@@ -1,0 +1,473 @@
+{
+  "subjectId": "python",
+  "parentLessonId": "P.6",
+  "parentPath": "track-p/P.6-modules-and-automated-asserts.md",
+  "title": "Modules and asserts in small steps",
+  "version": 1,
+  "concepts": [
+    {
+      "id": "imports",
+      "title": "A module is a toolbox you import",
+      "parentLessonId": "P.6",
+      "anchor": "micro-imports",
+      "sourceFocus": [
+        "`import math`",
+        "`math.sqrt(25.0)`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "functions"
+      ],
+      "resources": [
+        {
+          "id": "cs50p-notes-4",
+          "title": "CS50P Lecture 4 notes",
+          "url": "https://cs50.harvard.edu/python/2022/notes/4/",
+          "type": "notes",
+          "role": "primary",
+          "provider": "Harvard CS50P",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": 94,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "A module is a file of ready-made tools. `import math` at the top of a script makes the module available, and its tools are called with dot notation: `math.sqrt(25.0)` takes the square root, and `math.pi` is the value of pi.",
+        "Importing loads the name; it does not run the tool. Writing `sqrt(25.0)` without the `math.` prefix raises `NameError`, because this script never defined `sqrt` on its own."
+      ],
+      "example": {
+        "code": "import math\n\nprint(math.sqrt(25.0))\nprint(round(math.pi, 2))",
+        "output": "5.0\n3.14"
+      },
+      "walkthrough": [
+        {
+          "code": "import math",
+          "note": "The module's tools become reachable under the name `math`."
+        },
+        {
+          "code": "math.sqrt(25.0)",
+          "expression": "√25",
+          "output": "5.0",
+          "note": "The module name, a dot, then the function call; the argument is 25.0."
+        },
+        {
+          "code": "round(math.pi, 2)",
+          "output": "3.14",
+          "note": "`math.pi` is a value, not a call: it is used directly as an argument."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "imports-d1",
+          "prompt": "Which line computes the square root of 25 with the maths module?",
+          "options": [
+            { "id": "a", "text": "math.sqrt(25)" },
+            { "id": "b", "text": "sqrt(25)" },
+            { "id": "c", "text": "math.sqrt" },
+            { "id": "d", "text": "math(25).sqrt" }
+          ],
+          "answerId": "a",
+          "explanation": "The module name and a dot come before the function, and the value goes inside the parentheses."
+        },
+        {
+          "id": "imports-d2",
+          "prompt": "What happens after `import math` if you call `sqrt(25.0)` without the prefix?",
+          "options": [
+            { "id": "a", "text": "NameError: sqrt is not defined" },
+            { "id": "b", "text": "It returns 5.0" },
+            { "id": "c", "text": "It returns None" },
+            { "id": "d", "text": "It imports sqrt automatically" }
+          ],
+          "answerId": "a",
+          "explanation": "The import binds the module name, not each of its functions in the local namespace."
+        }
+      ],
+      "practice": {
+        "id": "imports-p1",
+        "prompt": "What does this print?",
+        "code": "import math\nprint(math.sqrt(81.0))",
+        "options": [
+          { "id": "a", "text": "9.0" },
+          { "id": "b", "text": "81.0" },
+          { "id": "c", "text": "8.0" },
+          { "id": "d", "text": "An error" }
+        ],
+        "answerId": "a",
+        "explanation": "The square root of 81 is 9, and `math.sqrt` always returns a float."
+      },
+      "reviewPool": [
+        {
+          "id": "imports-r1",
+          "prompt": "Where does an import usually go?",
+          "options": [
+            { "id": "a", "text": "At the top of the file" },
+            { "id": "b", "text": "Inside the loop only" },
+            { "id": "c", "text": "After the last print" },
+            { "id": "d", "text": "In a comment" }
+          ],
+          "answerId": "a",
+          "explanation": "Imports sit at the top so every line below can use the module."
+        },
+        {
+          "id": "imports-r2",
+          "prompt": "What does the dot in `math.sqrt` mean?",
+          "options": [
+            { "id": "a", "text": "Take sqrt from the math module" },
+            { "id": "b", "text": "Multiply math by sqrt" },
+            { "id": "c", "text": "Create a decimal number" },
+            { "id": "d", "text": "Compare two values" }
+          ],
+          "answerId": "a",
+          "explanation": "Dot notation names which module owns the function."
+        },
+        {
+          "id": "imports-r3",
+          "prompt": "`math.pi` is…",
+          "options": [
+            { "id": "a", "text": "a value, used without parentheses" },
+            { "id": "b", "text": "a function that needs an argument" },
+            { "id": "c", "text": "a module" },
+            { "id": "d", "text": "an error" }
+          ],
+          "answerId": "a",
+          "explanation": "Pi is a stored constant; calling it would raise an error."
+        },
+        {
+          "id": "imports-r4",
+          "prompt": "What is a module?",
+          "options": [
+            { "id": "a", "text": "A file of ready-made tools" },
+            { "id": "b", "text": "A single number" },
+            { "id": "c", "text": "A loop that runs once" },
+            { "id": "d", "text": "A comment" }
+          ],
+          "answerId": "a",
+          "explanation": "A module groups related functions and values under one name."
+        }
+      ],
+      "challenge": {
+        "id": "imports-c1",
+        "prompt": "What does this print?",
+        "code": "import math\nprint(math.sqrt(9.0) + math.sqrt(16.0))",
+        "options": [
+          { "id": "a", "text": "7.0" },
+          { "id": "b", "text": "25.0" },
+          { "id": "c", "text": "5.0" },
+          { "id": "d", "text": "7" }
+        ],
+        "answerId": "a",
+        "explanation": "The roots are 3.0 and 4.0; adding two floats gives 7.0, and the prints show the decimal."
+      }
+    },
+    {
+      "id": "asserts",
+      "title": "An assert makes a wrong answer loud",
+      "parentLessonId": "P.6",
+      "anchor": "micro-asserts",
+      "sourceFocus": [
+        "`assert condition` tests your code automatically",
+        "stops immediately on that line with an `AssertionError`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "functions"
+      ],
+      "resources": [
+        {
+          "id": "cs50p-notes-5",
+          "title": "CS50P Lecture 5 notes",
+          "url": "https://cs50.harvard.edu/python/2022/notes/5/",
+          "type": "notes",
+          "role": "primary",
+          "provider": "Harvard CS50P",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": 95,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "An `assert` is a self-check inside the program. `assert condition` tests your code automatically: when the condition is True it does nothing and the script continues; when it is False, Python stops immediately on that line with an `AssertionError`.",
+        "That turns a wrong answer into a loud failure at the moment it happens, instead of a number you must eyeball later. Keep each check small and specific, such as `assert distance_2d(3.0, 4.0) == 5.0`, so the message names one known case."
+      ],
+      "example": {
+        "code": "def distance_2d(x, y):\n    return (x ** 2 + y ** 2) ** 0.5\n\nassert distance_2d(3.0, 4.0) == 5.0\nprint(\"ok\")",
+        "output": "ok"
+      },
+      "walkthrough": [
+        {
+          "code": "def distance_2d(x, y):",
+          "note": "The function returns the hypotenuse of the two coordinates."
+        },
+        {
+          "code": "assert distance_2d(3.0, 4.0) == 5.0",
+          "expression": "5.0 == 5.0",
+          "output": "True",
+          "note": "The known 3-4-5 triangle is the fixture; a True test is silent."
+        },
+        {
+          "code": "print(\"ok\")",
+          "output": "ok",
+          "note": "Execution reaches this line only because the assert passed."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "asserts-d1",
+          "prompt": "What happens at this line?",
+          "code": "assert 2 + 2 == 5",
+          "options": [
+            { "id": "a", "text": "The program stops with AssertionError" },
+            { "id": "b", "text": "It prints False" },
+            { "id": "c", "text": "It prints 4" },
+            { "id": "d", "text": "Nothing; the script continues" }
+          ],
+          "answerId": "a",
+          "explanation": "Four is not five, so the assertion fails and the script stops there."
+        },
+        {
+          "id": "asserts-d2",
+          "prompt": "What does a passing assert print?",
+          "options": [
+            { "id": "a", "text": "Nothing" },
+            { "id": "b", "text": "True" },
+            { "id": "c", "text": "The condition" },
+            { "id": "d", "text": "AssertionError" }
+          ],
+          "answerId": "a",
+          "explanation": "A passing assert is silent; only a failing one produces output."
+        }
+      ],
+      "practice": {
+        "id": "asserts-p1",
+        "prompt": "What does this do?",
+        "code": "assert 3 * 3 == 9\nprint(\"done\")",
+        "options": [
+          { "id": "a", "text": "Prints done" },
+          { "id": "b", "text": "Stops with AssertionError" },
+          { "id": "c", "text": "Prints True" },
+          { "id": "d", "text": "Prints 9" }
+        ],
+        "answerId": "a",
+        "explanation": "Nine equals nine, so the check passes silently and the next line prints."
+      },
+      "reviewPool": [
+        {
+          "id": "asserts-r1",
+          "prompt": "Which exception does a failing assert raise?",
+          "options": [
+            { "id": "a", "text": "AssertionError" },
+            { "id": "b", "text": "TypeError" },
+            { "id": "c", "text": "NameError" },
+            { "id": "d", "text": "ValueError" }
+          ],
+          "answerId": "a",
+          "explanation": "The assert statement is defined to raise AssertionError."
+        },
+        {
+          "id": "asserts-r2",
+          "prompt": "When does an assert stop the program?",
+          "options": [
+            { "id": "a", "text": "When its condition is False" },
+            { "id": "b", "text": "When its condition is True" },
+            { "id": "c", "text": "Always" },
+            { "id": "d", "text": "Never" }
+          ],
+          "answerId": "a",
+          "explanation": "A False condition is the failing case."
+        },
+        {
+          "id": "asserts-r3",
+          "prompt": "What is an assert for?",
+          "options": [
+            { "id": "a", "text": "Checking a known answer automatically" },
+            { "id": "b", "text": "Printing a value for the user" },
+            { "id": "c", "text": "Importing a module" },
+            { "id": "d", "text": "Repeating a loop" }
+          ],
+          "answerId": "a",
+          "explanation": "It turns a wrong result into an immediate failure instead of a silent one."
+        },
+        {
+          "id": "asserts-r4",
+          "prompt": "Why is `assert distance_2d(3.0, 4.0) == 5.0` a good check?",
+          "options": [
+            { "id": "a", "text": "It names one known case with a known answer" },
+            { "id": "b", "text": "It checks every possible input" },
+            { "id": "c", "text": "It prints the result for inspection" },
+            { "id": "d", "text": "It runs the function twice" }
+          ],
+          "answerId": "a",
+          "explanation": "A small, specific check fails with an answer you can compare directly."
+        }
+      ],
+      "challenge": {
+        "id": "asserts-c1",
+        "prompt": "What does this print?",
+        "code": "def double(value):\n    return value * 2\n\nassert double(4) == 8\nprint(\"ok\")",
+        "options": [
+          { "id": "a", "text": "ok" },
+          { "id": "b", "text": "8" },
+          { "id": "c", "text": "AssertionError" },
+          { "id": "d", "text": "True" }
+        ],
+        "answerId": "a",
+        "explanation": "The function returns 8, the assert passes silently, and the next line prints ok."
+      }
+    },
+    {
+      "id": "assert-message",
+      "title": "An assert can say why",
+      "parentLessonId": "P.6",
+      "anchor": "micro-assert-message",
+      "sourceFocus": [
+        "`assert condition, \"message\"`",
+        "the message is shown with the `AssertionError`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "asserts"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": 86,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "An assert can carry an explanation: `assert condition, \"message\"`. When the condition passes, the message is never evaluated; when it fails, the message is shown with the `AssertionError`, so the failure names what was expected.",
+        "Write the message as the rule, not the symptom: `assert cmd <= 255, \"command above the limit\"` says what the program promised, which is what you need at the moment it breaks."
+      ],
+      "example": {
+        "code": "cmd = 300\nassert cmd <= 255, \"command above the limit\"",
+        "output": "AssertionError: command above the limit"
+      },
+      "walkthrough": [
+        {
+          "code": "cmd = 300",
+          "variable": "cmd",
+          "after": "300",
+          "note": "A value the register cannot hold."
+        },
+        {
+          "code": "cmd <= 255",
+          "expression": "300 <= 255",
+          "output": "False",
+          "note": "The check fails, so the assertion raises."
+        },
+        {
+          "code": "\"command above the limit\"",
+          "output": "AssertionError: command above the limit",
+          "note": "The message travels with the error and names the rule that broke."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "assert-message-d1",
+          "prompt": "What is shown when the assert passes?",
+          "options": [
+            { "id": "a", "text": "Nothing" },
+            { "id": "b", "text": "The message" },
+            { "id": "c", "text": "True" },
+            { "id": "d", "text": "AssertionError" }
+          ],
+          "answerId": "a",
+          "explanation": "A passing assert is silent; its message exists only for the failing case."
+        },
+        {
+          "id": "assert-message-d2",
+          "prompt": "Which line fails with a message?",
+          "options": [
+            { "id": "a", "text": "assert x < 10, \"x must stay small\"" },
+            { "id": "b", "text": "assert x < 10" },
+            { "id": "c", "text": "print(\"x must stay small\")" },
+            { "id": "d", "text": "x < 10, \"x must stay small\"" }
+          ],
+          "answerId": "a",
+          "explanation": "The message follows the condition after a comma, inside the assert statement."
+        }
+      ],
+      "practice": {
+        "id": "assert-message-p1",
+        "prompt": "What happens here?",
+        "code": "assert 2 + 2 == 4, \"bad sum\"\nprint(\"ok\")",
+        "options": [
+          { "id": "a", "text": "It prints ok" },
+          { "id": "b", "text": "It prints bad sum" },
+          { "id": "c", "text": "It stops with AssertionError" },
+          { "id": "d", "text": "It prints True" }
+        ],
+        "answerId": "a",
+        "explanation": "The condition is True, so the assert is silent and the next line prints."
+      },
+      "reviewPool": [
+        {
+          "id": "assert-message-r1",
+          "prompt": "Where does the message go?",
+          "options": [
+            { "id": "a", "text": "After a comma, inside the assert" },
+            { "id": "b", "text": "On the line below" },
+            { "id": "c", "text": "Inside print" },
+            { "id": "d", "text": "In a comment" }
+          ],
+          "answerId": "a",
+          "explanation": "`assert condition, \"message\"` keeps the explanation with its check."
+        },
+        {
+          "id": "assert-message-r2",
+          "prompt": "When is the message evaluated?",
+          "options": [
+            { "id": "a", "text": "Only when the condition is False" },
+            { "id": "b", "text": "Always" },
+            { "id": "c", "text": "Only when it passes" },
+            { "id": "d", "text": "Never" }
+          ],
+          "answerId": "a",
+          "explanation": "Python evaluates the message only on failure, as part of raising."
+        },
+        {
+          "id": "assert-message-r3",
+          "prompt": "Which message is most useful?",
+          "options": [
+            { "id": "a", "text": "command above the limit" },
+            { "id": "b", "text": "oops" },
+            { "id": "c", "text": "x" },
+            { "id": "d", "text": "False" }
+          ],
+          "answerId": "a",
+          "explanation": "It names the rule that failed, which is what a reader needs."
+        },
+        {
+          "id": "assert-message-r4",
+          "prompt": "What does a failing assert with a message raise?",
+          "options": [
+            { "id": "a", "text": "AssertionError carrying the message" },
+            { "id": "b", "text": "ValueError" },
+            { "id": "c", "text": "Nothing" },
+            { "id": "d", "text": "A printed line only" }
+          ],
+          "answerId": "a",
+          "explanation": "The AssertionError includes the message text as its detail."
+        }
+      ],
+      "challenge": {
+        "id": "assert-message-c1",
+        "prompt": "What does this print?",
+        "code": "value = 12\nassert value < 10, \"too large\"\nprint(\"ok\")",
+        "options": [
+          { "id": "a", "text": "AssertionError: too large" },
+          { "id": "b", "text": "ok" },
+          { "id": "c", "text": "too large" },
+          { "id": "d", "text": "Nothing" }
+        ],
+        "answerId": "a",
+        "explanation": "12 < 10 is False, so the assertion raises with its message and the print never runs."
+      }
+    }
+  ]
+}

@@ -45,6 +45,27 @@ EXPECTED_IDS = [
     "operators",
     "floor-division",
     "order-of-operations",
+    "comparisons",
+    "clamping",
+    "logic",
+    "lists",
+    "for-loops",
+    "index-error",
+    "functions",
+    "while-loops",
+    "none",
+    "imports",
+    "asserts",
+    "assert-message",
+    "si-units",
+    "metric-prefixes",
+    "unit-cancel",
+    "frequency-period",
+    "binary-bits",
+    "place-values",
+    "rearranging",
+    "linear-scaling",
+    "scale-output",
 ]
 QUESTION_FIELDS = ("id", "prompt", "explanation")
 ANCHOR = re.compile(r'^\s*<a\s+id="([^"]+)"\s*>\s*</a>\s*$')
@@ -280,7 +301,7 @@ def validate(sources: list[dict]) -> tuple[list[str], list[str], dict]:
     concepts = concepts_of(sources)
     ids = [concept.get("id") for concept in concepts]
     if ids != EXPECTED_IDS:
-        findings.append(f"expected the ten concepts in authored order, found {ids}")
+        findings.append(f"expected the authored concepts in order, found {ids}")
     if len(set(ids)) != len(ids):
         findings.append("two concepts share an id")
     findings.extend(_cycle(concepts))

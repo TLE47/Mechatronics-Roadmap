@@ -67,6 +67,18 @@ flowchart LR
   - **What to skip:** Skip `tera`, `peta`, `exa`, and `femto`—in beginner mechatronics you primarily use `M`, `k`, `m`, and `µ`.
   - **Key takeaway:** A **metric prefix** is a multiplier placed in front of a unit: **mega (`M`)** $= \times 1{,}000{,}000$ ($10^6$), **kilo (`k`)** $= \times 1{,}000$ ($10^3$), **milli (`m`)** $= \div 1{,}000$ ($10^{-3}$), and **micro (`µ` or `u`)** $= \div 1{,}000{,}000$ ($10^{-6}$). Always convert prefixed numbers into base SI units *before* multiplying or dividing!
 
+#### Micro focus: base units before arithmetic
+<a id="micro-si-units"></a>
+Every formula expects base SI units: meters (`m`), kilograms (`kg`), seconds (`s`), amperes (`A`), volts (`V`) and ohms (`Ω`). Convert on the first line — 250 mm becomes 0.25 m, 500 µs becomes 0.0005 s — so every intermediate answer carries the unit the equation promises.
+
+#### Micro focus: a prefix is a multiplier
+<a id="micro-metric-prefixes"></a>
+A metric prefix scales the unit without changing it: kilo (`k`) is ×1,000, mega (`M`) is ×1,000,000, milli (`m`) is ÷1,000 and micro (`µ`) is ÷1,000,000. Python writes the same factors as `1e3`, `1e-3` and `1e-6`, so a datasheet value and a formula can meet in the same base unit.
+
+#### Micro focus: the units are the check
+<a id="micro-unit-cancel"></a>
+Units travel through arithmetic: meters divided by seconds leaves `m/s`, and meters multiplied by meters leaves `m²`. Because the answer's unit is part of the check, a result in the wrong unit points at a wrong formula or a missing conversion before the robot moves.
+
 ### Bridge Notes
 Mixing un-converted prefixes into an equation is the #1 calculation error in beginner robotics. Every formula you will meet in this roadmap—such as distance ($d = s \cdot t$) and kinetic energy ($E_k = \frac{1}{2} m s^2$)—strictly expects **un-prefixed base SI units**: meters (`m`), kilograms (`kg`), seconds (`s`), Amperes (`A`), Volts (`V`), and Ohms (`Ω`).
 

@@ -68,6 +68,18 @@ flowchart LR
   - **Key takeaway:** Digital circuits store numbers using **bits** (binary digits that are either `0` for OFF or `1` for ON). Each extra bit doubles the number of possible combinations, so an **$N$-bit** register has **$2^N$ states** numbered from **`0` up to $2^N - 1$**.
   - **Alternative resource:** [MathsIsFun — Binary Number System](https://www.mathsisfun.com/binary-number-system.html) `[HTTP 200 — Verified by scripts/check_links.py]` — Read exact headings **`How do we Count using Binary?`** and **`Position`** (powers of 2: $1, 2, 4, 8, 16, \dots$).
 
+#### Micro focus: period is the reciprocal of frequency
+<a id="micro-frequency-period"></a>
+Frequency (`f`, in hertz `Hz`) counts cycles per second, and period (`T`) is the seconds one cycle takes. They describe the same tick from opposite sides: `T = 1 / f` and `f = 1 / T`, so 50 Hz is a 0.02 s period and a 0.01 s period is 100 Hz.
+
+#### Micro focus: each bit doubles the states
+<a id="micro-binary-bits"></a>
+A bit holds 0 or 1, and an N-bit register has 2^N states, numbered from 0 to 2^N - 1. Eight bits give 256 states from 0 to 255, which is exactly why a motor command register stops at 255.
+
+#### Micro focus: place values double
+<a id="micro-place-values"></a>
+Read binary with its place values: the place values are `1, 2, 4, 8, ...`, doubling to the left, and a 1 adds that value while a 0 adds nothing. So 1011 is 8 + 0 + 2 + 1 = 11, and 1000 is 8.
+
 ### Bridge Notes
 Two sets of numbers appear in almost every microcontroller program you will ever write:
 

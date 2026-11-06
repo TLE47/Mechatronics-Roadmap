@@ -1,0 +1,477 @@
+{
+  "subjectId": "python",
+  "parentLessonId": "P.4",
+  "parentPath": "track-p/P.4-lists-and-for-loops.md",
+  "title": "Lists and for loops in small steps",
+  "version": 1,
+  "concepts": [
+    {
+      "id": "lists",
+      "title": "A list keeps its order",
+      "parentLessonId": "P.4",
+      "anchor": "micro-lists",
+      "sourceFocus": [
+        "zero-based indexing",
+        "`len(samples)` returns the count"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "variables"
+      ],
+      "resources": [
+        {
+          "id": "python-tutorial-lists",
+          "title": "Python 3 tutorial — Lists",
+          "url": "https://docs.python.org/3/tutorial/introduction.html",
+          "type": "docs",
+          "role": "primary",
+          "provider": "Python Software Foundation",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": 94,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "A list stores an ordered sequence inside square brackets: `samples = [12.1, 11.9, 11.8]`. The order is part of the value, so the first item stays first until something changes the list, and one name can carry a whole stream of readings.",
+        "Positions use zero-based indexing: `samples[0]` is the first item and `samples[2]` is the third. `len(samples)` returns the count, and `.append()` adds one item to the end. Asking for an index past the end raises `IndexError`."
+      ],
+      "example": {
+        "code": "samples = [12.1, 11.9, 11.8]\nprint(samples[0])\nprint(len(samples))\nsamples.append(11.6)\nprint(samples[3])",
+        "output": "12.1\n3\n11.6"
+      },
+      "walkthrough": [
+        {
+          "code": "samples = [12.1, 11.9, 11.8]",
+          "variable": "samples",
+          "after": "[12.1, 11.9, 11.8]",
+          "note": "One name now holds three ordered values."
+        },
+        {
+          "code": "samples[0]",
+          "expression": "the first item",
+          "output": "12.1",
+          "note": "Counting starts at zero, so index 0 is the first item, not the second."
+        },
+        {
+          "code": "samples.append(11.6)",
+          "note": "Append adds to the end, which makes the new fourth item index 3."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "lists-d1",
+          "prompt": "What does this print?",
+          "code": "print([5, 6, 7][1])",
+          "options": [
+            { "id": "a", "text": "6" },
+            { "id": "b", "text": "5" },
+            { "id": "c", "text": "7" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "a",
+          "explanation": "Index 1 is the second item, because indexing starts at zero."
+        },
+        {
+          "id": "lists-d2",
+          "prompt": "What does this print?",
+          "code": "print(len([2, 4, 6, 8]))",
+          "options": [
+            { "id": "a", "text": "4" },
+            { "id": "b", "text": "3" },
+            { "id": "c", "text": "8" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "a",
+          "explanation": "There are four items, so `len` returns 4; the last index is 3."
+        }
+      ],
+      "practice": {
+        "id": "lists-p1",
+        "prompt": "What does this print?",
+        "code": "print([9, 8, 7][0])",
+        "options": [
+          { "id": "a", "text": "9" },
+          { "id": "b", "text": "8" },
+          { "id": "c", "text": "7" },
+          { "id": "d", "text": "An error" }
+        ],
+        "answerId": "a",
+        "explanation": "Index 0 is the first item, which is 9."
+      },
+      "reviewPool": [
+        {
+          "id": "lists-r1",
+          "prompt": "In a list of length 3, which index holds the last item?",
+          "options": [
+            { "id": "a", "text": "2" },
+            { "id": "b", "text": "3" },
+            { "id": "c", "text": "1" },
+            { "id": "d", "text": "0" }
+          ],
+          "answerId": "a",
+          "explanation": "Indexing starts at zero, so three items sit at 0, 1 and 2."
+        },
+        {
+          "id": "lists-r2",
+          "prompt": "What does `.append(x)` do to a list?",
+          "options": [
+            { "id": "a", "text": "Adds x to the end" },
+            { "id": "b", "text": "Adds x to the front" },
+            { "id": "c", "text": "Removes x" },
+            { "id": "d", "text": "Sorts the list" }
+          ],
+          "answerId": "a",
+          "explanation": "Append grows the list by one item at its end."
+        },
+        {
+          "id": "lists-r3",
+          "prompt": "What does len([10, 20, 30]) return?",
+          "options": [
+            { "id": "a", "text": "3" },
+            { "id": "b", "text": "30" },
+            { "id": "c", "text": "2" },
+            { "id": "d", "text": "10" }
+          ],
+          "answerId": "a",
+          "explanation": "`len` counts the items, not their values."
+        },
+        {
+          "id": "lists-r4",
+          "prompt": "Which expression reads the first item of samples?",
+          "options": [
+            { "id": "a", "text": "samples[0]" },
+            { "id": "b", "text": "samples[1]" },
+            { "id": "c", "text": "samples(0)" },
+            { "id": "d", "text": "samples.first" }
+          ],
+          "answerId": "a",
+          "explanation": "Square brackets index a list, and the first position is 0."
+        }
+      ],
+      "challenge": {
+        "id": "lists-c1",
+        "prompt": "What does this print?",
+        "code": "readings = [1.0, 2.0]\nreadings.append(3.0)\nprint(len(readings))",
+        "options": [
+          { "id": "a", "text": "3" },
+          { "id": "b", "text": "2" },
+          { "id": "c", "text": "6.0" },
+          { "id": "d", "text": "An error" }
+        ],
+        "answerId": "a",
+        "explanation": "Append grows the list from two items to three, so its length is 3."
+      }
+    },
+    {
+      "id": "for-loops",
+      "title": "A for loop visits every item",
+      "parentLessonId": "P.4",
+      "anchor": "micro-for-loops",
+      "sourceFocus": [
+        "A **`for` loop** (`for x in items:`)",
+        "`for step in range(N):` counts `0, 1, 2, ..., N - 1`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "lists"
+      ],
+      "resources": [
+        {
+          "id": "cs50p-notes-2",
+          "title": "CS50P Lecture 2 notes",
+          "url": "https://cs50.harvard.edu/python/2022/notes/2/",
+          "type": "notes",
+          "role": "primary",
+          "provider": "Harvard CS50P",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": 95,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "A **`for` loop** (`for x in items:`) visits each item of a sequence once, in order. On each pass the loop name is bound to the next item, the indented body runs, and then the loop moves on by itself. When the sequence is exhausted, the loop stops.",
+        "`for step in range(N):` counts `0, 1, 2, ..., N - 1`, so the body runs exactly N times. To build a running total, create the accumulator before the loop (`total = 0.0`) and update it inside the body; after the loop, it holds the sum of every item."
+      ],
+      "example": {
+        "code": "readings = [1.0, 2.0, 3.0]\ntotal = 0.0\nfor value in readings:\n    total = total + value\nprint(total / len(readings))",
+        "output": "2.0"
+      },
+      "walkthrough": [
+        {
+          "code": "total = 0.0",
+          "variable": "total",
+          "after": "0.0",
+          "note": "The accumulator starts at zero before the first pass."
+        },
+        {
+          "code": "total = total + value",
+          "expression": "0.0 + 1.0, then 1.0 + 2.0, then 3.0 + 3.0",
+          "output": "1.0, then 3.0, then 6.0",
+          "note": "The body runs once per item, so the total grows with each reading."
+        },
+        {
+          "code": "print(total / len(readings))",
+          "expression": "6.0 / 3",
+          "output": "2.0",
+          "note": "After the loop, dividing by the count gives the average."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "for-loops-d1",
+          "prompt": "What is the last value range(4) produces?",
+          "options": [
+            { "id": "a", "text": "3" },
+            { "id": "b", "text": "4" },
+            { "id": "c", "text": "0" },
+            { "id": "d", "text": "1" }
+          ],
+          "answerId": "a",
+          "explanation": "`range(4)` counts from 0 up to, but not including, 4."
+        },
+        {
+          "id": "for-loops-d2",
+          "prompt": "Which lines belong to the loop body?",
+          "options": [
+            { "id": "a", "text": "The indented lines under the for header" },
+            { "id": "b", "text": "Every line after the header" },
+            { "id": "c", "text": "Only the first line after the header" },
+            { "id": "d", "text": "The lines before the header" }
+          ],
+          "answerId": "a",
+          "explanation": "Indentation marks the body; the first unindented line ends the loop."
+        }
+      ],
+      "practice": {
+        "id": "for-loops-p1",
+        "prompt": "What does total hold at the end?",
+        "code": "total = 0\nfor value in [2, 4, 6]:\n    total = total + value\nprint(total)",
+        "options": [
+          { "id": "a", "text": "12" },
+          { "id": "b", "text": "6" },
+          { "id": "c", "text": "3" },
+          { "id": "d", "text": "0" }
+        ],
+        "answerId": "a",
+        "explanation": "The body adds each item in turn: 0 + 2, then + 4, then + 6 gives 12."
+      },
+      "reviewPool": [
+        {
+          "id": "for-loops-r1",
+          "prompt": "How many values does range(3) produce?",
+          "options": [
+            { "id": "a", "text": "3" },
+            { "id": "b", "text": "2" },
+            { "id": "c", "text": "4" },
+            { "id": "d", "text": "1" }
+          ],
+          "answerId": "a",
+          "explanation": "It produces 0, 1 and 2: three values, ending before 3."
+        },
+        {
+          "id": "for-loops-r2",
+          "prompt": "Where should an accumulator be created?",
+          "options": [
+            { "id": "a", "text": "Before the loop" },
+            { "id": "b", "text": "Inside the loop" },
+            { "id": "c", "text": "After the loop" },
+            { "id": "d", "text": "It needs no starting value" }
+          ],
+          "answerId": "a",
+          "explanation": "Creating it inside the body would reset the total on every pass."
+        },
+        {
+          "id": "for-loops-r3",
+          "prompt": "A for loop over a list of four items runs its body…",
+          "options": [
+            { "id": "a", "text": "four times" },
+            { "id": "b", "text": "three times" },
+            { "id": "c", "text": "five times" },
+            { "id": "d", "text": "once" }
+          ],
+          "answerId": "a",
+          "explanation": "One pass per item, so four items mean four passes."
+        },
+        {
+          "id": "for-loops-r4",
+          "prompt": "After summing three readings, how do you average them?",
+          "options": [
+            { "id": "a", "text": "Divide the total by len(readings)" },
+            { "id": "b", "text": "Divide the total by 2" },
+            { "id": "c", "text": "Multiply the total by len(readings)" },
+            { "id": "d", "text": "Print the total" }
+          ],
+          "answerId": "a",
+          "explanation": "The mean is the sum divided by the count, so `len` supplies the count."
+        }
+      ],
+      "challenge": {
+        "id": "for-loops-c1",
+        "prompt": "How many times does this body run?",
+        "code": "count = 0\nfor step in range(5):\n    count = count + 1\nprint(count)",
+        "options": [
+          { "id": "a", "text": "5" },
+          { "id": "b", "text": "4" },
+          { "id": "c", "text": "6" },
+          { "id": "d", "text": "1" }
+        ],
+        "answerId": "a",
+        "explanation": "`range(5)` produces five values (0 to 4), so the body runs and the count reaches 5."
+      }
+    },
+    {
+      "id": "index-error",
+      "title": "The last index is len minus one",
+      "parentLessonId": "P.4",
+      "anchor": "micro-index-error",
+      "sourceFocus": [
+        "the last item sits at `len(samples) - 1`",
+        "`samples[len(samples)]` raises `IndexError`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "lists"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": 88,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "The last item sits at `len(samples) - 1`, because counting starts at zero: a list of three items has indexes 0, 1 and 2. `samples[len(samples)]` asks for the item after the last one and raises `IndexError`.",
+        "That off-by-one is the most common list mistake. Read the index as a distance from the start, not as an item number: index 2 is two steps in, which is the third item."
+      ],
+      "example": {
+        "code": "samples = [5, 6, 7]\nprint(samples[len(samples) - 1])",
+        "output": "7"
+      },
+      "walkthrough": [
+        {
+          "code": "len(samples)",
+          "expression": "3",
+          "output": "3",
+          "note": "Three items, so the valid indexes are 0, 1 and 2."
+        },
+        {
+          "code": "len(samples) - 1",
+          "expression": "3 - 1",
+          "output": "2",
+          "note": "The last valid index is one less than the count."
+        },
+        {
+          "code": "samples[2]",
+          "output": "7",
+          "note": "Index 2 is the third and last item."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "index-error-d1",
+          "prompt": "A list has four items. What is the last valid index?",
+          "options": [
+            { "id": "a", "text": "3" },
+            { "id": "b", "text": "4" },
+            { "id": "c", "text": "5" },
+            { "id": "d", "text": "1" }
+          ],
+          "answerId": "a",
+          "explanation": "Four items occupy indexes 0, 1, 2 and 3 for the last one."
+        },
+        {
+          "id": "index-error-d2",
+          "prompt": "What happens at `samples[4]` on a four-item list?",
+          "options": [
+            { "id": "a", "text": "IndexError" },
+            { "id": "b", "text": "It returns the last item" },
+            { "id": "c", "text": "It returns None" },
+            { "id": "d", "text": "It adds a fifth item" }
+          ],
+          "answerId": "a",
+          "explanation": "Index 4 is past the last valid index (3), so Python raises IndexError."
+        }
+      ],
+      "practice": {
+        "id": "index-error-p1",
+        "prompt": "What is the last valid index of a three-item list?",
+        "options": [
+          { "id": "a", "text": "2" },
+          { "id": "b", "text": "3" },
+          { "id": "c", "text": "1" },
+          { "id": "d", "text": "0" }
+        ],
+        "answerId": "a",
+        "explanation": "Three items sit at 0, 1 and 2, so 2 is the last index."
+      },
+      "reviewPool": [
+        {
+          "id": "index-error-r1",
+          "prompt": "Which expression reads the last item?",
+          "options": [
+            { "id": "a", "text": "items[len(items) - 1]" },
+            { "id": "b", "text": "items[len(items)]" },
+            { "id": "c", "text": "items[0]" },
+            { "id": "d", "text": "items[len(items) + 1]" }
+          ],
+          "answerId": "a",
+          "explanation": "The count minus one is the last valid index."
+        },
+        {
+          "id": "index-error-r2",
+          "prompt": "Why does `items[len(items)]` fail?",
+          "options": [
+            { "id": "a", "text": "It asks for the item after the last one" },
+            { "id": "b", "text": "It asks for the first item" },
+            { "id": "c", "text": "len cannot be used as an index" },
+            { "id": "d", "text": "It returns None" }
+          ],
+          "answerId": "a",
+          "explanation": "The count is one past the last valid index."
+        },
+        {
+          "id": "index-error-r3",
+          "prompt": "A list of five items, index 2 holds which item?",
+          "options": [
+            { "id": "a", "text": "the third" },
+            { "id": "b", "text": "the second" },
+            { "id": "c", "text": "the fourth" },
+            { "id": "d", "text": "the fifth" }
+          ],
+          "answerId": "a",
+          "explanation": "Index 0 is first, so index 2 is the third item."
+        },
+        {
+          "id": "index-error-r4",
+          "prompt": "What error does an index past the end raise?",
+          "options": [
+            { "id": "a", "text": "IndexError" },
+            { "id": "b", "text": "TypeError" },
+            { "id": "c", "text": "NameError" },
+            { "id": "d", "text": "ValueError" }
+          ],
+          "answerId": "a",
+          "explanation": "The list's index is out of range, which is an IndexError."
+        }
+      ],
+      "challenge": {
+        "id": "index-error-c1",
+        "prompt": "What does this print?",
+        "code": "values = [1, 2, 3]\nprint(values[3])",
+        "options": [
+          { "id": "a", "text": "IndexError" },
+          { "id": "b", "text": "3" },
+          { "id": "c", "text": "None" },
+          { "id": "d", "text": "0" }
+        ],
+        "answerId": "a",
+        "explanation": "Index 3 is one past the last valid index (2), so the script stops with IndexError."
+      }
+    }
+  ]
+}

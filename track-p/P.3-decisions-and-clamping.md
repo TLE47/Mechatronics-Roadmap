@@ -68,6 +68,18 @@ flowchart LR
   - **What to skip:** Skip **`match`** statements.
   - **Key takeaway:** Real hardware outputs only accept a finite range of numbers—for example, a standard motor command register only accepts whole numbers from `0` to `255`. **Clamping** (also called **saturation**) uses `if cmd > 255: cmd = 255` and `elif cmd < 0: cmd = 0` so out-of-bounds math can never wrap around or cause hardware faults.
 
+#### Micro focus: comparisons answer a question
+<a id="micro-comparisons"></a>
+A comparison uses `==`, never `=` — one equals sign stores a value, two equals signs ask whether two values are equal. Every comparison (`==`, `!=`, `<`, `<=`, `>`, `>=`) produces `True` or `False`, and an `if` runs the indented lines only when the comparison is `True`. An `elif` is checked only after the tests above it failed, and `else` runs when none of them matched.
+
+#### Micro focus: clamping a command
+<a id="micro-clamping"></a>
+Clamping keeps a command inside `[0, 255]`, the range a standard motor register can hold. Check the ceiling first with `if cmd > 255: cmd = 255`, then the floor with `elif cmd < 0: cmd = 0`; anything already inside the range passes through untouched. Clamp the computed command before it reaches the output, because the register cannot store a larger number safely.
+
+#### Micro focus: combining questions
+<a id="micro-logic"></a>
+`and` is True only when both sides are True, `or` is True when at least one side is, and `not` flips a boolean. Use them to write one safe condition instead of nested ifs: `if temp > 80 and fan_ok:` asks both questions before its body runs.
+
 ### Bridge Notes
 Look closely at the difference between a single equals sign `=` and a double equals sign `==`:
 - **`x = 255` (Assignment):** Stores the number `255` into variable `x`.

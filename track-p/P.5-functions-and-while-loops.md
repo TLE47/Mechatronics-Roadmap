@@ -68,6 +68,18 @@ flowchart LR
   - **What to skip:** Skip **`Dictionaries`** and **`Mario`**.
   - **Key takeaway:** A **`while` loop** (`while step < 5:`) checks its condition before every pass and repeats its indented body as long as the condition is `True`. You must always update the loop counter (`step = step + 1`) inside the `while` block so the loop eventually stops!
 
+#### Micro focus: a function you can call twice
+<a id="micro-functions"></a>
+A **function** (`def clamp_cmd(cmd):`) is a named block with parameters that runs only when it is called. The `return` keyword hands the computed answer back to the caller, which can store it or print it; a function that only prints hands back `None`. That is why `print` and `return` are not interchangeable.
+
+#### Micro focus: a while loop checks first
+<a id="micro-while-loops"></a>
+A `while` loop checks its condition before every pass: while it is True the indented body runs, and then the test happens again. You must always update the loop counter inside the body, because that update is what makes the condition False; a body that never changes it loops forever.
+
+#### Micro focus: when nothing is returned
+<a id="micro-none"></a>
+`None` is a value of its own, meaning there is no answer here, and a function without `return` hands back `None` even when it printed something. Test it with `result is None`; printing a value is a side effect, not a return.
+
 ### Bridge Notes
 In Lesson P.3, you wrote an `if / elif / else` block to clamp an actuator command into `[0, 255]`. What if you need to clamp 20 different commands across your robot program? Instead of copy-pasting the same 6 lines 20 times, you wrap them once inside a **function**:
 

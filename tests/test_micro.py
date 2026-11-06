@@ -41,7 +41,7 @@ class MicroContentTests(unittest.TestCase):
         self.assertEqual(self.findings, [], "expected no micro findings; check the content validator before shipping")
 
     def test_every_source_names_the_file_it_lives_in(self):
-        self.assertGreaterEqual(len(self.sources), 2, "expected P.1 and P.2 to both teach micro lessons")
+        self.assertGreaterEqual(len(self.sources), 9, "expected P.1 through P.9 to each teach micro lessons")
         for source in self.sources:
             stem = os.path.splitext(os.path.basename(source["_source"]))[0]
             self.assertEqual(
@@ -55,11 +55,11 @@ class MicroContentTests(unittest.TestCase):
                 f"expected {source['_source']} to cite a readable parent page",
             )
 
-    def test_ten_concepts_in_authored_order(self):
+    def test_all_concepts_in_authored_order(self):
         self.assertEqual(
             [concept["id"] for concept in self.concepts],
             micro.EXPECTED_IDS,
-            "expected the ten concepts in authored order; check the micro/P.<n>.json files",
+            "expected the authored concepts in order; check the micro/P.<n>.json files",
         )
 
     def test_every_anchor_is_unique_and_inside_its_own_parent(self):

@@ -1,0 +1,474 @@
+{
+  "subjectId": "python",
+  "parentLessonId": "P.7",
+  "parentPath": "track-p/P.7-si-units-and-metric-prefixes.md",
+  "title": "SI units and prefixes in small steps",
+  "version": 1,
+  "concepts": [
+    {
+      "id": "si-units",
+      "title": "Every formula expects base units",
+      "parentLessonId": "P.7",
+      "anchor": "micro-si-units",
+      "sourceFocus": [
+        "base SI units",
+        "meters (`m`)"
+      ],
+      "revision": 1,
+      "prerequisites": [],
+      "resources": [
+        {
+          "id": "mathsisfun-metric",
+          "title": "MathsIsFun — Metric System of Measurement",
+          "url": "https://www.mathsisfun.com/measure/metric-system.html",
+          "type": "reference",
+          "role": "primary",
+          "provider": "MathsIsFun",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": 93,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "Physics and engineering equations expect base SI units: meters (`m`), kilograms (`kg`), seconds (`s`), amperes (`A`), volts (`V`) and ohms (`Ω`). A number written in millimetres or milliseconds is not the number the formula was built for.",
+        "Convert on the first line of code, before the arithmetic: 250 millimetres becomes 0.25 metres, and 500 microseconds becomes 0.0005 seconds. Then every intermediate answer carries the unit the equation promises; forgetting the conversion multiplies the answer by 1000 or 1,000,000."
+      ],
+      "example": {
+        "code": "length_mm = 250\nlength_m = length_mm / 1000\nspeed = 2.0\nprint(length_m / speed)",
+        "output": "0.125"
+      },
+      "walkthrough": [
+        {
+          "code": "length_mm = 250",
+          "variable": "length_mm",
+          "after": "250",
+          "note": "The datasheet number is in millimetres, not metres."
+        },
+        {
+          "code": "length_m = length_mm / 1000",
+          "variable": "length_m",
+          "after": "0.25",
+          "note": "Dividing by 1000 moves from milli to the base unit before any formula uses it."
+        },
+        {
+          "code": "length_m / speed",
+          "expression": "0.25 / 2.0",
+          "output": "0.125",
+          "note": "Both operands are now in base SI units, so the result is seconds."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "si-units-d1",
+          "prompt": "How many meters is 15 millimeters?",
+          "options": [
+            { "id": "a", "text": "0.015" },
+            { "id": "b", "text": "15" },
+            { "id": "c", "text": "1500" },
+            { "id": "d", "text": "0.15" }
+          ],
+          "answerId": "a",
+          "explanation": "Milli means a thousandth, so 15 mm is 15 / 1000 = 0.015 m."
+        },
+        {
+          "id": "si-units-d2",
+          "prompt": "A distance-and-time formula expects which length unit?",
+          "options": [
+            { "id": "a", "text": "meters" },
+            { "id": "b", "text": "millimeters" },
+            { "id": "c", "text": "kilometers" },
+            { "id": "d", "text": "any unit, as long as both use it" }
+          ],
+          "answerId": "a",
+          "explanation": "Base SI length is the meter; prefixed values must be converted first."
+        }
+      ],
+      "practice": {
+        "id": "si-units-p1",
+        "prompt": "What does this print?",
+        "code": "length_mm = 500\nprint(length_mm / 1000)",
+        "options": [
+          { "id": "a", "text": "0.5" },
+          { "id": "b", "text": "500" },
+          { "id": "c", "text": "5" },
+          { "id": "d", "text": "0.05" }
+        ],
+        "answerId": "a",
+        "explanation": "500 millimetres is 0.5 metres, the base-SI form a formula can use."
+      },
+      "reviewPool": [
+        {
+          "id": "si-units-r1",
+          "prompt": "Which is the base SI unit of length?",
+          "options": [
+            { "id": "a", "text": "meter" },
+            { "id": "b", "text": "millimeter" },
+            { "id": "c", "text": "kilometer" },
+            { "id": "d", "text": "inch" }
+          ],
+          "answerId": "a",
+          "explanation": "The prefixed forms are millimetres and kilometres; the base is the metre."
+        },
+        {
+          "id": "si-units-r2",
+          "prompt": "Which is the base SI unit of mass?",
+          "options": [
+            { "id": "a", "text": "kilogram" },
+            { "id": "b", "text": "gram" },
+            { "id": "c", "text": "milligram" },
+            { "id": "d", "text": "newton" }
+          ],
+          "answerId": "a",
+          "explanation": "The kilogram is the SI base unit, unusually already carrying a prefix."
+        },
+        {
+          "id": "si-units-r3",
+          "prompt": "Which is the base SI unit of time?",
+          "options": [
+            { "id": "a", "text": "second" },
+            { "id": "b", "text": "millisecond" },
+            { "id": "c", "text": "minute" },
+            { "id": "d", "text": "hertz" }
+          ],
+          "answerId": "a",
+          "explanation": "Seconds are the base; milliseconds must be divided by 1000 first."
+        },
+        {
+          "id": "si-units-r4",
+          "prompt": "When should prefixed values be converted to base units?",
+          "options": [
+            { "id": "a", "text": "Before the formula runs" },
+            { "id": "b", "text": "Only when printing" },
+            { "id": "c", "text": "Never" },
+            { "id": "d", "text": "After the final answer" }
+          ],
+          "answerId": "a",
+          "explanation": "The formula's constants assume base units, so the inputs must already be converted."
+        }
+      ],
+      "challenge": {
+        "id": "si-units-c1",
+        "prompt": "What does this print?",
+        "code": "pulse_us = 500\nprint(pulse_us / 1_000_000)",
+        "options": [
+          { "id": "a", "text": "0.0005" },
+          { "id": "b", "text": "0.5" },
+          { "id": "c", "text": "500" },
+          { "id": "d", "text": "0.005" }
+        ],
+        "answerId": "a",
+        "explanation": "Micro means a millionth, so 500 µs is 500 / 1,000,000 = 0.0005 s."
+      }
+    },
+    {
+      "id": "metric-prefixes",
+      "title": "A prefix is a multiplier",
+      "parentLessonId": "P.7",
+      "anchor": "micro-metric-prefixes",
+      "sourceFocus": [
+        "kilo (`k`) is ×1,000",
+        "micro (`µ`) is ÷1,000,000"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "si-units"
+      ],
+      "resources": [
+        {
+          "id": "mathsisfun-metric-numbers",
+          "title": "MathsIsFun — Metric Numbers",
+          "url": "https://www.mathsisfun.com/metric-numbers.html",
+          "type": "reference",
+          "role": "primary",
+          "provider": "MathsIsFun",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": 94,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "A metric prefix is a multiplier in front of a unit. Kilo (`k`) is ×1,000, mega (`M`) is ×1,000,000, milli (`m`) is ÷1,000 and micro (`µ`) is ÷1,000,000. The unit itself never changes, only its scale.",
+        "Python can write the same factors as powers of ten: `1e3` for a thousand, `1e-3` for a thousandth, and `1e-6` for a millionth. Converting to base units first keeps a datasheet value and a formula in the same language."
+      ],
+      "example": {
+        "code": "current_ma = 15\ncurrent_a = current_ma * 1e-3\nprint(current_a)",
+        "output": "0.015"
+      },
+      "walkthrough": [
+        {
+          "code": "current_ma = 15",
+          "variable": "current_ma",
+          "after": "15",
+          "note": "Fifteen milliamps, the number a datasheet would print."
+        },
+        {
+          "code": "current_ma * 1e-3",
+          "expression": "15 × 0.001",
+          "output": "0.015",
+          "note": "Milli is a thousandth, so multiplying by 1e-3 converts to amperes."
+        },
+        {
+          "code": "print(current_a)",
+          "output": "0.015",
+          "note": "The formula now sees amperes, the unit its constants expect."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "metric-prefixes-d1",
+          "prompt": "How many ohms is 2 kilo-ohms?",
+          "options": [
+            { "id": "a", "text": "2000" },
+            { "id": "b", "text": "0.002" },
+            { "id": "c", "text": "2" },
+            { "id": "d", "text": "200" }
+          ],
+          "answerId": "a",
+          "explanation": "Kilo multiplies by 1,000, so 2 kΩ is 2,000 Ω."
+        },
+        {
+          "id": "metric-prefixes-d2",
+          "prompt": "How many seconds is 500 microseconds?",
+          "options": [
+            { "id": "a", "text": "0.0005" },
+            { "id": "b", "text": "0.5" },
+            { "id": "c", "text": "500" },
+            { "id": "d", "text": "0.005" }
+          ],
+          "answerId": "a",
+          "explanation": "Micro divides by 1,000,000, so 500 µs is 0.0005 s."
+        }
+      ],
+      "practice": {
+        "id": "metric-prefixes-p1",
+        "prompt": "What does this print?",
+        "code": "length_mm = 250\nprint(length_mm * 1e-3)",
+        "options": [
+          { "id": "a", "text": "0.25" },
+          { "id": "b", "text": "250" },
+          { "id": "c", "text": "2.5" },
+          { "id": "d", "text": "0.025" }
+        ],
+        "answerId": "a",
+        "explanation": "Milli is one thousandth: 250 mm is 0.25 m."
+      },
+      "reviewPool": [
+        {
+          "id": "metric-prefixes-r1",
+          "prompt": "What multiplier does milli mean?",
+          "options": [
+            { "id": "a", "text": "one thousandth" },
+            { "id": "b", "text": "one thousand" },
+            { "id": "c", "text": "one millionth" },
+            { "id": "d", "text": "one million" }
+          ],
+          "answerId": "a",
+          "explanation": "Milli divides by 1,000, which is a factor of 1e-3."
+        },
+        {
+          "id": "metric-prefixes-r2",
+          "prompt": "What multiplier does kilo mean?",
+          "options": [
+            { "id": "a", "text": "one thousand" },
+            { "id": "b", "text": "one thousandth" },
+            { "id": "c", "text": "one million" },
+            { "id": "d", "text": "one millionth" }
+          ],
+          "answerId": "a",
+          "explanation": "Kilo multiplies by 1,000, which is 1e3."
+        },
+        {
+          "id": "metric-prefixes-r3",
+          "prompt": "What multiplier does mega mean?",
+          "options": [
+            { "id": "a", "text": "one million" },
+            { "id": "b", "text": "one thousand" },
+            { "id": "c", "text": "one thousandth" },
+            { "id": "d", "text": "one millionth" }
+          ],
+          "answerId": "a",
+          "explanation": "Mega is 1,000,000, which is 1e6."
+        },
+        {
+          "id": "metric-prefixes-r4",
+          "prompt": "Which Python number means one millionth?",
+          "options": [
+            { "id": "a", "text": "1e-6" },
+            { "id": "b", "text": "1e6" },
+            { "id": "c", "text": "1e-3" },
+            { "id": "d", "text": "1e3" }
+          ],
+          "answerId": "a",
+          "explanation": "A negative exponent of six is 0.000001."
+        }
+      ],
+      "challenge": {
+        "id": "metric-prefixes-c1",
+        "prompt": "What does this print?",
+        "code": "resistance_k = 0.22\nprint(resistance_k * 1000)",
+        "options": [
+          { "id": "a", "text": "220.0" },
+          { "id": "b", "text": "0.22" },
+          { "id": "c", "text": "2200.0" },
+          { "id": "d", "text": "22.0" }
+        ],
+        "answerId": "a",
+        "explanation": "0.22 kΩ is 0.22 × 1,000 = 220 Ω, and multiplying by an int gives a float."
+      }
+    },
+    {
+      "id": "unit-cancel",
+      "title": "Let the units check the answer",
+      "parentLessonId": "P.7",
+      "anchor": "micro-unit-cancel",
+      "sourceFocus": [
+        "meters divided by seconds leaves `m/s`",
+        "the answer's unit is part of the check"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "si-units"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": 87,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "Units travel through arithmetic like numbers. Meters divided by seconds leaves `m/s`; meters multiplied by meters leaves `m²`. If the result's unit is not the one you expected, the formula or a conversion is wrong.",
+        "So the answer's unit is part of the check: a speed should come out in `m/s`, and an energy in joules. Carrying the units on paper is faster than discovering a thousand-fold error in a robot's motion."
+      ],
+      "example": {
+        "code": "distance_m = 10.0\ntime_s = 2.0\nspeed = distance_m / time_s\nprint(speed)",
+        "output": "5.0"
+      },
+      "walkthrough": [
+        {
+          "code": "distance_m / time_s",
+          "expression": "10.0 m / 2.0 s",
+          "output": "5.0 m/s",
+          "note": "Meters over seconds is the unit of speed."
+        },
+        {
+          "code": "speed",
+          "variable": "speed",
+          "after": "5.0",
+          "note": "The number and its unit answer the question together."
+        },
+        {
+          "code": "print(speed)",
+          "output": "5.0",
+          "note": "Python prints the number; the unit lives in your reasoning and the label."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "unit-cancel-d1",
+          "prompt": "What unit does meters / seconds produce?",
+          "options": [
+            { "id": "a", "text": "m/s" },
+            { "id": "b", "text": "m*s" },
+            { "id": "c", "text": "s/m" },
+            { "id": "d", "text": "m²" }
+          ],
+          "answerId": "a",
+          "explanation": "Dividing by seconds leaves per-second, so the unit is meters per second."
+        },
+        {
+          "id": "unit-cancel-d2",
+          "prompt": "Adding 5 meters to 2 seconds gives…",
+          "options": [
+            { "id": "a", "text": "no meaningful unit" },
+            { "id": "b", "text": "7 meters" },
+            { "id": "c", "text": "7 m/s" },
+            { "id": "d", "text": "7 seconds" }
+          ],
+          "answerId": "a",
+          "explanation": "Only like units add; mixing length and time is a sign the formula is wrong."
+        }
+      ],
+      "practice": {
+        "id": "unit-cancel-p1",
+        "prompt": "What unit does meters * meters produce?",
+        "options": [
+          { "id": "a", "text": "m²" },
+          { "id": "b", "text": "m" },
+          { "id": "c", "text": "m/s" },
+          { "id": "d", "text": "s" }
+        ],
+        "answerId": "a",
+        "explanation": "Multiplying a length by a length gives an area in square meters."
+      },
+      "reviewPool": [
+        {
+          "id": "unit-cancel-r1",
+          "prompt": "What unit does a speed have?",
+          "options": [
+            { "id": "a", "text": "m/s" },
+            { "id": "b", "text": "m" },
+            { "id": "c", "text": "s" },
+            { "id": "d", "text": "kg" }
+          ],
+          "answerId": "a",
+          "explanation": "Speed is a distance per unit time, so meters per second."
+        },
+        {
+          "id": "unit-cancel-r2",
+          "prompt": "What does a wrong final unit usually signal?",
+          "options": [
+            { "id": "a", "text": "A wrong formula or a missing conversion" },
+            { "id": "b", "text": "Nothing; units are decoration" },
+            { "id": "c", "text": "Python rounded the answer" },
+            { "id": "d", "text": "The print statement is wrong" }
+          ],
+          "answerId": "a",
+          "explanation": "Units cancel through the arithmetic, so a mismatch exposes the mistake."
+        },
+        {
+          "id": "unit-cancel-r3",
+          "prompt": "Which pair can be added directly?",
+          "options": [
+            { "id": "a", "text": "3 m and 2 m" },
+            { "id": "b", "text": "3 m and 2 s" },
+            { "id": "c", "text": "3 m and 2 kg" },
+            { "id": "d", "text": "3 s and 2 m/s" }
+          ],
+          "answerId": "a",
+          "explanation": "Like units add; different units must be converted or the expression is meaningless."
+        },
+        {
+          "id": "unit-cancel-r4",
+          "prompt": "Meters divided by seconds then multiplied by seconds gives…",
+          "options": [
+            { "id": "a", "text": "meters" },
+            { "id": "b", "text": "m/s" },
+            { "id": "c", "text": "s²" },
+            { "id": "d", "text": "m²" }
+          ],
+          "answerId": "a",
+          "explanation": "The seconds cancel, leaving the original length unit."
+        }
+      ],
+      "challenge": {
+        "id": "unit-cancel-c1",
+        "prompt": "A cart covers 0.25 m in 2.0 s. What is its speed?",
+        "code": "print(0.25 / 2.0)",
+        "options": [
+          { "id": "a", "text": "0.125 m/s" },
+          { "id": "b", "text": "0.5 m/s" },
+          { "id": "c", "text": "8.0 m/s" },
+          { "id": "d", "text": "2.25 m/s" }
+        ],
+        "answerId": "a",
+        "explanation": "Distance over time gives 0.125, and the units cancel to m/s."
+      }
+    }
+  ]
+}

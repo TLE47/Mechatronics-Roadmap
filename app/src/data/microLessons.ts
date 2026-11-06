@@ -103,6 +103,76 @@ export const MICRO_LESSONS: MicroCatalog = {
         "floor-division",
         "order-of-operations"
       ]
+    },
+    {
+      "parentLessonId": "P.3",
+      "parentPath": "track-p/P.3-decisions-and-clamping.md",
+      "title": "Decisions and clamping in small steps",
+      "conceptIds": [
+        "comparisons",
+        "clamping",
+        "logic"
+      ]
+    },
+    {
+      "parentLessonId": "P.4",
+      "parentPath": "track-p/P.4-lists-and-for-loops.md",
+      "title": "Lists and for loops in small steps",
+      "conceptIds": [
+        "lists",
+        "for-loops",
+        "index-error"
+      ]
+    },
+    {
+      "parentLessonId": "P.5",
+      "parentPath": "track-p/P.5-functions-and-while-loops.md",
+      "title": "Functions and while loops in small steps",
+      "conceptIds": [
+        "functions",
+        "while-loops",
+        "none"
+      ]
+    },
+    {
+      "parentLessonId": "P.6",
+      "parentPath": "track-p/P.6-modules-and-automated-asserts.md",
+      "title": "Modules and asserts in small steps",
+      "conceptIds": [
+        "imports",
+        "asserts",
+        "assert-message"
+      ]
+    },
+    {
+      "parentLessonId": "P.7",
+      "parentPath": "track-p/P.7-si-units-and-metric-prefixes.md",
+      "title": "SI units and prefixes in small steps",
+      "conceptIds": [
+        "si-units",
+        "metric-prefixes",
+        "unit-cancel"
+      ]
+    },
+    {
+      "parentLessonId": "P.8",
+      "parentPath": "track-p/P.8-frequency-and-binary-bits.md",
+      "title": "Frequency and bits in small steps",
+      "conceptIds": [
+        "frequency-period",
+        "binary-bits",
+        "place-values"
+      ]
+    },
+    {
+      "parentLessonId": "P.9",
+      "parentPath": "track-p/P.9-rearranging-formulas-and-scaling.md",
+      "title": "Rearranging and scaling in small steps",
+      "conceptIds": [
+        "rearranging",
+        "linear-scaling",
+        "scale-output"
+      ]
     }
   ],
   "concepts": [
@@ -2895,6 +2965,5635 @@ export const MICRO_LESSONS: MicroCatalog = {
         ],
         "answerId": "a",
         "explanation": "Each bracket finishes first: 10 / 10 is 1.0, and slash division keeps it a float.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "comparisons",
+      "title": "A comparison answers a question",
+      "parentLessonId": "P.3",
+      "anchor": "micro-comparisons",
+      "sourceFocus": [
+        "A comparison uses `==`, never `=`",
+        "runs the indented lines only when the comparison is `True`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "booleans"
+      ],
+      "resources": [
+        {
+          "id": "cs50p-notes-1",
+          "title": "CS50P Lecture 1 notes",
+          "url": "https://cs50.harvard.edu/python/2022/notes/1/",
+          "type": "notes",
+          "role": "primary",
+          "provider": "Harvard CS50P",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 96,
+          "modeledSeconds": 84.4
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "A comparison asks a question about two values. `==` asks whether they are equal, `>` and `<` ask about order, and `!=` asks whether they differ. A single `=` is not a question: it stores a value in a name.",
+        "Every comparison produces `True` or `False`. An `if` runs the indented lines only when the comparison is `True`; an `elif` is tried only after the earlier tests failed, and `else` runs when none of them matched."
+      ],
+      "example": {
+        "code": "temperature = 72\nif temperature > 80:\n    print(\"fan on\")\nelse:\n    print(\"fan off\")",
+        "output": "fan off"
+      },
+      "walkthrough": [
+        {
+          "code": "temperature = 72",
+          "variable": "temperature",
+          "after": "72",
+          "note": "A plain assignment stores the value; it asks nothing."
+        },
+        {
+          "code": "temperature > 80",
+          "expression": "72 > 80",
+          "output": "False",
+          "note": "The comparison answers with a boolean, and the answer decides the branch."
+        },
+        {
+          "code": "print(\"fan off\")",
+          "note": "Because the test was False, execution skips the if body and takes the else body."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "comparisons-d1",
+          "prompt": "What does this print?",
+          "code": "level = 3\nprint(level == 3)",
+          "options": [
+            {
+              "id": "a",
+              "text": "True"
+            },
+            {
+              "id": "b",
+              "text": "False"
+            },
+            {
+              "id": "c",
+              "text": "3"
+            },
+            {
+              "id": "d",
+              "text": "An error"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "`==` asks whether the two values are equal, and 3 equals 3, so the answer is True.",
+          "type": "choice"
+        },
+        {
+          "id": "comparisons-d2",
+          "prompt": "Which line asks whether cmd is 255?",
+          "options": [
+            {
+              "id": "a",
+              "text": "cmd == 255"
+            },
+            {
+              "id": "b",
+              "text": "cmd = 255"
+            },
+            {
+              "id": "c",
+              "text": "cmd != 255"
+            },
+            {
+              "id": "d",
+              "text": "cmd >= 255"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A double equals asks the equality question; a single equals stores 255 and answers nothing.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "comparisons-p1",
+        "prompt": "What does this print?",
+        "code": "x = 10\nprint(x > 12)",
+        "options": [
+          {
+            "id": "a",
+            "text": "False"
+          },
+          {
+            "id": "b",
+            "text": "True"
+          },
+          {
+            "id": "c",
+            "text": "12"
+          },
+          {
+            "id": "d",
+            "text": "An error"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Ten is not greater than twelve, so the comparison answers False.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "comparisons-r1",
+          "prompt": "What does 4 != 4 produce?",
+          "options": [
+            {
+              "id": "a",
+              "text": "False"
+            },
+            {
+              "id": "b",
+              "text": "True"
+            },
+            {
+              "id": "c",
+              "text": "4"
+            },
+            {
+              "id": "d",
+              "text": "An error"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "`!=` asks whether the values differ; four is not different from four.",
+          "type": "choice"
+        },
+        {
+          "id": "comparisons-r2",
+          "prompt": "Which symbol stores a value in a name?",
+          "options": [
+            {
+              "id": "a",
+              "text": "="
+            },
+            {
+              "id": "b",
+              "text": "=="
+            },
+            {
+              "id": "c",
+              "text": "!="
+            },
+            {
+              "id": "d",
+              "text": ">="
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Assignment uses one equals sign; the others are comparison questions.",
+          "type": "choice"
+        },
+        {
+          "id": "comparisons-r3",
+          "prompt": "What does 9 >= 9 produce?",
+          "options": [
+            {
+              "id": "a",
+              "text": "True"
+            },
+            {
+              "id": "b",
+              "text": "False"
+            },
+            {
+              "id": "c",
+              "text": "9"
+            },
+            {
+              "id": "d",
+              "text": "An error"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "`>=` is true when the left value is greater than or equal to the right, and nine equals nine.",
+          "type": "choice"
+        },
+        {
+          "id": "comparisons-r4",
+          "prompt": "An if block runs its indented lines when its comparison is…",
+          "options": [
+            {
+              "id": "a",
+              "text": "True"
+            },
+            {
+              "id": "b",
+              "text": "False"
+            },
+            {
+              "id": "c",
+              "text": "a number"
+            },
+            {
+              "id": "d",
+              "text": "always"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The if body runs only on True; otherwise Python checks elif branches and then else.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "comparisons-c1",
+        "prompt": "What does this print?",
+        "code": "raw = 300\nprint(raw == 255)",
+        "options": [
+          {
+            "id": "a",
+            "text": "False"
+          },
+          {
+            "id": "b",
+            "text": "True"
+          },
+          {
+            "id": "c",
+            "text": "255"
+          },
+          {
+            "id": "d",
+            "text": "An error"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The comparison asks a question and 300 is not 255, so it answers False; it does not clamp the value.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "clamping",
+      "title": "Clamping keeps a command in range",
+      "parentLessonId": "P.3",
+      "anchor": "micro-clamping",
+      "sourceFocus": [
+        "Clamping keeps a command inside `[0, 255]`",
+        "`if cmd > 255: cmd = 255`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "comparisons"
+      ],
+      "resources": [
+        {
+          "id": "cs50p-notes-1",
+          "title": "CS50P Lecture 1 notes",
+          "url": "https://cs50.harvard.edu/python/2022/notes/1/",
+          "type": "notes",
+          "role": "primary",
+          "provider": "Harvard CS50P",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 92,
+          "modeledSeconds": 91.6
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "A hardware output accepts a finite range. A motor command register holds whole numbers from 0 to 255, so a computed 310 or -45 cannot be sent as it stands. Clamping keeps a command inside `[0, 255]` by replacing an out-of-range value with the nearest limit.",
+        "Check the high end first with `if cmd > 255: cmd = 255`, then the low end with `elif cmd < 0: cmd = 0`. A value already inside the range matches neither test and passes through untouched. Clamp the computed value before it reaches the output, never after."
+      ],
+      "example": {
+        "code": "cmd = 310\nif cmd > 255:\n    cmd = 255\nelif cmd < 0:\n    cmd = 0\nprint(cmd)",
+        "output": "255"
+      },
+      "walkthrough": [
+        {
+          "code": "cmd = 310",
+          "variable": "cmd",
+          "after": "310",
+          "note": "The controller's raw answer is outside the register's range."
+        },
+        {
+          "code": "cmd > 255",
+          "expression": "310 > 255",
+          "output": "True",
+          "note": "The high test matches, so the if body runs and the elif is skipped."
+        },
+        {
+          "code": "cmd = 255",
+          "variable": "cmd",
+          "before": "310",
+          "after": "255",
+          "note": "The command is pinned to the highest value the hardware accepts."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "clamping-d1",
+          "prompt": "What does this print?",
+          "code": "cmd = -45\nif cmd > 255:\n    cmd = 255\nelif cmd < 0:\n    cmd = 0\nprint(cmd)",
+          "options": [
+            {
+              "id": "a",
+              "text": "0"
+            },
+            {
+              "id": "b",
+              "text": "-45"
+            },
+            {
+              "id": "c",
+              "text": "255"
+            },
+            {
+              "id": "d",
+              "text": "An error"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The high test fails and the low test matches, so the command is pinned to 0.",
+          "type": "choice"
+        },
+        {
+          "id": "clamping-d2",
+          "prompt": "What does clamping 128 through the same two tests produce?",
+          "options": [
+            {
+              "id": "a",
+              "text": "128"
+            },
+            {
+              "id": "b",
+              "text": "0"
+            },
+            {
+              "id": "c",
+              "text": "255"
+            },
+            {
+              "id": "d",
+              "text": "An error"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "128 is already inside [0, 255], so neither branch changes it.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "clamping-p1",
+        "prompt": "What does this print?",
+        "code": "cmd = 300\nif cmd > 255:\n    cmd = 255\nprint(cmd)",
+        "options": [
+          {
+            "id": "a",
+            "text": "255"
+          },
+          {
+            "id": "b",
+            "text": "300"
+          },
+          {
+            "id": "c",
+            "text": "0"
+          },
+          {
+            "id": "d",
+            "text": "45"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "300 is over the high limit, so the assignment pins it to 255.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "clamping-r1",
+          "prompt": "What does clamping 300 into [0, 255] produce?",
+          "options": [
+            {
+              "id": "a",
+              "text": "255"
+            },
+            {
+              "id": "b",
+              "text": "300"
+            },
+            {
+              "id": "c",
+              "text": "0"
+            },
+            {
+              "id": "d",
+              "text": "45"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The nearest value inside the range is the high limit, 255.",
+          "type": "choice"
+        },
+        {
+          "id": "clamping-r2",
+          "prompt": "What does clamping -8 into [0, 255] produce?",
+          "options": [
+            {
+              "id": "a",
+              "text": "0"
+            },
+            {
+              "id": "b",
+              "text": "-8"
+            },
+            {
+              "id": "c",
+              "text": "255"
+            },
+            {
+              "id": "d",
+              "text": "8"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A negative command is below the range, so it is pinned to the low limit, 0.",
+          "type": "choice"
+        },
+        {
+          "id": "clamping-r3",
+          "prompt": "A command of 100 clamped into [0, 255] is…",
+          "options": [
+            {
+              "id": "a",
+              "text": "still 100"
+            },
+            {
+              "id": "b",
+              "text": "0"
+            },
+            {
+              "id": "c",
+              "text": "255"
+            },
+            {
+              "id": "d",
+              "text": "an error"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Inside the range, clamping is a no-op: the value passes through.",
+          "type": "choice"
+        },
+        {
+          "id": "clamping-r4",
+          "prompt": "When should a command be clamped?",
+          "options": [
+            {
+              "id": "a",
+              "text": "After it is computed and before the output"
+            },
+            {
+              "id": "b",
+              "text": "Only after the motor reports a fault"
+            },
+            {
+              "id": "c",
+              "text": "Never; the register handles it"
+            },
+            {
+              "id": "d",
+              "text": "Before the raw command is calculated"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The computed value is what can leave the safe range, so it is clamped before it reaches the register.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "clamping-c1",
+        "prompt": "What does this print?",
+        "code": "cmd = 128\nif cmd > 255:\n    cmd = 255\nelif cmd < 0:\n    cmd = 0\ncmd = cmd + 200\nprint(cmd)",
+        "options": [
+          {
+            "id": "a",
+            "text": "328"
+          },
+          {
+            "id": "b",
+            "text": "255"
+          },
+          {
+            "id": "c",
+            "text": "0"
+          },
+          {
+            "id": "d",
+            "text": "200"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The clamp ran before the addition, and 128 passed through unchanged; 128 + 200 is 328. Clamping early does not protect a later calculation.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "logic",
+      "title": "and, or and not combine questions",
+      "parentLessonId": "P.3",
+      "anchor": "micro-logic",
+      "sourceFocus": [
+        "`and` is True only when both sides are True",
+        "`not` flips a boolean"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "comparisons"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 90,
+          "modeledSeconds": 82.9
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "Comparisons can be combined. `and` is True only when both sides are True, `or` is True when at least one side is, and `not` flips a boolean. `not` binds tightest, then `and`, then `or`; brackets make the grouping unmistakable.",
+        "Use them to express one safe condition instead of nested ifs: `if temp > 80 and fan_ok:` asks both questions before the body runs, and `if not estop:` runs only while the emergency stop is clear."
+      ],
+      "example": {
+        "code": "temp = 72\nfan_on = True\nif temp > 60 and fan_on:\n    print(\"cooling\")",
+        "output": "cooling"
+      },
+      "walkthrough": [
+        {
+          "code": "temp > 60",
+          "expression": "72 > 60",
+          "output": "True",
+          "note": "The left question is true."
+        },
+        {
+          "code": "temp > 60 and fan_on",
+          "expression": "True and True",
+          "output": "True",
+          "note": "Both sides must be true for `and` to be true."
+        },
+        {
+          "code": "print(\"cooling\")",
+          "note": "The combined condition passed, so the body runs."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "logic-d1",
+          "prompt": "What does this produce?",
+          "code": "print(True and False)",
+          "options": [
+            {
+              "id": "a",
+              "text": "False"
+            },
+            {
+              "id": "b",
+              "text": "True"
+            },
+            {
+              "id": "c",
+              "text": "An error"
+            },
+            {
+              "id": "d",
+              "text": "None"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "`and` needs both sides true; one false side is enough to answer False.",
+          "type": "choice"
+        },
+        {
+          "id": "logic-d2",
+          "prompt": "What does this produce?",
+          "code": "print(not True)",
+          "options": [
+            {
+              "id": "a",
+              "text": "False"
+            },
+            {
+              "id": "b",
+              "text": "True"
+            },
+            {
+              "id": "c",
+              "text": "None"
+            },
+            {
+              "id": "d",
+              "text": "An error"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "`not` flips the boolean, so True becomes False.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "logic-p1",
+        "prompt": "What does this produce?",
+        "code": "print(5 > 3 and 2 > 4)",
+        "options": [
+          {
+            "id": "a",
+            "text": "False"
+          },
+          {
+            "id": "b",
+            "text": "True"
+          },
+          {
+            "id": "c",
+            "text": "5"
+          },
+          {
+            "id": "d",
+            "text": "An error"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The right comparison is False, so the `and` is False even though the left one passed.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "logic-r1",
+          "prompt": "When is `a or b` True?",
+          "options": [
+            {
+              "id": "a",
+              "text": "When at least one side is True"
+            },
+            {
+              "id": "b",
+              "text": "Only when both are True"
+            },
+            {
+              "id": "c",
+              "text": "Only when both are False"
+            },
+            {
+              "id": "d",
+              "text": "Never"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "`or` passes when either side passes.",
+          "type": "choice"
+        },
+        {
+          "id": "logic-r2",
+          "prompt": "When is `a and b` True?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Only when both sides are True"
+            },
+            {
+              "id": "b",
+              "text": "When either side is True"
+            },
+            {
+              "id": "c",
+              "text": "When both are False"
+            },
+            {
+              "id": "d",
+              "text": "Always"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Both sides must pass for the combined condition to pass.",
+          "type": "choice"
+        },
+        {
+          "id": "logic-r3",
+          "prompt": "What does `not False` produce?",
+          "options": [
+            {
+              "id": "a",
+              "text": "True"
+            },
+            {
+              "id": "b",
+              "text": "False"
+            },
+            {
+              "id": "c",
+              "text": "0"
+            },
+            {
+              "id": "d",
+              "text": "None"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "`not` flips the value, and the opposite of False is True.",
+          "type": "choice"
+        },
+        {
+          "id": "logic-r4",
+          "prompt": "Which operator binds tightest?",
+          "options": [
+            {
+              "id": "a",
+              "text": "not"
+            },
+            {
+              "id": "b",
+              "text": "and"
+            },
+            {
+              "id": "c",
+              "text": "or"
+            },
+            {
+              "id": "d",
+              "text": "They are equal"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "`not` applies first, then `and`, then `or`; brackets override the order.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "logic-c1",
+        "prompt": "What does this print?",
+        "code": "print(3 > 2 and 4 > 5)",
+        "options": [
+          {
+            "id": "a",
+            "text": "False"
+          },
+          {
+            "id": "b",
+            "text": "True"
+          },
+          {
+            "id": "c",
+            "text": "3"
+          },
+          {
+            "id": "d",
+            "text": "An error"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Both comparisons must pass; 4 > 5 does not.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "lists",
+      "title": "A list keeps its order",
+      "parentLessonId": "P.4",
+      "anchor": "micro-lists",
+      "sourceFocus": [
+        "zero-based indexing",
+        "`len(samples)` returns the count"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "variables"
+      ],
+      "resources": [
+        {
+          "id": "python-tutorial-lists",
+          "title": "Python 3 tutorial — Lists",
+          "url": "https://docs.python.org/3/tutorial/introduction.html",
+          "type": "docs",
+          "role": "primary",
+          "provider": "Python Software Foundation",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 94,
+          "modeledSeconds": 84.8
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "A list stores an ordered sequence inside square brackets: `samples = [12.1, 11.9, 11.8]`. The order is part of the value, so the first item stays first until something changes the list, and one name can carry a whole stream of readings.",
+        "Positions use zero-based indexing: `samples[0]` is the first item and `samples[2]` is the third. `len(samples)` returns the count, and `.append()` adds one item to the end. Asking for an index past the end raises `IndexError`."
+      ],
+      "example": {
+        "code": "samples = [12.1, 11.9, 11.8]\nprint(samples[0])\nprint(len(samples))\nsamples.append(11.6)\nprint(samples[3])",
+        "output": "12.1\n3\n11.6"
+      },
+      "walkthrough": [
+        {
+          "code": "samples = [12.1, 11.9, 11.8]",
+          "variable": "samples",
+          "after": "[12.1, 11.9, 11.8]",
+          "note": "One name now holds three ordered values."
+        },
+        {
+          "code": "samples[0]",
+          "expression": "the first item",
+          "output": "12.1",
+          "note": "Counting starts at zero, so index 0 is the first item, not the second."
+        },
+        {
+          "code": "samples.append(11.6)",
+          "note": "Append adds to the end, which makes the new fourth item index 3."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "lists-d1",
+          "prompt": "What does this print?",
+          "code": "print([5, 6, 7][1])",
+          "options": [
+            {
+              "id": "a",
+              "text": "6"
+            },
+            {
+              "id": "b",
+              "text": "5"
+            },
+            {
+              "id": "c",
+              "text": "7"
+            },
+            {
+              "id": "d",
+              "text": "An error"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Index 1 is the second item, because indexing starts at zero.",
+          "type": "choice"
+        },
+        {
+          "id": "lists-d2",
+          "prompt": "What does this print?",
+          "code": "print(len([2, 4, 6, 8]))",
+          "options": [
+            {
+              "id": "a",
+              "text": "4"
+            },
+            {
+              "id": "b",
+              "text": "3"
+            },
+            {
+              "id": "c",
+              "text": "8"
+            },
+            {
+              "id": "d",
+              "text": "An error"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "There are four items, so `len` returns 4; the last index is 3.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "lists-p1",
+        "prompt": "What does this print?",
+        "code": "print([9, 8, 7][0])",
+        "options": [
+          {
+            "id": "a",
+            "text": "9"
+          },
+          {
+            "id": "b",
+            "text": "8"
+          },
+          {
+            "id": "c",
+            "text": "7"
+          },
+          {
+            "id": "d",
+            "text": "An error"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Index 0 is the first item, which is 9.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "lists-r1",
+          "prompt": "In a list of length 3, which index holds the last item?",
+          "options": [
+            {
+              "id": "a",
+              "text": "2"
+            },
+            {
+              "id": "b",
+              "text": "3"
+            },
+            {
+              "id": "c",
+              "text": "1"
+            },
+            {
+              "id": "d",
+              "text": "0"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Indexing starts at zero, so three items sit at 0, 1 and 2.",
+          "type": "choice"
+        },
+        {
+          "id": "lists-r2",
+          "prompt": "What does `.append(x)` do to a list?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Adds x to the end"
+            },
+            {
+              "id": "b",
+              "text": "Adds x to the front"
+            },
+            {
+              "id": "c",
+              "text": "Removes x"
+            },
+            {
+              "id": "d",
+              "text": "Sorts the list"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Append grows the list by one item at its end.",
+          "type": "choice"
+        },
+        {
+          "id": "lists-r3",
+          "prompt": "What does len([10, 20, 30]) return?",
+          "options": [
+            {
+              "id": "a",
+              "text": "3"
+            },
+            {
+              "id": "b",
+              "text": "30"
+            },
+            {
+              "id": "c",
+              "text": "2"
+            },
+            {
+              "id": "d",
+              "text": "10"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "`len` counts the items, not their values.",
+          "type": "choice"
+        },
+        {
+          "id": "lists-r4",
+          "prompt": "Which expression reads the first item of samples?",
+          "options": [
+            {
+              "id": "a",
+              "text": "samples[0]"
+            },
+            {
+              "id": "b",
+              "text": "samples[1]"
+            },
+            {
+              "id": "c",
+              "text": "samples(0)"
+            },
+            {
+              "id": "d",
+              "text": "samples.first"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Square brackets index a list, and the first position is 0.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "lists-c1",
+        "prompt": "What does this print?",
+        "code": "readings = [1.0, 2.0]\nreadings.append(3.0)\nprint(len(readings))",
+        "options": [
+          {
+            "id": "a",
+            "text": "3"
+          },
+          {
+            "id": "b",
+            "text": "2"
+          },
+          {
+            "id": "c",
+            "text": "6.0"
+          },
+          {
+            "id": "d",
+            "text": "An error"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Append grows the list from two items to three, so its length is 3.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "for-loops",
+      "title": "A for loop visits every item",
+      "parentLessonId": "P.4",
+      "anchor": "micro-for-loops",
+      "sourceFocus": [
+        "A **`for` loop** (`for x in items:`)",
+        "`for step in range(N):` counts `0, 1, 2, ..., N - 1`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "lists"
+      ],
+      "resources": [
+        {
+          "id": "cs50p-notes-2",
+          "title": "CS50P Lecture 2 notes",
+          "url": "https://cs50.harvard.edu/python/2022/notes/2/",
+          "type": "notes",
+          "role": "primary",
+          "provider": "Harvard CS50P",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 95,
+          "modeledSeconds": 91.0
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "A **`for` loop** (`for x in items:`) visits each item of a sequence once, in order. On each pass the loop name is bound to the next item, the indented body runs, and then the loop moves on by itself. When the sequence is exhausted, the loop stops.",
+        "`for step in range(N):` counts `0, 1, 2, ..., N - 1`, so the body runs exactly N times. To build a running total, create the accumulator before the loop (`total = 0.0`) and update it inside the body; after the loop, it holds the sum of every item."
+      ],
+      "example": {
+        "code": "readings = [1.0, 2.0, 3.0]\ntotal = 0.0\nfor value in readings:\n    total = total + value\nprint(total / len(readings))",
+        "output": "2.0"
+      },
+      "walkthrough": [
+        {
+          "code": "total = 0.0",
+          "variable": "total",
+          "after": "0.0",
+          "note": "The accumulator starts at zero before the first pass."
+        },
+        {
+          "code": "total = total + value",
+          "expression": "0.0 + 1.0, then 1.0 + 2.0, then 3.0 + 3.0",
+          "output": "1.0, then 3.0, then 6.0",
+          "note": "The body runs once per item, so the total grows with each reading."
+        },
+        {
+          "code": "print(total / len(readings))",
+          "expression": "6.0 / 3",
+          "output": "2.0",
+          "note": "After the loop, dividing by the count gives the average."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "for-loops-d1",
+          "prompt": "What is the last value range(4) produces?",
+          "options": [
+            {
+              "id": "a",
+              "text": "3"
+            },
+            {
+              "id": "b",
+              "text": "4"
+            },
+            {
+              "id": "c",
+              "text": "0"
+            },
+            {
+              "id": "d",
+              "text": "1"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "`range(4)` counts from 0 up to, but not including, 4.",
+          "type": "choice"
+        },
+        {
+          "id": "for-loops-d2",
+          "prompt": "Which lines belong to the loop body?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The indented lines under the for header"
+            },
+            {
+              "id": "b",
+              "text": "Every line after the header"
+            },
+            {
+              "id": "c",
+              "text": "Only the first line after the header"
+            },
+            {
+              "id": "d",
+              "text": "The lines before the header"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Indentation marks the body; the first unindented line ends the loop.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "for-loops-p1",
+        "prompt": "What does total hold at the end?",
+        "code": "total = 0\nfor value in [2, 4, 6]:\n    total = total + value\nprint(total)",
+        "options": [
+          {
+            "id": "a",
+            "text": "12"
+          },
+          {
+            "id": "b",
+            "text": "6"
+          },
+          {
+            "id": "c",
+            "text": "3"
+          },
+          {
+            "id": "d",
+            "text": "0"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The body adds each item in turn: 0 + 2, then + 4, then + 6 gives 12.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "for-loops-r1",
+          "prompt": "How many values does range(3) produce?",
+          "options": [
+            {
+              "id": "a",
+              "text": "3"
+            },
+            {
+              "id": "b",
+              "text": "2"
+            },
+            {
+              "id": "c",
+              "text": "4"
+            },
+            {
+              "id": "d",
+              "text": "1"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "It produces 0, 1 and 2: three values, ending before 3.",
+          "type": "choice"
+        },
+        {
+          "id": "for-loops-r2",
+          "prompt": "Where should an accumulator be created?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Before the loop"
+            },
+            {
+              "id": "b",
+              "text": "Inside the loop"
+            },
+            {
+              "id": "c",
+              "text": "After the loop"
+            },
+            {
+              "id": "d",
+              "text": "It needs no starting value"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Creating it inside the body would reset the total on every pass.",
+          "type": "choice"
+        },
+        {
+          "id": "for-loops-r3",
+          "prompt": "A for loop over a list of four items runs its body…",
+          "options": [
+            {
+              "id": "a",
+              "text": "four times"
+            },
+            {
+              "id": "b",
+              "text": "three times"
+            },
+            {
+              "id": "c",
+              "text": "five times"
+            },
+            {
+              "id": "d",
+              "text": "once"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "One pass per item, so four items mean four passes.",
+          "type": "choice"
+        },
+        {
+          "id": "for-loops-r4",
+          "prompt": "After summing three readings, how do you average them?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Divide the total by len(readings)"
+            },
+            {
+              "id": "b",
+              "text": "Divide the total by 2"
+            },
+            {
+              "id": "c",
+              "text": "Multiply the total by len(readings)"
+            },
+            {
+              "id": "d",
+              "text": "Print the total"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The mean is the sum divided by the count, so `len` supplies the count.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "for-loops-c1",
+        "prompt": "How many times does this body run?",
+        "code": "count = 0\nfor step in range(5):\n    count = count + 1\nprint(count)",
+        "options": [
+          {
+            "id": "a",
+            "text": "5"
+          },
+          {
+            "id": "b",
+            "text": "4"
+          },
+          {
+            "id": "c",
+            "text": "6"
+          },
+          {
+            "id": "d",
+            "text": "1"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "`range(5)` produces five values (0 to 4), so the body runs and the count reaches 5.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "index-error",
+      "title": "The last index is len minus one",
+      "parentLessonId": "P.4",
+      "anchor": "micro-index-error",
+      "sourceFocus": [
+        "the last item sits at `len(samples) - 1`",
+        "`samples[len(samples)]` raises `IndexError`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "lists"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 88,
+          "modeledSeconds": 78.7
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "The last item sits at `len(samples) - 1`, because counting starts at zero: a list of three items has indexes 0, 1 and 2. `samples[len(samples)]` asks for the item after the last one and raises `IndexError`.",
+        "That off-by-one is the most common list mistake. Read the index as a distance from the start, not as an item number: index 2 is two steps in, which is the third item."
+      ],
+      "example": {
+        "code": "samples = [5, 6, 7]\nprint(samples[len(samples) - 1])",
+        "output": "7"
+      },
+      "walkthrough": [
+        {
+          "code": "len(samples)",
+          "expression": "3",
+          "output": "3",
+          "note": "Three items, so the valid indexes are 0, 1 and 2."
+        },
+        {
+          "code": "len(samples) - 1",
+          "expression": "3 - 1",
+          "output": "2",
+          "note": "The last valid index is one less than the count."
+        },
+        {
+          "code": "samples[2]",
+          "output": "7",
+          "note": "Index 2 is the third and last item."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "index-error-d1",
+          "prompt": "A list has four items. What is the last valid index?",
+          "options": [
+            {
+              "id": "a",
+              "text": "3"
+            },
+            {
+              "id": "b",
+              "text": "4"
+            },
+            {
+              "id": "c",
+              "text": "5"
+            },
+            {
+              "id": "d",
+              "text": "1"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Four items occupy indexes 0, 1, 2 and 3 for the last one.",
+          "type": "choice"
+        },
+        {
+          "id": "index-error-d2",
+          "prompt": "What happens at `samples[4]` on a four-item list?",
+          "options": [
+            {
+              "id": "a",
+              "text": "IndexError"
+            },
+            {
+              "id": "b",
+              "text": "It returns the last item"
+            },
+            {
+              "id": "c",
+              "text": "It returns None"
+            },
+            {
+              "id": "d",
+              "text": "It adds a fifth item"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Index 4 is past the last valid index (3), so Python raises IndexError.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "index-error-p1",
+        "prompt": "What is the last valid index of a three-item list?",
+        "options": [
+          {
+            "id": "a",
+            "text": "2"
+          },
+          {
+            "id": "b",
+            "text": "3"
+          },
+          {
+            "id": "c",
+            "text": "1"
+          },
+          {
+            "id": "d",
+            "text": "0"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Three items sit at 0, 1 and 2, so 2 is the last index.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "index-error-r1",
+          "prompt": "Which expression reads the last item?",
+          "options": [
+            {
+              "id": "a",
+              "text": "items[len(items) - 1]"
+            },
+            {
+              "id": "b",
+              "text": "items[len(items)]"
+            },
+            {
+              "id": "c",
+              "text": "items[0]"
+            },
+            {
+              "id": "d",
+              "text": "items[len(items) + 1]"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The count minus one is the last valid index.",
+          "type": "choice"
+        },
+        {
+          "id": "index-error-r2",
+          "prompt": "Why does `items[len(items)]` fail?",
+          "options": [
+            {
+              "id": "a",
+              "text": "It asks for the item after the last one"
+            },
+            {
+              "id": "b",
+              "text": "It asks for the first item"
+            },
+            {
+              "id": "c",
+              "text": "len cannot be used as an index"
+            },
+            {
+              "id": "d",
+              "text": "It returns None"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The count is one past the last valid index.",
+          "type": "choice"
+        },
+        {
+          "id": "index-error-r3",
+          "prompt": "A list of five items, index 2 holds which item?",
+          "options": [
+            {
+              "id": "a",
+              "text": "the third"
+            },
+            {
+              "id": "b",
+              "text": "the second"
+            },
+            {
+              "id": "c",
+              "text": "the fourth"
+            },
+            {
+              "id": "d",
+              "text": "the fifth"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Index 0 is first, so index 2 is the third item.",
+          "type": "choice"
+        },
+        {
+          "id": "index-error-r4",
+          "prompt": "What error does an index past the end raise?",
+          "options": [
+            {
+              "id": "a",
+              "text": "IndexError"
+            },
+            {
+              "id": "b",
+              "text": "TypeError"
+            },
+            {
+              "id": "c",
+              "text": "NameError"
+            },
+            {
+              "id": "d",
+              "text": "ValueError"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The list's index is out of range, which is an IndexError.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "index-error-c1",
+        "prompt": "What does this print?",
+        "code": "values = [1, 2, 3]\nprint(values[3])",
+        "options": [
+          {
+            "id": "a",
+            "text": "IndexError"
+          },
+          {
+            "id": "b",
+            "text": "3"
+          },
+          {
+            "id": "c",
+            "text": "None"
+          },
+          {
+            "id": "d",
+            "text": "0"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Index 3 is one past the last valid index (2), so the script stops with IndexError.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "functions",
+      "title": "A function you can call twice",
+      "parentLessonId": "P.5",
+      "anchor": "micro-functions",
+      "sourceFocus": [
+        "A **function** (`def clamp_cmd(cmd):`)",
+        "The `return` keyword hands the computed answer back to the caller"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "int-float"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 96,
+          "modeledSeconds": 83.2
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "A function is a named block you can call more than once. `def double(value):` names it and declares one parameter; the indented body runs only when the call happens, and `double(4)` supplies 4 as `value`. Without the call, the body waits.",
+        "The `return` keyword hands the computed answer back to the caller, so it can be stored or printed. A function that only prints hands back `None`; that is why `print` and `return` are not interchangeable."
+      ],
+      "example": {
+        "code": "def double(value):\n    return value * 2\n\nprint(double(4))\nprint(double(5))",
+        "output": "8\n10"
+      },
+      "walkthrough": [
+        {
+          "code": "def double(value):",
+          "note": "This line only builds the function and names its one parameter."
+        },
+        {
+          "code": "return value * 2",
+          "expression": "4 * 2, then 5 * 2",
+          "output": "8, then 10",
+          "note": "Each call runs the body with its own value and hands the product back."
+        },
+        {
+          "code": "print(double(4))",
+          "output": "8",
+          "note": "The returned value is what print receives; the call itself is the argument."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "functions-d1",
+          "prompt": "What does this print?",
+          "code": "def add_one(value):\n    value + 1\n\nprint(add_one(4))",
+          "options": [
+            {
+              "id": "a",
+              "text": "None"
+            },
+            {
+              "id": "b",
+              "text": "5"
+            },
+            {
+              "id": "c",
+              "text": "4"
+            },
+            {
+              "id": "d",
+              "text": "An error"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The body computes 5 and throws it away, because nothing returns it; a function without `return` hands back None.",
+          "type": "choice"
+        },
+        {
+          "id": "functions-d2",
+          "prompt": "Which keyword hands a value back to the caller?",
+          "options": [
+            {
+              "id": "a",
+              "text": "return"
+            },
+            {
+              "id": "b",
+              "text": "print"
+            },
+            {
+              "id": "c",
+              "text": "def"
+            },
+            {
+              "id": "d",
+              "text": "call"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "`return` ends the function and passes its value out; `print` only writes to the screen.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "functions-p1",
+        "prompt": "What does this print?",
+        "code": "def clamp(cmd):\n    if cmd > 255:\n        return 255\n    return cmd\n\nprint(clamp(300))",
+        "options": [
+          {
+            "id": "a",
+            "text": "255"
+          },
+          {
+            "id": "b",
+            "text": "300"
+          },
+          {
+            "id": "c",
+            "text": "None"
+          },
+          {
+            "id": "d",
+            "text": "An error"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "300 is over the ceiling, so the first return hands back 255 and the second return never runs.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "functions-r1",
+          "prompt": "What does `def` do?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Names a function and its parameters"
+            },
+            {
+              "id": "b",
+              "text": "Calls the function immediately"
+            },
+            {
+              "id": "c",
+              "text": "Prints the function's result"
+            },
+            {
+              "id": "d",
+              "text": "Imports a module"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "`def` defines the block; the body runs only when a call happens.",
+          "type": "choice"
+        },
+        {
+          "id": "functions-r2",
+          "prompt": "A function that only prints its answer returns…",
+          "options": [
+            {
+              "id": "a",
+              "text": "None"
+            },
+            {
+              "id": "b",
+              "text": "the printed text"
+            },
+            {
+              "id": "c",
+              "text": "0"
+            },
+            {
+              "id": "d",
+              "text": "an error"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Printing is a side effect, not a return value.",
+          "type": "choice"
+        },
+        {
+          "id": "functions-r3",
+          "prompt": "In `def area(width, height):`, what are width and height?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Parameters filled by each call"
+            },
+            {
+              "id": "b",
+              "text": "Global variables"
+            },
+            {
+              "id": "c",
+              "text": "Return values"
+            },
+            {
+              "id": "d",
+              "text": "Module names"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Each call supplies the values its parameters receive.",
+          "type": "choice"
+        },
+        {
+          "id": "functions-r4",
+          "prompt": "What does a return statement do to the rest of the function?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Ends the function immediately"
+            },
+            {
+              "id": "b",
+              "text": "Repeats it"
+            },
+            {
+              "id": "c",
+              "text": "Pauses it"
+            },
+            {
+              "id": "d",
+              "text": "Prints the value"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Code after a return in that call is never reached.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "functions-c1",
+        "prompt": "What does this print?",
+        "code": "def area(width, height):\n    return width * height\n\nprint(area(3, 4))",
+        "options": [
+          {
+            "id": "a",
+            "text": "12"
+          },
+          {
+            "id": "b",
+            "text": "7"
+          },
+          {
+            "id": "c",
+            "text": "(3, 4)"
+          },
+          {
+            "id": "d",
+            "text": "None"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The call fills width with 3 and height with 4, and return hands back 12.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "while-loops",
+      "title": "A while loop checks before every pass",
+      "parentLessonId": "P.5",
+      "anchor": "micro-while-loops",
+      "sourceFocus": [
+        "checks its condition before every pass",
+        "You must always update the loop counter"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "functions"
+      ],
+      "resources": [
+        {
+          "id": "cs50p-notes-2",
+          "title": "CS50P Lecture 2 notes",
+          "url": "https://cs50.harvard.edu/python/2022/notes/2/",
+          "type": "notes",
+          "role": "primary",
+          "provider": "Harvard CS50P",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 92,
+          "modeledSeconds": 82.0
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "A `while` loop checks its condition before every pass. While the condition is True the indented body runs, and then the condition is checked again; when it is False the loop ends and the first unindented line continues.",
+        "You must always update the loop counter inside the body, for example `step = step + 1`. That update is what eventually makes the condition False; a body that never changes it repeats forever."
+      ],
+      "example": {
+        "code": "step = 0\nwhile step < 3:\n    print(step)\n    step = step + 1",
+        "output": "0\n1\n2"
+      },
+      "walkthrough": [
+        {
+          "code": "step = 0",
+          "variable": "step",
+          "after": "0",
+          "note": "The counter starts below the limit, so the first check will pass."
+        },
+        {
+          "code": "while step < 3:",
+          "expression": "0 < 3, 1 < 3, 2 < 3, then 3 < 3",
+          "output": "True, True, True, then False",
+          "note": "The condition is tested before each pass; the fourth test ends the loop."
+        },
+        {
+          "code": "step = step + 1",
+          "variable": "step",
+          "before": "0, 1, 2",
+          "after": "1, 2, 3",
+          "note": "The counter moves towards the limit on every pass."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "while-loops-d1",
+          "prompt": "What does this print?",
+          "code": "step = 0\nwhile step < 3:\n    print(step)\n    step = step + 1",
+          "options": [
+            {
+              "id": "a",
+              "text": "0, 1, 2"
+            },
+            {
+              "id": "b",
+              "text": "1, 2, 3"
+            },
+            {
+              "id": "c",
+              "text": "0, 1, 2, 3"
+            },
+            {
+              "id": "d",
+              "text": "3"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The body prints before it increments, and the condition stops the loop once step reaches 3.",
+          "type": "choice"
+        },
+        {
+          "id": "while-loops-d2",
+          "prompt": "What happens if the increment line is removed?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The loop never ends"
+            },
+            {
+              "id": "b",
+              "text": "It runs zero times"
+            },
+            {
+              "id": "c",
+              "text": "It prints 0, 1, 2 once"
+            },
+            {
+              "id": "d",
+              "text": "Python adds the counter for you"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The condition stays True forever, because nothing moves the counter.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "while-loops-p1",
+        "prompt": "What is step at the end?",
+        "code": "step = 0\nwhile step < 5:\n    step = step + 1\nprint(step)",
+        "options": [
+          {
+            "id": "a",
+            "text": "5"
+          },
+          {
+            "id": "b",
+            "text": "4"
+          },
+          {
+            "id": "c",
+            "text": "0"
+          },
+          {
+            "id": "d",
+            "text": "An error"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The body increments until the test 5 < 5 fails, and the counter that failed the test is 5.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "while-loops-r1",
+          "prompt": "When is a while loop's condition checked?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Before every pass"
+            },
+            {
+              "id": "b",
+              "text": "Only once, at the start"
+            },
+            {
+              "id": "c",
+              "text": "After every pass, never before"
+            },
+            {
+              "id": "d",
+              "text": "Only when the loop breaks"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Each pass begins with the test; a False test means the body does not run again.",
+          "type": "choice"
+        },
+        {
+          "id": "while-loops-r2",
+          "prompt": "What does the body have to do for a counted while loop to end?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Move the counter towards the limit"
+            },
+            {
+              "id": "b",
+              "text": "Print the counter"
+            },
+            {
+              "id": "c",
+              "text": "Reset the counter to zero"
+            },
+            {
+              "id": "d",
+              "text": "Nothing; the loop ends itself"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The condition only becomes False when the counter changes.",
+          "type": "choice"
+        },
+        {
+          "id": "while-loops-r3",
+          "prompt": "How many times does `while step < 3` run with step starting at 0?",
+          "options": [
+            {
+              "id": "a",
+              "text": "3"
+            },
+            {
+              "id": "b",
+              "text": "2"
+            },
+            {
+              "id": "c",
+              "text": "4"
+            },
+            {
+              "id": "d",
+              "text": "1"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The passes run for step 0, 1 and 2, then the test fails at 3.",
+          "type": "choice"
+        },
+        {
+          "id": "while-loops-r4",
+          "prompt": "Where does execution go when the condition is False?",
+          "options": [
+            {
+              "id": "a",
+              "text": "To the first line after the loop"
+            },
+            {
+              "id": "b",
+              "text": "Back to the loop's first line"
+            },
+            {
+              "id": "c",
+              "text": "To the file's first line"
+            },
+            {
+              "id": "d",
+              "text": "Nowhere; the program stops"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A False test skips the body and continues below the loop.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "while-loops-c1",
+        "prompt": "What does this print?",
+        "code": "step = 2\nwhile step < 6:\n    step = step + 2\nprint(step)",
+        "options": [
+          {
+            "id": "a",
+            "text": "6"
+          },
+          {
+            "id": "b",
+            "text": "4"
+          },
+          {
+            "id": "c",
+            "text": "8"
+          },
+          {
+            "id": "d",
+            "text": "2"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The counter runs 2, 4, 6; at 6 the test 6 < 6 is False, so the loop ends and prints 6.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "none",
+      "title": "None is the answer when nothing returns",
+      "parentLessonId": "P.5",
+      "anchor": "micro-none",
+      "sourceFocus": [
+        "`None` is a value of its own",
+        "a function without `return` hands back `None`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "functions"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 87,
+          "modeledSeconds": 81.7
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "`None` is a value of its own: it means there is no answer here. A function without `return` hands back `None` even when its body prints something, so the printout and the return value are two different things.",
+        "Test for it with `is None`, as in `if result is None:`. Printing `None` and returning it look similar on screen, but only the returned value can be stored, compared or passed on."
+      ],
+      "example": {
+        "code": "def show(value):\n    print(value)\n\nresult = show(7)\nprint(result)",
+        "output": "7\nNone"
+      },
+      "walkthrough": [
+        {
+          "code": "show(7)",
+          "note": "The call runs the body, which prints 7."
+        },
+        {
+          "code": "result = show(7)",
+          "variable": "result",
+          "after": "None",
+          "note": "No return statement, so the call's value is None."
+        },
+        {
+          "code": "print(result)",
+          "output": "None",
+          "note": "The second line shows what the call handed back, which is nothing."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "none-d1",
+          "prompt": "What does this print?",
+          "code": "def f():\n    pass\n\nprint(f())",
+          "options": [
+            {
+              "id": "a",
+              "text": "None"
+            },
+            {
+              "id": "b",
+              "text": "0"
+            },
+            {
+              "id": "c",
+              "text": "An empty line"
+            },
+            {
+              "id": "d",
+              "text": "An error"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A function with no return hands back None, and printing it shows the word None.",
+          "type": "choice"
+        },
+        {
+          "id": "none-d2",
+          "prompt": "How should a result be tested for None?",
+          "options": [
+            {
+              "id": "a",
+              "text": "result is None"
+            },
+            {
+              "id": "b",
+              "text": "result == 0"
+            },
+            {
+              "id": "c",
+              "text": "result = None"
+            },
+            {
+              "id": "d",
+              "text": "result.print()"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "`is None` asks whether the value is exactly None; `=` would store it.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "none-p1",
+        "prompt": "What does this print?",
+        "code": "def f():\n    return\n\nprint(f())",
+        "options": [
+          {
+            "id": "a",
+            "text": "None"
+          },
+          {
+            "id": "b",
+            "text": "0"
+          },
+          {
+            "id": "c",
+            "text": "An error"
+          },
+          {
+            "id": "d",
+            "text": "Nothing"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "A bare return hands back None, and print shows it.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "none-r1",
+          "prompt": "What does a function without a return hand back?",
+          "options": [
+            {
+              "id": "a",
+              "text": "None"
+            },
+            {
+              "id": "b",
+              "text": "0"
+            },
+            {
+              "id": "c",
+              "text": "its last printed line"
+            },
+            {
+              "id": "d",
+              "text": "an error"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The language defines the missing return value as None.",
+          "type": "choice"
+        },
+        {
+          "id": "none-r2",
+          "prompt": "What does None mean?",
+          "options": [
+            {
+              "id": "a",
+              "text": "no value here"
+            },
+            {
+              "id": "b",
+              "text": "zero"
+            },
+            {
+              "id": "c",
+              "text": "an empty string"
+            },
+            {
+              "id": "d",
+              "text": "False"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "None is its own value, distinct from 0, an empty string and False.",
+          "type": "choice"
+        },
+        {
+          "id": "none-r3",
+          "prompt": "Does printing a value return it?",
+          "options": [
+            {
+              "id": "a",
+              "text": "No; printing is a side effect"
+            },
+            {
+              "id": "b",
+              "text": "Yes, print returns its argument"
+            },
+            {
+              "id": "c",
+              "text": "Only inside a function"
+            },
+            {
+              "id": "d",
+              "text": "Only for numbers"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "print writes to the screen; the value must be returned to be reused.",
+          "type": "choice"
+        },
+        {
+          "id": "none-r4",
+          "prompt": "What does `print(f())` show for a function that returns None?",
+          "options": [
+            {
+              "id": "a",
+              "text": "None"
+            },
+            {
+              "id": "b",
+              "text": "nothing at all"
+            },
+            {
+              "id": "c",
+              "text": "0"
+            },
+            {
+              "id": "d",
+              "text": "an error"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "print renders None as the word None.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "none-c1",
+        "prompt": "What does this print?",
+        "code": "def double(value):\n    value * 2\n\nresult = double(4)\nprint(result is None)",
+        "options": [
+          {
+            "id": "a",
+            "text": "True"
+          },
+          {
+            "id": "b",
+            "text": "False"
+          },
+          {
+            "id": "c",
+            "text": "8"
+          },
+          {
+            "id": "d",
+            "text": "None"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The body computes 8 and discards it, so the call returns None and `is None` is True.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "imports",
+      "title": "A module is a toolbox you import",
+      "parentLessonId": "P.6",
+      "anchor": "micro-imports",
+      "sourceFocus": [
+        "`import math`",
+        "`math.sqrt(25.0)`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "functions"
+      ],
+      "resources": [
+        {
+          "id": "cs50p-notes-4",
+          "title": "CS50P Lecture 4 notes",
+          "url": "https://cs50.harvard.edu/python/2022/notes/4/",
+          "type": "notes",
+          "role": "primary",
+          "provider": "Harvard CS50P",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 94,
+          "modeledSeconds": 79.2
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "A module is a file of ready-made tools. `import math` at the top of a script makes the module available, and its tools are called with dot notation: `math.sqrt(25.0)` takes the square root, and `math.pi` is the value of pi.",
+        "Importing loads the name; it does not run the tool. Writing `sqrt(25.0)` without the `math.` prefix raises `NameError`, because this script never defined `sqrt` on its own."
+      ],
+      "example": {
+        "code": "import math\n\nprint(math.sqrt(25.0))\nprint(round(math.pi, 2))",
+        "output": "5.0\n3.14"
+      },
+      "walkthrough": [
+        {
+          "code": "import math",
+          "note": "The module's tools become reachable under the name `math`."
+        },
+        {
+          "code": "math.sqrt(25.0)",
+          "expression": "√25",
+          "output": "5.0",
+          "note": "The module name, a dot, then the function call; the argument is 25.0."
+        },
+        {
+          "code": "round(math.pi, 2)",
+          "output": "3.14",
+          "note": "`math.pi` is a value, not a call: it is used directly as an argument."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "imports-d1",
+          "prompt": "Which line computes the square root of 25 with the maths module?",
+          "options": [
+            {
+              "id": "a",
+              "text": "math.sqrt(25)"
+            },
+            {
+              "id": "b",
+              "text": "sqrt(25)"
+            },
+            {
+              "id": "c",
+              "text": "math.sqrt"
+            },
+            {
+              "id": "d",
+              "text": "math(25).sqrt"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The module name and a dot come before the function, and the value goes inside the parentheses.",
+          "type": "choice"
+        },
+        {
+          "id": "imports-d2",
+          "prompt": "What happens after `import math` if you call `sqrt(25.0)` without the prefix?",
+          "options": [
+            {
+              "id": "a",
+              "text": "NameError: sqrt is not defined"
+            },
+            {
+              "id": "b",
+              "text": "It returns 5.0"
+            },
+            {
+              "id": "c",
+              "text": "It returns None"
+            },
+            {
+              "id": "d",
+              "text": "It imports sqrt automatically"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The import binds the module name, not each of its functions in the local namespace.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "imports-p1",
+        "prompt": "What does this print?",
+        "code": "import math\nprint(math.sqrt(81.0))",
+        "options": [
+          {
+            "id": "a",
+            "text": "9.0"
+          },
+          {
+            "id": "b",
+            "text": "81.0"
+          },
+          {
+            "id": "c",
+            "text": "8.0"
+          },
+          {
+            "id": "d",
+            "text": "An error"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The square root of 81 is 9, and `math.sqrt` always returns a float.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "imports-r1",
+          "prompt": "Where does an import usually go?",
+          "options": [
+            {
+              "id": "a",
+              "text": "At the top of the file"
+            },
+            {
+              "id": "b",
+              "text": "Inside the loop only"
+            },
+            {
+              "id": "c",
+              "text": "After the last print"
+            },
+            {
+              "id": "d",
+              "text": "In a comment"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Imports sit at the top so every line below can use the module.",
+          "type": "choice"
+        },
+        {
+          "id": "imports-r2",
+          "prompt": "What does the dot in `math.sqrt` mean?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Take sqrt from the math module"
+            },
+            {
+              "id": "b",
+              "text": "Multiply math by sqrt"
+            },
+            {
+              "id": "c",
+              "text": "Create a decimal number"
+            },
+            {
+              "id": "d",
+              "text": "Compare two values"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Dot notation names which module owns the function.",
+          "type": "choice"
+        },
+        {
+          "id": "imports-r3",
+          "prompt": "`math.pi` is…",
+          "options": [
+            {
+              "id": "a",
+              "text": "a value, used without parentheses"
+            },
+            {
+              "id": "b",
+              "text": "a function that needs an argument"
+            },
+            {
+              "id": "c",
+              "text": "a module"
+            },
+            {
+              "id": "d",
+              "text": "an error"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Pi is a stored constant; calling it would raise an error.",
+          "type": "choice"
+        },
+        {
+          "id": "imports-r4",
+          "prompt": "What is a module?",
+          "options": [
+            {
+              "id": "a",
+              "text": "A file of ready-made tools"
+            },
+            {
+              "id": "b",
+              "text": "A single number"
+            },
+            {
+              "id": "c",
+              "text": "A loop that runs once"
+            },
+            {
+              "id": "d",
+              "text": "A comment"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A module groups related functions and values under one name.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "imports-c1",
+        "prompt": "What does this print?",
+        "code": "import math\nprint(math.sqrt(9.0) + math.sqrt(16.0))",
+        "options": [
+          {
+            "id": "a",
+            "text": "7.0"
+          },
+          {
+            "id": "b",
+            "text": "25.0"
+          },
+          {
+            "id": "c",
+            "text": "5.0"
+          },
+          {
+            "id": "d",
+            "text": "7"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The roots are 3.0 and 4.0; adding two floats gives 7.0, and the prints show the decimal.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "asserts",
+      "title": "An assert makes a wrong answer loud",
+      "parentLessonId": "P.6",
+      "anchor": "micro-asserts",
+      "sourceFocus": [
+        "`assert condition` tests your code automatically",
+        "stops immediately on that line with an `AssertionError`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "functions"
+      ],
+      "resources": [
+        {
+          "id": "cs50p-notes-5",
+          "title": "CS50P Lecture 5 notes",
+          "url": "https://cs50.harvard.edu/python/2022/notes/5/",
+          "type": "notes",
+          "role": "primary",
+          "provider": "Harvard CS50P",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 95,
+          "modeledSeconds": 84.8
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "An `assert` is a self-check inside the program. `assert condition` tests your code automatically: when the condition is True it does nothing and the script continues; when it is False, Python stops immediately on that line with an `AssertionError`.",
+        "That turns a wrong answer into a loud failure at the moment it happens, instead of a number you must eyeball later. Keep each check small and specific, such as `assert distance_2d(3.0, 4.0) == 5.0`, so the message names one known case."
+      ],
+      "example": {
+        "code": "def distance_2d(x, y):\n    return (x ** 2 + y ** 2) ** 0.5\n\nassert distance_2d(3.0, 4.0) == 5.0\nprint(\"ok\")",
+        "output": "ok"
+      },
+      "walkthrough": [
+        {
+          "code": "def distance_2d(x, y):",
+          "note": "The function returns the hypotenuse of the two coordinates."
+        },
+        {
+          "code": "assert distance_2d(3.0, 4.0) == 5.0",
+          "expression": "5.0 == 5.0",
+          "output": "True",
+          "note": "The known 3-4-5 triangle is the fixture; a True test is silent."
+        },
+        {
+          "code": "print(\"ok\")",
+          "output": "ok",
+          "note": "Execution reaches this line only because the assert passed."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "asserts-d1",
+          "prompt": "What happens at this line?",
+          "code": "assert 2 + 2 == 5",
+          "options": [
+            {
+              "id": "a",
+              "text": "The program stops with AssertionError"
+            },
+            {
+              "id": "b",
+              "text": "It prints False"
+            },
+            {
+              "id": "c",
+              "text": "It prints 4"
+            },
+            {
+              "id": "d",
+              "text": "Nothing; the script continues"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Four is not five, so the assertion fails and the script stops there.",
+          "type": "choice"
+        },
+        {
+          "id": "asserts-d2",
+          "prompt": "What does a passing assert print?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Nothing"
+            },
+            {
+              "id": "b",
+              "text": "True"
+            },
+            {
+              "id": "c",
+              "text": "The condition"
+            },
+            {
+              "id": "d",
+              "text": "AssertionError"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A passing assert is silent; only a failing one produces output.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "asserts-p1",
+        "prompt": "What does this do?",
+        "code": "assert 3 * 3 == 9\nprint(\"done\")",
+        "options": [
+          {
+            "id": "a",
+            "text": "Prints done"
+          },
+          {
+            "id": "b",
+            "text": "Stops with AssertionError"
+          },
+          {
+            "id": "c",
+            "text": "Prints True"
+          },
+          {
+            "id": "d",
+            "text": "Prints 9"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Nine equals nine, so the check passes silently and the next line prints.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "asserts-r1",
+          "prompt": "Which exception does a failing assert raise?",
+          "options": [
+            {
+              "id": "a",
+              "text": "AssertionError"
+            },
+            {
+              "id": "b",
+              "text": "TypeError"
+            },
+            {
+              "id": "c",
+              "text": "NameError"
+            },
+            {
+              "id": "d",
+              "text": "ValueError"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The assert statement is defined to raise AssertionError.",
+          "type": "choice"
+        },
+        {
+          "id": "asserts-r2",
+          "prompt": "When does an assert stop the program?",
+          "options": [
+            {
+              "id": "a",
+              "text": "When its condition is False"
+            },
+            {
+              "id": "b",
+              "text": "When its condition is True"
+            },
+            {
+              "id": "c",
+              "text": "Always"
+            },
+            {
+              "id": "d",
+              "text": "Never"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A False condition is the failing case.",
+          "type": "choice"
+        },
+        {
+          "id": "asserts-r3",
+          "prompt": "What is an assert for?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Checking a known answer automatically"
+            },
+            {
+              "id": "b",
+              "text": "Printing a value for the user"
+            },
+            {
+              "id": "c",
+              "text": "Importing a module"
+            },
+            {
+              "id": "d",
+              "text": "Repeating a loop"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "It turns a wrong result into an immediate failure instead of a silent one.",
+          "type": "choice"
+        },
+        {
+          "id": "asserts-r4",
+          "prompt": "Why is `assert distance_2d(3.0, 4.0) == 5.0` a good check?",
+          "options": [
+            {
+              "id": "a",
+              "text": "It names one known case with a known answer"
+            },
+            {
+              "id": "b",
+              "text": "It checks every possible input"
+            },
+            {
+              "id": "c",
+              "text": "It prints the result for inspection"
+            },
+            {
+              "id": "d",
+              "text": "It runs the function twice"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A small, specific check fails with an answer you can compare directly.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "asserts-c1",
+        "prompt": "What does this print?",
+        "code": "def double(value):\n    return value * 2\n\nassert double(4) == 8\nprint(\"ok\")",
+        "options": [
+          {
+            "id": "a",
+            "text": "ok"
+          },
+          {
+            "id": "b",
+            "text": "8"
+          },
+          {
+            "id": "c",
+            "text": "AssertionError"
+          },
+          {
+            "id": "d",
+            "text": "True"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The function returns 8, the assert passes silently, and the next line prints ok.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "assert-message",
+      "title": "An assert can say why",
+      "parentLessonId": "P.6",
+      "anchor": "micro-assert-message",
+      "sourceFocus": [
+        "`assert condition, \"message\"`",
+        "the message is shown with the `AssertionError`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "asserts"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 86,
+          "modeledSeconds": 78.0
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "An assert can carry an explanation: `assert condition, \"message\"`. When the condition passes, the message is never evaluated; when it fails, the message is shown with the `AssertionError`, so the failure names what was expected.",
+        "Write the message as the rule, not the symptom: `assert cmd <= 255, \"command above the limit\"` says what the program promised, which is what you need at the moment it breaks."
+      ],
+      "example": {
+        "code": "cmd = 300\nassert cmd <= 255, \"command above the limit\"",
+        "output": "AssertionError: command above the limit"
+      },
+      "walkthrough": [
+        {
+          "code": "cmd = 300",
+          "variable": "cmd",
+          "after": "300",
+          "note": "A value the register cannot hold."
+        },
+        {
+          "code": "cmd <= 255",
+          "expression": "300 <= 255",
+          "output": "False",
+          "note": "The check fails, so the assertion raises."
+        },
+        {
+          "code": "\"command above the limit\"",
+          "output": "AssertionError: command above the limit",
+          "note": "The message travels with the error and names the rule that broke."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "assert-message-d1",
+          "prompt": "What is shown when the assert passes?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Nothing"
+            },
+            {
+              "id": "b",
+              "text": "The message"
+            },
+            {
+              "id": "c",
+              "text": "True"
+            },
+            {
+              "id": "d",
+              "text": "AssertionError"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A passing assert is silent; its message exists only for the failing case.",
+          "type": "choice"
+        },
+        {
+          "id": "assert-message-d2",
+          "prompt": "Which line fails with a message?",
+          "options": [
+            {
+              "id": "a",
+              "text": "assert x < 10, \"x must stay small\""
+            },
+            {
+              "id": "b",
+              "text": "assert x < 10"
+            },
+            {
+              "id": "c",
+              "text": "print(\"x must stay small\")"
+            },
+            {
+              "id": "d",
+              "text": "x < 10, \"x must stay small\""
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The message follows the condition after a comma, inside the assert statement.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "assert-message-p1",
+        "prompt": "What happens here?",
+        "code": "assert 2 + 2 == 4, \"bad sum\"\nprint(\"ok\")",
+        "options": [
+          {
+            "id": "a",
+            "text": "It prints ok"
+          },
+          {
+            "id": "b",
+            "text": "It prints bad sum"
+          },
+          {
+            "id": "c",
+            "text": "It stops with AssertionError"
+          },
+          {
+            "id": "d",
+            "text": "It prints True"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The condition is True, so the assert is silent and the next line prints.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "assert-message-r1",
+          "prompt": "Where does the message go?",
+          "options": [
+            {
+              "id": "a",
+              "text": "After a comma, inside the assert"
+            },
+            {
+              "id": "b",
+              "text": "On the line below"
+            },
+            {
+              "id": "c",
+              "text": "Inside print"
+            },
+            {
+              "id": "d",
+              "text": "In a comment"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "`assert condition, \"message\"` keeps the explanation with its check.",
+          "type": "choice"
+        },
+        {
+          "id": "assert-message-r2",
+          "prompt": "When is the message evaluated?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Only when the condition is False"
+            },
+            {
+              "id": "b",
+              "text": "Always"
+            },
+            {
+              "id": "c",
+              "text": "Only when it passes"
+            },
+            {
+              "id": "d",
+              "text": "Never"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Python evaluates the message only on failure, as part of raising.",
+          "type": "choice"
+        },
+        {
+          "id": "assert-message-r3",
+          "prompt": "Which message is most useful?",
+          "options": [
+            {
+              "id": "a",
+              "text": "command above the limit"
+            },
+            {
+              "id": "b",
+              "text": "oops"
+            },
+            {
+              "id": "c",
+              "text": "x"
+            },
+            {
+              "id": "d",
+              "text": "False"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "It names the rule that failed, which is what a reader needs.",
+          "type": "choice"
+        },
+        {
+          "id": "assert-message-r4",
+          "prompt": "What does a failing assert with a message raise?",
+          "options": [
+            {
+              "id": "a",
+              "text": "AssertionError carrying the message"
+            },
+            {
+              "id": "b",
+              "text": "ValueError"
+            },
+            {
+              "id": "c",
+              "text": "Nothing"
+            },
+            {
+              "id": "d",
+              "text": "A printed line only"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The AssertionError includes the message text as its detail.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "assert-message-c1",
+        "prompt": "What does this print?",
+        "code": "value = 12\nassert value < 10, \"too large\"\nprint(\"ok\")",
+        "options": [
+          {
+            "id": "a",
+            "text": "AssertionError: too large"
+          },
+          {
+            "id": "b",
+            "text": "ok"
+          },
+          {
+            "id": "c",
+            "text": "too large"
+          },
+          {
+            "id": "d",
+            "text": "Nothing"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "12 < 10 is False, so the assertion raises with its message and the print never runs.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "si-units",
+      "title": "Every formula expects base units",
+      "parentLessonId": "P.7",
+      "anchor": "micro-si-units",
+      "sourceFocus": [
+        "base SI units",
+        "meters (`m`)"
+      ],
+      "revision": 1,
+      "prerequisites": [],
+      "resources": [
+        {
+          "id": "mathsisfun-metric",
+          "title": "MathsIsFun — Metric System of Measurement",
+          "url": "https://www.mathsisfun.com/measure/metric-system.html",
+          "type": "reference",
+          "role": "primary",
+          "provider": "MathsIsFun",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 93,
+          "modeledSeconds": 83.9
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "Physics and engineering equations expect base SI units: meters (`m`), kilograms (`kg`), seconds (`s`), amperes (`A`), volts (`V`) and ohms (`Ω`). A number written in millimetres or milliseconds is not the number the formula was built for.",
+        "Convert on the first line of code, before the arithmetic: 250 millimetres becomes 0.25 metres, and 500 microseconds becomes 0.0005 seconds. Then every intermediate answer carries the unit the equation promises; forgetting the conversion multiplies the answer by 1000 or 1,000,000."
+      ],
+      "example": {
+        "code": "length_mm = 250\nlength_m = length_mm / 1000\nspeed = 2.0\nprint(length_m / speed)",
+        "output": "0.125"
+      },
+      "walkthrough": [
+        {
+          "code": "length_mm = 250",
+          "variable": "length_mm",
+          "after": "250",
+          "note": "The datasheet number is in millimetres, not metres."
+        },
+        {
+          "code": "length_m = length_mm / 1000",
+          "variable": "length_m",
+          "after": "0.25",
+          "note": "Dividing by 1000 moves from milli to the base unit before any formula uses it."
+        },
+        {
+          "code": "length_m / speed",
+          "expression": "0.25 / 2.0",
+          "output": "0.125",
+          "note": "Both operands are now in base SI units, so the result is seconds."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "si-units-d1",
+          "prompt": "How many meters is 15 millimeters?",
+          "options": [
+            {
+              "id": "a",
+              "text": "0.015"
+            },
+            {
+              "id": "b",
+              "text": "15"
+            },
+            {
+              "id": "c",
+              "text": "1500"
+            },
+            {
+              "id": "d",
+              "text": "0.15"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Milli means a thousandth, so 15 mm is 15 / 1000 = 0.015 m.",
+          "type": "choice"
+        },
+        {
+          "id": "si-units-d2",
+          "prompt": "A distance-and-time formula expects which length unit?",
+          "options": [
+            {
+              "id": "a",
+              "text": "meters"
+            },
+            {
+              "id": "b",
+              "text": "millimeters"
+            },
+            {
+              "id": "c",
+              "text": "kilometers"
+            },
+            {
+              "id": "d",
+              "text": "any unit, as long as both use it"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Base SI length is the meter; prefixed values must be converted first.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "si-units-p1",
+        "prompt": "What does this print?",
+        "code": "length_mm = 500\nprint(length_mm / 1000)",
+        "options": [
+          {
+            "id": "a",
+            "text": "0.5"
+          },
+          {
+            "id": "b",
+            "text": "500"
+          },
+          {
+            "id": "c",
+            "text": "5"
+          },
+          {
+            "id": "d",
+            "text": "0.05"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "500 millimetres is 0.5 metres, the base-SI form a formula can use.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "si-units-r1",
+          "prompt": "Which is the base SI unit of length?",
+          "options": [
+            {
+              "id": "a",
+              "text": "meter"
+            },
+            {
+              "id": "b",
+              "text": "millimeter"
+            },
+            {
+              "id": "c",
+              "text": "kilometer"
+            },
+            {
+              "id": "d",
+              "text": "inch"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The prefixed forms are millimetres and kilometres; the base is the metre.",
+          "type": "choice"
+        },
+        {
+          "id": "si-units-r2",
+          "prompt": "Which is the base SI unit of mass?",
+          "options": [
+            {
+              "id": "a",
+              "text": "kilogram"
+            },
+            {
+              "id": "b",
+              "text": "gram"
+            },
+            {
+              "id": "c",
+              "text": "milligram"
+            },
+            {
+              "id": "d",
+              "text": "newton"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The kilogram is the SI base unit, unusually already carrying a prefix.",
+          "type": "choice"
+        },
+        {
+          "id": "si-units-r3",
+          "prompt": "Which is the base SI unit of time?",
+          "options": [
+            {
+              "id": "a",
+              "text": "second"
+            },
+            {
+              "id": "b",
+              "text": "millisecond"
+            },
+            {
+              "id": "c",
+              "text": "minute"
+            },
+            {
+              "id": "d",
+              "text": "hertz"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Seconds are the base; milliseconds must be divided by 1000 first.",
+          "type": "choice"
+        },
+        {
+          "id": "si-units-r4",
+          "prompt": "When should prefixed values be converted to base units?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Before the formula runs"
+            },
+            {
+              "id": "b",
+              "text": "Only when printing"
+            },
+            {
+              "id": "c",
+              "text": "Never"
+            },
+            {
+              "id": "d",
+              "text": "After the final answer"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The formula's constants assume base units, so the inputs must already be converted.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "si-units-c1",
+        "prompt": "What does this print?",
+        "code": "pulse_us = 500\nprint(pulse_us / 1_000_000)",
+        "options": [
+          {
+            "id": "a",
+            "text": "0.0005"
+          },
+          {
+            "id": "b",
+            "text": "0.5"
+          },
+          {
+            "id": "c",
+            "text": "500"
+          },
+          {
+            "id": "d",
+            "text": "0.005"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Micro means a millionth, so 500 µs is 500 / 1,000,000 = 0.0005 s.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "metric-prefixes",
+      "title": "A prefix is a multiplier",
+      "parentLessonId": "P.7",
+      "anchor": "micro-metric-prefixes",
+      "sourceFocus": [
+        "kilo (`k`) is ×1,000",
+        "micro (`µ`) is ÷1,000,000"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "si-units"
+      ],
+      "resources": [
+        {
+          "id": "mathsisfun-metric-numbers",
+          "title": "MathsIsFun — Metric Numbers",
+          "url": "https://www.mathsisfun.com/metric-numbers.html",
+          "type": "reference",
+          "role": "primary",
+          "provider": "MathsIsFun",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 94,
+          "modeledSeconds": 81.7
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "A metric prefix is a multiplier in front of a unit. Kilo (`k`) is ×1,000, mega (`M`) is ×1,000,000, milli (`m`) is ÷1,000 and micro (`µ`) is ÷1,000,000. The unit itself never changes, only its scale.",
+        "Python can write the same factors as powers of ten: `1e3` for a thousand, `1e-3` for a thousandth, and `1e-6` for a millionth. Converting to base units first keeps a datasheet value and a formula in the same language."
+      ],
+      "example": {
+        "code": "current_ma = 15\ncurrent_a = current_ma * 1e-3\nprint(current_a)",
+        "output": "0.015"
+      },
+      "walkthrough": [
+        {
+          "code": "current_ma = 15",
+          "variable": "current_ma",
+          "after": "15",
+          "note": "Fifteen milliamps, the number a datasheet would print."
+        },
+        {
+          "code": "current_ma * 1e-3",
+          "expression": "15 × 0.001",
+          "output": "0.015",
+          "note": "Milli is a thousandth, so multiplying by 1e-3 converts to amperes."
+        },
+        {
+          "code": "print(current_a)",
+          "output": "0.015",
+          "note": "The formula now sees amperes, the unit its constants expect."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "metric-prefixes-d1",
+          "prompt": "How many ohms is 2 kilo-ohms?",
+          "options": [
+            {
+              "id": "a",
+              "text": "2000"
+            },
+            {
+              "id": "b",
+              "text": "0.002"
+            },
+            {
+              "id": "c",
+              "text": "2"
+            },
+            {
+              "id": "d",
+              "text": "200"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Kilo multiplies by 1,000, so 2 kΩ is 2,000 Ω.",
+          "type": "choice"
+        },
+        {
+          "id": "metric-prefixes-d2",
+          "prompt": "How many seconds is 500 microseconds?",
+          "options": [
+            {
+              "id": "a",
+              "text": "0.0005"
+            },
+            {
+              "id": "b",
+              "text": "0.5"
+            },
+            {
+              "id": "c",
+              "text": "500"
+            },
+            {
+              "id": "d",
+              "text": "0.005"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Micro divides by 1,000,000, so 500 µs is 0.0005 s.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "metric-prefixes-p1",
+        "prompt": "What does this print?",
+        "code": "length_mm = 250\nprint(length_mm * 1e-3)",
+        "options": [
+          {
+            "id": "a",
+            "text": "0.25"
+          },
+          {
+            "id": "b",
+            "text": "250"
+          },
+          {
+            "id": "c",
+            "text": "2.5"
+          },
+          {
+            "id": "d",
+            "text": "0.025"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Milli is one thousandth: 250 mm is 0.25 m.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "metric-prefixes-r1",
+          "prompt": "What multiplier does milli mean?",
+          "options": [
+            {
+              "id": "a",
+              "text": "one thousandth"
+            },
+            {
+              "id": "b",
+              "text": "one thousand"
+            },
+            {
+              "id": "c",
+              "text": "one millionth"
+            },
+            {
+              "id": "d",
+              "text": "one million"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Milli divides by 1,000, which is a factor of 1e-3.",
+          "type": "choice"
+        },
+        {
+          "id": "metric-prefixes-r2",
+          "prompt": "What multiplier does kilo mean?",
+          "options": [
+            {
+              "id": "a",
+              "text": "one thousand"
+            },
+            {
+              "id": "b",
+              "text": "one thousandth"
+            },
+            {
+              "id": "c",
+              "text": "one million"
+            },
+            {
+              "id": "d",
+              "text": "one millionth"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Kilo multiplies by 1,000, which is 1e3.",
+          "type": "choice"
+        },
+        {
+          "id": "metric-prefixes-r3",
+          "prompt": "What multiplier does mega mean?",
+          "options": [
+            {
+              "id": "a",
+              "text": "one million"
+            },
+            {
+              "id": "b",
+              "text": "one thousand"
+            },
+            {
+              "id": "c",
+              "text": "one thousandth"
+            },
+            {
+              "id": "d",
+              "text": "one millionth"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Mega is 1,000,000, which is 1e6.",
+          "type": "choice"
+        },
+        {
+          "id": "metric-prefixes-r4",
+          "prompt": "Which Python number means one millionth?",
+          "options": [
+            {
+              "id": "a",
+              "text": "1e-6"
+            },
+            {
+              "id": "b",
+              "text": "1e6"
+            },
+            {
+              "id": "c",
+              "text": "1e-3"
+            },
+            {
+              "id": "d",
+              "text": "1e3"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A negative exponent of six is 0.000001.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "metric-prefixes-c1",
+        "prompt": "What does this print?",
+        "code": "resistance_k = 0.22\nprint(resistance_k * 1000)",
+        "options": [
+          {
+            "id": "a",
+            "text": "220.0"
+          },
+          {
+            "id": "b",
+            "text": "0.22"
+          },
+          {
+            "id": "c",
+            "text": "2200.0"
+          },
+          {
+            "id": "d",
+            "text": "22.0"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "0.22 kΩ is 0.22 × 1,000 = 220 Ω, and multiplying by an int gives a float.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "unit-cancel",
+      "title": "Let the units check the answer",
+      "parentLessonId": "P.7",
+      "anchor": "micro-unit-cancel",
+      "sourceFocus": [
+        "meters divided by seconds leaves `m/s`",
+        "the answer's unit is part of the check"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "si-units"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 87,
+          "modeledSeconds": 82.0
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "Units travel through arithmetic like numbers. Meters divided by seconds leaves `m/s`; meters multiplied by meters leaves `m²`. If the result's unit is not the one you expected, the formula or a conversion is wrong.",
+        "So the answer's unit is part of the check: a speed should come out in `m/s`, and an energy in joules. Carrying the units on paper is faster than discovering a thousand-fold error in a robot's motion."
+      ],
+      "example": {
+        "code": "distance_m = 10.0\ntime_s = 2.0\nspeed = distance_m / time_s\nprint(speed)",
+        "output": "5.0"
+      },
+      "walkthrough": [
+        {
+          "code": "distance_m / time_s",
+          "expression": "10.0 m / 2.0 s",
+          "output": "5.0 m/s",
+          "note": "Meters over seconds is the unit of speed."
+        },
+        {
+          "code": "speed",
+          "variable": "speed",
+          "after": "5.0",
+          "note": "The number and its unit answer the question together."
+        },
+        {
+          "code": "print(speed)",
+          "output": "5.0",
+          "note": "Python prints the number; the unit lives in your reasoning and the label."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "unit-cancel-d1",
+          "prompt": "What unit does meters / seconds produce?",
+          "options": [
+            {
+              "id": "a",
+              "text": "m/s"
+            },
+            {
+              "id": "b",
+              "text": "m*s"
+            },
+            {
+              "id": "c",
+              "text": "s/m"
+            },
+            {
+              "id": "d",
+              "text": "m²"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Dividing by seconds leaves per-second, so the unit is meters per second.",
+          "type": "choice"
+        },
+        {
+          "id": "unit-cancel-d2",
+          "prompt": "Adding 5 meters to 2 seconds gives…",
+          "options": [
+            {
+              "id": "a",
+              "text": "no meaningful unit"
+            },
+            {
+              "id": "b",
+              "text": "7 meters"
+            },
+            {
+              "id": "c",
+              "text": "7 m/s"
+            },
+            {
+              "id": "d",
+              "text": "7 seconds"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Only like units add; mixing length and time is a sign the formula is wrong.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "unit-cancel-p1",
+        "prompt": "What unit does meters * meters produce?",
+        "options": [
+          {
+            "id": "a",
+            "text": "m²"
+          },
+          {
+            "id": "b",
+            "text": "m"
+          },
+          {
+            "id": "c",
+            "text": "m/s"
+          },
+          {
+            "id": "d",
+            "text": "s"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Multiplying a length by a length gives an area in square meters.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "unit-cancel-r1",
+          "prompt": "What unit does a speed have?",
+          "options": [
+            {
+              "id": "a",
+              "text": "m/s"
+            },
+            {
+              "id": "b",
+              "text": "m"
+            },
+            {
+              "id": "c",
+              "text": "s"
+            },
+            {
+              "id": "d",
+              "text": "kg"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Speed is a distance per unit time, so meters per second.",
+          "type": "choice"
+        },
+        {
+          "id": "unit-cancel-r2",
+          "prompt": "What does a wrong final unit usually signal?",
+          "options": [
+            {
+              "id": "a",
+              "text": "A wrong formula or a missing conversion"
+            },
+            {
+              "id": "b",
+              "text": "Nothing; units are decoration"
+            },
+            {
+              "id": "c",
+              "text": "Python rounded the answer"
+            },
+            {
+              "id": "d",
+              "text": "The print statement is wrong"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Units cancel through the arithmetic, so a mismatch exposes the mistake.",
+          "type": "choice"
+        },
+        {
+          "id": "unit-cancel-r3",
+          "prompt": "Which pair can be added directly?",
+          "options": [
+            {
+              "id": "a",
+              "text": "3 m and 2 m"
+            },
+            {
+              "id": "b",
+              "text": "3 m and 2 s"
+            },
+            {
+              "id": "c",
+              "text": "3 m and 2 kg"
+            },
+            {
+              "id": "d",
+              "text": "3 s and 2 m/s"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Like units add; different units must be converted or the expression is meaningless.",
+          "type": "choice"
+        },
+        {
+          "id": "unit-cancel-r4",
+          "prompt": "Meters divided by seconds then multiplied by seconds gives…",
+          "options": [
+            {
+              "id": "a",
+              "text": "meters"
+            },
+            {
+              "id": "b",
+              "text": "m/s"
+            },
+            {
+              "id": "c",
+              "text": "s²"
+            },
+            {
+              "id": "d",
+              "text": "m²"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The seconds cancel, leaving the original length unit.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "unit-cancel-c1",
+        "prompt": "A cart covers 0.25 m in 2.0 s. What is its speed?",
+        "code": "print(0.25 / 2.0)",
+        "options": [
+          {
+            "id": "a",
+            "text": "0.125 m/s"
+          },
+          {
+            "id": "b",
+            "text": "0.5 m/s"
+          },
+          {
+            "id": "c",
+            "text": "8.0 m/s"
+          },
+          {
+            "id": "d",
+            "text": "2.25 m/s"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Distance over time gives 0.125, and the units cancel to m/s.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "frequency-period",
+      "title": "Frequency and period are reciprocals",
+      "parentLessonId": "P.8",
+      "anchor": "micro-frequency-period",
+      "sourceFocus": [
+        "Frequency (`f`, in hertz `Hz`)",
+        "`T = 1 / f`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "operators"
+      ],
+      "resources": [
+        {
+          "id": "physics-classroom-frequency",
+          "title": "The Physics Classroom — Frequency and Period of a Wave",
+          "url": "https://www.physicsclassroom.com/class/waves/Lesson-2/Frequency-and-Period-of-a-Wave",
+          "type": "reference",
+          "role": "primary",
+          "provider": "The Physics Classroom",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 92,
+          "modeledSeconds": 82.7
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "Frequency (`f`, in hertz `Hz`) counts how many complete cycles happen each second. A control loop at 50 Hz repeats fifty times per second; 1 Hz is one cycle per second.",
+        "Period (`T`) is the time one cycle takes, measured in seconds. The two describe the same tick, so each is the other's reciprocal: `T = 1 / f` and `f = 1 / T`. A 50 Hz signal has a period of 0.02 s, or 20 ms."
+      ],
+      "example": {
+        "code": "frequency = 50\nperiod = 1 / frequency\nprint(period)",
+        "output": "0.02"
+      },
+      "walkthrough": [
+        {
+          "code": "frequency = 50",
+          "variable": "frequency",
+          "after": "50",
+          "note": "Fifty cycles per second, the standard hobby-servo pulse rate."
+        },
+        {
+          "code": "1 / frequency",
+          "expression": "1 / 50",
+          "output": "0.02",
+          "note": "Slash division returns the seconds per cycle as a float."
+        },
+        {
+          "code": "print(period)",
+          "output": "0.02",
+          "note": "0.02 s is the same claim as 20 ms; only the unit changes."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "frequency-period-d1",
+          "prompt": "What is the period of a 20 Hz signal?",
+          "options": [
+            {
+              "id": "a",
+              "text": "0.05 s"
+            },
+            {
+              "id": "b",
+              "text": "20 s"
+            },
+            {
+              "id": "c",
+              "text": "0.2 s"
+            },
+            {
+              "id": "d",
+              "text": "5 s"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "T = 1 / f = 1 / 20 = 0.05 s.",
+          "type": "choice"
+        },
+        {
+          "id": "frequency-period-d2",
+          "prompt": "What is the frequency of a signal whose period is 0.01 s?",
+          "options": [
+            {
+              "id": "a",
+              "text": "100 Hz"
+            },
+            {
+              "id": "b",
+              "text": "10 Hz"
+            },
+            {
+              "id": "c",
+              "text": "0.01 Hz"
+            },
+            {
+              "id": "d",
+              "text": "1000 Hz"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "f = 1 / T = 1 / 0.01 = 100 cycles per second.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "frequency-period-p1",
+        "prompt": "What does this print?",
+        "code": "frequency = 100\nprint(1 / frequency)",
+        "options": [
+          {
+            "id": "a",
+            "text": "0.01"
+          },
+          {
+            "id": "b",
+            "text": "100"
+          },
+          {
+            "id": "c",
+            "text": "0.1"
+          },
+          {
+            "id": "d",
+            "text": "1.0"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "One cycle at 100 Hz takes 0.01 s, and slash division returns a float.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "frequency-period-r1",
+          "prompt": "Which unit measures frequency?",
+          "options": [
+            {
+              "id": "a",
+              "text": "hertz"
+            },
+            {
+              "id": "b",
+              "text": "second"
+            },
+            {
+              "id": "c",
+              "text": "meter"
+            },
+            {
+              "id": "d",
+              "text": "volt"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Hertz counts cycles per second; seconds measure the period.",
+          "type": "choice"
+        },
+        {
+          "id": "frequency-period-r2",
+          "prompt": "Which formula gives the period from the frequency?",
+          "options": [
+            {
+              "id": "a",
+              "text": "T = 1 / f"
+            },
+            {
+              "id": "b",
+              "text": "T = f"
+            },
+            {
+              "id": "c",
+              "text": "T = f / 2"
+            },
+            {
+              "id": "d",
+              "text": "T = 2 * f"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Period is the reciprocal of frequency.",
+          "type": "choice"
+        },
+        {
+          "id": "frequency-period-r3",
+          "prompt": "What does 1 Hz mean?",
+          "options": [
+            {
+              "id": "a",
+              "text": "one cycle per second"
+            },
+            {
+              "id": "b",
+              "text": "one second per cycle"
+            },
+            {
+              "id": "c",
+              "text": "one thousand cycles per second"
+            },
+            {
+              "id": "d",
+              "text": "one volt per second"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Hertz counts repetitions in a second, so 1 Hz is one repetition per second.",
+          "type": "choice"
+        },
+        {
+          "id": "frequency-period-r4",
+          "prompt": "Which unit measures period?",
+          "options": [
+            {
+              "id": "a",
+              "text": "second"
+            },
+            {
+              "id": "b",
+              "text": "hertz"
+            },
+            {
+              "id": "c",
+              "text": "ohm"
+            },
+            {
+              "id": "d",
+              "text": "ampere"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Period is a duration, so it is measured in seconds.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "frequency-period-c1",
+        "prompt": "What does this print?",
+        "code": "frequency = 250\nprint(round(1 / frequency, 4))",
+        "options": [
+          {
+            "id": "a",
+            "text": "0.004"
+          },
+          {
+            "id": "b",
+            "text": "0.04"
+          },
+          {
+            "id": "c",
+            "text": "4.0"
+          },
+          {
+            "id": "d",
+            "text": "250"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "1 / 250 is 0.004 s, already exact at four decimal places.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "binary-bits",
+      "title": "Each bit doubles the states",
+      "parentLessonId": "P.8",
+      "anchor": "micro-binary-bits",
+      "sourceFocus": [
+        "an N-bit register has 2^N states",
+        "0 to 2^N - 1"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "int-float"
+      ],
+      "resources": [
+        {
+          "id": "sparkfun-binary",
+          "title": "SparkFun — Binary",
+          "url": "https://learn.sparkfun.com/tutorials/binary",
+          "type": "tutorial",
+          "role": "primary",
+          "provider": "SparkFun",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 93,
+          "modeledSeconds": 80.5
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "A bit is a binary digit: 0 for off, 1 for on. Two bits can be 00, 01, 10 or 11, so each extra bit doubles the number of combinations an N-bit register has 2^N states.",
+        "Those states are numbered from 0 to 2^N - 1. Eight bits give 2^8 = 256 states, so a byte holds 0 through 255, which is exactly why a clamped motor command stops at 255."
+      ],
+      "example": {
+        "code": "bits = 4\nprint(2 ** bits)\nprint(2 ** bits - 1)",
+        "output": "16\n15"
+      },
+      "walkthrough": [
+        {
+          "code": "bits = 4",
+          "variable": "bits",
+          "after": "4",
+          "note": "Four switches, each with two positions."
+        },
+        {
+          "code": "2 ** bits",
+          "expression": "2 ** 4",
+          "output": "16",
+          "note": "The number of distinct on/off patterns."
+        },
+        {
+          "code": "2 ** bits - 1",
+          "expression": "16 - 1",
+          "output": "15",
+          "note": "Counting from zero, the highest value is one less than the number of states."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "binary-bits-d1",
+          "prompt": "How many states does a 3-bit register have?",
+          "options": [
+            {
+              "id": "a",
+              "text": "8"
+            },
+            {
+              "id": "b",
+              "text": "6"
+            },
+            {
+              "id": "c",
+              "text": "3"
+            },
+            {
+              "id": "d",
+              "text": "9"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "2^3 = 8 patterns, numbered 0 through 7.",
+          "type": "choice"
+        },
+        {
+          "id": "binary-bits-d2",
+          "prompt": "What is the largest value an 8-bit register holds?",
+          "options": [
+            {
+              "id": "a",
+              "text": "255"
+            },
+            {
+              "id": "b",
+              "text": "256"
+            },
+            {
+              "id": "c",
+              "text": "128"
+            },
+            {
+              "id": "d",
+              "text": "1024"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Eight bits give 256 states from 0 to 255, so 255 is the highest value.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "binary-bits-p1",
+        "prompt": "What is the largest value a 4-bit register holds?",
+        "options": [
+          {
+            "id": "a",
+            "text": "15"
+          },
+          {
+            "id": "b",
+            "text": "16"
+          },
+          {
+            "id": "c",
+            "text": "8"
+          },
+          {
+            "id": "d",
+            "text": "4"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "2^4 = 16 states numbered from 0, so the highest is 15.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "binary-bits-r1",
+          "prompt": "What values can one bit hold?",
+          "options": [
+            {
+              "id": "a",
+              "text": "0 or 1"
+            },
+            {
+              "id": "b",
+              "text": "0 to 9"
+            },
+            {
+              "id": "c",
+              "text": "any number"
+            },
+            {
+              "id": "d",
+              "text": "true or false only in Python"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A bit is a single binary digit: off or on, 0 or 1.",
+          "type": "choice"
+        },
+        {
+          "id": "binary-bits-r2",
+          "prompt": "How many states does an N-bit register have?",
+          "options": [
+            {
+              "id": "a",
+              "text": "2^N"
+            },
+            {
+              "id": "b",
+              "text": "N^2"
+            },
+            {
+              "id": "c",
+              "text": "2 * N"
+            },
+            {
+              "id": "d",
+              "text": "N"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Each bit doubles the combinations, so N bits give 2 to the power N.",
+          "type": "choice"
+        },
+        {
+          "id": "binary-bits-r3",
+          "prompt": "How many states does a byte have?",
+          "options": [
+            {
+              "id": "a",
+              "text": "256"
+            },
+            {
+              "id": "b",
+              "text": "255"
+            },
+            {
+              "id": "c",
+              "text": "128"
+            },
+            {
+              "id": "d",
+              "text": "8"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A byte is eight bits, and 2^8 = 256.",
+          "type": "choice"
+        },
+        {
+          "id": "binary-bits-r4",
+          "prompt": "Why is a byte's highest value 255, not 256?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Counting starts at 0"
+            },
+            {
+              "id": "b",
+              "text": "One state is reserved"
+            },
+            {
+              "id": "c",
+              "text": "Bits start at 1"
+            },
+            {
+              "id": "d",
+              "text": "It is a rounding rule"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "256 states numbered from zero end at 255.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "binary-bits-c1",
+        "prompt": "What does this print?",
+        "code": "bits = 10\nprint(2 ** bits)",
+        "options": [
+          {
+            "id": "a",
+            "text": "1024"
+          },
+          {
+            "id": "b",
+            "text": "100"
+          },
+          {
+            "id": "c",
+            "text": "512"
+          },
+          {
+            "id": "d",
+            "text": "20"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "2^10 = 1024, which is why ten bits hold values from 0 to 1023.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "place-values",
+      "title": "Read binary by its place values",
+      "parentLessonId": "P.8",
+      "anchor": "micro-place-values",
+      "sourceFocus": [
+        "the place values are `1, 2, 4, 8, ...`",
+        "a 1 adds that value"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "binary-bits"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 90,
+          "modeledSeconds": 85.4
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "Read a binary number from left to right with its place values: the place values are `1, 2, 4, 8, ...`, doubling each step to the left. A 1 adds that value and a 0 adds nothing, so 1011 is 8 + 0 + 2 + 1 = 11.",
+        "The leftmost 1 decides how many bits the number needs. 1000 is 8, because the four-bit places are 8, 4, 2 and 1, and only the eight is switched on."
+      ],
+      "example": {
+        "code": "bits = [1, 0, 1, 1]\ntotal = 0\nfor bit in bits:\n    total = total * 2 + bit\nprint(total)",
+        "output": "11"
+      },
+      "walkthrough": [
+        {
+          "code": "total = total * 2 + bit",
+          "expression": "0*2+1, 1*2+0, 2*2+1, 5*2+1",
+          "output": "1, 2, 5, 11",
+          "note": "Each new bit shifts the total left and then adds itself."
+        },
+        {
+          "code": "bits = [1, 0, 1, 1]",
+          "note": "The places are 8, 4, 2 and 1 from left to right."
+        },
+        {
+          "code": "print(total)",
+          "output": "11",
+          "note": "8 + 2 + 1, which is the value the four bits spell."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "place-values-d1",
+          "prompt": "What is binary 1101 in decimal?",
+          "options": [
+            {
+              "id": "a",
+              "text": "13"
+            },
+            {
+              "id": "b",
+              "text": "11"
+            },
+            {
+              "id": "c",
+              "text": "14"
+            },
+            {
+              "id": "d",
+              "text": "7"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "8 + 4 + 0 + 1 = 13.",
+          "type": "choice"
+        },
+        {
+          "id": "place-values-d2",
+          "prompt": "What value does binary 1000 represent?",
+          "options": [
+            {
+              "id": "a",
+              "text": "8"
+            },
+            {
+              "id": "b",
+              "text": "1"
+            },
+            {
+              "id": "c",
+              "text": "4"
+            },
+            {
+              "id": "d",
+              "text": "16"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Only the eight's place is on, so the value is 8.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "place-values-p1",
+        "prompt": "What is binary 1010 in decimal?",
+        "options": [
+          {
+            "id": "a",
+            "text": "10"
+          },
+          {
+            "id": "b",
+            "text": "5"
+          },
+          {
+            "id": "c",
+            "text": "12"
+          },
+          {
+            "id": "d",
+            "text": "8"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "8 + 0 + 2 + 0 = 10.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "place-values-r1",
+          "prompt": "What are the first four binary place values from the right?",
+          "options": [
+            {
+              "id": "a",
+              "text": "1, 2, 4, 8"
+            },
+            {
+              "id": "b",
+              "text": "1, 2, 3, 4"
+            },
+            {
+              "id": "c",
+              "text": "2, 4, 6, 8"
+            },
+            {
+              "id": "d",
+              "text": "1, 10, 100, 1000"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Each place doubles as it moves left.",
+          "type": "choice"
+        },
+        {
+          "id": "place-values-r2",
+          "prompt": "How much does a 1 add in the third place from the right?",
+          "options": [
+            {
+              "id": "a",
+              "text": "4"
+            },
+            {
+              "id": "b",
+              "text": "3"
+            },
+            {
+              "id": "c",
+              "text": "8"
+            },
+            {
+              "id": "d",
+              "text": "2"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The places are 1, 2, 4, so the third is 4.",
+          "type": "choice"
+        },
+        {
+          "id": "place-values-r3",
+          "prompt": "What is binary 1111 in decimal?",
+          "options": [
+            {
+              "id": "a",
+              "text": "15"
+            },
+            {
+              "id": "b",
+              "text": "16"
+            },
+            {
+              "id": "c",
+              "text": "8"
+            },
+            {
+              "id": "d",
+              "text": "11"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "8 + 4 + 2 + 1 = 15, the largest four-bit value.",
+          "type": "choice"
+        },
+        {
+          "id": "place-values-r4",
+          "prompt": "A 0 in a place contributes…",
+          "options": [
+            {
+              "id": "a",
+              "text": "nothing"
+            },
+            {
+              "id": "b",
+              "text": "one"
+            },
+            {
+              "id": "c",
+              "text": "that place's value"
+            },
+            {
+              "id": "d",
+              "text": "a negative value"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Only the 1s are summed; a 0 switches its place off.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "place-values-c1",
+        "prompt": "What is binary 1111 in decimal?",
+        "code": "print(8 + 4 + 2 + 1)",
+        "options": [
+          {
+            "id": "a",
+            "text": "15"
+          },
+          {
+            "id": "b",
+            "text": "16"
+          },
+          {
+            "id": "c",
+            "text": "14"
+          },
+          {
+            "id": "d",
+            "text": "8"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "All four places are on, and their sum is 15.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "rearranging",
+      "title": "Undo an operation on both sides",
+      "parentLessonId": "P.9",
+      "anchor": "micro-rearranging",
+      "sourceFocus": [
+        "undo whatever is attached to it by performing the **opposite operation on both sides**",
+        "`s = d / t`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "operators"
+      ],
+      "resources": [
+        {
+          "id": "mathsisfun-algebra",
+          "title": "MathsIsFun — Algebra: Balance when Adding and Multiplying",
+          "url": "https://www.mathsisfun.com/algebra/introduction-multiply.html",
+          "type": "reference",
+          "role": "primary",
+          "provider": "MathsIsFun",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 94,
+          "modeledSeconds": 86.4
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "An equation is a balanced scale. To isolate an unknown, undo whatever is attached to it by performing the opposite operation on both sides: if the unknown is multiplied by `t`, divide both sides by `t`.",
+        "From `d = s * t`, dividing both sides by `t` gives `s = d / t`; dividing by `s` instead gives `t = d / s`. When an offset is added, remove it first: from `x = s * t + x0`, subtract `x0` and then divide by `t`."
+      ],
+      "example": {
+        "code": "d = 12.0\nt = 3.0\ns = d / t\nprint(s)",
+        "output": "4.0"
+      },
+      "walkthrough": [
+        {
+          "code": "d = 12.0",
+          "variable": "d",
+          "after": "12.0",
+          "note": "The distance the formula starts with."
+        },
+        {
+          "code": "s = d / t",
+          "expression": "12.0 / 3.0",
+          "output": "s = 4.0",
+          "note": "Distance divided by time is the rearranged form for speed."
+        },
+        {
+          "code": "print(s)",
+          "output": "4.0",
+          "note": "The isolated unknown is now a value the program can use."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "rearranging-d1",
+          "prompt": "From d = v * t, how do you solve for t?",
+          "options": [
+            {
+              "id": "a",
+              "text": "t = d / v"
+            },
+            {
+              "id": "b",
+              "text": "t = d * v"
+            },
+            {
+              "id": "c",
+              "text": "t = v / d"
+            },
+            {
+              "id": "d",
+              "text": "t = d - v"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "v is multiplied into t, so dividing both sides by v isolates t.",
+          "type": "choice"
+        },
+        {
+          "id": "rearranging-d2",
+          "prompt": "From x = s * t + x0, which line isolates s?",
+          "options": [
+            {
+              "id": "a",
+              "text": "s = (x - x0) / t"
+            },
+            {
+              "id": "b",
+              "text": "s = x / t - x0"
+            },
+            {
+              "id": "c",
+              "text": "s = x - x0 / t"
+            },
+            {
+              "id": "d",
+              "text": "s = (x + x0) / t"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Subtract the offset x0 from both sides first, then divide the whole left side by t.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "rearranging-p1",
+        "prompt": "What does this print?",
+        "code": "s = 8.0\nt = 2.0\nprint(s * t)",
+        "options": [
+          {
+            "id": "a",
+            "text": "16.0"
+          },
+          {
+            "id": "b",
+            "text": "4.0"
+          },
+          {
+            "id": "c",
+            "text": "10.0"
+          },
+          {
+            "id": "d",
+            "text": "6.0"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "This is the original distance form: speed times time is 16.0 m.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "rearranging-r1",
+          "prompt": "What undoes multiplication?",
+          "options": [
+            {
+              "id": "a",
+              "text": "division"
+            },
+            {
+              "id": "b",
+              "text": "subtraction"
+            },
+            {
+              "id": "c",
+              "text": "addition"
+            },
+            {
+              "id": "d",
+              "text": "squaring"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Division is the opposite operation, applied to both sides.",
+          "type": "choice"
+        },
+        {
+          "id": "rearranging-r2",
+          "prompt": "What undoes addition?",
+          "options": [
+            {
+              "id": "a",
+              "text": "subtraction"
+            },
+            {
+              "id": "b",
+              "text": "division"
+            },
+            {
+              "id": "c",
+              "text": "multiplication"
+            },
+            {
+              "id": "d",
+              "text": "a square root"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Subtracting the same value from both sides removes an added term.",
+          "type": "choice"
+        },
+        {
+          "id": "rearranging-r3",
+          "prompt": "When you change one side of an equation, what must happen to the other?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The same operation happens to it"
+            },
+            {
+              "id": "b",
+              "text": "It stays unchanged"
+            },
+            {
+              "id": "c",
+              "text": "It is divided by two"
+            },
+            {
+              "id": "d",
+              "text": "It is discarded"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The balance holds only when both sides receive the same operation.",
+          "type": "choice"
+        },
+        {
+          "id": "rearranging-r4",
+          "prompt": "Which rearranged form finds speed from distance and time?",
+          "options": [
+            {
+              "id": "a",
+              "text": "s = d / t"
+            },
+            {
+              "id": "b",
+              "text": "s = d * t"
+            },
+            {
+              "id": "c",
+              "text": "s = t / d"
+            },
+            {
+              "id": "d",
+              "text": "s = d + t"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Distance over time is the speed form of d = s * t.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "rearranging-c1",
+        "prompt": "What does this print?",
+        "code": "x = 10.0\nx0 = 4.0\nt = 3.0\nprint((x - x0) / t)",
+        "options": [
+          {
+            "id": "a",
+            "text": "2.0"
+          },
+          {
+            "id": "b",
+            "text": "4.67"
+          },
+          {
+            "id": "c",
+            "text": "3.33"
+          },
+          {
+            "id": "d",
+            "text": "6.0"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Subtract the offset (6.0) and divide by time: 6.0 / 3.0 = 2.0.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "linear-scaling",
+      "title": "Scale by the fraction of full range",
+      "parentLessonId": "P.9",
+      "anchor": "micro-linear-scaling",
+      "sourceFocus": [
+        "fraction of full scale",
+        "`y = (x / 1023.0) * 5.0`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "rearranging"
+      ],
+      "resources": [
+        {
+          "id": "mathsisfun-proportions",
+          "title": "MathsIsFun — Proportions",
+          "url": "https://www.mathsisfun.com/algebra/proportions.html",
+          "type": "reference",
+          "role": "primary",
+          "provider": "MathsIsFun",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 95,
+          "modeledSeconds": 85.5
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "A proportion says two ratios are equal. A sensor reading of `x` counts out of a full-scale count of 1023 has the same fraction of full scale as the output voltage has of 5.0 V: `x / 1023.0 = y / 5.0`.",
+        "Multiplying both sides by 5.0 gives `y = (x / 1023.0) * 5.0`. The fraction is a number between 0.0 and 1.0, so a reading of 0 counts gives 0.0 V, the full count gives 5.0 V, and half the counts give half the volts."
+      ],
+      "example": {
+        "code": "counts = 512\nvolts = (counts / 1023.0) * 5.0\nprint(round(volts, 2))",
+        "output": "2.5"
+      },
+      "walkthrough": [
+        {
+          "code": "counts / 1023.0",
+          "expression": "512 / 1023.0",
+          "output": "0.5005",
+          "note": "The reading as a fraction of full scale, between 0 and 1."
+        },
+        {
+          "code": "* 5.0",
+          "expression": "0.5005 × 5.0",
+          "output": "2.5024",
+          "note": "The fraction of the output range, in volts."
+        },
+        {
+          "code": "round(volts, 2)",
+          "output": "2.5",
+          "note": "Rounding keeps the displayed value honest to two decimals."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "linear-scaling-d1",
+          "prompt": "What voltage does a count of 0 give?",
+          "options": [
+            {
+              "id": "a",
+              "text": "0.0 V"
+            },
+            {
+              "id": "b",
+              "text": "5.0 V"
+            },
+            {
+              "id": "c",
+              "text": "2.5 V"
+            },
+            {
+              "id": "d",
+              "text": "1023 V"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Zero counts is the bottom of the range, so the fraction is 0.",
+          "type": "choice"
+        },
+        {
+          "id": "linear-scaling-d2",
+          "prompt": "What voltage does a count of 1023 give?",
+          "options": [
+            {
+              "id": "a",
+              "text": "5.0 V"
+            },
+            {
+              "id": "b",
+              "text": "0.0 V"
+            },
+            {
+              "id": "c",
+              "text": "1023 V"
+            },
+            {
+              "id": "d",
+              "text": "2.5 V"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The full count is the top of the range, so the fraction is 1 and the output is the full 5.0 V.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "linear-scaling-p1",
+        "prompt": "What does this print?",
+        "code": "counts = 1023\nprint(round((counts / 1023.0) * 5.0, 2))",
+        "options": [
+          {
+            "id": "a",
+            "text": "5.0"
+          },
+          {
+            "id": "b",
+            "text": "0.0"
+          },
+          {
+            "id": "c",
+            "text": "2.5"
+          },
+          {
+            "id": "d",
+            "text": "1023"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The fraction is exactly 1 at full scale, so the output is the full 5.0 V.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "linear-scaling-r1",
+          "prompt": "What is the full-scale count in the lesson's 10-bit example?",
+          "options": [
+            {
+              "id": "a",
+              "text": "1023"
+            },
+            {
+              "id": "b",
+              "text": "1024"
+            },
+            {
+              "id": "c",
+              "text": "255"
+            },
+            {
+              "id": "d",
+              "text": "5"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Ten bits hold values from 0 to 1023, so 1023 is the full-scale count.",
+          "type": "choice"
+        },
+        {
+          "id": "linear-scaling-r2",
+          "prompt": "What range does the output voltage span?",
+          "options": [
+            {
+              "id": "a",
+              "text": "0.0 to 5.0 V"
+            },
+            {
+              "id": "b",
+              "text": "0.0 to 1023 V"
+            },
+            {
+              "id": "c",
+              "text": "1.0 to 5.0 V"
+            },
+            {
+              "id": "d",
+              "text": "0.0 to 10.0 V"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The example maps the counts onto a 0–5 V output.",
+          "type": "choice"
+        },
+        {
+          "id": "linear-scaling-r3",
+          "prompt": "What does the ratio counts / 1023.0 represent?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The fraction of full scale"
+            },
+            {
+              "id": "b",
+              "text": "The voltage in volts"
+            },
+            {
+              "id": "c",
+              "text": "The time in seconds"
+            },
+            {
+              "id": "d",
+              "text": "The bit count"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "It places the reading between 0 and 1 on its own range.",
+          "type": "choice"
+        },
+        {
+          "id": "linear-scaling-r4",
+          "prompt": "Which expression scales counts to a 5.0 V output?",
+          "options": [
+            {
+              "id": "a",
+              "text": "(counts / 1023.0) * 5.0"
+            },
+            {
+              "id": "b",
+              "text": "counts * 5.0"
+            },
+            {
+              "id": "c",
+              "text": "counts / 5.0"
+            },
+            {
+              "id": "d",
+              "text": "(counts / 5.0) * 1023.0"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The fraction of full scale is multiplied by the output range.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "linear-scaling-c1",
+        "prompt": "What does this print?",
+        "code": "counts = 1023\nprint(round((counts / 1023.0) * 3.3, 2))",
+        "options": [
+          {
+            "id": "a",
+            "text": "3.3"
+          },
+          {
+            "id": "b",
+            "text": "5.0"
+          },
+          {
+            "id": "c",
+            "text": "1.65"
+          },
+          {
+            "id": "d",
+            "text": "1023"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Full scale is a fraction of 1, so the output is the whole 3.3 V range.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "scale-output",
+      "title": "The output range sets the top",
+      "parentLessonId": "P.9",
+      "anchor": "micro-scale-output",
+      "sourceFocus": [
+        "the multiplier is the output's top value",
+        "a 3.3 V board maps full scale to 3.3"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "linear-scaling"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 86,
+          "modeledSeconds": 81.4
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "The fraction of full scale is a number between 0 and 1; what changes between boards is the top of the output range. In `y = (x / 1023.0) * top`, the multiplier is the output's top value.",
+        "A 5 V sensor chain maps full scale to 5.0, and a 3.3 V board maps full scale to 3.3. The same counts therefore describe different voltages, so read the board's supply before choosing the number."
+      ],
+      "example": {
+        "code": "counts = 1023\nvolts = (counts / 1023.0) * 3.3\nprint(round(volts, 1))",
+        "output": "3.3"
+      },
+      "walkthrough": [
+        {
+          "code": "counts / 1023.0",
+          "expression": "1023 / 1023.0",
+          "output": "1.0",
+          "note": "Full scale is the fraction 1."
+        },
+        {
+          "code": "* 3.3",
+          "expression": "1.0 × 3.3",
+          "output": "3.3",
+          "note": "The fraction of the 3.3 V range."
+        },
+        {
+          "code": "round(volts, 1)",
+          "output": "3.3",
+          "note": "The displayed value matches the board's supply."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "scale-output-d1",
+          "prompt": "On a 3.3 V board, what does a count of 0 give?",
+          "options": [
+            {
+              "id": "a",
+              "text": "0.0 V"
+            },
+            {
+              "id": "b",
+              "text": "3.3 V"
+            },
+            {
+              "id": "c",
+              "text": "1.65 V"
+            },
+            {
+              "id": "d",
+              "text": "5.0 V"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Zero counts is the bottom of any range.",
+          "type": "choice"
+        },
+        {
+          "id": "scale-output-d2",
+          "prompt": "Which number is the multiplier for a 3.3 V board?",
+          "options": [
+            {
+              "id": "a",
+              "text": "3.3"
+            },
+            {
+              "id": "b",
+              "text": "5.0"
+            },
+            {
+              "id": "c",
+              "text": "1023.0"
+            },
+            {
+              "id": "d",
+              "text": "0.5"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The multiplier is the output range's top value, which is 3.3 V here.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "scale-output-p1",
+        "prompt": "What does full scale give on a 5.0 V board?",
+        "options": [
+          {
+            "id": "a",
+            "text": "5.0 V"
+          },
+          {
+            "id": "b",
+            "text": "3.3 V"
+          },
+          {
+            "id": "c",
+            "text": "2.5 V"
+          },
+          {
+            "id": "d",
+            "text": "1023 V"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The fraction is 1, so the output is the whole 5.0 V range.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "scale-output-r1",
+          "prompt": "What does the multiplier in a scaling formula represent?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The output range's top value"
+            },
+            {
+              "id": "b",
+              "text": "The sensor's count"
+            },
+            {
+              "id": "c",
+              "text": "The number of bits"
+            },
+            {
+              "id": "d",
+              "text": "The sample time"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The fraction of full scale is multiplied by the range it maps onto.",
+          "type": "choice"
+        },
+        {
+          "id": "scale-output-r2",
+          "prompt": "Half the full-scale counts on a 3.3 V board give…",
+          "options": [
+            {
+              "id": "a",
+              "text": "1.65 V"
+            },
+            {
+              "id": "b",
+              "text": "2.5 V"
+            },
+            {
+              "id": "c",
+              "text": "3.3 V"
+            },
+            {
+              "id": "d",
+              "text": "0.0 V"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Half of 3.3 is 1.65.",
+          "type": "choice"
+        },
+        {
+          "id": "scale-output-r3",
+          "prompt": "Why can the same counts give different volts?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The boards have different supply voltages"
+            },
+            {
+              "id": "b",
+              "text": "The counts are random"
+            },
+            {
+              "id": "c",
+              "text": "Python rounds differently"
+            },
+            {
+              "id": "d",
+              "text": "The sensor changes its range"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The fraction maps onto the board's own output range.",
+          "type": "choice"
+        },
+        {
+          "id": "scale-output-r4",
+          "prompt": "What is the fraction at half of 1023 counts (about 511)?",
+          "options": [
+            {
+              "id": "a",
+              "text": "about 0.5"
+            },
+            {
+              "id": "b",
+              "text": "about 1.0"
+            },
+            {
+              "id": "c",
+              "text": "about 2.0"
+            },
+            {
+              "id": "d",
+              "text": "0.0"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "511 / 1023 is just under one half.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "scale-output-c1",
+        "prompt": "What does this print?",
+        "code": "counts = 1023\nprint(round((counts / 1023.0) * 3.3, 2))",
+        "options": [
+          {
+            "id": "a",
+            "text": "3.3"
+          },
+          {
+            "id": "b",
+            "text": "5.0"
+          },
+          {
+            "id": "c",
+            "text": "1.65"
+          },
+          {
+            "id": "d",
+            "text": "1023"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Full scale is a fraction of 1, so the output is the whole 3.3 V range.",
         "type": "choice"
       }
     }

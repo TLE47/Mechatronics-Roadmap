@@ -1,0 +1,480 @@
+{
+  "subjectId": "python",
+  "parentLessonId": "P.3",
+  "parentPath": "track-p/P.3-decisions-and-clamping.md",
+  "title": "Decisions and clamping in small steps",
+  "version": 1,
+  "concepts": [
+    {
+      "id": "comparisons",
+      "title": "A comparison answers a question",
+      "parentLessonId": "P.3",
+      "anchor": "micro-comparisons",
+      "sourceFocus": [
+        "A comparison uses `==`, never `=`",
+        "runs the indented lines only when the comparison is `True`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "booleans"
+      ],
+      "resources": [
+        {
+          "id": "cs50p-notes-1",
+          "title": "CS50P Lecture 1 notes",
+          "url": "https://cs50.harvard.edu/python/2022/notes/1/",
+          "type": "notes",
+          "role": "primary",
+          "provider": "Harvard CS50P",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": 96,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "A comparison asks a question about two values. `==` asks whether they are equal, `>` and `<` ask about order, and `!=` asks whether they differ. A single `=` is not a question: it stores a value in a name.",
+        "Every comparison produces `True` or `False`. An `if` runs the indented lines only when the comparison is `True`; an `elif` is tried only after the earlier tests failed, and `else` runs when none of them matched."
+      ],
+      "example": {
+        "code": "temperature = 72\nif temperature > 80:\n    print(\"fan on\")\nelse:\n    print(\"fan off\")",
+        "output": "fan off"
+      },
+      "walkthrough": [
+        {
+          "code": "temperature = 72",
+          "variable": "temperature",
+          "after": "72",
+          "note": "A plain assignment stores the value; it asks nothing."
+        },
+        {
+          "code": "temperature > 80",
+          "expression": "72 > 80",
+          "output": "False",
+          "note": "The comparison answers with a boolean, and the answer decides the branch."
+        },
+        {
+          "code": "print(\"fan off\")",
+          "note": "Because the test was False, execution skips the if body and takes the else body."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "comparisons-d1",
+          "prompt": "What does this print?",
+          "code": "level = 3\nprint(level == 3)",
+          "options": [
+            { "id": "a", "text": "True" },
+            { "id": "b", "text": "False" },
+            { "id": "c", "text": "3" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "a",
+          "explanation": "`==` asks whether the two values are equal, and 3 equals 3, so the answer is True."
+        },
+        {
+          "id": "comparisons-d2",
+          "prompt": "Which line asks whether cmd is 255?",
+          "options": [
+            { "id": "a", "text": "cmd == 255" },
+            { "id": "b", "text": "cmd = 255" },
+            { "id": "c", "text": "cmd != 255" },
+            { "id": "d", "text": "cmd >= 255" }
+          ],
+          "answerId": "a",
+          "explanation": "A double equals asks the equality question; a single equals stores 255 and answers nothing."
+        }
+      ],
+      "practice": {
+        "id": "comparisons-p1",
+        "prompt": "What does this print?",
+        "code": "x = 10\nprint(x > 12)",
+        "options": [
+          { "id": "a", "text": "False" },
+          { "id": "b", "text": "True" },
+          { "id": "c", "text": "12" },
+          { "id": "d", "text": "An error" }
+        ],
+        "answerId": "a",
+        "explanation": "Ten is not greater than twelve, so the comparison answers False."
+      },
+      "reviewPool": [
+        {
+          "id": "comparisons-r1",
+          "prompt": "What does 4 != 4 produce?",
+          "options": [
+            { "id": "a", "text": "False" },
+            { "id": "b", "text": "True" },
+            { "id": "c", "text": "4" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "a",
+          "explanation": "`!=` asks whether the values differ; four is not different from four."
+        },
+        {
+          "id": "comparisons-r2",
+          "prompt": "Which symbol stores a value in a name?",
+          "options": [
+            { "id": "a", "text": "=" },
+            { "id": "b", "text": "==" },
+            { "id": "c", "text": "!=" },
+            { "id": "d", "text": ">=" }
+          ],
+          "answerId": "a",
+          "explanation": "Assignment uses one equals sign; the others are comparison questions."
+        },
+        {
+          "id": "comparisons-r3",
+          "prompt": "What does 9 >= 9 produce?",
+          "options": [
+            { "id": "a", "text": "True" },
+            { "id": "b", "text": "False" },
+            { "id": "c", "text": "9" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "a",
+          "explanation": "`>=` is true when the left value is greater than or equal to the right, and nine equals nine."
+        },
+        {
+          "id": "comparisons-r4",
+          "prompt": "An if block runs its indented lines when its comparison is…",
+          "options": [
+            { "id": "a", "text": "True" },
+            { "id": "b", "text": "False" },
+            { "id": "c", "text": "a number" },
+            { "id": "d", "text": "always" }
+          ],
+          "answerId": "a",
+          "explanation": "The if body runs only on True; otherwise Python checks elif branches and then else."
+        }
+      ],
+      "challenge": {
+        "id": "comparisons-c1",
+        "prompt": "What does this print?",
+        "code": "raw = 300\nprint(raw == 255)",
+        "options": [
+          { "id": "a", "text": "False" },
+          { "id": "b", "text": "True" },
+          { "id": "c", "text": "255" },
+          { "id": "d", "text": "An error" }
+        ],
+        "answerId": "a",
+        "explanation": "The comparison asks a question and 300 is not 255, so it answers False; it does not clamp the value."
+      }
+    },
+    {
+      "id": "clamping",
+      "title": "Clamping keeps a command in range",
+      "parentLessonId": "P.3",
+      "anchor": "micro-clamping",
+      "sourceFocus": [
+        "Clamping keeps a command inside `[0, 255]`",
+        "`if cmd > 255: cmd = 255`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "comparisons"
+      ],
+      "resources": [
+        {
+          "id": "cs50p-notes-1",
+          "title": "CS50P Lecture 1 notes",
+          "url": "https://cs50.harvard.edu/python/2022/notes/1/",
+          "type": "notes",
+          "role": "primary",
+          "provider": "Harvard CS50P",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": 92,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "A hardware output accepts a finite range. A motor command register holds whole numbers from 0 to 255, so a computed 310 or -45 cannot be sent as it stands. Clamping keeps a command inside `[0, 255]` by replacing an out-of-range value with the nearest limit.",
+        "Check the high end first with `if cmd > 255: cmd = 255`, then the low end with `elif cmd < 0: cmd = 0`. A value already inside the range matches neither test and passes through untouched. Clamp the computed value before it reaches the output, never after."
+      ],
+      "example": {
+        "code": "cmd = 310\nif cmd > 255:\n    cmd = 255\nelif cmd < 0:\n    cmd = 0\nprint(cmd)",
+        "output": "255"
+      },
+      "walkthrough": [
+        {
+          "code": "cmd = 310",
+          "variable": "cmd",
+          "after": "310",
+          "note": "The controller's raw answer is outside the register's range."
+        },
+        {
+          "code": "cmd > 255",
+          "expression": "310 > 255",
+          "output": "True",
+          "note": "The high test matches, so the if body runs and the elif is skipped."
+        },
+        {
+          "code": "cmd = 255",
+          "variable": "cmd",
+          "before": "310",
+          "after": "255",
+          "note": "The command is pinned to the highest value the hardware accepts."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "clamping-d1",
+          "prompt": "What does this print?",
+          "code": "cmd = -45\nif cmd > 255:\n    cmd = 255\nelif cmd < 0:\n    cmd = 0\nprint(cmd)",
+          "options": [
+            { "id": "a", "text": "0" },
+            { "id": "b", "text": "-45" },
+            { "id": "c", "text": "255" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "a",
+          "explanation": "The high test fails and the low test matches, so the command is pinned to 0."
+        },
+        {
+          "id": "clamping-d2",
+          "prompt": "What does clamping 128 through the same two tests produce?",
+          "options": [
+            { "id": "a", "text": "128" },
+            { "id": "b", "text": "0" },
+            { "id": "c", "text": "255" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "a",
+          "explanation": "128 is already inside [0, 255], so neither branch changes it."
+        }
+      ],
+      "practice": {
+        "id": "clamping-p1",
+        "prompt": "What does this print?",
+        "code": "cmd = 300\nif cmd > 255:\n    cmd = 255\nprint(cmd)",
+        "options": [
+          { "id": "a", "text": "255" },
+          { "id": "b", "text": "300" },
+          { "id": "c", "text": "0" },
+          { "id": "d", "text": "45" }
+        ],
+        "answerId": "a",
+        "explanation": "300 is over the high limit, so the assignment pins it to 255."
+      },
+      "reviewPool": [
+        {
+          "id": "clamping-r1",
+          "prompt": "What does clamping 300 into [0, 255] produce?",
+          "options": [
+            { "id": "a", "text": "255" },
+            { "id": "b", "text": "300" },
+            { "id": "c", "text": "0" },
+            { "id": "d", "text": "45" }
+          ],
+          "answerId": "a",
+          "explanation": "The nearest value inside the range is the high limit, 255."
+        },
+        {
+          "id": "clamping-r2",
+          "prompt": "What does clamping -8 into [0, 255] produce?",
+          "options": [
+            { "id": "a", "text": "0" },
+            { "id": "b", "text": "-8" },
+            { "id": "c", "text": "255" },
+            { "id": "d", "text": "8" }
+          ],
+          "answerId": "a",
+          "explanation": "A negative command is below the range, so it is pinned to the low limit, 0."
+        },
+        {
+          "id": "clamping-r3",
+          "prompt": "A command of 100 clamped into [0, 255] is…",
+          "options": [
+            { "id": "a", "text": "still 100" },
+            { "id": "b", "text": "0" },
+            { "id": "c", "text": "255" },
+            { "id": "d", "text": "an error" }
+          ],
+          "answerId": "a",
+          "explanation": "Inside the range, clamping is a no-op: the value passes through."
+        },
+        {
+          "id": "clamping-r4",
+          "prompt": "When should a command be clamped?",
+          "options": [
+            { "id": "a", "text": "After it is computed and before the output" },
+            { "id": "b", "text": "Only after the motor reports a fault" },
+            { "id": "c", "text": "Never; the register handles it" },
+            { "id": "d", "text": "Before the raw command is calculated" }
+          ],
+          "answerId": "a",
+          "explanation": "The computed value is what can leave the safe range, so it is clamped before it reaches the register."
+        }
+      ],
+      "challenge": {
+        "id": "clamping-c1",
+        "prompt": "What does this print?",
+        "code": "cmd = 128\nif cmd > 255:\n    cmd = 255\nelif cmd < 0:\n    cmd = 0\ncmd = cmd + 200\nprint(cmd)",
+        "options": [
+          { "id": "a", "text": "328" },
+          { "id": "b", "text": "255" },
+          { "id": "c", "text": "0" },
+          { "id": "d", "text": "200" }
+        ],
+        "answerId": "a",
+        "explanation": "The clamp ran before the addition, and 128 passed through unchanged; 128 + 200 is 328. Clamping early does not protect a later calculation."
+      }
+    },
+    {
+      "id": "logic",
+      "title": "and, or and not combine questions",
+      "parentLessonId": "P.3",
+      "anchor": "micro-logic",
+      "sourceFocus": [
+        "`and` is True only when both sides are True",
+        "`not` flips a boolean"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "comparisons"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": 90,
+        "review": 36,
+        "challenge": 49
+      },
+      "teaching": [
+        "Comparisons can be combined. `and` is True only when both sides are True, `or` is True when at least one side is, and `not` flips a boolean. `not` binds tightest, then `and`, then `or`; brackets make the grouping unmistakable.",
+        "Use them to express one safe condition instead of nested ifs: `if temp > 80 and fan_ok:` asks both questions before the body runs, and `if not estop:` runs only while the emergency stop is clear."
+      ],
+      "example": {
+        "code": "temp = 72\nfan_on = True\nif temp > 60 and fan_on:\n    print(\"cooling\")",
+        "output": "cooling"
+      },
+      "walkthrough": [
+        {
+          "code": "temp > 60",
+          "expression": "72 > 60",
+          "output": "True",
+          "note": "The left question is true."
+        },
+        {
+          "code": "temp > 60 and fan_on",
+          "expression": "True and True",
+          "output": "True",
+          "note": "Both sides must be true for `and` to be true."
+        },
+        {
+          "code": "print(\"cooling\")",
+          "note": "The combined condition passed, so the body runs."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "logic-d1",
+          "prompt": "What does this produce?",
+          "code": "print(True and False)",
+          "options": [
+            { "id": "a", "text": "False" },
+            { "id": "b", "text": "True" },
+            { "id": "c", "text": "An error" },
+            { "id": "d", "text": "None" }
+          ],
+          "answerId": "a",
+          "explanation": "`and` needs both sides true; one false side is enough to answer False."
+        },
+        {
+          "id": "logic-d2",
+          "prompt": "What does this produce?",
+          "code": "print(not True)",
+          "options": [
+            { "id": "a", "text": "False" },
+            { "id": "b", "text": "True" },
+            { "id": "c", "text": "None" },
+            { "id": "d", "text": "An error" }
+          ],
+          "answerId": "a",
+          "explanation": "`not` flips the boolean, so True becomes False."
+        }
+      ],
+      "practice": {
+        "id": "logic-p1",
+        "prompt": "What does this produce?",
+        "code": "print(5 > 3 and 2 > 4)",
+        "options": [
+          { "id": "a", "text": "False" },
+          { "id": "b", "text": "True" },
+          { "id": "c", "text": "5" },
+          { "id": "d", "text": "An error" }
+        ],
+        "answerId": "a",
+        "explanation": "The right comparison is False, so the `and` is False even though the left one passed."
+      },
+      "reviewPool": [
+        {
+          "id": "logic-r1",
+          "prompt": "When is `a or b` True?",
+          "options": [
+            { "id": "a", "text": "When at least one side is True" },
+            { "id": "b", "text": "Only when both are True" },
+            { "id": "c", "text": "Only when both are False" },
+            { "id": "d", "text": "Never" }
+          ],
+          "answerId": "a",
+          "explanation": "`or` passes when either side passes."
+        },
+        {
+          "id": "logic-r2",
+          "prompt": "When is `a and b` True?",
+          "options": [
+            { "id": "a", "text": "Only when both sides are True" },
+            { "id": "b", "text": "When either side is True" },
+            { "id": "c", "text": "When both are False" },
+            { "id": "d", "text": "Always" }
+          ],
+          "answerId": "a",
+          "explanation": "Both sides must pass for the combined condition to pass."
+        },
+        {
+          "id": "logic-r3",
+          "prompt": "What does `not False` produce?",
+          "options": [
+            { "id": "a", "text": "True" },
+            { "id": "b", "text": "False" },
+            { "id": "c", "text": "0" },
+            { "id": "d", "text": "None" }
+          ],
+          "answerId": "a",
+          "explanation": "`not` flips the value, and the opposite of False is True."
+        },
+        {
+          "id": "logic-r4",
+          "prompt": "Which operator binds tightest?",
+          "options": [
+            { "id": "a", "text": "not" },
+            { "id": "b", "text": "and" },
+            { "id": "c", "text": "or" },
+            { "id": "d", "text": "They are equal" }
+          ],
+          "answerId": "a",
+          "explanation": "`not` applies first, then `and`, then `or`; brackets override the order."
+        }
+      ],
+      "challenge": {
+        "id": "logic-c1",
+        "prompt": "What does this print?",
+        "code": "print(3 > 2 and 4 > 5)",
+        "options": [
+          { "id": "a", "text": "False" },
+          { "id": "b", "text": "True" },
+          { "id": "c", "text": "3" },
+          { "id": "d", "text": "An error" }
+        ],
+        "answerId": "a",
+        "explanation": "Both comparisons must pass; 4 > 5 does not."
+      }
+    }
+  ]
+}

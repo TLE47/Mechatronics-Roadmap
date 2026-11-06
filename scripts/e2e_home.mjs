@@ -1245,26 +1245,49 @@ async function main() {
 
       // A split-view resize holds the block the reader is on at the top of the pane.
       const held = await page.getByTestId('reader-scroll').evaluate((element) => {
-        element.scrollTop = 1200;
         const nodes = [...element.querySelectorAll('[data-reader-block]')].filter(
           (node) => node.getClientRects().length > 0
         );
+        // A fixed pixel offset lands on whatever block happens to be there, and on a long page that
+        // is the last one — which the browser can never hold at the top once the split view widens
+        // the pane at 1024 px (the CI flake measured -16 px, the end-of-scroll clamp). Pick a roomy
+        // block in the middle instead, so the row always tests the hold and not the page's foot.
+        const roomy = nodes.filter((node) => node.offsetHeight > 200);
+        const target = roomy[Math.floor(roomy.length / 2)] ?? nodes[0];
+        element.scrollTop = Math.max(0, target.offsetTop + 40);
         const hit = nodes.filter((node) => node.offsetTop <= element.scrollTop + 8).pop();
         return { key: hit?.dataset.readerBlock ?? '', into: element.scrollTop + 8 - (hit?.offsetTop ?? 0) };
       });
       assert.ok(held.key, 'the pane must have a block at the top of a scrolled page');
       const original = page.viewportSize() ?? { width: 1440, height: 900 };
       await page.setViewportSize({ width: 1024, height: original.height });
-      await page.waitForTimeout(700);
-      const kept = await page.getByTestId('reader-scroll').evaluate((element, key) => {
-        const node = element.querySelector(`[data-reader-block="${key}"]`);
-        return {
-          key,
-          into: element.scrollTop + 8 - (node?.offsetTop ?? 0),
-          height: node?.offsetHeight ?? 0,
-          exists: Boolean(node),
-        };
-      }, held.key);
+      // The pane restores the block after the reflow, not on the resize event itself, so a fixed
+      // 700 ms sleep can read the frame in between (the CI flake measured -16 px, i.e. mid-glide).
+      // Read until two samples agree, and only then take the measurement the assertion uses.
+      const readKept = (key) =>
+        page.getByTestId('reader-scroll').evaluate((element, blockKey) => {
+          const node = element.querySelector(`[data-reader-block="${blockKey}"]`);
+          return {
+            key: blockKey,
+            into: element.scrollTop + 8 - (node?.offsetTop ?? 0),
+            height: node?.offsetHeight ?? 0,
+            exists: Boolean(node),
+          };
+        }, key);
+      let kept = await readKept(held.key);
+      for (let sample = 0; sample < 20; sample += 1) {
+        await page.waitForTimeout(120);
+        const next = await readKept(held.key);
+        if (
+          next.exists === kept.exists &&
+          Math.abs(next.into - kept.into) <= 1 &&
+          Math.abs(next.height - kept.height) <= 1
+        ) {
+          kept = next;
+          break;
+        }
+        kept = next;
+      }
       await page.setViewportSize(original);
       assert.equal(kept.exists, true, 'the block must still be on the page after the resize');
       // Two ways the place is held, and both are the tight one. A block that still has room for the

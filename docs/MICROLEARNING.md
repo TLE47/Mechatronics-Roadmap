@@ -1,9 +1,8 @@
 # Atomic micro-learning (beta)
 
-Micro-learning is the workbench's sixteenth tab. It teaches one concept per unit, drawn from a P.1 or
-P.2 parent lesson, in roughly two minutes: it asks two diagnostics, chooses the practice from the
+Micro-learning is the workbench's sixteenth tab. It teaches one concept per unit, drawn from a P.1–P.9 parent lesson, in roughly two minutes: it asks two diagnostics, chooses the practice from the
 answers, and schedules a review. It is **beta** until a person who has never seen the workbench
-completes both lessons and reports where they got stuck.
+completes every lesson and reports where they got stuck.
 
 It never marks the parent lesson verified. A micro result is evidence for the micro store only; the
 parent lesson's verified/completed maps and the lesson runner are untouched.
@@ -17,7 +16,7 @@ flowchart LR
     Review --> Ladder["3 -> 7 -> 14 -> 30 days"]
 ```
 
-## The ten units
+## The thirty-one units
 
 ### P.1 — variables and data types
 
@@ -38,6 +37,62 @@ flowchart LR
 | `operators` | `#micro-operators` | `*`, `/` and `**` each answer a different question. |
 | `floor-division` | `#micro-floor-division` | `//` keeps the whole groups and drops the remainder. |
 | `order-of-operations` | `#micro-order-of-operations` | Brackets, then powers, then `*` and `/`, then `+` and `-`. |
+
+### P.3 — decisions and clamping
+
+| Unit | Parent anchor | The one idea |
+| :--- | :--- | :--- |
+| `comparisons` | `#micro-comparisons` | `==` asks; it answers `True` or `False`. |
+| `clamping` | `#micro-clamping` | Pin a command to the nearest limit of `[0, 255]`. |
+| `logic` | `#micro-logic` | `and`, `or` and `not` combine comparisons. |
+
+### P.4 — lists and for loops
+
+| Unit | Parent anchor | The one idea |
+| :--- | :--- | :--- |
+| `lists` | `#micro-lists` | One name holds an ordered sequence; indexing starts at 0. |
+| `for-loops` | `#micro-for-loops` | The body runs once per item, or N times with `range(N)`. |
+| `index-error` | `#micro-index-error` | The last index is `len(...) - 1`. |
+
+### P.5 — functions and while loops
+
+| Unit | Parent anchor | The one idea |
+| :--- | :--- | :--- |
+| `functions` | `#micro-functions` | `def` names it; `return` hands the value back. |
+| `while-loops` | `#micro-while-loops` | Test first, and update the counter in the body. |
+| `none` | `#micro-none` | No return means the answer is `None`. |
+
+### P.6 — modules and asserts
+
+| Unit | Parent anchor | The one idea |
+| :--- | :--- | :--- |
+| `imports` | `#micro-imports` | `import math` then `math.sqrt(...)`. |
+| `asserts` | `#micro-asserts` | A False check stops the script. |
+| `assert-message` | `#micro-assert-message` | The message names the rule that broke. |
+
+### P.7 — SI units and prefixes
+
+| Unit | Parent anchor | The one idea |
+| :--- | :--- | :--- |
+| `si-units` | `#micro-si-units` | Convert to meters, kilograms and seconds first. |
+| `metric-prefixes` | `#micro-metric-prefixes` | `k`, `M`, `m`, `µ` scale the unit. |
+| `unit-cancel` | `#micro-unit-cancel` | The surviving unit is part of the check. |
+
+### P.8 — frequency and bits
+
+| Unit | Parent anchor | The one idea |
+| :--- | :--- | :--- |
+| `frequency-period` | `#micro-frequency-period` | `T = 1 / f`. |
+| `binary-bits` | `#micro-binary-bits` | N bits give `2^N` states, 0 to `2^N - 1`. |
+| `place-values` | `#micro-place-values` | Binary place values double: 1, 2, 4, 8. |
+
+### P.9 — rearranging and scaling
+
+| Unit | Parent anchor | The one idea |
+| :--- | :--- | :--- |
+| `rearranging` | `#micro-rearranging` | Undo an operation on both sides. |
+| `linear-scaling` | `#micro-linear-scaling` | Multiply the fraction of full scale by the range. |
+| `scale-output` | `#micro-scale-output` | The board's supply sets the top value. |
 
 Each unit has an authored teaching passage, a read-only worked example, two four-option diagnostics
 (or normalized short answers), a practice, a four-question review pool and one transfer challenge.
@@ -93,7 +148,7 @@ build-time check; `npm run check:micro-debug` proves the production bundle does 
 
 ## Self-study protocol
 
-Day 1: all ten Learn units, P.1 then P.2. Deliberately answer some diagnostics wrong so the 1/2 and 0/2 paths,
+Day 1: all thirty-one Learn units, P.1 through P.9. Deliberately answer some diagnostics wrong so the 1/2 and 0/2 paths,
 the targeted notes and the practice branches are exercised. Scripted browser runs are allowed.
 
 Day 2, at least 18 hours later: reviews (launched manually if not due) plus challenges on variables

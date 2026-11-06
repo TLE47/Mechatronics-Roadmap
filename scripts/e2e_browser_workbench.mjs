@@ -1915,23 +1915,70 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         // The grip on the chip is the frame's handle: it is drawn above the cards and is a whole
         // control row tall, so it can be grabbed where a mouse and a finger both can. Scroll it into
         // the canvas first: three cards tall, its box can start above the visible paper.
-        await page.getByTestId('workflow-group-grip-0').scrollIntoViewIfNeeded();
-        await page.waitForTimeout(200);
-        const gripBox = await page.getByTestId('workflow-group-grip-0').boundingBox();
-        await page.mouse.move(gripBox.x + gripBox.width / 2, gripBox.y + gripBox.height / 2);
-        await page.mouse.down();
-        await page.mouse.move(gripBox.x + gripBox.width / 2 + 40, gripBox.y + gripBox.height / 2 + 40, {
-          steps: 8,
-        });
-        await page.mouse.up();
-        await page.waitForTimeout(400);
-        const afterGroupDrag = await page.evaluate(() =>
-          [...document.querySelectorAll('[data-node-id]')].map((card) => ({
-            id: card.getAttribute('data-node-id'),
-            left: parseFloat(card.style.left),
-            top: parseFloat(card.style.top),
-          }))
-        );
+        //
+        // This is a coordinate drag, so it needs a still target: the paper scrolls with `scroll-behavior:
+        // smooth` in some themes, and a box read 200 ms after `scrollIntoViewIfNeeded` can still be
+        // gliding. A press that lands where the grip was, rather than where it is, moves nothing (the
+        // CI flake was `0 !== 40`). Sample the box until two readings agree, prove the grip is the
+        // element under the pointer, and retry the whole drag once if the frame still did not move.
+        const readGroupCards = () =>
+          page.evaluate(() =>
+            [...document.querySelectorAll('[data-node-id]')].map((card) => ({
+              id: card.getAttribute('data-node-id'),
+              left: parseFloat(card.style.left),
+              top: parseFloat(card.style.top),
+            }))
+          );
+        const dragFrameByChip = async () => {
+          const grip = page.getByTestId('workflow-group-grip-0');
+          await grip.scrollIntoViewIfNeeded();
+          let box = await grip.boundingBox();
+          for (let sample = 0; sample < 15; sample += 1) {
+            await page.waitForTimeout(120);
+            const next = await grip.boundingBox();
+            if (
+              next &&
+              box &&
+              Math.abs(next.x - box.x) < 0.5 &&
+              Math.abs(next.y - box.y) < 0.5 &&
+              Math.abs(next.width - box.width) < 0.5 &&
+              Math.abs(next.height - box.height) < 0.5
+            ) {
+              box = next;
+              break;
+            }
+            box = next;
+          }
+          assert.ok(box, 'the frame chip grip must have a box to drag');
+          const cx = box.x + box.width / 2;
+          const cy = box.y + box.height / 2;
+          const onGrip = await page.evaluate(
+            ({ x, y }) => {
+              const hit = document.elementFromPoint(x, y);
+              const handle = document.querySelector('[data-testid="workflow-group-grip-0"]');
+              return Boolean(hit && handle && (handle === hit || handle.contains(hit)));
+            },
+            { x: cx, y: cy }
+          );
+          assert.ok(onGrip, 'the pointer must land on the chip grip, not on the paper behind it');
+          await page.mouse.move(cx, cy, { steps: 4 });
+          await page.mouse.down();
+          await page.mouse.move(cx + 40, cy + 40, { steps: 12 });
+          await page.mouse.up();
+        };
+        let afterGroupDrag = [];
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+          await dragFrameByChip();
+          await page.waitForTimeout(400);
+          afterGroupDrag = await readGroupCards();
+          const moved =
+            afterGroupDrag.length === beforeGroupDrag.length &&
+            beforeGroupDrag.every((before) => {
+              const after = afterGroupDrag.find((card) => card.id === before.id);
+              return after && Math.round(after.left - before.left) === 40;
+            });
+          if (moved) break;
+        }
         for (const before of beforeGroupDrag) {
           const after = afterGroupDrag.find((card) => card.id === before.id);
           assert.equal(
