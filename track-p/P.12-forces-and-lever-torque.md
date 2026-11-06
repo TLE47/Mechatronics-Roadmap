@@ -69,6 +69,18 @@ flowchart LR
   - **Key takeaway:** **Torque** ($\tau$, Greek letter **tau**, measured in **Newton-meters `N·m`**) is rotational twisting effort around a pivot: $\tau = \text{Force} \times \text{Perpendicular Lever Arm}$. When a robot arm of length $L$ holds a payload of weight $W = mg$ at angle $\theta$ measured from the **horizontal** ($0^\circ$ = horizontal, $90^\circ$ = straight up), gravity pulls straight down vertically, so the **perpendicular lever arm** is the horizontal reach $r_\perp = L\cos\theta$ from Lesson P.10—giving $\tau_{\text{grav}} = m \cdot g \cdot L \cos\theta$!
   - **Optional extra:** [PhET — Torque Interactive Simulation](https://phet.colorado.edu/en/simulations/torque) `[verify in-app]` — Adjust the **Applied Force** and **Radius** sliders `[verify in-app]` to see torque scale with lever arm distance.
 
+#### Micro focus: force from mass and acceleration
+<a id="micro-force"></a>
+Newton's second law says net force equals mass times acceleration, F = m · a, and one newton is one kg·m/s². A 1 kg mass accelerates at 1 m/s² under 1 N, and a $1.0\text{ kg}$ payload weighs $9.81\text{ N}$ because gravity supplies 9.81 m/s².
+
+#### Micro focus: weight is a force
+<a id="micro-weight"></a>
+Mass is kilograms; the downward **weight** force $W = m \cdot g$ is newtons, with $g = 9.81\text{ m/s}^2$ near Earth's surface. Multiply a payload's mass by g when a calculation asks how much force must be held, and divide a weight by g to recover its mass.
+
+#### Micro focus: torque and the lever arm
+<a id="micro-torque"></a>
+Torque is force times distance, and for a tip payload the **perpendicular lever arm** is the horizontal reach $r_\perp = L\cos\theta$, giving $\tau_{\text{grav}} = m \cdot g \cdot L \cdot \cos(\theta)$. It is largest at 0° (arm horizontal) and zero at 90° (weight over the pivot).
+
 ### Bridge Notes
 We use **one consistent angle convention** for robot arm links everywhere in this roadmap:
 - Arm angle $\theta$ is always measured upward from the **horizontal $x$-axis** ($\theta = 0^\circ$ when stretched out horizontally; $\theta = 90^\circ$ when pointing straight up).

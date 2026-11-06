@@ -1,0 +1,437 @@
+{
+  "subjectId": "python",
+  "parentLessonId": "P.12",
+  "parentPath": "track-p/P.12-forces-and-lever-torque.md",
+  "title": "Forces and lever torque in small steps",
+  "version": 1,
+  "concepts": [
+    {
+      "id": "force",
+      "title": "Force is mass times acceleration",
+      "parentLessonId": "P.12",
+      "anchor": "micro-force",
+      "sourceFocus": [
+        "net force equals mass times acceleration",
+        "a $1.0\\text{ kg}$ payload weighs $9.81\\text{ N}$"
+      ],
+      "revision": 1,
+      "prerequisites": ["variables"],
+      "resources": [],
+      "timing": { "learn": 90, "review": 36, "challenge": 49 },
+      "teaching": [
+        "Newton's second law is F = m · a: the net force on an object equals its mass times its acceleration. Force is measured in newtons, where one newton is one kilogram-meter per second squared.",
+        "The same equation runs three ways. Given mass and acceleration, multiply for force. Given force and mass, divide for acceleration. A net force of zero means no acceleration, which includes standing still or cruising at a constant speed."
+      ],
+      "example": {
+        "code": "mass_kg = 2.0\naccel = 3.0\nforce_n = mass_kg * accel\nprint(force_n)",
+        "output": "6.0"
+      },
+      "walkthrough": [
+        {
+          "code": "mass_kg * accel",
+          "expression": "2.0 kg × 3.0 m/s²",
+          "output": "6.0",
+          "note": "The units multiply to kg·m/s², which is the newton."
+        },
+        {
+          "code": "print(force_n)",
+          "output": "6.0",
+          "note": "Six newtons of net force."
+        },
+        {
+          "code": "force_n / mass_kg",
+          "expression": "6.0 / 2.0",
+          "output": "3.0",
+          "note": "The same equation rearranged returns the acceleration."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "force-d1",
+          "prompt": "What is the unit of force?",
+          "options": [
+            { "id": "a", "text": "newton (N)" },
+            { "id": "b", "text": "kilogram (kg)" },
+            { "id": "c", "text": "meter (m)" },
+            { "id": "d", "text": "joule (J)" }
+          ],
+          "answerId": "a",
+          "explanation": "One newton is one kg·m/s²."
+        },
+        {
+          "id": "force-d2",
+          "prompt": "A 4.0 kg cart accelerates at 2.0 m/s². What net force acts on it?",
+          "options": [
+            { "id": "a", "text": "8.0 N" },
+            { "id": "b", "text": "2.0 N" },
+            { "id": "c", "text": "6.0 N" },
+            { "id": "d", "text": "0.5 N" }
+          ],
+          "answerId": "a",
+          "explanation": "F = m · a = 4.0 × 2.0 = 8.0 N."
+        }
+      ],
+      "practice": {
+        "id": "force-p1",
+        "prompt": "What does this print?",
+        "code": "print(5.0 * 0.5)",
+        "options": [
+          { "id": "a", "text": "2.5" },
+          { "id": "b", "text": "5.5" },
+          { "id": "c", "text": "10.0" },
+          { "id": "d", "text": "0.1" }
+        ],
+        "answerId": "a",
+        "explanation": "Five kilograms at 0.5 m/s² needs 2.5 N."
+      },
+      "reviewPool": [
+        {
+          "id": "force-r1",
+          "prompt": "Which equation is Newton's second law?",
+          "options": [
+            { "id": "a", "text": "F = m · a" },
+            { "id": "b", "text": "F = m / a" },
+            { "id": "c", "text": "F = a / m" },
+            { "id": "d", "text": "F = m + a" }
+          ],
+          "answerId": "a",
+          "explanation": "Net force is mass times acceleration."
+        },
+        {
+          "id": "force-r2",
+          "prompt": "A 1.0 kg mass on Earth weighs about…",
+          "options": [
+            { "id": "a", "text": "9.81 N" },
+            { "id": "b", "text": "1.0 N" },
+            { "id": "c", "text": "0.1 N" },
+            { "id": "d", "text": "98.1 N" }
+          ],
+          "answerId": "a",
+          "explanation": "W = m · g = 1.0 × 9.81 = 9.81 N."
+        },
+        {
+          "id": "force-r3",
+          "prompt": "If the net force is zero, the acceleration is…",
+          "options": [
+            { "id": "a", "text": "zero" },
+            { "id": "b", "text": "infinite" },
+            { "id": "c", "text": "9.81 m/s²" },
+            { "id": "d", "text": "negative" }
+          ],
+          "answerId": "a",
+          "explanation": "Zero net force means no change in velocity."
+        },
+        {
+          "id": "force-r4",
+          "prompt": "What does a newton equal in base units?",
+          "options": [
+            { "id": "a", "text": "kg·m/s²" },
+            { "id": "b", "text": "kg·m/s" },
+            { "id": "c", "text": "kg/m" },
+            { "id": "d", "text": "m/s²" }
+          ],
+          "answerId": "a",
+          "explanation": "Mass times acceleration carries kg·m/s²."
+        }
+      ],
+      "challenge": {
+        "id": "force-c1",
+        "prompt": "A 3.0 kg load is pushed with 12.0 N. What is its acceleration?",
+        "code": "print(12.0 / 3.0)",
+        "options": [
+          { "id": "a", "text": "4.0 m/s²" },
+          { "id": "b", "text": "36.0 m/s²" },
+          { "id": "c", "text": "0.25 m/s²" },
+          { "id": "d", "text": "9.0 m/s²" }
+        ],
+        "answerId": "a",
+        "explanation": "a = F / m = 12.0 / 3.0 = 4.0 m/s²."
+      }
+    },
+    {
+      "id": "weight",
+      "title": "Weight is the force gravity adds",
+      "parentLessonId": "P.12",
+      "anchor": "micro-weight",
+      "sourceFocus": [
+        "downward **weight** force $W = m \\cdot g$",
+        "$g = 9.81\\text{ m/s}^2$"
+      ],
+      "revision": 1,
+      "prerequisites": ["force"],
+      "resources": [],
+      "timing": { "learn": 88, "review": 36, "challenge": 49 },
+      "teaching": [
+        "Mass is how much matter an object has, measured in kilograms. Weight is the force gravity exerts on that mass, measured in newtons: W = m · g, with g = 9.81 m/s² near Earth's surface.",
+        "A 1 kg payload therefore weighs 9.81 N, not 1 N. When a datasheet or a calculation asks for a force to hold a payload, multiply its mass by g; when it asks for mass, divide the weight by g."
+      ],
+      "example": {
+        "code": "mass_kg = 2.5\ngravity = 9.81\nweight_n = mass_kg * gravity\nprint(weight_n)",
+        "output": "24.525"
+      },
+      "walkthrough": [
+        {
+          "code": "mass_kg * gravity",
+          "expression": "2.5 kg × 9.81 m/s²",
+          "output": "24.525",
+          "note": "The result is a force in newtons."
+        },
+        {
+          "code": "round(weight_n, 1)",
+          "output": "24.5",
+          "note": "One decimal is enough for a robot's payload budget."
+        },
+        {
+          "code": "weight_n / gravity",
+          "expression": "24.525 / 9.81",
+          "output": "2.5",
+          "note": "Dividing by g returns the mass."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "weight-d1",
+          "prompt": "Which is a force?",
+          "options": [
+            { "id": "a", "text": "weight" },
+            { "id": "b", "text": "mass" },
+            { "id": "c", "text": "length" },
+            { "id": "d", "text": "time" }
+          ],
+          "answerId": "a",
+          "explanation": "Weight is mass times gravitational acceleration, so it is measured in newtons."
+        },
+        {
+          "id": "weight-d2",
+          "prompt": "What is the weight of a 3.0 kg payload on Earth?",
+          "options": [
+            { "id": "a", "text": "29.43 N" },
+            { "id": "b", "text": "3.0 N" },
+            { "id": "c", "text": "9.81 N" },
+            { "id": "d", "text": "0.31 N" }
+          ],
+          "answerId": "a",
+          "explanation": "3.0 × 9.81 = 29.43 N."
+        }
+      ],
+      "practice": {
+        "id": "weight-p1",
+        "prompt": "What does this print?",
+        "code": "print(round(1.0 * 9.81, 2))",
+        "options": [
+          { "id": "a", "text": "9.81" },
+          { "id": "b", "text": "1.0" },
+          { "id": "c", "text": "0.98" },
+          { "id": "d", "text": "98.1" }
+        ],
+        "answerId": "a",
+        "explanation": "One kilogram weighs 9.81 N."
+      },
+      "reviewPool": [
+        {
+          "id": "weight-r1",
+          "prompt": "What is g near Earth's surface?",
+          "options": [
+            { "id": "a", "text": "9.81 m/s²" },
+            { "id": "b", "text": "9.81 N" },
+            { "id": "c", "text": "1.0 m/s²" },
+            { "id": "d", "text": "3.14 m/s²" }
+          ],
+          "answerId": "a",
+          "explanation": "g is an acceleration, not a force."
+        },
+        {
+          "id": "weight-r2",
+          "prompt": "Which formula gives weight?",
+          "options": [
+            { "id": "a", "text": "W = m · g" },
+            { "id": "b", "text": "W = m / g" },
+            { "id": "c", "text": "W = g / m" },
+            { "id": "d", "text": "W = m + g" }
+          ],
+          "answerId": "a",
+          "explanation": "Weight is mass times gravitational acceleration."
+        },
+        {
+          "id": "weight-r3",
+          "prompt": "Mass is measured in…",
+          "options": [
+            { "id": "a", "text": "kilograms" },
+            { "id": "b", "text": "newtons" },
+            { "id": "c", "text": "meters" },
+            { "id": "d", "text": "seconds" }
+          ],
+          "answerId": "a",
+          "explanation": "Mass is kilograms; weight is newtons."
+        },
+        {
+          "id": "weight-r4",
+          "prompt": "A 10 N weight corresponds to about what mass?",
+          "options": [
+            { "id": "a", "text": "1.02 kg" },
+            { "id": "b", "text": "10 kg" },
+            { "id": "c", "text": "98.1 kg" },
+            { "id": "d", "text": "0.1 kg" }
+          ],
+          "answerId": "a",
+          "explanation": "10 / 9.81 ≈ 1.02 kg."
+        }
+      ],
+      "challenge": {
+        "id": "weight-c1",
+        "prompt": "What does this print?",
+        "code": "print(round(0.5 * 9.81, 1))",
+        "options": [
+          { "id": "a", "text": "4.9" },
+          { "id": "b", "text": "0.5" },
+          { "id": "c", "text": "9.8" },
+          { "id": "d", "text": "19.6" }
+        ],
+        "answerId": "a",
+        "explanation": "Half a kilogram weighs 4.905 N, which rounds to 4.9 N."
+      }
+    },
+    {
+      "id": "torque",
+      "title": "Torque needs the perpendicular lever arm",
+      "parentLessonId": "P.12",
+      "anchor": "micro-torque",
+      "sourceFocus": [
+        "the **perpendicular lever arm** is the horizontal reach $r_\\perp = L\\cos\\theta$",
+        "$\\tau_{\\text{grav}} = m \\cdot g \\cdot L \\cdot \\cos(\\theta)$"
+      ],
+      "revision": 1,
+      "prerequisites": ["weight"],
+      "resources": [],
+      "timing": { "learn": 94, "review": 36, "challenge": 49 },
+      "teaching": [
+        "Torque is twisting effort around a pivot: force times the perpendicular distance from the pivot to the force's line of action. It is measured in newton-meters.",
+        "For a horizontal arm holding a tip payload, gravity pulls straight down at horizontal distance L·cos θ, so τ = m · g · L · cos θ. At 0° (arm horizontal) the lever arm is the full length and torque is maximum; at 90° the weight hangs over the pivot and torque is zero."
+      ],
+      "example": {
+        "code": "import math\nm = 1.0\nL = 0.5\ntheta = math.radians(0)\ntorque = m * 9.81 * L * math.cos(theta)\nprint(round(torque, 3))",
+        "output": "4.905"
+      },
+      "walkthrough": [
+        {
+          "code": "L * math.cos(theta)",
+          "expression": "0.5 × cos(0)",
+          "output": "0.5",
+          "note": "A horizontal arm puts the whole link in the lever arm."
+        },
+        {
+          "code": "m * 9.81",
+          "expression": "1.0 × 9.81",
+          "output": "9.81",
+          "note": "The payload's weight is 9.81 N."
+        },
+        {
+          "code": "9.81 * 0.5",
+          "output": "4.905",
+          "note": "Weight times lever arm gives the holding torque."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "torque-d1",
+          "prompt": "At what arm angle is gravity torque largest?",
+          "options": [
+            { "id": "a", "text": "0°, horizontal" },
+            { "id": "b", "text": "30°" },
+            { "id": "c", "text": "60°" },
+            { "id": "d", "text": "90°, straight up" }
+          ],
+          "answerId": "a",
+          "explanation": "cos(0) = 1, so the lever arm is the full length."
+        },
+        {
+          "id": "torque-d2",
+          "prompt": "What is the gravity torque when the arm points straight up?",
+          "options": [
+            { "id": "a", "text": "0 N·m" },
+            { "id": "b", "text": "mgL" },
+            { "id": "c", "text": "mgL/2" },
+            { "id": "d", "text": "2mgL" }
+          ],
+          "answerId": "a",
+          "explanation": "At 90° the weight sits over the pivot: cos(90°) = 0."
+        }
+      ],
+      "practice": {
+        "id": "torque-p1",
+        "prompt": "A 1.0 kg payload on a 1.0 m horizontal arm gives what torque?",
+        "options": [
+          { "id": "a", "text": "9.81 N·m" },
+          { "id": "b", "text": "1.0 N·m" },
+          { "id": "c", "text": "4.9 N·m" },
+          { "id": "d", "text": "0 N·m" }
+        ],
+        "answerId": "a",
+        "explanation": "τ = 1.0 × 9.81 × 1.0 × cos(0) = 9.81 N·m."
+      },
+      "reviewPool": [
+        {
+          "id": "torque-r1",
+          "prompt": "What is torque's unit?",
+          "options": [
+            { "id": "a", "text": "N·m" },
+            { "id": "b", "text": "N" },
+            { "id": "c", "text": "kg" },
+            { "id": "d", "text": "m/s²" }
+          ],
+          "answerId": "a",
+          "explanation": "Force times distance is newton-meters."
+        },
+        {
+          "id": "torque-r2",
+          "prompt": "What is the perpendicular lever arm for a tip payload?",
+          "options": [
+            { "id": "a", "text": "L · cos θ" },
+            { "id": "b", "text": "L · sin θ" },
+            { "id": "c", "text": "L" },
+            { "id": "d", "text": "m · g" }
+          ],
+          "answerId": "a",
+          "explanation": "The horizontal reach is L cos θ."
+        },
+        {
+          "id": "torque-r3",
+          "prompt": "Doubling the arm length, at the same angle and mass, does what to torque?",
+          "options": [
+            { "id": "a", "text": "doubles it" },
+            { "id": "b", "text": "halves it" },
+            { "id": "c", "text": "leaves it unchanged" },
+            { "id": "d", "text": "quarters it" }
+          ],
+          "answerId": "a",
+          "explanation": "Torque is proportional to the lever arm."
+        },
+        {
+          "id": "torque-r4",
+          "prompt": "Which formula gives the gravity torque?",
+          "options": [
+            { "id": "a", "text": "m · g · L · cos θ" },
+            { "id": "b", "text": "m · L · sin θ" },
+            { "id": "c", "text": "m · g / L" },
+            { "id": "d", "text": "g · L" }
+          ],
+          "answerId": "a",
+          "explanation": "Weight mg times the perpendicular arm L cos θ."
+        }
+      ],
+      "challenge": {
+        "id": "torque-c1",
+        "prompt": "What does this print?",
+        "code": "import math\nprint(round(2.0 * 9.81 * 1.0 * math.cos(math.radians(60)), 2))",
+        "options": [
+          { "id": "a", "text": "9.81" },
+          { "id": "b", "text": "19.62" },
+          { "id": "c", "text": "4.91" },
+          { "id": "d", "text": "0.0" }
+        ],
+        "answerId": "a",
+        "explanation": "cos(60°) = 0.5, so τ = 2.0 × 9.81 × 1.0 × 0.5 = 9.81 N·m."
+      }
+    }
+  ]
+}

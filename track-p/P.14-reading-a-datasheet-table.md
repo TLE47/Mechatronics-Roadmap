@@ -74,6 +74,18 @@ flowchart LR
 | **`DRV8833`** | Motor Supply (`VM`) | $11.8$ | $2.7$ | $6.0\text{–}9.0$ | $10.8$ | `V` | **NO** ($12.0\text{ V} > 10.8\text{ V}$ max!) |
 | **`TB6612FNG`** | Motor Supply (`VM`) | $15.0$ | $4.5$ | $12.0$ | $13.5$ | `V` | **YES** ($4.5 \le 12.0 \le 13.5\text{ V}$) |
 
+#### Micro focus: read the unit column
+<a id="micro-datasheet-units"></a>
+Always check the **Unit** column before using a number: a quiescent draw of `2.5` in a `mA` column is $0.0025\text{ A}$, and a timing of 250 in a `µs` row is 0.00025 s. Convert once, when the value enters the program, so every later comparison uses the same base unit.
+
+#### Micro focus: recommended is not absolute
+<a id="micro-datasheet-bounds"></a>
+Design inside the **Recommended Operating Conditions (`Min` $\le x \le$ `Max`)** with margin. **Absolute Maximum Ratings** are the stress threshold beyond which permanent damage happens, and reliable operation is not promised there — a supply above the recommended maximum is out of design even when it is below the absolute maximum of destruction.
+
+#### Micro focus: Typ is not a promise
+<a id="micro-datasheet-conditions"></a>
+The `Typ` column describes a usual part, not a guarantee; a worst-case budget uses Max and is designed with safety margin. Test conditions above a table (25 °C, 5 V) qualify every number in it, so a hotter design must read the hotter value or leave room for the drift.
+
 ### Bridge Notes
 Before wiring any part in Stage 0 or Pass 1, you must read its datasheet specification table without falling for the two classic beginner traps:
 1. **Trap 1 — Confusing Absolute Maximum Ratings with Recommended Operating Conditions:** Suppose you want to drive a motor from a $12.0\text{ V}$ supply rail. Looking at the **`DRV8833`** datasheet table above, its **Recommended Operating Conditions** specify `Min = 2.7 V` and `Max = 10.8 V`, while its **Absolute Maximum Rating** is `11.8 V`. Connecting a $12.0\text{ V}$ supply exceeds both the $10.8\text{ V}$ operating bound and the $11.8\text{ V}$ destruction limit! For a $6.0\text{–}9.0\text{ V}$ bench supply, `DRV8833` is ideal; for a $12.0\text{ V}$ supply, reading the table tells you to select **`TB6612FNG`** (`Recommended Min = 4.5 V`, `Max = 13.5 V`, `Abs Max = 15.0 V`).

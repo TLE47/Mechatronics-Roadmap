@@ -66,6 +66,21 @@ EXPECTED_IDS = [
     "rearranging",
     "linear-scaling",
     "scale-output",
+    "radians",
+    "trig-reach",
+    "atan2",
+    "graph-slope",
+    "area-under-curve",
+    "graph-units",
+    "force",
+    "weight",
+    "torque",
+    "datasheet-units",
+    "datasheet-bounds",
+    "datasheet-conditions",
+    "given-unknown",
+    "answer-check",
+    "bounds-check",
 ]
 QUESTION_FIELDS = ("id", "prompt", "explanation")
 ANCHOR = re.compile(r'^\s*<a\s+id="([^"]+)"\s*>\s*</a>\s*$')
@@ -73,7 +88,11 @@ HEADING = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
 
 
 def source_paths() -> list[str]:
-    names = sorted(name for name in os.listdir(SOURCE_DIR) if SOURCE_NAME.match(name))
+    # Numeric order, not lexicographic: P.10 belongs after P.9, not between P.1 and P.2.
+    names = sorted(
+        (name for name in os.listdir(SOURCE_DIR) if SOURCE_NAME.match(name)),
+        key=lambda name: int(name[2:-5]),
+    )
     if not names:
         raise OSError("no micro/P.<n>.json sources found")
     return [os.path.join(SOURCE_DIR, name) for name in names]

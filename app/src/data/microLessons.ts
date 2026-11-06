@@ -173,6 +173,56 @@ export const MICRO_LESSONS: MicroCatalog = {
         "linear-scaling",
         "scale-output"
       ]
+    },
+    {
+      "parentLessonId": "P.10",
+      "parentPath": "track-p/P.10-radians-and-right-triangle-trig.md",
+      "title": "Radians and right-triangle trig in small steps",
+      "conceptIds": [
+        "radians",
+        "trig-reach",
+        "atan2"
+      ]
+    },
+    {
+      "parentLessonId": "P.11",
+      "parentPath": "track-p/P.11-reading-time-series-graphs.md",
+      "title": "Reading time-series graphs in small steps",
+      "conceptIds": [
+        "graph-slope",
+        "area-under-curve",
+        "graph-units"
+      ]
+    },
+    {
+      "parentLessonId": "P.12",
+      "parentPath": "track-p/P.12-forces-and-lever-torque.md",
+      "title": "Forces and lever torque in small steps",
+      "conceptIds": [
+        "force",
+        "weight",
+        "torque"
+      ]
+    },
+    {
+      "parentLessonId": "P.14",
+      "parentPath": "track-p/P.14-reading-a-datasheet-table.md",
+      "title": "Reading a datasheet in small steps",
+      "conceptIds": [
+        "datasheet-units",
+        "datasheet-bounds",
+        "datasheet-conditions"
+      ]
+    },
+    {
+      "parentLessonId": "P.15",
+      "parentPath": "track-p/P.15-analysis-workflow-given-unknown-model-check-answer.md",
+      "title": "The analysis workflow in small steps",
+      "conceptIds": [
+        "given-unknown",
+        "answer-check",
+        "bounds-check"
+      ]
     }
   ],
   "concepts": [
@@ -8594,6 +8644,3935 @@ export const MICRO_LESSONS: MicroCatalog = {
         ],
         "answerId": "a",
         "explanation": "Full scale is a fraction of 1, so the output is the whole 3.3 V range.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "radians",
+      "title": "Radians are the angle the maths uses",
+      "parentLessonId": "P.10",
+      "anchor": "micro-radians",
+      "sourceFocus": [
+        "one full revolution ($360^\\circ$) is **$2\\pi\\text{ radians}$**",
+        "`math.radians(deg)`"
+      ],
+      "revision": 1,
+      "prerequisites": [],
+      "resources": [
+        {
+          "id": "mathsisfun-radians",
+          "title": "MathsIsFun — Radians",
+          "url": "https://www.mathsisfun.com/geometry/radians.html",
+          "type": "reference",
+          "role": "primary",
+          "provider": "MathsIsFun",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 92,
+          "modeledSeconds": 81.7
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "A radian measures an angle by the distance walked around a circle of radius one. Walking one radius gives 1 radian, and a full lap gives 2π of them, so one full revolution (360°) is 2π radians and a half-turn (180°) is π radians.",
+        "Python's `math.cos`, `math.sin` and `math.atan2` expect radians, never degrees. Convert with `math.radians(deg)` before the call, or multiply by π/180; convert back with `math.degrees(rad)`. A 90° angle is π/2 ≈ 1.571 radians."
+      ],
+      "example": {
+        "code": "import math\nhalf_turn = math.radians(180)\nprint(round(half_turn, 3))",
+        "output": "3.142"
+      },
+      "walkthrough": [
+        {
+          "code": "math.radians(180)",
+          "expression": "180 × π / 180",
+          "output": "3.141592653589793",
+          "note": "A half-turn is exactly π radians."
+        },
+        {
+          "code": "round(half_turn, 3)",
+          "output": "3.142",
+          "note": "Rounding keeps the display readable without changing the stored value."
+        },
+        {
+          "code": "math.cos(math.radians(180))",
+          "expression": "cos(π)",
+          "output": "-1.0",
+          "note": "The function receives radians; passing 180 would compute cos(180 rad) instead."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "radians-d1",
+          "prompt": "How many radians is a quarter turn (90°)?",
+          "options": [
+            {
+              "id": "a",
+              "text": "about 1.571"
+            },
+            {
+              "id": "b",
+              "text": "90"
+            },
+            {
+              "id": "c",
+              "text": "about 3.142"
+            },
+            {
+              "id": "d",
+              "text": "about 6.283"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "90 × π / 180 = π/2 ≈ 1.571 radians.",
+          "type": "choice"
+        },
+        {
+          "id": "radians-d2",
+          "prompt": "How many radians is one full revolution?",
+          "options": [
+            {
+              "id": "a",
+              "text": "2π ≈ 6.283"
+            },
+            {
+              "id": "b",
+              "text": "π ≈ 3.142"
+            },
+            {
+              "id": "c",
+              "text": "360"
+            },
+            {
+              "id": "d",
+              "text": "1"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A full lap is 2π radians; a half-turn is π.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "radians-p1",
+        "prompt": "What does this print?",
+        "code": "import math\nprint(round(math.radians(90), 3))",
+        "options": [
+          {
+            "id": "a",
+            "text": "1.571"
+          },
+          {
+            "id": "b",
+            "text": "90"
+          },
+          {
+            "id": "c",
+            "text": "3.142"
+          },
+          {
+            "id": "d",
+            "text": "0.5"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "90° converts to π/2 radians, which rounds to 1.571.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "radians-r1",
+          "prompt": "Which unit do Python's trig functions expect?",
+          "options": [
+            {
+              "id": "a",
+              "text": "radians"
+            },
+            {
+              "id": "b",
+              "text": "degrees"
+            },
+            {
+              "id": "c",
+              "text": "turns"
+            },
+            {
+              "id": "d",
+              "text": "either one"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "`math.cos` and `math.sin` take radians; degrees must be converted.",
+          "type": "choice"
+        },
+        {
+          "id": "radians-r2",
+          "prompt": "What does `math.degrees` convert?",
+          "options": [
+            {
+              "id": "a",
+              "text": "radians to degrees"
+            },
+            {
+              "id": "b",
+              "text": "degrees to radians"
+            },
+            {
+              "id": "c",
+              "text": "meters to feet"
+            },
+            {
+              "id": "d",
+              "text": "turns to seconds"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "It multiplies by 180/π, the inverse of `math.radians`.",
+          "type": "choice"
+        },
+        {
+          "id": "radians-r3",
+          "prompt": "How many radians is 180°?",
+          "options": [
+            {
+              "id": "a",
+              "text": "π"
+            },
+            {
+              "id": "b",
+              "text": "2π"
+            },
+            {
+              "id": "c",
+              "text": "π/2"
+            },
+            {
+              "id": "d",
+              "text": "180"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A half-turn is π radians.",
+          "type": "choice"
+        },
+        {
+          "id": "radians-r4",
+          "prompt": "What is 1 radian approximately in degrees?",
+          "options": [
+            {
+              "id": "a",
+              "text": "57.3°"
+            },
+            {
+              "id": "b",
+              "text": "1°"
+            },
+            {
+              "id": "c",
+              "text": "90°"
+            },
+            {
+              "id": "d",
+              "text": "360°"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "One radius of arc is about 57.3°.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "radians-c1",
+        "prompt": "What does this print?",
+        "code": "import math\nprint(round(math.radians(360), 3))",
+        "options": [
+          {
+            "id": "a",
+            "text": "6.283"
+          },
+          {
+            "id": "b",
+            "text": "3.142"
+          },
+          {
+            "id": "c",
+            "text": "360"
+          },
+          {
+            "id": "d",
+            "text": "1.571"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "A full turn is 2π ≈ 6.283 radians.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "trig-reach",
+      "title": "Cosine is the horizontal shadow",
+      "parentLessonId": "P.10",
+      "anchor": "micro-trig-reach",
+      "sourceFocus": [
+        "horizontal reach** is $x = L\\cos(\\theta)$",
+        "vertical height** is $y = L\\sin(\\theta)$"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "radians"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 93,
+          "modeledSeconds": 90.1
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "A robot link of length L tilted by angle θ from the horizontal has two shadows. The horizontal reach is x = L·cos(θ), the side next to the angle; the vertical height is y = L·sin(θ), the side opposite it. Their squares add to L².",
+        "The angle must be in radians. At θ = 0° the link lies flat, so cos(0) = 1 and the reach is the whole length while sin(0) = 0. At θ = 90° the link points up, so the reach is 0 and the height is the whole length."
+      ],
+      "example": {
+        "code": "import math\nlength = 2.0\nangle = math.radians(60)\nprint(round(length * math.cos(angle), 2))\nprint(round(length * math.sin(angle), 2))",
+        "output": "1.0\n1.73"
+      },
+      "walkthrough": [
+        {
+          "code": "math.radians(60)",
+          "output": "1.047",
+          "note": "Sixty degrees becomes about 1.047 radians before any trig call."
+        },
+        {
+          "code": "length * math.cos(angle)",
+          "expression": "2.0 × 0.5",
+          "output": "1.0",
+          "note": "The horizontal shadow is half the link at 60°."
+        },
+        {
+          "code": "length * math.sin(angle)",
+          "expression": "2.0 × 0.866",
+          "output": "1.73",
+          "note": "The vertical height is the longer shadow at 60°."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "trig-reach-d1",
+          "prompt": "A link points straight up. What is its horizontal reach?",
+          "options": [
+            {
+              "id": "a",
+              "text": "0"
+            },
+            {
+              "id": "b",
+              "text": "the full length"
+            },
+            {
+              "id": "c",
+              "text": "half the length"
+            },
+            {
+              "id": "d",
+              "text": "the square of the length"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "At 90° the horizontal shadow is zero: cos(90°) = 0.",
+          "type": "choice"
+        },
+        {
+          "id": "trig-reach-d2",
+          "prompt": "A link lies flat at 0°. What is its vertical height?",
+          "options": [
+            {
+              "id": "a",
+              "text": "0"
+            },
+            {
+              "id": "b",
+              "text": "the full length"
+            },
+            {
+              "id": "c",
+              "text": "half the length"
+            },
+            {
+              "id": "d",
+              "text": "90"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Horizontal means no height: sin(0°) = 0.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "trig-reach-p1",
+        "prompt": "For a link of length 1.0 at 60°, what is the horizontal reach?",
+        "options": [
+          {
+            "id": "a",
+            "text": "0.5"
+          },
+          {
+            "id": "b",
+            "text": "0.866"
+          },
+          {
+            "id": "c",
+            "text": "1.0"
+          },
+          {
+            "id": "d",
+            "text": "60"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "x = 1.0 × cos(60°) = 0.5; the height would be 0.866.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "trig-reach-r1",
+          "prompt": "Which function gives the horizontal reach?",
+          "options": [
+            {
+              "id": "a",
+              "text": "cos"
+            },
+            {
+              "id": "b",
+              "text": "sin"
+            },
+            {
+              "id": "c",
+              "text": "atan2"
+            },
+            {
+              "id": "d",
+              "text": "radians"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Cosine is the side next to the angle, which is horizontal here.",
+          "type": "choice"
+        },
+        {
+          "id": "trig-reach-r2",
+          "prompt": "Which function gives the vertical height?",
+          "options": [
+            {
+              "id": "a",
+              "text": "sin"
+            },
+            {
+              "id": "b",
+              "text": "cos"
+            },
+            {
+              "id": "c",
+              "text": "degrees"
+            },
+            {
+              "id": "d",
+              "text": "sqrt"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Sine is the side opposite the angle, which is vertical here.",
+          "type": "choice"
+        },
+        {
+          "id": "trig-reach-r3",
+          "prompt": "What is cos(0)?",
+          "options": [
+            {
+              "id": "a",
+              "text": "1"
+            },
+            {
+              "id": "b",
+              "text": "0"
+            },
+            {
+              "id": "c",
+              "text": "0.5"
+            },
+            {
+              "id": "d",
+              "text": "undefined"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A flat link puts its whole length in the horizontal direction.",
+          "type": "choice"
+        },
+        {
+          "id": "trig-reach-r4",
+          "prompt": "What must be done to a 60° angle before `math.cos`?",
+          "options": [
+            {
+              "id": "a",
+              "text": "convert it to radians"
+            },
+            {
+              "id": "b",
+              "text": "round it"
+            },
+            {
+              "id": "c",
+              "text": "square it"
+            },
+            {
+              "id": "d",
+              "text": "nothing"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The trig functions take radians; `math.radians(60)` supplies them.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "trig-reach-c1",
+        "prompt": "A link of length 3.0 sits at 30°. What is its height?",
+        "code": "import math\nprint(round(3.0 * math.sin(math.radians(30)), 2))",
+        "options": [
+          {
+            "id": "a",
+            "text": "1.5"
+          },
+          {
+            "id": "b",
+            "text": "2.6"
+          },
+          {
+            "id": "c",
+            "text": "3.0"
+          },
+          {
+            "id": "d",
+            "text": "0.5"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "sin(30°) = 0.5, so the height is 3.0 × 0.5 = 1.5; the reach is 2.6.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "atan2",
+      "title": "atan2 turns a point back into an angle",
+      "parentLessonId": "P.10",
+      "anchor": "micro-atan2",
+      "sourceFocus": [
+        "`math.atan2(y, x)` (which takes `y` first, then `x`)",
+        "`math.degrees(rad)`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "trig-reach"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 90,
+          "modeledSeconds": 85.7
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "Going backward from a target point (x, y) to the joint angle uses the four-quadrant inverse tangent `math.atan2(y, x)`: y first, then x. The order matters, and atan2 also handles x = 0 and negative quadrants where plain atan fails.",
+        "The result is in radians, so `math.degrees(rad)` converts it for a display or a comparison with a degree limit. A point at (3, 3) is 45°; a point at (0, 1) is 90°; a point at (-1, 0) is 180°."
+      ],
+      "example": {
+        "code": "import math\nx = 3.0\ny = 3.0\nangle = math.atan2(y, x)\nprint(round(math.degrees(angle), 1))",
+        "output": "45.0"
+      },
+      "walkthrough": [
+        {
+          "code": "math.atan2(3.0, 3.0)",
+          "output": "0.7853981633974483",
+          "note": "A 45° angle in radians, because y and x are equal."
+        },
+        {
+          "code": "math.degrees(angle)",
+          "output": "45.0",
+          "note": "Degrees for a display; the maths itself stays in radians."
+        },
+        {
+          "code": "math.atan2(x, y)",
+          "note": "Swapping the arguments asks a different question: the answer would be 45° here only because the point is symmetric."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "atan2-d1",
+          "prompt": "What does `math.atan2(1, 0)` give in degrees?",
+          "options": [
+            {
+              "id": "a",
+              "text": "90"
+            },
+            {
+              "id": "b",
+              "text": "0"
+            },
+            {
+              "id": "c",
+              "text": "45"
+            },
+            {
+              "id": "d",
+              "text": "180"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "y = 1, x = 0 is straight up, which is 90°.",
+          "type": "choice"
+        },
+        {
+          "id": "atan2-d2",
+          "prompt": "What does `math.atan2(0, -1)` give in degrees?",
+          "options": [
+            {
+              "id": "a",
+              "text": "180"
+            },
+            {
+              "id": "b",
+              "text": "0"
+            },
+            {
+              "id": "c",
+              "text": "-90"
+            },
+            {
+              "id": "d",
+              "text": "90"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A point on the negative x-axis is a half-turn, 180°.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "atan2-p1",
+        "prompt": "What does this print?",
+        "code": "import math\nprint(round(math.degrees(math.atan2(1, 1)), 1))",
+        "options": [
+          {
+            "id": "a",
+            "text": "45.0"
+          },
+          {
+            "id": "b",
+            "text": "1.0"
+          },
+          {
+            "id": "c",
+            "text": "90.0"
+          },
+          {
+            "id": "d",
+            "text": "0.8"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Equal x and y put the point on the 45° diagonal.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "atan2-r1",
+          "prompt": "Which argument comes first in `math.atan2`?",
+          "options": [
+            {
+              "id": "a",
+              "text": "y"
+            },
+            {
+              "id": "b",
+              "text": "x"
+            },
+            {
+              "id": "c",
+              "text": "the angle"
+            },
+            {
+              "id": "d",
+              "text": "the length"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "atan2 takes the vertical coordinate first, then the horizontal one.",
+          "type": "choice"
+        },
+        {
+          "id": "atan2-r2",
+          "prompt": "What unit does `math.atan2` return?",
+          "options": [
+            {
+              "id": "a",
+              "text": "radians"
+            },
+            {
+              "id": "b",
+              "text": "degrees"
+            },
+            {
+              "id": "c",
+              "text": "meters"
+            },
+            {
+              "id": "d",
+              "text": "turns"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "It returns radians; `math.degrees` converts for display.",
+          "type": "choice"
+        },
+        {
+          "id": "atan2-r3",
+          "prompt": "What does `math.atan2(0, 1)` give?",
+          "options": [
+            {
+              "id": "a",
+              "text": "0"
+            },
+            {
+              "id": "b",
+              "text": "90"
+            },
+            {
+              "id": "c",
+              "text": "180"
+            },
+            {
+              "id": "d",
+              "text": "-90"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A point on the positive x-axis has no upward component, so the angle is zero.",
+          "type": "choice"
+        },
+        {
+          "id": "atan2-r4",
+          "prompt": "Why use atan2 instead of atan(y / x)?",
+          "options": [
+            {
+              "id": "a",
+              "text": "It handles x = 0 and every quadrant"
+            },
+            {
+              "id": "b",
+              "text": "It returns degrees"
+            },
+            {
+              "id": "c",
+              "text": "It is faster"
+            },
+            {
+              "id": "d",
+              "text": "It takes the angle first"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Dividing by x fails at x = 0 and loses the sign of the quadrant; atan2 keeps both.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "atan2-c1",
+        "prompt": "What does this print?",
+        "code": "import math\nprint(round(math.degrees(math.atan2(-1, 0)), 1))",
+        "options": [
+          {
+            "id": "a",
+            "text": "-90.0"
+          },
+          {
+            "id": "b",
+            "text": "90.0"
+          },
+          {
+            "id": "c",
+            "text": "0.0"
+          },
+          {
+            "id": "d",
+            "text": "180.0"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The point is straight down, which is -90°.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "graph-slope",
+      "title": "Slope is the rate of change",
+      "parentLessonId": "P.11",
+      "anchor": "micro-graph-slope",
+      "sourceFocus": [
+        "the **slope**",
+        "`vel = (pos_now - pos_prev) / dt_s`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "operators"
+      ],
+      "resources": [
+        {
+          "id": "physics-classroom-slope",
+          "title": "The Physics Classroom — Meaning of Slope for a p-t Graph",
+          "url": "https://www.physicsclassroom.com/class/1DKin/Lesson-3/Meaning-of-Slope-for-a-p-t-Graph",
+          "type": "reference",
+          "role": "primary",
+          "provider": "The Physics Classroom",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 93,
+          "modeledSeconds": 86.0
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "On a time-series graph the horizontal axis is time, so the slope is the rate the vertical quantity changes: rise over run, Δy / Δt. On a position graph that slope is velocity; on a velocity graph the same slope is acceleration.",
+        "Read two samples a known time apart and divide their difference by that time: `vel = (pos_now - pos_prev) / dt_s`. A flat line has slope 0 (standing still), and a falling line has a negative slope (moving back)."
+      ],
+      "example": {
+        "code": "pos_prev = 3.0\npos_now = 5.0\ndt_s = 0.5\nvel = (pos_now - pos_prev) / dt_s\nprint(vel)",
+        "output": "4.0"
+      },
+      "walkthrough": [
+        {
+          "code": "pos_now - pos_prev",
+          "expression": "5.0 - 3.0",
+          "output": "2.0",
+          "note": "The rise: two meters of change between the samples."
+        },
+        {
+          "code": "/ dt_s",
+          "expression": "2.0 / 0.5",
+          "output": "4.0",
+          "note": "The run: half a second, so the rate is four meters per second."
+        },
+        {
+          "code": "print(vel)",
+          "output": "4.0",
+          "note": "Velocity is the slope of position, not the position itself."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "graph-slope-d1",
+          "prompt": "What is the slope of a flat position-time line?",
+          "options": [
+            {
+              "id": "a",
+              "text": "0"
+            },
+            {
+              "id": "b",
+              "text": "1"
+            },
+            {
+              "id": "c",
+              "text": "the position value"
+            },
+            {
+              "id": "d",
+              "text": "undefined"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "No change over time means zero velocity.",
+          "type": "choice"
+        },
+        {
+          "id": "graph-slope-d2",
+          "prompt": "What does the slope of a position-time graph measure?",
+          "options": [
+            {
+              "id": "a",
+              "text": "velocity"
+            },
+            {
+              "id": "b",
+              "text": "position"
+            },
+            {
+              "id": "c",
+              "text": "mass"
+            },
+            {
+              "id": "d",
+              "text": "area"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Position change over time is velocity.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "graph-slope-p1",
+        "prompt": "What is the velocity?",
+        "code": "pos_prev = 1.0\npos_now = 3.0\ndt_s = 0.5\nprint((pos_now - pos_prev) / dt_s)",
+        "options": [
+          {
+            "id": "a",
+            "text": "4.0"
+          },
+          {
+            "id": "b",
+            "text": "2.0"
+          },
+          {
+            "id": "c",
+            "text": "0.5"
+          },
+          {
+            "id": "d",
+            "text": "1.0"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The rise is 2.0 over a run of 0.5 s, so the slope is 4.0 m/s.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "graph-slope-r1",
+          "prompt": "Which formula gives the slope between two samples?",
+          "options": [
+            {
+              "id": "a",
+              "text": "(y_now - y_prev) / dt"
+            },
+            {
+              "id": "b",
+              "text": "y_now * dt"
+            },
+            {
+              "id": "c",
+              "text": "y_now + y_prev"
+            },
+            {
+              "id": "d",
+              "text": "dt / (y_now - y_prev)"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Rise over run: the change divided by the time it took.",
+          "type": "choice"
+        },
+        {
+          "id": "graph-slope-r2",
+          "prompt": "The slope of a velocity-time graph is…",
+          "options": [
+            {
+              "id": "a",
+              "text": "acceleration"
+            },
+            {
+              "id": "b",
+              "text": "position"
+            },
+            {
+              "id": "c",
+              "text": "force"
+            },
+            {
+              "id": "d",
+              "text": "area"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Velocity change over time is acceleration.",
+          "type": "choice"
+        },
+        {
+          "id": "graph-slope-r3",
+          "prompt": "A downward-sloping position line means the object is…",
+          "options": [
+            {
+              "id": "a",
+              "text": "moving back toward the origin"
+            },
+            {
+              "id": "b",
+              "text": "standing still"
+            },
+            {
+              "id": "c",
+              "text": "accelerating forward"
+            },
+            {
+              "id": "d",
+              "text": "at the origin"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A negative slope is negative velocity.",
+          "type": "choice"
+        },
+        {
+          "id": "graph-slope-r4",
+          "prompt": "What is on the horizontal axis of a time-series graph?",
+          "options": [
+            {
+              "id": "a",
+              "text": "time"
+            },
+            {
+              "id": "b",
+              "text": "position"
+            },
+            {
+              "id": "c",
+              "text": "velocity"
+            },
+            {
+              "id": "d",
+              "text": "mass"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Time-series means time runs along the horizontal axis.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "graph-slope-c1",
+        "prompt": "What does this print?",
+        "code": "pos_prev = 10.0\npos_now = 4.0\ndt_s = 2.0\nprint((pos_now - pos_prev) / dt_s)",
+        "options": [
+          {
+            "id": "a",
+            "text": "-3.0"
+          },
+          {
+            "id": "b",
+            "text": "3.0"
+          },
+          {
+            "id": "c",
+            "text": "-6.0"
+          },
+          {
+            "id": "d",
+            "text": "7.0"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The change is -6.0 over 2.0 s, so the slope is -3.0 m/s.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "area-under-curve",
+      "title": "Area is the accumulated change",
+      "parentLessonId": "P.11",
+      "anchor": "micro-area-under-curve",
+      "sourceFocus": [
+        "**area** of a rectangle slice",
+        "`pos = pos + vel * dt`"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "graph-slope"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 92,
+          "modeledSeconds": 91.6
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "On a velocity-time graph, each narrow rectangle of height v and width Δt has the area v · Δt, which is the displacement during that slice. Adding the slices accumulates the whole journey, which is what an integrator does.",
+        "In code it is one line inside a loop: `pos = pos + vel * dt`. Start the position at its known value before the loop, keep the step small, and the sum of the rectangles approaches the area under the curve. The area's unit is the product of the axes: m/s × s = m."
+      ],
+      "example": {
+        "code": "pos = 0.0\nvel = 2.0\ndt_s = 0.5\nfor step in range(3):\n    pos = pos + vel * dt_s\nprint(pos)",
+        "output": "3.0"
+      },
+      "walkthrough": [
+        {
+          "code": "vel * dt_s",
+          "expression": "2.0 × 0.5",
+          "output": "1.0",
+          "note": "One slice covers one meter in half a second."
+        },
+        {
+          "code": "pos = pos + vel * dt_s",
+          "variable": "pos",
+          "before": "0.0, 1.0, 2.0",
+          "after": "1.0, 2.0, 3.0",
+          "note": "Each pass adds one rectangle's area."
+        },
+        {
+          "code": "print(pos)",
+          "output": "3.0",
+          "note": "Three slices at one meter each accumulate three meters."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "area-under-curve-d1",
+          "prompt": "What unit does the area under a velocity-time graph have?",
+          "options": [
+            {
+              "id": "a",
+              "text": "meters"
+            },
+            {
+              "id": "b",
+              "text": "seconds"
+            },
+            {
+              "id": "c",
+              "text": "m/s"
+            },
+            {
+              "id": "d",
+              "text": "m/s²"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Velocity (m/s) times time (s) cancels to meters of displacement.",
+          "type": "choice"
+        },
+        {
+          "id": "area-under-curve-d2",
+          "prompt": "If the time step doubles while the velocity stays the same, each slice's area…",
+          "options": [
+            {
+              "id": "a",
+              "text": "doubles"
+            },
+            {
+              "id": "b",
+              "text": "halves"
+            },
+            {
+              "id": "c",
+              "text": "stays the same"
+            },
+            {
+              "id": "d",
+              "text": "becomes zero"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The area is v · Δt, so a wider slice covers proportionally more distance.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "area-under-curve-p1",
+        "prompt": "What does this print?",
+        "code": "pos = 0.0\nvel = 4.0\ndt_s = 0.25\nfor step in range(4):\n    pos = pos + vel * dt_s\nprint(pos)",
+        "options": [
+          {
+            "id": "a",
+            "text": "4.0"
+          },
+          {
+            "id": "b",
+            "text": "1.0"
+          },
+          {
+            "id": "c",
+            "text": "16.0"
+          },
+          {
+            "id": "d",
+            "text": "0.25"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Each of four slices is 4.0 × 0.25 = 1.0 m, so the total is 4.0 m.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "area-under-curve-r1",
+          "prompt": "What does one slice's area v · Δt represent?",
+          "options": [
+            {
+              "id": "a",
+              "text": "the displacement during that time step"
+            },
+            {
+              "id": "b",
+              "text": "the acceleration"
+            },
+            {
+              "id": "c",
+              "text": "the mass"
+            },
+            {
+              "id": "d",
+              "text": "the slope"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Velocity times time is the distance covered in that slice.",
+          "type": "choice"
+        },
+        {
+          "id": "area-under-curve-r2",
+          "prompt": "Which loop body accumulates position?",
+          "options": [
+            {
+              "id": "a",
+              "text": "pos = pos + vel * dt"
+            },
+            {
+              "id": "b",
+              "text": "pos = vel / dt"
+            },
+            {
+              "id": "c",
+              "text": "pos = pos - dt"
+            },
+            {
+              "id": "d",
+              "text": "vel = pos * dt"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Each pass adds the area of one rectangle to the running position.",
+          "type": "choice"
+        },
+        {
+          "id": "area-under-curve-r3",
+          "prompt": "What is the area under a velocity-time curve?",
+          "options": [
+            {
+              "id": "a",
+              "text": "displacement"
+            },
+            {
+              "id": "b",
+              "text": "acceleration"
+            },
+            {
+              "id": "c",
+              "text": "force"
+            },
+            {
+              "id": "d",
+              "text": "velocity"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Accumulated velocity over time is change in position.",
+          "type": "choice"
+        },
+        {
+          "id": "area-under-curve-r4",
+          "prompt": "Where does the running position start?",
+          "options": [
+            {
+              "id": "a",
+              "text": "At its known value before the loop"
+            },
+            {
+              "id": "b",
+              "text": "Inside the loop, each pass"
+            },
+            {
+              "id": "c",
+              "text": "After the loop"
+            },
+            {
+              "id": "d",
+              "text": "At the final velocity"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Resetting it inside the loop would discard the accumulation.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "area-under-curve-c1",
+        "prompt": "What does this print?",
+        "code": "pos = 0.0\nvel = 1.5\ndt_s = 0.2\nfor step in range(5):\n    pos = pos + vel * dt_s\nprint(round(pos, 2))",
+        "options": [
+          {
+            "id": "a",
+            "text": "1.5"
+          },
+          {
+            "id": "b",
+            "text": "0.3"
+          },
+          {
+            "id": "c",
+            "text": "7.5"
+          },
+          {
+            "id": "d",
+            "text": "0.75"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Each slice is 0.3 m and there are five of them, for 1.5 m.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "graph-units",
+      "title": "Read the axes before the shape",
+      "parentLessonId": "P.11",
+      "anchor": "micro-graph-units",
+      "sourceFocus": [
+        "horizontal axis = time $t$",
+        "A downward-sloping line has a **negative** rate of change"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "graph-slope"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 88,
+          "modeledSeconds": 82.3
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "A graph's labels are part of its answer. The horizontal axis is time t, so the slope's unit is the vertical unit divided by seconds: position over time gives m/s, velocity over time gives m/s².",
+        "A downward-sloping line has a negative rate of change, which is a real direction, not an error: the quantity is falling. A flat line is zero, not missing data, and a curve means the rate itself is changing."
+      ],
+      "example": {
+        "code": "pos_prev = 8.0\npos_now = 2.0\ndt_s = 3.0\nprint((pos_now - pos_prev) / dt_s)",
+        "output": "-2.0"
+      },
+      "walkthrough": [
+        {
+          "code": "pos_now - pos_prev",
+          "expression": "2.0 - 8.0",
+          "output": "-6.0",
+          "note": "The position fell by six meters, so the rise is negative."
+        },
+        {
+          "code": "/ dt_s",
+          "expression": "-6.0 / 3.0",
+          "output": "-2.0",
+          "note": "Six meters over three seconds is two meters per second backwards."
+        },
+        {
+          "code": "print(...)",
+          "output": "-2.0",
+          "note": "The sign carries the direction; the unit is m/s."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "graph-units-d1",
+          "prompt": "What are the units of a position-time slope?",
+          "options": [
+            {
+              "id": "a",
+              "text": "m/s"
+            },
+            {
+              "id": "b",
+              "text": "s/m"
+            },
+            {
+              "id": "c",
+              "text": "m"
+            },
+            {
+              "id": "d",
+              "text": "m/s²"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Vertical meters divided by horizontal seconds is velocity.",
+          "type": "choice"
+        },
+        {
+          "id": "graph-units-d2",
+          "prompt": "What does a negative slope mean?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The quantity is decreasing"
+            },
+            {
+              "id": "b",
+              "text": "The measurement failed"
+            },
+            {
+              "id": "c",
+              "text": "The quantity is zero"
+            },
+            {
+              "id": "d",
+              "text": "Time is running backwards"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A negative rate is a fall; the direction is the sign.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "graph-units-p1",
+        "prompt": "A velocity-time graph rises 2.0 m/s in 0.5 s. What is the slope?",
+        "options": [
+          {
+            "id": "a",
+            "text": "4.0 m/s²"
+          },
+          {
+            "id": "b",
+            "text": "1.0 m/s²"
+          },
+          {
+            "id": "c",
+            "text": "2.0 m/s"
+          },
+          {
+            "id": "d",
+            "text": "0.25 m/s²"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "2.0 m/s / 0.5 s = 4.0 m/s².",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "graph-units-r1",
+          "prompt": "What sits on the horizontal axis of a time-series graph?",
+          "options": [
+            {
+              "id": "a",
+              "text": "time"
+            },
+            {
+              "id": "b",
+              "text": "the measured quantity"
+            },
+            {
+              "id": "c",
+              "text": "the slope"
+            },
+            {
+              "id": "d",
+              "text": "the area"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Time runs along the horizontal axis by definition.",
+          "type": "choice"
+        },
+        {
+          "id": "graph-units-r2",
+          "prompt": "What does a flat line mean?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The quantity is not changing"
+            },
+            {
+              "id": "b",
+              "text": "The sensor is broken"
+            },
+            {
+              "id": "c",
+              "text": "The quantity is negative"
+            },
+            {
+              "id": "d",
+              "text": "Time has stopped"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Zero slope is a constant value.",
+          "type": "choice"
+        },
+        {
+          "id": "graph-units-r3",
+          "prompt": "What are the units of a velocity-time slope?",
+          "options": [
+            {
+              "id": "a",
+              "text": "m/s²"
+            },
+            {
+              "id": "b",
+              "text": "m/s"
+            },
+            {
+              "id": "c",
+              "text": "s/m"
+            },
+            {
+              "id": "d",
+              "text": "m"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Meters per second divided by seconds is acceleration.",
+          "type": "choice"
+        },
+        {
+          "id": "graph-units-r4",
+          "prompt": "Why read the axis labels first?",
+          "options": [
+            {
+              "id": "a",
+              "text": "They give the slope and area their units"
+            },
+            {
+              "id": "b",
+              "text": "They change the shape"
+            },
+            {
+              "id": "c",
+              "text": "They set the sample rate"
+            },
+            {
+              "id": "d",
+              "text": "They are optional"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The labels decide what the geometry means.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "graph-units-c1",
+        "prompt": "A velocity falls from 5.0 m/s to 3.0 m/s in 0.4 s. What is the slope?",
+        "code": "print((3.0 - 5.0) / 0.4)",
+        "options": [
+          {
+            "id": "a",
+            "text": "-5.0 m/s²"
+          },
+          {
+            "id": "b",
+            "text": "5.0 m/s²"
+          },
+          {
+            "id": "c",
+            "text": "-8.0 m/s²"
+          },
+          {
+            "id": "d",
+            "text": "2.0 m/s²"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The change is -2.0 m/s over 0.4 s, so the slope is -5.0 m/s².",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "force",
+      "title": "Force is mass times acceleration",
+      "parentLessonId": "P.12",
+      "anchor": "micro-force",
+      "sourceFocus": [
+        "net force equals mass times acceleration",
+        "a $1.0\\text{ kg}$ payload weighs $9.81\\text{ N}$"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "variables"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 90,
+          "modeledSeconds": 82.3
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "Newton's second law is F = m · a: the net force on an object equals its mass times its acceleration. Force is measured in newtons, where one newton is one kilogram-meter per second squared.",
+        "The same equation runs three ways. Given mass and acceleration, multiply for force. Given force and mass, divide for acceleration. A net force of zero means no acceleration, which includes standing still or cruising at a constant speed."
+      ],
+      "example": {
+        "code": "mass_kg = 2.0\naccel = 3.0\nforce_n = mass_kg * accel\nprint(force_n)",
+        "output": "6.0"
+      },
+      "walkthrough": [
+        {
+          "code": "mass_kg * accel",
+          "expression": "2.0 kg × 3.0 m/s²",
+          "output": "6.0",
+          "note": "The units multiply to kg·m/s², which is the newton."
+        },
+        {
+          "code": "print(force_n)",
+          "output": "6.0",
+          "note": "Six newtons of net force."
+        },
+        {
+          "code": "force_n / mass_kg",
+          "expression": "6.0 / 2.0",
+          "output": "3.0",
+          "note": "The same equation rearranged returns the acceleration."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "force-d1",
+          "prompt": "What is the unit of force?",
+          "options": [
+            {
+              "id": "a",
+              "text": "newton (N)"
+            },
+            {
+              "id": "b",
+              "text": "kilogram (kg)"
+            },
+            {
+              "id": "c",
+              "text": "meter (m)"
+            },
+            {
+              "id": "d",
+              "text": "joule (J)"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "One newton is one kg·m/s².",
+          "type": "choice"
+        },
+        {
+          "id": "force-d2",
+          "prompt": "A 4.0 kg cart accelerates at 2.0 m/s². What net force acts on it?",
+          "options": [
+            {
+              "id": "a",
+              "text": "8.0 N"
+            },
+            {
+              "id": "b",
+              "text": "2.0 N"
+            },
+            {
+              "id": "c",
+              "text": "6.0 N"
+            },
+            {
+              "id": "d",
+              "text": "0.5 N"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "F = m · a = 4.0 × 2.0 = 8.0 N.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "force-p1",
+        "prompt": "What does this print?",
+        "code": "print(5.0 * 0.5)",
+        "options": [
+          {
+            "id": "a",
+            "text": "2.5"
+          },
+          {
+            "id": "b",
+            "text": "5.5"
+          },
+          {
+            "id": "c",
+            "text": "10.0"
+          },
+          {
+            "id": "d",
+            "text": "0.1"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Five kilograms at 0.5 m/s² needs 2.5 N.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "force-r1",
+          "prompt": "Which equation is Newton's second law?",
+          "options": [
+            {
+              "id": "a",
+              "text": "F = m · a"
+            },
+            {
+              "id": "b",
+              "text": "F = m / a"
+            },
+            {
+              "id": "c",
+              "text": "F = a / m"
+            },
+            {
+              "id": "d",
+              "text": "F = m + a"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Net force is mass times acceleration.",
+          "type": "choice"
+        },
+        {
+          "id": "force-r2",
+          "prompt": "A 1.0 kg mass on Earth weighs about…",
+          "options": [
+            {
+              "id": "a",
+              "text": "9.81 N"
+            },
+            {
+              "id": "b",
+              "text": "1.0 N"
+            },
+            {
+              "id": "c",
+              "text": "0.1 N"
+            },
+            {
+              "id": "d",
+              "text": "98.1 N"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "W = m · g = 1.0 × 9.81 = 9.81 N.",
+          "type": "choice"
+        },
+        {
+          "id": "force-r3",
+          "prompt": "If the net force is zero, the acceleration is…",
+          "options": [
+            {
+              "id": "a",
+              "text": "zero"
+            },
+            {
+              "id": "b",
+              "text": "infinite"
+            },
+            {
+              "id": "c",
+              "text": "9.81 m/s²"
+            },
+            {
+              "id": "d",
+              "text": "negative"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Zero net force means no change in velocity.",
+          "type": "choice"
+        },
+        {
+          "id": "force-r4",
+          "prompt": "What does a newton equal in base units?",
+          "options": [
+            {
+              "id": "a",
+              "text": "kg·m/s²"
+            },
+            {
+              "id": "b",
+              "text": "kg·m/s"
+            },
+            {
+              "id": "c",
+              "text": "kg/m"
+            },
+            {
+              "id": "d",
+              "text": "m/s²"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Mass times acceleration carries kg·m/s².",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "force-c1",
+        "prompt": "A 3.0 kg load is pushed with 12.0 N. What is its acceleration?",
+        "code": "print(12.0 / 3.0)",
+        "options": [
+          {
+            "id": "a",
+            "text": "4.0 m/s²"
+          },
+          {
+            "id": "b",
+            "text": "36.0 m/s²"
+          },
+          {
+            "id": "c",
+            "text": "0.25 m/s²"
+          },
+          {
+            "id": "d",
+            "text": "9.0 m/s²"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "a = F / m = 12.0 / 3.0 = 4.0 m/s².",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "weight",
+      "title": "Weight is the force gravity adds",
+      "parentLessonId": "P.12",
+      "anchor": "micro-weight",
+      "sourceFocus": [
+        "downward **weight** force $W = m \\cdot g$",
+        "$g = 9.81\\text{ m/s}^2$"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "force"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 88,
+          "modeledSeconds": 83.2
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "Mass is how much matter an object has, measured in kilograms. Weight is the force gravity exerts on that mass, measured in newtons: W = m · g, with g = 9.81 m/s² near Earth's surface.",
+        "A 1 kg payload therefore weighs 9.81 N, not 1 N. When a datasheet or a calculation asks for a force to hold a payload, multiply its mass by g; when it asks for mass, divide the weight by g."
+      ],
+      "example": {
+        "code": "mass_kg = 2.5\ngravity = 9.81\nweight_n = mass_kg * gravity\nprint(weight_n)",
+        "output": "24.525"
+      },
+      "walkthrough": [
+        {
+          "code": "mass_kg * gravity",
+          "expression": "2.5 kg × 9.81 m/s²",
+          "output": "24.525",
+          "note": "The result is a force in newtons."
+        },
+        {
+          "code": "round(weight_n, 1)",
+          "output": "24.5",
+          "note": "One decimal is enough for a robot's payload budget."
+        },
+        {
+          "code": "weight_n / gravity",
+          "expression": "24.525 / 9.81",
+          "output": "2.5",
+          "note": "Dividing by g returns the mass."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "weight-d1",
+          "prompt": "Which is a force?",
+          "options": [
+            {
+              "id": "a",
+              "text": "weight"
+            },
+            {
+              "id": "b",
+              "text": "mass"
+            },
+            {
+              "id": "c",
+              "text": "length"
+            },
+            {
+              "id": "d",
+              "text": "time"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Weight is mass times gravitational acceleration, so it is measured in newtons.",
+          "type": "choice"
+        },
+        {
+          "id": "weight-d2",
+          "prompt": "What is the weight of a 3.0 kg payload on Earth?",
+          "options": [
+            {
+              "id": "a",
+              "text": "29.43 N"
+            },
+            {
+              "id": "b",
+              "text": "3.0 N"
+            },
+            {
+              "id": "c",
+              "text": "9.81 N"
+            },
+            {
+              "id": "d",
+              "text": "0.31 N"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "3.0 × 9.81 = 29.43 N.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "weight-p1",
+        "prompt": "What does this print?",
+        "code": "print(round(1.0 * 9.81, 2))",
+        "options": [
+          {
+            "id": "a",
+            "text": "9.81"
+          },
+          {
+            "id": "b",
+            "text": "1.0"
+          },
+          {
+            "id": "c",
+            "text": "0.98"
+          },
+          {
+            "id": "d",
+            "text": "98.1"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "One kilogram weighs 9.81 N.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "weight-r1",
+          "prompt": "What is g near Earth's surface?",
+          "options": [
+            {
+              "id": "a",
+              "text": "9.81 m/s²"
+            },
+            {
+              "id": "b",
+              "text": "9.81 N"
+            },
+            {
+              "id": "c",
+              "text": "1.0 m/s²"
+            },
+            {
+              "id": "d",
+              "text": "3.14 m/s²"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "g is an acceleration, not a force.",
+          "type": "choice"
+        },
+        {
+          "id": "weight-r2",
+          "prompt": "Which formula gives weight?",
+          "options": [
+            {
+              "id": "a",
+              "text": "W = m · g"
+            },
+            {
+              "id": "b",
+              "text": "W = m / g"
+            },
+            {
+              "id": "c",
+              "text": "W = g / m"
+            },
+            {
+              "id": "d",
+              "text": "W = m + g"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Weight is mass times gravitational acceleration.",
+          "type": "choice"
+        },
+        {
+          "id": "weight-r3",
+          "prompt": "Mass is measured in…",
+          "options": [
+            {
+              "id": "a",
+              "text": "kilograms"
+            },
+            {
+              "id": "b",
+              "text": "newtons"
+            },
+            {
+              "id": "c",
+              "text": "meters"
+            },
+            {
+              "id": "d",
+              "text": "seconds"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Mass is kilograms; weight is newtons.",
+          "type": "choice"
+        },
+        {
+          "id": "weight-r4",
+          "prompt": "A 10 N weight corresponds to about what mass?",
+          "options": [
+            {
+              "id": "a",
+              "text": "1.02 kg"
+            },
+            {
+              "id": "b",
+              "text": "10 kg"
+            },
+            {
+              "id": "c",
+              "text": "98.1 kg"
+            },
+            {
+              "id": "d",
+              "text": "0.1 kg"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "10 / 9.81 ≈ 1.02 kg.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "weight-c1",
+        "prompt": "What does this print?",
+        "code": "print(round(0.5 * 9.81, 1))",
+        "options": [
+          {
+            "id": "a",
+            "text": "4.9"
+          },
+          {
+            "id": "b",
+            "text": "0.5"
+          },
+          {
+            "id": "c",
+            "text": "9.8"
+          },
+          {
+            "id": "d",
+            "text": "19.6"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Half a kilogram weighs 4.905 N, which rounds to 4.9 N.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "torque",
+      "title": "Torque needs the perpendicular lever arm",
+      "parentLessonId": "P.12",
+      "anchor": "micro-torque",
+      "sourceFocus": [
+        "the **perpendicular lever arm** is the horizontal reach $r_\\perp = L\\cos\\theta$",
+        "$\\tau_{\\text{grav}} = m \\cdot g \\cdot L \\cdot \\cos(\\theta)$"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "weight"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 94,
+          "modeledSeconds": 87.2
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "Torque is twisting effort around a pivot: force times the perpendicular distance from the pivot to the force's line of action. It is measured in newton-meters.",
+        "For a horizontal arm holding a tip payload, gravity pulls straight down at horizontal distance L·cos θ, so τ = m · g · L · cos θ. At 0° (arm horizontal) the lever arm is the full length and torque is maximum; at 90° the weight hangs over the pivot and torque is zero."
+      ],
+      "example": {
+        "code": "import math\nm = 1.0\nL = 0.5\ntheta = math.radians(0)\ntorque = m * 9.81 * L * math.cos(theta)\nprint(round(torque, 3))",
+        "output": "4.905"
+      },
+      "walkthrough": [
+        {
+          "code": "L * math.cos(theta)",
+          "expression": "0.5 × cos(0)",
+          "output": "0.5",
+          "note": "A horizontal arm puts the whole link in the lever arm."
+        },
+        {
+          "code": "m * 9.81",
+          "expression": "1.0 × 9.81",
+          "output": "9.81",
+          "note": "The payload's weight is 9.81 N."
+        },
+        {
+          "code": "9.81 * 0.5",
+          "output": "4.905",
+          "note": "Weight times lever arm gives the holding torque."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "torque-d1",
+          "prompt": "At what arm angle is gravity torque largest?",
+          "options": [
+            {
+              "id": "a",
+              "text": "0°, horizontal"
+            },
+            {
+              "id": "b",
+              "text": "30°"
+            },
+            {
+              "id": "c",
+              "text": "60°"
+            },
+            {
+              "id": "d",
+              "text": "90°, straight up"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "cos(0) = 1, so the lever arm is the full length.",
+          "type": "choice"
+        },
+        {
+          "id": "torque-d2",
+          "prompt": "What is the gravity torque when the arm points straight up?",
+          "options": [
+            {
+              "id": "a",
+              "text": "0 N·m"
+            },
+            {
+              "id": "b",
+              "text": "mgL"
+            },
+            {
+              "id": "c",
+              "text": "mgL/2"
+            },
+            {
+              "id": "d",
+              "text": "2mgL"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "At 90° the weight sits over the pivot: cos(90°) = 0.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "torque-p1",
+        "prompt": "A 1.0 kg payload on a 1.0 m horizontal arm gives what torque?",
+        "options": [
+          {
+            "id": "a",
+            "text": "9.81 N·m"
+          },
+          {
+            "id": "b",
+            "text": "1.0 N·m"
+          },
+          {
+            "id": "c",
+            "text": "4.9 N·m"
+          },
+          {
+            "id": "d",
+            "text": "0 N·m"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "τ = 1.0 × 9.81 × 1.0 × cos(0) = 9.81 N·m.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "torque-r1",
+          "prompt": "What is torque's unit?",
+          "options": [
+            {
+              "id": "a",
+              "text": "N·m"
+            },
+            {
+              "id": "b",
+              "text": "N"
+            },
+            {
+              "id": "c",
+              "text": "kg"
+            },
+            {
+              "id": "d",
+              "text": "m/s²"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Force times distance is newton-meters.",
+          "type": "choice"
+        },
+        {
+          "id": "torque-r2",
+          "prompt": "What is the perpendicular lever arm for a tip payload?",
+          "options": [
+            {
+              "id": "a",
+              "text": "L · cos θ"
+            },
+            {
+              "id": "b",
+              "text": "L · sin θ"
+            },
+            {
+              "id": "c",
+              "text": "L"
+            },
+            {
+              "id": "d",
+              "text": "m · g"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The horizontal reach is L cos θ.",
+          "type": "choice"
+        },
+        {
+          "id": "torque-r3",
+          "prompt": "Doubling the arm length, at the same angle and mass, does what to torque?",
+          "options": [
+            {
+              "id": "a",
+              "text": "doubles it"
+            },
+            {
+              "id": "b",
+              "text": "halves it"
+            },
+            {
+              "id": "c",
+              "text": "leaves it unchanged"
+            },
+            {
+              "id": "d",
+              "text": "quarters it"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Torque is proportional to the lever arm.",
+          "type": "choice"
+        },
+        {
+          "id": "torque-r4",
+          "prompt": "Which formula gives the gravity torque?",
+          "options": [
+            {
+              "id": "a",
+              "text": "m · g · L · cos θ"
+            },
+            {
+              "id": "b",
+              "text": "m · L · sin θ"
+            },
+            {
+              "id": "c",
+              "text": "m · g / L"
+            },
+            {
+              "id": "d",
+              "text": "g · L"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Weight mg times the perpendicular arm L cos θ.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "torque-c1",
+        "prompt": "What does this print?",
+        "code": "import math\nprint(round(2.0 * 9.81 * 1.0 * math.cos(math.radians(60)), 2))",
+        "options": [
+          {
+            "id": "a",
+            "text": "9.81"
+          },
+          {
+            "id": "b",
+            "text": "19.62"
+          },
+          {
+            "id": "c",
+            "text": "4.91"
+          },
+          {
+            "id": "d",
+            "text": "0.0"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "cos(60°) = 0.5, so τ = 2.0 × 9.81 × 1.0 × 0.5 = 9.81 N·m.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "datasheet-units",
+      "title": "The unit column is part of the value",
+      "parentLessonId": "P.14",
+      "anchor": "micro-datasheet-units",
+      "sourceFocus": [
+        "Always check the **Unit** column",
+        "a quiescent draw of `2.5` in a `mA` column is $0.0025\\text{ A}$"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "si-units"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 89,
+          "modeledSeconds": 85.1
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "A datasheet number is only half a value; the Unit column supplies the other half. Always check the **Unit** column before comparing or multiplying, because a table mixes V, mA, kHz and °C in adjacent rows.",
+        "Convert to base SI at the boundary: a quiescent draw of `2.5` in a `mA` column is 0.0025 A, and 250 in a `kHz` row is 250000 Hz. Doing the conversion once, when the number enters the program, keeps every later comparison in the same units."
+      ],
+      "example": {
+        "code": "table_value = 2.5\nmilliamps_to_amps = 1e-3\ndraw_a = table_value * milliamps_to_amps\nprint(draw_a)",
+        "output": "0.0025"
+      },
+      "walkthrough": [
+        {
+          "code": "table_value * 1e-3",
+          "expression": "2.5 × 0.001",
+          "output": "0.0025",
+          "note": "Milliamps become amps by moving the decimal three places."
+        },
+        {
+          "code": "print(draw_a)",
+          "output": "0.0025",
+          "note": "The stored value is in amps, ready for a comparison."
+        },
+        {
+          "code": "draw_a > 0.05",
+          "output": "False",
+          "note": "A 2.5 mA standby draw is far below a 50 mA budget."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "datasheet-units-d1",
+          "prompt": "A row says Typ = 1.8 with Unit = mA. What is that in amps?",
+          "options": [
+            {
+              "id": "a",
+              "text": "0.0018 A"
+            },
+            {
+              "id": "b",
+              "text": "1.8 A"
+            },
+            {
+              "id": "c",
+              "text": "1800 A"
+            },
+            {
+              "id": "d",
+              "text": "0.18 A"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "1.8 mA = 1.8 × 10⁻³ A = 0.0018 A.",
+          "type": "choice"
+        },
+        {
+          "id": "datasheet-units-d2",
+          "prompt": "Why read the Unit column before comparing two rows?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The rows may use different units"
+            },
+            {
+              "id": "b",
+              "text": "It gives the part number"
+            },
+            {
+              "id": "c",
+              "text": "It sets the supply voltage"
+            },
+            {
+              "id": "d",
+              "text": "It is optional"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Comparing 1.8 mA with 0.05 A as raw numbers would be wrong by a factor of 1000.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "datasheet-units-p1",
+        "prompt": "What does this print?",
+        "code": "print(250 * 1e3)",
+        "options": [
+          {
+            "id": "a",
+            "text": "250000.0"
+          },
+          {
+            "id": "b",
+            "text": "250.0"
+          },
+          {
+            "id": "c",
+            "text": "0.25"
+          },
+          {
+            "id": "d",
+            "text": "2500.0"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "A 250 kHz row becomes 250000 Hz.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "datasheet-units-r1",
+          "prompt": "What does the Unit column tell you?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The scale of the number beside it"
+            },
+            {
+              "id": "b",
+              "text": "The price"
+            },
+            {
+              "id": "c",
+              "text": "The package size"
+            },
+            {
+              "id": "d",
+              "text": "The pin count"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The number and its unit form one value.",
+          "type": "choice"
+        },
+        {
+          "id": "datasheet-units-r2",
+          "prompt": "How many amps is 500 mA?",
+          "options": [
+            {
+              "id": "a",
+              "text": "0.5 A"
+            },
+            {
+              "id": "b",
+              "text": "500 A"
+            },
+            {
+              "id": "c",
+              "text": "500000 A"
+            },
+            {
+              "id": "d",
+              "text": "0.005 A"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "500 mA = 0.5 A.",
+          "type": "choice"
+        },
+        {
+          "id": "datasheet-units-r3",
+          "prompt": "When should the conversion to base SI happen?",
+          "options": [
+            {
+              "id": "a",
+              "text": "When the value enters the program"
+            },
+            {
+              "id": "b",
+              "text": "Only at the end"
+            },
+            {
+              "id": "c",
+              "text": "Never"
+            },
+            {
+              "id": "d",
+              "text": "Only in the datasheet"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "One conversion at the boundary keeps later maths consistent.",
+          "type": "choice"
+        },
+        {
+          "id": "datasheet-units-r4",
+          "prompt": "How many hertz is 20 kHz?",
+          "options": [
+            {
+              "id": "a",
+              "text": "20000 Hz"
+            },
+            {
+              "id": "b",
+              "text": "20 Hz"
+            },
+            {
+              "id": "c",
+              "text": "0.02 Hz"
+            },
+            {
+              "id": "d",
+              "text": "2000 Hz"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "kilo means ×1000.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "datasheet-units-c1",
+        "prompt": "A timing row says 250 with Unit = µs. What is that in seconds?",
+        "code": "print(250 * 1e-6)",
+        "options": [
+          {
+            "id": "a",
+            "text": "0.00025 s"
+          },
+          {
+            "id": "b",
+            "text": "0.25 s"
+          },
+          {
+            "id": "c",
+            "text": "250000 s"
+          },
+          {
+            "id": "d",
+            "text": "0.025 s"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "250 µs = 250 × 10⁻⁶ s = 0.00025 s.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "datasheet-bounds",
+      "title": "Recommended bounds are not the destruction limit",
+      "parentLessonId": "P.14",
+      "anchor": "micro-datasheet-bounds",
+      "sourceFocus": [
+        "**Recommended Operating Conditions (`Min` $\\le x \\le$ `Max`)**",
+        "**Absolute Maximum Ratings** are the stress threshold"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "datasheet-units"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 94,
+          "modeledSeconds": 89.1
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "Recommended Operating Conditions give the band a part is designed to run in: Min ≤ x ≤ Max, inclusive. The Absolute Maximum Ratings are a different, wider list: **Absolute Maximum Ratings** are the stress threshold beyond which permanent damage occurs, and reliable operation is not promised even at those numbers.",
+        "Design inside the recommended band, not between it and the absolute maximum. A DRV8833 with a 10.8 V recommended maximum and an 11.8 V absolute maximum is already outside its safe design at 11.0 V, even though it may survive briefly."
+      ],
+      "example": {
+        "code": "v_supply = 12.0\nv_min = 2.7\nv_max = 10.8\nsafe = v_min <= v_supply <= v_max\nprint(safe)",
+        "output": "False"
+      },
+      "walkthrough": [
+        {
+          "code": "2.7 <= 12.0",
+          "output": "True",
+          "note": "The supply clears the minimum."
+        },
+        {
+          "code": "12.0 <= 10.8",
+          "output": "False",
+          "note": "It fails the recommended maximum."
+        },
+        {
+          "code": "v_min <= v <= v_max",
+          "output": "False",
+          "note": "Both comparisons must hold; chaining them says so in one line."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "datasheet-bounds-d1",
+          "prompt": "Which list should a design stay inside?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Recommended Operating Conditions"
+            },
+            {
+              "id": "b",
+              "text": "Absolute Maximum Ratings"
+            },
+            {
+              "id": "c",
+              "text": "Either one"
+            },
+            {
+              "id": "d",
+              "text": "The package drawing"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The absolute maximum is a damage threshold, not an operating target.",
+          "type": "choice"
+        },
+        {
+          "id": "datasheet-bounds-d2",
+          "prompt": "A part is rated 2.7–10.8 V recommended and 11.8 V absolute max. Is 11.0 V a safe design point?",
+          "options": [
+            {
+              "id": "a",
+              "text": "No — it is above the recommended maximum"
+            },
+            {
+              "id": "b",
+              "text": "Yes — it is below the absolute maximum"
+            },
+            {
+              "id": "c",
+              "text": "Yes — any value below 11.8 V is fine"
+            },
+            {
+              "id": "d",
+              "text": "Only if the current is low"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Reliable operation is guaranteed only inside Min ≤ x ≤ Max.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "datasheet-bounds-p1",
+        "prompt": "What does this print?",
+        "code": "print(4.5 <= 5.0 <= 13.5)",
+        "options": [
+          {
+            "id": "a",
+            "text": "True"
+          },
+          {
+            "id": "b",
+            "text": "False"
+          },
+          {
+            "id": "c",
+            "text": "5.0"
+          },
+          {
+            "id": "d",
+            "text": "Error"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Five volts sits inside the TB6612FNG's recommended 4.5–13.5 V band.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "datasheet-bounds-r1",
+          "prompt": "What does `min <= x <= max` check?",
+          "options": [
+            {
+              "id": "a",
+              "text": "That x is inside the band, ends included"
+            },
+            {
+              "id": "b",
+              "text": "That x equals min"
+            },
+            {
+              "id": "c",
+              "text": "That x equals max"
+            },
+            {
+              "id": "d",
+              "text": "That min is greater than max"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Python chains the two comparisons with and.",
+          "type": "choice"
+        },
+        {
+          "id": "datasheet-bounds-r2",
+          "prompt": "What is an absolute maximum rating?",
+          "options": [
+            {
+              "id": "a",
+              "text": "A stress limit beyond which damage may occur"
+            },
+            {
+              "id": "b",
+              "text": "The best operating point"
+            },
+            {
+              "id": "c",
+              "text": "A typical value"
+            },
+            {
+              "id": "d",
+              "text": "The recommended minimum"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "It is a survival threshold, not a design target.",
+          "type": "choice"
+        },
+        {
+          "id": "datasheet-bounds-r3",
+          "prompt": "A 12.0 V rail against a recommended maximum of 10.8 V is…",
+          "options": [
+            {
+              "id": "a",
+              "text": "outside the recommended band"
+            },
+            {
+              "id": "b",
+              "text": "inside the band"
+            },
+            {
+              "id": "c",
+              "text": "exactly at the maximum"
+            },
+            {
+              "id": "d",
+              "text": "below the minimum"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "12.0 > 10.8, so the design fails the band.",
+          "type": "choice"
+        },
+        {
+          "id": "datasheet-bounds-r4",
+          "prompt": "Why keep safety margin inside the recommended band?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Tolerance and heat can push a value past the edge"
+            },
+            {
+              "id": "b",
+              "text": "The band is only a suggestion"
+            },
+            {
+              "id": "c",
+              "text": "It makes the part cheaper"
+            },
+            {
+              "id": "d",
+              "text": "It raises the absolute maximum"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A supply at its nominal limit can drift above it; margin absorbs that.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "datasheet-bounds-c1",
+        "prompt": "Which supply is safe for a part rated 4.5–13.5 V recommended?",
+        "options": [
+          {
+            "id": "a",
+            "text": "12.0 V"
+          },
+          {
+            "id": "b",
+            "text": "14.0 V"
+          },
+          {
+            "id": "c",
+            "text": "3.3 V"
+          },
+          {
+            "id": "d",
+            "text": "15.0 V"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "12.0 V sits inside 4.5–13.5 V; 14.0 and 15.0 are above it and 3.3 is below.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "datasheet-conditions",
+      "title": "Typ is not a promise — design to Max",
+      "parentLessonId": "P.14",
+      "anchor": "micro-datasheet-conditions",
+      "sourceFocus": [
+        "`Typ`",
+        "with safety margin"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "datasheet-bounds"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 90,
+          "modeledSeconds": 90.4
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "Datasheets print Min, `Typ` and Max because a part varies. The typical value is what a fresh part usually does, not a promise: a `Typ` current can be higher on a hot day or a different batch. Design a budget against Max and keep the result with safety margin.",
+        "The same caution applies to the test conditions above a table: a current measured at 25 °C may rise well above that at 70 °C. Read the conditions row before quoting the number, and when a value has no Max, treat the stated limit as the one to stay under."
+      ],
+      "example": {
+        "code": "typ_ma = 1.8\nmax_ma = 3.0\nbudget_a = max_ma * 1e-3\nprint(budget_a)",
+        "output": "0.003"
+      },
+      "walkthrough": [
+        {
+          "code": "max_ma * 1e-3",
+          "expression": "3.0 × 0.001",
+          "output": "0.003",
+          "note": "The worst-case standby draw in amps."
+        },
+        {
+          "code": "typ_ma * 1e-3",
+          "expression": "1.8 × 0.001",
+          "output": "0.0018",
+          "note": "The typical value is lower, which is why budgeting on it would understate the draw."
+        },
+        {
+          "code": "budget_a",
+          "output": "0.003",
+          "note": "Use 3 mA for the budget, not 1.8 mA."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "datasheet-conditions-d1",
+          "prompt": "Which column should a worst-case budget use?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Max"
+            },
+            {
+              "id": "b",
+              "text": "Typ"
+            },
+            {
+              "id": "c",
+              "text": "Min"
+            },
+            {
+              "id": "d",
+              "text": "Any of them"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Max covers the part at its worst; Typ is only a typical sample.",
+          "type": "choice"
+        },
+        {
+          "id": "datasheet-conditions-d2",
+          "prompt": "What does a Typ value mean?",
+          "options": [
+            {
+              "id": "a",
+              "text": "A typical value, not a guarantee"
+            },
+            {
+              "id": "b",
+              "text": "The guaranteed maximum"
+            },
+            {
+              "id": "c",
+              "text": "The absolute maximum"
+            },
+            {
+              "id": "d",
+              "text": "The minimum supply"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Typ describes a usual part; the band is bounded by Min and Max.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "datasheet-conditions-p1",
+        "prompt": "A row shows Typ = 1.8 mA, Max = 3.0 mA. Which value goes into a worst-case budget?",
+        "options": [
+          {
+            "id": "a",
+            "text": "3.0 mA"
+          },
+          {
+            "id": "b",
+            "text": "1.8 mA"
+          },
+          {
+            "id": "c",
+            "text": "4.8 mA"
+          },
+          {
+            "id": "d",
+            "text": "0 mA"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Budget on Max; Typ would understate the draw.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "datasheet-conditions-r1",
+          "prompt": "Why does a datasheet give Min, Typ and Max?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Parts vary, so the table bounds the spread"
+            },
+            {
+              "id": "b",
+              "text": "To fill the columns"
+            },
+            {
+              "id": "c",
+              "text": "To show three suppliers"
+            },
+            {
+              "id": "d",
+              "text": "To give three voltages"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The three columns describe the guaranteed band and a typical part.",
+          "type": "choice"
+        },
+        {
+          "id": "datasheet-conditions-r2",
+          "prompt": "A number measured at 25 °C is quoted for a 70 °C design. What should you check?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Whether the table has a value for the hotter condition"
+            },
+            {
+              "id": "b",
+              "text": "Nothing — temperature does not matter"
+            },
+            {
+              "id": "c",
+              "text": "The package colour"
+            },
+            {
+              "id": "d",
+              "text": "The part's price"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Test conditions qualify the number; a hot design needs the hot value or margin.",
+          "type": "choice"
+        },
+        {
+          "id": "datasheet-conditions-r3",
+          "prompt": "Designing exactly at Max with no margin is…",
+          "options": [
+            {
+              "id": "a",
+              "text": "risky, because tolerance can push past it"
+            },
+            {
+              "id": "b",
+              "text": "the recommended approach"
+            },
+            {
+              "id": "c",
+              "text": "the same as Typ"
+            },
+            {
+              "id": "d",
+              "text": "impossible"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Keep safety margin inside the band.",
+          "type": "choice"
+        },
+        {
+          "id": "datasheet-conditions-r4",
+          "prompt": "Which is a test condition?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Measured at 25 °C and 5 V"
+            },
+            {
+              "id": "b",
+              "text": "The part number"
+            },
+            {
+              "id": "c",
+              "text": "The pin count"
+            },
+            {
+              "id": "d",
+              "text": "The package width"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Conditions state the temperature and supply the numbers were measured at.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "datasheet-conditions-c1",
+        "prompt": "A standby row is Typ 1.8 mA, Max 3.0 mA; a 5 V rail feeds it. What is the worst-case standby power?",
+        "code": "print(round(5.0 * 3.0e-3, 3))",
+        "options": [
+          {
+            "id": "a",
+            "text": "0.015 W"
+          },
+          {
+            "id": "b",
+            "text": "0.009 W"
+          },
+          {
+            "id": "c",
+            "text": "15 W"
+          },
+          {
+            "id": "d",
+            "text": "0.003 W"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "P = V · I = 5.0 × 0.003 = 0.015 W, using Max rather than Typ.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "given-unknown",
+      "title": "Name the given list before the model",
+      "parentLessonId": "P.15",
+      "anchor": "micro-given-unknown",
+      "sourceFocus": [
+        "Write the **given** quantities with their units",
+        "name the one **unknown**"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "variables"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 90,
+          "modeledSeconds": 85.4
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "An analysis starts before any formula. Write the **given** quantities with their units — supply 12.0 V, winding 2.4 Ω, driver limit 3.2 A — and name the one **unknown**, here the draw. A number without a unit cannot be checked later.",
+        "Only then choose the model, because the unknown decides which model applies: asking for a current selects Ohm's law, asking for a torque selects the lever equation. Starting from a remembered formula instead is how the wrong quantity gets computed correctly."
+      ],
+      "example": {
+        "code": "supply_v = 12.0\nwinding_ohm = 2.4\ndraw_a = supply_v / winding_ohm\nprint(draw_a)",
+        "output": "5.0"
+      },
+      "walkthrough": [
+        {
+          "code": "given: 12.0 V, 2.4 Ω",
+          "note": "Both values are named with their units before the model."
+        },
+        {
+          "code": "unknown: draw in amps",
+          "note": "The unknown picks the model: a current from a voltage and a resistance."
+        },
+        {
+          "code": "12.0 / 2.4",
+          "output": "5.0",
+          "note": "The compute step, still without judging the result."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "given-unknown-d1",
+          "prompt": "What is the first step of the workflow?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Write the given quantities with units"
+            },
+            {
+              "id": "b",
+              "text": "Compute the answer"
+            },
+            {
+              "id": "c",
+              "text": "Check the bounds"
+            },
+            {
+              "id": "d",
+              "text": "Pick a formula"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Naming the givens and the unknown comes before choosing a model.",
+          "type": "choice"
+        },
+        {
+          "id": "given-unknown-d2",
+          "prompt": "What decides which model to use?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The unknown being asked for"
+            },
+            {
+              "id": "b",
+              "text": "The first formula remembered"
+            },
+            {
+              "id": "c",
+              "text": "The number of givens"
+            },
+            {
+              "id": "d",
+              "text": "The units of the answer"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The question selects the model; the givens only populate it.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "given-unknown-p1",
+        "prompt": "Which line states the unknown?",
+        "options": [
+          {
+            "id": "a",
+            "text": "the draw in amps"
+          },
+          {
+            "id": "b",
+            "text": "12.0 V"
+          },
+          {
+            "id": "c",
+            "text": "2.4 Ω"
+          },
+          {
+            "id": "d",
+            "text": "3.2 A limit"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The unknown is the quantity the analysis is asked to produce.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "given-unknown-r1",
+          "prompt": "Why write units beside every given?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The unit is part of the value and is checked later"
+            },
+            {
+              "id": "b",
+              "text": "To make the list longer"
+            },
+            {
+              "id": "c",
+              "text": "Units are optional"
+            },
+            {
+              "id": "d",
+              "text": "To choose the variable names"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A bare number cannot be checked against a datasheet or a model.",
+          "type": "choice"
+        },
+        {
+          "id": "given-unknown-r2",
+          "prompt": "What are the six workflow steps in order?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Given, Unknown, Model, Compute, Check, Answer"
+            },
+            {
+              "id": "b",
+              "text": "Compute, Given, Answer, Check, Model, Unknown"
+            },
+            {
+              "id": "c",
+              "text": "Model, Answer, Given, Unknown, Compute, Check"
+            },
+            {
+              "id": "d",
+              "text": "Given, Compute, Model, Unknown, Answer, Check"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The order is the lesson's whole point: name, choose, compute, check, answer.",
+          "type": "choice"
+        },
+        {
+          "id": "given-unknown-r3",
+          "prompt": "A problem gives a mass and a lever length and asks for torque. Which model?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The lever equation τ = m·g·L·cos θ"
+            },
+            {
+              "id": "b",
+              "text": "Ohm's law"
+            },
+            {
+              "id": "c",
+              "text": "The slope equation"
+            },
+            {
+              "id": "d",
+              "text": "The area rule"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The unknown is a torque, so the lever model is the one that produces it.",
+          "type": "choice"
+        },
+        {
+          "id": "given-unknown-r4",
+          "prompt": "When is the answer written?",
+          "options": [
+            {
+              "id": "a",
+              "text": "After the check step"
+            },
+            {
+              "id": "b",
+              "text": "Before the model"
+            },
+            {
+              "id": "c",
+              "text": "Instead of computing"
+            },
+            {
+              "id": "d",
+              "text": "Before the givens"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The answer is written last, after the check decides whether the number is usable.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "given-unknown-c1",
+        "prompt": "Given 5.0 V across 10.0 Ω, what is the unknown draw?",
+        "code": "print(5.0 / 10.0)",
+        "options": [
+          {
+            "id": "a",
+            "text": "0.5 A"
+          },
+          {
+            "id": "b",
+            "text": "2.0 A"
+          },
+          {
+            "id": "c",
+            "text": "50.0 A"
+          },
+          {
+            "id": "d",
+            "text": "0.2 A"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "I = V / R = 5.0 / 10.0 = 0.5 A.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "answer-check",
+      "title": "A number becomes an answer after the check",
+      "parentLessonId": "P.15",
+      "anchor": "micro-answer-check",
+      "sourceFocus": [
+        "A computed number is not an answer until it carries a **unit**",
+        "the driver in this lesson passes 3.2 A"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "given-unknown"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 92,
+          "modeledSeconds": 88.5
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "A computed number is not an answer until it carries a **unit** and fits the real part. Twelve volts across 2.4 Ω gives 5.0 A, but the driver in this lesson passes only 3.2 A continuously, so 5.0 A is a fault rather than a result.",
+        "The check compares the computed value with the limit and records which side it landed on: ok when it fits, and the limit when it does not. That flag is what lets the answer step speak honestly instead of printing a plausible-looking number."
+      ],
+      "example": {
+        "code": "draw_a = 5.0\nlimit_a = 3.2\nok = draw_a <= limit_a\npassable_a = draw_a if ok else limit_a\nprint(ok, passable_a)",
+        "output": "False 3.2"
+      },
+      "walkthrough": [
+        {
+          "code": "5.0 <= 3.2",
+          "output": "False",
+          "note": "The computed draw is above the driver's continuous limit."
+        },
+        {
+          "code": "5.0 if ok else 3.2",
+          "output": "3.2",
+          "note": "The passable value is the limit when the draw does not fit."
+        },
+        {
+          "code": "print(ok, passable_a)",
+          "output": "False 3.2",
+          "note": "The flag and the clamped value travel together into the answer."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "answer-check-d1",
+          "prompt": "The computed draw is 5.0 A and the limit is 3.2 A. What is the check result?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Not ok; the draw exceeds the limit"
+            },
+            {
+              "id": "b",
+              "text": "Ok; 5.0 is a number"
+            },
+            {
+              "id": "c",
+              "text": "Ok; the limit is only advice"
+            },
+            {
+              "id": "d",
+              "text": "Unknown"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "5.0 > 3.2, so the design takes the failure branch.",
+          "type": "choice"
+        },
+        {
+          "id": "answer-check-d2",
+          "prompt": "What must every answer carry?",
+          "options": [
+            {
+              "id": "a",
+              "text": "A unit and a check against the bounds"
+            },
+            {
+              "id": "b",
+              "text": "Only digits"
+            },
+            {
+              "id": "c",
+              "text": "A colour"
+            },
+            {
+              "id": "d",
+              "text": "A formula name"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The unit and the bound check are what make the number usable.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "answer-check-p1",
+        "prompt": "What does this print?",
+        "code": "print(2.0 <= 3.2)",
+        "options": [
+          {
+            "id": "a",
+            "text": "True"
+          },
+          {
+            "id": "b",
+            "text": "False"
+          },
+          {
+            "id": "c",
+            "text": "3.2"
+          },
+          {
+            "id": "d",
+            "text": "2.0"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "Two amps fits inside the 3.2 A limit.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "answer-check-r1",
+          "prompt": "What does the check step compare?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The computed value with the part's limit"
+            },
+            {
+              "id": "b",
+              "text": "Two formulas"
+            },
+            {
+              "id": "c",
+              "text": "The givens with each other"
+            },
+            {
+              "id": "d",
+              "text": "The units with the price"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The check is against the bounds of the real part.",
+          "type": "choice"
+        },
+        {
+          "id": "answer-check-r2",
+          "prompt": "What value is passed on when the draw exceeds the limit?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The limit"
+            },
+            {
+              "id": "b",
+              "text": "The draw"
+            },
+            {
+              "id": "c",
+              "text": "Zero"
+            },
+            {
+              "id": "d",
+              "text": "The supply voltage"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The passable value is clamped to the limit.",
+          "type": "choice"
+        },
+        {
+          "id": "answer-check-r3",
+          "prompt": "Why is a bare number not an answer?",
+          "options": [
+            {
+              "id": "a",
+              "text": "It has no unit and no bound check"
+            },
+            {
+              "id": "b",
+              "text": "It is too short"
+            },
+            {
+              "id": "c",
+              "text": "It was computed"
+            },
+            {
+              "id": "d",
+              "text": "It is a float"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "A result becomes an answer when it is unit-checked and bounded.",
+          "type": "choice"
+        },
+        {
+          "id": "answer-check-r4",
+          "prompt": "The check is ok. What should the answer report?",
+          "options": [
+            {
+              "id": "a",
+              "text": "The computed value with its unit"
+            },
+            {
+              "id": "b",
+              "text": "The limit instead"
+            },
+            {
+              "id": "c",
+              "text": "Nothing"
+            },
+            {
+              "id": "d",
+              "text": "The supply voltage"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "When the value fits, it is the passable value.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "answer-check-c1",
+        "prompt": "What does this print?",
+        "code": "draw = 4.8\nok = draw <= 3.2\nprint(ok, draw if ok else 3.2)",
+        "options": [
+          {
+            "id": "a",
+            "text": "False 3.2"
+          },
+          {
+            "id": "b",
+            "text": "True 4.8"
+          },
+          {
+            "id": "c",
+            "text": "False 4.8"
+          },
+          {
+            "id": "d",
+            "text": "True 3.2"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "4.8 exceeds 3.2, so the flag is False and the passable value is the limit.",
+        "type": "choice"
+      }
+    },
+    {
+      "id": "bounds-check",
+      "title": "When the check fails, name the limit",
+      "parentLessonId": "P.15",
+      "anchor": "micro-bounds-check",
+      "sourceFocus": [
+        "fits the **bounds** of the real part",
+        "clamp the answer to 3.2 A"
+      ],
+      "revision": 1,
+      "prerequisites": [
+        "answer-check"
+      ],
+      "resources": [],
+      "timing": {
+        "learn": {
+          "estimatedSeconds": 89,
+          "modeledSeconds": 87.3
+        },
+        "review": {
+          "estimatedSeconds": 36,
+          "modeledSeconds": 36.0
+        },
+        "challenge": {
+          "estimatedSeconds": 49,
+          "modeledSeconds": 48.9
+        }
+      },
+      "teaching": [
+        "The check asks two questions: does the value fit the **bounds** of the real part, and does its unit match what was asked? A number can be arithmetically right and still unusable, like 5.0 A through a driver rated 3.2 A.",
+        "When it fails, do not hide it and do not report the impossible number as the result: clamp the answer to the limit and say which part imposed it. \"3.2 A, limited by the driver\" is an answer; \"5.0 A\" is a fault report pretending to be one."
+      ],
+      "example": {
+        "code": "draw_a = 5.0\nlimit_a = 3.2\npassable_a = min(draw_a, limit_a)\nprint(f\"{passable_a} A, limited by the driver\")",
+        "output": "3.2 A, limited by the driver"
+      },
+      "walkthrough": [
+        {
+          "code": "min(5.0, 3.2)",
+          "output": "3.2",
+          "note": "The clamp takes the lower of the computed value and the limit."
+        },
+        {
+          "code": "f\"{passable_a} A, ...\"",
+          "output": "3.2 A, ...",
+          "note": "The unit and the reason are part of the sentence."
+        },
+        {
+          "code": "print(...)",
+          "output": "3.2 A, limited by the driver",
+          "note": "The answer names the part that set the ceiling."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "bounds-check-d1",
+          "prompt": "A result is 5.0 A but the driver passes 3.2 A. What should the answer say?",
+          "options": [
+            {
+              "id": "a",
+              "text": "3.2 A, limited by the driver"
+            },
+            {
+              "id": "b",
+              "text": "5.0 A"
+            },
+            {
+              "id": "c",
+              "text": "No answer"
+            },
+            {
+              "id": "d",
+              "text": "3.2 V"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "Clamp to the limit and name the part that set it.",
+          "type": "choice"
+        },
+        {
+          "id": "bounds-check-d2",
+          "prompt": "What makes a computed value usable?",
+          "options": [
+            {
+              "id": "a",
+              "text": "A matching unit and a check against the real bounds"
+            },
+            {
+              "id": "b",
+              "text": "Many decimal places"
+            },
+            {
+              "id": "c",
+              "text": "A large magnitude"
+            },
+            {
+              "id": "d",
+              "text": "Being printed"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The unit and the bounds check are the two gates.",
+          "type": "choice"
+        }
+      ],
+      "practice": {
+        "id": "bounds-check-p1",
+        "prompt": "What does this print?",
+        "code": "print(min(6.0, 3.2))",
+        "options": [
+          {
+            "id": "a",
+            "text": "3.2"
+          },
+          {
+            "id": "b",
+            "text": "6.0"
+          },
+          {
+            "id": "c",
+            "text": "9.2"
+          },
+          {
+            "id": "d",
+            "text": "2.8"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The clamp keeps the lower value, the limit.",
+        "type": "choice"
+      },
+      "reviewPool": [
+        {
+          "id": "bounds-check-r1",
+          "prompt": "What does `min(value, limit)` do when the value exceeds the limit?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Returns the limit"
+            },
+            {
+              "id": "b",
+              "text": "Returns the value"
+            },
+            {
+              "id": "c",
+              "text": "Raises an error"
+            },
+            {
+              "id": "d",
+              "text": "Returns zero"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The smaller of the two is the passable one.",
+          "type": "choice"
+        },
+        {
+          "id": "bounds-check-r2",
+          "prompt": "Why name the limiting part in the answer?",
+          "options": [
+            {
+              "id": "a",
+              "text": "It tells the reader what to change or respect"
+            },
+            {
+              "id": "b",
+              "text": "It looks technical"
+            },
+            {
+              "id": "c",
+              "text": "It hides the failure"
+            },
+            {
+              "id": "d",
+              "text": "It removes the unit"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "The cause of the ceiling is the actionable part of the answer.",
+          "type": "choice"
+        },
+        {
+          "id": "bounds-check-r3",
+          "prompt": "Which answer is honest about a limit?",
+          "options": [
+            {
+              "id": "a",
+              "text": "3.2 A, limited by the driver"
+            },
+            {
+              "id": "b",
+              "text": "5.0 A"
+            },
+            {
+              "id": "c",
+              "text": "5.0"
+            },
+            {
+              "id": "d",
+              "text": "about 4"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "It carries the unit and names the bound.",
+          "type": "choice"
+        },
+        {
+          "id": "bounds-check-r4",
+          "prompt": "The value fits the limit. What happens?",
+          "options": [
+            {
+              "id": "a",
+              "text": "It is reported with its unit"
+            },
+            {
+              "id": "b",
+              "text": "It is clamped anyway"
+            },
+            {
+              "id": "c",
+              "text": "It is discarded"
+            },
+            {
+              "id": "d",
+              "text": "It becomes the limit"
+            }
+          ],
+          "answerId": "a",
+          "explanation": "No clamp is needed; the computed value is the passable one.",
+          "type": "choice"
+        }
+      ],
+      "challenge": {
+        "id": "bounds-check-c1",
+        "prompt": "What does this print?",
+        "code": "draw = 1.8\nlimit = 3.2\nprint(f\"{min(draw, limit)} A\")",
+        "options": [
+          {
+            "id": "a",
+            "text": "1.8 A"
+          },
+          {
+            "id": "b",
+            "text": "3.2 A"
+          },
+          {
+            "id": "c",
+            "text": "5.0 A"
+          },
+          {
+            "id": "d",
+            "text": "1.8"
+          }
+        ],
+        "answerId": "a",
+        "explanation": "The draw fits, so no clamp happens and the unit is appended.",
         "type": "choice"
       }
     }

@@ -1,0 +1,444 @@
+{
+  "subjectId": "python",
+  "parentLessonId": "P.10",
+  "parentPath": "track-p/P.10-radians-and-right-triangle-trig.md",
+  "title": "Radians and right-triangle trig in small steps",
+  "version": 1,
+  "concepts": [
+    {
+      "id": "radians",
+      "title": "Radians are the angle the maths uses",
+      "parentLessonId": "P.10",
+      "anchor": "micro-radians",
+      "sourceFocus": [
+        "one full revolution ($360^\\circ$) is **$2\\pi\\text{ radians}$**",
+        "`math.radians(deg)`"
+      ],
+      "revision": 1,
+      "prerequisites": [],
+      "resources": [
+        {
+          "id": "mathsisfun-radians",
+          "title": "MathsIsFun — Radians",
+          "url": "https://www.mathsisfun.com/geometry/radians.html",
+          "type": "reference",
+          "role": "primary",
+          "provider": "MathsIsFun",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": { "learn": 92, "review": 36, "challenge": 49 },
+      "teaching": [
+        "A radian measures an angle by the distance walked around a circle of radius one. Walking one radius gives 1 radian, and a full lap gives 2π of them, so one full revolution (360°) is 2π radians and a half-turn (180°) is π radians.",
+        "Python's `math.cos`, `math.sin` and `math.atan2` expect radians, never degrees. Convert with `math.radians(deg)` before the call, or multiply by π/180; convert back with `math.degrees(rad)`. A 90° angle is π/2 ≈ 1.571 radians."
+      ],
+      "example": {
+        "code": "import math\nhalf_turn = math.radians(180)\nprint(round(half_turn, 3))",
+        "output": "3.142"
+      },
+      "walkthrough": [
+        {
+          "code": "math.radians(180)",
+          "expression": "180 × π / 180",
+          "output": "3.141592653589793",
+          "note": "A half-turn is exactly π radians."
+        },
+        {
+          "code": "round(half_turn, 3)",
+          "output": "3.142",
+          "note": "Rounding keeps the display readable without changing the stored value."
+        },
+        {
+          "code": "math.cos(math.radians(180))",
+          "expression": "cos(π)",
+          "output": "-1.0",
+          "note": "The function receives radians; passing 180 would compute cos(180 rad) instead."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "radians-d1",
+          "prompt": "How many radians is a quarter turn (90°)?",
+          "options": [
+            { "id": "a", "text": "about 1.571" },
+            { "id": "b", "text": "90" },
+            { "id": "c", "text": "about 3.142" },
+            { "id": "d", "text": "about 6.283" }
+          ],
+          "answerId": "a",
+          "explanation": "90 × π / 180 = π/2 ≈ 1.571 radians."
+        },
+        {
+          "id": "radians-d2",
+          "prompt": "How many radians is one full revolution?",
+          "options": [
+            { "id": "a", "text": "2π ≈ 6.283" },
+            { "id": "b", "text": "π ≈ 3.142" },
+            { "id": "c", "text": "360" },
+            { "id": "d", "text": "1" }
+          ],
+          "answerId": "a",
+          "explanation": "A full lap is 2π radians; a half-turn is π."
+        }
+      ],
+      "practice": {
+        "id": "radians-p1",
+        "prompt": "What does this print?",
+        "code": "import math\nprint(round(math.radians(90), 3))",
+        "options": [
+          { "id": "a", "text": "1.571" },
+          { "id": "b", "text": "90" },
+          { "id": "c", "text": "3.142" },
+          { "id": "d", "text": "0.5" }
+        ],
+        "answerId": "a",
+        "explanation": "90° converts to π/2 radians, which rounds to 1.571."
+      },
+      "reviewPool": [
+        {
+          "id": "radians-r1",
+          "prompt": "Which unit do Python's trig functions expect?",
+          "options": [
+            { "id": "a", "text": "radians" },
+            { "id": "b", "text": "degrees" },
+            { "id": "c", "text": "turns" },
+            { "id": "d", "text": "either one" }
+          ],
+          "answerId": "a",
+          "explanation": "`math.cos` and `math.sin` take radians; degrees must be converted."
+        },
+        {
+          "id": "radians-r2",
+          "prompt": "What does `math.degrees` convert?",
+          "options": [
+            { "id": "a", "text": "radians to degrees" },
+            { "id": "b", "text": "degrees to radians" },
+            { "id": "c", "text": "meters to feet" },
+            { "id": "d", "text": "turns to seconds" }
+          ],
+          "answerId": "a",
+          "explanation": "It multiplies by 180/π, the inverse of `math.radians`."
+        },
+        {
+          "id": "radians-r3",
+          "prompt": "How many radians is 180°?",
+          "options": [
+            { "id": "a", "text": "π" },
+            { "id": "b", "text": "2π" },
+            { "id": "c", "text": "π/2" },
+            { "id": "d", "text": "180" }
+          ],
+          "answerId": "a",
+          "explanation": "A half-turn is π radians."
+        },
+        {
+          "id": "radians-r4",
+          "prompt": "What is 1 radian approximately in degrees?",
+          "options": [
+            { "id": "a", "text": "57.3°" },
+            { "id": "b", "text": "1°" },
+            { "id": "c", "text": "90°" },
+            { "id": "d", "text": "360°" }
+          ],
+          "answerId": "a",
+          "explanation": "One radius of arc is about 57.3°."
+        }
+      ],
+      "challenge": {
+        "id": "radians-c1",
+        "prompt": "What does this print?",
+        "code": "import math\nprint(round(math.radians(360), 3))",
+        "options": [
+          { "id": "a", "text": "6.283" },
+          { "id": "b", "text": "3.142" },
+          { "id": "c", "text": "360" },
+          { "id": "d", "text": "1.571" }
+        ],
+        "answerId": "a",
+        "explanation": "A full turn is 2π ≈ 6.283 radians."
+      }
+    },
+    {
+      "id": "trig-reach",
+      "title": "Cosine is the horizontal shadow",
+      "parentLessonId": "P.10",
+      "anchor": "micro-trig-reach",
+      "sourceFocus": [
+        "horizontal reach** is $x = L\\cos(\\theta)$",
+        "vertical height** is $y = L\\sin(\\theta)$"
+      ],
+      "revision": 1,
+      "prerequisites": ["radians"],
+      "resources": [],
+      "timing": { "learn": 93, "review": 36, "challenge": 49 },
+      "teaching": [
+        "A robot link of length L tilted by angle θ from the horizontal has two shadows. The horizontal reach is x = L·cos(θ), the side next to the angle; the vertical height is y = L·sin(θ), the side opposite it. Their squares add to L².",
+        "The angle must be in radians. At θ = 0° the link lies flat, so cos(0) = 1 and the reach is the whole length while sin(0) = 0. At θ = 90° the link points up, so the reach is 0 and the height is the whole length."
+      ],
+      "example": {
+        "code": "import math\nlength = 2.0\nangle = math.radians(60)\nprint(round(length * math.cos(angle), 2))\nprint(round(length * math.sin(angle), 2))",
+        "output": "1.0\n1.73"
+      },
+      "walkthrough": [
+        {
+          "code": "math.radians(60)",
+          "output": "1.047",
+          "note": "Sixty degrees becomes about 1.047 radians before any trig call."
+        },
+        {
+          "code": "length * math.cos(angle)",
+          "expression": "2.0 × 0.5",
+          "output": "1.0",
+          "note": "The horizontal shadow is half the link at 60°."
+        },
+        {
+          "code": "length * math.sin(angle)",
+          "expression": "2.0 × 0.866",
+          "output": "1.73",
+          "note": "The vertical height is the longer shadow at 60°."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "trig-reach-d1",
+          "prompt": "A link points straight up. What is its horizontal reach?",
+          "options": [
+            { "id": "a", "text": "0" },
+            { "id": "b", "text": "the full length" },
+            { "id": "c", "text": "half the length" },
+            { "id": "d", "text": "the square of the length" }
+          ],
+          "answerId": "a",
+          "explanation": "At 90° the horizontal shadow is zero: cos(90°) = 0."
+        },
+        {
+          "id": "trig-reach-d2",
+          "prompt": "A link lies flat at 0°. What is its vertical height?",
+          "options": [
+            { "id": "a", "text": "0" },
+            { "id": "b", "text": "the full length" },
+            { "id": "c", "text": "half the length" },
+            { "id": "d", "text": "90" }
+          ],
+          "answerId": "a",
+          "explanation": "Horizontal means no height: sin(0°) = 0."
+        }
+      ],
+      "practice": {
+        "id": "trig-reach-p1",
+        "prompt": "For a link of length 1.0 at 60°, what is the horizontal reach?",
+        "options": [
+          { "id": "a", "text": "0.5" },
+          { "id": "b", "text": "0.866" },
+          { "id": "c", "text": "1.0" },
+          { "id": "d", "text": "60" }
+        ],
+        "answerId": "a",
+        "explanation": "x = 1.0 × cos(60°) = 0.5; the height would be 0.866."
+      },
+      "reviewPool": [
+        {
+          "id": "trig-reach-r1",
+          "prompt": "Which function gives the horizontal reach?",
+          "options": [
+            { "id": "a", "text": "cos" },
+            { "id": "b", "text": "sin" },
+            { "id": "c", "text": "atan2" },
+            { "id": "d", "text": "radians" }
+          ],
+          "answerId": "a",
+          "explanation": "Cosine is the side next to the angle, which is horizontal here."
+        },
+        {
+          "id": "trig-reach-r2",
+          "prompt": "Which function gives the vertical height?",
+          "options": [
+            { "id": "a", "text": "sin" },
+            { "id": "b", "text": "cos" },
+            { "id": "c", "text": "degrees" },
+            { "id": "d", "text": "sqrt" }
+          ],
+          "answerId": "a",
+          "explanation": "Sine is the side opposite the angle, which is vertical here."
+        },
+        {
+          "id": "trig-reach-r3",
+          "prompt": "What is cos(0)?",
+          "options": [
+            { "id": "a", "text": "1" },
+            { "id": "b", "text": "0" },
+            { "id": "c", "text": "0.5" },
+            { "id": "d", "text": "undefined" }
+          ],
+          "answerId": "a",
+          "explanation": "A flat link puts its whole length in the horizontal direction."
+        },
+        {
+          "id": "trig-reach-r4",
+          "prompt": "What must be done to a 60° angle before `math.cos`?",
+          "options": [
+            { "id": "a", "text": "convert it to radians" },
+            { "id": "b", "text": "round it" },
+            { "id": "c", "text": "square it" },
+            { "id": "d", "text": "nothing" }
+          ],
+          "answerId": "a",
+          "explanation": "The trig functions take radians; `math.radians(60)` supplies them."
+        }
+      ],
+      "challenge": {
+        "id": "trig-reach-c1",
+        "prompt": "A link of length 3.0 sits at 30°. What is its height?",
+        "code": "import math\nprint(round(3.0 * math.sin(math.radians(30)), 2))",
+        "options": [
+          { "id": "a", "text": "1.5" },
+          { "id": "b", "text": "2.6" },
+          { "id": "c", "text": "3.0" },
+          { "id": "d", "text": "0.5" }
+        ],
+        "answerId": "a",
+        "explanation": "sin(30°) = 0.5, so the height is 3.0 × 0.5 = 1.5; the reach is 2.6."
+      }
+    },
+    {
+      "id": "atan2",
+      "title": "atan2 turns a point back into an angle",
+      "parentLessonId": "P.10",
+      "anchor": "micro-atan2",
+      "sourceFocus": [
+        "`math.atan2(y, x)` (which takes `y` first, then `x`)",
+        "`math.degrees(rad)`"
+      ],
+      "revision": 1,
+      "prerequisites": ["trig-reach"],
+      "resources": [],
+      "timing": { "learn": 90, "review": 36, "challenge": 49 },
+      "teaching": [
+        "Going backward from a target point (x, y) to the joint angle uses the four-quadrant inverse tangent `math.atan2(y, x)`: y first, then x. The order matters, and atan2 also handles x = 0 and negative quadrants where plain atan fails.",
+        "The result is in radians, so `math.degrees(rad)` converts it for a display or a comparison with a degree limit. A point at (3, 3) is 45°; a point at (0, 1) is 90°; a point at (-1, 0) is 180°."
+      ],
+      "example": {
+        "code": "import math\nx = 3.0\ny = 3.0\nangle = math.atan2(y, x)\nprint(round(math.degrees(angle), 1))",
+        "output": "45.0"
+      },
+      "walkthrough": [
+        {
+          "code": "math.atan2(3.0, 3.0)",
+          "output": "0.7853981633974483",
+          "note": "A 45° angle in radians, because y and x are equal."
+        },
+        {
+          "code": "math.degrees(angle)",
+          "output": "45.0",
+          "note": "Degrees for a display; the maths itself stays in radians."
+        },
+        {
+          "code": "math.atan2(x, y)",
+          "note": "Swapping the arguments asks a different question: the answer would be 45° here only because the point is symmetric."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "atan2-d1",
+          "prompt": "What does `math.atan2(1, 0)` give in degrees?",
+          "options": [
+            { "id": "a", "text": "90" },
+            { "id": "b", "text": "0" },
+            { "id": "c", "text": "45" },
+            { "id": "d", "text": "180" }
+          ],
+          "answerId": "a",
+          "explanation": "y = 1, x = 0 is straight up, which is 90°."
+        },
+        {
+          "id": "atan2-d2",
+          "prompt": "What does `math.atan2(0, -1)` give in degrees?",
+          "options": [
+            { "id": "a", "text": "180" },
+            { "id": "b", "text": "0" },
+            { "id": "c", "text": "-90" },
+            { "id": "d", "text": "90" }
+          ],
+          "answerId": "a",
+          "explanation": "A point on the negative x-axis is a half-turn, 180°."
+        }
+      ],
+      "practice": {
+        "id": "atan2-p1",
+        "prompt": "What does this print?",
+        "code": "import math\nprint(round(math.degrees(math.atan2(1, 1)), 1))",
+        "options": [
+          { "id": "a", "text": "45.0" },
+          { "id": "b", "text": "1.0" },
+          { "id": "c", "text": "90.0" },
+          { "id": "d", "text": "0.8" }
+        ],
+        "answerId": "a",
+        "explanation": "Equal x and y put the point on the 45° diagonal."
+      },
+      "reviewPool": [
+        {
+          "id": "atan2-r1",
+          "prompt": "Which argument comes first in `math.atan2`?",
+          "options": [
+            { "id": "a", "text": "y" },
+            { "id": "b", "text": "x" },
+            { "id": "c", "text": "the angle" },
+            { "id": "d", "text": "the length" }
+          ],
+          "answerId": "a",
+          "explanation": "atan2 takes the vertical coordinate first, then the horizontal one."
+        },
+        {
+          "id": "atan2-r2",
+          "prompt": "What unit does `math.atan2` return?",
+          "options": [
+            { "id": "a", "text": "radians" },
+            { "id": "b", "text": "degrees" },
+            { "id": "c", "text": "meters" },
+            { "id": "d", "text": "turns" }
+          ],
+          "answerId": "a",
+          "explanation": "It returns radians; `math.degrees` converts for display."
+        },
+        {
+          "id": "atan2-r3",
+          "prompt": "What does `math.atan2(0, 1)` give?",
+          "options": [
+            { "id": "a", "text": "0" },
+            { "id": "b", "text": "90" },
+            { "id": "c", "text": "180" },
+            { "id": "d", "text": "-90" }
+          ],
+          "answerId": "a",
+          "explanation": "A point on the positive x-axis has no upward component, so the angle is zero."
+        },
+        {
+          "id": "atan2-r4",
+          "prompt": "Why use atan2 instead of atan(y / x)?",
+          "options": [
+            { "id": "a", "text": "It handles x = 0 and every quadrant" },
+            { "id": "b", "text": "It returns degrees" },
+            { "id": "c", "text": "It is faster" },
+            { "id": "d", "text": "It takes the angle first" }
+          ],
+          "answerId": "a",
+          "explanation": "Dividing by x fails at x = 0 and loses the sign of the quadrant; atan2 keeps both."
+        }
+      ],
+      "challenge": {
+        "id": "atan2-c1",
+        "prompt": "What does this print?",
+        "code": "import math\nprint(round(math.degrees(math.atan2(-1, 0)), 1))",
+        "options": [
+          { "id": "a", "text": "-90.0" },
+          { "id": "b", "text": "90.0" },
+          { "id": "c", "text": "0.0" },
+          { "id": "d", "text": "180.0" }
+        ],
+        "answerId": "a",
+        "explanation": "The point is straight down, which is -90°."
+      }
+    }
+  ]
+}

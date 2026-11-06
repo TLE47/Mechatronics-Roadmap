@@ -16,7 +16,7 @@ flowchart LR
     Review --> Ladder["3 -> 7 -> 14 -> 30 days"]
 ```
 
-## The thirty-one units
+## The forty-six units
 
 ### P.1 — variables and data types
 
@@ -94,6 +94,46 @@ flowchart LR
 | `linear-scaling` | `#micro-linear-scaling` | Multiply the fraction of full scale by the range. |
 | `scale-output` | `#micro-scale-output` | The board's supply sets the top value. |
 
+### P.10 — radians and right-triangle trigonometry
+
+| Unit | Parent anchor | The one idea |
+| :--- | :--- | :--- |
+| `radians` | `#micro-radians` | A half-turn is π radians; convert before the trig call. |
+| `trig-reach` | `#micro-trig-reach` | Cosine is the horizontal shadow, sine the vertical one. |
+| `atan2` | `#micro-atan2` | atan2 takes y first and returns radians. |
+
+### P.11 — reading time-series graphs
+
+| Unit | Parent anchor | The one idea |
+| :--- | :--- | :--- |
+| `graph-slope` | `#micro-graph-slope` | Slope is the rate of change, not the value. |
+| `area-under-curve` | `#micro-area-under-curve` | Rectangle slices accumulate displacement. |
+| `graph-units` | `#micro-graph-units` | The axis labels give the slope its unit. |
+
+### P.12 — forces and lever torque
+
+| Unit | Parent anchor | The one idea |
+| :--- | :--- | :--- |
+| `force` | `#micro-force` | Net force is mass times acceleration. |
+| `weight` | `#micro-weight` | Weight is the force gravity adds: W = m · g. |
+| `torque` | `#micro-torque` | Torque uses the perpendicular lever arm, L cos θ. |
+
+### P.14 — reading a datasheet table
+
+| Unit | Parent anchor | The one idea |
+| :--- | :--- | :--- |
+| `datasheet-units` | `#micro-datasheet-units` | The unit column is half the value. |
+| `datasheet-bounds` | `#micro-datasheet-bounds` | Recommended bounds are not the destruction limit. |
+| `datasheet-conditions` | `#micro-datasheet-conditions` | Typ is not a promise; budget on Max. |
+
+### P.15 — the analysis workflow
+
+| Unit | Parent anchor | The one idea |
+| :--- | :--- | :--- |
+| `given-unknown` | `#micro-given-unknown` | Name the givens and the unknown before the model. |
+| `answer-check` | `#micro-answer-check` | A number becomes an answer after the check. |
+| `bounds-check` | `#micro-bounds-check` | Clamp to the limit and name the part. |
+
 Each unit has an authored teaching passage, a read-only worked example, two four-option diagnostics
 (or normalized short answers), a practice, a four-question review pool and one transfer challenge.
 Answers are graded locally and deterministically: no model, no network, no code execution.
@@ -101,7 +141,7 @@ Answers are graded locally and deterministically: no model, no network, no code 
 ## Design and evidence
 
 `micro/P.<n>.json` is the authored source, one file per parent lesson. `scripts/generate_micro_lessons.py`
-validates every file and concatenates them, in filename order, into `app/src/data/microLessons.ts` with
+validates every file and concatenates them, in numeric order, into `app/src/data/microLessons.ts` with
 one `parents` entry per lesson; `scripts/generate_parent_lessons.py` writes the metadata-only
 `app/src/data/parentLessons.json`. `scripts/micro_timing.py` is the one time model. Every activity
 models at **≤120 seconds**; an author/model gap over 20% is a warning, not a build failure, because
@@ -148,7 +188,7 @@ build-time check; `npm run check:micro-debug` proves the production bundle does 
 
 ## Self-study protocol
 
-Day 1: all thirty-one Learn units, P.1 through P.9. Deliberately answer some diagnostics wrong so the 1/2 and 0/2 paths,
+Day 1: all forty-six Learn units, P.1 through P.15 (P.13 is not a lesson). Deliberately answer some diagnostics wrong so the 1/2 and 0/2 paths,
 the targeted notes and the practice branches are exercised. Scripted browser runs are allowed.
 
 Day 2, at least 18 hours later: reviews (launched manually if not due) plus challenges on variables

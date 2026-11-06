@@ -11,11 +11,12 @@
   "_why_budget_2026_11_05_lesson_requirements": "Every Project lesson now shows its pass conditions under the goal, in Study and in the runner. The block is generated per lesson (43 lessons, about 11 kB raw) and rides the same data module as the starter, so the signed-in build measured entry 601,495 B, js 1,041,625 B and largest_js_gzip 407,485 B on 2026-11-05: 1,495 B and 1,625 B over the first two ceilings, and 515 B left in the third. The new ceilings are 605,000 B entry, 1,046,000 B signed-in js and 412,000 B largest - 3.5-4.5 kB of room each for the next small control, not a library. No dependency or lazy chunk was added, and css (28,084 B of 29,000 B) and total (3,767,655 B of 3,790,000 B) keep their numbers. Hand-raised after the measurement, not recorded first.",
   "_why_budget_2026_11_06_micro_p2": "The P.2 micro units and the header door raised signed-in js_gzip to 1,046,115 B on the 2026-11-06 CI build - 115 B over the unchanged 1,046,000 B ceiling - while the same tree measured 1,045,855 B locally (145 B left), so the gap is the CI build's compression, not a second feature. The three authored P.2 concepts, the second parent entry, the per-concept visuals and the extra group heading and lesson-footer control ride the already-lazy TabMicro chunk; the header's Micro button and its icon ride the entry chunk, which measured 601.9 kB of its 605 kB. The signed-in ceiling is 1,052,000 B: about 6 kB of room above the CI measurement for the next small control, not a library. largest_js_gzip (407.8 of 412 kB) and total (3.77 of 3.79 MB) keep their numbers, and the local-only js_gzip ceiling is untouched because this build was graded in its signed-in shape. Hand-raised after the measurement, not recorded first.",
   "_why_budget_2026_11_06_micro_p9": "The P.3-P.9 micro units raised signed-in js_gzip to 1,065,366 B on 2026-11-06, 13,366 B over the unchanged 1,052,000 B ceiling, and total to 3,791,472 B, 1,472 B over 3,790,000 B. The twenty-one new authored concepts (thirty-one across nine lessons), their reader anchors and the figure map ride the already-lazy TabMicro chunk and the reader's figure table; the entry chunk did not move (601,897 B of 605,000 B). The ceilings are 1,072,000 B js and 3,800,000 B total: about 6.6 kB and 8.5 kB of room above the measurement for the next small control, not a library. largest_js_gzip (407,811 of 412,000), reader_gzip (718,018 of 720,000) and prose_gzip (218,067 of 220,000) stay inside their numbers. The local-only js ceiling is untouched because this build was graded in its signed-in shape. Hand-raised after the measurement, not recorded first.",
+  "_why_budget_2026_11_06_micro_p10": "The P.10, P.11, P.12, P.14 and P.15 micro units raised signed-in js_gzip to 1,080,083 B on 2026-11-06, 8,083 B over the unchanged 1,072,000 B ceiling, and total to 3,806,188 B, 6,188 B over 3,800,000 B. The fifteen new authored concepts (forty-six across fourteen lessons), their reader anchors and the figure map ride the already-lazy TabMicro chunk and the reader's figure table; the entry chunk did not move (601,883 B of 605,000 B). The ceilings are 1,090,000 B js and 3,820,000 B total: about 10 kB and 14 kB of room above the measurement for the next small control, not a library. largest_js_gzip (407,798 of 412,000) stays inside its number; reader_gzip (719,575 of 720,000) and prose_gzip (219,352 of 220,000) also stay inside, with about 425 B and 648 B left, so the next micro lesson must watch those two rather than assume room. The local-only js ceiling is untouched because this build was graded in its signed-in shape. Hand-raised after the measurement, not recorded first.",
   "signed_in": {
     "_why": "The same source builds a bigger bundle when the Supabase variables are set, which is how CI builds it (the anon key is a repository variable; the build is local-only on a fresh clone). Run 207 is why this block exists. CI's `entry_gzip` read 532.6 kB against the 480 kB ceiling — a real breach nobody saw locally — because `@supabase/supabase-js` was being parked by the catch-all in the statically preloaded `vendor` chunk. The fix is a split, not a ceiling: `vite.config.ts` sends it to its own `vendor-auth` chunk, which the account panel fetches when it opens, so `entry_gzip` measured 475.1 kB with accounts configured and needs no override — and it should not get one, because a first paint that differs between the two shapes would mean the split regressed. What the library really costs is emitted bytes: 57.8 kB gzipped in `vendor-auth` plus the account panel's own code in the runner chunk. (Both builds emit a `vendor-auth` file; without the variables it is the one-byte stub the folded-away import leaves, which is why the gate tells the shapes apart by that chunk's raw size rather than by its name.) `js_gzip` 801.0 kB measured against 810 kB (9 kB of room) and `total` 1.12 MB against 1.14 MB (20 kB), both by hand and by this measurement. The other five metrics are the same file in both shapes and keep their base ceilings, so a font or a stylesheet cannot grow just because someone built with a key.",
     "budgets": {
-      "js_gzip": 1072000,
-      "total": 3800000
+      "js_gzip": 1090000,
+      "total": 3820000
     }
   },
   "budgets": {
@@ -31,16 +32,16 @@
     "total": 3740000
   },
   "measured": {
-    "entry_gzip": 601897,
-    "js_gzip": 1065366,
+    "entry_gzip": 601883,
+    "js_gzip": 1080083,
     "css_gzip": 28158,
     "fonts": 425324,
-    "largest_js_gzip": 407811,
-    "prose_gzip": 218067,
-    "reader_gzip": 718018,
+    "largest_js_gzip": 407798,
+    "prose_gzip": 219352,
+    "reader_gzip": 719575,
     "audio": 126967,
     "music": 2233468,
-    "total": 3791472,
+    "total": 3806188,
     "variant": "signed_in",
     "recordedAt": "2026-11-06"
   }

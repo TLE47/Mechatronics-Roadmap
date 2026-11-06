@@ -71,6 +71,18 @@ flowchart LR
   - **Key takeaway:** A computed number is not an answer until it carries a **unit** and fits the **bounds** of the real part. A 12 V supply across a 2.4 ohm winding gives $12.0 / 2.4 = 5.0$ **A**; the driver in this lesson passes 3.2 A continuously, so 5.0 A is a **fault**, not a result. The check step is what turns that fault into a decision: clamp the answer to 3.2 A and say which part is the limit.
   - **Alternative resource:** [SparkFun — How to Read a Datasheet](https://learn.sparkfun.com/tutorials/how-to-read-a-schematic/all) `[HTTP 200 — Verified by scripts/check_links.py]` — Review the exact heading **`Name Designators and Values`**; the `Min`/`Max` columns are the bounds your check step reads.
 
+#### Micro focus: givens first, then the model
+<a id="micro-given-unknown"></a>
+Write the **given** quantities with their units, then name the one **unknown** — the draw, the torque, the angle. The unknown chooses the model, so an analysis that starts from a remembered formula has already skipped the step that decides whether the formula is the right one.
+
+#### Micro focus: a number is not yet an answer
+<a id="micro-answer-check"></a>
+A computed number is not an answer until it carries a **unit** and passes the check. Twelve volts across 2.4 Ω gives 5.0 A, but the driver in this lesson passes 3.2 A, so the check returns not-ok and the passable value becomes the limit.
+
+#### Micro focus: clamp and name the limit
+<a id="micro-bounds-check"></a>
+The check asks whether the value fits the **bounds** of the real part and whether its unit matches the question. When it does not, clamp the answer to 3.2 A and name the part that set the ceiling, rather than printing the impossible number as if it were a result.
+
 ### Bridge Notes
 Two engineers can compute the same number and only one of them produces a usable answer. The difference is not arithmetic; it is order. The workflow makes the order visible. Start with the **given** list and write every value with its unit, because a number without a unit cannot be checked later. Name the **unknown** next: it decides which **model** you are allowed to use. Then **compute** without dressing the result up as a conclusion. The **check** step asks the question arithmetic cannot: is this value inside the **bounds** of the part, and does its unit match what the answer needs? At 12 V across 2.4 ohm the computed value is 5.0 A, while the driver passes 3.2 A — so the workflow takes the failure **branch**, clamps the result, and writes an **answer** that names the limit instead of hiding it. That last step, writing the answer after the check rather than before it, is the whole habit this lesson teaches.
 

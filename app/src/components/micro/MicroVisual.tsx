@@ -18,6 +18,96 @@ import type { PrimitiveSample } from '../../micro/randomize.ts';
  */
 
 const TONE: Record<string, { border: string; bg: string; text: string; label: string }> = {
+  radians: {
+    border: 'border-accent/40',
+    bg: 'bg-accent/10',
+    text: 'text-accent',
+    label: 'A half-turn is pi radians',
+  },
+  'trig-reach': {
+    border: 'border-emerald/40',
+    bg: 'bg-emerald/10',
+    text: 'text-emerald',
+    label: 'One link, two shadows',
+  },
+  atan2: {
+    border: 'border-purple/40',
+    bg: 'bg-purple/10',
+    text: 'text-purple',
+    label: 'A point turned back into an angle',
+  },
+  'graph-slope': {
+    border: 'border-amber/40',
+    bg: 'bg-amber/10',
+    text: 'text-amber',
+    label: 'Rise over run is the rate',
+  },
+  'area-under-curve': {
+    border: 'border-emerald/40',
+    bg: 'bg-emerald/10',
+    text: 'text-emerald',
+    label: 'Slices add up to the journey',
+  },
+  'graph-units': {
+    border: 'border-accent/40',
+    bg: 'bg-accent/10',
+    text: 'text-accent',
+    label: 'The axes carry the units',
+  },
+  force: {
+    border: 'border-rose/40',
+    bg: 'bg-rose/10',
+    text: 'text-rose',
+    label: 'Mass times acceleration is force',
+  },
+  weight: {
+    border: 'border-amber/40',
+    bg: 'bg-amber/10',
+    text: 'text-amber',
+    label: 'Gravity turns mass into weight',
+  },
+  torque: {
+    border: 'border-purple/40',
+    bg: 'bg-purple/10',
+    text: 'text-purple',
+    label: 'The lever arm is the horizontal reach',
+  },
+  'datasheet-units': {
+    border: 'border-accent/40',
+    bg: 'bg-accent/10',
+    text: 'text-accent',
+    label: 'The number and its unit',
+  },
+  'datasheet-bounds': {
+    border: 'border-rose/40',
+    bg: 'bg-rose/10',
+    text: 'text-rose',
+    label: 'A band with two edges',
+  },
+  'datasheet-conditions': {
+    border: 'border-amber/40',
+    bg: 'bg-amber/10',
+    text: 'text-amber',
+    label: 'Typ is a usual part, not a promise',
+  },
+  'given-unknown': {
+    border: 'border-emerald/40',
+    bg: 'bg-emerald/10',
+    text: 'text-emerald',
+    label: 'Name the givens and the unknown',
+  },
+  'answer-check': {
+    border: 'border-accent/40',
+    bg: 'bg-accent/10',
+    text: 'text-accent',
+    label: 'A number becomes an answer after the check',
+  },
+  'bounds-check': {
+    border: 'border-rose/40',
+    bg: 'bg-rose/10',
+    text: 'text-rose',
+    label: 'Clamp to the limit and name it',
+  },
   variables: {
     border: 'border-accent/40',
     bg: 'bg-accent/10',
@@ -208,6 +298,21 @@ const TONE: Record<string, { border: string; bg: string; text: string; label: st
 
 /** One literal row per concept that has no hand-drawn figure of its own. */
 const PICTURE: Record<string, { chips: string[]; note: string }> = {
+  radians: { chips: ['180°', 'π rad'], note: 'a half-turn in the maths unit' },
+  'trig-reach': { chips: ['L = 2.0', 'x = 1.0, y = 1.73'], note: 'cos is the shadow across' },
+  atan2: { chips: ['(3, 3)', '45°'], note: 'y first, then x' },
+  'graph-slope': { chips: ['3.0 → 5.0 m', '0.5 s'], note: 'the slope is 4.0 m/s' },
+  'area-under-curve': { chips: ['v = 2.0, dt = 0.5', '1.0 m per slice'], note: 'slices accumulate' },
+  'graph-units': { chips: ['5.0 → 3.0 V', '0.4 s'], note: 'the slope is -5.0 V/s' },
+  force: { chips: ['2.0 kg × 3.0 m/s²', '6.0 N'], note: 'mass times acceleration' },
+  weight: { chips: ['2.5 kg × 9.81', '24.5 N'], note: 'gravity adds the force' },
+  torque: { chips: ['1.0 kg, 0.5 m, 0°', '4.905 N·m'], note: 'the lever arm is horizontal' },
+  'datasheet-units': { chips: ['2.5 mA', '0.0025 A'], note: 'the unit is half the value' },
+  'datasheet-bounds': { chips: ['2.7 V ≤ 12.0 V ≤ 10.8 V', 'False'], note: 'outside the recommended band' },
+  'datasheet-conditions': { chips: ['Typ 1.8 mA', 'Max 3.0 mA'], note: 'budget on Max' },
+  'given-unknown': { chips: ['12.0 V, 2.4 Ω', 'draw = ?'], note: 'name it before the model' },
+  'answer-check': { chips: ['5.0 A > 3.2 A', 'not ok'], note: 'the limit decides' },
+  'bounds-check': { chips: ['min(5.0, 3.2)', '3.2 A, driver-limited'], note: 'clamp and name the part' },
   comparisons: { chips: ['12 > 80', 'False'], note: 'a comparison answers True or False' },
   clamping: { chips: ['310', '255 (limit)'], note: 'the nearest allowed value' },
   logic: { chips: ['True and False', 'False'], note: 'both sides must agree' },

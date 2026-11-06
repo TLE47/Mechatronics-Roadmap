@@ -41,7 +41,9 @@ class MicroContentTests(unittest.TestCase):
         self.assertEqual(self.findings, [], "expected no micro findings; check the content validator before shipping")
 
     def test_every_source_names_the_file_it_lives_in(self):
-        self.assertGreaterEqual(len(self.sources), 9, "expected P.1 through P.9 to each teach micro lessons")
+        self.assertGreaterEqual(
+            len(self.sources), 14, "expected every numbered P lesson to teach micro lessons"
+        )
         for source in self.sources:
             stem = os.path.splitext(os.path.basename(source["_source"]))[0]
             self.assertEqual(

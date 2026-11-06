@@ -1,0 +1,433 @@
+{
+  "subjectId": "python",
+  "parentLessonId": "P.14",
+  "parentPath": "track-p/P.14-reading-a-datasheet-table.md",
+  "title": "Reading a datasheet in small steps",
+  "version": 1,
+  "concepts": [
+    {
+      "id": "datasheet-units",
+      "title": "The unit column is part of the value",
+      "parentLessonId": "P.14",
+      "anchor": "micro-datasheet-units",
+      "sourceFocus": [
+        "Always check the **Unit** column",
+        "a quiescent draw of `2.5` in a `mA` column is $0.0025\\text{ A}$"
+      ],
+      "revision": 1,
+      "prerequisites": ["si-units"],
+      "resources": [],
+      "timing": { "learn": 89, "review": 36, "challenge": 49 },
+      "teaching": [
+        "A datasheet number is only half a value; the Unit column supplies the other half. Always check the **Unit** column before comparing or multiplying, because a table mixes V, mA, kHz and °C in adjacent rows.",
+        "Convert to base SI at the boundary: a quiescent draw of `2.5` in a `mA` column is 0.0025 A, and 250 in a `kHz` row is 250000 Hz. Doing the conversion once, when the number enters the program, keeps every later comparison in the same units."
+      ],
+      "example": {
+        "code": "table_value = 2.5\nmilliamps_to_amps = 1e-3\ndraw_a = table_value * milliamps_to_amps\nprint(draw_a)",
+        "output": "0.0025"
+      },
+      "walkthrough": [
+        {
+          "code": "table_value * 1e-3",
+          "expression": "2.5 × 0.001",
+          "output": "0.0025",
+          "note": "Milliamps become amps by moving the decimal three places."
+        },
+        {
+          "code": "print(draw_a)",
+          "output": "0.0025",
+          "note": "The stored value is in amps, ready for a comparison."
+        },
+        {
+          "code": "draw_a > 0.05",
+          "output": "False",
+          "note": "A 2.5 mA standby draw is far below a 50 mA budget."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "datasheet-units-d1",
+          "prompt": "A row says Typ = 1.8 with Unit = mA. What is that in amps?",
+          "options": [
+            { "id": "a", "text": "0.0018 A" },
+            { "id": "b", "text": "1.8 A" },
+            { "id": "c", "text": "1800 A" },
+            { "id": "d", "text": "0.18 A" }
+          ],
+          "answerId": "a",
+          "explanation": "1.8 mA = 1.8 × 10⁻³ A = 0.0018 A."
+        },
+        {
+          "id": "datasheet-units-d2",
+          "prompt": "Why read the Unit column before comparing two rows?",
+          "options": [
+            { "id": "a", "text": "The rows may use different units" },
+            { "id": "b", "text": "It gives the part number" },
+            { "id": "c", "text": "It sets the supply voltage" },
+            { "id": "d", "text": "It is optional" }
+          ],
+          "answerId": "a",
+          "explanation": "Comparing 1.8 mA with 0.05 A as raw numbers would be wrong by a factor of 1000."
+        }
+      ],
+      "practice": {
+        "id": "datasheet-units-p1",
+        "prompt": "What does this print?",
+        "code": "print(250 * 1e3)",
+        "options": [
+          { "id": "a", "text": "250000.0" },
+          { "id": "b", "text": "250.0" },
+          { "id": "c", "text": "0.25" },
+          { "id": "d", "text": "2500.0" }
+        ],
+        "answerId": "a",
+        "explanation": "A 250 kHz row becomes 250000 Hz."
+      },
+      "reviewPool": [
+        {
+          "id": "datasheet-units-r1",
+          "prompt": "What does the Unit column tell you?",
+          "options": [
+            { "id": "a", "text": "The scale of the number beside it" },
+            { "id": "b", "text": "The price" },
+            { "id": "c", "text": "The package size" },
+            { "id": "d", "text": "The pin count" }
+          ],
+          "answerId": "a",
+          "explanation": "The number and its unit form one value."
+        },
+        {
+          "id": "datasheet-units-r2",
+          "prompt": "How many amps is 500 mA?",
+          "options": [
+            { "id": "a", "text": "0.5 A" },
+            { "id": "b", "text": "500 A" },
+            { "id": "c", "text": "500000 A" },
+            { "id": "d", "text": "0.005 A" }
+          ],
+          "answerId": "a",
+          "explanation": "500 mA = 0.5 A."
+        },
+        {
+          "id": "datasheet-units-r3",
+          "prompt": "When should the conversion to base SI happen?",
+          "options": [
+            { "id": "a", "text": "When the value enters the program" },
+            { "id": "b", "text": "Only at the end" },
+            { "id": "c", "text": "Never" },
+            { "id": "d", "text": "Only in the datasheet" }
+          ],
+          "answerId": "a",
+          "explanation": "One conversion at the boundary keeps later maths consistent."
+        },
+        {
+          "id": "datasheet-units-r4",
+          "prompt": "How many hertz is 20 kHz?",
+          "options": [
+            { "id": "a", "text": "20000 Hz" },
+            { "id": "b", "text": "20 Hz" },
+            { "id": "c", "text": "0.02 Hz" },
+            { "id": "d", "text": "2000 Hz" }
+          ],
+          "answerId": "a",
+          "explanation": "kilo means ×1000."
+        }
+      ],
+      "challenge": {
+        "id": "datasheet-units-c1",
+        "prompt": "A timing row says 250 with Unit = µs. What is that in seconds?",
+        "code": "print(250 * 1e-6)",
+        "options": [
+          { "id": "a", "text": "0.00025 s" },
+          { "id": "b", "text": "0.25 s" },
+          { "id": "c", "text": "250000 s" },
+          { "id": "d", "text": "0.025 s" }
+        ],
+        "answerId": "a",
+        "explanation": "250 µs = 250 × 10⁻⁶ s = 0.00025 s."
+      }
+    },
+    {
+      "id": "datasheet-bounds",
+      "title": "Recommended bounds are not the destruction limit",
+      "parentLessonId": "P.14",
+      "anchor": "micro-datasheet-bounds",
+      "sourceFocus": [
+        "**Recommended Operating Conditions (`Min` $\\le x \\le$ `Max`)**",
+        "**Absolute Maximum Ratings** are the stress threshold"
+      ],
+      "revision": 1,
+      "prerequisites": ["datasheet-units"],
+      "resources": [],
+      "timing": { "learn": 94, "review": 36, "challenge": 49 },
+      "teaching": [
+        "Recommended Operating Conditions give the band a part is designed to run in: Min ≤ x ≤ Max, inclusive. The Absolute Maximum Ratings are a different, wider list: **Absolute Maximum Ratings** are the stress threshold beyond which permanent damage occurs, and reliable operation is not promised even at those numbers.",
+        "Design inside the recommended band, not between it and the absolute maximum. A DRV8833 with a 10.8 V recommended maximum and an 11.8 V absolute maximum is already outside its safe design at 11.0 V, even though it may survive briefly."
+      ],
+      "example": {
+        "code": "v_supply = 12.0\nv_min = 2.7\nv_max = 10.8\nsafe = v_min <= v_supply <= v_max\nprint(safe)",
+        "output": "False"
+      },
+      "walkthrough": [
+        {
+          "code": "2.7 <= 12.0",
+          "output": "True",
+          "note": "The supply clears the minimum."
+        },
+        {
+          "code": "12.0 <= 10.8",
+          "output": "False",
+          "note": "It fails the recommended maximum."
+        },
+        {
+          "code": "v_min <= v <= v_max",
+          "output": "False",
+          "note": "Both comparisons must hold; chaining them says so in one line."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "datasheet-bounds-d1",
+          "prompt": "Which list should a design stay inside?",
+          "options": [
+            { "id": "a", "text": "Recommended Operating Conditions" },
+            { "id": "b", "text": "Absolute Maximum Ratings" },
+            { "id": "c", "text": "Either one" },
+            { "id": "d", "text": "The package drawing" }
+          ],
+          "answerId": "a",
+          "explanation": "The absolute maximum is a damage threshold, not an operating target."
+        },
+        {
+          "id": "datasheet-bounds-d2",
+          "prompt": "A part is rated 2.7–10.8 V recommended and 11.8 V absolute max. Is 11.0 V a safe design point?",
+          "options": [
+            { "id": "a", "text": "No — it is above the recommended maximum" },
+            { "id": "b", "text": "Yes — it is below the absolute maximum" },
+            { "id": "c", "text": "Yes — any value below 11.8 V is fine" },
+            { "id": "d", "text": "Only if the current is low" }
+          ],
+          "answerId": "a",
+          "explanation": "Reliable operation is guaranteed only inside Min ≤ x ≤ Max."
+        }
+      ],
+      "practice": {
+        "id": "datasheet-bounds-p1",
+        "prompt": "What does this print?",
+        "code": "print(4.5 <= 5.0 <= 13.5)",
+        "options": [
+          { "id": "a", "text": "True" },
+          { "id": "b", "text": "False" },
+          { "id": "c", "text": "5.0" },
+          { "id": "d", "text": "Error" }
+        ],
+        "answerId": "a",
+        "explanation": "Five volts sits inside the TB6612FNG's recommended 4.5–13.5 V band."
+      },
+      "reviewPool": [
+        {
+          "id": "datasheet-bounds-r1",
+          "prompt": "What does `min <= x <= max` check?",
+          "options": [
+            { "id": "a", "text": "That x is inside the band, ends included" },
+            { "id": "b", "text": "That x equals min" },
+            { "id": "c", "text": "That x equals max" },
+            { "id": "d", "text": "That min is greater than max" }
+          ],
+          "answerId": "a",
+          "explanation": "Python chains the two comparisons with and."
+        },
+        {
+          "id": "datasheet-bounds-r2",
+          "prompt": "What is an absolute maximum rating?",
+          "options": [
+            { "id": "a", "text": "A stress limit beyond which damage may occur" },
+            { "id": "b", "text": "The best operating point" },
+            { "id": "c", "text": "A typical value" },
+            { "id": "d", "text": "The recommended minimum" }
+          ],
+          "answerId": "a",
+          "explanation": "It is a survival threshold, not a design target."
+        },
+        {
+          "id": "datasheet-bounds-r3",
+          "prompt": "A 12.0 V rail against a recommended maximum of 10.8 V is…",
+          "options": [
+            { "id": "a", "text": "outside the recommended band" },
+            { "id": "b", "text": "inside the band" },
+            { "id": "c", "text": "exactly at the maximum" },
+            { "id": "d", "text": "below the minimum" }
+          ],
+          "answerId": "a",
+          "explanation": "12.0 > 10.8, so the design fails the band."
+        },
+        {
+          "id": "datasheet-bounds-r4",
+          "prompt": "Why keep safety margin inside the recommended band?",
+          "options": [
+            { "id": "a", "text": "Tolerance and heat can push a value past the edge" },
+            { "id": "b", "text": "The band is only a suggestion" },
+            { "id": "c", "text": "It makes the part cheaper" },
+            { "id": "d", "text": "It raises the absolute maximum" }
+          ],
+          "answerId": "a",
+          "explanation": "A supply at its nominal limit can drift above it; margin absorbs that."
+        }
+      ],
+      "challenge": {
+        "id": "datasheet-bounds-c1",
+        "prompt": "Which supply is safe for a part rated 4.5–13.5 V recommended?",
+        "options": [
+          { "id": "a", "text": "12.0 V" },
+          { "id": "b", "text": "14.0 V" },
+          { "id": "c", "text": "3.3 V" },
+          { "id": "d", "text": "15.0 V" }
+        ],
+        "answerId": "a",
+        "explanation": "12.0 V sits inside 4.5–13.5 V; 14.0 and 15.0 are above it and 3.3 is below."
+      }
+    },
+    {
+      "id": "datasheet-conditions",
+      "title": "Typ is not a promise — design to Max",
+      "parentLessonId": "P.14",
+      "anchor": "micro-datasheet-conditions",
+      "sourceFocus": [
+        "`Typ`",
+        "with safety margin"
+      ],
+      "revision": 1,
+      "prerequisites": ["datasheet-bounds"],
+      "resources": [],
+      "timing": { "learn": 90, "review": 36, "challenge": 49 },
+      "teaching": [
+        "Datasheets print Min, `Typ` and Max because a part varies. The typical value is what a fresh part usually does, not a promise: a `Typ` current can be higher on a hot day or a different batch. Design a budget against Max and keep the result with safety margin.",
+        "The same caution applies to the test conditions above a table: a current measured at 25 °C may rise well above that at 70 °C. Read the conditions row before quoting the number, and when a value has no Max, treat the stated limit as the one to stay under."
+      ],
+      "example": {
+        "code": "typ_ma = 1.8\nmax_ma = 3.0\nbudget_a = max_ma * 1e-3\nprint(budget_a)",
+        "output": "0.003"
+      },
+      "walkthrough": [
+        {
+          "code": "max_ma * 1e-3",
+          "expression": "3.0 × 0.001",
+          "output": "0.003",
+          "note": "The worst-case standby draw in amps."
+        },
+        {
+          "code": "typ_ma * 1e-3",
+          "expression": "1.8 × 0.001",
+          "output": "0.0018",
+          "note": "The typical value is lower, which is why budgeting on it would understate the draw."
+        },
+        {
+          "code": "budget_a",
+          "output": "0.003",
+          "note": "Use 3 mA for the budget, not 1.8 mA."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "datasheet-conditions-d1",
+          "prompt": "Which column should a worst-case budget use?",
+          "options": [
+            { "id": "a", "text": "Max" },
+            { "id": "b", "text": "Typ" },
+            { "id": "c", "text": "Min" },
+            { "id": "d", "text": "Any of them" }
+          ],
+          "answerId": "a",
+          "explanation": "Max covers the part at its worst; Typ is only a typical sample."
+        },
+        {
+          "id": "datasheet-conditions-d2",
+          "prompt": "What does a Typ value mean?",
+          "options": [
+            { "id": "a", "text": "A typical value, not a guarantee" },
+            { "id": "b", "text": "The guaranteed maximum" },
+            { "id": "c", "text": "The absolute maximum" },
+            { "id": "d", "text": "The minimum supply" }
+          ],
+          "answerId": "a",
+          "explanation": "Typ describes a usual part; the band is bounded by Min and Max."
+        }
+      ],
+      "practice": {
+        "id": "datasheet-conditions-p1",
+        "prompt": "A row shows Typ = 1.8 mA, Max = 3.0 mA. Which value goes into a worst-case budget?",
+        "options": [
+          { "id": "a", "text": "3.0 mA" },
+          { "id": "b", "text": "1.8 mA" },
+          { "id": "c", "text": "4.8 mA" },
+          { "id": "d", "text": "0 mA" }
+        ],
+        "answerId": "a",
+        "explanation": "Budget on Max; Typ would understate the draw."
+      },
+      "reviewPool": [
+        {
+          "id": "datasheet-conditions-r1",
+          "prompt": "Why does a datasheet give Min, Typ and Max?",
+          "options": [
+            { "id": "a", "text": "Parts vary, so the table bounds the spread" },
+            { "id": "b", "text": "To fill the columns" },
+            { "id": "c", "text": "To show three suppliers" },
+            { "id": "d", "text": "To give three voltages" }
+          ],
+          "answerId": "a",
+          "explanation": "The three columns describe the guaranteed band and a typical part."
+        },
+        {
+          "id": "datasheet-conditions-r2",
+          "prompt": "A number measured at 25 °C is quoted for a 70 °C design. What should you check?",
+          "options": [
+            { "id": "a", "text": "Whether the table has a value for the hotter condition" },
+            { "id": "b", "text": "Nothing — temperature does not matter" },
+            { "id": "c", "text": "The package colour" },
+            { "id": "d", "text": "The part's price" }
+          ],
+          "answerId": "a",
+          "explanation": "Test conditions qualify the number; a hot design needs the hot value or margin."
+        },
+        {
+          "id": "datasheet-conditions-r3",
+          "prompt": "Designing exactly at Max with no margin is…",
+          "options": [
+            { "id": "a", "text": "risky, because tolerance can push past it" },
+            { "id": "b", "text": "the recommended approach" },
+            { "id": "c", "text": "the same as Typ" },
+            { "id": "d", "text": "impossible" }
+          ],
+          "answerId": "a",
+          "explanation": "Keep safety margin inside the band."
+        },
+        {
+          "id": "datasheet-conditions-r4",
+          "prompt": "Which is a test condition?",
+          "options": [
+            { "id": "a", "text": "Measured at 25 °C and 5 V" },
+            { "id": "b", "text": "The part number" },
+            { "id": "c", "text": "The pin count" },
+            { "id": "d", "text": "The package width" }
+          ],
+          "answerId": "a",
+          "explanation": "Conditions state the temperature and supply the numbers were measured at."
+        }
+      ],
+      "challenge": {
+        "id": "datasheet-conditions-c1",
+        "prompt": "A standby row is Typ 1.8 mA, Max 3.0 mA; a 5 V rail feeds it. What is the worst-case standby power?",
+        "code": "print(round(5.0 * 3.0e-3, 3))",
+        "options": [
+          { "id": "a", "text": "0.015 W" },
+          { "id": "b", "text": "0.009 W" },
+          { "id": "c", "text": "15 W" },
+          { "id": "d", "text": "0.003 W" }
+        ],
+        "answerId": "a",
+        "explanation": "P = V · I = 5.0 × 0.003 = 0.015 W, using Max rather than Typ."
+      }
+    }
+  ]
+}

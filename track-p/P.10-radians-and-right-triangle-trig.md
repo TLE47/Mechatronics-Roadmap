@@ -69,6 +69,18 @@ flowchart LR
   - **Key takeaway:** When a robot arm link of length $L$ (the **hypotenuse**) tilts upward by angle $\theta$ from the horizontal $x$-axis, its **horizontal reach** is $x = L\cos(\theta)$ and its **vertical height** is $y = L\sin(\theta)$. To go backward from target coordinates $(x, y)$ to joint angle $\theta$, always use **four-quadrant inverse tangent** `math.atan2(y, x)` (which takes `y` first, then `x`).
   - **Optional extra:** [PhET — Trig Tour Interactive Simulation](https://phet.colorado.edu/en/simulations/trig-tour) `[verify in-app]` — Drag the point around the circle with **`Radians`** selected `[verify in-app]` to watch $\cos\theta$ and $\sin\theta$ change live.
 
+#### Micro focus: radians before the call
+<a id="micro-radians"></a>
+A radian is the angle swept by one radius of arc, and one full revolution ($360^\circ$) is **$2\pi\text{ radians}$** while a half-turn is π. Python's trig functions take radians, so convert with `math.radians(deg)` before calling them and use `math.degrees(rad)` to come back.
+
+#### Micro focus: the two shadows of a link
+<a id="micro-trig-reach"></a>
+For a link of length L at angle θ from the horizontal, the **horizontal reach** is $x = L\cos(\theta)$ and the **vertical height** is $y = L\sin(\theta)$. At 0° the reach is the whole length and the height is zero; at 90° the opposite is true.
+
+#### Micro focus: a point back to an angle
+<a id="micro-atan2"></a>
+To recover a joint angle from a target, use `math.atan2(y, x)` (which takes `y` first, then `x`) and convert the result with `math.degrees(rad)` for a display. It returns radians, handles x = 0, and keeps the sign of every quadrant.
+
 ### Bridge Notes
 Every programming language (`Python`, `C`, `C++`, `MATLAB`) expects angles inside `cos()` and `sin()` to be in **radians**, never degrees! A radian measures an angle by the distance walked around a unit circle of radius $r = 1$: walking halfway around the circle ($180^\circ$) covers $\pi \approx 3.1416\text{ radians}$, and walking a full turn ($360^\circ$) covers $2\pi \approx 6.2832\text{ radians}$. Use these two conversion rules constantly:
 1. **Degrees $\leftrightarrow$ Radians:** $\text{rad} = \text{deg} \times \frac{\pi}{180}$ (`math.radians(deg)`), and $\text{deg} = \text{rad} \times \frac{180}{\pi}$ (`math.degrees(rad)`).

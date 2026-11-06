@@ -1,0 +1,429 @@
+{
+  "subjectId": "python",
+  "parentLessonId": "P.15",
+  "parentPath": "track-p/P.15-analysis-workflow-given-unknown-model-check-answer.md",
+  "title": "The analysis workflow in small steps",
+  "version": 1,
+  "concepts": [
+    {
+      "id": "given-unknown",
+      "title": "Name the given list before the model",
+      "parentLessonId": "P.15",
+      "anchor": "micro-given-unknown",
+      "sourceFocus": [
+        "Write the **given** quantities with their units",
+        "name the one **unknown**"
+      ],
+      "revision": 1,
+      "prerequisites": ["variables"],
+      "resources": [],
+      "timing": { "learn": 90, "review": 36, "challenge": 49 },
+      "teaching": [
+        "An analysis starts before any formula. Write the **given** quantities with their units — supply 12.0 V, winding 2.4 Ω, driver limit 3.2 A — and name the one **unknown**, here the draw. A number without a unit cannot be checked later.",
+        "Only then choose the model, because the unknown decides which model applies: asking for a current selects Ohm's law, asking for a torque selects the lever equation. Starting from a remembered formula instead is how the wrong quantity gets computed correctly."
+      ],
+      "example": {
+        "code": "supply_v = 12.0\nwinding_ohm = 2.4\ndraw_a = supply_v / winding_ohm\nprint(draw_a)",
+        "output": "5.0"
+      },
+      "walkthrough": [
+        {
+          "code": "given: 12.0 V, 2.4 Ω",
+          "note": "Both values are named with their units before the model."
+        },
+        {
+          "code": "unknown: draw in amps",
+          "note": "The unknown picks the model: a current from a voltage and a resistance."
+        },
+        {
+          "code": "12.0 / 2.4",
+          "output": "5.0",
+          "note": "The compute step, still without judging the result."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "given-unknown-d1",
+          "prompt": "What is the first step of the workflow?",
+          "options": [
+            { "id": "a", "text": "Write the given quantities with units" },
+            { "id": "b", "text": "Compute the answer" },
+            { "id": "c", "text": "Check the bounds" },
+            { "id": "d", "text": "Pick a formula" }
+          ],
+          "answerId": "a",
+          "explanation": "Naming the givens and the unknown comes before choosing a model."
+        },
+        {
+          "id": "given-unknown-d2",
+          "prompt": "What decides which model to use?",
+          "options": [
+            { "id": "a", "text": "The unknown being asked for" },
+            { "id": "b", "text": "The first formula remembered" },
+            { "id": "c", "text": "The number of givens" },
+            { "id": "d", "text": "The units of the answer" }
+          ],
+          "answerId": "a",
+          "explanation": "The question selects the model; the givens only populate it."
+        }
+      ],
+      "practice": {
+        "id": "given-unknown-p1",
+        "prompt": "Which line states the unknown?",
+        "options": [
+          { "id": "a", "text": "the draw in amps" },
+          { "id": "b", "text": "12.0 V" },
+          { "id": "c", "text": "2.4 Ω" },
+          { "id": "d", "text": "3.2 A limit" }
+        ],
+        "answerId": "a",
+        "explanation": "The unknown is the quantity the analysis is asked to produce."
+      },
+      "reviewPool": [
+        {
+          "id": "given-unknown-r1",
+          "prompt": "Why write units beside every given?",
+          "options": [
+            { "id": "a", "text": "The unit is part of the value and is checked later" },
+            { "id": "b", "text": "To make the list longer" },
+            { "id": "c", "text": "Units are optional" },
+            { "id": "d", "text": "To choose the variable names" }
+          ],
+          "answerId": "a",
+          "explanation": "A bare number cannot be checked against a datasheet or a model."
+        },
+        {
+          "id": "given-unknown-r2",
+          "prompt": "What are the six workflow steps in order?",
+          "options": [
+            { "id": "a", "text": "Given, Unknown, Model, Compute, Check, Answer" },
+            { "id": "b", "text": "Compute, Given, Answer, Check, Model, Unknown" },
+            { "id": "c", "text": "Model, Answer, Given, Unknown, Compute, Check" },
+            { "id": "d", "text": "Given, Compute, Model, Unknown, Answer, Check" }
+          ],
+          "answerId": "a",
+          "explanation": "The order is the lesson's whole point: name, choose, compute, check, answer."
+        },
+        {
+          "id": "given-unknown-r3",
+          "prompt": "A problem gives a mass and a lever length and asks for torque. Which model?",
+          "options": [
+            { "id": "a", "text": "The lever equation τ = m·g·L·cos θ" },
+            { "id": "b", "text": "Ohm's law" },
+            { "id": "c", "text": "The slope equation" },
+            { "id": "d", "text": "The area rule" }
+          ],
+          "answerId": "a",
+          "explanation": "The unknown is a torque, so the lever model is the one that produces it."
+        },
+        {
+          "id": "given-unknown-r4",
+          "prompt": "When is the answer written?",
+          "options": [
+            { "id": "a", "text": "After the check step" },
+            { "id": "b", "text": "Before the model" },
+            { "id": "c", "text": "Instead of computing" },
+            { "id": "d", "text": "Before the givens" }
+          ],
+          "answerId": "a",
+          "explanation": "The answer is written last, after the check decides whether the number is usable."
+        }
+      ],
+      "challenge": {
+        "id": "given-unknown-c1",
+        "prompt": "Given 5.0 V across 10.0 Ω, what is the unknown draw?",
+        "code": "print(5.0 / 10.0)",
+        "options": [
+          { "id": "a", "text": "0.5 A" },
+          { "id": "b", "text": "2.0 A" },
+          { "id": "c", "text": "50.0 A" },
+          { "id": "d", "text": "0.2 A" }
+        ],
+        "answerId": "a",
+        "explanation": "I = V / R = 5.0 / 10.0 = 0.5 A."
+      }
+    },
+    {
+      "id": "answer-check",
+      "title": "A number becomes an answer after the check",
+      "parentLessonId": "P.15",
+      "anchor": "micro-answer-check",
+      "sourceFocus": [
+        "A computed number is not an answer until it carries a **unit**",
+        "the driver in this lesson passes 3.2 A"
+      ],
+      "revision": 1,
+      "prerequisites": ["given-unknown"],
+      "resources": [],
+      "timing": { "learn": 92, "review": 36, "challenge": 49 },
+      "teaching": [
+        "A computed number is not an answer until it carries a **unit** and fits the real part. Twelve volts across 2.4 Ω gives 5.0 A, but the driver in this lesson passes only 3.2 A continuously, so 5.0 A is a fault rather than a result.",
+        "The check compares the computed value with the limit and records which side it landed on: ok when it fits, and the limit when it does not. That flag is what lets the answer step speak honestly instead of printing a plausible-looking number."
+      ],
+      "example": {
+        "code": "draw_a = 5.0\nlimit_a = 3.2\nok = draw_a <= limit_a\npassable_a = draw_a if ok else limit_a\nprint(ok, passable_a)",
+        "output": "False 3.2"
+      },
+      "walkthrough": [
+        {
+          "code": "5.0 <= 3.2",
+          "output": "False",
+          "note": "The computed draw is above the driver's continuous limit."
+        },
+        {
+          "code": "5.0 if ok else 3.2",
+          "output": "3.2",
+          "note": "The passable value is the limit when the draw does not fit."
+        },
+        {
+          "code": "print(ok, passable_a)",
+          "output": "False 3.2",
+          "note": "The flag and the clamped value travel together into the answer."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "answer-check-d1",
+          "prompt": "The computed draw is 5.0 A and the limit is 3.2 A. What is the check result?",
+          "options": [
+            { "id": "a", "text": "Not ok; the draw exceeds the limit" },
+            { "id": "b", "text": "Ok; 5.0 is a number" },
+            { "id": "c", "text": "Ok; the limit is only advice" },
+            { "id": "d", "text": "Unknown" }
+          ],
+          "answerId": "a",
+          "explanation": "5.0 > 3.2, so the design takes the failure branch."
+        },
+        {
+          "id": "answer-check-d2",
+          "prompt": "What must every answer carry?",
+          "options": [
+            { "id": "a", "text": "A unit and a check against the bounds" },
+            { "id": "b", "text": "Only digits" },
+            { "id": "c", "text": "A colour" },
+            { "id": "d", "text": "A formula name" }
+          ],
+          "answerId": "a",
+          "explanation": "The unit and the bound check are what make the number usable."
+        }
+      ],
+      "practice": {
+        "id": "answer-check-p1",
+        "prompt": "What does this print?",
+        "code": "print(2.0 <= 3.2)",
+        "options": [
+          { "id": "a", "text": "True" },
+          { "id": "b", "text": "False" },
+          { "id": "c", "text": "3.2" },
+          { "id": "d", "text": "2.0" }
+        ],
+        "answerId": "a",
+        "explanation": "Two amps fits inside the 3.2 A limit."
+      },
+      "reviewPool": [
+        {
+          "id": "answer-check-r1",
+          "prompt": "What does the check step compare?",
+          "options": [
+            { "id": "a", "text": "The computed value with the part's limit" },
+            { "id": "b", "text": "Two formulas" },
+            { "id": "c", "text": "The givens with each other" },
+            { "id": "d", "text": "The units with the price" }
+          ],
+          "answerId": "a",
+          "explanation": "The check is against the bounds of the real part."
+        },
+        {
+          "id": "answer-check-r2",
+          "prompt": "What value is passed on when the draw exceeds the limit?",
+          "options": [
+            { "id": "a", "text": "The limit" },
+            { "id": "b", "text": "The draw" },
+            { "id": "c", "text": "Zero" },
+            { "id": "d", "text": "The supply voltage" }
+          ],
+          "answerId": "a",
+          "explanation": "The passable value is clamped to the limit."
+        },
+        {
+          "id": "answer-check-r3",
+          "prompt": "Why is a bare number not an answer?",
+          "options": [
+            { "id": "a", "text": "It has no unit and no bound check" },
+            { "id": "b", "text": "It is too short" },
+            { "id": "c", "text": "It was computed" },
+            { "id": "d", "text": "It is a float" }
+          ],
+          "answerId": "a",
+          "explanation": "A result becomes an answer when it is unit-checked and bounded."
+        },
+        {
+          "id": "answer-check-r4",
+          "prompt": "The check is ok. What should the answer report?",
+          "options": [
+            { "id": "a", "text": "The computed value with its unit" },
+            { "id": "b", "text": "The limit instead" },
+            { "id": "c", "text": "Nothing" },
+            { "id": "d", "text": "The supply voltage" }
+          ],
+          "answerId": "a",
+          "explanation": "When the value fits, it is the passable value."
+        }
+      ],
+      "challenge": {
+        "id": "answer-check-c1",
+        "prompt": "What does this print?",
+        "code": "draw = 4.8\nok = draw <= 3.2\nprint(ok, draw if ok else 3.2)",
+        "options": [
+          { "id": "a", "text": "False 3.2" },
+          { "id": "b", "text": "True 4.8" },
+          { "id": "c", "text": "False 4.8" },
+          { "id": "d", "text": "True 3.2" }
+        ],
+        "answerId": "a",
+        "explanation": "4.8 exceeds 3.2, so the flag is False and the passable value is the limit."
+      }
+    },
+    {
+      "id": "bounds-check",
+      "title": "When the check fails, name the limit",
+      "parentLessonId": "P.15",
+      "anchor": "micro-bounds-check",
+      "sourceFocus": [
+        "fits the **bounds** of the real part",
+        "clamp the answer to 3.2 A"
+      ],
+      "revision": 1,
+      "prerequisites": ["answer-check"],
+      "resources": [],
+      "timing": { "learn": 89, "review": 36, "challenge": 49 },
+      "teaching": [
+        "The check asks two questions: does the value fit the **bounds** of the real part, and does its unit match what was asked? A number can be arithmetically right and still unusable, like 5.0 A through a driver rated 3.2 A.",
+        "When it fails, do not hide it and do not report the impossible number as the result: clamp the answer to the limit and say which part imposed it. \"3.2 A, limited by the driver\" is an answer; \"5.0 A\" is a fault report pretending to be one."
+      ],
+      "example": {
+        "code": "draw_a = 5.0\nlimit_a = 3.2\npassable_a = min(draw_a, limit_a)\nprint(f\"{passable_a} A, limited by the driver\")",
+        "output": "3.2 A, limited by the driver"
+      },
+      "walkthrough": [
+        {
+          "code": "min(5.0, 3.2)",
+          "output": "3.2",
+          "note": "The clamp takes the lower of the computed value and the limit."
+        },
+        {
+          "code": "f\"{passable_a} A, ...\"",
+          "output": "3.2 A, ...",
+          "note": "The unit and the reason are part of the sentence."
+        },
+        {
+          "code": "print(...)",
+          "output": "3.2 A, limited by the driver",
+          "note": "The answer names the part that set the ceiling."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "bounds-check-d1",
+          "prompt": "A result is 5.0 A but the driver passes 3.2 A. What should the answer say?",
+          "options": [
+            { "id": "a", "text": "3.2 A, limited by the driver" },
+            { "id": "b", "text": "5.0 A" },
+            { "id": "c", "text": "No answer" },
+            { "id": "d", "text": "3.2 V" }
+          ],
+          "answerId": "a",
+          "explanation": "Clamp to the limit and name the part that set it."
+        },
+        {
+          "id": "bounds-check-d2",
+          "prompt": "What makes a computed value usable?",
+          "options": [
+            { "id": "a", "text": "A matching unit and a check against the real bounds" },
+            { "id": "b", "text": "Many decimal places" },
+            { "id": "c", "text": "A large magnitude" },
+            { "id": "d", "text": "Being printed" }
+          ],
+          "answerId": "a",
+          "explanation": "The unit and the bounds check are the two gates."
+        }
+      ],
+      "practice": {
+        "id": "bounds-check-p1",
+        "prompt": "What does this print?",
+        "code": "print(min(6.0, 3.2))",
+        "options": [
+          { "id": "a", "text": "3.2" },
+          { "id": "b", "text": "6.0" },
+          { "id": "c", "text": "9.2" },
+          { "id": "d", "text": "2.8" }
+        ],
+        "answerId": "a",
+        "explanation": "The clamp keeps the lower value, the limit."
+      },
+      "reviewPool": [
+        {
+          "id": "bounds-check-r1",
+          "prompt": "What does `min(value, limit)` do when the value exceeds the limit?",
+          "options": [
+            { "id": "a", "text": "Returns the limit" },
+            { "id": "b", "text": "Returns the value" },
+            { "id": "c", "text": "Raises an error" },
+            { "id": "d", "text": "Returns zero" }
+          ],
+          "answerId": "a",
+          "explanation": "The smaller of the two is the passable one."
+        },
+        {
+          "id": "bounds-check-r2",
+          "prompt": "Why name the limiting part in the answer?",
+          "options": [
+            { "id": "a", "text": "It tells the reader what to change or respect" },
+            { "id": "b", "text": "It looks technical" },
+            { "id": "c", "text": "It hides the failure" },
+            { "id": "d", "text": "It removes the unit" }
+          ],
+          "answerId": "a",
+          "explanation": "The cause of the ceiling is the actionable part of the answer."
+        },
+        {
+          "id": "bounds-check-r3",
+          "prompt": "Which answer is honest about a limit?",
+          "options": [
+            { "id": "a", "text": "3.2 A, limited by the driver" },
+            { "id": "b", "text": "5.0 A" },
+            { "id": "c", "text": "5.0" },
+            { "id": "d", "text": "about 4" }
+          ],
+          "answerId": "a",
+          "explanation": "It carries the unit and names the bound."
+        },
+        {
+          "id": "bounds-check-r4",
+          "prompt": "The value fits the limit. What happens?",
+          "options": [
+            { "id": "a", "text": "It is reported with its unit" },
+            { "id": "b", "text": "It is clamped anyway" },
+            { "id": "c", "text": "It is discarded" },
+            { "id": "d", "text": "It becomes the limit" }
+          ],
+          "answerId": "a",
+          "explanation": "No clamp is needed; the computed value is the passable one."
+        }
+      ],
+      "challenge": {
+        "id": "bounds-check-c1",
+        "prompt": "What does this print?",
+        "code": "draw = 1.8\nlimit = 3.2\nprint(f\"{min(draw, limit)} A\")",
+        "options": [
+          { "id": "a", "text": "1.8 A" },
+          { "id": "b", "text": "3.2 A" },
+          { "id": "c", "text": "5.0 A" },
+          { "id": "d", "text": "1.8" }
+        ],
+        "answerId": "a",
+        "explanation": "The draw fits, so no clamp happens and the unit is appended."
+      }
+    }
+  ]
+}

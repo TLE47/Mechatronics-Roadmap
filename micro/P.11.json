@@ -1,0 +1,448 @@
+{
+  "subjectId": "python",
+  "parentLessonId": "P.11",
+  "parentPath": "track-p/P.11-reading-time-series-graphs.md",
+  "title": "Reading time-series graphs in small steps",
+  "version": 1,
+  "concepts": [
+    {
+      "id": "graph-slope",
+      "title": "Slope is the rate of change",
+      "parentLessonId": "P.11",
+      "anchor": "micro-graph-slope",
+      "sourceFocus": [
+        "the **slope**",
+        "`vel = (pos_now - pos_prev) / dt_s`"
+      ],
+      "revision": 1,
+      "prerequisites": ["operators"],
+      "resources": [
+        {
+          "id": "physics-classroom-slope",
+          "title": "The Physics Classroom — Meaning of Slope for a p-t Graph",
+          "url": "https://www.physicsclassroom.com/class/1DKin/Lesson-3/Meaning-of-Slope-for-a-p-t-Graph",
+          "type": "reference",
+          "role": "primary",
+          "provider": "The Physics Classroom",
+          "lastVerified": "2026-11-06"
+        }
+      ],
+      "timing": { "learn": 93, "review": 36, "challenge": 49 },
+      "teaching": [
+        "On a time-series graph the horizontal axis is time, so the slope is the rate the vertical quantity changes: rise over run, Δy / Δt. On a position graph that slope is velocity; on a velocity graph the same slope is acceleration.",
+        "Read two samples a known time apart and divide their difference by that time: `vel = (pos_now - pos_prev) / dt_s`. A flat line has slope 0 (standing still), and a falling line has a negative slope (moving back)."
+      ],
+      "example": {
+        "code": "pos_prev = 3.0\npos_now = 5.0\ndt_s = 0.5\nvel = (pos_now - pos_prev) / dt_s\nprint(vel)",
+        "output": "4.0"
+      },
+      "walkthrough": [
+        {
+          "code": "pos_now - pos_prev",
+          "expression": "5.0 - 3.0",
+          "output": "2.0",
+          "note": "The rise: two meters of change between the samples."
+        },
+        {
+          "code": "/ dt_s",
+          "expression": "2.0 / 0.5",
+          "output": "4.0",
+          "note": "The run: half a second, so the rate is four meters per second."
+        },
+        {
+          "code": "print(vel)",
+          "output": "4.0",
+          "note": "Velocity is the slope of position, not the position itself."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "graph-slope-d1",
+          "prompt": "What is the slope of a flat position-time line?",
+          "options": [
+            { "id": "a", "text": "0" },
+            { "id": "b", "text": "1" },
+            { "id": "c", "text": "the position value" },
+            { "id": "d", "text": "undefined" }
+          ],
+          "answerId": "a",
+          "explanation": "No change over time means zero velocity."
+        },
+        {
+          "id": "graph-slope-d2",
+          "prompt": "What does the slope of a position-time graph measure?",
+          "options": [
+            { "id": "a", "text": "velocity" },
+            { "id": "b", "text": "position" },
+            { "id": "c", "text": "mass" },
+            { "id": "d", "text": "area" }
+          ],
+          "answerId": "a",
+          "explanation": "Position change over time is velocity."
+        }
+      ],
+      "practice": {
+        "id": "graph-slope-p1",
+        "prompt": "What is the velocity?",
+        "code": "pos_prev = 1.0\npos_now = 3.0\ndt_s = 0.5\nprint((pos_now - pos_prev) / dt_s)",
+        "options": [
+          { "id": "a", "text": "4.0" },
+          { "id": "b", "text": "2.0" },
+          { "id": "c", "text": "0.5" },
+          { "id": "d", "text": "1.0" }
+        ],
+        "answerId": "a",
+        "explanation": "The rise is 2.0 over a run of 0.5 s, so the slope is 4.0 m/s."
+      },
+      "reviewPool": [
+        {
+          "id": "graph-slope-r1",
+          "prompt": "Which formula gives the slope between two samples?",
+          "options": [
+            { "id": "a", "text": "(y_now - y_prev) / dt" },
+            { "id": "b", "text": "y_now * dt" },
+            { "id": "c", "text": "y_now + y_prev" },
+            { "id": "d", "text": "dt / (y_now - y_prev)" }
+          ],
+          "answerId": "a",
+          "explanation": "Rise over run: the change divided by the time it took."
+        },
+        {
+          "id": "graph-slope-r2",
+          "prompt": "The slope of a velocity-time graph is…",
+          "options": [
+            { "id": "a", "text": "acceleration" },
+            { "id": "b", "text": "position" },
+            { "id": "c", "text": "force" },
+            { "id": "d", "text": "area" }
+          ],
+          "answerId": "a",
+          "explanation": "Velocity change over time is acceleration."
+        },
+        {
+          "id": "graph-slope-r3",
+          "prompt": "A downward-sloping position line means the object is…",
+          "options": [
+            { "id": "a", "text": "moving back toward the origin" },
+            { "id": "b", "text": "standing still" },
+            { "id": "c", "text": "accelerating forward" },
+            { "id": "d", "text": "at the origin" }
+          ],
+          "answerId": "a",
+          "explanation": "A negative slope is negative velocity."
+        },
+        {
+          "id": "graph-slope-r4",
+          "prompt": "What is on the horizontal axis of a time-series graph?",
+          "options": [
+            { "id": "a", "text": "time" },
+            { "id": "b", "text": "position" },
+            { "id": "c", "text": "velocity" },
+            { "id": "d", "text": "mass" }
+          ],
+          "answerId": "a",
+          "explanation": "Time-series means time runs along the horizontal axis."
+        }
+      ],
+      "challenge": {
+        "id": "graph-slope-c1",
+        "prompt": "What does this print?",
+        "code": "pos_prev = 10.0\npos_now = 4.0\ndt_s = 2.0\nprint((pos_now - pos_prev) / dt_s)",
+        "options": [
+          { "id": "a", "text": "-3.0" },
+          { "id": "b", "text": "3.0" },
+          { "id": "c", "text": "-6.0" },
+          { "id": "d", "text": "7.0" }
+        ],
+        "answerId": "a",
+        "explanation": "The change is -6.0 over 2.0 s, so the slope is -3.0 m/s."
+      }
+    },
+    {
+      "id": "area-under-curve",
+      "title": "Area is the accumulated change",
+      "parentLessonId": "P.11",
+      "anchor": "micro-area-under-curve",
+      "sourceFocus": [
+        "**area** of a rectangle slice",
+        "`pos = pos + vel * dt`"
+      ],
+      "revision": 1,
+      "prerequisites": ["graph-slope"],
+      "resources": [],
+      "timing": { "learn": 92, "review": 36, "challenge": 49 },
+      "teaching": [
+        "On a velocity-time graph, each narrow rectangle of height v and width Δt has the area v · Δt, which is the displacement during that slice. Adding the slices accumulates the whole journey, which is what an integrator does.",
+        "In code it is one line inside a loop: `pos = pos + vel * dt`. Start the position at its known value before the loop, keep the step small, and the sum of the rectangles approaches the area under the curve. The area's unit is the product of the axes: m/s × s = m."
+      ],
+      "example": {
+        "code": "pos = 0.0\nvel = 2.0\ndt_s = 0.5\nfor step in range(3):\n    pos = pos + vel * dt_s\nprint(pos)",
+        "output": "3.0"
+      },
+      "walkthrough": [
+        {
+          "code": "vel * dt_s",
+          "expression": "2.0 × 0.5",
+          "output": "1.0",
+          "note": "One slice covers one meter in half a second."
+        },
+        {
+          "code": "pos = pos + vel * dt_s",
+          "variable": "pos",
+          "before": "0.0, 1.0, 2.0",
+          "after": "1.0, 2.0, 3.0",
+          "note": "Each pass adds one rectangle's area."
+        },
+        {
+          "code": "print(pos)",
+          "output": "3.0",
+          "note": "Three slices at one meter each accumulate three meters."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "area-under-curve-d1",
+          "prompt": "What unit does the area under a velocity-time graph have?",
+          "options": [
+            { "id": "a", "text": "meters" },
+            { "id": "b", "text": "seconds" },
+            { "id": "c", "text": "m/s" },
+            { "id": "d", "text": "m/s²" }
+          ],
+          "answerId": "a",
+          "explanation": "Velocity (m/s) times time (s) cancels to meters of displacement."
+        },
+        {
+          "id": "area-under-curve-d2",
+          "prompt": "If the time step doubles while the velocity stays the same, each slice's area…",
+          "options": [
+            { "id": "a", "text": "doubles" },
+            { "id": "b", "text": "halves" },
+            { "id": "c", "text": "stays the same" },
+            { "id": "d", "text": "becomes zero" }
+          ],
+          "answerId": "a",
+          "explanation": "The area is v · Δt, so a wider slice covers proportionally more distance."
+        }
+      ],
+      "practice": {
+        "id": "area-under-curve-p1",
+        "prompt": "What does this print?",
+        "code": "pos = 0.0\nvel = 4.0\ndt_s = 0.25\nfor step in range(4):\n    pos = pos + vel * dt_s\nprint(pos)",
+        "options": [
+          { "id": "a", "text": "4.0" },
+          { "id": "b", "text": "1.0" },
+          { "id": "c", "text": "16.0" },
+          { "id": "d", "text": "0.25" }
+        ],
+        "answerId": "a",
+        "explanation": "Each of four slices is 4.0 × 0.25 = 1.0 m, so the total is 4.0 m."
+      },
+      "reviewPool": [
+        {
+          "id": "area-under-curve-r1",
+          "prompt": "What does one slice's area v · Δt represent?",
+          "options": [
+            { "id": "a", "text": "the displacement during that time step" },
+            { "id": "b", "text": "the acceleration" },
+            { "id": "c", "text": "the mass" },
+            { "id": "d", "text": "the slope" }
+          ],
+          "answerId": "a",
+          "explanation": "Velocity times time is the distance covered in that slice."
+        },
+        {
+          "id": "area-under-curve-r2",
+          "prompt": "Which loop body accumulates position?",
+          "options": [
+            { "id": "a", "text": "pos = pos + vel * dt" },
+            { "id": "b", "text": "pos = vel / dt" },
+            { "id": "c", "text": "pos = pos - dt" },
+            { "id": "d", "text": "vel = pos * dt" }
+          ],
+          "answerId": "a",
+          "explanation": "Each pass adds the area of one rectangle to the running position."
+        },
+        {
+          "id": "area-under-curve-r3",
+          "prompt": "What is the area under a velocity-time curve?",
+          "options": [
+            { "id": "a", "text": "displacement" },
+            { "id": "b", "text": "acceleration" },
+            { "id": "c", "text": "force" },
+            { "id": "d", "text": "velocity" }
+          ],
+          "answerId": "a",
+          "explanation": "Accumulated velocity over time is change in position."
+        },
+        {
+          "id": "area-under-curve-r4",
+          "prompt": "Where does the running position start?",
+          "options": [
+            { "id": "a", "text": "At its known value before the loop" },
+            { "id": "b", "text": "Inside the loop, each pass" },
+            { "id": "c", "text": "After the loop" },
+            { "id": "d", "text": "At the final velocity" }
+          ],
+          "answerId": "a",
+          "explanation": "Resetting it inside the loop would discard the accumulation."
+        }
+      ],
+      "challenge": {
+        "id": "area-under-curve-c1",
+        "prompt": "What does this print?",
+        "code": "pos = 0.0\nvel = 1.5\ndt_s = 0.2\nfor step in range(5):\n    pos = pos + vel * dt_s\nprint(round(pos, 2))",
+        "options": [
+          { "id": "a", "text": "1.5" },
+          { "id": "b", "text": "0.3" },
+          { "id": "c", "text": "7.5" },
+          { "id": "d", "text": "0.75" }
+        ],
+        "answerId": "a",
+        "explanation": "Each slice is 0.3 m and there are five of them, for 1.5 m."
+      }
+    },
+    {
+      "id": "graph-units",
+      "title": "Read the axes before the shape",
+      "parentLessonId": "P.11",
+      "anchor": "micro-graph-units",
+      "sourceFocus": [
+        "horizontal axis = time $t$",
+        "A downward-sloping line has a **negative** rate of change"
+      ],
+      "revision": 1,
+      "prerequisites": ["graph-slope"],
+      "resources": [],
+      "timing": { "learn": 88, "review": 36, "challenge": 49 },
+      "teaching": [
+        "A graph's labels are part of its answer. The horizontal axis is time t, so the slope's unit is the vertical unit divided by seconds: position over time gives m/s, velocity over time gives m/s².",
+        "A downward-sloping line has a negative rate of change, which is a real direction, not an error: the quantity is falling. A flat line is zero, not missing data, and a curve means the rate itself is changing."
+      ],
+      "example": {
+        "code": "pos_prev = 8.0\npos_now = 2.0\ndt_s = 3.0\nprint((pos_now - pos_prev) / dt_s)",
+        "output": "-2.0"
+      },
+      "walkthrough": [
+        {
+          "code": "pos_now - pos_prev",
+          "expression": "2.0 - 8.0",
+          "output": "-6.0",
+          "note": "The position fell by six meters, so the rise is negative."
+        },
+        {
+          "code": "/ dt_s",
+          "expression": "-6.0 / 3.0",
+          "output": "-2.0",
+          "note": "Six meters over three seconds is two meters per second backwards."
+        },
+        {
+          "code": "print(...)",
+          "output": "-2.0",
+          "note": "The sign carries the direction; the unit is m/s."
+        }
+      ],
+      "diagnostics": [
+        {
+          "id": "graph-units-d1",
+          "prompt": "What are the units of a position-time slope?",
+          "options": [
+            { "id": "a", "text": "m/s" },
+            { "id": "b", "text": "s/m" },
+            { "id": "c", "text": "m" },
+            { "id": "d", "text": "m/s²" }
+          ],
+          "answerId": "a",
+          "explanation": "Vertical meters divided by horizontal seconds is velocity."
+        },
+        {
+          "id": "graph-units-d2",
+          "prompt": "What does a negative slope mean?",
+          "options": [
+            { "id": "a", "text": "The quantity is decreasing" },
+            { "id": "b", "text": "The measurement failed" },
+            { "id": "c", "text": "The quantity is zero" },
+            { "id": "d", "text": "Time is running backwards" }
+          ],
+          "answerId": "a",
+          "explanation": "A negative rate is a fall; the direction is the sign."
+        }
+      ],
+      "practice": {
+        "id": "graph-units-p1",
+        "prompt": "A velocity-time graph rises 2.0 m/s in 0.5 s. What is the slope?",
+        "options": [
+          { "id": "a", "text": "4.0 m/s²" },
+          { "id": "b", "text": "1.0 m/s²" },
+          { "id": "c", "text": "2.0 m/s" },
+          { "id": "d", "text": "0.25 m/s²" }
+        ],
+        "answerId": "a",
+        "explanation": "2.0 m/s / 0.5 s = 4.0 m/s²."
+      },
+      "reviewPool": [
+        {
+          "id": "graph-units-r1",
+          "prompt": "What sits on the horizontal axis of a time-series graph?",
+          "options": [
+            { "id": "a", "text": "time" },
+            { "id": "b", "text": "the measured quantity" },
+            { "id": "c", "text": "the slope" },
+            { "id": "d", "text": "the area" }
+          ],
+          "answerId": "a",
+          "explanation": "Time runs along the horizontal axis by definition."
+        },
+        {
+          "id": "graph-units-r2",
+          "prompt": "What does a flat line mean?",
+          "options": [
+            { "id": "a", "text": "The quantity is not changing" },
+            { "id": "b", "text": "The sensor is broken" },
+            { "id": "c", "text": "The quantity is negative" },
+            { "id": "d", "text": "Time has stopped" }
+          ],
+          "answerId": "a",
+          "explanation": "Zero slope is a constant value."
+        },
+        {
+          "id": "graph-units-r3",
+          "prompt": "What are the units of a velocity-time slope?",
+          "options": [
+            { "id": "a", "text": "m/s²" },
+            { "id": "b", "text": "m/s" },
+            { "id": "c", "text": "s/m" },
+            { "id": "d", "text": "m" }
+          ],
+          "answerId": "a",
+          "explanation": "Meters per second divided by seconds is acceleration."
+        },
+        {
+          "id": "graph-units-r4",
+          "prompt": "Why read the axis labels first?",
+          "options": [
+            { "id": "a", "text": "They give the slope and area their units" },
+            { "id": "b", "text": "They change the shape" },
+            { "id": "c", "text": "They set the sample rate" },
+            { "id": "d", "text": "They are optional" }
+          ],
+          "answerId": "a",
+          "explanation": "The labels decide what the geometry means."
+        }
+      ],
+      "challenge": {
+        "id": "graph-units-c1",
+        "prompt": "A velocity falls from 5.0 m/s to 3.0 m/s in 0.4 s. What is the slope?",
+        "code": "print((3.0 - 5.0) / 0.4)",
+        "options": [
+          { "id": "a", "text": "-5.0 m/s²" },
+          { "id": "b", "text": "5.0 m/s²" },
+          { "id": "c", "text": "-8.0 m/s²" },
+          { "id": "d", "text": "2.0 m/s²" }
+        ],
+        "answerId": "a",
+        "explanation": "The change is -2.0 m/s over 0.4 s, so the slope is -5.0 m/s²."
+      }
+    }
+  ]
+}

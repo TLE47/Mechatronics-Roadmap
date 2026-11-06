@@ -150,10 +150,10 @@ function challengeEvent(concept, correct, overrides = {}) {
   };
 }
 
-section('the content is thirty-one concepts from P.1 to P.9');
+section('the content is forty-six concepts from P.1 to P.15');
 
-check('thirty-one concepts in teaching order, each with two four-option diagnostics', () => {
-  assert.equal(MICRO_CONCEPTS.length, 31);
+check('forty-six concepts in teaching order, each with two four-option diagnostics', () => {
+  assert.equal(MICRO_CONCEPTS.length, 46);
   assert.deepEqual(
     MICRO_CONCEPTS.map((concept) => concept.id),
     [
@@ -188,6 +188,21 @@ check('thirty-one concepts in teaching order, each with two four-option diagnost
       'rearranging',
       'linear-scaling',
       'scale-output',
+      'radians',
+      'trig-reach',
+      'atan2',
+      'graph-slope',
+      'area-under-curve',
+      'graph-units',
+      'force',
+      'weight',
+      'torque',
+      'datasheet-units',
+      'datasheet-bounds',
+      'datasheet-conditions',
+      'given-unknown',
+      'answer-check',
+      'bounds-check',
     ]
   );
   for (const concept of MICRO_CONCEPTS) {
@@ -206,10 +221,25 @@ check('thirty-one concepts in teaching order, each with two four-option diagnost
 });
 
 check('every concept belongs to a parent lesson whose path is the one it cites', () => {
-  assert.equal(MICRO_PARENTS.length, 9, 'P.1 through P.9 each teach micro lessons');
+  assert.equal(MICRO_PARENTS.length, 14, 'every numbered P lesson teaches micro lessons');
   assert.deepEqual(
     MICRO_PARENTS.map((parent) => parent.parentLessonId),
-    ['P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7', 'P.8', 'P.9']
+    [
+      'P.1',
+      'P.2',
+      'P.3',
+      'P.4',
+      'P.5',
+      'P.6',
+      'P.7',
+      'P.8',
+      'P.9',
+      'P.10',
+      'P.11',
+      'P.12',
+      'P.14',
+      'P.15',
+    ]
   );
   for (const parent of MICRO_PARENTS) {
     assert.match(parent.parentPath, /^track-p\/P\.\d+-.+\.md$/, `${parent.parentLessonId} needs its markdown path`);

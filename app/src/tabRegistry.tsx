@@ -192,7 +192,7 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
     id: 'tab-micro',
     Icon: Brain,
     beginnerLabel: TAB_NAMES['tab-micro'],
-    beginnerSubtitle: 'Thirty-one tiny P.1–P.9 concepts, about two minutes each',
+    beginnerSubtitle: 'Forty-six tiny P-track concepts, about two minutes each',
     technicalLabel: 'Atomic Micro-Learning (P.1 + P.2, beta)',
     technicalSubtitle: '31 concepts · deterministic diagnostics · local review schedule',
     isBeginnerCore: true,

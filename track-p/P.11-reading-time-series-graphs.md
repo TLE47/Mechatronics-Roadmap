@@ -68,6 +68,18 @@ flowchart LR
   - **Key takeaway:** On a velocity-vs-time graph, the **area** of a rectangle slice of height $v$ and width $\Delta t$ equals the **displacement** (change in position $\Delta x = v \cdot \Delta t$) during that slice. Adding up those rectangles in a loop (`pos = pos + vel * dt`) is how every physics simulator advances position over time!
   - **Alternative resource:** [The Physics Classroom — Meaning of Shape for a v-t Graph](https://www.physicsclassroom.com/class/1DKin/Lesson-4/Meaning-of-Shape-for-a-v-t-Graph) `[HTTP 200 — Verified by scripts/check_links.py]` — Read exact headings **`The Importance of Slope`** and **`Positive Velocity versus Negative Velocity`**.
 
+#### Micro focus: slope is the rate
+<a id="micro-graph-slope"></a>
+On a time-series graph the **slope** is rise over run, Δy / Δt, and the rate of change. On a position graph the slope is velocity, computed as `vel = (pos_now - pos_prev) / dt_s`; on a velocity graph the same slope is acceleration.
+
+#### Micro focus: area accumulates
+<a id="micro-area-under-curve"></a>
+Each narrow slice under a velocity graph has the **area** of a rectangle slice, v · Δt, which is the displacement during that step. Adding the slices with `pos = pos + vel * dt` accumulates the journey, which is what an integrator does.
+
+#### Micro focus: the axes carry the units
+<a id="micro-graph-units"></a>
+The horizontal axis = time $t$, so the slope's unit is the vertical unit per second: m/s for position, m/s² for velocity. A downward-sloping line has a **negative** rate of change — the quantity is falling — while a flat line is a zero rate, not missing data.
+
 ### Bridge Notes
 Every telemetry plot in robotics puts **time ($t$, in seconds)** on the horizontal axis. You can read any time-series plot using just two geometric ideas—**slope** and **rectangle area**:
 
