@@ -8,7 +8,6 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
-import { Columns2, Rows2 } from 'lucide-react';
 import { PythonKeys } from '../../PythonKeys';
 import { PythonEditor, type PythonEditorHandle } from '../../PythonEditor';
 import { MAIN_FILE_NAME, type LessonFile } from '../../../lessonFiles';
@@ -31,6 +30,12 @@ import type { AnalysisSession } from '../../../analysisClient';
 
 const EditorRequirements = lazy(() =>
   import('./EditorRequirements').then((module) => ({ default: module.EditorRequirements }))
+);
+
+// The placement control only exists in a body of three or more panes; keeping it out of the entry
+// chunk leaves room in the shell's weight budget for the panes themselves.
+const PanePlacement = lazy(() =>
+  import('./PanePlacement').then((module) => ({ default: module.PanePlacement }))
 );
 
 /** The editor's own draft and files, as the body's main pane draws them. */
@@ -420,65 +425,33 @@ export function EditorPaneBody({
     const showPlacement = !hidden && paneSplit && !isPhone && paneSlots.length >= 3 && slot > 0;
     const boundary =
       panes.orientations?.[slot - 1] ?? (panes.axis === 'rows' ? 'rows' : 'columns');
-    const placement = (choice: 'columns' | 'rows') => {
-      const selected = boundary === choice;
-      const Icon = choice === 'columns' ? Columns2 : Rows2;
-      return (
-        <button
-          type="button"
-          data-testid={`btn-pane-orient-${slot + 1}-${choice}`}
-          aria-pressed={selected}
-          aria-label={`Place pane ${slot + 1} ${choice === 'columns' ? 'beside' : 'below'} pane ${slot}`}
-          title={
-            choice === 'columns'
-              ? `Pane ${slot + 1}: open a new column beside pane ${slot}`
-              : `Pane ${slot + 1}: stack under pane ${slot} in its column`
-          }
-          onClick={(event) => {
-            event.stopPropagation();
-            onPanes(setPaneOrientation(panes, slot, choice));
-          }}
-          className={`flex h-4 w-4 cursor-pointer items-center justify-center rounded-sm ${
-            selected ? 'bg-accent/15 text-accent' : 'text-muted hover:bg-raise hover:text-body'
-          }`}
-        >
-          <Icon className="h-2.5 w-2.5" aria-hidden="true" />
-        </button>
-      );
-    };
     return (
       <div
         key={view}
         data-testid={`pane-${view}`}
         data-pane={view}
-        data-slot={slot}
-        data-hidden={hidden ? '1' : undefined}
         onClick={() => focusPane(view)}
         style={
           hidden
-            ? { display: 'none' }
-            : {
-                position: 'relative',
-                minWidth: 0,
-                // Only a bounded split may shrink its panes. A content-sized card keeps the flex
-                // item's automatic content floor, which is what stops a Requirements-only body
-                // from collapsing to zero height.
-                minHeight: paneSplit && boundedBody ? 0 : undefined,
-                order: rowIndex,
-                flexGrow: rows?.[rowIndex] ?? 1,
-                flexBasis: 0,
-              }
+            ? { display: 'none' }              : {
+                  position: 'relative',
+                  // Only a bounded split may shrink its panes. A content-sized card keeps the flex
+                  // item's automatic content floor, which is what stops a Requirements-only body
+                  // from collapsing to zero height.
+                  minHeight: paneSplit && boundedBody ? 0 : undefined,
+                  flexGrow: rows?.[rowIndex] ?? 1,
+                }
         }
         className={paneClass(view)}
       >
         {showPlacement && (
-          <div
-            data-testid={`pane-orientation-${slot + 1}`}
-            className="absolute right-1 top-1 z-[1] flex items-center gap-0.5 rounded border border-line bg-canvas/95 p-0.5 shadow-sm"
-          >
-            {placement('columns')}
-            {placement('rows')}
-          </div>
+          <Suspense fallback={null}>
+            <PanePlacement
+              slot={slot}
+              boundary={boundary}
+              onPlace={(choice) => onPanes(setPaneOrientation(panes, slot, choice))}
+            />
+          </Suspense>
         )}
         {paneContent(view)}
       </div>
@@ -520,9 +493,8 @@ export function EditorPaneBody({
             key={`column-divider-${index}`}
             role="separator"
             aria-orientation="vertical"
-            aria-label={`Drag to resize columns ${index + 1} and ${index + 2}`}
+            aria-label={`Resize columns ${index + 1} and ${index + 2}`}
             data-testid="pane-divider-column"
-            data-index={index}
             onPointerDown={(event) =>
               beginResize(event, 'column', index, shownWidths, rowSharesFor(1))
             }
@@ -547,11 +519,8 @@ export function EditorPaneBody({
             <div
               key={`row-divider-${columnIndex}-${index}`}
               role="separator"
-              aria-orientation="horizontal"
-              aria-label={`Drag to resize panes ${index + 1} and ${index + 2} in column ${columnIndex + 1}`}
+              aria-label={`Resize panes ${index + 1} and ${index + 2} in column ${columnIndex + 1}`}
               data-testid="pane-divider-row"
-              data-column={columnIndex}
-              data-index={index}
               onPointerDown={(event) =>
                 beginResize(event, 'row', index, [], rows)
               }
@@ -571,9 +540,6 @@ export function EditorPaneBody({
         return (
           <div
             key={`pane-column-${columnIndex}`}
-            data-testid="pane-column"
-            data-column={columnIndex}
-            data-column-panes={group.length}
             style={{
               display: 'flex',
               flexDirection: 'column',

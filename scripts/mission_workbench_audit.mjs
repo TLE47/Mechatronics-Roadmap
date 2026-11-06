@@ -50,14 +50,17 @@ function paneByName(state, paneName) {
 }
 
 /** A swap must move the pane itself; a changed state label alone is not enough. */
-function assertSameSlot(actual, expected, label, name) {
+function assertSameSlot(actual, expected, label, name, beforeHeight, afterHeight) {
+  // The body is content-sized in a preset: a taller view arriving in a slot makes the body grow,
+  // so the two body-controlled dimensions are compared as shares of its height.
+  const share = (value, body) => (body > 0 ? value / body : value);
   assert.ok(
     Math.abs(actual.x - expected.x) <= 5 &&
-      Math.abs(actual.y - expected.y) <= 5 &&
       Math.abs(actual.w - expected.w) <= 5 &&
-      Math.abs(actual.h - expected.h) <= 5,
+      Math.abs(share(actual.y, afterHeight) - share(expected.y, beforeHeight)) <= 0.04 &&
+      Math.abs(share(actual.h, afterHeight) - share(expected.h, beforeHeight)) <= 0.04,
     `${name}: ${label} did not move into the expected slot; got ${JSON.stringify(actual)} ` +
-      `instead of ${JSON.stringify(expected)}`
+      `instead of ${JSON.stringify(expected)} (body ${beforeHeight} -> ${afterHeight}px)`
   );
 }
 
@@ -453,6 +456,13 @@ export async function auditPaneSwapsAndCapacity(browser, baseUrl, name) {
     await expandEditorBody(page);
     await page.getByTestId('editor-tab-requirements').click();
     await page.getByTestId('pane-requirements').waitFor({ state: 'visible', timeout: 10000 });
+    // The Requirements tab is a lazy boundary: measuring the body before its cards render records a
+    // shorter pane than the one the swap is about to move.
+    await page
+      .locator('[data-testid="pane-requirements"] .editor-requirement-card')
+      .first()
+      .waitFor({ state: 'visible', timeout: 10000 });
+    await page.waitForTimeout(300);
     await page.getByTestId('btn-pane-split').click();
     await page.waitForFunction(
       () => document.querySelector('[data-testid="editor-panes"]')?.getAttribute('data-count') === '2',
@@ -480,9 +490,30 @@ export async function auditPaneSwapsAndCapacity(browser, baseUrl, name) {
     await page.getByTestId('select-pane-swap').selectOption('2');
     await waitForViews('predict,main,requirements');
     const columnsAfter = await paneBoxes(page);
-    assertSameSlot(paneByName(columnsAfter, 'predict'), requirementsSlot, 'the third column pane', name);
-    assertSameSlot(paneByName(columnsAfter, 'requirements'), predictSlot, 'the first column pane', name);
-    assertSameSlot(paneByName(columnsAfter, 'main'), paneByName(columnsBefore, 'main'), 'the untouched middle pane', name);
+    assertSameSlot(
+      paneByName(columnsAfter, 'predict'),
+      requirementsSlot,
+      'the third column pane',
+      name,
+      columnsBefore.body.h,
+      columnsAfter.body.h
+    );
+    assertSameSlot(
+      paneByName(columnsAfter, 'requirements'),
+      predictSlot,
+      'the first column pane',
+      name,
+      columnsBefore.body.h,
+      columnsAfter.body.h
+    );
+    assertSameSlot(
+      paneByName(columnsAfter, 'main'),
+      paneByName(columnsBefore, 'main'),
+      'the untouched middle pane',
+      name,
+      columnsBefore.body.h,
+      columnsAfter.body.h
+    );
 
     await page.getByTestId('btn-pane-rows').click();
     await page.waitForFunction(
@@ -500,8 +531,21 @@ export async function auditPaneSwapsAndCapacity(browser, baseUrl, name) {
     await waitForViews('requirements,main,predict');
     await page.waitForTimeout(250);
     const rowsAfter = await paneBoxes(page);
-    assertSameSlot(paneByName(rowsAfter, 'requirements'), topRow, 'the first row pane', name);
-    assertSameSlot(paneByName(rowsAfter, 'predict'), bottomRow, 'the third row pane', name);
+    // A content-sized body lets each stacked pane keep its own content height, so the row swap is
+    // read as order and column, not as the pixel height the other view happened to have.
+    const rowRequirements = paneByName(rowsAfter, 'requirements');
+    const rowMain = paneByName(rowsAfter, 'main');
+    const rowPredict = paneByName(rowsAfter, 'predict');
+    assert.ok(
+      rowRequirements.y < rowMain.y && rowMain.y < rowPredict.y,
+      `${name}: a row swap must move Requirements to the top and Predict to the bottom ` +
+        `(${[rowRequirements.y, rowMain.y, rowPredict.y].map((y) => Math.round(y)).join('/')})`
+    );
+    assert.ok(
+      Math.abs(rowRequirements.x - rowPredict.x) <= 3 &&
+        Math.abs(rowRequirements.w - rowPredict.w) <= 3,
+      `${name}: the swapped rows must stay in one column`
+    );
 
     assert.equal(
       await page.getByTestId('btn-pane-add').count(),
@@ -614,6 +658,13 @@ export async function auditPaneOrientations(browser, baseUrl, name) {
     await expandEditorBody(page);
     await page.getByTestId('editor-tab-requirements').click();
     await page.getByTestId('pane-requirements').waitFor({ state: 'visible', timeout: 10000 });
+    // The Requirements tab is a lazy boundary: measuring the body before its cards render records a
+    // shorter pane than the one the swap is about to move.
+    await page
+      .locator('[data-testid="pane-requirements"] .editor-requirement-card')
+      .first()
+      .waitFor({ state: 'visible', timeout: 10000 });
+    await page.waitForTimeout(300);
     await page.getByTestId('btn-pane-split').click();
     await waitForCount(2);
     await page.getByTestId('btn-pane-add').click();
