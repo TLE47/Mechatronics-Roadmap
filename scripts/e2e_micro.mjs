@@ -145,12 +145,16 @@ async function main() {
       const values = document.querySelector('.micro-walkthrough-values');
       const note = document.querySelector('.micro-walkthrough-note');
       if (!values || !note) return null;
+      const value = document.querySelector('.micro-answer-value');
+      if (!value) return null;
       const valuesStyle = getComputedStyle(values);
       const noteStyle = getComputedStyle(note);
+      const valueStyle = getComputedStyle(value);
       return {
         valuesAnimation: valuesStyle.animationName,
         noteAnimation: noteStyle.animationName,
         valuesDuration: Number.parseFloat(valuesStyle.animationDuration),
+        valueDuration: Number.parseFloat(valueStyle.animationDuration),
         noteDelay: Number.parseFloat(noteStyle.animationDelay),
       };
     });
@@ -158,7 +162,10 @@ async function main() {
     assert.match(revealSequence.valuesAnimation, /micro-values-in/);
     assert.match(revealSequence.noteAnimation, /micro-note-in/);
     assert.ok(revealSequence.valuesDuration >= 0.35, `the values should have their own fade (${revealSequence.valuesDuration}s)`);
-    assert.ok(revealSequence.noteDelay >= 0.2, `the explanation should follow the values (${revealSequence.noteDelay}s)`);
+    assert.ok(
+      revealSequence.noteDelay >= revealSequence.valueDuration,
+      `the explanation should wait for the value spring (${revealSequence.noteDelay}s vs ${revealSequence.valueDuration}s)`
+    );
     assert.deepEqual(
       await page.evaluate(() => window.__microSounds.at(-1)),
       { kind: 'ui', role: 'nav', pan: 0 },
