@@ -13,10 +13,12 @@
  *    and must mount React with no page errors.
  * 3. Representative *later-track* lessons (03.3 sensors+F, 06.1 robotics, 08.1 capstone) must load in
  *    the in-browser Python runner, so the suite is no longer a single-lesson check.
- * 4. A tablet viewport (834x1112) must keep the tab bar, lesson list and runner usable *and* fit the
- *    viewport: zero horizontal overflow, asserted rather than reported. Elements inside a
- *    horizontal scroller (the tab rail) are reachable by scrolling that rail, so they are not
- *    counted as spilling the page.
+ * 4. A phone (390x844) and a tablet (834x1112) must keep the tab bar, lesson list and runner usable
+ *    *and* fit the viewport: zero horizontal overflow, asserted rather than reported. Elements inside
+ *    a horizontal scroller (the tab rail) are reachable by scrolling that rail, so they are not
+ *    counted as spilling the page. The same narrow pair mounts a two-pane editor, checks that its
+ *    tab strip keeps the 12rem floor and stays clear of the arrangement controls, keeps P.6's
+ *    Requirements content, and restores the reader after reload.
  * 5. Every school-maths ramp entry (R.1-R.6) is graded on the bundle: the starter must not verify, and
  *    the page's own reference must match its expected output and pass its instructor tests. Each ramp
  *    page repairs a Tier 1 exit-check item, so the recovery path is now proven where a learner uses it.
@@ -53,6 +55,7 @@ import { resolveChromiumExecutable } from './e2e_browser_workbench.mjs';
 import { getEditorCode, setEditorCode } from './editor-code.mjs';
 import { nameStale, staleBuild } from './buildFreshness.mjs';
 import { seedTourSeen } from './tour_seed.mjs';
+import { auditNarrowWorkbench } from './narrow_workbench_audit.mjs';
 
 const repoRoot = process.cwd();
 export const BASE = (process.env.PAGES_BASE ?? '/Mechatronics-Roadmap/').replace(/\/?$/, '/');
@@ -1609,6 +1612,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
         `${layout.ignored ? `, ${layout.ignored} clipped SVG/MathML box(es) skipped` : ''})`
     );
     await tablet.close();
+    await auditNarrowWorkbench(browser, baseUrl, name);
     return 'pass';
   } finally {
     await browser.close();
@@ -1657,7 +1661,7 @@ async function main() {
     console.log(        `[PASS] Built Pages bundle at ${BASE} mounts, serves every asset, loads later-track lessons ` +
         `${LATER_TRACK_LESSONS.join(', ')}, grades ramp ${RAMP_LESSONS[0]}..${RAMP_LESSONS[RAMP_LESSONS.length - 1]} ` +
         `(starter unverified, reference verified), ${grading}, ` +
-        `and stays usable at tablet width in: ${ran.join(', ')}` +
+        `and stays usable at phone and tablet widths in: ${ran.join(', ')}` +
         (skipped.length ? ` (SKIP: ${skipped.join(', ')} not installed)` : '')
     );
   } finally {
