@@ -92,7 +92,6 @@ export function EditorPaneBody({
   shownViews,
   allowedViews,
   collapsed,
-  boundedBody,
   isPhone,
   deferPhoneEditor,
   draft,
@@ -110,8 +109,6 @@ export function EditorPaneBody({
   shownViews: Set<EditorView>;
   allowedViews: EditorView[];
   collapsed: boolean;
-  /** The surface gives the body a definite height, so panes may shrink and scroll inside it. */
-  boundedBody: boolean;
   isPhone: boolean;
   deferPhoneEditor: boolean;
   draft: PaneDraft;
@@ -273,10 +270,10 @@ export function EditorPaneBody({
       style={{
         display: collapsed ? 'none' : undefined,
         position: 'relative',
-        // A split outside a preset-owned card has no height of its own. Give it a definite, screen-
-        // sized body so its panes can share that height instead of falling back to their content
-        // minima, which would leave the divider away from the boundary it appears to mark.
-        minHeight: paneSplit && !boundedBody ? 'min(65vh, 36rem)' : undefined,
+        // A split needs a definite body height: a card that sizes itself to its content would let
+        // every `flex-basis: 0` pane collapse to nothing. A preset body taller than this floor keeps
+        // its own height; a content-sized one gets a usable, screen-sized body.
+        minHeight: paneSplit ? (isPhone ? '20rem' : 'min(65vh, 36rem)') : undefined,
         gridTemplateColumns: sideBySide ? `${colShare}fr ${1 - colShare}fr` : undefined,
         gridTemplateRows:
           sideBySide && rowCount > 1

@@ -473,7 +473,6 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
         shownViews={shownViews}
         allowedViews={allowedViews}
         collapsed={bodyCollapsed}
-        boundedBody={boundedBody}
         isPhone={isPhone}
         deferPhoneEditor={deferPhoneEditor}
         draft={props.draft}
