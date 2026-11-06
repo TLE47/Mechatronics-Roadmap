@@ -1038,6 +1038,15 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       await wide.getByTestId('tab-btn-tab-pyodide').click();
     }
     await wide.getByTestId('reader-loading').waitFor({ state: 'detached', timeout: 20000 });
+    // The reader restores in an effect after the page commits, then one animation frame later. On a
+    // slow runner the loading node leaves before that frame, so wait for the restore itself rather
+    // than read a zero that only means "not yet". The anchor assertion below still catches a
+    // restore that lands in the wrong place.
+    await wide.waitForFunction(
+      () => (document.querySelector('[data-testid="reader-scroll"]')?.scrollTop ?? 0) > 0,
+      undefined,
+      { timeout: 5000 }
+    );
     const restored = await wide.evaluate(() => {
       const scroll = document.querySelector('[data-testid="reader-scroll"]');
       let top = '';
