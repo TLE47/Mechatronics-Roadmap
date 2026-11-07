@@ -38,10 +38,8 @@ const PanePlacement = lazy(() =>
   import('./PanePlacement').then((module) => ({ default: module.PanePlacement }))
 );
 
-// The drag grip only matters once a body is split; its pointer work is not the entry's to carry.
-const PaneDrag = lazy(() =>
-  import('./PaneDrag').then((module) => ({ default: module.PaneDrag }))
-);
+// The pane grips only matter once a body is split; their pointer work is not the entry's to carry.
+const PaneHandles = lazy(() => import('./PaneDrag'));
 
 /** The editor's own draft and files, as the body's main pane draws them. */
 interface PaneDraft {
@@ -318,7 +316,7 @@ export function EditorPaneBody({
   const paneContent = (view: EditorView): ReactNode => {
     if (view === 'main') {
       return (
-        <>
+        <div data-pane-main-body className="flex min-h-0 flex-1 flex-col">
           {coEdit && (
             <p
               role="status"
@@ -386,7 +384,7 @@ export function EditorPaneBody({
               initialLine={pendingJump?.file === MAIN_FILE_NAME ? pendingJump.line : undefined}
             />
           )}
-        </>
+        </div>
       );
     }
     if (view === 'requirements') {
@@ -452,7 +450,7 @@ export function EditorPaneBody({
       >
         {!hidden && paneSplit && (
           <Suspense fallback={null}>
-            <PaneDrag slot={slot} view={view} panes={panes} onPanes={onPanes} />
+            <PaneHandles slot={slot} view={view} panes={panes} onPanes={onPanes} />
           </Suspense>
         )}
         {showPlacement && (
@@ -483,13 +481,11 @@ export function EditorPaneBody({
         display: collapsed ? 'none' : undefined,
         position: 'relative',
         flexDirection: groups.length > 1 ? 'row' : 'column',
-        // A preset's split needs a definite body height: at some widths its card sizes itself to
-        // content, and every `flex-basis: 0` pane would collapse to nothing. A body taller than this
-        // floor keeps its own height; a content-sized preset gets a usable, screen-sized one.
-        minHeight:
-          paneSplit && boundedBody ? (isPhone ? '20rem' : 'min(65vh, 36rem)') : undefined,
+        // The split's height floor lives in `index.css`, keyed on the `data-bounded` and
+        // `data-split` attributes below; a desktop gets 65vh, a phone 20rem.
       }}
       data-axis={panes.axis}
+      data-bounded={boundedBody || undefined}
       data-orientations={(panes.orientations ?? []).join(',')}
       data-split={paneSplit ? 'split' : 'single'}
       data-focus={paneSplit ? panes.focus : 0}
@@ -571,6 +567,11 @@ export function EditorPaneBody({
       })}
       {hiddenViews.map((view) =>
         renderPane(view, slotFor(panes, view) ?? panes.views.length, { hidden: true })
+      )}
+      {boundedBody && !isPhone && (
+        <Suspense fallback={null}>
+          <PaneHandles resize />
+        </Suspense>
       )}
     </div>
   );

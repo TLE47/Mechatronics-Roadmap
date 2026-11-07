@@ -1,5 +1,6 @@
 import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react';
 import { GripVertical } from 'lucide-react';
+import { PaneResize } from './PaneResize';
 import {
   EDITOR_VIEW_LABELS,
   swapPanes,
@@ -32,17 +33,14 @@ interface DragState {
  * The grip is a lazy chunk: a two-pane body pays for it only when a split exists, and every editor
  * body would otherwise carry the pointer work in its entry chunk.
  */
-export function PaneDrag({
-  slot,
-  view,
-  panes,
-  onPanes,
-}: {
+interface PaneDragProps {
   slot: number;
   view: EditorView;
   panes: EditorPanes;
   onPanes: (next: EditorPanes) => void;
-}) {
+}
+
+function PaneDrag({ slot, view, panes, onPanes }: PaneDragProps) {
   const drag = useRef<DragState | null>(null);
   const current = useRef({ panes, onPanes });
   current.current = { panes, onPanes };
@@ -172,5 +170,24 @@ export function PaneDrag({
     >
       <GripVertical className="h-3 w-3" aria-hidden="true" />
     </button>
+  );
+}
+
+type PaneHandlesProps = { resize: true } | (PaneDragProps & { resize?: false });
+
+/**
+ * The pane's pointer chrome (`runner/PaneDrag.tsx`): a header grip in each pane, and the one bottom
+ * grip that resizes the pane area. One lazy chunk serves both, and the entry above only names this
+ * component once.
+ */
+export default function PaneHandles(props: PaneHandlesProps) {
+  if (props.resize) return <PaneResize />;
+  return (
+    <PaneDrag
+      slot={props.slot}
+      view={props.view}
+      panes={props.panes}
+      onPanes={props.onPanes}
+    />
   );
 }

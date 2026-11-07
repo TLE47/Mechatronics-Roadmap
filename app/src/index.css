@@ -843,12 +843,49 @@ body {
   --editor-font-size: 16px;
   --editor-min-h: 45dvh;
   --editor-max-h: none;
+  --pane-floor: 20rem;
 }
 [data-phone-code='1'] .cm-editor {
   height: 100%;
 }
 [data-phone-code='1'] .cm-scroller {
   height: 100%;
+}
+
+/* The floor a bounded split starts from. A phone's Code surface overrides it through the custom
+   property set above; a dragged grip overrides both. */
+[data-bounded][data-split='split'] {
+  min-height: var(--pane-floor, min(65vh, 36rem));
+}
+
+/* A bounded editor fills its pane instead of stopping at the theme's 360 px scroller and leaving
+   unpainted panel underneath. Scoped to the bounded (lesson) body so the studio's content-sized
+   card keeps its own frame; the main content is a flex column, so the phone's keys keep their row
+   above the editor. */
+[data-bounded] [data-pane='main'] {
+  --editor-max-h: none;
+  display: flex;
+  flex-flow: column;
+}
+[data-bounded] [data-pane='main'] [data-pane-main-body],
+[data-bounded] [data-pane='main'] [data-editor],
+[data-bounded] [data-pane='main'] .cm-host {
+  display: flex;
+  flex: 1;
+  flex-flow: column;
+  min-height: 0;
+}
+[data-bounded] [data-pane='main'] .cm-editor {
+  height: 100%;
+  min-height: 0;
+}
+
+/* A dragged bottom grip overrides the body's floor without moving the pane markup: the floor
+   stays the default for every reader that never drags. Reset is a no-op until there is a size to
+   clear, so the control stays available without changing the layout. */
+[data-pane-resized] {
+  height: var(--pane-body-h) !important;
+  min-height: 0 !important;
 }
 
 /* A phone's native scrollbars are overlays, not a gutter; reserving 10 px for one cuts the plot's

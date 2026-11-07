@@ -62,6 +62,7 @@ import {
 } from './narrow_workbench_audit.mjs';
 import {
   auditLessonSurface,
+  auditPaneBottomResize,
   auditPaneOrientations,
   auditPaneSwapsAndCapacity,
   auditResetChooser,
@@ -1632,6 +1633,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     await auditResetChooser(browser, baseUrl, name);
     await auditPaneSwapsAndCapacity(browser, baseUrl, name);
     await auditPaneOrientations(browser, baseUrl, name);
+    await auditPaneBottomResize(browser, baseUrl, name);
     return 'pass';
   } finally {
     await browser.close();

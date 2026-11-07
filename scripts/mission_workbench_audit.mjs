@@ -4,8 +4,9 @@
  * The unit suites pin the stores and the pure pane state machine. This file answers what only a
  * rendered browser can: the goal and Requirements are the micro lessons' colourful boxes, the
  * chooser's two lists scroll independently and reset one lesson unit, the lesson summary is aligned,
- * and the swap menu exchanges two panes on both axes. The built Pages suite calls it after the
- * existing narrow, column/row and studio audits, so a regression here is a real bundle failure.
+ * the swap menu exchanges two panes on both axes, and the bottom edge resizes the body. The built
+ * Pages suite calls it after the existing narrow, column/row and studio audits, so a regression here
+ * is a real bundle failure.
  */
 
 import assert from 'node:assert/strict';
@@ -445,12 +446,30 @@ export async function auditPaneSwapsAndCapacity(browser, baseUrl, name) {
   const dragPane = async (fromSlot, targetView) => {
     const handle = page.getByTestId(`pane-drag-${fromSlot + 1}`);
     await handle.waitFor({ state: 'visible', timeout: 10000 });
+    // A bounded body can be taller than the viewport, so a full-height target pane's center may be
+    // off-screen even while its top is visible. Scroll the page (not the pane's own scroller) so the
+    // body's top is just below any sticky header, then aim near the target's top; the exchange is
+    // slot-based, so any visible point inside the target is the same drop.
+    await page.evaluate(() => {
+      const body = document.querySelector('[data-testid="editor-panes"]');
+      if (!body) return;
+      const top = body.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: Math.max(0, top - 100), behavior: 'instant' });
+    });
+    await page.waitForTimeout(150);
     const from = await handle.boundingBox();
     const to = await page.locator(`[data-pane="${targetView}"]`).boundingBox();
     assert.ok(from && to, `${name}: the drag needs a visible grip and target pane`);
+    const viewport = page.viewportSize();
+    assert.ok(viewport, `${name}: the drag needs a viewport`);
+    const targetX = to.x + to.width / 2;
+    const targetY = Math.min(
+      viewport.height - 12,
+      Math.max(12, to.y + Math.min(to.height / 2, 80))
+    );
     await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
     await page.mouse.down();
-    await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 8 });
+    await page.mouse.move(targetX, targetY, { steps: 8 });
     const marked = await page.locator(`[data-pane="${targetView}"]`).getAttribute('data-pane-drop');
     await page.mouse.up();
     return marked;
@@ -813,6 +832,179 @@ export async function auditPaneOrientations(browser, baseUrl, name) {
     console.log(
       `  ok ${name}: pane 3 opened a third column, pane 2 stacked alone under pane 1, ` +
         `and the three-column body survived a reload`
+    );
+  } finally {
+    await context.close();
+  }
+}
+
+/**
+ * The pane area's bottom edge, on the built bundle.
+ *
+ * A bounded split gives the body a height floor, but the editor used to stop at its own 360px
+ * theme cap, leaving a dead strip under it. The bottom grip resizes the whole body; reset returns
+ * it to the floor. This measures the rendered CodeMirror box, not its wrapper: the test id is on
+ * `.cm-content`, so `[data-editor="editor-main"] .cm-editor` is the node that has to reach the
+ * bottom. The grip drag is a real pointer sequence, because an attribute alone would not prove the
+ * border moves.
+ */
+export async function auditPaneBottomResize(browser, baseUrl, name) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  await seedTourSeen(context);
+  const page = await context.newPage();
+  const pageErrors = [];
+  page.on('pageerror', (error) => pageErrors.push(String(error)));
+
+  const read = () =>
+    page.evaluate(() => {
+      const rect = (node) => {
+        if (!node) return null;
+        const box = node.getBoundingClientRect();
+        return { x: box.x, y: box.y, w: box.width, h: box.height, bottom: box.bottom };
+      };
+      const body = document.querySelector('[data-testid="editor-panes"]');
+      return {
+        body: rect(body),
+        mainBody: rect(document.querySelector('[data-pane="main"] [data-pane-main-body]')),
+        editor: rect(document.querySelector('[data-editor="editor-main"] .cm-editor')),
+        bar: rect(document.querySelector('[data-testid="pane-divider-bottom"]')),
+        reset: rect(document.querySelector('[data-testid="btn-pane-reset"]')),
+        resized: Boolean(body?.hasAttribute('data-pane-resized')),
+        split: body?.getAttribute('data-split'),
+        bounded: body?.getAttribute('data-bounded'),
+      };
+    });
+
+  try {
+    await page.goto(`${baseUrl}?lesson=P.6`, { waitUntil: 'networkidle', timeout: 45000 });
+    await page.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, {
+      timeout: 20000,
+    });
+    await page.keyboard.press('Alt+1');
+    await page.waitForFunction(
+      () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'study',
+      undefined,
+      { timeout: 10000 }
+    );
+    await expandEditorBody(page);
+    const body = page.getByTestId('editor-panes');
+    await body.waitFor({ state: 'visible', timeout: 10000 });
+    if ((await body.getAttribute('data-split')) !== 'split') {
+      await page.getByTestId('btn-pane-split').click();
+    }
+    await page.waitForFunction(
+      () => document.querySelector('[data-testid="editor-panes"]')?.getAttribute('data-split') === 'split',
+      undefined,
+      { timeout: 10000 }
+    );
+    await page
+      .locator('[data-editor="editor-main"] .cm-editor')
+      .waitFor({ state: 'visible', timeout: 20000 });
+    await page.getByTestId('pane-divider-bottom').waitFor({ state: 'visible', timeout: 10000 });
+    await page.waitForTimeout(250);
+
+    const before = await read();
+    assert.ok(before.body && before.editor && before.mainBody, `${name}: the split body or its editor is missing`);
+    assert.equal(before.bounded, 'true', `${name}: the P.6 body must be a bounded preset`);
+    assert.equal(before.resized, false, `${name}: a fresh body must not start resized`);
+    assert.ok(before.bar && before.bar.h > 0 && before.bar.h <= 16, `${name}: the bottom grip is not on the body edge`);
+    assert.ok(before.reset && before.reset.h >= 12, `${name}: the bottom bar has no reset control`);
+    // The editor's content node used to stop at 360px while the pane went on below it.
+    assert.ok(
+      Math.abs(before.editor.bottom - before.body.bottom) <= 2 &&
+        Math.abs(before.editor.bottom - before.mainBody.bottom) <= 2,
+      `${name}: the editor leaves a gap under it (editor ${before.editor.bottom.toFixed(1)}, ` +
+        `body ${before.body.bottom.toFixed(1)}, pane ${before.mainBody.bottom.toFixed(1)})`
+    );
+    assert.ok(
+      before.editor.h >= before.body.h - 4,
+      `${name}: the editor is ${before.editor.h.toFixed(1)}px in a ${before.body.h.toFixed(1)}px body`
+    );
+
+    const grip = page.getByTestId('pane-divider-bottom');
+    // The body can be taller than the viewport, so the grip starts below the fold. Center it with
+    // an instant scroll: the page uses smooth scrolling, and coordinates read during that motion
+    // point at where the bar used to be.
+    await page.evaluate(() => {
+      document
+        .querySelector('[data-testid="pane-divider-bottom"]')
+        ?.scrollIntoView({ block: 'center', behavior: 'instant' });
+    });
+    await page.waitForTimeout(150);
+    const box = await grip.boundingBox();
+    assert.ok(box, `${name}: the bottom grip has no pointer box`);
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height / 2;
+    const hit = await page.evaluate(
+      ({ px, py }) => {
+        const element = document.elementFromPoint(px, py);
+        return {
+          tag: element?.tagName ?? null,
+          testid: element?.getAttribute('data-testid') ?? null,
+          onGrip: Boolean(element?.closest('[data-testid="pane-divider-bottom"]')),
+        };
+      },
+      { px: x, py: y }
+    );
+    assert.ok(
+      hit.onGrip,
+      `${name}: the pointer at (${Math.round(x)}, ${Math.round(y)}) hits ` +
+        `${hit.tag ?? 'nothing'}${hit.testid ? `[${hit.testid}]` : ''}, not the grip (box ${JSON.stringify(box)})`
+    );
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x, y - 90, { steps: 10 });
+    await page.mouse.up();
+    await page.waitForFunction(
+      () => document.querySelector('[data-testid="editor-panes"]')?.hasAttribute('data-pane-resized'),
+      undefined,
+      { timeout: 5000 }
+    );
+    const resized = await read();
+    assert.equal(resized.resized, true, `${name}: dragging the bottom edge did not mark the body resized`);
+    // The page scrolls while the body shrinks under the pointer, so the rendered delta is smaller
+    // than the pointer travel. A third of the drag is still a real move, not a rounding wobble.
+    assert.ok(
+      resized.body.h <= before.body.h - 30,
+      `${name}: the drag did not shrink the pane area (${before.body.h.toFixed(1)} -> ${resized.body.h.toFixed(1)})`
+    );
+    assert.ok(
+      resized.editor && Math.abs(resized.editor.bottom - resized.body.bottom) <= 2,
+      `${name}: the editor stopped filling the resized body`
+    );
+
+    await page.getByTestId('btn-pane-reset').click();
+    await page.waitForFunction(
+      () => !document.querySelector('[data-testid="editor-panes"]')?.hasAttribute('data-pane-resized'),
+      undefined,
+      { timeout: 5000 }
+    );
+    const reset = await read();
+    assert.equal(reset.resized, false, `${name}: reset left the resize flag behind`);
+    // The natural height is content- and scroll-dependent, so reset must grow back from the
+    // dragged height and land near the default, not reproduce the pre-drag pixel exactly.
+    assert.ok(
+      reset.body.h > resized.body.h + 30 &&
+        Math.abs(reset.body.h - before.body.h) <= 80,
+      `${name}: reset returned ${reset.body.h.toFixed(1)}px (dragged ${resized.body.h.toFixed(1)}, ` +
+        `default ${before.body.h.toFixed(1)})`
+    );
+    assert.ok(
+      reset.editor && Math.abs(reset.editor.bottom - reset.body.bottom) <= 2,
+      `${name}: the editor stopped filling the body after reset`
+    );
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForFunction(
+      () => document.querySelectorAll('[data-testid="pane-divider-bottom"]').length === 0,
+      undefined,
+      { timeout: 5000 }
+    );
+    assert.equal(pageErrors.length, 0, `${name}: bottom resize page errors: ${pageErrors.join(' | ')}`);
+
+    console.log(
+      `  ok ${name}: the editor fills the ${Math.round(before.body.h)}px body, the bottom grip resized it, ` +
+        `and reset restored it`
     );
   } finally {
     await context.close();
