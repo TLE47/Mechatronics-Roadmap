@@ -14,12 +14,15 @@
  *    the same contract as `focusMode.ts` and the fold keys.
  *
  * The numbers are deliberately few: a master toggle, the music bed, the room, and the effects, plus
- * two choices that are switches rather than levels — whether the interface clicks at all, and whether
- * the music is a song or a drone. Per-cue volume is an implementation detail, and every knob here is
- * one a learner can reason about in a second.
+ * the choices that are switches rather than levels — whether the interface clicks at all, whether
+ * the music is a song or a drone, and when the tape should change on its own. Per-cue volume is an
+ * implementation detail, and every knob here is one a learner can reason about in a second.
  */
 
 import { DEFAULT_TAPE, isTapeId, tapeById } from './musicCatalogue.ts';
+
+/** How the music changes without a press. */
+export type RandomizeMode = 'off' | 'time' | 'lesson';
 
 export interface SoundPrefs {
   /** The master. Off means nothing is scheduled and the context is suspended. */
@@ -46,10 +49,23 @@ export interface SoundPrefs {
    * catalogue id outlives a panel that groups it differently.
    */
   tape: string;
+  /**
+   * When to pick a fresh tape: never, on a timer, or after each newly verified lesson.
+   *
+   * `time` is not a loop that ignores the learner: every change writes the store, so the panel's
+   * chosen tape stays the one the next page shows and the timer starts again from that choice.
+   */
+  randomize: RandomizeMode;
 }
 
 export const SOUND_STORAGE_KEY = 'mechalab_sound_v1';
 export const SOUND_SCHEMA = 'mechalab.sound/2';
+/** The timer's period, printed in the panel so the choice is not a mystery interval. */
+export const RANDOMIZE_INTERVAL_MINUTES = 20;
+
+export function isRandomizeMode(value: unknown): value is RandomizeMode {
+  return value === 'off' || value === 'time' || value === 'lesson';
+}
 
 /** What a fresh browser hears: nothing, until the toggle is pressed. */
 export const DEFAULT_SOUND_PREFS: SoundPrefs = {
@@ -59,6 +75,7 @@ export const DEFAULT_SOUND_PREFS: SoundPrefs = {
   sfx: 0.8,
   clicks: true,
   tape: DEFAULT_TAPE,
+  randomize: 'off',
 };
 
 /** A level that would not round-trip is a level the slider could never show. */
@@ -97,6 +114,7 @@ export function parseSoundPrefs(raw: string | null | undefined): SoundPrefs {
       // Same for the two switches: an old record keeps its levels and gains today's defaults.
       clicks: parsed.clicks !== false,
       tape: storedTape(parsed.tape, parsed.beds),
+      randomize: isRandomizeMode(parsed.randomize) ? parsed.randomize : DEFAULT_SOUND_PREFS.randomize,
     };
   } catch {
     return { ...DEFAULT_SOUND_PREFS };
@@ -160,6 +178,7 @@ export function writeSoundPrefs(patch: Partial<SoundPrefs>): SoundPrefs {
     sfx: clampLevel(patch.sfx, base.sfx),
     clicks: typeof patch.clicks === 'boolean' ? patch.clicks : base.clicks,
     tape: isTapeId(patch.tape) ? patch.tape : base.tape,
+    randomize: isRandomizeMode(patch.randomize) ? patch.randomize : base.randomize,
   };
   current = next;
   const store = storage();

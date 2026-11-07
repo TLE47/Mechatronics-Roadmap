@@ -51,6 +51,7 @@ import {
   MUSIC_TAPES,
   categoryOf,
   isTapeId,
+  randomTapeId,
   tapesIn,
   tapeById,
   tapeCredit,
@@ -59,6 +60,7 @@ import { panFromX, roleForControl } from '../app/src/audio/clickMap.ts';
 import {
   DEFAULT_SOUND_PREFS,
   SOUND_STORAGE_KEY,
+  RANDOMIZE_INTERVAL_MINUTES,
   cachedSoundPrefs,
   clampLevel,
   parseSoundPrefs,
@@ -67,6 +69,7 @@ import {
   writeSoundPrefs,
 } from '../app/src/audio/prefs.ts';
 import {
+  LESSON_PASS_EVENT,
   SOUND_EVENT,
   UI_PAN_LIMIT,
   UI_ROLES,
@@ -306,6 +309,7 @@ await check('levels are clamped to 0..1 and rounded to what the slider can show'
     sfx: 0,
     clicks: true,
     tape: DEFAULT_SOUND_PREFS.tape,
+    randomize: DEFAULT_SOUND_PREFS.randomize,
   });
   // A record written before the Room fader existed keeps its choice and gains the default.
   const old = parseSoundPrefs('{"on":true,"music":0.3,"sfx":0.5}');
@@ -323,6 +327,9 @@ await check('levels are clamped to 0..1 and rounded to what the slider can show'
   assert.equal(parseSoundPrefs('{"tape":"removed-in-a-later-release"}').tape, 'lab-night');
   assert.equal(parseSoundPrefs('{"clicks":"no"}').clicks, true, 'only the literal false switches clicks off');
   assert.equal(parseSoundPrefs('{"clicks":false}').clicks, false);
+  assert.equal(parseSoundPrefs('{"randomize":"lesson"}').randomize, 'lesson');
+  assert.equal(parseSoundPrefs('{"randomize":"sometimes"}').randomize, 'off');
+  assert.equal(parseSoundPrefs('{}').randomize, 'off', 'an old record gains no timer');
 });
 
 await check('the choice round-trips and every control hears it', () => {
@@ -338,6 +345,7 @@ await check('the choice round-trips and every control hears it', () => {
     sfx: DEFAULT_SOUND_PREFS.sfx,
     clicks: true,
     tape: DEFAULT_SOUND_PREFS.tape,
+    randomize: DEFAULT_SOUND_PREFS.randomize,
   });
   assert.deepEqual(readSoundPrefs(), written, 'the store must hold what the control returned');
   assert.equal(seen.length, 1);
@@ -351,6 +359,7 @@ await check('the choice round-trips and every control hears it', () => {
     sfx: 0.1,
     clicks: true,
     tape: DEFAULT_SOUND_PREFS.tape,
+    randomize: DEFAULT_SOUND_PREFS.randomize,
   });
   // The switch and the tape are part of the choice, and are never clamped or coerced by a level patch.
   const switched = writeSoundPrefs({ clicks: false, tape: 'neon-stage', music: 0.2 });
@@ -359,8 +368,12 @@ await check('the choice round-trips and every control hears it', () => {
   assert.equal(switched.music, 0.2);
   assert.equal(writeSoundPrefs({ tape: 'not-a-tape' }).tape, 'neon-stage', 'an unknown id must not replace a real one');
   // Back to the record the next assertion is about, so the switches are the only thing that moved.
-  writeSoundPrefs({ clicks: true, tape: DEFAULT_SOUND_PREFS.tape, music: 0.4 });
+  writeSoundPrefs({ clicks: true, tape: DEFAULT_SOUND_PREFS.tape, music: 0.4, randomize: 'off' });
   assert.deepEqual(cachedSoundPrefs(), after);
+  // A mode patch is validated like the tape: a hostile value cannot become a timer the UI cannot show.
+  assert.equal(writeSoundPrefs({ randomize: 'time' }).randomize, 'time');
+  assert.equal(writeSoundPrefs({ randomize: 'sometimes' }).randomize, 'time');
+  writeSoundPrefs({ randomize: 'off' });
 });
 
 await check('a blocked store costs the memory, never the toggle', () => {
@@ -798,6 +811,19 @@ await check('the catalogue names eleven tapes in five genre doors, each with a f
   assert.match(tapeCredit(tapeById('neon-stage')), /composed by this repository/);
 });
 
+await check('a random tape is never the one already playing, and the roll is bounded', () => {
+  assert.equal(randomTapeId('lab-night', () => 0), 'focus-current');
+  assert.equal(randomTapeId('lab-night', () => 1), MUSIC_TAPES.at(-1).id);
+  assert.equal(randomTapeId('lab-night', () => Number.NaN), 'focus-current');
+  assert.notEqual(randomTapeId(DRONE_ID, () => 0), DRONE_ID, 'the drone is not a tape to keep');
+  assert.notEqual(randomTapeId('winter-blues', () => 0.999), 'winter-blues');
+  assert.equal(
+    randomTapeId('not-a-tape', () => 0),
+    MUSIC_TAPES[0].id,
+    'an unknown current id is not a reason to crash'
+  );
+});
+
 const BED_BUFFER = {
   numberOfChannels: 1,
   length: 48000,
@@ -807,7 +833,7 @@ const BED_BUFFER = {
 
 /** A preference record with one tape, so each engine test says only what it is about. */
 function prefsWith(tape, extra = {}) {
-  return { on: true, music: 0.6, room: 0.5, sfx: 0.8, clicks: true, tape, ...extra };
+  return { on: true, music: 0.6, room: 0.5, sfx: 0.8, clicks: true, tape, randomize: 'off', ...extra };
 }
 
 await check('the chosen tape replaces the drone once it decodes, and a scene change stays on it', async () => {
@@ -995,9 +1021,20 @@ class ManagerEngine {
 
 await check('the manager picks a door\'s own tape, keeps a chosen one, and every write reaches the mix', async () => {
   const target = new EventTarget();
+  const timers = [];
+  let nextTimer = 1;
   target.requestIdleCallback = (callback) => {
     callback();
     return 0;
+  };
+  target.setTimeout = (fn, ms) => {
+    const id = nextTimer++;
+    timers.push({ id, fn, ms });
+    return id;
+  };
+  target.clearTimeout = (id) => {
+    const index = timers.findIndex((timer) => timer.id === id);
+    if (index !== -1) timers.splice(index, 1);
   };
   const previousWindow = globalThis.window;
   globalThis.window = target;
@@ -1042,6 +1079,33 @@ await check('the manager picks a door\'s own tape, keeps a chosen one, and every
     assert.equal(reset.on, true);
     assert.equal(reset.tape, 'neon-stage');
     assert.equal(reset.music, DEFAULT_SOUND_PREFS.music);
+    assert.equal(reset.randomize, 'off', 'Reset restores the switches, including randomisation');
+
+    // Lesson mode changes the tape once a lesson passes; timed mode does not react to a pass.
+    changeMix({ randomize: 'lesson', tape: 'neon-stage' });
+    target.dispatchEvent(new Event(LESSON_PASS_EVENT));
+    const lessonTape = cachedSoundPrefs().tape;
+    assert.notEqual(lessonTape, 'neon-stage', 'a lesson pass must pick a different tape');
+    changeMix({ randomize: 'time' });
+    const timedTape = cachedSoundPrefs().tape;
+    target.dispatchEvent(new Event(LESSON_PASS_EVENT));
+    assert.equal(cachedSoundPrefs().tape, timedTape);
+
+    // Timed mode owns one timer, and its period is the one the panel prints. Firing it changes the
+    // tape once and re-arms for the next interval; moving a level must not postpone that interval.
+    const timer = timers.at(-1);
+    assert.ok(timer, 'timed mode must schedule a timer');
+    assert.equal(timer.ms, RANDOMIZE_INTERVAL_MINUTES * 60 * 1000);
+    timers.splice(timers.indexOf(timer), 1);
+    timer.fn();
+    assert.notEqual(cachedSoundPrefs().tape, timedTape, 'the timer must pick a new tape');
+    assert.equal(timers.length, 1, 'the timer must re-arm from the new tape');
+    const pending = timers.length;
+    setVolume(0.41);
+    assert.equal(timers.length, pending, 'a level move must not restart the interval');
+    changeMix({ on: false });
+    assert.equal(timers.length, 0, 'switching sound off must clear the timer');
+    changeMix({ on: true });
 
     // The toggle is one press in either direction, and the engine hears both.
     const off = togglePlay();

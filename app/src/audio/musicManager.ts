@@ -18,9 +18,28 @@
  * `configureMusicManager` injects a loader for the Node suite; the browser never calls it.
  */
 
-import { cachedSoundPrefs, writeSoundPrefs, subscribeSoundPrefs, DEFAULT_SOUND_PREFS, type SoundPrefs } from './prefs.ts';
-import { categoryOf, defaultTapeFor, isMusicCategory, type MusicCategory } from './musicCatalogue.ts';
-import { SOUND_EVENT, previewUi, readSoundMessage, type UiRole } from './facade.ts';
+import {
+  cachedSoundPrefs,
+  writeSoundPrefs,
+  subscribeSoundPrefs,
+  DEFAULT_SOUND_PREFS,
+  RANDOMIZE_INTERVAL_MINUTES,
+  type SoundPrefs,
+} from './prefs.ts';
+import {
+  categoryOf,
+  defaultTapeFor,
+  isMusicCategory,
+  randomTapeId,
+  type MusicCategory,
+} from './musicCatalogue.ts';
+import {
+  LESSON_PASS_EVENT,
+  SOUND_EVENT,
+  previewUi,
+  readSoundMessage,
+  type UiRole,
+} from './facade.ts';
 import { FOCUS_EVENT, readFocus } from '../focusMode.ts';
 
 type EngineModule = typeof import('./engine.ts');
@@ -34,6 +53,9 @@ let installed = false;
 let armed = false;
 let disarm: (() => void) | null = null;
 const armedListeners = new Set<(armed: boolean) => void>();
+let randomizeTimer: number | null = null;
+/** The mode + tape the pending timer belongs to, so a volume move does not postpone it. */
+let randomizeTimerKey = '';
 
 function setArmed(on: boolean): void {
   if (armed === on) return;
@@ -82,6 +104,43 @@ function loadEngine(): Promise<Engine> {
 /** Every write goes to the engine through `install`'s subscription; nothing here applies directly. */
 function apply(next: SoundPrefs): void {
   engine?.apply(next);
+}
+
+/** Pick a tape the learner is not already hearing, but only while sound is on. */
+function randomizeNow(): string | null {
+  const prefs = cachedSoundPrefs();
+  if (!prefs.on || prefs.randomize === 'off') return null;
+  const tape = randomTapeId(prefs.tape);
+  if (tape === prefs.tape) return null;
+  change({ tape });
+  return tape;
+}
+
+function clearRandomizeTimer(): void {
+  if (randomizeTimer === null) return;
+  window.clearTimeout(randomizeTimer);
+  randomizeTimer = null;
+}
+
+/**
+ * Keep one timer for timed randomisation, and none for the other modes.
+ *
+ * The key is the tape and the mode, not the whole preference: moving the volume slider must not
+ * restart a twenty-minute wait. A timer that fires writes a new tape through the store, which
+ * re-enters here and starts the next interval from that choice.
+ */
+function scheduleRandomize(prefs: SoundPrefs): void {
+  const key = prefs.on && prefs.randomize === 'time' ? `time:${prefs.tape}` : '';
+  if (key === randomizeTimerKey) return;
+  clearRandomizeTimer();
+  randomizeTimerKey = key;
+  if (!key || typeof window === 'undefined' || typeof window.setTimeout !== 'function') return;
+  randomizeTimer = window.setTimeout(() => {
+    randomizeTimer = null;
+    randomizeTimerKey = '';
+    randomizeNow();
+    scheduleRandomize(cachedSoundPrefs());
+  }, RANDOMIZE_INTERVAL_MINUTES * 60 * 1000);
 }
 
 /** Start playback inside (or as soon after) a gesture, and record that the arm has fired. */
@@ -134,6 +193,7 @@ export function install(): void {
   subscribeSoundPrefs((next) => {
     apply(next);
     syncArming(next);
+    scheduleRandomize(next);
   });
   if (typeof window === 'undefined') return;
 
@@ -156,6 +216,11 @@ export function install(): void {
     void loadEngine().then((instance) => instance.setScene(on ? 'focus' : 'home'));
   });
 
+  // The runner reports the pass; this owner decides whether it means a new tape.
+  window.addEventListener(LESSON_PASS_EVENT, () => {
+    randomizeAfterLesson();
+  });
+
   // Warm the chunk after first paint, never before it: a learner who keeps sound off downloads no
   // audio code beyond the control.
   const idle = (
@@ -166,6 +231,7 @@ export function install(): void {
 
   // A remembered "on" from a previous visit is armed, not playing.
   syncArming(cachedSoundPrefs());
+  scheduleRandomize(cachedSoundPrefs());
 }
 
 /** One press: off in one go, or on and starting from the press itself. */
@@ -199,6 +265,17 @@ export function setGenre(genre: MusicCategory): string {
 /** The music fader, 0..1, clamped by the store. Returns what is actually rendered. */
 export function setVolume(volume: number): number {
   return change({ music: volume }).music;
+}
+
+/**
+ * A newly verified lesson: change the tape only when the learner asked for lesson mode.
+ *
+ * The runner calls this once per lesson; `randomizeNow` still honours the master switch, so a
+ * remembered "on" that has not had its first gesture does not quietly rewrite the choice.
+ */
+export function randomizeAfterLesson(): string | null {
+  if (cachedSoundPrefs().randomize !== 'lesson') return null;
+  return randomizeNow();
 }
 
 /** A preview is a request to hear one tick, so it plays even with the interface clicks switched off. */

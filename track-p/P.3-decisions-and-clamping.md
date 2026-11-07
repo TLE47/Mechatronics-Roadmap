@@ -56,9 +56,9 @@ flowchart LR
 
 
 ### Idea 1: Conditional branching (`if/elif/else`)
-- **Primary resource:** [futurecoder.io — Chapter 5 (`If Statements`)](https://futurecoder.io/course/#toc) `[verify in-app]`
-  - **What to complete:** Complete **Chapter 5 (`If Statements`)** `[verify in-app]`.
-  - **What to skip:** Skip Chapter 4 (`For Loops`) and Chapter 6 (`Lists`) for now—we cover both in Lesson P.4 next.
+- **Primary resource:** [futurecoder.io — “If Statements”](https://futurecoder.io/course/#toc) `[verify in-app]`
+  - **What to complete:** Complete **If Statements** `[verify in-app]`.
+  - **What to skip:** Skip **For Loops** and **Lists** for now—we cover both in Lesson P.4 next.
   - **Key takeaway:** An `if` statement tests a **comparison** (`<`, `<=`, `>`, `>=`, `==` equal to, `!=` not equal to) that evaluates to `True` or `False`. When `True`, Python runs the **indented** lines (shifted right by 4 spaces) underneath the colon `:`; otherwise it checks any `elif` ("else if") branches or falls back to `else:`.
   - **Alternative resource:** [Harvard CS50P Lecture 1 Notes](https://cs50.harvard.edu/python/2022/notes/1/) `[HTTP 200 — Verified by scripts/check_links.py]` — Read exact headings **`Conditionals`**, **`if Statements`**, **`Control Flow, elif, and else`**, **`or`**, and **`and`** (skip **`Modulo`** and **`match`**).
 

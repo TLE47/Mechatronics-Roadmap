@@ -59,14 +59,14 @@ flowchart LR
   - **What to read:** Read exact heading **`3.1.3. Lists`** (creating lists with square brackets, indexing with `[0]`, `.append()`, and `len()`).
   - **What to skip:** Skip nested lists at the very end of the section.
   - **Key takeaway:** A **list** stores an ordered sequence of values inside square brackets, such as `distances = [12.1, 11.9, 11.8]`. Python uses **zero-based indexing**: the first item is at index `0` (`distances[0]` is `12.1`), the second is at index `1`, and the last item in a list of length `len(distances)` (`3`) is at index `2`.
-  - **Alternative resource:** [futurecoder.io — Chapter 6 (`Lists`)](https://futurecoder.io/course/#toc) `[verify in-app]` — Complete **Chapter 6 (`Lists`)** `[verify in-app]`.
+  - **Alternative resource:** [futurecoder.io — “Lists”](https://futurecoder.io/course/#toc) `[verify in-app]` — Complete **Lists** `[verify in-app]`.
 
 ### Idea 2: Repeating actions with `for` loops
 - **Primary resource:** [Harvard CS50P Lecture 2 Notes](https://cs50.harvard.edu/python/2022/notes/2/) `[HTTP 200 — Verified by scripts/check_links.py]`
   - **What to read:** Read exact headings **`For Loops`**, **`More About Lists`**, and **`Length`**.
   - **What to skip:** Skip **`While Loops`** (covered in Lesson P.5), **`Dictionaries`**, and **`Mario`**.
   - **Key takeaway:** Instead of copy-pasting the same calculation ten times, a **`for` loop** (`for x in items:`) visits each element of a list one by one and runs its indented block. When you want to run a loop a specific number of times $N$, `for step in range(N):` counts `step` through `0, 1, 2, ..., N - 1`.
-  - **Alternative resource:** [futurecoder.io — Chapter 4 (`For Loops`)](https://futurecoder.io/course/#toc) `[verify in-app]` — Complete **Chapter 4 (`For Loops`)** `[verify in-app]`.
+  - **Alternative resource:** [futurecoder.io — “For Loops”](https://futurecoder.io/course/#toc) `[verify in-app]` — Complete **For Loops** `[verify in-app]`.
 
 #### Micro focus: one name, many ordered values
 <a id="micro-lists"></a>

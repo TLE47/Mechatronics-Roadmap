@@ -215,6 +215,24 @@ export function isMusicCategory(value: unknown): value is MusicCategory {
 }
 
 /**
+ * A fresh tape id, never the one already playing.
+ *
+ * `random()` is injectable so the tests can pin both ends of the range without touching the clock.
+ * A value outside [0, 1) is clamped rather than being allowed to index past the catalogue, and a
+ * non-finite roll opens the list at its first tape. A one-tape catalogue stays on that tape: a
+ * randomiser that can only choose the current one has nothing to do.
+ */
+export function randomTapeId(current: string, random: () => number = Math.random): string {
+  const choices = MUSIC_TAPES.filter((entry) => entry.id !== current);
+  if (choices.length === 0) return current;
+  const roll = random();
+  const index = Number.isFinite(roll)
+    ? Math.min(choices.length - 1, Math.max(0, Math.floor(roll * choices.length)))
+    : 0;
+  return choices[index].id;
+}
+
+/**
  * One line of credit for the panel: who made it, and under what terms.
  *
  * A composed tape says so in the same sentence that names its author, so a learner never has to work

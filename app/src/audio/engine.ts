@@ -37,7 +37,7 @@
 
 import type { SoundCue, SoundMessage, SoundScene, UiRole } from './facade.ts';
 import { clampPan } from './facade.ts';
-import { DEFAULT_SOUND_PREFS, type SoundPrefs } from './prefs.ts';
+import { DEFAULT_SOUND_PREFS, isRandomizeMode, type SoundPrefs } from './prefs.ts';
 import { ROOM_TRIM, roomMix, type RoomLayer } from './ambience.ts';
 import { DRONE_ID, tapeById } from './musicCatalogue.ts';
 
@@ -935,6 +935,7 @@ function normalise(prefs: Partial<SoundPrefs>, on: boolean): SoundPrefs {
     room: typeof prefs.room === 'number' ? prefs.room : DEFAULT_SOUND_PREFS.room,
     clicks: typeof prefs.clicks === 'boolean' ? prefs.clicks : DEFAULT_SOUND_PREFS.clicks,
     tape: typeof prefs.tape === 'string' && prefs.tape ? prefs.tape : DEFAULT_SOUND_PREFS.tape,
+    randomize: isRandomizeMode(prefs.randomize) ? prefs.randomize : DEFAULT_SOUND_PREFS.randomize,
   };
 }
 

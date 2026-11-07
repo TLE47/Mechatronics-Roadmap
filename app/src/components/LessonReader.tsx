@@ -26,6 +26,7 @@ import {
   type ReaderBlock,
 } from '../lessonPage';
 import { headingAnchors, inlinePlain } from '../readerMarkdown';
+import { blocksForScope, type ReaderScope } from '../readerScope';
 import {
   clearReadingPosition,
   createReadingSaver,
@@ -76,6 +77,10 @@ import { lessonPageUrl as sourceUrl } from '../startHere';
 /** What a route block says when the page gives no caption of its own. */
 const ROUTE_CAPTION = 'Each box is a checkpoint in order; the last one is the verified pass this page ends on.';
 
+/** The one split-view instruction, kept whole so its button tooltip cannot drift from the panel. */
+const SPLIT_TIP =
+  "Study tip: Open the external resource in a new tab, then use your browser's Split View to display it beside this lesson. Alternatively, drag two windows side by side. Adjust their sizes to give more space to the page you're currently working on.";
+
 /**
  * The passage a sticky note is written about.
  *
@@ -125,10 +130,10 @@ interface LessonReaderProps {
    */
   hidden?: boolean;
   /**
-   * Study is the reading half only: the page stops at its `## Do it yourself` heading, because the
-   * workbench below is the doing half. Read (and any other preset) shows the whole page.
+   * Study starts at `## Learn` and stops at its `## Do it yourself` heading, because the workbench
+   * below is the doing half. Read keeps the rest of the page, without the Learn section Study carries.
    */
-  scope?: 'full' | 'study';
+  scope?: ReaderScope;
   /**
    * Where the page goes next: Study continues into Read, Read continues into the next lesson.
    *
@@ -137,15 +142,6 @@ interface LessonReaderProps {
    * compete with the exercise the learner has just read.
    */
   continueAction?: { label: string; title: string; onClick: () => void } | null;
-}
-
-/** The page up to its exercise section, for the Study preset. */
-function blocksForScope(blocks: LessonPage['blocks'], scope: 'full' | 'study'): LessonPage['blocks'] {
-  if (scope === 'full') return blocks;
-  const stop = blocks.findIndex(
-    (block) => block.t === 'h' && block.l >= 2 && /^do it yourself\b/i.test(block.x)
-  );
-  return stop === -1 ? blocks : blocks.slice(0, stop);
 }
 
 /** The page's absolute URL, for the source link a heading or a figure points back to. */
@@ -1085,7 +1081,7 @@ export function LessonReader({
             onClick={() => setSplitTip((open) => !open)}
             aria-expanded={splitTip}
             data-testid="btn-split-tip"
-            title="Study tip: put this page beside the editor in split view, so the code and the explanation stay in sight together"
+            title={SPLIT_TIP}
             className="flex items-center gap-1 rounded border border-line-soft bg-canvas px-2 py-1 text-[13px] font-mono text-muted hover:text-ink cursor-pointer"
           >
             <PanelsTopLeft className="h-3 w-3" /> Split view
@@ -1121,25 +1117,7 @@ export function LessonReader({
           data-testid="reader-split-tip"
           className="border-b border-line-soft bg-canvas px-3 py-1.5 text-[12px] leading-snug text-muted"
         >
-          Study tip: on a wide window, put this page beside the editor — the{' '}
-          <span className="font-mono text-body">Study</span> preset does it, and dragging two windows
-          side by side works too — so the code and the explanation stay in sight together.
-          {onJumpToEditor && (
-            <>
-              {' '}
-              No room to split?{' '}
-              <button
-                type="button"
-                onClick={onJumpToEditor}
-                data-testid="btn-split-tip-jump"
-                className="font-mono text-accent underline underline-offset-2 cursor-pointer"
-              >
-                Jump to the editor ↓
-              </button>
-              {' '}
-              — the text keeps its place when you come back.
-            </>
-          )}
+          {SPLIT_TIP}
         </p>
       )}
 

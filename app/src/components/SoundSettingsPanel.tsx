@@ -1,6 +1,11 @@
 import React from 'react';
 import { RotateCcw } from 'lucide-react';
-import type { SoundPrefs } from '../audio/prefs.ts';
+import {
+  RANDOMIZE_INTERVAL_MINUTES,
+  isRandomizeMode,
+  type RandomizeMode,
+  type SoundPrefs,
+} from '../audio/prefs.ts';
 import {
   DRONE_ID,
   MUSIC_CATEGORIES,
@@ -25,7 +30,8 @@ import type { UiRole } from '../audio/facade.ts';
  *    Acoustic) plus the drone, and inside a door the tapes it holds. The rows are chips that wrap,
  *    because a 360 px phone cannot show six side by side and a horizontal scroller would hide three
  *    of them. The line under the picker says what the run duck does, because a learner who hears the
- *    music step back deserves to know it was the checks.
+ *    music step back deserves to know it was the checks. A final select chooses whether that tape
+ *    stays, changes on a timer, or changes after each verified lesson.
  * 3. **Room** — the rain, the floor and the city, as one fader, with what those words mean.
  * 4. **Interface** — the tick level, a switch for whether the interface ticks at all, and previews,
  *    so the decision is made by ear rather than by description.
@@ -55,6 +61,7 @@ interface Props {
   onClicks: (on: boolean) => void;
   /** A catalogue tape id, or `drone`. */
   onTape: (tape: string) => void;
+  onRandomize: (mode: RandomizeMode) => void;
   onPreview: (role: UiRole) => void;
   onReset: () => void;
 }
@@ -71,6 +78,12 @@ const PREVIEWS = [
   { role: 'close', label: 'Close' },
 ] as const;
 
+const RANDOMIZE_CHOICES: readonly { value: RandomizeMode; label: string }[] = [
+  { value: 'off', label: 'Off' },
+  { value: 'time', label: `Every ${RANDOMIZE_INTERVAL_MINUTES} min` },
+  { value: 'lesson', label: 'After each lesson' },
+];
+
 export const SoundSettingsPanel: React.FC<Props> = ({
   id,
   testIdSuffix,
@@ -80,6 +93,7 @@ export const SoundSettingsPanel: React.FC<Props> = ({
   onLevel,
   onClicks,
   onTape,
+  onRandomize,
   onPreview,
   onReset,
 }) => {
@@ -234,6 +248,35 @@ export const SoundSettingsPanel: React.FC<Props> = ({
       <p className="mt-1 text-[11px] leading-snug" style={{ color: 'var(--dim)' }}>
         {openCategoryHint ?? 'Two detuned oscillators — a texture rather than a song.'}
       </p>
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <label
+          htmlFor={`${id}-randomize`}
+          className="text-[11px] font-semibold uppercase tracking-wide"
+        >
+          Randomize
+        </label>
+        <select
+          id={`${id}-randomize`}
+          value={prefs.randomize}
+          disabled={!prefs.on}
+          onChange={(event) => {
+            if (isRandomizeMode(event.target.value)) onRandomize(event.target.value);
+          }}
+          data-testid={tid('sound-randomize')}
+          className="min-h-[32px] rounded-md border px-1.5 py-0.5 text-[11px] font-semibold disabled:opacity-50"
+          style={{
+            borderColor: 'var(--border)',
+            backgroundColor: 'var(--panel)',
+            color: 'var(--text)',
+          }}
+        >
+          {RANDOMIZE_CHOICES.map((choice) => (
+            <option key={choice.value} value={choice.value}>
+              {choice.label}
+            </option>
+          ))}
+        </select>
+      </div>
     </section>
 
     {/* ---- Room and cues ---- */}

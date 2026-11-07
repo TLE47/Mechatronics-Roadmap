@@ -34,6 +34,7 @@ import {
   writeReadingPosition,
 } from '../app/src/readingPosition.ts';
 import { markQuotes, wrapSelection } from '../app/src/lessonMarks.ts';
+import { blocksForScope } from '../app/src/readerScope.ts';
 
 let passed = 0;
 let failed = 0;
@@ -237,6 +238,60 @@ check('a repeated heading gets the -1 suffix, keyed by the block it belongs to',
   assert.equal(anchors.get(second), 'summary-1');
   assert.equal(anchors.get(nested), 'detail', 'a heading behind a reveal is still a heading');
   assert.equal(anchors.has(text), false);
+});
+
+section('reader scope');
+
+const pageText = (blocks) =>
+  blocks.map((block) => (block.t === 'h' || block.t === 'p' ? block.x : block.t));
+
+check('Study starts at Learn and stops before the exercise; Read drops the whole Learn section', () => {
+  const blocks = [
+    { t: 'h', l: 2, x: 'Goal' },
+    { t: 'p', x: 'goal words' },
+    { t: 'h', l: 2, x: 'Prerequisites' },
+    { t: 'p', x: 'needs' },
+    { t: 'h', l: 2, x: 'Learn' },
+    { t: 'p', x: 'learn words' },
+    { t: 'h', l: 3, x: 'Idea 1' },
+    { t: 'p', x: 'idea words' },
+    { t: 'h', l: 2, x: 'Do it yourself' },
+    { t: 'p', x: 'exercise words' },
+    { t: 'h', l: 2, x: 'Recap' },
+    { t: 'p', x: 'recap words' },
+  ];
+  assert.deepEqual(pageText(blocksForScope(blocks, 'study')), [
+    'Learn',
+    'learn words',
+    'Idea 1',
+    'idea words',
+  ]);
+  assert.deepEqual(pageText(blocksForScope(blocks, 'full')), [
+    'Goal',
+    'goal words',
+    'Prerequisites',
+    'needs',
+    'Do it yourself',
+    'exercise words',
+    'Recap',
+    'recap words',
+  ]);
+});
+
+check('a page with no Learn heading is stopped before its exercise, not blanked', () => {
+  const blocks = [
+    { t: 'h', l: 2, x: 'Goal' },
+    { t: 'p', x: 'goal words' },
+    { t: 'h', l: 2, x: 'Do it yourself' },
+    { t: 'p', x: 'exercise words' },
+  ];
+  assert.deepEqual(pageText(blocksForScope(blocks, 'study')), ['Goal', 'goal words']);
+  assert.deepEqual(pageText(blocksForScope(blocks, 'full')), [
+    'Goal',
+    'goal words',
+    'Do it yourself',
+    'exercise words',
+  ]);
 });
 
 section('payloads');

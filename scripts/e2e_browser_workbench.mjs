@@ -904,6 +904,60 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     console.log('  ok a run draws its values beside their lines, and an edit clears them');
 
+    // 5b-i. The next-lesson handoff is a Study handoff. A learner who just passed in Debug must
+    //       land on the next lesson's page in Study, not keep Debug and hide the prose behind the
+    //       code they finished. The page must start at Learn, not the Goal it already passed.
+    {
+      const currentReaderPath = await page.getByTestId('lesson-reader').getAttribute('data-reader-path');
+      assert.ok(currentReaderPath, 'the passed lesson must have a reader page to leave');
+      await page.getByTestId('layout-debug').click();
+      await page.waitForFunction(
+        () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'debug',
+        undefined,
+        { timeout: 5000 }
+      );
+      await page.getByTestId('btn-next-chapter').click();
+      await page.waitForFunction(
+        (previous) => {
+          const layout = document.querySelector('[data-layout]')?.getAttribute('data-layout');
+          const reader = document.querySelector('[data-testid="lesson-reader"]');
+          return layout === 'study' && reader?.getAttribute('data-reader-path') !== previous;
+        },
+        currentReaderPath,
+        { timeout: 20000 }
+      );
+      await page.getByTestId('reader-loading').waitFor({ state: 'detached', timeout: 20000 });
+      const nextProse = await page.getByTestId('reader-prose').innerText();
+      assert.match(nextProse, /^Learn$/m, 'the next lesson must open at its Learn heading');
+      assert.doesNotMatch(nextProse, /^Goal$/m, 'the next lesson must not repeat its Goal in Study');
+      assert.equal(
+        await page.getByTestId('layout-study').getAttribute('aria-pressed'),
+        'true',
+        'the next lesson must leave the layout in Study'
+      );
+      // Back to P.6 for the symbol checks below: they read the solution loaded above, and this block
+      // is about where the next press lands, not about changing the lesson the suite is testing.
+      await page.getByTestId('lesson-item-P.6').click();
+      await page.waitForFunction(
+        (previous) =>
+          document.querySelector('[data-testid="lesson-reader"]')?.getAttribute('data-reader-path') ===
+          previous,
+        currentReaderPath,
+        { timeout: 15000 }
+      );
+      await page.getByTestId('reader-loading').waitFor({ state: 'detached', timeout: 15000 });
+      // Study opens with its editor body folded. The symbol checks below press F12, so expand it;
+      // the chooser rail that the next step uses is only drawn in Study.
+      if (!(await page.getByTestId('editor-panes').isVisible())) {
+        await page.getByTestId('btn-toggle-editor').click();
+        await page.waitForTimeout(150);
+      }
+      // Selecting a lesson leaves focus on the chooser button. The symbol checks below press F12,
+      // which only reaches the editor when the editor has focus.
+      await page.locator('[data-editor="editor-main"] .cm-content').click();
+      console.log('  ok next-lesson opens the next page in Study, at Learn, even after Debug');
+    }
+
     // 5c. Symbol linking: F12 on a name puts the cursor on the line that defines it, and the name is
     //     read from the solution rather than hard-coded, so this does not depend on which function
     //     P.6 happens to ship.
@@ -3492,22 +3546,23 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     console.log('  ok a try-it link opens scratch, runs ungraded, and saves nothing');
 
-    // The Study preset is the reading half only: P.1 has an exercise section, and Study stops at
-    // its heading, while Read keeps the whole page. The editor starts expanded afterwards so the
-    // keyboard steps below land in a visible editor.
+    // Study starts at Learn and stops at the exercise; Read carries the rest of the page without
+    // repeating the Learn section. The editor starts expanded afterwards so the keyboard steps
+    // below land in a visible editor.
     await page.getByTestId('reader-loading').waitFor({ state: 'detached', timeout: 10000 });
     const p1StudyProse = await page.getByTestId('reader-prose').innerText();
+    assert.match(p1StudyProse, /^Learn$/m, 'Study must start at P.1’s Learn heading');
+    assert.doesNotMatch(p1StudyProse, /^Goal$/m, 'Study must not repeat the Goal above the toolchain');
     assert.doesNotMatch(
       p1StudyProse,
       /Do it yourself/i,
       'Study must stop before P.1’s exercise section'
     );
     await page.getByTestId('layout-read').click();
-    assert.match(
-      await page.getByTestId('reader-prose').innerText(),
-      /Do it yourself/i,
-      'Read must keep P.1’s exercise section'
-    );
+    const p1ReadProse = await page.getByTestId('reader-prose').innerText();
+    assert.match(p1ReadProse, /^Goal$/m, 'Read must keep P.1’s Goal and requirements');
+    assert.doesNotMatch(p1ReadProse, /^Learn$/m, 'Read must not repeat the Learn section');
+    assert.match(p1ReadProse, /Do it yourself/i, 'Read must keep P.1’s exercise section');
     const continueToWrite = page.getByTestId('btn-reader-continue');
     await continueToWrite.waitFor({ timeout: 5000 });
     assert.match(

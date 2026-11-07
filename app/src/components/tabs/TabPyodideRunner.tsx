@@ -33,7 +33,7 @@ import {
 import { FirstRunTour } from '../FirstRunTour';
 import { layoutForStep } from '../../tour';
 import { resumeLabel } from '../../tourState';
-import { playCue } from '../../audio/facade';
+import { lessonPassed, playCue } from '../../audio/facade';
 
 import { harnessGate } from '../../harnessGrading.ts';
 import { harnessForLesson } from '../../lessonHarnesses.ts';
@@ -981,6 +981,19 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     share.reset();
   };
 
+  /**
+   * Open the next lesson in Study.
+   *
+   * Debug describes the run just finished, so carrying that preset into the next entry would hide
+   * its page behind the old layout. On a phone, Study is two surfaces; a new lesson starts on its
+   * text.
+   */
+  const openNextLesson = (id: string) => {
+    chooseLayout('study');
+    if (isPhone) writePhoneSurface(id, 'lesson');
+    selectLesson(id);
+  };
+
   // Co-editing (`runner/useCoEdit.ts`): the shared document, the offer that has to be answered
   // before an editor is replaced, and the sentence that says why it stopped. Every local write asks
   // it, so typing, a paste, Format and a slider all reach the peer by one path.
@@ -1463,12 +1476,19 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
   // A verdict earns a toast once. Leaving the lesson or running again clears it, so the same pass
   // cannot stack three copies on screen.
+  const randomizedPassRef = useRef<string | null>(null);
   useEffect(() => {
     if (passStatus !== 'passed') {
       setShowPassToast(false);
       return;
     }
     setShowPassToast(true);
+    // Once per verified lesson, not once per render: a pass already recorded still opens the toast,
+    // but it must not keep shuffling the tape every time the learner returns to that entry.
+    if (randomizedPassRef.current !== selectedId) {
+      randomizedPassRef.current = selectedId;
+      lessonPassed();
+    }
     const timer = window.setTimeout(() => setShowPassToast(false), 6000);
     return () => window.clearTimeout(timer);
   }, [passStatus, selectedId]);
@@ -1826,7 +1846,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       </span>
       {passStatus === 'passed' && nextLesson && (
         <button
-          onClick={() => selectLesson(nextLesson.id)}
+          onClick={() => openNextLesson(nextLesson.id)}
           className="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-accent text-inverse flex items-center gap-1 cursor-pointer"
         >
           <Sparkles className="w-3 h-3" />
@@ -2191,7 +2211,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               the code, and proved it. The next lesson opens with its own starter brief.
               {nextLesson && (
                 <button
-                  onClick={() => selectLesson(nextLesson.id)}
+                  onClick={() => openNextLesson(nextLesson.id)}
                   className="ml-2 px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-emerald text-inverse cursor-pointer"
                 >
                   Next: Lesson {nextLesson.id} →
@@ -2782,8 +2802,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 nextLesson
                   ? {
                       label: `Next: ${nextLesson.id}`,
-                      title: `Go to ${nextLesson.id}: ${nextLesson.title}`,
-                      onOpen: () => selectLesson(nextLesson.id),
+                      title: `Open ${nextLesson.id} in Study: ${nextLesson.title}`,
+                      onOpen: () => openNextLesson(nextLesson.id),
                     }
                   : null
               }
@@ -2896,7 +2916,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               </p>
             </div>
             {nextLesson && (                <button
-                onClick={() => selectLesson(nextLesson.id)}
+                onClick={() => openNextLesson(nextLesson.id)}
                 className="btn btn-primary px-3 py-1.5 text-[13px]"
               >
                 Next lesson →

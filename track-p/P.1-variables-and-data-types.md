@@ -59,9 +59,9 @@ flowchart LR
 
 
 ### Idea 1: Storing values in named variables
-- **Primary resource:** [futurecoder.io — Chapters 1 and 3 (`The Shell` & `Variables`)](https://futurecoder.io/course/#toc) `[verify in-app]`
-  - **What to complete:** Complete **Chapter 1 (`The Shell`)** and **Chapter 3 (`Variables`)** `[verify in-app]`.
-  - **What to skip:** Skip Chapter 2 for a moment (covered in Idea 2 below) and skip Chapters 4–12.
+- **Primary resource:** [futurecoder.io — “The Shell” and “Variables”](https://futurecoder.io/course/#toc) `[verify in-app]`
+  - **What to complete:** Complete **The Shell** and **Variables** `[verify in-app]`.
+  - **What to skip:** Skip **String Basics** for a moment (covered in Idea 2 below); leave **If Statements**, **For Loops**, **Lists**, and **Functions** for later lessons.
   - **Key takeaway:** A **variable** is a named storage box in computer memory. In Python, the single equals sign `=` is the **assignment** action—not a math equation: Python calculates the value on the right side of `=` first, and copies that result into the variable name on the left (`count = count + 1` increases `count` by `1`).
   - **Alternative resource:** [Harvard CS50P Lecture 0 Notes](https://cs50.harvard.edu/python/2022/notes/0/) `[HTTP 200 — Verified by scripts/check_links.py]` — Read exact headings **`Variables`** and **`Comments`**.
 
@@ -70,7 +70,7 @@ flowchart LR
   - **What to read:** Read exact headings **`Formatting Strings`**, **`Integers or int`**, and **`Float Basics`**.
   - **What to skip:** Skip **`Strings and Parameters`**, **`More on Strings`**, and **`Def`**.
   - **Key takeaway:** Computers treat whole numbers, decimal numbers, text, and true/false switches differently: **`int`** holds exact whole numbers (`400`, `-5`), **`float`** holds numbers with a decimal point (`12.0`, `0.05`), **`str`** holds text inside quotation marks (`"READY"`), and **`bool`** holds `True` or `False` (capitalized).
-  - **Alternative resource:** [futurecoder.io — Chapter 2 (`String Basics`) and Chapter 7 (`f-strings`)](https://futurecoder.io/course/#toc) `[verify in-app]` — Complete **Chapter 2 (`String Basics`)** and the **`f-strings`** page in **Chapter 7 (`A Bit More About Strings`)** `[verify in-app]`.
+  - **Alternative resource:** [futurecoder.io — “String Basics” and “A Bit More About Strings”](https://futurecoder.io/course/#toc) `[verify in-app]` — Complete **String Basics** and the **`f-strings`** page under **A Bit More About Strings** `[verify in-app]`.
 
 #### Micro focus: variables
 <a id="micro-variables"></a>

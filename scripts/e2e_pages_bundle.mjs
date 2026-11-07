@@ -859,33 +859,56 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
         editorLeft: Math.round(editor.left),
         editorWidth: Math.round(editor.width),
         scrollable: scroll.scrollHeight > scroll.clientHeight,
-        // The figures: the lesson's own named scene and the page's flowchart drawn as numbered
-        // steps. Both are app-drawn, so "is it there" has to be asked of the built bundle.
+        // Study starts at ## Learn, so this half carries the lesson's named scene. The page's route
+        // block sits above Learn and is read in the Read preset; both are app-drawn, so "is it
+        // there" has to be asked of the built bundle.
         figures: [...box.querySelectorAll('[data-testid^="diagram-"]')].map((figure) => ({
           id: figure.dataset.testid,
           labelled: Boolean(figure.querySelector('svg[role="img"]')?.getAttribute('aria-label')),
           caption: (figure.querySelector('figcaption')?.textContent ?? '').trim(),
         })),
-        routeSteps: [...box.querySelectorAll('[data-testid="diagram-route"] text')].filter((node) =>
-          /^\d+$/.test((node.textContent ?? '').trim())
-        ).length,
       };
     });
     assert.ok(reader.headings.length >= 3, `${name}: the pane rendered ${reader.headings.length} headings`);
     assert.ok(
-      reader.figures.length >= 2,
-      `${name}: the page draws ${reader.figures.length} figure(s) (${reader.figures
-        .map((figure) => figure.id)
-        .join(', ')}): a named scene and the page's own route are both expected`
+      reader.figures.some((figure) => figure.id === 'diagram-trajectory'),
+      `${name}: Study must draw the Learn scene (got ${reader.figures.map((figure) => figure.id).join(', ')})`
     );
     assert.ok(
       reader.figures.every((figure) => figure.labelled && figure.caption.length > 10),
       `${name}: every figure needs a role="img" name and a caption, got ${JSON.stringify(reader.figures)}`
     );
-    assert.ok(
-      reader.routeSteps >= 3,
-      `${name}: the page's flowchart is drawn as ${reader.routeSteps} numbered steps; the route is missing or unnumbered`
+
+    // Read is the other half: it drops Learn and carries the route, which is the page's own
+    // flowchart of numbered checkpoints.
+    await wide.keyboard.press('Alt+2');
+    await wide.waitForFunction(
+      () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'read',
+      undefined,
+      { timeout: 5000 }
     );
+    await wide.getByTestId('reader-loading').waitFor({ state: 'detached', timeout: 20000 });
+    const readRoute = await wide.evaluate(() => {
+      const box = document.querySelector('[data-testid="lesson-reader"]');
+      return {
+        present: Boolean(box?.querySelector('[data-testid="diagram-route"]')),
+        steps: [...(box?.querySelectorAll('[data-testid="diagram-route"] text') ?? [])].filter((node) =>
+          /^\d+$/.test((node.textContent ?? '').trim())
+        ).length,
+      };
+    });
+    assert.equal(readRoute.present, true, `${name}: Read must draw the page's route above Learn`);
+    assert.ok(
+      readRoute.steps >= 3,
+      `${name}: the page's flowchart is drawn as ${readRoute.steps} numbered steps; the route is missing or unnumbered`
+    );
+    await wide.keyboard.press('Alt+1');
+    await wide.waitForFunction(
+      () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'study',
+      undefined,
+      { timeout: 5000 }
+    );
+    await wide.getByTestId('reader-loading').waitFor({ state: 'detached', timeout: 20000 });
 
     // ---- A drawing can be read at its own size ----
     // The scenes are laid out on a 640-unit canvas, so a narrow column scales their labels down with
@@ -1027,7 +1050,9 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     // page keeps.
     const scrolled = await wide.evaluate(() => {
       const scroll = document.querySelector('[data-testid="reader-scroll"]');
-      const heading = document.querySelectorAll('[data-reader-anchor]')[3];
+      // Study now stops before the exercise, so the last heading has no room below it: scrolling
+      // there clamps and the top anchor is an earlier heading. Use Idea 1, which is mid-Learn.
+      const heading = document.querySelectorAll('[data-reader-anchor]')[1];
       scroll.scrollTop = heading.offsetTop + 24;
       scroll.dispatchEvent(new Event('scroll'));
       return { anchor: heading.dataset.readerAnchor, at: scroll.scrollTop };
@@ -1107,7 +1132,9 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       const movedAgain = await marks();
       assert.notEqual(movedAgain.cursorX, moving.cursorX, `${name}: the figure cursor must move while it is read`);
 
-      await wide.getByTestId('reader-scroll').evaluate((node) => node.scrollTo(0, 0));
+      // Study now starts at Learn, so the figure is near the top; scrolling to 0 would leave it in
+      // view on a tall window. Scroll past it to the end of the page instead.
+      await wide.getByTestId('reader-scroll').evaluate((node) => node.scrollTo(0, node.scrollHeight));
       await wide.waitForTimeout(700);
       assert.equal(
         (await marks()).all,
@@ -1692,7 +1719,7 @@ async function main() {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().catch((error) => {
-    console.error('[FAIL] Pages bundle checks failed:', error.message);
+    console.error('[FAIL] Pages bundle checks failed:', error.stack ?? error.message);
     process.exit(1);
   });
 }

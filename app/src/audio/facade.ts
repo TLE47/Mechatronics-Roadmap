@@ -46,6 +46,11 @@ export type SoundMessage =
   | { kind: 'preview'; role: UiRole };
 
 export const SOUND_EVENT = 'mechalab:sound';
+/**
+ * A lesson was verified. It is a fact for the sound runtime, not a sound of its own: the manager
+ * decides whether that means a new tape, and the runner does not import the manager to ask.
+ */
+export const LESSON_PASS_EVENT = 'mechalab:lesson-pass';
 
 /** Pan is a position, not an instruction: anything outside the limit is clamped, and NaN is centre. */
 export function clampPan(pan: number): number {
@@ -80,6 +85,16 @@ export function playUi(role: UiRole, pan = 0): void {
 
 export function setSoundScene(scene: SoundScene): void {
   dispatch({ kind: 'scene', scene });
+}
+
+/** Say a lesson passed, without carrying a payload: the listener reads the learner's preferences. */
+export function lessonPassed(): void {
+  if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
+  try {
+    window.dispatchEvent(new Event(LESSON_PASS_EVENT));
+  } catch {
+    // Silence is the default; a page that refuses the event loses only the shuffle.
+  }
 }
 
 /**

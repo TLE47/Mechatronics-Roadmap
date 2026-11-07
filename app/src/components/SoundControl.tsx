@@ -183,6 +183,7 @@ export const SoundControl: React.FC<{ variant?: 'header' | 'pill'; testIdSuffix?
               onLevel={setLevel}
               onClicks={(on) => change({ clicks: on })}
               onTape={(tape) => change({ tape })}
+              onRandomize={(randomize) => change({ randomize })}
               onPreview={(role: UiRole) => preview(role)}
               onReset={() => reset()}
             />
