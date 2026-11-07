@@ -33,7 +33,7 @@ import {
 import { FirstRunTour } from '../FirstRunTour';
 import { layoutForStep } from '../../tour';
 import { resumeLabel } from '../../tourState';
-import { lessonPassed, playCue } from '../../audio/facade';
+import { playCue } from '../../audio/facade';
 
 import { harnessGate } from '../../harnessGrading.ts';
 import { harnessForLesson } from '../../lessonHarnesses.ts';
@@ -99,6 +99,7 @@ import { useCollab } from './runner/useCollab';
 import { useProgressFlags } from './runner/useProgressFlags';
 import { useVimKeys } from './runner/useVimKeys';
 import { useShareLink } from './runner/useShareLink';
+import { usePassToast } from './runner/usePassToast';
 import { AttemptOffers } from './runner/AttemptOffers';
 import { useDraftComparison } from './runner/useDraftComparison';
 import { DiffPanel } from './runner/DiffPanel';
@@ -1474,24 +1475,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     runShortcutRef.current();
   }, [runRequest]);
 
-  // A verdict earns a toast once. Leaving the lesson or running again clears it, so the same pass
-  // cannot stack three copies on screen.
-  const randomizedPassRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (passStatus !== 'passed') {
-      setShowPassToast(false);
-      return;
-    }
-    setShowPassToast(true);
-    // Once per verified lesson, not once per render: a pass already recorded still opens the toast,
-    // but it must not keep shuffling the tape every time the learner returns to that entry.
-    if (randomizedPassRef.current !== selectedId) {
-      randomizedPassRef.current = selectedId;
-      lessonPassed();
-    }
-    const timer = window.setTimeout(() => setShowPassToast(false), 6000);
-    return () => window.clearTimeout(timer);
-  }, [passStatus, selectedId]);
+  // A verdict earns a toast once, and the lesson pass requests the next tape once.
+  usePassToast(passStatus, selectedId, setShowPassToast);
 
   const filteredLessons = PYTHON_LESSONS.filter((l) => {
     const matchesTrack =

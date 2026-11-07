@@ -26,6 +26,7 @@ flowchart LR
 | `AttemptOffers.tsx` | The two offers of someone else's code — a pair attempt and a shared link — with the lesson check before either can replace a draft. |
 | `useShareLink.ts` | The Share press and its five outcomes, including the printed URL when the clipboard refuses. |
 | `useVimKeys.ts` | The remembered Vim opt-in and the mode the editor reads keys in while it is on. |
+| `usePassToast.ts` | The pass toast and the once-per-lesson shuffle: one tape change per verified lesson, and the toast's own six-second life. |
 | `useProgressFlags.ts` | The verified and self-marked lesson stores, parent-owned or local, and the two writers. |
 | `useRunnerArrangement.ts` | The editor/results split share, which side results sit on, and the persisted layout record. |
 | `RunnerToolbar.tsx` | The run controls: presets and dock, Pause/Stop/Run, Predict, and the More panel's actions. |
