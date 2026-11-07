@@ -57,7 +57,7 @@ flowchart LR
 ### Idea 1: End-to-end sense-compute-simulate loop
 - **Primary resource:** [The Physics Classroom — Determining the Area on a v-t Graph](https://www.physicsclassroom.com/class/1DKin/Lesson-4/Determining-the-Area-on-a-v-t-Graph) `[HTTP 200 — Verified by scripts/check_links.py]`
   - **What to read:** Review exact heading **`Calculating the Area of a Rectangle`**.
-  - **What to skip:** No new external chapters required—this milestone synthesizes the ideas you already practiced in Lessons P.1–P.12.
+  - **What to skip:** No new external reading required—this milestone synthesizes the ideas you already practiced in Lessons P.1–P.12.
   - **Key takeaway:** A physical simulation is a loop that repeats three simple steps at every time slice $\Delta t$: (1) convert commands and geometry into base SI units (`m`, `kg`, `s`, `rad`, `N·m`), (2) compare motor torque against gravity torque $\tau_{\text{grav}} = mgL\cos\theta$, and (3) advance angle and tip $(x, y) = (L\cos\theta, L\sin\theta)$ over $\Delta t$.
   - **Alternative resource:** [HyperPhysics — Torque](http://hyperphysics.phy-astr.gsu.edu/hbase/torq.html) `[HTTP 200 — Verified by scripts/check_links.py]` — Review exact heading **`Torque = Force applied x lever arm`**.
 

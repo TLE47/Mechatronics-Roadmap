@@ -462,7 +462,7 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
       {
         label: 'Åström & Murray: Feedback Systems (fbsbook.org Open Textbook)',
         url: 'https://www.fbsbook.org/',
-        note: 'Chapter 11 provides the gold-standard practical formulation of PID with anti-windup.',
+        note: 'The PID Control section provides the gold-standard practical formulation of PID with anti-windup.',
       },
       {
         label: 'Brett Beauregard: Improving the Beginner’s PID',
@@ -688,7 +688,7 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
       {
         label: 'MIT Precision Machine Design Principles (Slocum FUNdaMENTALS)',
         url: 'https://pergatory.mit.edu/resources/FUNdaMENTALS.html',
-        note: 'Free textbook chapters by Prof. Alex Slocum on exact constraint, Abbe error, and bearings.',
+        note: 'Free textbook coverage by Prof. Alex Slocum on exact constraint, Abbe error, and bearings.',
       },
       {
         label: 'CadQuery Python Parametric CAD Documentation',

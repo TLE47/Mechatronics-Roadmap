@@ -413,7 +413,7 @@ print("gate key: Ax=[%.1f, %.1f], v1=%.2f m/s, x1(new v)=%.3f m, radius=%.6f"
 | `ValueError: math domain error` in $\sqrt{1 - \zeta^2}$ | Used the underdamped formula when $\zeta > 1$ (overdamped). | Check `if zeta < 1.0:` before computing $\omega_d$ and $M_p$. |
 
 ## 9. Resources
-- **Åström & Murray — [*Feedback Systems: An Introduction for Scientists and Engineers* (`fbsbook.org`)](https://www.fbsbook.org/) ([`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md)):** Open-access textbook chapters on first- and second-order linear systems `[VERIFIED 2026-10-15]`.
+- **Åström & Murray — [*Feedback Systems: An Introduction for Scientists and Engineers* (`fbsbook.org`)](https://www.fbsbook.org/) ([`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md)):** Open-access textbook coverage of first- and second-order linear systems `[VERIFIED 2026-10-15]`.
 - **Track 05 ([`05-control-and-estimation/README.md`](../05-control-and-estimation/README.md)) & [Paul's Online Math Notes (Vibrations)](https://tutorial.math.lamar.edu/Classes/DE/Vibrations.aspx):** Applies $\omega_n = \sqrt{K_p/J}$ and $K_d = 2\zeta\sqrt{JK_p}$ to joint PD tuning `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
