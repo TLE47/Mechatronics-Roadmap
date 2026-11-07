@@ -32,6 +32,7 @@ flowchart LR
 | `RunnerEditorCard.tsx` | The editor surface: main/helper tabs, the pane strip, and the editor body beside Requirements, Predict, Run output, Expected, Cases and Workflow. |
 | `EditorPaneBody.tsx` | The pane body: up to four panes in a mixed grid (three side by side put the first at full height and stack the other two beside it, so no cell is empty), the same arrangement stacked on a phone, and the dividers a pointer drags to resize them. |
 | `EditorPaneArrangement.tsx` | Horizontal/vertical axis, Add pane, pane swapping and Close — the split's controls, lazy beside the eager Split door and outside the tablist. It also reads how many panes the viewport allows: two on a phone, three on a laptop, four on a large desktop, re-read on resize. |
+| `PanePlacement.tsx` | A pane's own split direction once there are three or more: the two buttons that open its boundary beside or under it, loaded with the placement control instead of the tab's eager chunk. |
 | `EditorGoal.tsx` | The lesson's goal as a labelled prompt card, folded with the editor body. |
 | `EditorRequirements.tsx` | The lesson's pass conditions as their own editor tab: numbered colourful cards with the micro lessons' token styling. |
 | `resultTabMeta.tsx` | What each result tab says: its label, its tooltip and its glyph. |
