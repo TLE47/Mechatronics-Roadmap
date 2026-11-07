@@ -779,8 +779,13 @@ async function main() {
         let node = walker.nextNode();
         while (node) {
           const value = node.textContent ?? '';
-          const blocked = node.parentElement?.closest('a, code, pre, [data-testid="sticky-mark"]');
-          if (!blocked && value.trim().length >= 80) break;
+          const parent = node.parentElement;
+          const blocked = parent?.closest('a, code, pre, [data-testid="sticky-mark"]');
+          // Marks are drawn in prose runs, not in a figure's caption: Study now starts on the
+          // lesson's Learn section, whose first long text can be a figure caption. Pick a paragraph
+          // so this step checks the mark it is about rather than a passage the page cannot mark.
+          const paragraph = parent?.closest('p[data-reader-block]');
+          if (!blocked && paragraph && value.trim().length >= 80) break;
           node = walker.nextNode();
         }
         if (!node) return '';
@@ -927,6 +932,18 @@ async function main() {
           const prose = element.querySelector('[data-testid="reader-prose"]');
           if (!prose) return null;
           const paneBox = element.getBoundingClientRect();
+          // The top case needs a passage with room underneath, not merely the first long run after
+          // Study's opening figure. Put a real paragraph at the pane's top, where the header stays
+          // visible and the popover has the viewport below it.
+          if (placement === 'top') {
+            const firstParagraph = [...prose.querySelectorAll('p[data-reader-block]')].find(
+              (paragraph) => (paragraph.textContent ?? '').trim().length >= 80
+            );
+            if (firstParagraph) {
+              const box = firstParagraph.getBoundingClientRect();
+              element.scrollTop += box.top - paneBox.top - 8;
+            }
+          }
           const walker = document.createTreeWalker(prose, NodeFilter.SHOW_TEXT);
           let chosen = null;
           while (walker.nextNode()) {
@@ -973,6 +990,18 @@ async function main() {
           element.scrollTop = where === 'bottom' ? element.scrollHeight : 0;
         }, placement);
         await page.waitForTimeout(400);
+        // The popover is placed against the viewport, so put the pane's own top edge there too. Study
+        // starts on a figure now, and a page left scrolled by the previous step can put its first
+        // passage near the window's bottom, where above is the honest side rather than below.
+        if (placement === 'top') {
+          await page.evaluate(() => {
+            const element = document.querySelector('[data-testid="reader-scroll"]');
+            if (!element) return;
+            // The page scrolls smoothly by default; this fixture is a position, not an animation.
+            window.scrollBy({ top: element.getBoundingClientRect().top - 20, behavior: 'instant' });
+          });
+          await page.waitForTimeout(200);
+        }
         // For the bottom case, put the pane's own bottom edge near the window's, which is what makes the
         // last visible line a passage with no room under it. The page scrolls, not the pane.
         if (placement === 'bottom') {
@@ -980,7 +1009,10 @@ async function main() {
             const element = document.querySelector('[data-testid="reader-scroll"]');
             if (!element) return;
             const box = element.getBoundingClientRect();
-            window.scrollBy(0, box.bottom - window.innerHeight + 40);
+            window.scrollBy({
+              top: box.bottom - window.innerHeight + 40,
+              behavior: 'instant',
+            });
           });
           await page.waitForTimeout(400);
         }
@@ -989,7 +1021,10 @@ async function main() {
           passage && passage.text.trim().length > 20,
           `the ${placement} of the pane must have a passage to select`
         );
-        await page.getByTestId('btn-sticky').click();
+        // Press the button in place. Playwright's click scrolls it to the viewport's top edge, which
+        // moves the passage this step just positioned and asks the app to place the popover against
+        // a different spot. The fixture is measuring the placement, not the button's hit target.
+        await page.evaluate(() => document.querySelector('[data-testid="btn-sticky"]')?.click());
         const popup = page.getByTestId('sticky-note-popup');
         await popup.waitFor({ timeout: 10000 });
         // Pressing the button is allowed to scroll the pane (the toolbar has to be in view), so the
@@ -1059,7 +1094,9 @@ async function main() {
       assert.equal(
         atTop.side,
         'below',
-        'a passage with room underneath must open its note below the words'
+        `a passage with room underneath must open its note below the words (words at ${Math.round(
+          atTop.passage.top
+        )}..${Math.round(atTop.passage.bottom)}px of a ${original.height}px window)`
       );
       // A window would dim or cover the page behind it; a popover must not.
       const covered = await page.evaluate(() =>
