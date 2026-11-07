@@ -58,7 +58,7 @@ flowchart LR
 ### Idea 1: Reusable functions (`def` and `return`)
 - **Primary resource:** [futurecoder.io — “Functions”](https://futurecoder.io/course/#toc) `[verify in-app]`
   - **What to complete:** Complete the pages on defining functions, parameters, and returning values under **Functions** `[verify in-app]`.
-  - **What to skip:** Skip the later futurecoder course sections after **Functions**.
+  - **What to skip:** Skip the later futurecoder modules after **Functions**.
   - **Key takeaway:** A **function** (`def clamp_cmd(cmd):`) is a reusable machine: you feed input numbers into its **parameters** inside the parentheses, and the `return` keyword hands the computed answer back to the caller so later code can store it in a variable. Never confuse `return` with `print()`: `print()` only displays text on screen and hands back `None`!
   - **Alternative resource:** [Harvard CS50P Lecture 0 Notes](https://cs50.harvard.edu/python/2022/notes/0/) `[HTTP 200 — Verified by scripts/check_links.py]` — Read exact heading **`Def`**.
 

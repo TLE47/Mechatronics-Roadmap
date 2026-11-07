@@ -104,7 +104,7 @@ EXERCISE_TARGET=exercises/02-mechanics.T1.02a/starter.py \
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*SI Rotational Units*), [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Radians, Cosine Law & `math.atan2`*), and [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Rotational Kinetic Energy*).
   - **Core Concepts to Review First:** Lever torque $\tau = r F \sin\theta$, static equilibrium ($\sum F = 0, \sum \tau = 0$), gear ratio torque/speed scaling and reflected inertia $J_{\text{refl}} = N^2 J_{\text{motor}}$, and 2-link planar FK/IK in `## 3. Formalization` and `## 4. Worked example` above.
-  - **Study Links & Resources:** [Lynch & Park *Modern Robotics* Ch. 3 & Ch. 6 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) and [Track 02 Tier 1 (`02-mechanics-kinematics-dynamics/README.md`)](../02-mechanics-kinematics-dynamics/README.md#tier-1-beginner--intuitive).
+  - **Study Links & Resources:** [Lynch & Park *Modern Robotics* — **Rigid-Body Motions** and **Inverse Kinematics** (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) and [Track 02 Tier 1 (`02-mechanics-kinematics-dynamics/README.md`)](../02-mechanics-kinematics-dynamics/README.md#tier-1-beginner--intuitive).
 
 ### Starter code
 ```python

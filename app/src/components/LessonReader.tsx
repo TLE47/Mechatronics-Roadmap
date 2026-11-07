@@ -1110,6 +1110,16 @@ export function LessonReader({
         </div>
       </div>
 
+      {/* The two layouts read different halves of the page. Say which is which at the point the
+          learner sees the text, not only in a layout button's tooltip. */}
+      <p
+        data-testid="reader-scope-note"
+        className="border-b border-line-soft bg-canvas px-3 py-1 text-[11px] leading-snug text-muted"
+      >
+        <span className="font-semibold text-body">Study</span> shows the Learn section.{' '}
+        <span className="font-semibold text-body">Read</span> shows the Goal, the exercise and the recap.
+      </p>
+
       {panel}
 
       {splitTip && (

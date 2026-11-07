@@ -240,7 +240,7 @@ export const MICRO_LESSONS: MicroCatalog = {
       "resources": [
         {
           "id": "futurecoder-variables",
-          "title": "futurecoder — The Shell and cmariables",
+          "title": "futurecoder — The Shell and Variables",
           "url": "https://futurecoder.io/course/#toc",
           "type": "course",
           "role": "primary",
@@ -526,7 +526,7 @@ export const MICRO_LESSONS: MicroCatalog = {
       "resources": [
         {
           "id": "futurecoder-variables",
-          "title": "futurecoder — The Shell and cmariables",
+          "title": "futurecoder — The Shell and Variables",
           "url": "https://futurecoder.io/course/#toc",
           "type": "course",
           "role": "primary",
@@ -1089,7 +1089,7 @@ export const MICRO_LESSONS: MicroCatalog = {
       "resources": [
         {
           "id": "futurecoder-variables",
-          "title": "futurecoder — The Shell and cmariables",
+          "title": "futurecoder — The Shell and Variables",
           "url": "https://futurecoder.io/course/#toc",
           "type": "course",
           "role": "primary",
@@ -1917,7 +1917,7 @@ export const MICRO_LESSONS: MicroCatalog = {
       "resources": [
         {
           "id": "futurecoder-variables",
-          "title": "futurecoder — The Shell and cmariables",
+          "title": "futurecoder — The Shell and Variables",
           "url": "https://futurecoder.io/course/#toc",
           "type": "course",
           "role": "primary",

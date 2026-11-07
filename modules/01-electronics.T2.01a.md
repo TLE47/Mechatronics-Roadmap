@@ -388,7 +388,7 @@ assert math.isclose(g10_safety_energy, 1.8, rel_tol=1e-9)  # Mandatory [SAFETY] 
 
 ## 9. Resources
 - **Texas Instruments — *INA240 Zero-Drift, Bidirectional Current-Sense Amplifier Datasheet & Kelvin Layout Guide* (`resources/textbooks-and-papers.md`):** Enhanced PWM rejection and 4-terminal shunt PCB layout rules `[VERIFIED 2026-10-15]`.
-- **Horowitz & Hill — *The Art of Electronics* (3e, Ch. 4 Operational Amplifiers):** Virtual short, differential amplifiers, and CMRR `[VERIFIED 2026-10-15]`.
+- **Horowitz & Hill — *The Art of Electronics* (3e, **Operational Amplifiers**):** Virtual short, differential amplifiers, and CMRR `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
 
 <!-- next-step:start -->

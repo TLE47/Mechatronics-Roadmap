@@ -419,7 +419,7 @@ assert math.isclose(g13_vab, -4.8, rel_tol=1e-9)
 | Decoupling capacitor placed $15\text{ cm}$ away on the far corner of the breadboard | Long jumper wires add $\sim 100\text{ nH}$ of parasitic inductance that blocks fast current delivery. | Place the $100\text{ nF}$ ceramic capacitor within $<1\text{ cm}$ of the IC's $V_{\text{CC}}$ and $\text{GND}$ pins. |
 
 ## 9. Resources
-- **Horowitz & Hill — *The Art of Electronics* (3e, Ch. 1, `resources/textbooks-and-papers.md`):** Capacitive decoupling, RC filters, and inductive kickback protection `[VERIFIED 2026-10-15]`.
+- **Horowitz & Hill — *The Art of Electronics* (3e, `resources/textbooks-and-papers.md`):** Capacitive decoupling, RC filters, and inductive kickback protection `[VERIFIED 2026-10-15]`.
 - **Track 01 (`01-electronics-and-power/README.md`):** Prepares directly for MOSFET switching in `01-electronics.T1.01b` and Step 1.2 (`01-electronics.T1.02`) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
 

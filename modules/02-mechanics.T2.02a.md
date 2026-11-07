@@ -581,7 +581,7 @@ assert math.isclose(g8_izz_joint, 0.024, rel_tol=1e-9)
 | Inverted $T \in SE(3)$ with `[R.T, -p]` | Forgot to rotate $-p$ by $R^\top$ in the top-right block of $T^{-1}$ | Use `-R.T @ p` and assert `mat4_mul(T, T_inv)` equals $I_4$ within $10^{-14}$ |
 
 ## 9. Resources
-- **Kevin Lynch & Frank Park - *Modern Robotics* (`modernrobotics.org`, Ch. 3, 5 and 8, `resources/textbooks-and-papers.md`):** the free textbook behind section 3 here: $SE(3)$ transforms, Jacobians, spatial inertia `[VERIFIED 2026-10-15]`.
+- **Kevin Lynch & Frank Park - *Modern Robotics* (`modernrobotics.org`, `resources/textbooks-and-papers.md`):** the free textbook behind section 3 here: $SE(3)$ transforms, Jacobians, spatial inertia `[VERIFIED 2026-10-15]`.
 - **The shared plant - [`resources/plants/README.md`](../resources/plants/README.md):** the arm every exercise in this module runs on, its values, and the provenance rule that keeps them honest `[VERIFIED 2026-10-15]`.
 - **The Tier 1 capstone - [`08-capstone-projects/08.1`](../08-capstone-projects/08.1-tier1-2dof-compliant-arm-capstone.md):** where this arm's numbers, gains and figure-8 come from `[VERIFIED 2026-10-15]`.
 - **The parity contract - [`docs/QUALITY_SPEC.md`](../docs/QUALITY_SPEC.md):** what "done" means for this module, item by item `[VERIFIED 2026-10-15]`.

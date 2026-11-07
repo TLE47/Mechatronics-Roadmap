@@ -113,7 +113,7 @@ The tests are behavioural: the first-order response must be $1 - e^{-1}$ at $t =
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Prerequisite Foundations Modules:** [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Spring-Mass-Damper Loop*) and [`00-foundations.T2.00b`](00-foundations.T2.00b.md).
   - **Core Concepts to Review First:** Standard second-order ODE $\ddot{q} + 2\zeta\omega_n\dot{q} + \omega_n^2 q = \omega_n^2 q_{\text{ref}}$, natural frequency $\omega_n = \sqrt{k/J}$, damping ratio $\zeta = \frac{b}{2\sqrt{Jk}}$, and critical damping $b_{\text{crit}} = 2\sqrt{Jk}$ ($\zeta = 1.0$) in `## 3. Formalization` (Items 2–3) and `## 4. Worked example` above.
-  - **ODEs & Damping Study Links:** [Åström & Murray *Feedback Systems* Ch. 6 (`fbsbook.org`)](https://www.fbsbook.org/), [Paul's Online Math Notes: Second-Order Differential Equations & Mechanical Vibrations](https://tutorial.math.lamar.edu/Classes/DE/Vibrations.aspx), and [MIT OCW 18.03 Differential Equations](https://ocw.mit.edu/courses/18-03sc-differential-equations-fall-2011/).
+  - **ODEs & Damping Study Links:** [Åström & Murray *Feedback Systems* — **Linear Systems** (`fbsbook.org`)](https://www.fbsbook.org/), [Paul's Online Math Notes: Second-Order Differential Equations & Mechanical Vibrations](https://tutorial.math.lamar.edu/Classes/DE/Vibrations.aspx), and [MIT OCW 18.03 Differential Equations](https://ocw.mit.edu/courses/18-03sc-differential-equations-fall-2011/).
   - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) and [Track 05 (`05-control-and-estimation/README.md`)](../05-control-and-estimation/README.md).
 
 ### Starter code

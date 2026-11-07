@@ -106,7 +106,7 @@ The tests are behavioural: 3150 Hz at 4 kHz must fold to 850 Hz and 9000 Hz to 1
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Prerequisite Foundations Module:** [`00-foundations.T2.00e`](00-foundations.T2.00e.md) (*Laplace, State-Space & Euler/Tustin Discretization*).
   - **Core Concepts to Review First:** the Nyquist limit $f_s/2$ and the fold-and-mirror rule $f_{\text{alias}} = |f - k f_s|$ in `## 3. Formalization` (Items 1-2) and `## 4. Worked example` above.
-  - **Sampling & Aliasing Study Links:** [The Scientist and Engineer's Guide to DSP, Ch. 3 (`dspguide.com`)](https://www.dspguide.com/ch3.htm) and [Julius O. Smith III, *Introduction to Digital Filters* (`ccrma.stanford.edu/~jos/filters/`)](https://ccrma.stanford.edu/~jos/filters/).
+  - **Sampling & Aliasing Study Links:** [The Scientist and Engineer's Guide to DSP — **ADC and DAC** (`dspguide.com`)](https://www.dspguide.com/ch3.htm) and [Julius O. Smith III, *Introduction to Digital Filters* (`ccrma.stanford.edu/~jos/filters/`)](https://ccrma.stanford.edu/~jos/filters/).
   - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied).
 
 ### Starter code
@@ -347,7 +347,7 @@ print("gate key: Ax=[%.1f, %.1f], v1=%.2f m/s, x1(new v)=%.3f m, radius=%.6f"
 | Tried to remove aliased switching noise with a digital low-pass filter | Forgot the fold happens at the ADC, before any code runs | Put an analog RC or Bessel filter before the ADC pin so the tone is attenuated before it is sampled |
 
 ## 9. Resources
-- **Steven W. Smith — [*The Scientist and Engineer's Guide to Digital Signal Processing*, Ch. 3 (`dspguide.com/ch3.htm`)](https://www.dspguide.com/ch3.htm) ([`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md)):** Sampling, the Nyquist limit and aliasing, with worked worked-out folding examples `[VERIFIED 2026-10-15]`.
+- **Steven W. Smith — [*The Scientist and Engineer's Guide to Digital Signal Processing*, **ADC and DAC** (`dspguide.com/ch3.htm`)](https://www.dspguide.com/ch3.htm) ([`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md)):** Sampling, the Nyquist limit and aliasing, with worked worked-out folding examples `[VERIFIED 2026-10-15]`.
 - **Julius O. Smith III — [*Introduction to Digital Filters* (`ccrma.stanford.edu/~jos/filters/`)](https://ccrma.stanford.edu/~jos/filters/):** The sampling theorem and why fold-down is unavoidable after conversion `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules

@@ -121,7 +121,7 @@ The tests are behavioural: the worked matrix's eigenvalues must be $-2 \pm j\sqr
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Prerequisite Foundations Modules:** [`00-foundations.T2.00a`](00-foundations.T2.00a.md) (*State Matrices*), [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (*ODE Roots*), and [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Transfer Functions*).
   - **Core Concepts to Review First:** Bilinear (Tustin) state matrix $A_{d,\text{Tustin}} = (I - \frac{T_s}{2}A)^{-1}(I + \frac{T_s}{2}A)$ and $2\times 2$ eigenvalue formula $\lambda_{1,2} = \frac{\operatorname{tr}(A_d) \pm \sqrt{\operatorname{tr}(A_d)^2 - 4\det(A_d)}}{2}$ in `## 3. Formalization` (Items 2–3) and `## 4. Worked example` above.
-  - **State-Space & Discretization Study Links:** [Åström & Murray *Feedback Systems* Ch. 6–7 (`fbsbook.org`)](https://www.fbsbook.org/), [Python Control Library `control.c2d` Docs (`python-control.readthedocs.io`)](https://python-control.readthedocs.io/), and [Steve Brunton Control Bootcamp (`youtube.com/c/Eigensteve`)](https://www.youtube.com/c/Eigensteve).
+  - **State-Space & Discretization Study Links:** [Åström & Murray *Feedback Systems* — **Linear Systems** and **State Feedback** (`fbsbook.org`)](https://www.fbsbook.org/), [Python Control Library `control.c2d` Docs (`python-control.readthedocs.io`)](https://python-control.readthedocs.io/), and [Steve Brunton Control Bootcamp (`youtube.com/c/Eigensteve`)](https://www.youtube.com/c/Eigensteve).
   - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) and [`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md).
 
 ### Starter code
@@ -405,7 +405,7 @@ print("gate key: Ax=[%.1f, %.1f], v1=%.2f m/s, x1(new v)=%.3f m, radius=%.6f"
 | Used elementwise `*` instead of `@` in Tustin formula | Multiplied matrix elements componentwise with `*` (Hadamard product) instead of matrix multiplication. | Use row-by-column matrix multiplication (`mat_mul2`) for all matrix products. |
 
 ## 9. Resources
-- **Åström & Murray — [*Feedback Systems* (`fbsbook.org`, Ch. 6–7)](https://www.fbsbook.org/) & [Python Control Library Docs](https://python-control.readthedocs.io/):** Free textbook and Python tools on state-space linear systems, eigenvalues, and `c2d` discretization `[VERIFIED 2026-10-15]`.
+- **Åström & Murray — [*Feedback Systems* (`fbsbook.org`, **Linear Systems** and **State Feedback**)](https://www.fbsbook.org/) & [Python Control Library Docs](https://python-control.readthedocs.io/):** Free textbook and Python tools on state-space linear systems, eigenvalues, and `c2d` discretization `[VERIFIED 2026-10-15]`.
 - **Brunton & Kutz — [*Data-Driven Science and Engineering* (`databookuw.com`)](https://databookuw.com/) ([`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md)):** State-space modeling and discretization `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
