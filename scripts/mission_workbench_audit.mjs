@@ -441,6 +441,20 @@ export async function auditPaneSwapsAndCapacity(browser, baseUrl, name) {
       views,
       { timeout: 10000 }
     );
+  /** Drag a pane's header grip onto another pane; returns whether the target was marked mid-drag. */
+  const dragPane = async (fromSlot, targetView) => {
+    const handle = page.getByTestId(`pane-drag-${fromSlot + 1}`);
+    await handle.waitFor({ state: 'visible', timeout: 10000 });
+    const from = await handle.boundingBox();
+    const to = await page.locator(`[data-pane="${targetView}"]`).boundingBox();
+    assert.ok(from && to, `${name}: the drag needs a visible grip and target pane`);
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 8 });
+    const marked = await page.locator(`[data-pane="${targetView}"]`).getAttribute('data-pane-drop');
+    await page.mouse.up();
+    return marked;
+  };
 
   try {
     await page.goto(`${baseUrl}?lesson=P.6`, { waitUntil: 'networkidle', timeout: 45000 });
@@ -514,6 +528,18 @@ export async function auditPaneSwapsAndCapacity(browser, baseUrl, name) {
       columnsBefore.body.h,
       columnsAfter.body.h
     );
+
+    // The header grip is the pointer path to the same exchange the menu just made: drag pane 1 onto
+    // pane 3, then back, so the row fixture below starts from the slots it expects.
+    assert.equal(
+      await dragPane(0, 'requirements'),
+      'true',
+      `${name}: hovering a pane during a drag must mark it as the drop target`
+    );
+    await waitForViews('requirements,main,predict');
+    await dragPane(0, 'predict');
+    await waitForViews('predict,main,requirements');
+    await page.getByTestId('pane-drag-1').waitFor({ state: 'visible', timeout: 10000 });
 
     await page.getByTestId('btn-pane-rows').click();
     await page.waitForFunction(

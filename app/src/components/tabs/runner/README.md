@@ -33,6 +33,7 @@ flowchart LR
 | `EditorPaneBody.tsx` | The pane body: up to four panes in a mixed grid (three side by side put the first at full height and stack the other two beside it, so no cell is empty), the same arrangement stacked on a phone, and the dividers a pointer drags to resize them. |
 | `EditorPaneArrangement.tsx` | Horizontal/vertical axis, Add pane, pane swapping and Close — the split's controls, lazy beside the eager Split door and outside the tablist. It also reads how many panes the viewport allows: two on a phone, three on a laptop, four on a large desktop, re-read on resize. |
 | `PanePlacement.tsx` | A pane's own split direction once there are three or more: the two buttons that open its boundary beside or under it, loaded with the placement control instead of the tab's eager chunk. |
+| `PaneDrag.tsx` | A pane's header grip: press and drag it onto another pane to exchange the two, with the swap menu as the keyboard path. The pointer work is a lazy chunk, so a one-pane body never pays for it. |
 | `EditorGoal.tsx` | The lesson's goal as a labelled prompt card, folded with the editor body. |
 | `EditorRequirements.tsx` | The lesson's pass conditions as their own editor tab: numbered colourful cards with the micro lessons' token styling. |
 | `resultTabMeta.tsx` | What each result tab says: its label, its tooltip and its glyph. |

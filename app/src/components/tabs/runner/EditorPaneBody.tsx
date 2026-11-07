@@ -38,6 +38,11 @@ const PanePlacement = lazy(() =>
   import('./PanePlacement').then((module) => ({ default: module.PanePlacement }))
 );
 
+// The drag grip only matters once a body is split; its pointer work is not the entry's to carry.
+const PaneDrag = lazy(() =>
+  import('./PaneDrag').then((module) => ({ default: module.PaneDrag }))
+);
+
 /** The editor's own draft and files, as the body's main pane draws them. */
 interface PaneDraft {
   code: string;
@@ -430,6 +435,7 @@ export function EditorPaneBody({
         key={view}
         data-testid={`pane-${view}`}
         data-pane={view}
+        data-slot={slot}
         onClick={() => focusPane(view)}
         style={
           hidden
@@ -444,6 +450,11 @@ export function EditorPaneBody({
         }
         className={paneClass(view)}
       >
+        {!hidden && paneSplit && (
+          <Suspense fallback={null}>
+            <PaneDrag slot={slot} view={view} panes={panes} onPanes={onPanes} />
+          </Suspense>
+        )}
         {showPlacement && (
           <Suspense fallback={null}>
             <PanePlacement
