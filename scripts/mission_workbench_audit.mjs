@@ -954,40 +954,76 @@ export async function auditPaneBottomResize(browser, baseUrl, name) {
       `${name}: the editor is ${before.editor.h.toFixed(1)}px in a ${before.body.h.toFixed(1)}px body`
     );
 
-    const grip = page.getByTestId('pane-divider-bottom');
-    // The body can be taller than the viewport, so the grip starts below the fold. Center it with
-    // an instant scroll: the page uses smooth scrolling, and coordinates read during that motion
-    // point at where the bar used to be.
-    await page.evaluate(() => {
-      document
-        .querySelector('[data-testid="pane-divider-bottom"]')
-        ?.scrollIntoView({ block: 'center', behavior: 'instant' });
-    });
-    await page.waitForTimeout(150);
-    const box = await grip.boundingBox();
-    assert.ok(box, `${name}: the bottom grip has no pointer box`);
-    const x = box.x + box.width / 2;
-    const y = box.y + box.height / 2;
-    const hit = await page.evaluate(
-      ({ px, py }) => {
-        const element = document.elementFromPoint(px, py);
-        return {
-          tag: element?.tagName ?? null,
-          testid: element?.getAttribute('data-testid') ?? null,
-          onGrip: Boolean(element?.closest('[data-testid="pane-divider-bottom"]')),
-        };
-      },
-      { px: x, py: y }
-    );
-    assert.ok(
-      hit.onGrip,
-      `${name}: the pointer at (${Math.round(x)}, ${Math.round(y)}) hits ` +
-        `${hit.tag ?? 'nothing'}${hit.testid ? `[${hit.testid}]` : ''}, not the grip (box ${JSON.stringify(box)})`
-    );
-    await page.mouse.move(x, y);
-    await page.mouse.down();
-    await page.mouse.move(x, y - 90, { steps: 10 });
-    await page.mouse.up();
+    /**
+     * Press the bottom grip at a box the page has held for a frame, then drag it up.
+     *
+     * The body can be taller than the viewport, so the grip starts below the fold. Center it with an
+     * instant scroll: the page uses smooth scrolling, and coordinates read during that motion point
+     * at where the bar used to be. Even after the scroll the panes can settle late, and a press on
+     * the box measured before that lands on the editor instead of the grip.
+     */
+    const dragBottomGrip = async (travel) => {
+      const grip = page.getByTestId('pane-divider-bottom');
+      await page.evaluate(() => {
+        document
+          .querySelector('[data-testid="pane-divider-bottom"]')
+          ?.scrollIntoView({ block: 'center', behavior: 'instant' });
+      });
+      await page.waitForFunction(
+        () => {
+          const element = document.querySelector('[data-testid="pane-divider-bottom"]');
+          if (!element) return false;
+          const box = element.getBoundingClientRect();
+          const previous = window.__gripBox;
+          window.__gripBox = { x: box.x, y: box.y };
+          return (
+            previous !== undefined &&
+            Math.abs(previous.x - box.x) < 1 &&
+            Math.abs(previous.y - box.y) < 1 &&
+            box.top >= 0 &&
+            box.bottom <= window.innerHeight
+          );
+        },
+        undefined,
+        { timeout: 10000 }
+      );
+      const box = await grip.boundingBox();
+      assert.ok(box, `${name}: the bottom grip has no pointer box`);
+      const x = box.x + box.width / 2;
+      const y = box.y + box.height / 2;
+      const hit = await page.evaluate(
+        ({ px, py }) => {
+          const element = document.elementFromPoint(px, py);
+          return {
+            tag: element?.tagName ?? null,
+            testid: element?.getAttribute('data-testid') ?? null,
+            onGrip: Boolean(element?.closest('[data-testid="pane-divider-bottom"]')),
+          };
+        },
+        { px: x, py: y }
+      );
+      assert.ok(
+        hit.onGrip,
+        `${name}: the pointer at (${Math.round(x)}, ${Math.round(y)}) hits ` +
+          `${hit.tag ?? 'nothing'}${hit.testid ? `[${hit.testid}]` : ''}, not the grip (box ${JSON.stringify(box)})`
+      );
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      await page.mouse.move(x, y - travel, { steps: 10 });
+      await page.mouse.up();
+    };
+    const resizedFlag = () =>
+      page.evaluate(() =>
+        document.querySelector('[data-testid="editor-panes"]')?.hasAttribute('data-pane-resized')
+      );
+    await dragBottomGrip(90);
+    // A slow runner can lose the press to a scroll that begins between the hit test and the drag.
+    // One re-press after a fresh measurement is the driver retrying its gesture, not a weaker check:
+    // every assertion below still grades the body the drag produced.
+    if (!(await resizedFlag())) {
+      await page.waitForTimeout(400);
+      await dragBottomGrip(90);
+    }
     await page.waitForFunction(
       () => document.querySelector('[data-testid="editor-panes"]')?.hasAttribute('data-pane-resized'),
       undefined,
