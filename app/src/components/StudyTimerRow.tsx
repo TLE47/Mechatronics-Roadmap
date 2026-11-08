@@ -4,12 +4,14 @@ import {
   clearedTimer,
   elapsedMs,
   formatClock,
+  formatTimeOfDay,
   heartbeat,
   pauseTimer,
   readTimer,
   resumeTimer,
   startTimer,
   writeTimer,
+  type ClockAction,
   type StudyTimer,
 } from '../studyTimer';
 import {
@@ -39,8 +41,22 @@ import {
  * sittings, and today. It is labelled by what the store can actually answer: a sitting is a run of
  * activity, and one that touched two lessons counts whole for both, so the panel says "in sittings
  * with this lesson" and names that rule instead of claiming a per-lesson stopwatch it never kept.
+ *
+ * The clock also writes its session down. Every press adds a line under the digits: the time of day,
+ * what the digits read at that moment, and — for a pause — how long the stretch it ended had run.
+ * The log's first line states the session's own time, so the card answers "when did this start, when
+ * did it pause, when did it carry on" and not only "how much is on the clock". Log & reset starts a
+ * new session, which is why the log empties with it.
  */
 const HEARTBEAT_MS = 60_000;
+
+/** How the three presses are named in the log. */
+const PRESS_LABEL: Record<ClockAction, string> = {
+  start: 'Started',
+  pause: 'Paused',
+  resume: 'Resumed',
+};
+
 
 const BUTTON =
   'inline-flex items-center gap-1 rounded border border-line bg-raise px-2.5 py-1 text-[12px] font-mono font-semibold text-ink cursor-pointer hover:bg-elevate disabled:opacity-50 disabled:cursor-not-allowed';
@@ -117,8 +133,13 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
     const now = Date.now();
     setLogged('');
     recordSittingEvent({ at: now, kind: 'study', lesson: lessonId });
-    // One control for both directions: the press means what its label says.
-    persist(running ? pauseTimer(timer, now) : startTimer(timer, now, lessonId));
+    // One control for both directions: the press means what its label says. A resume after a pause
+    // is its own press in the log, not a second start.
+    persist(
+      running
+        ? pauseTimer(timer, now)
+        : startTimer(timer, now, lessonId, elapsed > 0 ? 'resume' : 'start')
+    );
   };
 
   const onReset = () => {
@@ -148,7 +169,7 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
       </span>
       <span
         data-testid="study-timer-elapsed"
-        title={`${formatDuration(elapsed)} on this stretch`}
+        title={`${formatDuration(elapsed)} counted this session`}
         className="font-mono text-[15px] font-bold tabular-nums text-ink"
       >
         {formatClock(elapsed)}
@@ -202,6 +223,28 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
                 ? 'Paused — Resume keeps counting'
                 : 'Press Start to time this session'}
         </span>
+      )}
+      {!compact && timer.log.length > 0 && (
+        <div
+          data-testid="study-clock-log"
+          className="w-full rounded-lg border border-line bg-canvas px-2.5 py-2 font-mono text-[11.5px] text-muted"
+        >
+          <p className="text-body">
+            Session{' '}
+            <span data-testid="study-clock-session" className="font-semibold">
+              {formatClock(elapsed)}
+            </span>
+          </p>
+          <ol className="mt-1 space-y-0.5">
+            {timer.log.map((press, index) => (
+              <li key={`${press.at}-${index}`} data-testid="study-clock-entry">
+                {`${formatTimeOfDay(press.at)} ${PRESS_LABEL[press.action]} · clock ${formatClock(
+                  press.clockMs
+                )}${press.stretchMs === null ? '' : ` · stretch ${formatClock(press.stretchMs)}`}`}
+              </li>
+            ))}
+          </ol>
+        </div>
       )}
       <button
         type="button"

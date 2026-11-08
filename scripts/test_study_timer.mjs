@@ -11,11 +11,13 @@
 import assert from 'node:assert/strict';
 import {
   IDLE_TIMER,
+  MAX_CLOCK_LOG,
   TIMER_STORAGE_KEY,
   clearTimer,
   clearedTimer,
   elapsedMs,
   formatClock,
+  formatTimeOfDay,
   heartbeat,
   parseTimer,
   pauseTimer,
@@ -131,6 +133,101 @@ check('Log & reset zeroes the clock and forgets nothing else', () => {
   assert.equal(elapsedMs(cleared, T0 + 99 * MIN), 0);
   assert.equal(cleared.runningSince, null);
   assert.equal(cleared.lesson, 'P.1');
+  // A session ends at Log & reset, so its log goes with it.
+  assert.deepEqual(cleared.log, []);
+});
+
+section('the session log');
+
+check('Start writes the first press: when it happened and the empty clock', () => {
+  const started = startTimer(IDLE_TIMER, T0, 'P.1', 'start');
+  assert.deepEqual(started.log, [{ action: 'start', at: T0, clockMs: 0, stretchMs: null }]);
+});
+
+check('Pause writes the clock it stopped at and how long that stretch ran', () => {
+  const started = startTimer(IDLE_TIMER, T0, 'P.1', 'start');
+  const paused = pauseTimer(started, T0 + 4 * MIN);
+  assert.deepEqual(paused.log[1], {
+    action: 'pause',
+    at: T0 + 4 * MIN,
+    clockMs: 4 * MIN,
+    stretchMs: 4 * MIN,
+  });
+  // A second Pause is one stop, not a second press.
+  assert.equal(pauseTimer(paused, T0 + 9 * MIN).log.length, 2);
+});
+
+check('Resume writes the reading it carried on from, and the next stretch is its own', () => {
+  const started = startTimer(IDLE_TIMER, T0, 'P.1', 'start');
+  const paused = pauseTimer(started, T0 + 4 * MIN);
+  const resumed = startTimer(paused, T0 + 10 * MIN, 'P.1', 'resume');
+  const ended = pauseTimer(resumed, T0 + 13 * MIN);
+  assert.deepEqual(
+    ended.log.map((press) => [press.action, press.clockMs, press.stretchMs]),
+    [
+      ['start', 0, null],
+      ['pause', 4 * MIN, 4 * MIN],
+      ['resume', 4 * MIN, null],
+      ['pause', 7 * MIN, 3 * MIN],
+    ]
+  );
+  // Every press also carries the wall-clock time it happened.
+  assert.deepEqual(ended.log.map((press) => press.at), [T0, T0 + 4 * MIN, T0 + 10 * MIN, T0 + 13 * MIN]);
+  // The two stretches add up to the clock, not to the wall time between them.
+  assert.equal(ended.log[1].stretchMs + ended.log[3].stretchMs, elapsedMs(ended, T0 + 60 * MIN));
+});
+
+check('a page that was away writes the pause it was trusted to, and nothing later', () => {
+  const running = {
+    ...IDLE_TIMER,
+    runningSince: T0,
+    lastTick: T0 + 10 * MIN,
+    lesson: 'P.1',
+    log: [{ action: 'start', at: T0, clockMs: 0, stretchMs: null }],
+  };
+  const resumed = resumeTimer(running, T0 + 120 * MIN);
+  assert.equal(resumed.runningSince, null);
+  assert.deepEqual(resumed.log[1], {
+    action: 'pause',
+    at: T0 + 10 * MIN,
+    clockMs: 10 * MIN,
+    stretchMs: 10 * MIN,
+  });
+  assert.equal(resumed.log.length, 2, 'the hours the page was gone must not be a press');
+});
+
+check('the log is bounded: the newest presses are the ones kept', () => {
+  let timer = startTimer(IDLE_TIMER, T0, 'P.1', 'start');
+  for (let minute = 1; minute <= MAX_CLOCK_LOG + 5; minute += 1) {
+    timer = startTimer(timer, T0 + minute * MIN, 'P.1', 'resume');
+    timer = pauseTimer(timer, T0 + minute * MIN + 1000);
+  }
+  assert.equal(timer.log.length, MAX_CLOCK_LOG);
+  assert.equal(timer.log.at(-1).action, 'pause');
+  assert.equal(timer.log[0].action, 'resume', 'the oldest presses are the ones dropped');
+});
+
+check('a press prints the time of day in twenty-four hours', () => {
+  const afternoon = new Date(2026, 0, 2, 14, 32, 7).getTime();
+  assert.equal(formatTimeOfDay(afternoon), '14:32');
+  const afterMidnight = new Date(2026, 0, 2, 0, 5).getTime();
+  assert.equal(formatTimeOfDay(afterMidnight), '00:05');
+  assert.equal(formatTimeOfDay(Number.NaN), '00:00');
+});
+
+check('a press that cannot be read is dropped, not the whole log', () => {
+  const stored = JSON.stringify({
+    log: [
+      { action: 'start', at: T0, clockMs: 0, stretchMs: null },
+      { action: 'sneeze', at: T0, clockMs: 0 },
+      { action: 'pause', at: 'later', clockMs: 5000 },
+      { action: 'resume', at: T0 + MIN, clockMs: 1000 },
+    ],
+  });
+  assert.deepEqual(parseTimer(stored).log.map((press) => press.action), ['start', 'resume']);
+  assert.deepEqual(parseTimer(null).log, []);
+  // An older store has no log at all, and reads as one with none rather than failing.
+  assert.deepEqual(parseTimer(JSON.stringify({ bankedMs: 5000 })).log, []);
 });
 
 section('a store from another visit');
@@ -181,7 +278,13 @@ check('junk in the store reads as the fields that do parse', () => {
 
 check('the store round-trips, and a cleared clock removes the key', () => {
   const store = fakeStorage();
-  const running = { bankedMs: 2 * MIN, runningSince: T0, lastTick: T0 + MIN, lesson: 'P.1' };
+  const running = {
+    bankedMs: 2 * MIN,
+    runningSince: T0,
+    lastTick: T0 + MIN,
+    lesson: 'P.1',
+    log: [{ action: 'start', at: T0, clockMs: 0, stretchMs: null }],
+  };
   writeTimer(running, store);
   assert.deepEqual(readTimer(store), running);
   assert.ok(store.data.has(TIMER_STORAGE_KEY));

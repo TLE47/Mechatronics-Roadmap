@@ -21,8 +21,15 @@
  *   `resumeTimer` pauses it at the last heartbeat. It is the sitting's own five-minute break rule,
  *   reused rather than re-derived.
  * - **Only the facts are stored**: what is banked, when the running stretch began, the last
- *   heartbeat, and the lesson it belongs to. Blocked storage leaves the clock unrecorded for the
- *   visit, never the lesson broken.
+ *   heartbeat, the lesson it belongs to, and this session's presses. Blocked storage leaves the
+ *   clock unrecorded for the visit, never the lesson broken.
+ *
+ * The card names three things, because they are easy to mix up:
+ *
+ * - **A press** is one Start, Pause or Resume.
+ * - **A stretch** is what a Start or Resume opens and what the next Pause closes.
+ * - **The session** is everything since the last Log & reset: the digits are its time, and its
+ *   presses are the log.
  *
  * Everything above the storage layer is pure and takes `now`, so `npm run test:studyclock` can pin
  * the arithmetic across pauses and reloads without a browser or a timer.
@@ -31,6 +38,28 @@
 import { IDLE_GAP_MS } from './sittingClock.ts';
 
 export const TIMER_STORAGE_KEY = 'mechalab_study_timer_v1';
+
+/** What the learner pressed: the three buttons a session has. */
+export type ClockAction = 'start' | 'pause' | 'resume';
+
+/**
+ * One press in the session log.
+ *
+ * `clockMs` is what the big digits read at that press. `stretchMs` is how long the stretch a pause
+ * ended had run, and is null on a start or a resume because those open a stretch.
+ */
+export interface ClockLogEntry {
+  action: ClockAction;
+  /** When the press happened (`Date.now()`); the card prints it as the time of day, e.g. 14:32. */
+  at: number;
+  /** The study clock at that press, in milliseconds. */
+  clockMs: number;
+  /** A pause: how long its stretch ran. A start or a resume: null. */
+  stretchMs: number | null;
+}
+
+/** How many presses the log keeps. The newest win, so a long session cannot grow the store forever. */
+export const MAX_CLOCK_LOG = 16;
 
 export interface StudyTimer {
   /** Milliseconds in stretches that already ended — a pause, a reload, a hidden tab. */
@@ -41,6 +70,8 @@ export interface StudyTimer {
   lastTick: number;
   /** The lesson the current stretch belongs to, so the sitting can name it. */
   lesson: string;
+  /** This session's presses, oldest first. Log & reset starts an empty log. */
+  log: ClockLogEntry[];
 }
 
 export const IDLE_TIMER: StudyTimer = {
@@ -48,6 +79,7 @@ export const IDLE_TIMER: StudyTimer = {
   runningSince: null,
   lastTick: 0,
   lesson: '',
+  log: [],
 };
 
 /** The clock's reading at `now`: banked time plus the stretch in progress. Never negative. */
@@ -71,8 +103,41 @@ export function formatClock(ms: number): string {
   return `${hours}:${String(minutes).padStart(2, '0')}:${String(rest).padStart(2, '0')}`;
 }
 
-/** Begin, or resume, counting: what is already on the clock is banked and a stretch opens. */
-export function startTimer(timer: StudyTimer, now: number, lesson: string): StudyTimer {
+/**
+ * The time of day a press happened, as the learner's own clock shows it: `14:32`, `00:05`.
+ *
+ * Twenty-four hours and no seconds: the digits already carry the seconds, and a press is named by
+ * the minute it happened in.
+ */
+export function formatTimeOfDay(at: number): string {
+  // No readable time reads as midnight rather than as the visitor's own 1969 evening.
+  if (!Number.isFinite(at) || at <= 0) return '00:00';
+  const date = new Date(at);
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
+/** The log with one press added, newest last, kept to its bound. */
+function addPress(timer: StudyTimer, entry: ClockLogEntry): ClockLogEntry[] {
+  // A timer handed in without a log (a hand-built value, or one from before the log existed) starts
+  // its log here rather than throwing on the first press.
+  const log = Array.isArray(timer.log) ? timer.log : [];
+  return [...log, entry].slice(-MAX_CLOCK_LOG);
+}
+
+/**
+ * Begin, or resume, counting: what is already on the clock is banked and a stretch opens.
+ *
+ * `action` is what the learner pressed — `start` for the session's first press and `resume` after a
+ * pause — because only the caller can see which label the one button is showing.
+ */
+export function startTimer(
+  timer: StudyTimer,
+  now: number,
+  lesson: string,
+  action: 'start' | 'resume' = 'start'
+): StudyTimer {
   const at = Math.round(now);
   const banked = elapsedMs(timer, at);
   // A clock whose bank is zero and which never ran is the idle value: the resume is a start, and a
@@ -82,18 +147,31 @@ export function startTimer(timer: StudyTimer, now: number, lesson: string): Stud
     runningSince: at,
     lastTick: at,
     lesson: lesson || timer.lesson,
+    log: addPress(timer, { action, at, clockMs: banked, stretchMs: null }),
   };
 }
 
-/** Stop counting and keep the time. Idempotent: pausing a paused clock only moves the heartbeat. */
+/**
+ * Stop counting and keep the time.
+ *
+ * Idempotent in what matters: pressing Pause on a paused clock only moves the heartbeat, so the log
+ * never gains a second pause for one stop and the stretch is never counted twice.
+ */
 export function pauseTimer(timer: StudyTimer, now: number): StudyTimer {
   const at = Math.round(now);
   if (timer.runningSince === null) return { ...timer, lastTick: Math.max(timer.lastTick, at) };
+  const clockMs = elapsedMs(timer, at);
   return {
-    bankedMs: elapsedMs(timer, at),
+    bankedMs: clockMs,
     runningSince: null,
     lastTick: at,
     lesson: timer.lesson,
+    log: addPress(timer, {
+      action: 'pause',
+      at,
+      clockMs,
+      stretchMs: Math.max(0, at - timer.runningSince),
+    }),
   };
 }
 
@@ -128,6 +206,19 @@ function count(value: unknown, fallback = 0): number {
   return Number.isFinite(raw) && raw >= 0 ? Math.round(raw) : fallback;
 }
 
+/** One stored press, or null when it cannot be read. Junk costs its own line, not the log. */
+function parsePress(value: unknown): ClockLogEntry | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const press = value as Record<string, unknown>;
+  if (press.action !== 'start' && press.action !== 'pause' && press.action !== 'resume') return null;
+  const at = count(press.at);
+  // A press with no readable time is not a press: printing it at 00:00 would invent one.
+  if (at <= 0) return null;
+  const stretchMs =
+    press.stretchMs === null || press.stretchMs === undefined ? null : count(press.stretchMs);
+  return { action: press.action, at, clockMs: count(press.clockMs), stretchMs };
+}
+
 /** A store written by another version reads as the part of itself that still parses. */
 export function parseTimer(raw: string | null): StudyTimer {
   if (!raw) return { ...IDLE_TIMER };
@@ -142,7 +233,11 @@ export function parseTimer(raw: string | null): StudyTimer {
         : count(entry.runningSince, 0) || null;
     const bankedMs = count(entry.bankedMs);
     const lastTick = running === null ? count(entry.lastTick) : Math.max(running, count(entry.lastTick));
-    return { bankedMs, runningSince: running, lastTick, lesson };
+    const log = (Array.isArray(entry.log) ? entry.log : [])
+      .map(parsePress)
+      .filter((press): press is ClockLogEntry => press !== null)
+      .slice(-MAX_CLOCK_LOG);
+    return { bankedMs, runningSince: running, lastTick, lesson, log };
   } catch {
     return { ...IDLE_TIMER };
   }
@@ -169,7 +264,12 @@ export function readTimer(store: Storage | null = bucket()): StudyTimer {
 export function writeTimer(timer: StudyTimer, store: Storage | null = bucket()): void {
   if (!store) return;
   try {
-    if (timer.bankedMs === 0 && timer.runningSince === null && !timer.lastTick) {
+    if (
+      timer.bankedMs === 0 &&
+      timer.runningSince === null &&
+      !timer.lastTick &&
+      timer.log.length === 0
+    ) {
       store.removeItem(TIMER_STORAGE_KEY);
       return;
     }

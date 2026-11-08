@@ -683,6 +683,45 @@ async function main() {
       );
       assert.notEqual(await elapsedText(), held, 'Resume must add the seconds that follow it');
 
+      // The session log: each press with the time of day and the clock reading it was made at.
+      const log = page.getByTestId('study-clock-log');
+      await log.waitFor({ timeout: 5000 });
+      const presses = page.getByTestId('study-clock-entry');
+      assert.equal(
+        await presses.count(),
+        3,
+        'Start, Pause and Resume must each be a press in the clock log'
+      );
+      const pressText = async (index) => (await presses.nth(index).textContent()) ?? '';
+      assert.match(
+        await pressText(0),
+        /Started.*clock 0:00:00/,
+        'the first press must name Start and the empty clock'
+      );
+      assert.match(
+        await pressText(1),
+        /Paused.*clock \d+:\d{2}:\d{2}.*stretch \d+:\d{2}:\d{2}/,
+        'Pause must report the clock it stopped at and the stretch it ended'
+      );
+      assert.match(
+        await pressText(2),
+        /Resumed.*clock \d+:\d{2}:\d{2}/,
+        'Resume must report the clock it carried on from'
+      );
+      assert.match(
+        await pressText(0),
+        /^\d{2}:\d{2} /,
+        'every press must carry the time of day it happened'
+      );
+      const sessionText =
+        (await page.getByTestId('study-clock-session').textContent())?.trim() ?? '';
+      assert.match(
+        sessionText,
+        /^\d+:\d{2}:\d{2}$/,
+        'the session must state its own time, separate from the presses'
+      );
+      console.log(`  ok the clock log reports ${await presses.count()} presses and a session of ${sessionText}`);
+
       // The disclosure beside the clock: what this lesson has cost, opened by its own press.
       const logged = page.getByTestId('btn-study-logged');
       assert.equal(await logged.getAttribute('aria-expanded'), 'false');
@@ -722,6 +761,11 @@ async function main() {
         'the reset must say what it kept'
       );
       assert.equal(await reset.isDisabled(), true, 'the zeroed clock has nothing more to log');
+      assert.equal(
+        await page.getByTestId('study-clock-log').count(),
+        0,
+        'Log & reset must start a new session, so its log must be empty'
+      );
       console.log('  ok the brief’s study clock starts, pauses, resumes and files its stretch');
     }
 

@@ -519,7 +519,12 @@ the same store and puts the digits back to zero: one set of hours, the one **Tod
 beside the trail and the portfolio. **Time logged with this lesson** expands the sitting totals — the
 total, how many sittings and today — and says what they are: a sitting is one stretch of activity and
 is counted whole for every lesson it touched, so this is not a per-lesson stopwatch (the store never
-recorded one). The two controls are the only two; Reset is already the way to end a stretch
+recorded one). The clock also writes its **session** down: every Start, Pause and Resume adds a press to
+a short log under the digits — the time of day, what the digits read, and, for a pause, how long that
+stretch ran — and the log's first line states the session's own time. The vocabulary is three words: a
+**press** is one Start, Pause or Resume; a **stretch** is what a start or resume opens and the next
+pause closes; the **session** is everything since the last Log & reset. The two controls are the only
+two; Reset is already the way to end a stretch
 ([`src/studyTimer.ts`](src/studyTimer.ts), [`src/components/StudyTimerRow.tsx`](src/components/StudyTimerRow.tsx),
 `npm run test:studyclock`).
 
@@ -1665,7 +1670,7 @@ npm run test:e2e:reset       # the same panel in Chromium: a backup first, a par
 npm run test:study           # notes and highlights: what is kept, deduped, refused by the store, and what a restore merges
 npm run test:review          # FSRS: 0.9-at-stability, grade order, lapses, the year cap, and the card join
 npm run test:sitting         # the sitting clock's rules and focus mode's store, without a browser
-npm run test:studyclock      # the brief's clock: banked stretches, a reload trusted to its heartbeat, a background tab that keeps counting, Log & reset
+npm run test:studyclock      # the brief's clock: banked stretches, the session log's presses and stretch lengths, a reload trusted to its heartbeat, a background tab that keeps counting, Log & reset
 npm run test:portfolio       # the export: sections only when they have content, quoting, caps, the time table
 npm run test:storage         # IndexedDB: the bucket fallback, the migration order, the write queue, a refused write
 npm run test:traceback       # tracebacks as data: frames, chains, syntax shapes, and the index match
