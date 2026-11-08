@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { GripVertical, X } from 'lucide-react';
 import { PaneResize } from './PaneResize';
+import { clearClose, closeNotice, recordClose, subscribeClose, type CloseNotice } from './paneUndo';
 import {
   closeView,
   EDITOR_VIEW_LABELS,
@@ -11,59 +12,6 @@ import {
 
 /** Pixels a press must travel before it becomes a drag rather than a click on the grip. */
 const DRAG_THRESHOLD = 4;
-
-/** How long a closed pane waits for its Undo before the offer goes away on its own. */
-const UNDO_MS = 8000;
-
-interface CloseNotice {
-  /** The arrangement the close replaced: the whole of it, so Undo restores the slot too. */
-  snapshot: EditorPanes;
-  /** What closed, as the offer prints it. */
-  label: string;
-  /** A keyboard press takes the focus with its pane; the offer has to hand it back. */
-  keyboard: boolean;
-  id: number;
-}
-
-/**
- * The one close waiting to be undone (`runner/PaneDrag.tsx`).
- *
- * Module state on purpose: the button that closes a pane is unmounted by its own press, so the offer
- * cannot live in that component, and it is not the tab's state either — the tab is assembly. Every
- * close control is in this lazy chunk, which is why the body can render the offer for free: a body
- * that never closes a pane never loads it. The notice holds the whole arrangement rather than the
- * view alone, so Undo puts the view back in the slot it left, boundaries and shares included.
- */
-let notice: CloseNotice | null = null;
-let dismissTimer = 0;
-let sequence = 0;
-const listeners = new Set<() => void>();
-
-function announce() {
-  for (const listener of listeners) listener();
-}
-
-function clearClose() {
-  window.clearTimeout(dismissTimer);
-  notice = null;
-  announce();
-}
-
-/** Offer a closed arrangement back; a second close replaces the first offer. */
-export function recordClose(snapshot: EditorPanes, label: string, keyboard = false) {
-  window.clearTimeout(dismissTimer);
-  sequence += 1;
-  notice = { snapshot, label, keyboard, id: sequence };
-  dismissTimer = window.setTimeout(clearClose, UNDO_MS);
-  announce();
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
 
 interface DragState {
   pointerId: number;
@@ -243,11 +191,11 @@ type PaneHandlesProps =
  * the offer takes the focus in turn; a pointer press leaves the focus where the learner had it.
  */
 function PaneUndo({ onPanes }: { onPanes: (next: EditorPanes) => void }) {
-  const [entry, setEntry] = useState<CloseNotice | null>(notice);
+  const [entry, setEntry] = useState<CloseNotice | null>(() => closeNotice());
   const current = useRef(onPanes);
   current.current = onPanes;
   const button = useRef<HTMLButtonElement | null>(null);
-  useEffect(() => subscribe(() => setEntry(notice)), []);
+  useEffect(() => subscribeClose(() => setEntry(closeNotice())), []);
   useEffect(() => {
     if (entry?.keyboard) button.current?.focus();
   }, [entry?.id, entry?.keyboard]);
@@ -285,8 +233,9 @@ function PaneUndo({ onPanes }: { onPanes: (next: EditorPanes) => void }) {
  * The close is the pane's own: it takes that view off the screen and leaves the others in order
  * (`closeView`), where the tab row's Close goes all the way back to one pane. Every view is legal as
  * the last one, so a pane never closes into an empty card. A close is reversible: it records the
- * arrangement it replaced, and the body renders that notice's Undo from its own `undo` instance of
- * this chunk, which survives the pane the close unmounted.
+ * arrangement it replaced in `paneUndo.ts` (the split's Close and the prediction gate's own Close do
+ * too), and the body renders that notice's Undo from its own `undo` instance of this chunk, which
+ * survives the pane the close unmounted.
  */
 export default function PaneHandles(props: PaneHandlesProps) {
   if (props.resize) return <PaneResize />;

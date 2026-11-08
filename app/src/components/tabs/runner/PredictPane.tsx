@@ -26,7 +26,8 @@ export function PredictPane({
   onCommit: () => void;
   onSkip: () => void;
   onAgain: () => void;
-  onClose: () => void;
+  /** `keyboard` is the press that closed it: the offer takes the focus that press loses. */
+  onClose: (keyboard: boolean) => void;
   asksForFinish: boolean;
   held: boolean;
   running: boolean;
@@ -54,7 +55,7 @@ export function PredictPane({
                   Predict again
                 </button>
                 <button
-                  onClick={onClose}
+                  onClick={(event) => onClose(event.detail === 0)}
                   data-testid="btn-predict-close"
                   className="px-2 py-0.5 rounded text-[11px] font-mono text-muted hover:text-body border border-line cursor-pointer"
                 >

@@ -152,8 +152,30 @@ export async function runPredictGateSuite({ baseUrl: externalBaseUrl } = {}) {
     );
     console.log('  ok a committed guess is judged against the expected output, then the run goes');
 
-    // 3. One question per lesson: the next Run goes straight through.
+    // 3. The gate's own Close is a pane close like the corner ×: it leaves the same Undo, which puts
+    //    the Predict pane back — the guess it was showing with it. Then one question per lesson: the
+    //    next Run goes straight through.
     await page.getByTestId('btn-predict-close').click();
+    await page.getByTestId('pane-undo').waitFor({ timeout: 5000 });
+    assert.equal(
+      await page.getByTestId('pane-predict').isVisible(),
+      false,
+      "the gate's Close must take the Predict pane off the screen"
+    );
+    await page.getByTestId('btn-pane-undo').click();
+    await page.getByTestId('pane-predict').waitFor({ timeout: 5000 });
+    assert.equal(
+      await page.getByTestId('predict-recorded').isVisible(),
+      true,
+      'Undo must put the Predict pane back with the guess still on it'
+    );
+    assert.equal(
+      await page.getByTestId('pane-undo').count(),
+      0,
+      'Undo must take its own offer away'
+    );
+    await page.getByTestId('btn-predict-close').click();
+    await page.getByTestId('pane-predict').waitFor({ state: 'hidden', timeout: 5000 });
     await page.getByTestId('btn-run-verify').click();
     // The run's own output is the horizon, not a stopwatch: if a gate had opened the run would still
     // be waiting on an answer, so "stdout arrived" plus "no gate on screen" is the claim. Reading the

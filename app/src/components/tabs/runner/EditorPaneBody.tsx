@@ -12,6 +12,7 @@ import { PythonKeys } from '../../PythonKeys';
 import { PythonEditor, type PythonEditorHandle } from '../../PythonEditor';
 import { MAIN_FILE_NAME, type LessonFile } from '../../../lessonFiles';
 import {
+  EDITOR_VIEW_LABELS,
   EDITOR_VIEWS,
   focusSlot,
   paneColumns,
@@ -25,6 +26,7 @@ import {
   type EditorView,
 } from '../../../editorPanes';
 import { PredictPane } from './PredictPane';
+import { recordClose } from './paneUndo';
 import type { PredictGate } from './usePredictGate';
 import type { AnalysisSession } from '../../../analysisClient';
 
@@ -108,8 +110,9 @@ function sharesFor(count: number, stored: number[] | undefined): number[] {
  * leaves the rest in order (`closeView`), which is the opposite of the tab row's Close every pane
  * except the first. The close and the drag grip ride in the pane chrome chunk (`PaneDrag.tsx`), so a
  * one-pane body never pays for either, and the placement chips keep their own spot beside them. A
- * close is reversible: the body also renders that chunk's `undo` instance, which offers the view and
- * its slot back for a few seconds — the one thing that must outlive the pane the close unmounted.
+ * close is reversible, the prediction gate's own Close included: every close records the arrangement
+ * it took away in `paneUndo.ts`, and the body also renders that chunk's `undo` instance, which offers
+ * the view and its slot back for a few seconds — the thing that must outlive the pane it unmounted.
  *
  * A phone stacks every arrangement: two 195 px columns are narrower than a line of Python.
  */
@@ -410,7 +413,13 @@ export function EditorPaneBody({
           onCommit={gate.commit}
           onSkip={gate.skip}
           onAgain={gate.again}
-          onClose={() => onClosePredict?.()}
+          onClose={(keyboard) => {
+            // The gate's Close is a pane close like the corner ×: record the arrangement before the
+            // tab writes one without this view, so the same Undo puts it back in its slot.
+            if (!onClosePredict) return;
+            recordClose(panes, EDITOR_VIEW_LABELS.predict, keyboard);
+            onClosePredict();
+          }}
           asksForFinish={asksForFinish}
           held={gate.holding}
           running={running}

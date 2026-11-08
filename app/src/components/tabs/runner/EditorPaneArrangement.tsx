@@ -10,7 +10,7 @@ import {
   type EditorPanes,
   type EditorView,
 } from '../../../editorPanes';
-import { recordClose } from './PaneDrag';
+import { recordClose } from './paneUndo';
 import { resultTabMeta } from './resultTabMeta';
 
 /**
