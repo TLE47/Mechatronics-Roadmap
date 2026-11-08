@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import type { RobotCommandMessage, RobotReply, RobotRunApi, RobotScenario } from '../../../robotSim/model';
+import { armRobotWait, cancelRobotWait, writeRobotReply } from '../../../robotSim/protocol';
 import type { MutableRefObject, RefObject } from 'react';
 import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../../data/mechalabPlant';
 import type { PythonLessonItem } from '../../../data/pythonLessonsData';
@@ -153,6 +155,15 @@ export function useRunnerExecution({
   // `pauseAt`). Null means the browser gave no SharedArrayBuffer, and then Pause is simply absent - a
   // button that cannot work is worse than one that is not offered.
   const pauseRef = useRef<SharedArrayBuffer | null>(null);
+  // The robot's command word, waited on by the worker and answered by `onMessage` below.
+  const robotBufferRef = useRef<SharedArrayBuffer | null>(null);
+  // Robot Pause is a gate on this side: the worker is blocked on the command word, so parking the
+  // next command here is what stops the run at the next robot call instead of between lines of Python.
+  const robotPausedRef = useRef(false);
+  const robotGateRef = useRef<(() => void) | null>(null);
+  const robotStepOnceRef = useRef(false);
+  const [robotRunning, setRobotRunning] = useState(false);
+  const [robotPaused, setRobotPaused] = useState(false);
   // A change to a parked frame's values. The command word decides, the payload rides here: the same
   // `[length, bytes]` shape stdin uses, for the same reason - a message queues behind the park.
   const frameEditRef = useRef<SharedArrayBuffer | null>(null);
@@ -180,6 +191,7 @@ export function useRunnerExecution({
           stdinCtrlRef.current = new SharedArrayBuffer(8 * 1024);
           pauseRef.current = new SharedArrayBuffer(8);
           frameEditRef.current = new SharedArrayBuffer(8 + FRAME_EDIT_BYTES);
+          robotBufferRef.current = new SharedArrayBuffer(8 + 64 * 1024);
           setPauseCapable(true);
           worker.postMessage({
             type: 'init',
@@ -187,6 +199,7 @@ export function useRunnerExecution({
             stdinBuffer: stdinCtrlRef.current,
             pauseBuffer: pauseRef.current,
             editBuffer: frameEditRef.current,
+            robotBuffer: robotBufferRef.current,
           });
         }
       } catch {
@@ -194,6 +207,7 @@ export function useRunnerExecution({
         stdinCtrlRef.current = null;
         pauseRef.current = null;
         frameEditRef.current = null;
+        robotBufferRef.current = null;
       }
       // A brand-new worker has not loaded Python, so the status has to stop saying it has. A tab
       // switch terminates the worker while this component's state survives it, and the next mount
@@ -416,7 +430,11 @@ export function useRunnerExecution({
   const runPythonCode = async (
     sourceCode: string,
     lesson: PythonLessonItem = currentLessonRef.current,
-    options: { grade?: boolean } = {}
+    options: {
+      grade?: boolean;
+      /** A lesson-scoped Python module and the page's answer to each robot command. */
+      robot?: { python: string; onCommand: (message: RobotCommandMessage) => Promise<RobotReply> };
+    } = {}
   ) => {
     const grade = options.grade !== false && !scratchRef.current;
     const matchMode: OutputMatchMode = asOutputMatchMode(lesson.outputMatch);
@@ -478,6 +496,7 @@ export function useRunnerExecution({
           plantSource: MECHALAB_PLANT_PY,
           plantFilename: MECHALAB_PLANT_FILENAME,
           helperFiles: helperFiles.map((file) => ({ name: file.name, content: file.content })),
+          robot: options.robot ? { python: options.robot.python } : undefined,
         },
         // The first load also fetches Pyodide, so it gets the longer clock; once the interpreter
         // reports ready the run's own budget applies.
@@ -486,6 +505,25 @@ export function useRunnerExecution({
           // Everything that is not a verdict: a waiting `input()`, a scope batch, or a park (whose
           // clock the session has already stopped). A stale run's messages never reach here.
           onMessage: (data) => {
+            if (data.type === 'robot') {
+              const handling = options.robot;
+              if (!handling) return;
+              void (async () => {
+                try {
+                  const reply = await handling.onCommand({
+                    command: String(data.command || ''),
+                    args: (data.args as Record<string, unknown>) || {},
+                    line: Number(data.line) || 0,
+                  });
+                  writeRobotReply(robotBufferRef.current, reply);
+                } catch (error) {
+                  writeRobotReply(robotBufferRef.current, {
+                    error: error instanceof Error ? error.message : String(error),
+                  });
+                }
+              })();
+              return;
+            }
             if (data.type === 'stdin-request') {
               setStdinPrompt(String(data.prompt || ''));
               setStdinValue('');
@@ -692,6 +730,79 @@ export function useRunnerExecution({
   };
 
 
+  const releaseRobotGate = () => {
+    const release = robotGateRef.current;
+    robotGateRef.current = null;
+    release?.();
+  };
+
+  const waitRobotGate = async () => {
+    if (!robotPausedRef.current) return;
+    if (robotStepOnceRef.current) {
+      robotStepOnceRef.current = false;
+      return;
+    }
+    await new Promise<void>((resolve) => {
+      robotGateRef.current = resolve;
+    });
+  };
+
+  const startRobot = (
+    scenario: RobotScenario,
+    onCommand: (message: RobotCommandMessage) => Promise<RobotReply>
+  ) => {
+    if (isRunning) return;
+    robotPausedRef.current = false;
+    robotStepOnceRef.current = false;
+    setRobotPaused(false);
+    armRobotWait(robotBufferRef.current);
+    setRobotRunning(true);
+    void runPythonCode(codeRef.current, currentLessonRef.current, {
+      grade: false,
+      robot: {
+        python: scenario.python,
+        onCommand: async (message) => {
+          await waitRobotGate();
+          return onCommand(message);
+        },
+      },
+    }).finally(() => {
+      setRobotRunning(false);
+      setRobotPaused(false);
+      robotPausedRef.current = false;
+      releaseRobotGate();
+    });
+  };
+
+  const pauseRobot = () => {
+    if (!robotRunning) return;
+    robotPausedRef.current = true;
+    setRobotPaused(true);
+  };
+
+  const resumeRobot = () => {
+    robotPausedRef.current = false;
+    robotStepOnceRef.current = false;
+    setRobotPaused(false);
+    releaseRobotGate();
+  };
+
+  const stepRobot = () => {
+    if (!robotPausedRef.current) return;
+    robotStepOnceRef.current = true;
+    releaseRobotGate();
+  };
+
+  const stopRobot = () => {
+    cancelRobotWait(robotBufferRef.current);
+    robotPausedRef.current = false;
+    robotStepOnceRef.current = false;
+    setRobotPaused(false);
+    setRobotRunning(false);
+    releaseRobotGate();
+    stopExecution();
+  };
+
   return {
     session,
     analysisRef,
@@ -718,6 +829,16 @@ export function useRunnerExecution({
     setOutputCheck,
     isRunning,
     setIsRunning,
+    robot: {
+      start: startRobot,
+      pause: pauseRobot,
+      resume: resumeRobot,
+      step: stepRobot,
+      stop: stopRobot,
+      isRunning: robotRunning,
+      paused: robotPaused,
+      pauseCapable,
+    } satisfies RobotRunApi,
     pausedStep,
     setPausedStep,
     frameEdit,

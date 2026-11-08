@@ -523,6 +523,7 @@ export function useWorkflowEditor(lessonId: string, lessonTitle: string) {
     selectedEdgeId,
     status,
     say: setStatus,
+    flush,
     historySize,
     undo,
     redo,

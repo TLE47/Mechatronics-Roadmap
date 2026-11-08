@@ -218,10 +218,10 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
           {logged
             ? `Logged ${logged}`
             : running
-              ? 'Counting while this lesson is open'
+              ? 'Counting this lesson'
               : elapsed > 0
-                ? 'Paused — Resume keeps counting'
-                : 'Press Start to time this session'}
+                ? 'Paused — press Resume'
+                : 'Press Start'}
         </span>
       )}
       {!compact && timer.log.length > 0 && (
@@ -238,7 +238,7 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
           <ol className="mt-1 space-y-0.5">
             {timer.log.map((press, index) => (
               <li key={`${press.at}-${index}`} data-testid="study-clock-entry">
-                {`${formatTimeOfDay(press.at)} ${PRESS_LABEL[press.action]} · clock ${formatClock(
+                {`${formatTimeOfDay(press.at)} ${PRESS_LABEL[press.action]} · study clock ${formatClock(
                   press.clockMs
                 )}${press.stretchMs === null ? '' : ` · stretch ${formatClock(press.stretchMs)}`}`}
               </li>
@@ -277,7 +277,7 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
               }`}
           </p>
           <p data-testid="study-timer-scope" className="mt-0.5">
-            A sitting is one stretch of activity, so it counts whole for every lesson it touched.
+            A sitting is one stretch, counted whole for every lesson it touched.
           </p>
           <p className="mt-0.5">Today, all lessons: {todayMs > 0 ? today : 'nothing logged yet'}</p>
         </div>

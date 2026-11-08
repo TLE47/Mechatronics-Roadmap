@@ -3800,13 +3800,14 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     // `type`, not two `press` round trips: a pending Vim operator waits for its second key, and two
     // separate protocol calls is exactly the gap a loaded runner can widen.
     await page.keyboard.type('dd');
-    // 15 s, like the other steps that wait on the editor: the plugin chunk and the re-render it
-    // triggers are the slow part under the twelve-suite matrix, and a 5 s wait is a claim about an
-    // idle machine rather than about `dd`.
+    // 30 s: the plugin chunk and the re-render it triggers are the slow part under the eighteen-suite
+    // matrix, where the Pyodide robot suite shares the wave. A 15 s wait was measured timing out on
+    // that load while the same check passed on an idle machine; it remains a wait for the edit, not a
+    // loosened assertion about what `dd` does.
     await page.waitForFunction(
       () => (window.__mechalabEditors['editor-main'].get() ?? '').startsWith('b = 2'),
       undefined,
-      { timeout: 15000 }
+      { timeout: 30000 }
     );
     assert.equal(
       (await getEditorCode(page)).trim(),

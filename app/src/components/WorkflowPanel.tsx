@@ -112,6 +112,7 @@ export function WorkflowPanel({
     selectedEdgeId,
     status,
     say: setStatus,
+    flush,
     historySize,
     undo,
     redo,
@@ -922,6 +923,7 @@ export function WorkflowPanel({
           aria-pressed={grouping}
           title="Draw a box around cards to frame them"
           onClick={() => {
+            flush();
             setGrouping(!grouping);
             setLaning(false);
             setStatus(grouping ? '' : 'Drag a box around cards');
@@ -936,6 +938,7 @@ export function WorkflowPanel({
           aria-pressed={laning}
           title="Draw a box around cards to put them in a named activity partition"
           onClick={() => {
+            flush();
             setLaning(!laning);
             setGrouping(false);
             setStatus(laning ? '' : 'Drag a box around cards to name their lane');

@@ -695,17 +695,17 @@ async function main() {
       const pressText = async (index) => (await presses.nth(index).textContent()) ?? '';
       assert.match(
         await pressText(0),
-        /Started.*clock 0:00:00/,
+        /Started.*study clock 0:00:00/,
         'the first press must name Start and the empty clock'
       );
       assert.match(
         await pressText(1),
-        /Paused.*clock \d+:\d{2}:\d{2}.*stretch \d+:\d{2}:\d{2}/,
+        /Paused.*study clock \d+:\d{2}:\d{2}.*stretch \d+:\d{2}:\d{2}/,
         'Pause must report the clock it stopped at and the stretch it ended'
       );
       assert.match(
         await pressText(2),
-        /Resumed.*clock \d+:\d{2}:\d{2}/,
+        /Resumed.*study clock \d+:\d{2}:\d{2}/,
         'Resume must report the clock it carried on from'
       );
       assert.match(

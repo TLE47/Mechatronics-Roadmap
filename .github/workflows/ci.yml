@@ -264,13 +264,15 @@ jobs:
 
   # The browser matrix in two jobs, split by cost rather than by subject. `e2e` is the one suite that
   # runs longer than five minutes on its own (327s on run 40617696276, a slow runner; ~250s warm), so it
-  # travels with the six light flows and keeps four slots to itself instead of sharing a dev server with
-  # the built-bundle sweep and the control pairs. The cheap suites — the unit batch and the SSR smoke —
-  # ride with `e2e`, because a second copy in the other job would be the same checks twice. Each job
+  # travels with the light flows and keeps four slots to itself instead of sharing a dev server with
+  # the built-bundle sweep and the control pairs. The robot's real-Pyodide examples and the study
+  # clock's rendered log ride in that partition too, so every push and PR runs both. The cheap
+  # suites — the unit batch and the SSR smoke — ride with `e2e`, because a second copy in the other
+  # job would be the same checks twice. Each job
   # still fetches the one build and starts its own server pair, so a partition passes exactly when the
   # whole matrix would: partitioning changes only which suites are started.
   e2e-suites:
-    name: Browser suites — the dev-server E2E sweep, the smoke, and the light flows
+    name: Browser suites — the dev-server E2E sweep (robot + clock), the smoke, and the light flows
     needs: build-workbench
     runs-on: ubuntu-latest
 
@@ -329,7 +331,7 @@ jobs:
         run: npx playwright-core install-deps chromium firefox
         timeout-minutes: 10
 
-      - name: Run the e2e partition (the SSR smoke, the unit batch, the dev-server E2E sweep, the light flows)
+      - name: Run the e2e partition (the SSR smoke, the unit batch, the dev-server sweep with the robot examples and clock log, the light flows)
         run: npm run test:workbench -- --partition e2e
 
       # The micro tab has its own browser flow: 2/2, the 0/2 practice branch, a seeded due review,

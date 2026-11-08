@@ -51,6 +51,8 @@ export interface PythonRunRequest {
   plantSource: string;
   plantFilename: string;
   helperFiles: readonly { name: string; content: string }[];
+  /** The enabled primitives' Python, installed before the learner's program in the same namespace. */
+  robot?: { python: string };
   breakpoints: readonly unknown[];
   watches: readonly unknown[];
   trace?: { cap: number; names: number; chars: number };
@@ -269,6 +271,11 @@ export class PyodideWorkerSession {
       return;
     }
     // Scope batches and parks belong to the run that produced them, and neither ends it.
+    if (data.type === 'robot') {
+      if (data.runId !== this.nextRunId) return;
+      pending.handlers.onMessage?.(data);
+      return;
+    }
     if (data.type === 'scope' || data.type === 'paused') {
       if (data.runId !== this.nextRunId) return;
       if (data.type === 'paused') this.pauseClock();

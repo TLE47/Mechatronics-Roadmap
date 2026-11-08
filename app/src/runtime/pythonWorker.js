@@ -33,6 +33,10 @@ let loadPromise = null;
 let interruptView = null;
 let stdinView = null;
 let stdinBytes = null;
+// The robot's command word: [state, length, JSON bytes], waited on by this worker and answered by the
+// page. Null when the lesson has no robot (or shared memory is unavailable).
+let robotView = null;
+let robotBytes = null;
 let activeRunId = null;
 let stopRequested = false;
 // One id per worker. Stop must interrupt the interpreter, not replace it; the page can only tell
@@ -100,6 +104,46 @@ function readStdin(prompt) {
   const length = Atomics.load(stdinView, STDIN_LENGTH);
   const bytes = new Uint8Array(stdinBytes, 8, length).slice();
   return new TextDecoder().decode(bytes);
+}
+
+/**
+ * Ask the page to perform one robot command, and block until it answers.
+ *
+ * `Atomics.wait` on this worker thread is a real park: the page's own thread stays free to paint the
+ * move, so the visual is never the thing that decides the outcome. `-1` is a stop, answered as `stop`
+ * so Python raises KeyboardInterrupt through `_robot_call`.
+ */
+function robotCall(name, argsJson, line) {
+  if (!robotView || !robotBytes) {
+    return JSON.stringify({ error: 'The robot simulator is not connected.' });
+  }
+  let args = {};
+  try {
+    args = JSON.parse(String(argsJson || '{}'));
+  } catch {
+    args = {};
+  }
+  Atomics.store(robotView, 0, 0);
+  Atomics.store(robotView, 1, 0);
+  self.postMessage({
+    type: 'robot',
+    runId: activeRunId,
+    command: String(name || ''),
+    args,
+    line: Number(line) || 0,
+  });
+  const waited = Atomics.wait(robotView, 0, 0, 300000);
+  if (waited === 'timed-out') {
+    return JSON.stringify({ error: 'The simulator did not answer.' });
+  }
+  if (Atomics.load(robotView, 0) === -1) {
+    Atomics.store(robotView, 0, 0);
+    return 'stop';
+  }
+  const length = Math.max(0, Math.min(Atomics.load(robotView, 1), robotBytes.byteLength - 8));
+  const text = new TextDecoder().decode(new Uint8Array(robotBytes, 8, length).slice());
+  Atomics.store(robotView, 0, 0);
+  return text;
 }
 
 /**
@@ -909,6 +953,8 @@ self.onmessage = async (event) => {
     // The buffer itself, not a view over it: the payload decode slices from byte 8, and a `Uint8Array`
     // passed to another `Uint8Array` constructor is copied as an array-like, ignoring the offset.
     editBytes = msg.editBuffer || null;
+    robotView = msg.robotBuffer ? new Int32Array(msg.robotBuffer, 0, 2) : null;
+    robotBytes = msg.robotBuffer || null;
     if (interruptView && pyodideInstance) pyodideInstance.setInterruptBuffer(interruptView);
     return;
   }
@@ -922,6 +968,11 @@ self.onmessage = async (event) => {
     if (stdinView) {
       Atomics.store(stdinView, STDIN_STATE, -1);
       Atomics.notify(stdinView, STDIN_STATE);
+    }
+    // A robot command is a park of this worker, not of the interpreter: wake it with a stop.
+    if (robotView) {
+      Atomics.store(robotView, 0, -1);
+      Atomics.notify(robotView, 0);
     }
     return;
   }
@@ -971,6 +1022,7 @@ self.onmessage = async (event) => {
       helperFiles = [],
       breakpoints = [],
       watches = [],
+      robot = null,
     } = msg;
 
     // A fresh run starts un-stopped: clear the interrupt word a previous Stop left set.
@@ -1030,6 +1082,9 @@ self.onmessage = async (event) => {
       // The expressions the bar pins, one JSON string: evaluated in whichever frame parks, so the
       // same question is answered at every stop rather than only where the name happens to be local.
       py.globals.set('__mechalab_watches__', serializeWatches(watches));
+      // The lesson's robot API, installed into the run's own namespace before the learner's file.
+      py.globals.set('__mechalab_robot_source__', robot && typeof robot.python === 'string' ? robot.python : '');
+      py.globals.set('__mechalab_robot_call__', robotCall);
       py.globals.set('__mechalab_take_watch__', takePauseWatch);
       // Every file the page can put on screen: the lesson's helper tabs and the shared plant. A step
       // can land in one of them, and the bar quotes the line from the file it names - so a file the
@@ -1051,6 +1106,9 @@ def __mechalab_execute():
         "__name__": "__main__",
         "__mechalab_student_source__": __mechalab_student_code__,
     }
+    if __mechalab_robot_source__:
+        ns["__mechalab_robot__"] = __mechalab_robot_call__
+        exec(__mechalab_robot_source__, ns)
     t0 = time.monotonic()
     steps = 0
     max_s = int(__mechalab_max_steps__)

@@ -95,6 +95,7 @@ interface EditorSlots {
   casesPane?: ReactNode;
   workflowPane: ReactNode;
   tracePane?: ReactNode;
+  robotPane?: import('react').ReactNode;
 }
 
 /** The other workbench, when this document is shared. */
@@ -185,7 +186,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
     gate,
     onClosePredict,
     nextChapter,
-    resultViews = ['requirements', 'predict', 'actual', 'expected', 'cases', 'workflow', 'trace'],
+    resultViews: declaredResultViews,
   } = props;
   // A held run is a question that has to be visible. Study opens folded, but the gate lives in the
   // body: a Run that opens it must not leave the learner with an invisible question and a held run.
@@ -205,6 +206,11 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
    * Predict and Workflow but no run output), and the stored arrangement is still the learner's: a
    * view the preset forbids is not shown and is not written away, so it comes back with Study.
    */
+  const baseResultViews =
+    declaredResultViews ?? ['requirements', 'predict', 'actual', 'expected', 'cases', 'workflow', 'trace'];
+  const resultViews: EditorView[] = props.slots.robotPane
+    ? [...baseResultViews, 'robot']
+    : baseResultViews;
   const allowedViews: EditorView[] = layout
     ? viewsForLayout(layout)
     : resultsAllowed

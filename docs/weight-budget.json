@@ -20,8 +20,8 @@
   "signed_in": {
     "_why": "The same source builds a bigger bundle when the Supabase variables are set, which is how CI builds it (the anon key is a repository variable; the build is local-only on a fresh clone). Run 207 is why this block exists. CI's `entry_gzip` read 532.6 kB against the 480 kB ceiling — a real breach nobody saw locally — because `@supabase/supabase-js` was being parked by the catch-all in the statically preloaded `vendor` chunk. The fix is a split, not a ceiling: `vite.config.ts` sends it to its own `vendor-auth` chunk, which the account panel fetches when it opens, so `entry_gzip` measured 475.1 kB with accounts configured and needs no override — and it should not get one, because a first paint that differs between the two shapes would mean the split regressed. What the library really costs is emitted bytes: 57.8 kB gzipped in `vendor-auth` plus the account panel's own code in the runner chunk. (Both builds emit a `vendor-auth` file; without the variables it is the one-byte stub the folded-away import leaves, which is why the gate tells the shapes apart by that chunk's raw size rather than by its name.) `js_gzip` 801.0 kB measured against 810 kB (9 kB of room) and `total` 1.12 MB against 1.14 MB (20 kB), both by hand and by this measurement. The other five metrics are the same file in both shapes and keep their base ceilings, so a font or a stylesheet cannot grow just because someone built with a key.",
     "budgets": {
-      "js_gzip": 1095000,
-      "total": 3820000
+      "js_gzip": 1099555,
+      "total": 3827113
     }
   },
   "budgets": {
@@ -31,23 +31,24 @@
     "js_gzip": 980000,
     "css_gzip": 29650,
     "fonts": 600000,
-    "largest_js_gzip": 413000,
+    "largest_js_gzip": 413805,
     "audio": 150000,
     "music": 2350000,
     "total": 3740000
   },
   "measured": {
-    "entry_gzip": 607852,
-    "js_gzip": 1090221,
-    "css_gzip": 29595,
+    "entry_gzip": 609702,
+    "js_gzip": 1099555,
+    "css_gzip": 29609,
     "fonts": 425324,
-    "largest_js_gzip": 412052,
-    "prose_gzip": 219358,
-    "reader_gzip": 719467,
+    "largest_js_gzip": 413805,
+    "prose_gzip": 219356,
+    "reader_gzip": 719563,
     "audio": 126967,
     "music": 2233468,
-    "total": 3817766,
+    "total": 3827113,
     "variant": "signed_in",
-    "recordedAt": "2026-11-07"
-  }
+    "recordedAt": "2026-11-08"
+  },
+  "_why_budget_2026_11_08_robot": "The lesson robot simulator moved three signed-in ceilings by hand on 2026-11-08, after trimming first. Measured signed-in: entry 609702 B, js 1099555 B, css 29609 B, largest_js_gzip 413805 B and total 3827113 B. The robot pane is its own React.lazy chunk (19,035 B raw) and is not in index.html's preloads; the main chunk pays only the lazy declaration, the four lesson ids and the tab wiring (805 B gzipped), which is why largest_js_gzip is 413,805 B. The worker gains the synchronous shared-memory bridge and the generated Python API; that code is in the already-emitted pythonWorker chunk, so it moves js and total but not entry. CSS did not need a raise: removing the cosmetic pulse state and reusing existing theme utilities took the stylesheet from 29,705 B to 29,609 B, under its unchanged 29,650 B ceiling. The tiny robot-lessons module was inlined into the tab, its model stays in the lazy pane, and the pane's status duplication was removed. The ceilings are the measured values, not estimates. The robot runs are ungraded and verify no lesson."
 }
