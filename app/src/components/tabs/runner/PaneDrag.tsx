@@ -1,4 +1,4 @@
-import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { GripVertical, X } from 'lucide-react';
 import { PaneResize } from './PaneResize';
 import {
@@ -11,6 +11,59 @@ import {
 
 /** Pixels a press must travel before it becomes a drag rather than a click on the grip. */
 const DRAG_THRESHOLD = 4;
+
+/** How long a closed pane waits for its Undo before the offer goes away on its own. */
+const UNDO_MS = 8000;
+
+interface CloseNotice {
+  /** The arrangement the close replaced: the whole of it, so Undo restores the slot too. */
+  snapshot: EditorPanes;
+  /** What closed, as the offer prints it. */
+  label: string;
+  /** A keyboard press takes the focus with its pane; the offer has to hand it back. */
+  keyboard: boolean;
+  id: number;
+}
+
+/**
+ * The one close waiting to be undone (`runner/PaneDrag.tsx`).
+ *
+ * Module state on purpose: the button that closes a pane is unmounted by its own press, so the offer
+ * cannot live in that component, and it is not the tab's state either — the tab is assembly. Every
+ * close control is in this lazy chunk, which is why the body can render the offer for free: a body
+ * that never closes a pane never loads it. The notice holds the whole arrangement rather than the
+ * view alone, so Undo puts the view back in the slot it left, boundaries and shares included.
+ */
+let notice: CloseNotice | null = null;
+let dismissTimer = 0;
+let sequence = 0;
+const listeners = new Set<() => void>();
+
+function announce() {
+  for (const listener of listeners) listener();
+}
+
+function clearClose() {
+  window.clearTimeout(dismissTimer);
+  notice = null;
+  announce();
+}
+
+/** Offer a closed arrangement back; a second close replaces the first offer. */
+export function recordClose(snapshot: EditorPanes, label: string, keyboard = false) {
+  window.clearTimeout(dismissTimer);
+  sequence += 1;
+  notice = { snapshot, label, keyboard, id: sequence };
+  dismissTimer = window.setTimeout(clearClose, UNDO_MS);
+  announce();
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
 
 interface DragState {
   pointerId: number;
@@ -176,7 +229,53 @@ function PaneDrag({ slot, view, panes, onPanes }: PaneDragProps) {
   );
 }
 
-type PaneHandlesProps = { resize: true } | (PaneDragProps & { resize?: false });
+type PaneHandlesProps =
+  | { resize: true; undo?: false }
+  | { undo: true; resize?: false; onPanes: (next: EditorPanes) => void }
+  | (PaneDragProps & { resize?: false; undo?: false });
+
+/**
+ * The body's offer to take a close back (`runner/PaneDrag.tsx`).
+ *
+ * It prints what closed and restores the arrangement it replaced, which is what makes the slot come
+ * back and not just the view. It rides this chunk rather than the entry, so a body that never closes
+ * a pane never pays for it. A close pressed from the keyboard takes its button's focus with it, so
+ * the offer takes the focus in turn; a pointer press leaves the focus where the learner had it.
+ */
+function PaneUndo({ onPanes }: { onPanes: (next: EditorPanes) => void }) {
+  const [entry, setEntry] = useState<CloseNotice | null>(notice);
+  const current = useRef(onPanes);
+  current.current = onPanes;
+  const button = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => subscribe(() => setEntry(notice)), []);
+  useEffect(() => {
+    if (entry?.keyboard) button.current?.focus();
+  }, [entry?.id, entry?.keyboard]);
+  if (!entry) return null;
+  return (
+    <div
+      role="status"
+      data-testid="pane-undo"
+      style={{ bottom: 16, left: 8 }}
+      className="absolute z-[3] flex items-center gap-2 rounded border border-line bg-canvas/95 px-2 py-1 text-[11px] text-muted"
+    >
+      <span>{entry.label} closed</span>
+      <button
+        ref={button}
+        type="button"
+        data-testid="btn-pane-undo"
+        aria-label={`Undo closing ${entry.label}`}
+        onClick={() => {
+          current.current(entry.snapshot);
+          clearClose();
+        }}
+        className="cursor-pointer rounded border border-line px-1.5 py-0.5 text-accent hover:bg-raise"
+      >
+        Undo
+      </button>
+    </div>
+  );
+}
 
 /**
  * The pane's pointer chrome (`runner/PaneDrag.tsx`): the header grip and close in each pane, and the
@@ -185,10 +284,13 @@ type PaneHandlesProps = { resize: true } | (PaneDragProps & { resize?: false });
  *
  * The close is the pane's own: it takes that view off the screen and leaves the others in order
  * (`closeView`), where the tab row's Close goes all the way back to one pane. Every view is legal as
- * the last one, so a pane never closes into an empty card.
+ * the last one, so a pane never closes into an empty card. A close is reversible: it records the
+ * arrangement it replaced, and the body renders that notice's Undo from its own `undo` instance of
+ * this chunk, which survives the pane the close unmounted.
  */
 export default function PaneHandles(props: PaneHandlesProps) {
   if (props.resize) return <PaneResize />;
+  if (props.undo) return <PaneUndo onPanes={props.onPanes} />;
   const { slot, view, panes, onPanes } = props;
   return (
     <>
@@ -200,6 +302,7 @@ export default function PaneHandles(props: PaneHandlesProps) {
         title="Close this pane; the panes beside it stay open"
         onClick={(event) => {
           event.stopPropagation();
+          recordClose(panes, EDITOR_VIEW_LABELS[view], event.detail === 0);
           onPanes(closeView(panes, view));
         }}
         className="absolute right-1 top-1 z-[2] flex h-5 w-5 cursor-pointer items-center justify-center rounded border border-line bg-canvas/95 text-muted hover:text-accent"

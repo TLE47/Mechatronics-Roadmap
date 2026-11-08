@@ -1451,7 +1451,64 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         'the last pane left returns the one-pane control'
       );
 
-      // 5d-ii. The workflow is a fifth view: the learner's own cards for how the problem gets
+      // 5d-ii. A close is reversible: the offer in the body puts the view back where it was, slot
+      //        included. A close pressed from the keyboard took its button's focus with it, so the
+      //        offer takes the focus in turn and Enter on it undoes the close.
+      await page.getByTestId('editor-tab-main').click();
+      await page.waitForTimeout(150);
+      await page.getByTestId('btn-pane-split').click();
+      await page.waitForTimeout(250);
+      await page.getByTestId('pane-close-main').focus();
+      await page.keyboard.press('Enter');
+      await page.waitForTimeout(250);
+      assert.equal(
+        await page.getByTestId('pane-undo').isVisible(),
+        true,
+        'closing a pane must leave an Undo in the body'
+      );
+      assert.equal(
+        await page.evaluate(() => document.activeElement?.getAttribute('data-testid')),
+        'btn-pane-undo',
+        'a keyboard close must put the focus on its Undo'
+      );
+      assert.equal(
+        await page.getByTestId('pane-main').isVisible(),
+        false,
+        'the closed pane must leave the screen before it comes back'
+      );
+      await page.keyboard.press('Enter');
+      await page.waitForTimeout(250);
+      assert.equal(
+        await page.getByTestId('pane-main').isVisible(),
+        true,
+        'Undo must bring the closed view back'
+      );
+      assert.equal(
+        await page.getByTestId('pane-main').getAttribute('data-slot'),
+        '0',
+        'Undo must put the view back in the slot it left'
+      );
+      assert.equal(
+        await page.getByTestId('pane-undo').count(),
+        0,
+        'Undo must take its own offer away'
+      );
+      // The split these checks opened goes away again, so the scenarios after this one draw the
+      // one-pane body they were written against.
+      await page.getByTestId('btn-pane-close').click();
+      await page.waitForTimeout(250);
+      assert.equal(
+        await page.getByTestId('pane-actual').isVisible(),
+        false,
+        'the undo checks must leave the body as one pane'
+      );
+      assert.equal(
+        await page.getByTestId('pane-main').isVisible(),
+        true,
+        'the undo checks must leave the editor on screen'
+      );
+
+      // 5d-iii. The workflow is a fifth view: the learner's own cards for how the problem gets
       //        solved. The checklist names what a card is missing and never disables Run, and the
       //        cards are authored work, so a reload finds them again under the lesson's own key.
       {

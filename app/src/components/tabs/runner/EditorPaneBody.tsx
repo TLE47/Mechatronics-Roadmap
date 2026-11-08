@@ -107,7 +107,9 @@ function sharesFor(count: number, stored: number[] | undefined): number[] {
  * Each pane in a split carries its own close in the corner: it takes that view off the screen and
  * leaves the rest in order (`closeView`), which is the opposite of the tab row's Close every pane
  * except the first. The close and the drag grip ride in the pane chrome chunk (`PaneDrag.tsx`), so a
- * one-pane body never pays for either, and the placement chips keep their own spot beside them.
+ * one-pane body never pays for either, and the placement chips keep their own spot beside them. A
+ * close is reversible: the body also renders that chunk's `undo` instance, which offers the view and
+ * its slot back for a few seconds — the one thing that must outlive the pane the close unmounted.
  *
  * A phone stacks every arrangement: two 195 px columns are narrower than a line of Python.
  */
@@ -578,6 +580,9 @@ export function EditorPaneBody({
           <PaneHandles resize />
         </Suspense>
       )}
+      <Suspense fallback={null}>
+        <PaneHandles undo onPanes={onPanes} />
+      </Suspense>
     </div>
   );
 }

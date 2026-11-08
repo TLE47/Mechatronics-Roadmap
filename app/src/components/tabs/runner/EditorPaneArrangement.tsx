@@ -10,6 +10,7 @@ import {
   type EditorPanes,
   type EditorView,
 } from '../../../editorPanes';
+import { recordClose } from './PaneDrag';
 import { resultTabMeta } from './resultTabMeta';
 
 /**
@@ -19,6 +20,9 @@ import { resultTabMeta } from './resultTabMeta';
  * swap menu names slots the way the screen draws them — "Pane 1 with pane 3" — and works identically
  * for a side-by-side grid and a stacked one, because it exchanges the views in the state machine
  * rather than moving pixels.
+ *
+ * Close takes every pane but the first away, so it records the arrangement it replaced: the same
+ * Undo a pane's own corner close offers puts the whole split, slots and boundaries included, back.
  */
 export function EditorPaneArrangement({
   panes,
@@ -117,7 +121,10 @@ export function EditorPaneArrangement({
       <button
         type="button"
         data-testid="btn-pane-close"
-        onClick={() => onPanes(closeSplit(panes))}
+        onClick={(event) => {
+          recordClose(panes, 'Split', event.detail === 0);
+          onPanes(closeSplit(panes));
+        }}
         title="Close every pane except the first"
         aria-label="Close every pane except the first"
         className="cursor-pointer rounded border border-line bg-canvas px-1.5 py-0.5 text-muted hover:bg-raise hover:text-body"
