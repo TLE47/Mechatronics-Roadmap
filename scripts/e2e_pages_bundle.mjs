@@ -1154,11 +1154,17 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       );
       assert.equal((await marks()).all, 0, `${name}: turning motion off must stop the lesson figures`);
       await wide.getByTestId('btn-motion-toggle').click();
+      // The header is sticky and the switch is pressed from wherever the pane is scrolled, so the
+      // press can leave the figure it restarts outside the view — and an off-screen figure is
+      // stopped on purpose. Put the figure back in front of the reader, then wait for the mark, then
+      // give it a frame: the mark has to survive, not flash on its way to being stopped again.
+      await wide.getByTestId('diagram-trajectory').scrollIntoViewIfNeeded();
       await wide.waitForFunction(
         () => document.querySelectorAll('[data-testid="lesson-reader"] [data-figure-motion]').length >= 1,
         undefined,
         { timeout: 10000 }
       );
+      await wide.waitForTimeout(250);
       assert.ok((await marks()).all >= 1, `${name}: turning motion back on must restart the figure`);
       console.log(`  ok ${name}: a lesson figure moves while read, stops off screen, and follows the header switch`);
     }
