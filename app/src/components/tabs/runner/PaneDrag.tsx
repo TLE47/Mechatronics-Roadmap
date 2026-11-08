@@ -31,7 +31,8 @@ interface DragState {
  * the target pane, and `elementFromPoint` decides the target rather than the captured handle.
  *
  * The grip is a lazy chunk: a two-pane body pays for it only when a split exists, and every editor
- * body would otherwise carry the pointer work in its entry chunk.
+ * body would otherwise carry the pointer work in its entry chunk. It sits one square in from the
+ * corner so the pane's own close keeps the corner, and the placement chips start past both.
  */
 interface PaneDragProps {
   slot: number;
@@ -166,7 +167,7 @@ function PaneDrag({ slot, view, panes, onPanes }: PaneDragProps) {
       onPointerCancel={() => finish(false)}
       onLostPointerCapture={() => finish(false)}
       onClick={(event) => event.stopPropagation()}
-      className="absolute right-1 top-1 z-[2] flex h-5 w-5 cursor-grab touch-none select-none items-center justify-center rounded border border-line bg-canvas/95 text-muted hover:text-accent active:cursor-grabbing"
+      className="absolute right-8 top-1 z-[2] flex h-5 w-5 cursor-grab touch-none select-none items-center justify-center rounded border border-line bg-canvas/95 text-muted hover:text-accent active:cursor-grabbing"
     >
       <GripVertical className="h-3 w-3" aria-hidden="true" />
     </button>

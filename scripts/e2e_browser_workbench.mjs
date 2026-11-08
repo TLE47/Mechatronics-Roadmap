@@ -1409,6 +1409,48 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       await page.waitForTimeout(250);
       assert.equal(await page.getByTestId('editor-main').isVisible(), true, 'the main tab returns the code');
 
+      // 5d-i. Each pane in a split has its own close: it takes that view away and leaves the rest in
+      //       order. The pane's chrome also stays clear of itself — the close keeps the corner, the
+      //       drag grip sits beside it, and the placement chips start past both.
+      await page.getByTestId('btn-pane-split').click();
+      await page.waitForTimeout(300);
+      assert.equal(
+        await page.getByTestId('pane-close-main').count(),
+        1,
+        'each pane in a split must carry its own close'
+      );
+      const paneChrome = await page.evaluate(() => {
+        const box = (id) => {
+          const element = document.querySelector(`[data-testid="${id}"]`);
+          if (!element) return null;
+          const rect = element.getBoundingClientRect();
+          return { left: Math.round(rect.left), right: Math.round(rect.right) };
+        };
+        return { close: box('pane-close-main'), grip: box('pane-drag-1') };
+      });
+      assert.ok(paneChrome.close && paneChrome.grip, 'a split pane must draw both a close and a grip');
+      assert.ok(
+        paneChrome.grip.right <= paneChrome.close.left,
+        `the drag grip must stay clear of the close; the grip ends at ${paneChrome.grip?.right} and the close starts at ${paneChrome.close?.left}`
+      );
+      await page.getByTestId('pane-close-actual').click();
+      await page.waitForTimeout(300);
+      assert.equal(
+        await page.getByTestId('pane-actual').isVisible(),
+        false,
+        'a pane close must take only that view away'
+      );
+      assert.equal(
+        await page.getByTestId('pane-main').isVisible(),
+        true,
+        'the pane beside the closed one must stay open'
+      );
+      assert.equal(
+        await page.getByTestId('btn-pane-split').count(),
+        1,
+        'the last pane left returns the one-pane control'
+      );
+
       // 5d-ii. The workflow is a fifth view: the learner's own cards for how the problem gets
       //        solved. The checklist names what a card is missing and never disables Run, and the
       //        cards are authored work, so a reload finds them again under the lesson's own key.
@@ -3558,6 +3600,31 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       /Do it yourself/i,
       'Study must stop before P.1’s exercise section'
     );
+
+    // The lesson list is one press in all four presets. Study toggles its rail; Read, Write and
+    // Debug have no rail column, so the same button opens the lesson sheet the phone uses.
+    for (const preset of ['read', 'write', 'debug', 'study']) {
+      await page.getByTestId(`layout-${preset}`).click();
+      await page.waitForTimeout(250);
+      const lessonToggle = page.getByTestId('btn-lessons-toggle');
+      await lessonToggle.waitFor({ timeout: 5000 });
+      const lessonToggleLabel = (await lessonToggle.textContent()) ?? '';
+      assert.match(
+        lessonToggleLabel,
+        /Show lesson list|Hide lesson list/,
+        `${preset} must offer the lesson list from the brief`
+      );
+      if (preset === 'study') continue;
+      assert.match(
+        lessonToggleLabel,
+        /Show lesson list/,
+        `${preset} has no rail to hide, so its button must promise only the list`
+      );
+      await lessonToggle.click();
+      await page.getByTestId('lesson-sheet').waitFor({ state: 'visible', timeout: 10000 });
+      await page.getByTestId('lesson-sheet-close').click();
+      await page.getByTestId('lesson-sheet').waitFor({ state: 'hidden', timeout: 10000 });
+    }
     await page.getByTestId('layout-read').click();
     const p1ReadProse = await page.getByTestId('reader-prose').innerText();
     assert.match(p1ReadProse, /^Goal$/m, 'Read must keep P.1’s Goal and requirements');

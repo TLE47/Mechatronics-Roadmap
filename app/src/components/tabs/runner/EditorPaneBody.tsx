@@ -8,10 +8,13 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
+import { X } from 'lucide-react';
 import { PythonKeys } from '../../PythonKeys';
 import { PythonEditor, type PythonEditorHandle } from '../../PythonEditor';
 import { MAIN_FILE_NAME, type LessonFile } from '../../../lessonFiles';
 import {
+  closeView,
+  EDITOR_VIEW_LABELS,
   EDITOR_VIEWS,
   focusSlot,
   paneColumns,
@@ -103,6 +106,11 @@ function sharesFor(count: number, stored: number[] | undefined): number[] {
  * per pointer move, and the release position is the one that counts because a pointermove's state
  * can still be queued. Every view stays mounted and an unshown pane is `display:none`, which keeps
  * exactly one `pre-actual-stdout` on the page.
+ *
+ * Each pane in a split carries its own close in the corner: it takes that view off the screen and
+ * leaves the rest in order (`closeView`), which is the opposite of the tab row's Close every pane
+ * except the first. The close, the drag grip and the placement chips sit in that order along the
+ * pane's top edge, so none of them covers another.
  *
  * A phone stacks every arrangement: two 195 px columns are narrower than a line of Python.
  */
@@ -461,6 +469,21 @@ export function EditorPaneBody({
               onPlace={(choice) => onPanes(setPaneOrientation(panes, slot, choice))}
             />
           </Suspense>
+        )}
+        {!hidden && paneSplit && (
+          <button
+            type="button"
+            data-testid={`pane-close-${view}`}
+            aria-label={`Close pane ${slot + 1} (${EDITOR_VIEW_LABELS[view]})`}
+            title="Close this pane; the panes beside it stay open"
+            onClick={(event) => {
+              event.stopPropagation();
+              onPanes(closeView(panes, view));
+            }}
+            className="absolute right-1 top-1 z-[2] flex h-5 w-5 cursor-pointer items-center justify-center rounded border border-line bg-canvas/95 text-muted hover:border-accent/50 hover:bg-raise hover:text-body"
+          >
+            <X className="h-3 w-3" aria-hidden="true" />
+          </button>
         )}
         {paneContent(view)}
       </div>

@@ -163,6 +163,20 @@ check('a folded chooser leaves no strip; the brief carries the way back', () => 
   assert.match(runnerSource, /shownLayout === 'study' && !chooserFold\.folded/);
 });
 
+check('the lesson list opens in every preset, not only where the rail is drawn', () => {
+  assert.match(chooserRailSource, /opensSheet\?: boolean/);
+  assert.match(chooserRailSource, /aria-haspopup=\{opensSheet \? 'dialog' : undefined\}/);
+  assert.match(
+    chooserRailSource,
+    /\{opensSheet \|\| folded \? 'Show lesson list' : 'Hide lesson list'\}/
+  );
+  assert.match(runnerSource, /opensSheet=\{shownLayout !== 'study'\}/);
+  assert.match(
+    runnerSource,
+    /shownLayout === 'study' \? chooserFold\.toggle : \(\) => setLessonSheetOpen\(true\)/
+  );
+});
+
 console.log(`\nrail collapse: ${passed} passed, ${failures.length} failed`);
 for (const failure of failures) console.log(`  - ${failure}`);
 process.exit(failures.length === 0 ? 0 : 1);

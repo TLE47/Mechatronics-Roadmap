@@ -31,17 +31,17 @@ flowchart LR
 | `useRunnerArrangement.ts` | The editor/results split share, which side results sit on, and the persisted layout record. |
 | `RunnerToolbar.tsx` | The run controls: presets and dock, Pause/Stop/Run, Predict, and the More panel's actions. |
 | `RunnerEditorCard.tsx` | The editor surface: main/helper tabs, the pane strip, and the editor body beside Requirements, Predict, Run output, Expected, Cases and Workflow. |
-| `EditorPaneBody.tsx` | The pane body: up to four panes in a mixed grid (three side by side put the first at full height and stack the other two beside it, so no cell is empty), the same arrangement stacked on a phone, and the dividers a pointer drags to resize them. |
+| `EditorPaneBody.tsx` | The pane body: up to four panes in a mixed grid (three side by side put the first at full height and stack the other two beside it, so no cell is empty), the same arrangement stacked on a phone, the dividers a pointer drags to resize them, and each split pane's own close — that view leaves, the rest stay in order. |
 | `EditorPaneArrangement.tsx` | Horizontal/vertical axis, Add pane, pane swapping and Close — the split's controls, lazy beside the eager Split door and outside the tablist. It also reads how many panes the viewport allows: two on a phone, three on a laptop, four on a large desktop, re-read on resize. |
-| `PanePlacement.tsx` | A pane's own split direction once there are three or more: the two buttons that open its boundary beside or under it, loaded with the placement control instead of the tab's eager chunk. |
-| `PaneDrag.tsx` | The pane's pointer chrome: a header grip in each pane that exchanges it with the pane it is dropped on, and the single bottom grip that resizes the pane area. One lazy chunk, so a one-pane body never pays for the drag work. |
+| `PanePlacement.tsx` | A pane's own split direction once there are three or more: the two buttons that open its boundary beside or under it, sitting past the close and the grip so no control covers another, loaded with the placement control instead of the tab's eager chunk. |
+| `PaneDrag.tsx` | The pane's pointer chrome: a header grip in each pane that exchanges it with the pane it is dropped on (one square in from the corner, so the pane's own close keeps it), and the single bottom grip that resizes the pane area. One lazy chunk, so a one-pane body never pays for the drag work. |
 | `PaneResize.tsx` | The pane area's bottom grip itself: drag it to trim unused space under the panes, and the Reset size control restores the body's default height. Loaded with `PaneDrag.tsx`, only for bounded desktop bodies. |
 | `EditorGoal.tsx` | The lesson's goal as a labelled prompt card, folded with the editor body. |
 | `EditorRequirements.tsx` | The lesson's pass conditions as their own editor tab: numbered colourful cards with the micro lessons' token styling. |
 | `resultTabMeta.tsx` | What each result tab says: its label, its tooltip and its glyph. |
 | `CasesPane.tsx` | The behavioural cases: one row per substituted input, with what the last run proved and which cases it never reached. |
 | `readerContinue.ts` | Where the page goes next: Study into Read, Read into Write. |
-| `LessonChooserRail.tsx` | The Study preset's left column, the brief's button that brings a folded rail back, and the grid width that follows the fold. |
+| `LessonChooserRail.tsx` | The Study preset's left column, the brief's button that brings a folded rail back, and the grid width that follows the fold. In Read, Write and Debug, which have no rail column, that same button opens the lesson sheet. |
 | `LessonAmbience.tsx` | The pointer-free atmosphere behind the runner: aurora, instrument grid, orbit and four HUD chips. |
 | `RunnerRuntimeStrip.tsx` | Where the interpreter is while it loads: first-run guide and runtime sentence. |
 | `RunVerdict.tsx` | The one-line verdict under the run controls, from the last outcome. |
