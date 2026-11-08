@@ -735,8 +735,8 @@ async function main() {
       );
       assert.match(
         (await page.getByTestId('study-timer-scope').textContent()) ?? '',
-        /counts whole for every lesson it touched/,
-        'and it must say that one sitting is credited to every lesson it touched'
+        /counted whole for every lesson it touched/,
+        'and it must say that one sitting is counted for every lesson it touched'
       );
       await logged.click();
       assert.equal(
