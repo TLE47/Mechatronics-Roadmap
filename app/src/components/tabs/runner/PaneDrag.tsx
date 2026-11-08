@@ -1,7 +1,8 @@
 import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, X } from 'lucide-react';
 import { PaneResize } from './PaneResize';
 import {
+  closeView,
   EDITOR_VIEW_LABELS,
   swapPanes,
   type EditorPanes,
@@ -31,8 +32,9 @@ interface DragState {
  * the target pane, and `elementFromPoint` decides the target rather than the captured handle.
  *
  * The grip is a lazy chunk: a two-pane body pays for it only when a split exists, and every editor
- * body would otherwise carry the pointer work in its entry chunk. It sits one square in from the
- * corner so the pane's own close keeps the corner, and the placement chips start past both.
+ * body would otherwise carry the pointer work in its entry chunk. It sits at the pane's top-left, so
+ * the close keeps the top-right corner and the placement chips start beside it: three controls, three
+ * spots, none covering another even in a half-width pane.
  */
 interface PaneDragProps {
   slot: number;
@@ -167,7 +169,7 @@ function PaneDrag({ slot, view, panes, onPanes }: PaneDragProps) {
       onPointerCancel={() => finish(false)}
       onLostPointerCapture={() => finish(false)}
       onClick={(event) => event.stopPropagation()}
-      className="absolute right-8 top-1 z-[2] flex h-5 w-5 cursor-grab touch-none select-none items-center justify-center rounded border border-line bg-canvas/95 text-muted hover:text-accent active:cursor-grabbing"
+      className="absolute left-1 top-1 z-[2] flex h-5 w-5 cursor-grab touch-none select-none items-center justify-center rounded border border-line bg-canvas/95 text-muted hover:text-accent active:cursor-grabbing"
     >
       <GripVertical className="h-3 w-3" aria-hidden="true" />
     </button>
@@ -177,18 +179,33 @@ function PaneDrag({ slot, view, panes, onPanes }: PaneDragProps) {
 type PaneHandlesProps = { resize: true } | (PaneDragProps & { resize?: false });
 
 /**
- * The pane's pointer chrome (`runner/PaneDrag.tsx`): a header grip in each pane, and the one bottom
- * grip that resizes the pane area. One lazy chunk serves both, and the entry above only names this
- * component once.
+ * The pane's pointer chrome (`runner/PaneDrag.tsx`): the header grip and close in each pane, and the
+ * one bottom grip that resizes the pane area. One lazy chunk serves all of them, so a one-pane body
+ * pays for none of it and the entry above only names this component once.
+ *
+ * The close is the pane's own: it takes that view off the screen and leaves the others in order
+ * (`closeView`), where the tab row's Close goes all the way back to one pane. Every view is legal as
+ * the last one, so a pane never closes into an empty card.
  */
 export default function PaneHandles(props: PaneHandlesProps) {
   if (props.resize) return <PaneResize />;
+  const { slot, view, panes, onPanes } = props;
   return (
-    <PaneDrag
-      slot={props.slot}
-      view={props.view}
-      panes={props.panes}
-      onPanes={props.onPanes}
-    />
+    <>
+      <PaneDrag slot={slot} view={view} panes={panes} onPanes={onPanes} />
+      <button
+        type="button"
+        data-testid={`pane-close-${view}`}
+        aria-label={`Close pane ${slot + 1} (${EDITOR_VIEW_LABELS[view]})`}
+        title="Close this pane; the panes beside it stay open"
+        onClick={(event) => {
+          event.stopPropagation();
+          onPanes(closeView(panes, view));
+        }}
+        className="absolute right-1 top-1 z-[2] flex h-5 w-5 cursor-pointer items-center justify-center rounded border border-line bg-canvas/95 text-muted hover:text-accent"
+      >
+        <X className="h-3 w-3" aria-hidden="true" />
+      </button>
+    </>
   );
 }

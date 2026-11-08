@@ -45,7 +45,7 @@ export function PanePlacement({
     );
   };
   return (
-    <div className="absolute right-14 top-1 z-[1] flex items-center gap-0.5 rounded border border-line bg-canvas/95 p-0.5">
+    <div className="absolute right-8 top-1 z-[1] flex items-center gap-0.5 rounded border border-line bg-canvas/95 p-0.5">
       {button('columns')}
       {button('rows')}
     </div>
