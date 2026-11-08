@@ -2994,7 +2994,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         testId="lesson-sheet"
         size="lg"
       >
-        <div className="p-2"><LessonChooser {...chooser} maxHeight="none" /></div>
+        <div className="p-2"><LessonChooser {...chooser} maxHeight="none" onClose={() => setLessonSheetOpen(false)} /></div>
       </Sheet>
 
       {helpOpen && <HelpSheet input={helpInput} onClose={() => setHelpOpen(false)} />}

@@ -145,7 +145,8 @@ height; all sixteen tabs are in the sheet with 44 px rows, Escape closes it and 
 plot opens at its own resolution and scrolls; Study opens on the text, Code mounts the editor, a
 punctuation key inserts at the caret, every key is 40 px, the Run bar ends on the bottom edge, and a
 sheet hides it; a reload inside Code comes back to Code and Lesson hides the editor without a remount;
-the lesson sheet selects another entry and the strip follows; the install row appears only with a
+the lesson sheet closes from the list's own corner × and hands focus back, then selects another entry
+and the strip follows; the install row appears only with a
 prompt event (or the iOS UA) and calls the prompt exactly once; and at 768/1024 the rail is back with
 Predict sharing Run's row. It launches no interpreter: `test:e2e` and `test:predict` own running code,
 and 10 MB on a throttled phone link would make this too slow to gate every pull request.

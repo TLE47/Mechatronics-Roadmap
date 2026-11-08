@@ -488,6 +488,19 @@ async function main() {
       console.log('\nthe lesson sheet');
       await page.getByTestId('btn-lessons').click();
       await page.getByTestId('lesson-sheet').waitFor({ state: 'visible', timeout: 10000 });
+      // The chooser carries the corner close a pane has: the header's × belongs to the overlay, this
+      // one to the list the learner opened, and it has to put the sheet away and hand focus back.
+      const chooserClose = page.getByTestId('lesson-sheet').getByTestId('btn-lessons-close');
+      check(await chooserClose.isVisible(), 'the phone lesson sheet has no close of its own');
+      await chooserClose.click();
+      await page.getByTestId('lesson-sheet').waitFor({ state: 'hidden', timeout: 10000 });
+      check(
+        (await page.evaluate(() => document.activeElement?.getAttribute('data-testid') ?? '')) ===
+          'btn-lessons',
+        'closing the list did not put focus back on the door that opened it'
+      );
+      await page.getByTestId('btn-lessons').click();
+      await page.getByTestId('lesson-sheet').waitFor({ state: 'visible', timeout: 10000 });
       // Scoped to the sheet: the desktop rail is still in the DOM behind it (hidden at 390), and a
       // second copy of the same row is a strict-mode tie, not a learner-visible duplicate.
       await page
@@ -505,7 +518,7 @@ async function main() {
         'the page stayed locked after the lesson sheet closed'
       );
       await assertNoSidewaysScroll(page, 'after a lesson change');
-      ok(`the chooser opens ${OTHER_LESSON.id}, closes, and the strip follows`);
+      ok(`the chooser closes from its own ×, then opens ${OTHER_LESSON.id} and the strip follows`);
 
       console.log('\nthe install row');
       await openTabPicker(page);

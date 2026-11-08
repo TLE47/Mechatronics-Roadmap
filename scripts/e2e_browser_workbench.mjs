@@ -3710,10 +3710,26 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       );
       await lessonToggle.click();
       await page.getByTestId('lesson-sheet').waitFor({ state: 'visible', timeout: 10000 });
+      assert.ok(
+        await page.getByTestId('btn-lessons-close').isVisible(),
+        `${preset} must give the lesson sheet the pane's own corner close`
+      );
       await page.getByTestId('lesson-sheet-close').click();
       await page.getByTestId('lesson-sheet').waitFor({ state: 'hidden', timeout: 10000 });
     }
+    // The chooser's own × closes the sheet, so the list is put away like a pane and not only from
+    // the dialog header; the sheet hands focus back to the door that opened it.
     await page.getByTestId('layout-read').click();
+    await page.waitForTimeout(250);
+    await page.getByTestId('btn-lessons-toggle').click();
+    await page.getByTestId('lesson-sheet').waitFor({ state: 'visible', timeout: 10000 });
+    await page.getByTestId('btn-lessons-close').click();
+    await page.getByTestId('lesson-sheet').waitFor({ state: 'hidden', timeout: 10000 });
+    assert.equal(
+      await page.evaluate(() => document.activeElement?.getAttribute('data-testid') ?? ''),
+      'btn-lessons-toggle',
+      'closing the lesson list must put focus back on the button that opened it'
+    );
     const p1ReadProse = await page.getByTestId('reader-prose').innerText();
     assert.match(p1ReadProse, /^Goal$/m, 'Read must keep P.1’s Goal and requirements');
     assert.doesNotMatch(p1ReadProse, /^Learn$/m, 'Read must not repeat the Learn section');

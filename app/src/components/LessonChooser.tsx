@@ -43,6 +43,12 @@ interface LessonChooserProps {
    * a collapsed card inside a sheet would be a card with no room to be folded into.
    */
   onCollapse?: () => void;
+  /**
+   * Close the list's own surface. A sheet passes this, so the chooser keeps the corner close a pane
+   * has instead of borrowing the sheet's header ×: that × belongs to the overlay, and on a phone the
+   * list is the thing the learner opened and wants to put away.
+   */
+  onClose?: () => void;
 }
 
 export function LessonChooser({
@@ -59,6 +65,7 @@ export function LessonChooser({
   className = '',
   maxHeight,
   onCollapse,
+  onClose,
 }: LessonChooserProps) {
   const tracks: { id: TrackFilter; label: string; count: number }[] = [
     { id: 'all', label: 'All', count: lessons.length },
@@ -113,6 +120,18 @@ export function LessonChooser({
             >
               <ChevronLeft className="h-3 w-3" aria-hidden="true" />
               <span>Hide</span>
+            </button>
+          )}
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              data-testid="btn-lessons-close"
+              aria-label="Close the lesson list"
+              title="Close the lesson list and go back to the workbench"
+              className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded border border-line bg-canvas/95 text-muted hover:text-accent"
+            >
+              <X className="h-3 w-3" aria-hidden="true" />
             </button>
           )}
         </div>
