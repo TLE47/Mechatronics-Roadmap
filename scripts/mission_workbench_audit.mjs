@@ -688,6 +688,39 @@ export async function auditPaneOrientations(browser, baseUrl, name) {
     await expandEditorBody(page);
     await waitForCount(3);
   };
+  /**
+   * Press a pane's placement chip.
+   *
+   * The chip is anchored to the top of its pane, and a pane moves while the body settles: the
+   * Requirements cards arrive through a lazy boundary, and a three-column body is shorter than the
+   * mixed one. Playwright scrolls the chip into view and then clicks the box it measured; on a slow
+   * runner the body can move between the scroll and the press, and the click lands on the pane
+   * instead (which only focuses it). Wait for a box the page has held for a frame and that sits
+   * fully in the viewport, then press that one.
+   */
+  const pressPaneChip = async (testId) => {
+    const chip = page.getByTestId(testId);
+    await chip.scrollIntoViewIfNeeded();
+    await page.waitForFunction(
+      (id) => {
+        const element = document.querySelector(`[data-testid="${id}"]`);
+        if (!element) return false;
+        const box = element.getBoundingClientRect();
+        const previous = window.__paneChipBox;
+        window.__paneChipBox = { id, x: box.x, y: box.y };
+        return (
+          previous?.id === id &&
+          Math.abs(previous.x - box.x) < 1 &&
+          Math.abs(previous.y - box.y) < 1 &&
+          box.top >= 0 &&
+          box.bottom <= window.innerHeight
+        );
+      },
+      testId,
+      { timeout: 10000 }
+    );
+    await chip.click();
+  };
 
   try {
     await page.goto(`${baseUrl}?lesson=P.6`, { waitUntil: 'networkidle', timeout: 45000 });
@@ -732,7 +765,7 @@ export async function auditPaneOrientations(browser, baseUrl, name) {
       `${name}: panes 2 and 3 must sit beside pane 1 in the mixed layout`
     );
 
-    await page.getByTestId('btn-pane-orient-3-columns').click();
+    await pressPaneChip('btn-pane-orient-3-columns');
     await waitForOrientations('columns,columns');
     await page.waitForTimeout(250);
     const three = await paneBoxes(page);
@@ -789,7 +822,7 @@ export async function auditPaneOrientations(browser, baseUrl, name) {
     );
 
     // Pane 2 chooses to stack under pane 1; pane 3 keeps the column it opened.
-    await page.getByTestId('btn-pane-orient-2-rows').click();
+    await pressPaneChip('btn-pane-orient-2-rows');
     await waitForOrientations('rows,columns');
     await page.waitForTimeout(250);
     const stacked = await paneBoxes(page);
@@ -810,7 +843,7 @@ export async function auditPaneOrientations(browser, baseUrl, name) {
     );
 
     // Each chip sets one boundary back, and the whole-body control still stacks everything.
-    await page.getByTestId('btn-pane-orient-2-columns').click();
+    await pressPaneChip('btn-pane-orient-2-columns');
     await waitForOrientations('columns,columns');
     await page.getByTestId('btn-pane-rows').click();
     await page.waitForFunction(
