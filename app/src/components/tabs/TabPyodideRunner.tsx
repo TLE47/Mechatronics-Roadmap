@@ -2209,8 +2209,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
       {/* The chooser is a rail, not a third column of the work area: the entries stay one click
           away while the lesson text and the editor share the width the chooser used to take. Read,
-          Write and Debug have no column for it, so the brief's Show lesson list button opens the
-          sheet the phone uses instead of hiding a list those presets never draw. */}
+          Write and Debug have no column, so the brief's Show lesson list button opens the sheet. */}
       <div className={`grid grid-cols-1 gap-5 ${shownLayout === 'study' ? studyGridColumns(chooserFold.folded) : ''}`}>
         {shownLayout === 'study' && !chooserFold.folded && (
           <LessonChooserRail
@@ -2414,16 +2413,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 >
                   {currentLesson.title}
                 </h2>
-                {/* The brief, not a 48 px strip, is the way back to a folded rail; in the presets
-                    with no rail column the same button opens the lesson sheet. */}
-                <LessonRailToggle
-                  folded={chooserFold.folded}
-                  count={filteredLessons.length}
-                  opensSheet={shownLayout !== 'study'}
-                  onToggle={
-                    shownLayout === 'study' ? chooserFold.toggle : () => setLessonSheetOpen(true)
-                  }
-                />
+                {/* Study folds its rail; the other presets have no rail, so the press opens the sheet. */}
+                <LessonRailToggle folded={chooserFold.folded} count={filteredLessons.length} opensSheet={shownLayout !== 'study'} onToggle={shownLayout === 'study' ? chooserFold.toggle : () => setLessonSheetOpen(true)} />
               </div>
 
               {showFirstGuide && <GuideToggle hidden={guideHidden} onToggle={toggleGuide} />}
