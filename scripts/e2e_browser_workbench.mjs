@@ -1424,11 +1424,20 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           const element = document.querySelector(`[data-testid="${id}"]`);
           if (!element) return null;
           const rect = element.getBoundingClientRect();
-          return { left: Math.round(rect.left), right: Math.round(rect.right) };
+          return {
+            left: Math.round(rect.left),
+            right: Math.round(rect.right),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+          };
         };
         return { close: box('pane-close-main'), grip: box('pane-drag-1') };
       });
       assert.ok(paneChrome.close && paneChrome.grip, 'a split pane must draw both a close and a grip');
+      assert.ok(
+        paneChrome.grip.width > paneChrome.grip.height,
+        `the drag grip is a short, wide pill so it covers little of the pane's first line; got ${paneChrome.grip.width}×${paneChrome.grip.height}`
+      );
       assert.ok(
         paneChrome.grip.right <= paneChrome.close.left,
         `the drag grip must stay clear of the close; the grip ends at ${paneChrome.grip?.right} and the close starts at ${paneChrome.close?.left}`
