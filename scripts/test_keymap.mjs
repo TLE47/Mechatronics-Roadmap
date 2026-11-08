@@ -319,7 +319,7 @@ check('every remappable action has one row, and the fixed rows say so', () => {
   assert.equal(new Set(withAction).size, withAction.length, 'one row per action');
   assert.equal(
     SHORTCUT_ROWS.length,
-    12,
+    13,
     'the sheet keeps its rows: the fixed ones are what a rebinder does not touch'
   );
 });

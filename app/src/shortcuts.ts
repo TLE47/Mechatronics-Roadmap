@@ -12,7 +12,9 @@
  * Six rows carry a `keymapAction` and can be rebound in the sheet ([`keymap.ts`](keymap.ts)); their
  * keys are read from the map when one is passed. The rest are fixed on purpose: the four presets are
  * a positional family, F9/F12 belong to the caret, Escape and Tab belong to dialogs, and the palette
- * and divider keys move a highlight rather than doing something.
+ * and divider keys move a highlight rather than doing something. ⌥Z is fixed for the same reason a
+ * dialog key is: it exists only while a pane close can still be taken back, so there is nothing to
+ * rebind between offers.
  */
 
 // The `.ts` extension is for Node's type stripping (`scripts/test_keymap.mjs`).
@@ -70,6 +72,10 @@ export const SHORTCUT_ROWS: ShortcutRow[] = [
     keys: '⌘.',
     action: 'Focus mode on or off: the chrome out of the way, the work left.',
     keymapAction: 'focus',
+  },
+  {
+    keys: '⌥Z',
+    action: 'Undo the pane that was just closed, while its offer is on screen.',
   },
   {
     keys: '← →  Home  End',

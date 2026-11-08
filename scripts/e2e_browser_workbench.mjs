@@ -1493,6 +1493,37 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         0,
         'Undo must take its own offer away'
       );
+      // A pointer close leaves the focus on the button that unmounts, so ⌥Z is the keyboard's way
+      // back without reaching for the offer it has just drawn.
+      await page.getByTestId('pane-close-main').click();
+      await page.waitForTimeout(250);
+      assert.equal(
+        await page.getByTestId('pane-undo').isVisible(),
+        true,
+        'the pointer close must offer its Undo before ⌥Z can take it'
+      );
+      assert.equal(
+        await page.getByTestId('pane-main').isVisible(),
+        false,
+        'the pointer close must take the pane away'
+      );
+      await page.keyboard.press('Alt+z');
+      await page.waitForTimeout(250);
+      assert.equal(
+        await page.getByTestId('pane-main').isVisible(),
+        true,
+        '⌥Z must put the closed pane back'
+      );
+      assert.equal(
+        await page.getByTestId('pane-main').getAttribute('data-slot'),
+        '0',
+        '⌥Z must restore the slot too, not just the view'
+      );
+      assert.equal(
+        await page.getByTestId('pane-undo').count(),
+        0,
+        '⌥Z must take its own offer away'
+      );
       // The split these checks opened goes away again, so the scenarios after this one draw the
       // one-pane body they were written against.
       await page.getByTestId('btn-pane-close').click();

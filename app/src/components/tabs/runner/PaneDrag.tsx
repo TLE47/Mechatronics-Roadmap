@@ -189,6 +189,7 @@ type PaneHandlesProps =
  * back and not just the view. It rides this chunk rather than the entry, so a body that never closes
  * a pane never pays for it. A close pressed from the keyboard takes its button's focus with it, so
  * the offer takes the focus in turn; a pointer press leaves the focus where the learner had it.
+ * Either way ⌥Z undoes the close from the keyboard while the offer is on screen.
  */
 function PaneUndo({ onPanes }: { onPanes: (next: EditorPanes) => void }) {
   const [entry, setEntry] = useState<CloseNotice | null>(() => closeNotice());
@@ -199,6 +200,24 @@ function PaneUndo({ onPanes }: { onPanes: (next: EditorPanes) => void }) {
   useEffect(() => {
     if (entry?.keyboard) button.current?.focus();
   }, [entry?.id, entry?.keyboard]);
+  // ⌥Z is the same Undo from the keyboard, for the close that was made with the pointer and left
+  // no focus on its own button. The listener exists only while the offer does, so no typing loses a
+  // key, and a dialog keeps its chords: the offer never takes a press from one.
+  useEffect(() => {
+    if (!entry) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
+      if (!event.altKey || event.metaKey || event.ctrlKey || event.shiftKey) return;
+      if (event.code !== 'KeyZ') return;
+      const target = event.target instanceof Element ? event.target : null;
+      if (target?.closest('[role="dialog"]')) return;
+      event.preventDefault();
+      current.current(entry.snapshot);
+      clearClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [entry]);
   if (!entry) return null;
   return (
     <div
@@ -213,6 +232,7 @@ function PaneUndo({ onPanes }: { onPanes: (next: EditorPanes) => void }) {
         type="button"
         data-testid="btn-pane-undo"
         aria-label={`Undo closing ${entry.label}`}
+        aria-keyshortcuts="Alt+Z"
         onClick={() => {
           current.current(entry.snapshot);
           clearClose();
@@ -221,6 +241,13 @@ function PaneUndo({ onPanes }: { onPanes: (next: EditorPanes) => void }) {
       >
         Undo
       </button>
+      <kbd
+        aria-hidden="true"
+        title="Undo from the keyboard while this offer is on screen"
+        className="rounded border border-line-soft px-1 font-mono text-[10px] text-faint"
+      >
+        ⌥Z
+      </kbd>
     </div>
   );
 }
