@@ -37,7 +37,6 @@ export const EDITOR_VIEWS = [
   'cases',
   'workflow',
   'trace',
-  'robot',
 ] as const;
 
 export type EditorView = (typeof EDITOR_VIEWS)[number];
@@ -52,7 +51,6 @@ export const EDITOR_VIEW_LABELS: Record<EditorView, string> = {
   cases: 'Cases',
   workflow: 'Workflow',
   trace: 'Trace',
-  robot: 'Robot',
 };
 
 /** Which way the panes divide the body. Columns become a grid at three or more. */
@@ -183,8 +181,8 @@ export function paneCapacity(width: number, height: number): number {
  */
 export function viewsForLayout(layout: 'study' | 'write' | 'read' | 'debug'): EditorView[] {
   if (layout === 'read') return [];
-  if (layout === 'write') return ['requirements', 'predict', 'cases', 'workflow', 'robot'];
-  return ['requirements', 'predict', 'actual', 'expected', 'cases', 'workflow', 'trace', 'robot'];
+  if (layout === 'write') return ['requirements', 'predict', 'cases', 'workflow'];
+  return ['requirements', 'predict', 'actual', 'expected', 'cases', 'workflow', 'trace'];
 }
 
 export function isPaneAxis(value: unknown): value is PaneAxis {

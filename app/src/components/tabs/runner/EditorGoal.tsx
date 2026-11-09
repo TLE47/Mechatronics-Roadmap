@@ -22,7 +22,10 @@ export function EditorGoalCard({ goal }: { goal: string }) {
           Starter code · runs as-is
         </span>
       </div>
-      <p className="editor-goal-text mt-2.5 text-[14.5px] font-semibold leading-relaxed text-ink sm:text-[15.5px]">
+      <p
+        className="editor-goal-text mt-2.5 text-[14.5px] font-semibold leading-relaxed text-ink sm:text-[15.5px]"
+        data-testid="editor-goal-text"
+      >
         <MicroRichText text={goal} />
       </p>
       <p className="mt-2 text-[11.5px] text-muted">

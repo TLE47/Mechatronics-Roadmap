@@ -40,7 +40,7 @@ flowchart LR
 | `EditorGoal.tsx` | The lesson's goal as a labelled prompt card, folded with the editor body. |
 | `EditorRequirements.tsx` | The lesson's pass conditions as their own editor tab: numbered colourful cards with the micro lessons' token styling. |
 | `resultTabMeta.tsx` | What each result tab says: its label, its tooltip and its glyph. |
-| `robotPane.tsx` | The Robot tab's slot: the four grid lessons, and the lazy pane that is null everywhere else. |
+| `robotPane.tsx` | The Robot dock's slot: the four lesson views, and the lazy dock that is null everywhere else. |
 | `CasesPane.tsx` | The behavioural cases: one row per substituted input, with what the last run proved and which cases it never reached. |
 | `readerContinue.ts` | Where the page goes next: Study into Read, Read into Write. |
 | `LessonChooserRail.tsx` | The Study preset's left column, the brief's button that brings a folded rail back, and the grid width that follows the fold. In Read, Write and Debug, which have no rail column, that same button opens the lesson sheet. |
@@ -58,46 +58,29 @@ flowchart LR
 | `GuideToggle.tsx` | The brief's and the phone strip's door onto that switch, in two target sizes and one behaviour. |
 
 
-## The robot tab
+## The robot dock in main.py
 
-Four Python lessons have a grid to drive: **P.1** variables, **P.3** `if`/`else` and a sensor, **P.4**
-`for`, and **P.5** `def`. The tab is `../../robotSim/RobotPane.tsx`, reached through `React.lazy` and
-listed by the four ids in `robotPane.tsx`; the pane's model and drawing are not in the entry bundle or
-in `index.html`'s preloads. The only start is `freshRobot(scenario)`: `(0,0)` is the top-left
-square, x runs right, y runs down, and heading is `0 north, 1 east, 2 south, 3 west`. A move is exactly
-one cell and a turn is exactly 90°, so the stage can never interpolate a different result.
+Four Python lessons get a robot dock in the one `main.py` pane: **P.1** variables and data types,
+**P.3** decisions and clamping, **P.4** lists and `for`, and **P.5** functions and `while`. The
+lesson goal above the editor is the dock's goal; there is no second code surface. `robotPane.tsx`
+gates the four ids and lazily mounts `../../robotSim/RobotPane.tsx` below the editor in
+`EditorPaneBody.tsx`. The dock offers only **Run robot** and **Reset**. It has no starter loader and
+never writes to the editor: **Run robot** executes the learner's current code and appends one
+read-only probe that calls `_robot_send(...)` with the names the lesson itself binds: `robot_mode`,
+`encoder_ticks` and `battery_level` for P.1; `clamped_high`, `clamped_low` and `safe_output` for P.3;
+the command lists for P.4; `pos_m`, `vel_m_s` and `step` for P.5. Missing names are shown as `—`,
+never as invented values.
 
-Each scenario generates only the functions it teaches. The names a learner can call are deliberately
-plain:
-
-| Python call | What it does |
-|---|---|
-| `move_forward(steps=1)` | Move that many cells. `0` does nothing; a negative, non-integer or `bool` step is refused before the robot moves. |
-| `turn_right()` / `turn_left()` | Turn exactly one quarter turn. |
-| `say(text)` | Put a short message in the robot's speech bubble. |
-| `wall_ahead()` | `True` when the next square is a wall or the edge. |
-| `wall_distance()` | How many legal single steps are left before that block; `0` means the next square is blocked. |
-
-The worker builds those names from `scenario.python`; a function the lesson did not enable is a real
-Python `NameError`, not a no-op. Sensors use the same movement path: the model computes the answer,
-stores it, then the pane waits only to pace the drawing. The wait defaults to 140 ms and
-`window.__mechalabRobotStepMs` overrides it in tests. Stop/Reset writes `-1` to the shared word, the
-worker turns that into `KeyboardInterrupt`, and `protocol.ts` refuses a reply written after the stop,
-so a late animation cannot revive a cancelled run. Pause takes effect before the next robot command;
-Step releases exactly one; Resume releases the gate. The runner calls this path with `grade: false`,
-so the simulator never awards lesson verification or changes its progress.
-
-`app/src/robotSim/model.ts` owns the rules and the declared `expected` outcome. `modelWalk` is a fast
-model fixture; it is **not** evidence that the Python example works. The browser suite
-(`npm run test:robot:browser`) loads each scenario's own example from the editor, reads that exact
-source back, runs it through Pyodide and the bridge, and compares x, y, heading, trail length, `said`,
-sensors and completion. It also checks a NameError keeps the reached state, Reset cannot be revived by
-a late reply, Pause/Step/Resume advance predictably, and the verified tally does not move.
-
-`npm run test:robot` is the no-browser model/protocol suite; `npm run test:robot:browser` is the real
-Pyodide suite. The stage's test hooks (`robot-stage`, `robot-sensors`, `robot-status`) are the only
-contract those tests read, so the drawing can change without rewriting the assertions.
-
+The stage is a game view of those values: an encoder track with a robot and status lamps for P.1, a
+safe-command corridor for P.3, a command conveyor for P.4, and a linear joint for P.5. The arena is
+decorative and data-driven; the exact numbers stay in the tiles below it. The robot run is
+`grade: false`: it never verifies a lesson, and Run & Verify remains the verdict. The browser suite
+(`npm run test:robot:browser`) asserts the goal above `main.py`, sets each lesson's own
+`fullSolution`, clicks **Run robot**, compares `data-reading`, and asserts the editor is unchanged.
+It also checks that Reset and a failing program leave no reading. `npm run test:robot` is the
+no-browser model suite: every view is the lesson record, the probe names that lesson's values, the
+old grid commands are gone, and the parser refuses junk. The stage's contract is `robot-stage`'s
+`data-reading` and `robot-status`; the goal is the existing `editor-goal-text` above the code.
 Wiring rule: a region takes exactly the state and callbacks it renders; it never reaches into the tab.
 A region with more than a handful of inputs takes them as named concern objects — `RunnerEditorCard`
 is handed `surface`, `draft`, `panes`, `gate`, `run`, `slots` and `collab`, and `ResultsColumn` its

@@ -757,7 +757,10 @@ export function useRunnerExecution({
     setRobotPaused(false);
     armRobotWait(robotBufferRef.current);
     setRobotRunning(true);
-    void runPythonCode(codeRef.current, currentLessonRef.current, {
+    // The learner's own lesson code, then one read-only probe. The probe is not an example and is
+    // never written to the editor: it only asks Python for the names this lesson binds.
+    const source = `${codeRef.current.replace(/\s*$/, '')}\n\n# Robot view: read this lesson's own values.\n${scenario.probe}\n`;
+    void runPythonCode(source, currentLessonRef.current, {
       grade: false,
       robot: {
         python: scenario.python,

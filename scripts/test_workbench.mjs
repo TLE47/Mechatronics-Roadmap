@@ -54,7 +54,7 @@
  *   test:firstrun    the first lesson's tour without a browser: six steps, the edit and run gates, the offer rule, the restore, and every data-tour anchor in the app's own source
  *   test:smoke       Vite in middleware mode, SSR-render App + Runner + Quiz
  *   test:e2e         Vite dev server on a random port + Chromium
- *   test:robot:browser  each lesson's own Python example through Pyodide and the robot bridge
+ *   test:robot:browser  each robot lesson's goal and full solution through Pyodide and the robot bridge
  *   test:studyclock:e2e the rendered study-clock session log: press readings + separate session total
  *   test:e2e:pages   `npm run build` if `dist/` was missing, a static Pages server + Chromium, Firefox
  *   test:pairs       the same dev server + Chromium, for the same-task control-pair sweep

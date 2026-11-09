@@ -95,7 +95,7 @@ interface EditorSlots {
   casesPane?: ReactNode;
   workflowPane: ReactNode;
   tracePane?: ReactNode;
-  robotPane?: import('react').ReactNode;
+  robotDock?: ReactNode;
 }
 
 /** The other workbench, when this document is shared. */
@@ -206,11 +206,8 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
    * Predict and Workflow but no run output), and the stored arrangement is still the learner's: a
    * view the preset forbids is not shown and is not written away, so it comes back with Study.
    */
-  const baseResultViews =
+  const resultViews: EditorView[] =
     declaredResultViews ?? ['requirements', 'predict', 'actual', 'expected', 'cases', 'workflow', 'trace'];
-  const resultViews: EditorView[] = props.slots.robotPane
-    ? [...baseResultViews, 'robot']
-    : baseResultViews;
   const allowedViews: EditorView[] = layout
     ? viewsForLayout(layout)
     : resultsAllowed

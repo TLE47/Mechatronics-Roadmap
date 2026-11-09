@@ -1,21 +1,20 @@
 /**
- * The robot simulator's model, without a browser (`scripts/test_robot_sim.mjs`).
+ * The robot view's model, without a browser (`scripts/test_robot_sim.mjs`).
  *
- * This pins conventions, validation, movement, sensors and determinism. It is deliberately not proof
- * that a scenario's Python example produces `expected` — that is the browser suite's job, which runs
- * the actual example through Pyodide.
+ * This pins the contract the request turns on: every robot lesson is the same `PYTHON_LESSONS`
+ * record the editor uses, its goal and starter code are that record's strings, its probe reads the
+ * names the lesson binds, and the old invented grid exercise is gone. The browser suite is what
+ * proves the actual lesson code produces the reading and that reading it leaves main.py unchanged.
  */
 import assert from 'node:assert/strict';
+import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 import {
+  ROBOT_LESSON_IDS,
   ROBOT_SCENARIOS,
-  HEADINGS,
-  applyCommand,
-  blocked,
-  freshRobot,
-  replayWalk,
+  parseRobotReading,
+  robotPythonSource,
   robotScenario,
   scenarioProblems,
-  wallDistance,
 } from '../app/src/robotSim/model.ts';
 import { armRobotWait, cancelRobotWait, writeRobotReply } from '../app/src/robotSim/protocol.ts';
 
@@ -26,90 +25,109 @@ const check = (name, fn) => {
   console.log(`ok ${passed} - ${name}`);
 };
 
-check('the four lessons own a scenario and every scenario is valid', () => {
-  assert.deepEqual(ROBOT_SCENARIOS.map((entry) => entry.lessonId), ['P.1', 'P.3', 'P.4', 'P.5']);
+check('the four robot lessons are the lesson records themselves', () => {
+  assert.deepEqual(
+    ROBOT_SCENARIOS.map((entry) => entry.lessonId),
+    ['P.1', 'P.3', 'P.4', 'P.5']
+  );
   for (const entry of ROBOT_SCENARIOS) {
-    assert.deepEqual(scenarioProblems(entry), [], `${entry.lessonId}: ${scenarioProblems(entry).join('; ')}`);
-    assert.equal(robotScenario(entry.lessonId), entry);
+    const lesson = PYTHON_LESSONS.find((candidate) => candidate.id === entry.lessonId);
+    assert.ok(lesson, `${entry.lessonId} is in PYTHON_LESSONS`);
+    assert.equal(entry.lesson, lesson, `${entry.lessonId} uses the lesson record, not a copy`);
+    assert.equal(entry.lesson.goal, lesson.goal);
+    assert.equal(entry.lesson.starterCode, lesson.starterCode);
+    assert.equal(entry.lesson.fullSolution, lesson.fullSolution);
+    assert.equal(entry.lesson.expectedOutput, lesson.expectedOutput);
   }
   assert.equal(robotScenario('P.2'), null);
 });
 
-check('a malformed scenario is refused with reasons', () => {
-  const broken = { ...ROBOT_SCENARIOS[0], walls: [{ x: 1, y: 4 }], target: { x: 99, y: 99 } };
-  const problems = scenarioProblems(broken);
-  assert(problems.some((line) => line.includes('outside the grid')));
-  assert(problems.some((line) => line.includes('wall sits on the start')));
-});
-
-check('the declared walk matches expected, twice, and does not mutate its scenario', () => {
+check('the old grid exercise and its invented example are gone', () => {
   for (const entry of ROBOT_SCENARIOS) {
-    const before = JSON.stringify(entry);
-    const first = replayWalk(entry, entry.modelWalk);
-    const second = replayWalk(entry, entry.modelWalk);
-    assert.deepEqual(first, second);
-    assert.equal(JSON.stringify(entry), before);
-    assert.equal(first.state.x, entry.expected.x);
-    assert.equal(first.state.y, entry.expected.y);
-    assert.equal(first.state.heading, entry.expected.heading);
-    assert.equal(first.state.trail.length, entry.expected.trail);
-    assert.equal(first.said, entry.expected.said);
-    assert.equal(first.blockedMoves, entry.expected.blockedMoves);
+    assert.equal('example' in entry, false, `${entry.lessonId} has no separate example`);
+    assert.equal('objective' in entry, false, `${entry.lessonId} has no separate objective`);
+    assert.equal('challenge' in entry, false, `${entry.lessonId} has no separate challenge`);
+    assert.equal('commands' in entry, false, `${entry.lessonId} has no separate command list`);
+    assert.doesNotMatch(
+      entry.probe,
+      /move_forward|turn_right|turn_left|wall_ahead|wall_distance/,
+      `${entry.lessonId} does not use the old grid commands`
+    );
   }
 });
 
-check('one square east is one cell and a turn is 90 degrees', () => {
-  const entry = ROBOT_SCENARIOS[1];
-  const start = freshRobot(entry);
-  const moved = applyCommand(entry, start, 'move_forward', { steps: 1 });
-  assert.deepEqual([moved.state.x, moved.state.y], [start.x + 1, start.y]);
-  assert.equal(moved.state.heading, start.heading);
-  const turned = applyCommand(entry, start, 'turn_right');
-  assert.equal(turned.state.heading, (start.heading + 1) % 4);
-  assert.equal(applyCommand(entry, start, 'turn_left').state.heading, (start.heading + 3) % 4);
+check('every robot lesson is valid and sends the names its lesson binds', () => {
+  for (const entry of ROBOT_SCENARIOS) {
+    assert.deepEqual(scenarioProblems(entry), [], `${entry.lessonId}: ${scenarioProblems(entry).join('; ')}`);
+    assert.match(entry.probe, /_robot_send\(/);
+    assert.match(entry.python, /def _robot_send\(/);
+  }
+  assert.match(robotPythonSource(), /__mechalab_robot__/);
+  assert.match(robotPythonSource(), /json\.dumps\(values, default=str\)/);
 });
 
-check('the edge and a wall stop movement at the same rule the sensors read', () => {
-  const entry = ROBOT_SCENARIOS[1];
-  const atWall = { ...freshRobot(entry), x: 3, y: 4 };
-  assert.equal(blocked(entry, { x: 4, y: 4 }), true);
-  assert.equal(blocked(entry, { x: 3, y: -1 }), true);
-  assert.equal(wallDistance(entry, atWall), 0);
-  assert.equal(applyCommand(entry, atWall, 'wall_ahead').reply.value, true);
-  const push = applyCommand(entry, atWall, 'move_forward', { steps: 3 });
-  assert.equal(push.state.x, 3);
-  assert.equal(push.blocked, true);
+check('each expected reading is visible in that lesson expected output', () => {
+  const output = (id) => PYTHON_LESSONS.find((lesson) => lesson.id === id).expectedOutput;
+  assert.match(output('P.1'), /Mode: ACTIVE \| E-Stop: False/);
+  assert.match(output('P.1'), /Encoder Ticks: 425 \| Battery: 12\.15 V/);
+  assert.match(output('P.3'), /310 clamped -> 255 \| -45 clamped -> 0/);
+  assert.match(output('P.3'), /E-Stop=True -> Safe Output: 0/);
+  assert.match(output('P.4'), /Clamped list: \[0, 0, 64, 128, 200, 255\]/);
+  assert.match(output('P.4'), /Mean Clamped Cmd=107\.83/);
+  assert.match(output('P.5'), /After 4 steps: pos_m = 1\.20 m/);
 });
 
-check('wall_distance counts the legal steps before a block at 0, 1 and 3', () => {
-  const entry = ROBOT_SCENARIOS[0];
-  const straight = { ...freshRobot(entry), x: 0, y: 4, heading: 1 };
-  assert.equal(wallDistance(entry, { ...straight, x: 7 }), 0);
-  assert.equal(wallDistance(entry, { ...straight, x: 6 }), 1);
-  assert.equal(wallDistance(entry, { ...straight, x: 4 }), 3);
+check('the parser keeps a lesson reading and drops junk fields', () => {
+  const parsed = parseRobotReading({
+    mode: 'ACTIVE',
+    eStop: false,
+    encoderTicks: 425,
+    batteryVolts: 12.15,
+    rawCommands: [-30, 0, 64, 128, 200, 310],
+    clampedCommands: [0, 0, 64, 128, 200, 255],
+    meanCommand: 107.83,
+  });
+  assert.ok(parsed);
+  assert.equal(parsed.mode, 'ACTIVE');
+  assert.equal(parsed.eStop, false);
+  assert.equal(parsed.encoderTicks, 425);
+  assert.equal(parsed.batteryVolts, 12.15);
+  assert.deepEqual(parsed.rawCommands, [-30, 0, 64, 128, 200, 310]);
+  assert.deepEqual(parsed.clampedCommands, [0, 0, 64, 128, 200, 255]);
+  assert.equal(parsed.meanCommand, 107.83);
+
+  const partial = parseRobotReading({
+    mode: 'ACTIVE',
+    eStop: 'yes',
+    encoderTicks: Number.NaN,
+    batteryVolts: 12.15,
+    rawCommands: [-30, 'x', 64],
+  });
+  assert.ok(partial);
+  assert.equal(partial.mode, 'ACTIVE');
+  assert.equal(partial.eStop, null);
+  assert.equal(partial.encoderTicks, null);
+  assert.equal(partial.batteryVolts, 12.15);
+  assert.deepEqual(partial.rawCommands, [-30, 64]);
+  assert.equal(parseRobotReading(null), null);
+  assert.equal(parseRobotReading([]), null);
+  assert.equal(parseRobotReading('telemetry'), null);
 });
 
-check('zero steps is a no-op and a disabled command never acts', () => {
-  const entry = ROBOT_SCENARIOS[0];
-  const start = freshRobot(entry);
-  const zero = applyCommand(entry, start, 'move_forward', { steps: 0 });
-  assert.deepEqual(zero.state, start);
-  assert.equal(zero.blocked, false);
-  const disabled = applyCommand(entry, start, 'turn_right');
-  assert(disabled.reply.error);
-  assert.deepEqual(disabled.state, start);
+check('a malformed robot lesson is refused with reasons', () => {
+  const first = ROBOT_SCENARIOS[0];
+  const broken = {
+    ...first,
+    lesson: { ...first.lesson, goal: '' },
+    probe: 'move_forward(1)',
+  };
+  const problems = scenarioProblems(broken);
+  assert(problems.some((line) => line.includes('copy, not the lesson record')));
+  assert(problems.some((line) => line.includes("old 'move_forward' command")));
+  assert(problems.some((line) => line.includes('does not call _robot_send')));
 });
 
-check('state is applied before the reply, and the trail grows one dot per cell', () => {
-  const entry = ROBOT_SCENARIOS[3];
-  const start = freshRobot(entry);
-  const out = applyCommand(entry, start, 'move_forward', { steps: 2 });
-  assert.equal(out.state.trail.length, 3);
-  assert.equal(out.reply.value, 2);
-  assert.equal(start.trail.length, 1, 'the input state must not be mutated');
-});
-
-check('the protocol writes one JSON reply, refuses after a stop, and re-arms', () => {
+check('the protocol still writes one JSON reply, refuses after a stop, and re-arms', () => {
   const buffer = new SharedArrayBuffer(8 + 4096);
   const word = new Int32Array(buffer, 0, 2);
   armRobotWait(buffer);

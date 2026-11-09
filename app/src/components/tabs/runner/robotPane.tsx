@@ -1,27 +1,25 @@
 /**
- * The Robot tab's slot (`components/tabs/runner/robotPane.tsx`).
+ * The Robot dock's slot (components/tabs/runner/robotPane.tsx).
  *
- * Only P.1, P.3, P.4 and P.5 have a grid. The pane is lazy, so a learner who never opens Robot
- * never downloads the robot model or its stage; the tab itself just asks this module for a slot.
+ * Only the four Python lessons whose goals bind robot values have a dock. The stage is lazy, so the
+ * main.py pane pays a few bytes for the gate, not for the arena. The dock is mounted below the one
+ * editor and never offers a second code path.
  */
 import React from 'react';
 import type { RobotRunApi } from '../../../robotSim/model';
 
-const ROBOT_LESSON_IDS = ['P.1', 'P.3', 'P.4', 'P.5'];
-const RobotPane = React.lazy(() =>
-  import('../../../robotSim/RobotPane').then((module) => ({ default: module.RobotPane }))
-);
+/** Keep in step with ROBOT_LESSON_IDS in app/src/robotLessons.ts. This gate is deliberately a
+ * regex rather than an import: the eager slot should pay a few bytes, not pull the model in. */
+const ROBOT_DOCK_LESSON = /^P\.[1345]$/;
 
-/** The lazy Robot pane for a grid lesson, or null where this lesson has no scenario. */
-export function robotPaneFor(
-  lessonId: string,
-  robot: RobotRunApi,
-  onLoadExample: (code: string) => void
-): React.ReactNode {
-  if (!ROBOT_LESSON_IDS.includes(lessonId)) return null;
+const RobotDock = React.lazy(() => import('../../../robotSim/RobotPane'));
+
+/** The lazy Robot dock for a lesson with a robot view, or null everywhere else. */
+export function robotDockFor(lessonId: string, robot: RobotRunApi): React.ReactNode {
+  if (!ROBOT_DOCK_LESSON.test(lessonId)) return null;
   return (
     <React.Suspense fallback={null}>
-      <RobotPane lessonId={lessonId} robot={robot} onLoadExample={onLoadExample} />
+      <RobotDock lessonId={lessonId} robot={robot} />
     </React.Suspense>
   );
 }

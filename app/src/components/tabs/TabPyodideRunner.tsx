@@ -91,7 +91,7 @@ import { DraftHistoryPanel } from './runner/DraftHistoryPanel';
 import { BreakpointPanel } from './runner/BreakpointPanel';
 import { RunnerToolbar } from './runner/RunnerToolbar';
 import { RunnerEditorCard } from './runner/RunnerEditorCard';
-import { robotPaneFor } from './runner/robotPane';
+import { robotDockFor } from './runner/robotPane';
 import { CasesPane } from './runner/CasesPane';
 import { readerContinue } from './runner/readerContinue';
 import { useRunnerExecution } from './runner/useRunnerExecution';
@@ -2769,7 +2769,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               run={{ isRunning, passStatus, harnessResult, asksForFinish: gateAsksForFinish }}
               slots={{
                 toolbar: runnerToolbar,
-                robotPane: robotPaneFor(selectedId, execution.robot, commitCode),
+                robotDock: robotDockFor(selectedId, execution.robot),
                 feedback: runFeedback,
                 actualOutputPane,
                 expectedOutputPane,
