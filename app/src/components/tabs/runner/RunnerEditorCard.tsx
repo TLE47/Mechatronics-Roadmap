@@ -95,7 +95,7 @@ interface EditorSlots {
   casesPane?: ReactNode;
   workflowPane: ReactNode;
   tracePane?: ReactNode;
-  robotDock?: ReactNode;
+  robotPane?: ReactNode;
 }
 
 /** The other workbench, when this document is shared. */
@@ -206,8 +206,14 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
    * Predict and Workflow but no run output), and the stored arrangement is still the learner's: a
    * view the preset forbids is not shown and is not written away, so it comes back with Study.
    */
-  const resultViews: EditorView[] =
+  const baseResultViews =
     declaredResultViews ?? ['requirements', 'predict', 'actual', 'expected', 'cases', 'workflow', 'trace'];
+  // The Robot tab exists only where the lesson has a robot reading; every other lesson keeps the
+  // same strip. It is a normal result view, so a split can put it beside the code.
+  const resultViews: EditorView[] =
+    props.slots.robotPane && !baseResultViews.includes('robot')
+      ? [...baseResultViews, 'robot']
+      : baseResultViews;
   const allowedViews: EditorView[] = layout
     ? viewsForLayout(layout)
     : resultsAllowed

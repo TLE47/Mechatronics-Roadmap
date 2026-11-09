@@ -16,17 +16,19 @@ flowchart LR
 
 ---
 
-## [2026-11-09] — The robot lives in main.py
+## [2026-11-09] — The robot lives in the runner's tabs
 
-The robot is no longer a separate result tab. For P.1, P.3, P.4 and P.5 it docks under the one
-`main.py` editor, under the lesson's own goal from `PYTHON_LESSONS`. **Run robot** sends the
-learner's current code plus one read-only probe; it never loads a starter, edits the editor, or
-grades the lesson, and the browser suite asserts `main.py` is byte-for-byte unchanged after a run.
-The stage is an arena-style game view: an encoder track and status lamps for P.1, a safe-command
-corridor for P.3, a command conveyor for P.4, and a moving linear joint for P.5. Missing values
-stay placeholders. The dock is a lazy chunk mounted in the main pane; the separate Robot result
-tab and its view entry are gone. `npm run test:robot` and `npm run test:robot:browser` cover the
-lesson record, probe, readings, Reset, failure, and the no-edit guarantee.
+The robot is a result tab of the one `python-runner-editor` again. For P.1, P.3, P.4 and P.5 the
+**Robot** tab sits in the editor's own tab strip, beside Requirements, Predict and the run output;
+the lesson goal above `main.py` is still the only brief. **Run robot** sends the learner's current
+code plus one read-only probe; it never loads a starter, edits the editor, or grades the lesson, and
+the browser suite asserts `main.py` is byte-for-byte unchanged after a run. The stage remains an
+arena-style game view: an encoder track and status lamps for P.1, a safe-command corridor for P.3,
+a command conveyor for P.4, and a moving linear joint for P.5. Missing values stay placeholders.
+The tab is a lazy chunk beside the other result panes. The browser suite also runs P.4 at 360×740,
+390×844 and 412×915 and checks the pane, stage and Run control fit without sideways scrolling.
+`npm run test:robot` and `npm run test:robot:browser` cover the lesson record, probe, readings, Reset,
+failure, the no-edit guarantee and the phone sizes.
 
 ---
 

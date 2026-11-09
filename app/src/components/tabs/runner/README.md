@@ -40,7 +40,7 @@ flowchart LR
 | `EditorGoal.tsx` | The lesson's goal as a labelled prompt card, folded with the editor body. |
 | `EditorRequirements.tsx` | The lesson's pass conditions as their own editor tab: numbered colourful cards with the micro lessons' token styling. |
 | `resultTabMeta.tsx` | What each result tab says: its label, its tooltip and its glyph. |
-| `robotPane.tsx` | The Robot dock's slot: the four lesson views, and the lazy dock that is null everywhere else. |
+| `robotPane.tsx` | The Robot tab's slot: the four lesson views, and the lazy result tab that is null everywhere else. |
 | `CasesPane.tsx` | The behavioural cases: one row per substituted input, with what the last run proved and which cases it never reached. |
 | `readerContinue.ts` | Where the page goes next: Study into Read, Read into Write. |
 | `LessonChooserRail.tsx` | The Study preset's left column, the brief's button that brings a folded rail back, and the grid width that follows the fold. In Read, Write and Debug, which have no rail column, that same button opens the lesson sheet. |
@@ -58,13 +58,13 @@ flowchart LR
 | `GuideToggle.tsx` | The brief's and the phone strip's door onto that switch, in two target sizes and one behaviour. |
 
 
-## The robot dock in main.py
+## The robot tab
 
-Four Python lessons get a robot dock in the one `main.py` pane: **P.1** variables and data types,
+Four Python lessons get a Robot tab in the one `python-runner-editor`: **P.1** variables and data types,
 **P.3** decisions and clamping, **P.4** lists and `for`, and **P.5** functions and `while`. The
-lesson goal above the editor is the dock's goal; there is no second code surface. `robotPane.tsx`
-gates the four ids and lazily mounts `../../robotSim/RobotPane.tsx` below the editor in
-`EditorPaneBody.tsx`. The dock offers only **Run robot** and **Reset**. It has no starter loader and
+lesson goal above the editor remains the lesson's goal; there is no second code surface. `robotPane.tsx`
+gates the four ids and lazily mounts `../../robotSim/RobotPane.tsx` as the Robot result tab in
+`EditorPaneBody.tsx`. The tab offers only **Run robot** and **Reset**. It has no starter loader and
 never writes to the editor: **Run robot** executes the learner's current code and appends one
 read-only probe that calls `_robot_send(...)` with the names the lesson itself binds: `robot_mode`,
 `encoder_ticks` and `battery_level` for P.1; `clamped_high`, `clamped_low` and `safe_output` for P.3;
@@ -75,9 +75,10 @@ The stage is a game view of those values: an encoder track with a robot and stat
 safe-command corridor for P.3, a command conveyor for P.4, and a linear joint for P.5. The arena is
 decorative and data-driven; the exact numbers stay in the tiles below it. The robot run is
 `grade: false`: it never verifies a lesson, and Run & Verify remains the verdict. The browser suite
-(`npm run test:robot:browser`) asserts the goal above `main.py`, sets each lesson's own
-`fullSolution`, clicks **Run robot**, compares `data-reading`, and asserts the editor is unchanged.
-It also checks that Reset and a failing program leave no reading. `npm run test:robot` is the
+(`npm run test:robot:browser`) asserts the goal above `main.py`, opens the **Robot** tab, sets each
+lesson's own `fullSolution`, clicks **Run robot**, compares `data-reading`, and asserts the editor is
+unchanged. It also checks that Reset and a failing program leave no reading, and runs P.4 at
+360×740, 390×844 and 412×915 to prove the tab, stage and Run control fit. `npm run test:robot` is the
 no-browser model suite: every view is the lesson record, the probe names that lesson's values, the
 old grid commands are gone, and the parser refuses junk. The stage's contract is `robot-stage`'s
 `data-reading` and `robot-status`; the goal is the existing `editor-goal-text` above the code.

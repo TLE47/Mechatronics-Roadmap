@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Activity, CheckSquare, ClipboardList, GitBranch, ListChecks, Sparkles, Terminal } from 'lucide-react';
+import { Activity, Bot, CheckSquare, ClipboardList, GitBranch, ListChecks, Sparkles, Terminal } from 'lucide-react';
 import type { EditorView } from '../../../editorPanes';
 
 /**
@@ -58,6 +58,13 @@ export function resultTabMeta(view: EditorView): ResultTabMeta {
         label: 'Workflow',
         title: 'How this problem gets solved — given, model, compute, check, with a live checklist',
         icon: <GitBranch className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
+      };
+    case 'robot':
+      return {
+        label: 'Robot',
+        title:
+          'The robot arena watches the values your current main.py binds — Run robot never edits or grades the code',
+        icon: <Bot className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
       };
     case 'trace':
       return {

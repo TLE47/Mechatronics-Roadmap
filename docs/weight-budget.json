@@ -31,24 +31,24 @@
     "js_gzip": 980000,
     "css_gzip": 29650,
     "fonts": 600000,
-    "largest_js_gzip": 413805,
+    "largest_js_gzip": 414500,
     "audio": 150000,
     "music": 2350000,
     "total": 3740000
   },
   "measured": {
-    "entry_gzip": 609518,
-    "js_gzip": 1098240,
-    "css_gzip": 29604,
+    "entry_gzip": 609652,
+    "js_gzip": 1098392,
+    "css_gzip": 29623,
     "fonts": 425324,
-    "largest_js_gzip": 413709,
+    "largest_js_gzip": 413826,
     "prose_gzip": 219356,
     "reader_gzip": 719563,
     "audio": 126967,
     "music": 2233468,
-    "total": 3825794,
+    "total": 3825963,
     "variant": "signed_in",
     "recordedAt": "2026-11-09"
   },
-  "_why_budget_2026_11_08_robot": "The robot moved from a result tab into a dock under the one main.py editor on 2026-11-09. Measured signed-in: entry 609518 B, js 1098240 B, css 29604 B, largest_js_gzip 413709 B and total 3825794 B. The arena is still its own React.lazy chunk (17.51 kB raw / 5.40 kB gzipped) and is not in index.html's preloads; the main chunk pays the lazy declaration and the one dock slot, not the model. There is no Robot tab and no starter loader: the dock only reads the learner's current code with a read-only probe. The worker's synchronous shared-memory bridge and the generated Python API stay in the already-emitted pythonWorker chunk. CSS did not need a raise: reusing theme utilities took the stylesheet to 29604 B, under its unchanged 29650 B ceiling with 46 B left. The eager slot uses a four-id regex rather than importing the tiny ROBOT_LESSON_IDS module, so that module and the model stay in the lazy pane. largest_js_gzip is 413805 B, 96 B above the measurement; js_gzip is 1099555 B (1315 B above) and total 3827113 B (1319 B above). The robot runs are ungraded and verify no lesson."
+  "_why_budget_2026_11_08_robot": "The robot is a result tab in the one python-runner-editor on 2026-11-09. Measured signed-in: entry 609652 B, js 1098392 B, css 29623 B, largest_js_gzip 413826 B and total 3825963 B. The arena is still its own React.lazy chunk (17.72 kB raw / 5.47 kB gzipped) and is not in index.html's preloads; the main chunk pays the lazy declaration and the one tab slot, not the model. There is no starter loader: the tab only reads the learner's current code with a read-only probe. The worker's synchronous shared-memory bridge and the generated Python API stay in the already-emitted pythonWorker chunk. CSS did not need a raise: reusing theme utilities took the stylesheet to 29623 B, under its unchanged 29650 B ceiling with 27 B left. The tab slot uses a four-id regex rather than importing the tiny ROBOT_LESSON_IDS module, so that module and the model stay in the lazy pane. largest_js_gzip is 414500 B, 674 B above the measurement; js_gzip is 1099555 B (1163 B above) and total 3827113 B (1150 B above). The robot runs are ungraded and verify no lesson."
 }

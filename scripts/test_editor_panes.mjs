@@ -130,6 +130,7 @@ check('the view names are the only names, including requirements', () => {
     'cases',
     'workflow',
     'trace',
+    'robot',
   ]);
   for (const view of EDITOR_VIEWS) assert.equal(isEditorView(view), true);
   assert.equal(isEditorView('output'), false);
@@ -191,7 +192,8 @@ check('splitting from an output brings the editor back beside it', () => {
   assert.deepEqual(panes.views, ['expected', 'main']);
   assert.equal(nextView('main'), 'requirements', 'Requirements sit between the code and its outputs');
   assert.equal(nextView('requirements'), 'predict');
-  assert.equal(nextView('trace'), 'main', 'the list wraps');
+  assert.equal(nextView('trace'), 'robot', 'the robot is the last view');
+  assert.equal(nextView('robot'), 'main', 'the list wraps');
 });
 check('a split can open on the prediction gate or the workflow', () => {
   assert.deepEqual(splitPane(DEFAULT_PANES, 'predict').views, ['main', 'predict']);

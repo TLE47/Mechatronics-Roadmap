@@ -1,5 +1,5 @@
 /**
- * The robot dock (app/src/robotSim/RobotPane.tsx).
+ * The robot tab (app/src/robotSim/RobotPane.tsx).
  *
  * It watches the one editor, main.py. Run robot sends the learner's current code plus one read-only
  * probe and draws the names that run binds; it never writes the editor, loads an example, or grades
@@ -59,22 +59,26 @@ export default function RobotPane({ lessonId, robot }: { lessonId: string; robot
 
   return (
     <div
-      className="flex flex-col gap-2 border-t border-line-soft bg-panel px-3 py-2"
+      className="flex min-h-0 flex-1 flex-col gap-3 bg-panel px-3 py-3 sm:px-4"
       data-testid="robot-pane"
-      data-dock="1"
+      data-tab="1"
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
-          Robot · {scenario.lessonId}
-        </span>
-        <span className="text-[11px] text-muted">Watching main.py; it never edits or grades your code.</span>
-        <div className="ml-auto flex flex-wrap items-center gap-1.5">
+      <div className="flex flex-wrap items-start gap-x-2 gap-y-1.5">
+        <div className="min-w-0 flex-1">
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
+            Robot · {scenario.lessonId}
+          </span>
+          <p className="mt-0.5 text-[11px] leading-snug text-muted">
+            Watching main.py; it never edits or grades your code.
+          </p>
+        </div>
+        <div className="flex w-full items-center gap-1.5 sm:w-auto">
           <button
             type="button"
             data-testid="robot-run"
             onClick={start}
             disabled={!robot.pauseCapable || robot.isRunning}
-            className="inline-flex items-center gap-1 rounded border border-accent/40 bg-accent/10 px-2.5 py-1 text-[12px] font-medium text-accent disabled:opacity-40"
+            className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded border border-accent/40 bg-accent/10 px-2.5 py-1 text-[12px] font-medium text-accent disabled:opacity-40 sm:min-h-8 sm:flex-none"
           >
             <Play className="h-3 w-3" aria-hidden="true" /> Run robot
           </button>
@@ -82,7 +86,7 @@ export default function RobotPane({ lessonId, robot }: { lessonId: string; robot
             type="button"
             data-testid="robot-reset"
             onClick={reset}
-            className="inline-flex items-center gap-1 rounded border border-line-soft px-2.5 py-1 text-[12px]"
+            className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded border border-line-soft px-2.5 py-1 text-[12px] sm:min-h-8 sm:flex-none"
           >
             <RotateCcw className="h-3 w-3" aria-hidden="true" /> Reset
           </button>

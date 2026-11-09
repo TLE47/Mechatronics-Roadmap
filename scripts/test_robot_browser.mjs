@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 /**
- * The robot dock's real-Python suite (scripts/test_robot_browser.mjs).
+ * The Robot tab's real-Python suite (scripts/test_robot_browser.mjs).
  *
- * For every robot lesson this suite proves the dock is the lesson, not a second exercise: the goal
+ * For every robot lesson this suite proves the tab is the lesson, not a second exercise: the goal
  * above main.py is the lesson's own goal, running the lesson's full solution makes the arena show
  * the values that code binds, and the run leaves main.py byte-for-byte unchanged. It also proves
- * the dock is ungraded, that Reset clears it, and that a failing program leaves no invented reading.
+ * the tab is ungraded, that Reset clears it, that a failing program leaves no invented reading, and
+ * that the same run fits and works at 360x740, 390x844 and 412x915.
  */
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright-core';
@@ -20,7 +21,19 @@ async function openRobot(page, baseUrl, lessonId) {
   await page.goto(new URL('?lesson=' + encodeURIComponent(lessonId), baseUrl).href, {
     waitUntil: 'domcontentloaded',
   });
-  await page.getByTestId('editor-tab-main').click();
+  await page.waitForFunction(
+    () =>
+      Boolean(
+        document.querySelector('[data-testid="editor-tab-robot"]') ||
+          document.querySelector('[data-testid="phone-surface-code"]')
+      ),
+    null,
+    { timeout: 30_000 }
+  );
+  if (!(await page.getByTestId('editor-tab-robot').isVisible())) {
+    await page.getByTestId('phone-surface-code').click();
+  }
+  await page.getByTestId('editor-tab-robot').click();
   await page.getByTestId('robot-pane').waitFor({ timeout: 30_000 });
   await page.getByTestId('robot-stage').waitFor({ timeout: 30_000 });
 }
@@ -91,6 +104,17 @@ async function assertScenario(page, scenario) {
   const goal = normalized(await page.getByTestId('editor-goal-text').textContent());
   assert.equal(goal, normalized(lesson.goal), scenario.lessonId + ": the goal must be the lesson's goal");
   assert.equal(
+    await page.getByTestId('editor-tab-robot').getAttribute('aria-selected'),
+    'true',
+    scenario.lessonId + ': the Robot result tab must be selected'
+  );
+  assert.equal(await page.getByTestId('robot-dock').count(), 0, scenario.lessonId + ': the robot is a tab, not a dock');
+  assert.equal(
+    await page.getByTestId('robot-pane').getAttribute('data-tab'),
+    '1',
+    scenario.lessonId + ': the pane must identify itself as the Robot tab'
+  );
+  assert.equal(
     await page.getByTestId('robot-load-starter').count(),
     0,
     scenario.lessonId + ': the robot must not offer to replace main.py'
@@ -112,7 +136,7 @@ async function assertScenario(page, scenario) {
   assert.equal(
     await page.getByTestId('robot-status').getAttribute('data-state'),
     'finished',
-    scenario.lessonId + ': the dock reports a finished reading'
+    scenario.lessonId + ': the tab reports a finished reading'
   );
   assert.equal(await getEditorCode(page), codeBefore, scenario.lessonId + ': Run robot must not change main.py');
   assert.equal(await verifiedTally(page), before, scenario.lessonId + ': a robot view is ungraded');
@@ -153,6 +177,74 @@ async function assertFailureLeavesNoReading(page) {
   console.log('  ok   a failing lesson program leaves the robot view empty');
 }
 
+async function assertMobileViewport(browser, baseUrl, viewport, scenario) {
+  const context = await browser.newContext({ viewport, isMobile: true, hasTouch: true });
+  await seedTourSeen(context);
+  await context.addInitScript(() => {
+    window.__mechalabPredictFirst = false;
+  });
+  const page = await context.newPage();
+  try {
+    await openRobot(page, baseUrl, scenario.lessonId);
+    await setEditorCode(page, scenario.lesson.fullSolution);
+    await waitForEditor(page);
+    const codeBefore = await getEditorCode(page);
+
+    await page.getByTestId('robot-run').click();
+    await waitForReading(page);
+    await waitForIdle(page);
+    const stage = await readStage(page);
+    assertReading(stage.reading, scenario.expected, scenario.lessonId + ' at ' + viewport.width + 'px');
+    assert.equal(
+      await getEditorCode(page),
+      codeBefore,
+      scenario.lessonId + ' at ' + viewport.width + 'px: Run robot must not change main.py'
+    );
+
+    const layout = await page.evaluate(() => {
+      const box = (selector) => {
+        const node = document.querySelector(selector);
+        if (!node) return null;
+        const rect = node.getBoundingClientRect();
+        return {
+          left: rect.left,
+          right: rect.right,
+          width: rect.width,
+          height: rect.height,
+        };
+      };
+      const pane = document.querySelector('[data-testid="robot-pane"]');
+      const tab = document.querySelector('[data-testid="editor-tab-robot"]');
+      return {
+        viewport: window.innerWidth,
+        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        pane: box('[data-testid="robot-pane"]'),
+        stage: box('[data-testid="robot-stage"]'),
+        run: box('[data-testid="robot-run"]'),
+        tab: box('[data-testid="editor-tab-robot"]'),
+        paneOverflow: pane ? pane.scrollWidth - pane.clientWidth : null,
+        tabSelected: tab?.getAttribute('aria-selected'),
+        tabVisible: Boolean(tab && tab.getClientRects().length),
+      };
+    });
+
+    const at = scenario.lessonId + ' at ' + viewport.width + 'x' + viewport.height;
+    assert.equal(layout.overflow, 0, at + ': the page must not scroll sideways');
+    assert.ok(layout.pane && layout.stage && layout.run, at + ': the pane, stage and Run control must be present');
+    assert.ok(layout.pane.left >= -1 && layout.pane.right <= layout.viewport + 1, at + ': the pane must fit the viewport');
+    assert.ok(layout.stage.left >= -1 && layout.stage.right <= layout.viewport + 1, at + ': the stage must fit the viewport');
+    assert.equal(layout.paneOverflow, 0, at + ': the robot pane must not scroll sideways');
+    assert.ok(layout.run.height >= 36, at + ': the Run control must keep a touch-sized target');
+    assert.equal(layout.tabSelected, 'true', at + ': the Robot tab must be selected');
+    assert.equal(layout.tabVisible, true, at + ': the Robot tab must be visible');
+    console.log(
+      '  ok   ' + at + ' -> pane ' + Math.round(layout.pane.width) + 'px, stage ' + Math.round(layout.stage.width) + 'px'
+    );
+  } finally {
+    await context.close();
+  }
+}
+
 // The combined gate hands over its warm server; a standalone run owns one.
 const own = process.env.E2E_BASE_URL ? null : await startDevServer(process.cwd());
 const BASE = own ? own.baseUrl : (process.env.E2E_BASE_URL.replace(/\/+$/, '') + '/');
@@ -167,9 +259,20 @@ try {
   const page = await context.newPage();
   console.log('\nthe lesson goals and the game views their own solutions drive:');
   for (const scenario of ROBOT_SCENARIOS) await assertScenario(page, scenario);
-  console.log('\nthe dock edges:');
+  console.log('\nthe tab edges:');
   await assertResetClears(page);
   await assertFailureLeavesNoReading(page);
+
+  console.log('\nthe Robot tab at phone widths:');
+  const phoneScenario = ROBOT_SCENARIOS.find((entry) => entry.lessonId === 'P.4');
+  assert.ok(phoneScenario, 'the mobile check needs the P.4 robot lesson');
+  for (const viewport of [
+    { width: 360, height: 740 },
+    { width: 390, height: 844 },
+    { width: 412, height: 915 },
+  ]) {
+    await assertMobileViewport(browser, BASE, viewport, phoneScenario);
+  }
   console.log('\nrobot browser checks passed\n');
 } finally {
   await browser.close();

@@ -15,7 +15,9 @@ function numberOrNull(value: number | null | undefined): number | null {
 
 function shown(value: number | null | undefined, unit = ''): string {
   const number = numberOrNull(value);
-  return number === null ? '—' : number + unit;
+  if (number === null) return '—';
+  // The arena is read at a glance, so a float's binary tail (1.2000000000000002) is noise.
+  return Math.round(number * 100) / 100 + unit;
 }
 
 function shownText(value: string | null | undefined): string {
