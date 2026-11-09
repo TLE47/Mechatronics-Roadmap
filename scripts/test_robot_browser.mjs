@@ -5,9 +5,9 @@
  * For every robot lesson this suite proves the tab is the lesson, not a second exercise: the goal
  * above main.py is the lesson's own goal, running the lesson's full solution makes the arena show
  * the values that code binds, and the run leaves main.py byte-for-byte unchanged. It also proves
- * the tab is ungraded, that Reset clears it, that a failing program leaves no invented reading, that
- * the step-speed switch selects without editing or grading, and that the same run fits and works at
- * 360x740, 390x844 and 412x915.
+ * the tab is ungraded, that Reset clears it, that Stop and Reset clear the line box mid-run, that a
+ * failing program leaves no invented reading, that the step-speed switch selects without editing or
+ * grading, and that the same run fits and works at 360x740, 390x844 and 412x915.
  */
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright-core';
@@ -17,6 +17,9 @@ import { getEditorCode, setEditorCode, waitForEditor } from './editor-code.mjs';
 import { ROBOT_SCENARIOS } from '../app/src/robotSim/model.ts';
 
 const RUN_TIMEOUT = 120_000;
+// A line that sleeps keeps the interpreter running long enough for the box and the toolbar's Stop
+// control to exist together; the lesson program itself is never edited by the test's fixture.
+const MID_RUN_CODE = 'import time\n\nrobot_mode = "ACTIVE"\ntime.sleep(4)\n';
 
 async function openRobot(page, baseUrl, lessonId) {
   await page.goto(new URL('?lesson=' + encodeURIComponent(lessonId), baseUrl).href, {
@@ -163,6 +166,80 @@ async function assertResetClears(page) {
     'Reset returns the status to idle'
   );
   console.log('  ok   Reset clears the last reading');
+}
+
+async function boxState(page) {
+  return page.evaluate(() => {
+    const pane = document.querySelector('[data-testid="robot-pane"]');
+    return {
+      line: pane?.getAttribute('data-running-line') ?? '',
+      boxed: Boolean(document.querySelector('[data-editor="editor-main"] .cm-robot-trace-line')),
+      state: document.querySelector('[data-testid="robot-status"]')?.getAttribute('data-state') ?? '',
+    };
+  });
+}
+
+async function startMidRunRobot(page) {
+  const scenario = ROBOT_SCENARIOS.find((entry) => entry.lessonId === 'P.5');
+  assert.ok(scenario, 'the mid-run checks need the P.5 robot lesson');
+  await openRobot(page, BASE, scenario.lessonId);
+  await setEditorCode(page, MID_RUN_CODE);
+  await waitForEditor(page);
+  await page.getByTestId('robot-speed-slow').click();
+  await page.getByTestId('robot-run').click();
+  await page.waitForFunction(
+    () => {
+      const pane = document.querySelector('[data-testid="robot-pane"]');
+      const stop = document.querySelector('[data-testid="btn-stop-execution"]');
+      const box = document.querySelector('[data-editor="editor-main"] .cm-robot-trace-line');
+      return Boolean(box && stop && Number(pane?.getAttribute('data-running-line') || 0) > 0);
+    },
+    null,
+    { timeout: 30_000 }
+  );
+  return boxState(page);
+}
+
+async function assertBoxCleared(page, action) {
+  try {
+    await page.waitForFunction(
+      () => {
+        const pane = document.querySelector('[data-testid="robot-pane"]');
+        return (
+          !document.querySelector('[data-editor="editor-main"] .cm-robot-trace-line') &&
+          !pane?.getAttribute('data-running-line') &&
+          document.querySelector('[data-testid="robot-status"]')?.getAttribute('data-state') !== 'running'
+        );
+      },
+      null,
+      { timeout: 10_000 }
+    );
+  } catch (error) {
+    console.log('  diag ' + action + ' ' + JSON.stringify(await boxState(page)));
+    throw error;
+  }
+  // A queued frame must not put the box back after the action cleared it.
+  await page.waitForTimeout(600);
+  const state = await boxState(page);
+  assert.equal(state.boxed, false, action + ' clears the line box');
+  assert.equal(state.line, '', action + ' clears data-running-line');
+  assert.notEqual(state.state, 'running', action + ' returns the robot to an idle status');
+}
+
+async function assertStopClearsMidRun(page) {
+  const before = await startMidRunRobot(page);
+  assert.ok(before.boxed, 'Stop check: a line box must exist before clicking Stop');
+  await page.getByTestId('btn-stop-execution').click();
+  await assertBoxCleared(page, 'Stop');
+  console.log('  ok   Stop clears the line box while the robot is mid-run');
+}
+
+async function assertResetClearsMidRun(page) {
+  const before = await startMidRunRobot(page);
+  assert.ok(before.boxed, 'Reset check: a line box must exist before clicking Reset');
+  await page.getByTestId('robot-reset').click();
+  await assertBoxCleared(page, 'Reset');
+  console.log('  ok   Reset clears the line box while the robot is mid-run');
 }
 
 async function assertFailureLeavesNoReading(page) {
@@ -362,6 +439,8 @@ try {
   for (const scenario of ROBOT_SCENARIOS) await assertScenario(page, scenario);
   console.log('\nthe tab edges:');
   await assertResetClears(page);
+  await assertStopClearsMidRun(page);
+  await assertResetClearsMidRun(page);
   await assertFailureLeavesNoReading(page);
   await assertPartialFailureLeavesNoReading(page);
   await assertSpeedControl(page);

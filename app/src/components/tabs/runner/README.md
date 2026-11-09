@@ -78,7 +78,7 @@ While the run is alive, the same bridge samples those names before each executed
 and sends the line number with the reading. The Robot tab therefore advances step by step instead of
 waiting for the final probe, and `main.py` draws a rectangle around the line currently running. The
 box follows the interpreter down the file, scrolls with it, and is cleared when the run ends, when
-Reset is pressed, or when the editor changes. The **Speed** switch holds each line for about 360 ms
+Stop or Reset is pressed, or when the editor changes. The **Speed** switch holds each line for about 360 ms
 at **0.5×**, 180 ms at **1×**, and 90 ms at **2×**; it stays available during a run, so the remaining
 lines follow a new choice. The readings are queued in the page and presented at that pace after the
 worker has answered, so the switch never holds up Python or counts against the run's execution
@@ -91,9 +91,10 @@ decorative and data-driven; the exact numbers stay in the tiles below it. The ro
 `grade: false`: it never verifies a lesson, and Run & Verify remains the verdict. The browser suite
 (`npm run test:robot:browser`) asserts the goal above `main.py`, opens the **Robot** tab, sets each
 lesson's own `fullSolution`, clicks **Run robot**, compares `data-reading`, and asserts the editor is
-unchanged. It also checks that Reset and a failing program leave no reading, selects all three
-speeds and runs P.1 at 2× to prove the reading, `main.py` and verified tally are unchanged, and runs
-P.4 at 360×740, 390×844 and 412×915 to prove the tab, stage, Run control and speed switch fit.
+unchanged. It also checks that Stop and Reset clear the line box mid-run, that Reset and a failing
+program leave no reading, selects all three speeds and runs P.1 at 2× to prove the reading,
+`main.py` and verified tally are unchanged, and runs P.4 at 360×740, 390×844 and 412×915 to prove
+the tab, stage, Run control and speed switch fit.
 `npm run test:robot` is the
 no-browser model suite: every view is the lesson record, the probe names that lesson's values, the
 old grid commands are gone, and the parser refuses junk. The stage's contract is `robot-stage`'s

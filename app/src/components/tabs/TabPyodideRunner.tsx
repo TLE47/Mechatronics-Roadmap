@@ -1879,7 +1879,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       pauseCapable={pauseCapable}
       paused={Boolean(pausedStep)}
       onPause={pauseExecution}
-      onStop={() => stopExecution()}
+      // A robot run owns the moving editor box. Stop it through the robot API so the box is cleared
+      // and the worker's robot wait is released before the generic execution stop runs.
+      onStop={() => (execution.robot.isRunning ? execution.robot.stop() : stopExecution())}
       onMoreOpenChange={setMoreOpen}
       onShowTrace={() =>
         commitPanes(
