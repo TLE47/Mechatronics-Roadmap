@@ -156,6 +156,23 @@ export const LINK_HISTORY: LinkHistoryPoint[] = [
       "SERVER_ERROR": 1,
       "UNREACHABLE": 16
     }
+  },
+  {
+    "date": "2026-11-09T14:28:47+00:00",
+    "urls": 604,
+    "served": 557,
+    "notChecked": 47,
+    "failed": 0,
+    "blocked": 32,
+    "unreachable": 15,
+    "serverError": 0,
+    "verdicts": {
+      "BLOCKED": 32,
+      "FAIL": 0,
+      "PASS": 557,
+      "SERVER_ERROR": 0,
+      "UNREACHABLE": 15
+    }
   }
 ];
 
@@ -179,7 +196,7 @@ export interface LatestLinkReport {
 
 /** Null only for a run recorded before the checker added structured report rows. */
 export const LATEST_LINK_REPORT: LatestLinkReport | null = {
-  "date": "2026-11-03T07:38:26+00:00",
+  "date": "2026-11-09T14:28:47+00:00",
   "totalUrls": 604,
   "hardFailures": [],
   "notChecked": [
@@ -188,6 +205,20 @@ export const LATEST_LINK_REPORT: LatestLinkReport | null = {
       "reason": "BLOCKED (403)",
       "sources": [
         "resources/textbooks-and-papers.md"
+      ]
+    },
+    {
+      "url": "https://compliantmechanisms.byu.edu/",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "02-mechanics-kinematics-dynamics/README.md"
+      ]
+    },
+    {
+      "url": "https://ctms.engin.umich.edu/CTMS/index.php?example=Introduction&section=ControlFrequency",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "modules/00-foundations.T2.00h.md"
       ]
     },
     {
@@ -222,6 +253,13 @@ export const LATEST_LINK_REPORT: LatestLinkReport | null = {
       ]
     },
     {
+      "url": "https://en.cppreference.com/w/cpp/atomic/memory_order",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "04-embedded-and-realtime/README.md"
+      ]
+    },
+    {
       "url": "https://journals.sagepub.com/home/ijr",
       "reason": "BLOCKED (403)",
       "sources": [
@@ -250,6 +288,27 @@ export const LATEST_LINK_REPORT: LatestLinkReport | null = {
       ]
     },
     {
+      "url": "https://reddit.com/r/ControlTheory",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "resources/textbooks-and-papers.md"
+      ]
+    },
+    {
+      "url": "https://reddit.com/r/PLC",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "resources/textbooks-and-papers.md"
+      ]
+    },
+    {
+      "url": "https://reddit.com/r/robotics",
+      "reason": "BLOCKED (403)",
+      "sources": [
+        "resources/textbooks-and-papers.md"
+      ]
+    },
+    {
       "url": "https://sapien.ucsd.edu/",
       "reason": "UNREACHABLE (<urlopen error timed out>)",
       "sources": [
@@ -261,13 +320,6 @@ export const LATEST_LINK_REPORT: LatestLinkReport | null = {
       "reason": "UNREACHABLE (<urlopen error timed out>)",
       "sources": [
         "06-robotics-and-autonomy/README.md"
-      ]
-    },
-    {
-      "url": "https://web.stanford.edu/~boyd/cvxbook/",
-      "reason": "UNREACHABLE (<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)>)",
-      "sources": [
-        "05-control-and-estimation/README.md"
       ]
     },
     {
@@ -333,14 +385,14 @@ export const LATEST_LINK_REPORT: LatestLinkReport | null = {
     },
     {
       "url": "https://www.cds.caltech.edu/~murray/books/AM08/pdf/fbs-pid_24Jul2020.pdf",
-      "reason": "UNREACHABLE (<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)>)",
+      "reason": "UNREACHABLE (<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1011)>)",
       "sources": [
         "05-control-and-estimation/README.md"
       ]
     },
     {
       "url": "https://www.cds.caltech.edu/~murray/books/AM08/pdf/fbs-public_24Jul2020.pdf",
-      "reason": "UNREACHABLE (<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)>)",
+      "reason": "UNREACHABLE (<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1011)>)",
       "sources": [
         "05-control-and-estimation/README.md"
       ]
@@ -353,22 +405,8 @@ export const LATEST_LINK_REPORT: LatestLinkReport | null = {
       ]
     },
     {
-      "url": "https://www.fbsbook.org/",
-      "reason": "SERVER_ERROR (500)",
-      "sources": [
-        "00-foundations/README.md",
-        "05-control-and-estimation/05.1-pid-virtual-spring-damper-and-anti-windup.md",
-        "05-control-and-estimation/README.md",
-        "modules/00-foundations.T2.00c.md",
-        "modules/00-foundations.T2.00e.md",
-        "modules/05-control.T1.05a.md",
-        "modules/05-control.T2.05a.md",
-        "resources/textbooks-and-papers.md"
-      ]
-    },
-    {
       "url": "https://www.ieee-ies.org/conferences",
-      "reason": "UNREACHABLE (<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)>)",
+      "reason": "UNREACHABLE (<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1011)>)",
       "sources": [
         "resources/textbooks-and-papers.md"
       ]
@@ -517,182 +555,188 @@ export interface HostRecurrence {
 }
 
 /** Runs whose record carried its unverified URL list; older rows cannot contribute. */
-export const HOST_RECURRENCE_RUNS: number = 7;
+export const HOST_RECURRENCE_RUNS: number = 8;
 
 export const HOST_RECURRENCE: HostRecurrence[] = [
   {
     "host": "st.com",
-    "runs": 7,
+    "runs": 8,
     "urls": 5,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
+    "lastSeen": "2026-11-09T14:28:47+00:00"
   },
   {
     "host": "sciencedirect.com",
-    "runs": 7,
+    "runs": 8,
     "urls": 4,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
+    "lastSeen": "2026-11-09T14:28:47+00:00"
   },
   {
     "host": "analog.com",
-    "runs": 7,
+    "runs": 8,
     "urls": 3,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
+    "lastSeen": "2026-11-09T14:28:47+00:00"
   },
   {
     "host": "cds.caltech.edu",
-    "runs": 7,
+    "runs": 8,
     "urls": 2,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
-  },
-  {
-    "host": "doi.org",
-    "runs": 7,
-    "urls": 2,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
-  },
-  {
-    "host": "mathworks.com",
-    "runs": 7,
-    "urls": 2,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
-  },
-  {
-    "host": "raspberrypi.com",
-    "runs": 7,
-    "urls": 2,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
-  },
-  {
-    "host": "wiki.st.com",
-    "runs": 7,
-    "urls": 2,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
-  },
-  {
-    "host": "advanced.onlinelibrary.wiley.com",
-    "runs": 7,
-    "urls": 1,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
-  },
-  {
-    "host": "allaboutcircuits.com",
-    "runs": 7,
-    "urls": 1,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
+    "lastSeen": "2026-11-09T14:28:47+00:00"
   },
   {
     "host": "ctms.engin.umich.edu",
-    "runs": 7,
+    "runs": 8,
+    "urls": 2,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "doi.org",
+    "runs": 8,
+    "urls": 2,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "mathworks.com",
+    "runs": 8,
+    "urls": 2,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "raspberrypi.com",
+    "runs": 8,
+    "urls": 2,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "wiki.st.com",
+    "runs": 8,
+    "urls": 2,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "advanced.onlinelibrary.wiley.com",
+    "runs": 8,
     "urls": 1,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
+    "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "allaboutcircuits.com",
+    "runs": 8,
+    "urls": 1,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
   },
   {
     "host": "dl.acm.org",
-    "runs": 7,
+    "runs": 8,
     "urls": 1,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
+    "lastSeen": "2026-11-09T14:28:47+00:00"
   },
   {
     "host": "elmerfem.org",
-    "runs": 7,
+    "runs": 8,
     "urls": 1,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
+    "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "iso.org",
+    "runs": 8,
+    "urls": 1,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "journals.sagepub.com",
+    "runs": 8,
+    "urls": 1,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "maxongroup.com",
+    "runs": 8,
+    "urls": 1,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "mitpress.mit.edu",
+    "runs": 8,
+    "urls": 1,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "ngspice.sourceforge.io",
+    "runs": 8,
+    "urls": 1,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "onlinelibrary.wiley.com",
+    "runs": 8,
+    "urls": 1,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "rug.nl",
+    "runs": 8,
+    "urls": 1,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "sapien.ucsd.edu",
+    "runs": 8,
+    "urls": 1,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "science.org",
+    "runs": 8,
+    "urls": 1,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "w3.org",
+    "runs": 8,
+    "urls": 1,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "wiki.linuxfoundation.org",
+    "runs": 8,
+    "urls": 1,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "ww1.microchip.com",
+    "runs": 8,
+    "urls": 1,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
   },
   {
     "host": "fbsbook.org",
     "runs": 7,
-    "urls": 1,
+    "urls": 0,
     "lastSeen": "2026-11-03T07:38:26+00:00"
   },
   {
-    "host": "iso.org",
-    "runs": 7,
-    "urls": 1,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
-  },
-  {
-    "host": "journals.sagepub.com",
-    "runs": 7,
-    "urls": 1,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
-  },
-  {
-    "host": "maxongroup.com",
-    "runs": 7,
-    "urls": 1,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
-  },
-  {
-    "host": "mitpress.mit.edu",
-    "runs": 7,
-    "urls": 1,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
-  },
-  {
-    "host": "ngspice.sourceforge.io",
-    "runs": 7,
-    "urls": 1,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
-  },
-  {
-    "host": "onlinelibrary.wiley.com",
-    "runs": 7,
-    "urls": 1,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
-  },
-  {
-    "host": "rug.nl",
-    "runs": 7,
-    "urls": 1,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
-  },
-  {
-    "host": "sapien.ucsd.edu",
-    "runs": 7,
-    "urls": 1,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
-  },
-  {
-    "host": "science.org",
-    "runs": 7,
-    "urls": 1,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
-  },
-  {
-    "host": "w3.org",
-    "runs": 7,
-    "urls": 1,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
-  },
-  {
-    "host": "wiki.linuxfoundation.org",
-    "runs": 7,
-    "urls": 1,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
-  },
-  {
-    "host": "ww1.microchip.com",
-    "runs": 7,
-    "urls": 1,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
-  },
-  {
-    "host": "summerschool.stiff-project.org",
-    "runs": 3,
-    "urls": 1,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
+    "host": "reddit.com",
+    "runs": 4,
+    "urls": 3,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
   },
   {
     "host": "compliantmechanisms.byu.edu",
-    "runs": 3,
-    "urls": 0,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "runs": 4,
+    "urls": 1,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
   },
   {
     "host": "en.cppreference.com",
-    "runs": 3,
-    "urls": 0,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
+    "runs": 4,
+    "urls": 1,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "summerschool.stiff-project.org",
+    "runs": 4,
+    "urls": 1,
+    "lastSeen": "2026-11-09T14:28:47+00:00"
   },
   {
     "host": "learn.sparkfun.com",
@@ -719,27 +763,21 @@ export const HOST_RECURRENCE: HostRecurrence[] = [
     "lastSeen": "2026-10-19T22:24:26+00:00"
   },
   {
-    "host": "reddit.com",
-    "runs": 3,
-    "urls": 0,
-    "lastSeen": "2026-11-02T13:56:20+00:00"
-  },
-  {
     "host": "ieee-ies.org",
-    "runs": 1,
+    "runs": 2,
     "urls": 1,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
-  },
-  {
-    "host": "web.stanford.edu",
-    "runs": 1,
-    "urls": 1,
-    "lastSeen": "2026-11-03T07:38:26+00:00"
+    "lastSeen": "2026-11-09T14:28:47+00:00"
   },
   {
     "host": "cs.stanford.edu",
     "runs": 1,
     "urls": 0,
     "lastSeen": "2026-10-29T04:58:34+00:00"
+  },
+  {
+    "host": "web.stanford.edu",
+    "runs": 1,
+    "urls": 0,
+    "lastSeen": "2026-11-03T07:38:26+00:00"
   }
 ];
