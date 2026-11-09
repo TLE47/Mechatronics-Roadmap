@@ -35,11 +35,13 @@ import {
   startCompletion,
   type CompletionSource,
 } from '@codemirror/autocomplete';
-import { Compartment, EditorState, Transaction } from '@codemirror/state';
+import { Compartment, EditorState, StateEffect, StateField, Transaction } from '@codemirror/state';
 import {
+  Decoration,
   drawSelection,
   dropCursor,
   EditorView,
+  type DecorationSet,
   highlightActiveLine,
   highlightActiveLineGutter,
   keymap,
@@ -71,6 +73,41 @@ function revealLine(view: EditorView, line: number): void {
   const target = view.state.doc.line(number);
   view.dispatch({ selection: { anchor: target.from }, scrollIntoView: true });
   view.focus();
+}
+
+/** The robot's box is a line decoration, so it moves with the document and never steals the caret. */
+const runLineEffect = StateEffect.define<number | null>();
+const runLineField = StateField.define<DecorationSet>({
+  create: () => Decoration.none,
+  update(decorations, transaction) {
+    for (const effect of transaction.effects) {
+      if (!effect.is(runLineEffect)) continue;
+      if (effect.value === null) return Decoration.none;
+      const number = Math.max(1, Math.min(Math.round(effect.value), transaction.state.doc.lines));
+      return Decoration.set([
+        Decoration.line({ class: 'cm-robot-trace-line' }).range(transaction.state.doc.line(number).from),
+      ]);
+    }
+    // A value drawn for one run describes the document it ran; an edit ends that description.
+    if (transaction.docChanged) return Decoration.none;
+    return decorations.map(transaction.changes);
+  },
+  provide: (field) => EditorView.decorations.from(field),
+});
+
+/** Move the robot's box to a 1-based line, or clear it, and keep it in the scroller's view. */
+function showRunLine(view: EditorView, line: number | null): void {
+  if (line === null) {
+    view.dispatch({ effects: runLineEffect.of(null) });
+    return;
+  }
+  const number = Math.max(1, Math.min(Math.round(line), view.state.doc.lines));
+  view.dispatch({
+    effects: [
+      runLineEffect.of(number),
+      EditorView.scrollIntoView(view.state.doc.line(number).from, { y: 'nearest' }),
+    ],
+  });
 }
 
 type VimModule = typeof import('@replit/codemirror-vim');
@@ -143,6 +180,8 @@ declare global {
         getCursor: () => number;
         /** Cursor to a 1-based line, scrolled into view: the failure card's "show line N". */
         revealLine: (line: number) => void;
+        /** Draw or clear the Robot tab's line box, so a browser suite can follow the run. */
+        setRunLine: (line: number | null) => void;
         /**
          * Open the completion list, the same command `Ctrl-Space` runs.
          *
@@ -315,6 +354,10 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           const view = viewRef.current;
           if (view) revealLine(view, line);
         },
+        setRunLine: (line: number | null) => {
+          const view = viewRef.current;
+          if (view) showRunLine(view, line);
+        },
         setInlineValues: (entries: InlineValueAt[]) => {
           const view = viewRef.current;
           if (view) applyInlineValues(view, entries);
@@ -427,6 +470,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           pythonEditorTheme,
           sliderField,
           inlineValueField,
+          runLineField,
           // Only where a cell can be run: a read-only helper with a `# %%` in it gets no buttons.
           ...(onRunCell ? [cellField] : []),
           // Only where a line can be armed: the read-only helper gets no gutter, so it also gets no
@@ -497,6 +541,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
         },
         getCursor: () => view.state.selection.main.head,
         revealLine: (line: number) => revealLine(view, line),
+        setRunLine: (line: number | null) => showRunLine(view, line),
         startCompletion: () => {
           view.focus();
           startCompletion(view);

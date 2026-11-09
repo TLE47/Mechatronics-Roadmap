@@ -42,6 +42,11 @@ export interface PythonEditorHandle {
   /** Put the cursor at the start of a 1-based line and scroll it into view. */
   revealLine: (line: number) => void;
   /**
+   * Draw the robot's rectangle around a 1-based line, or clear it with null. Unlike `revealLine`
+   * this is a decoration, not a selection: the learner's caret and selection stay where they were.
+   */
+  setRunLine: (line: number | null) => void;
+  /**
    * Draw the values a run left beside their assignment lines; `[]` clears them. The editor clears
    * them itself on the next edit, because a value describes one run of one document.
    */

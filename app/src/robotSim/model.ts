@@ -46,9 +46,9 @@ export interface RobotReading {
 export interface RobotScenario {
   lessonId: RobotLessonId;
   lesson: PythonLessonItem;
-  /** The module installed before the learner's program; it defines `_robot_send`. */
+  /** The module installed before the learner's program; it defines `_robot_send` and `_robot_step`. */
   python: string;
-  /** The code appended after the learner's program: it sends the lesson's names to the view. */
+  /** The code appended after the learner's program: it sends the lesson's final names to the view. */
   probe: string;
   /** What the lesson's own full solution produces, used by the browser suite. */
   expected: RobotReading;
@@ -67,7 +67,7 @@ export interface RobotCommandMessage {
 }
 
 /** What the simulator's controls can ask of the run it belongs to. Pause/Step stay for the shared
- * runner API, but this view has one telemetry call at the end, so it uses only start and stop. */
+ * runner API, but this view uses start, stop and the editor's line marker. */
 export interface RobotRunApi {
   start: (
     scenario: RobotScenario,
@@ -77,6 +77,8 @@ export interface RobotRunApi {
   resume: () => void;
   step: () => void;
   stop: () => void;
+  /** Draw the box around the line the interpreter is on, or clear it with null. */
+  showLine: (line: number | null) => void;
   isRunning: boolean;
   paused: boolean;
   pauseCapable: boolean;
@@ -86,43 +88,43 @@ export interface RobotRunApi {
  * The Python bridge, and nothing more.
  *
  * `default=str` keeps a learner's unexpected object from turning a successful run into a JSON
- * error in the robot view. The probe is separate so the Python installed here stays identical for
- * every lesson; only the names it reads differ.
+ * error in the robot view. The probe and the line sampler are separate so the Python installed here
+ * stays identical for every lesson; only the names they read differ.
  */
-export function robotPythonSource(): string {
-  return [
+export function robotPythonSource(step = ''): string {
+  const lines = [
     'import json as _robot_json',
     '',
-    'def _robot_send(**values):',
+    'def _robot_send(__line=0, **values):',
     '    """Send the names this lesson binds to the Robot view."""',
-    '    __mechalab_robot__("telemetry", _robot_json.dumps(values, default=str), 0)',
-  ].join('\n');
+    '    __mechalab_robot__("telemetry", _robot_json.dumps(values, default=str), __line)',
+  ];
+  if (step) lines.push('', step);
+  return lines.join('\n');
 }
 
-const PROBES: Record<RobotLessonId, { probe: string; expected: RobotReading }> = {
+type RobotField = readonly [keyof RobotReading, string];
+
+const PROBES: Record<RobotLessonId, { fields: readonly RobotField[]; expected: RobotReading }> = {
   'P.1': {
-    probe: [
-      '_robot_send(',
-      '    mode=globals().get("robot_mode"),',
-      '    eStop=globals().get("is_estop_active"),',
-      '    encoderTicks=globals().get("encoder_ticks"),',
-      '    batteryVolts=globals().get("battery_level"),',
-      ')',
-    ].join('\n'),
+    fields: [
+      ['mode', 'robot_mode'],
+      ['eStop', 'is_estop_active'],
+      ['encoderTicks', 'encoder_ticks'],
+      ['batteryVolts', 'battery_level'],
+    ],
     expected: { mode: 'ACTIVE', eStop: false, encoderTicks: 425, batteryVolts: 12.15 },
   },
   'P.3': {
-    probe: [
-      '_robot_send(',
-      '    rawHigh=globals().get("raw_cmd_high"),',
-      '    rawLow=globals().get("raw_cmd_low"),',
-      '    rawNormal=globals().get("raw_cmd_normal"),',
-      '    eStopPressed=globals().get("is_estop_pressed"),',
-      '    clampedHigh=globals().get("clamped_high"),',
-      '    clampedLow=globals().get("clamped_low"),',
-      '    safeOutput=globals().get("safe_output"),',
-      ')',
-    ].join('\n'),
+    fields: [
+      ['rawHigh', 'raw_cmd_high'],
+      ['rawLow', 'raw_cmd_low'],
+      ['rawNormal', 'raw_cmd_normal'],
+      ['eStopPressed', 'is_estop_pressed'],
+      ['clampedHigh', 'clamped_high'],
+      ['clampedLow', 'clamped_low'],
+      ['safeOutput', 'safe_output'],
+    ],
     expected: {
       rawHigh: 310,
       rawLow: -45,
@@ -134,14 +136,12 @@ const PROBES: Record<RobotLessonId, { probe: string; expected: RobotReading }> =
     },
   },
   'P.4': {
-    probe: [
-      '_robot_send(',
-      '    rawCommands=globals().get("raw_commands"),',
-      '    clampedCommands=globals().get("clamped_commands"),',
-      '    totalCommand=globals().get("total_cmd"),',
-      '    meanCommand=globals().get("mean_cmd"),',
-      ')',
-    ].join('\n'),
+    fields: [
+      ['rawCommands', 'raw_commands'],
+      ['clampedCommands', 'clamped_commands'],
+      ['totalCommand', 'total_cmd'],
+      ['meanCommand', 'mean_cmd'],
+    ],
     expected: {
       rawCommands: [-30, 0, 64, 128, 200, 310],
       clampedCommands: [0, 0, 64, 128, 200, 255],
@@ -150,16 +150,34 @@ const PROBES: Record<RobotLessonId, { probe: string; expected: RobotReading }> =
     },
   },
   'P.5': {
-    probe: [
-      '_robot_send(',
-      '    positionM=globals().get("pos_m"),',
-      '    velocityMS=globals().get("vel_m_s"),',
-      '    step=globals().get("step"),',
-      ')',
-    ].join('\n'),
+    fields: [
+      ['positionM', 'pos_m'],
+      ['velocityMS', 'vel_m_s'],
+      ['step', 'step'],
+    ],
     expected: { positionM: 1.2, velocityMS: 1.5, step: 4 },
   },
 };
+
+function fieldLine(indent: string, [field, name]: RobotField): string {
+  return `${indent}${field}=globals().get("${name}"),`;
+}
+
+/** The final read, unchanged: it is what fills a value the last line binds. */
+function probeSource(fields: readonly RobotField[]): string {
+  return ['_robot_send(', ...fields.map((field) => fieldLine('    ', field)), ')'].join('\n');
+}
+
+/** The same fields, sampled before each executed line so the stage can move during the run. */
+function stepSource(fields: readonly RobotField[]): string {
+  return [
+    'def _robot_step(__line):',
+    '    """Send the lesson values visible at this line to the Robot view."""',
+    '    _robot_send(__line,',
+    ...fields.map((field) => fieldLine('        ', field)),
+    '    )',
+  ].join('\n');
+}
 
 function isRobotLessonId(id: string): id is RobotLessonId {
   return (ROBOT_LESSON_IDS as readonly string[]).includes(id);
@@ -237,6 +255,7 @@ export function scenarioProblems(entry: RobotScenario): string[] {
     if (!lesson.expectedOutput.trim()) problems.push(`lesson ${entry.lessonId} has no expected output`);
   }
   if (!entry.python.includes('def _robot_send(')) problems.push('the Python bridge does not define _robot_send');
+  if (!entry.python.includes('def _robot_step(')) problems.push('the Python bridge does not define _robot_step');
   if (!entry.probe.includes('_robot_send(')) problems.push('the probe does not call _robot_send');
   for (const old of ['move_forward', 'turn_right', 'turn_left', 'wall_ahead', 'wall_distance']) {
     if (entry.probe.includes(old)) problems.push(`the probe still uses the old '${old}' command`);
@@ -261,11 +280,12 @@ export function robotScenario(lessonId: string): RobotScenario | null {
     console.error(`Robot lesson ${lessonId} is missing from PYTHON_LESSONS`);
     return null;
   }
+  const fields = PROBES[lessonId].fields;
   const entry: RobotScenario = {
     lessonId,
     lesson,
-    python: robotPythonSource(),
-    probe: PROBES[lessonId].probe,
+    python: robotPythonSource(stepSource(fields)),
+    probe: probeSource(fields),
     expected: PROBES[lessonId].expected,
   };
   const problems = scenarioProblems(entry);

@@ -52,7 +52,7 @@ export interface PythonRunRequest {
   plantFilename: string;
   helperFiles: readonly { name: string; content: string }[];
   /** The enabled primitives' Python, installed before the learner's program in the same namespace. */
-  robot?: { python: string };
+  robot?: { python: string; stepMaxLine?: number };
   breakpoints: readonly unknown[];
   watches: readonly unknown[];
   trace?: { cap: number; names: number; chars: number };

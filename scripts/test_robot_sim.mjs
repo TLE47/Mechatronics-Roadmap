@@ -61,6 +61,8 @@ check('every robot lesson is valid and sends the names its lesson binds', () => 
     assert.deepEqual(scenarioProblems(entry), [], `${entry.lessonId}: ${scenarioProblems(entry).join('; ')}`);
     assert.match(entry.probe, /_robot_send\(/);
     assert.match(entry.python, /def _robot_send\(/);
+    assert.match(entry.python, /def _robot_step\(/);
+    assert.match(entry.python, /_robot_send\(__line,/);
   }
   assert.match(robotPythonSource(), /__mechalab_robot__/);
   assert.match(robotPythonSource(), /json\.dumps\(values, default=str\)/);
@@ -75,6 +77,16 @@ check('each expected reading is visible in that lesson expected output', () => {
   assert.match(output('P.4'), /Clamped list: \[0, 0, 64, 128, 200, 255\]/);
   assert.match(output('P.4'), /Mean Clamped Cmd=107\.83/);
   assert.match(output('P.5'), /After 4 steps: pos_m = 1\.20 m/);
+});
+
+check('the line sampler sends the same names before each executed line', () => {
+  for (const entry of ROBOT_SCENARIOS) {
+    const step = entry.python.slice(entry.python.indexOf('def _robot_step('));
+    assert.match(step, /_robot_send\(__line,/);
+    for (const match of entry.probe.matchAll(/^\s+(\w+)=globals\(\)\.get\("([^"]+)"\)/gm)) {
+      assert.match(step, new RegExp(`${match[1]}=globals\\(\\).get\\("${match[2]}"\\)`));
+    }
+  }
 });
 
 check('the parser keeps a lesson reading and drops junk fields', () => {

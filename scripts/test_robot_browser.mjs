@@ -177,6 +177,54 @@ async function assertFailureLeavesNoReading(page) {
   console.log('  ok   a failing lesson program leaves the robot view empty');
 }
 
+async function assertPartialFailureLeavesNoReading(page) {
+  const scenario = ROBOT_SCENARIOS[0];
+  await openRobot(page, BASE, scenario.lessonId);
+  await setEditorCode(page, 'robot_mode = "ACTIVE"\nraise RuntimeError("after a value")');
+  await page.getByTestId('robot-run').click();
+  await waitForIdle(page);
+  const stage = await readStage(page);
+  assert.equal(stage.reading, null, 'a program that binds a value then fails must not keep that partial reading');
+  console.log('  ok   a partial reading is cleared when its run fails');
+}
+
+async function assertStepByStep(page) {
+  const scenario = ROBOT_SCENARIOS.find((entry) => entry.lessonId === 'P.5');
+  assert.ok(scenario, 'the step check needs the P.5 robot lesson');
+  await openRobot(page, BASE, scenario.lessonId);
+  await setEditorCode(page, scenario.lesson.fullSolution);
+  await page.getByTestId('robot-run').click();
+  const lines = new Set();
+  let sawBox = false;
+  for (let index = 0; index < 240; index += 1) {
+    const state = await page.evaluate(() => {
+      const pane = document.querySelector('[data-testid="robot-pane"]');
+      const box = document.querySelector('[data-editor="editor-main"] .cm-robot-trace-line');
+      const status = document.querySelector('[data-testid="robot-status"]');
+      return {
+        line: Number(pane?.getAttribute('data-running-line') || 0),
+        boxed: Boolean(box),
+        running: status?.getAttribute('data-state') === 'running',
+      };
+    });
+    if (state.line > 0) lines.add(state.line);
+    if (state.boxed) sawBox = true;
+    if (!state.running) break;
+    await page.waitForTimeout(20);
+  }
+  await waitForIdle(page);
+  assert.ok(sawBox, 'P.5: the editor must draw a box around the running line');
+  assert.ok(lines.size >= 3, 'P.5: the run must visit several main.py lines, saw ' + [...lines].join(','));
+  assert.equal(
+    await page.evaluate(() => document.querySelector('[data-editor="editor-main"] .cm-robot-trace-line')),
+    null,
+    'P.5: the line box must clear when the run ends'
+  );
+  const stage = await readStage(page);
+  assertReading(stage.reading, scenario.expected, 'P.5 step stream');
+  console.log('  ok   P.5 steps through lines ' + [...lines].sort((a, b) => a - b).join(', '));
+}
+
 async function assertMobileViewport(browser, baseUrl, viewport, scenario) {
   const context = await browser.newContext({ viewport, isMobile: true, hasTouch: true });
   await seedTourSeen(context);
@@ -262,6 +310,8 @@ try {
   console.log('\nthe tab edges:');
   await assertResetClears(page);
   await assertFailureLeavesNoReading(page);
+  await assertPartialFailureLeavesNoReading(page);
+  await assertStepByStep(page);
 
   console.log('\nthe Robot tab at phone widths:');
   const phoneScenario = ROBOT_SCENARIOS.find((entry) => entry.lessonId === 'P.4');

@@ -433,7 +433,12 @@ export function useRunnerExecution({
     options: {
       grade?: boolean;
       /** A lesson-scoped Python module and the page's answer to each robot command. */
-      robot?: { python: string; onCommand: (message: RobotCommandMessage) => Promise<RobotReply> };
+      robot?: {
+        python: string;
+        /** The last learner line the worker should sample; the appended probe is past this. */
+        stepMaxLine?: number;
+        onCommand: (message: RobotCommandMessage) => Promise<RobotReply>;
+      };
     } = {}
   ) => {
     const grade = options.grade !== false && !scratchRef.current;
@@ -496,7 +501,9 @@ export function useRunnerExecution({
           plantSource: MECHALAB_PLANT_PY,
           plantFilename: MECHALAB_PLANT_FILENAME,
           helperFiles: helperFiles.map((file) => ({ name: file.name, content: file.content })),
-          robot: options.robot ? { python: options.robot.python } : undefined,
+          robot: options.robot
+            ? { python: options.robot.python, stepMaxLine: options.robot.stepMaxLine }
+            : undefined,
         },
         // The first load also fetches Pyodide, so it gets the longer clock; once the interpreter
         // reports ready the run's own budget applies.
@@ -747,6 +754,10 @@ export function useRunnerExecution({
     });
   };
 
+  const showRobotLine = (line: number | null) => {
+    editorRef.current?.setRunLine(line);
+  };
+
   const startRobot = (
     scenario: RobotScenario,
     onCommand: (message: RobotCommandMessage) => Promise<RobotReply>
@@ -757,13 +768,19 @@ export function useRunnerExecution({
     setRobotPaused(false);
     armRobotWait(robotBufferRef.current);
     setRobotRunning(true);
+    showRobotLine(null);
     // The learner's own lesson code, then one read-only probe. The probe is not an example and is
-    // never written to the editor: it only asks Python for the names this lesson binds.
-    const source = `${codeRef.current.replace(/\s*$/, '')}\n\n# Robot view: read this lesson's own values.\n${scenario.probe}\n`;
+    // never written to the editor: it only asks Python for the names this lesson binds. The line
+    // count stops the worker's per-line samples before that appended probe, so its helper lines
+    // never put a box on the last line of main.py.
+    const learnerCode = codeRef.current.replace(/\s*$/, '');
+    const stepMaxLine = learnerCode.trim() ? learnerCode.split('\n').length : 0;
+    const source = `${learnerCode}\n\n# Robot view: read this lesson's own values.\n${scenario.probe}\n`;
     void runPythonCode(source, currentLessonRef.current, {
       grade: false,
       robot: {
         python: scenario.python,
+        stepMaxLine,
         onCommand: async (message) => {
           await waitRobotGate();
           return onCommand(message);
@@ -773,6 +790,7 @@ export function useRunnerExecution({
       setRobotRunning(false);
       setRobotPaused(false);
       robotPausedRef.current = false;
+      showRobotLine(null);
       releaseRobotGate();
     });
   };
@@ -802,6 +820,7 @@ export function useRunnerExecution({
     robotStepOnceRef.current = false;
     setRobotPaused(false);
     setRobotRunning(false);
+    showRobotLine(null);
     releaseRobotGate();
     stopExecution();
   };
@@ -841,6 +860,7 @@ export function useRunnerExecution({
       isRunning: robotRunning,
       paused: robotPaused,
       pauseCapable,
+      showLine: showRobotLine,
     } satisfies RobotRunApi,
     pausedStep,
     setPausedStep,

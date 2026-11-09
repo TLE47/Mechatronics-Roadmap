@@ -88,6 +88,14 @@ export const pythonTheme = EditorView.theme(
       borderColor: 'var(--rose)',
       borderWidth: '2px',
     },
+    // The Robot tab's line marker (`pythonEditorImpl.tsx`): a rectangle that travels down main.py
+    // with the line the interpreter is on. The line decoration is the whole row, so the inset ring
+    // reads as the box the learner asked for without adding a second column or moving the caret.
+    '.cm-robot-trace-line': {
+      backgroundColor: 'color-mix(in srgb, var(--accent) 16%, transparent)',
+      boxShadow: 'inset 0 0 0 2px var(--accent)',
+      borderRadius: '4px',
+    },
     '.cm-activeLine': { backgroundColor: 'color-mix(in srgb, var(--accent) 6%, transparent)' },
     '.cm-activeLineGutter': {
       backgroundColor: 'color-mix(in srgb, var(--accent) 8%, transparent)',

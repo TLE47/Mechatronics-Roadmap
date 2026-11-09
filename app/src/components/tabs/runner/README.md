@@ -71,6 +71,13 @@ read-only probe that calls `_robot_send(...)` with the names the lesson itself b
 the command lists for P.4; `pos_m`, `vel_m_s` and `step` for P.5. Missing names are shown as `—`,
 never as invented values.
 
+While the run is alive, the same bridge samples those names before each executed line of `main.py`
+and sends the line number with the reading. The Robot tab therefore advances step by step instead of
+waiting for the final probe, and `main.py` draws a rectangle around the line currently running. The
+box follows the interpreter down the file, scrolls with it, and is cleared when the run ends, when
+Reset is pressed, or when the editor changes. The probe still sends the final reading after the last
+line, so a value bound on that last line is not lost.
+
 The stage is a game view of those values: an encoder track with a robot and status lamps for P.1, a
 safe-command corridor for P.3, a command conveyor for P.4, and a linear joint for P.5. The arena is
 decorative and data-driven; the exact numbers stay in the tiles below it. The robot run is

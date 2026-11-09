@@ -16,6 +16,20 @@ flowchart LR
 
 ---
 
+## [2026-11-09] — The robot runs line by line
+
+**Run robot** is now a demonstration of the program in motion, not a wait for one final reading.
+The worker's existing line trace calls a robot sampler before each executed line of the learner's
+`main.py`; the sampler sends the same lesson names the final probe reads, tagged with that 1-based
+line number. The Robot stage advances with each message, and the editor draws a rectangle around the
+line currently running, scrolling it into view without moving the caret. The box clears when the run
+finishes, is stopped, is reset, or the editor is edited. The appended probe still sends the final
+read, so a value bound on the last line is not lost. `npm run test:robot` checks that every lesson's
+sampler reads the same names as its probe; `npm run test:robot:browser` runs P.5 and asserts the box,
+several distinct lines, the final reading, and that the box clears when the run ends.
+
+---
+
 ## [2026-11-09] — The robot lives in the runner's tabs
 
 The robot is a result tab of the one `python-runner-editor` again. For P.1, P.3, P.4 and P.5 the

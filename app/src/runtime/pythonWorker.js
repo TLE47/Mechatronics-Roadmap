@@ -1085,6 +1085,14 @@ self.onmessage = async (event) => {
       // The lesson's robot API, installed into the run's own namespace before the learner's file.
       py.globals.set('__mechalab_robot_source__', robot && typeof robot.python === 'string' ? robot.python : '');
       py.globals.set('__mechalab_robot_call__', robotCall);
+      // The learner's own line count: the appended probe has lines too, but the editor has no box
+      // to draw around them. Zero means this run did not ask for a step stream.
+      py.globals.set(
+        '__mechalab_robot_step_max_line__',
+        robot && Number.isFinite(Number(robot.stepMaxLine))
+          ? Math.max(0, Math.trunc(Number(robot.stepMaxLine)))
+          : 0
+      );
       py.globals.set('__mechalab_take_watch__', takePauseWatch);
       // Every file the page can put on screen: the lesson's helper tabs and the shared plant. A step
       // can land in one of them, and the bar quotes the line from the file it names - so a file the
@@ -1109,6 +1117,10 @@ def __mechalab_execute():
     if __mechalab_robot_source__:
         ns["__mechalab_robot__"] = __mechalab_robot_call__
         exec(__mechalab_robot_source__, ns)
+    # The robot's line sampler, defined by the lesson bridge above. A run without one leaves this
+    # None, so the trace hook below stays exactly the debugger's trace.
+    robot_step = ns.get("_robot_step")
+    robot_step_max_line = int(__mechalab_robot_step_max_line__)
     t0 = time.monotonic()
     steps = 0
     max_s = int(__mechalab_max_steps__)
@@ -1427,6 +1439,12 @@ def __mechalab_execute():
                         "depth": _trace_depth(frame),
                         "values": _trace_values(frame),
                     })
+                # The Robot view follows the same line events. The call blocks until the page has
+                # painted the reading and the editor box, which is what makes the run watchable
+                # instead of a jump from the starter to the final probe. The appended probe runs
+                # past robot_step_max_line and therefore stays a single final read.
+                if robot_step is not None and 0 < frame.f_lineno <= robot_step_max_line:
+                    robot_step(frame.f_lineno)
             # Where a park may land: a step in any file the page can show, a breakpoint only in the
             # file whose gutter drew it (a helper's line 3 must not fire the dot on main.py's line 3),
             # and Pause in the learner's own file, which is what the button promises.
