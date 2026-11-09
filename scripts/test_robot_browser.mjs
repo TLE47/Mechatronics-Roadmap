@@ -5,8 +5,9 @@
  * For every robot lesson this suite proves the tab is the lesson, not a second exercise: the goal
  * above main.py is the lesson's own goal, running the lesson's full solution makes the arena show
  * the values that code binds, and the run leaves main.py byte-for-byte unchanged. It also proves
- * the tab is ungraded, that Reset clears it, that a failing program leaves no invented reading, and
- * that the same run fits and works at 360x740, 390x844 and 412x915.
+ * the tab is ungraded, that Reset clears it, that a failing program leaves no invented reading, that
+ * the step-speed switch selects without editing or grading, and that the same run fits and works at
+ * 360x740, 390x844 and 412x915.
  */
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright-core';
@@ -188,6 +189,49 @@ async function assertPartialFailureLeavesNoReading(page) {
   console.log('  ok   a partial reading is cleared when its run fails');
 }
 
+async function assertSpeedControl(page) {
+  const scenario = ROBOT_SCENARIOS[0];
+  await openRobot(page, BASE, scenario.lessonId);
+  await setEditorCode(page, scenario.lesson.fullSolution);
+  await waitForEditor(page);
+  const codeBefore = await getEditorCode(page);
+
+  assert.equal(
+    await page.getByTestId('robot-pane').getAttribute('data-speed'),
+    'normal',
+    'the robot starts at normal speed'
+  );
+  assert.equal(
+    await page.getByTestId('robot-speed-normal').getAttribute('aria-pressed'),
+    'true',
+    'normal speed starts selected'
+  );
+
+  await page.getByTestId('robot-speed-fast').click();
+  assert.equal(await page.getByTestId('robot-pane').getAttribute('data-speed'), 'fast');
+  assert.equal(await page.getByTestId('robot-speed-fast').getAttribute('aria-pressed'), 'true');
+  assert.equal(await page.getByTestId('robot-speed-normal').getAttribute('aria-pressed'), 'false');
+
+  await page.getByTestId('robot-speed-slow').click();
+  assert.equal(await page.getByTestId('robot-pane').getAttribute('data-speed'), 'slow');
+  assert.equal(await page.getByTestId('robot-speed-slow').getAttribute('aria-pressed'), 'true');
+  assert.equal(await page.getByTestId('robot-speed-fast').getAttribute('aria-pressed'), 'false');
+  assert.equal(await getEditorCode(page), codeBefore, 'changing speed must not edit main.py');
+
+  // The switch changes only the hold between sampled lines: the lesson still runs, reads and stays
+  // ungraded exactly as it does at 1x.
+  await page.getByTestId('robot-speed-fast').click();
+  const before = await verifiedTally(page);
+  await page.getByTestId('robot-run').click();
+  await waitForReading(page);
+  await waitForIdle(page);
+  const stage = await readStage(page);
+  assertReading(stage.reading, scenario.expected, 'fast robot speed');
+  assert.equal(await getEditorCode(page), codeBefore, 'a robot run at 2x must not edit main.py');
+  assert.equal(await verifiedTally(page), before, 'a robot run at 2x must stay ungraded');
+  console.log('  ok   speeds 0.5x, 1x and 2x select without editing or grading main.py');
+}
+
 async function assertStepByStep(page) {
   const scenario = ROBOT_SCENARIOS.find((entry) => entry.lessonId === 'P.5');
   assert.ok(scenario, 'the step check needs the P.5 robot lesson');
@@ -269,6 +313,7 @@ async function assertMobileViewport(browser, baseUrl, viewport, scenario) {
         pane: box('[data-testid="robot-pane"]'),
         stage: box('[data-testid="robot-stage"]'),
         run: box('[data-testid="robot-run"]'),
+        speed: box('[data-testid="robot-speed-control"]'),
         tab: box('[data-testid="editor-tab-robot"]'),
         paneOverflow: pane ? pane.scrollWidth - pane.clientWidth : null,
         tabSelected: tab?.getAttribute('aria-selected'),
@@ -278,11 +323,19 @@ async function assertMobileViewport(browser, baseUrl, viewport, scenario) {
 
     const at = scenario.lessonId + ' at ' + viewport.width + 'x' + viewport.height;
     assert.equal(layout.overflow, 0, at + ': the page must not scroll sideways');
-    assert.ok(layout.pane && layout.stage && layout.run, at + ': the pane, stage and Run control must be present');
+    assert.ok(
+      layout.pane && layout.stage && layout.run && layout.speed,
+      at + ': the pane, stage, Run control and speed switch must be present'
+    );
     assert.ok(layout.pane.left >= -1 && layout.pane.right <= layout.viewport + 1, at + ': the pane must fit the viewport');
     assert.ok(layout.stage.left >= -1 && layout.stage.right <= layout.viewport + 1, at + ': the stage must fit the viewport');
     assert.equal(layout.paneOverflow, 0, at + ': the robot pane must not scroll sideways');
     assert.ok(layout.run.height >= 36, at + ': the Run control must keep a touch-sized target');
+    assert.ok(
+      layout.speed.left >= -1 && layout.speed.right <= layout.viewport + 1,
+      at + ': the speed switch must fit the viewport'
+    );
+    assert.ok(layout.speed.height >= 24, at + ': the speed switch must keep a compact target');
     assert.equal(layout.tabSelected, 'true', at + ': the Robot tab must be selected');
     assert.equal(layout.tabVisible, true, at + ': the Robot tab must be visible');
     console.log(
@@ -311,6 +364,7 @@ try {
   await assertResetClears(page);
   await assertFailureLeavesNoReading(page);
   await assertPartialFailureLeavesNoReading(page);
+  await assertSpeedControl(page);
   await assertStepByStep(page);
 
   console.log('\nthe Robot tab at phone widths:');

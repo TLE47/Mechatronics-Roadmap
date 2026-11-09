@@ -16,6 +16,19 @@ flowchart LR
 
 ---
 
+## [2026-11-09] — Robot playback speed
+
+The Robot tab now has a compact **0.5× / 1× / 2×** step-speed switch beside its status line. It
+changes only the hold between sampled `main.py` lines — about 360 ms, 180 ms or 90 ms — so the
+learner can watch the robot and the line box at their own pace. Readings are queued in the page and
+presented after the worker has answered, so the switch never holds up Python or counts against the
+run's execution budget. It stays available during a run and changes the remaining lines
+immediately, but it does not alter the source, the Python execution, grading, or the final reading.
+`npm run test:robot:browser` selects all three speeds, runs P.1 at **2×**, and proves the reading,
+`main.py` and verified tally are unchanged.
+
+---
+
 ## [2026-11-09] — The robot runs line by line
 
 **Run robot** is now a demonstration of the program in motion, not a wait for one final reading.
@@ -24,9 +37,10 @@ The worker's existing line trace calls a robot sampler before each executed line
 line number. The Robot stage advances with each message, and the editor draws a rectangle around the
 line currently running, scrolling it into view without moving the caret. The box clears when the run
 finishes, is stopped, is reset, or the editor is edited. The appended probe still sends the final
-read, so a value bound on the last line is not lost. `npm run test:robot` checks that every lesson's
-sampler reads the same names as its probe; `npm run test:robot:browser` runs P.5 and asserts the box,
-several distinct lines, the final reading, and that the box clears when the run ends.
+read, so a value bound on the last line is not lost. The **Speed** switch sets the hold between
+lines to **0.5×**, **1×** or **2×** without changing the run. `npm run test:robot` checks that every
+lesson's sampler reads the same names as its probe; `npm run test:robot:browser` runs P.5 and asserts
+the box, several distinct lines, the final reading, and that the box clears when the run ends.
 
 ---
 

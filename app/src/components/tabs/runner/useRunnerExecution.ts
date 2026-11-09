@@ -790,7 +790,8 @@ export function useRunnerExecution({
       setRobotRunning(false);
       setRobotPaused(false);
       robotPausedRef.current = false;
-      showRobotLine(null);
+      // The Robot pane owns the box after the worker finishes: it may still be presenting the
+      // sampled lines at the chosen speed. Its final frame, Reset or a failed run clears it.
       releaseRobotGate();
     });
   };

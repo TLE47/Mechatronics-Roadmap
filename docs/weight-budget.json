@@ -20,8 +20,8 @@
   "signed_in": {
     "_why": "The same source builds a bigger bundle when the Supabase variables are set, which is how CI builds it (the anon key is a repository variable; the build is local-only on a fresh clone). Run 207 is why this block exists. CI's `entry_gzip` read 532.6 kB against the 480 kB ceiling — a real breach nobody saw locally — because `@supabase/supabase-js` was being parked by the catch-all in the statically preloaded `vendor` chunk. The fix is a split, not a ceiling: `vite.config.ts` sends it to its own `vendor-auth` chunk, which the account panel fetches when it opens, so `entry_gzip` measured 475.1 kB with accounts configured and needs no override — and it should not get one, because a first paint that differs between the two shapes would mean the split regressed. What the library really costs is emitted bytes: 57.8 kB gzipped in `vendor-auth` plus the account panel's own code in the runner chunk. (Both builds emit a `vendor-auth` file; without the variables it is the one-byte stub the folded-away import leaves, which is why the gate tells the shapes apart by that chunk's raw size rather than by its name.) `js_gzip` 801.0 kB measured against 810 kB (9 kB of room) and `total` 1.12 MB against 1.14 MB (20 kB), both by hand and by this measurement. The other five metrics are the same file in both shapes and keep their base ceilings, so a font or a stylesheet cannot grow just because someone built with a key.",
     "budgets": {
-      "js_gzip": 1099555,
-      "total": 3827113
+      "js_gzip": 1104000,
+      "total": 3832000
     }
   },
   "budgets": {
@@ -37,18 +37,19 @@
     "total": 3740000
   },
   "measured": {
-    "entry_gzip": 609652,
-    "js_gzip": 1098392,
+    "entry_gzip": 609730,
+    "js_gzip": 1099937,
     "css_gzip": 29623,
     "fonts": 425324,
-    "largest_js_gzip": 413826,
+    "largest_js_gzip": 413903,
     "prose_gzip": 219356,
     "reader_gzip": 719563,
     "audio": 126967,
     "music": 2233468,
-    "total": 3825963,
+    "total": 3827509,
     "variant": "signed_in",
     "recordedAt": "2026-11-09"
   },
-  "_why_budget_2026_11_08_robot": "The robot is a result tab in the one python-runner-editor on 2026-11-09. Measured signed-in: entry 609652 B, js 1098392 B, css 29623 B, largest_js_gzip 413826 B and total 3825963 B. The arena is still its own React.lazy chunk (17.72 kB raw / 5.47 kB gzipped) and is not in index.html's preloads; the main chunk pays the lazy declaration and the one tab slot, not the model. There is no starter loader: the tab only reads the learner's current code with a read-only probe. The worker's synchronous shared-memory bridge and the generated Python API stay in the already-emitted pythonWorker chunk. CSS did not need a raise: reusing theme utilities took the stylesheet to 29623 B, under its unchanged 29650 B ceiling with 27 B left. The tab slot uses a four-id regex rather than importing the tiny ROBOT_LESSON_IDS module, so that module and the model stay in the lazy pane. largest_js_gzip is 414500 B, 674 B above the measurement; js_gzip is 1099555 B (1163 B above) and total 3827113 B (1150 B above). The robot runs are ungraded and verify no lesson."
+  "_why_budget_2026_11_08_robot": "The robot is a result tab in the one python-runner-editor on 2026-11-09. Measured signed-in: entry 609652 B, js 1098392 B, css 29623 B, largest_js_gzip 413826 B and total 3825963 B. The arena is still its own React.lazy chunk (17.72 kB raw / 5.47 kB gzipped) and is not in index.html's preloads; the main chunk pays the lazy declaration and the one tab slot, not the model. There is no starter loader: the tab only reads the learner's current code with a read-only probe. The worker's synchronous shared-memory bridge and the generated Python API stay in the already-emitted pythonWorker chunk. CSS did not need a raise: reusing theme utilities took the stylesheet to 29623 B, under its unchanged 29650 B ceiling with 27 B left. The tab slot uses a four-id regex rather than importing the tiny ROBOT_LESSON_IDS module, so that module and the model stay in the lazy pane. largest_js_gzip is 414500 B, 674 B above the measurement; js_gzip is 1099555 B (1163 B above) and total 3827113 B (1150 B above). The robot runs are ungraded and verify no lesson.",
+  "_why_budget_2026_11_09_robot_speed": "The Robot tab's 0.5×/1×/2× speed switch and its presentation queue moved two signed-in ceilings by hand on 2026-11-09. The queue is app code in the already-lazy RobotPane chunk; no dependency or lazy chunk was added, and entry, css, largest_js_gzip, reader, prose, audio and music keep their numbers. Measured signed-in: js_gzip 1099937 B and total 3827509 B, 382 B and 396 B over the old ceilings. The ceilings are 1104000 B js and 3832000 B total: about 4 kB each for the next small control, not a library. Hand-raised after the measurement, not recorded first."
 }
