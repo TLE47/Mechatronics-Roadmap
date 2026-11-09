@@ -245,48 +245,46 @@ export async function auditResetChooser(browser, baseUrl, name) {
   const conceptsPerUnit = 2;
   const context = await browser.newContext({ viewport: { width: 1440, height: 950 } });
   await seedTourSeen(context);
+  // Seed before the first script reads the stores. Seeding after boot needs a reload, and that
+  // reload can abort the idle audio-engine import; Firefox reports the abort as a page error even
+  // though it belongs to the document being replaced. The reset chooser gets one document instead.
+  await context.addInitScript(
+    ({ units, conceptsPerUnit }) => {
+      const verified = {};
+      for (let index = 1; index <= units; index += 1) verified[`P.${index}`] = true;
+      localStorage.setItem('mechalab_pyodide_verified_v1', JSON.stringify(verified));
+      const concepts = {};
+      for (let index = 1; index <= units; index += 1) {
+        for (let concept = 1; concept <= conceptsPerUnit; concept += 1) {
+          const conceptId = `P.${index}.seed${concept}`;
+          concepts[conceptId] = {
+            conceptId,
+            revision: 1,
+            mastery: 'learning',
+            stale: false,
+            skipEligible: false,
+            successCount: 0,
+            dueAt: null,
+            lastReviewedAt: null,
+            learnCompletedAt: 1000,
+            diagnosticCorrect: 2,
+            practiceCorrect: true,
+          };
+        }
+      }
+      localStorage.setItem(
+        'mechalab_micro_progress_v1',
+        JSON.stringify({ version: 1, revision: 1, updatedAt: 1000, concepts, events: [] })
+      );
+    },
+    { units, conceptsPerUnit }
+  );
   const page = await context.newPage();
   const pageErrors = [];
   page.on('pageerror', (error) => pageErrors.push(String(error)));
 
   try {
     await page.goto(baseUrl, { waitUntil: 'networkidle', timeout: 45000 });
-    await page.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, {
-      timeout: 20000,
-    });
-    await page.evaluate(
-      ({ units, conceptsPerUnit }) => {
-        const verified = {};
-        for (let index = 1; index <= units; index += 1) verified[`P.${index}`] = true;
-        localStorage.setItem('mechalab_pyodide_verified_v1', JSON.stringify(verified));
-        const concepts = {};
-        for (let index = 1; index <= units; index += 1) {
-          for (let concept = 1; concept <= conceptsPerUnit; concept += 1) {
-            const conceptId = `P.${index}.seed${concept}`;
-            concepts[conceptId] = {
-              conceptId,
-              revision: 1,
-              mastery: 'learning',
-              stale: false,
-              skipEligible: false,
-              successCount: 0,
-              dueAt: null,
-              lastReviewedAt: null,
-              learnCompletedAt: 1000,
-              diagnosticCorrect: 2,
-              practiceCorrect: true,
-            };
-          }
-        }
-        localStorage.setItem(
-          'mechalab_micro_progress_v1',
-          JSON.stringify({ version: 1, revision: 1, updatedAt: 1000, concepts, events: [] })
-        );
-      },
-      { units, conceptsPerUnit }
-    );
-    // Seeding localStorage after boot is not enough: the app read its stores once at startup.
-    await page.reload({ waitUntil: 'networkidle', timeout: 45000 });
     await page.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, {
       timeout: 20000,
     });
