@@ -287,3 +287,25 @@ export function clearTimer(store: Storage | null = bucket()): void {
     // Nothing to do: the next write is the one that matters.
   }
 }
+
+/** Fired when the clock is started from outside its own row (the lesson's reminder). */
+export const STUDY_CLOCK_EVENT = 'mechalab-study-clock';
+
+/**
+ * Start the clock from the reminder at the top of a lesson.
+ *
+ * The reminder and the row are two views of one store, so this writes the same record the row's own
+ * Start button would and then announces it: every mounted clock re-reads instead of showing the
+ * digits it had before the press.
+ */
+export function startClockFromReminder(lessonId: string, now: number): StudyTimer {
+  const before = readTimer();
+  const next = startTimer(before, now, lessonId, elapsedMs(before, now) > 0 ? 'resume' : 'start');
+  writeTimer(next);
+  try {
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event(STUDY_CLOCK_EVENT));
+  } catch {
+    // A blocked window costs the announcement, not the clock.
+  }
+  return next;
+}

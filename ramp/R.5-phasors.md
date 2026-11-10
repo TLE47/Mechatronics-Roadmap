@@ -98,25 +98,25 @@ import math
 
 def arrow(magnitude, angle_rad):
     # TODO 1: Return the arrow this length and angle describe.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0j
 
 
 def rotate(z, angle_rad):
     # TODO 2: Return the same arrow turned by this angle.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return z
 
 
 def sum_arrows(arrows):
     # TODO 3: Return the resultant arrow of the list.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0j
 
 
 def report(name, z):
     # TODO 4: Print the real part, imaginary part, length, and angle of z in the report's fixed order.
-    #         Use the exact labels and three-decimal/degree formatting in Expected Output; do not type in a fixed report.
+    #         Use the exact labels and three-decimal/degree formatting in Expected Output; do not hard-code the report.
     return name
 
 

@@ -10,6 +10,7 @@ import {
   readTimer,
   resumeTimer,
   startTimer,
+  STUDY_CLOCK_EVENT,
   writeTimer,
   type ClockAction,
   type StudyTimer,
@@ -92,6 +93,13 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
     const resumed = resumeTimer(readTimer(), Date.now());
     writeTimer(resumed);
     setTimer(resumed);
+  }, []);
+
+  // The lesson's reminder starts the same clock, so this row follows a write it did not make.
+  useEffect(() => {
+    const refresh = () => setTimer(resumeTimer(readTimer(), Date.now()));
+    window.addEventListener(STUDY_CLOCK_EVENT, refresh);
+    return () => window.removeEventListener(STUDY_CLOCK_EVENT, refresh);
   }, []);
 
   // Today's hours, and this lesson's, follow the store wherever the write came from — a run, a

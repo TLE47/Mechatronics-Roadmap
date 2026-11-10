@@ -112,7 +112,7 @@ Complete `slope_velocity` (`TODO 1`) and `accumulate_positions` (`TODO 2`) to co
 ```python
 def slope_velocity(pos_prev_m, pos_now_m, dt_s):
     # TODO 1: Return the velocity the two readings imply.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 

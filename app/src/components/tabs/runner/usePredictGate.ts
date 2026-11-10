@@ -135,11 +135,16 @@ export function usePredictGate({
     if (pending) void runPythonCode(pending.code, lesson);
   };
 
-  /** Forget this lesson's commit so the question is asked again (a second attempt, not a reset). */
+  /**
+   * Edit the saved guess: the question comes back with the learner's own words in the box, so a
+   * revision is a revision rather than retyping from memory. Committing writes the one record this
+   * lesson keeps and judges it again against the same expected output.
+   */
   const again = () => {
+    const previous = predictionFor(selectedId);
     clearPrediction(selectedId);
     setRecord(null);
-    setText('');
+    setText(previous?.text ?? '');
     setHeld(null);
   };
 

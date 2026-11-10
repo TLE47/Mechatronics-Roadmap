@@ -6,6 +6,8 @@ import { CheatSheetModal } from './components/CheatSheetModal';
 import { CommandPalette } from './components/CommandPalette';
 import { ShortcutsModal } from './components/ShortcutsModal';
 import { lessonSearchItems } from './lessonSearch';
+import { termSearchItems } from './termSearch';
+import { ReviewModePanel } from './components/ReviewModePanel';
 import { loadProseIndex, proseSearchItems, type ProsePage } from './proseSearch';
 import { SimulatorTierBanner } from './components/SimulatorTierBanner';
 import { PhoneTabPicker } from './components/PhoneTabPicker';
@@ -374,6 +376,7 @@ export const App: React.FC = () => {
   // `⌘⇧F` open the same dialog on a narrower question, so there is one search box to learn
   // (`app/src/palette.ts`).
   const [isPaletteOpen, setIsPaletteOpen] = useState<boolean>(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const [paletteMode, setPaletteMode] = useState<PaletteMode>('all');
   // Refs because the key handler below is registered once: it closes over the first render, and
   // "is this door already open?" has to be answered by the value on screen now.
@@ -1076,8 +1079,12 @@ export const App: React.FC = () => {
   /** `⌘⇧F`'s list: the lesson text first, then the reading pages, each group in its own band. */
   const paletteSearch = React.useCallback(
     (query: string) => {
+      // Terms first: a learner who typed "eight-bit range" wants the idea, then the lesson that
+      // explains it, before a list of every line that happens to contain the words.
+      const terms = termSearchItems(query);
       const rows = lessonSearchItems(query, PYTHON_LESSONS, verifiedLessons);
-      return prosePages ? [...rows, ...proseSearchItems(query, prosePages)] : rows;
+      const pages = prosePages ? proseSearchItems(query, prosePages) : [];
+      return [...terms, ...rows, ...pages];
     },
     [prosePages, verifiedLessons]
   );
@@ -1201,6 +1208,18 @@ export const App: React.FC = () => {
         break;
     }
   };
+
+  const reviewOverlay = (
+    <ReviewModePanel
+      open={reviewOpen}
+      onClose={() => setReviewOpen(false)}
+      verified={verifiedLessons}
+      onOpen={(id) => {
+        setReviewOpen(false);
+        openLesson(id);
+      }}
+    />
+  );
 
   // One dialog for both whole-page and workbench layouts: Home has the same header search, and the
   // palette's own results move to the workbench when the target lives there.
@@ -1562,6 +1581,7 @@ export const App: React.FC = () => {
           accountEmail={accountEmail}
           onOpenAccount={() => setIsAccountOpen(true)}
           onOpenPalette={() => setIsPaletteOpen(true)}
+          onOpenReview={() => setReviewOpen(true)}
           onOpenHome={() => openPage('home')}
           onOpenStudio={() => openTabFromHome('tab-studio')}
           onOpenLessons={() => openTabFromHome('tab-pyodide')}
@@ -1645,6 +1665,7 @@ export const App: React.FC = () => {
         </main>
         <SiteFooter onOpenIntro={() => openPage('intro')} />
         {paletteOverlay}
+        {reviewOverlay}
         {accountPanel}
       </div>
     );
@@ -1672,6 +1693,7 @@ export const App: React.FC = () => {
           accountEmail={accountEmail}
           onOpenAccount={() => setIsAccountOpen(true)}
           onOpenPalette={() => setIsPaletteOpen(true)}
+          onOpenReview={() => setReviewOpen(true)}
           onOpenHome={() => openPage('home')}
           onOpenStudio={() => openTabFromHome('tab-studio')}
           onOpenLessons={() => openTabFromHome('tab-pyodide')}
@@ -2102,6 +2124,7 @@ export const App: React.FC = () => {
 
       {/* ⌘K / ⌘P / ⌘⇧F. Rendered last so it sits above every panel, and only mounted while open. */}
       {paletteOverlay}
+        {reviewOverlay}
 
       {/* Export Progress Portfolio Modal */}
       {isPortfolioModalOpen && (

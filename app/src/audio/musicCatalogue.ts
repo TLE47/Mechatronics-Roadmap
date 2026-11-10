@@ -56,6 +56,34 @@
 
 export type MusicCategory = 'lofi' | 'jpop' | 'synthwave' | 'chiptune' | 'acoustic';
 
+/**
+ * The sustained instrument beds (`INSTRUMENTS`).
+ *
+ * These are not recordings and not songs: each is one chord held on a different harmonic recipe, so
+ * the drone can sound like a piano, a guitar, a flute or a violin instead of two anonymous sines. The
+ * engine builds them (`engine.ts`, `instrumentBeds`), the Drone chip is what plays them, and the label
+ * says "bed" rather than "instrument" so nobody expects a performance.
+ */
+export type InstrumentId = 'piano' | 'guitar' | 'flute' | 'violin';
+
+export interface InstrumentInfo {
+  id: InstrumentId;
+  label: string;
+  /** One line under the chips: what the recipe actually sounds like. */
+  hint: string;
+}
+
+export const INSTRUMENTS: readonly InstrumentInfo[] = [
+  { id: 'piano', label: 'Piano', hint: 'A soft struck chord — strong fundamental, quick upper partials.' },
+  { id: 'guitar', label: 'Guitar', hint: 'A plucked open chord — warm, with a slight chorusing detune.' },
+  { id: 'flute', label: 'Flute', hint: 'A hollow, breathy fifth — almost a pure sine with one octave above.' },
+  { id: 'violin', label: 'Violin', hint: 'A bowed chord — richer harmonics and a slow, wide vibrato detune.' },
+];
+
+export function isInstrumentId(value: unknown): value is InstrumentId {
+  return INSTRUMENTS.some((entry) => entry.id === value);
+}
+
 /** The category that is not a tape: two detuned oscillators the engine has always had. */
 export const DRONE_ID = 'drone';
 
@@ -222,8 +250,13 @@ export function isMusicCategory(value: unknown): value is MusicCategory {
  * non-finite roll opens the list at its first tape. A one-tape catalogue stays on that tape: a
  * randomiser that can only choose the current one has nothing to do.
  */
-export function randomTapeId(current: string, random: () => number = Math.random): string {
-  const choices = MUSIC_TAPES.filter((entry) => entry.id !== current);
+export function randomTapeId(
+  current: string,
+  random: () => number = Math.random,
+  excluded: readonly string[] = []
+): string {
+  const skipped = new Set(excluded);
+  const choices = MUSIC_TAPES.filter((entry) => entry.id !== current && !skipped.has(entry.id));
   if (choices.length === 0) return current;
   const roll = random();
   const index = Number.isFinite(roll)

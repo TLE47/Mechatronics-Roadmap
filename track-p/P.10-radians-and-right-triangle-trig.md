@@ -117,19 +117,19 @@ import math
 
 def rpm_to_rad_s(rpm):
     # TODO 1: Return the same rotation rate in radians per second.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 
 def arm_tip_xy(length_m, angle_deg):
     # TODO 2: Return the tip's x and y for the given angle, in metres.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return [0.0, 0.0]
 
 
 def target_angle_deg(x_m, y_m):
     # TODO 3: Return the direction of the point (x, y) measured from +x, in degrees.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 

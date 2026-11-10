@@ -226,6 +226,13 @@
       "sourceFormat": "markdown"
     },
     {
+      "id": "02.6",
+      "subjectId": "python",
+      "title": "Think in Comments — Draft the Logic Before You Type Code",
+      "path": "02-mechanics-kinematics-dynamics/02.6-thinking-in-comments.md",
+      "sourceFormat": "markdown"
+    },
+    {
       "id": "03.1",
       "subjectId": "python",
       "title": "Quadrature Encoders (4x Counting) and 12-Bit Magnetic Angle Sensors",

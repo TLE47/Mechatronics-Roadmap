@@ -33,7 +33,7 @@
 
 > **Goal of Depth 1 (Track 02):** Ramp smoothly from **1-Link Planar Forward Kinematics (`02.1`)** $\to$ **2-Link Planar Forward Kinematics (`02.2`)** $\to$ **2-Link Planar Inverse Kinematics (`02.3`)**, then master **Rotational Inertia & Gear Ratios ($N^2$ reflected inertia, `02.4`)** and **Double-Shear Bearings, Timing Belts & 3D-Printed Parts (`02.5`)**.
 
-### 🟢 Track 02 — Tier 1 Beginner Lessons (`02.1`–`02.5`)
+### 🟢 Track 02 — Tier 1 Beginner Lessons (`02.1`–`02.6`)
 
 | Lesson | Topic | New Ideas (Max 2, Enforced in Front Matter) | Simulator / Tool | Typical Time | Slow-Learner Time |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -42,6 +42,7 @@
 | **[Lesson 02.3](02.3-2link-planar-inverse-kinematics.md)** | **2-Link Planar Arm Inverse Kinematics ($x, y \to \theta_1, \theta_2$) & Reachability** | 1. Law of Cosines for elbow angle & reachability clamping<br>2. Elbow-down vs. elbow-up geometric solutions & shoulder angle via `math.atan2` | Python (futurecoder.io) | 1.5–2.0 hrs | 2.5–3.5 hrs |
 | **[Lesson 02.4](02.4-rotational-inertia-and-gear-ratios.md)** | **Rotational Dynamics ($\tau_{\text{net}} = I_{\text{rot}}\alpha$), Gear Ratios ($N$) & Reflected Inertia** | 1. Rotational Newton's Second Law ($\tau_{\text{net}} = I_{\text{rot}}\alpha$) & moment of inertia ($I_{\text{rot}} = mr^2$)<br>2. Gear reduction ratio ($N$) & reflected rotor inertia ($I_{\text{reflected}} = N^2 I_{\text{motor}}$) | Python (futurecoder.io) | 1.5–2.0 hrs | 2.5–3.5 hrs |
 | **[Lesson 02.5](02.5-bearings-belts-and-3d-printing.md)** | **Practical Robot Mechanisms — Double-Shear Bearings, Timing Belts & 3D Printing** | 1. Cantilevered vs. double-shear shaft support<br>2. GT2 timing belt pulley ratios ($N = N_{\text{driven}}/N_{\text{driver}}$) & 3D-printed layer orientation | Python (futurecoder.io) | 1.0–1.5 hrs | 2.0–3.0 hrs |
+| **[Lesson 02.6](02.6-thinking-in-comments.md)** | **Think in Comments — Draft the Logic Before You Type Code** | 1. Comments as a plan: input, output, edge, check<br>2. First draft, then edge cases (empty list, tie, boundary) | Python (futurecoder.io) | 1.0–1.5 hrs | 2.0–3.0 hrs |
 
 ---
 

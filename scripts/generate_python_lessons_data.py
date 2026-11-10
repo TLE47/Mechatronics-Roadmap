@@ -662,6 +662,19 @@ _bore, _hole = cad_hole_diameters_mm(19.0, 4.0)
 assert math.isclose(_bore, 19.10, abs_tol=1e-5) and math.isclose(_hole, 4.20, abs_tol=1e-5)
 """,
     ),
+    "02.6": (
+        [
+            "Test lap_report best, average, and the strict >10% review cut-off on an unseen lap list",
+            "Test lap_report([]) returns (0.0, 0.0, []) without touching min()",
+        ],
+        """import math
+_best, _avg, _slow = lap_report([10.0, 9.0, 12.0], slow_margin=0.10)
+assert math.isclose(_best, 9.0) and math.isclose(_avg, 31.0 / 3.0)
+assert _slow == [10.0, 12.0], _slow
+assert lap_report([9.9, 9.0], slow_margin=0.10)[2] == []
+assert lap_report([]) == (0.0, 0.0, [])
+""",
+    ),
     "03.1": (
         [
             "Test quadrature_resolution 4x decoding and angular resolution on 256-line disk with 20:1 gearbox",

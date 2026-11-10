@@ -103,25 +103,25 @@ COUNTS = [0, 120, 235, 330, 400, 440, 450, 425, 370, 290]
 
 def counts_to_rad(counts):
     # TODO 1: Return the angle these encoder counts represent.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 
 def rate_rad_s(now_counts, prev_counts, dt_s=DT_S):
     # TODO 2: Return the joint's speed between these two samples.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 
 def average_rate_rad_s(samples, dt_s=DT_S):
     # TODO 3: Return the average speed over the whole trace.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 
 def central_rate_rad_s(samples, i, dt_s=DT_S):
     # TODO 4: Return the speed at this sample, using the samples either side of it.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 

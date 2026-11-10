@@ -92,13 +92,13 @@ import math
 
 def cmd10_to_torque(cmd_10bit, max_torque_nm):
     # TODO 1: Return the torque this ten-bit command asks for, held inside the command's own range.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 
 def holding_torque_nm(length_m, mass_kg, angle_from_horiz_rad):
     # TODO 2: Return the torque gravity demands at this angle from horizontal.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 

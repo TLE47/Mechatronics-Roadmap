@@ -104,25 +104,25 @@ SETTLE_S = 1.0
 
 def gain(omega, tau=TAU):
     # TODO 1: Return the gain of this lag at the given frequency.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 1.0
 
 
 def phase_deg(omega, tau=TAU):
     # TODO 2: Return the phase delay of this lag at the given frequency, in degrees.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 
 def simulate(omega, tau=TAU, dt_s=DT_S, settle_s=SETTLE_S):
     # TODO 3: Return one settled period of the command and the response.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return []
 
 
 def measure(samples, omega):
     # TODO 4: Return the gain and phase the recorded period shows.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0, 0.0
 
 

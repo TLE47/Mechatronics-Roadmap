@@ -310,6 +310,8 @@ await check('levels are clamped to 0..1 and rounded to what the slider can show'
     clicks: true,
     tape: DEFAULT_SOUND_PREFS.tape,
     randomize: DEFAULT_SOUND_PREFS.randomize,
+    instrument: 'off',
+    excluded: [],
   });
   // A record written before the Room fader existed keeps its choice and gains the default.
   const old = parseSoundPrefs('{"on":true,"music":0.3,"sfx":0.5}');
@@ -346,6 +348,8 @@ await check('the choice round-trips and every control hears it', () => {
     clicks: true,
     tape: DEFAULT_SOUND_PREFS.tape,
     randomize: DEFAULT_SOUND_PREFS.randomize,
+    instrument: 'off',
+    excluded: [],
   });
   assert.deepEqual(readSoundPrefs(), written, 'the store must hold what the control returned');
   assert.equal(seen.length, 1);
@@ -360,6 +364,8 @@ await check('the choice round-trips and every control hears it', () => {
     clicks: true,
     tape: DEFAULT_SOUND_PREFS.tape,
     randomize: DEFAULT_SOUND_PREFS.randomize,
+    instrument: 'off',
+    excluded: [],
   });
   // The switch and the tape are part of the choice, and are never clamped or coerced by a level patch.
   const switched = writeSoundPrefs({ clicks: false, tape: 'neon-stage', music: 0.2 });
@@ -842,12 +848,17 @@ await check('the chosen tape replaces the drone once it decodes, and a scene cha
   await engine.whenMusicReady();
   assert.equal(engine.debug().musicSource, 'file');
   const { music, gains } = graph(context);
-  // The two drone beds are built with the graph, the tape after it; all three hang off the music bus.
+  // The graph builds the two drone beds and the four instrument beds with the music bus; the tape is
+  // added after it. Only the tape may be audible once it decodes.
   const underMusic = gains.filter((node) => node.targets.includes(music));
-  assert.equal(underMusic.length, 3, 'two drone beds and the one chosen tape');
-  const [droneHome, droneFocus, tape] = underMusic;
+  assert.equal(underMusic.length, 7, 'two drone beds, four instrument beds and the one chosen tape');
+  const [droneHome, droneFocus, ...rest] = underMusic;
+  const tape = rest[rest.length - 1];
   assert.equal(droneHome.gain.value, 0, 'the drone is silent once a tape is playing');
   assert.equal(droneFocus.gain.value, 0);
+  for (const bed of rest.slice(0, -1)) {
+    assert.equal(bed.gain.value, 0, 'every instrument bed is silent under a tape');
+  }
   assert.equal(tape.gain.value, BED_TRIM, 'and the tape is at its trim');
   engine.setScene('focus');
   assert.equal(tape.gain.value, BED_TRIM, 'focus quiets the music through the bus, not by switching tape');

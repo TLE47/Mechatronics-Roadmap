@@ -119,13 +119,13 @@ import math
 
 def weight_newtons(mass_kg):
     # TODO 1: Return the downward weight of this mass, in newtons.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 
 def gravity_torque_nm(mass_kg, length_m, angle_from_horiz_deg):
     # TODO 2: Return the gravity torque this link must hold at the given angle from horizontal — the page's lever-arm picture shows what the angle does to that arm.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 

@@ -115,19 +115,19 @@ Complete `ma_to_amps` (`TODO 1`), `kohms_to_ohms` (`TODO 2`), and `us_to_seconds
 ```python
 def ma_to_amps(val_ma):
     # TODO 1: Return the same reading in amperes.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 
 def kohms_to_ohms(r_kohms):
     # TODO 2: Return the same reading in ohms.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 
 def us_to_seconds(time_us):
     # TODO 3: Return the time in seconds.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 

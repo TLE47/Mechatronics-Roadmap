@@ -110,7 +110,7 @@ function apply(next: SoundPrefs): void {
 function randomizeNow(): string | null {
   const prefs = cachedSoundPrefs();
   if (!prefs.on || prefs.randomize === 'off') return null;
-  const tape = randomTapeId(prefs.tape);
+  const tape = randomTapeId(prefs.tape, Math.random, prefs.excluded);
   if (tape === prefs.tape) return null;
   change({ tape });
   return tape;

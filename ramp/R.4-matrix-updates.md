@@ -105,19 +105,19 @@ B_IN = [[0.0], [1.0 / J]]
 
 def mat_vec(matrix, vector):
     # TODO 1: Return the matrix applied to this vector.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return [0.0 for _ in matrix]
 
 
 def step_matrix(state, dt_s=DT_S, tau=TAU):
     # TODO 2: Return the state after one tick, through the matrix.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return list(state)
 
 
 def step_two_lines(state, dt_s=DT_S, tau=TAU):
     # TODO 3: Return the same tick through the two line-by-line updates.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return list(state)
 
 

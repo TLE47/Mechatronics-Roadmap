@@ -140,6 +140,14 @@ export function PausedBar({
           </button>
         </span>
       </div>
+      {/* The controls in the words a beginner would use: the titles are the short version, this is
+          the one that explains what each press does to the program. */}
+      <p data-testid="paused-help" className="mt-1.5 text-[11px] leading-snug text-muted">
+        <strong className="text-body">Debugger:</strong> <em>Step</em> runs this line and stops at the
+        next one in this file. <em>Step in</em> follows the call on this line into the function it
+        calls. <em>Step out</em> finishes the current function and stops in its caller. Continue runs
+        to the end, the next breakpoint, or the next Pause. Stop, in the toolbar, ends the run.
+      </p>
       {/* Quoted from the text that ran, not from the editor: a park describes a program, and an edit
           made while it is parked must not rewrite what it is about to execute. A helper's line is
           quoted from that helper, which is why the payload names a file. */}

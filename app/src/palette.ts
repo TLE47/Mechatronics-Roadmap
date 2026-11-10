@@ -68,9 +68,9 @@ export const PALETTE_MODE_TEXT: Record<
     empty: 'Try a lesson id like P.1, or a word from its title.',
   },
   search: {
-    placeholder: 'Search inside the lessons and course pages…',
-    label: 'Search inside the lessons and course pages',
-    empty: 'Nothing in the lessons or course pages matches that. Try a shorter word.',
+    placeholder: 'Search terms, lessons and course pages…',
+    label: 'Search terms, lessons and course pages',
+    empty: 'No term, lesson or course page matches that. Try a shorter word.',
   },
 };
 

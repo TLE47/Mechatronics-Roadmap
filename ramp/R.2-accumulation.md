@@ -99,31 +99,31 @@ V_RAD_S = [0.0, 2.0, 4.0, 6.0, 6.0, 6.0, 4.0, 2.0, -2.0]
 
 def left_rule_rad(v, dt_s=DT_S):
     # TODO 1: Return the angle by the left-edge estimate over this trace.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 
 def right_rule_rad(v, dt_s=DT_S):
     # TODO 2: Return the angle by the right-edge estimate over this trace.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 
 def trapezoid_rad(v, dt_s=DT_S):
     # TODO 3: Return the angle by the trapezoid estimate over this trace.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 
 def accumulate_rad(v, q0=0.0, dt_s=DT_S):
     # TODO 4: Return the running angle from q0, using the trapezoid estimate at each sample.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 
 def drift_rad(bias_rad_s, seconds):
     # TODO 5: Return the angle error a constant bias builds over this many seconds.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 

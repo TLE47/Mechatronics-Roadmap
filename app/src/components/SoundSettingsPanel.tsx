@@ -3,11 +3,13 @@ import { RotateCcw } from 'lucide-react';
 import {
   RANDOMIZE_INTERVAL_MINUTES,
   isRandomizeMode,
+  type InstrumentChoice,
   type RandomizeMode,
   type SoundPrefs,
 } from '../audio/prefs.ts';
 import {
   DRONE_ID,
+  INSTRUMENTS,
   MUSIC_CATEGORIES,
   TAPE_SCRIPT_PAGE,
   categoryOf,
@@ -61,7 +63,13 @@ interface Props {
   onClicks: (on: boolean) => void;
   /** A catalogue tape id, or `drone`. */
   onTape: (tape: string) => void;
+  /** Tapes the randomiser must never choose. */
+  excluded: string[];
+  /** Flip one tape in or out of the shuffle, without changing what is playing. */
+  onExclude: (tape: string) => void;
   onRandomize: (mode: RandomizeMode) => void;
+  /** The drone's timbre; any instrument also chooses the drone, so the choice is audible at once. */
+  onInstrument: (instrument: InstrumentChoice) => void;
   onPreview: (role: UiRole) => void;
   onReset: () => void;
 }
@@ -93,7 +101,10 @@ export const SoundSettingsPanel: React.FC<Props> = ({
   onLevel,
   onClicks,
   onTape,
+  excluded,
+  onExclude,
   onRandomize,
+  onInstrument,
   onPreview,
   onReset,
 }) => {
@@ -220,34 +231,120 @@ export const SoundSettingsPanel: React.FC<Props> = ({
         <div className="mt-1.5 flex flex-col gap-1" role="group" aria-label="Music tape">
           {tapesIn(openCategory).map((entry) => {
             const active = prefs.tape === entry.id;
+            const shuffled = !excluded.includes(entry.id);
             return (
-              <button
+              <div
                 key={entry.id}
-                type="button"
-                disabled={!prefs.on}
-                aria-pressed={active}
-                onClick={() => onTape(entry.id)}
-                data-testid={tid(`sound-tape-${entry.id}`)}
-                className="flex min-h-[34px] items-center justify-between gap-2 rounded-md border px-2 py-1 text-left text-[11px] disabled:opacity-50"
+                className="flex items-stretch gap-1 rounded-md border text-[11px]"
                 style={{
                   borderColor: active ? 'var(--accent)' : 'var(--border)',
                   backgroundColor: active ? 'var(--accent-soft)' : 'transparent',
-                  color: active ? 'var(--accent)' : 'var(--text)',
                 }}
               >
-                <span className="truncate font-semibold">{entry.title}</span>
-                <span className="shrink-0 font-mono text-[10px] tabular-nums" style={{ color: 'var(--muted)' }}>
-                  {entry.seconds}s
-                </span>
-              </button>
+                <button
+                  type="button"
+                  disabled={!prefs.on}
+                  aria-pressed={active}
+                  onClick={() => onTape(entry.id)}
+                  data-testid={tid(`sound-tape-${entry.id}`)}
+                  className="flex min-h-[34px] min-w-0 flex-1 items-center justify-between gap-2 rounded-l-md px-2 py-1 text-left disabled:opacity-50"
+                  style={{ color: active ? 'var(--accent)' : 'var(--text)' }}
+                >
+                  <span className="truncate font-semibold">{entry.title}</span>
+                  <span className="shrink-0 font-mono text-[10px] tabular-nums" style={{ color: 'var(--muted)' }}>
+                    {entry.seconds}s
+                  </span>
+                </button>
+                {/* A tape stays in the catalogue whether or not the shuffle may choose it: this is
+                    the difference between "not for me right now" and "delete this". */}
+                <button
+                  type="button"
+                  disabled={!prefs.on}
+                  onClick={() => onExclude(entry.id)}
+                  aria-pressed={shuffled}
+                  aria-label={`${shuffled ? 'Exclude' : 'Include'} ${entry.title} in the random shuffle`}
+                  title={
+                    shuffled
+                      ? 'Let the randomiser choose this tape. Press to keep it out of the shuffle.'
+                      : 'Kept out of the shuffle. Press to let the randomiser choose it again.'
+                  }
+                  data-testid={tid(`sound-tape-exclude-${entry.id}`)}
+                  className="flex min-h-[34px] min-w-[34px] items-center justify-center rounded-r-md border-l px-1.5 disabled:opacity-50"
+                  style={{
+                    borderColor: 'var(--border)',
+                    color: shuffled ? 'var(--accent)' : 'var(--muted)',
+                    backgroundColor: shuffled ? 'transparent' : 'var(--panel-2)',
+                  }}
+                >
+                  <span aria-hidden="true" className="font-mono text-[12px]">
+                    {shuffled ? '↻' : '✕'}
+                  </span>
+                </button>
+              </div>
             );
           })}
         </div>
       ) : null}
 
       <p className="mt-1 text-[11px] leading-snug" style={{ color: 'var(--dim)' }}>
-        {openCategoryHint ?? 'Two detuned oscillators — a texture rather than a song.'}
+        {openCategoryHint ?? 'Two detuned oscillators — a texture rather than a song.'}{' '}
+        The arrow on a row keeps that tape in the random shuffle; the cross leaves it in the list but
+        out of the draw.
       </p>
+
+      {/* The instrument beds are not tapes: they are the drone's harmonic recipe, so they only
+          sound with the Drone chip. Pressing one selects the drone as well, because choosing a
+          timbre that then stays silent under a song would look broken. */}
+      <div className="mt-2" role="group" aria-label="Instrument bed">
+        <span className="text-[11px] font-semibold uppercase tracking-wide">Instrument bed</span>
+        <p className="mt-0.5 text-[11px] leading-snug" style={{ color: 'var(--dim)' }}>
+          {prefs.instrument === 'off'
+            ? 'The drone\u2019s plain two-sine texture. Pick an instrument to hear the same held chord as a piano, guitar, flute or violin.'
+            : INSTRUMENTS.find((entry) => entry.id === prefs.instrument)?.hint ?? ''}
+        </p>
+        <div className="mt-1 flex flex-wrap gap-1">
+          <button
+            type="button"
+            disabled={!prefs.on}
+            aria-pressed={prefs.instrument === 'off'}
+            onClick={() => onInstrument('off')}
+            data-testid={tid('sound-instrument-off')}
+            className="min-h-[32px] rounded-full border px-2.5 py-0.5 text-[11px] font-semibold disabled:opacity-50"
+            style={{
+              borderColor: prefs.instrument === 'off' ? 'var(--accent)' : 'var(--border)',
+              backgroundColor: prefs.instrument === 'off' ? 'var(--accent-soft)' : 'transparent',
+              color: prefs.instrument === 'off' ? 'var(--accent)' : 'var(--muted)',
+            }}
+          >
+            Plain
+          </button>
+          {INSTRUMENTS.map((entry) => {
+            const active = prefs.instrument === entry.id;
+            return (
+              <button
+                key={entry.id}
+                type="button"
+                disabled={!prefs.on}
+                aria-pressed={active}
+                onClick={() => {
+                  onInstrument(entry.id);
+                  // Audible at once: the bed only plays with the drone.
+                  onTape(DRONE_ID);
+                }}
+                data-testid={tid(`sound-instrument-${entry.id}`)}
+                className="min-h-[32px] rounded-full border px-2.5 py-0.5 text-[11px] font-semibold disabled:opacity-50"
+                style={{
+                  borderColor: active ? 'var(--accent)' : 'var(--border)',
+                  backgroundColor: active ? 'var(--accent-soft)' : 'transparent',
+                  color: active ? 'var(--accent)' : 'var(--muted)',
+                }}
+              >
+                {entry.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
       <div className="mt-2 flex items-center justify-between gap-2">
         <label
           htmlFor={`${id}-randomize`}

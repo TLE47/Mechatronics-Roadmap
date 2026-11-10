@@ -102,31 +102,31 @@ TAU = 0.40  # constant commanded torque, N m
 
 def accel_rad_s2(state, tau=TAU, j=J, b=B):
     # TODO 1: Return the joint's angular acceleration at this state.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 
 def step(state, dt_s=DT_S, tau=TAU, j=J, b=B):
     # TODO 2: Return the next state after one tick.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return list(state)
 
 
 def run(state, ticks, dt_s=DT_S, tau=TAU, j=J, b=B):
     # TODO 3: Return the state after the requested number of ticks.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return state
 
 
 def add(a, b):
     # TODO 4: Return the component-wise combination of the two states.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return list(a)
 
 
 def scale(a, k):
     # TODO 5: Return the state with every component scaled by k.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return list(a)
 
 

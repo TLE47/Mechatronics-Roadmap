@@ -39,7 +39,7 @@ import type { SoundCue, SoundMessage, SoundScene, UiRole } from './facade.ts';
 import { clampPan } from './facade.ts';
 import { DEFAULT_SOUND_PREFS, isRandomizeMode, type SoundPrefs } from './prefs.ts';
 import { ROOM_TRIM, roomMix, type RoomLayer } from './ambience.ts';
-import { DRONE_ID, tapeById } from './musicCatalogue.ts';
+import { DRONE_ID, isInstrumentId, tapeById, type InstrumentId } from './musicCatalogue.ts';
 
 /** Music and room level while a run is active: about −10 dB, enough to get out of the way. */
 export const DUCK_GAIN = 0.32;
@@ -282,6 +282,8 @@ export class SoundEngine {
   private sfxBus: GainNode | null = null;
   private labBed: GainNode | null = null;
   private focusBed: GainNode | null = null;
+  /** One sustained chord per recipe; all silent except the chosen one (and none under a tape). */
+  private instrumentBeds: Partial<Record<InstrumentId, GainNode>> = {};
   private rainGain: GainNode | null = null;
   private floorGain: GainNode | null = null;
   private cityGain: GainNode | null = null;
@@ -544,6 +546,39 @@ export class SoundEngine {
       { freq: 783.99, peak: 0.16, detune: -3 },
     ], 1600);
 
+    // The instrument beds: four harmonic recipes for the same held chord. They share the drone's
+    // contract — silent under a tape, silent in focus (where `focusBed` takes over) — so choosing one
+    // is a change of timbre, never a second source that could be heard at the same time.
+    const recipes: Record<InstrumentId, [{ freq: number; peak: number; detune?: number }[], number]> = {
+      piano: [[
+        { freq: 110, peak: 0.5 },
+        { freq: 220, peak: 0.28 },
+        { freq: 330, peak: 0.12 },
+        { freq: 440, peak: 0.07, detune: 2 },
+      ], 2000],
+      guitar: [[
+        { freq: 196, peak: 0.5 },
+        { freq: 392, peak: 0.22, detune: 5 },
+        { freq: 588, peak: 0.08, detune: -4 },
+      ], 2600],
+      flute: [[
+        { freq: 523.25, peak: 0.5 },
+        { freq: 1046.5, peak: 0.12 },
+      ], 3200],
+      violin: [[
+        { freq: 440, peak: 0.45 },
+        { freq: 880, peak: 0.22, detune: 4 },
+        { freq: 1320, peak: 0.1, detune: -4 },
+      ], 3000],
+    };
+    for (const [id, [partials, cutoff]] of Object.entries(recipes) as [InstrumentId, [{ freq: number; peak: number; detune?: number }[], number]][]) {
+      const bed = ctx.createGain();
+      bed.gain.value = 0;
+      bed.connect(musicBus);
+      this.buildBed(ctx, bed, partials, cutoff);
+      this.instrumentBeds[id] = bed;
+    }
+
     // ---- the room's four layers ---------------------------------------------------------------
     // Rain: the gain the recorded loop (or its fallback) is played into. The gust sits after it, so
     // a failed run swells the same signal whatever the source.
@@ -672,8 +707,16 @@ export class SoundEngine {
     const tapeReady =
       this.tape !== DRONE_ID && this.loadedTape === this.tape && this.tapeNodes.has(this.tape);
     const droneOn = !tapeReady;
-    if (this.labBed) ramp(this.labBed.gain, this.scene === 'focus' || !droneOn ? 0 : 1, at, seconds);
+    // The instrument bed is the drone with a different recipe: one or the other, never both, and
+    // never in focus (the focus bed is the identity of that scene).
+    const instrument = droneOn && this.scene !== 'focus' ? this.levels.instrument : 'off';
+    if (this.labBed) {
+      ramp(this.labBed.gain, droneOn && this.scene !== 'focus' && instrument === 'off' ? 1 : 0, at, seconds);
+    }
     if (this.focusBed) ramp(this.focusBed.gain, this.scene === 'focus' && droneOn ? 1 : 0, at, seconds);
+    for (const [id, bed] of Object.entries(this.instrumentBeds) as [InstrumentId, GainNode][]) {
+      ramp(bed.gain, instrument === id ? 1 : 0, at, seconds);
+    }
     // Only the chosen tape is audible: the retained ones sit at zero and cost no mix headroom.
     for (const [id, node] of this.tapeNodes) {
       ramp(node.gain.gain, tapeReady && id === this.tape ? BED_TRIM : 0, at, seconds);
@@ -936,6 +979,10 @@ function normalise(prefs: Partial<SoundPrefs>, on: boolean): SoundPrefs {
     clicks: typeof prefs.clicks === 'boolean' ? prefs.clicks : DEFAULT_SOUND_PREFS.clicks,
     tape: typeof prefs.tape === 'string' && prefs.tape ? prefs.tape : DEFAULT_SOUND_PREFS.tape,
     randomize: isRandomizeMode(prefs.randomize) ? prefs.randomize : DEFAULT_SOUND_PREFS.randomize,
+    instrument: isInstrumentId(prefs.instrument) ? prefs.instrument : 'off',
+    excluded: Array.isArray(prefs.excluded)
+      ? prefs.excluded.filter((id): id is string => typeof id === 'string')
+      : DEFAULT_SOUND_PREFS.excluded,
   };
 }
 

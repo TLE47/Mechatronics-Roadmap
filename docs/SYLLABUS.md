@@ -177,7 +177,7 @@ Starts at [`01.1`](../01-electronics-and-power/01.1-mosfet-inductor-flyback.md) 
 
 > Turn joint angles into a tip position, and a tip position back into joint angles.
 
-Starts at [`02.1`](../02-mechanics-kinematics-dynamics/02.1-1d-link-fk-and-coord-frames.md) · **20-30 focused hours** · 5 lessons · 1 arm module · 1 Depth 2 module · 1 Depth 3 module.
+Starts at [`02.1`](../02-mechanics-kinematics-dynamics/02.1-1d-link-fk-and-coord-frames.md) · **20-30 focused hours** · 6 lessons · 1 arm module · 1 Depth 2 module · 1 Depth 3 module.
 
 | Page | What it teaches | Layer | Focused hours |
 | :--- | :--- | :--- | ---: |
@@ -186,6 +186,7 @@ Starts at [`02.1`](../02-mechanics-kinematics-dynamics/02.1-1d-link-fk-and-coord
 | [`02.3`](../02-mechanics-kinematics-dynamics/02.3-2link-planar-inverse-kinematics.md) | 2-Link Planar Arm Inverse Kinematics (x, y -> theta_1, theta_2) and Reachability | lesson | 1.5-4 |
 | [`02.4`](../02-mechanics-kinematics-dynamics/02.4-rotational-inertia-and-gear-ratios.md) | Rotational Dynamics (tau_net = I_rot * alpha), Gear Ratios (N) and Reflected Inertia | lesson | 1.5-3.5 |
 | [`02.5`](../02-mechanics-kinematics-dynamics/02.5-bearings-belts-and-3d-printing.md) | Practical Robot Mechanisms — Double-Shear Bearings, Timing Belts and 3D-Printed Parts | lesson | 1.5-3 |
+| [`02.6`](../02-mechanics-kinematics-dynamics/02.6-thinking-in-comments.md) | Think in Comments — Draft the Logic Before You Type Code | lesson | 1.5-3 |
 | [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md) | Free-Body Diagrams, Gravity Lever-Arm Torque & Gear Speed/Torque Power Scaling | arm | 3.5 |
 | [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md) | 6-DOF Rigid-Body Degrees of Freedom, 3D Homogeneous Transforms (SE(3)), Velocity Jacobians & Parallel-Axis Inertia | depth 2 | 4.5 |
 | [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md) | 6D Spatial Twists & Wrenches, Screw Axes in SE(3), Notch Flexure Stiffness & Recursive Newton-Euler Passivity | depth 3 | 5 |

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Printer, Download, FileJson, User, ChevronRight, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, House, Pause, Play, RotateCcw, FlaskConical, Brain } from 'lucide-react';
+import { Printer, Download, FileJson, User, ChevronRight, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, House, Pause, Play, RotateCcw, FlaskConical, Brain, Settings2, ListChecks } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
 import { downloadLearningLog } from '../learningLog';
 import { BackupControls } from './BackupControls';
@@ -17,6 +17,8 @@ import { focusLabel } from '../focusMode';
 import { motionHint, motionLabel } from '../motionPrefs';
 import { useMotion } from '../useMotion';
 import { SoundControlLazy } from './SoundControlLazy';
+import { GeneralSettingsPanel } from './GeneralSettingsPanel';
+import { GENERAL_SETTINGS_EVENT, readShowActionLabels } from '../generalSettings';
 import { HeaderTips } from './HeaderTips';
 // The interface's own ear: one delegated listener for every control's click, mounted once with the
 // header (which every screen renders). It renders nothing and holds no state.
@@ -55,6 +57,8 @@ interface HeaderProps {
    * hidden then, and a door to a hidden tab would only look broken.
    */
   onOpenMicro?: () => void;
+  /** Opens review mode: every lesson this device has verified, in one place. */
+  onOpenReview?: () => void;
   /**
    * The wordmark's destination: the introduction page. Optional in the same way `onOpenHome` is —
    * the token page passes neither, and the lockup then falls back to its plain `href`.
@@ -110,6 +114,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenStudio,
   onOpenLessons,
   onOpenMicro,
+  onOpenReview,
   onOpenIntro,
   focus = false,
   onToggleFocus,
@@ -131,6 +136,17 @@ export const Header: React.FC<HeaderProps> = ({
   // The reset panel is lazy and mounted only once it is opened, so this is one boolean and one icon
   // on the first paint; the eleven stores it counts for arrive with the chunk.
   const [resetOpen, setResetOpen] = React.useState(false);
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
+  // The tray labels switch is a device preference, so the header follows the event its own dialog
+  // fires rather than holding a copy that a second mounted header could disagree with.
+  const [actionLabels, setActionLabels] = React.useState(readShowActionLabels);
+  React.useEffect(() => {
+    const refresh = () => setActionLabels(readShowActionLabels());
+    window.addEventListener(GENERAL_SETTINGS_EVENT, refresh);
+    return () => window.removeEventListener(GENERAL_SETTINGS_EVENT, refresh);
+  }, []);
+  /** Shown beside every tray icon when the switch is on, and at 2xl otherwise. */
+  const labelClass = actionLabels ? 'inline text-[11px] leading-none' : 'hidden 2xl:inline';
   // The tray row is the scope of the hover names (`HeaderTips`): one listener for the three trays,
   // the account chip's neighbours and whatever a child component puts in them.
   const actionsRef = React.useRef<HTMLDivElement | null>(null);
@@ -179,6 +195,7 @@ export const Header: React.FC<HeaderProps> = ({
       }}
     >
       <SoundClicks />
+      <GeneralSettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <div className="mx-auto flex max-w-[var(--shell-max)] flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2.5 sm:px-6">
         {/* Zone 1: brand lockup. The mark is the arm a learner is working towards, and the lockup is
             the door to the introduction — the one page that explains the course before a learner has
@@ -284,7 +301,19 @@ export const Header: React.FC<HeaderProps> = ({
                 className="btn"
               >
                 <House className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                <span className="hidden 2xl:inline">Home</span>
+                <span className={labelClass}>Home</span>
+              </button>
+            )}
+            {onOpenReview && (
+              <button
+                onClick={onOpenReview}
+                data-testid="btn-open-review"
+                aria-label="Review mode"
+                data-tip="Review — every lesson you have verified, with your guesses and notes"
+                className="btn"
+              >
+                <ListChecks className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span className={labelClass}>Review</span>
               </button>
             )}
             {onOpenLessons && (
@@ -296,7 +325,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="btn"
               >
                 <BookOpen className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                <span className="hidden 2xl:inline">Lessons</span>
+                <span className={labelClass}>Lessons</span>
               </button>
             )}
             {onOpenStudio && (
@@ -308,7 +337,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="btn"
               >
                 <FlaskConical className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                <span className="hidden 2xl:inline">Free study</span>
+                <span className={labelClass}>Free study</span>
               </button>
             )}
             {onOpenMicro && (
@@ -320,7 +349,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="btn"
               >
                 <Brain className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                <span className="hidden 2xl:inline">Micro</span>
+                <span className={labelClass}>Micro</span>
               </button>
             )}
             {/* The palette is a shortcut first, but a shortcut nobody can see is a secret. */}
@@ -332,7 +361,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="btn"
             >
               <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span className="hidden 2xl:inline">Search</span>
+              <span className={labelClass}>Search</span>
               <kbd
                 className="ml-0.5 hidden rounded border px-1 py-0.5 text-[9.5px] font-semibold sm:inline"
                 style={{ borderColor: 'var(--border)', color: 'var(--dim)' }}
@@ -357,7 +386,7 @@ export const Header: React.FC<HeaderProps> = ({
               ) : (
                 <Moon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               )}
-              <span className="hidden 2xl:inline">{themeShortLabel(theme, fallback)}</span>
+              <span className={labelClass}>{themeShortLabel(theme, fallback)}</span>
             </button>
             <button
               onClick={onToggleContrast}
@@ -369,7 +398,7 @@ export const Header: React.FC<HeaderProps> = ({
               style={pressed(theme === 'contrast')}
             >
               <Contrast className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span className="hidden 2xl:inline">Contrast</span>
+              <span className={labelClass}>Contrast</span>
             </button>
             <button
               onClick={onTogglePaper}
@@ -381,7 +410,7 @@ export const Header: React.FC<HeaderProps> = ({
               style={pressed(theme === 'paper')}
             >
               <BookOpen className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span className="hidden 2xl:inline">Paper</span>
+              <span className={labelClass}>Paper</span>
             </button>
             {/* Sound is a preference, so its control is on every screen — including this one, where
                 the switch is the first thing a learner reaches for after a loud surprise. Behind a
@@ -410,7 +439,7 @@ export const Header: React.FC<HeaderProps> = ({
                 ) : (
                   <Maximize2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 )}
-                <span className="hidden 2xl:inline">Focus</span>
+                <span className={labelClass}>Focus</span>
               </button>
             )}
             {/* One switch for the moving drawings, on every screen. Off is also the cheap setting:
@@ -430,7 +459,18 @@ export const Header: React.FC<HeaderProps> = ({
               ) : (
                 <Play className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               )}
-              <span className="hidden 2xl:inline">Motion</span>
+              <span className={labelClass}>Motion</span>
+            </button>
+            <button
+              onClick={() => setSettingsOpen(true)}
+              data-testid="btn-general-settings"
+              aria-haspopup="dialog"
+              aria-label="General settings"
+              data-tip="Settings — action-tray labels and the full sound controls"
+              className="btn"
+            >
+              <Settings2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className={labelClass}>Settings</span>
             </button>
           </div>
 
@@ -444,7 +484,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="btn"
             >
               <FileJson className="h-3.5 w-3.5" aria-hidden="true" />
-              <span className="hidden 2xl:inline">Export Learning Log (.json)</span>
+              <span className={labelClass}>Export Learning Log (.json)</span>
             </button>
             {/* Everything in this browser, out and back in: the two buttons report what they did. */}
             <BackupControls />
@@ -459,7 +499,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="btn"
             >
               <RotateCcw className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span className="hidden 2xl:inline">Reset…</span>
+              <span className={labelClass}>Reset…</span>
             </button>
             <React.Suspense fallback={null}>
               <ResetProgressLazy isOpen={resetOpen} onClose={() => setResetOpen(false)} />
@@ -477,7 +517,7 @@ export const Header: React.FC<HeaderProps> = ({
               style={{ color: 'var(--emerald)' }}
             >
               <Download className="h-3.5 w-3.5" aria-hidden="true" />
-              <span className="hidden 2xl:inline">Export Progress (.md)</span>
+              <span className={labelClass}>Export Progress (.md)</span>
             </button>
             <button
               onClick={onOpenCheatSheet}
@@ -488,7 +528,7 @@ export const Header: React.FC<HeaderProps> = ({
               style={{ borderColor: 'var(--border-strong)', color: 'var(--accent)' }}
             >
               <Printer className="h-3.5 w-3.5" aria-hidden="true" />
-              <span className="hidden 2xl:inline">1-Page Cheat Sheet</span>
+              <span className={labelClass}>1-Page Cheat Sheet</span>
             </button>
           </div>
 

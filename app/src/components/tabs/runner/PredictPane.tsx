@@ -50,9 +50,10 @@ export function PredictPane({
                 <button
                   onClick={onAgain}
                   data-testid="btn-predict-again"
+                  title="Change your saved prediction: the box comes back with your words in it and the new call is judged again"
                   className="px-2 py-0.5 rounded text-[11px] font-mono text-muted hover:text-accent border border-line cursor-pointer"
                 >
-                  Predict again
+                  {record.skipped ? 'Predict again' : 'Edit prediction'}
                 </button>
                 <button
                   onClick={(event) => onClose(event.detail === 0)}

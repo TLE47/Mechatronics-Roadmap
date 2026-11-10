@@ -104,19 +104,21 @@ Complete `distance_2d` (`TODO 1`) and `clamp_cmd` (`TODO 2`), then write the `as
 1. **Results** — the names each TODO asks you to update or return; the TODO prompt names the result it wants.
 1. **Given values** — keep every value that a TODO does not name unchanged.
 
+> **Term — eight-bit range.** A value stored in **8 bits** has $2^8 = 256$ possible states, numbered `0` to `255` (the same byte range Lesson P.8 builds). A command of `300` or `-20` does not fit: clamping means pulling it back to the nearest end of that range, so `300` becomes `255` and `-20` becomes `0`.
+
 ```python
 import math
 
 
 def distance_2d(x_m, y_m):
     # TODO 1: Return the straight-line distance from the origin to this point.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 
 def clamp_cmd(cmd):
-    # TODO 2: Return the command, kept inside its eight-bit range.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    # TODO 2: Return the command, kept inside its eight-bit range (0 to 255).
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0
 
 
@@ -124,7 +126,7 @@ d1 = distance_2d(3.0, 4.0)
 d2 = distance_2d(0.6, 0.8)
 
 # TODO 3: Write the two self-checks this lesson teaches: one for the distance results and one for the clamp bounds.
-#         Keep the existing print pass line; use the values already computed above, not typed-in Expected Output.
+#         Keep the existing print pass line; use the values already computed above, not hard-coded Expected Output.
 # result, and the command's eight-bit range. Then print the pass line.
 
 print(f"Distance (3, 4): {d1:.2f} m | Distance (0.6, 0.8): {d2:.2f} m")

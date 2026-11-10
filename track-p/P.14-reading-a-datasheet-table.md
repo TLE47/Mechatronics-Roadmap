@@ -129,7 +129,7 @@ def select_safe_driver(supply_v):
 
 def datasheet_val_to_base_si(value, unit_str):
     # TODO 3: Return the figure in base SI units, read with its unit column.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 

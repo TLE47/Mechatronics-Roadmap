@@ -19,10 +19,13 @@
  * implementation detail, and every knob here is one a learner can reason about in a second.
  */
 
-import { DEFAULT_TAPE, isTapeId, tapeById } from './musicCatalogue.ts';
+import { DEFAULT_TAPE, isInstrumentId, isTapeId, tapeById, type InstrumentId } from './musicCatalogue.ts';
 
 /** How the music changes without a press. */
 export type RandomizeMode = 'off' | 'time' | 'lesson';
+
+/** An instrument recipe, or `off` for the two plain sines the drone has always used. */
+export type InstrumentChoice = InstrumentId | 'off';
 
 export interface SoundPrefs {
   /** The master. Off means nothing is scheduled and the context is suspended. */
@@ -56,6 +59,18 @@ export interface SoundPrefs {
    * chosen tape stays the one the next page shows and the timer starts again from that choice.
    */
   randomize: RandomizeMode;
+  /**
+   * The drone's harmonic recipe: `off` keeps the two-sine bed, an instrument turns the same sustained
+   * chord into a piano, guitar, flute or violin. It only sounds with the Drone choice; a tape steps
+   * over it, which is why choosing an instrument also chooses the drone.
+   */
+  instrument: InstrumentId | 'off';
+  /**
+   * Tapes the randomiser must never choose. A learner who likes the bed but cannot read over the
+   * chiptune can keep it in the catalogue and out of the shuffle; the chosen tape is never a
+   * candidate anyway, and an excluded tape can still be played by pressing it.
+   */
+  excluded: string[];
 }
 
 export const SOUND_STORAGE_KEY = 'mechalab_sound_v1';
@@ -76,6 +91,8 @@ export const DEFAULT_SOUND_PREFS: SoundPrefs = {
   clicks: true,
   tape: DEFAULT_TAPE,
   randomize: 'off',
+  instrument: 'off',
+  excluded: [],
 };
 
 /** A level that would not round-trip is a level the slider could never show. */
@@ -115,6 +132,11 @@ export function parseSoundPrefs(raw: string | null | undefined): SoundPrefs {
       clicks: parsed.clicks !== false,
       tape: storedTape(parsed.tape, parsed.beds),
       randomize: isRandomizeMode(parsed.randomize) ? parsed.randomize : DEFAULT_SOUND_PREFS.randomize,
+      instrument: isInstrumentId(parsed.instrument) ? parsed.instrument : 'off',
+      // Unknown ids are dropped rather than kept: a catalogue can lose an id between releases.
+      excluded: Array.isArray(parsed.excluded)
+        ? [...new Set(parsed.excluded.filter((id): id is string => isTapeId(id) && id !== 'drone'))]
+        : [],
     };
   } catch {
     return { ...DEFAULT_SOUND_PREFS };
@@ -179,6 +201,10 @@ export function writeSoundPrefs(patch: Partial<SoundPrefs>): SoundPrefs {
     clicks: typeof patch.clicks === 'boolean' ? patch.clicks : base.clicks,
     tape: isTapeId(patch.tape) ? patch.tape : base.tape,
     randomize: isRandomizeMode(patch.randomize) ? patch.randomize : base.randomize,
+    instrument: isInstrumentId(patch.instrument) ? patch.instrument : base.instrument,
+    excluded: Array.isArray(patch.excluded)
+      ? [...new Set(patch.excluded.filter((id): id is string => isTapeId(id) && id !== 'drone'))]
+      : base.excluded,
   };
   current = next;
   const store = storage();

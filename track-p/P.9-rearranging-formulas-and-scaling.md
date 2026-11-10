@@ -114,19 +114,19 @@ Complete `solve_for_speed` (`TODO 1`), `scale10_to_five` (`TODO 2`), and `scale1
 ```python
 def solve_for_speed(x_final, x_start, time_s):
     # TODO 1: Return the average speed that covers this distance in this time.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 
 def scale10_to_five(raw_10bit):
     # TODO 2: Return this ten-bit reading on the five-volt scale.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 
 def scale10_to_cmd8(raw_10bit):
     # TODO 3: Return the same reading expressed as an eight-bit command.
-    #         Compute it from the function's parameters and the starter values; do not return a typed-in final value.
+    #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0.0
 
 

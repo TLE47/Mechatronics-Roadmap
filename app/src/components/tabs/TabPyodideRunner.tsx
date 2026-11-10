@@ -56,6 +56,7 @@ import {
 import { runAnnouncement } from '../../announce';
 import { MAX_SHARE_URL, type SharedAttempt } from '../../shareLink';
 import { StudyTimerRow } from '../StudyTimerRow';
+import { StudyClockReminder } from '../StudyClockReminder';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { findDefinition } from '../../symbolIndex';
 
@@ -2273,6 +2274,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 </button>
                 {showFirstGuide && <GuideToggle hidden={guideHidden} onToggle={toggleGuide} phone />}
               </div>
+              <StudyClockReminder lessonId={selectedId} />
               <div className="overflow-x-auto">
                 <StudyTimerRow lessonId={selectedId} compact />
               </div>
@@ -2426,6 +2428,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 the automatic sitting caught it. The hours land in the same store Today reads. On a
                 phone the compact strip above this card already carries it, and two clocks on one
                 screen would count the same stretch twice. */}
+            {!isPhone && <StudyClockReminder lessonId={selectedId} />}
             {!isPhone && <StudyTimerRow lessonId={selectedId} />}
 
             {/* The Share button's answer. A polite status, not an alert: it is a confirmation of

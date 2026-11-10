@@ -29,6 +29,12 @@ export interface AnalysisOption {
   type: string;
   /** The docstring's full text, already capped by the worker. */
   doc: string;
+  /**
+   * The call itself, as `freq_to_period_ms(freq_hz)` — the answer to "what arguments does this
+   * take?", which is the question a completion row is actually asked. Absent for names that cannot
+   * be called.
+   */
+  signature?: string;
 }
 
 export interface LintNote {
@@ -168,7 +174,10 @@ export function toCompletionOptions(options: AnalysisOption[]): CompletionOption
     if (seen.has(option.name)) continue;
     seen.add(option.name);
     const doc = typeof option.doc === 'string' ? option.doc : '';
-    const detail = docFirstLine(doc);
+    const signature = typeof option.signature === 'string' ? option.signature.trim() : '';
+    // The call wins over the docstring's first line: a learner choosing a function wants its
+    // arguments, not the sentence describing it.
+    const detail = signature || docFirstLine(doc);
     mapped.push({
       label: option.name,
       type: completionType(option.type),

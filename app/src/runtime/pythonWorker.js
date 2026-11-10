@@ -444,10 +444,18 @@ def __mechalab_complete(code, line, column):
             doc = (completion.docstring() or "").strip()
         except Exception:
             doc = ""
+        # The call's own signature, so a function row shows the arguments it takes instead of only
+        # the name. Jedi hands these out per completion; a name that cannot be called has none.
+        try:
+            signatures = completion.get_signatures()
+            signature = str(signatures[0].to_string() or "").strip() if signatures else ""
+        except Exception:
+            signature = ""
         items.append({
             "name": completion.name,
             "type": completion.type,
             "doc": doc[:400],
+            "signature": signature[:160],
         })
     return _mechalab_json.dumps(items)
 
