@@ -2280,7 +2280,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               </div>
             </div>
           )}
-
         {/* The lesson text, the editor and everything that reports on it. Only these three are the
             preset's grid: the lesson card above describes all of them, and the run banners
             between belong to the run, not to a column. */}
@@ -2430,7 +2429,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 screen would count the same stretch twice. */}
             {!isPhone && <StudyClockReminder lessonId={selectedId} />}
             {!isPhone && <StudyTimerRow lessonId={selectedId} />}
-
             {/* The Share button's answer. A polite status, not an alert: it is a confirmation of
                 something the learner just asked for, and pressing Share twice must not trap them. */}
             {/* Format's answer: the file was tidied, it already was, or why not. A formatter that

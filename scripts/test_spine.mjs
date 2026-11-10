@@ -286,7 +286,7 @@ check('the matrix footer totals the rows it prints, not a second hand-typed numb
   }
   assert.equal(
     costLabel(sums),
-    '169.85–214.5 h · arm 89.85–134.5 h · depth 80 h',
+    '171.35–217.5 h · arm 91.35–137.5 h · depth 80 h',
     'the matrix footer must print the same spelled-out layers as the step cards'
   );
   assert.ok(

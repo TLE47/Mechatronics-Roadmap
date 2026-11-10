@@ -154,8 +154,8 @@ async function main() {
         : [];
     });
     assert.deepEqual(
-      trayOrder.slice(0, 5),
-      ['btn-home', 'btn-open-lessons', 'btn-open-studio', 'btn-open-micro', 'btn-open-palette'],
+      trayOrder.slice(0, 6),
+      ['btn-home', 'btn-open-review', 'btn-open-lessons', 'btn-open-studio', 'btn-open-micro', 'btn-open-palette'],
       'Lessons, Free study and micro-learning must sit between Home and Search in the Navigate tray'
     );
     await headerStudio.click();
