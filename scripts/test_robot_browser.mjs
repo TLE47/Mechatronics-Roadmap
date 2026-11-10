@@ -7,7 +7,9 @@
  * the values that code binds, and the run leaves main.py byte-for-byte unchanged. It also proves
  * the tab is ungraded, that Reset clears it, that Stop and Reset clear the line box mid-run, that a
  * failing program leaves no invented reading, that the step-speed switch selects without editing or
- * grading, and that the same run fits and works at 360x740, 390x844 and 412x915.
+ * grading, and that the same run fits and works at 360x740, 390x844 and 412x915. At 1440x900 the
+ * arena is a desktop surface with room to spread out, so the same run also has to keep its 16px
+ * radius, one Live signals header, the four drawn speed modes, and labels that never share a pixel.
  */
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright-core';
@@ -956,6 +958,149 @@ async function assertRobotTourPhone(browser, baseUrl) {
   }
 }
 
+// The arena is a desktop surface too: at 1440x900 it has room to spread out, so its readability is
+// measurable rather than a matter of taste. This walks the two scenes that carry the most text,
+// leaves the run on Instant so the labels are final, and requires the merged panel's single header,
+// the four drawn speed modes and a 16px radius around labels that neither overlap nor escape.
+async function assertDesktopArena(browser, baseUrl) {
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 900 },
+    reducedMotion: 'reduce',
+  });
+  await seedTourSeen(context);
+  await seedRobotTourSeen(context);
+  const page = await context.newPage();
+  const expectedSpeeds = [
+    { id: 'slow', label: '0.5×' },
+    { id: 'normal', label: '1×' },
+    { id: 'fast', label: '2×' },
+    { id: 'instant', label: 'Instant' },
+  ];
+  try {
+    for (const lessonId of ['P.1', 'P.4']) {
+      const scenario = ROBOT_SCENARIOS.find((entry) => entry.lessonId === lessonId);
+      assert.ok(scenario, 'the desktop audit needs the ' + lessonId + ' robot lesson');
+      await openRobot(page, baseUrl, lessonId);
+      await setEditorCode(page, scenario.lesson.fullSolution);
+      await waitForEditor(page);
+      await page.getByTestId('robot-speed-instant').click();
+      await page.getByTestId('robot-run').click();
+      await waitForReading(page);
+      await waitForIdle(page);
+
+      const audit = await page.evaluate(() => {
+        const visible = (selector) =>
+          [...document.querySelectorAll(selector)].filter(
+            (node) => node.getBoundingClientRect().height > 0
+          );
+        const arena = visible('.robot-arena')[0];
+        const svg = arena ? arena.querySelector('svg') : null;
+        const labels = svg
+          ? [...svg.querySelectorAll('text')]
+              .map((node) => ({
+                text: (node.textContent || '').trim(),
+                box: node.getBoundingClientRect(),
+              }))
+              .filter((entry) => entry.text && entry.box.width > 0 && entry.box.height > 0)
+          : [];
+        const overlaps = [];
+        for (let i = 0; i < labels.length; i += 1) {
+          for (let j = i + 1; j < labels.length; j += 1) {
+            const a = labels[i].box;
+            const b = labels[j].box;
+            const sharedX = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+            const sharedY = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+            if (sharedX > 1 && sharedY > 1) {
+              overlaps.push(labels[i].text + ' / ' + labels[j].text);
+            }
+          }
+        }
+        const frame = arena ? arena.getBoundingClientRect() : null;
+        const outside = frame
+          ? labels
+              .filter(
+                (entry) =>
+                  entry.box.left < frame.left - 1 ||
+                  entry.box.top < frame.top - 1 ||
+                  entry.box.right > frame.right + 1 ||
+                  entry.box.bottom > frame.bottom + 1
+              )
+              .map((entry) => entry.text)
+          : [];
+        const pane = visible('[data-testid="robot-pane"]')[0];
+        return {
+          arena: frame ? { width: Math.round(frame.width), height: Math.round(frame.height) } : null,
+          radius: arena ? getComputedStyle(arena).borderRadius : null,
+          labels: labels.length,
+          overlaps,
+          outside,
+          paneOverflow: pane ? pane.scrollWidth - pane.clientWidth : -1,
+          pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+          liveToggles: visible('[data-testid="robot-live-toggle"]').length,
+          speeds: visible('button[data-testid^="robot-speed-"]').map((button) => {
+            const box = button.getBoundingClientRect();
+            return {
+              id: (button.getAttribute('data-testid') || '').replace('robot-speed-', ''),
+              text: (button.textContent || '').replace(/\s+/g, ' ').trim(),
+              pressed: button.getAttribute('aria-pressed'),
+              drawn: box.width >= 24 && box.height >= 20,
+            };
+          }),
+        };
+      });
+
+      const tag = lessonId + ' at 1440x900';
+      assert.equal(audit.radius, '16px', tag + ': the arena radius must stay 16px, got ' + audit.radius);
+      assert.equal(audit.liveToggles, 1, tag + ': one Live signals header, got ' + audit.liveToggles);
+      assert.deepEqual(
+        audit.speeds.map((speed) => speed.id),
+        expectedSpeeds.map((speed) => speed.id),
+        tag + ': the four speed modes must be present, got ' + audit.speeds.map((speed) => speed.id).join(', ')
+      );
+      for (const [index, speed] of audit.speeds.entries()) {
+        const expected = expectedSpeeds[index];
+        assert.ok(
+          speed.drawn,
+          tag + ': the ' + expected.id + ' speed mode must be drawn, got ' + JSON.stringify(speed)
+        );
+        assert.equal(
+          speed.text,
+          expected.label,
+          tag + ': the ' + expected.id + ' speed mode must read ' + JSON.stringify(expected.label)
+        );
+      }
+      assert.equal(
+        audit.speeds.find((speed) => speed.id === 'instant')?.pressed,
+        'true',
+        tag + ': the run must be paced by Instant'
+      );
+      assert.ok(audit.labels >= 4, tag + ': the arena must draw its labels, got ' + audit.labels);
+      assert.deepEqual(
+        audit.overlaps,
+        [],
+        tag + ': no two arena labels may share pixels, got ' + audit.overlaps.join(', ')
+      );
+      assert.deepEqual(
+        audit.outside,
+        [],
+        tag + ': every arena label must stay inside the arena, got ' + audit.outside.join(', ')
+      );
+      assert.equal(audit.paneOverflow, 0, tag + ': the pane must not overflow, got ' + audit.paneOverflow);
+      assert.equal(audit.pageOverflow, 0, tag + ': the page must not overflow, got ' + audit.pageOverflow);
+      assert.ok(
+        audit.arena && audit.arena.width >= 380,
+        tag + ': the arena must spread to its column, got ' + JSON.stringify(audit.arena)
+      );
+      console.log(
+        '  ok   ' + tag + ': 16px radius, one Live signals header, four drawn speeds, ' +
+          audit.labels + ' labels with no shared pixel'
+      );
+    }
+  } finally {
+    await context.close();
+  }
+}
+
 // The combined gate hands over its warm server; a standalone run owns one.
 const own = process.env.E2E_BASE_URL ? null : await startDevServer(process.cwd());
 const BASE = own ? own.baseUrl : (process.env.E2E_BASE_URL.replace(/\/+$/, '') + '/');
@@ -988,6 +1133,9 @@ try {
   await assertRobotTour(browser, BASE);
   await assertRobotTourDismiss(browser, BASE);
   await assertRobotTourPhone(browser, BASE);
+
+  console.log('\nthe Robot tab at desktop width:');
+  await assertDesktopArena(browser, BASE);
 
   console.log('\nthe Robot tab at phone widths:');
   const phoneScenario = ROBOT_SCENARIOS.find((entry) => entry.lessonId === 'P.4');
