@@ -2,7 +2,7 @@
 """
 Automated Lesson Template & Topic-Alignment Linter (`scripts/lint_lessons.py`)
 
-Enforces all curriculum design rules across all 49 beginner lessons:
+Enforces all curriculum design rules across all 50 beginner lessons:
 - `track-p/P.*.md` (15 lessons: P.1 through P.12 + P.14 + P.15 + P.M)
 - `stage-0/S0.*.md` (11 lessons: S0.0 through S0.9 + S0.M)
 - `00-foundations/00.*.md` (3 lessons: 00.1 through 00.3)
@@ -14,7 +14,7 @@ Enforces all curriculum design rules across all 49 beginner lessons:
 - `06-robotics-and-autonomy/06.1-*.md` (1 lesson: 06.1)
 - `07-systems-hil-and-production/07.1-*.md` (1 lesson: 07.1)
 - `08-capstone-projects/08.1-*.md` (1 lesson: 08.1)
-Total: 49 beginner lessons (37 Python lessons, 7 Falstad circuit lessons, 5 Wokwi Arduino lessons).
+Total: 50 beginner lessons (37 Python lessons, 7 Falstad circuit lessons, 5 Wokwi Arduino lessons, 1 critical-thinking lesson).
 
 Checks enforced on every lesson:
 1. Valid YAML front matter (`--- ... ---`) containing `lesson_id`, `title`, `ideas` (1..2 entries),
@@ -395,9 +395,9 @@ def lint_file(filepath: str, glossary_entries: list[tuple[str, str, str]]) -> li
 
 def main():
     files = get_lesson_files()
-    if len(files) != 49:
+    if len(files) != 50:
         print(
-            f"ERROR: Expected 49 beginner lesson files (15 Track P + 11 Stage 0 + 23 Tracks 00-08 Tier 1), found {len(files)}"
+            f"ERROR: Expected 50 beginner lesson files (15 Track P + 11 Stage 0 + 24 Tracks 00-08 Tier 1), found {len(files)}"
         )
         sys.exit(1)
 

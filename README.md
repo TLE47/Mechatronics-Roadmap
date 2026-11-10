@@ -58,7 +58,7 @@
 
 **What this is.** A free, browser-based course that starts from no coding, electronics, or maths past school arithmetic and ends with a working simulated two-joint robot arm. You read one small idea, write it in Python, and a lesson only counts when its checks pass.
 
-<!-- sim-route:hours -->**≈121–212 focused hours**<!-- /sim-route --> to the arm · <!-- sim-route:full-hours -->**≈201–292 with the optional depth pass**<!-- /sim-route --> · **\$0 in hardware** — everything runs in your browser; an optional bench starts at \$15.
+<!-- sim-route:hours -->**≈123–215 focused hours**<!-- /sim-route --> to the arm · <!-- sim-route:full-hours -->**≈203–295 with the optional depth pass**<!-- /sim-route --> · **\$0 in hardware** — everything runs in your browser; an optional bench starts at \$15.
 
 **Focused hours, not elapsed time.** The first count is the arm route: time with its lessons open, excluding setup, debugging and re-reading. At 6 hours a week, plan for **2–4 years** for the arm once that overhead is counted; the full course with the optional depth pass is **3–5 years**, and the minimum viable finish is about **1.5–2.5 years** at the same pace. [The arithmetic is below.](#how-long-this-really-takes)
 
@@ -103,7 +103,7 @@ _Rounded to whole hours: the ten rows add to ≈121–212 for the arm. With the 
 
 <!-- route:lessons -->49<!-- /route --> lessons and <!-- sim-route:modules -->**17 arm + 23 depth modules**<!-- /sim-route --> you practise with. All 49 lessons and the 17 arm modules are the arm route; the 23 depth modules are the optional second pass; another <!-- sim-route:extensions -->**10 optional modules (47.5 focused hours)**<!-- /sim-route --> sit outside the route's two passes. Skipping the depth and optional work still leaves a finished arm.
 
-The focused hours are targets, not measurements: each page's own estimate, summed by [`scripts/generate_sim_route.py`](scripts/generate_sim_route.py): <!-- sim-route:hours-basis -->the route's high end is a slow-learner figure on 49 of 66 pages and a single estimate on the other 17, so plan against it as a floor and expect it to rise as those pages are measured<!-- /sim-route -->. No outside learner has completed the route yet. [`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md) is the arm route, [`docs/DEPTH.md`](docs/DEPTH.md) is the depth pass, and `--check` fails CI if a count or hour drifts from the lessons.
+The focused hours are targets, not measurements: each page's own estimate, summed by [`scripts/generate_sim_route.py`](scripts/generate_sim_route.py): <!-- sim-route:hours-basis -->the route's high end is a slow-learner figure on 50 of 67 pages and a single estimate on the other 17, so plan against it as a floor and expect it to rise as those pages are measured<!-- /sim-route -->. No outside learner has completed the route yet. [`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md) is the arm route, [`docs/DEPTH.md`](docs/DEPTH.md) is the depth pass, and `--check` fails CI if a count or hour drifts from the lessons.
 
 > [!TIP]
 > **One working arm is a finish line, not a consolation prize.** The [minimum viable finish](#the-minimum-viable-finish) is 48 pages and ≈94–153 focused hours. Everything after it is optional depth.

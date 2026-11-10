@@ -13,7 +13,7 @@ After it, there are two further layers, each with its own generated page: the **
 pass** in [`DEPTH.md`](DEPTH.md) (23 Tier 2/3 modules, taken in the same step order) and
 the **Extensions** in [`EXTENSIONS.md`](EXTENSIONS.md). Neither is required for the arm.
 
-**Arm route total: ≈121–212 focused hours** for 17 arm modules and all 49 lessons. The depth pass is 80 hours; the full course is ≈201–292.
+**Arm route total: ≈123–215 focused hours** for 17 arm modules and all 50 lessons. The depth pass is 80 hours; the full course is ≈203–295.
 
 **Route status: `author-dogfood`** — the author has run every page and no outside learner has finished this route, so every hour is a target rather than a measurement.
 
@@ -82,8 +82,9 @@ flowchart LR
 | Step 5 · Build the arm: mechanics | `02.3` 2-Link Planar Arm Inverse Kinematics (x, y -> theta_1, theta_2) and Reachability | 1.5-4 |
 | Step 5 · Build the arm: mechanics | `02.4` Rotational Dynamics (tau_net = I_rot * alpha), Gear Ratios (N) and Reflected Inertia | 1.5-3.5 |
 | Step 5 · Build the arm: mechanics | `02.5` Practical Robot Mechanisms — Double-Shear Bearings, Timing Belts and 3D-Printed Parts | 1.5-3 |
+| Step 5 · Build the arm: mechanics | `02.6` Think in Comments — Draft the Logic Before You Type Code | 1.5-3 |
 | Step 5 · Build the arm: mechanics | `02-mechanics.T1.02a` Free-Body Diagrams, Gravity Lever-Arm Torque & Gear Speed/Torque Power Scaling **· arm** | 3.5 |
-| Step 5 · Build the arm: mechanics | **5 lessons + 1 arm module, together** | ≈10–20 |
+| Step 5 · Build the arm: mechanics | **6 lessons + 1 arm module, together** | ≈12–23 |
 | Step 6 · Measure the joint: sensors | `03.1` Quadrature Encoders (4x Counting) and 12-Bit Magnetic Angle Sensors | 1.5-3.5 |
 | Step 6 · Measure the joint: sensors | `03.2` 3-Phase Brushless Motors, Pole Pairs and 90-Degree Electrical Torque Lead | 1.5-3.5 |
 | Step 6 · Measure the joint: sensors | `03.3` Track 02 + 03 Integration Micro-Lab — Read Dual Encoders to Compute 2-Link End-Effector Position | 0.35-1 |
@@ -107,20 +108,20 @@ flowchart LR
 | Step 10 · Put it together: the 2-DOF arm | `08.1` Tier 1 Boss Milestone — 1 kHz 2-DOF Compliant Arm Plant, Figure-8 PD Control & CRC-8 Telemetry | 2-4.5 |
 | Step 10 · Put it together: the 2-DOF arm | `08-capstones.T3.07a` System Error/Latency Budgeting, Cross-Domain Interface Contracts & Pre-Bring-Up Safety Sign-Off **· arm** | 4.5 |
 | Step 10 · Put it together: the 2-DOF arm | **1 lesson + 1 arm module, together** | ≈6–9 |
-| **Arm route total** | **17 arm modules + all 49 lessons (66 pages)** | **121.1-212** |
+| **Arm route total** | **17 arm modules + all 50 lessons (67 pages)** | **122.6-215** |
 
 These are **focused hours**: time with the page open, excluding setup, debugging and
 re-reading. The low end is every page's `est_hours` / `typical_hours`; the high end is
 its `slow_learner_hours` where the page states one. The README gives the calendar
 estimate these become once first-time overhead is counted.
 
-**Estimate coverage:** The route's high end is a slow-learner figure on 49 of 66 pages and a single estimate on the other 17, so plan against it as a floor and expect it to rise as those pages are measured.
+**Estimate coverage:** The route's high end is a slow-learner figure on 50 of 67 pages and a single estimate on the other 17, so plan against it as a floor and expect it to rise as those pages are measured.
 
 Nothing in this table is hand-entered, and `--check` fails when it drifts from the pages.
 
 The stage rows above are rounded to whole hours with the same allocation as the README's
 step table, so `16.75-42.5` appears as `≈17–43` in both places; the page rows and the
-arm total keep the exact sums (`121.1-212`).
+arm total keep the exact sums (`122.6-215`).
 
 ## What is not on this page
 

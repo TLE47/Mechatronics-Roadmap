@@ -76,7 +76,7 @@ overhead the README explains (5x focused hours) and plan **1.5-2.5 years**; at 1
 
 ## What the minimum leaves out
 
-- **17 prose lessons and the capstone's graded exercise**, ≈27–59 focused hours: the rest of the arm route in [`SIM_ROUTE.md`](SIM_ROUTE.md). They are arm reading, not depth work.
+- **18 prose lessons and the capstone's graded exercise**, ≈29–62 focused hours: the rest of the arm route in [`SIM_ROUTE.md`](SIM_ROUTE.md). They are arm reading, not depth work.
 - **23 depth modules**, 80 focused hours: the separate depth pass in [`DEPTH.md`](DEPTH.md), taken after the arm.
 - **10 optional Extensions**, 47.5 focused hours. None is required for any
   finish line.
@@ -85,6 +85,6 @@ overhead the README explains (5x focused hours) and plan **1.5-2.5 years**; at 1
 
 ## What the arm route adds
 
-The arm route is **121.1-212 focused hours**: 17 arm modules and all 49 lessons (66 pages). It is the same arm with all of its reading and the capstone's graded exercise, not a different project.
+The arm route is **122.6-215 focused hours**: 17 arm modules and all 50 lessons (67 pages). It is the same arm with all of its reading and the capstone's graded exercise, not a different project.
 
-The depth pass is a second, optional route: **23 modules, 80-80 focused hours**, page by page in [`DEPTH.md`](DEPTH.md). The full course is the arm plus the depth pass, **201.1-292 focused hours**.
+The depth pass is a second, optional route: **23 modules, 80-80 focused hours**, page by page in [`DEPTH.md`](DEPTH.md). The full course is the arm plus the depth pass, **202.6-295 focused hours**.
