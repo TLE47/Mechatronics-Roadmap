@@ -468,7 +468,7 @@ jobs:
       - name: "Check the surface snapshot: every tab in every palette is still shaped the same"
         run: |
           set +e
-          npm run check:snapshot -- --json > /tmp/surface-drift.json 2>/tmp/surface-drift.err
+          node scripts/snapshot_surfaces.mjs --json > /tmp/surface-drift.json 2>/tmp/surface-drift.err
           status=$?
           cat /tmp/surface-drift.err
           if [ "$status" -ne 0 ]; then
