@@ -2133,12 +2133,29 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         );
         await page.getByTestId('workflow-group-title-0').fill('Winding → driver');
         await page.waitForTimeout(300);
-        const beforeGroupDrag = await page.evaluate(() =>
-          [...document.querySelectorAll('[data-node-id]')].map((card) => ({
-            id: card.getAttribute('data-node-id'),
-            left: parseFloat(card.style.left),
-            top: parseFloat(card.style.top),
-          }))
+        // Read the cards the frame actually holds, not every card on the paper. The box is drawn
+        // across the visible canvas, so a card that scrolled below it is legitimately outside; only
+        // the members are expected to travel. This helper is also the reload/deletion check below.
+        const readFrameCards = () =>
+          page.evaluate(() => {
+            const frame = document.querySelector('[data-testid="workflow-group-0"]').getBoundingClientRect();
+            return [...document.querySelectorAll('[data-node-id]')]
+              .filter((card) => {
+                const rect = card.getBoundingClientRect();
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top + rect.height / 2;
+                return cx >= frame.left && cx <= frame.right && cy >= frame.top && cy <= frame.bottom;
+              })
+              .map((card) => ({
+                id: card.getAttribute('data-node-id'),
+                left: parseFloat(card.style.left),
+                top: parseFloat(card.style.top),
+              }));
+          });
+        const beforeGroupDrag = await readFrameCards();
+        assert.ok(
+          beforeGroupDrag.length >= 2,
+          `a frame drag needs its members; the drawn frame held ${beforeGroupDrag.length}`
         );
         // The grip on the chip is the frame's handle: it is drawn above the cards and is a whole
         // control row tall, so it can be grabbed where a mouse and a finger both can. Scroll it into
@@ -2149,14 +2166,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         // gliding. A press that lands where the grip was, rather than where it is, moves nothing (the
         // CI flake was `0 !== 40`). Sample the box until two readings agree, prove the grip is the
         // element under the pointer, and retry the whole drag once if the frame still did not move.
-        const readGroupCards = () =>
-          page.evaluate(() =>
-            [...document.querySelectorAll('[data-node-id]')].map((card) => ({
-              id: card.getAttribute('data-node-id'),
-              left: parseFloat(card.style.left),
-              top: parseFloat(card.style.top),
-            }))
-          );
+        const readGroupCards = readFrameCards;
         const dragFrameByChip = async () => {
           const grip = page.getByTestId('workflow-group-grip-0');
           await grip.scrollIntoViewIfNeeded();
@@ -2199,22 +2209,35 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           await dragFrameByChip();
           await page.waitForTimeout(400);
           afterGroupDrag = await readGroupCards();
-          const moved =
-            afterGroupDrag.length === beforeGroupDrag.length &&
-            beforeGroupDrag.every((before) => {
-              const after = afterGroupDrag.find((card) => card.id === before.id);
-              return after && Math.round(after.left - before.left) === 40;
-            });
-          if (moved) break;
+          const movedCount = beforeGroupDrag.filter((before) => {
+            const after = afterGroupDrag.find((card) => card.id === before.id);
+            return (
+              after &&
+              Math.round(after.left - before.left) === 40 &&
+              Math.round(after.top - before.top) === 40
+            );
+          }).length;
+          // Retry only a missed press (nothing moved). If some members moved, the frame is being
+          // carried and a second drag would compound a real failure into 80; report the deltas.
+          if (movedCount === beforeGroupDrag.length || movedCount > 0) break;
         }
-        for (const before of beforeGroupDrag) {
+        const deltas = beforeGroupDrag.map((before) => {
           const after = afterGroupDrag.find((card) => card.id === before.id);
+          return {
+            id: before.id,
+            dx: after ? Math.round(after.left - before.left) : null,
+            dy: after ? Math.round(after.top - before.top) : null,
+          };
+        });
+        for (const delta of deltas) {
           assert.equal(
-            Math.round(after.left - before.left),
+            delta.dx,
             40,
-            'dragging a frame by its chip must move every card in it by the same dx'
+            `dragging a frame by its chip must move every member by the same dx (${deltas
+              .map((card) => `${card.id}: ${card.dx}x${card.dy}`)
+              .join(', ')})`
           );
-          assert.equal(Math.round(after.top - before.top), 40, 'and the same dy');
+          assert.equal(delta.dy, 40, 'and the same dy');
         }
         const cardsInFrame = () =>
           page.evaluate(() => {
