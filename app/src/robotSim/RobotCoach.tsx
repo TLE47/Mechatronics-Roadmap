@@ -7,7 +7,7 @@ import {
 } from './robotTour';
 
 /**
- * The Robot tab's first-run coach mark (`app/src/robotSim/RobotTour.tsx`).
+ * The Robot tab's first-run coach mark (`app/src/robotSim/RobotCoach.tsx`).
  *
  * It follows the first-lesson tour's rules: a ring with a shadow instead of a backdrop, no focus
  * trap, and a card that sits beside the thing it names. The learner can press Run, open a chip or
@@ -20,7 +20,7 @@ import {
  * a font swaps in.
  */
 
-interface RobotTourProps {
+interface RobotCoachProps {
   step: RobotTourStep;
   index: number;
   onNext: () => void;
@@ -78,7 +78,7 @@ function placeCard(rect: Rect, viewportWidth: number, viewportHeight: number, ca
   return { width, left, top };
 }
 
-export function RobotTour({ step, index, onNext, onBack, onDismiss }: RobotTourProps) {
+export function RobotCoach({ step, index, onNext, onBack, onDismiss }: RobotCoachProps) {
   const [rect, setRect] = useState<Rect | null>(null);
   const [cardHeight, setCardHeight] = useState(0);
   const [isPhone, setIsPhone] = useState<boolean>(() => {

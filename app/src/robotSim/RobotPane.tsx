@@ -27,7 +27,7 @@ import {
   type RobotSourceLines,
 } from './robotMission';
 import { RobotStage } from './RobotStage';
-import { RobotTour } from './RobotTour';
+import { RobotCoach } from './RobotCoach';
 import {
   dismissRobotTour,
   nextRobotTour,
@@ -551,7 +551,7 @@ export default function RobotPane({ lessonId, robot }: { lessonId: string; robot
       data-replay={replayActive ? 'true' : 'false'}
     >
       {tourOpen && (
-        <RobotTour
+        <RobotCoach
           step={tourStep}
           index={robotTour.stepIndex}
           onNext={advanceTour}
