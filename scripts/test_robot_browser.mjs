@@ -743,6 +743,83 @@ async function robotTourRecord(page) {
   }, ROBOT_TOUR_KEY);
 }
 
+async function assertRunWithVerify(browser, baseUrl) {
+  // No `__mechalabPredictFirst` here on purpose: this walks the graded path the toolbar really
+  // starts, and answers the gate with its own Skip — a recorded decision, not a disabled check.
+  const scenario = ROBOT_SCENARIOS[0];
+  const context = await browser.newContext();
+  await seedTourSeen(context);
+  await seedRobotTourSeen(context);
+  const page = await context.newPage();
+  const toggle = () => page.getByTestId('robot-autorun');
+  const readingNow = () =>
+    page.evaluate(
+      () => document.querySelector('[data-testid="robot-stage"]')?.getAttribute('data-reading') || ''
+    );
+  const waitForGradedRun = () =>
+    page.waitForFunction(
+      () => {
+        const button = document.querySelector('[data-testid="btn-run-verify"]');
+        return Boolean(button && !button.disabled);
+      },
+      null,
+      { timeout: RUN_TIMEOUT }
+    );
+  try {
+    await openRobot(page, baseUrl, scenario.lessonId);
+    await setEditorCode(page, scenario.lesson.fullSolution);
+    await waitForEditor(page);
+
+    assert.equal(await toggle().getAttribute('aria-checked'), 'false', 'Run with Verify starts off');
+    await toggle().click();
+    assert.equal(await toggle().getAttribute('aria-checked'), 'true', 'the switch turns on');
+    // The switch is storage, not state: a reload shows what was chosen, not a default.
+    await openRobot(page, baseUrl, scenario.lessonId);
+    assert.equal(
+      await toggle().getAttribute('aria-checked'),
+      'true',
+      'the Run with Verify choice is remembered across a reload'
+    );
+
+    // On: one graded Run & Verify also runs the robot, with no press of Run robot.
+    await setEditorCode(page, scenario.lesson.fullSolution);
+    await waitForEditor(page);
+    await page.getByTestId('robot-reset').click();
+    assert.equal(await readingNow(), '', 'Reset leaves the arena empty before the run');
+    await page.getByTestId('btn-run-verify').click();
+    // The gate opens on the first graded run of a fresh browser. Waiting for its own button is the
+    // difference between answering the question and pressing Skip on a pane that has not painted.
+    const skip = page.getByTestId('btn-predict-skip');
+    try {
+      await skip.waitFor({ state: 'visible', timeout: 5000 });
+      await skip.click();
+    } catch {
+      // No gate: this lesson already has a prediction record.
+    }
+    await waitForReading(page);
+    await waitForIdle(page);
+    assertReading((await readStage(page)).reading, scenario.expected, 'Run with Verify');
+    console.log('  ok   Run with Verify runs the robot after the graded run');
+
+    // Off: the same press leaves the robot alone.
+    await toggle().click();
+    assert.equal(await toggle().getAttribute('aria-checked'), 'false', 'the switch turns off');
+    await page.getByTestId('robot-reset').click();
+    assert.equal(await readingNow(), '', 'Reset leaves the arena empty again');
+    await page.getByTestId('btn-run-verify').click();
+    await waitForGradedRun();
+    await page.waitForTimeout(1500);
+    assert.equal(
+      await readingNow(),
+      '',
+      'with Run with Verify off a graded run must not run the robot'
+    );
+    console.log('  ok   with Run with Verify off the same press leaves the robot empty');
+  } finally {
+    await context.close();
+  }
+}
+
 async function assertRobotTour(browser, baseUrl) {
   const context = await browser.newContext();
   await seedTourSeen(context);
@@ -904,6 +981,7 @@ try {
   await assertPartialFailureLeavesNoReading(page);
   await assertSpeedControl(page);
   await assertLiveSignalsToggle(page);
+  await assertRunWithVerify(browser, BASE);
   await assertStepByStep(page);
 
   console.log('\nthe first-run Robot guide:');

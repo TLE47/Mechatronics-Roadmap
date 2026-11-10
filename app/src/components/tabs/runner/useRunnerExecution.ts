@@ -431,6 +431,11 @@ export function useRunnerExecution({
   // attempt at the lesson and must never verify it (`app/src/editor/cells.ts`). Scratch is the third
   // case and the simplest: a page's snippet is not an attempt either, so every run in scratch is
   // ungraded however it was started - the button, the shortcut, the palette, watch or a slider.
+  // The in-flight guard, kept apart from the state it renders: a graded run has settled (and is
+  // about to announce itself) before React re-renders, and a listener that starts the next run
+  // must not read this one as still running. State answers the screen; this answers the executor.
+  const runningRef = useRef(false);
+
   const runPythonCode = async (
     sourceCode: string,
     lesson: PythonLessonItem = currentLessonRef.current,
@@ -450,6 +455,7 @@ export function useRunnerExecution({
     const attemptLessonId = lesson.id;
     let runId = 0;
 
+    runningRef.current = true;
     setIsRunning(true);
     // A new run is not paused: a bar left over from the previous one would describe a worker that
     // has already been replaced by this run.
@@ -721,6 +727,10 @@ export function useRunnerExecution({
       // Run with Verify: a graded run that has settled is the moment the Robot tab may take its own
       // instrumented pass. The robot's run is a separate, ungraded execution (it appends a probe),
       // so announcing here — after this verdict is complete — keeps the two apart.
+      // The run is settled: this ref is false here even though the render that started the run
+      // still says true. That is what lets the Robot tab's listener start its own pass from this
+      // callback without racing the commit.
+      runningRef.current = false;
       if (grade && !options.robot) announceVerifyFinished();
       if (stopFallbackRef.current) {
         clearTimeout(stopFallbackRef.current);
@@ -770,7 +780,7 @@ export function useRunnerExecution({
     scenario: RobotScenario,
     onCommand: (message: RobotCommandMessage) => Promise<RobotReply>
   ) => {
-    if (isRunning) return;
+    if (runningRef.current) return;
     robotPausedRef.current = false;
     robotStepOnceRef.current = false;
     setRobotPaused(false);
