@@ -7,9 +7,11 @@
  * the values that code binds, and the run leaves main.py byte-for-byte unchanged. It also proves
  * the tab is ungraded, that Reset clears it, that Stop and Reset clear the line box mid-run, that a
  * failing program leaves no invented reading, that the step-speed switch selects without editing or
- * grading, and that the same run fits and works at 360x740, 390x844 and 412x915. At 1440x900 the
- * arena is a desktop surface with room to spread out, so the same run also has to keep its 16px
- * radius, one Live signals header, the four drawn speed modes, and labels that never share a pixel.
+ * grading, and that the same run fits and works at 360x740, 390x844 and 412x915, where the arena's
+ * own labels are held to the same rule. At 1440x900 the arena is a desktop surface with room to
+ * spread out, so the same run also has to keep its 16px radius, one Live signals header, the four
+ * drawn speed modes, and labels that never share a pixel — in all four palettes, dark through high
+ * contrast, each reached by the header's own control.
  */
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright-core';
@@ -675,8 +677,35 @@ async function assertMobileViewport(browser, baseUrl, viewport, scenario) {
     assert.ok(layout.speed.height >= 24, at + ': the speed switch must keep a compact target');
     assert.equal(layout.tabSelected, 'true', at + ': the Robot tab must be selected');
     assert.equal(layout.tabVisible, true, at + ': the Robot tab must be visible');
+    const arena = await measureArena(page);
+    assert.ok(
+      arena.arena && arena.arena.width >= 200,
+      at + ': the phone arena must be drawn, got ' + JSON.stringify(arena.arena)
+    );
+    assert.ok(
+      arena.arena && arena.arena.width <= layout.stage.width + 1,
+      at + ': the arena must fit the stage, got ' + JSON.stringify(arena.arena)
+    );
+    assert.equal(arena.radius, '16px', at + ': the arena radius must stay 16px, got ' + arena.radius);
+    assert.ok(arena.labels >= 4, at + ': the phone arena must keep its labels, got ' + arena.labels);
+    assert.deepEqual(
+      arena.undrawn,
+      [],
+      at + ': every phone arena label must be drawn, got ' + arena.undrawn.join(', ')
+    );
+    assert.deepEqual(
+      arena.overlaps,
+      [],
+      at + ': no two phone arena labels may share pixels, got ' + arena.overlaps.join(', ')
+    );
+    assert.deepEqual(
+      arena.outside,
+      [],
+      at + ': every phone arena label must stay inside the arena, got ' + arena.outside.join(', ')
+    );
     console.log(
-      '  ok   ' + at + ' -> pane ' + Math.round(layout.pane.width) + 'px, stage ' + Math.round(layout.stage.width) + 'px'
+      '  ok   ' + at + ' -> pane ' + Math.round(layout.pane.width) + 'px, stage ' + Math.round(layout.stage.width) +
+        'px, arena ' + arena.labels + ' labels with no shared pixel'
     );
   } finally {
     await context.close();
@@ -958,10 +987,173 @@ async function assertRobotTourPhone(browser, baseUrl) {
   }
 }
 
+// The four palettes, in the order the desktop audit walks them: the stored default, the flip, the
+// paper control, and high contrast. Each has its own token set, so each gets its own measurement.
+const PALETTES = ['dark', 'light', 'paper', 'contrast'];
+
+const DESKTOP_SPEEDS = [
+  { id: 'slow', label: '0.5×' },
+  { id: 'normal', label: '1×' },
+  { id: 'fast', label: '2×' },
+  { id: 'instant', label: 'Instant' },
+];
+
+// One measurement of what the arena draws, shared by the desktop palette walk and the phone layout:
+// every SVG label with its box, the panel around it, and the controls beside it. A label counts only
+// when it has a box, and text that draws nothing is reported separately, so clipped or collapsed
+// text fails the audit instead of quietly leaving the count.
+async function measureArena(page) {
+  return page.evaluate(() => {
+    const visible = (selector) =>
+      [...document.querySelectorAll(selector)].filter(
+        (node) => node.getBoundingClientRect().height > 0
+      );
+    const arena = visible('.robot-arena')[0];
+    const svg = arena ? arena.querySelector('svg') : null;
+    const texts = svg
+      ? [...svg.querySelectorAll('text')]
+          .map((node) => ({
+            text: (node.textContent || '').trim(),
+            box: node.getBoundingClientRect(),
+          }))
+          .filter((entry) => entry.text)
+      : [];
+    const labels = texts.filter((entry) => entry.box.width > 0 && entry.box.height > 0);
+    const undrawn = texts
+      .filter((entry) => entry.box.width <= 0 || entry.box.height <= 0)
+      .map((entry) => entry.text);
+    const overlaps = [];
+    for (let i = 0; i < labels.length; i += 1) {
+      for (let j = i + 1; j < labels.length; j += 1) {
+        const a = labels[i].box;
+        const b = labels[j].box;
+        const sharedX = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+        const sharedY = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+        if (sharedX > 1 && sharedY > 1) {
+          overlaps.push(labels[i].text + ' / ' + labels[j].text);
+        }
+      }
+    }
+    const frame = arena ? arena.getBoundingClientRect() : null;
+    const outside = frame
+      ? labels
+          .filter(
+            (entry) =>
+              entry.box.left < frame.left - 1 ||
+              entry.box.top < frame.top - 1 ||
+              entry.box.right > frame.right + 1 ||
+              entry.box.bottom > frame.bottom + 1
+          )
+          .map((entry) => entry.text)
+      : [];
+    const pane = visible('[data-testid="robot-pane"]')[0];
+    return {
+      frame: frame
+        ? { left: frame.left, top: frame.top, right: frame.right, bottom: frame.bottom }
+        : null,
+      arena: frame ? { width: Math.round(frame.width), height: Math.round(frame.height) } : null,
+      radius: arena ? getComputedStyle(arena).borderRadius : null,
+      labels: labels.length,
+      undrawn,
+      overlaps,
+      outside,
+      paneOverflow: pane ? pane.scrollWidth - pane.clientWidth : -1,
+      pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      liveToggles: visible('[data-testid="robot-live-toggle"]').length,
+      speeds: visible('button[data-testid^="robot-speed-"]').map((button) => {
+        const box = button.getBoundingClientRect();
+        return {
+          id: (button.getAttribute('data-testid') || '').replace('robot-speed-', ''),
+          text: (button.textContent || '').replace(/\s+/g, ' ').trim(),
+          pressed: button.getAttribute('aria-pressed'),
+          drawn: box.width >= 24 && box.height >= 20,
+        };
+      }),
+    };
+  });
+}
+
+// Reach a palette the way a learner does — the header's flip, paper and contrast controls — and
+// prove the document took it. Each press persists that pick, so this walks the same path a
+// returning reader's stored choice takes; a reload would be the wrong way to change it here, and
+// would abort the idle engine import the pages audit's old reload used to trip on.
+async function pinPalette(page, wanted) {
+  for (let press = 0; press < 3; press += 1) {
+    const current = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
+    if (current === wanted) return;
+    const control =
+      wanted === 'paper'
+        ? 'btn-paper-toggle'
+        : wanted === 'contrast'
+          ? 'btn-contrast-toggle'
+          : 'btn-theme-toggle';
+    await page.getByTestId(control).click();
+    await page.waitForFunction(
+      (previous) => document.documentElement.getAttribute('data-theme') !== previous,
+      current,
+      { timeout: 5000 }
+    );
+  }
+  const landed = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
+  assert.equal(landed, wanted, 'the palette controls must reach ' + wanted + ', got ' + landed);
+}
+
+// The desktop readability contract, asserted against one measurement.
+function assertArenaLayout(audit, tag) {
+  assert.equal(audit.radius, '16px', tag + ': the arena radius must stay 16px, got ' + audit.radius);
+  assert.equal(audit.liveToggles, 1, tag + ': one Live signals header, got ' + audit.liveToggles);
+  assert.deepEqual(
+    audit.speeds.map((speed) => speed.id),
+    DESKTOP_SPEEDS.map((speed) => speed.id),
+    tag + ': the four speed modes must be present, got ' + audit.speeds.map((speed) => speed.id).join(', ')
+  );
+  for (const [index, speed] of audit.speeds.entries()) {
+    const expected = DESKTOP_SPEEDS[index];
+    assert.ok(
+      speed.drawn,
+      tag + ': the ' + expected.id + ' speed mode must be drawn, got ' + JSON.stringify(speed)
+    );
+    assert.equal(
+      speed.text,
+      expected.label,
+      tag + ': the ' + expected.id + ' speed mode must read ' + JSON.stringify(expected.label)
+    );
+  }
+  assert.equal(
+    audit.speeds.find((speed) => speed.id === 'instant')?.pressed,
+    'true',
+    tag + ': the run must be paced by Instant'
+  );
+  assert.ok(audit.labels >= 4, tag + ': the arena must draw its labels, got ' + audit.labels);
+  assert.deepEqual(
+    audit.undrawn,
+    [],
+    tag + ': every arena label must be drawn, got ' + audit.undrawn.join(', ')
+  );
+  assert.deepEqual(
+    audit.overlaps,
+    [],
+    tag + ': no two arena labels may share pixels, got ' + audit.overlaps.join(', ')
+  );
+  assert.deepEqual(
+    audit.outside,
+    [],
+    tag + ': every arena label must stay inside the arena, got ' + audit.outside.join(', ')
+  );
+  assert.equal(audit.paneOverflow, 0, tag + ': the pane must not overflow, got ' + audit.paneOverflow);
+  assert.equal(audit.pageOverflow, 0, tag + ': the page must not overflow, got ' + audit.pageOverflow);
+  assert.ok(
+    audit.arena && audit.arena.width >= 380,
+    tag + ': the arena must spread to its column, got ' + JSON.stringify(audit.arena)
+  );
+}
+
 // The arena is a desktop surface too: at 1440x900 it has room to spread out, so its readability is
 // measurable rather than a matter of taste. This walks the two scenes that carry the most text,
-// leaves the run on Instant so the labels are final, and requires the merged panel's single header,
-// the four drawn speed modes and a 16px radius around labels that neither overlap nor escape.
+// leaves the run on Instant so the labels are final, and then audits that same run in all four
+// palettes — dark, light, paper and high contrast — each reached through the header's own controls,
+// so the merged panel's single header, the four drawn speed modes, the 16px radius and labels that
+// neither overlap nor escape are required in every palette, not only the one drawn first.
 async function assertDesktopArena(browser, baseUrl) {
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
@@ -970,12 +1162,6 @@ async function assertDesktopArena(browser, baseUrl) {
   await seedTourSeen(context);
   await seedRobotTourSeen(context);
   const page = await context.newPage();
-  const expectedSpeeds = [
-    { id: 'slow', label: '0.5×' },
-    { id: 'normal', label: '1×' },
-    { id: 'fast', label: '2×' },
-    { id: 'instant', label: 'Instant' },
-  ];
   try {
     for (const lessonId of ['P.1', 'P.4']) {
       const scenario = ROBOT_SCENARIOS.find((entry) => entry.lessonId === lessonId);
@@ -988,113 +1174,21 @@ async function assertDesktopArena(browser, baseUrl) {
       await waitForReading(page);
       await waitForIdle(page);
 
-      const audit = await page.evaluate(() => {
-        const visible = (selector) =>
-          [...document.querySelectorAll(selector)].filter(
-            (node) => node.getBoundingClientRect().height > 0
-          );
-        const arena = visible('.robot-arena')[0];
-        const svg = arena ? arena.querySelector('svg') : null;
-        const labels = svg
-          ? [...svg.querySelectorAll('text')]
-              .map((node) => ({
-                text: (node.textContent || '').trim(),
-                box: node.getBoundingClientRect(),
-              }))
-              .filter((entry) => entry.text && entry.box.width > 0 && entry.box.height > 0)
-          : [];
-        const overlaps = [];
-        for (let i = 0; i < labels.length; i += 1) {
-          for (let j = i + 1; j < labels.length; j += 1) {
-            const a = labels[i].box;
-            const b = labels[j].box;
-            const sharedX = Math.min(a.right, b.right) - Math.max(a.left, b.left);
-            const sharedY = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
-            if (sharedX > 1 && sharedY > 1) {
-              overlaps.push(labels[i].text + ' / ' + labels[j].text);
-            }
-          }
-        }
-        const frame = arena ? arena.getBoundingClientRect() : null;
-        const outside = frame
-          ? labels
-              .filter(
-                (entry) =>
-                  entry.box.left < frame.left - 1 ||
-                  entry.box.top < frame.top - 1 ||
-                  entry.box.right > frame.right + 1 ||
-                  entry.box.bottom > frame.bottom + 1
-              )
-              .map((entry) => entry.text)
-          : [];
-        const pane = visible('[data-testid="robot-pane"]')[0];
-        return {
-          arena: frame ? { width: Math.round(frame.width), height: Math.round(frame.height) } : null,
-          radius: arena ? getComputedStyle(arena).borderRadius : null,
-          labels: labels.length,
-          overlaps,
-          outside,
-          paneOverflow: pane ? pane.scrollWidth - pane.clientWidth : -1,
-          pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-          liveToggles: visible('[data-testid="robot-live-toggle"]').length,
-          speeds: visible('button[data-testid^="robot-speed-"]').map((button) => {
-            const box = button.getBoundingClientRect();
-            return {
-              id: (button.getAttribute('data-testid') || '').replace('robot-speed-', ''),
-              text: (button.textContent || '').replace(/\s+/g, ' ').trim(),
-              pressed: button.getAttribute('aria-pressed'),
-              drawn: box.width >= 24 && box.height >= 20,
-            };
-          }),
-        };
-      });
-
-      const tag = lessonId + ' at 1440x900';
-      assert.equal(audit.radius, '16px', tag + ': the arena radius must stay 16px, got ' + audit.radius);
-      assert.equal(audit.liveToggles, 1, tag + ': one Live signals header, got ' + audit.liveToggles);
-      assert.deepEqual(
-        audit.speeds.map((speed) => speed.id),
-        expectedSpeeds.map((speed) => speed.id),
-        tag + ': the four speed modes must be present, got ' + audit.speeds.map((speed) => speed.id).join(', ')
-      );
-      for (const [index, speed] of audit.speeds.entries()) {
-        const expected = expectedSpeeds[index];
-        assert.ok(
-          speed.drawn,
-          tag + ': the ' + expected.id + ' speed mode must be drawn, got ' + JSON.stringify(speed)
-        );
+      for (const palette of PALETTES) {
+        await pinPalette(page, palette);
         assert.equal(
-          speed.text,
-          expected.label,
-          tag + ': the ' + expected.id + ' speed mode must read ' + JSON.stringify(expected.label)
+          await page.evaluate(() => document.documentElement.getAttribute('data-theme')),
+          palette,
+          lessonId + ': the document must carry the ' + palette + ' palette'
+        );
+        const tag = lessonId + ' in ' + palette + ' at 1440x900';
+        const audit = await measureArena(page);
+        assertArenaLayout(audit, tag);
+        console.log(
+          '  ok   ' + tag + ': 16px radius, one Live signals header, four drawn speeds, ' +
+            audit.labels + ' labels with no shared pixel'
         );
       }
-      assert.equal(
-        audit.speeds.find((speed) => speed.id === 'instant')?.pressed,
-        'true',
-        tag + ': the run must be paced by Instant'
-      );
-      assert.ok(audit.labels >= 4, tag + ': the arena must draw its labels, got ' + audit.labels);
-      assert.deepEqual(
-        audit.overlaps,
-        [],
-        tag + ': no two arena labels may share pixels, got ' + audit.overlaps.join(', ')
-      );
-      assert.deepEqual(
-        audit.outside,
-        [],
-        tag + ': every arena label must stay inside the arena, got ' + audit.outside.join(', ')
-      );
-      assert.equal(audit.paneOverflow, 0, tag + ': the pane must not overflow, got ' + audit.paneOverflow);
-      assert.equal(audit.pageOverflow, 0, tag + ': the page must not overflow, got ' + audit.pageOverflow);
-      assert.ok(
-        audit.arena && audit.arena.width >= 380,
-        tag + ': the arena must spread to its column, got ' + JSON.stringify(audit.arena)
-      );
-      console.log(
-        '  ok   ' + tag + ': 16px radius, one Live signals header, four drawn speeds, ' +
-          audit.labels + ' labels with no shared pixel'
-      );
     }
   } finally {
     await context.close();
