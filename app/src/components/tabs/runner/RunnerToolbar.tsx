@@ -250,7 +250,7 @@ export function RunnerToolbar({
         }`}
       >
         <MoreHorizontal className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline">More ⋯</span>
+        <span className="hidden xl:inline">More ⋯</span>
       </button>
       <button
         onClick={onRun}
