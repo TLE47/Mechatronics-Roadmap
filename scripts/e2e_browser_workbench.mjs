@@ -2091,6 +2091,15 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         // A frame is drawn, not assembled: arm Group, drag a box across the cards, name it on its
         // chip, then move the chip — all members travel together, one card deleted shrinks the
         // frame, and a reload finds the name and the membership.
+        //
+        // Fit first: the box is drawn over the visible paper, and a card below the fold must not
+        // be silently left outside the frame. Fit brings all three cards into the canvas; the test
+        // restores 100% after the frame exists.
+        const allCardIds = await page.evaluate(() =>
+          [...document.querySelectorAll('[data-node-id]')].map((card) => card.getAttribute('data-node-id'))
+        );
+        await page.getByTestId('workflow-fit').click();
+        await page.waitForTimeout(350);
         await page.getByTestId('workflow-group-draw').click();
         assert.match(
           await page.getByTestId('workflow-status').innerText(),
@@ -2133,6 +2142,12 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         );
         await page.getByTestId('workflow-group-title-0').fill('Winding → driver');
         await page.waitForTimeout(300);
+        // The frame was drawn at Fit scale. Put the paper back to life size, so the pointer delta
+        // below is canvas pixels and the open column is not hidden by the lens.
+        if ((await page.getByTestId('workflow-canvas-grid').evaluate((grid) => grid.style.transform)) !== 'scale(1)') {
+          await page.getByTestId('workflow-fit').click();
+          await page.waitForTimeout(350);
+        }
         // Read the cards the frame actually holds, not every card on the paper. The box is drawn
         // across the visible canvas, so a card that scrolled below it is legitimately outside; only
         // the members are expected to travel. This helper is also the reload/deletion check below.
@@ -2153,9 +2168,10 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
               }));
           });
         const beforeGroupDrag = await readFrameCards();
-        assert.ok(
-          beforeGroupDrag.length >= 2,
-          `a frame drag needs its members; the drawn frame held ${beforeGroupDrag.length}`
+        assert.equal(
+          beforeGroupDrag.length,
+          allCardIds.length,
+          `the drawn frame must hold every card (${beforeGroupDrag.length} of ${allCardIds.length})`
         );
         // The grip on the chip is the frame's handle: it is drawn above the cards and is a whole
         // control row tall, so it can be grabbed where a mouse and a finger both can. Scroll it into
@@ -2239,16 +2255,11 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           );
           assert.equal(delta.dy, 40, 'and the same dy');
         }
-        const cardsInFrame = () =>
-          page.evaluate(() => {
-            const frame = document.querySelector('[data-testid="workflow-group-0"]').getBoundingClientRect();
-            return [...document.querySelectorAll('[data-node-id]')].filter((card) => {
-              const rect = card.getBoundingClientRect();
-              const cx = rect.left + rect.width / 2;
-              const cy = rect.top + rect.height / 2;
-              return cx >= frame.left && cx <= frame.right && cy >= frame.top && cy <= frame.bottom;
-            }).length;
-          });
+        const cardsInFrame = async () => (await readFrameCards()).length;
+        // A sticky header or the frame chip can sit over a card at the edge of the viewport. Centre
+        // the target first: the delete is a real pointer click, not a forced one.
+        await page.getByTestId('workflow-node-delete-2').evaluate((button) => button.scrollIntoView({ block: 'center' }));
+        await page.waitForTimeout(200);
         await page.getByTestId('workflow-node-delete-2').click();
         await page.waitForTimeout(700);
         assert.equal(
