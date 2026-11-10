@@ -115,8 +115,8 @@ async function main() {
         : [];
     });
     assert.deepEqual(
-      headerTray.slice(0, 5),
-      ['btn-home', 'btn-open-lessons', 'btn-open-studio', 'btn-open-micro', 'btn-open-palette'],
+      headerTray.slice(0, 6),
+      ['btn-home', 'btn-open-review', 'btn-open-lessons', 'btn-open-studio', 'btn-open-micro', 'btn-open-palette'],
       'Micro-learning must sit between Free study and Search in the Navigate tray'
     );
     await headerMicro.click();
