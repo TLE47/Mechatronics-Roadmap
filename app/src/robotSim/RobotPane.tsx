@@ -11,7 +11,7 @@
  * Replay plays that same queue again without touching Python, the editor or the lesson's verdict.
  */
 import { useEffect, useRef, useState } from 'react';
-import { Play, RotateCcw, Sparkles } from 'lucide-react';
+import { ChevronDown, Play, RotateCcw, Sparkles } from 'lucide-react';
 import type { RobotCommandMessage, RobotReading, RobotReply, RobotRunApi } from './model';
 import { parseRobotReading, robotScenario } from './model';
 import {
@@ -24,7 +24,13 @@ import {
   type RobotSourceFrame,
   type RobotSourceLines,
 } from './robotMission';
-import { RobotStage } from './RobotStage';
+import { RobotStage, RobotTelemetry } from './RobotStage';
+import {
+  onVerifyFinished,
+  readRobotAutoRun,
+  subscribeRobotAutoRun,
+  writeRobotAutoRun,
+} from './robotAutoRun';
 import { RobotCoach } from './RobotCoach';
 import {
   dismissRobotTour,
@@ -39,22 +45,26 @@ import {
 import { readTour as readGlobalTour } from '../tourState';
 import { motionEnabled, subscribeMotion } from '../motionPrefs';
 
-type RobotSpeed = 'slow' | 'normal' | 'fast';
+type RobotSpeed = 'slow' | 'normal' | 'fast' | 'instant';
 type RobotStep = { line: number; reading: RobotReading | null; text: string | null };
 
 const ROBOT_SPEEDS = [
   { id: 'slow', label: '0.5×', title: 'Half speed: about 360 ms between lines' },
   { id: 'normal', label: '1×', title: 'Normal speed: about 180 ms between lines' },
   { id: 'fast', label: '2×', title: 'Double speed: about 90 ms between lines' },
+  { id: 'instant', label: 'Instant', title: 'No wait: every line arrives the moment Python produces it' },
 ] as const satisfies readonly { id: RobotSpeed; label: string; title: string }[];
 
-const ROBOT_STEP_MS: Record<RobotSpeed, number> = { slow: 360, normal: 180, fast: 90 };
+const ROBOT_STEP_MS: Record<RobotSpeed, number> = { slow: 360, normal: 180, fast: 90, instant: 0 };
 
 /** Hold each step long enough to read after its frame paints. This runs in the page, after the
  * worker has answered, so the demonstration's pace never becomes part of the program's execution
  * budget. A hidden tab paints nothing, so it answers immediately instead of charging time for
  * frames nobody sees. */
 async function waitForRobotStep(speed: RobotSpeed): Promise<void> {
+  // Instant is a real speed, not a missing one: the queue drains in one frame, so a long lesson
+  // still ends on its final reading instead of piling every line onto the screen at once.
+  if (ROBOT_STEP_MS[speed] <= 0) return;
   if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
   if (typeof requestAnimationFrame !== 'function') return;
   await new Promise<void>((resolve) => {
@@ -143,6 +153,10 @@ function LaunchBar({
 }
 
 function SignalDeck({
+  lessonId,
+  reading,
+  open,
+  onToggle,
   progress,
   activeKey,
   onPick,
@@ -151,6 +165,10 @@ function SignalDeck({
   sources,
   onShowSource,
 }: {
+  lessonId: string;
+  reading: RobotReading | null;
+  open: boolean;
+  onToggle: () => void;
   progress: RobotProgress;
   activeKey: keyof RobotReading | null;
   onPick: (key: keyof RobotReading) => void;
@@ -173,21 +191,33 @@ function SignalDeck({
       data-goal-state={state}
       data-goal-met={progress.met}
       data-goal-total={progress.total}
+      data-live-open={open ? 'true' : 'false'}
       className="robot-signal-deck"
     >
-      <div className="flex items-center justify-between gap-3">
-        <span className="robot-deck-kicker">
-          <span className="robot-deck-pulse" aria-hidden="true" />
-          live signals
-        </span>
-        <span className="font-round text-[11.5px] font-semibold tabular-nums text-muted">
+      {/* One button for one reading: the targets, the hint and the tiles are the same run's values,
+          so they open together instead of stacking as two readouts above one another. */}
+      <button
+        type="button"
+        data-testid="robot-live-toggle"
+        aria-expanded={open}
+        aria-controls="robot-live-body"
+        onClick={onToggle}
+        title={open ? 'Hide the live readings' : 'Show the values this run bound'}
+        className="robot-live-toggle"
+      >
+        <span className="robot-deck-pulse" aria-hidden="true" />
+        <span className="robot-live-label">Live signals</span>
+        <span className="robot-live-count">
           {progress.met}/{progress.total} linked
         </span>
-      </div>
+        <ChevronDown className="robot-live-chevron" aria-hidden="true" />
+      </button>
 
-      <div className="robot-signal-meter" aria-hidden="true">
-        <div className="robot-signal-meter-fill" style={{ width: percent + '%' }} />
-      </div>
+      {open && (
+        <div id="robot-live-body" className="robot-live-body">
+          <div className="robot-signal-meter" aria-hidden="true">
+            <div className="robot-signal-meter-fill" style={{ width: percent + '%' }} />
+          </div>
 
       <ul data-robot-tour="targets" className="m-0 mt-2.5 flex list-none flex-wrap gap-1.5 p-0">
         {progress.rows.map((row) => {
@@ -270,9 +300,13 @@ function SignalDeck({
           data-testid="robot-goal-banner"
           className="mt-2 flex items-center gap-1.5 text-[12px] font-semibold text-emerald"
         >
-          <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Signal locked. Every value in this run
-          agrees.
-        </p>
+              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Signal locked. Every value in this run
+              agrees.
+            </p>
+          )}
+
+          <RobotTelemetry lesson={lessonId} reading={reading} />
+        </div>
       )}
     </section>
   );
@@ -287,6 +321,10 @@ export default function RobotPane({ lessonId, robot }: { lessonId: string; robot
   const [lineText, setLineText] = useState<string | null>(null);
   const [speed, setSpeed] = useState<RobotSpeed>('normal');
   const [activeKey, setActiveKey] = useState<keyof RobotReading | null>(null);
+  // One disclosure for one reading: the chips, the hint and the lesson's own tiles are the same
+  // run's values, so they open and close together instead of stacking as two readouts.
+  const [liveOpen, setLiveOpen] = useState(true);
+  const [autoRun, setAutoRun] = useState(() => readRobotAutoRun());
   const [sources, setSources] = useState<RobotSourceLines>({});
   const [motion, setMotion] = useState(() => motionEnabled());
   // A first-run guide for the three controls this tab adds. Its record is separate from the
@@ -303,6 +341,10 @@ export default function RobotPane({ lessonId, robot }: { lessonId: string; robot
   // The command callback closes over the run that started, so the live choice rides a ref: a speed
   // picked while the robot is moving changes the remaining lines without starting another run.
   const speedRef = useRef<RobotSpeed>('normal');
+  // Run with Verify listens from a subscription that outlives any one render, so the run handle and
+  // the busy flag are published into refs rather than captured in the listener.
+  const startRef = useRef<() => void>(() => {});
+  const busyRef = useRef(false);
   // A run that fails after binding a value should not leave the last partial reading on screen.
   // The final probe is the one line-0 message; without it the run did not finish, so the stage
   // clears as soon as the run stops.
@@ -322,6 +364,20 @@ export default function RobotPane({ lessonId, robot }: { lessonId: string; robot
   const progress = scenario ? robotProgress(reading, scenario) : NO_ROBOT_PROGRESS;
 
   useEffect(() => subscribeMotion(setMotion), []);
+
+  // Another surface may change the switch; this one renders the stored choice, not a copy of it.
+  useEffect(() => subscribeRobotAutoRun(setAutoRun), []);
+
+  // Run with Verify: a graded run that settles while this tab is open takes the robot's own pass.
+  // The listener never starts a run over one that is still presenting its lines.
+  useEffect(
+    () =>
+      onVerifyFinished(() => {
+        if (!readRobotAutoRun() || busyRef.current) return;
+        startRef.current();
+      }),
+    []
+  );
 
   // Opening the Robot tab is this guide's first run. A stored `active` record resumes at its step;
   // a pristine one starts at Run. Mount-only: changing lesson must not restart a guide mid-walk.
@@ -383,6 +439,7 @@ export default function RobotPane({ lessonId, robot }: { lessonId: string; robot
   }
 
   const busy = robot.isRunning || demoActive;
+  busyRef.current = busy;
   const tourStep = robotTourStepAt(robotTour.stepIndex);
 
   const advanceTour = () => {
@@ -491,6 +548,8 @@ export default function RobotPane({ lessonId, robot }: { lessonId: string; robot
     robot.showLine(null);
     robot.start(scenario, handleCommand);
   };
+  // Published for the Run with Verify listener: `start` owns the run, this is only its handle.
+  startRef.current = start;
 
   const startReplay = () => {
     if (busy || recordedRef.current.length === 0) return;
@@ -589,6 +648,10 @@ export default function RobotPane({ lessonId, robot }: { lessonId: string; robot
       </div>
 
       <SignalDeck
+        lessonId={scenario.lessonId}
+        reading={reading}
+        open={liveOpen}
+        onToggle={() => setLiveOpen((shown) => !shown)}
         progress={progress}
         activeKey={activeKey}
         onPick={pickTarget}
@@ -616,6 +679,26 @@ export default function RobotPane({ lessonId, robot }: { lessonId: string; robot
           </span>
         )}
         <div className="ml-auto flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={autoRun}
+            data-testid="robot-autorun"
+            onClick={() => setAutoRun(writeRobotAutoRun(!autoRun))}
+            disabled={!robot.pauseCapable}
+            aria-label="Run with Verify: also run the robot after Run & Verify Output"
+            title={
+              robot.pauseCapable
+                ? 'After Run & Verify Output finishes, run this tab too. Robot runs stay ungraded.'
+                : 'The robot needs shared memory; this page cannot run it after Verify.'
+            }
+            className="robot-autorun"
+          >
+            <span className="robot-autorun-track" aria-hidden="true">
+              <span className="robot-autorun-knob" />
+            </span>
+            Run with Verify
+          </button>
           <button
             type="button"
             data-testid="robot-replay"

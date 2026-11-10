@@ -470,7 +470,12 @@ async function assertSpeedControl(page) {
   assert.equal(await page.getByTestId('robot-pane').getAttribute('data-speed'), 'slow');
   assert.equal(await page.getByTestId('robot-speed-slow').getAttribute('aria-pressed'), 'true');
   assert.equal(await page.getByTestId('robot-speed-fast').getAttribute('aria-pressed'), 'false');
-  assert.equal(await getEditorCode(page), codeBefore, 'changing speed must not edit main.py');
+
+  await page.getByTestId('robot-speed-instant').click();
+  assert.equal(await page.getByTestId('robot-pane').getAttribute('data-speed'), 'instant');
+  assert.equal(await page.getByTestId('robot-speed-instant').getAttribute('aria-pressed'), 'true');
+  assert.equal(await page.getByTestId('robot-speed-slow').getAttribute('aria-pressed'), 'false');
+  assert.equal(await getEditorCode(page), codeBefore, 'choosing Instant must not edit main.py');
 
   // The switch changes only the hold between sampled lines: the lesson still runs, reads and stays
   // ungraded exactly as it does at 1x.
@@ -483,7 +488,37 @@ async function assertSpeedControl(page) {
   assertReading(stage.reading, scenario.expected, 'fast robot speed');
   assert.equal(await getEditorCode(page), codeBefore, 'a robot run at 2x must not edit main.py');
   assert.equal(await verifiedTally(page), before, 'a robot run at 2x must stay ungraded');
-  console.log('  ok   speeds 0.5x, 1x and 2x select without editing or grading main.py');
+  // Instant is a speed, not a shortcut: the run still ends on its final reading and stays ungraded.
+  await page.getByTestId('robot-speed-instant').click();
+  await page.getByTestId('robot-run').click();
+  await waitForReading(page);
+  await waitForIdle(page);
+  assertReading((await readStage(page)).reading, scenario.expected, 'instant robot speed');
+  assert.equal(await getEditorCode(page), codeBefore, 'an instant robot run must not edit main.py');
+  assert.equal(await verifiedTally(page), before, 'an instant robot run must stay ungraded');
+  console.log('  ok   speeds 0.5x, 1x, 2x and Instant select without editing or grading main.py');
+}
+
+async function assertLiveSignalsToggle(page) {
+  const scenario = ROBOT_SCENARIOS[0];
+  await openRobot(page, BASE, scenario.lessonId);
+  await setEditorCode(page, scenario.lesson.fullSolution);
+  await page.getByTestId('robot-run').click();
+  await waitForReading(page);
+  await waitForIdle(page);
+  const toggle = page.getByTestId('robot-live-toggle');
+  const chips = page.locator('button[data-testid^="robot-goal-"]');
+  assert.equal(await toggle.getAttribute('aria-expanded'), 'true', 'the readings start open');
+  assert.ok((await chips.count()) >= 2, 'an open panel shows the mission chips');
+  assert.equal(await page.getByTestId('robot-telemetry').count(), 1, 'an open panel shows the tiles');
+  await toggle.click();
+  assert.equal(await toggle.getAttribute('aria-expanded'), 'false', 'one press closes the panel');
+  assert.equal(await chips.count(), 0, 'closing hides the chips');
+  assert.equal(await page.getByTestId('robot-telemetry').count(), 0, 'closing hides the tiles too');
+  await toggle.click();
+  assert.equal(await toggle.getAttribute('aria-expanded'), 'true', 'a second press reopens it');
+  assert.equal(await page.getByTestId('robot-telemetry').count(), 1, 'reopening brings the tiles back');
+  console.log('  ok   one Live signals button opens the chips and the tiles together');
 }
 
 async function assertStepByStep(page) {
@@ -868,6 +903,7 @@ try {
   await assertFailureLeavesNoReading(page);
   await assertPartialFailureLeavesNoReading(page);
   await assertSpeedControl(page);
+  await assertLiveSignalsToggle(page);
   await assertStepByStep(page);
 
   console.log('\nthe first-run Robot guide:');

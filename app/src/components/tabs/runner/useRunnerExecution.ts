@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { RobotCommandMessage, RobotReply, RobotRunApi, RobotScenario } from '../../../robotSim/model';
 import { armRobotWait, cancelRobotWait, writeRobotReply } from '../../../robotSim/protocol';
+import { announceVerifyFinished } from '../../../robotSim/robotAutoRun';
 import type { MutableRefObject, RefObject } from 'react';
 import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../../data/mechalabPlant';
 import type { PythonLessonItem } from '../../../data/pythonLessonsData';
@@ -717,6 +718,10 @@ export function useRunnerExecution({
         setIsRunning(false);
         setPausedStep(null);
       }
+      // Run with Verify: a graded run that has settled is the moment the Robot tab may take its own
+      // instrumented pass. The robot's run is a separate, ungraded execution (it appends a probe),
+      // so announcing here — after this verdict is complete — keeps the two apart.
+      if (grade && !options.robot) announceVerifyFinished();
       if (stopFallbackRef.current) {
         clearTimeout(stopFallbackRef.current);
         stopFallbackRef.current = null;

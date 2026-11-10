@@ -3,9 +3,11 @@
  *
  * The arena is a drawing of the lessons' own values: a rover on a target-aware track, two commands
  * pulled into a safe corridor, a conveyor of clamped crates, or a joint travelling to its dock. The
- * numbers stay under it, at reading size, and a missing name stays a dash. `data-reading` is the raw
- * reading the browser suite compares; `data-robot-position` is how far into its own travel the scene
- * is, which is what lets that suite prove motion instead of only the end state.
+ * numbers live in one place, `RobotTelemetry`, which the Live signals panel under the arena opens;
+ * the arena itself carries no readout that could overlap its own drawing. A missing name stays a
+ * dash. `data-reading` is the raw reading the browser suite compares; `data-robot-position` is how
+ * far into its own travel the scene is, which is what lets that suite prove motion instead of only
+ * the end state.
  */
 import type { RobotReading, RobotScenario } from './model';
 import { formatNumber, type RobotProgress } from './robotMission';
@@ -48,11 +50,12 @@ function shownBoolean(value: boolean | null | undefined, yes: string, no: string
 /** One value under the arena: a big round number over its label, not a 9 px instrument caption. */
 function Tile({ label, value, tone }: { label: string; value: string; tone?: Tone }) {
   return (
-    <div className="rounded-2xl border border-line-soft bg-canvas px-3 py-2">
+    <div className="rounded-xl border border-line-soft bg-canvas px-3 py-2">
       <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">{label}</div>
       <div
-        className="font-round mt-0.5 text-[16px] font-semibold leading-tight text-ink tabular-nums"
+        className="font-round mt-0.5 truncate text-[16px] font-semibold leading-tight text-ink tabular-nums"
         style={{ color: toneColor(tone) }}
+        title={value}
       >
         {value}
       </div>
@@ -83,12 +86,79 @@ function CommandReadout({ reading }: { reading: RobotReading | null }) {
   );
 }
 
-const SCENE_LABEL: Record<string, string> = {
+export const SCENE_LABEL: Record<string, string> = {
   'P.1': 'first light',
   'P.3': 'safe passage',
   'P.4': 'convoy sync',
   'P.5': 'final approach',
 };
+
+/**
+ * The lesson's own numbers. One block, rendered inside the Live signals panel so the arena stays a
+ * drawing and the values stay a list — two places with one owner each, instead of two readouts of
+ * the same reading sitting on top of one another.
+ */
+export function RobotTelemetry({ lesson, reading }: { lesson: string; reading: RobotReading | null }) {
+  return (
+    <div className="robot-telemetry" data-quiet={reading ? 'false' : 'true'} data-testid="robot-telemetry">
+      {lesson === 'P.1' && (
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+          <Tile
+            label="Mode"
+            value={shownText(reading?.mode)}
+            tone={reading?.mode === 'ACTIVE' ? 'good' : reading?.mode ? 'warn' : undefined}
+          />
+          <Tile
+            label="E-stop"
+            value={shownBoolean(reading?.eStop, 'Pressed', 'Clear')}
+            tone={reading?.eStop === true ? 'bad' : reading?.eStop === false ? 'good' : undefined}
+          />
+          <Tile label="Encoder" value={shown(reading?.encoderTicks, ' ticks')} />
+          <Tile label="Battery" value={shown(reading?.batteryVolts, ' V')} />
+        </div>
+      )}
+
+      {lesson === 'P.3' && (
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+          <Tile label="High" value={shown(reading?.rawHigh) + ' → ' + shown(reading?.clampedHigh)} />
+          <Tile label="Low" value={shown(reading?.rawLow) + ' → ' + shown(reading?.clampedLow)} />
+          <Tile
+            label="Safe output"
+            value={shown(reading?.safeOutput)}
+            tone={reading?.safeOutput === 0 ? 'good' : reading?.safeOutput == null ? undefined : 'warn'}
+          />
+          <Tile
+            label="E-stop"
+            value={shownBoolean(reading?.eStopPressed, 'Pressed', 'Clear')}
+            tone={reading?.eStopPressed === true ? 'warn' : reading?.eStopPressed === false ? 'good' : undefined}
+          />
+        </div>
+      )}
+
+      {lesson === 'P.4' && (
+        <div className="flex flex-col gap-1.5">
+          <CommandReadout reading={reading} />
+          <div className="grid grid-cols-3 gap-1.5">
+            <Tile
+              label="Values"
+              value={reading?.clampedCommands ? String(reading.clampedCommands.length) : '—'}
+            />
+            <Tile label="Total" value={shown(reading?.totalCommand)} />
+            <Tile label="Mean" value={shown(reading?.meanCommand)} />
+          </div>
+        </div>
+      )}
+
+      {lesson === 'P.5' && (
+        <div className="grid grid-cols-3 gap-1.5">
+          <Tile label="Position" value={shown(reading?.positionM, ' m')} />
+          <Tile label="Velocity" value={shown(reading?.velocityMS, ' m/s')} />
+          <Tile label="Steps" value={shown(reading?.step)} />
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function RobotStage({
   scenario,
@@ -155,12 +225,9 @@ export function RobotStage({
           </svg>
           <span className="robot-scan" aria-hidden="true" />
           <span className="robot-vignette" aria-hidden="true" />
-          {reached && reading && (
-            <span className="robot-arrival" aria-hidden="true">
-              <span className="robot-arrival-ring" />
-              <span className="robot-arrival-label">link stable</span>
-            </span>
-          )}
+          {/* The arrival is the HUD's own signal, the green beacon and the robot's stopped pose. A
+              floating "link stable" chip used to sit here and draw itself through the scene's
+              bottom row, which is exactly the overlap this arena is meant not to have. */}
         </div>
 
         <div className="robot-arena-foot" aria-hidden="true">
@@ -183,64 +250,6 @@ export function RobotStage({
           </code>
         </div>
       )}
-
-      <div className="robot-telemetry" data-quiet={reading ? 'false' : 'true'}>
-      {lesson === 'P.1' && (
-        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-          <Tile
-            label="Mode"
-            value={shownText(reading?.mode)}
-            tone={reading?.mode === 'ACTIVE' ? 'good' : reading?.mode ? 'warn' : undefined}
-          />
-          <Tile
-            label="E-stop"
-            value={shownBoolean(reading?.eStop, 'Pressed', 'Clear')}
-            tone={reading?.eStop === true ? 'bad' : reading?.eStop === false ? 'good' : undefined}
-          />
-          <Tile label="Encoder" value={shown(reading?.encoderTicks, ' ticks')} />
-          <Tile label="Battery" value={shown(reading?.batteryVolts, ' V')} />
-        </div>
-      )}
-
-      {lesson === 'P.3' && (
-        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-          <Tile label="High" value={shown(reading?.rawHigh) + ' → ' + shown(reading?.clampedHigh)} />
-          <Tile label="Low" value={shown(reading?.rawLow) + ' → ' + shown(reading?.clampedLow)} />
-          <Tile
-            label="Safe output"
-            value={shown(reading?.safeOutput)}
-            tone={reading?.safeOutput === 0 ? 'good' : reading?.safeOutput == null ? undefined : 'warn'}
-          />
-          <Tile
-            label="E-stop"
-            value={shownBoolean(reading?.eStopPressed, 'Pressed', 'Clear')}
-            tone={reading?.eStopPressed === true ? 'warn' : reading?.eStopPressed === false ? 'good' : undefined}
-          />
-        </div>
-      )}
-
-      {lesson === 'P.4' && (
-        <div className="flex flex-col gap-1.5">
-          <CommandReadout reading={reading} />
-          <div className="grid grid-cols-3 gap-1.5">
-            <Tile
-              label="Values"
-              value={reading?.clampedCommands ? String(reading.clampedCommands.length) : '—'}
-            />
-            <Tile label="Total" value={shown(reading?.totalCommand)} />
-            <Tile label="Mean" value={shown(reading?.meanCommand)} />
-          </div>
-        </div>
-      )}
-
-      {lesson === 'P.5' && (
-        <div className="grid grid-cols-3 gap-1.5">
-          <Tile label="Position" value={shown(reading?.positionM, ' m')} />
-          <Tile label="Velocity" value={shown(reading?.velocityMS, ' m/s')} />
-          <Tile label="Steps" value={shown(reading?.step)} />
-        </div>
-      )}
-      </div>
 
       <p className="robot-caption">
         {reached

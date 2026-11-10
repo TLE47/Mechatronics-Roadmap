@@ -300,7 +300,19 @@ export function P1Scene({ reading, progress, highlight }: SceneProps) {
       {showStart && (
         <g>
           <ellipse cx={startX} cy="151" rx="12" ry="2.5" fill="#38bdf8" opacity="0.22" />
-          <text x={startX} y="170" textAnchor="middle" fill="#7f93ad" fontSize="8.5" fontFamily="var(--font-round)" letterSpacing="0.6">
+          <text
+            x={startX}
+            y="170"
+            textAnchor="middle"
+            fill="#7f93ad"
+            fontSize="8.5"
+            fontFamily="var(--font-round)"
+            letterSpacing="0.6"
+            paintOrder="stroke"
+            stroke="#050e1c"
+            strokeWidth="2.2"
+            strokeLinejoin="round"
+          >
             HOME
           </text>
         </g>
@@ -360,7 +372,18 @@ function CommandLane({ label, y, raw, clamped, highlighted, badge }: LaneProps) 
         </g>
       )}
       {at !== null && (
-        <text x={at} y={y - 16} textAnchor="middle" fill="#dbeafe" fontSize="10" fontFamily="var(--font-round)">
+        <text
+          x={at}
+          y={y - 16}
+          textAnchor="middle"
+          fill="#dbeafe"
+          fontSize="10"
+          fontFamily="var(--font-round)" style={{ fontVariantNumeric: 'tabular-nums' }}
+          paintOrder="stroke"
+          stroke="#050e1c"
+          strokeWidth="2.6"
+          strokeLinejoin="round"
+        >
           {clamped === null ? '—' : formatNumber(clamped)}
         </text>
       )}
@@ -419,7 +442,9 @@ export function P3Scene({ reading, progress, highlight }: SceneProps) {
       <text x="58" y="150" fill="#64748b" fontSize="8.5" fontFamily="var(--font-round)">0</text>
       <text x="302" y="150" textAnchor="end" fill="#64748b" fontSize="8.5" fontFamily="var(--font-round)">255</text>
 
-      <text x="14" y="176" fill="#9fb0c9" fontSize="10" fontFamily="var(--font-round)">OUTPUT</text>
+      {/* Above the bar, not beside it: the e-stop badge sits on this baseline at the left end, and
+          the two used to be drawn through each other. */}
+      <text x="14" y="160" fill="#9fb0c9" fontSize="10" fontFamily="var(--font-round)">OUTPUT</text>
       <rect x="58" y="168" width="244" height="10" rx="5" fill="#071a2c" stroke="#233a57" />
       <rect x="58" y="168" width={safeFill} height="10" rx="5" fill={estop ? '#f59e0b' : '#34d399'} />
       <text x="310" y="177" textAnchor="end" fill="#dbeafe" fontSize="10" fontFamily="var(--font-round)">
@@ -463,28 +488,30 @@ export function P4Scene({ reading, progress, highlight }: SceneProps) {
   const active = useNewestIndex(clamped.length);
   const slots = Math.max(6, raw.length, clamped.length);
   const slotX = (index: number) => 42 + index * (276 / Math.max(slots - 1, 1));
-  const meanFill = mean === null ? 0 : clamp(mean / 255, 0, 1) * 54;
-  const meanMark = meanTarget === 0 ? 0 : clamp(meanTarget / 255, 0, 1) * 54;
+  const meanFill = mean === null ? 0 : clamp(mean / 255, 0, 1) * 52;
+  const meanMark = meanTarget === 0 ? 0 : clamp(meanTarget / 255, 0, 1) * 52;
 
   return (
     <g>
+      {/* Each pill is sized to the longest value the lesson can produce, not to the one on screen:
+          a four-digit total and a three-digit mean stay inside their own borders at every width. */}
       <g>
-        <rect x="16" y="12" width="92" height="20" rx="10" fill="#0b1a2e" stroke="#233a57" />
-        <text x="26" y="25.5" fill="#9fb0c9" fontSize="9.5" fontFamily="var(--font-round)">TOTAL</text>
-        <text x="72" y="26" fill="#dbeafe" fontSize="12" fontFamily="var(--font-round)">
+        <rect x="12" y="12" width="92" height="20" rx="10" fill="#0b1a2e" stroke="#233a57" />
+        <text x="22" y="25.5" fill="#9fb0c9" fontSize="9.5" fontFamily="var(--font-round)">TOTAL</text>
+        <text x="66" y="26" fill="#dbeafe" fontSize="12" fontFamily="var(--font-round)" style={{ fontVariantNumeric: 'tabular-nums' }}>
           {total === null ? '—' : formatNumber(total)}
         </text>
-        <rect x="118" y="12" width="118" height="20" rx="10" fill="#0b1a2e" stroke="#233a57" />
-        <text x="126" y="25.5" fill="#9fb0c9" fontSize="9.5" fontFamily="var(--font-round)">MEAN</text>
-        <rect x="164" y="19" width="54" height="6" rx="3" fill="#1b3552" />
-        <rect x="164" y="19" width={meanFill} height="6" rx="3" fill="#38bdf8" />
-        <line x1={164 + meanMark} y1="16" x2={164 + meanMark} y2="28" stroke="#fbbf24" strokeWidth="1.5" />
-        <text x="222" y="25.5" fill="#dbeafe" fontSize="10" fontFamily="var(--font-round)">
+        <rect x="112" y="12" width="140" height="20" rx="10" fill="#0b1a2e" stroke="#233a57" />
+        <text x="122" y="25.5" fill="#9fb0c9" fontSize="9.5" fontFamily="var(--font-round)">MEAN</text>
+        <rect x="166" y="19" width="52" height="6" rx="3" fill="#1b3552" />
+        <rect x="166" y="19" width={meanFill} height="6" rx="3" fill="#38bdf8" />
+        <line x1={166 + meanMark} y1="16" x2={166 + meanMark} y2="28" stroke="#fbbf24" strokeWidth="1.5" />
+        <text x="224" y="25.5" fill="#dbeafe" fontSize="9.5" fontFamily="var(--font-round)" style={{ fontVariantNumeric: 'tabular-nums' }}>
           {mean === null ? '—' : formatNumber(mean)}
         </text>
       </g>
-      {highlight === 'meanCommand' && <Spotlight cx={164 + meanMark} cy={22} r={22} />}
-      {highlight === 'totalCommand' && <Spotlight cx={72} cy={22} r={26} />}
+      {highlight === 'meanCommand' && <Spotlight cx={166 + meanMark} cy={22} r={22} />}
+      {highlight === 'totalCommand' && <Spotlight cx={66} cy={22} r={26} />}
 
       <text x="16" y="66" fill="#7f93ad" fontSize="9.5" fontFamily="var(--font-round)" letterSpacing="1.2">
         CONVOY · RAW → CLAMPED
@@ -526,14 +553,27 @@ export function P4Scene({ reading, progress, highlight }: SceneProps) {
                 y="126"
                 textAnchor="middle"
                 fill={ready ? '#e2f3ff' : '#64748b'}
-                fontSize="15"
+                fontSize="14"
                 fontFamily="var(--font-round)"
-                fontWeight="600"
+                fontWeight="600" style={{ fontVariantNumeric: 'tabular-nums' }}
               >
                 {value === null ? '?' : formatNumber(value)}
               </text>
             </g>
-            <text x={x} y="82" textAnchor="middle" fill="#fbbf24" fontSize="9.5" fontFamily="var(--font-round)">
+            <text
+              x={x}
+              y="82"
+              textAnchor="middle"
+              fill="#fbbf24"
+              fontSize="9.5"
+              fontFamily="var(--font-round)" style={{ fontVariantNumeric: 'tabular-nums' }}
+              // A dark halo keeps the number readable where it crosses the belt and the grid,
+              // instead of letting the drawing run through the glyphs.
+              paintOrder="stroke"
+              stroke="#050e1c"
+              strokeWidth="2.4"
+              strokeLinejoin="round"
+            >
               {typeof rawValue === 'number' ? formatNumber(rawValue) : '—'}
             </text>
           </g>
@@ -576,14 +616,14 @@ export function P5Scene({ reading, progress, highlight }: SceneProps) {
   return (
     <g>
       <g>
-        <rect x="16" y="12" width="100" height="20" rx="10" fill="#0b1a2e" stroke="#233a57" />
-        <text x="26" y="25.5" fill="#9fb0c9" fontSize="9.5" fontFamily="var(--font-round)">POSITION</text>
-        <text x="82" y="26" fill="#dbeafe" fontSize="12" fontFamily="var(--font-round)">
+        <rect x="12" y="12" width="112" height="20" rx="10" fill="#0b1a2e" stroke="#233a57" />
+        <text x="22" y="25.5" fill="#9fb0c9" fontSize="9.5" fontFamily="var(--font-round)">POSITION</text>
+        <text x="82" y="26" fill="#dbeafe" fontSize="11.5" fontFamily="var(--font-round)" style={{ fontVariantNumeric: 'tabular-nums' }}>
           {position === null ? '—' : formatNumber(position) + ' m'}
         </text>
-        <rect x="124" y="12" width="104" height="20" rx="10" fill="#0b1a2e" stroke="#233a57" />
-        <text x="134" y="25.5" fill="#9fb0c9" fontSize="9.5" fontFamily="var(--font-round)">STEPS</text>
-        <text x="188" y="26" fill="#dbeafe" fontSize="12" fontFamily="var(--font-round)">
+        <rect x="128" y="12" width="116" height="20" rx="10" fill="#0b1a2e" stroke="#233a57" />
+        <text x="138" y="25.5" fill="#9fb0c9" fontSize="9.5" fontFamily="var(--font-round)">STEPS</text>
+        <text x="196" y="26" fill="#dbeafe" fontSize="11.5" fontFamily="var(--font-round)" style={{ fontVariantNumeric: 'tabular-nums' }}>
           {step === null ? '—' : formatNumber(step) + ' / ' + formatNumber(stepTarget)}
         </text>
       </g>
