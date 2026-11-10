@@ -427,7 +427,12 @@ async function main() {
 
   const browser = await chromium.launch({
     executablePath,
-    args: ['--no-sandbox', '--force-device-scale-factor=1'],
+    // Hinting is the one font setting that is not the app's choice. It comes from the host's
+    // fontconfig, and it moves where a line wraps: with the container's unhinted metrics the
+    // activity rail's subtitle takes one more line and the rail is 15 px taller than on the runner,
+    // which recorded a baseline that only reproduced on the machine that wrote it. Turned off here,
+    // every machine measures the same advances, and a box moves only when the layout does.
+    args: ['--no-sandbox', '--force-device-scale-factor=1', '--font-render-hinting=none'],
   });
   const surfaces = {};
   const errors = [];

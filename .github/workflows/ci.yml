@@ -499,10 +499,10 @@ jobs:
       - name: "Check the settle gate: a count that lands after the pane goes quiet is waited for"
         run: npm run test:settle
 
-      # TEMPORARY DIAGNOSTICS: a failed run's log is not readable without repository admin, so the
-      # checker's drift rows are republished as check annotations and a step summary. The report is
-      # read from `--json-out` rather than stdout, where npm's script banner would land in it. Remove
-      # this wrapper once the drift it is describing is fixed.
+      # A failed run's log is not readable without repository admin, so the checker's own drift rows
+      # are republished as check annotations and a step summary: a red gate that names the surface and
+      # the field it moved, instead of a step that only says "failed". The report is read from
+      # `--json-out` rather than stdout, where npm's script banner would land in it.
       - name: "Check the surface snapshot: every tab in every palette is still shaped the same"
         run: |
           set +e
