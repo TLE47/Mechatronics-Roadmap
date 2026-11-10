@@ -39,6 +39,7 @@ import { STORAGE_KEY_READING } from './readingPosition.ts';
 import { STORAGE_KEY_LAST_LESSON, readLastLessonId } from './lastLesson.ts';
 import { STORAGE_KEY_LAST_VISIT, readLastVisit } from './homeLanding.ts';
 import { STORAGE_KEY_TOUR, readTour } from './tourState.ts';
+import { STORAGE_KEY_ROBOT_TOUR, readRobotTour } from './robotSim/robotTour.ts';
 import { STORY_SEEN_KEY, readStorySeen } from './story.ts';
 import { clearAllPredictions, readPredictions } from './predictGate.ts';
 import { readAwards, writeAwards } from './gamification/awardStore.ts';
@@ -316,19 +317,21 @@ export const RESET_AREAS: readonly ResetArea[] = [
   {
     id: 'onboarding',
     label: 'Onboarding',
-    hint: 'The first-run tour, the prologue, and the hints you dismissed. Resetting replays them.',
+    hint: 'The first-run and Robot tours, the prologue, and the hints you dismissed. Resetting replays them.',
     group: 'local',
     count: () => {
       const marks = [
         readTour().status !== 'not-started',
+        readRobotTour().status !== 'not-started',
         readStorySeen(),
         flagOn(START_HERE_KEY),
         flagOn(FIRST_GUIDE_KEY),
       ].filter(Boolean).length;
-      return { n: marks, text: marks ? `${marks} of 4 seen` : 'not seen' };
+      return { n: marks, text: marks ? `${marks} of 5 seen` : 'not seen' };
     },
     clear: () => {
       removeKey(STORAGE_KEY_TOUR);
+      removeKey(STORAGE_KEY_ROBOT_TOUR);
       removeKey(STORY_SEEN_KEY);
       removeKey(START_HERE_KEY);
       removeKey(FIRST_GUIDE_KEY);

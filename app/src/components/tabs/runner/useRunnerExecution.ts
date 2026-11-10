@@ -157,6 +157,9 @@ export function useRunnerExecution({
   const pauseRef = useRef<SharedArrayBuffer | null>(null);
   // The robot's command word, waited on by the worker and answered by `onMessage` below.
   const robotBufferRef = useRef<SharedArrayBuffer | null>(null);
+  // The exact source the current robot run executed. The pane asks for a line's text while it
+  // presents that run, and reading the editor's live draft would describe code that did not run.
+  const robotCodeRef = useRef<string>('');
   // Robot Pause is a gate on this side: the worker is blocked on the command word, so parking the
   // next command here is what stops the run at the next robot call instead of between lines of Python.
   const robotPausedRef = useRef(false);
@@ -774,6 +777,7 @@ export function useRunnerExecution({
     // count stops the worker's per-line samples before that appended probe, so its helper lines
     // never put a box on the last line of main.py.
     const learnerCode = codeRef.current.replace(/\s*$/, '');
+    robotCodeRef.current = learnerCode;
     const stepMaxLine = learnerCode.trim() ? learnerCode.split('\n').length : 0;
     const source = `${learnerCode}\n\n# Robot view: read this lesson's own values.\n${scenario.probe}\n`;
     void runPythonCode(source, currentLessonRef.current, {
@@ -862,6 +866,12 @@ export function useRunnerExecution({
       paused: robotPaused,
       pauseCapable,
       showLine: showRobotLine,
+      readLine: (line: number) => {
+        if (!Number.isInteger(line) || line < 1) return null;
+        const text = robotCodeRef.current.split('\n')[line - 1];
+        return text === undefined ? null : text.trim() || null;
+      },
+      readSource: () => robotCodeRef.current,
     } satisfies RobotRunApi,
     pausedStep,
     setPausedStep,

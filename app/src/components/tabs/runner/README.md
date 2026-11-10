@@ -64,7 +64,7 @@ Four Python lessons get a Robot tab in the one `python-runner-editor`: **P.1** v
 **P.3** decisions and clamping, **P.4** lists and `for`, and **P.5** functions and `while`. The
 lesson goal above the editor remains the lesson's goal; there is no second code surface. `robotPane.tsx`
 gates the four ids and lazily mounts `../../robotSim/RobotPane.tsx` as the Robot result tab in
-`EditorPaneBody.tsx`. The tab offers **Run robot**, **Reset**, and a compact **Speed** switch
+`EditorPaneBody.tsx`. The tab offers **Run robot**, **Reset**, **Replay**, and a compact **Speed** switch
 (**0.5×**, **1×**, **2×**, default **1×**) beside the status line. The switch changes only how long
 each sampled line is held for the eye; it never changes the source, the Python execution, the
 lesson's verdict, or the final reading. The tab has no starter loader and never writes to the
@@ -85,21 +85,68 @@ worker has answered, so the switch never holds up Python or counts against the r
 budget. The probe still sends the final reading after the last line, so a value bound on that last
 line is not lost.
 
-The stage is a game view of those values: an encoder track with a robot and status lamps for P.1, a
-safe-command corridor for P.3, a command conveyor for P.4, and a linear joint for P.5. The arena is
-decorative and data-driven; the exact numbers stay in the tiles below it. The robot run is
-`grade: false`: it never verifies a lesson, and Run & Verify remains the verdict. The browser suite
-(`npm run test:robot:browser`) asserts the goal above `main.py`, opens the **Robot** tab, sets each
-lesson's own `fullSolution`, clicks **Run robot**, compares `data-reading`, and asserts the editor is
-unchanged. It also checks that Stop and Reset clear the line box mid-run, that Reset and a failing
-program leave no reading, selects all three speeds and runs P.1 at 2× to prove the reading,
-`main.py` and verified tally are unchanged, and runs P.4 at 360×740, 390×844 and 412×915 to prove
-the tab, stage, Run control and speed switch fit.
-`npm run test:robot` is the
-no-browser model suite: every view is the lesson record, the probe names that lesson's values, the
-old grid commands are gone, and the parser refuses junk. The stage's contract is `robot-stage`'s
-`data-reading`, `data-speed` and `robot-status`; the goal is the existing `editor-goal-text` above
-the code.
+The stage is a mission, not a readout. A round mission card names the lesson's goal in the learner's
+language — **Wake the rover**, **Guard the motor**, **Sort the convoy**, **Dock the arm** — and turns
+that goal into two to four targets read from the lesson's own `expected` reading, so a target cannot
+drift from the solution it describes. Every chip shows the run's current value beside the target
+(`— → 425 ticks` before a run), and a tap opens the sentence explaining it. The bar and the **Goal
+reached** banner count only targets this run actually reached; a partial reading says `2/4 targets`,
+never a percentage of an invented answer. A chip also points back at the code that wrote its current
+value: after the run it carries a small `L8` badge, and opening it shows `main.py:8` with the
+executed line quoted. The chip puts the editor's box on that line (the run keeps the box while it is
+live), and the quoted reference moves it again. The line is provenance from the run's own frames,
+not a fixed lookup in the lesson text, so P.3's clamp chips name the branch that actually ran
+(`clamped_high = 255` on line 8) rather than the last assignment in the file.
+
+The arena is those same values in motion. One round robot with big blinking eyes drives an encoder
+track (P.1), pulls two commands into a safe corridor (P.3), meets a conveyor of clamped crates (P.4),
+or docks a joint (P.5); every moving part is placed from a real reading and travels with a CSS
+transition, so it moves between values instead of teleporting. The target flag comes from the
+mission's target, not a second set of numbers. A strip under the arena quotes the `main.py` line the
+interpreter is on, beside the same line box in the editor. Numbers stay in the large readout tiles
+under the arena; a missing name is `—`. The robot’s face is Fredoka, self-hosted beside Space Grotesk
+and named once as `--font-round`; body copy keeps Geist. Motion still follows the header's Motion
+switch and `prefers-reduced-motion`.
+
+**Replay** plays the frames the last successful run already recorded, without running Python again,
+without touching `main.py`, and without grading. It starts from the first line, so the arena travels
+the same path again; the button stays disabled until a run has finished. The robot run is
+`grade: false`: it never verifies a lesson, and Run & Verify remains the verdict.
+
+The first time the tab opens, a three-step guide points at **Run robot**, the goal chips and
+**Replay**. It uses the first-lesson tour's visual language — a ring with a shadow instead of a
+backdrop, and a card that does not take a focus trap — so Run and the chips stay usable while it is
+up. **Next** and **Back** walk the three steps, the last one reads **Got it**, and `Esc` or the ×
+skips it. The record (`mechalab_robot_tour_v1`) means it opens once; resetting Onboarding brings it
+back, and a quiet **Show guide** beside the status line brings it back without opening Reset
+progress. On a phone the card is a bottom sheet with 44 px controls and no ring. It is deliberately
+separate from the six-step first-lesson tour, which owns the screen first.
+
+The browser suite (`npm run test:robot:browser`) asserts the goal above `main.py`, opens the
+**Robot** tab, sets each lesson's own `fullSolution`, clicks **Run robot**, compares `data-reading`,
+asserts the mission reports every target met and the arena arrives (`data-robot-position` 1), and
+asserts the editor is unchanged. It also checks that every chip names the `main.py` line that wrote
+its value, that opening the first chip quotes and boxes that exact line and closing it clears the
+box, that a chip opens and closes its hint, that the
+robot moves through several positions and quotes executed lines, that Replay re-presents the run
+without an edit or a grade, that Stop and Reset clear the line box mid-run, that Reset and a failing
+program leave no reading, selects all three speeds and runs P.1 at 2× to prove the reading, `main.py`
+and verified tally are unchanged, and runs P.4 at 360×740, 390×844 and 412×915 to prove the mission,
+stage, chips, Run control and speed switch fit. A fresh context also opens the Robot guide on Run,
+checks the ring lands and stays click-through, walks Back/Next to the chips and Replay, checks the
+completed record survives a reload, checks Escape keeps it skipped, opens **Show guide** to bring it
+back at Run, and checks the phone sheet and its touch targets. `npm run test:robot` is the no-browser
+model suite:
+every view is the lesson record, every mission target is that lesson's expected value, a full
+solution completes the mission while a partial reading does not, a chip's source is the line that
+last changed its value (including P.3's executed branch), numbers keep their tolerance and lists
+compare element by element, the probe names that lesson's values, the old grid commands are gone,
+the guide walks exactly Run → targets → Replay with a tolerant one-time record, starts again from
+Run after it is finished, and the parser
+refuses junk. The stage's contract is `robot-stage`'s `data-reading`,
+`data-target`, `data-robot-position`, `data-motion`, `data-lesson` and `robot-status`; the pane adds
+`data-running-line`, `data-speed`, `data-replay` and `robot-code-line`; the goal is the existing
+`editor-goal-text` above the code.
 Wiring rule: a region takes exactly the state and callbacks it renders; it never reaches into the tab.
 A region with more than a handful of inputs takes them as named concern objects — `RunnerEditorCard`
 is handed `surface`, `draft`, `panes`, `gate`, `run`, `slots` and `collab`, and `ResultsColumn` its

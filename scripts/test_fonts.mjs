@@ -68,6 +68,32 @@ assert.match(
   'expected body to use var(--font-sans) instead of spelling a stack out a second time'
 );
 
+// 2b. The Robot tab's round face is self-hosted too, and named once.
+assert.match(
+  css,
+  /@font-face\s*{[^}]*font-family:\s*'Fredoka'[^}]*src:\s*url\('\.\/assets\/fonts\/fredoka-latin-wght\.woff2'\)\s*format\('woff2-variations'\)/s,
+  "expected a self-hosted 'Fredoka' @font-face from assets/fonts; the robot's round face must not depend on a CDN"
+);
+assert.match(
+  css,
+  /--font-round:\s*'Fredoka'/,
+  'expected --font-round to name Fredoka, the one place the robot face is chosen'
+);
+const fredoka = 'app/src/assets/fonts/fredoka-latin-wght.woff2';
+assert.ok(fs.existsSync(path.join(repoRoot, fredoka)), `expected ${fredoka} beside the other self-hosted faces`);
+assert.ok(
+  fs.statSync(path.join(repoRoot, fredoka)).size > 20_000,
+  `expected ${fredoka} to be the real variable font, not a placeholder`
+);
+assert.ok(
+  read('app/src/robotSim/RobotPane.tsx').includes('font-round'),
+  'expected the Robot pane to use the font-round utility, so the face is loaded by the tab that needs it'
+);
+assert.ok(
+  read('app/src/robotSim/robotScenes.tsx').includes('var(--font-round)'),
+  'expected the arena labels to use var(--font-round), so SVG text and HTML share the face'
+);
+
 // 3. No font CDN, in the shell or the stylesheet — and no remote stylesheet of any kind.
 for (const [where, text] of [
   ['app/index.html', html],
@@ -102,6 +128,7 @@ if (fs.existsSync(distAssets)) {
   for (const [family, pattern] of [
     ['Geist', /^geist-latin-wght-normal-[\w-]+\.woff2$/],
     ['Geist Mono', /^geist-mono-latin-wght-normal-[\w-]+\.woff2$/],
+    ['Fredoka', /^fredoka-latin-wght-[\w-]+\.woff2$/],
   ]) {
     assert.ok(
       files.some((file) => pattern.test(file)),

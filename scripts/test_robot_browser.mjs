@@ -13,6 +13,7 @@ import assert from 'node:assert/strict';
 import { chromium } from 'playwright-core';
 import { startDevServer, resolveChromiumExecutable } from './e2e_browser_workbench.mjs';
 import { seedTourSeen } from './tour_seed.mjs';
+import { seedRobotTourSeen } from './robot_tour_seed.mjs';
 import { getEditorCode, setEditorCode, waitForEditor } from './editor-code.mjs';
 import { ROBOT_SCENARIOS } from '../app/src/robotSim/model.ts';
 
@@ -20,6 +21,15 @@ const RUN_TIMEOUT = 120_000;
 // A line that sleeps keeps the interpreter running long enough for the box and the toolbar's Stop
 // control to exist together; the lesson program itself is never edited by the test's fixture.
 const MID_RUN_CODE = 'import time\n\nrobot_mode = "ACTIVE"\ntime.sleep(4)\n';
+
+// The line each mission value is written on in the lesson's own full solution. The P.3 entries
+// are branch lines: a static "last assignment" lookup would name 12 and 20, which never run.
+const SOURCE_LINES = {
+  'P.1': { mode: 8, encoderTicks: 6, batteryVolts: 7, eStop: 4 },
+  'P.3': { clampedHigh: 8, clampedLow: 18, safeOutput: 23 },
+  'P.4': { clampedCommands: 12, totalCommand: 13, meanCommand: 15 },
+  'P.5': { step: 12, positionM: 11 },
+};
 
 async function openRobot(page, baseUrl, lessonId) {
   await page.goto(new URL('?lesson=' + encodeURIComponent(lessonId), baseUrl).href, {
@@ -67,6 +77,30 @@ async function readStage(page) {
     return {
       lesson: stage.getAttribute('data-lesson'),
       reading: raw ? JSON.parse(raw) : null,
+    };
+  });
+}
+
+async function missionState(page) {
+  return page.evaluate(() => {
+    const card = document.querySelector('[data-testid="robot-mission"]');
+    const stage = document.querySelector('[data-testid="robot-stage"]');
+    const buttons = [...document.querySelectorAll('button[data-testid^="robot-goal-"]')];
+    return {
+      state: card?.getAttribute('data-goal-state') ?? '',
+      met: Number(card?.getAttribute('data-goal-met') ?? -1),
+      total: Number(card?.getAttribute('data-goal-total') ?? -1),
+      chips: buttons.map((button) => ({
+        id: button.getAttribute('data-testid'),
+        met: button.getAttribute('data-met'),
+        pressed: button.getAttribute('aria-pressed'),
+        sourceLine: button.getAttribute('data-source-line') ?? '',
+      })),
+      target: stage?.getAttribute('data-target') ?? '',
+      position: Number(stage?.getAttribute('data-robot-position') ?? -1),
+      banner: Boolean(document.querySelector('[data-testid="robot-goal-banner"]')),
+      hint: document.querySelector('[data-testid="robot-goal-hint"]')?.textContent?.trim() ?? '',
+      source: document.querySelector('[data-testid="robot-goal-source"]')?.textContent?.trim() ?? '',
     };
   });
 }
@@ -124,6 +158,14 @@ async function assertScenario(page, scenario) {
     scenario.lessonId + ': the robot must not offer to replace main.py'
   );
 
+  const pristine = await missionState(page);
+  assert.equal(pristine.state, 'idle', scenario.lessonId + ': the mission starts idle');
+  assert.equal(pristine.met, 0, scenario.lessonId + ': no target is met before a run');
+  assert.equal(pristine.banner, false, scenario.lessonId + ': no goal banner before a run');
+  assert.ok(pristine.target && pristine.target !== '—', scenario.lessonId + ': the target is known before a run');
+  assert.ok(pristine.chips.length >= 2, scenario.lessonId + ': the mission lists its targets');
+  for (const chip of pristine.chips) assert.equal(chip.met, 'false', scenario.lessonId + ': ' + chip.id + ' starts unmet');
+
   await setEditorCode(page, lesson.fullSolution);
   await waitForEditor(page);
   const codeBefore = await getEditorCode(page);
@@ -145,9 +187,134 @@ async function assertScenario(page, scenario) {
   assert.equal(await getEditorCode(page), codeBefore, scenario.lessonId + ': Run robot must not change main.py');
   assert.equal(await verifiedTally(page), before, scenario.lessonId + ': a robot view is ungraded');
 
+  const mission = await missionState(page);
+  assert.equal(mission.state, 'reached', scenario.lessonId + ': the mission reports the goal reached');
+  assert.equal(mission.met, mission.total, scenario.lessonId + ': every mission target is met');
+  assert.equal(mission.chips.length, mission.total, scenario.lessonId + ': one chip per mission target');
+  for (const chip of mission.chips) {
+    assert.equal(chip.met, 'true', scenario.lessonId + ': ' + chip.id + ' should be met');
+  }
+  assert.ok(mission.banner, scenario.lessonId + ': the goal banner is shown');
+  assert.ok(Math.abs(mission.position - 1) <= 0.02, scenario.lessonId + ': the arena arrives at its target, got ' + mission.position);
+
+  const expectedSources = SOURCE_LINES[scenario.lessonId];
+  assert.ok(expectedSources, scenario.lessonId + ': the source-line map covers this lesson');
+  for (const chip of mission.chips) {
+    const key = chip.id.replace('robot-goal-', '');
+    const line = String(expectedSources[key]);
+    assert.equal(
+      chip.sourceLine,
+      line,
+      scenario.lessonId + ': ' + key + ' must point at the line that wrote it'
+    );
+    assert.ok(
+      lesson.fullSolution.split('\n')[Number(line) - 1].trim(),
+      scenario.lessonId + ': ' + key + ' must point at a real line of code'
+    );
+  }
+
+  // Opening the first chip must show the reference and put the editor box on that exact line, then
+  // close cleanly. This is the interaction the chips exist for, not only the number in the badge.
+  const first = mission.chips[0];
+  await page.getByTestId(first.id).click();
+  const pointed = await missionState(page);
+  assert.ok(
+    pointed.source.includes('main.py:' + first.sourceLine),
+    scenario.lessonId + ': the open chip must name main.py:' + first.sourceLine + ', got: ' + pointed.source
+  );
+  const pointedText = lesson.fullSolution.split('\n')[Number(first.sourceLine) - 1].trim();
+  await page.waitForFunction(
+    (text) =>
+      document
+        .querySelector('[data-editor="editor-main"] .cm-robot-trace-line')
+        ?.textContent?.includes(text),
+    pointedText,
+    { timeout: 10_000 }
+  );
+  await page.getByTestId(first.id).click();
+  await page.waitForFunction(
+    () => !document.querySelector('[data-editor="editor-main"] .cm-robot-trace-line'),
+    null,
+    { timeout: 10_000 }
+  );
+
   const body = await page.locator('body').innerText();
   assert.doesNotMatch(body, /move_forward|turn_right|wall_ahead|draw a square/, scenario.lessonId + ': no old grid exercise');
   console.log('  ok   ' + scenario.lessonId + ' ' + lesson.title + ' -> ' + JSON.stringify(stage.reading));
+}
+
+async function assertMissionChips(page) {
+  const scenario = ROBOT_SCENARIOS[0];
+  await openRobot(page, BASE, scenario.lessonId);
+  const before = await missionState(page);
+  assert.ok(before.chips.length >= 2, 'goal chips are buttons');
+  const first = before.chips[0];
+  assert.equal(first.pressed, 'false', 'a goal chip starts closed');
+
+  await page.getByTestId(first.id).click();
+  const opened = await missionState(page);
+  assert.equal(opened.chips[0].pressed, 'true', 'a goal chip opens its hint');
+  assert.ok(opened.hint.length > 0, 'an open goal chip shows its hint');
+
+  await page.getByTestId(first.id).click();
+  const closed = await missionState(page);
+  assert.equal(closed.chips[0].pressed, 'false', 'a second tap closes the hint');
+  assert.equal(closed.hint, '', 'the hint clears with its chip');
+
+  await setEditorCode(page, scenario.lesson.fullSolution);
+  await page.getByTestId('robot-run').click();
+  await waitForReading(page);
+  await waitForIdle(page);
+  const finished = await missionState(page);
+  for (const chip of finished.chips) assert.equal(chip.met, 'true', chip.id + ' should be met after the run');
+  console.log('  ok   goal chips open their hint and turn met when the run reaches them');
+}
+
+async function assertReplay(page) {
+  const scenario = ROBOT_SCENARIOS[0];
+  await openRobot(page, BASE, scenario.lessonId);
+  await setEditorCode(page, scenario.lesson.fullSolution);
+  await waitForEditor(page);
+  assert.equal(await page.getByTestId('robot-replay').isDisabled(), true, 'Replay is off before a run');
+  const codeBefore = await getEditorCode(page);
+  const before = await verifiedTally(page);
+
+  await page.getByTestId('robot-run').click();
+  await waitForReading(page);
+  await waitForIdle(page);
+  assert.equal(await page.getByTestId('robot-replay').isDisabled(), false, 'Replay is offered after a run');
+
+  await page.getByTestId('robot-replay').click();
+  await page.waitForFunction(
+    () => document.querySelector('[data-testid="robot-pane"]')?.getAttribute('data-replay') === 'true',
+    null,
+    { timeout: 10_000 }
+  );
+  // The first recorded frame is queued in the same React batch as the reset, so the stage may already
+  // show it. What matters is that Replay did not start on the finished reading.
+  const replayStart = (await readStage(page)).reading;
+  assert.ok(
+    replayStart === null || replayStart.mode !== scenario.expected.mode,
+    'a replay starts from the top, not the finished reading'
+  );
+
+  await page.waitForFunction(
+    () => {
+      const pane = document.querySelector('[data-testid="robot-pane"]');
+      const status = document.querySelector('[data-testid="robot-status"]');
+      return (
+        pane?.getAttribute('data-replay') === 'false' &&
+        status?.getAttribute('data-state') !== 'running'
+      );
+    },
+    null,
+    { timeout: RUN_TIMEOUT }
+  );
+  const after = await readStage(page);
+  assertReading(after.reading, scenario.expected, 'replayed run');
+  assert.equal(await getEditorCode(page), codeBefore, 'Replay must not edit main.py');
+  assert.equal(await verifiedTally(page), before, 'Replay must stay ungraded');
+  console.log('  ok   Replay re-presents the last run without Python, an edit or a grade');
 }
 
 async function assertResetClears(page) {
@@ -316,26 +483,49 @@ async function assertStepByStep(page) {
   await setEditorCode(page, scenario.lesson.fullSolution);
   await page.getByTestId('robot-run').click();
   const lines = new Set();
+  const positions = new Set();
+  const quotes = new Set();
   let sawBox = false;
   for (let index = 0; index < 240; index += 1) {
     const state = await page.evaluate(() => {
       const pane = document.querySelector('[data-testid="robot-pane"]');
       const box = document.querySelector('[data-editor="editor-main"] .cm-robot-trace-line');
       const status = document.querySelector('[data-testid="robot-status"]');
+      const stage = document.querySelector('[data-testid="robot-stage"]');
+      const quote = document.querySelector('[data-testid="robot-code-line"]');
       return {
         line: Number(pane?.getAttribute('data-running-line') || 0),
         boxed: Boolean(box),
         running: status?.getAttribute('data-state') === 'running',
+        position: stage ? Number(stage.getAttribute('data-robot-position')) : -1,
+        quote: quote?.textContent?.trim() ?? '',
       };
     });
     if (state.line > 0) lines.add(state.line);
     if (state.boxed) sawBox = true;
+    if (state.running) {
+      if (Number.isFinite(state.position)) positions.add(state.position.toFixed(3));
+      if (state.quote) quotes.add(state.quote);
+    }
     if (!state.running) break;
     await page.waitForTimeout(20);
   }
   await waitForIdle(page);
   assert.ok(sawBox, 'P.5: the editor must draw a box around the running line');
   assert.ok(lines.size >= 3, 'P.5: the run must visit several main.py lines, saw ' + [...lines].join(','));
+  assert.ok(
+    positions.size >= 2,
+    'P.5: the joint must move through several positions, saw ' + [...positions].join(', ')
+  );
+  assert.ok(quotes.size > 0, 'P.5: the stage must quote the line being executed');
+  for (const quote of quotes) {
+    assert.ok(
+      scenario.lesson.fullSolution.includes(quote),
+      'P.5: the quoted line must be main.py text, got: ' + quote
+    );
+  }
+  const arrival = Number(await page.getByTestId('robot-stage').getAttribute('data-robot-position'));
+  assert.ok(arrival > 0.98, 'P.5: the joint must finish at its dock, got ' + arrival);
   assert.equal(
     await page.evaluate(() => document.querySelector('[data-editor="editor-main"] .cm-robot-trace-line')),
     null,
@@ -349,6 +539,7 @@ async function assertStepByStep(page) {
 async function assertMobileViewport(browser, baseUrl, viewport, scenario) {
   const context = await browser.newContext({ viewport, isMobile: true, hasTouch: true });
   await seedTourSeen(context);
+  await seedRobotTourSeen(context);
   await context.addInitScript(() => {
     window.__mechalabPredictFirst = false;
   });
@@ -389,6 +580,16 @@ async function assertMobileViewport(browser, baseUrl, viewport, scenario) {
         overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
         pane: box('[data-testid="robot-pane"]'),
         stage: box('[data-testid="robot-stage"]'),
+        mission: box('[data-testid="robot-mission"]'),
+        goals: [...document.querySelectorAll('button[data-testid^="robot-goal-"]')].map((button) => {
+          const rect = button.getBoundingClientRect();
+          return {
+            left: rect.left,
+            right: rect.right,
+            height: rect.height,
+            sourceLine: button.getAttribute('data-source-line') ?? '',
+          };
+        }),
         run: box('[data-testid="robot-run"]'),
         speed: box('[data-testid="robot-speed-control"]'),
         tab: box('[data-testid="editor-tab-robot"]'),
@@ -407,6 +608,18 @@ async function assertMobileViewport(browser, baseUrl, viewport, scenario) {
     assert.ok(layout.pane.left >= -1 && layout.pane.right <= layout.viewport + 1, at + ': the pane must fit the viewport');
     assert.ok(layout.stage.left >= -1 && layout.stage.right <= layout.viewport + 1, at + ': the stage must fit the viewport');
     assert.equal(layout.paneOverflow, 0, at + ': the robot pane must not scroll sideways');
+    assert.ok(
+      layout.mission && layout.mission.left >= -1 && layout.mission.right <= layout.viewport + 1,
+      at + ': the mission card must fit the viewport'
+    );
+    assert.ok(layout.goals.length >= 2, at + ': the mission must show its target chips');
+    for (const goal of layout.goals) {
+      assert.ok(goal.left >= -1 && goal.right <= layout.viewport + 1, at + ': a goal chip must fit the viewport');
+      assert.ok(goal.height >= 34, at + ': a goal chip must keep a touch-sized target');
+      assert.ok(goal.sourceLine, at + ': a goal chip must point at its main.py line after a run');
+    }
+    const arrival = Number(await page.getByTestId('robot-stage').getAttribute('data-robot-position'));
+    assert.ok(arrival > 0.98, at + ': the arena must arrive at its target, got ' + arrival);
     assert.ok(layout.run.height >= 36, at + ': the Run control must keep a touch-sized target');
     assert.ok(
       layout.speed.left >= -1 && layout.speed.right <= layout.viewport + 1,
@@ -423,6 +636,204 @@ async function assertMobileViewport(browser, baseUrl, viewport, scenario) {
   }
 }
 
+const ROBOT_TOUR_KEY = 'mechalab_robot_tour_v1';
+
+async function waitForRobotTourStep(page, at, timeout = 10_000) {
+  try {
+    await page.waitForFunction(
+      (wanted) =>
+        document.querySelector('[data-testid="robot-tour"]')?.getAttribute('data-robot-tour-step') === wanted,
+      at,
+      { timeout, polling: 50 }
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function robotTourRing(page, anchor, timeout = 5000) {
+  // Wait for the ring to land and the anchor to be the topmost element, rather than reading a
+  // geometry React has not painted yet. A card that permanently covers the control still times out.
+  try {
+    const handle = await page.waitForFunction(
+      (name) => {
+        const ring = document.querySelector('[data-testid="robot-tour-ring"]');
+        const target = document.querySelector(`[data-robot-tour="${name}"]`);
+        if (!ring || !target) return null;
+        const r = ring.getBoundingClientRect();
+        const a = target.getBoundingClientRect();
+        if (
+          Math.abs(r.left - a.left) >= 12 ||
+          Math.abs(r.top - a.top) >= 12 ||
+          Math.abs(r.width - a.width) >= 16 ||
+          Math.abs(r.height - a.height) >= 16
+        ) {
+          return null;
+        }
+        const under = document.elementFromPoint(a.left + a.width / 2, a.top + a.height / 2);
+        if (!under?.closest(`[data-robot-tour="${name}"]`)) return null;
+        return {
+          dx: Math.abs(r.left - a.left),
+          dy: Math.abs(r.top - a.top),
+          dw: Math.abs(r.width - a.width),
+          dh: Math.abs(r.height - a.height),
+          pointer: getComputedStyle(ring).pointerEvents,
+          under: true,
+        };
+      },
+      anchor,
+      { timeout, polling: 50 }
+    );
+    return await handle.jsonValue();
+  } catch {
+    return null;
+  }
+}
+
+async function robotTourRecord(page) {
+  return page.evaluate((key) => {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  }, ROBOT_TOUR_KEY);
+}
+
+async function assertRobotTour(browser, baseUrl) {
+  const context = await browser.newContext();
+  await seedTourSeen(context);
+  await context.addInitScript(() => {
+    window.__mechalabPredictFirst = false;
+  });
+  const page = await context.newPage();
+  try {
+    await openRobot(page, baseUrl, 'P.1');
+    const card = page.getByTestId('robot-tour');
+    await card.waitFor({ timeout: 15_000 });
+    assert.equal(await card.getAttribute('data-robot-tour-step'), 'run', 'the guide opens on Run');
+    assert.match(await card.innerText(), /Run your code/, 'the first step names Run');
+
+    const runRing = await robotTourRing(page, 'run');
+    assert.ok(runRing, 'the first step must draw a ring');
+    assert.equal(runRing.pointer, 'none', 'the ring must not eat the Run press');
+    assert.equal(runRing.under, true, 'Run must stay clickable through the spotlight');
+    assert.ok(runRing.dx < 9 && runRing.dy < 9, 'the ring must land on Run, got ' + runRing.dx + '/' + runRing.dy);
+    assert.ok(runRing.dw < 16 && runRing.dh < 16, 'the ring must cover Run');
+
+    const opening = await robotTourRecord(page);
+    assert.equal(opening.status, 'active', 'opening the guide records an active tour');
+    assert.equal(opening.stepIndex, 0, 'the record starts at Run');
+
+    await page.getByTestId('robot-tour-next').click();
+    assert.ok(await waitForRobotTourStep(page, 'targets'), 'Next did not reach the goal chips');
+    assert.equal(await page.getByTestId('robot-tour-back').count(), 1, 'step two offers Back');
+    const targetsRing = await robotTourRing(page, 'targets');
+    assert.ok(targetsRing, 'the chip step must draw a ring');
+    assert.equal(targetsRing.under, true, 'the chips must stay clickable through the spotlight');
+
+    await page.getByTestId('robot-tour-back').click();
+    assert.ok(await waitForRobotTourStep(page, 'run'), 'Back did not return to Run');
+    await page.getByTestId('robot-tour-next').click();
+    assert.ok(await waitForRobotTourStep(page, 'targets'), 'Next did not return to the chips');
+    await page.getByTestId('robot-tour-next').click();
+    assert.ok(await waitForRobotTourStep(page, 'replay'), 'Next did not reach Replay');
+    assert.equal(await page.getByTestId('robot-tour-next').innerText(), 'Got it', 'the last step finishes');
+    const replayRing = await robotTourRing(page, 'replay');
+    assert.ok(replayRing, 'the Replay step must draw a ring');
+    assert.equal(replayRing.under, true, 'Replay must stay clickable through the spotlight');
+
+    await page.getByTestId('robot-tour-next').click();
+    await card.waitFor({ state: 'detached', timeout: 10_000 });
+    const done = await robotTourRecord(page);
+    assert.equal(done.status, 'completed', 'Got it records the finished guide');
+    assert.equal(done.stepIndex, 2, 'the finished record keeps the last step');
+
+    await openRobot(page, baseUrl, 'P.1');
+    assert.equal(await page.getByTestId('robot-tour').count(), 0, 'a finished guide must not reopen');
+    const showGuide = page.getByTestId('robot-tour-show');
+    assert.equal(await showGuide.count(), 1, 'a finished guide offers Show guide');
+    await showGuide.click();
+    await card.waitFor({ timeout: 10_000 });
+    assert.equal(await card.getAttribute('data-robot-tour-step'), 'run', 'Show guide starts at Run');
+    assert.ok(await robotTourRing(page, 'run'), 'Show guide redraws the ring');
+    assert.equal((await robotTourRecord(page)).status, 'active', 'Show guide records an active guide');
+    assert.equal(await showGuide.count(), 0, 'the action hides while the guide is open');
+    console.log('  ok   the Robot guide walks Run, the goal chips and Replay once, and Show guide brings it back');
+  } finally {
+    await context.close();
+  }
+}
+
+async function assertRobotTourDismiss(browser, baseUrl) {
+  const context = await browser.newContext();
+  await seedTourSeen(context);
+  await context.addInitScript(() => {
+    window.__mechalabPredictFirst = false;
+  });
+  const page = await context.newPage();
+  try {
+    await openRobot(page, baseUrl, 'P.1');
+    const card = page.getByTestId('robot-tour');
+    await card.waitFor({ timeout: 15_000 });
+    await page.keyboard.press('Escape');
+    await card.waitFor({ state: 'detached', timeout: 10_000 });
+    const record = await robotTourRecord(page);
+    assert.equal(record.status, 'dismissed', 'Escape records the skip');
+
+    await openRobot(page, baseUrl, 'P.1');
+    assert.equal(await page.getByTestId('robot-tour').count(), 0, 'a skipped guide must stay skipped');
+    console.log('  ok   Esc skips the Robot guide and it stays skipped');
+  } finally {
+    await context.close();
+  }
+}
+
+async function assertRobotTourPhone(browser, baseUrl) {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  await seedTourSeen(context);
+  await context.addInitScript(() => {
+    window.__mechalabPredictFirst = false;
+  });
+  const page = await context.newPage();
+  try {
+    await openRobot(page, baseUrl, 'P.1');
+    const card = page.getByTestId('robot-tour');
+    await card.waitFor({ timeout: 15_000 });
+    const sheet = await page.evaluate(() => {
+      const box = document.querySelector('[data-testid="robot-tour"]');
+      if (!box) return null;
+      const rect = box.getBoundingClientRect();
+      return {
+        bottomGap: Math.round(window.innerHeight - rect.bottom),
+        width: Math.round(rect.width),
+        ring: Boolean(document.querySelector('[data-testid="robot-tour-ring"]')),
+        buttons: [...box.querySelectorAll('button')].map((button) =>
+          Math.round(button.getBoundingClientRect().height)
+        ),
+      };
+    });
+    assert.ok(sheet, 'the phone guide must be on screen');
+    assert.ok(sheet.bottomGap >= 0 && sheet.bottomGap <= 40, 'the guide must sit at the bottom, got ' + sheet.bottomGap);
+    assert.ok(sheet.width <= 382, 'the sheet must fit a 390px screen, got ' + sheet.width);
+    assert.equal(sheet.ring, false, 'a phone must not get the desktop ring');
+    for (const height of sheet.buttons) assert.ok(height >= 44, 'a ' + height + 'px guide button on a phone');
+
+    await page.getByTestId('robot-tour-next').click();
+    assert.ok(await waitForRobotTourStep(page, 'targets'), 'the phone guide did not reach the chips');
+    await page.getByTestId('robot-tour-next').click();
+    assert.ok(await waitForRobotTourStep(page, 'replay'), 'the phone guide did not reach Replay');
+    await page.getByTestId('robot-tour-next').click();
+    await card.waitFor({ state: 'detached', timeout: 10_000 });
+    assert.equal((await robotTourRecord(page)).status, 'completed', 'the phone guide finishes');
+    console.log('  ok   the Robot guide is a phone sheet with touch-sized controls');
+  } finally {
+    await context.close();
+  }
+}
+
 // The combined gate hands over its warm server; a standalone run owns one.
 const own = process.env.E2E_BASE_URL ? null : await startDevServer(process.cwd());
 const BASE = own ? own.baseUrl : (process.env.E2E_BASE_URL.replace(/\/+$/, '') + '/');
@@ -431,6 +842,7 @@ const browser = await chromium.launch({ ...(executablePath ? { executablePath } 
 try {
   const context = await browser.newContext();
   await seedTourSeen(context);
+  await seedRobotTourSeen(context);
   await context.addInitScript(() => {
     window.__mechalabPredictFirst = false;
   });
@@ -438,6 +850,8 @@ try {
   console.log('\nthe lesson goals and the game views their own solutions drive:');
   for (const scenario of ROBOT_SCENARIOS) await assertScenario(page, scenario);
   console.log('\nthe tab edges:');
+  await assertMissionChips(page);
+  await assertReplay(page);
   await assertResetClears(page);
   await assertStopClearsMidRun(page);
   await assertResetClearsMidRun(page);
@@ -445,6 +859,11 @@ try {
   await assertPartialFailureLeavesNoReading(page);
   await assertSpeedControl(page);
   await assertStepByStep(page);
+
+  console.log('\nthe first-run Robot guide:');
+  await assertRobotTour(browser, BASE);
+  await assertRobotTourDismiss(browser, BASE);
+  await assertRobotTourPhone(browser, BASE);
 
   console.log('\nthe Robot tab at phone widths:');
   const phoneScenario = ROBOT_SCENARIOS.find((entry) => entry.lessonId === 'P.4');

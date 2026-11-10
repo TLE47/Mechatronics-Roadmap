@@ -42,6 +42,11 @@ import { readSittings, recordSittingEvent } from '../app/src/sittingClock.ts';
 import { readPredictions, savePrediction } from '../app/src/predictGate.ts';
 import { readAwards, recordAwards } from '../app/src/gamification/awardStore.ts';
 import { readTour, writeTour } from '../app/src/tourState.ts';
+import {
+  STORAGE_KEY_ROBOT_TOUR,
+  readRobotTour,
+  writeRobotTour,
+} from '../app/src/robotSim/robotTour.ts';
 import { markStorySeen } from '../app/src/story.ts';
 import { rememberLastLesson } from '../app/src/lastLesson.ts';
 import { noteVisit } from '../app/src/homeLanding.ts';
@@ -130,6 +135,7 @@ function seedEverything() {
     at: 1000,
   });
   writeTour({ ...readTour(), status: 'completed', stepIndex: 1 });
+  writeRobotTour({ ...readRobotTour(), status: 'completed', stepIndex: 2 });
   markStorySeen();
   localStorage.setItem(START_HERE_KEY, '1');
   rememberLastLesson('P.1');
@@ -191,7 +197,7 @@ check('every part counts what its own store holds', () => {
     log: 1,
     sittings: 1,
     predictions: 1,
-    onboarding: 3,
+    onboarding: 4,
     resume: 3,
   };
   for (const [id, n] of Object.entries(expected)) {
@@ -203,6 +209,17 @@ check('every part counts what its own store holds', () => {
   assert.match(area('notes').count().text, /1 note · 1 highlight/);
   assert.match(area('micro').count().text, /1 lesson touched/);
   assert.match(area('drafts').count().text, /1 draft · 1 version/);
+});
+
+check('resetting onboarding forgets both guided tours', () => {
+  freshBrowser();
+  seedEverything();
+  assert.equal(area('onboarding').count().n, 4, 'the lesson tour, the Robot guide, the prologue and Start Here');
+  const report = resetAreas(['onboarding']);
+  assert.equal(report.items, 4);
+  assert.equal(readTour().status, 'not-started');
+  assert.equal(readRobotTour().status, 'not-started');
+  assert.equal(localStorage.getItem(STORAGE_KEY_ROBOT_TOUR), null);
 });
 
 console.log('\none part, alone');

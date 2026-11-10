@@ -20,6 +20,7 @@ import { STORAGE_KEY_READING, clearReadingPosition, readReadingPositions } from 
 import { STORAGE_KEY_LAST_LESSON, readLastLessonId } from './lastLesson.ts';
 import { STORAGE_KEY_LAST_VISIT, readLastVisit } from './homeLanding.ts';
 import { STORAGE_KEY_TOUR, readTour } from './tourState.ts';
+import { STORAGE_KEY_ROBOT_TOUR, readRobotTour } from './robotSim/robotTour.ts';
 import { STORY_SEEN_KEY, readStorySeen } from './story.ts';
 import { PREDICTIONS_KEY, clearPrediction, readPredictions } from './predictGate.ts';
 import { readAwards, writeAwards } from './gamification/awardStore.ts';
@@ -264,6 +265,13 @@ function onboardingItems(): ResetItem[] {
       detail: `status: ${readTour().status}`,
       present: readTour().status !== 'not-started',
       key: STORAGE_KEY_TOUR,
+    },
+    {
+      id: 'robot-tour',
+      label: 'Robot tab tour',
+      detail: `status: ${readRobotTour().status}`,
+      present: readRobotTour().status !== 'not-started',
+      key: STORAGE_KEY_ROBOT_TOUR,
     },
     {
       id: 'story',

@@ -16,6 +16,70 @@ flowchart LR
 
 ---
 
+## [2026-11-10] — The Robot guide can be called back
+
+A quiet **Show guide** action now sits beside the Robot tab's status line. It starts the three-step
+guide again from Run after the learner has finished or skipped it, without opening Reset progress.
+The action writes the same `mechalab_robot_tour_v1` record through `startRobotTour`, so the guide is
+still a one-time first-run offer: the button is the explicit way back, and it hides while the card is
+up. The coach mark brings Run into view if the action was pressed lower in the scrolling pane.
+`npm run test:robot` pins the restart transition; `npm run test:robot:browser` finishes the guide,
+reloads to prove it stays closed, presses **Show guide**, and checks the card, ring and active record
+return at Run.
+
+---
+
+## [2026-11-09] — The Robot tab introduces itself once
+
+The first time a learner opens the Robot tab, a three-step guide points at **Run robot**, the goal
+chips and **Replay**. It is not a modal: the ring covers the control with a shadow and lets clicks
+through, so the learner can press Run or open a chip while the card is up. **Next** and **Back**
+walk the steps, the last reads **Got it**, and `Esc` or the × skips it. The guide is anchored to the
+controls' own `data-robot-tour` values, so a run that moves the status line or a font swap cannot leave
+the ring on the wrong thing. Completion, skip and the current step live in
+`mechalab_robot_tour_v1`; the record means the guide opens once, and the Onboarding reset removes it
+so resetting replays it. On a phone the card is a bottom sheet with 44 px controls and no ring. It is
+separate from the six-step first-lesson tour, which owns the screen first. `npm run test:robot` pins
+the three steps and the tolerant record; `npm run test:robot:browser` opens it fresh, checks the
+ring and click-through, walks Back/Next to the finish, verifies the record survives a reload, checks
+Escape keeps it skipped, and checks the phone sheet; `npm run test:reset` pins the Onboarding reset.
+
+---
+
+## [2026-11-09] — Mission chips point back at their line
+
+Every Robot-tab mission chip now names the `main.py` line that wrote its current value. After a run
+the chip carries a small `L8`-style badge, and opening it shows `main.py:8` with that executed line
+quoted; the chip puts the editor's box on the line, and the quoted reference moves it again. The
+pointer is provenance from the run's own frame sequence, not a fixed table of the lesson solution:
+an executed frame's reading was sampled before its line ran, so a change is credited to the previous
+line. That makes P.3's clamp chips point at the branch that actually ran — `clamped_high = 255` on
+line 8, `clamped_low = 0` on line 18 — instead of line 12 or 20, which never execute, while P.4's
+list, total and mean point at the append, accumulator and division that produced them. The pointer
+is rebuilt for a replay and cleared when the run fails or is reset. `npm run test:robot` pins the
+branch, loop and final-probe attribution; `npm run test:robot:browser` asserts every chip's line,
+opens one, checks the quoted text and the editor box, and checks the pointers still fit at 360 px.
+
+---
+
+## [2026-11-09] — The Robot tab becomes a mission
+
+The Robot tab is now a small game with a goal the learner can watch being reached. Each lesson opens
+with its own mission — **Wake the rover**, **Guard the motor**, **Sort the convoy**, **Dock the arm**
+— whose targets are read from that lesson's `expected` reading, never copied, so the card cannot
+drift from the solution it describes. Every target is a chip showing the run's current value beside
+its target; a tap explains it, the progress bar counts only values this run actually matched, and a
+banner marks the moment every target agrees. The robot, its eyes, the four arenas and the readout
+type are redrawn bigger and rounder; the round face is Fredoka, self-hosted beside Space Grotesk and
+named once as `--font-round`. The robot now travels to the lesson's own target with CSS transitions,
+the arena quotes the `main.py` line being executed, and **Replay** plays the stored frames again
+without running Python, editing the editor or grading the lesson. A missing value stays `—`.
+`npm run test:robot` pins the mission model; `npm run test:robot:browser` proves the mission, chip
+hints, movement toward the target, arrival, Replay and the phone layout; `npm run test:fonts` checks
+the self-hosted round face.
+
+---
+
 ## [2026-11-09] — Robot playback speed
 
 The Robot tab now has a compact **0.5× / 1× / 2×** step-speed switch beside its status line. It

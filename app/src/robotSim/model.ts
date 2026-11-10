@@ -13,6 +13,7 @@
  */
 import { PYTHON_LESSONS, type PythonLessonItem } from '../data/pythonLessonsData.ts';
 import { ROBOT_LESSON_IDS, type RobotLessonId } from '../robotLessons.ts';
+import { missionFor } from './robotMission.ts';
 
 export { ROBOT_LESSON_IDS, type RobotLessonId };
 
@@ -79,6 +80,10 @@ export interface RobotRunApi {
   stop: () => void;
   /** Draw the box around the line the interpreter is on, or clear it with null. */
   showLine: (line: number | null) => void;
+  /** The executed `main.py` line's text, for the Robot tab's code strip; null when it is blank. */
+  readLine: (line: number) => string | null;
+  /** The exact source this robot run executed, for source-line provenance. */
+  readSource: () => string;
   isRunning: boolean;
   paused: boolean;
   pauseCapable: boolean;
@@ -262,6 +267,15 @@ export function scenarioProblems(entry: RobotScenario): string[] {
   }
   const expectedKeys = Object.keys(entry.expected);
   if (expectedKeys.length < 2) problems.push('the expected reading has fewer than two values');
+  // The mission's targets are read back out of this same expected reading, so a lesson whose
+  // expected values cannot back a mission target is refused here rather than drawn as a dash.
+  try {
+    const mission = missionFor(entry);
+    if (!mission.title.trim()) problems.push('the mission has no title');
+    if (mission.targets.length < 2) problems.push('the mission has fewer than two targets');
+  } catch (error) {
+    problems.push(`the mission is invalid: ${error instanceof Error ? error.message : String(error)}`);
+  }
   for (const [name, value] of Object.entries(entry.expected)) {
     if (value === null || value === undefined) problems.push(`expected.${name} is empty`);
     else if (typeof value === 'number' && !Number.isFinite(value)) problems.push(`expected.${name} is not finite`);
