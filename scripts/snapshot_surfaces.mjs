@@ -51,6 +51,7 @@ import { resolveChromiumExecutable } from './e2e_browser_workbench.mjs';
 import { ensureBuilt, startStaticServer } from './e2e_pages_bundle.mjs';
 import { SETTLE, SURFACE_COUNTS, settleSurface } from './surface_settle.mjs';
 import { seedTourSeen } from './tour_seed.mjs';
+import { seedRobotTourSeen } from './robot_tour_seed.mjs';
 import { compareSnapshot } from './snapshot_compare.mjs';
 
 const ROOT = process.cwd();
@@ -445,9 +446,10 @@ async function main() {
           }
         }, palette);
       }
-      // This sweep measures the workbench, not onboarding: a first-run coach mark over the toolbar
-      // would be recorded as the tab's own structure (`scripts/tour_seed.mjs`).
+      // This sweep measures the workbench, not onboarding: either first-run coach mark over the
+      // toolbar would be recorded as the tab's own structure (`scripts/tour_seed.mjs`).
       await seedTourSeen(context);
+      await seedRobotTourSeen(context);
       const page = await context.newPage();
       page.on('pageerror', (error) => errors.push(`${palette}: ${error.message}`));
       // Answer the one live request the app makes (see RISE_ISSUE_FIXTURE) before anything loads:

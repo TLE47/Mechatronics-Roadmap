@@ -40,6 +40,7 @@ import { BULK_KEYS } from '../app/src/bulkStorage.ts';
 import { clearBulk, readBulk } from './bulk_store_page.mjs';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
 import { seedTourSeen } from './tour_seed.mjs';
+import { seedRobotTourSeen } from './robot_tour_seed.mjs';
 
 /** Injected into every page load: spec resolution, clicking, fingerprinting. */
 const HELPERS = `
@@ -131,12 +132,28 @@ window.__pairs = {
     // stamp the landing rule keeps (mechalab_last_visit_v1) all differ between two runs of the same
     // clicks by design - a sitting and a visit *are* records of when they happened - and nothing in
     // this sweep is about any of them. Everything else is still compared.
+    const wallClockOnboarding = (key, raw) => {
+      if (key !== 'mechalab_tour_v1') return raw;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          delete parsed.updatedAt;
+          return JSON.stringify(parsed);
+        }
+      } catch {
+        // A malformed record is compared as it was stored; this helper must not hide a real difference.
+      }
+      return raw;
+    };
     const storage = Object.keys(localStorage)
       .filter(
-        (k) => k.startsWith('mechalab') && !/learningLog|progress\.updatedAt|sittings|last_visit/i.test(k)
+        (k) =>
+          k.startsWith('mechalab') &&
+          // The Robot guide's record is harness state for its own suite, not a paired control here.
+          !/learningLog|progress\.updatedAt|sittings|last_visit|robot_tour_v1/i.test(k)
       )
       .sort()
-      .map((k) => k + '=' + localStorage.getItem(k))
+      .map((k) => k + '=' + wallClockOnboarding(k, localStorage.getItem(k)))
       .join('|');
     return ['--text--', text, '--fields--', fields, '--storage--', storage].join('\\n');
   },
@@ -426,8 +443,9 @@ export async function runSameTaskPairSweep({ baseUrl: externalBaseUrl, only = pr
   try {
     const context = await browser.newContext();
     // Seeded on the context, so it survives the per-case `localStorage.clear()`: an init script runs
-    // again on the reload that follows, and the coach mark never appears over the controls.
+    // again on the reload that follows, and neither coach mark appears over the controls.
     await seedTourSeen(context);
+    await seedRobotTourSeen(context);
     const page = await context.newPage();
     await page.addInitScript({ content: HELPERS });
     let index = 0;

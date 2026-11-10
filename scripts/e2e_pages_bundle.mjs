@@ -55,6 +55,7 @@ import { resolveChromiumExecutable } from './e2e_browser_workbench.mjs';
 import { getEditorCode, setEditorCode } from './editor-code.mjs';
 import { nameStale, staleBuild } from './buildFreshness.mjs';
 import { seedTourSeen } from './tour_seed.mjs';
+import { seedRobotTourSeen } from './robot_tour_seed.mjs';
 import {
   auditNarrowWorkbench,
   auditPaneLayouts,
@@ -633,6 +634,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     // The built bundle is graded as a returning learner's workbench: a first-run coach mark over it
     // would be measured as part of the page.
     await seedTourSeen(context);
+    await seedRobotTourSeen(context);
     const page = await context.newPage();
     const pageErrors = [];
     page.on('pageerror', (error) => pageErrors.push(String(error)));
@@ -722,6 +724,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       window.__mechalabPredictFirst = false;
     });
     await seedTourSeen(cheatContext);
+    await seedRobotTourSeen(cheatContext);
     const cheatPage = await cheatContext.newPage();
     await cheatPage.goto(baseUrl, { waitUntil: 'networkidle', timeout: 45000 });
     await cheatPage.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, { timeout: 20000 });
@@ -779,6 +782,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       window.__mechalabPredictFirst = false;
     });
     await seedTourSeen(wideContext);
+    await seedRobotTourSeen(wideContext);
     const wide = await wideContext.newPage();
     await wide.goto(baseUrl, { waitUntil: 'networkidle', timeout: 45000 });
     await wide.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, { timeout: 20000 });
@@ -1177,6 +1181,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
         reducedMotion: 'reduce',
       });
       await seedTourSeen(quietContext);
+      await seedRobotTourSeen(quietContext);
       const quiet = await quietContext.newPage();
       await quiet.goto(`${baseUrl}?view=study`, { waitUntil: 'domcontentloaded' });
       await quiet.getByTestId('tab-btn-tab-pyodide').click();
@@ -1544,6 +1549,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       window.__mechalabPredictFirst = false;
     });
     await seedTourSeen(tabletContext);
+    await seedRobotTourSeen(tabletContext);
     const tablet = await tabletContext.newPage();
     await tablet.goto(baseUrl, { waitUntil: 'networkidle', timeout: 45000 });
     await tablet.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, { timeout: 20000 });
