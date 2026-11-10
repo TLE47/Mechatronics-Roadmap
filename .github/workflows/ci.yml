@@ -352,12 +352,17 @@ jobs:
             const message = oneLine(value);
             console.log(`::error title=${title}::${message.slice(-3800)}`);
           };
-          console.log('=== E2E failure lines ===');
-          console.log(failures);
+          const firstFailure = lines.findIndex((line) =>
+            /\[FAIL\].*(Real-browser|AssertionError)|AssertionError/.test(line)
+          );
+          const context = firstFailure >= 0 ? numbered.slice(firstFailure, firstFailure + 28).join('\n') : failures;
+          console.log('=== E2E failure context ===');
+          console.log(context);
+          annotate('E2E failure context', context);
           annotate('E2E failure lines', failures);
           annotate('E2E failure tail', tail);
           if (process.env.GITHUB_STEP_SUMMARY) {
-            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### E2E failure lines\n\n\`\`\`\n${failures}\n\`\`\`\n\n### E2E failure tail\n\n\`\`\`\n${tail}\n\`\`\`\n`);
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### E2E failure context\n\n\`\`\`\n${context}\n\`\`\`\n\n### E2E failure lines\n\n\`\`\`\n${failures}\n\`\`\`\n\n### E2E failure tail\n\n\`\`\`\n${tail}\n\`\`\`\n`);
           }
           NODE
           fi
