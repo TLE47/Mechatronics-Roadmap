@@ -205,7 +205,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = (props) => {
             <h2 className="home-headline mt-3 font-display text-ink">
               Build the loop.
               <br />
-              <span className="text-muted">Then watch it move.</span>
+              <span className="home-gradient-text text-muted">Then watch it move.</span>
             </h2>
             <p className="mt-3 max-w-[46ch] text-[13px] leading-relaxed text-muted">
               Read a page, predict what the code will do, run it, and let the checks tell you the

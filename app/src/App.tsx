@@ -1809,7 +1809,7 @@ export const App: React.FC = () => {
                 className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-[12px] font-semibold transition-colors"
                 style={
                   viewMode === 'beginner'
-                    ? { backgroundColor: 'var(--accent-soft)', color: 'var(--accent)' }
+                    ? { backgroundColor: 'var(--accent-soft)', color: 'var(--text)' }
                     : { color: 'var(--muted)' }
                 }
               >
@@ -1826,7 +1826,7 @@ export const App: React.FC = () => {
                 className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-[12px] font-semibold transition-colors"
                 style={
                   viewMode === 'advanced'
-                    ? { backgroundColor: 'var(--accent-soft)', color: 'var(--accent)' }
+                    ? { backgroundColor: 'var(--accent-soft)', color: 'var(--text)' }
                     : { color: 'var(--muted)' }
                 }
               >

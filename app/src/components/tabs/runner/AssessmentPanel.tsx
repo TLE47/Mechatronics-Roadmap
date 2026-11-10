@@ -233,7 +233,7 @@ export function AssessmentPanel({
           <summary className="flex cursor-pointer list-none items-center gap-1.5 text-[12px] font-mono uppercase tracking-[0.08em] text-faint hover:text-body [&::-webkit-details-marker]:hidden">
             <Activity className="h-3 w-3" aria-hidden="true" />
             How presentation is read
-            <span className="ml-auto text-[11px] normal-case tracking-normal text-dim group-open:hidden">
+            <span className="ml-auto text-[11px] normal-case tracking-normal text-muted group-open:hidden">
               open
             </span>
           </summary>

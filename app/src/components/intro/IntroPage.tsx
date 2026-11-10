@@ -1427,22 +1427,21 @@ const INTRO_CSS = `
 }
 @keyframes intro-edge-flow { to { stroke-dashoffset: -11; } }
 @keyframes intro-loop-state {
-  0%, 100% { box-shadow: inset 0 0 0 1px transparent, 0 0 0 0 transparent; }
-  2% { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 20px -10px color-mix(in srgb, var(--accent) 90%, transparent); }
-  13% { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 20px -10px color-mix(in srgb, var(--accent) 90%, transparent); }
-  22% { box-shadow: inset 0 0 0 1px transparent, 0 0 0 0 transparent; }
+  0%, 100% { box-shadow: inset 2px 0 0 transparent; }
+  2%, 13% { box-shadow: inset 2px 0 0 var(--accent); }
+  22% { box-shadow: inset 2px 0 0 transparent; }
 }
 @keyframes intro-beacon {
-  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--emerald, #34d399) 55%, transparent); opacity: 1; }
-  55%, 100% { box-shadow: 0 0 0 5px transparent; opacity: 0.55; }
+  0%, 100% { opacity: 1; }
+  55% { opacity: 0.45; }
 }
 @keyframes intro-edge-sweep {
-  0% { transform: translateX(-120%); }
-  55%, 100% { transform: translateX(240%); }
+  0%, 100% { opacity: 0.14; }
+  50% { opacity: 0.42; }
 }
 @keyframes intro-aurora {
-  0%, 100% { background-position: 18% 0%; }
-  50% { background-position: 82% 100%; }
+  0%, 100% { box-shadow: inset 0 0 0 1px transparent; }
+  50% { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent); }
 }
 @media print {
   .intro-reveal, .intro-reveal:not(.is-shown) { opacity: 1; transform: none; }
@@ -1472,8 +1471,9 @@ const INTRO_CSS = `
   .intro-root[data-motion='off'] .intro-cta:hover { transform: none; }
 .intro-root[data-motion='off'] .intro-live { animation: none; }
 
-/* Flat, instrument-panel finish: the page keeps its route and its live figures, without the
-   aurora, gradient headline, sweeping edges or hover lift that made it read as a showcase. */
+/* Flat, instrument-panel finish: the page keeps its route, its live figures and a restrained
+   state cue, without the aurora, gradient headline, sweeping edges or hover lift that made it
+   read as a showcase. */
 .intro-gradient-text {
   background: none;
   color: var(--accent);
@@ -1482,15 +1482,27 @@ const INTRO_CSS = `
 }
 .intro-hero-glow { display: none; }
 .intro-grid { animation: none; opacity: 0.22; }
-.intro-loop-step { animation: none; }
+.intro-loop-step {
+  animation: intro-loop-state 6.9s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * -1.15s);
+}
 .intro-beacon {
   width: 4px;
   height: 4px;
   border-radius: 2px;
   box-shadow: none;
-  animation: none;
+  animation: intro-beacon 4.4s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * -0.44s);
 }
-.intro-stat::after,
+.intro-stat::after {
+  display: block;
+  width: 100%;
+  transform: none;
+  background: var(--accent);
+  opacity: 0.18;
+  animation: intro-edge-sweep 12s ease-in-out infinite;
+  animation-delay: var(--stat-delay, 0s);
+}
 .intro-kept-card::after { display: none; }
 .intro-traveller {
   width: 8px;
@@ -1509,7 +1521,7 @@ const INTRO_CSS = `
 .intro-arm-card { box-shadow: none; }
 .intro-closing {
   background: var(--panel);
-  animation: none;
+  animation: intro-aurora 24s ease-in-out infinite;
 }
 .intro-live { animation: none; }
 .intro-step rect { animation: none; filter: none !important; }

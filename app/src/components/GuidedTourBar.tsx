@@ -50,7 +50,7 @@ export const GuidedTourBar: React.FC<GuidedTourBarProps> = ({
         </button>
         <button
           onClick={onNext}
-          className="flex min-h-8 cursor-pointer items-center gap-1 rounded-[var(--r-sm)] border border-accent bg-accent/15 px-2 py-1.5 text-[11px] font-semibold text-accent transition-colors hover:bg-accent/25 sm:px-3 sm:text-xs"
+          className="flex min-h-8 cursor-pointer items-center gap-1 rounded-[var(--r-sm)] border border-accent bg-accent/15 px-2 py-1.5 text-[11px] font-semibold text-ink transition-colors hover:bg-accent/25 sm:px-3 sm:text-xs"
         >
           <span className="sm:hidden">Next {currentStepIndex + 1}/{totalSteps}</span>
           <span className="hidden sm:inline">Next Step ({currentStepIndex + 1}/{totalSteps})</span>
@@ -58,7 +58,7 @@ export const GuidedTourBar: React.FC<GuidedTourBarProps> = ({
         </button>
         <button
           onClick={onApplyPreset}
-          className="flex min-h-8 cursor-pointer items-center gap-1 rounded-[var(--r-sm)] border border-emerald/60 bg-emerald/10 px-2 py-1.5 text-[11px] font-semibold text-emerald transition-colors hover:bg-emerald/20 sm:px-3 sm:text-xs"
+          className="flex min-h-8 cursor-pointer items-center gap-1 rounded-[var(--r-sm)] border border-emerald/60 bg-emerald/10 px-2 py-1.5 text-[11px] font-semibold text-ink transition-colors hover:bg-emerald/20 sm:px-3 sm:text-xs"
         >
           <Play className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
           <span className="sm:hidden">Demo</span>
