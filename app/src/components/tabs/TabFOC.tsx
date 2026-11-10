@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MathView, MathPanel } from '../MathView';
-import { Sparkles, Check, AlertTriangle } from 'lucide-react';
+import { Activity, Check, AlertTriangle } from 'lucide-react';
 import { PresetRequest, claimPreset } from '../../demoPresets';
 import { PlotExpander } from '../PlotExpander';
 
@@ -144,7 +144,7 @@ export const TabFOC: React.FC<TabFOCProps> = ({ onLoadPreset, highlightedId, pre
 
     ctx.fillStyle = '#cbd5e1';
     ctx.font = '12px monospace';
-    ctx.fillText(`Top: Step i_q(t) (Emerald, Target = ${iqRef.toFixed(1)} A) vs Cross-Coupled i_d(t) Error (Rose, Decoupling: ${decouplingEnabled ? 'ON' : 'OFF!'})`, 20, 20);
+    ctx.fillText(`Top: Step i_q(t) (Emerald, Target = ${iqRef.toFixed(1)} A) vs Cross-Coupled i_d(t) Error (Rose, Decoupling: ${decouplingEnabled ? 'ON' : 'OFF'})`, 20, 20);
 
     // Bottom Pane: SVPWM Duty cycles
     const svN = 180;
@@ -269,7 +269,7 @@ export const TabFOC: React.FC<TabFOCProps> = ({ onLoadPreset, highlightedId, pre
               onClick={toggleDecoupling}
               className="w-full bg-accent/20 hover:bg-accent/30 text-accent border border-accent px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Activity className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Toggle Decoupling Feedforward</span>
             </button>
           </div>

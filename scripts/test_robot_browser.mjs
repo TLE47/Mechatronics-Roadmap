@@ -158,6 +158,16 @@ async function assertScenario(page, scenario) {
     scenario.lessonId + ': the robot must not offer to replace main.py'
   );
 
+  // The lesson goal above main.py is the brief. This tab must not repeat it as a headline, a
+  // target list or a spelled-out objective: the destination, the movement and the signal chips
+  // carry the goal instead. Keep this assertion copy-level so it does not pin any one drawing.
+  const visibleCopy = normalized(await page.getByTestId('robot-pane').innerText());
+  assert.doesNotMatch(
+    visibleCopy,
+    /\b(goal|targets?)\b/i,
+    scenario.lessonId + ': the Robot tab must not spell the goal out, got: ' + visibleCopy
+  );
+
   const pristine = await missionState(page);
   assert.equal(pristine.state, 'idle', scenario.lessonId + ': the mission starts idle');
   assert.equal(pristine.met, 0, scenario.lessonId + ': no target is met before a run');

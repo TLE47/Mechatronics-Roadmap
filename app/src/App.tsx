@@ -210,7 +210,7 @@ const TOUR_STEPS: TourStepInfo[] = [
     tab: 'tab-arch',
     targetId: null,
     title: 'Tour 1 / 8 — The Ten-Step Roadmap (Steps 1–10, Depths 1–3)',
-    desc: 'Steps 1 and 2 are Python and circuits; Steps 3–10 are one joint and then the 2-DOF arm, in order. Depth 2 and Depth 3 keep the same step numbers and raise what each step asks for. Click "Next Step →" to test the simulators!',
+    desc: 'Steps 1 and 2 are Python and circuits; Steps 3–10 are one joint and then the 2-DOF arm, in order. Depth 2 and Depth 3 keep the same step numbers and raise what each step asks for. Click "Next Step →" to test the simulators.',
   },
   {
     tab: 'tab-bode',
@@ -222,37 +222,37 @@ const TOUR_STEPS: TourStepInfo[] = [
     tab: 'tab-foc',
     targetId: 'btn-dec-toggle',
     title: 'Tour 3 / 8 — Brushless Motor Field-Oriented Control (FOC) & Decoupling',
-    desc: 'At high RPM, spinning magnets induce cross-coupling voltages (±ω_e L i_q). Click the highlighted "Toggle Decoupling Feedforward" button to see how turning off feedforward decoupling causes a large rose-colored i_d current error spike!',
+    desc: 'At high RPM, spinning magnets induce cross-coupling voltages (±ω_e L i_q). Click the highlighted "Toggle Decoupling Feedforward" button to see how turning off feedforward decoupling causes a large rose-colored i_d current error spike.',
   },
   {
     tab: 'tab-pend',
     targetId: 'sl-xmax',
     title: 'Tour 4 / 8 — Pendulum Energy Swing-Up, Balancing & Safety Walls',
-    desc: 'Watch the Furuta Pendulum pump energy until upright and catch itself! Drag the highlighted Safety Wall slider (x_max) inward or click "Apply Demo Preset" to inject a +3.2 rad/s kick—the safety filter brakes the cart before crossing the red walls.',
+    desc: 'Watch the Furuta Pendulum pump energy until upright and catch itself. Drag the highlighted Safety Wall slider (x_max) inward or click "Apply Demo Preset" to inject a +3.2 rad/s kick—the safety filter brakes the cart before crossing the red walls.',
   },
   {
     tab: 'tab-models',
     targetId: 'sl-rq2',
     title: 'Tour 5 / 8 — 3D Robot Arm Kinematics & Sub-Microsecond Safety Cutoff (STO)',
-    desc: 'Drag the highlighted Joint q_2 slider to articulate the 3-DOF Hopping Leg, or click "Apply Demo Preset" to inject a 42A Overcurrent Short and watch the dual-channel hardware STO trip the MOSFET gates to SAFE HIGH-Z in 0.65 μs!',
+    desc: 'Drag the highlighted Joint q_2 slider to articulate the 3-DOF Hopping Leg, or click "Apply Demo Preset" to inject a 42A Overcurrent Short and watch the dual-channel hardware STO trip the MOSFET gates to SAFE HIGH-Z in 0.65 μs.',
   },
   {
     tab: 'tab-cadpcb',
     targetId: 'sl-pcbl',
     title: 'Tour 6 / 8 — 3D Flexure Hinges & Motor Driver PCB Voltage Spikes',
-    desc: 'Drag the highlighted Loop Inductance slider (L_loop) above 4.0 nH: notice how V_DS,peak turns red (>60V) because stray PCB trace inductance spikes during turn-off! Click "Apply Demo Preset" to snap back to our 6-layer 1.6 nH layout.',
+    desc: 'Drag the highlighted Loop Inductance slider (L_loop) above 4.0 nH: notice how V_DS,peak turns red (>60V) because stray PCB trace inductance spikes during turn-off. Click "Apply Demo Preset" to snap back to our 6-layer 1.6 nH layout.',
   },
   {
     tab: 'tab-sysid',
     targetId: 'btn-sysmode-toggle',
     title: 'Tour 7 / 8 — Sine-Sweep & Multisine System Identification',
-    desc: 'Notice how zero-phase cosines (φ_k = 0) create a giant impulse spike at t=0 (CF = 8.00) that clips the actuator! Click "Apply Demo Preset" to switch to Schroeder quadratic phasing—compressing Crest Factor to 1.71 and locking onto the true cyan plant curve.',
+    desc: 'Notice how zero-phase cosines (φ_k = 0) create a giant impulse spike at t=0 (CF = 8.00) that clips the actuator. Click "Apply Demo Preset" to switch to Schroeder quadratic phasing—compressing Crest Factor to 1.71 and locking onto the true cyan plant curve.',
   },
   {
     tab: 'tab-eskf',
     targetId: 'btn-seqlock-toggle',
     title: 'Tour 8 / 8 — IMU Attitude Sensor Fusion & Torn-Read Protection',
-    desc: 'When WaitFreeSeqLock is disabled, the 40 kHz motor ISR overwrites the telemetry struct mid-read—causing violent red torn-read spikes! Click "Apply Demo Preset" to enable atomic sequence locking (0 torn reads in 29.6 ns) while estimating gyro bias.',
+    desc: 'When WaitFreeSeqLock is disabled, the 40 kHz motor ISR overwrites the telemetry struct mid-read—causing violent red torn-read spikes. Click "Apply Demo Preset" to enable atomic sequence locking (0 torn reads in 29.6 ns) while estimating gyro bias.',
   },
 ];
 
@@ -427,7 +427,7 @@ export const App: React.FC = () => {
       return false;
     }
   });
-  // At `xl` the rail is a 196 px activity bar on every lesson; a press folds it to its icons. A
+  // At `xl` the rail is a 232 px activity bar on every lesson; a press folds it to its icons. A
   // preference like the layout, so it is remembered (`app/src/railCollapse.ts`).
   const [railCollapsed, setRailCollapsed] = useState<boolean>(() => readRailCollapsed());
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState<boolean>(false);
@@ -1799,14 +1799,14 @@ export const App: React.FC = () => {
             <div
               role="group"
               aria-label="Workbench Complexity Mode"
-              className="flex max-w-full items-center gap-0.5 overflow-x-auto rounded-[var(--r-full)] border p-1"
+              className="flex max-w-full items-center gap-0.5 overflow-x-auto rounded-[var(--r-md)] border p-1"
               style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg)' }}
             >
               <button
                 onClick={() => setViewMode('beginner')}
                 data-testid="btn-mode-beginner"
                 aria-pressed={viewMode === 'beginner'}
-                className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-[var(--r-full)] px-3 py-1.5 text-[12px] font-semibold transition-colors"
+                className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-[12px] font-semibold transition-colors"
                 style={
                   viewMode === 'beginner'
                     ? { backgroundColor: 'var(--accent-soft)', color: 'var(--accent)' }
@@ -1823,7 +1823,7 @@ export const App: React.FC = () => {
                 onClick={() => setViewMode('advanced')}
                 data-testid="btn-mode-advanced"
                 aria-pressed={viewMode === 'advanced'}
-                className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-[var(--r-full)] px-3 py-1.5 text-[12px] font-semibold transition-colors"
+                className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-[12px] font-semibold transition-colors"
                 style={
                   viewMode === 'advanced'
                     ? { backgroundColor: 'var(--accent-soft)', color: 'var(--accent)' }
@@ -1907,7 +1907,7 @@ export const App: React.FC = () => {
           data-testid="tab-rail-nav"
           data-collapsed={railCollapsed ? 'true' : 'false'}
           className={`border-b xl:shrink-0 xl:border-b-0 xl:border-r ${
-            railCollapsed ? 'xl:w-[68px]' : 'xl:w-[196px]'
+            railCollapsed ? 'xl:w-[68px]' : 'xl:w-[232px]'
           }`}
           style={{ backgroundColor: 'var(--panel)', borderColor: 'var(--border)' }}
         >
@@ -2000,13 +2000,13 @@ export const App: React.FC = () => {
                   </span>
                   <span className={`min-w-0${railCollapsed ? ' xl:hidden' : ''}`}>
                     <span
-                      className="block truncate text-[12.5px] font-semibold"
+                      className="block text-[12px] font-semibold leading-tight"
                       style={{ color: isActive ? 'var(--accent)' : 'var(--text)' }}
                     >
                       {label}
                     </span>
                     <span
-                      className="mt-0.5 block truncate text-[11px]"
+                      className="mt-0.5 block text-[10.5px] leading-snug"
                       style={{ color: isActive ? 'var(--muted)' : 'var(--dim)' }}
                     >
                       {subtitle}

@@ -534,7 +534,7 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     equation: '\\tau = K_p\\big(\\text{IK}(x_d, y_d) - q\\big) - K_d \\dot{q}',
     milestoneId: 't1_tr08',
     milestoneTask: 'Complete the Tier 1 2-DOF desktop robot (or pass all 8 interactive simulator presets in Tier 1 mode) to unlock the Tier 2 Applied Engineering Pass!',
-    deliverableGate: '🏆 TIER 1 GRADUATION: Unlock Tier 2 (Custom PCBs, RTOS/DMA, LQR & MuJoCo).',
+    deliverableGate: 'TIER 1 GRADUATION: Unlock Tier 2 (Custom PCBs, RTOS/DMA, LQR & MuJoCo).',
     presetId: 'robot_arm_polish',
     presetLabel: 'Launch Capstone Inspector',
     studyLinks: [
@@ -906,7 +906,7 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     equation: '\\tau_{\\text{cmd}} = K_p(q_{\\text{des}} - q) + K_d(v_{\\text{des}} - \\hat{v}_{\\text{PLL}}) + \\tau_{\\text{ff}}',
     milestoneId: 't2_tr08',
     milestoneTask: 'Complete all Tier 2 Applied Milestones across Tracks 00–08 to unlock the final Tier 3 Production & Graduate Mastery Pass!',
-    deliverableGate: '🏆 TIER 2 GRADUATION: Unlock Tier 3 (Lie Groups, <2nH 48V FOC, WaitFreeSeqLock & STO).',
+    deliverableGate: 'TIER 2 GRADUATION: Unlock Tier 3 (Lie Groups, <2nH 48V FOC, WaitFreeSeqLock & STO).',
     presetId: 'cad_qdd_carrier',
     presetLabel: 'Inspect QDD Actuator Design',
     studyLinks: [
@@ -1264,7 +1264,7 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     equation: '\\text{All 12 Hardware, CAD, PCB, Firmware \\& Control Verification Gates} = \\text{PASS}',
     milestoneId: 't3_tr08',
     milestoneTask: 'Complete all Tier 3 Production Milestones to achieve 100% MechaLab Roadmap Mastery!',
-    deliverableGate: '🏆 FULL ROADMAP MASTERY: 12/12 Production Suites Verified.',
+    deliverableGate: 'FULL ROADMAP MASTERY: 12/12 Production Suites Verified.',
     presetId: 'robot_hopper_crouch',
     presetLabel: 'Inspect All Capstone Models',
     studyLinks: [

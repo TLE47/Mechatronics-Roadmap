@@ -2,7 +2,7 @@
  * The Robot tab's first-run guide (`app/src/robotSim/robotTour.ts`).
  *
  * The guide is three sentences about the three controls the tab adds to the one editor: Run robot,
- * the mission's goal chips, and Replay. It is deliberately not the six-step first-lesson tour: a
+ * the signal chips, and Replay. It is deliberately not the six-step first-lesson tour: a
  * learner who opens Robot has already met the workbench, and the only new vocabulary here is the
  * tab's own.
  *
@@ -33,14 +33,14 @@ export const ROBOT_TOUR_STEPS = [
   {
     id: 'targets',
     anchor: 'targets',
-    title: 'Read the targets',
-    body: 'Each target compares your run with the lesson goal. Tap one to open its hint and the main.py line that wrote its value.',
+    title: 'Trace the signals',
+    body: 'Each signal is drawn from your run. Tap one to open the main.py line that wrote its value.',
   },
   {
     id: 'replay',
     anchor: 'replay',
     title: 'Replay the motion',
-    body: 'After a run, Replay walks the same motion without running Python again. Watch how the code reached the goal.',
+    body: 'After a run, Replay walks the same motion without running Python again. Watch how the code finds its way.',
   },
 ] as const satisfies readonly RobotTourStep[];
 

@@ -110,7 +110,7 @@ import { roadmapStepForLesson } from '../../practiceLinks';
 import { stepBreadcrumb, stepCostLabel, stepForMilestone } from '../../spine';
 
 import type { ActiveTierPass } from '../../curriculumData';
-import { Play, Lightbulb, BookOpen, Sparkles, Check, ChevronRight, OctagonX, LifeBuoy } from 'lucide-react';
+import { Play, Lightbulb, BookOpen, Check, ChevronRight, OctagonX, LifeBuoy } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -1835,7 +1835,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           onClick={() => openNextLesson(nextLesson.id)}
           className="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-accent text-inverse flex items-center gap-1 cursor-pointer"
         >
-          <Sparkles className="w-3 h-3" />
           <span>Next: Lesson {nextLesson.id} →</span>
         </button>
       )}
@@ -2011,7 +2010,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="text-xs font-mono text-emerald flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5" />
+                <BookOpen className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>
                   {currentLesson.id === 'P.1'
                     ? 'Lesson P.1 · start of the Python on-ramp · open and ready below'
@@ -2982,7 +2981,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               title="Predict first: commit to what this will print, then run it"
               className="btn min-h-[44px] min-w-[44px] shrink-0 gap-1.5 px-2.5 text-[12.5px]"
             >
-              <Sparkles className="h-4 w-4 text-accent" aria-hidden="true" />
+              <Lightbulb className="h-4 w-4 text-accent" aria-hidden="true" />
               <span className="hidden min-[380px]:inline">Predict</span>
             </button>
           </div>

@@ -12,7 +12,6 @@ import {
   Moon,
   Play,
   ShieldCheck,
-  Sparkles,
   UserRound,
   Waypoints,
   Wrench,
@@ -153,8 +152,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = (props) => {
               What is this?
             </button>
           </div>
-          <h1 className="home-page-title mt-1 flex items-center gap-2 font-display text-3xl font-bold text-ink sm:text-4xl">
-            <Sparkles className="h-5 w-5 text-accent" aria-hidden="true" />
+          <h1 className="home-page-title mt-1 font-display text-3xl font-bold text-ink sm:text-4xl">
             Home
           </h1>
           <p className="mt-1 text-xs text-muted">
@@ -197,7 +195,6 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = (props) => {
         data-testid="home-hero"
         className="home-hero relative isolate overflow-hidden rounded-2xl border border-line p-5 sm:p-7"
       >
-        <div aria-hidden="true" className="home-hero-aurora pointer-events-none absolute inset-0 -z-10" />
         <div aria-hidden="true" className="home-grid pointer-events-none absolute inset-0 -z-10" />
         <div className="grid gap-6 lg:grid-cols-[1.12fr_0.88fr] lg:items-center">
           <div className="min-w-0">
@@ -208,7 +205,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = (props) => {
             <h2 className="home-headline mt-3 font-display text-ink">
               Build the loop.
               <br />
-              <span className="home-gradient-text">Then watch it move.</span>
+              <span className="text-muted">Then watch it move.</span>
             </h2>
             <p className="mt-3 max-w-[46ch] text-[13px] leading-relaxed text-muted">
               Read a page, predict what the code will do, run it, and let the checks tell you the
@@ -219,7 +216,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = (props) => {
                 type="button"
                 onClick={startToday}
                 data-testid="home-hero-continue"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3.5 py-2 text-[12.5px] font-bold text-inverse transition-transform hover:-translate-y-0.5 hover:bg-accent/85"
+                className="inline-flex items-center gap-1.5 rounded-[var(--r-md)] bg-accent px-3.5 py-2 text-[12.5px] font-semibold text-inverse hover:bg-accent/85"
               >
                 <Play className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
                 Continue the route

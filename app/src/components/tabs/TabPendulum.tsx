@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MathView, MathPanel } from '../MathView';
-import { Sparkles, RefreshCw, Zap } from 'lucide-react';
+import { Activity, RefreshCw, Zap } from 'lucide-react';
 import { PresetRequest, claimPreset } from '../../demoPresets';
 import { PlotExpander } from '../PlotExpander';
 
@@ -272,7 +272,7 @@ export const TabPendulum: React.FC<TabPendulumProps> = ({ onLoadPreset, highligh
           <div className={`space-y-1 p-2 rounded-lg transition-all ${highlightedId === 'sl-xmax' ? 'ring-2 ring-amber bg-amber/10 shadow-[0_0_15px_rgba(251,191,36,0.3)]' : ''}`}>
             <div className="flex justify-between text-xs text-body">
               <span className="flex items-center gap-1 font-semibold text-amber">
-                <Sparkles className="w-3 h-3" />
+                <Activity className="w-3 h-3" aria-hidden="true" />
                 CBF Safety Wall <MathView math="x_{\max}" /> [m]
               </span>
               <span className="font-mono text-emerald font-bold">{xmax.toFixed(2)}</span>

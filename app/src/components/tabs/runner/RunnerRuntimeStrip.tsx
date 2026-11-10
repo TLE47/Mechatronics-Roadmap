@@ -172,7 +172,7 @@ export function RunnerRuntimeStrip({
           className="h-full transition-[width] duration-500"
           style={{
             width: `${lessonCount ? Math.round((verifiedCount / lessonCount) * 100) : 0}%`,
-            background: 'linear-gradient(90deg, var(--accent), var(--emerald))',
+            background: 'var(--accent)',
           }}
         />
       </div>

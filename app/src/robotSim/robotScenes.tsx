@@ -112,51 +112,55 @@ export function primaryTargetLabel(lessonId: string, progress: RobotProgress): s
   return value;
 }
 
-/** The robot's line in its speech bubble: short enough to fit over the arena at 11 units. */
-export function bubbleMessage(lessonId: string, reading: RobotReading | null, complete: boolean): string {
-  if (complete) return 'That’s the goal!';
-  if (!reading) return 'Ready when you are';
-  if (lessonId === 'P.1') return 'Wheels rolling…';
-  if (lessonId === 'P.3') return 'Pulling into range…';
-  if (lessonId === 'P.4') return 'Next crate!';
-  if (lessonId === 'P.5') return 'Scooting to dock…';
-  return 'Watching main.py';
-}
-
 /** The arena's own dark instrument face, the same in every palette as the app's plots. */
 export function ArenaBackground() {
   return (
     <>
       <defs>
-        <pattern id="robot-grid" width="18" height="18" patternUnits="userSpaceOnUse">
-          <path d="M 18 0 L 0 0 0 18" fill="none" stroke="#17263d" strokeWidth="1" />
+        <pattern id="robot-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+          <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#152642" strokeWidth="0.8" />
         </pattern>
-        <linearGradient id="robot-floor" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#0a1729" />
-          <stop offset="1" stopColor="#060d19" />
+        <linearGradient id="robot-floor" x1="0" y1="0" x2="0.35" y2="1">
+          <stop offset="0" stopColor="#0b1d35" />
+          <stop offset="0.5" stopColor="#071426" />
+          <stop offset="1" stopColor="#040b16" />
         </linearGradient>
         <radialGradient id="robot-glow">
-          <stop offset="0" stopColor="#38bdf8" stopOpacity="0.3" />
+          <stop offset="0" stopColor="#38bdf8" stopOpacity="0.34" />
+          <stop offset="0.45" stopColor="#0ea5e9" stopOpacity="0.12" />
           <stop offset="1" stopColor="#38bdf8" stopOpacity="0" />
         </radialGradient>
+        <radialGradient id="robot-aurora">
+          <stop offset="0" stopColor="#2dd4bf" stopOpacity="0.2" />
+          <stop offset="1" stopColor="#2dd4bf" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="robot-beam" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#38bdf8" stopOpacity="0" />
+          <stop offset="0.7" stopColor="#38bdf8" stopOpacity="0.15" />
+          <stop offset="1" stopColor="#38bdf8" stopOpacity="0" />
+        </linearGradient>
       </defs>
       <rect width="360" height="210" fill="url(#robot-floor)" />
-      <rect width="360" height="210" fill="url(#robot-grid)" />
-      <circle cx="180" cy="132" r="120" fill="url(#robot-glow)" opacity="0.35" />
+      <circle cx="312" cy="8" r="120" fill="url(#robot-aurora)" />
+      <circle cx="46" cy="184" r="120" fill="url(#robot-aurora)" opacity="0.55" />
+      <rect width="360" height="210" fill="url(#robot-grid)" opacity="0.72" />
+      <path d="M 0 186 Q 180 154 360 186" fill="none" stroke="#163451" strokeWidth="1" opacity="0.8" />
+      <path d="M 0 198 Q 180 166 360 198" fill="none" stroke="#11304c" strokeWidth="1" opacity="0.65" />
+      <g className="robot-dust" fill="#7dd3fc">
+        <circle cx="36" cy="58" r="1.2" opacity="0.38" />
+        <circle cx="92" cy="36" r="0.9" opacity="0.3" />
+        <circle cx="148" cy="74" r="1" opacity="0.26" />
+        <circle cx="224" cy="42" r="1.3" opacity="0.4" />
+        <circle cx="286" cy="78" r="1" opacity="0.28" />
+        <circle cx="330" cy="52" r="1.4" opacity="0.35" />
+        <circle cx="64" cy="112" r="0.8" opacity="0.24" />
+        <circle cx="300" cy="118" r="0.8" opacity="0.2" />
+        <circle cx="116" cy="24" r="1.1" opacity="0.3" />
+        <circle cx="252" cy="104" r="0.7" opacity="0.24" />
+      </g>
+      <circle cx="180" cy="132" r="132" fill="url(#robot-glow)" opacity="0.5" />
+      <rect x="0" y="80" width="360" height="130" fill="url(#robot-beam)" opacity="0.5" />
     </>
-  );
-}
-
-/** The little speech bubble, centred so it never collides with a scene's own gauges. */
-function Bubble({ text }: { text: string }) {
-  return (
-    <g aria-hidden="true">
-      <rect x="103" y="38" width="154" height="26" rx="13" fill="#0c1e34" stroke="#2a4566" />
-      <path d="M 172 64 l 8 8 l 8 -8 Z" fill="#0c1e34" stroke="#2a4566" strokeWidth="1" />
-      <text x="180" y="55" textAnchor="middle" fill="#dbeafe" fontSize="11" fontFamily="var(--font-round)">
-        {text}
-      </text>
-    </g>
   );
 }
 
@@ -172,6 +176,25 @@ function Spotlight({ cx, cy, r }: { cx: number; cy: number; r: number }) {
       strokeWidth="1.5"
       strokeDasharray="3 3"
     />
+  );
+}
+
+/**
+ * The destination is a place, not a sentence: a lit gate with a slow halo and a chevron pointing
+ * into it. It turns green only when the reading agrees, so the run visibly arrives somewhere.
+ */
+function DestinationBeacon({ x, y, met }: { x: number; y: number; met: boolean }) {
+  const ink = met ? '#34d399' : '#7dd3fc';
+  return (
+    <g className="robot-beacon" data-met={met ? 'true' : 'false'} transform={`translate(${x} ${y})`}>
+      <line x1="0" y1="-2" x2="0" y2="-54" stroke={ink} strokeWidth="1" opacity="0.34" strokeDasharray="2 4" />
+      <circle className="robot-beacon-halo" r="32" fill="url(#robot-glow)" opacity="0.8" />
+      <circle className="robot-beacon-pulse" r="22" fill="none" stroke={ink} strokeWidth="1" opacity="0" />
+      <circle className="robot-beacon-ring" r="18" fill="none" stroke={ink} strokeWidth="1.2" opacity="0.65" strokeDasharray="4 5" />
+      <circle r="11" fill="#071a2e" stroke={ink} strokeWidth="1.8" />
+      <circle r="4" fill={ink} />
+      <path d="M -25 0 h -8 l 5 -4 M -25 0 l 5 4" fill="none" stroke={ink} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
+    </g>
   );
 }
 
@@ -191,7 +214,9 @@ export function P1Scene({ reading, progress, highlight }: SceneProps) {
   const ticks = numberOrNull(reading?.encoderTicks);
   const target = targetNumber(progress, 'encoderTicks', 425);
   const anchor = useAnchor(ticks);
-  const start = anchor ?? Math.min(ticks ?? target, target);
+  // Before the first reading the rover waits at the near end of its own track. The destination
+  // still exists, but it is a place ahead, not a number written on the arena.
+  const start = anchor ?? target - Math.max(25, Math.abs(target) * 0.55);
   const span = Math.abs(target - start);
   const pad = Math.max(6, span * 0.14);
   const lo = Math.min(start, target) - pad;
@@ -245,9 +270,7 @@ export function P1Scene({ reading, progress, highlight }: SceneProps) {
         {estop === true ? 'E-STOP ON' : estop === false ? 'E-STOP CLEAR' : 'E-STOP —'}
       </text>
 
-      <Bubble text={bubbleMessage('P.1', reading, complete)} />
-
-      <text x="16" y="92" fill="#7f93ad" fontSize="9.5" fontFamily="var(--font-round)" letterSpacing="1.2">
+      <text x="16" y="52" fill="#7f93ad" fontSize="9.5" fontFamily="var(--font-round)" letterSpacing="1.2">
         ENCODER TRACK
       </text>
       <line x1="54" y1="150" x2="306" y2="150" stroke="#2c4462" strokeWidth="4" strokeLinecap="round" />
@@ -267,34 +290,27 @@ export function P1Scene({ reading, progress, highlight }: SceneProps) {
         y1="150"
         x2={Math.max(startX, x)}
         y2="150"
-        stroke="#0ea5e9"
+        stroke={met ? '#34d399' : '#0ea5e9'}
         strokeWidth="4"
         strokeLinecap="round"
       />
 
-      <g>
-        <line x1={targetX} y1="150" x2={targetX} y2="96" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" />
-        <path
-          d={`M ${targetX} 98 h 22 l -6 6 l 6 6 h -22 Z`}
-          fill={met ? '#34d399' : '#fbbf24'}
-          opacity="0.92"
-        />
-        <text x={targetX} y="170" textAnchor="middle" fill="#dbeafe" fontSize="10" fontFamily="var(--font-round)">
-          {formatNumber(target)} ticks
-        </text>
-        {highlight === 'encoderTicks' && <Spotlight cx={targetX} cy={150} r={18} />}
-      </g>
+      <DestinationBeacon x={targetX} y={150} met={met} />
+      {highlight === 'encoderTicks' && <Spotlight cx={targetX} cy={150} r={22} />}
       {showStart && (
-        <text x={startX} y="170" textAnchor="middle" fill="#7f93ad" fontSize="9.5" fontFamily="var(--font-round)">
-          start
-        </text>
+        <g>
+          <ellipse cx={startX} cy="151" rx="12" ry="2.5" fill="#38bdf8" opacity="0.22" />
+          <text x={startX} y="170" textAnchor="middle" fill="#7f93ad" fontSize="8.5" fontFamily="var(--font-round)" letterSpacing="0.6">
+            HOME
+          </text>
+        </g>
       )}
 
-      {met && reading && <circle cx={x} cy="126" r="28" fill="url(#robot-glow)" />}
-      <ellipse cx={x} cy="144" rx="16" ry="4" fill="#020617" opacity="0.6" />
-      {reading && !met && <SpeedLines x={x} y={126} />}
-      <g data-testid="robot-mover" className="robot-mover" style={{ transform: `translate(${x}px, 126px)` }}>
-        <g transform="scale(27)">
+      {met && reading && <circle cx={x} cy="138" r="34" fill="url(#robot-glow)" />}
+      <ellipse cx={x} cy="152" rx="19" ry="3.5" fill="#020617" opacity="0.6" />
+      {reading && !met && <SpeedLines x={x} y={138} />}
+      <g data-testid="robot-mover" className="robot-mover" style={{ transform: `translate(${x}px, 138px)` }}>
+        <g transform="scale(34)">
           <RobotSprite heading={1} mood={mood} />
         </g>
       </g>
@@ -353,7 +369,7 @@ function CommandLane({ label, y, raw, clamped, highlighted, badge }: LaneProps) 
         {/* the raw command, so the pull into range reads as one move */}
         {raw === null ? '—' : formatNumber(raw) + ' raw'}
       </text>
-      <text x="310" y={y + 4} textAnchor="end" fill={badge === 'in range' ? '#6ee7b7' : '#fbbf24'} fontSize="9" fontFamily="var(--font-round)">
+      <text x="310" y={y + 4} textAnchor="end" fill={badge === 'inside' ? '#6ee7b7' : '#fbbf24'} fontSize="9" fontFamily="var(--font-round)">
         {badge}
       </text>
     </g>
@@ -375,9 +391,8 @@ export function P3Scene({ reading, progress, highlight }: SceneProps) {
 
   return (
     <g>
-      <Bubble text={bubbleMessage('P.3', reading, complete)} />
       <text x="16" y="28" fill="#7f93ad" fontSize="9.5" fontFamily="var(--font-round)" letterSpacing="1.2">
-        SAFE CORRIDOR 0–255
+        STABILITY ENVELOPE
       </text>
       <rect x="270" y="12" width="76" height="20" rx="10" fill={estop ? '#3b1414' : '#0b1a2e'} stroke={estop ? '#7f1d1d' : '#233a57'} />
       <text x="308" y="25.5" textAnchor="middle" fill={estop ? '#fda4af' : '#94a3b8'} fontSize="9.5" fontFamily="var(--font-round)">
@@ -390,7 +405,7 @@ export function P3Scene({ reading, progress, highlight }: SceneProps) {
         raw={highRaw}
         clamped={high}
         highlighted={highlight === 'clampedHigh'}
-        badge={high === null ? '—' : metHigh ? 'in range' : 'clamping'}
+        badge={high === null ? '—' : metHigh ? 'inside' : 'pulling'}
       />
       <CommandLane
         label="LOW"
@@ -398,7 +413,7 @@ export function P3Scene({ reading, progress, highlight }: SceneProps) {
         raw={lowRaw}
         clamped={low}
         highlighted={highlight === 'clampedLow'}
-        badge={low === null ? '—' : metLow ? 'in range' : 'clamping'}
+        badge={low === null ? '—' : metLow ? 'inside' : 'pulling'}
       />
 
       <text x="58" y="150" fill="#64748b" fontSize="8.5" fontFamily="var(--font-round)">0</text>
@@ -453,7 +468,6 @@ export function P4Scene({ reading, progress, highlight }: SceneProps) {
 
   return (
     <g>
-      <Bubble text={bubbleMessage('P.4', reading, progress.complete)} />
       <g>
         <rect x="16" y="12" width="92" height="20" rx="10" fill="#0b1a2e" stroke="#233a57" />
         <text x="26" y="25.5" fill="#9fb0c9" fontSize="9.5" fontFamily="var(--font-round)">TOTAL</text>
@@ -473,7 +487,7 @@ export function P4Scene({ reading, progress, highlight }: SceneProps) {
       {highlight === 'totalCommand' && <Spotlight cx={72} cy={22} r={26} />}
 
       <text x="16" y="66" fill="#7f93ad" fontSize="9.5" fontFamily="var(--font-round)" letterSpacing="1.2">
-        CONVEYOR · RAW → CLAMPED
+        CONVOY · RAW → CLAMPED
       </text>
       <g stroke="#223a56" strokeWidth="1">
         <line x1="176" y1="84" x2="176" y2="148" />
@@ -539,7 +553,7 @@ export function P4Scene({ reading, progress, highlight }: SceneProps) {
         className="robot-belt"
       />
       <text x="180" y="176" textAnchor="middle" fill="#7f93ad" fontSize="9.5" fontFamily="var(--font-round)">
-        {clamped.length === 0 ? 'waiting for the first crate' : clamped.length + ' of ' + slots + ' sorted'}
+        {clamped.length === 0 ? 'waiting for the convoy' : clamped.length + ' of ' + slots + ' linked'}
       </text>
     </g>
   );
@@ -561,7 +575,6 @@ export function P5Scene({ reading, progress, highlight }: SceneProps) {
 
   return (
     <g>
-      <Bubble text={bubbleMessage('P.5', reading, complete)} />
       <g>
         <rect x="16" y="12" width="100" height="20" rx="10" fill="#0b1a2e" stroke="#233a57" />
         <text x="26" y="25.5" fill="#9fb0c9" fontSize="9.5" fontFamily="var(--font-round)">POSITION</text>
@@ -586,20 +599,17 @@ export function P5Scene({ reading, progress, highlight }: SceneProps) {
       ))}
       <line x1="52" y1="152" x2={Math.max(x, 52)} y2="152" stroke="#0ea5e9" strokeWidth="4" strokeLinecap="round" />
 
-      <g>
-        <line x1={targetX} y1="118" x2={targetX} y2="152" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" />
-        <path d="M 296 124 l 12 10 l -12 10" fill="none" stroke="#fbbf24" strokeWidth="2.5" strokeLinecap="round" />
-        <text x={targetX} y="112" textAnchor="middle" fill={met ? '#6ee7b7' : '#fbbf24'} fontSize="10" fontFamily="var(--font-round)">
-          DOCK {formatNumber(target)} m
-        </text>
-        {highlight === 'positionM' && <Spotlight cx={targetX} cy={152} r={20} />}
+      <g className="robot-dock">
+        <rect x={targetX - 17} y="156" width="34" height="8" rx="4" fill={met ? '#134e4a' : '#12304a'} stroke={met ? '#34d399' : '#2b5a7a'} strokeWidth="1" />
+        <DestinationBeacon x={targetX} y={152} met={met} />
+        {highlight === 'positionM' && <Spotlight cx={targetX} cy={152} r={22} />}
       </g>
 
-      {met && reading && <circle cx={x} cy="126" r="28" fill="url(#robot-glow)" />}
-      <ellipse cx={x} cy="146" rx="16" ry="4" fill="#020617" opacity="0.6" />
-      {velocity !== null && velocity > 0 && <SpeedLines x={x} y={126} />}
-      <g data-testid="robot-mover" className="robot-mover" style={{ transform: `translate(${x}px, 126px)` }}>
-        <g transform="scale(27)">
+      {met && reading && <circle cx={x} cy="140" r="34" fill="url(#robot-glow)" />}
+      <ellipse cx={x} cy="156" rx="19" ry="3.5" fill="#020617" opacity="0.6" />
+      {velocity !== null && velocity > 0 && <SpeedLines x={x} y={140} />}
+      <g data-testid="robot-mover" className="robot-mover" style={{ transform: `translate(${x}px, 140px)` }}>
+        <g transform="scale(34)">
           <RobotSprite heading={1} mood={mood} />
         </g>
       </g>
@@ -617,7 +627,7 @@ export function P5Scene({ reading, progress, highlight }: SceneProps) {
           />
         ))}
         <text x="236" y="194" fill="#9fb0c9" fontSize="9.5" fontFamily="var(--font-round)">
-          {step === null ? 'waiting' : formatNumber(step) + ' of ' + formatNumber(stepTarget) + ' steps'}
+          {step === null ? 'waiting' : formatNumber(step) + ' / ' + formatNumber(stepTarget) + ' pulses'}
         </text>
         {highlight === 'step' && <Spotlight cx={180} cy={190} r={26} />}
       </g>

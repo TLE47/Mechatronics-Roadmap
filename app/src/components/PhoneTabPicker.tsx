@@ -53,7 +53,7 @@ export const PhoneTabPicker: React.FC<PhoneTabPickerProps> = ({ items, activeId,
           <span className="block truncate text-[13px] font-semibold text-ink">{active.label}</span>
           <span className="block truncate text-[11px] text-muted">{active.subtitle}</span>
         </span>
-        <span className="flex shrink-0 items-center gap-1 rounded-full border border-line bg-canvas px-2 py-1 font-mono text-[10.5px] text-muted">
+        <span className="flex shrink-0 items-center gap-1 rounded-[var(--r-sm)] border border-line bg-canvas px-2 py-1 font-mono text-[10.5px] text-muted">
           Tabs
           <ChevronDown className="h-3 w-3" aria-hidden="true" />
         </span>
@@ -95,8 +95,8 @@ export const PhoneTabPicker: React.FC<PhoneTabPickerProps> = ({ items, activeId,
                   <Icon className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[12.5px] font-semibold">{item.label}</span>
-                  <span className="block truncate text-[11px] font-normal text-muted">
+                  <span className="block text-[12.5px] font-semibold leading-tight">{item.label}</span>
+                  <span className="block text-[11px] font-normal leading-snug text-muted">
                     {item.subtitle}
                   </span>
                 </span>

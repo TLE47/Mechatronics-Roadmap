@@ -17,11 +17,9 @@ import { parseRobotReading, robotScenario } from './model';
 import {
   NO_ROBOT_PROGRESS,
   formatCurrent,
-  formatTarget,
   missionFor,
   robotProgress,
   sourceLinesForFrames,
-  type RobotMission,
   type RobotProgress,
   type RobotSourceFrame,
   type RobotSourceLines,
@@ -69,56 +67,95 @@ function hasReadingValue(reading: RobotReading): boolean {
   return Object.values(reading).some((value) => value !== null && value !== undefined);
 }
 
-function GoalMark({ met }: { met: boolean }) {
+function SignalMark({ met }: { met: boolean }) {
   return (
-    <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 shrink-0" aria-hidden="true">
-      <circle
-        cx="8"
-        cy="8"
-        r="7"
-        fill={met ? 'var(--emerald)' : 'transparent'}
-        fillOpacity={met ? 0.2 : 0}
-        stroke={met ? 'var(--emerald)' : 'var(--dim)'}
-        strokeWidth="1.5"
-      />
-      {met ? (
-        <path
-          d="M4.6 8.2l2.2 2.2 4.4-4.6"
-          fill="none"
-          stroke="var(--emerald)"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      ) : (
-        <circle cx="8" cy="8" r="2" fill="var(--dim)" />
-      )}
+    <svg viewBox="0 0 18 18" className="h-4 w-4 shrink-0" aria-hidden="true">
+      <circle cx="9" cy="9" r="7.4" fill="none" stroke={met ? 'var(--emerald)' : 'var(--dim)'} strokeWidth="1.2" />
+      <circle cx="9" cy="9" r={met ? 3.1 : 2} fill={met ? 'var(--emerald)' : 'var(--dim)'} />
+      {met && <circle cx="9" cy="9" r="5.4" fill="none" stroke="var(--emerald)" strokeOpacity="0.35" />}
     </svg>
   );
 }
 
-function MissionCard({
+function LaunchBar({
   lessonId,
-  mission,
+  status,
+  state,
+  busy,
+  canRun,
+  onRun,
+  onReset,
+}: {
+  lessonId: string;
+  status: string;
+  state: 'idle' | 'running' | 'finished';
+  busy: boolean;
+  canRun: boolean;
+  onRun: () => void;
+  onReset: () => void;
+}) {
+  return (
+    <div className="robot-launchbar">
+      <div className="flex min-w-0 flex-1 items-center gap-2.5">
+        <span className="robot-live-dot" data-live={busy ? 'true' : 'false'} aria-hidden="true" />
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="font-round text-[12px] font-semibold uppercase tracking-[0.14em] text-ink">
+              {lessonId} · robot link
+            </span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-faint">ungraded</span>
+          </div>
+          <p
+            className="mt-0.5 truncate text-[11.5px] font-medium text-muted"
+            role="status"
+            data-testid="robot-status"
+            data-state={state}
+          >
+            {status}
+          </p>
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center gap-1.5">
+        <button
+          type="button"
+          data-testid="robot-reset"
+          onClick={onReset}
+          aria-label="Reset robot view"
+          title="Clear the reading and the arena."
+          className="robot-reset"
+        >
+          <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          data-testid="robot-run"
+          data-robot-tour="run"
+          onClick={onRun}
+          disabled={!canRun || busy}
+          className="robot-launch"
+        >
+          <Play className="h-3.5 w-3.5" aria-hidden="true" />
+          <span>{busy ? 'Linking…' : 'Run robot'}</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SignalDeck({
   progress,
   activeKey,
   onPick,
   robot,
   busy,
-  onRun,
-  onReset,
   sources,
   onShowSource,
 }: {
-  lessonId: string;
-  mission: RobotMission;
   progress: RobotProgress;
   activeKey: keyof RobotReading | null;
   onPick: (key: keyof RobotReading) => void;
   robot: RobotRunApi;
   busy: boolean;
-  onRun: () => void;
-  onReset: () => void;
   sources: RobotSourceLines;
   onShowSource: (line: number) => void;
 }) {
@@ -136,55 +173,23 @@ function MissionCard({
       data-goal-state={state}
       data-goal-met={progress.met}
       data-goal-total={progress.total}
-      className="robot-mission"
+      className="robot-signal-deck"
     >
-      <div className="flex flex-wrap items-start gap-x-3 gap-y-2">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-round text-[21px] font-semibold leading-tight text-ink sm:text-[23px]">
-              {mission.title}
-            </h2>
-            <span className="rounded-full border border-line-soft bg-canvas px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
-              {lessonId} · not graded
-            </span>
-          </div>
-          <p className="mt-1 text-[13px] leading-snug text-body">{mission.blurb}</p>
-        </div>
-        <div className="flex w-full items-center gap-1.5 sm:w-auto">
-          <button
-            type="button"
-            data-testid="robot-run"
-            data-robot-tour="run"
-            onClick={onRun}
-            disabled={!robot.pauseCapable || busy}
-            className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-full border border-accent/50 bg-accent/15 px-3.5 text-[13px] font-semibold text-accent transition-colors hover:bg-accent/25 disabled:opacity-40 sm:flex-none"
-          >
-            <Play className="h-3.5 w-3.5" aria-hidden="true" /> Run robot
-          </button>
-          <button
-            type="button"
-            data-testid="robot-reset"
-            onClick={onReset}
-            className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-full border border-line-soft px-3.5 text-[13px] font-semibold text-ink transition-colors hover:bg-raise sm:flex-none"
-          >
-            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" /> Reset
-          </button>
-        </div>
-      </div>
-
-      <div className="mt-3 flex items-center gap-2">
-        <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line-soft" aria-hidden="true">
-          <div
-            className="h-full rounded-full bg-emerald transition-all duration-300"
-            style={{ width: percent + '%' }}
-          />
-        </div>
-        <span className="font-round shrink-0 text-[12px] font-semibold tabular-nums text-muted">
-          {progress.met}/{progress.total} targets
+      <div className="flex items-center justify-between gap-3">
+        <span className="robot-deck-kicker">
+          <span className="robot-deck-pulse" aria-hidden="true" />
+          live signals
+        </span>
+        <span className="font-round text-[11.5px] font-semibold tabular-nums text-muted">
+          {progress.met}/{progress.total} linked
         </span>
       </div>
 
-      <ul data-robot-tour="targets" className="m-0 mt-2 flex list-none flex-wrap gap-1.5 p-0">
+      <div className="robot-signal-meter" aria-hidden="true">
+        <div className="robot-signal-meter-fill" style={{ width: percent + '%' }} />
+      </div>
+
+      <ul data-robot-tour="targets" className="m-0 mt-2.5 flex list-none flex-wrap gap-1.5 p-0">
         {progress.rows.map((row) => {
           const selected = activeKey === row.target.key;
           const source = sources[row.target.key];
@@ -200,14 +205,13 @@ function MissionCard({
                 onClick={() => onPick(row.target.key)}
                 className="robot-goal-chip max-w-full flex-wrap"
               >
-                <GoalMark met={row.met} />
-                <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">
+                <SignalMark met={row.met} />
+                <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
                   {row.target.label}
                 </span>
                 <span className="font-round text-[15px] font-semibold leading-none text-ink tabular-nums">
                   {formatCurrent(row)}
                 </span>
-                <span className="text-[11px] text-muted">→ {formatTarget(row.target)}</span>
                 {source !== undefined && (
                   <span
                     data-testid={'robot-goal-line-' + String(row.target.key)}
@@ -266,8 +270,8 @@ function MissionCard({
           data-testid="robot-goal-banner"
           className="mt-2 flex items-center gap-1.5 text-[12px] font-semibold text-emerald"
         >
-          <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Goal reached — every target matches this
-          run.
+          <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Signal locked. Every value in this run
+          agrees.
         </p>
       )}
     </section>
@@ -536,13 +540,13 @@ export default function RobotPane({ lessonId, robot }: { lessonId: string; robot
         : `Running main.py · line ${line}…`
     : hasRun
       ? progress.complete
-        ? 'Goal reached in this run.'
-        : `${progress.met} of ${progress.total} targets reached.`
-      : 'Run robot to start the mission.';
+        ? 'Link stable. Every value agrees.'
+        : `${progress.met} of ${progress.total} signals linked.`
+      : 'Link ready. Press Run robot.';
 
   return (
     <div
-      className="flex min-h-0 flex-1 flex-col gap-3 overflow-x-hidden overflow-y-auto bg-panel px-3 py-3 sm:px-4"
+      className="robot-pane flex min-h-0 flex-1 flex-col gap-3 overflow-x-hidden overflow-y-auto px-3 py-3 sm:px-4"
       data-testid="robot-pane"
       data-tab="1"
       data-running-line={line ?? ''}
@@ -560,42 +564,41 @@ export default function RobotPane({ lessonId, robot }: { lessonId: string; robot
         />
       )}
 
-      <MissionCard
-        lessonId={scenario.lessonId}
-        mission={mission}
+      <div className="robot-cockpit">
+        <LaunchBar
+          lessonId={scenario.lessonId}
+          status={status}
+          state={busy ? 'running' : hasRun ? 'finished' : 'idle'}
+          busy={busy}
+          canRun={robot.pauseCapable}
+          onRun={start}
+          onReset={reset}
+        />
+
+        <RobotStage
+          key={scenario.lessonId}
+          scenario={scenario}
+          reading={reading}
+          progress={progress}
+          highlight={activeKey}
+          motion={motion}
+          running={busy && !replayActive}
+          line={line}
+          lineText={lineText}
+        />
+      </div>
+
+      <SignalDeck
         progress={progress}
         activeKey={activeKey}
         onPick={pickTarget}
         robot={robot}
         busy={busy}
-        onRun={start}
-        onReset={reset}
         sources={sources}
         onShowSource={(line) => robot.showLine(line)}
       />
 
-      <RobotStage
-        key={scenario.lessonId}
-        scenario={scenario}
-        reading={reading}
-        progress={progress}
-        highlight={activeKey}
-        motion={motion}
-        running={busy && !replayActive}
-        title={mission.title}
-        line={line}
-        lineText={lineText}
-      />
-
       <div className="flex flex-wrap items-center gap-2">
-        <span
-          className="text-[12px] font-semibold text-muted"
-          role="status"
-          data-testid="robot-status"
-          data-state={busy ? 'running' : hasRun ? 'finished' : 'idle'}
-        >
-          {status}
-        </span>
         {!tourOpen && (
           <button
             type="button"

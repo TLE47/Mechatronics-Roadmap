@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MathView, MathPanel } from '../MathView';
-import { Sparkles } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import { PresetRequest, claimPreset } from '../../demoPresets';
 import projectDocument from '../../data/capstoneProject.json';
 import { readProject } from '../../projectModel';
@@ -280,7 +280,7 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
           <div className={`space-y-1 p-2 rounded-lg transition-all ${highlightedId === 'sl-pcbl' ? 'ring-2 ring-amber bg-amber/10 shadow-[0_0_15px_rgba(251,191,36,0.3)]' : ''}`}>
             <div className="flex justify-between text-xs text-body">
               <span className="text-amber font-semibold flex items-center gap-1">
-                <Sparkles className="w-3 h-3" />
+                <Activity className="w-3 h-3" aria-hidden="true" />
                 Loop Inductance <MathView math="L_{\text{loop}}" /> [nH]
               </span>
               <span className="font-mono text-emerald font-bold">{lNh.toFixed(1)}</span>

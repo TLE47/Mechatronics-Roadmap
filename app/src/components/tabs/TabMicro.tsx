@@ -9,7 +9,6 @@ import {
   Clock3,
   ExternalLink,
   RotateCcw,
-  Sparkles,
 } from 'lucide-react';
 import type { MicroConcept, MicroQuestion } from '../../data/microLessons';
 import { MICRO_CONCEPTS, MICRO_PARENTS, parentOf } from '../../micro/catalog';
@@ -520,8 +519,8 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
 
   const overview = (
     <div className="space-y-2.5 sm:space-y-3" data-testid="micro-overview">
-      <section className={`${CARD} relative overflow-hidden border-accent/30`} data-testid="micro-hero">
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_92%_8%,var(--accent-soft),transparent_38%),radial-gradient(circle_at_8%_92%,var(--emerald),transparent_32%)] opacity-70" />        <div className="relative grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start sm:gap-4">
+      <section className={`${CARD} relative overflow-hidden border-line`} data-testid="micro-hero">
+        <div className="relative grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start sm:gap-4">
           <div className="min-w-0">
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-accent sm:text-[11px]">{MICRO_PARENTS.map((parent) => parent.parentLessonId).join(' + ')} · {MICRO_CONCEPTS.length} tiny concepts</p>
             <h2 className="mt-1 font-display text-2xl font-bold leading-tight text-ink sm:text-3xl">
@@ -536,7 +535,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
           <div className="w-full rounded-xl border border-line-soft bg-canvas/90 px-3 py-2.5 text-left sm:w-auto sm:px-4 sm:py-3 sm:text-right">
             <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-faint">Due now</p>
             <p className="font-mono text-3xl font-bold tabular-nums text-ink">{due.length}</p>
-            <p className="font-mono text-[10px] text-faint">{due.length === 0 ? 'all caught up' : 'ready for you'}</p>
+            <p className="font-mono text-[10px] text-faint">{due.length === 0 ? 'none due' : 'due now'}</p>
           </div>
         </div>
         <div className="relative mt-3 grid gap-2 sm:mt-4 sm:grid-cols-3">
@@ -557,7 +556,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
         </div>
         <div className="relative mt-3 h-2 overflow-hidden rounded-full bg-raise" aria-hidden="true">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-accent via-emerald to-purple transition-[width] duration-500"
+            className="h-full rounded-full bg-accent transition-[width] duration-300"
             style={{ width: `${Math.round((learnedCount / MICRO_CONCEPTS.length) * 100)}%` }}
           />
         </div>
@@ -574,7 +573,6 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
             className="mt-3 inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-[14px] font-bold text-inverse shadow-sm hover:bg-accent/80"
             data-testid="micro-next"
           >
-            <Sparkles className="h-4 w-4" aria-hidden="true" />
             {suggested && store.concepts[suggested] ? 'Continue with' : 'Start with'}{' '}
             {MICRO_CONCEPTS.find((concept) => concept.id === suggested)?.title}
             <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -860,7 +858,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
             {diagnosticScore === 0 ? (
               <>
                 <p className="mt-1 text-[14px] leading-relaxed text-body">
-                  Let's slow down and walk the worked example once more before the practice.
+                  Work through the example once more before the practice.
                 </p>
                 <pre className="mt-2 overflow-x-auto rounded-lg border border-line-soft bg-panel p-2.5 font-mono text-[13px] text-body">
                   {active.example.code}
@@ -1049,8 +1047,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
 
   return (
     <div data-testid="tab-micro" className="micro-shell space-y-3 sm:space-y-4">
-      <section className={`${CARD} relative overflow-hidden border-accent/30`}>
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_18%,var(--accent-soft),transparent_36%),radial-gradient(circle_at_12%_90%,var(--purple),transparent_30%)] opacity-80" />
+      <section className={`${CARD} relative overflow-hidden border-line`}>
         <div className="relative grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start sm:gap-4">
           <div className="min-w-0">
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-accent sm:text-[11px]">Beta · subject-agnostic engine</p>
@@ -1058,8 +1055,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
               Micro-learning
             </h1>
             <p className="mt-1.5 max-w-[62ch] text-[13.5px] leading-relaxed text-muted sm:mt-2 sm:text-[15px]">
-              {MICRO_CONCEPTS.length} concepts across {MICRO_PARENTS.length} lessons, each about two minutes. Local-only progress; no account, no cloud,
-              no generated content. Follow one curious thread at a time and let the small wins stack up.
+              {MICRO_CONCEPTS.length} concepts across {MICRO_PARENTS.length} lessons, each about two minutes. Local-only progress;no account, no cloud, no generated content. Follow one idea at a time and keep the evidence current.
             </p>
           </div>
           <div className="grid w-full grid-cols-3 gap-x-3 gap-y-1 rounded-xl border border-line-soft bg-canvas/90 px-3.5 py-2.5 font-mono text-[11px] text-muted sm:w-auto sm:grid-cols-1">

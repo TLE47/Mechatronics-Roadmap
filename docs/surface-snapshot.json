@@ -17,25 +17,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          8581
+          232,
+          177,
+          1208,
+          8731
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          8541
+          252,
+          197,
+          1168,
+          8691
         ],
         "footer": [
           0,
-          8781,
+          8907,
           1440,
           43
         ],
@@ -43,7 +43,7 @@
           0,
           0,
           1440,
-          8824
+          8951
         ]
       },
       "counts": {
@@ -58,21 +58,21 @@
         "body": {
           "display": "block",
           "background": "rgb(7, 11, 18)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -82,8 +82,8 @@
         "tokens": {
           "bg": "#070b12",
           "panel": "#0e1624",
-          "text": "#eef4ff",
-          "accent": "#38bdf8"
+          "text": "#edf2f6",
+          "accent": "#5eead4"
         }
       }
     },
@@ -98,24 +98,24 @@
         "rail": [
           0,
           158,
-          195,
-          1006
+          231,
+          1334
         ],
         "main": [
-          196,
+          232,
           119,
-          1244,
-          3072
+          1208,
+          3105
         ],
         "panel": [
-          216,
+          252,
           139,
-          1204,
+          1168,
           363
         ],
         "footer": [
           0,
-          3190,
+          3224,
           1440,
           43
         ],
@@ -123,14 +123,14 @@
           0,
           0,
           1440,
-          3234
+          3267
         ]
       },
       "counts": {
         "buttons": 225,
         "inputs": 15,
         "links": 11,
-        "headings": 16,
+        "headings": 15,
         "canvases": 1,
         "tables": 0
       },
@@ -138,21 +138,21 @@
         "body": {
           "display": "block",
           "background": "rgb(7, 11, 18)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -162,8 +162,8 @@
         "tokens": {
           "bg": "#070b12",
           "panel": "#0e1624",
-          "text": "#eef4ff",
-          "accent": "#38bdf8"
+          "text": "#edf2f6",
+          "accent": "#5eead4"
         }
       }
     },
@@ -177,25 +177,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           900
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           631
         ],
         "footer": [
           0,
-          1099,
+          1077,
           1440,
           43
         ],
@@ -203,7 +203,7 @@
           0,
           0,
           1440,
-          1143
+          1120
         ]
       },
       "counts": {
@@ -218,21 +218,21 @@
         "body": {
           "display": "block",
           "background": "rgb(7, 11, 18)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -242,8 +242,8 @@
         "tokens": {
           "bg": "#070b12",
           "panel": "#0e1624",
-          "text": "#eef4ff",
-          "accent": "#38bdf8"
+          "text": "#edf2f6",
+          "accent": "#5eead4"
         }
       }
     },
@@ -257,25 +257,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           4290
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           4250
         ],
         "footer": [
           0,
-          4489,
+          4467,
           1440,
           43
         ],
@@ -283,7 +283,7 @@
           0,
           0,
           1440,
-          4533
+          4510
         ]
       },
       "counts": {
@@ -298,21 +298,21 @@
         "body": {
           "display": "block",
           "background": "rgb(7, 11, 18)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -322,8 +322,8 @@
         "tokens": {
           "bg": "#070b12",
           "panel": "#0e1624",
-          "text": "#eef4ff",
-          "accent": "#38bdf8"
+          "text": "#edf2f6",
+          "accent": "#5eead4"
         }
       }
     },
@@ -337,25 +337,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          1585
+          232,
+          177,
+          1208,
+          1599
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          1545
+          252,
+          197,
+          1168,
+          1559
         ],
         "footer": [
           0,
-          1784,
+          1775,
           1440,
           43
         ],
@@ -363,7 +363,7 @@
           0,
           0,
           1440,
-          1828
+          1819
         ]
       },
       "counts": {
@@ -378,21 +378,21 @@
         "body": {
           "display": "block",
           "background": "rgb(7, 11, 18)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -402,8 +402,8 @@
         "tokens": {
           "bg": "#070b12",
           "panel": "#0e1624",
-          "text": "#eef4ff",
-          "accent": "#38bdf8"
+          "text": "#edf2f6",
+          "accent": "#5eead4"
         }
       }
     },
@@ -417,25 +417,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           1096
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           195
         ],
         "footer": [
           0,
-          1296,
+          1273,
           1440,
           43
         ],
@@ -443,7 +443,7 @@
           0,
           0,
           1440,
-          1339
+          1316
         ]
       },
       "counts": {
@@ -458,21 +458,21 @@
         "body": {
           "display": "block",
           "background": "rgb(7, 11, 18)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
@@ -482,8 +482,8 @@
         "tokens": {
           "bg": "#070b12",
           "panel": "#0e1624",
-          "text": "#eef4ff",
-          "accent": "#38bdf8"
+          "text": "#edf2f6",
+          "accent": "#5eead4"
         }
       }
     },
@@ -497,25 +497,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          969
+          232,
+          177,
+          1208,
+          997
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          167
+          252,
+          197,
+          1168,
+          195
         ],
         "footer": [
           0,
-          1169,
+          1174,
           1440,
           43
         ],
@@ -523,7 +523,7 @@
           0,
           0,
           1440,
-          1212
+          1217
         ]
       },
       "counts": {
@@ -538,21 +538,21 @@
         "body": {
           "display": "block",
           "background": "rgb(7, 11, 18)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
@@ -562,8 +562,8 @@
         "tokens": {
           "bg": "#070b12",
           "panel": "#0e1624",
-          "text": "#eef4ff",
-          "accent": "#38bdf8"
+          "text": "#edf2f6",
+          "accent": "#5eead4"
         }
       }
     },
@@ -577,25 +577,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          996
+          232,
+          177,
+          1208,
+          987
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           167
         ],
         "footer": [
           0,
-          1195,
+          1164,
           1440,
           43
         ],
@@ -603,7 +603,7 @@
           0,
           0,
           1440,
-          1239
+          1207
         ]
       },
       "counts": {
@@ -618,21 +618,21 @@
         "body": {
           "display": "block",
           "background": "rgb(7, 11, 18)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
@@ -642,8 +642,8 @@
         "tokens": {
           "bg": "#070b12",
           "panel": "#0e1624",
-          "text": "#eef4ff",
-          "accent": "#38bdf8"
+          "text": "#edf2f6",
+          "accent": "#5eead4"
         }
       }
     },
@@ -657,25 +657,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          1031
+          232,
+          177,
+          1208,
+          1059
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          167
+          252,
+          197,
+          1168,
+          195
         ],
         "footer": [
           0,
-          1231,
+          1236,
           1440,
           43
         ],
@@ -683,7 +683,7 @@
           0,
           0,
           1440,
-          1274
+          1279
         ]
       },
       "counts": {
@@ -698,21 +698,21 @@
         "body": {
           "display": "block",
           "background": "rgb(7, 11, 18)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
@@ -722,8 +722,8 @@
         "tokens": {
           "bg": "#070b12",
           "panel": "#0e1624",
-          "text": "#eef4ff",
-          "accent": "#38bdf8"
+          "text": "#edf2f6",
+          "accent": "#5eead4"
         }
       }
     },
@@ -737,25 +737,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           1393
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           195
         ],
         "footer": [
           0,
-          1592,
+          1569,
           1440,
           43
         ],
@@ -763,7 +763,7 @@
           0,
           0,
           1440,
-          1635
+          1613
         ]
       },
       "counts": {
@@ -778,21 +778,21 @@
         "body": {
           "display": "block",
           "background": "rgb(7, 11, 18)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
@@ -802,8 +802,8 @@
         "tokens": {
           "bg": "#070b12",
           "panel": "#0e1624",
-          "text": "#eef4ff",
-          "accent": "#38bdf8"
+          "text": "#edf2f6",
+          "accent": "#5eead4"
         }
       }
     },
@@ -817,25 +817,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          200,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           900
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           657
         ],
         "footer": [
           0,
-          1099,
+          1077,
           1440,
           43
         ],
@@ -843,7 +843,7 @@
           0,
           0,
           1440,
-          1143
+          1120
         ]
       },
       "counts": {
@@ -858,21 +858,21 @@
         "body": {
           "display": "block",
           "background": "rgb(7, 11, 18)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -882,8 +882,8 @@
         "tokens": {
           "bg": "#070b12",
           "panel": "#0e1624",
-          "text": "#eef4ff",
-          "accent": "#38bdf8"
+          "text": "#edf2f6",
+          "accent": "#5eead4"
         }
       }
     },
@@ -897,25 +897,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          -257,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           900
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           657
         ],
         "footer": [
           0,
-          1099,
+          1077,
           1440,
           43
         ],
@@ -923,7 +923,7 @@
           0,
           0,
           1440,
-          1143
+          1120
         ]
       },
       "counts": {
@@ -938,21 +938,21 @@
         "body": {
           "display": "block",
           "background": "rgb(7, 11, 18)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -962,8 +962,8 @@
         "tokens": {
           "bg": "#070b12",
           "panel": "#0e1624",
-          "text": "#eef4ff",
-          "accent": "#38bdf8"
+          "text": "#edf2f6",
+          "accent": "#5eead4"
         }
       }
     },
@@ -977,25 +977,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          -257,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          998
+          232,
+          177,
+          1208,
+          1026
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          167
+          252,
+          197,
+          1168,
+          195
         ],
         "footer": [
           0,
-          1198,
+          1203,
           1440,
           43
         ],
@@ -1003,7 +1003,7 @@
           0,
           0,
           1440,
-          1241
+          1246
         ]
       },
       "counts": {
@@ -1018,21 +1018,21 @@
         "body": {
           "display": "block",
           "background": "rgb(7, 11, 18)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
@@ -1042,8 +1042,8 @@
         "tokens": {
           "bg": "#070b12",
           "panel": "#0e1624",
-          "text": "#eef4ff",
-          "accent": "#38bdf8"
+          "text": "#edf2f6",
+          "accent": "#5eead4"
         }
       }
     },
@@ -1057,25 +1057,25 @@
         ],
         "rail": [
           0,
-          229,
-          195,
-          1006
+          -257,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          1051
+          232,
+          177,
+          1208,
+          1070
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           195
         ],
         "footer": [
           0,
-          1250,
+          1247,
           1440,
           43
         ],
@@ -1083,7 +1083,7 @@
           0,
           0,
           1440,
-          1293
+          1290
         ]
       },
       "counts": {
@@ -1098,21 +1098,21 @@
         "body": {
           "display": "block",
           "background": "rgb(7, 11, 18)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
@@ -1122,8 +1122,8 @@
         "tokens": {
           "bg": "#070b12",
           "panel": "#0e1624",
-          "text": "#eef4ff",
-          "accent": "#38bdf8"
+          "text": "#edf2f6",
+          "accent": "#5eead4"
         }
       }
     },
@@ -1137,25 +1137,25 @@
         ],
         "rail": [
           0,
-          94,
-          195,
-          1006
+          -257,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           900
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           440
         ],
         "footer": [
           0,
-          1099,
+          1077,
           1440,
           43
         ],
@@ -1163,7 +1163,7 @@
           0,
           0,
           1440,
-          1143
+          1120
         ]
       },
       "counts": {
@@ -1178,21 +1178,21 @@
         "body": {
           "display": "block",
           "background": "rgb(7, 11, 18)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -1202,8 +1202,8 @@
         "tokens": {
           "bg": "#070b12",
           "panel": "#0e1624",
-          "text": "#eef4ff",
-          "accent": "#38bdf8"
+          "text": "#edf2f6",
+          "accent": "#5eead4"
         }
       }
     },
@@ -1217,25 +1217,25 @@
         ],
         "rail": [
           0,
-          94,
-          195,
-          1006
+          -257,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          2915
+          232,
+          177,
+          1208,
+          2922
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          2875
+          252,
+          197,
+          1168,
+          2882
         ],
         "footer": [
           0,
-          3114,
+          3098,
           1440,
           43
         ],
@@ -1243,7 +1243,7 @@
           0,
           0,
           1440,
-          3157
+          3142
         ]
       },
       "counts": {
@@ -1258,21 +1258,21 @@
         "body": {
           "display": "block",
           "background": "rgb(7, 11, 18)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -1282,8 +1282,8 @@
         "tokens": {
           "bg": "#070b12",
           "panel": "#0e1624",
-          "text": "#eef4ff",
-          "accent": "#38bdf8"
+          "text": "#edf2f6",
+          "accent": "#5eead4"
         }
       }
     },
@@ -1300,17 +1300,17 @@
           0,
           61,
           1440,
-          4751
+          4736
         ],
         "panel": [
           144,
           61,
           1152,
-          4751
+          4736
         ],
         "footer": [
           0,
-          4812,
+          4797,
           1440,
           43
         ],
@@ -1318,7 +1318,7 @@
           0,
           0,
           1440,
-          4855
+          4840
         ]
       },
       "counts": {
@@ -1333,21 +1333,21 @@
         "body": {
           "display": "block",
           "background": "rgb(7, 11, 18)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -1357,8 +1357,8 @@
         "tokens": {
           "bg": "#070b12",
           "panel": "#0e1624",
-          "text": "#eef4ff",
-          "accent": "#38bdf8"
+          "text": "#edf2f6",
+          "accent": "#5eead4"
         }
       }
     },
@@ -1373,24 +1373,24 @@
         "rail": [
           0,
           158,
-          195,
-          1006
+          231,
+          1334
         ],
         "main": [
-          196,
+          232,
           119,
-          1244,
-          4458
+          1208,
+          4492
         ],
         "panel": [
-          216,
+          252,
           139,
-          1204,
+          1168,
           363
         ],
         "footer": [
           0,
-          4577,
+          4610,
           1440,
           43
         ],
@@ -1398,7 +1398,7 @@
           0,
           0,
           1440,
-          4620
+          4654
         ],
         "wf-node-s1": [
           34,
@@ -1426,13 +1426,13 @@
         ],
         "wf-port-left-0": [
           24,
-          307,
+          306,
           20,
           20
         ],
         "wf-port-right-0": [
           224,
-          307,
+          306,
           20,
           20
         ],
@@ -1444,19 +1444,19 @@
         ],
         "wf-port-bottom-0": [
           124,
-          375,
+          374,
           20,
           20
         ],
         "wf-port-left-1": [
           24,
-          479,
+          478,
           20,
           20
         ],
         "wf-port-right-1": [
           224,
-          479,
+          478,
           20,
           20
         ],
@@ -1468,19 +1468,19 @@
         ],
         "wf-port-bottom-1": [
           124,
-          547,
+          546,
           20,
           20
         ],
         "wf-port-left-2": [
           25,
-          666,
+          665,
           20,
           20
         ],
         "wf-port-right-2": [
           223,
-          666,
+          665,
           20,
           20
         ],
@@ -1498,13 +1498,13 @@
         ],
         "wf-port-left-3": [
           25,
-          838,
+          837,
           20,
           20
         ],
         "wf-port-right-3": [
           223,
-          838,
+          837,
           20,
           20
         ],
@@ -1553,7 +1553,7 @@
         "wf-lane-chip-0": [
           28,
           605,
-          148,
+          146,
           22
         ],
         "wf-label-0": [
@@ -1563,7 +1563,7 @@
           18
         ],
         "wf-control-0": [
-          272,
+          273,
           350,
           16,
           16
@@ -1571,7 +1571,7 @@
         "wf-kind-0": [
           215,
           350,
-          53,
+          54,
           16
         ],
         "wf-path-0": [
@@ -1585,7 +1585,7 @@
         "buttons": 282,
         "inputs": 25,
         "links": 11,
-        "headings": 16,
+        "headings": 15,
         "canvases": 1,
         "tables": 0
       },
@@ -1593,21 +1593,21 @@
         "body": {
           "display": "block",
           "background": "rgb(7, 11, 18)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(238, 244, 255)",
+          "color": "rgb(237, 242, 246)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -1617,8 +1617,8 @@
         "tokens": {
           "bg": "#070b12",
           "panel": "#0e1624",
-          "text": "#eef4ff",
-          "accent": "#38bdf8"
+          "text": "#edf2f6",
+          "accent": "#5eead4"
         }
       }
     },
@@ -1632,25 +1632,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          8581
+          232,
+          177,
+          1208,
+          8731
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          8541
+          252,
+          197,
+          1168,
+          8691
         ],
         "footer": [
           0,
-          8781,
+          8907,
           1440,
           43
         ],
@@ -1658,7 +1658,7 @@
           0,
           0,
           1440,
-          8824
+          8951
         ]
       },
       "counts": {
@@ -1673,21 +1673,21 @@
         "body": {
           "display": "block",
           "background": "rgb(248, 246, 242)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -1697,8 +1697,8 @@
         "tokens": {
           "bg": "#f8f6f2",
           "panel": "#fff",
-          "text": "#141a24",
-          "accent": "#0d6b64"
+          "text": "#101820",
+          "accent": "#0f766e"
         }
       }
     },
@@ -1713,24 +1713,24 @@
         "rail": [
           0,
           158,
-          195,
-          1006
+          231,
+          1334
         ],
         "main": [
-          196,
+          232,
           119,
-          1244,
-          3072
+          1208,
+          3105
         ],
         "panel": [
-          216,
+          252,
           139,
-          1204,
+          1168,
           363
         ],
         "footer": [
           0,
-          3190,
+          3224,
           1440,
           43
         ],
@@ -1738,14 +1738,14 @@
           0,
           0,
           1440,
-          3234
+          3267
         ]
       },
       "counts": {
         "buttons": 225,
         "inputs": 15,
         "links": 11,
-        "headings": 16,
+        "headings": 15,
         "canvases": 1,
         "tables": 0
       },
@@ -1753,21 +1753,21 @@
         "body": {
           "display": "block",
           "background": "rgb(248, 246, 242)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -1777,8 +1777,8 @@
         "tokens": {
           "bg": "#f8f6f2",
           "panel": "#fff",
-          "text": "#141a24",
-          "accent": "#0d6b64"
+          "text": "#101820",
+          "accent": "#0f766e"
         }
       }
     },
@@ -1792,25 +1792,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           900
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           631
         ],
         "footer": [
           0,
-          1099,
+          1077,
           1440,
           43
         ],
@@ -1818,7 +1818,7 @@
           0,
           0,
           1440,
-          1143
+          1120
         ]
       },
       "counts": {
@@ -1833,21 +1833,21 @@
         "body": {
           "display": "block",
           "background": "rgb(248, 246, 242)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -1857,8 +1857,8 @@
         "tokens": {
           "bg": "#f8f6f2",
           "panel": "#fff",
-          "text": "#141a24",
-          "accent": "#0d6b64"
+          "text": "#101820",
+          "accent": "#0f766e"
         }
       }
     },
@@ -1872,25 +1872,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           4290
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           4250
         ],
         "footer": [
           0,
-          4489,
+          4467,
           1440,
           43
         ],
@@ -1898,7 +1898,7 @@
           0,
           0,
           1440,
-          4533
+          4510
         ]
       },
       "counts": {
@@ -1913,21 +1913,21 @@
         "body": {
           "display": "block",
           "background": "rgb(248, 246, 242)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -1937,8 +1937,8 @@
         "tokens": {
           "bg": "#f8f6f2",
           "panel": "#fff",
-          "text": "#141a24",
-          "accent": "#0d6b64"
+          "text": "#101820",
+          "accent": "#0f766e"
         }
       }
     },
@@ -1952,25 +1952,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          1585
+          232,
+          177,
+          1208,
+          1599
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          1545
+          252,
+          197,
+          1168,
+          1559
         ],
         "footer": [
           0,
-          1784,
+          1775,
           1440,
           43
         ],
@@ -1978,7 +1978,7 @@
           0,
           0,
           1440,
-          1828
+          1819
         ]
       },
       "counts": {
@@ -1993,21 +1993,21 @@
         "body": {
           "display": "block",
           "background": "rgb(248, 246, 242)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -2017,8 +2017,8 @@
         "tokens": {
           "bg": "#f8f6f2",
           "panel": "#fff",
-          "text": "#141a24",
-          "accent": "#0d6b64"
+          "text": "#101820",
+          "accent": "#0f766e"
         }
       }
     },
@@ -2032,25 +2032,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           1096
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           195
         ],
         "footer": [
           0,
-          1296,
+          1273,
           1440,
           43
         ],
@@ -2058,7 +2058,7 @@
           0,
           0,
           1440,
-          1339
+          1316
         ]
       },
       "counts": {
@@ -2073,21 +2073,21 @@
         "body": {
           "display": "block",
           "background": "rgb(248, 246, 242)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
@@ -2097,8 +2097,8 @@
         "tokens": {
           "bg": "#f8f6f2",
           "panel": "#fff",
-          "text": "#141a24",
-          "accent": "#0d6b64"
+          "text": "#101820",
+          "accent": "#0f766e"
         }
       }
     },
@@ -2112,25 +2112,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          969
+          232,
+          177,
+          1208,
+          997
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          167
+          252,
+          197,
+          1168,
+          195
         ],
         "footer": [
           0,
-          1169,
+          1174,
           1440,
           43
         ],
@@ -2138,7 +2138,7 @@
           0,
           0,
           1440,
-          1212
+          1217
         ]
       },
       "counts": {
@@ -2153,21 +2153,21 @@
         "body": {
           "display": "block",
           "background": "rgb(248, 246, 242)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
@@ -2177,8 +2177,8 @@
         "tokens": {
           "bg": "#f8f6f2",
           "panel": "#fff",
-          "text": "#141a24",
-          "accent": "#0d6b64"
+          "text": "#101820",
+          "accent": "#0f766e"
         }
       }
     },
@@ -2192,25 +2192,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          996
+          232,
+          177,
+          1208,
+          987
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           167
         ],
         "footer": [
           0,
-          1195,
+          1164,
           1440,
           43
         ],
@@ -2218,7 +2218,7 @@
           0,
           0,
           1440,
-          1239
+          1207
         ]
       },
       "counts": {
@@ -2233,21 +2233,21 @@
         "body": {
           "display": "block",
           "background": "rgb(248, 246, 242)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
@@ -2257,8 +2257,8 @@
         "tokens": {
           "bg": "#f8f6f2",
           "panel": "#fff",
-          "text": "#141a24",
-          "accent": "#0d6b64"
+          "text": "#101820",
+          "accent": "#0f766e"
         }
       }
     },
@@ -2272,25 +2272,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          1031
+          232,
+          177,
+          1208,
+          1059
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          167
+          252,
+          197,
+          1168,
+          195
         ],
         "footer": [
           0,
-          1231,
+          1236,
           1440,
           43
         ],
@@ -2298,7 +2298,7 @@
           0,
           0,
           1440,
-          1274
+          1279
         ]
       },
       "counts": {
@@ -2313,21 +2313,21 @@
         "body": {
           "display": "block",
           "background": "rgb(248, 246, 242)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
@@ -2337,8 +2337,8 @@
         "tokens": {
           "bg": "#f8f6f2",
           "panel": "#fff",
-          "text": "#141a24",
-          "accent": "#0d6b64"
+          "text": "#101820",
+          "accent": "#0f766e"
         }
       }
     },
@@ -2352,25 +2352,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           1393
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           195
         ],
         "footer": [
           0,
-          1592,
+          1569,
           1440,
           43
         ],
@@ -2378,7 +2378,7 @@
           0,
           0,
           1440,
-          1635
+          1613
         ]
       },
       "counts": {
@@ -2393,21 +2393,21 @@
         "body": {
           "display": "block",
           "background": "rgb(248, 246, 242)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
@@ -2417,8 +2417,8 @@
         "tokens": {
           "bg": "#f8f6f2",
           "panel": "#fff",
-          "text": "#141a24",
-          "accent": "#0d6b64"
+          "text": "#101820",
+          "accent": "#0f766e"
         }
       }
     },
@@ -2432,25 +2432,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          200,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           900
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           657
         ],
         "footer": [
           0,
-          1099,
+          1077,
           1440,
           43
         ],
@@ -2458,7 +2458,7 @@
           0,
           0,
           1440,
-          1143
+          1120
         ]
       },
       "counts": {
@@ -2473,21 +2473,21 @@
         "body": {
           "display": "block",
           "background": "rgb(248, 246, 242)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -2497,8 +2497,8 @@
         "tokens": {
           "bg": "#f8f6f2",
           "panel": "#fff",
-          "text": "#141a24",
-          "accent": "#0d6b64"
+          "text": "#101820",
+          "accent": "#0f766e"
         }
       }
     },
@@ -2512,25 +2512,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          -257,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           900
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           657
         ],
         "footer": [
           0,
-          1099,
+          1077,
           1440,
           43
         ],
@@ -2538,7 +2538,7 @@
           0,
           0,
           1440,
-          1143
+          1120
         ]
       },
       "counts": {
@@ -2553,21 +2553,21 @@
         "body": {
           "display": "block",
           "background": "rgb(248, 246, 242)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -2577,8 +2577,8 @@
         "tokens": {
           "bg": "#f8f6f2",
           "panel": "#fff",
-          "text": "#141a24",
-          "accent": "#0d6b64"
+          "text": "#101820",
+          "accent": "#0f766e"
         }
       }
     },
@@ -2592,25 +2592,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          -257,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          998
+          232,
+          177,
+          1208,
+          1026
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          167
+          252,
+          197,
+          1168,
+          195
         ],
         "footer": [
           0,
-          1198,
+          1203,
           1440,
           43
         ],
@@ -2618,7 +2618,7 @@
           0,
           0,
           1440,
-          1241
+          1246
         ]
       },
       "counts": {
@@ -2633,21 +2633,21 @@
         "body": {
           "display": "block",
           "background": "rgb(248, 246, 242)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
@@ -2657,8 +2657,8 @@
         "tokens": {
           "bg": "#f8f6f2",
           "panel": "#fff",
-          "text": "#141a24",
-          "accent": "#0d6b64"
+          "text": "#101820",
+          "accent": "#0f766e"
         }
       }
     },
@@ -2672,25 +2672,25 @@
         ],
         "rail": [
           0,
-          229,
-          195,
-          1006
+          -257,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          1051
+          232,
+          177,
+          1208,
+          1070
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           195
         ],
         "footer": [
           0,
-          1250,
+          1247,
           1440,
           43
         ],
@@ -2698,7 +2698,7 @@
           0,
           0,
           1440,
-          1293
+          1290
         ]
       },
       "counts": {
@@ -2713,21 +2713,21 @@
         "body": {
           "display": "block",
           "background": "rgb(248, 246, 242)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
@@ -2737,8 +2737,8 @@
         "tokens": {
           "bg": "#f8f6f2",
           "panel": "#fff",
-          "text": "#141a24",
-          "accent": "#0d6b64"
+          "text": "#101820",
+          "accent": "#0f766e"
         }
       }
     },
@@ -2752,25 +2752,25 @@
         ],
         "rail": [
           0,
-          94,
-          195,
-          1006
+          -257,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           900
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           440
         ],
         "footer": [
           0,
-          1099,
+          1077,
           1440,
           43
         ],
@@ -2778,7 +2778,7 @@
           0,
           0,
           1440,
-          1143
+          1120
         ]
       },
       "counts": {
@@ -2793,21 +2793,21 @@
         "body": {
           "display": "block",
           "background": "rgb(248, 246, 242)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -2817,8 +2817,8 @@
         "tokens": {
           "bg": "#f8f6f2",
           "panel": "#fff",
-          "text": "#141a24",
-          "accent": "#0d6b64"
+          "text": "#101820",
+          "accent": "#0f766e"
         }
       }
     },
@@ -2832,25 +2832,25 @@
         ],
         "rail": [
           0,
-          94,
-          195,
-          1006
+          -257,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          2915
+          232,
+          177,
+          1208,
+          2922
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          2875
+          252,
+          197,
+          1168,
+          2882
         ],
         "footer": [
           0,
-          3114,
+          3098,
           1440,
           43
         ],
@@ -2858,7 +2858,7 @@
           0,
           0,
           1440,
-          3157
+          3142
         ]
       },
       "counts": {
@@ -2873,21 +2873,21 @@
         "body": {
           "display": "block",
           "background": "rgb(248, 246, 242)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -2897,8 +2897,8 @@
         "tokens": {
           "bg": "#f8f6f2",
           "panel": "#fff",
-          "text": "#141a24",
-          "accent": "#0d6b64"
+          "text": "#101820",
+          "accent": "#0f766e"
         }
       }
     },
@@ -2915,17 +2915,17 @@
           0,
           61,
           1440,
-          4751
+          4736
         ],
         "panel": [
           144,
           61,
           1152,
-          4751
+          4736
         ],
         "footer": [
           0,
-          4812,
+          4797,
           1440,
           43
         ],
@@ -2933,7 +2933,7 @@
           0,
           0,
           1440,
-          4855
+          4840
         ]
       },
       "counts": {
@@ -2948,21 +2948,21 @@
         "body": {
           "display": "block",
           "background": "rgb(248, 246, 242)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -2972,8 +2972,8 @@
         "tokens": {
           "bg": "#f8f6f2",
           "panel": "#fff",
-          "text": "#141a24",
-          "accent": "#0d6b64"
+          "text": "#101820",
+          "accent": "#0f766e"
         }
       }
     },
@@ -2988,24 +2988,24 @@
         "rail": [
           0,
           158,
-          195,
-          1006
+          231,
+          1334
         ],
         "main": [
-          196,
+          232,
           119,
-          1244,
-          4458
+          1208,
+          4492
         ],
         "panel": [
-          216,
+          252,
           139,
-          1204,
+          1168,
           363
         ],
         "footer": [
           0,
-          4577,
+          4610,
           1440,
           43
         ],
@@ -3013,7 +3013,7 @@
           0,
           0,
           1440,
-          4620
+          4654
         ],
         "wf-node-s1": [
           34,
@@ -3041,13 +3041,13 @@
         ],
         "wf-port-left-0": [
           24,
-          307,
+          306,
           20,
           20
         ],
         "wf-port-right-0": [
           224,
-          307,
+          306,
           20,
           20
         ],
@@ -3059,19 +3059,19 @@
         ],
         "wf-port-bottom-0": [
           124,
-          375,
+          374,
           20,
           20
         ],
         "wf-port-left-1": [
           24,
-          479,
+          478,
           20,
           20
         ],
         "wf-port-right-1": [
           224,
-          479,
+          478,
           20,
           20
         ],
@@ -3083,19 +3083,19 @@
         ],
         "wf-port-bottom-1": [
           124,
-          547,
+          546,
           20,
           20
         ],
         "wf-port-left-2": [
           25,
-          666,
+          665,
           20,
           20
         ],
         "wf-port-right-2": [
           223,
-          666,
+          665,
           20,
           20
         ],
@@ -3113,13 +3113,13 @@
         ],
         "wf-port-left-3": [
           25,
-          838,
+          837,
           20,
           20
         ],
         "wf-port-right-3": [
           223,
-          838,
+          837,
           20,
           20
         ],
@@ -3168,7 +3168,7 @@
         "wf-lane-chip-0": [
           28,
           605,
-          148,
+          146,
           22
         ],
         "wf-label-0": [
@@ -3178,7 +3178,7 @@
           18
         ],
         "wf-control-0": [
-          272,
+          273,
           350,
           16,
           16
@@ -3186,7 +3186,7 @@
         "wf-kind-0": [
           215,
           350,
-          53,
+          54,
           16
         ],
         "wf-path-0": [
@@ -3200,7 +3200,7 @@
         "buttons": 282,
         "inputs": 25,
         "links": 11,
-        "headings": 16,
+        "headings": 15,
         "canvases": 1,
         "tables": 0
       },
@@ -3208,21 +3208,21 @@
         "body": {
           "display": "block",
           "background": "rgb(248, 246, 242)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(20, 26, 36)",
+          "color": "rgb(16, 24, 32)",
           "fontFamily": "\"Geist Variable\", Geist, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
@@ -3232,8 +3232,8 @@
         "tokens": {
           "bg": "#f8f6f2",
           "panel": "#fff",
-          "text": "#141a24",
-          "accent": "#0d6b64"
+          "text": "#101820",
+          "accent": "#0f766e"
         }
       }
     },
@@ -3247,25 +3247,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          8581
+          232,
+          177,
+          1208,
+          8731
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          8541
+          252,
+          197,
+          1168,
+          8691
         ],
         "footer": [
           0,
-          8781,
+          8907,
           1440,
           43
         ],
@@ -3273,7 +3273,7 @@
           0,
           0,
           1440,
-          8824
+          8951
         ]
       },
       "counts": {
@@ -3328,24 +3328,24 @@
         "rail": [
           0,
           158,
-          195,
-          1006
+          231,
+          1334
         ],
         "main": [
-          196,
+          232,
           119,
-          1244,
-          3072
+          1208,
+          3105
         ],
         "panel": [
-          216,
+          252,
           139,
-          1204,
+          1168,
           363
         ],
         "footer": [
           0,
-          3190,
+          3224,
           1440,
           43
         ],
@@ -3353,14 +3353,14 @@
           0,
           0,
           1440,
-          3234
+          3267
         ]
       },
       "counts": {
         "buttons": 225,
         "inputs": 15,
         "links": 11,
-        "headings": 16,
+        "headings": 15,
         "canvases": 1,
         "tables": 0
       },
@@ -3407,25 +3407,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           900
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           631
         ],
         "footer": [
           0,
-          1099,
+          1077,
           1440,
           43
         ],
@@ -3433,7 +3433,7 @@
           0,
           0,
           1440,
-          1143
+          1120
         ]
       },
       "counts": {
@@ -3487,25 +3487,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           4290
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           4250
         ],
         "footer": [
           0,
-          4489,
+          4467,
           1440,
           43
         ],
@@ -3513,7 +3513,7 @@
           0,
           0,
           1440,
-          4533
+          4510
         ]
       },
       "counts": {
@@ -3567,25 +3567,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          1585
+          232,
+          177,
+          1208,
+          1599
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          1545
+          252,
+          197,
+          1168,
+          1559
         ],
         "footer": [
           0,
-          1784,
+          1775,
           1440,
           43
         ],
@@ -3593,7 +3593,7 @@
           0,
           0,
           1440,
-          1828
+          1819
         ]
       },
       "counts": {
@@ -3647,25 +3647,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           1096
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           195
         ],
         "footer": [
           0,
-          1296,
+          1273,
           1440,
           43
         ],
@@ -3673,7 +3673,7 @@
           0,
           0,
           1440,
-          1339
+          1316
         ]
       },
       "counts": {
@@ -3727,25 +3727,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          969
+          232,
+          177,
+          1208,
+          997
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          167
+          252,
+          197,
+          1168,
+          195
         ],
         "footer": [
           0,
-          1169,
+          1174,
           1440,
           43
         ],
@@ -3753,7 +3753,7 @@
           0,
           0,
           1440,
-          1212
+          1217
         ]
       },
       "counts": {
@@ -3807,25 +3807,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          996
+          232,
+          177,
+          1208,
+          987
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           167
         ],
         "footer": [
           0,
-          1195,
+          1164,
           1440,
           43
         ],
@@ -3833,7 +3833,7 @@
           0,
           0,
           1440,
-          1239
+          1207
         ]
       },
       "counts": {
@@ -3887,25 +3887,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          1031
+          232,
+          177,
+          1208,
+          1059
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          167
+          252,
+          197,
+          1168,
+          195
         ],
         "footer": [
           0,
-          1231,
+          1236,
           1440,
           43
         ],
@@ -3913,7 +3913,7 @@
           0,
           0,
           1440,
-          1274
+          1279
         ]
       },
       "counts": {
@@ -3967,25 +3967,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           1393
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           195
         ],
         "footer": [
           0,
-          1592,
+          1569,
           1440,
           43
         ],
@@ -3993,7 +3993,7 @@
           0,
           0,
           1440,
-          1635
+          1613
         ]
       },
       "counts": {
@@ -4047,25 +4047,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          200,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           900
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           657
         ],
         "footer": [
           0,
-          1099,
+          1077,
           1440,
           43
         ],
@@ -4073,7 +4073,7 @@
           0,
           0,
           1440,
-          1143
+          1120
         ]
       },
       "counts": {
@@ -4127,25 +4127,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          -257,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           900
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           657
         ],
         "footer": [
           0,
-          1099,
+          1077,
           1440,
           43
         ],
@@ -4153,7 +4153,7 @@
           0,
           0,
           1440,
-          1143
+          1120
         ]
       },
       "counts": {
@@ -4207,25 +4207,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          -257,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          998
+          232,
+          177,
+          1208,
+          1026
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          167
+          252,
+          197,
+          1168,
+          195
         ],
         "footer": [
           0,
-          1198,
+          1203,
           1440,
           43
         ],
@@ -4233,7 +4233,7 @@
           0,
           0,
           1440,
-          1241
+          1246
         ]
       },
       "counts": {
@@ -4287,25 +4287,25 @@
         ],
         "rail": [
           0,
-          229,
-          195,
-          1006
+          -257,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          1051
+          232,
+          177,
+          1208,
+          1070
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           195
         ],
         "footer": [
           0,
-          1250,
+          1247,
           1440,
           43
         ],
@@ -4313,7 +4313,7 @@
           0,
           0,
           1440,
-          1293
+          1290
         ]
       },
       "counts": {
@@ -4367,25 +4367,25 @@
         ],
         "rail": [
           0,
-          94,
-          195,
-          1006
+          -257,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           900
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           440
         ],
         "footer": [
           0,
-          1099,
+          1077,
           1440,
           43
         ],
@@ -4393,7 +4393,7 @@
           0,
           0,
           1440,
-          1143
+          1120
         ]
       },
       "counts": {
@@ -4447,25 +4447,25 @@
         ],
         "rail": [
           0,
-          94,
-          195,
-          1006
+          -257,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          2915
+          232,
+          177,
+          1208,
+          2922
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          2875
+          252,
+          197,
+          1168,
+          2882
         ],
         "footer": [
           0,
-          3114,
+          3098,
           1440,
           43
         ],
@@ -4473,7 +4473,7 @@
           0,
           0,
           1440,
-          3157
+          3142
         ]
       },
       "counts": {
@@ -4530,17 +4530,17 @@
           0,
           61,
           1440,
-          4751
+          4736
         ],
         "panel": [
           144,
           61,
           1152,
-          4751
+          4736
         ],
         "footer": [
           0,
-          4812,
+          4797,
           1440,
           43
         ],
@@ -4548,7 +4548,7 @@
           0,
           0,
           1440,
-          4855
+          4840
         ]
       },
       "counts": {
@@ -4603,24 +4603,24 @@
         "rail": [
           0,
           158,
-          195,
-          1006
+          231,
+          1334
         ],
         "main": [
-          196,
+          232,
           119,
-          1244,
-          4458
+          1208,
+          4492
         ],
         "panel": [
-          216,
+          252,
           139,
-          1204,
+          1168,
           363
         ],
         "footer": [
           0,
-          4577,
+          4610,
           1440,
           43
         ],
@@ -4628,7 +4628,7 @@
           0,
           0,
           1440,
-          4620
+          4654
         ],
         "wf-node-s1": [
           34,
@@ -4656,13 +4656,13 @@
         ],
         "wf-port-left-0": [
           24,
-          307,
+          306,
           20,
           20
         ],
         "wf-port-right-0": [
           224,
-          307,
+          306,
           20,
           20
         ],
@@ -4674,19 +4674,19 @@
         ],
         "wf-port-bottom-0": [
           124,
-          375,
+          374,
           20,
           20
         ],
         "wf-port-left-1": [
           24,
-          479,
+          478,
           20,
           20
         ],
         "wf-port-right-1": [
           224,
-          479,
+          478,
           20,
           20
         ],
@@ -4698,19 +4698,19 @@
         ],
         "wf-port-bottom-1": [
           124,
-          547,
+          546,
           20,
           20
         ],
         "wf-port-left-2": [
           25,
-          666,
+          665,
           20,
           20
         ],
         "wf-port-right-2": [
           223,
-          666,
+          665,
           20,
           20
         ],
@@ -4728,13 +4728,13 @@
         ],
         "wf-port-left-3": [
           25,
-          838,
+          837,
           20,
           20
         ],
         "wf-port-right-3": [
           223,
-          838,
+          837,
           20,
           20
         ],
@@ -4783,7 +4783,7 @@
         "wf-lane-chip-0": [
           28,
           605,
-          148,
+          146,
           22
         ],
         "wf-label-0": [
@@ -4793,7 +4793,7 @@
           18
         ],
         "wf-control-0": [
-          272,
+          273,
           350,
           16,
           16
@@ -4801,7 +4801,7 @@
         "wf-kind-0": [
           215,
           350,
-          53,
+          54,
           16
         ],
         "wf-path-0": [
@@ -4815,7 +4815,7 @@
         "buttons": 282,
         "inputs": 25,
         "links": 11,
-        "headings": 16,
+        "headings": 15,
         "canvases": 1,
         "tables": 0
       },
@@ -4862,25 +4862,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          8581
+          232,
+          177,
+          1208,
+          8731
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          8541
+          252,
+          197,
+          1168,
+          8691
         ],
         "footer": [
           0,
-          8781,
+          8907,
           1440,
           43
         ],
@@ -4888,7 +4888,7 @@
           0,
           0,
           1440,
-          8824
+          8951
         ]
       },
       "counts": {
@@ -4943,24 +4943,24 @@
         "rail": [
           0,
           158,
-          195,
-          1006
+          231,
+          1334
         ],
         "main": [
-          196,
+          232,
           119,
-          1244,
-          3072
+          1208,
+          3105
         ],
         "panel": [
-          216,
+          252,
           139,
-          1204,
+          1168,
           363
         ],
         "footer": [
           0,
-          3190,
+          3224,
           1440,
           43
         ],
@@ -4968,14 +4968,14 @@
           0,
           0,
           1440,
-          3234
+          3267
         ]
       },
       "counts": {
         "buttons": 225,
         "inputs": 15,
         "links": 11,
-        "headings": 16,
+        "headings": 15,
         "canvases": 1,
         "tables": 0
       },
@@ -5022,25 +5022,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           900
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           631
         ],
         "footer": [
           0,
-          1099,
+          1077,
           1440,
           43
         ],
@@ -5048,7 +5048,7 @@
           0,
           0,
           1440,
-          1143
+          1120
         ]
       },
       "counts": {
@@ -5102,25 +5102,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           4290
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           4250
         ],
         "footer": [
           0,
-          4489,
+          4467,
           1440,
           43
         ],
@@ -5128,7 +5128,7 @@
           0,
           0,
           1440,
-          4533
+          4510
         ]
       },
       "counts": {
@@ -5182,25 +5182,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          1585
+          232,
+          177,
+          1208,
+          1599
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          1545
+          252,
+          197,
+          1168,
+          1559
         ],
         "footer": [
           0,
-          1784,
+          1775,
           1440,
           43
         ],
@@ -5208,7 +5208,7 @@
           0,
           0,
           1440,
-          1828
+          1819
         ]
       },
       "counts": {
@@ -5262,25 +5262,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           1096
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           195
         ],
         "footer": [
           0,
-          1296,
+          1273,
           1440,
           43
         ],
@@ -5288,7 +5288,7 @@
           0,
           0,
           1440,
-          1339
+          1316
         ]
       },
       "counts": {
@@ -5342,25 +5342,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          969
+          232,
+          177,
+          1208,
+          997
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          167
+          252,
+          197,
+          1168,
+          195
         ],
         "footer": [
           0,
-          1169,
+          1174,
           1440,
           43
         ],
@@ -5368,7 +5368,7 @@
           0,
           0,
           1440,
-          1212
+          1217
         ]
       },
       "counts": {
@@ -5422,25 +5422,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          996
+          232,
+          177,
+          1208,
+          987
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           167
         ],
         "footer": [
           0,
-          1195,
+          1164,
           1440,
           43
         ],
@@ -5448,7 +5448,7 @@
           0,
           0,
           1440,
-          1239
+          1207
         ]
       },
       "counts": {
@@ -5502,25 +5502,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          1031
+          232,
+          177,
+          1208,
+          1059
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          167
+          252,
+          197,
+          1168,
+          195
         ],
         "footer": [
           0,
-          1231,
+          1236,
           1440,
           43
         ],
@@ -5528,7 +5528,7 @@
           0,
           0,
           1440,
-          1274
+          1279
         ]
       },
       "counts": {
@@ -5582,25 +5582,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          216,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           1393
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           195
         ],
         "footer": [
           0,
-          1592,
+          1569,
           1440,
           43
         ],
@@ -5608,7 +5608,7 @@
           0,
           0,
           1440,
-          1635
+          1613
         ]
       },
       "counts": {
@@ -5662,25 +5662,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          200,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           900
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           657
         ],
         "footer": [
           0,
-          1099,
+          1077,
           1440,
           43
         ],
@@ -5688,7 +5688,7 @@
           0,
           0,
           1440,
-          1143
+          1120
         ]
       },
       "counts": {
@@ -5742,25 +5742,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          -257,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           900
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           657
         ],
         "footer": [
           0,
-          1099,
+          1077,
           1440,
           43
         ],
@@ -5768,7 +5768,7 @@
           0,
           0,
           1440,
-          1143
+          1120
         ]
       },
       "counts": {
@@ -5822,25 +5822,25 @@
         ],
         "rail": [
           0,
-          239,
-          195,
-          1006
+          -257,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          998
+          232,
+          177,
+          1208,
+          1026
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          167
+          252,
+          197,
+          1168,
+          195
         ],
         "footer": [
           0,
-          1198,
+          1203,
           1440,
           43
         ],
@@ -5848,7 +5848,7 @@
           0,
           0,
           1440,
-          1241
+          1246
         ]
       },
       "counts": {
@@ -5902,25 +5902,25 @@
         ],
         "rail": [
           0,
-          229,
-          195,
-          1006
+          -257,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          1051
+          232,
+          177,
+          1208,
+          1070
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           195
         ],
         "footer": [
           0,
-          1250,
+          1247,
           1440,
           43
         ],
@@ -5928,7 +5928,7 @@
           0,
           0,
           1440,
-          1293
+          1290
         ]
       },
       "counts": {
@@ -5982,25 +5982,25 @@
         ],
         "rail": [
           0,
-          94,
-          195,
-          1006
+          -257,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
+          232,
+          177,
+          1208,
           900
         ],
         "panel": [
-          216,
-          219,
-          1204,
+          252,
+          197,
+          1168,
           440
         ],
         "footer": [
           0,
-          1099,
+          1077,
           1440,
           43
         ],
@@ -6008,7 +6008,7 @@
           0,
           0,
           1440,
-          1143
+          1120
         ]
       },
       "counts": {
@@ -6062,25 +6062,25 @@
         ],
         "rail": [
           0,
-          94,
-          195,
-          1006
+          -257,
+          231,
+          1334
         ],
         "main": [
-          196,
-          199,
-          1244,
-          2915
+          232,
+          177,
+          1208,
+          2922
         ],
         "panel": [
-          216,
-          219,
-          1204,
-          2875
+          252,
+          197,
+          1168,
+          2882
         ],
         "footer": [
           0,
-          3114,
+          3098,
           1440,
           43
         ],
@@ -6088,7 +6088,7 @@
           0,
           0,
           1440,
-          3157
+          3142
         ]
       },
       "counts": {
@@ -6145,17 +6145,17 @@
           0,
           61,
           1440,
-          4751
+          4736
         ],
         "panel": [
           144,
           61,
           1152,
-          4751
+          4736
         ],
         "footer": [
           0,
-          4812,
+          4797,
           1440,
           43
         ],
@@ -6163,7 +6163,7 @@
           0,
           0,
           1440,
-          4855
+          4840
         ]
       },
       "counts": {
@@ -6218,24 +6218,24 @@
         "rail": [
           0,
           158,
-          195,
-          1006
+          231,
+          1334
         ],
         "main": [
-          196,
+          232,
           119,
-          1244,
-          4458
+          1208,
+          4492
         ],
         "panel": [
-          216,
+          252,
           139,
-          1204,
+          1168,
           363
         ],
         "footer": [
           0,
-          4577,
+          4610,
           1440,
           43
         ],
@@ -6243,7 +6243,7 @@
           0,
           0,
           1440,
-          4620
+          4654
         ],
         "wf-node-s1": [
           34,
@@ -6271,13 +6271,13 @@
         ],
         "wf-port-left-0": [
           24,
-          307,
+          306,
           20,
           20
         ],
         "wf-port-right-0": [
           224,
-          307,
+          306,
           20,
           20
         ],
@@ -6289,19 +6289,19 @@
         ],
         "wf-port-bottom-0": [
           124,
-          375,
+          374,
           20,
           20
         ],
         "wf-port-left-1": [
           24,
-          479,
+          478,
           20,
           20
         ],
         "wf-port-right-1": [
           224,
-          479,
+          478,
           20,
           20
         ],
@@ -6313,19 +6313,19 @@
         ],
         "wf-port-bottom-1": [
           124,
-          547,
+          546,
           20,
           20
         ],
         "wf-port-left-2": [
           25,
-          666,
+          665,
           20,
           20
         ],
         "wf-port-right-2": [
           223,
-          666,
+          665,
           20,
           20
         ],
@@ -6343,13 +6343,13 @@
         ],
         "wf-port-left-3": [
           25,
-          838,
+          837,
           20,
           20
         ],
         "wf-port-right-3": [
           223,
-          838,
+          837,
           20,
           20
         ],
@@ -6398,7 +6398,7 @@
         "wf-lane-chip-0": [
           28,
           605,
-          148,
+          146,
           22
         ],
         "wf-label-0": [
@@ -6408,7 +6408,7 @@
           18
         ],
         "wf-control-0": [
-          272,
+          273,
           350,
           16,
           16
@@ -6416,7 +6416,7 @@
         "wf-kind-0": [
           215,
           350,
-          53,
+          54,
           16
         ],
         "wf-path-0": [
@@ -6430,7 +6430,7 @@
         "buttons": 282,
         "inputs": 25,
         "links": 11,
-        "headings": 16,
+        "headings": 15,
         "canvases": 1,
         "tables": 0
       },

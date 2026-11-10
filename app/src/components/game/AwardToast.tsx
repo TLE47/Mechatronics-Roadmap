@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award as AwardIcon, Sparkles } from 'lucide-react';
+import { Award as AwardIcon } from 'lucide-react';
 import type { Award } from '../../gamification/rewards.ts';
 import { levelAt } from '../../gamification/levels.ts';
 
@@ -47,11 +47,11 @@ export const AwardToast: React.FC<AwardToastProps> = ({ awards, onClose, holdMs 
       }}
     >
       <div className="flex items-start gap-2">
-        {level ? (
-          <Sparkles className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" style={{ color: 'var(--accent)' }} />
-        ) : (
-          <AwardIcon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" style={{ color: 'var(--emerald)' }} />
-        )}
+        <AwardIcon
+          className="mt-0.5 h-4 w-4 shrink-0"
+          aria-hidden="true"
+          style={{ color: level ? 'var(--accent)' : 'var(--emerald)' }}
+        />
         <div className="min-w-0 flex-1">
           {level && levelInfo ? (
             <>

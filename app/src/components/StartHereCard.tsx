@@ -101,9 +101,8 @@ export const StartHereCard: React.FC<StartHereCardProps> = ({
       className="relative overflow-hidden rounded-[var(--r-xl)] border"
       style={{
         borderColor: 'var(--border)',
-        background:
-          'radial-gradient(900px 420px at 8% -20%, rgba(56,189,248,0.16), transparent 62%), linear-gradient(160deg, var(--panel) 0%, var(--bg) 78%)',
-        boxShadow: 'var(--shadow-md)',
+        background: 'var(--panel)',
+        boxShadow: 'var(--shadow-sm)',
       }}
     >
       <div className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-center">

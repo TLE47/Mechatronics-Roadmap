@@ -40,7 +40,7 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
         label: 'clamped = 12.0 V, and range(5) executes 5 times (k = 0, 1, 2, 3, 4)',
         isCorrect: true,
         explanation:
-          'Correct! min(12.0, 15.4) caps the upper bound at 12.0 V, and range(5) produces 5 zero-indexed steps.',
+          'Correct. min(12.0, 15.4) caps the upper bound at 12.0 V, and range(5) produces 5 zero-indexed steps.',
       },
       {
         label: 'clamped = -12.0 V, and range(5) executes 6 times (k = 0..5)',
@@ -71,7 +71,7 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
         label: '0.015 A, 4700 Ω, 0.0005 s; 12.0 V exceeds both the 10.8 V recommended max and 11.8 V abs max (use 6–9 V on DRV8833 or TB6612FNG for 12 V)',
         isCorrect: true,
         explanation:
-          'Correct! You passed Gate P→0 (SI prefix conversion + datasheet table reading) and are ready for Stage 0 (Lesson S0.0)!',
+          'Correct. You passed Gate P→0 (SI prefix conversion + datasheet table reading) and are ready for Stage 0 (Lesson S0.0).',
       },
       {
         label: '1.5 A, 470 Ω, 0.05 s; 12.0 V is safe because 12.0 V is close to 11.8 V',
@@ -102,7 +102,7 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
         label: 'V_mid = 2.50 V, and ADC count ≈ 512 (half of 1023)',
         isCorrect: true,
         explanation:
-          'Correct! Equal series resistors divide 5.0 V in half to 2.50 V, which maps to ~512 on a 10-bit (0..1023) ADC.',
+          'Correct. Equal series resistors divide 5.0 V in half to 2.50 V, which maps to ~512 on a 10-bit (0..1023) ADC.',
       },
       {
         label: 'V_mid = 5.00 V, and ADC count = 255',
@@ -133,7 +133,7 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
         label: '63.2% (1 - e^-1) at t = tau, and b_crit = 2 * sqrt(m * k) = 20.0 N·s/m',
         isCorrect: true,
         explanation:
-          'Correct! First-order lag reaches 1 - e^-1 = 63.2% at t = tau, and critical damping requires b = 2*sqrt(m*k) = 20 N·s/m.',
+          'Correct. First-order lag reaches 1 - e^-1 = 63.2% at t = tau, and critical damping requires b = 2*sqrt(m*k) = 20 N·s/m.',
       },
       {
         label: '50.0% at t = tau, and b_crit = 10.0 N·s/m',
@@ -164,7 +164,7 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
         label: 'DRV8833 is rated 2.7–10.8 V operating (11.8 V abs max, so use TB6612FNG at 12 V); I_stall = 12.0 / 2.4 = 5.0 A',
         isCorrect: true,
         explanation:
-          'Correct! DRV8833 abs max is 11.8 V (use 6–9 V on DRV8833 or TB6612FNG for 12 V), and at stall back-EMF is 0 V so I = V/R = 5.0 A.',
+          'Correct. DRV8833 abs max is 11.8 V (use 6–9 V on DRV8833 or TB6612FNG for 12 V), and at stall back-EMF is 0 V so I = V/R = 5.0 A.',
       },
       {
         label: 'DRV8833 requires 24 V minimum; I_stall = 0.2 A',
@@ -195,7 +195,7 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
         label: 'Reflected inertia scales by N² = 100×, and electrical angle is theta_e = 7 * 10° = 70°',
         isCorrect: true,
         explanation:
-          'Correct! Kinetic energy conservation scales reflected inertia by N² = 100, and N_p = 7 pole pairs multiply mechanical angle by 7.',
+          'Correct. Kinetic energy conservation scales reflected inertia by N² = 100, and N_p = 7 pole pairs multiply mechanical angle by 7.',
       },
       {
         label: 'Reflected inertia scales by N = 10×, and electrical angle is 10° / 7 = 1.43°',
@@ -226,7 +226,7 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
         label: 'volatile prevents register-caching; uint8_t wraps 255 -> 0; passing JointBox *p updates the caller’s struct in-place via p->pos_rad instead of mutating a discarded photocopy',
         isCorrect: true,
         explanation:
-          'Correct! You mastered all 3 parts of the Python→C bridge: fixed-width rollover (04.1), bitwise/CRC-8 framing (04.2), and struct pointers as labeled boxes (04.3).',
+          'Correct. You mastered all 3 parts of the Python→C bridge: fixed-width rollover (04.1), bitwise/CRC-8 framing (04.2), and struct pointers as labeled boxes (04.3).',
       },
       {
         label: 'volatile makes 64-bit floats atomic; uint8_t saturates at 255; C structs are always passed by reference automatically',
@@ -257,7 +257,7 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
         label: 'Actuator saturation lets error_sum grow huge (causing massive overshoot unless clamped); gravity feedforward cancels weight with zero sag while keeping K_p soft and human-safe',
         isCorrect: true,
         explanation:
-          'Correct! You have mastered the entire Tier 1 conceptual foundation and are ready for the Lesson 08.1 2-DOF Capstone or Depth 2 (Tier 2)!',
+          'Correct. You have mastered the entire Tier 1 conceptual foundation and are ready for the Lesson 08.1 2-DOF Capstone or Depth 2 (Tier 2).',
       },
       {
         label: 'Derivative kick causes windup; high K_p is always safer than gravity feedforward',
@@ -802,10 +802,10 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
 
       {/* MODE 1: Placement Recommendation Card & 8 Skip-Gate Questions */}
       {diagnosticMode === 'placement' && (submitted || answeredCount > 0) && (
-        <div className="bg-gradient-to-r from-panel via-panel to-purple/10 border border-accent/50 rounded-xl p-5">
+        <div className="rounded-xl border border-line bg-panel p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-1.5 max-w-3xl">
-              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-accent/15 text-accent border border-accent/40">
+              <div className="inline-flex items-center gap-2 rounded-[var(--r-sm)] border border-line bg-panel-2 px-2.5 py-0.5 font-mono text-[11px] font-bold text-accent">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 RECOMMENDED ENTRY POINT · {totalCorrect}/{PLACEMENT_QUESTIONS.length} SKIP-GATES PASSED
               </div>
@@ -828,7 +828,7 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
               ) : (
                 <>
                   <h3 className="text-base font-bold text-emerald">
-                    All 8 Tier 1 Skip-Gates Passed! Start at Lesson 08.1 (2-DOF Boss Capstone) or Depth 2 (Tier 2)
+                    All 8 Tier 1 skip-gates passed. Start at Lesson 08.1 (2-DOF Boss Capstone) or Depth 2 (Tier 2)
                   </h3>
                   <p className="text-xs text-body">
                     You passed every Track P, Stage 0 and Depth 1 skip test. Run the{' '}

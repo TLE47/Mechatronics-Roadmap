@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MathView, MathPanel } from '../MathView';
-import { Sparkles } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import { PresetRequest, claimPreset } from '../../demoPresets';
 import { PlotExpander } from '../PlotExpander';
 
@@ -124,7 +124,7 @@ export const TabSysId: React.FC<TabSysIdProps> = ({ onLoadPreset, highlightedId,
     ctx.fillStyle = '#cbd5e1';
     ctx.font = '12px monospace';
     ctx.fillText(
-      `Excitation Waveform d_exc(t) — Crest Factor CF = ${curCF.toFixed(2)} (${useSchroeder ? 'Uniform Energy, Zero Saturation' : 'Impulse Spike @ t=0 -> Clipping!'})`,
+      `Excitation Waveform d_exc(t) — Crest Factor CF = ${curCF.toFixed(2)} (${useSchroeder ? 'Uniform Energy, Zero Saturation' : 'Impulse Spike @ t=0 -> Clipping'})`,
       20,
       18
     );
@@ -193,7 +193,7 @@ export const TabSysId: React.FC<TabSysIdProps> = ({ onLoadPreset, highlightedId,
             <div className="flex justify-between items-center text-xs">
               <span className="text-body font-medium">Phase Schedule Mode:</span>
               <span className={`font-mono text-xs font-bold ${useSchroeder ? 'text-emerald' : 'text-rose'}`}>
-                {useSchroeder ? 'SCHROEDER' : 'ZERO-PHASE (SPIKE!)'}
+                {useSchroeder ? 'SCHROEDER' : 'ZERO-PHASE (SPIKE)'}
               </span>
             </div>
             <button
@@ -201,7 +201,7 @@ export const TabSysId: React.FC<TabSysIdProps> = ({ onLoadPreset, highlightedId,
               onClick={togglePhaseMode}
               className="w-full bg-accent/20 hover:bg-accent/30 text-accent border border-accent px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Activity className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Toggle Schroeder vs. Zero-Phase (φₖ=0)</span>
             </button>
           </div>

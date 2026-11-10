@@ -605,7 +605,7 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                       <ul className="space-y-1.5 text-body leading-relaxed">
                         {step.studyLinks.map((lk) => (
                           <li key={lk.url}>
-                            <span aria-hidden="true">🔗 </span>
+                            <span aria-hidden="true">↗ </span>
                             <a
                               href={lk.url}
                               target="_blank"
@@ -781,7 +781,7 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
           })}
 
           {/* End-of-Pass Level-Up Callout Card */}
-          <div className="bg-gradient-to-r from-panel via-raise to-emerald/10 border border-emerald rounded-xl p-5 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-emerald/60 bg-panel p-5">
             <div className="space-y-1 max-w-3xl">
               <div className="text-xs font-mono uppercase text-emerald font-bold">
                 {nextPass

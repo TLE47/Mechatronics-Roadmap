@@ -127,15 +127,15 @@ export function StudyTips() {
       aria-live="polite"
       data-testid="study-tip"
       data-tip-id={tip.id}
-      className="fixed bottom-4 left-4 z-40 max-w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-accent/35 bg-panel/95 p-3 shadow-xl backdrop-blur"
+      className="fixed bottom-20 left-4 z-40 max-w-[min(21rem,calc(100vw-2rem))] rounded-[var(--r-lg)] border border-line bg-panel p-3 shadow-lg sm:bottom-4"
     >
       <div className="flex items-start gap-2.5">
-        <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-accent/15 text-accent">
+        <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-[var(--r-sm)] border border-line bg-panel-2 text-accent">
           <Lightbulb className="h-4 w-4" aria-hidden="true" />
         </span>
         <div className="min-w-0">
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent">
-            A small study nudge
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
+            Study note
           </p>
           <p className="mt-1 text-[12.5px] leading-relaxed text-body">{tip.text}</p>
         </div>

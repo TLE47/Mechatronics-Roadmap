@@ -83,6 +83,13 @@ function CommandReadout({ reading }: { reading: RobotReading | null }) {
   );
 }
 
+const SCENE_LABEL: Record<string, string> = {
+  'P.1': 'first light',
+  'P.3': 'safe passage',
+  'P.4': 'convoy sync',
+  'P.5': 'final approach',
+};
+
 export function RobotStage({
   scenario,
   reading,
@@ -90,7 +97,6 @@ export function RobotStage({
   highlight,
   motion,
   running,
-  title,
   line,
   lineText,
 }: {
@@ -100,7 +106,6 @@ export function RobotStage({
   highlight: keyof RobotReading | null;
   motion: boolean;
   running: boolean;
-  title: string;
   line: number | null;
   lineText: string | null;
 }) {
@@ -109,7 +114,9 @@ export function RobotStage({
   const position = primaryProgress(lesson, reading, progress, anchor);
   const scene: SceneProps = { reading, progress, highlight, motion, running };
   const reached = progress.complete;
-  const signal = reading ? (running ? 'run live' : 'reading') : 'waiting';
+  const phase = running ? 'running' : reached ? 'complete' : reading ? 'reading' : 'idle';
+  const signal = running ? 'linking' : reached ? 'synced' : reading ? 'live' : 'standby';
+  const sceneLabel = SCENE_LABEL[lesson] ?? 'robot link';
 
   return (
     <section
@@ -119,37 +126,53 @@ export function RobotStage({
       data-robot-position={position.toFixed(3)}
       data-target={primaryTargetLabel(lesson, progress)}
       data-motion={motion ? 'on' : 'off'}
+      data-phase={phase}
       aria-label={
-        'Robot arena for ' + lesson + ': ' + title + '. ' +
-        (reading ? progress.met + ' of ' + progress.total + ' targets reached.' : 'Waiting for a run.')
+        'Robot arena for ' + lesson + ', ' + sceneLabel + '. ' +
+        (reading ? progress.met + ' of ' + progress.total + ' values agree.' : 'Ready for a run.')
       }
-      className="flex flex-col gap-2"
+      className="robot-stage"
     >
-      <div className="robot-arena">
-        <div className="flex items-center justify-between gap-2 px-3 pb-1 pt-2.5">
-          <span className="font-round text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">
-            {lesson} · {title}
-          </span>
-          <span
-            className="font-round text-[10px] font-semibold uppercase tracking-[0.12em]"
-            style={{ color: running ? 'var(--emerald)' : reading ? 'var(--accent)' : 'var(--dim)' }}
-          >
+      <div className="robot-arena" data-phase={phase}>
+        <div className="robot-hud">
+          <div className="robot-hud-place">
+            <span className="robot-hud-index">{lesson}</span>
+            <span className="robot-hud-scene">{sceneLabel}</span>
+          </div>
+          <span className="robot-hud-signal" data-signal={signal}>
+            <span className="robot-hud-pip" aria-hidden="true" />
             {signal}
           </span>
         </div>
-        <svg viewBox="0 0 360 210" role="img" aria-label={title}>
-          <ArenaBackground />
-          {lesson === 'P.1' && <P1Scene {...scene} />}
-          {lesson === 'P.3' && <P3Scene {...scene} />}
-          {lesson === 'P.4' && <P4Scene {...scene} />}
-          {lesson === 'P.5' && <P5Scene {...scene} />}
-        </svg>
+
+        <div className="robot-viewport">
+          <svg viewBox="0 0 360 210" role="img" aria-label={sceneLabel}>
+            <ArenaBackground />
+            {lesson === 'P.1' && <P1Scene {...scene} />}
+            {lesson === 'P.3' && <P3Scene {...scene} />}
+            {lesson === 'P.4' && <P4Scene {...scene} />}
+            {lesson === 'P.5' && <P5Scene {...scene} />}
+          </svg>
+          <span className="robot-scan" aria-hidden="true" />
+          <span className="robot-vignette" aria-hidden="true" />
+          {reached && reading && (
+            <span className="robot-arrival" aria-hidden="true">
+              <span className="robot-arrival-ring" />
+              <span className="robot-arrival-label">link stable</span>
+            </span>
+          )}
+        </div>
+
+        <div className="robot-arena-foot" aria-hidden="true">
+          <span>main.py · live telemetry</span>
+          <span>{reading ? progress.met + ' / ' + progress.total : 'waiting for signal'}</span>
+        </div>
       </div>
 
       {line !== null && lineText && (
-        <div className="flex min-w-0 items-center gap-2 rounded-xl border border-line-soft bg-canvas px-2.5 py-1.5">
-          <span className="font-round shrink-0 text-[11px] font-semibold uppercase tracking-[0.1em] text-accent">
-            line {line}
+        <div className="robot-line">
+          <span className="robot-line-label">
+            <span className="robot-line-pip" aria-hidden="true" /> line {line}
           </span>
           <code
             data-testid="robot-code-line"
@@ -161,6 +184,7 @@ export function RobotStage({
         </div>
       )}
 
+      <div className="robot-telemetry" data-quiet={reading ? 'false' : 'true'}>
       {lesson === 'P.1' && (
         <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
           <Tile
@@ -216,11 +240,12 @@ export function RobotStage({
           <Tile label="Steps" value={shown(reading?.step)} />
         </div>
       )}
+      </div>
 
-      <p className="text-[11px] leading-snug text-muted">
+      <p className="robot-caption">
         {reached
-          ? 'Every target matches this run. The lesson verdict still belongs to Run & Verify.'
-          : 'A view of your code’s own values — it never edits or grades main.py.'}
+          ? 'The link is stable. The lesson verdict still belongs to Run & Verify.'
+          : 'A live view of the names your code binds. Nothing here edits or grades main.py.'}
       </p>
     </section>
   );

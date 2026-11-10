@@ -72,31 +72,31 @@ export interface MusicCategoryInfo {
 export const MUSIC_CATEGORIES: readonly MusicCategoryInfo[] = [
   {
     id: 'lofi',
-    label: '☕ Lo-Fi Beats',
+    label: 'Lo-Fi Beats',
     hint: 'The two recordings this app opened with: a bench at night, and a fire.',
     defaultTape: 'lab-night',
   },
   {
     id: 'jpop',
-    label: '🌸 J-Pop (City Pop)',
+    label: 'J-Pop (City Pop)',
     hint: 'City-pop, anime and pop instrumentals written here — no vocal leads.',
     defaultTape: 'city-pop',
   },
   {
     id: 'synthwave',
-    label: '🌆 Synthwave',
+    label: 'Synthwave',
     hint: 'Retrowave pads and an analog arpeggio, composed for this loop.',
     defaultTape: 'night-drive',
   },
   {
     id: 'chiptune',
-    label: '🕹️ Chiptune 8-Bit',
+    label: 'Chiptune 8-Bit',
     hint: 'A pulse lead and noise hats — the game-wave idiom, composed here.',
     defaultTape: 'pixel-run',
   },
   {
     id: 'acoustic',
-    label: '🎸 Acoustic',
+    label: 'Acoustic',
     hint: 'A minimal piano piece and a slow blues walk, both real CC0 recordings.',
     defaultTape: 'first-snow',
   },

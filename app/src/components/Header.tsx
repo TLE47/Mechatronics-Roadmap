@@ -510,15 +510,15 @@ export const Header: React.FC<HeaderProps> = ({
                 ? `Signed in as ${accountEmail} — progress syncs to your account`
                 : 'Sign in to keep your progress across browsers, or keep it in this one'
             }
-            className="flex max-w-[16rem] shrink-0 cursor-pointer items-center gap-2 rounded-full py-1 pl-1 pr-1 text-[12.5px] font-semibold transition-colors hover:brightness-110 md:pr-2.5"
+            className="flex max-w-[16rem] shrink-0 cursor-pointer items-center gap-2 rounded-[var(--r-sm)] py-1 pl-1 pr-1 text-[12.5px] font-semibold transition-colors hover:border-[var(--border-strong)] md:pr-2.5"
             style={{
-              border: '1px solid color-mix(in srgb, var(--accent) 40%, var(--border))',
-              background: 'color-mix(in srgb, var(--accent-soft) 80%, var(--panel-2))',
-              color: 'var(--accent)',
+              border: '1px solid var(--border)',
+              background: 'var(--panel-2)',
+              color: 'var(--text)',
             }}
           >
             <span
-              className="grid h-6 w-6 shrink-0 place-items-center rounded-full"
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-[var(--r-xs)]"
               aria-hidden="true"
               style={{ background: 'var(--accent)', color: 'var(--inverse)' }}
             >

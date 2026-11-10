@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MathView, MathPanel } from '../MathView';
-import { Sparkles, ShieldCheck, AlertOctagon } from 'lucide-react';
+import { Activity, ShieldCheck, AlertOctagon } from 'lucide-react';
 import { PresetRequest, claimPreset } from '../../demoPresets';
 import { PlotExpander } from '../PlotExpander';
 
@@ -90,7 +90,7 @@ export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId, p
     setNeesVal(5.4 + sigmaMeas * 8.0);
 
     const calculatedTorn = seqLockEnabled ? 0 : Math.round(2500 * (contentionPct / 12.0));
-    setTornCount(seqLockEnabled ? '0 / 250k' : `${calculatedTorn} GLITCHES!`);
+    setTornCount(seqLockEnabled ? '0 / 250k' : `${calculatedTorn} GLITCHES`);
     setStepLatNs(28.4 + contentionPct * 0.12);
 
     const canvas = canvasRef.current;
@@ -145,7 +145,7 @@ export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId, p
 
     ctx.fillStyle = '#cbd5e1';
     ctx.font = '12px monospace';
-    ctx.fillText('Top: Raw Gyro Drift (Rose, Diverges!) vs Joseph ESKF Error x4 (Emerald) & Bias Convergence (Cyan)', 20, 16);
+    ctx.fillText('Top: Raw Gyro Drift (Rose, Diverges) vs Joseph ESKF Error x4 (Emerald) & Bias Convergence (Cyan)', 20, 16);
 
     // Bottom pane: IPC telemetry stream
     const botCenter = midY + (H - midY) * 0.55;
@@ -166,7 +166,7 @@ export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId, p
 
     ctx.fillStyle = '#cbd5e1';
     ctx.fillText(
-      `Bottom: 40kHz ISR -> 1kHz Planner Telemetry (${seqLockEnabled ? 'WaitFreeSeqLock Active: 0 Torn Reads, Bounded Retry' : 'UNPROTECTED STRUCT: Corrupted Torn-Word Glitches!'})`,
+      `Bottom: 40kHz ISR -> 1kHz Planner Telemetry (${seqLockEnabled ? 'WaitFreeSeqLock Active: 0 Torn Reads, Bounded Retry' : 'UNPROTECTED STRUCT: Corrupted Torn-Word Glitches'})`,
       20,
       midY + 18
     );
@@ -214,7 +214,7 @@ export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId, p
               onClick={toggleSeqLock}
               className="w-full bg-accent/20 hover:bg-accent/30 text-accent border border-accent px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Activity className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Toggle WaitFreeSeqLock vs. Unprotected Struct</span>
             </button>
           </div>

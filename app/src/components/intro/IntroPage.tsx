@@ -17,7 +17,6 @@ import {
   Pause,
   Play,
   RotateCcw,
-  Sparkles,
   TerminalSquare,
   Waypoints,
   Wrench,
@@ -369,7 +368,7 @@ const Hero: React.FC<{
     <div className="mx-auto grid max-w-[var(--shell-max)] gap-8 px-4 pb-12 pt-10 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-10 lg:pb-16 lg:pt-14">
       <Reveal>
         <p className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]" style={{ borderColor: 'var(--border-strong)', color: 'var(--accent)' }}>
-          <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+          <CircleDot className="h-3.5 w-3.5" aria-hidden="true" />
           {signedIn ? 'Welcome back to the bench' : 'An open workbench for mechatronics'}
         </p>
 
@@ -1472,4 +1471,49 @@ const INTRO_CSS = `
   .intro-root[data-motion='off'] .intro-lift:hover,
   .intro-root[data-motion='off'] .intro-cta:hover { transform: none; }
 .intro-root[data-motion='off'] .intro-live { animation: none; }
+
+/* Flat, instrument-panel finish: the page keeps its route and its live figures, without the
+   aurora, gradient headline, sweeping edges or hover lift that made it read as a showcase. */
+.intro-gradient-text {
+  background: none;
+  color: var(--accent);
+  -webkit-text-fill-color: currentColor;
+  animation: none;
+}
+.intro-hero-glow { display: none; }
+.intro-grid { animation: none; opacity: 0.22; }
+.intro-loop-step { animation: none; }
+.intro-beacon {
+  width: 4px;
+  height: 4px;
+  border-radius: 2px;
+  box-shadow: none;
+  animation: none;
+}
+.intro-stat::after,
+.intro-kept-card::after { display: none; }
+.intro-traveller {
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 2px;
+  box-shadow: none;
+  animation: none;
+}
+.intro-lift:hover { transform: none; box-shadow: none; }
+.intro-cta {
+  background: var(--accent);
+  box-shadow: none;
+}
+.intro-cta:hover { transform: none; filter: brightness(1.05); }
+.intro-arm-card { box-shadow: none; }
+.intro-closing {
+  background: var(--panel);
+  animation: none;
+}
+.intro-live { animation: none; }
+.intro-step rect { animation: none; filter: none !important; }
+.intro-edge { animation: none; stroke-dasharray: 4 5; }
+.intro-scan::after { display: none; }
+.intro-nav-chip { border-radius: var(--r-sm) !important; }
 `;

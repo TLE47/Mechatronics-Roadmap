@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useId } from 'react';
 import { MathView, MathPanel } from '../MathView';
-import { Sparkles } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import { PresetRequest, claimPreset } from '../../demoPresets';
 import { PlotExpander } from '../PlotExpander';
 
@@ -234,7 +234,7 @@ export const TabBode: React.FC<TabBodeProps> = ({ onLoadPreset, highlightedId, p
           <div className={`space-y-1 p-2 rounded-lg transition-all ${highlightedId === 'sl-fn' ? 'ring-2 ring-amber bg-amber/10 shadow-[0_0_15px_rgba(251,191,36,0.3)]' : ''}`}>
             <div className="flex justify-between text-xs text-body">
               <span className="flex items-center gap-1 font-semibold text-amber">
-                <Sparkles className="w-3 h-3" />
+                <Activity className="w-3 h-3" aria-hidden="true" />
                 Notch Center <MathView math="f_{\text{notch}}" /> [Hz]
               </span>
               <span className="font-mono text-emerald font-bold">{fn.toFixed(1)}</span>

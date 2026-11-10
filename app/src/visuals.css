@@ -1,123 +1,69 @@
-/* Home's loud moment and the lesson runner's atmosphere. Kept out of `index.css` so the token block
-   stays a token block; both use the same custom properties, so every palette retints them. */
+/* Home's working surface and the lesson runner's quiet technical grid. Kept out of index.css so
+   the token block stays a token block; both use the same custom properties. */
 
 .home-hero {
-  background:
-    radial-gradient(ellipse at 12% -20%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 58%),
-    radial-gradient(ellipse at 92% 120%, color-mix(in srgb, var(--purple) 13%, transparent), transparent 55%),
-    var(--panel);
-  box-shadow: 0 18px 60px color-mix(in srgb, var(--bg) 55%, transparent);
-}
-.home-hero-aurora {
-  background:
-    radial-gradient(circle at 25% 30%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 34%),
-    radial-gradient(circle at 78% 64%, color-mix(in srgb, var(--emerald) 10%, transparent), transparent 30%);
-  animation: home-aurora 16s ease-in-out infinite alternate;
+  background: var(--panel);
+  box-shadow: var(--shadow-sm);
 }
 .home-kicker {
   display: inline-flex;
-  animation: home-rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   align-items: center;
   gap: 8px;
-  border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border));
-  border-radius: 999px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--panel-2);
   padding: 4px 10px;
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 11px;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--muted);
 }
 .home-live-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: var(--emerald);
-  box-shadow: 0 0 0 0 color-mix(in srgb, var(--emerald) 55%, transparent);
-  animation: home-pulse 2.4s ease-out infinite;
 }
 .home-headline {
   font-size: clamp(2.15rem, 5.2vw, 3.8rem);
-  line-height: 0.96;
-  letter-spacing: -0.04em;
-  animation: home-rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.05s both;
-}
-.home-gradient-text {
-  background: linear-gradient(92deg, var(--accent), var(--emerald) 55%, var(--purple), var(--accent));
-  background-size: 220% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: home-shimmer 7s ease-in-out infinite;
-}
-/* A single soft scan across the hero, behind its words: motion you notice once and then read past. */
-.home-hero::after {
-  content: '';
-  position: absolute;
-  inset: -30% -20%;
-  z-index: -1;
-  pointer-events: none;
-  background: linear-gradient(
-    105deg,
-    transparent 42%,
-    color-mix(in srgb, var(--accent) 10%, transparent) 50%,
-    transparent 58%
-  );
-  transform: translateX(-70%) rotate(6deg);
-  animation: home-scan 9s ease-in-out infinite;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
 }
 .home-stat {
-  background: color-mix(in srgb, var(--canvas) 62%, transparent);
-  backdrop-filter: blur(6px);
-  animation: home-rise 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  background: var(--panel-2);
 }
-.home-stat:nth-child(2) { animation-delay: 90ms; }
-.home-stat:nth-child(3) { animation-delay: 180ms; }
 .home-orbit {
   position: relative;
   display: grid;
-  min-height: 250px;
+  min-height: 210px;
   place-items: center;
-}
-.home-orbit::before {
-  content: '';
-  position: absolute;
-  width: 210px;
-  height: 210px;
-  border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 22%, transparent), transparent 68%);
-  filter: blur(12px);
 }
 .home-orbit-ring {
   position: absolute;
-  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--accent) 30%, transparent);
   border-radius: 50%;
+  opacity: 0.5;
 }
 .home-orbit-ring--a {
   width: 228px;
   height: 228px;
-  border-style: dashed;
-  animation: home-spin 26s linear infinite;
 }
 .home-orbit-ring--b {
   width: 160px;
   height: 160px;
   border-color: color-mix(in srgb, var(--emerald) 34%, transparent);
-  animation: home-spin 18s linear infinite reverse;
 }
 .home-orbit-core {
   position: relative;
   display: grid;
-  width: 76px;
-  height: 76px;
+  width: 64px;
+  height: 64px;
   place-items: center;
   border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--border));
-  border-radius: 22px;
-  background: color-mix(in srgb, var(--accent) 12%, var(--panel));
+  border-radius: var(--r-lg);
+  background: var(--panel-2);
   color: var(--accent);
-  box-shadow: 0 0 40px color-mix(in srgb, var(--accent) 24%, transparent);
-  animation: home-breathe 5.5s ease-in-out infinite;
 }
 .home-orbit-node {
   position: absolute;
@@ -126,76 +72,32 @@
   height: 38px;
   place-items: center;
   border: 1px solid var(--border-strong);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  border-radius: var(--r-md);
+  background: var(--panel-2);
   color: var(--accent);
-  box-shadow: var(--shadow-sm);
-  animation: home-float 6s ease-in-out infinite;
 }
-.home-orbit-node--a { top: 9%; left: 16%; animation-delay: -1s; }
-.home-orbit-node--b { top: 18%; right: 12%; animation-delay: -2.4s; }
-.home-orbit-node--c { bottom: 17%; left: 11%; animation-delay: -3.8s; }
-.home-orbit-node--d { bottom: 10%; right: 19%; animation-delay: -4.6s; }
+.home-orbit-node--a { top: 9%; left: 16%; }
+.home-orbit-node--b { top: 18%; right: 12%; }
+.home-orbit-node--c { bottom: 17%; left: 11%; }
+.home-orbit-node--d { bottom: 10%; right: 19%; }
 .home-orbit-label {
   position: absolute;
   bottom: 1%;
   border: 1px solid var(--border);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--canvas) 72%, transparent);
+  border-radius: var(--r-sm);
+  background: var(--panel-2);
   padding: 3px 9px;
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 11px;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--dim);
 }
-@keyframes home-aurora {
-  from { transform: translate3d(-2%, -1%, 0) scale(1); opacity: 0.7; }
-  to { transform: translate3d(3%, 2%, 0) scale(1.08); opacity: 1; }
-}
-@keyframes home-spin {
-  to { transform: rotate(360deg); }
-}
-@keyframes home-pulse {
-  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--emerald) 55%, transparent); }
-  70% { box-shadow: 0 0 0 8px transparent; }
-  100% { box-shadow: 0 0 0 0 transparent; }
-}
-@keyframes home-breathe {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-4px) scale(1.035); }
-}
-@keyframes home-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-7px); }
-}
-@keyframes home-shimmer {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-@keyframes home-rise {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes home-scan {
-  0%, 100% { transform: translateX(-70%) rotate(6deg); opacity: 0; }
-  12% { opacity: 0.85; }
-  55% { transform: translateX(70%) rotate(6deg); opacity: 0.4; }
-  68% { opacity: 0; }
-}
 
-/* The lesson's atmosphere: a very quiet aurora and instrument grid behind the cards. */
+/* One technical grid behind the reading surface; the old aurora, orbit and HUD chips were
+   decoration over prose and are intentionally gone. */
 .lesson-ambience {
   opacity: 0.8;
-}
-.lesson-aurora {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 18% 24%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 38%),
-    radial-gradient(circle at 82% 70%, color-mix(in srgb, var(--purple) 12%, transparent), transparent 36%),
-    radial-gradient(circle at 52% 100%, color-mix(in srgb, var(--emerald) 10%, transparent), transparent 40%);
-  animation: lesson-drift 24s ease-in-out infinite alternate;
 }
 .lesson-grid {
   position: absolute;
@@ -205,51 +107,7 @@
     linear-gradient(to bottom, color-mix(in srgb, var(--accent) 8%, transparent) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: radial-gradient(ellipse at 50% 20%, black, transparent 72%);
-  opacity: 0.55;
-}
-/* Keep the orbit inside the runner box: the tablet overflow gate counts a clipped box, not just a
-   painted edge. It also stays still, because a rotating square's bounding box grows past the edge. */
-.lesson-orbit {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 360px;
-  height: 360px;
-  border: 1px solid color-mix(in srgb, var(--accent) 14%, transparent);
-  border-radius: 50%;
-}
-.lesson-orbit::before,
-.lesson-orbit::after {
-  content: '';
-  position: absolute;
-  border: 1px solid color-mix(in srgb, var(--purple) 12%, transparent);
-  border-radius: 50%;
-}
-.lesson-orbit::before { inset: 42px; }
-.lesson-orbit::after { inset: 92px; border-color: color-mix(in srgb, var(--emerald) 14%, transparent); }
-.lesson-hud {
-  position: absolute;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--canvas) 55%, transparent);
-  padding: 2px 7px;
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--dim);
-  opacity: 0.65;
-}
-.lesson-hud--a { top: 22px; right: 9%; }
-.lesson-hud--b { top: 34%; left: 8px; }
-.lesson-hud--c { bottom: 18%; right: 3%; }
-.lesson-hud--d { bottom: 8%; left: 2%; }
-@keyframes lesson-drift {
-  from { transform: translate3d(-1%, -1%, 0); }
-  to { transform: translate3d(0, 0, 0); }
+  opacity: 0.3;
 }
 
 /* Micro-learning's staged lesson and answer comparison: one piece arrives at a time. */
@@ -315,18 +173,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .home-hero-aurora,
-  .home-live-dot,
-  .home-orbit-ring,
-  .home-orbit-core,
-  .home-orbit-node,
-  .home-kicker,
-  .home-headline,
-  .home-stat,
-  .home-gradient-text,
-  .home-hero::after,
-  .lesson-aurora,
-  .lesson-orbit,
   .micro-reveal,
   .micro-walkthrough-line,
   .micro-answer-value,
@@ -336,42 +182,19 @@
   }
 }
 
-/* Home, lifted to the introduction's register: a tinted canvas, panels with a lit edge, and a
-   study heatmap that carries the year's shape rather than another row of numbers. */
-.home-canvas {
-  position: relative;
-}
-.home-canvas::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto;
-  height: 420px;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(ellipse at 12% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 55%),
-    radial-gradient(ellipse at 88% 8%, color-mix(in srgb, var(--purple) 10%, transparent), transparent 52%);
-  mask-image: linear-gradient(to bottom, black, transparent);
-}
+/* Home's working cards: flat surfaces, a technical grid, no ambient glow. */
 .home-page-title {
   letter-spacing: -0.035em;
 }
 .home-panel {
-  position: relative;
-  background:
-    linear-gradient(155deg, color-mix(in srgb, var(--panel) 92%, var(--accent) 8%), var(--panel) 46%),
-    var(--panel);
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--text) 5%, transparent) inset,
-    0 18px 44px -34px color-mix(in srgb, var(--bg) 80%, transparent);
-  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  background: var(--panel);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--t-fast) var(--ease-out), background-color var(--t-fast) var(--ease-out);
 }
 .home-panel:hover {
-  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--text) 7%, transparent) inset,
-    0 22px 52px -30px color-mix(in srgb, var(--accent) 32%, transparent);
-  transform: translateY(-1px);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+  transform: none;
 }
 .home-grid {
   background-image:
@@ -379,19 +202,11 @@
     linear-gradient(to bottom, color-mix(in srgb, var(--accent) 9%, transparent) 1px, transparent 1px);
   background-size: 44px 44px;
   mask-image: radial-gradient(ellipse at 40% 18%, black, transparent 70%);
-  opacity: 0.6;
+  opacity: 0.28;
 }
 
 .home-heat-card {
   overflow: hidden;
-}
-.home-heat-card::after {
-  content: '';
-  position: absolute;
-  inset: auto -10% -60% 45%;
-  height: 200px;
-  pointer-events: none;
-  background: radial-gradient(ellipse, color-mix(in srgb, var(--purple) 14%, transparent), transparent 65%);
 }
 .study-heat-scroll {
   overflow-x: auto;
@@ -563,76 +378,415 @@
 }
 
 /* ----------------------------------------------------------------------------
-   The Robot tab: the mission card, the soft arena and the little moving machine.
+   The Robot tab: a stage-first cockpit, a destination you can see, and a little
+   machine that wakes up when Run robot is pressed.
 
-   The arena keeps the plot face — dark in every palette — because its fills are literal signal
-   colours tuned against that ink. Everything around it uses the app's tokens. Movement is a CSS
-   transition rather than a frame loop, so `prefers-reduced-motion` and the header's Motion switch
-   stop the same drawing with one rule, and neither costs a render per frame.
+   The arena is dark in every palette because its fills are literal signal colours
+   tuned against that ink. The HUD and the telemetry deck use the app's tokens, so
+   the room around the arena still belongs to the rest of MechaLab. Movement is CSS,
+   not a frame loop: the Motion switch stops all of it with one rule and costs no
+   renders per frame.
    -------------------------------------------------------------------------- */
-.robot-mission {
-  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
-  border-radius: 20px;
-  background:
-    radial-gradient(ellipse at 0% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 58%),
-    linear-gradient(150deg, color-mix(in srgb, var(--panel) 90%, var(--accent) 10%), var(--panel) 62%);
-  padding: 12px 14px;
-  box-shadow: 0 18px 40px -34px color-mix(in srgb, var(--accent) 55%, transparent);
+.robot-pane {
+  background: var(--panel);
 }
-.robot-goal-chip {
-  display: inline-flex;
+.robot-cockpit {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+.robot-launchbar {
+  display: flex;
+  min-width: 0;
   align-items: center;
-  gap: 6px;
-  min-height: 34px;
-  padding: 4px 10px;
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  border-radius: var(--r-lg);
+  background: var(--panel-2);
+  padding: 8px 10px;
+}
+.robot-live-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--dim);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--dim) 14%, transparent);
+}
+.robot-live-dot[data-live='true'] {
+  background: var(--emerald);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--emerald) 16%, transparent);
+}
+.robot-reset {
+  display: inline-grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--panel-2) 72%, transparent);
-  cursor: pointer;
-  transition:
-    border-color 120ms ease-out,
-    background-color 120ms ease-out,
-    box-shadow 120ms ease-out;
+  background: var(--canvas);
+  color: var(--muted);
+  transition: color 140ms ease-out, border-color 140ms ease-out;
 }
-.robot-goal-chip:hover {
+.robot-reset:hover {
   border-color: var(--border-strong);
+  color: var(--ink);
 }
-.robot-goal-chip[data-met='true'] {
-  border-color: color-mix(in srgb, var(--emerald) 55%, var(--border));
-  background: color-mix(in srgb, var(--emerald) 10%, transparent);
+.robot-launch {
+  position: relative;
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid color-mix(in srgb, var(--accent) 78%, transparent);
+  border-radius: var(--r-md);
+  background: var(--accent);
+  color: var(--inverse);
+  padding: 0 16px;
+  font-family: var(--font-round);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transition: filter 140ms ease-out;
 }
-.robot-goal-chip[aria-pressed='true'] {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent);
+.robot-launch:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+.robot-launch:disabled {
+  cursor: not-allowed;
+  opacity: 0.46;
+}
+.robot-stage {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
 }
 .robot-arena {
   position: relative;
+  isolation: isolate;
   overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 22px;
-  background: #08111f;
+  border: 1px solid color-mix(in srgb, #38bdf8 34%, #1e3a5f);
+  border-radius: 24px;
+  background: #050e1c;
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.05),
-    0 22px 44px -36px rgb(56 189 248 / 0.55);
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 26px 58px -40px rgb(56 189 248 / 0.8);
+  transition: border-color 280ms ease-out, box-shadow 280ms ease-out;
+}
+.robot-arena[data-phase='running'] {
+  border-color: color-mix(in srgb, #34d399 52%, #38bdf8);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    0 0 0 1px rgb(52 211 153 / 0.12),
+    0 30px 64px -38px rgb(52 211 153 / 0.8);
+}
+.robot-arena[data-phase='complete'] {
+  border-color: color-mix(in srgb, #34d399 72%, #38bdf8);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    0 0 0 1px rgb(52 211 153 / 0.2),
+    0 30px 64px -36px rgb(52 211 153 / 0.85);
+}
+.robot-hud {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px 5px;
+}
+.robot-hud-place {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+.robot-hud-index {
+  display: inline-grid;
+  min-width: 29px;
+  height: 20px;
+  place-items: center;
+  border: 1px solid rgb(125 211 252 / 0.28);
+  border-radius: 6px;
+  background: rgb(8 25 45 / 0.72);
+  color: #bae6fd;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+}
+.robot-hud-scene {
+  overflow: hidden;
+  color: #dbeafe;
+  font-family: var(--font-round);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.robot-hud-signal {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  color: #7dd3fc;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+.robot-hud-signal[data-signal='linking'],
+.robot-hud-signal[data-signal='live'] {
+  color: #6ee7b7;
+}
+.robot-hud-signal[data-signal='synced'] {
+  color: #6ee7b7;
+}
+.robot-hud-pip {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 9px currentColor;
+}
+.robot-viewport {
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+  margin: 0 4px;
 }
 .robot-arena svg {
   display: block;
   width: 100%;
   height: auto;
 }
+.robot-scan {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 4;
+  height: 28%;
+  background: linear-gradient(180deg, transparent, rgb(52 211 153 / 0.08) 70%, rgb(52 211 153 / 0.2) 100%);
+  border-bottom: 1px solid rgb(52 211 153 / 0.38);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-110%);
+}
+.robot-arena[data-phase='running'] .robot-scan {
+  opacity: 1;
+  animation: robot-scan 2.2s linear infinite;
+}
+.robot-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  box-shadow: inset 0 0 38px 14px rgb(2 8 20 / 0.42);
+  pointer-events: none;
+}
+.robot-arrival {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transform: translateX(-50%);
+  color: #a7f3d0;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  animation: robot-arrival-in 460ms var(--ease-out) both;
+}
+.robot-arrival-ring {
+  width: 7px;
+  height: 7px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  box-shadow: 0 0 0 3px rgb(52 211 153 / 0.14), 0 0 12px rgb(52 211 153 / 0.8);
+}
+.robot-arena-foot {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 3px 12px 9px;
+  color: #49647f;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.robot-line {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgb(56 189 248 / 0.17);
+  border-radius: 12px;
+  background: #071628;
+  padding: 6px 9px;
+  color: #c7d2fe;
+}
+.robot-line-label {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  color: #7dd3fc;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.robot-line-pip {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 7px currentColor;
+}
+.robot-telemetry {
+  opacity: 1;
+  transition: opacity 260ms ease-out;
+}
+.robot-telemetry[data-quiet='true'] {
+  opacity: 0.58;
+}
+.robot-caption {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+.robot-signal-deck {
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+  border-radius: 18px;
+  background:
+    radial-gradient(ellipse at 100% 0%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 48%),
+    color-mix(in srgb, var(--panel-2) 72%, transparent);
+  padding: 9px 11px 10px;
+  box-shadow: 0 12px 30px -30px color-mix(in srgb, var(--accent) 62%, transparent);
+}
+.robot-deck-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.robot-deck-pulse {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.robot-signal-meter {
+  height: 2px;
+  overflow: hidden;
+  margin-top: 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 75%, transparent);
+}
+.robot-signal-meter-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--emerald));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--emerald) 55%, transparent);
+  transition: width 360ms var(--ease-out);
+}
+.robot-goal-chip {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-left: 3px solid color-mix(in srgb, var(--accent) 58%, var(--border));
+  border-radius: 10px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 92%, transparent), color-mix(in srgb, var(--canvas) 76%, transparent));
+  padding: 5px 9px 5px 8px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.025);
+  cursor: pointer;
+  transition:
+    border-color 120ms ease-out,
+    background-color 120ms ease-out,
+    box-shadow 120ms ease-out,
+    transform 120ms ease-out;
+}
+.robot-goal-chip:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+.robot-goal-chip[data-met='true'] {
+  border-color: color-mix(in srgb, var(--emerald) 55%, var(--border));
+  border-left-color: var(--emerald);
+  background: color-mix(in srgb, var(--emerald) 9%, var(--panel));
+}
+.robot-goal-chip[aria-pressed='true'] {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent);
+}
 .robot-mover,
 .robot-slide {
   transition: transform 380ms var(--ease-out);
 }
 .robot-crate {
-  transition:
-    transform 380ms var(--ease-out),
-    opacity 380ms var(--ease-out);
+  transition: transform 380ms var(--ease-out), opacity 380ms var(--ease-out);
 }
-.robot-ant {
-  animation: robot-ant 2.6s ease-in-out infinite;
+.robot-body {
+  transform-box: fill-box;
+  transform-origin: center;
 }
-.robot-blink {
-  animation: robot-blink 6.4s ease-in-out infinite;
+.robot-sensor-scan {
+  animation: robot-sensor-scan 2.8s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.robot-beacon-light {
+  animation: robot-beacon-light 2.8s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.robot-beacon-halo {
+  animation: robot-beacon 2.8s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.robot-beacon-pulse {
+  animation: robot-beacon-pulse 2.8s ease-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.robot-arena[data-phase='complete'] .robot-beacon-pulse {
+  opacity: 0.55;
+  animation-duration: 1.6s;
+}
+.robot-beacon-ring {
+  animation: robot-spin 10s linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.robot-arena[data-phase='complete'] .robot-beacon-ring {
+  animation-duration: 3.5s;
+}
+.robot-dust {
+  animation: robot-dust 5.2s ease-in-out infinite;
 }
 .robot-speed {
   animation: robot-speed 1.1s ease-in-out infinite;
@@ -645,34 +799,119 @@
 }
 [data-motion='off'] .robot-mover,
 [data-motion='off'] .robot-slide,
-[data-motion='off'] .robot-crate {
+[data-motion='off'] .robot-crate,
+[data-motion='off'] .robot-signal-meter-fill {
   transition: none !important;
 }
-[data-motion='off'] .robot-ant,
-[data-motion='off'] .robot-blink,
+[data-motion='off'] .robot-sensor-scan,
+[data-motion='off'] .robot-beacon-light,
 [data-motion='off'] .robot-speed,
 [data-motion='off'] .robot-belt,
-[data-motion='off'] .robot-spot {
+[data-motion='off'] .robot-spot,
+[data-motion='off'] .robot-body,
+[data-motion='off'] .robot-beacon-halo,
+[data-motion='off'] .robot-beacon-pulse,
+[data-motion='off'] .robot-beacon-ring,
+[data-motion='off'] .robot-dust,
+[data-motion='off'] .robot-scan,
+[data-motion='off'] .robot-arrival,
+[data-motion='off'] .robot-live-dot {
   animation: none !important;
 }
-@keyframes robot-ant {
+@keyframes robot-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.4px);
+  }
+}
+@keyframes robot-beacon {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+@keyframes robot-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes robot-beacon-pulse {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.55);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.65);
+  }
+}
+@keyframes robot-arrival-flash {
+  0% {
+    opacity: 0.2;
+    filter: brightness(0.8);
+  }
+  30% {
+    opacity: 1;
+    filter: brightness(1.25);
+  }
+  100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+@keyframes robot-dust {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+@keyframes robot-scan {
+  0% {
+    transform: translateY(-110%);
+  }
+  100% {
+    transform: translateY(380%);
+  }
+}
+@keyframes robot-arrival-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 4px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+@keyframes robot-sensor-scan {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translateX(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(0.24px);
+  }
+}
+@keyframes robot-beacon-light {
   0%,
   100% {
     opacity: 0.55;
   }
   50% {
     opacity: 1;
-  }
-}
-@keyframes robot-blink {
-  0%,
-  91%,
-  100% {
-    transform: scaleY(0);
-  }
-  94%,
-  97% {
-    transform: scaleY(1);
   }
 }
 @keyframes robot-speed {
@@ -697,4 +936,41 @@
   50% {
     opacity: 1;
   }
+}
+@media (max-width: 640px) {
+  .robot-launchbar {
+    padding: 7px 8px;
+  }
+  .robot-launch {
+    min-height: 38px;
+    padding: 0 12px;
+  }
+  .robot-hud {
+    padding: 8px 9px 4px;
+  }
+  .robot-hud-scene {
+    font-size: 10px;
+    letter-spacing: 0.11em;
+  }
+  .robot-arena-foot {
+    padding-inline: 9px;
+  }
+  .robot-signal-deck {
+    padding-inline: 9px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .robot-body,
+  .robot-beacon-halo,
+  .robot-beacon-ring,
+  .robot-dust,
+  .robot-scan,
+  .robot-live-dot {
+    animation: none !important;
+  }
+}
+
+/* The only entrance animation left in this stylesheet. */
+.animate-pop {
+  animation: fade-up 180ms var(--ease-out) both;
 }

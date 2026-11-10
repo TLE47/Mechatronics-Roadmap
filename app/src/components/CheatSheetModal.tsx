@@ -27,7 +27,7 @@ export const CheatSheetModal: React.FC<CheatSheetModalProps> = ({ isOpen, onClos
         <div className="flex justify-between items-start border-b-2 border-accent pb-3 mb-4 flex-wrap gap-2 print:border-b-black">
           <div>
             <h1 className="text-xl font-extrabold tracking-tight text-ink print:text-black">
-              ⚡ MechaLab — 1-Page Production Mechatronics & Robotics Reference Card
+              MechaLab — 1-Page Production Mechatronics & Robotics Reference Card
             </h1>
             <div className="text-xs text-muted print:text-gray-600 mt-1">
               Tracks 00–08 Core Equations, PCB Stackup Rules, Exact Kinematic Constraint, FOC Tuning Laws & Real-Time Safety Gates
