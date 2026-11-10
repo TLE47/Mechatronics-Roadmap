@@ -466,32 +466,7 @@ jobs:
         run: npm run test:settle
 
       - name: "Check the surface snapshot: every tab in every palette is still shaped the same"
-        run: |
-          set +e
-          node scripts/snapshot_surfaces.mjs --json > /tmp/surface-drift.json 2>/tmp/surface-drift.err
-          status=$?
-          cat /tmp/surface-drift.err
-          if [ "$status" -ne 0 ]; then
-            node - <<'NODE'
-          const fs = require('node:fs');
-          const details = [];
-          try {
-            const data = JSON.parse(fs.readFileSync('/tmp/surface-drift.json', 'utf8'));
-            for (const row of data.drift ?? []) {
-              details.push(`${row.surface} ${row.part}.${row.field} expected=${JSON.stringify(row.expected)} actual=${JSON.stringify(row.actual)}`);
-            }
-            for (const name of data.stale ?? []) details.push(`${name} stale in the snapshot`);
-          } catch (error) {
-            details.push(`could not read the surface result: ${error.message}`);
-          }
-          const text = details.join('\n');
-          console.log(`::error title=Surface drift::${details.join(' | ').slice(0, 12000)}`);
-          if (process.env.GITHUB_STEP_SUMMARY) {
-            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Surface drift\n\n\`\`\`\n${text}\n\`\`\`\n`);
-          }
-          NODE
-          fi
-          exit "$status"
+        run: npm run check:snapshot
 
       - name: "Check label sizes: the quiet row, the folded toolbar, and reading text at 17-18 px"
         run: npm run check:labels
