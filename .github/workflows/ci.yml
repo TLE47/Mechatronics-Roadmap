@@ -500,15 +500,14 @@ jobs:
         run: npm run test:settle
 
       # TEMPORARY DIAGNOSTICS: a failed run's log is not readable without repository admin, so the
-      # checker's drift rows are republished as check annotations and a step summary. The checker is
-      # called directly because npm's script banner would land in the redirected JSON. Remove this
-      # wrapper once the drift it is describing is fixed.
+      # checker's drift rows are republished as check annotations and a step summary. The report is
+      # read from `--json-out` rather than stdout, where npm's script banner would land in it. Remove
+      # this wrapper once the drift it is describing is fixed.
       - name: "Check the surface snapshot: every tab in every palette is still shaped the same"
         run: |
           set +e
-          node scripts/snapshot_surfaces.mjs --json > /tmp/surface-drift.json 2>/tmp/surface-drift.err
+          npm run check:snapshot -- --json-out /tmp/surface-drift.json
           status=$?
-          cat /tmp/surface-drift.err
           if [ "$status" -ne 0 ]; then
             node - <<'NODE'
           const fs = require('node:fs');

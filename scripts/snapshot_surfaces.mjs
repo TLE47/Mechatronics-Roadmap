@@ -36,6 +36,7 @@
  *     node scripts/snapshot_surfaces.mjs --tab tab-bode --palette light   # one surface, while fixing it
  *     node scripts/snapshot_surfaces.mjs --png        # also write a PNG per surface for a human
  *     node scripts/snapshot_surfaces.mjs --json       # machine-readable, stdout only
+ *     node scripts/snapshot_surfaces.mjs --json-out drift.json   # ... written to a file instead
  *
  * Exit-code family: typed
  *     0  every surface matches the snapshot
@@ -116,6 +117,9 @@ const only = (flag) => {
 };
 const ONLY_TAB = only('--tab');
 const ONLY_PALETTE = only('--palette');
+/** The same report as `--json`, written to a file: a caller that wraps the command (the audit step) cannot
+ * separate npm's banner from stdout, and a JSON parser that silently fails would report no drift at all. */
+const JSON_OUT_FILE = only('--json-out');
 const SURFACE_IDS = ONLY_TAB ? [ONLY_TAB] : [...ALL_TABS, ...PAGES, ...EXTRAS];
 const THEMES = ONLY_PALETTE ? [ONLY_PALETTE] : PALETTES;
 const FILTERED = Boolean(ONLY_TAB || ONLY_PALETTE);
@@ -591,20 +595,18 @@ async function main() {
     checkStale: !FILTERED,
   });
 
+  const summary = {
+    viewport: VIEWPORT,
+    tolerance_px: TOLERANCE_PX,
+    surfaces: Object.keys(surfaces).length,
+    drift: rows,
+    stale,
+  };
+  if (JSON_OUT_FILE) {
+    fs.writeFileSync(JSON_OUT_FILE, `${JSON.stringify(summary, null, 2)}\n`);
+  }
   if (JSON_OUT) {
-    console.log(
-      JSON.stringify(
-        {
-          viewport: VIEWPORT,
-          tolerance_px: TOLERANCE_PX,
-          surfaces: Object.keys(surfaces).length,
-          drift: rows,
-          stale,
-        },
-        null,
-        2
-      )
-    );
+    console.log(JSON.stringify(summary, null, 2));
   } else {
     for (const row of rows) {
       if (row.part === 'surface') {
