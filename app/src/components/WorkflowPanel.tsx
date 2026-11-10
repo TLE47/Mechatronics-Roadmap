@@ -757,18 +757,19 @@ export function WorkflowPanel({
 
       {guide}
 
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[10.5px] text-faint">
+      {/* One hint per line, not a wrapped run of them: the sentences are much longer than the row is
+          wide, so packed inline their number of rows follows the measured width of each phrase, and a
+          fraction of a pixel of type difference on another machine repacks them into one line fewer
+          — which moved the whole canvas below by a line. Stacked, the hint block is four lines
+          everywhere, and the paper underneath starts at the same height on every machine. */}
+      <div className="mt-1.5 flex flex-col gap-y-0.5 font-mono text-[10.5px] text-faint">
         <span className="flex items-center gap-1">
           <MousePointerClick className="h-3 w-3" aria-hidden="true" />
           Drag a card by its header
         </span>
-        <span aria-hidden="true">·</span>
         <span>Drag a dot to another card to draw an arrow; press an arrow to name what it carries</span>
-        <span aria-hidden="true">·</span>
         <span>Drag empty canvas to select; Alt-drag or arrow keys pan; Ctrl/⌘-click adds a card</span>
-        <span aria-hidden="true">·</span>
         <span>Ctrl/⌘ C, X, V copy, cut and paste; Delete removes the selection</span>
-        <span aria-hidden="true">·</span>
         <span>Ctrl/⌘ F finds a card; right-click a card for Wrap text and the card menu</span>
       </div>
 
