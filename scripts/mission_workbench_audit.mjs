@@ -88,21 +88,19 @@ function boxedTokenStyles(elements) {
 export async function auditLessonSurface(browser, baseUrl, name) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 950 } });
   await seedTourSeen(context);
+  // The summary row's right side is the verified count. Seed the verdict before the first script
+  // reads the stores: storing it after boot needs a reload, and that reload aborts the idle engine
+  // import, which Firefox reports as a page error even though it belongs to the document being
+  // replaced. This audit gets one document, so a returning learner is the first load.
+  await context.addInitScript(() => {
+    localStorage.setItem('mechalab_pyodide_verified_v1', JSON.stringify({ 'P.1': true }));
+  });
   const page = await context.newPage();
   const pageErrors = [];
   page.on('pageerror', (error) => pageErrors.push(String(error)));
 
   try {
     await page.goto(`${baseUrl}?lesson=P.1`, { waitUntil: 'networkidle', timeout: 45000 });
-    await page.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, {
-      timeout: 20000,
-    });
-    // The summary row's right side is the verified count. Seed one verdict so both sides exist,
-    // then reload as a returning learner would.
-    await page.evaluate(() => {
-      localStorage.setItem('mechalab_pyodide_verified_v1', JSON.stringify({ 'P.1': true }));
-    });
-    await page.reload({ waitUntil: 'networkidle', timeout: 45000 });
     await page.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, {
       timeout: 20000,
     });
