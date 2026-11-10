@@ -127,7 +127,6 @@ d2 = distance_2d(0.6, 0.8)
 
 # TODO 3: Write the two self-checks this lesson teaches: one for the distance results and one for the clamp bounds.
 #         Keep the existing print pass line; use the values already computed above, not hard-coded Expected Output.
-# result, and the command's eight-bit range. Then print the pass line.
 
 print(f"Distance (3, 4): {d1:.2f} m | Distance (0.6, 0.8): {d2:.2f} m")
 print(f"Clamped(-20)={clamp_cmd(-20)} | Clamped(128)={clamp_cmd(128)} | Clamped(300)={clamp_cmd(300)}")
