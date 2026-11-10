@@ -499,8 +499,59 @@ jobs:
       - name: "Check the settle gate: a count that lands after the pane goes quiet is waited for"
         run: npm run test:settle
 
+      # TEMPORARY DIAGNOSTICS: a failed run's log is not readable without repository admin, so the
+      # checker's drift rows are republished as check annotations and a step summary. The checker is
+      # called directly because npm's script banner would land in the redirected JSON. Remove this
+      # wrapper once the drift it is describing is fixed.
       - name: "Check the surface snapshot: every tab in every palette is still shaped the same"
-        run: npm run check:snapshot
+        run: |
+          set +e
+          node scripts/snapshot_surfaces.mjs --json > /tmp/surface-drift.json 2>/tmp/surface-drift.err
+          status=$?
+          cat /tmp/surface-drift.err
+          if [ "$status" -ne 0 ]; then
+            node - <<'NODE'
+          const fs = require('node:fs');
+          const say = (line) => console.log(line);
+          let data = null;
+          try {
+            data = JSON.parse(fs.readFileSync('/tmp/surface-drift.json', 'utf8'));
+          } catch (error) {
+            say(`::error title=Surface drift unreadable::${error.message}`);
+          }
+          if (data) {
+            const rows = data.drift ?? [];
+            say(`::error title=Surface drift::${rows.length} field(s) differ across ${data.surfaces} measured surface(s)`);
+            for (const row of rows.slice(0, 60)) {
+              if (row.part === 'surface') {
+                say(`::error title=${row.surface}::${row.actual}`);
+                continue;
+              }
+              const label = `${row.surface} ${row.part}.${row.field}`;
+              const body = `expected ${JSON.stringify(row.expected)} got ${JSON.stringify(row.actual)}`;
+              say(`::error title=${label}::${body}`);
+            }
+            for (const name of data.stale ?? []) {
+              say(`::error title=${name}::in the snapshot, not produced by the sweep`);
+            }
+            if (process.env.GITHUB_STEP_SUMMARY) {
+              const lines = rows.map((row) =>
+                row.part === 'surface'
+                  ? `- \`${row.surface}\` — ${row.actual}`
+                  : `- \`${row.surface}\` \`${row.part}.${row.field}\` — expected \`${JSON.stringify(
+                      row.expected
+                    )}\`, got \`${JSON.stringify(row.actual)}\``
+              );
+              for (const name of data.stale ?? []) lines.push(`- \`${name}\` — stale in the snapshot`);
+              fs.appendFileSync(
+                process.env.GITHUB_STEP_SUMMARY,
+                `### Surface drift (${rows.length} field(s))\n\n${lines.join('\n')}\n`
+              );
+            }
+          }
+          NODE
+          fi
+          exit "$status"
 
       - name: "Check label sizes: the quiet row, the folded toolbar, and reading text at 17-18 px"
         run: npm run check:labels
