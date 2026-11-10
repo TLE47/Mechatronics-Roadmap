@@ -422,7 +422,42 @@ jobs:
         timeout-minutes: 10
 
       - name: Run the bundle partition (built bundle, control pairs, the tour, home)
-        run: npm run test:workbench -- --partition bundle
+        run: |
+          set +e
+          npm run test:workbench -- --partition bundle > /tmp/bundle-partition.log 2>&1
+          status=$?
+          cat /tmp/bundle-partition.log
+          if [ "$status" -ne 0 ]; then
+            node - <<'NODE'
+          const fs = require('node:fs');
+          const lines = fs.readFileSync('/tmp/bundle-partition.log', 'utf8').split('\n');
+          const numbered = lines.map((line, index) => `${index + 1}: ${line}`);
+          const failures = numbered
+            .filter((line) => /FAIL|Error|error|expected|not ok|timed out|timeout|Traceback|AssertionError|Unhandled|exit code|exited/.test(line))
+            .slice(-60)
+            .join('\n');
+          const tail = numbered.slice(-50).join('\n');
+          const oneLine = (value) => value.replace(/\r/g, ' ').replace(/\n/g, ' | ');
+          const annotate = (title, value) => {
+            const message = oneLine(value);
+            console.log(`::error title=${title}::${message.slice(-3800)}`);
+          };
+          const firstFailure = lines.findIndex((line) =>
+            /\[FAIL\]|AssertionError/.test(line)
+          );
+          const context = firstFailure >= 0 ? numbered.slice(firstFailure, firstFailure + 28).join('\n') : failures;
+          console.log('=== Bundle failure context ===');
+          console.log(context);
+          annotate('Bundle failure context', context);
+          annotate('Bundle failure lines', failures);
+          annotate('Bundle failure tail', tail);
+          if (process.env.GITHUB_STEP_SUMMARY) {
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Bundle failure context\n\n\`\`\`\n${context}\n\`\`\`\n\n### Bundle failure lines\n\n\`\`\`\n${failures}\n\`\`\`\n\n### Bundle failure tail\n\n\`\`\`\n${tail}\n\`\`\`\n`);
+          }
+          NODE
+          fi
+          exit "$status"
+
 
       - name: "Check the 3.0 game: prologue, Mission Control, journey map, Black Box, award ledger"
         run: npm run test:e2e:game
