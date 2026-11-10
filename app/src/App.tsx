@@ -7,7 +7,9 @@ import { CommandPalette } from './components/CommandPalette';
 import { ShortcutsModal } from './components/ShortcutsModal';
 import { lessonSearchItems } from './lessonSearch';
 import { termSearchItems } from './termSearch';
-import { ReviewModePanel } from './components/ReviewModePanel';
+const ReviewModePanel = React.lazy(() =>
+  import('./components/ReviewModePanel').then((module) => ({ default: module.ReviewModePanel }))
+);
 import { loadProseIndex, proseSearchItems, type ProsePage } from './proseSearch';
 import { SimulatorTierBanner } from './components/SimulatorTierBanner';
 import { PhoneTabPicker } from './components/PhoneTabPicker';
@@ -1209,17 +1211,19 @@ export const App: React.FC = () => {
     }
   };
 
-  const reviewOverlay = (
-    <ReviewModePanel
-      open={reviewOpen}
-      onClose={() => setReviewOpen(false)}
-      verified={verifiedLessons}
-      onOpen={(id) => {
-        setReviewOpen(false);
-        openLesson(id);
-      }}
-    />
-  );
+  const reviewOverlay = reviewOpen ? (
+    <React.Suspense fallback={null}>
+      <ReviewModePanel
+        open
+        onClose={() => setReviewOpen(false)}
+        verified={verifiedLessons}
+        onOpen={(id) => {
+          setReviewOpen(false);
+          openLesson(id);
+        }}
+      />
+    </React.Suspense>
+  ) : null;
 
   // One dialog for both whole-page and workbench layouts: Home has the same header search, and the
   // palette's own results move to the workbench when the target lives there.

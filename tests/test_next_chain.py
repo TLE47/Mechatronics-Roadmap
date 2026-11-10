@@ -81,7 +81,7 @@ def links_of(path):
 class NextChainTest(unittest.TestCase):
     def test_the_route_is_65_arm_pages_then_23_depth_pages(self):
         self.assertEqual(
-            len(arm_chain()), 66, "the arm route must be 66 pages; check route_model.STEPS"
+            len(arm_chain()), 67, "the arm route must be 67 pages; check route_model.STEPS"
         )
         self.assertEqual(
             len(depth_ids_from_doc()),
@@ -90,7 +90,7 @@ class NextChainTest(unittest.TestCase):
         )
         self.assertEqual(
             len(route_chain()),
-            89,
+            90,
             "expected 89 pages in the sequence; check the arm and depth chains for a dropped page",
         )
 

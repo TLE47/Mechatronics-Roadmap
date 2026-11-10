@@ -2,7 +2,7 @@
 """
 scripts/check_term_order.py — Automated curriculum term-order and prerequisite order verifier.
 
-Verifies two strict pedagogical invariants across all 49 beginner lessons:
+Verifies two strict pedagogical invariants across all 50 beginner lessons:
 1. Prerequisite Order: In `docs/PLAN-batch-1.md` and across all 48 beginner lessons (`Track P` -> `Stage 0` ->
    `Tracks 00–08 Tier 1`), every prerequisite lesson ID listed in a lesson's `Prerequisites` section
    (or in `docs/PLAN-batch-1.md`) must appear strictly earlier in curriculum path order.

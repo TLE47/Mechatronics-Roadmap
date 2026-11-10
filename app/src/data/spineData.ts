@@ -109,11 +109,11 @@ export const SPINE_SOURCE: SpineStepData[] = [
     modules: ["02-mechanics.T1.02a", "02-mechanics.T2.02a", "02-mechanics.T3.02a"],
     optional: [],
     hours: {
-      arm: { low: 10.5, high: 20.5 },
+      arm: { low: 12.0, high: 23.5 },
       depth2: { low: 4.5, high: 4.5 },
       depth3: { low: 5.0, high: 5.0 },
       depth: { low: 9.5, high: 9.5 },
-      total: { low: 20.0, high: 30.0 },
+      total: { low: 21.5, high: 33.0 },
     },
   },
   {

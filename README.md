@@ -88,20 +88,20 @@ Each step ends with something you can run and check yourself. Steps 3–10 each 
 | **[2 · Circuits and your first microcontroller](stage-0/S0.0-why-electricity-is-like-flow.md)** | Light an LED, read a knob, and dim it with PWM without breaking anything. | 11 | — | ≈14–33 |
 | **[3 · Make a joint move: foundations](00-foundations/00.1-effort-flow-and-first-order-lag.md)** | Model a spring, a damper, and a motor as one joint that responds to torque. | 3 | 5 + 11 | ≈21–27 |
 | **[4 · Power the joint: electronics](01-electronics-and-power/01.1-mosfet-inductor-flyback.md)** | Switch a motor both ways, budget its current, and keep the switching noise out. | 4 | 4 + 2 | ≈18–26 |
-| **[5 · Build the arm: mechanics](02-mechanics-kinematics-dynamics/02.1-1d-link-fk-and-coord-frames.md)** | Turn joint angles into a tip position, and a tip position back into joint angles. | 5 | 1 + 2 | ≈10–20 |
+| **[5 · Build the arm: mechanics](02-mechanics-kinematics-dynamics/02.1-1d-link-fk-and-coord-frames.md)** | Turn joint angles into a tip position, and a tip position back into joint angles. | 6 | 1 + 2 | ≈12–23 |
 | **[6 · Measure the joint: sensors](03-sensors-and-actuators/03.1-quadrature-and-magnetic-encoders.md)** | Read an encoder, compute a clean angle, and know how much to trust it. | 3 | 1 + 1 | ≈7–11 |
 | **[7 · Run it in real time: embedded C](04-embedded-and-realtime/04.1-c-types-and-hardware-timer-isr.md)** | Move a fixed-rate control loop off Python and onto a microcontroller. | 3 | 2 + 2 | ≈11–17 |
 | **[8 · Make it hold still: control](05-control-and-estimation/05.1-pid-virtual-spring-damper-and-anti-windup.md)** | Tune a PID that holds the arm against gravity without overshooting. | 2 | 1 + 4 | ≈6–10 |
 | **[9 · Plan motion and bring it up safely](06-robotics-and-autonomy/06.1-cubic-trajectories-and-compliant-joints.md)** | Smooth a path, identify the plant, and run a bring-up that fails safe. | 2 | 2 + 1 | ≈10–14 |
 | **[10 · Put it together: the 2-DOF arm](08-capstone-projects/08.1-tier1-2dof-compliant-arm-capstone.md)** | Run a figure-8 path on a simulated arm, then recover from four planted faults. | 1 | 1 | ≈6–9 |
-| **10 steps** | **A finished simulated arm, and the checks to prove it** | **49** | **17 + 23** | **≈121–212** |
+| **10 steps** | **A finished simulated arm, and the checks to prove it** | **50** | **17 + 23** | **≈123–215** |
 
 **Two passes, one order.** The hours column is the **arm route**. Take its arm module in Steps 3–10, then stop at the working arm. The **depth** modules are the optional second pass, with their own totals in [`docs/DEPTH.md`](docs/DEPTH.md).
 
-_Rounded to whole hours: the ten rows add to ≈121–212 for the arm. With the optional depth pass (80 h), the full course is ≈201–292 focused hours. [`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md) keeps the page-level decimals._
+_Rounded to whole hours: the ten rows add to ≈123–215 for the arm. With the optional depth pass (80 h), the full course is ≈203–295 focused hours. [`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md) keeps the page-level decimals._
 <!-- route:table:end -->
 
-<!-- route:lessons -->49<!-- /route --> lessons and <!-- sim-route:modules -->**17 arm + 23 depth modules**<!-- /sim-route --> you practise with. All 49 lessons and the 17 arm modules are the arm route; the 23 depth modules are the optional second pass; another <!-- sim-route:extensions -->**10 optional modules (47.5 focused hours)**<!-- /sim-route --> sit outside the route's two passes. Skipping the depth and optional work still leaves a finished arm.
+<!-- route:lessons -->50<!-- /route --> lessons and <!-- sim-route:modules -->**17 arm + 23 depth modules**<!-- /sim-route --> you practise with. All 50 lessons and the 17 arm modules are the arm route; the 23 depth modules are the optional second pass; another <!-- sim-route:extensions -->**10 optional modules (47.5 focused hours)**<!-- /sim-route --> sit outside the route's two passes. Skipping the depth and optional work still leaves a finished arm.
 
 The focused hours are targets, not measurements: each page's own estimate, summed by [`scripts/generate_sim_route.py`](scripts/generate_sim_route.py): <!-- sim-route:hours-basis -->the route's high end is a slow-learner figure on 50 of 67 pages and a single estimate on the other 17, so plan against it as a floor and expect it to rise as those pages are measured<!-- /sim-route -->. No outside learner has completed the route yet. [`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md) is the arm route, [`docs/DEPTH.md`](docs/DEPTH.md) is the depth pass, and `--check` fails CI if a count or hour drifts from the lessons.
 

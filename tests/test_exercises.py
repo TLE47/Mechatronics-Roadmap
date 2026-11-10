@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Automated test suite for all 49 beginner lessons:
+Automated test suite for all 50 beginner lessons:
 - Track P (`P.1` through `P.12` + `P.14` + `P.15` + `P.M`: 15 Python lessons)
 - Stage 0 (`S0.0`: 1 Python effort/flow analogy lesson; `S0.1` through `S0.6`: 6 Falstad circuit lessons; `S0.7` through `S0.M`: 4 Arduino Uno Wokwi lessons)
 - Track 00 (`00.1` through `00.3`: 3 Python physics-modeling lessons)
@@ -103,8 +103,8 @@ class TestBeginnerRoadmapExercises(unittest.TestCase):
         """Every Python lesson's Starter Code runs without error, Full Solution matches Expected Output + Instructor Behavioral Tests, and print-only spoofing fails."""
         lesson_files = get_python_lesson_files()
         self.assertEqual(
-            len(lesson_files), 37,
-            f"expected 37 Python lessons with a Starter/Full Solution pair; got "
+            len(lesson_files), 38,
+            f"expected 38 Python lessons with a Starter/Full Solution pair; got "
             f"{len(lesson_files)} - check get_python_lesson_files' glob, since a renamed "
             f"directory would silently drop lessons from every check below",
         )

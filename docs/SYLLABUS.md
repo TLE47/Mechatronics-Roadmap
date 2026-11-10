@@ -25,9 +25,9 @@
 
 ```mermaid
 flowchart LR
-    Arm["Arm layer<br/>Steps 1-10 · 121.1-212 h"] --> Built["A verified 2-DOF arm"]
+    Arm["Arm layer<br/>Steps 1-10 · 122.6-215 h"] --> Built["A verified 2-DOF arm"]
     Built --> Depth["Depth layer<br/>Steps 3-10 again · 80 h"]
-    Depth --> Full["Full course<br/>201.1-292 h"]
+    Depth --> Full["Full course<br/>202.6-295 h"]
     Outside["Outside both routes<br/>10 modules"] -.-> Full
 ```
 
@@ -37,19 +37,19 @@ flowchart LR
 | **2 · Circuits and your first microcontroller** ([Stage 0](../stage-0/README.md)) | 11 | — | — | — | **13.75-33** |
 | **3 · Make a joint move: foundations** ([Track 00](../00-foundations/README.md)) | 3 | 5 modules · 20.5-26.5 h | 10 modules · 29.5 h | 1 module · 5 h | **55-61** |
 | **4 · Power the joint: electronics** ([Track 01](../01-electronics-and-power/README.md)) | 4 | 4 modules · 18-25.5 h | 2 modules · 8.5 h | — | **26.5-34** |
-| **5 · Build the arm: mechanics** ([Track 02](../02-mechanics-kinematics-dynamics/README.md)) | 5 | 1 module · 10.5-20.5 h | 1 module · 4.5 h | 1 module · 5 h | **20-30** |
+| **5 · Build the arm: mechanics** ([Track 02](../02-mechanics-kinematics-dynamics/README.md)) | 6 | 1 module · 12-23.5 h | 1 module · 4.5 h | 1 module · 5 h | **21.5-33** |
 | **6 · Measure the joint: sensors** ([Track 03](../03-sensors-and-actuators/README.md)) | 3 | 1 module · 6.85-11.5 h | 1 module · 4.5 h | — | **11.35-16** |
 | **7 · Run it in real time: embedded C** ([Track 04](../04-embedded-and-realtime/README.md)) | 3 | 2 modules · 11-17 h | 2 modules · 8 h | — | **19-25** |
 | **8 · Make it hold still: control** ([Track 05](../05-control-and-estimation/README.md)) | 2 | 1 module · 6.5-10.5 h | 1 module · 4.5 h | 3 modules · 6 h | **17-21** |
 | **9 · Plan motion and bring it up safely** ([Track 06](../06-robotics-and-autonomy/README.md) + [Track 07](../07-systems-hil-and-production/README.md)) | 2 | 2 modules · 10-14 h | 1 module · 4.5 h | — | **14.5-18.5** |
 | **10 · Put it together: the 2-DOF arm** ([Track 08](../08-capstone-projects/README.md)) | 1 | 1 module · 6.5-9 h | — | — | **6.5-9** |
-| **Arm route, Steps 1-10** | 49 | 17 modules · 121.1-212 h | — | — | **121.1-212** |
+| **Arm route, Steps 1-10** | 50 | 17 modules · 122.6-215 h | — | — | **122.6-215** |
 | **Depth 2 pass, after Step 10** | — | — | 18 modules · 64 h | — | **64** |
 | **Depth 3 pass, after Step 10** | — | — | — | 5 modules · 16 h | **16** |
 | **Depth pass, after Step 10** | — | — | 18 modules | 5 modules | **80** |
-| **Full course** | 49 | 17 modules | 18 modules | 5 modules | **201.1-292** |
+| **Full course** | 50 | 17 modules | 18 modules | 5 modules | **202.6-295** |
 
-The arm route is **121.1-212 focused hours**, the depth pass adds **80** - of which Depth 2 practice is **64** and Depth 3 derivation is **16** - and the full course is **201.1-292**. The minimum viable finish - every Tier 1 bridge plus the capstone and the 5 lessons it opens - is **93.75-153 focused hours**; its page list is [`MINIMUM.md`](MINIMUM.md).
+The arm route is **122.6-215 focused hours**, the depth pass adds **80** - of which Depth 2 practice is **64** and Depth 3 derivation is **16** - and the full course is **202.6-295**. The minimum viable finish - every Tier 1 bridge plus the capstone and the 5 lessons it opens - is **93.75-153 focused hours**; its page list is [`MINIMUM.md`](MINIMUM.md).
 
 ## C. The teaching sequence every page follows
 
@@ -177,7 +177,7 @@ Starts at [`01.1`](../01-electronics-and-power/01.1-mosfet-inductor-flyback.md) 
 
 > Turn joint angles into a tip position, and a tip position back into joint angles.
 
-Starts at [`02.1`](../02-mechanics-kinematics-dynamics/02.1-1d-link-fk-and-coord-frames.md) · **20-30 focused hours** · 6 lessons · 1 arm module · 1 Depth 2 module · 1 Depth 3 module.
+Starts at [`02.1`](../02-mechanics-kinematics-dynamics/02.1-1d-link-fk-and-coord-frames.md) · **21.5-33 focused hours** · 6 lessons · 1 arm module · 1 Depth 2 module · 1 Depth 3 module.
 
 | Page | What it teaches | Layer | Focused hours |
 | :--- | :--- | :--- | ---: |

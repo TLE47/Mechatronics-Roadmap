@@ -17,7 +17,9 @@ import { focusLabel } from '../focusMode';
 import { motionHint, motionLabel } from '../motionPrefs';
 import { useMotion } from '../useMotion';
 import { SoundControlLazy } from './SoundControlLazy';
-import { GeneralSettingsPanel } from './GeneralSettingsPanel';
+const GeneralSettingsPanel = React.lazy(() =>
+  import('./GeneralSettingsPanel').then((module) => ({ default: module.GeneralSettingsPanel }))
+);
 import { GENERAL_SETTINGS_EVENT, readShowActionLabels } from '../generalSettings';
 import { HeaderTips } from './HeaderTips';
 // The interface's own ear: one delegated listener for every control's click, mounted once with the
@@ -195,7 +197,11 @@ export const Header: React.FC<HeaderProps> = ({
       }}
     >
       <SoundClicks />
-      <GeneralSettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      {settingsOpen && (
+        <React.Suspense fallback={null}>
+          <GeneralSettingsPanel open onClose={() => setSettingsOpen(false)} />
+        </React.Suspense>
+      )}
       <div className="mx-auto flex max-w-[var(--shell-max)] flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2.5 sm:px-6">
         {/* Zone 1: brand lockup. The mark is the arm a learner is working towards, and the lockup is
             the door to the introduction — the one page that explains the course before a learner has

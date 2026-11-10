@@ -22,14 +22,14 @@ it twice, and the hours are the pages' own metadata.
 | 2 | [`stage-0/`](../stage-0/README.md) | Circuits and your first microcontroller | 11 | — | — | — | **13.75-33** |
 | 3 | [`00-foundations/`](../00-foundations/README.md) | Make a joint move: foundations | 3 | 5 modules · 20.5-26.5 h | 10 modules · 29.5 h | 1 module · 5 h | **55-61** |
 | 4 | [`01-electronics-and-power/`](../01-electronics-and-power/README.md) | Power the joint: electronics | 4 | 4 modules · 18-25.5 h | 2 modules · 8.5 h | — | **26.5-34** |
-| 5 | [`02-mechanics-kinematics-dynamics/`](../02-mechanics-kinematics-dynamics/README.md) | Build the arm: mechanics | 5 | 1 module · 10.5-20.5 h | 1 module · 4.5 h | 1 module · 5 h | **20-30** |
+| 5 | [`02-mechanics-kinematics-dynamics/`](../02-mechanics-kinematics-dynamics/README.md) | Build the arm: mechanics | 6 | 1 module · 12-23.5 h | 1 module · 4.5 h | 1 module · 5 h | **21.5-33** |
 | 6 | [`03-sensors-and-actuators/`](../03-sensors-and-actuators/README.md) | Measure the joint: sensors | 3 | 1 module · 6.85-11.5 h | 1 module · 4.5 h | — | **11.35-16** |
 | 7 | [`04-embedded-and-realtime/`](../04-embedded-and-realtime/README.md) | Run it in real time: embedded C | 3 | 2 modules · 11-17 h | 2 modules · 8 h | — | **19-25** |
 | 8 | [`05-control-and-estimation/`](../05-control-and-estimation/README.md) | Make it hold still: control | 2 | 1 module · 6.5-10.5 h | 1 module · 4.5 h | 3 modules · 6 h | **17-21** |
 | 9 | [`06-robotics-and-autonomy/`](../06-robotics-and-autonomy/README.md) + [`07-systems-hil-and-production/`](../07-systems-hil-and-production/README.md) | Plan motion and bring it up safely | 2 | 2 modules · 10-14 h | 1 module · 4.5 h | — | **14.5-18.5** |
 | 10 | [`08-capstone-projects/`](../08-capstone-projects/README.md) | Put it together: the 2-DOF arm | 1 | 1 module · 6.5-9 h | — | — | **6.5-9** |
 
-Totals: arm **121.1-212 h**, Depth 2 **64 h**, Depth 3 **16 h**, full course **201.1-292 h**. The arm layer is every Tier 1 bridge plus the
+Totals: arm **122.6-215 h**, Depth 2 **64 h**, Depth 3 **16 h**, full course **202.6-295 h**. The arm layer is every Tier 1 bridge plus the
 Step 10 capstone; Depth 2 is the Tier 2 practice pass and Depth 3 the Tier 3 derivation
 pass, both taken after Step 10 in the same step order. `scripts/route_model.py` is the
 declaration; this page and
@@ -48,7 +48,7 @@ order the step asks for them (arm layer first, then the depth layer).
 | 2 | `S0.0`-`S0.M` (11) | — | — |
 | 3 | `00.1`-`00.3` (3) | `00-foundations.T1.00a`-`00-foundations.T1.00e` (5) | `00-foundations.T2.00a`-`00-foundations.T3.00a` (11) |
 | 4 | `01.1`-`01.4` (4) | `01-electronics.T1.01a`-`01-electronics.T1.01d` (4) | `01-electronics.T2.01a`-`01-electronics.T2.01b` (2) |
-| 5 | `02.1`-`02.5` (5) | `02-mechanics.T1.02a` | `02-mechanics.T2.02a`-`02-mechanics.T3.02a` (2) |
+| 5 | `02.1`-`02.6` (6) | `02-mechanics.T1.02a` | `02-mechanics.T2.02a`-`02-mechanics.T3.02a` (2) |
 | 6 | `03.1`-`03.3` (3) | `03-sensors.T1.03a` | `03-sensors.T2.03a` |
 | 7 | `04.1`-`04.3` (3) | `04-embedded.T1.04a`-`04-embedded.T1.04b` (2) | `04-embedded.T2.04a`-`04-embedded.T2.04b` (2) |
 | 8 | `05.1`-`05.2` (2) | `05-control.T1.05a` | `05-control.T2.05a`-`05-control.T3.05c` (4) |
@@ -67,7 +67,7 @@ badgeable, never required, and not a fourth depth.
 | :--- | ---: | :--- | :--- | :--- | :--- | :--- |
 | **Foundations, Bench Intuition & Multi-Domain Mathematics** | 3 | 8 · 20.5-26.5 h | 10 · 29.5 h | 1 · 5 h | — | Moving average to pre-warped TDF-II biquad notch |
 | **Mixed-Signal Electronics, Power Stages & High-Speed PCB Design** | 4 | 8 · 18-25.5 h | 2 · 8.5 h | — | 1 · 5 h | `DRV8833`/`INA219` breakouts to `DRV8353` + `INA240` Kelvin PCB |
-| **Precision Mechanical Design, Kinematics & Multibody Dynamics** | 5 | 6 · 10.5-20.5 h | 1 · 4.5 h | 1 · 5 h | — | 200:1 hobby servos to 8:1 backdrivable QDD actuator |
+| **Precision Mechanical Design, Kinematics & Multibody Dynamics** | 5 | 7 · 12-23.5 h | 1 · 4.5 h | 1 · 5 h | — | 200:1 hobby servos to 8:1 backdrivable QDD actuator |
 | **Sensors, Metrology, Actuators & Field-Oriented Drive Systems** | 6 | 4 · 6.85-11.5 h | 1 · 4.5 h | — | 1 · 4.5 h | Hobby ESC / voltage mode to centre-aligned ADC current FOC |
 | **Hard Real-Time Embedded Systems, Industrial Networks & FPGA Co-Design** | 7 | 5 · 11-17 h | 2 · 8 h | — | 3 · 13 h | Global structs / `mutex` to DMA ping-pong pipelines |
 | **Classical, Optimal, Nonlinear Control & State Estimation** | 8 | 3 · 6.5-10.5 h | 1 · 4.5 h | 3 · 6 h | — | Trial-and-error PID to LQR + predictive safety filter |
