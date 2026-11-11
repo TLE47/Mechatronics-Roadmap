@@ -33,3 +33,15 @@ audio encoder, so a candidate only lands here once someone cuts it to a 30–45 
 
 Flute and violin have no bundled recording yet: their chips still play the drone's instrument recipe,
 and their hints say so rather than promising a performance.
+
+## How a recording reaches the chip
+
+```mermaid
+flowchart LR
+  A[CC0 or public-domain recording] --> B[Cut a 30-45 s loop]
+  B --> C[Encode AAC .m4a]
+  C --> D[app/src/audio/assets/music/id.m4a]
+  D --> E[recorded row in MUSIC_TAPES]
+  E --> F[SoloTrack.tapeId on the instrument]
+  F --> G[Instrument chip plays the recording]
+```

@@ -470,7 +470,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     // `showMainLine` is declared below and is only called from the callback, not here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonRequest]);
-
   const currentLesson: PythonLessonItem =
     PYTHON_LESSONS.find((l) => l.id === selectedId) || PYTHON_LESSONS[0];
   // What the Write preset prints as the question: the functions the starter marks, not the lesson's

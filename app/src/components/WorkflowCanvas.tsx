@@ -131,8 +131,8 @@ export interface WorkflowCanvasProps {
   /** Open filling the viewport: the paper is no longer capped at 70% of the screen. */
   fullscreen: boolean;
   /**
-   * Drawn in the editor's pane rather than full screen: the same graph at 80%, so a starting flow
-   * fits the smaller paper instead of needing a pan on the first look.
+   * Drawn in the editor's pane rather than full screen. The pane keeps the chrome compact; the lens
+   * still opens at 100%, because Fit must mean Fit on the first press.
    */
   compact?: boolean;
   /** The plan being walked: its marks, its status and its four controls, floated over the paper. */
@@ -193,7 +193,7 @@ export function WorkflowCanvas({
   );
   const nodeIds = useMemo(() => doc.nodes.map((node) => node.id).join('\u0000'), [doc.nodes]);
 
-  const viewport = useViewport(doc.nodes, onSelect, compact ? 0.8 : 1);
+  const viewport = useViewport(doc.nodes, onSelect);
   const heights = useNodeHeights(viewport.gridRef, nodeIds);
   const drag = useNodeDrag({ toCanvas: viewport.toCanvas, onMoveMany });
 

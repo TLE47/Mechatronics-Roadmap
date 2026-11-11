@@ -40,13 +40,12 @@ export interface CanvasViewport {
 
 export function useViewport(
   nodes: WorkflowNode[],
-  onSelect: (id: string | null) => void,
-  initialScale = 1
+  onSelect: (id: string | null) => void
 ): CanvasViewport {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   /** View scale, not document data: a fit is a lens on the graph, never a coordinate written to it. */
-  const [scale, setScale] = useState(initialScale);
+  const [scale, setScale] = useState(1);
   const viewTarget = useRef<{ left: number; top: number } | null>(null);
   const [viewSeq, setViewSeq] = useState(0);
   const panStart = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
