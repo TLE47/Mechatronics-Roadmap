@@ -6182,6 +6182,63 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       await opened.close();
       console.log('  ok ⌘⇧F finds the course pages and opens the section on GitHub beside the workbench');
 
+      // The in-app half of that door: a page the runner carries opens in the workbench on the
+      // paragraph the row names, not on GitHub. `anti-windup` lives in 05.1's prose and not in the
+      // runner's own text, so the row can only have come from the index. The reader outlines the
+      // block it lands on for a moment; opening the lesson without the jump would leave every
+      // block unmarked, which is the regression this reads.
+      await searchPage.keyboard.press('Control+Shift+F');
+      await searchPage.getByTestId('command-palette').waitFor({ timeout: 10000 });
+      await searchPage.waitForFunction(
+        () => document.querySelector('[data-testid="input-palette-search"]')?.value === '',
+        undefined,
+        { timeout: 5000 }
+      );
+      await searchPage.getByTestId('input-palette-search').fill('anti-windup');
+      const inAppRow = searchPage
+        .locator('[data-testid^="palette-item-prose-"]')
+        .filter({ hasText: '05.1' })
+        .first();
+      await inAppRow.waitFor({ timeout: 15000 });
+      assert.equal(
+        await inAppRow.getAttribute('data-href'),
+        null,
+        'a page the runner carries must open in the workbench, not leave for GitHub'
+      );
+      assert.match(
+        (await inAppRow.innerText()).replace(/\s+/g, ' '),
+        /§ Idea 2: .*anti-windup/i,
+        'the row must name the section its paragraph is in'
+      );
+      await inAppRow.click();
+      await searchPage.getByTestId('command-palette').waitFor({ state: 'detached', timeout: 5000 });
+      await searchPage.waitForFunction(
+        () => {
+          if (!window.location.href.includes('lesson=05.1')) return false;
+          const layout = document.querySelector('[data-layout]')?.getAttribute('data-layout');
+          // The hit is in Learn, which Study carries and Read omits; the app retries the other
+          // preset, so either reader preset is a landing and Write/Debug is not.
+          if (layout !== 'read' && layout !== 'study') return false;
+          const article = document.querySelector('[data-testid="reader-prose"]');
+          const pane = document.querySelector('[data-testid="reader-scroll"]');
+          if (!article || !pane) return false;
+          const marked = [...article.querySelectorAll('[data-reader-block]')].find((node) => {
+            const style = getComputedStyle(node);
+            return style.outlineStyle === 'solid' && style.outlineWidth === '2px';
+          });
+          if (!marked) return false;
+          if (!(marked.textContent ?? '').replace(/\s+/g, ' ').toLowerCase().includes('anti-windup')) {
+            return false;
+          }
+          const box = marked.getBoundingClientRect();
+          const view = pane.getBoundingClientRect();
+          return box.bottom > view.top && box.top < view.bottom;
+        },
+        undefined,
+        { timeout: 20000 }
+      );
+      console.log('  ok a prose row opens its lesson in the workbench and outlines the paragraph it named');
+
       // `?` opens the sheet — and is a character inside the editor, where it has to stay text. Blur
       // first: the jump above left the caret in the editor, where `?` is Python.
       await searchPage.evaluate(() => {
