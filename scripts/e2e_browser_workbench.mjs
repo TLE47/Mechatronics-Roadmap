@@ -2056,6 +2056,29 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
             canvas.scrollTop = start;
             return null;
           }, minX);
+        // A drag from a dot must end on paper the pointer can reach in the same windowful: the
+        // canvas may not scroll between the press and the release, or the dot slides out from
+        // under the held button and no drag ever starts. This scan looks only at what is on
+        // screen now, and never scrolls the paper.
+        const bareSpotHere = (minX) =>
+          page.getByTestId('workflow-canvas').evaluate((canvas, minX) => {
+            const rect = canvas.getBoundingClientRect();
+            const top = Math.max(rect.top + 40, 40);
+            const bottom = Math.min(rect.bottom - 20, window.innerHeight - 20);
+            const left = Math.max(rect.left + 40, minX);
+            const right = Math.min(rect.right - 30, window.innerWidth - 30);
+            for (let y = top; y < bottom; y += 16) {
+              for (let x = left; x < right; x += 16) {
+                const hit = document.elementFromPoint(x, y);
+                const taken =
+                  hit?.closest(
+                    '[data-node-id],[data-lane-band],[data-testid^="workflow-edge-"],[data-testid^="workflow-group-"],button,input,textarea,select,a'
+                  ) ?? null;
+                if (!taken && hit?.closest('[data-testid="workflow-canvas"]')) return { x, y };
+              }
+            }
+            return null;
+          }, minX);
 
         // Drag empty paper to pan: a plain drag is the selection box now, so panning is the
         // explicit Alt-drag gesture (middle-drag and the arrow keys also pan). 24 cards stand taller
@@ -2796,9 +2819,15 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           const port = page.getByTestId(`workflow-node-port-right-${portIndex}`);
           await port.scrollIntoViewIfNeeded();
           await page.waitForTimeout(200);
-          const target = await emptySpot(0);
-          assert.ok(target, 'a drag needs bare paper to land on');
+          const target = await bareSpotHere(0);
+          assert.ok(target, 'a drag needs bare paper on screen beside the dot to land on');
           const box = await port.boundingBox();
+          const reachable = await port.evaluate((el) => {
+            const rect = el.getBoundingClientRect();
+            const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            return Boolean(hit && (hit === el || el.contains(hit)));
+          });
+          assert.ok(reachable, `the dot at ${portIndex} must be on top where it is pressed`);
           await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
           if (alt) await page.keyboard.down('Alt');
           await page.mouse.down();
