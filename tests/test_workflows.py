@@ -198,10 +198,39 @@ class WorkflowSpeedTests(unittest.TestCase):
             "supersedes instead of queueing beside it",
         )
         self.assertIn(
-            "cancel-in-progress: ${{ github.event_name == 'pull_request' }}",
+            "github.event_name == 'push' && format('push-{0}', github.ref)",
             block,
-            msg="expected cancellation on a pull request only: cancelling a `main` run would kill "
-            "the run that publishes the site",
+            msg="expected every push to a deployed branch to share one group: a per-commit group let "
+            "a superseded push run the whole matrix, which is how the snapshot detour and the commit "
+            "that followed it each paid for fifteen jobs nobody was waiting for",
+        )
+        self.assertIn(
+            "cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}",
+            block,
+            msg="expected a push to cancel the run it supersedes, and nothing else to: a push must "
+            "not cancel the nightly, and a dispatch must not cancel a run that publishes",
+        )
+        self.assertIn(
+            "format('{0}-{1}', github.ref, github.sha)",
+            block,
+            msg="expected the nightly and the dispatched runs to keep a group per commit, so a push "
+            "cannot cancel either of them",
+        )
+
+    def test_the_publish_keeps_its_own_serial_group(self):
+        ci = ci_text()
+        deploy = job_block(ci, "deploy-pages")
+        self.assertIn(
+            "group: pages-deploy",
+            deploy,
+            msg="expected the publish to keep its own group: it must serialise with any other deploy, "
+            "not share the run's group, so cancelling a superseded run cannot race two uploads",
+        )
+        self.assertIn(
+            "cancel-in-progress: false",
+            deploy,
+            msg="expected the publish never to be cancelled mid-upload: a superseded commit is "
+            "already refused by the head guard, and half a deployment is worse than none",
         )
 
     def test_every_browser_suite_still_runs_somewhere_exactly_once(self):

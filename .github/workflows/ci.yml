@@ -14,15 +14,17 @@ on:
     - cron: "0 4 * * *"
   workflow_dispatch:
 
-# A newer push to the same pull request cancels the run it supersedes: that run's verdict is about a
-# commit nobody is waiting for. `main` is never cancelled, because its run is the one that publishes.
-# A pull request cancels its superseded run: that verdict is about a commit nobody waits for. `main`
-# runs are per-commit instead, so a push no longer queues behind the previous pipeline; the deploy job
-# below has its own group and refuses a commit that is no longer the branch head, so overlapping runs
-# cannot publish out of order.
+# A newer push cancels the run it supersedes, on a pull request and on `main` alike: that run's
+# verdict is about a commit nobody is waiting for. `main` used to be per-commit instead, which meant
+# a push that was superseded seconds later still spent fifteen runners - the snapshot detour and the
+# commit that followed it each paid for a full matrix nobody read, and neither could publish. The
+# deploy job below keeps its own `pages-deploy` group with cancellation off and refuses a commit that
+# is no longer the branch head, so a cancelled predecessor never publishes over its successor.
+# The nightly and the dispatched runs keep a group per commit on purpose: a push must not cancel the
+# macOS sweep, and a dispatch - a snapshot re-record, say - must not cancel a run that publishes.
 concurrency:
-  group: ci-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('{0}-{1}', github.ref, github.sha) }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ci-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || (github.event_name == 'push' && format('push-{0}', github.ref)) || format('{0}-{1}', github.ref, github.sha) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
 
 permissions:
   contents: read
