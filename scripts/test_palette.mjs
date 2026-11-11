@@ -21,7 +21,9 @@
  */
 
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
+import { TERM_ENTRIES, termSearchItems } from '../app/src/termSearch.ts';
 import { PALETTE_MODE_TEXT, rankPalette, groupPalette, lessonIdOf } from '../app/src/palette.ts';
 import { PALETTE_ACTIONS, paletteCatalog, lessonPaletteItems } from '../app/src/paletteCatalog.ts';
 import { SHORTCUT_ROWS, shortcutRows } from '../app/src/shortcuts.ts';
@@ -172,5 +174,33 @@ assert(
   'typing "shortcuts" into ⌘K must offer the sheet'
 );
 console.log(`  ok the sheet lists ${SHORTCUT_ROWS.length} keys once each, and ⌘K finds it`);
+
+// --- term deep links -------------------------------------------------------------------------
+
+// A term row is not just a lesson id: it carries the words the reader must land on. Check every
+// row has a phrase, and that the phrase is really in the generated page the runner will open.
+for (const entry of TERM_ENTRIES) {
+  const row = termSearchItems(entry.term).find((item) => item.label === `Term: ${entry.term}`);
+  assert(row, `typing "${entry.term}" must find its term row`);
+  assert.equal(row.focus, entry.focus ?? entry.term, `${entry.term} must carry its focus phrase`);
+  if (entry.href) {
+    assert(row.href?.startsWith('https://github.com/'), `${entry.term} must link to its source page`);
+    continue;
+  }
+  const lesson = PYTHON_LESSONS.find((item) => item.id === entry.lessonId);
+  assert(lesson?.readerPath, `${entry.term} must name a lesson the runner carries`);
+  const payloadPath = `app/public/lesson-pages/${lesson.readerPath.replace(/\.md$/, '.json')}`;
+  const payload = readFileSync(payloadPath, 'utf8').toLowerCase();
+  assert(
+    payload.includes(row.focus.toLowerCase()),
+    `${entry.term}'s focus "${row.focus}" must occur in ${payloadPath}`
+  );
+}
+assert.equal(
+  termSearchItems('eight-bit range')[0]?.lessonId,
+  'P.6',
+  'the eight-bit term must still open P.6'
+);
+console.log(`  ok all ${TERM_ENTRIES.length} term rows carry a phrase found in their destination`);
 
 console.log('[PASS] Palette catalogue and search: complete, unique, and predictable.');

@@ -32,6 +32,8 @@ export interface PaletteItem {
   lessonId?: string;
   /** A line of the learner's own file this row opens the lesson on. Search hits only. */
   line?: number;
+  /** A phrase in the lesson text this row should scroll to. Term rows only. */
+  focus?: string;
   /** The lesson's instructor checks passed on this device; the palette draws a green Verified mark. */
   verified?: boolean;
   /**

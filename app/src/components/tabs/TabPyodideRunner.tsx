@@ -178,7 +178,7 @@ interface TabPyodideRunnerProps {
    * puts the caret there when that number still describes the text on screen, and opens the lesson
    * without a jump when the learner's draft has moved the line.
    */
-  lessonRequest?: { id: string; nonce: number; line?: number } | null;
+  lessonRequest?: { id: string; nonce: number; line?: number; focus?: string } | null;
   /**
    * Code that arrived in a share link (`#share=…`). Offered, never applied: it is someone else's
    * attempt and the learner's own draft is behind it.
@@ -456,6 +456,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     if (!lessonRequest || lessonRequest.nonce <= lastLessonRequest.current) return;
     lastLessonRequest.current = lessonRequest.nonce;
     const { id, line } = lessonRequest;
+    if (lessonRequest.focus) chooseLayout('read');
     const sameLesson = id === selectedId;
     const named = line !== undefined && Number.isFinite(line) ? line : null;
     // A lesson that opens on the learner's own draft has its own lines: the pick opens the top.
@@ -974,8 +975,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setWatchError('');
     setRevealedHints(0);
     setPinnedScope(null);
-    setStdout('');
-    setStderr('');
+    setStdout(''); setStderr('');
     setInstructorError('');
     setHarnessReport(null);
     setBehaviorCheck('untested');
@@ -1041,8 +1041,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setScratch(false);
     scratchRef.current = false;
     commitCode(readDraft(selectedId) ?? currentLesson.starterCode);
-    setStdout('');
-    setStderr('');
+    setStdout(''); setStderr('');
     setInstructorError('');
     setHarnessReport(null);
     setBehaviorCheck('untested');
@@ -2808,6 +2807,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 // set an exercise. '' means the entry has no prose page, and the pane says so.
                 path={currentLesson.readerPath}
                 tall={shownLayout === 'read'}
+                focus={lessonRequest}
                 onJumpToEditor={jumpToEditor}
                 // Hidden, not unmounted: the phone's Code surface must return to the paragraph the
                 // reader was on, and the page's own request is not free.

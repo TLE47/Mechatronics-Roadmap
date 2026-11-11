@@ -422,6 +422,8 @@ export const App: React.FC = () => {
     nonce: number;
     /** A line of the lesson's starter to put the caret on — what `⌘⇧F` names when it hits code. */
     line?: number;
+    /** A term row's words to land on in the lesson text. */
+    focus?: string;
   } | null>(null);
   // The collapsed Start here line can be dismissed for good; the roadmap tab carries the control
   // that restores it, so nothing is lost without a way back.
@@ -1102,7 +1104,7 @@ export const App: React.FC = () => {
           ? 'course pages unavailable offline'
           : null;
 
-  const openLesson = (lessonId: string, line?: number) => {
+  const openLesson = (lessonId: string, line?: number, focus?: string) => {
     setPyodideLessonId(lessonId);
     // The id alone is not enough: re-choosing the lesson a deep link already named is a no-op prop
     // change, so the runner gets a request it can count. The line rides along for a search hit; the
@@ -1111,6 +1113,7 @@ export const App: React.FC = () => {
       id: lessonId,
       nonce: (prev?.nonce ?? 0) + 1,
       ...(line && Number.isFinite(line) ? { line } : {}),
+      ...(focus ? { focus } : {}),
     }));
     setActiveTab('tab-pyodide');
     setHighlightedId(null);
@@ -1136,7 +1139,7 @@ export const App: React.FC = () => {
     const lessonId = lessonIdOf(item);
     if (lessonId) {
       openWorkbench();
-      openLesson(lessonId, item.line);
+      openLesson(lessonId, item.line, item.focus);
       return;
     }
     if (item.kind === 'tab') {

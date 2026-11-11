@@ -21,6 +21,10 @@ export interface TermEntry {
   lessonId: string;
   /** Other spellings and near-synonyms that should find this row. */
   aliases?: string;
+  /** The words the lesson actually prints; defaults to the term itself. */
+  focus?: string;
+  /** A bench lesson the runner does not carry: its source page, already on the right heading. */
+  href?: string;
 }
 
 export const TERM_ENTRIES: readonly TermEntry[] = [
@@ -35,6 +39,7 @@ export const TERM_ENTRIES: readonly TermEntry[] = [
     definition: 'A number typed straight into the code instead of computed, so it stops being true when the inputs change.',
     lessonId: 'P.6',
     aliases: 'typed-in type-in magic number',
+    focus: 'hard-coded final value',
   },
   {
     term: 'clamping',
@@ -59,18 +64,21 @@ export const TERM_ENTRIES: readonly TermEntry[] = [
     definition: 'One digital 0 or 1; N bits hold 2^N values, from 0 to 2^N - 1.',
     lessonId: 'P.8',
     aliases: 'bit byte binary register',
+    focus: 'Binary bits',
   },
   {
     term: 'duty cycle',
     definition: 'The fraction of each period a PWM pin is on; 50% is half the supply voltage on average.',
     lessonId: 'S0.9',
     aliases: 'pwm pulse width modulation analogWrite',
+    href: 'https://github.com/TLE47/Mechatronics-Roadmap/blob/main/stage-0/S0.9-pwm-duty-cycle-and-analog-write.md#idea-1-pulse-width-modulation-pwm-duty-cycle-and-average-voltage-v_textavg--textduty-times-v_textcc',
   },
   {
     term: 'encoder ticks',
     definition: 'Counts from a shaft encoder; ticks multiplied by degrees-per-tick give the joint angle.',
     lessonId: '03.1',
     aliases: 'quadrature encoder cpr counts',
+    focus: 'edge counting',
   },
   {
     term: 'integer',
@@ -104,5 +112,7 @@ export function termSearchItems(query: string): PaletteItem[] {
     detail: `${entry.definition} · explained in ${entry.lessonId}`,
     keywords: entry.aliases,
     lessonId: entry.lessonId,
+    ...(entry.href ? { href: entry.href } : {}),
+    focus: entry.focus ?? entry.term,
   }));
 }

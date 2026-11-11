@@ -114,6 +114,8 @@ interface LessonReaderProps {
   path: string;
   /** Read layout: the pane is the page, so it gets the window's height instead of a card's. */
   tall?: boolean;
+  /** A term row's phrase to land on; `nonce` makes the same term a fresh request. */
+  focus?: { id: string; nonce: number; focus?: string } | null;
   /** Controls the runner draws in the header, after Top. */
   toolbar?: React.ReactNode;
   /** The lesson chooser, when the runner has it open; between the header and the text. */
@@ -258,6 +260,7 @@ export function LessonReader({
   lessonId,
   path,
   tall = false,
+  focus = null,
   toolbar,
   panel,
   onJumpToEditor,
@@ -410,6 +413,50 @@ export function LessonReader({
     });
     return () => cancelAnimationFrame(frame);
   }, [page]);
+
+  // A term row is a request to land on the words it explains, not just on the lesson. The page has
+  // to arrive first, then the first non-heading block that carries the phrase is scrolled under the
+  // reader's eyes and outlined for a moment so the jump is visible rather than disorienting.
+  useEffect(() => {
+    if (!page || !focus?.focus || focus.id !== lessonId) return;
+    const phrase = focus.focus.trim().toLowerCase();
+    const container = scrollRef.current;
+    const article = container?.querySelector<HTMLElement>('[data-testid="reader-prose"]');
+    if (!phrase || !container || !article) return;
+    let marked: HTMLElement | null = null;
+    let timer = 0;
+    const frame = requestAnimationFrame(() => {
+      const blocks = Array.from(article.children).filter(
+        (node): node is HTMLElement => node instanceof HTMLElement
+      );
+      const matches = (node: HTMLElement) =>
+        (node.textContent ?? '').replace(/\s+/g, ' ').toLowerCase().includes(phrase);
+      const target =
+        blocks.find((node) => !/^H[1-6]$/.test(node.tagName) && matches(node)) ?? blocks.find(matches);
+      if (!target) return;
+      const top = target.getBoundingClientRect().top - container.getBoundingClientRect().top;
+      const furthest = Math.max(0, container.scrollHeight - container.clientHeight);
+      container.scrollTop = Math.min(furthest, Math.max(0, container.scrollTop + top - 8));
+      marked = target;
+      target.style.outline = '2px solid var(--accent)';
+      target.style.outlineOffset = '4px';
+      target.style.borderRadius = '6px';
+      timer = window.setTimeout(() => {
+        target.style.outline = '';
+        target.style.outlineOffset = '';
+        target.style.borderRadius = '';
+      }, 2400);
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+      if (marked) {
+        marked.style.outline = '';
+        marked.style.outlineOffset = '';
+        marked.style.borderRadius = '';
+      }
+    };
+  }, [page, focus, lessonId]);
 
   // A split-view resize reflows the page under the reader: the paragraph they were reading has to
   // stay under their eyes. The old pixel offset means nothing after a reflow (lines wrap, a reveal
