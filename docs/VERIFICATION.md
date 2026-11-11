@@ -84,17 +84,19 @@ and every suite would otherwise read it as stale), restore `~/.cache/ms-playwrig
 follows `package-lock.json`, and run side by side; and
 `deploy-pages` needs all four, so a red audit cannot publish what it graded.
 
-**The matrix is two jobs, split by cost.** `npm run test:workbench` carries eighteen browser suites;
-`e2e` alone is longer than five minutes (327s on run 40617696276, ~250s on a warm runner), so it rides
-with the light flows in `e2e-suites` and keeps all four slots, while the built-bundle sweep, the
-control pairs, the tour and home run in `bundle-suites`. The unit batch and the SSR smoke travel with
-`e2e` rather than being run twice. `--partition e2e|bundle` is the switch; a browser suite that names
-no partition fails the runner at startup, and `tests/test_workflows.py` asks every browser suite line
-for one and CI for exactly one invocation of each half. The robot's real-Pyodide examples and the
-study clock's rendered log are two of the `e2e` suites, so CI runs both on every push and pull
-request; their standalone commands below stay available for a focused run. Splitting changed no
-check: the servers, the bundle and each suite's setup are the same, so a partition passes exactly
-when the whole matrix would.
+**The matrix is three lanes, split by cost.** The dev-server sweep alone is longer than four minutes
+(327s on run 40617696276, ~250s warm), and the lane carrying it measured 6m18s on run 42962870218
+with ten light flows queueing behind it. `e2e-suites` is a two-shard matrix now: `e2e-a` runs the
+sweep, the robot, the study clock, the deferred-editor flow and the phone flow; `e2e-b` runs the
+backup, review, focus, storage, studio and reset flows. `bundle-suites` keeps the built-bundle sweep,
+the control pairs, the tour and home. The unit batch and the SSR smoke travel with `e2e-a` rather
+than being run in both shards. `--partition e2e-a|e2e-b|bundle` is the switch (`e2e` still runs both
+dev-server shards locally); a browser suite that names no partition fails the runner at startup, and
+`tests/test_workflows.py` asks every browser suite line for one and CI for exactly one invocation of
+each lane. The robot's real-Pyodide examples and the study clock's rendered log are two of the
+`e2e-a` suites, so CI runs both on every push and pull request; their standalone commands below stay
+available for a focused run. Splitting changed no check: the servers, the bundle and each suite's
+setup are the same, so a shard passes exactly when the whole matrix would.
 
 **Nothing waits for the Python sweep any more, and the gate still holds.** `build-workbench` carried
 `needs: verify-and-test` until 2026-10-28, which made a runner handoff out of a check: the build could

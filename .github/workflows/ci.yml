@@ -379,15 +379,23 @@ jobs:
         with:
           path: ./dist
 
-  # The browser matrix in two jobs, split by cost rather than by subject. `e2e` is the one suite that
-  # runs longer than five minutes on its own (327s on run 40617696276, a slow runner; ~250s warm), so it
-  # travels with the light flows and keeps four slots to itself instead of sharing a dev server with
-  # the built-bundle sweep and the control pairs. Each job still fetches the one build and starts its
-  # own server pair, so a partition passes exactly when the whole matrix would.
+  # The browser matrix in three lanes, split by cost rather than by subject. The dev-server lane was
+  # the longest job in the run that proved the cache work (6m18s, run 42962870218): its eleven suites
+  # queued three waves deep around one suite that is ~250s warm on its own. It is a two-shard matrix
+  # now - `e2e-a` keeps that suite plus four flows, `e2e-b` the remaining six, so each lane is a wave
+  # behind the sweep instead of three. `bundle` keeps the built-bundle sweep and the control pairs.
+  # Each job still fetches the one build and starts its own server pair, so a shard passes exactly
+  # when the whole matrix would.
   e2e-suites:
-    name: Browser suites — the dev-server E2E sweep (robot + clock), the smoke, and the light flows
+    name: Browser suites — the dev-server sweep and its light flows (shard ${{ matrix.shard }})
     needs: [changes, build-workbench]
     if: github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.browser == 'true'
+    strategy:
+      # One shard's red is not the other's verdict: `fail-fast` would cancel the second half and
+      # leave the run with a lane nobody graded.
+      fail-fast: false
+      matrix:
+        shard: [e2e-a, e2e-b]
     runs-on: ubuntu-latest
     env:
       # This lane launches Chromium only; installing Firefox here was a browser no suite opened.
@@ -465,7 +473,7 @@ jobs:
           MECHALAB_PREBUILT_DIST: "1"
         run: |
           set +e
-          npm run test:workbench -- --partition e2e > /tmp/e2e-partition.log 2>&1
+          npm run test:workbench -- --partition ${{ matrix.shard }} > /tmp/e2e-partition.log 2>&1
           status=$?
           cat /tmp/e2e-partition.log
           if [ "$status" -ne 0 ]; then

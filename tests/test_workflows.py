@@ -100,10 +100,10 @@ BROWSER_SUITES = (
 )
 SUITE_JOBS = ("e2e-suites", "bundle-suites", "audit-suites", "runtime-suites")
 
-# The matrix runner and its two halves. A partition CI names and the runner does not have is a job
-# that dies on its first command; a browser suite in neither partition is a gate nobody runs.
+# The matrix runner and its lanes. A partition CI names and the runner does not have is a job that
+# dies on its first command; a browser suite in no lane is a gate nobody runs.
 MATRIX_RUNNER = os.path.join(ROOT, "scripts", "test_workbench.mjs")
-PARTITIONS = ("e2e", "bundle")
+PARTITIONS = ("e2e-a", "e2e-b", "bundle")
 
 # The URL sweep, and the three lesson gates it used to re-run on every pull request. `ci.yml` owns
 # all three on the same bytes, so a pull request paid 4-8 s for a second verdict that can only
@@ -263,28 +263,43 @@ class WorkflowSpeedTests(unittest.TestCase):
                     "only the new browser build",
                 )
 
-    def test_the_matrix_runs_as_two_partitions_once_each(self):
-        """Two jobs, each naming one half of the matrix, and no half run twice.
+    def test_the_matrix_runs_each_partition_once(self):
+        """Three lanes, each named once, and the long dev-server queue split in two.
 
-        The split exists because `e2e` alone is longer than five minutes: it travels with the light
-        flows while the built-bundle sweep and the control pairs get their own four slots. A job
-        that named a partition the runner does not know would die on its first command, and a
-        suite in neither half would silently stop being a gate - so both are checked here.
+        The dev-server lane measured 6m18s on run 42962870218 while the sweep inside it is ~250s
+        warm: the other ten flows queued in waves behind it. `e2e-suites` is a two-shard matrix now
+        (`e2e-a` keeps the sweep, `e2e-b` the rest) and `bundle-suites` keeps the built-bundle
+        sweep and the control pairs. A job naming a partition the runner does not know would die on
+        its first command, and a suite in no lane would silently stop being a gate.
         """
         ci = ci_text()
+        e2e = job_block(ci, "e2e-suites")
+        matrix = re.search(r"^      matrix:\n(.*?)(?=^    \S)", e2e, re.M | re.S)
+        self.assertIsNotNone(matrix, msg="expected the dev-server lane to run as a shard matrix")
+        shards = re.search(r"shard:\s*\[([^\]]+)\]", matrix.group(1))
+        self.assertIsNotNone(shards, msg="expected the matrix to name its shards as a list")
+        self.assertEqual(
+            [shard.strip() for shard in shards.group(1).split(",")],
+            ["e2e-a", "e2e-b"],
+            msg="expected exactly the two dev-server partitions the runner defines: a name the "
+            "runner does not know fails the lane on its first command",
+        )
+        self.assertEqual(
+            e2e.count("-- --partition ${{ matrix.shard }}"),
+            1,
+            msg="expected the matrix job to hand its own shard to the runner",
+        )
+        bundle = job_block(ci, "bundle-suites")
+        self.assertEqual(
+            bundle.count("-- --partition bundle"),
+            1,
+            msg="expected exactly one job to run the `bundle` partition",
+        )
         self.assertEqual(
             ci.count("npm run test:workbench"),
             2,
-            msg="expected the matrix exactly twice, once per partition; a third call is the same "
-            "matrix again, and one call is a half that lost its job",
+            msg="expected the matrix exactly twice: the sharded dev-server job and the bundle job",
         )
-        for partition in PARTITIONS:
-            with self.subTest(partition=partition):
-                self.assertEqual(
-                    ci.count("-- --partition %s" % partition),
-                    1,
-                    msg=f"expected exactly one job to run the `{partition}` partition",
-                )
 
     def test_every_browser_suite_names_a_partition(self):
         with open(MATRIX_RUNNER, encoding="utf-8") as handle:

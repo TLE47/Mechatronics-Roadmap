@@ -75,14 +75,19 @@
  * scripts cover when run alone. Each one still passes standalone: they create their own servers when
  * no URL is given.
  *
- * `--partition e2e|bundle` runs one half of that matrix, which is how CI carries it in two jobs. The
- * split is by cost, not by subject: the dev-server sweep (`e2e`) is the one suite longer than five
- * minutes on its own, so it travels with the six light flows and keeps four dedicated slots instead
- * of sharing them with the built-bundle sweep and the control pairs. The cheap suites (the unit
- * batch and the SSR smoke) ride with `e2e`, because a second copy of them in the other job would be
- * the same checks twice on the same servers. Partitioning changes only which suites are started; the
- * servers, the bundle and each suite's own setup are identical, so a partition passes exactly when
- * the whole matrix would.
+ * `--partition <name>` runs one lane of that matrix, which is how CI carries it in three jobs: the
+ * dev-server sweep and its light flows are one queue, so they are split into `e2e-a` (the sweep plus
+ * the flows that ride its first wave) and `e2e-b` (the rest), and the built-bundle sweep and the
+ * control pairs are `bundle`. The split is by measured cost, not by subject: the sweep is one suite
+ * longer than four minutes on its own (~250 s warm, 327 s on run 40617696276), and the lane that ran
+ * it beside the other ten flows measured 6 m 18 s on run 42962870218. Two lanes of five and six
+ * flows leave each one a wave behind the sweep instead of three waves in one queue.
+ *
+ * `e2e` stays as an alias for `e2e-a` plus `e2e-b`, so a local run can still grade the dev-server
+ * half in one command. The cheap suites (the unit batch and the SSR smoke) ride with `e2e-a` only:
+ * a copy in each shard would be the same checks twice on the same servers. Partitioning changes
+ * only which suites are started; the servers, the bundle and each suite's own setup are identical,
+ * so a partition passes exactly when the whole matrix would.
  */
 
 import { spawn } from 'node:child_process';
@@ -93,8 +98,16 @@ import { runSmokeTests } from './smoke_test_workbench.mjs';
 
 const repoRoot = process.cwd();
 
-/** The halves CI runs. Every browser suite must name one; `main` fails loudly if one does not. */
-const PARTITIONS = ['e2e', 'bundle'];
+/** The lanes CI runs. Every browser suite must name one; `main` fails loudly if one does not. */
+const PARTITIONS = ['e2e-a', 'e2e-b', 'bundle'];
+
+/** `--partition` names a lane, or a whole half of the matrix (`e2e` = both dev-server shards). */
+const PARTITION_ALIASES = {
+  e2e: ['e2e-a', 'e2e-b'],
+  'e2e-a': ['e2e-a'],
+  'e2e-b': ['e2e-b'],
+  bundle: ['bundle'],
+};
 
 /** Stream a child's output line by line, prefixed, so two suites' logs stay readable. */
 function pipe(stream, prefix) {
@@ -172,11 +185,15 @@ async function main() {
   // default - the same reason a browser suite with no partition fails below.
   const flag = process.argv.indexOf('--partition');
   const partition = flag === -1 ? null : process.argv[flag + 1];
-  if (flag !== -1 && !PARTITIONS.includes(partition)) {
+  if (flag !== -1 && !(partition in PARTITION_ALIASES)) {
     throw new Error(
-      `--partition needs one of ${PARTITIONS.join(', ')}, got ${JSON.stringify(partition)}`
+      `--partition needs one of ${Object.keys(PARTITION_ALIASES).join(', ')}, got ${JSON.stringify(
+        partition
+      )}`
     );
   }
+  // The partitions this run starts; `null` is the whole matrix.
+  const wanted = partition === null ? null : PARTITION_ALIASES[partition];
 
   // Build when the bundle is missing *or older than its sources*: the Pages sweep grades `dist/`, and
   // a stale one there grades code the source no longer has (the weight gate's Run 166 hole).
@@ -255,24 +272,24 @@ async function main() {
     { label: 'weight', script: 'test_weight_budget.mjs' },
     { label: 'audio', script: 'test_audio.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'fonts', script: 'test_fonts.mjs' },
-    { label: 'e2e', script: 'e2e_browser_workbench.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'e2e', browser: true },
-    { label: 'robot2e', script: 'test_robot_browser.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
-    { label: 'clock2e', script: 'e2e_study_clock.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
+    { label: 'e2e', script: 'e2e_browser_workbench.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'e2e-a', browser: true },
+    { label: 'robot2e', script: 'test_robot_browser.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-a', browser: true },
+    { label: 'clock2e', script: 'e2e_study_clock.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-a', browser: true },
     { label: 'pages', script: 'e2e_pages_bundle.mjs', env: { PAGES_SERVER_URL: pagesUrl }, partition: 'bundle', browser: true },
     { label: 'pairs', script: 'e2e_same_task_pairs.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'bundle', browser: true },
     { label: 'firstrun-e2e', script: 'e2e_tour.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'bundle', browser: true },
     { label: 'tour', script: 'e2e_tour_presets.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'bundle', browser: true },
-    { label: 'defer', script: 'e2e_editor_deferred.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
-    { label: 'bak2e', script: 'e2e_backup.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
-    { label: 'rev2e', script: 'e2e_review.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
+    { label: 'defer', script: 'e2e_editor_deferred.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-a', browser: true },
+    { label: 'bak2e', script: 'e2e_backup.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-b', browser: true },
+    { label: 'rev2e', script: 'e2e_review.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-b', browser: true },
     { label: 'trail2e', script: 'e2e_trail.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'bundle', browser: true },
     { label: 'predict2e', script: 'e2e_predict_gate.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'bundle', browser: true },
-    { label: 'focus2e', script: 'e2e_focus.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
-    { label: 'store2e', script: 'e2e_storage.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
-    { label: 'studio2e', script: 'e2e_studio.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
+    { label: 'focus2e', script: 'e2e_focus.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-b', browser: true },
+    { label: 'store2e', script: 'e2e_storage.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-b', browser: true },
+    { label: 'studio2e', script: 'e2e_studio.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-b', browser: true },
     { label: 'home2e', script: 'e2e_home.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'bundle', browser: true },
-    { label: 'mobile2e', script: 'e2e_mobile.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
-    { label: 'reset2e', script: 'e2e_reset.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e', browser: true },
+    { label: 'mobile2e', script: 'e2e_mobile.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-a', browser: true },
+    { label: 'reset2e', script: 'e2e_reset.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-b', browser: true },
   ];
   const unassigned = SUITES.filter((suite) => suite.browser && !PARTITIONS.includes(suite.partition));
   if (unassigned.length) {
@@ -300,12 +317,12 @@ async function main() {
     // The browser suites are started as thunks so a wave decides when a Chromium is opened at all;
     // the rest are cheap and go in one batch.
     const start = (suite) => () => runSuite(suite.label, suite.script, suite.env ?? {});
-    // The unit batch and the SSR smoke ride with `e2e`: they are seconds, they share this job's dev
-    // server, and a copy in the other job would be the same checks twice on the same servers.
-    const withCheap = partition === null || partition === 'e2e';
+    // The unit batch and the SSR smoke ride with `e2e-a`: they are seconds, they share this job's dev
+    // server, and a copy in every shard would be the same checks twice on the same servers.
+    const withCheap = wanted === null || wanted.includes('e2e-a');
     const unit = withCheap ? SUITES.filter((suite) => !suite.browser).map(start) : [];
     const browser = SUITES.filter(
-      (suite) => suite.browser && (partition === null || suite.partition === partition)
+      (suite) => suite.browser && (wanted === null || wanted.includes(suite.partition))
     ).map(start);
     const smoke = withCheap ? [runSmoke(viteServer)] : [];
     results = [
