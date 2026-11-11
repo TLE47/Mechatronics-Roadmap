@@ -2025,7 +2025,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         // the search walks the visible part of the canvas at every scroll offset until it finds a
         // point the pointer can hit as bare paper. It stays clear of both scrollbars, because a
         // right-click on a scrollbar reads as a canvas hit but opens no menu.
-        const emptySpot = (minX) =>
+        const scanPaper = (minX) =>
           page.getByTestId('workflow-canvas').evaluate((canvas, minX) => {
             const scan = () => {
               const rect = canvas.getBoundingClientRect();
@@ -2056,6 +2056,18 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
             canvas.scrollTop = start;
             return null;
           }, minX);
+        // A diagram can be drawn wide enough that no windowful has a bare point left. Fit is the
+        // app's own way to make room, so a search that finds nothing asks for it once and looks
+        // again rather than reporting the paper missing.
+        const emptySpot = async (minX) => {
+          const found = await scanPaper(minX);
+          if (found) return found;
+          const fit = page.getByTestId('workflow-fit');
+          if ((await fit.count()) === 0) return null;
+          await fit.click();
+          await page.waitForTimeout(350);
+          return scanPaper(minX);
+        };
         // The margins are a placement rule as much as a hit test: a press within a card's width of
         // the canvas's edge makes the app clamp the card it adds inward, so a point nearer the
         // border than that would fail the "lands under the pointer" check it is chosen for.
@@ -2607,14 +2619,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
               dialogs,
             };
           });
-        let firstAt = await emptySpot(0);
-        if (!firstAt) {
-          // A diagram can be drawn wide enough to fill every windowful of paper. Fit is the app's
-          // own way to make room, so ask it for some and look again before calling it a failure.
-          await page.getByTestId('workflow-fit').click();
-          await page.waitForTimeout(350);
-          firstAt = await emptySpot(0);
-        }
+        const firstAt = await emptySpot(0);
         assert.ok(
           firstAt,
           `the canvas must have bare paper to right-click (${JSON.stringify(await paperReport())})`
