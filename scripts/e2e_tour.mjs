@@ -334,7 +334,8 @@ async function main() {
 
     /* 12 — replay from the palette, in the same context that just finished */
     await check('the palette replays the tour after it was finished', async () => {
-      await page.locator('[data-testid="btn-open-palette"]').click();
+      // The header's Search button opens text search now; ⌘K is the palette that carries commands.
+      await page.keyboard.press('Control+k');
       const search = page.locator('[role="dialog"] input');
       await search.waitFor({ timeout: 15000 });
       await search.fill('replay the first-lesson tour');

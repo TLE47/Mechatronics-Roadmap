@@ -5943,7 +5943,8 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       `choosing a lesson from the palette must put it in the address bar; url was ${formattingPage.url()}`
     );
 
-    await formattingPage.getByTestId('btn-open-palette').click();
+    // ⌘K, not the header's Search door: this list is the command catalogue.
+    await formattingPage.keyboard.press('Control+k');
     await formattingPage.getByTestId('command-palette').waitFor({ timeout: 5000 });
     await formattingPage.getByTestId('input-palette-search').fill('zzzzqqq');
     await formattingPage.getByTestId('palette-empty').waitFor({ timeout: 5000 });
