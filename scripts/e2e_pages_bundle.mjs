@@ -37,9 +37,12 @@
  *    logged and asserted.
  *
  * Chromium always runs and carries the exhaustive pass; Firefox runs when its browser build is present
- * (`npx playwright-core install firefox`, which CI does) and grades the sample. A browser selected on
- * its own (`PLAYWRIGHT_BROWSERS=chromium|firefox`) still gets the exhaustive pass. A browser that is not
- * installed is reported as SKIP with the reason, never as a pass.
+ * (`npx playwright-core install firefox`, which CI does) and grades the sample. `PLAYWRIGHT_BROWSERS`
+ * is the selector this script reads - `both` (the default) runs Chromium and Firefox, a single name
+ * (`chromium` or `firefox`) runs that browser alone and still gets the exhaustive pass. It is not the
+ * install list: the workflow keeps that in `PW_BROWSERS`, because passing `chromium firefox` here
+ * selects no browser at all. A browser that is not installed is reported as SKIP with the reason,
+ * never as a pass.
  *
  * Usage:  PAGES_BASE=/Mechatronics-Roadmap/ node scripts/e2e_pages_bundle.mjs
  */
