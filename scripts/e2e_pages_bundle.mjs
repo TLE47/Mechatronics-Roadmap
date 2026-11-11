@@ -206,6 +206,15 @@ function rampReferences() {
 export function ensureBuilt() {
   const { built, stale } = staleBuild(repoRoot);
   if (built && !stale.length) return;
+  // A CI lane is handed the build job's artifact and stamps it; a rebuild there would grade bytes
+  // this commit did not produce, and would make the handed-over bundle pointless. Fail instead.
+  if (process.env.MECHALAB_PREBUILT_DIST === '1') {
+    assert.fail(
+      built
+        ? `dist/ is older than ${stale.length} source file(s) in a lane handed a prebuilt bundle: ${nameStale(stale)}`
+        : 'dist/index.html is missing in a lane handed a prebuilt bundle'
+    );
+  }
   console.log(
     built
       ? `[build] dist/ is older than ${stale.length} source file(s) - rebuilding before grading it`
@@ -1160,9 +1169,18 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       await wide.getByTestId('btn-motion-toggle').click();
       // The header is sticky and the switch is pressed from wherever the pane is scrolled, so the
       // press can leave the figure it restarts outside the view — and an off-screen figure is
-      // stopped on purpose. Put the figure back in front of the reader, then wait for the mark, then
-      // give it a frame: the mark has to survive, not flash on its way to being stopped again.
-      await wide.getByTestId('diagram-trajectory').scrollIntoViewIfNeeded();
+      // stopped on purpose. Centre it in the pane rather than leaving it at the nearest edge:
+      // `scrollIntoViewIfNeeded` may align it with the bottom, which the observer's -12% root margin
+      // counts as gone, so Firefox restarted the figure and stopped it again a frame later. Then
+      // wait for the mark, then give it a frame: it has to survive, not flash on its way to being
+      // stopped again.
+      await wide.evaluate(() => {
+        const pane = document.querySelector('[data-testid="reader-scroll"]');
+        const figure = pane.querySelector('[data-testid="diagram-trajectory"]');
+        const box = figure.getBoundingClientRect();
+        const top = box.top - pane.getBoundingClientRect().top + pane.scrollTop;
+        pane.scrollTop = top - (pane.clientHeight - box.height) / 2;
+      });
       await wide.waitForFunction(
         () => document.querySelectorAll('[data-testid="lesson-reader"] [data-figure-motion]').length >= 1,
         undefined,
