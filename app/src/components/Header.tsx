@@ -485,6 +485,7 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setSettingsOpen(true)}
               data-testid="btn-general-settings"
               aria-haspopup="dialog"
+              aria-expanded={settingsOpen}
               aria-label="General settings"
               data-tip="Settings — action-tray labels and the full sound controls"
               className="btn"

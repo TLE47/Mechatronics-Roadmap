@@ -258,7 +258,6 @@ async function main() {
       // A click is heard, and it is the delegated listener that hears it: the classifier decides the
       // role, so the settings button (an `aria-expanded` latch) must arrive as a toggle.
       await page.getByTestId('btn-general-settings').click();
-      await closeSound(page);
       // The speaker's detail button opens the one settings dialog; the sound card lives inside it.
       await page.getByTestId('general-settings').waitFor({ timeout: 5000 });
       await page.getByTestId('sound-settings').waitFor({ timeout: 5000 });
@@ -479,7 +478,7 @@ async function main() {
       await seedTourSeen(context);
       const page = await context.newPage();
       await openWorkbench(page, baseUrl);
-      await page.getByTestId('btn-sound-settings').click();
+      await page.getByTestId('btn-general-settings').click();
       await page.getByTestId('general-settings').waitFor({ timeout: 5000 });
       const panel = page.getByTestId('sound-settings');
       await panel.waitFor({ timeout: 5000 });
@@ -539,7 +538,7 @@ async function main() {
       assert.equal(await panel.count(), 0, 'Escape did not close the phone settings');
       assert.equal(
         await page.evaluate(() => document.activeElement?.getAttribute('data-testid')),
-        'btn-sound-settings',
+        'btn-general-settings',
         'focus must go back to the button that opened the panel'
       );
       console.log('  ok the settings dialog opens on a phone, fits 360×640, and keeps the sound rows usable');
