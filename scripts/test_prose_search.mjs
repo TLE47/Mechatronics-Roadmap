@@ -46,6 +46,9 @@ import {
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const raw = JSON.parse(fs.readFileSync(path.join(ROOT, 'app', 'public', 'prose-index.json'), 'utf8'));
 const pages = readProseIndex(raw);
+const lessonByPath = new Map(
+  PYTHON_LESSONS.filter((lesson) => lesson.readerPath).map((lesson) => [lesson.readerPath, lesson.id])
+);
 
 let passed = 0;
 let failed = 0;
@@ -181,6 +184,26 @@ check('a heading hit outranks a body hit, and the row opens that section', () =>
   );
   assert.deepEqual(prosePageUrl('a/b.md'), 'https://github.com/TLE47/Mechatronics-Roadmap/blob/main/a/b.md');
   assert.equal(prosePageUrl('a/b.md', ''), prosePageUrl('a/b.md'), 'no anchor, no lone `#`');
+});
+
+check('a page the runner carries opens there at the matched paragraph', () => {
+  const rows = proseSearchItems('anti-windup', pages, { lessonByPath });
+  const row = rows.find((entry) => entry.lessonId);
+  assert.ok(row, '05.1 is carried by the runner, so a hit must open in the workbench');
+  assert.equal(row.lessonId, '05.1');
+  assert.equal(row.focus, 'anti-windup');
+  assert.match(row.focusAnchor, /anti-windup/, 'the row must carry the section the phrase is in');
+  assert.equal(row.href, undefined, 'an in-app page must not also leave for GitHub');
+  assert.ok(!row.detail.includes('GitHub'), `in-app detail must not promise a new tab: ${row.detail}`);
+  const lesson = PYTHON_LESSONS.find((entry) => entry.id === row.lessonId);
+  assert(lesson, 'the mapped runner entry must still exist');
+  const payload = fs
+    .readFileSync(
+      path.join(ROOT, 'app', 'public', 'lesson-pages', lesson.readerPath.replace(/\.md$/, '.json')),
+      'utf8'
+    )
+    .toLowerCase();
+  assert.ok(payload.includes(row.focus), `${row.lessonId} must print “${row.focus}”`);
 });
 
 check('something under two characters is not a search', () => {

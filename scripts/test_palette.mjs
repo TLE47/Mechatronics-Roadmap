@@ -57,6 +57,11 @@ for (const item of catalog) {
   }
 }
 assert.equal(lessonIdOf({ id: 'tab-tab-pyodide', kind: 'tab', label: 'x' }), null, 'a tab is not a lesson');
+assert.equal(
+  lessonIdOf({ id: 'prose-05.1-0', kind: 'page', label: 'x', lessonId: '05.1' }),
+  '05.1',
+  'a prose page carried by the runner must resolve to its lesson'
+);
 console.log('  ok every id carries the prefix its selector switches on');
 
 // --- ranking --------------------------------------------------------------------------------

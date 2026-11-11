@@ -32,15 +32,21 @@ export interface PaletteItem {
   lessonId?: string;
   /** A line of the learner's own file this row opens the lesson on. Search hits only. */
   line?: number;
-  /** A phrase in the lesson text this row should scroll to. Term rows only. */
+  /** A phrase in the lesson text this row should scroll to. Term and prose rows. */
   focus?: string;
+  /**
+   * The section a prose row's phrase belongs to, so the reader does not land on the same word in an
+   * earlier section. Absent on term rows, whose phrase is looked for across the whole page.
+   */
+  focusAnchor?: string;
   /** The lesson's instructor checks passed on this device; the palette draws a green Verified mark. */
   verified?: boolean;
   /**
    * A page outside the workbench this row opens in a new tab.
    *
-   * A prose hit (`app/src/proseSearch.ts`) is a reading page on GitHub, because Pages serves only
-   * the built app; there is nothing in this window to switch to, so the row says where it goes.
+   * A reading page the runner has no copy of (`app/src/proseSearch.ts`) opens on GitHub, because
+   * Pages serves only the built app; there is nothing in this window to switch to, so the row says
+   * where it goes. A page the runner does carry opens in the reader instead and has no `href`.
    */
   href?: string;
 }
@@ -190,9 +196,9 @@ export function groupPalette(matches: PaletteMatch[]): { kind: PaletteKind; matc
   })).filter((group) => group.matches.length > 0);
 }
 
-/** The lesson id behind a lesson item, or null for tabs and commands. */
+/** The in-app lesson or reading page a row opens, or null for tabs, commands and source links. */
 export function lessonIdOf(item: PaletteItem): string | null {
-  if (item.kind !== 'lesson') return null;
   if (item.lessonId) return item.lessonId;
+  if (item.kind !== 'lesson') return null;
   return item.id.startsWith('lesson-') ? item.id.slice('lesson-'.length) : null;
 }

@@ -15,10 +15,12 @@
  *
  * Two rules shape the answer:
  *
- * - **A row names its section, and opens the page there.** The index is one entry per heading, so a
- *   hit is not "somewhere in 05.1": it is `§ Integrator anti-windup`, and the anchor is GitHub's
+ * - **A row names its section, and lands on the paragraph.** The index is one entry per heading, so
+ *   a hit is not "somewhere in 05.1": it is `§ Integrator anti-windup`, and the anchor is GitHub's
  *   own slug for that heading (`githubSlug` below, including the `-1` suffix a repeated heading
- *   gets). A page with no heading to jump to opens at the top.
+ *   gets). Where the runner carries the page, the row opens it there and the reader finds the
+ *   matched words inside that section. The pages the runner does not carry still open on GitHub at
+ *   the heading.
  * - **Headings outrank bodies.** A learner typing `encoder` wants the page whose section is called
  *   that before a paragraph that happens to say the word, so a heading hit scores above every body
  *   hit and only the best two sections of one page are kept: a page that says a word forty times is
@@ -201,21 +203,49 @@ export function searchProse(
   return hits.slice(0, limit);
 }
 
+export interface ProseRowOptions {
+  /**
+   * The runner lesson id for each reading page, keyed by the path both sides share. A page absent
+   * from the map has no in-app reading copy and keeps its GitHub link.
+   */
+  lessonByPath?: ReadonlyMap<string, string>;
+}
+
 /**
  * The same hits as palette rows.
  *
  * The detail names the section first: two hits on one page are told apart by where they are, not by
- * which page they are on, and the trailing `GitHub ↗` says the row leaves the workbench (the runner
- * stays open underneath, in its own tab).
+ * which page they are on. A page the runner carries opens in the workbench at the matched paragraph;
+ * the row keeps the typed phrase and section anchor for that jump. A page it does not carry keeps
+ * the trailing `GitHub ↗`, which says the row leaves the workbench.
  */
-export function proseSearchItems(query: string, pages: ProsePage[]): PaletteItem[] {
-  return searchProse(query, pages).map((hit) => ({
-    id: `prose-${hit.pageId}-${hit.section}`,
-    kind: 'page',
-    label: `${hit.pageId} · ${hit.title}`,
-    detail: `${hit.heading ? `§ ${hit.heading} — ` : ''}${hit.snippet} · GitHub ↗`,
-    href: prosePageUrl(hit.path, hit.anchor),
-  }));
+export function proseSearchItems(
+  query: string,
+  pages: ProsePage[],
+  options: ProseRowOptions = {}
+): PaletteItem[] {
+  return searchProse(query, pages).map((hit) => {
+    const lessonId = options.lessonByPath?.get(hit.path);
+    const detail = `${hit.heading ? `§ ${hit.heading} — ` : ''}${hit.snippet}`;
+    if (lessonId) {
+      return {
+        id: `prose-${hit.pageId}-${hit.section}`,
+        kind: 'page',
+        label: `${hit.pageId} · ${hit.title}`,
+        detail,
+        lessonId,
+        focus: query.trim(),
+        ...(hit.anchor ? { focusAnchor: hit.anchor } : {}),
+      };
+    }
+    return {
+      id: `prose-${hit.pageId}-${hit.section}`,
+      kind: 'page',
+      label: `${hit.pageId} · ${hit.title}`,
+      detail: `${detail} · GitHub ↗`,
+      href: prosePageUrl(hit.path, hit.anchor),
+    };
+  });
 }
 
 /**

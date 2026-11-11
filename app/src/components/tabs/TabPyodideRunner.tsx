@@ -178,7 +178,7 @@ interface TabPyodideRunnerProps {
    * puts the caret there when that number still describes the text on screen, and opens the lesson
    * without a jump when the learner's draft has moved the line.
    */
-  lessonRequest?: { id: string; nonce: number; line?: number; focus?: string } | null;
+  lessonRequest?: { id: string; nonce: number; line?: number; focus?: string; focusAnchor?: string } | null;
   /**
    * Code that arrived in a share link (`#share=…`). Offered, never applied: it is someone else's
    * attempt and the learner's own draft is behind it.
@@ -1444,7 +1444,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
-
 
   // A slider drag is a parameter change, so the answer is a fresh run - but one run per drag, not
   // one per pixel. The timer is cleared on unmount so a removed tab cannot run in the background.
@@ -2808,6 +2807,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 path={currentLesson.readerPath}
                 tall={shownLayout === 'read'}
                 focus={lessonRequest}
+                onFocusMiss={() => chooseLayout(layout === 'study' ? 'read' : 'study')}
                 onJumpToEditor={jumpToEditor}
                 // Hidden, not unmounted: the phone's Code surface must return to the paragraph the
                 // reader was on, and the page's own request is not free.

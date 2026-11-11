@@ -215,7 +215,7 @@ IndexedDB and comes back after a reload.
 | :--- | :--- |
 | `⌘K` / `Ctrl+K` | The command palette: every lesson, exercise, tab and command in one searchable list. `↑`/`↓` move, `↵` opens, `esc` closes. It works while the editor has focus, which is when it is needed. |
 | `⌘P` / `Ctrl+P` | The same palette over **lessons only** — quick-open for a learner who already knows what they are opening. The browser's Print gives way; the cheat sheet's own **Print** button still prints. |
-| `⌘⇧F` / `Ctrl+⇧+F` | Search **inside** the course: the lessons' starter code, hint ladder, instructor's checks and expected output, and the 66 reading pages' prose. A starter hit opens the lesson with the caret on that line; a hint, check or output hit says which panel it is in; a course-page hit names its section and opens that page **on GitHub at the heading**, in a new tab, with the workbench still behind it. |
+| `⌘⇧F` / `Ctrl+⇧+F` | Search **inside** the course: the lessons' starter code, hint ladder, instructor's checks and expected output, and the 66 reading pages' prose. A starter hit opens the lesson with the caret on that line; a hint, check or output hit says which panel it is in; a course-page hit names its section and opens that page in the reader at the matched paragraph, or in a new tab on GitHub when the runner has no copy of it. |
 | `?` | The sheet of every key, from [`src/shortcuts.ts`](src/shortcuts.ts) — one table, so the list cannot go stale. It must be typed outside an editor or a field, where `?` is a character. `⌘K` finds it too, by typing `shortcuts`. |
 | `⌘↵` / `Ctrl+↵` | Run the open lesson. |
 | `Escape`, then `i` | With **Vim keys** on (**More ⋯ → Vim keys**), normal mode reads `dd`, `u`, `/` and the rest; the badge beside the line count names the mode that is reading them. Off by default, and remembered once turned on ([`src/vimMode.ts`](src/vimMode.ts)). |
@@ -254,7 +254,8 @@ lists and safety notes; not code fences, tables, or the callouts and ladder-gate
 into every page) into [`app/public/prose-index.json`](public/prose-index.json), and the app fetches that
 file **the first time `⌘⇧F` is opened** — 207 kB gzipped, never on a normal visit, cached by the service
 worker after the first search. A heading hit outranks a body hit, two sections per page and fifteen rows
-overall; the row names its section and opens the page on GitHub at that heading's anchor
+overall. A hit on a page the runner carries opens it in the reader, scrolled to its section and
+paragraph; the twelve pages it does not carry open on GitHub at that heading's anchor
 (`github-slugger`'s rule, including the `-1` a repeated heading gets), so a hit on a 300-line module is
 a place to read, not just a page. `prose_gzip` is its own line in
 [`docs/weight-budget.json`](../docs/weight-budget.json): it is neither JavaScript nor part of a first

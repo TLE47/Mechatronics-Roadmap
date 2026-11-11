@@ -422,8 +422,10 @@ export const App: React.FC = () => {
     nonce: number;
     /** A line of the lesson's starter to put the caret on — what `⌘⇧F` names when it hits code. */
     line?: number;
-    /** A term row's words to land on in the lesson text. */
+    /** A term or prose row's words to land on in the lesson text. */
     focus?: string;
+    /** The section a prose row's words belong to, when they came from a page hit. */
+    focusAnchor?: string;
   } | null>(null);
   // The collapsed Start here line can be dismissed for good; the roadmap tab carries the control
   // that restores it, so nothing is lost without a way back.
@@ -1080,6 +1082,13 @@ export const App: React.FC = () => {
     });
   }, [isPaletteOpen, paletteMode]);
 
+  // A reading page's path is the same on both sides, so the runner's entry is found without
+  // keeping a second list of page ids. The 12 pages the runner does not carry keep their source link.
+  const proseLessonByPath = React.useMemo(
+    () => new Map(PYTHON_LESSONS.map((lesson) => [lesson.readerPath, lesson.id])),
+    []
+  );
+
   /** `⌘⇧F`'s list: the lesson text first, then the reading pages, each group in its own band. */
   const paletteSearch = React.useCallback(
     (query: string) => {
@@ -1087,10 +1096,12 @@ export const App: React.FC = () => {
       // explains it, before a list of every line that happens to contain the words.
       const terms = termSearchItems(query);
       const rows = lessonSearchItems(query, PYTHON_LESSONS, verifiedLessons);
-      const pages = prosePages ? proseSearchItems(query, prosePages) : [];
+      const pages = prosePages
+        ? proseSearchItems(query, prosePages, { lessonByPath: proseLessonByPath })
+        : [];
       return [...terms, ...rows, ...pages];
     },
-    [prosePages, verifiedLessons]
+    [prosePages, proseLessonByPath, verifiedLessons]
   );
 
   // What the footer says while the file is in flight, or when it could not be had at all. Silent
@@ -1104,16 +1115,17 @@ export const App: React.FC = () => {
           ? 'course pages unavailable offline'
           : null;
 
-  const openLesson = (lessonId: string, line?: number, focus?: string) => {
+  const openLesson = (lessonId: string, line?: number, focus?: string, focusAnchor?: string) => {
     setPyodideLessonId(lessonId);
     // The id alone is not enough: re-choosing the lesson a deep link already named is a no-op prop
     // change, so the runner gets a request it can count. The line rides along for a search hit; the
-    // runner decides whether it is still a line of the text on screen.
+    // phrase and section ride along for a term or prose hit.
     setLessonRequest((prev) => ({
       id: lessonId,
       nonce: (prev?.nonce ?? 0) + 1,
       ...(line && Number.isFinite(line) ? { line } : {}),
       ...(focus ? { focus } : {}),
+      ...(focusAnchor ? { focusAnchor } : {}),
     }));
     setActiveTab('tab-pyodide');
     setHighlightedId(null);
@@ -1126,7 +1138,7 @@ export const App: React.FC = () => {
   };
 
   const handlePaletteSelect = (item: PaletteItem) => {
-    // A course-page hit is a reading page on GitHub, not a panel in this window: open it beside the
+    // A reading page the runner does not carry is not a panel in this window: open it beside the
     // workbench instead of navigating away from the learner's draft.
     if (item.href) {
       window.open(item.href, '_blank', 'noopener,noreferrer');
@@ -1139,7 +1151,7 @@ export const App: React.FC = () => {
     const lessonId = lessonIdOf(item);
     if (lessonId) {
       openWorkbench();
-      openLesson(lessonId, item.line, item.focus);
+      openLesson(lessonId, item.line, item.focus, item.focusAnchor);
       return;
     }
     if (item.kind === 'tab') {

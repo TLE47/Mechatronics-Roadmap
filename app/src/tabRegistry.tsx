@@ -77,7 +77,7 @@ export interface WorkbenchTabContext {
   formatRequest: number;
   tourRequest: number;
   reviewRequest: number;
-  lessonRequest: { id: string; nonce: number; line?: number } | null;
+  lessonRequest: { id: string; nonce: number; line?: number; focus?: string; focusAnchor?: string } | null;
   sharedAttempt: SharedAttempt | null;
   dismissShared: () => void;
   trySnippet: SharedAttempt | null;

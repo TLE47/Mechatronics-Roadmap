@@ -114,8 +114,8 @@ interface LessonReaderProps {
   path: string;
   /** Read layout: the pane is the page, so it gets the window's height instead of a card's. */
   tall?: boolean;
-  /** A term row's phrase to land on; `nonce` makes the same term a fresh request. */
-  focus?: { id: string; nonce: number; focus?: string } | null;
+  /** A term or prose row's phrase to land on; `nonce` makes the same phrase a fresh request. */
+  focus?: { id: string; nonce: number; focus?: string; focusAnchor?: string } | null;
   /** Controls the runner draws in the header, after Top. */
   toolbar?: React.ReactNode;
   /** The lesson chooser, when the runner has it open; between the header and the text. */
@@ -125,6 +125,11 @@ interface LessonReaderProps {
    * preset), which is what keeps the jump link from promising a door that is not there.
    */
   onJumpToEditor?: () => void;
+  /**
+   * The phrase was not in this scope: ask once for the other reader preset. Read drops the whole
+   * `## Learn` section and Study drops the rest, so a deep link has to be allowed to try both.
+   */
+  onFocusMiss?: () => void;
   /**
    * The phone's Code surface: the pane keeps its scroll and its mounted page, and is only taken off
    * screen. Unmounting it would fetch the page again and lose the reading position the reader has
@@ -264,6 +269,7 @@ export function LessonReader({
   toolbar,
   panel,
   onJumpToEditor,
+  onFocusMiss,
   hidden = false,
   scope = 'full',
   continueAction = null,
@@ -301,6 +307,10 @@ export function LessonReader({
   /** Where the caret goes when the next render commits, because a controlled box forgets it. */
   const stickyCaretRef = useRef<{ start: number; end: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const onFocusMissRef = useRef(onFocusMiss);
+  onFocusMissRef.current = onFocusMiss;
+  /** The request that already asked for the other scope, so a miss cannot bounce forever. */
+  const focusMissed = useRef<number | null>(null);
   // The saver belongs to the lesson it was made for: a pending write must not land on the next one.
   const saverRef = useRef<{ lessonId: string; saver: ReadingSaver } | null>(null);
   const saverFor = (id: string): ReadingSaver => {
@@ -414,11 +424,12 @@ export function LessonReader({
     return () => cancelAnimationFrame(frame);
   }, [page]);
 
-  // A term row is a request to land on the words it explains, not just on the lesson. The page has
-  // to arrive first, then the first non-heading block that carries the phrase is scrolled under the
-  // reader's eyes and outlined for a moment so the jump is visible rather than disorienting.
+  // A term or prose row is a request to land on the words it names, not just on the lesson. A prose
+  // row also carries its section anchor: the same word can appear earlier, so its paragraph is
+  // looked for only between that heading and the next one. The page has to arrive first, then the
+  // block is scrolled under the reader's eyes and outlined for a moment so the jump is visible.
   useEffect(() => {
-    if (!page || !focus?.focus || focus.id !== lessonId) return;
+    if (!page || page.path !== path || !focus?.focus || focus.id !== lessonId) return;
     const phrase = focus.focus.trim().toLowerCase();
     const container = scrollRef.current;
     const article = container?.querySelector<HTMLElement>('[data-testid="reader-prose"]');
@@ -426,14 +437,63 @@ export function LessonReader({
     let marked: HTMLElement | null = null;
     let timer = 0;
     const frame = requestAnimationFrame(() => {
-      const blocks = Array.from(article.children).filter(
-        (node): node is HTMLElement => node instanceof HTMLElement
-      );
       const matches = (node: HTMLElement) =>
         (node.textContent ?? '').replace(/\s+/g, ' ').toLowerCase().includes(phrase);
-      const target =
-        blocks.find((node) => !/^H[1-6]$/.test(node.tagName) && matches(node)) ?? blocks.find(matches);
+      let target: HTMLElement | undefined;
+      const anchor = focus.focusAnchor?.trim();
+      if (anchor) {
+        // Module pages number their headings (`1. Why it matters`) while the prose index strips the
+        // number, so an anchor can be the numbered form of the exact one the index knows.
+        const heading =
+          article.querySelector<HTMLElement>(`[data-reader-anchor="${CSS.escape(anchor)}"]`) ??
+          Array.from(article.querySelectorAll<HTMLElement>('[data-reader-anchor]')).find((node) => {
+            const value = node.dataset.readerAnchor ?? '';
+            return /^\d+-/.test(value) && value.slice(value.indexOf('-') + 1) === anchor;
+          });
+        if (heading) {
+          if (matches(heading)) target = heading;
+          else {
+            const headings = Array.from(article.querySelectorAll<HTMLElement>('h2, h3, h4'));
+            const next = headings[headings.indexOf(heading) + 1];
+            target = Array.from(
+              article.querySelectorAll<HTMLElement>('[data-reader-block]')
+            ).find((node) => {
+              if (/^H[1-6]$/.test(node.tagName)) return false;
+              if (!(heading.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+                return false;
+              }
+              if (next && !(node.compareDocumentPosition(next) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+                return false;
+              }
+              return matches(node);
+            });
+          }
+        }
+      }
+      if (!target) {
+        // An anchored hit has to be in this scope. If its heading is absent (Read drops Learn),
+        // ask once for the other preset and try again. On the retry the phrase fallback still
+        // reaches a section whose heading is inside a collapsed reveal.
+        if (anchor && focusMissed.current !== focus.nonce) {
+          focusMissed.current = focus.nonce;
+          onFocusMissRef.current?.();
+          return;
+        }
+        const blocks = Array.from(article.children).filter(
+          (node): node is HTMLElement => node instanceof HTMLElement
+        );
+        target =
+          blocks.find((node) => !/^H[1-6]$/.test(node.tagName) && matches(node)) ??
+          blocks.find(matches);
+        if (!target && focusMissed.current !== focus.nonce) {
+          focusMissed.current = focus.nonce;
+          onFocusMissRef.current?.();
+          return;
+        }
+      }
       if (!target) return;
+      const reveal = target.closest('details');
+      if (reveal && !reveal.open) reveal.open = true;
       const top = target.getBoundingClientRect().top - container.getBoundingClientRect().top;
       const furthest = Math.max(0, container.scrollHeight - container.clientHeight);
       container.scrollTop = Math.min(furthest, Math.max(0, container.scrollTop + top - 8));
@@ -456,7 +516,7 @@ export function LessonReader({
         marked.style.borderRadius = '';
       }
     };
-  }, [page, focus, lessonId]);
+  }, [page, path, focus, lessonId, scope]);
 
   // A split-view resize reflows the page under the reader: the paragraph they were reading has to
   // stay under their eyes. The old pixel offset means nothing after a reflow (lines wrap, a reveal
