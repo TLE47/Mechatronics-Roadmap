@@ -158,6 +158,8 @@ const signatureField = StateField.define<Tooltip | null>({
  */
 class SignatureWatcher {
   private timer: ReturnType<typeof setTimeout> | null = null;
+  private retryTimer: ReturnType<typeof setTimeout> | null = null;
+  private retries = 0;
 
   constructor(
     private readonly view: EditorView,
@@ -166,12 +168,36 @@ class SignatureWatcher {
 
   update(update: ViewUpdate): void {
     if (!update.docChanged && !update.selectionSet) return;
+    this.retries = 0;
+    this.clearRetry();
     this.schedule();
   }
 
   destroy(): void {
     if (this.timer) clearTimeout(this.timer);
     this.timer = null;
+    this.clearRetry();
+  }
+
+  private clearRetry(): void {
+    if (this.retryTimer) clearTimeout(this.retryTimer);
+    this.retryTimer = null;
+  }
+
+  /**
+   * The analyzer is installed after the editor, so a learner who types `print(` in the first second
+   * would otherwise get nothing until their next key: the card is only asked for on a document or
+   * selection change. Ask again while the session is missing, briefly and only while this watcher
+   * lives; once Jedi answers, the same cursor gets its card without another keystroke.
+   */
+  private retryLater(): void {
+    if (this.retries >= 24) return;
+    this.retries += 1;
+    this.clearRetry();
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null;
+      void this.ask();
+    }, 250);
   }
 
   private schedule(): void {
@@ -183,6 +209,7 @@ class SignatureWatcher {
   }
 
   private hide(): void {
+    this.clearRetry();
     if (this.view.state.field(signatureField)) {
       this.view.dispatch({ effects: setSignatureTip.of(null) });
     }
@@ -208,7 +235,8 @@ class SignatureWatcher {
       return;
     }
     const session = this.getSession();
-    if (!session) return this.hide();
+    if (!session) return this.retryLater();
+    this.retries = 0;
     const reply = await session.signature({ code: doc, line: context.line, column: context.column });
     if (this.view.state.doc.toString() !== doc) return; // the learner kept typing
     if (!reply.ok || !reply.value) return this.hide();
