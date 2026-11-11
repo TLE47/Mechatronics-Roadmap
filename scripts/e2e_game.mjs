@@ -193,6 +193,19 @@ async function main() {
       await context.close();
     }
 
+    /** Sound's one press now lives in General settings beside the rest of its controls: the header
+     *  keeps the door and the dialog carries the master switch. Every use closes the dialog again,
+     *  so no later step runs behind a modal. */
+    const openSound = async (page) => {
+      await page.getByTestId('btn-general-settings').click();
+      await page.getByTestId('sound-settings').waitFor({ state: 'visible', timeout: 5000 });
+      return page.getByTestId('btn-sound-master');
+    };
+    const closeSound = async (page) => {
+      await page.keyboard.press('Escape');
+      await page.getByTestId('sound-settings').waitFor({ state: 'hidden', timeout: 5000 });
+    };
+
     // ---- 3. A real pass files an award, once ----
     {
       const context = await browser.newContext();
@@ -210,17 +223,20 @@ async function main() {
       await waitForEditor(page, undefined, 20000);
 
       // ---- 3a. Sound is off until asked for, and one press turns it on ----
+      const masterBeforePress = await openSound(page);
       assert.equal(
-        await page.getByTestId('btn-sound-toggle').getAttribute('aria-pressed'),
+        await masterBeforePress.getAttribute('aria-pressed'),
         'false',
         'a fresh profile must show sound off'
       );
+      await closeSound(page);
       assert.equal(
         await page.evaluate(() => window.__mechalabAudio?.().running ?? false),
         false,
         'nothing may hold a running AudioContext before the learner asks for sound'
       );
-      await page.getByTestId('btn-sound-toggle').click();
+      await (await openSound(page)).click();
+      await closeSound(page);
       await page.waitForFunction(() => window.__mechalabAudio?.().running === true, undefined, {
         timeout: 15000,
       });
@@ -424,21 +440,24 @@ async function main() {
         false,
         'a reload must not autoplay the room tone'
       );
-      await page.getByTestId('btn-sound-toggle').click(); // on -> off
-      await page.getByTestId('btn-sound-toggle').click(); // off -> on, a real gesture
+      await (await openSound(page)).click();
+      await closeSound(page); // on -> off
+      await (await openSound(page)).click();
+      await closeSound(page); // off -> on, a real gesture
       await page.waitForFunction(() => window.__mechalabAudio?.().running === true, undefined, {
         timeout: 15000,
       });
       console.log('  ok a remembered "on" waits for a gesture instead of autoplaying');
 
       // And one press the other way: a muted engine schedules nothing, whatever the learner touches.
-      await page.getByTestId('btn-sound-toggle').click(); // on -> off
+      await (await openSound(page)).click();
+      await closeSound(page); // on -> off
       await page.waitForFunction(() => window.__mechalabAudio?.().muted === true, undefined, {
         timeout: 5000,
       });
       const beforeMute = await page.evaluate(() => window.__mechalabAudio?.().uiCues.length);
-      await page.getByTestId('btn-sound-settings').click();
-      await page.keyboard.press('Escape');
+      await page.getByTestId('btn-general-settings').click();
+      await closeSound(page);
       const afterMute = await page.evaluate(() => window.__mechalabAudio?.().uiCues.length);
       assert.equal(afterMute, beforeMute, 'a muted interface must be silent, not merely quiet');
       console.log('  ok one press mutes, and a muted interface schedules nothing');

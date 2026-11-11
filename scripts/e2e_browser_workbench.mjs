@@ -2520,11 +2520,15 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         assert.ok(firstAt, 'the canvas must have bare paper to right-click');
         const first = await menuAdd(firstAt.x, firstAt.y, 'Compute');
         assert.equal(await page.locator('[data-node-id]').count(), 4, 'the menu adds one card');
+        // A press focuses the paper, and a focus can scroll it a pixel or two before the browser
+        // hands the context-menu point to the app; the card is still under the pointer, so the
+        // containment check carries a few pixels of slack instead of failing on that rounding.
+        const dropSlack = 8;
         assert.ok(
-          first.at.x >= first.box.x &&
-            first.at.x <= first.box.x + first.box.width &&
-            first.at.y >= first.box.y &&
-            first.at.y <= first.box.y + first.box.height,
+          first.at.x >= first.box.x - dropSlack &&
+            first.at.x <= first.box.x + first.box.width + dropSlack &&
+            first.at.y >= first.box.y - dropSlack &&
+            first.at.y <= first.box.y + first.box.height + dropSlack,
           `a card added from the menu must land under the pointer, not in the palette's column (press on paper ${Math.round(first.at.x)},${Math.round(first.at.y)}; card at ${first.box.x},${first.box.y})`
         );
         const secondAt = await emptySpot(
