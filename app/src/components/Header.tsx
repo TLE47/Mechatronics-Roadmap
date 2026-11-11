@@ -251,24 +251,22 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 Workbench
               </span>
+              {/* The stamp rides on the version's own line, and only from `2xl` up. The header is a
+                  wrapping row: at 1440 the 138 px this needs pushed the action tray onto a second row
+                  (+47 px), which a sticky header then paints over the pane below it; a line of its own
+                  cost 11 px and did the same to a click. From `2xl` the tray has already wrapped for
+                  its own reasons, so the stamp costs nothing there. Everywhere narrower the badge
+                  stays the release version alone and the footer still names the build. */}
               <span
                 data-testid="brand-version"
                 className="font-mono text-[9.5px] leading-none sm:mt-0.5 sm:block"
                 style={{ color: 'var(--faint)' }}
               >
                 {APP_VERSION}
-              </span>
-              {/* The stamp gets a line of its own instead of the version's: the header is a wrapping
-                  row, and the 138 px of extra brand width an inline stamp needed pushed the action
-                  tray onto a second row (+47 px) on a 1440 laptop. A line is a third row in the brand
-                  block, so it is `sm` and up only — the phone header's 112 px ceiling is measured
-                  with two, and the badge there stays the release version alone. */}
-              <span
-                data-testid="brand-build"
-                className="hidden font-mono text-[9.5px] leading-none sm:mt-0.5 sm:block"
-                style={{ color: 'var(--faint)' }}
-              >
-                {APP_BUILD}
+                <span data-testid="brand-build" className="hidden 2xl:inline">
+                  {' \u00b7 '}
+                  {APP_BUILD}
+                </span>
               </span>
             </span>
           </span>

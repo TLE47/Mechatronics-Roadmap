@@ -32,10 +32,11 @@ Debug layout, Trace and Breakpoints; they used to sit among the formatting choic
 header badge and the footer now print the commit the bundle was cut from and the day it was built
 (`ffa4069 · 2026-11-11`) beside `v3.3.0`. `vite.config.ts` reads git once and injects `__APP_BUILD__`
 next to `__APP_VERSION__`; a checkout without git says *local build* instead of inventing a commit.
-The stamp takes its own line under the version from `sm` up, because on the version's line its
-138 px of extra width wrapped the action tray onto a second header row (+47 px at 1440); below `sm`
-the badge stays the release version alone, which is what the phone's two-row ceiling was measured
-with.
+The stamp rides beside the version from `2xl` up. At 1440 its 138 px width wrapped the header's action
+tray onto a second row (+47 px) and a line of its own cost 11 px; either way the now-taller sticky
+header painted over the pane below it, which the workflow suite caught as an intercepted click. From
+`2xl` the tray has already wrapped, so the stamp is free there; below that the badge stays the release
+version alone and the footer always carries the build.
 
 **Sound.** The speaker's detail door no longer opens a second popover: it opens **General settings**,
 where the whole sound surface already lived. One dialog, one mount of the store, and the speaker keeps
