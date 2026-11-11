@@ -400,6 +400,8 @@ jobs:
     env:
       # This lane launches Chromium only; installing Firefox here was a browser no suite opened.
       PW_BROWSERS: chromium
+      # TEMPORARY: the split's seam is chosen from these timings; removed with them.
+      E2E_TIMINGS: "1"
 
     steps:
       - name: Checkout repository

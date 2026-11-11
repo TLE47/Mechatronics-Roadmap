@@ -172,6 +172,20 @@ async function readTally(page) {
  */
 export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) {
   const repoRoot = process.cwd();
+  // TEMPORARY instrumentation (E2E_TIMINGS=1): the per-step time table the partition seam is being
+  // chosen from. It prints the elapsed seconds at every `ok` line as check annotations, because a
+  // failed job's log is not readable without repository admin. Removed once the seam is fixed.
+  const timing = process.env.E2E_TIMINGS === '1' ? { t0: Date.now(), rows: [] } : null;
+  if (timing) {
+    const passThrough = console.log;
+    console.log = (...args) => {
+      const text = args.map(String).join(' ');
+      if (/^\s+ok /.test(text) || text.startsWith('[PASS] Real-browser')) {
+        timing.rows.push(`${((Date.now() - timing.t0) / 1000).toFixed(1)}s ${text.trim().slice(0, 90)}`);
+      }
+      passThrough(...args);
+    };
+  }
   const own = externalBaseUrl ? null : await startDevServer(repoRoot);
   const baseUrl = externalBaseUrl
     ? externalBaseUrl.replace(/\/*$/, '/')
@@ -6579,6 +6593,13 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, Home’s Continue & hand-off, draft restore & step count, run history restore, Diff panel lines & earned solution reference, share link copied, opened and loaded, a pair session over hand-carried codes, two editors co-editing one document with undo staying each person’s own, inline values drawn then cleared by an edit, F12/Ctrl-click go-to-definition across the lesson’s files, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, ⌘P quick-open over lessons only, ⌘⇧F inside-the-lesson search landing on the hit’s line and finding a course page at its section, the ? key sheet open and inert in the editor, a sheet row rebound to a new key, a clash refused and a reset, study note & pinned highlight across a reload, gutter breakpoints clicked, keyed and remembered, a dot following an edit, the Board card showing its own sketch, a prediction graded against the verified serial, the sketch copied for the simulator, the simulator tab rail folded to icons, remembered and expanded again, the Study preset stacking the code above the lesson text, and the lesson list folded to a strip and back).'
     );
   } finally {
+    if (timing) {
+      const chunks = [];
+      for (let i = 0; i < timing.rows.length; i += 14) chunks.push(timing.rows.slice(i, i + 14));
+      chunks.slice(0, 8).forEach((chunk, index) => {
+        console.log(`::notice title=E2E timings ${index + 1}/${chunks.length}::${chunk.join(' || ')}`);
+      });
+    }
     await browser.close();
     if (own) await own.viteServer.close();
   }
