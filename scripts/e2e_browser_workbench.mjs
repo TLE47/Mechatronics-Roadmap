@@ -2000,6 +2000,10 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         // A point on bare paper, found rather than guessed: the seeded diagram's cards move as the
         // suite edits it, so a fixed coordinate can land on one and start a card drag instead of a
         // pan (or open that card's menu rather than the paper's).
+        // A menu or dialog left open from an earlier step makes the page behind it inert, and an
+        // inert canvas has no hit-testable paper at any scroll offset: close it before searching.
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(120);
         // The seeded diagram is taller than the pane, so one windowful of paper is not guaranteed:
         // the search walks the visible part of the canvas at every scroll offset until it finds a
         // point the pointer can hit as bare paper. It stays clear of both scrollbars, because a
