@@ -257,7 +257,8 @@ async function main() {
 
       // A click is heard, and it is the delegated listener that hears it: the classifier decides the
       // role, so the settings button (an `aria-expanded` latch) must arrive as a toggle.
-      await page.getByTestId('btn-sound-settings').click();
+      await page.getByTestId('btn-general-settings').click();
+      await closeSound(page);
       // The speaker's detail button opens the one settings dialog; the sound card lives inside it.
       await page.getByTestId('general-settings').waitFor({ timeout: 5000 });
       await page.getByTestId('sound-settings').waitFor({ timeout: 5000 });
