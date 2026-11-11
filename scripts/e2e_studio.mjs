@@ -193,9 +193,10 @@ async function main() {
         localStorage.setItem('mechalab_pyodide_verified_v1', JSON.stringify({ 'P.1': true }))
       );
       await palettePage.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-      const paletteDoor = palettePage.getByTestId('btn-open-palette');
-      await paletteDoor.waitFor({ timeout: 30000 });
-      await paletteDoor.click();
+      // The header's Search door opens text search now; ⌘K is the palette that carries commands,
+      // and it is the one that marks a passed lesson.
+      await palettePage.getByTestId('btn-open-palette').waitFor({ timeout: 30000 });
+      await palettePage.keyboard.press('Control+k');
       await palettePage.getByTestId('command-palette').waitFor({ timeout: 30000 });
       await palettePage.getByTestId('input-palette-search').fill('P.1');
       const verifiedMark = palettePage.getByTestId('palette-verified-lesson-P.1');
