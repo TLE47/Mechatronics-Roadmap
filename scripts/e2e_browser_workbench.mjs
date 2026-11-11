@@ -2004,6 +2004,23 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         // inert canvas has no hit-testable paper at any scroll offset: close it before searching.
         await page.keyboard.press('Escape');
         await page.waitForTimeout(120);
+        // A dialog opening or closing leaves the page behind it inert; wait until the canvas is
+        // hit-testable again instead of racing that frame.
+        await page
+          .waitForFunction(
+            () => {
+              const canvas = document.querySelector('[data-testid="workflow-canvas"]');
+              if (!canvas) return false;
+              const rect = canvas.getBoundingClientRect();
+              const x = Math.min(Math.max(rect.left + rect.width / 2, 0), window.innerWidth - 1);
+              const y = Math.min(Math.max(rect.top + rect.height / 2, 0), window.innerHeight - 1);
+              const hit = document.elementFromPoint(x, y);
+              return Boolean(hit && hit.closest('[data-testid="workflow-canvas"]'));
+            },
+            undefined,
+            { timeout: 10000 }
+          )
+          .catch(() => {});
         // The seeded diagram is taller than the pane, so one windowful of paper is not guaranteed:
         // the search walks the visible part of the canvas at every scroll offset until it finds a
         // point the pointer can hit as bare paper. It stays clear of both scrollbars, because a
