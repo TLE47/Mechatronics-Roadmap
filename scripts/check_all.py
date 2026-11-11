@@ -16,8 +16,14 @@ The two sweeps are marked heavy - the 48-package exercise run (~10 s) and the 21
 discovery (~32 s) - and are skipped unless `--full` is given, because the gates in front of them are
 what catch drift.
 
+The gates are read-only: every generator runs its `--check` mode, which compares what is on disk
+with what it would write. The two heavy sweeps are also order-dependent (the exercise report feeds
+the coverage gate and the unittest discovery), so they run in list order after the parallel pass
+rather than beside it.
+
 Usage
     python3 scripts/check_all.py             # the drift gates + the label audit (~50 s)
+    python3 scripts/check_all.py --ci        # the text gates alone, in parallel (no browser, no sweeps)
     python3 scripts/check_all.py --full      # + exercise sweep and unittest discovery
     python3 scripts/check_all.py --list      # names, commands, which are heavy
     python3 scripts/check_all.py --only legacy_crosswalk --only term_order
@@ -32,6 +38,7 @@ Exit-code family: typed
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import json
 import os
 import subprocess
@@ -110,6 +117,8 @@ GATES: list[tuple[str, list[str], bool]] = [
     # Heavy from here down: same commands CI runs, including the report handoff that lets the
     # unittest discovery reuse the sweep instead of running all 48 packages a second time.
     ("exercise_sweep", ["scripts/run_exercise.py", "--verbose"], True),
+    # Reads the report the sweep above writes, so it is ordered after it (`ORDERED_AFTER`), but it
+    # is cheap enough to stay in the local default pass; CI runs it in the exercise job.
     ("exercise_coverage", ["scripts/check_exercise_coverage.py"], False),
     ("tests", ["-m", "unittest", "discover", "-s", "tests"], True),
 ]
@@ -123,6 +132,11 @@ AUDIT_GATES: list[tuple[str, list[str], bool]] = [
 ]
 
 REPORT_PATH = os.path.join(os.environ.get("RUNNER_TEMP", "/tmp"), "run-exercise.json")
+
+# Gates that read the exercise report, so they must run after the parallel pass and never beside it.
+# They are not heavy enough to hide behind `--full`, and CI runs them in the exercises job, so
+# `--ci` leaves them out.
+ORDERED_AFTER = {"exercise_coverage"}
 
 
 def command_for(argv: list[str]) -> list[str]:
@@ -142,9 +156,15 @@ def environment_for(argv: list[str]) -> dict[str, str]:
     return env
 
 
-def selected(only: list[str], full: bool) -> list[tuple[str, list[str], bool]]:
-    every = [*GATES, *AUDIT_GATES]
-    gates = every if full else [gate for gate in every if not gate[2]]
+def selected(only: list[str], full: bool, ci: bool = False) -> list[tuple[str, list[str], bool]]:
+    """The gates to run: CI's text pass, or the local pass with its audit and heavy rows."""
+    if ci:
+        every = [gate for gate in GATES if not gate[2] and gate[0] not in ORDERED_AFTER]
+    elif full:
+        every = [*GATES, *AUDIT_GATES]
+    else:
+        every = [gate for gate in [*GATES, *AUDIT_GATES] if not gate[2]]
+    gates = every
     if not only:
         return gates
     wanted = {name.lower() for name in only}
@@ -190,6 +210,11 @@ def main() -> int:
         epilog="Exit-code family: typed (0 pass, 1 a gate failed, 2 bad interpreter or arguments).",
     )
     parser.add_argument("--full", action="store_true", help="also run the exercise sweep and the unittest discovery")
+    parser.add_argument(
+        "--ci",
+        action="store_true",
+        help="run the text gates only: no audit gates and no order-dependent sweeps (the CI text job)",
+    )
     parser.add_argument("--only", action="append", metavar="GATE", help="run only this gate (repeatable)")
     parser.add_argument("--list", action="store_true", help="list the gates and exit")
     parser.add_argument("--json", action="store_true", help="print a JSON report on stdout")
@@ -210,7 +235,7 @@ def main() -> int:
             print(f"{'heavy' if heavy else '     '}  {name:<22} {shown}")
         return 0
 
-    gates = selected(args.only, args.full)
+    gates = selected(args.only, args.full, args.ci)
     if not gates:
         print("no gates selected", file=sys.stderr)
         return 2
@@ -218,7 +243,20 @@ def main() -> int:
     if not args.json and not args.quiet:
         print(f"running {len(gates)} gate(s) from .github/workflows/ci.yml\n")
     started = time.time()
-    records = [run(gate, args.quiet or args.json) for gate in gates]
+    quiet = args.quiet or args.json
+    # The text gates do not read each other's output and their `--check` modes write nothing, so
+    # they run together: one push shows every red instead of one per rerun. The heavy sweeps are
+    # ordered (the exercise report is the input to the two that follow), so they run after, alone.
+    records = []
+    ordered = {gate[0] for gate in gates if gate[2]} | ORDERED_AFTER
+    fast = [gate for gate in gates if gate[0] not in ordered]
+    slow = [gate for gate in gates if gate[0] in ordered]
+    if fast:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=min(8, len(fast))) as pool:
+            for record in pool.map(lambda gate: run(gate, quiet), fast):
+                records.append(record)
+    for gate in slow:
+        records.append(run(gate, quiet))
     failed = [record for record in records if not record["ok"]]
     total = time.time() - started
 

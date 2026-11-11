@@ -112,10 +112,10 @@ LINK_CHECK = os.path.join(ROOT, ".github", "workflows", "link-check.yml")
 WEEKLY_ONLY = "github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'"
 SWEEP = "scripts/check_links.py --write-report"
 SHARED_GATES = (
-    ("python3 scripts/lint_lessons.py", "python3 scripts/lint_lessons.py"),
+    ("python3 scripts/lint_lessons.py", "scripts/lint_lessons.py"),
     (
         "python3 scripts/generate_python_lessons_data.py --check",
-        "python3 scripts/generate_python_lessons_data.py --check",
+        "scripts/generate_python_lessons_data.py",
     ),
     # Not spelled out in `ci.yml`: the discovery run collects every `test*.py` under `tests/`, and
     # this file is one of them. Naming the collection command keeps the check honest about *how*
@@ -214,9 +214,9 @@ class WorkflowSpeedTests(unittest.TestCase):
             with self.subTest(job=name):
                 self.assertTrue(block, msg=f"expected a `{name}` job in ci.yml; check the job was not renamed or folded back into the build")
                 self.assertIn(
-                    "needs: build-workbench",
+                    "build-workbench",
                     block,
-                    msg="expected the suite job to wait for the one build, not to race it",
+                    msg="expected the suite job to name the build job in its `needs:`, not to race it",
                 )
                 self.assertIn(
                     "actions/download-artifact@v4",
@@ -250,10 +250,17 @@ class WorkflowSpeedTests(unittest.TestCase):
                     msg="expected the cache to name the directory the browsers land in",
                 )
                 self.assertIn(
-                    "hashFiles('package-lock.json')",
+                    "steps.pw.outputs.v",
                     block,
-                    msg="expected the cache key to follow the lockfile: an upgraded Playwright must "
-                    "not be handed the old browser build",
+                    msg="expected the cache key to follow the Playwright version, not the lockfile "
+                    "hash: any dependency bump used to discard every browser and miss in all four "
+                    "lanes at once",
+                )
+                self.assertIn(
+                    "restore-keys:",
+                    block,
+                    msg="expected a fallback key: a version change should reuse the cache and fetch "
+                    "only the new browser build",
                 )
 
     def test_the_matrix_runs_as_two_partitions_once_each(self):
@@ -319,13 +326,16 @@ class WorkflowSpeedTests(unittest.TestCase):
         active = "\n".join(
             line for line in build.splitlines() if not line.strip().startswith("#")
         )
-        self.assertNotIn(
-            "needs:",
-            active,
-            msg="expected the build to start on its own: a `needs:` here is a runner handoff, and "
-            "`needs: verify-and-test` kept the browser lane parked behind the Python sweep for "
-            "2m40s",
-        )
+        # `needs: changes` is only the path filter; no Python job may gate the build again.
+        for gating in ("verify-and-test", "python-text", "python-exercises", "python-labs"):
+            with self.subTest(job=gating):
+                self.assertNotIn(
+                    gating,
+                    active,
+                    msg="expected the build to start on its own: naming a Python job in `needs:` is "
+                    "a runner handoff, and `needs: verify-and-test` kept the browser lane parked "
+                    "behind the Python sweep for 2m40s",
+                )
 
     def test_the_browser_libraries_ride_a_cache_miss_only(self):
         """The one measured outlier: `--with-deps` on a cache miss took 17m31s.
@@ -351,19 +361,20 @@ class WorkflowSpeedTests(unittest.TestCase):
                     "on the one miss measured",
                 )
                 self.assertIn(
-                    "npx playwright-core install chromium firefox",
+                    "npx playwright-core install ${{ env.PLAYWRIGHT_BROWSERS }}",
                     block,
-                    msg="expected the browsers installed on their own",
+                    msg="expected the lane to install only the browsers it launches",
                 )
                 self.assertIn(
-                    "npx playwright-core install-deps chromium firefox",
+                    "npx playwright-core install-deps ${{ env.PLAYWRIGHT_BROWSERS }}",
                     block,
                     msg="expected the OS libraries installed on their own, so they can be conditional",
                 )
-                self.assertIn(
-                    "if: steps.playwright-cache.outputs.cache-hit != 'true'",
-                    block,
-                    msg="expected the library step to run only on a cache miss",
+                self.assertEqual(
+                    block.count("if: steps.playwright-cache.outputs.cache-hit != 'true'"),
+                    2,
+                    msg="expected both the browser install and the library step to run only on a "
+                    "cache miss: a hit used to pay 7-23s per lane for a no-op",
                 )
                 self.assertEqual(
                     block.count("timeout-minutes:"),
@@ -386,11 +397,16 @@ class WorkflowSpeedTests(unittest.TestCase):
         ci = ci_text()
         for command, owner in SHARED_GATES:
             with self.subTest(command=command):
+                # The Python gates live in one table now (`check_all.py`), and CI runs that table;
+                # the discovery run still names its own command.
+                corpus = ci if owner.startswith("python3 ") else open(
+                    os.path.join(ROOT, "scripts", "check_all.py"), encoding="utf-8"
+                ).read()
                 self.assertIn(
                     owner,
-                    ci,
-                    msg=f"expected `{owner}` in ci.yml: the gate is only skipped in "
-                    "link-check.yml because the main workflow already runs it on the same bytes",
+                    corpus,
+                    msg=f"expected `{owner}` in the gate table CI runs: the gate is only skipped "
+                    "in link-check.yml because the main workflow already grades the same bytes",
                 )
                 matches = [step for step in steps if command in step]
                 self.assertEqual(
@@ -422,12 +438,62 @@ class WorkflowSpeedTests(unittest.TestCase):
         ci = ci_text()
         deploy = job_block(ci, "deploy-pages")
         self.assertTrue(deploy, msg="expected a deploy-pages job: without it a green run would never publish the site")
+        for required in (
+            "changes",
+            "python-text",
+            "python-exercises",
+            "python-labs",
+            "native-install-macos",
+            "build-workbench",
+            *SUITE_JOBS,
+        ):
+            with self.subTest(job=required):
+                self.assertIn(
+                    required,
+                    deploy,
+                    msg="expected the deploy to depend on every gate: the Python sweep used to ride "
+                    "along inside the build's `needs:`, so a red sweep that no longer delays the "
+                    "browser lane must still stop the publish",
+                )
+
+    def test_the_browser_work_is_filtered_on_pull_requests_only(self):
+        """A docs-only PR grades the Python text, not four browser lanes and a macOS queue."""
+        ci = ci_text()
+        changes = job_block(ci, "changes")
+        self.assertTrue(changes, msg="expected a `changes` job that classifies the diff")
+        self.assertIn("dorny/paths-filter", changes, msg="expected the path filter action to classify the changed paths")
+        for path in ("app/**", "package-lock.json", "vite.config.ts", "scripts/**/*.mjs"):
+            with self.subTest(path=path):
+                self.assertIn(path, changes, msg=f"expected `{path}` to select the browser lanes")
+        for name in SUITE_JOBS:
+            block = job_block(ci, name)
+            with self.subTest(job=name):
+                self.assertIn(
+                    "refs/heads/main",
+                    block,
+                    msg="expected the lane to run unconditionally on main: a skipped required check "
+                    "that is skipped on the deploying branch would publish an ungraded bundle",
+                )
+                self.assertIn(
+                    "browser == 'true'",
+                    block,
+                    msg="expected the lane to be gated on the filter for a pull request",
+                )
+        for mac in ("macos-python", "native-install-macos"):
+            block = job_block(ci, mac)
+            with self.subTest(job=mac):
+                self.assertIn("macos == 'true'", block, msg="expected macOS to run only for a dependency or build-config change")
+                self.assertIn("schedule", block, msg="expected the nightly run to exercise macOS")
+
+    def test_the_python_sweep_is_three_jobs(self):
+        ci = ci_text()
+        for name in ("python-text", "python-exercises", "python-labs"):
+            with self.subTest(job=name):
+                self.assertTrue(job_block(ci, name), msg=f"expected a `{name}` job: the Python gate used to serialize ~45 checks, the sweep, the tests and the labs")
         self.assertIn(
-            "needs: [verify-and-test, native-install-macos, build-workbench, %s]" % ", ".join(SUITE_JOBS),
-            deploy,
-            msg="expected the deploy to depend on every suite job and on the Python sweep: the "
-            "sweep used to ride along inside the build's `needs:`, so a red sweep that no longer "
-            "delays the browser lane must still stop the publish",
+            "python3 scripts/check_all.py --ci",
+            ci,
+            msg="expected the text job to run the shared gate table",
         )
 
 

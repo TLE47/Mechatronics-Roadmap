@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
-"""The local verify table must be the CI verify table, and audit extras must be real CI commands.
+"""The local verify table must be CI's verify table, and audit extras must be real CI commands.
 
-`scripts/check_all.py` promises the verify step's gates in CI's order, plus the audit gates a local
-pre-push should exercise. That promise is only worth something if something checks it, so this test
-parses the verify step out of `.github/workflows/ci.yml` (as text - PyYAML is not a dependency here)
-and compares it with the script's table in both directions:
+`scripts/check_all.py` promises the text gates CI's Python job runs, in one command that starts them
+in parallel and reports every failure. CI calls that same script (`--ci`), so the two lists cannot
+drift: a gate added to the table is a gate CI runs, and a gate deleted locally is a gate CI stops
+running. This test holds the three properties the arrangement needs:
 
-1. **A gate added to CI is not silently missing locally** - the next `--check` step lands in the
-   workflow and a contributor's one command keeps passing without it.
-2. **A gate cannot be quietly dropped** - deleting a row from the script to make a pre-push run go
-   green would fail here.
-3. **An audit extra is not invented** - every `AUDIT_GATES` row names a command the workflow runs
-   outside the verify step, so the local command grows only with CI's own gates.
+1. **CI calls the table** - the text job runs `python3 scripts/check_all.py --ci`.
+2. **`--ci` selects the text pass only** - no audit gate (a browser) and no heavy, order-dependent
+   sweep; those live in the exercise job, and their commands must still appear in the workflow.
+3. **A local run keeps its audit and heavy rows** - `check:labels` runs before a push, and the two
+   heavy sweeps still wait for `--full`.
 
 Run: `python3 tests/test_check_all.py` (also discovered by `python3 -m unittest discover`).
 """
@@ -19,7 +18,6 @@ Run: `python3 tests/test_check_all.py` (also discovered by `python3 -m unittest 
 import contextlib
 import io
 import os
-import re
 import sys
 import unittest
 from unittest import mock
@@ -32,7 +30,6 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 import check_all  # noqa: E402
 
 WORKFLOW = os.path.join(ROOT, ".github", "workflows", "ci.yml")
-VERIFY_STEP = "Verify Markdown structure, internal links, Mermaid diagrams & LaTeX math fences"
 
 
 def workflow_text():
@@ -40,59 +37,47 @@ def workflow_text():
         return handle.read()
 
 
-def verify_commands():
-    """The `python3` commands of the verify step, normalised to (target, checks)."""
-    text = workflow_text()
-    start = text.index(VERIFY_STEP)
-    body = text[start:]
-    end = re.search(r"\n\s*#?\s*- name:", body[len(VERIFY_STEP):])
-    block = body[: len(VERIFY_STEP) + end.start()] if end else body
-    block = re.sub(r"\\\n\s*", " ", block)  # join continuations
-    block = re.sub(r"(?m)^\s*#.*$", "", block)  # whole-line comments
-    block = re.sub(r"\s+#.*$", "", block)  # trailing comments
-
-    commands = []
-    for line in block.splitlines():
-        tokens = line.strip().split()
-        while tokens and re.match(r"^[A-Z_][A-Z0-9_]*=", tokens[0]):
-            tokens.pop(0)  # RUN_EXERCISE_REPORT="..." python3 ... comes before the command
-        if not tokens or tokens[0] != "python3":
-            continue
-        tokens = tokens[1:]  # drop `python3`
-        if tokens[:2] == ["-m", "unittest"]:
-            commands.append(("unittest", False))
-            continue
-        script = tokens[0]
-        commands.append((script, "--check" in tokens))
-    return commands
-
-
-def gate_specs():
-    return [(gate[1][0] if gate[1][0] != "-m" else "unittest", "--check" in gate[1]) for gate in check_all.GATES]
-
-
 def audit_specs():
     return [(name, argv) for name, argv, _heavy in check_all.AUDIT_GATES]
 
 
 class CheckAllParityTests(unittest.TestCase):
-    def test_every_ci_gate_is_in_the_local_command(self):
-        ci = verify_commands()
-        self.assertGreater(len(ci), 20, msg=f"expected the verify step to carry the whole gate set, parsed only {len(ci)}")
-        missing = [spec for spec in ci if spec not in gate_specs()]
-        self.assertEqual(
-            missing,
-            [],
-            msg=f"expected scripts/check_all.py to run every CI gate; missing {missing} - add the row, "
-            "or CI will catch a drift the local command calls green",
+    def test_ci_calls_the_same_table(self):
+        text = workflow_text()
+        self.assertIn(
+            "python3 scripts/check_all.py --ci",
+            text,
+            msg="expected CI's text job to run scripts/check_all.py --ci: a second hand-written list "
+            "is the list that drifts, and the local command then grades something CI does not",
         )
 
-    def test_the_verify_table_adds_nothing_ci_does_not_run(self):
-        extra = [spec for spec in gate_specs() if spec not in verify_commands()]
-        self.assertEqual(
-            extra,
-            [],
-            msg=f"expected the local table to mirror CI exactly; {extra} is not in the workflow's verify step",
+    def test_ci_runs_the_order_dependent_sweeps_in_their_own_job(self):
+        text = workflow_text()
+        for gate in check_all.GATES:
+            if not gate[2]:
+                continue
+            name, argv, _heavy = gate
+            with self.subTest(gate=name):
+                command = " ".join(argv) if argv[0] == "npm" else "python3 " + " ".join(argv[:2])
+                self.assertIn(
+                    command,
+                    text,
+                    msg=f"expected the exercise job to run `{command}`: `--ci` excludes it, so CI "
+                    "would stop running it entirely",
+                )
+
+    def test_the_ci_selection_is_the_text_pass(self):
+        gates = check_all.selected([], full=False, ci=True)
+        names = [gate[0] for gate in gates]
+        self.assertIn("workflows", names, msg="expected the workflow scan in the text pass")
+        self.assertIn("assertions", names, msg="expected the assertion lint in the text pass")
+        self.assertNotIn("labels", names, msg="expected --ci to leave the browser-based label audit out")
+        self.assertNotIn("exercise_sweep", names, msg="expected --ci to leave the exercise sweep to its job")
+        self.assertNotIn("exercise_coverage", names, msg="expected --ci to leave the report reader with the sweep")
+        self.assertNotIn("tests", names, msg="expected --ci to leave the discovery run to its job")
+        self.assertFalse(
+            [gate[0] for gate in gates if gate[2]],
+            msg="expected --ci to select no heavy gate: the heavy ones are ordered after the parallel pass",
         )
 
     def test_every_audit_gate_is_a_real_ci_command(self):
@@ -104,18 +89,9 @@ class CheckAllParityTests(unittest.TestCase):
                 msg=f"expected audit gate {name} to name a command in ci.yml; {' '.join(argv)} is missing",
             )
 
-    def test_the_order_matches_ci(self):
-        ci = [spec for spec in verify_commands() if spec in gate_specs()]
-        local = [spec for spec in gate_specs() if spec in ci]
-        self.assertEqual(
-            ci,
-            local,
-            msg="expected the gates to run in CI's order; a reordering hides which failure came first",
-        )
-
     def test_every_gate_names_a_file_that_exists(self):
         for name, argv, _heavy in check_all.GATES:
-            if argv[0] == "-m":
+            if argv[0] == "-m" or argv[0] == "npm":
                 continue
             path = os.path.join(ROOT, argv[0])
             self.assertTrue(os.path.exists(path), msg=f"expected gate {name} to name a real script; {argv[0]} is missing")

@@ -8,6 +8,10 @@ on:
     branches: ["main", "master"]
   pull_request:
     branches: ["main", "master"]
+  # The nightly run is where the macOS legs live beside `main`: a macOS-only difference in the
+  # exercises or the labs is worth catching without waiting for a dependency bump.
+  schedule:
+    - cron: "0 4 * * *"
   workflow_dispatch:
 
 # A newer push to the same pull request cancels the run it supersedes: that run's verdict is about a
@@ -22,13 +26,43 @@ permissions:
   id-token: write
 
 jobs:
-  verify-and-test:
-    name: Repository Integrity, Math/Mermaid Lint & Labs 00-08 (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-15-intel]
+  # What changed, so a docs-only pull request does not start four browser lanes and a macOS queue.
+  # `main` and the nightly/dispatched runs ignore this verdict (see each job's `if:`), so nothing is
+  # ever skipped on the branch that publishes.
+  changes:
+    name: Classify the change
+    runs-on: ubuntu-latest
+    outputs:
+      browser: ${{ steps.filter.outputs.browser }}
+      macos: ${{ steps.filter.outputs.macos }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Filter the changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            browser:
+              - 'app/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'vite.config.ts'
+              - 'scripts/**/*.mjs'
+              - '.github/workflows/**'
+            macos:
+              - 'package.json'
+              - 'package-lock.json'
+              - 'vite.config.ts'
+
+  # The text gates, in one job on Ubuntu, from the same table a contributor runs. `check_all.py`
+  # runs them in parallel and reports every failure: one push shows all the reds instead of one per
+  # rerun. The exercise sweep and the unittest discovery are order-dependent and live below.
+  python-text:
+    name: Text gates — Markdown, math, generated data, workflows
+    needs: changes
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
@@ -39,107 +73,113 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Verify Markdown structure, internal links, Mermaid diagrams & LaTeX math fences
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install the locked dependencies
+        if: steps.node-modules.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit --no-fund
+
+      - name: Assert npm ci installed every optional binary recorded for linux/x64
+        run: npm run check:native
+
+      # The gate list is `scripts/check_all.py`, so CI and a pre-push run grade the same table.
+      # `--ci` leaves out the audit gates (they need a browser) and the order-dependent sweeps
+      # (the exercise report and the discovery run are the job below).
+      - name: Run every text gate, reporting all failures
+        run: python3 scripts/check_all.py --ci
+
+  # The 48-package exercise sweep writes the report the discovery run reads back, so these three
+  # steps are one job in this order rather than three parallel ones.
+  python-exercises:
+    name: Exercises and unittest discovery
+    needs: changes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # The 48-package sweep runs once: packages are checked in parallel workers, and this report is
+      # what tests/test_exercise_package.py reads instead of running it a second time. It refuses a
+      # report that does not name every package on disk, so the reuse cannot hide a package.
+      - name: Run the exercise sweep and write the report the tests reuse
         run: |
-          # The workflows themselves come first: a file GitHub cannot parse is a run that fails in
-          # 0 s with no jobs, and nothing inside the job ever gets to report it. This scan needs no
-          # YAML parser; a contributor with actionlint installed gets the full lint too.
-          python3 scripts/check_workflows.py
-          python3 scripts/verify_repo.py --verbose
-          python3 scripts/clean_tex.py --check
-          python3 scripts/validate_modules.py
-          python3 scripts/lint_lessons.py
-          python3 scripts/check_ramp_lessons.py
-          # A `TODO n:` that writes the expression can be answered by retyping it. Every marker has
-          # to name the quantity or the law, so the gate reads the markers instead of trusting them.
-          python3 scripts/check_todo_prompts.py
-          python3 scripts/audit_step_size.py --check
-          python3 scripts/legacy_crosswalk.py --check
-          python3 scripts/mentions_audit.py --check
-          python3 scripts/lint_modules.py
-          python3 scripts/module_parity.py --check
-          python3 scripts/generate_ladder_gate.py --check
-          python3 scripts/generate_skip_tests.py --check
-          python3 scripts/generate_plant_data.py --check
-          python3 scripts/check_term_order.py
-          python3 scripts/generate_python_lessons_data.py --check
-          # The 3.0 story, missions and reward rules: `content/` is the source of truth and the
-          # bundle the site imports is a build of it. A story edited without rebuilding fails here,
-          # so the site can never render a mission the repository does not have.
-          python3 scripts/build_content.py --check
-          # ... and the bundle is honest: every mission joins to a spine step with lessons, every
-          # recording is a voice memo, the ladder is 0..10 with a perk at every level.
-          npm run test:content
-          # The lesson text the workbench renders beside the editor, generated from the same pages
-          # the runner's registry names. A page edited without regenerating is stale here.
-          python3 scripts/generate_lesson_pages.py --check
-          # The seven micro concepts and the parent-lesson manifest are generated from one authored
-          # source and the registry. A stale bundle is a tab teaching the previous revision.
-          python3 scripts/generate_micro_lessons.py --check
-          python3 scripts/generate_parent_lessons.py --check
-          # The app's error index is the explainer page; editing one without the other fails here.
-          python3 scripts/generate_error_index.py --check
-          python3 scripts/generate_run_callouts.py --check
-          # The searchable text of the 65 reading pages, which the app fetches only when asked.
-          python3 scripts/generate_prose_index.py --check
-          # One name per tab, in one file; no page or label may point at a position instead.
-          python3 scripts/check_tab_names.py
-          python3 scripts/generate_link_history_data.py --check
-          python3 scripts/generate_sim_route.py --check
-          # The ten steps the pages print, copied for the app by the same model.
-          python3 scripts/generate_spine_data.py --check
-          # One order: every arm page's last line names the next page in that same model.
-          python3 scripts/generate_next_links.py --check
-          # The syllabus, the curriculum map and the nine track READMEs cost those ten steps
-          # from each page's own metadata; a moved page must move the hours with it.
-          python3 scripts/generate_step_docs.py --check
-          python3 scripts/generate_readme_counts.py --check
-          # The Board card's data is the five Arduino lessons' own sketches plus the serial this job
-          # proves for them; a lesson that edits its sketch must not leave the card on the old one.
-          python3 scripts/extract_and_compile_sketches.py --check-panel
-          # The Board tab runs these bytes: every committed `.hex` must have been built from the
-          # sketch the page ships, and be the file the index hashes (the Node suite runs them).
-          python3 scripts/extract_and_compile_sketches.py --check-firmware
-          # Every `npm run …` and every `scripts/…` path an instruction page names must exist. The
-          # gate list had this coverage; the prose did not, and its first run found the plan telling
-          # a reader to run `npm run test:e2e:storage` for a suite package.json had never declared.
-          python3 scripts/check_doc_commands.py
-          # The 2.0 gap page is a contract now that every row reads `ships`: a reopened row fails here,
-          # and so does a `ships` row that names no command or browser step a reader can run.
-          python3 scripts/check_plan_rows.py
-          python3 scripts/check_consistency.py
-          python3 scripts/friction_report.py --check
-          python3 scripts/lint_assertions.py
-          # The 48-package sweep runs once: packages are checked in parallel workers, and this
-          # report is what tests/test_exercise_package.py reads instead of running it a second
-          # time. It refuses a report that does not name every package on disk, so the reuse
-          # cannot hide an unverified package.
           python3 scripts/run_exercise.py --verbose \
             --report-file "${RUNNER_TEMP:-/tmp}/run-exercise.json"
           python3 scripts/check_exercise_coverage.py
-          # One discovery run covers all 22 suites in tests/ - including test_sketch_host_verify
-          # and test_module_full_solutions, which the old per-file list never ran - and it is the
-          # same command CONTRIBUTING gives a contributor. It runs on the 3.12 interpreter the
-          # repo pins in .python-version, so every script a test imports must run there.
-          RUN_EXERCISE_REPORT="${RUNNER_TEMP:-/tmp}/run-exercise.json" \
-            python3 -m unittest discover -s tests
 
-      # The KaTeX audit used to live here, behind an `npm install --no-save katex` on both runners,
-      # to re-fetch a dependency the lockfile already pins. It is OS-independent text checking, so it
-      # runs in build-workbench instead, where `npm ci` has already put katex in node_modules. This
-      # job is Python only.
-      - name: Run all 13 Python & C++20 Reference Simulations, Module Expected-Output Diffs, CAD, PCB EDA & Firmware Tests
+      # One discovery run covers all 22 suites in tests/, on the interpreter `.python-version` pins.
+      - name: Run the unittest discovery
+        env:
+          RUN_EXERCISE_REPORT: ${{ runner.temp }}/run-exercise.json
+        run: python3 -m unittest discover -s tests
+
+  python-labs:
+    name: Python and C++20 reference labs
+    needs: changes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run all 13 Python and C++20 reference simulations, module diffs, CAD, PCB and firmware tests
         run: python3 scripts/run_all_labs.py --verbose
 
+  # macOS exists to catch OS differences in the exercises and the labs, so it keeps exactly those,
+  # and only where a dependency or the build configuration can move: `main`, the nightly run, or a
+  # pull request that touches package*.json or vite.config.ts. The Intel pool is scarce and the
+  # Python leg was the slowest one measured (1m57s), which is why it no longer rides every PR.
+  macos-python:
+    name: macOS — exercises and labs
+    needs: changes
+    if: github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.macos == 'true'
+    runs-on: macos-15-intel
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run the exercise sweep
+        run: python3 scripts/run_exercise.py --verbose
+
+      - name: Run all 13 Python and C++20 reference simulations, module diffs, CAD, PCB and firmware tests
+        run: python3 scripts/run_all_labs.py --verbose
+
+  # A lockfile resolved on Linux records only Linux's optional binaries, so `npm ci` on a Mac
+  # installs none of the natives rollup/esbuild/Tailwind/Lightning CSS need. `check:native` derives
+  # the expected packages from the actual darwin/x64 target. The build that used to ride here proved
+  # nothing the Linux build does not already prove, so this job is the install alone.
   native-install-macos:
-    # A lockfile resolved on Linux records only Linux's optional binaries, so `npm ci` on a
-    # Mac installs none of the natives rollup/esbuild/Tailwind/Lightning CSS need, and the
-    # failure surfaces later as `Cannot find module '@rollup/rollup-darwin-x64'`.
-    # `macos-latest` is arm64 and its hosted pool could not acquire this job; the supported
-    # Intel image is allocatable and still exercises a real macOS install. The guard below
-    # rejects a mislabeled runner, and `check:native` derives the expected packages from its
-    # actual darwin/x64 target.
-    name: Fresh install on macOS Intel (npm ci) has every native binary the build needs
+    name: Fresh install on macOS Intel has every native binary the build needs
+    needs: changes
+    if: github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.macos == 'true'
     runs-on: macos-15-intel
 
     steps:
@@ -152,32 +192,22 @@ jobs:
           node-version: "22"
           cache: npm
 
-      - name: Set up Python 3.12 (the build's prebuild step generates lesson data)
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
       - name: Assert the macOS runner is the Intel target this job tests
         run: |
           node -e 'const { platform, arch } = process; if (platform !== "darwin" || arch !== "x64") { console.error("[FAIL] expected darwin/x64 for macos-15-intel, got " + platform + "/" + arch); process.exit(1); } console.log("[PASS] native target is " + platform + "/" + arch);'
 
       - name: Install the locked dependencies from scratch
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: Assert npm ci installed every optional binary the lockfile owes this platform
         run: npm run check:native
 
-      - name: Build the workbench (rollup, esbuild, Tailwind oxide & Lightning CSS all run natively)
-        run: npm run build
-
-  build-workbench:
-    name: Typecheck & build the Vite workbench bundle
-    # No `needs:` on purpose. A needs chain is a runner handoff, and this one waited for the
-    # slowest leg of verify-and-test - the macOS Python sweep, 1m57s measured on run 40616101620 -
-    # so the first browser test could not start before 2m40s and every one of those minutes bought
-    # nothing. The gate still holds: a run is green only when every job passed, so the Python sweep
-    # blocks the merge exactly as it did, it no longer blocks the machine. The property is pinned by
-    # `tests/test_workflows.py` (`test_the_build_does_not_wait_on_the_python_gate`).
+  # Typecheck without the bundle: `tsc -b` needs no `dist`, so it runs beside the build instead of
+  # inside it. `npm run build` used to do both, and the typecheck then waited behind the whole build.
+  typecheck:
+    name: Typecheck the workbench
+    needs: [changes, build-workbench]
+    if: github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.browser == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -190,8 +220,56 @@ jobs:
           node-version: "22"
           cache: npm
 
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
       - name: Install the locked dependencies
-        run: npm ci
+        if: steps.node-modules.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit --no-fund
+
+      - name: Restore the TypeScript build info
+        uses: actions/cache@v4
+        with:
+          path: "**/*.tsbuildinfo"
+          key: tsbuildinfo-${{ runner.os }}-${{ hashFiles('package-lock.json', 'tsconfig*.json', 'app/tsconfig*.json') }}-${{ github.sha }}
+          restore-keys: |
+            tsbuildinfo-${{ runner.os }}-
+
+      - name: Typecheck every project reference
+        run: npx tsc -b
+
+  # The Node unit checks, none of which needs `dist`: they grade source modules. They used to ride
+  # behind the bundle build, which made the two wait on each other for no reason.
+  node-unit:
+    name: Node unit checks
+    needs: changes
+    if: github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.browser == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install the locked dependencies
+        if: steps.node-modules.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: Assert npm ci installed every optional binary recorded for linux/x64
         run: npm run check:native
@@ -199,48 +277,87 @@ jobs:
       - name: Typeset every formula (Markdown modules + workbench curriculum) with KaTeX
         run: node scripts/audit_math.mjs .
 
-      # Sign-in is optional: with neither repository variable set the bundle ships local-only and the
-      # account panel says so. The anon key is public by design (row-level security guards the rows).
-      - name: Typecheck and build the production bundle (base /Mechatronics-Roadmap/)
-        env:
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
-        run: npm run build
-
       - name: Check the cloud-sync merge rules (local vs account progress)
         run: npm run test:merge
 
-      # The account layer without a browser or a project: return-to sanitising, password rules,
-      # the keep-both workspace merge, the dashboard model and the admin gate.
       - name: Check the account rules (sign-in, return-to, workspace merge, admin gate)
         run: npm run test:accounts
 
       - name: Check the 08.1 fault-bench metrics
         run: npm run test:faultbench
 
-      # The reward engine without a browser: a level comes from verified missions, an award is
-      # granted once across a restore and a merge, a missed week erases nothing, a hint costs
-      # nothing, and a changed grader asks for a re-verify instead of resetting a flag.
       - name: Check the 3.0 reward engine (levels, ledger idempotence, night shifts, stamps)
         run: npm run test:game
 
       - name: Check the roadmap <-> workbench join (every entry claimed once)
         run: npm run test:practice
 
-      # What the bundle costs, in gzipped bytes, against docs/weight-budget.json: a metric over its
-      # budget fails, and so does a budget the build no longer produces anything for. It reads the
-      # `dist/` the step above just built — signed_in here — and on a machine whose build is
-      # local-only it builds the signed-in shape beside it, so the same gate can fail before a push.
-      - name: "Check the weight budget: gzipped shell, largest chunk, and no metric left unmeasured"
-        run: npm run check:weight
+      - name: Check the content bundle (story, missions, reward rules)
+        run: npm run test:content
 
-      # The other half of §4 of docs/PLAN-2.1a.md: the walk itself is deliberately not a CI step
-      # (its six moments would be a function of the runner's contention, the same reason
-      # check:lighthouse does not score performance), so what CI holds is the page: docs/PERF.md and
-      # docs/perf-budget.json must still describe the same six moments, and no recorded number may
-      # sit above its own ceiling. Cheap, no browser, and it fails the moment the doc drifts.
       - name: "Check the perf page: six moments, both profiles, no row above its ceiling"
         run: npm run test:perf:unit
+
+  build-workbench:
+    name: Build the Vite workbench bundle
+    needs: changes
+    # No `needs:` on the Python jobs on purpose. A needs chain is a runner handoff, and this one
+    # waited for the slowest leg of the Python sweep (the macOS one, 1m57s measured on run
+    # 40616101620), so the first browser test could not start before 2m40s and every one of those
+    # minutes bought nothing. A run is green only when every job passed, so the sweep still blocks
+    # the merge; it just no longer blocks the machine.
+    if: github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.browser == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      # `vite build` does not run the typecheck (`tsc -b`, its own job) but `prebuild` is npm's own
+      # hook, so calling `npm run prebuild` is what makes the generated lesson data current without
+      # running `npm run build` (which would typecheck the same tree a second time).
+      - name: Set up Python 3.12 (the prebuild step generates lesson data)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install the locked dependencies
+        if: steps.node-modules.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit --no-fund
+
+      - name: Assert npm ci installed every optional binary recorded for linux/x64
+        run: npm run check:native
+
+      - name: Restore the Vite build cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules/.vite
+          key: vite-cache-${{ runner.os }}-${{ hashFiles('package-lock.json', 'vite.config.ts', 'app/src/**') }}
+          restore-keys: |
+            vite-cache-${{ runner.os }}-
+
+      # Sign-in is optional: with neither repository variable set the bundle ships local-only and the
+      # account panel says so. The anon key is public by design (row-level security guards the rows).
+      - name: Generate the lesson data and build the production bundle (base /Mechatronics-Roadmap/)
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          npm run prebuild
+          npx vite build
 
       # The bundle every browser job tests. This is what lets the browser work leave this job at
       # all: one build is shared by four lanes, and no lane has to remake the bytes it grades.
@@ -265,16 +382,16 @@ jobs:
   # The browser matrix in two jobs, split by cost rather than by subject. `e2e` is the one suite that
   # runs longer than five minutes on its own (327s on run 40617696276, a slow runner; ~250s warm), so it
   # travels with the light flows and keeps four slots to itself instead of sharing a dev server with
-  # the built-bundle sweep and the control pairs. The robot's real-Pyodide examples and the study
-  # clock's rendered log ride in that partition too, so every push and PR runs both. The cheap
-  # suites — the unit batch and the SSR smoke — ride with `e2e`, because a second copy in the other
-  # job would be the same checks twice. Each job
-  # still fetches the one build and starts its own server pair, so a partition passes exactly when the
-  # whole matrix would: partitioning changes only which suites are started.
+  # the built-bundle sweep and the control pairs. Each job still fetches the one build and starts its
+  # own server pair, so a partition passes exactly when the whole matrix would.
   e2e-suites:
     name: Browser suites — the dev-server E2E sweep (robot + clock), the smoke, and the light flows
-    needs: build-workbench
+    needs: [changes, build-workbench]
+    if: github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.browser == 'true'
     runs-on: ubuntu-latest
+    env:
+      # This lane launches Chromium only; installing Firefox here was a browser no suite opened.
+      PLAYWRIGHT_BROWSERS: chromium
 
     steps:
       - name: Checkout repository
@@ -286,13 +403,16 @@ jobs:
           node-version: "22"
           cache: npm
 
-      - name: Set up Python 3.12 (a rebuild, if one is needed, runs the generator)
-        uses: actions/setup-python@v5
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache@v4
         with:
-          python-version: "3.12"
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Install the locked dependencies
-        run: npm ci
+        if: steps.node-modules.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit --no-fund
 
       # The bundle was built once, in build-workbench. Its archive is older than this checkout's
       # files, so the next step stamps it; from there every suite's `ensureBuilt` reuses it.
@@ -309,29 +429,40 @@ jobs:
       - name: Stamp the restored bundle as newer than this checkout
         run: find dist -exec touch {} +
 
+      # The cache key follows the Playwright version, not the lockfile hash: a dependency bump that
+      # leaves Playwright alone must not throw away four browser installs. The fallback key lets a
+      # version change reuse what is there and fetch only the new build.
+      - name: Read the installed Playwright version
+        id: pw
+        run: node -p "'v=' + require('playwright-core/package.json').version" >> "$GITHUB_OUTPUT"
+
       - name: Restore the Playwright browsers
         id: playwright-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.v }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
 
-      # Two steps, because the old single one did two jobs: fetch the browsers, which the cache has
-      # already done on a hit, and apt-install the OS libraries, which the runner image already
-      # carries. Measured 2026-10-28: that step took 7-23s on a hit and 17m31s on a miss (run
-      # 40559024836), the miss being ~30 packages from a throttled mirror. So the libraries ride on
-      # the miss that actually needs them, and both steps are bounded - a throttled mirror now fails
-      # the run in ten minutes instead of stalling it for seventeen.
-      - name: Install the Playwright browsers (a no-op when the cache hit)
-        run: npx playwright-core install chromium firefox
+      # On a hit the install is a no-op (measured 7-23s per lane); on a miss it is bounded, and the
+      # OS libraries ride the same miss. Installing the browser and its dependencies in one step took 17m31s once (run 40559024836) pulling ~30
+      # packages from a throttled mirror, so the apt half is separate and conditional.
+      - name: Install the Playwright browsers (only a cache miss needs them)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright-core install ${{ env.PLAYWRIGHT_BROWSERS }}
         timeout-minutes: 8
 
       - name: Install the Playwright OS libraries (only a cache miss needs them)
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright-core install-deps chromium firefox
+        run: npx playwright-core install-deps ${{ env.PLAYWRIGHT_BROWSERS }}
         timeout-minutes: 10
 
       - name: Run the e2e partition (the SSR smoke, the unit batch, the dev-server sweep with the robot examples and clock log, the light flows)
+        env:
+          # A suite that finds the handed-over bundle stale must fail here, not rebuild it: the
+          # stamp above is the statement that these bytes came from this commit.
+          MECHALAB_PREBUILT_DIST: "1"
         run: |
           set +e
           npm run test:workbench -- --partition e2e > /tmp/e2e-partition.log 2>&1
@@ -375,8 +506,13 @@ jobs:
 
   bundle-suites:
     name: Browser suites — the built bundle, control pairs, tour and home
-    needs: build-workbench
+    needs: [changes, build-workbench]
+    if: github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.browser == 'true'
     runs-on: ubuntu-latest
+    env:
+      # The Pages sweep grades a sample in Firefox as the second browser; every other suite here is
+      # Chromium, so this is the only lane that installs both.
+      PLAYWRIGHT_BROWSERS: chromium firefox
 
     steps:
       - name: Checkout repository
@@ -388,13 +524,16 @@ jobs:
           node-version: "22"
           cache: npm
 
-      - name: Set up Python 3.12 (a rebuild, if one is needed, runs the generator)
-        uses: actions/setup-python@v5
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache@v4
         with:
-          python-version: "3.12"
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Install the locked dependencies
-        run: npm ci
+        if: steps.node-modules.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: Fetch the bundle the build job produced
         uses: actions/download-artifact@v4
@@ -405,23 +544,32 @@ jobs:
       - name: Stamp the restored bundle as newer than this checkout
         run: find dist -exec touch {} +
 
+      - name: Read the installed Playwright version
+        id: pw
+        run: node -p "'v=' + require('playwright-core/package.json').version" >> "$GITHUB_OUTPUT"
+
       - name: Restore the Playwright browsers
         id: playwright-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.v }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
 
-      - name: Install the Playwright browsers (a no-op when the cache hit)
-        run: npx playwright-core install chromium firefox
+      - name: Install the Playwright browsers (only a cache miss needs them)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright-core install ${{ env.PLAYWRIGHT_BROWSERS }}
         timeout-minutes: 8
 
       - name: Install the Playwright OS libraries (only a cache miss needs them)
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright-core install-deps chromium firefox
+        run: npx playwright-core install-deps ${{ env.PLAYWRIGHT_BROWSERS }}
         timeout-minutes: 10
 
       - name: Run the bundle partition (built bundle, control pairs, the tour, home)
+        env:
+          MECHALAB_PREBUILT_DIST: "1"
         run: |
           set +e
           npm run test:workbench -- --partition bundle > /tmp/bundle-partition.log 2>&1
@@ -458,14 +606,16 @@ jobs:
           fi
           exit "$status"
 
-
       - name: "Check the 3.0 game: prologue, Mission Control, journey map, Black Box, award ledger"
         run: npm run test:e2e:game
 
   audit-suites:
     name: Audits — theme, axe, Lighthouse, the surface snapshot, label sizes
-    needs: build-workbench
+    needs: [changes, build-workbench]
+    if: github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.browser == 'true'
     runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_BROWSERS: chromium
 
     steps:
       - name: Checkout repository
@@ -477,50 +627,54 @@ jobs:
           node-version: "22"
           cache: npm
 
-      - name: Set up Python 3.12 (a rebuild, if one is needed, runs the generator)
-        uses: actions/setup-python@v5
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache@v4
         with:
-          python-version: "3.12"
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Install the locked dependencies
-        run: npm ci
+        if: steps.node-modules.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit --no-fund
 
-      # The bundle was built once, in build-workbench. Its archive is older than this checkout's
-      # files, so the next step stamps it; from there every suite's `ensureBuilt` reuses it.
       - name: Fetch the bundle the build job produced
         uses: actions/download-artifact@v4
         with:
           name: workbench-dist
           path: dist
 
-      # The archive carries the build job's timestamps, and this checkout's files are newer than that
-      # clock — so every suite's `ensureBuilt` would read the handed-over bundle as stale and build it
-      # again, in three lanes at once. Stamping it to now is the same statement the mtime comparison is
-      # trying to make: these bytes were built from this commit, earlier in this same run.
       - name: Stamp the restored bundle as newer than this checkout
         run: find dist -exec touch {} +
+
+      - name: Read the installed Playwright version
+        id: pw
+        run: node -p "'v=' + require('playwright-core/package.json').version" >> "$GITHUB_OUTPUT"
 
       - name: Restore the Playwright browsers
         id: playwright-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.v }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
 
-      # Two steps, because the old single one did two jobs: fetch the browsers, which the cache has
-      # already done on a hit, and apt-install the OS libraries, which the runner image already
-      # carries. Measured 2026-10-28: that step took 7-23s on a hit and 17m31s on a miss (run
-      # 40559024836), the miss being ~30 packages from a throttled mirror. So the libraries ride on
-      # the miss that actually needs them, and both steps are bounded - a throttled mirror now fails
-      # the run in ten minutes instead of stalling it for seventeen.
-      - name: Install the Playwright browsers (a no-op when the cache hit)
-        run: npx playwright-core install chromium firefox
+      - name: Install the Playwright browsers (only a cache miss needs them)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright-core install ${{ env.PLAYWRIGHT_BROWSERS }}
         timeout-minutes: 8
 
       - name: Install the Playwright OS libraries (only a cache miss needs them)
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright-core install-deps chromium firefox
+        run: npx playwright-core install-deps ${{ env.PLAYWRIGHT_BROWSERS }}
         timeout-minutes: 10
+
+      # What the bundle costs, in gzipped bytes, against docs/weight-budget.json: a metric over its
+      # budget fails, and so does a budget the build no longer produces anything for. It reads the
+      # `dist/` this lane already downloaded — signed_in on CI — so it costs no extra build.
+      - name: "Check the weight budget: gzipped shell, largest chunk, and no metric left unmeasured"
+        run: npm run check:weight
 
       - name: "Check light/dark: toggle contract, and WCAG contrast on all sixteen tabs in both modes"
         run: npm run test:theme:e2e
@@ -592,8 +746,11 @@ jobs:
 
   runtime-suites:
     name: Runtime suites — the Python worker under isolation, and the offline workbench
-    needs: build-workbench
+    needs: [changes, build-workbench]
+    if: github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.browser == 'true'
     runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_BROWSERS: chromium
 
     steps:
       - name: Checkout repository
@@ -605,49 +762,47 @@ jobs:
           node-version: "22"
           cache: npm
 
-      - name: Set up Python 3.12 (a rebuild, if one is needed, runs the generator)
-        uses: actions/setup-python@v5
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache@v4
         with:
-          python-version: "3.12"
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Install the locked dependencies
-        run: npm ci
+        if: steps.node-modules.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit --no-fund
 
-      # The bundle was built once, in build-workbench. Its archive is older than this checkout's
-      # files, so the next step stamps it; from there every suite's `ensureBuilt` reuses it.
       - name: Fetch the bundle the build job produced
         uses: actions/download-artifact@v4
         with:
           name: workbench-dist
           path: dist
 
-      # The archive carries the build job's timestamps, and this checkout's files are newer than that
-      # clock — so every suite's `ensureBuilt` would read the handed-over bundle as stale and build it
-      # again, in three lanes at once. Stamping it to now is the same statement the mtime comparison is
-      # trying to make: these bytes were built from this commit, earlier in this same run.
       - name: Stamp the restored bundle as newer than this checkout
         run: find dist -exec touch {} +
+
+      - name: Read the installed Playwright version
+        id: pw
+        run: node -p "'v=' + require('playwright-core/package.json').version" >> "$GITHUB_OUTPUT"
 
       - name: Restore the Playwright browsers
         id: playwright-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.v }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
 
-      # Two steps, because the old single one did two jobs: fetch the browsers, which the cache has
-      # already done on a hit, and apt-install the OS libraries, which the runner image already
-      # carries. Measured 2026-10-28: that step took 7-23s on a hit and 17m31s on a miss (run
-      # 40559024836), the miss being ~30 packages from a throttled mirror. So the libraries ride on
-      # the miss that actually needs them, and both steps are bounded - a throttled mirror now fails
-      # the run in ten minutes instead of stalling it for seventeen.
-      - name: Install the Playwright browsers (a no-op when the cache hit)
-        run: npx playwright-core install chromium firefox
+      - name: Install the Playwright browsers (only a cache miss needs them)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright-core install ${{ env.PLAYWRIGHT_BROWSERS }}
         timeout-minutes: 8
 
       - name: Install the Playwright OS libraries (only a cache miss needs them)
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright-core install-deps chromium firefox
+        run: npx playwright-core install-deps ${{ env.PLAYWRIGHT_BROWSERS }}
         timeout-minutes: 10
 
       - name: "Check the Python worker: in-place Stop, input(), isolation, and the no-buffer fallback"
@@ -658,12 +813,25 @@ jobs:
 
   deploy-pages:
     name: Deploy MechaLab Workbench to GitHub Pages
-    # Every browser suite, not only the build: a red audit cannot publish the bundle it graded.
-    # `verify-and-test` is named here in its own right now that the build no longer waits for it;
-    # before that the build's `needs:` carried the dependency, and dropping it there would have let a
-    # red Python sweep publish a site whose own run was red. `native-install-macos` is named for the
-    # same reason: a failed native install must not publish a bundle it could not build locally.
-    needs: [verify-and-test, native-install-macos, build-workbench, e2e-suites, bundle-suites, audit-suites, runtime-suites]
+    # Every gate, not only the build: a red audit cannot publish the bundle it graded, and a red
+    # Python sweep must still stop the publish now that the build no longer waits for it. Nothing is
+    # skipped on `main`, so this list is always the full matrix there.
+    needs:
+      [
+        changes,
+        python-text,
+        python-exercises,
+        python-labs,
+        macos-python,
+        native-install-macos,
+        typecheck,
+        node-unit,
+        build-workbench,
+        e2e-suites,
+        bundle-suites,
+        audit-suites,
+        runtime-suites,
+      ]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment:
