@@ -20,7 +20,12 @@ import { SoundControlLazy } from './SoundControlLazy';
 const GeneralSettingsPanel = React.lazy(() =>
   import('./GeneralSettingsPanel').then((module) => ({ default: module.GeneralSettingsPanel }))
 );
-import { GENERAL_SETTINGS_EVENT, readShowActionLabels } from '../generalSettings';
+import {
+  GENERAL_SETTINGS_EVENT,
+  OPEN_GENERAL_SETTINGS_EVENT,
+  readShowActionLabels,
+} from '../generalSettings';
+import { APP_VERSION } from '../appVersion';
 import { HeaderTips } from './HeaderTips';
 // The interface's own ear: one delegated listener for every control's click, mounted once with the
 // header (which every screen renders). It renders nothing and holds no state.
@@ -149,6 +154,12 @@ export const Header: React.FC<HeaderProps> = ({
     window.addEventListener(GENERAL_SETTINGS_EVENT, refresh);
     return () => window.removeEventListener(GENERAL_SETTINGS_EVENT, refresh);
   }, []);
+  // The speaker's detail button and the gear open the same dialog: one surface, one set of controls.
+  React.useEffect(() => {
+    const open = () => setSettingsOpen(true);
+    window.addEventListener(OPEN_GENERAL_SETTINGS_EVENT, open);
+    return () => window.removeEventListener(OPEN_GENERAL_SETTINGS_EVENT, open);
+  }, []);
   // The tray row is the scope of the hover names (`HeaderTips`): one listener for the three trays,
   // the account chip's neighbours and whatever a child component puts in them.
   const actionsRef = React.useRef<HTMLDivElement | null>(null);
@@ -231,11 +242,23 @@ export const Header: React.FC<HeaderProps> = ({
             >
               MechaLab
             </span>
-            <span
-              className="mt-1 text-[10px] font-medium uppercase tracking-[0.18em]"
-              style={{ color: 'var(--dim)' }}
-            >
-              Workbench
+            {/* On a phone the version rides beside the wordmark instead of under it: the two-row
+                header has a 112 px ceiling, and a third line in the brand block broke it by ~7 px.
+                From `sm` up it sits directly under the word, which is where a screenshot shows it. */}
+            <span className="mt-1 flex items-center gap-1.5 sm:block">
+              <span
+                className="text-[10px] font-medium uppercase tracking-[0.18em]"
+                style={{ color: 'var(--dim)' }}
+              >
+                Workbench
+              </span>
+              <span
+                data-testid="brand-version"
+                className="font-mono text-[9.5px] leading-none sm:mt-0.5 sm:block"
+                style={{ color: 'var(--faint)' }}
+              >
+                {APP_VERSION}
+              </span>
             </span>
           </span>
           <span className="sr-only">, open the introduction</span>

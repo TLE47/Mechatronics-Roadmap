@@ -73,7 +73,7 @@ export function AudioPlayerWidget({
           aria-controls={panelId}
           aria-label="Sound settings"
           data-testid={tid('btn-sound-settings')}
-          data-tip="Sound settings — volume, ambience and the click map"
+          data-tip="Sound settings — volume, tape, ambience and the click map, in General settings"
           className="btn ml-1 px-1.5"
           style={{ color: 'var(--muted)' }}
         >

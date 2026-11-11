@@ -3,10 +3,30 @@ name: Weekly Link, Lesson & Arduino Uno Sketch Verification
 on:
   push:
     branches: [main]
+    paths:
+      - "**/*.md"
+      - "docs/**"
+      - "app/src/data/**"
+      - "scripts/check_links.py"
+      - "scripts/file_rise_issue.py"
+      - ".github/workflows/link-check.yml"
   pull_request:
+    paths:
+      - "**/*.md"
+      - "docs/**"
+      - "app/src/data/**"
+      - "scripts/check_links.py"
+      - "scripts/file_rise_issue.py"
+      - ".github/workflows/link-check.yml"
   schedule:
     - cron: "0 6 * * 1"
   workflow_dispatch:
+
+# A newer pull request cancels the run it supersedes. `main` queues instead, because this workflow
+# commits its own history row: two overlapping runs there would race on that commit and on the push.
+concurrency:
+  group: link-check-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Only the scheduled/dispatch run pushes (one history row and the dashboard module regenerated from
 # it); the scope is declared here because the default token is read-only in some repository settings
@@ -49,11 +69,18 @@ jobs:
 
       # A week-old verdict for a page that still serves is worth reusing; the script keeps served
       # verdicts for 7 days and retries anything it could not check within 6 hours itself.
+      # The verdicts are a rolling cache, so the key has to move for a save to happen at all - but a
+      # fresh `run_id` key meant every job missed its own restore and re-checked the whole world. A
+      # dated key restores the newest entry through `restore-keys` and saves at most once a day.
+      - name: Read the cache day
+        id: day
+        run: echo "value=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
       - name: Restore the URL verdict cache
         uses: actions/cache@v4
         with:
           path: .link_cache.json
-          key: link-cache-${{ github.run_id }}
+          key: link-cache-${{ runner.os }}-${{ steps.day.outputs.value }}
           restore-keys: |
             link-cache-
 
@@ -123,10 +150,20 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install arduino-cli and arduino:avr core
+      - name: Install arduino-cli
         uses: arduino/setup-arduino-cli@v2
 
+      # The core is a fixed download that the sketch compile only reads, so it is cached by version
+      # instead of being re-fetched (with a fresh index) on every push and pull request.
+      - name: Restore the Arduino AVR core
+        id: avr-core
+        uses: actions/cache@v4
+        with:
+          path: ~/.arduino15
+          key: arduino-avr-${{ runner.os }}-1.8.6
+
       - name: Install Arduino AVR Boards (Arduino Uno)
+        if: steps.avr-core.outputs.cache-hit != 'true'
         run: |
           arduino-cli core update-index
           arduino-cli core install arduino:avr

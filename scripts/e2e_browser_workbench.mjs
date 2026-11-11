@@ -195,7 +195,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await seedTourSeen(context);
     const page = await context.newPage();
 
-    await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
 
     // 0. The landing screen opens with the README's Start here block, and its Lesson 1 link is the
     //    same page the README links, so the two doors agree on the first thing to do.
@@ -303,7 +303,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     //     entry. Without this the callout's link is only the workbench's front door again, and the
     //     reader is back to searching for the id the page just handed them.
     const deepPage = await context.newPage();
-    await deepPage.goto(`${baseUrl}?lesson=EX.05-control.T2.05a`, { waitUntil: 'networkidle' });
+    await deepPage.goto(`${baseUrl}?lesson=EX.05-control.T2.05a`, { waitUntil: 'domcontentloaded' });
     await waitForEditor(deepPage, undefined, 15000);
     assert(
       (await deepPage.getByTestId('link-lesson-page').getAttribute('href'))?.endsWith(
@@ -326,7 +326,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     // An id the registry does not list never opens an empty editor. It falls back to the lesson the
     // learner was last on - here P.7, chosen just above - and only to Lesson 1 when nothing is
     // remembered: a broken link is not evidence that they wanted to start over (`src/lastLesson.ts`).
-    await deepPage.goto(`${baseUrl}?lesson=NOT.A.LESSON`, { waitUntil: 'networkidle' });
+    await deepPage.goto(`${baseUrl}?lesson=NOT.A.LESSON`, { waitUntil: 'domcontentloaded' });
     await waitForEditor(deepPage, undefined, 15000);
     const unknownIdMeta = (await deepPage.getByTestId('lesson-meta').textContent()) ?? '';
     assert(
@@ -1162,7 +1162,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     assert.equal(await visible('editor-panel'), true, 'the Read button keeps the editor bar');
     assert.equal(await visible('editor-panes'), false, 'the Read button keeps the body folded');
     assert.equal(await visible('lesson-reader'), true, 'the Read button keeps the lesson text');
-    await page.reload({ waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'domcontentloaded' });
     await waitForEditor(page, 'editor-main');
     assert.equal(await visible('editor-panel'), true, 'a remembered preset survives the reload');
     assert.equal(
@@ -1277,7 +1277,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       );
 
       await page.getByTestId('editor-tab-actual').click();
-      await page.waitForTimeout(300);
+      await page.getByTestId('pre-actual-stdout').waitFor({ state: 'visible', timeout: 5000 });
       assert.equal(
         await page.getByTestId('pre-actual-stdout').isVisible(),
         true,
@@ -1295,7 +1295,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       );
 
       await page.getByTestId('btn-pane-split').click();
-      await page.waitForTimeout(400);
+      await page.getByTestId('editor-main').waitFor({ state: 'visible', timeout: 10000 });
       assert.equal(
         await page.getByTestId('editor-main').isVisible(),
         true,
@@ -1332,15 +1332,29 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       // open the split again from main, so the arrangement the reload and the rows split below read
       // is the code-then-output one the rest of this scenario is written against.
       await page.getByTestId('btn-pane-close').click();
-      await page.waitForTimeout(250);
+      await page.getByTestId('editor-tab-main').waitFor({ state: 'visible', timeout: 5000 });
       await page.getByTestId('editor-tab-main').click();
-      await page.waitForTimeout(250);
+      await page.getByTestId('editor-main').waitFor({ state: 'visible', timeout: 5000 });
       await page.getByTestId('btn-pane-split').click();
-      await page.waitForTimeout(300);
+      // The reload below reads the arrangement back out of storage, so wait for that write: two views.
+      await page.waitForFunction(() => {
+        try {
+          return (JSON.parse(localStorage.getItem('mechalab_editor_panes_v1') ?? 'null')?.views?.length ?? 0) === 2;
+        } catch {
+          return false;
+        }
+      }, undefined, { timeout: 5000 });
 
       await page.reload({ waitUntil: 'domcontentloaded' });
       await waitForEditor(page, undefined, 30000);
-      await page.waitForTimeout(700);
+      await page.waitForFunction(
+        () =>
+          Boolean(
+            document.querySelector('[data-testid="editor-panes"], [data-testid="btn-toggle-editor"]')
+          ),
+        undefined,
+        { timeout: 15000 }
+      );
       // Study opens folded; the split is still the stored arrangement underneath it.
       if (!(await page.getByTestId('editor-panes').isVisible())) {
         await page.getByTestId('btn-toggle-editor').click();
@@ -1370,7 +1384,9 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       await page.waitForTimeout(200);
       await page.getByTestId('pane-main').click();
       await page.getByTestId('editor-tab-expected').click();
-      await page.waitForTimeout(300);
+      await page.waitForFunction(() =>
+        document.querySelector('[data-testid="editor-panes"]')?.getAttribute('data-views') === 'expected,actual',
+        undefined, { timeout: 5000 });
       const outputs = await page.evaluate(() => {
         const box = document.querySelector('[data-testid="editor-panes"]');
         return {
@@ -1394,7 +1410,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       );
 
       await page.getByTestId('btn-pane-close').click();
-      await page.waitForTimeout(300);
+      await page.getByTestId('btn-pane-split').waitFor({ state: 'visible', timeout: 5000 });
       assert.equal(
         await page.getByTestId('btn-pane-split').count(),
         1,
@@ -1406,14 +1422,14 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         'one view stays on screen after the split closes'
       );
       await page.getByTestId('editor-tab-main').click();
-      await page.waitForTimeout(250);
+      await page.getByTestId('editor-main').waitFor({ state: 'visible', timeout: 5000 });
       assert.equal(await page.getByTestId('editor-main').isVisible(), true, 'the main tab returns the code');
 
       // 5d-i. Each pane in a split has its own close: it takes that view away and leaves the rest in
       //       order. The pane's chrome also stays clear of itself — the close keeps the corner, the
       //       drag grip sits beside it, and the placement chips start past both.
       await page.getByTestId('btn-pane-split').click();
-      await page.waitForTimeout(300);
+      await page.getByTestId('pane-close-main').waitFor({ state: 'visible', timeout: 5000 });
       assert.equal(
         await page.getByTestId('pane-close-main').count(),
         1,
@@ -1443,7 +1459,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         `the drag grip must stay clear of the close; the grip ends at ${paneChrome.grip?.right} and the close starts at ${paneChrome.close?.left}`
       );
       await page.getByTestId('pane-close-actual').click();
-      await page.waitForTimeout(300);
+      await page.getByTestId('pane-actual').waitFor({ state: 'hidden', timeout: 5000 });
       assert.equal(
         await page.getByTestId('pane-actual').isVisible(),
         false,
@@ -1466,10 +1482,10 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       await page.getByTestId('editor-tab-main').click();
       await page.waitForTimeout(150);
       await page.getByTestId('btn-pane-split').click();
-      await page.waitForTimeout(250);
+      await page.getByTestId('pane-close-main').waitFor({ state: 'visible', timeout: 5000 });
       await page.getByTestId('pane-close-main').focus();
       await page.keyboard.press('Enter');
-      await page.waitForTimeout(250);
+      await page.getByTestId('pane-undo').waitFor({ state: 'visible', timeout: 5000 });
       assert.equal(
         await page.getByTestId('pane-undo').isVisible(),
         true,
@@ -1486,7 +1502,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         'the closed pane must leave the screen before it comes back'
       );
       await page.keyboard.press('Enter');
-      await page.waitForTimeout(250);
+      await page.getByTestId('pane-main').waitFor({ state: 'visible', timeout: 5000 });
       assert.equal(
         await page.getByTestId('pane-main').isVisible(),
         true,
@@ -1505,7 +1521,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       // A pointer close leaves the focus on the button that unmounts, so ⌥Z is the keyboard's way
       // back without reaching for the offer it has just drawn.
       await page.getByTestId('pane-close-main').click();
-      await page.waitForTimeout(250);
+      await page.getByTestId('pane-undo').waitFor({ state: 'visible', timeout: 5000 });
       assert.equal(
         await page.getByTestId('pane-undo').isVisible(),
         true,
@@ -1517,7 +1533,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         'the pointer close must take the pane away'
       );
       await page.keyboard.press('Alt+z');
-      await page.waitForTimeout(250);
+      await page.getByTestId('pane-main').waitFor({ state: 'visible', timeout: 5000 });
       assert.equal(
         await page.getByTestId('pane-main').isVisible(),
         true,
@@ -1536,7 +1552,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       // The split these checks opened goes away again, so the scenarios after this one draw the
       // one-pane body they were written against.
       await page.getByTestId('btn-pane-close').click();
-      await page.waitForTimeout(250);
+      await page.getByTestId('pane-actual').waitFor({ state: 'hidden', timeout: 5000 });
       assert.equal(
         await page.getByTestId('pane-actual').isVisible(),
         false,
@@ -1553,7 +1569,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       //        cards are authored work, so a reload finds them again under the lesson's own key.
       {
         await page.getByTestId('editor-tab-workflow').click();
-        await page.waitForTimeout(250);
+        await page.getByTestId('panel-workflow').waitFor({ state: 'visible', timeout: 5000 });
         assert.equal(
           await page.getByTestId('panel-workflow').isVisible(),
           true,
@@ -1572,10 +1588,14 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.waitForTimeout(200);
         await page.reload({ waitUntil: 'domcontentloaded' });
         await waitForEditor(page, undefined, 30000);
-        await page.waitForTimeout(600);
+        await page.waitForFunction(
+          () => Boolean(document.querySelector('[data-testid="editor-panes"], [data-testid="panel-workflow"]')),
+          undefined,
+          { timeout: 15000 }
+        );
         if (!(await page.getByTestId('panel-workflow').isVisible().catch(() => false))) {
           await page.getByTestId('editor-tab-workflow').click();
-          await page.waitForTimeout(250);
+          await page.getByTestId('panel-workflow').waitFor({ state: 'visible', timeout: 5000 });
         }
         assert.equal(
           await page.getByTestId('workflow-howto').count(),
@@ -1606,7 +1626,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         // Inline editing: the card is the form. No edit mode, no second panel to open.
         await page.getByTestId('workflow-node-title-1').fill('Divide');
         await page.getByTestId('workflow-node-detail-1').fill('12.0 / 2.4 = 5.00');
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => (document.querySelector('[data-testid="workflow-issues"]')?.textContent ?? '').includes('has a number but no unit'), undefined, { timeout: 5000 });
         assert.match(
           await page.getByTestId('workflow-issues').innerText(),
           /has a number but no unit/,
@@ -1618,7 +1638,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           'an open checklist item is advice: it must never disable Run'
         );
         await page.getByTestId('workflow-node-unit-1').fill('A');
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => !(document.querySelector('[data-testid="workflow-issues"]')?.textContent ?? '').includes('has a number but no unit'), undefined, { timeout: 5000 });
         assert.doesNotMatch(
           await page.getByTestId('workflow-issues').innerText(),
           /has a number but no unit/,
@@ -1705,13 +1725,20 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           'dragging from a right outlet to a top inlet must draw one directed arrow, not cancel'
         );
 
+        // The workflow document is written through the storage layer (IndexedDB-backed), so there is
+        // no localStorage read that proves this write landed: a 10 s wait on the key timed out in
+        // run 1 while the reload found the card. The sleep is the flush it says it is.
         await page.waitForTimeout(700);
         await page.reload({ waitUntil: 'domcontentloaded' });
         await waitForEditor(page, undefined, 30000);
-        await page.waitForTimeout(700);
+        await page.waitForFunction(
+          () => Boolean(document.querySelector('[data-testid="editor-panes"], [data-testid="panel-workflow"]')),
+          undefined,
+          { timeout: 15000 }
+        );
         if (!(await page.getByTestId('panel-workflow').isVisible().catch(() => false))) {
           await page.getByTestId('editor-tab-workflow').click();
-          await page.waitForTimeout(250);
+          await page.getByTestId('panel-workflow').waitFor({ state: 'visible', timeout: 5000 });
         }
         assert.equal(
           await page.getByTestId('workflow-node-title-1').inputValue(),
@@ -1733,9 +1760,9 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.getByTestId('workflow-mode-code').click();
         await page.waitForTimeout(200);
         await page.getByTestId('workflow-add-branch').click();
-        await page.waitForTimeout(250);
+        await page.getByTestId('workflow-node-condition-2').waitFor({ state: 'visible', timeout: 5000 });
         await page.getByTestId('workflow-node-condition-2').fill('draw > 3.2 A');
-        await page.waitForTimeout(250);
+        await page.waitForFunction((want) => document.querySelector('[data-testid="workflow-node-condition-2"]')?.value === want, 'draw > 3.2 A', { timeout: 5000 });
         // Tap-then-tap: the phone's way to draw the same arrow, and independent of where the
         // canvas is scrolled — the first press arms the branch, the second lands on the target dot.
         await page.getByTestId('workflow-node-port-right-2').click();
@@ -1772,8 +1799,14 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           6,
           'the palette must offer every kind an arrow can carry'
         );
+        const dashBefore = await page
+          .locator('svg g[data-testid="workflow-edge-0"] path')
+          .evaluate((el) => getComputedStyle(el).strokeDasharray);
         await page.getByTestId('workflow-edge-type-data-0').click();
-        await page.waitForTimeout(300);
+        await page.waitForFunction((was) => {
+          const path = document.querySelector('svg g[data-testid="workflow-edge-0"] path');
+          return Boolean(path) && getComputedStyle(path).strokeDasharray !== was;
+        }, dashBefore, { timeout: 5000 });
         const dataStroke = await page.locator('svg g[data-testid="workflow-edge-0"] path').evaluate((el) => ({
           dash: getComputedStyle(el).strokeDasharray,
           width: getComputedStyle(el).strokeWidth,
@@ -1812,14 +1845,14 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           'the socket must be named for a screen reader, not only drawn'
         );
         await page.getByTestId('workflow-edge-port-to-0').selectOption('in');
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => document.querySelector('[data-testid="workflow-node-port-top-1"]')?.getAttribute('data-port-kind') === 'in', undefined, { timeout: 5000 });
         assert.equal(
           await page.getByTestId('workflow-node-port-top-1').getAttribute('data-port-kind'),
           'in',
           'choosing IN for an end must show IN on the dot it lands on'
         );
         await page.getByTestId('workflow-edge-label-input-0').fill('12.0 / 2.4');
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => (document.querySelector('[data-testid="workflow-edge-label-0"]')?.textContent ?? '').trim() === '12.0 / 2.4', undefined, { timeout: 5000 });
         assert.equal(
           await page.getByTestId('workflow-edge-label-0').innerText(),
           '12.0 / 2.4',
@@ -1832,13 +1865,19 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           0,
           'Done must put the palette away'
         );
+        // Same flush as above: the edge edit is persisted on the panel's debounce through the
+        // IndexedDB-backed store, which no assertion in the page can read. Kept, with the reason.
         await page.waitForTimeout(600);
         await page.reload({ waitUntil: 'domcontentloaded' });
         await waitForEditor(page, undefined, 30000);
-        await page.waitForTimeout(600);
+        await page.waitForFunction(
+          () => Boolean(document.querySelector('[data-testid="editor-panes"], [data-testid="panel-workflow"]')),
+          undefined,
+          { timeout: 15000 }
+        );
         if (!(await page.getByTestId('panel-workflow').isVisible().catch(() => false))) {
           await page.getByTestId('editor-tab-workflow').click();
-          await page.waitForTimeout(250);
+          await page.getByTestId('panel-workflow').waitFor({ state: 'visible', timeout: 5000 });
         }
         assert.equal(
           await page.getByTestId('workflow-node-condition-2').inputValue(),
@@ -1867,9 +1906,11 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         );
         // Back to the two cards the rest of this block measures, in the palette it adds with.
         await page.getByTestId('workflow-node-delete-2').click();
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => document.querySelectorAll('[data-node-id]').length === 2, undefined, { timeout: 5000 });
         await page.getByTestId('workflow-mode-analysis').click();
-        await page.waitForTimeout(700);
+        await page.waitForFunction(() => document.querySelectorAll('[data-node-id]').length === 2, undefined, {
+          timeout: 10000,
+        });
         assert.equal(
           await page.locator('[data-node-id]').count(),
           2,
@@ -1883,14 +1924,18 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
             await new Promise((resolve) => setTimeout(resolve, 0));
           }
         });
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => document.querySelectorAll('[data-node-id]').length === 24, undefined, { timeout: 5000 });
         assert.equal(
           await page.locator('[data-node-id]').count(),
           24,
           '24 cards are the cap, and adding up to it must work'
         );
         await page.getByTestId('workflow-add-given').click();
-        await page.waitForTimeout(600);
+        await page.waitForFunction(
+          () => /at most 24 cards/.test(document.querySelector('[data-testid="workflow-status"]')?.textContent ?? ''),
+          undefined,
+          { timeout: 10000 }
+        );
         assert.equal(
           await page.locator('[data-node-id]').count(),
           24,
@@ -1985,7 +2030,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.mouse.move(panSpot.x, panSpot.y - 160, { steps: 8 });
         await page.mouse.up();
         await page.keyboard.up('Alt');
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => (document.querySelector('[data-testid="workflow-canvas"]')?.scrollTop ?? 0) > 80, undefined, { timeout: 5000 });
         const panned = await page.getByTestId('workflow-canvas').evaluate((canvas) => canvas.scrollTop);
         assert.ok(panned > 80, `Alt-dragging empty paper must pan the canvas, but it scrolled ${panned}px`);
 
@@ -2015,7 +2060,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         const scrollBeforeNudge = await page.getByTestId('workflow-canvas').evaluate((canvas) => canvas.scrollTop);
         const topBeforeNudge = await page.getByTestId('workflow-node-0').evaluate((card) => parseFloat(card.style.top));
         await page.keyboard.press('ArrowDown');
-        await page.waitForTimeout(250);
+        await page.waitForFunction((want) => parseFloat(document.querySelector('[data-testid="workflow-node-0"]')?.style.top ?? 'NaN') === want, topBeforeNudge + 8, { timeout: 5000 });
         assert.equal(
           await page.getByTestId('workflow-node-0').evaluate((card) => parseFloat(card.style.top)),
           topBeforeNudge + 8,
@@ -2028,7 +2073,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         );
         await page.getByTestId('workflow-clear').click();
         await page.getByTestId('workflow-clear-yes').click();
-        await page.waitForTimeout(300);
+        await page.getByTestId('workflow-empty').waitFor({ state: 'visible', timeout: 5000 });
         assert.equal(
           await page.getByTestId('workflow-empty').isVisible(),
           true,
@@ -2041,7 +2086,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.getByTestId('workflow-start-blank').click();
         await page.getByTestId('workflow-add-compute').click();
         await page.getByTestId('workflow-add-answer').click();
-        await page.waitForTimeout(250);
+        await page.waitForFunction(() => document.querySelectorAll('[data-node-id]').length === 3, undefined, { timeout: 5000 });
         // The ports are canvas coordinates, and the page may have scrolled above them in earlier
         // steps: bring the paper into view so both dots are on screen before a pointer drag.
         await page
@@ -2110,13 +2155,18 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         // the paper's foot below the window. Centre it first: the box is drawn in viewport pixels, and
         // a corner outside the window would start the drag on nothing.
         await page.getByTestId('workflow-canvas').evaluate((canvas) => canvas.scrollIntoView({ block: 'center' }));
+        // Kept: the frame is drawn from this box, and the cards' positions settle after Group is armed;
+        // nothing in the DOM says all three are inside the box yet. Run 1 drew a 2-of-3 frame with a
+        // box-on-screen condition, so this is a settle, not a condition that exists yet.
         await page.waitForTimeout(250);
         const groupCanvas = await page.getByTestId('workflow-canvas').boundingBox();
         await page.mouse.move(groupCanvas.x + groupCanvas.width - 24, groupCanvas.y + groupCanvas.height - 24);
         await page.mouse.down();
         await page.mouse.move(groupCanvas.x + 4, groupCanvas.y + 4, { steps: 10 });
         await page.mouse.up();
-        await page.waitForTimeout(400);
+        await page.waitForFunction(() => Boolean(document.querySelector('[data-testid="workflow-group-0"]')), undefined, {
+          timeout: 10000,
+        });
         assert.equal(
           await page.getByTestId('workflow-group-0').count(),
           1,
@@ -2141,7 +2191,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           'the chip hangs below the last card, so the grid must reserve air for it'
         );
         await page.getByTestId('workflow-group-title-0').fill('Winding → driver');
-        await page.waitForTimeout(300);
+        await page.waitForFunction((want) => document.querySelector('[data-testid="workflow-group-title-0"]')?.value === want, 'Winding → driver', { timeout: 5000 });
         // The frame was drawn at Fit scale. Put the paper back to life size, so the pointer delta
         // below is canvas pixels and the open column is not hidden by the lens.
         if ((await page.getByTestId('workflow-canvas-grid').evaluate((grid) => grid.style.transform)) !== 'scale(1)') {
@@ -2261,6 +2311,10 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.getByTestId('workflow-node-delete-2').evaluate((button) => button.scrollIntoView({ block: 'center' }));
         await page.waitForTimeout(200);
         await page.getByTestId('workflow-node-delete-2').click();
+        // The frame's membership updates on the spot, but the delete is persisted on the panel's
+        // debounce and the store offers no readable signal (run 1: a 10 s localStorage wait timed
+        // out while the reload found the edit). Run 2 showed that waiting on the DOM alone lets the
+        // reload overtake the write, so this sleep is the flush, not a repaint.
         await page.waitForTimeout(700);
         assert.equal(
           await cardsInFrame(),
@@ -2269,10 +2323,14 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         );
         await page.reload({ waitUntil: 'domcontentloaded' });
         await waitForEditor(page, undefined, 30000);
-        await page.waitForTimeout(600);
+        await page.waitForFunction(
+          () => Boolean(document.querySelector('[data-testid="editor-panes"], [data-testid="panel-workflow"]')),
+          undefined,
+          { timeout: 15000 }
+        );
         if (!(await page.getByTestId('panel-workflow').isVisible().catch(() => false))) {
           await page.getByTestId('editor-tab-workflow').click();
-          await page.waitForTimeout(250);
+          await page.getByTestId('panel-workflow').waitFor({ state: 'visible', timeout: 5000 });
         }
         assert.equal(
           await page.getByTestId('workflow-group-title-0').inputValue(),
@@ -2285,7 +2343,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           'and membership must survive the reload with the deleted card already gone'
         );
         await page.getByTestId('workflow-group-remove-0').click();
-        await page.waitForTimeout(300);
+        await page.getByTestId('workflow-group-0').waitFor({ state: 'hidden', timeout: 5000 });
         assert.equal(
           await page.getByTestId('workflow-group-0').count(),
           0,
@@ -2305,7 +2363,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.getByTestId('workflow-node-drag-2').focus();
         const barBefore = await page.getByTestId('workflow-node-2').evaluate((bar) => parseFloat(bar.style.top));
         await page.keyboard.press('ArrowDown');
-        await page.waitForTimeout(250);
+        await page.waitForFunction((want) => parseFloat(document.querySelector('[data-testid="workflow-node-2"]')?.style.top ?? 'NaN') === want, barBefore + 8, { timeout: 5000 });
         assert.equal(
           await page.getByTestId('workflow-node-2').evaluate((bar) => parseFloat(bar.style.top)),
           barBefore + 8,
@@ -2317,7 +2375,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.getByTestId('workflow-node-title-0').click();
         await page.getByTestId('workflow-selection').waitFor({ state: 'visible', timeout: 10000 });
         await page.getByTestId('workflow-card-lane').selectOption('new');
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => document.activeElement?.getAttribute('data-testid') === 'workflow-lane-title-0', undefined, { timeout: 5000 });
         assert.equal(await page.getByTestId('workflow-lane-0').count(), 1, 'choosing New lane adds a lane');
         assert.equal(
           await page.evaluate(() => document.activeElement?.getAttribute('data-testid')),
@@ -2325,10 +2383,10 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           'a new lane must hand its name field the caret'
         );
         await page.getByTestId('workflow-lane-title-0').fill('Mechanical');
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => document.querySelector('[data-testid="workflow-lane-title-0"]')?.value === 'Mechanical', undefined, { timeout: 5000 });
         await page.getByTestId('workflow-node-title-1').click();
         await page.getByTestId('workflow-card-lane').selectOption('new');
-        await page.waitForTimeout(300);
+        await page.getByTestId('workflow-lane-title-1').waitFor({ state: 'visible', timeout: 5000 });
         await page.getByTestId('workflow-lane-title-1').fill('Firmware');
         // A card's look is authored, not a preview: the swatches write a theme token, the size steps
         // the type, and a field holding `$…$` is drawn by KaTeX — with its source back while focused.
@@ -2370,10 +2428,14 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
 
         await page.reload({ waitUntil: 'domcontentloaded' });
         await waitForEditor(page, undefined, 30000);
-        await page.waitForTimeout(600);
+        await page.waitForFunction(
+          () => Boolean(document.querySelector('[data-testid="editor-panes"], [data-testid="panel-workflow"]')),
+          undefined,
+          { timeout: 15000 }
+        );
         if (!(await page.getByTestId('panel-workflow').isVisible().catch(() => false))) {
           await page.getByTestId('editor-tab-workflow').click();
-          await page.waitForTimeout(250);
+          await page.getByTestId('panel-workflow').waitFor({ state: 'visible', timeout: 5000 });
         }
         assert.equal(
           await page.getByTestId('workflow-lane-title-0').inputValue(),
@@ -2405,14 +2467,14 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           'and so are the ink and the size, written only because they were chosen'
         );
         await page.getByTestId('workflow-lane-title-1').fill('Firmware team');
-        await page.waitForTimeout(300);
+        await page.waitForFunction((want) => document.querySelector('[data-testid="workflow-lane-title-1"]')?.value === want, 'Firmware team', { timeout: 5000 });
         assert.equal(
           await page.getByTestId('workflow-lane-title-1').inputValue(),
           'Firmware team',
           'an existing lane is renamed where its name sits'
         );
         await page.getByTestId('workflow-lane-remove-0').click();
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => document.querySelectorAll('[data-testid="workflow-lane-0"]').length === 1, undefined, { timeout: 5000 });
         assert.equal(await page.getByTestId('workflow-lane-0').count(), 1, 'removing a lane takes the band only');
         assert.equal(
           await page.locator('[data-node-id]').count(),
@@ -2449,7 +2511,10 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           return { at, box };
         };
         await page.getByTestId('workflow-canvas').evaluate((canvas) => canvas.scrollIntoView({ block: 'center' }));
-        await page.waitForTimeout(250);
+        await page.waitForFunction(() => {
+          const box = document.querySelector('[data-testid="workflow-canvas"]')?.getBoundingClientRect();
+          return Boolean(box) && box.top >= 0 && box.top < window.innerHeight;
+        }, undefined, { timeout: 5000 });
 
         const firstAt = await emptySpot(0);
         assert.ok(firstAt, 'the canvas must have bare paper to right-click');
@@ -2521,7 +2586,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.mouse.click(outsideAt.x, outsideAt.y, { button: 'right' });
         await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
         await page.mouse.click(outsideAt.x + 260, outsideAt.y);
-        await page.waitForTimeout(250);
+        await page.getByTestId('workflow-menu').waitFor({ state: 'hidden', timeout: 5000 });
         assert.equal(await page.getByTestId('workflow-menu').count(), 0, 'a press outside must close the menu');
         assert.equal(await page.locator('[data-node-id]').count(), 5, 'and must not add a card');
         assert.equal(
@@ -2547,7 +2612,12 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           );
         }
         await page.getByTestId('workflow-menu-fill-purple').click();
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() =>
+          [...document.querySelectorAll('[data-node-id]')].some((card) =>
+            [card, ...card.querySelectorAll('[style]')].some((el) =>
+              (el.getAttribute('style') ?? '').includes('--purple')
+            )
+          ), undefined, { timeout: 5000 });
         const painted = (testid) =>
           page.getByTestId(testid).evaluate((card) =>
             [card, ...card.querySelectorAll('[style]')].some((el) =>
@@ -2557,12 +2627,14 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         assert.equal(await painted('workflow-node-3'), true, 'a colour chosen from the card menu must paint it');
         await openCardMenu();
         await page.getByTestId('workflow-menu').getByRole('button', { name: 'Copy', exact: true }).click();
-        await page.waitForTimeout(250);
+        await page.getByTestId('workflow-menu').waitFor({ state: 'hidden', timeout: 5000 });
         const pasteAt = await emptySpot(0);
         await page.mouse.click(pasteAt.x, pasteAt.y, { button: 'right' });
         await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
         await page.getByTestId('workflow-menu').getByRole('button', { name: 'Paste', exact: true }).click();
-        await page.waitForTimeout(400);
+        await page.waitForFunction(() => document.querySelectorAll('[data-node-id]').length === 6, undefined, {
+          timeout: 10000,
+        });
         assert.equal(await page.locator('[data-node-id]').count(), 6, 'Paste must add the clip as a card');
         const pasted = await page.locator('[data-node-id]').last().evaluate((card) => ({
           id: card.getAttribute('data-node-id'),
@@ -2586,16 +2658,20 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           .click({ button: 'right' });
         await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
         await page.getByTestId('workflow-menu').getByRole('button', { name: 'Cut', exact: true }).click();
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => document.querySelectorAll('[data-node-id]').length === 5, undefined, { timeout: 5000 });
         assert.equal(await page.locator('[data-node-id]').count(), 5, 'Cut must take the card away');
 
         await page.waitForTimeout(700);
         await page.reload({ waitUntil: 'domcontentloaded' });
         await waitForEditor(page, undefined, 30000);
-        await page.waitForTimeout(700);
+        await page.waitForFunction(
+          () => Boolean(document.querySelector('[data-testid="editor-panes"], [data-testid="panel-workflow"]')),
+          undefined,
+          { timeout: 15000 }
+        );
         if (!(await page.getByTestId('panel-workflow').isVisible().catch(() => false))) {
           await page.getByTestId('editor-tab-workflow').click();
-          await page.waitForTimeout(250);
+          await page.getByTestId('panel-workflow').waitFor({ state: 'visible', timeout: 5000 });
         }
         assert.equal(
           await page.locator('[data-node-id]').count(),
@@ -2622,7 +2698,16 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         const canvasBefore = await page.getByTestId('workflow-canvas').boundingBox();
         const scrollBefore = await page.evaluate(() => window.scrollY);
         await page.getByTestId('workflow-fullscreen').click();
-        await page.waitForTimeout(400);
+        await page.waitForFunction(
+          () => {
+            const panel = document.querySelector('[data-testid="panel-workflow"]');
+            if (!panel) return false;
+            const box = panel.getBoundingClientRect();
+            return box.width >= window.innerWidth - 2 && box.height >= window.innerHeight - 2;
+          },
+          undefined,
+          { timeout: 10000 }
+        );
         const paneFull = await page.getByTestId('panel-workflow').boundingBox();
         assert.ok(
           paneFull.width >= viewport.width - 2 && paneFull.height >= viewport.height - 2,
@@ -2679,7 +2764,10 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         };
         const edgeChips = () => page.locator('[data-testid^="workflow-edge-kind-"]').count();
         await page.getByTestId('workflow-canvas').evaluate((canvas) => canvas.scrollIntoView({ block: 'center' }));
-        await page.waitForTimeout(250);
+        await page.waitForFunction(() => {
+          const box = document.querySelector('[data-testid="workflow-canvas"]')?.getBoundingClientRect();
+          return Boolean(box) && box.top >= 0 && box.top < window.innerHeight;
+        }, undefined, { timeout: 5000 });
         const chipsBefore = await edgeChips();
         // The card the full-screen step added is the newest, so its dot is the one nothing covers.
         const dropPaper = await dragTo(5);
@@ -2723,14 +2811,14 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await dragTo(7, true);
         await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
         await page.keyboard.press('Escape');
-        await page.waitForTimeout(250);
+        await page.waitForFunction(() => document.querySelectorAll('[data-node-id]').length === 8, undefined, { timeout: 5000 });
         assert.equal(await page.locator('[data-node-id]').count(), 8, 'Alt must ask instead of adding');
 
         // An arrow's route is chosen in its own inspector and changes the line the SVG draws.
         const routeEdge = chipsBefore + 1;
         await page.getByTestId(`workflow-edge-kind-${routeEdge}`).click();
         await page.getByTestId(`workflow-edge-route-elbow-${routeEdge}`).click();
-        await page.waitForTimeout(250);
+        await page.waitForFunction((id) => document.querySelector(`[data-testid="workflow-edge-${id}"] path`)?.getAttribute('data-route') === 'elbow', routeEdge, { timeout: 5000 });
         assert.equal(
           await page
             .locator(`[data-testid="workflow-edge-${routeEdge}"] path`)
@@ -2739,7 +2827,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           'the picked route must reach the line, not just the button'
         );
         await page.getByTestId(`workflow-edge-route-straight-${routeEdge}`).click();
-        await page.waitForTimeout(250);
+        await page.waitForFunction((id) => document.querySelector(`[data-testid="workflow-edge-${id}"] path`)?.getAttribute('data-route') === 'straight', routeEdge, { timeout: 5000 });
         const straightPath = await page
           .locator(`[data-testid="workflow-edge-${routeEdge}"] path`)
           .evaluate((path) => ({ route: path.getAttribute('data-route'), d: path.getAttribute('d') }));
@@ -2771,7 +2859,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         const homeX = await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetLeft);
         await handle0.focus();
         await page.keyboard.press('ArrowRight');
-        await page.waitForTimeout(300);
+        await page.waitForFunction((x) => document.querySelector('[data-testid="workflow-node-0"]').offsetLeft !== x, homeX, { timeout: 5000 });
         assert.notEqual(
           await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetLeft),
           homeX,
@@ -2837,7 +2925,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         const partSelect = page.getByTestId('workflow-card-project');
         await partSelect.waitFor({ timeout: 5000 });
         await partSelect.selectOption('08-capstone1-foc-eda/u1');
-        await page.waitForTimeout(250);
+        await page.waitForFunction(() => /^U1 · STM32G474RET6$/.test((document.querySelector('[data-testid="workflow-node-ref-0"]')?.textContent ?? '').trim()), undefined, { timeout: 5000 });
         const partChip = page.getByTestId('workflow-node-ref-0');
         assert.match(
           (await partChip.innerText()).trim(),
@@ -2846,10 +2934,10 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         );
         await page.getByTestId('workflow-canvas').focus();
         await page.keyboard.press(`${mod}+z`);
-        await page.waitForTimeout(300);
+        await partChip.waitFor({ state: 'hidden', timeout: 5000 });
         assert.equal(await partChip.count(), 0, 'undo must take the citation away');
         await page.keyboard.press(`${mod}+Shift+z`);
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => /^U1 · STM32G474RET6$/.test((document.querySelector('[data-testid="workflow-node-ref-0"]')?.textContent ?? '').trim()), undefined, { timeout: 5000 });
         assert.match(
           (await partChip.innerText()).trim(),
           /^U1 · STM32G474RET6$/,
@@ -2863,7 +2951,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         const walkX = await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetLeft);
         await nudgeHandle.focus();
         await page.keyboard.press('ArrowRight');
-        await page.waitForTimeout(300);
+        await page.waitForFunction((x) => document.querySelector('[data-testid="workflow-node-0"]').offsetLeft !== x, walkX, { timeout: 5000 });
         const nudgedX = await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetLeft);
         assert.notEqual(nudgedX, walkX, 'the nudge must move the card');
         await page.getByTestId('workflow-undo').click();
@@ -2922,7 +3010,13 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         const edgesBeforeClear = await edgeChips();
         await page.getByTestId('workflow-clear').click();
         await page.getByTestId('workflow-clear-yes').click();
-        await page.waitForTimeout(400);
+        await page.waitForFunction(
+          () =>
+            document.querySelectorAll('[data-node-id]').length === 0 &&
+            Boolean(document.querySelector('[data-testid="workflow-empty"]')),
+          undefined,
+          { timeout: 10000 }
+        );
         assert.equal(await page.locator('[data-node-id]').count(), 0, 'Clear must empty the diagram');
         assert.equal(await page.getByTestId('workflow-empty').count(), 1, 'and the panel must say it is empty');
         await page.getByTestId('workflow-undo').waitFor({ timeout: 5000 });
@@ -2932,26 +3026,30 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         assert.equal(await edgeChips(), edgesBeforeClear, 'and every arrow with it');
         await page.getByTestId('workflow-canvas').focus();
         await page.keyboard.press(`${mod}+Shift+z`);
-        await page.waitForTimeout(400);
+        await page.waitForFunction(() => document.querySelectorAll('[data-node-id]').length === 0, undefined, {
+          timeout: 10000,
+        });
         assert.equal(await page.locator('[data-node-id]').count(), 0, 'redo must clear it again');
         await page.keyboard.press(`${mod}+z`);
-        await page.waitForTimeout(400);
+        await page.waitForFunction(() => document.querySelectorAll('[data-node-id]').length === 8, undefined, {
+          timeout: 10000,
+        });
         assert.equal(await page.locator('[data-node-id]').count(), 8, 'and undo must still be there afterwards');
 
         await page.getByTestId('workflow-clear').click();
         await page.getByTestId('workflow-clear-yes').click();
-        await page.waitForTimeout(250);
+        await page.getByTestId('workflow-start-blank').waitFor({ state: 'visible', timeout: 5000 });
 
         // Simulation is a walk over control arrows: Start puts one token on the opening card, Step
         // follows one arrow to the next card, and the answer ends the walk. The marks are view state,
         // so Stop takes them away without touching the diagram.
         await page.getByTestId('workflow-start-blank').click();
-        await page.waitForTimeout(250);
+        await page.getByTestId('workflow-add-compute').waitFor({ state: 'visible', timeout: 5000 });
         await page.getByTestId('workflow-add-compute').click();
         await page.waitForTimeout(200);
         await page.getByTestId('workflow-node-port-right-0').click();
         await page.getByTestId('workflow-node-port-top-1').click();
-        await page.waitForTimeout(250);
+        await page.waitForFunction(() => document.querySelectorAll('svg g[data-testid^="workflow-edge-"]').length >= 1, undefined, { timeout: 5000 });
         await page.getByTestId('workflow-run-start').click();
         await page.waitForTimeout(150);
         assert.equal(
@@ -2991,7 +3089,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         const doorSelect = page.getByTestId('workflow-card-project');
         await doorSelect.waitFor({ timeout: 5000 });
         await doorSelect.selectOption('08-capstone1-foc-eda/u1');
-        await page.waitForTimeout(250);
+        await page.waitForFunction(() => (document.querySelector('[data-testid="workflow-node-ref-0"]')?.textContent ?? '').includes('U1'), undefined, { timeout: 5000 });
         const doorBadge = page.getByTestId('workflow-node-ref-0');
         await doorBadge.waitFor({ timeout: 5000 });
         await doorBadge.click();
@@ -3038,7 +3136,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           'and a cited part must return to Project Mode on that part’s id'
         );
         await page.getByTestId('project-search').fill('08-capstone1-foc-eda/u6');
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => (document.querySelector('[data-testid="project-count"]')?.textContent ?? '').trim() === '1 of 12 parts', undefined, { timeout: 5000 });
         assert.match(
           await page.getByTestId('project-count').innerText(),
           /^1 of 12 parts$/,
@@ -3055,18 +3153,18 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           'and its detail card must name the part the id resolves to'
         );
         await page.getByTestId('tab-btn-tab-pyodide').click();
-        await page.waitForTimeout(250);
+        await page.getByTestId('editor-tab-workflow').waitFor({ state: 'visible', timeout: 5000 });
 
         // The same field cites the model's other object type. A requirement id is stored as the id,
         // not as a second kind of reference: the picker groups it, the badge names its reference and
         // title, and pressing the badge opens the Requirements view selected on that exact row.
         await page.getByTestId('editor-tab-workflow').click();
-        await page.waitForTimeout(400);
+        await page.getByTestId('workflow-node-drag-0').waitFor({ state: 'visible', timeout: 10000 });
         await page.getByTestId('workflow-node-drag-0').focus();
         const objectSelect = page.getByTestId('workflow-card-project');
         await objectSelect.waitFor({ timeout: 5000 });
         await objectSelect.selectOption('08-capstone1-foc-eda/req-therm-01');
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => (document.querySelector('[data-testid="workflow-node-ref-0"]')?.textContent ?? '').trim() === 'REQ-THERM-01 · Stay cool at full load', undefined, { timeout: 5000 });
         const objectBadge = page.getByTestId('workflow-node-ref-0');
         assert.equal(
           (await objectBadge.innerText()).trim(),
@@ -3077,14 +3175,14 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         // citation it replaced, redo puts the requirement back.
         await page.getByTestId('workflow-canvas').focus();
         await page.keyboard.press(`${mod}+z`);
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => (document.querySelector('[data-testid="workflow-node-ref-0"]')?.textContent ?? '').trim() === 'U1 · STM32G474RET6', undefined, { timeout: 5000 });
         assert.equal(
           (await objectBadge.innerText()).trim(),
           'U1 · STM32G474RET6',
           'undo must restore the part citation the requirement replaced'
         );
         await page.keyboard.press(`${mod}+Shift+z`);
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => (document.querySelector('[data-testid="workflow-node-ref-0"]')?.textContent ?? '').trim() === 'REQ-THERM-01 · Stay cool at full load', undefined, { timeout: 5000 });
         assert.equal(
           (await objectBadge.innerText()).trim(),
           'REQ-THERM-01 · Stay cool at full load',
@@ -3095,20 +3193,34 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.getByTestId('workflow-node-drag-0').click({ button: 'right' });
         await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
         await page.getByTestId('workflow-menu').getByRole('button', { name: 'Copy', exact: true }).click();
-        await page.waitForTimeout(250);
+        await page.getByTestId('workflow-menu').waitFor({ state: 'hidden', timeout: 5000 });
         // The paper may be scrolled from the simulation step; a paste needs a visible bare point.
         await page.getByTestId('workflow-canvas').evaluate((canvas) => {
           canvas.scrollTop = 0;
           canvas.scrollLeft = 0;
           canvas.scrollIntoView({ block: 'center' });
         });
-        await page.waitForTimeout(250);
+        // The scroll reset above is the condition: the paste point is measured on unscrolled paper.
+        await page.waitForFunction(() => {
+          const canvas = document.querySelector('[data-testid="workflow-canvas"]');
+          return Boolean(canvas) && canvas.scrollTop === 0 && canvas.scrollLeft === 0;
+        }, undefined, { timeout: 5000 });
         const citePasteAt = await emptySpot(0);
         assert.ok(citePasteAt, 'pasting a cited card needs bare paper to start on');
         await page.mouse.click(citePasteAt.x, citePasteAt.y, { button: 'right' });
         await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
         await page.getByTestId('workflow-menu').getByRole('button', { name: 'Paste', exact: true }).click();
-        await page.waitForTimeout(400);
+        await page.waitForFunction(
+          () => {
+            const cards = document.querySelectorAll('[data-node-id]');
+            const last = cards[cards.length - 1];
+            return Boolean(
+              last?.querySelector('[data-testid^="workflow-node-ref-"]')?.textContent?.includes('REQ-THERM-01')
+            );
+          },
+          undefined,
+          { timeout: 10000 }
+        );
         const copiedBadge = page
           .locator('[data-node-id]')
           .last()
@@ -3118,6 +3230,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           'REQ-THERM-01 · Stay cool at full load',
           'a pasted card must carry the requirement citation'
         );
+        const cardsBeforeRemove = await page.locator('[data-node-id]').count();
         await page
           .locator('[data-node-id]')
           .last()
@@ -3125,7 +3238,8 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           .click({ button: 'right' });
         await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
         await page.getByTestId('workflow-menu').getByRole('button', { name: 'Remove', exact: true }).click();
-        await page.waitForTimeout(300);
+        // Remove takes a card away; the count is the only thing the press promises here.
+        await page.waitForFunction((n) => document.querySelectorAll('[data-node-id]').length === n, cardsBeforeRemove - 1, { timeout: 5000 });
 
         await objectBadge.click();
         await page.getByTestId('requirements-mode').waitFor({ timeout: 5000 });
@@ -3157,14 +3271,14 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         // TEST-THERM-01, the badge names it, and pressing it opens the requirement the test
         // judges, with the measured value held against its own limit in that row.
         await page.getByTestId('tab-btn-tab-pyodide').click();
-        await page.waitForTimeout(300);
+        await page.getByTestId('editor-tab-workflow').waitFor({ state: 'visible', timeout: 5000 });
         await page.getByTestId('editor-tab-workflow').click();
-        await page.waitForTimeout(400);
+        await page.getByTestId('workflow-node-drag-0').waitFor({ state: 'visible', timeout: 10000 });
         await page.getByTestId('workflow-node-drag-0').focus();
         const testSelect = page.getByTestId('workflow-card-project');
         await testSelect.waitFor({ timeout: 5000 });
         await testSelect.selectOption('08-capstone1-foc-eda/test-therm-01');
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => (document.querySelector('[data-testid="workflow-node-ref-0"]')?.textContent ?? '').trim() === 'TEST-THERM-01 · Junction temperature at full load', undefined, { timeout: 5000 });
         const testBadge = page.getByTestId('workflow-node-ref-0');
         assert.equal(
           (await testBadge.innerText()).trim(),
@@ -3175,14 +3289,14 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         // redo puts the test back.
         await page.getByTestId('workflow-canvas').focus();
         await page.keyboard.press(`${mod}+z`);
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => (document.querySelector('[data-testid="workflow-node-ref-0"]')?.textContent ?? '').trim() === 'REQ-THERM-01 · Stay cool at full load', undefined, { timeout: 5000 });
         assert.equal(
           (await testBadge.innerText()).trim(),
           'REQ-THERM-01 · Stay cool at full load',
           'undo must restore the requirement citation the test replaced'
         );
         await page.keyboard.press(`${mod}+Shift+z`);
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => (document.querySelector('[data-testid="workflow-node-ref-0"]')?.textContent ?? '').trim() === 'TEST-THERM-01 · Junction temperature at full load', undefined, { timeout: 5000 });
         assert.equal(
           (await testBadge.innerText()).trim(),
           'TEST-THERM-01 · Junction temperature at full load',
@@ -3204,21 +3318,27 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         // Leaving and returning remounts the panel from the store; a full reload must find the
         // citation again, because it is part of the lesson's saved document, not view state.
         await page.getByTestId('tab-btn-tab-pyodide').click();
-        await page.waitForTimeout(300);
+        await page.getByTestId('editor-tab-workflow').waitFor({ state: 'visible', timeout: 5000 });
         await page.getByTestId('editor-tab-workflow').click();
-        await page.waitForTimeout(400);
+        await page.getByTestId('workflow-node-ref-0').waitFor({ state: 'visible', timeout: 10000 });
         assert.equal(
           (await page.getByTestId('workflow-node-ref-0').innerText()).trim(),
           'TEST-THERM-01 · Junction temperature at full load',
           'a test citation must survive the panel remounting'
         );
+        // And here again: the citation is stored on the same debounce and has no DOM or storage
+        // signal to wait on, so this is the write flush the reload needs, not a repaint.
         await page.waitForTimeout(700);
         await page.reload({ waitUntil: 'domcontentloaded' });
         await waitForEditor(page, undefined, 30000);
-        await page.waitForTimeout(700);
+        await page.waitForFunction(
+          () => Boolean(document.querySelector('[data-testid="editor-panes"], [data-testid="panel-workflow"]')),
+          undefined,
+          { timeout: 15000 }
+        );
         if (!(await page.getByTestId('panel-workflow').isVisible().catch(() => false))) {
           await page.getByTestId('editor-tab-workflow').click();
-          await page.waitForTimeout(300);
+          await page.getByTestId('panel-workflow').waitFor({ state: 'visible', timeout: 5000 });
         }
         assert.equal(
           (await page.getByTestId('workflow-node-ref-0').innerText()).trim(),
@@ -3257,7 +3377,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.getByTestId('workflow-node-title-0').fill('A deliberately long card title that should fit on one wide line');
         await page.waitForTimeout(200);
         await page.getByTestId('workflow-fit-text').click();
-        await page.waitForTimeout(300);
+        await page.waitForFunction((want) => (document.querySelector('[data-testid="workflow-node-0"]')?.offsetWidth ?? 0) >= want, widthAfter, { timeout: 5000 });
         const fittedWidth = await page.getByTestId('workflow-node-0').evaluate((card) => card.offsetWidth);
         assert.ok(fittedWidth >= widthAfter, `Fit text must lengthen a long line (${widthAfter} → ${fittedWidth})`);
         // Right-click opens the card menu; Wrap text is the item that changes wrapping.
@@ -3302,7 +3422,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           'search must show the matching card and its snippet'
         );
         await page.getByTestId('workflow-search-hit-0').click();
-        await page.waitForTimeout(250);
+        await page.waitForFunction(() => document.querySelector('[data-testid="workflow-node-0"]')?.getAttribute('data-step') === '1', undefined, { timeout: 5000 });
         assert.equal(
           await page.getByTestId('workflow-node-0').getAttribute('data-step'),
           '1',
@@ -3321,7 +3441,16 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           cards.map((card) => `${card.style.left},${card.style.top}`)
         );
         await page.getByTestId('workflow-auto-layout').click();
-        await page.waitForTimeout(400);
+        await page.waitForFunction(
+          (before) => {
+            const now = [...document.querySelectorAll('[data-node-id]')].map(
+              (card) => `${card.style.left},${card.style.top}`
+            );
+            return JSON.stringify(now) !== JSON.stringify(before);
+          },
+          beforeLayout,
+          { timeout: 10000 }
+        );
         const afterLayout = await page.locator('[data-node-id]').evaluateAll((cards) =>
           cards.map((card) => `${card.style.left},${card.style.top}`)
         );
@@ -3336,7 +3465,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.keyboard.down(mod);
         await page.getByTestId('workflow-node-drag-1').click();
         await page.keyboard.up(mod);
-        await page.waitForTimeout(250);
+        await page.getByTestId('workflow-multi-selection').waitFor({ state: 'visible', timeout: 5000 });
         assert.equal(
           await page.getByTestId('workflow-multi-selection').isVisible(),
           true,
@@ -3367,7 +3496,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.getByTestId('workflow-text-toolbar').waitFor({ timeout: 5000 });
         const titleText = await titleField.inputValue();
         await page.getByTestId('workflow-format-bold').click();
-        await page.waitForTimeout(300);
+        await page.waitForFunction(() => ((document.querySelector('[data-testid="workflow-node-title-format-0"]')?.querySelector('[data-format="bold"]')?.textContent) ?? '').length > 0, undefined, { timeout: 5000 });
         const selectedWords = titleText.slice(0, 12);
         assert.equal(
           await titleField.inputValue(),
@@ -3404,7 +3533,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         );
         if (await foldedGoalEditor.count()) await foldedGoalEditor.first().click();
         await page.getByTestId('editor-tab-main').click();
-        await page.waitForTimeout(300);
+        await page.getByTestId('editor-goal').waitFor({ state: 'visible', timeout: 5000 });
         const goalText = await page.getByTestId('editor-goal').innerText();
         assert.match(
           goalText,
@@ -3486,7 +3615,16 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         assert.equal(mid.overflow, 0, `${width}px must not scroll sideways`);
       }
       await page.setViewportSize({ width: 1440, height: 900 });
-      await page.waitForTimeout(400);
+      await page.waitForFunction(
+        () => {
+          const run = document.querySelector('[data-testid="btn-run-verify"]');
+          const predict = document.querySelector('[data-testid="btn-predict"]');
+          if (!run || !predict) return false;
+          return Math.abs(run.getBoundingClientRect().top - predict.getBoundingClientRect().top) <= 4;
+        },
+        undefined,
+        { timeout: 10000 }
+      );
       const wideRow = await page.evaluate(() => {
         const run = document.querySelector('[data-testid="btn-run-verify"]').getBoundingClientRect();
         const predict = document.querySelector('[data-testid="btn-predict"]').getBoundingClientRect();
@@ -3565,7 +3703,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     assert.equal(dockedDebug.side, 'left', 'the divider must know which edge it sits on');
     assert.equal(dockedDebug.handleOnTheRight, true, 'a results column on the left puts the handle on its right edge');
     assert.match(dockedDebug.label, /Results\s*→\s*Right/, 'the button must offer the way back');
-    await page.reload({ waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'domcontentloaded' });
     await waitForEditor(page, 'editor-main');
     assert.equal(
       await page.evaluate(() => document.querySelector('[data-layout]').getAttribute('data-dock')),
@@ -3591,7 +3729,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'right',
       'the lesson text must report the side it was moved to'
     );
-    await page.reload({ waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'domcontentloaded' });
     await waitForEditor(page, 'editor-main');
     assert.equal(
       await page.evaluate(() => document.querySelector('[data-layout]').getAttribute('data-lesson-dock')),
@@ -3683,7 +3821,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     const tryPayload = Buffer.from(JSON.stringify({ v: 1, lesson: tryLesson, code: tryCode })).toString(
       'base64url'
     );
-    await page.goto(`${baseUrl}?lesson=${tryLesson}#try=${tryPayload}`, { waitUntil: 'networkidle' });
+    await page.goto(`${baseUrl}?lesson=${tryLesson}#try=${tryPayload}`, { waitUntil: 'domcontentloaded' });
     await waitForEditor(page);
     assert.equal(await page.getByTestId('scratch-banner').isVisible(), true, 'a try link must open scratch');
     assert.equal(
@@ -3711,7 +3849,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     assert.equal(await page.getByTestId('scratch-banner').count(), 0, 'the banner’s button must leave scratch');
     const afterScratch = await getEditorCode(page);
     assert.equal(afterScratch.includes('total = 0'), false, 'leaving scratch must restore the learner’s text');
-    await page.goto(`${baseUrl}?lesson=${tryLesson}`, { waitUntil: 'networkidle' });
+    await page.goto(`${baseUrl}?lesson=${tryLesson}`, { waitUntil: 'domcontentloaded' });
     await waitForEditor(page);
     assert.equal(
       (await getEditorCode(page)).trim(),
@@ -3792,7 +3930,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'the Read page’s continue action must select Write'
     );
     await page.getByTestId('layout-study').click();
-    await page.waitForTimeout(400);
+    await page.getByTestId('editor-panes').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
     for (let attempt = 0; attempt < 3; attempt += 1) {
       if (await page.getByTestId('editor-panes').isVisible()) break;
       await page.getByTestId('btn-toggle-editor').click();
@@ -3868,7 +4006,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       { timeout: 5000 }
     );
     // Remembered: the reload is the whole point of storing it.
-    await page.reload({ waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'domcontentloaded' });
     await waitForEditor(page);
     assert.equal(
       await page.getByTestId('btn-vim').getAttribute('aria-pressed'),
@@ -4061,7 +4199,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     // draft. Both lines were armed in this lesson's file, so both are still dots afterwards. Wait
     // out the 400 ms draft debounce: this is a reload of the file, not a claim about lost keystrokes.
     await page.waitForTimeout(700);
-    await page.reload({ waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'domcontentloaded' });
     await waitForEditor(page);
     await armed(3);
     assert.equal(
@@ -4157,7 +4295,14 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
 
     // 7. Progress survives full browser reload
-    await page.reload({ waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    // DOMContentLoaded says nothing about hydration, so wait for the counts themselves rather than
+    // for the network to fall quiet; a count that never returns is still a failure, with a timeout.
+    await page.waitForFunction(
+      (needle) => (document.body.textContent ?? '').includes(needle),
+      `Executed & Passed: 1/${TOTAL}`,
+      { timeout: 15000 }
+    );
     const bodyAfterReload = await page.locator('body').textContent();
     assert(
       bodyAfterReload?.includes(`Executed & Passed: 1/${TOTAL}`),
@@ -4178,7 +4323,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       '?lesson=P.4',
       'choosing a lesson must still write the address, or a copied URL reopens the previous one'
     );
-    await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
     await waitForEditor(page, undefined, 15000);
     const resumedMeta = (await page.getByTestId('lesson-meta').textContent()) ?? '';
     assert(
@@ -4205,7 +4350,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     //     Continue card (the page that answers "what is next"), so the return visit's promise is
     //     judged there: the lesson last chosen is named, the reason is a resume, and one press
     //     reopens it. P.4 has been opened but not verified, which is the case worth resuming.
-    await page.goto(`${baseUrl}?view=home`, { waitUntil: 'networkidle' });
+    await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });
     await page.getByTestId('home-dashboard').waitFor({ timeout: 15000 });
     const continueCard = page.getByTestId('home-continue');
     const continueText = (await continueCard.textContent()) ?? '';
@@ -4242,7 +4387,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       flags['P.4'] = true;
       localStorage.setItem(key, JSON.stringify(flags));
     });
-    await page.goto(`${baseUrl}?view=home`, { waitUntil: 'networkidle' });
+    await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });
     await page.getByTestId('home-dashboard').waitFor({ timeout: 15000 });
     const nextText = (await page.getByTestId('home-continue').textContent()) ?? '';
     assert(
@@ -4273,7 +4418,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     //     unfinished program, Home says a draft is there and how large it is, and reopening it from
     //     Home hands the work back - a card naming an exercise whose typing it then replaced with the
     //     starter would be the same loss in a new place.
-    await page.goto(`${baseUrl}?lesson=P.4`, { waitUntil: 'networkidle' });
+    await page.goto(`${baseUrl}?lesson=P.4`, { waitUntil: 'domcontentloaded' });
     await waitForEditor(page, undefined, 15000);
     const p4Starter = await getEditorCode(page);
     // A real half-finished attempt: P.4's one measurable step (`# TODO 1` over `safe_cmd = cmd`) is
@@ -4285,7 +4430,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     // rather than for a fixed number of milliseconds - a slower CI runner would otherwise reach Home
     // before the debounce fired and read an untouched starter.
     await waitForBulk(page, DRAFTS_KEY, (drafts) => (drafts['P.4'] ?? '').includes('min(max(cmd'));
-    await page.goto(`${baseUrl}?view=home`, { waitUntil: 'networkidle' });
+    await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });
     await page.getByTestId('home-dashboard').waitFor({ timeout: 15000 });
     const draftText = (await page.getByTestId('home-continue').textContent()) ?? '';
     assert(
@@ -4365,7 +4510,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     // Reset Starter is the one edit that means "forget this one", so Home stops advertising it.
     await clickToolbar(page, 'btn-reset-starter');
     await page.waitForTimeout(200);
-    await page.goto(`${baseUrl}?view=home`, { waitUntil: 'networkidle' });
+    await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });
     await page.getByTestId('home-dashboard').waitFor({ timeout: 15000 });
     assert.equal(
       ((await page.getByTestId('home-continue').textContent()) ?? '').includes('Your draft is here'),
@@ -4528,7 +4673,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     });
     await seedTourSeen(receiverContext);
     const receiver = await receiverContext.newPage();
-    await receiver.goto(sharedUrl, { waitUntil: 'networkidle' });
+    await receiver.goto(sharedUrl, { waitUntil: 'domcontentloaded' });
     await receiver.getByTestId('shared-attempt-card').waitFor({ timeout: 15000 });
     assert.equal(
       await receiver.getByTestId('lesson-title').innerText(),
@@ -4554,7 +4699,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'loading the attempt must clear the offer, so it cannot be applied twice'
     );
     // Loading is a draft like any other: a reload on the receiver's own browser has to keep it.
-    await receiver.reload({ waitUntil: 'networkidle' });
+    await receiver.reload({ waitUntil: 'domcontentloaded' });
     await waitForEditor(receiver);
     assert.equal(
       await getEditorCode(receiver),
@@ -4595,7 +4740,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     });
     await seedTourSeen(guestContext);
     const guest = await guestContext.newPage();
-    await guest.goto(baseUrl, { waitUntil: 'networkidle' });
+    await guest.goto(baseUrl, { waitUntil: 'domcontentloaded' });
     await waitForEditor(guest);
     await clickToolbar(guest, 'btn-pair-open');
     await guest.getByTestId('btn-pair-join').click();
@@ -5249,8 +5394,9 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     // ...and the six stores that live in IndexedDB, or the reload would come back with this suite's
     // own log, drafts and notes still in place.
     await clearBulk(page);
-    await page.reload({ waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'domcontentloaded' });
     const formattingPage = page;
+    await waitForEditor(formattingPage, undefined, 30000);
     await formattingPage.getByTestId('tab-btn-tab-pyodide').click();
     const formatTotal = await readTally(formattingPage);
     const formatVerified = (n) => `${n} / ${formatTotal} Verified`;
@@ -5494,7 +5640,9 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     await formattingPage.getByTestId('btn-step-expand').waitFor({ timeout: 5000 });
 
     // The dismissal is remembered across a reload, and the restore control survives it too.
-    await formattingPage.reload({ waitUntil: 'networkidle' });
+    await formattingPage.reload({ waitUntil: 'domcontentloaded' });
+    // A count-is-zero assertion passes on an unmounted page, so mount the app before reading it.
+    await waitForEditor(formattingPage, undefined, 30000);
     assert(
       (await formattingPage.getByTestId('start-here').count()) === 0,
       'a dismissed Start here line must stay dismissed after a reload'
@@ -5772,7 +5920,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       boardSummary.length > 0,
       'a folded Board card must still say which lesson it holds; the summary was empty'
     );
-    await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
     await page.getByTestId('tab-btn-tab-arch').click();
     await page.getByTestId('board-bridge').waitFor({ timeout: 15000 });
     assert.equal(
@@ -6279,7 +6427,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       await searchPage.getByTestId('btn-focus-pill').waitFor({ timeout: 15000 });
       await searchPage.keyboard.press('Escape');
       await searchPage.getByTestId('btn-focus-pill').waitFor({ state: 'detached', timeout: 15000 });
-      await searchPage.reload({ waitUntil: 'networkidle' });
+      await searchPage.reload({ waitUntil: 'domcontentloaded' });
       await searchPage.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, {
         timeout: 20000,
       });

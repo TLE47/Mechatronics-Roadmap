@@ -96,6 +96,37 @@ flowchart LR
 
 <!-- figure: signal-chain | The plan in one line: inputs, four calculations, one checked output. -->
 
+#### The five-step method: think, then type
+
+The battery report is one instance of a method you will use on every P-track problem. It is not
+about knowing the answer; it is about *earning* the answer in an order that keeps you honest.
+
+1. **Restate the problem in one sentence, in your own words.** If you cannot, you are not ready to
+   type. "Given a pack and a load, report four numbers about what the pack can do" is a restatement;
+   "do the battery exercise" is not.
+2. **Write down what you know and what you need.** Two columns: the given values with their units,
+   and the answers with theirs. This is where a wrong unit — minutes against hours, mAh against mA —
+   becomes visible while it still costs one word to fix.
+3. **Plan in comments, one step per comment.** Each comment is a job: an input, a calculation, or a
+   check. If a comment needs two verbs, split it. If a step has no comment, ask what it is for.
+4. **Turn one comment into one line, then run it.** The first draft only has to be *honest*, not
+   complete: normal numbers, the simplest arithmetic, run after every line so a wrong answer is one
+   line away from the reason.
+5. **Attack the plan, not the code.** Try the case you expect to break it: a load of zero, a run
+   longer than the pack survives, a value already at the cutoff. When it breaks, the question you
+   missed belongs in the comments — answer it there, then change the code.
+
+**What critical thinking looks like here.** At each step, ask three questions: *What do I know for
+certain? What am I assuming? How would I find out?* The starter's names and units are facts. "The
+runtime should be about five hours" is an assumption until `capacity / load` confirms it. The
+expected output is how you find out. A learner who writes code first is answering those questions in
+the wrong order, with the editor as a notepad.
+
+**The first draft is allowed to be wrong; it is not allowed to be vague.** A draft with a comment
+that says "work out the charge" has not decided anything. A draft that says "charge used = load
+current × hours the test ran" has decided the units, the inputs and the shape of the line — and if
+it is wrong, it is wrong in a place you can point at.
+
 ### Bridge Notes
 
 The same four comments work on every later P-track exercise. In P.3 the input is a raw command, the output is a clamped command, the edge is a value outside 0–255, and the check is the boundary case you can work out by hand. Writing those four lines first turns a page of instructions into a short list of jobs.

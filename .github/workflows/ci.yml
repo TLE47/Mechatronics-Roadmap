@@ -16,8 +16,12 @@ on:
 
 # A newer push to the same pull request cancels the run it supersedes: that run's verdict is about a
 # commit nobody is waiting for. `main` is never cancelled, because its run is the one that publishes.
+# A pull request cancels its superseded run: that verdict is about a commit nobody waits for. `main`
+# runs are per-commit instead, so a push no longer queues behind the previous pipeline; the deploy job
+# below has its own group and refuses a commit that is no longer the branch head, so overlapping runs
+# cannot publish out of order.
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('{0}-{1}', github.ref, github.sha) }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -32,15 +36,18 @@ jobs:
   changes:
     name: Classify the change
     runs-on: ubuntu-latest
+    # The filter reads the pull request's file list through the API; it needs no checkout of its own,
+    # which turns a clone plus a filter into a few seconds of runner start.
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       browser: ${{ steps.filter.outputs.browser }}
       macos: ${{ steps.filter.outputs.macos }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Filter the changed paths
         id: filter
+        if: github.event_name == 'pull_request'
         uses: dorny/paths-filter@v3
         with:
           filters: |
@@ -61,7 +68,6 @@ jobs:
   # rerun. The exercise sweep and the unittest discovery are order-dependent and live below.
   python-text:
     name: Text gates — Markdown, math, generated data, workflows
-    needs: changes
     runs-on: ubuntu-latest
 
     steps:
@@ -103,7 +109,6 @@ jobs:
   # steps are one job in this order rather than three parallel ones.
   python-exercises:
     name: Exercises and unittest discovery
-    needs: changes
     runs-on: ubuntu-latest
 
     steps:
@@ -132,7 +137,6 @@ jobs:
 
   python-labs:
     name: Python and C++20 reference labs
-    needs: changes
     runs-on: ubuntu-latest
 
     steps:
@@ -206,7 +210,7 @@ jobs:
   # inside it. `npm run build` used to do both, and the typecheck then waited behind the whole build.
   typecheck:
     name: Typecheck the workbench
-    needs: [changes, build-workbench]
+    needs: [changes]
     if: github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.browser == 'true'
     runs-on: ubuntu-latest
 
@@ -384,11 +388,13 @@ jobs:
   # queued three waves deep around one suite that is ~250s warm on its own. It is a two-shard matrix
   # now - `e2e-a` keeps that suite plus four flows, `e2e-b` the remaining six, so each lane is a wave
   # behind the sweep instead of three. `bundle` keeps the built-bundle sweep and the control pairs.
-  # Each job still fetches the one build and starts its own server pair, so a shard passes exactly
-  # when the whole matrix would.
+  # Each shard starts its own dev server and browser, and neither fetches the bundle: the sweep has no
+  # use for `dist/`, so it starts beside the build instead of after it. `bundle-suites` owns that.
   e2e-suites:
     name: Browser suites — the dev-server sweep and its light flows (shard ${{ matrix.shard }})
-    needs: [changes, build-workbench]
+    # No build: every suite in these two shards drives the Vite dev server, so waiting for the bundle
+    # put the ~250 s sweep behind a build it never reads. `bundle-suites` still waits for it.
+    needs: [changes]
     if: github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.browser == 'true'
     strategy:
       # One shard's red is not the other's verdict: `fail-fast` would cancel the second half and
@@ -422,21 +428,6 @@ jobs:
         if: steps.node-modules.outputs.cache-hit != 'true'
         run: npm ci --prefer-offline --no-audit --no-fund
 
-      # The bundle was built once, in build-workbench. Its archive is older than this checkout's
-      # files, so the next step stamps it; from there every suite's `ensureBuilt` reuses it.
-      - name: Fetch the bundle the build job produced
-        uses: actions/download-artifact@v4
-        with:
-          name: workbench-dist
-          path: dist
-
-      # The archive carries the build job's timestamps, and this checkout's files are newer than that
-      # clock — so every suite's `ensureBuilt` would read the handed-over bundle as stale and build it
-      # again, in three lanes at once. Stamping it to now is the same statement the mtime comparison is
-      # trying to make: these bytes were built from this commit, earlier in this same run.
-      - name: Stamp the restored bundle as newer than this checkout
-        run: find dist -exec touch {} +
-
       # The cache key follows the Playwright version, not the lockfile hash: a dependency bump that
       # leaves Playwright alone must not throw away four browser installs. The fallback key lets a
       # version change reuse what is there and fetch only the new build.
@@ -466,11 +457,7 @@ jobs:
         run: npx playwright-core install-deps ${{ env.PW_BROWSERS }}
         timeout-minutes: 10
 
-      - name: Run the e2e partition (the SSR smoke, the unit batch, the dev-server sweep with the robot examples and clock log, the light flows)
-        env:
-          # A suite that finds the handed-over bundle stale must fail here, not rebuild it: the
-          # stamp above is the statement that these bytes came from this commit.
-          MECHALAB_PREBUILT_DIST: "1"
+      - name: Run the e2e partition (the SSR smoke, the unit batch, the dev-server sweep with the robot examples and clock log, micro-learning, the game, the light flows)
         run: |
           set +e
           npm run test:workbench -- --partition ${{ matrix.shard }} > /tmp/e2e-partition.log 2>&1
@@ -506,11 +493,6 @@ jobs:
           NODE
           fi
           exit "$status"
-
-      # The micro tab has its own browser flow: 2/2, the 0/2 practice branch, a seeded due review,
-      # the runtime switch, the source anchor and a 390 px fit. The reducer itself is in test:micro.
-      - name: "Check micro-learning: Home door, diagnostics, review, runtime switch and a 390 px tab"
-        run: npm run test:e2e:micro
 
   bundle-suites:
     name: Browser suites — the built bundle, control pairs, tour and home
@@ -617,11 +599,8 @@ jobs:
           fi
           exit "$status"
 
-      - name: "Check the 3.0 game: prologue, Mission Control, journey map, Black Box, award ledger"
-        run: npm run test:e2e:game
-
   audit-suites:
-    name: Audits — theme, axe, Lighthouse, the surface snapshot, label sizes
+    name: Audits — weight, theme, axe, the surface snapshot, label sizes
     needs: [changes, build-workbench]
     if: github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.browser == 'true'
     runs-on: ubuntu-latest
@@ -693,8 +672,6 @@ jobs:
       - name: "Check accessibility: axe over all sixteen tabs in both themes"
         run: npm run check:axe
 
-      - name: "Check Lighthouse: best-practices, SEO and accessibility on the built bundle"
-        run: npm run check:lighthouse
 
       - name: "Check the settle gate: a count that lands after the pane goes quiet is waited for"
         run: npm run test:settle
@@ -755,8 +732,76 @@ jobs:
       - name: "Check label sizes: the quiet row, the folded toolbar, and reading text at 17-18 px"
         run: npm run check:labels
 
-  runtime-suites:
-    name: Runtime suites — the Python worker under isolation, and the offline workbench
+  # Lighthouse is the one audit that owns a browser for minutes, and it used to make the five cheap
+  # browser gates above queue behind it. Same setup, one gate, its own runner.
+  lighthouse:
+    name: Audits — Lighthouse on the built bundle
+    needs: [changes, build-workbench]
+    if: github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.browser == 'true'
+    runs-on: ubuntu-latest
+    env:
+      PW_BROWSERS: chromium
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install the locked dependencies
+        if: steps.node-modules.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit --no-fund
+
+      - name: Fetch the bundle the build job produced
+        uses: actions/download-artifact@v4
+        with:
+          name: workbench-dist
+          path: dist
+
+      - name: Stamp the restored bundle as newer than this checkout
+        run: find dist -exec touch {} +
+
+      - name: Read the installed Playwright version
+        id: pw
+        run: node -p "'v=' + require('playwright-core/package.json').version" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.v }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install the Playwright browsers (only a cache miss needs them)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright-core install ${{ env.PW_BROWSERS }}
+        timeout-minutes: 8
+
+      - name: Install the Playwright OS libraries (only a cache miss needs them)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright-core install-deps ${{ env.PW_BROWSERS }}
+        timeout-minutes: 10
+
+      - name: "Check Lighthouse: best-practices, SEO and accessibility on the built bundle"
+        run: npm run check:lighthouse
+
+  # These two were one job with two steps, so the offline suite waited for the worker suite's browser
+  # to close. They touch different failure modes and share only the setup, so each gets a runner.
+  runtime-python:
+    name: Runtime — the Python worker under isolation
     needs: [changes, build-workbench]
     if: github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.browser == 'true'
     runs-on: ubuntu-latest
@@ -819,6 +864,67 @@ jobs:
       - name: "Check the Python worker: in-place Stop, input(), isolation, and the no-buffer fallback"
         run: npm run test:runtime
 
+  runtime-offline:
+    name: Runtime — the offline workbench
+    needs: [changes, build-workbench]
+    if: github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.browser == 'true'
+    runs-on: ubuntu-latest
+    env:
+      PW_BROWSERS: chromium
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install the locked dependencies
+        if: steps.node-modules.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit --no-fund
+
+      - name: Fetch the bundle the build job produced
+        uses: actions/download-artifact@v4
+        with:
+          name: workbench-dist
+          path: dist
+
+      - name: Stamp the restored bundle as newer than this checkout
+        run: find dist -exec touch {} +
+
+      - name: Read the installed Playwright version
+        id: pw
+        run: node -p "'v=' + require('playwright-core/package.json').version" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.v }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install the Playwright browsers (only a cache miss needs them)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright-core install ${{ env.PW_BROWSERS }}
+        timeout-minutes: 8
+
+      - name: Install the Playwright OS libraries (only a cache miss needs them)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright-core install-deps ${{ env.PW_BROWSERS }}
+        timeout-minutes: 10
+
       - name: "Check the offline workbench: worker-supplied isolation, cached shell, offline reload"
         run: npm run test:offline
 
@@ -841,14 +947,36 @@ jobs:
         e2e-suites,
         bundle-suites,
         audit-suites,
-        runtime-suites,
+        lighthouse,
+        runtime-python,
+        runtime-offline,
       ]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    # One deploy at a time, in its own group: runs of the same commit no longer share a queue, so this
+    # is the one place where two pushes could otherwise race.
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: false
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # A run that finished after a newer push must not publish over it. The check is against the
+      # branch head, not against the run's own commit, and it costs one ls-remote.
+      - name: Skip a commit that is no longer the branch head
+        id: head
+        run: |
+          current=$(git ls-remote origin refs/heads/main | cut -f1)
+          if [ "$current" != "$GITHUB_SHA" ]; then
+            echo "Superseded by $current; this run does not publish."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Deploy the built bundle to GitHub Pages
         id: deployment
+        if: steps.head.outputs.skip != 'true'
         uses: actions/deploy-pages@v4

@@ -242,6 +242,8 @@ async function main() {
       // A click is heard, and it is the delegated listener that hears it: the classifier decides the
       // role, so the settings button (an `aria-expanded` latch) must arrive as a toggle.
       await page.getByTestId('btn-sound-settings').click();
+      // The speaker's detail button opens the one settings dialog; the sound card lives inside it.
+      await page.getByTestId('general-settings').waitFor({ timeout: 5000 });
       await page.getByTestId('sound-settings').waitFor({ timeout: 5000 });
       const uiCues = await page.evaluate(() => window.__mechalabAudio?.().uiCues);
       assert.ok(
@@ -443,12 +445,11 @@ async function main() {
       await context.close();
     }
 
-    // ---- 4. The sound panel on a phone: it opens, it fits, and its last row is reachable ----
+    // ---- 4. The sound card on a phone: the dialog fits, and its last row is reachable ----
     //
-    // The tray row the button lives in scrolls sideways on a phone, and the panel used to be an
-    // `absolute` child of it: its left edge sat at -21 px and the row's clip box cut it off, so the
-    // panel was open and unusable. A 360×640 window is the short end of the same problem — the card
-    // was taller than the room under the header, and its credit and **Reset** were below the fold.
+    // Sound settings moved into General settings, so the box that has to fit is the dialog. A
+    // 360×640 window is the short end of the problem: the card is taller than the room under the
+    // header, and its credit and **Reset** must still be reachable by scrolling inside the dialog.
     {
       const context = await browser.newContext({
         viewport: { width: 360, height: 640 },
@@ -459,27 +460,39 @@ async function main() {
       const page = await context.newPage();
       await openWorkbench(page, baseUrl);
       await page.getByTestId('btn-sound-settings').click();
+      await page.getByTestId('general-settings').waitFor({ timeout: 5000 });
       const panel = page.getByTestId('sound-settings');
       await panel.waitFor({ timeout: 5000 });
 
       const fits = await page.evaluate(() => {
+        const dialog = document.querySelector('[data-testid="general-settings"]');
         const card = document.querySelector('[data-testid="sound-settings"]');
-        if (!card) return { missing: true };
-        const box = card.getBoundingClientRect();
+        if (!dialog || !card) return { missing: true };
+        const box = dialog.getBoundingClientRect();
+        const cardBox = card.getBoundingClientRect();
         return {
           view: { width: window.innerWidth, height: window.innerHeight },
           box: { top: box.top, left: box.left, right: box.right, bottom: box.bottom },
+          card: { left: cardBox.left, right: cardBox.right },
         };
       });
-      assert.ok(!fits.missing, 'the panel did not open on a phone');
-      assert.ok(fits.box.left >= 0, `the panel starts at ${fits.box.left} px, off the left edge`);
+      assert.ok(!fits.missing, 'general settings did not open on a phone');
+      assert.ok(
+        fits.box.top >= 0,
+        `the dialog starts at ${fits.box.top} px, off the top edge (a fixed panel inside a filtered header does this)`
+      );
+      assert.ok(fits.box.left >= 0, `the dialog starts at ${fits.box.left} px, off the left edge`);
       assert.ok(
         fits.box.right <= fits.view.width + 1,
-        `the panel ends at ${fits.box.right} px, past the ${fits.view.width} px window`
+        `the dialog ends at ${fits.box.right} px, past the ${fits.view.width} px window`
       );
       assert.ok(
         fits.box.bottom <= fits.view.height + 1,
-        `the panel ends at ${fits.box.bottom} px, below the ${fits.view.height} px window`
+        `the dialog ends at ${fits.box.bottom} px, below the ${fits.view.height} px window`
+      );
+      assert.ok(
+        fits.card.left >= 0 && fits.card.right <= fits.view.width + 1,
+        `the sound card is clipped sideways (${fits.card.left}..${fits.card.right} of ${fits.view.width})`
       );
 
       // A press inside a portalled panel is not a press outside it: the panel must survive its own
@@ -503,13 +516,13 @@ async function main() {
 
       await page.keyboard.press('Escape');
       await page.waitForTimeout(200);
-      assert.equal(await panel.count(), 0, 'Escape did not close the phone panel');
+      assert.equal(await panel.count(), 0, 'Escape did not close the phone settings');
       assert.equal(
         await page.evaluate(() => document.activeElement?.getAttribute('data-testid')),
         'btn-sound-settings',
         'focus must go back to the button that opened the panel'
       );
-      console.log('  ok the sound panel opens on a phone, fits 360×640, and keeps its controls usable');
+      console.log('  ok the settings dialog opens on a phone, fits 360×640, and keeps the sound rows usable');
       await context.close();
     }
   } finally {

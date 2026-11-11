@@ -78,34 +78,36 @@ export const INSTRUMENTS: readonly InstrumentInfo[] = [
   { id: 'violin', label: 'Violin' },
 ];
 
+/** The category that is not a tape: two detuned oscillators the engine has always had. */
+export const DRONE_ID = 'drone';
+
 /**
- * Instrument-led tracks, not the drone's held recipes.
+ * The solo instrument tracks.
  *
- * These are shortcuts into the real tape list: choosing one starts a full loop whose lead instrument
- * matches the chip. The held `INSTRUMENTS` above stay for the Drone preference, but the panel no
- * longer offers them as music — a sustained chord is a texture, not a track a learner can study to.
+ * "Solo" is meant literally: one instrument and nothing else. These chips choose the drone with an
+ * instrument recipe — the held chord the engine already builds for a piano, a guitar, a flute or a
+ * violin — so what a learner hears is that instrument alone, not a full band with that instrument
+ * somewhere in the mix. The previous shortcuts played whole recordings (a lo-fi track for "Piano"),
+ * which is not what the heading promised.
  */
 export interface SoloTrack {
   id: InstrumentId;
   label: string;
-  /** The catalogue tape this chip plays. */
+  /** The drone is the only tape that plays one instrument on its own. */
   tapeId: string;
   hint: string;
 }
 
 export const SOLO_TRACKS: readonly SoloTrack[] = [
-  { id: 'piano', label: 'Piano', tapeId: 'first-snow', hint: 'First Snow — a real solo piano recording.' },
-  { id: 'guitar', label: 'Guitar', tapeId: 'winter-blues', hint: 'Winter Blues — a guitar-led CC0 recording.' },
-  { id: 'flute', label: 'Flute', tapeId: 'paper-lanterns', hint: 'Paper Lanterns — bell and breathy flute voices.' },
-  { id: 'violin', label: 'Violin', tapeId: 'city-lights', hint: 'City Lights — a warm string-pad lead.' },
+  { id: 'piano', label: 'Piano', tapeId: 'drone', hint: 'Piano only — the held chord with a piano\u2019s harmonics, no other voice.' },
+  { id: 'guitar', label: 'Guitar', tapeId: 'drone', hint: 'Guitar only — the held chord with a plucked-string recipe, nothing else.' },
+  { id: 'flute', label: 'Flute', tapeId: 'drone', hint: 'Flute only — the held chord with a breathy flute voice, nothing else.' },
+  { id: 'violin', label: 'Violin', tapeId: 'drone', hint: 'Violin only — the held chord with a bowed-string recipe, nothing else.' },
 ];
 
 export function isInstrumentId(value: unknown): value is InstrumentId {
   return INSTRUMENTS.some((entry) => entry.id === value);
 }
-
-/** The category that is not a tape: two detuned oscillators the engine has always had. */
-export const DRONE_ID = 'drone';
 
 export interface MusicCategoryInfo {
   id: MusicCategory;

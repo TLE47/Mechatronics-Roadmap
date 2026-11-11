@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { Settings2, X } from 'lucide-react';
 import { GENERAL_SETTINGS_EVENT, readShowActionLabels, writeShowActionLabels } from '../generalSettings';
 import { cachedSoundPrefs, subscribeSoundPrefs, type SoundPrefs } from '../audio/prefs.ts';
@@ -28,6 +29,7 @@ const SoundSettingsLive: React.FC<{ id: string }> = ({ id }) => {
       onLevel={(key, value) => change({ [key]: value / 100 } as Partial<SoundPrefs>)}
       onClicks={(on) => change({ clicks: on })}
       onTape={(tape) => change({ tape })}
+      onInstrument={(instrument) => change({ instrument })}
       excluded={prefs.excluded}
       onExclude={(tape) =>
         change({
@@ -53,10 +55,15 @@ const SoundSettingsLive: React.FC<{ id: string }> = ({ id }) => {
 export const GeneralSettingsPanel: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
   const [labels, setLabels] = React.useState(readShowActionLabels());
   const closeRef = React.useRef<HTMLButtonElement | null>(null);
+  // Whoever opened the dialog gets the focus back: the gear, or the speaker's detail button, which
+  // is the same door now that sound lives here.
+  const returnFocusRef = React.useRef<HTMLElement | null>(null);
   const panelId = React.useId();
 
   React.useEffect(() => {
     if (!open) return;
+    returnFocusRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const refresh = () => setLabels(readShowActionLabels());
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
@@ -67,11 +74,15 @@ export const GeneralSettingsPanel: React.FC<{ open: boolean; onClose: () => void
     return () => {
       window.removeEventListener(GENERAL_SETTINGS_EVENT, refresh);
       window.removeEventListener('keydown', onKey);
+      returnFocusRef.current?.focus({ preventScroll: true });
     };
   }, [open, onClose]);
 
   if (!open) return null;
-  return (
+  // Portalled to `body`: the header that opens this dialog is `backdrop-blur`red, and a filtered
+  // ancestor is a containing block for `position: fixed`. Rendered in place, `inset-0` resolved to
+  // the header's box instead of the window, which put the dialog ~390 px above a phone's screen.
+  const dialog = (
     <div
       className="fixed inset-0 z-[70] flex items-start justify-center bg-black/60 p-4 pt-[10vh] max-sm:items-end max-sm:p-0"
       onMouseDown={(event) => {
@@ -139,4 +150,5 @@ export const GeneralSettingsPanel: React.FC<{ open: boolean; onClose: () => void
       </div>
     </div>
   );
+  return typeof document === 'undefined' ? null : createPortal(dialog, document.body);
 };

@@ -16,6 +16,28 @@ flowchart LR
 
 ---
 
+## [2026-11-11] — One settings surface, a debugger tray, and a version you can read
+
+**Runner.** **More ⋯** is now a tray of compact tiles — icon over a 10.5 px word — and a press on one
+of them no longer folds the panel: the next tool is usually the one beside it. Every folded control
+carries a `title`, including Self-Mark, Reset Starter and Load Solution, which had none. A separate
+**Debugger tools** group under the general actions holds the three controls that read a finished run:
+Debug layout, Trace and Breakpoints; they used to sit among the formatting choices.
+
+**Header.** The build number now prints under the wordmark (`brand-version`), read from the same
+`__APP_VERSION__` define that fills the footer. Review mode keeps its own **Navigate** button
+(`btn-open-review`); with **Small text on the action buttons** on, its word sits under the icon.
+
+**Sound.** The speaker's detail door no longer opens a second popover: it opens **General settings**,
+where the whole sound surface already lived. One dialog, one mount of the store, and the speaker keeps
+only the one press that has to be in the header. General settings restores focus to whichever control
+opened it. The **Solo instrument tracks** chips now mean what they say — the drone with that
+instrument's recipe and nothing else — instead of starting a full recording. The shuffle switch's
+tooltip is on its row, so it is readable while sound is off and the switch is disabled.
+
+**Track P.** P.2.5 gains *The five-step method*: restate, separate facts from assumptions, plan one
+comment per job, run one line at a time, then attack the plan with the edge that should break it.
+
 ## [2026-11-10] — The Robot guide can be called back
 
 A quiet **Show guide** action now sits beside the Robot tab's status line. It starts the three-step

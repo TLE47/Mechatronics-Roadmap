@@ -88,6 +88,14 @@
  * a copy in each shard would be the same checks twice on the same servers. Partitioning changes
  * only which suites are started; the servers, the bundle and each suite's own setup are identical,
  * so a partition passes exactly when the whole matrix would.
+ *
+ * Two rules keep that promise honest:
+ *
+ *  - `dist/` is built only when the run includes `bundle`. The dev-server shards never read it, and
+ *    `test_fonts.mjs` - which does read `dist/assets` and would silently skip without it - names
+ *    `bundle` as its partition instead of riding `e2e-a`.
+ *  - The cheap batch and the browser waves start together. They share one dev server, so the waves
+ *    no longer wait for ~60 Node processes to finish before the first Chromium opens.
  */
 
 import { spawn } from 'node:child_process';
@@ -199,15 +207,24 @@ async function main() {
   // The partitions this run starts; `null` is the whole matrix.
   const wanted = partition === null ? null : PARTITION_ALIASES[partition];
 
-  // Build when the bundle is missing *or older than its sources*: the Pages sweep grades `dist/`, and
-  // a stale one there grades code the source no longer has (the weight gate's Run 166 hole).
-  ensureBuilt();
+  // Only the `bundle` lane grades `dist/`. Every dev-server suite in `e2e-a` and `e2e-b` runs against
+  // Vite and none of them reads the built bundle, so building here put both shards behind a build
+  // they never open (and put the ~250 s sweep behind the whole pipeline). `needsBundle` is also what
+  // keeps `fonts` - the one unit suite that reads `dist/assets` - inside a lane that has a bundle,
+  // instead of letting it skip its checks silently in `e2e-a`.
+  const needsBundle = wanted === null || wanted.includes('bundle');
+  if (needsBundle) ensureBuilt();
 
   const { viteServer, baseUrl: devUrl } = await startDevServer(repoRoot);
-  const { server: distServer, port } = await startStaticServer();
-  const pagesUrl = `http://127.0.0.1:${port}${BASE}`;
+  let distServer = null;
+  let pagesUrl = '';
+  if (needsBundle) {
+    const bundleServer = await startStaticServer();
+    distServer = bundleServer.server;
+    pagesUrl = `http://127.0.0.1:${bundleServer.port}${BASE}`;
+  }
   console.log(`[setup] dev server ${devUrl}`);
-  console.log(`[setup] built bundle ${pagesUrl}`);
+  console.log(`[setup] built bundle ${needsBundle ? pagesUrl : 'not read by this partition'}`);
   console.log(`[setup] partition ${partition ?? 'all'}`);
 
   // The suites, as data: `browser` marks the ones that launch Chromium and drive pages, and those run
@@ -275,7 +292,7 @@ async function main() {
     { label: 'home', script: 'test_home.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'weight', script: 'test_weight_budget.mjs' },
     { label: 'audio', script: 'test_audio.mjs', env: { NODE_OPTIONS: TYPES } },
-    { label: 'fonts', script: 'test_fonts.mjs' },
+    { label: 'fonts', script: 'test_fonts.mjs', partition: 'bundle' },
     { label: 'e2e', script: 'e2e_browser_workbench.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'e2e-a', browser: true },
     { label: 'robot2e', script: 'test_robot_browser.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-a', browser: true },
     { label: 'clock2e', script: 'e2e_study_clock.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-a', browser: true },
@@ -294,6 +311,10 @@ async function main() {
     { label: 'home2e', script: 'e2e_home.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'bundle', browser: true },
     { label: 'mobile2e', script: 'e2e_mobile.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-a', browser: true },
     { label: 'reset2e', script: 'e2e_reset.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-b', browser: true },
+    // These two used to be extra `npm run` steps queued behind a shard, each booting its own server
+    // and browser. Both speak the same dev server this runner already has, so they are suites now.
+    { label: 'micro2e', script: 'e2e_micro.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-b', browser: true },
+    { label: 'game2e', script: 'e2e_game.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'e2e-b', browser: true },
   ];
   const unassigned = SUITES.filter((suite) => suite.browser && !PARTITIONS.includes(suite.partition));
   if (unassigned.length) {
@@ -305,7 +326,7 @@ async function main() {
   // Ctrl-C must not leave a Vite server or two Chromium runs behind.
   const stop = () => {
     viteServer.close();
-    distServer.close();
+    distServer?.close();
     process.exit(130);
   };
   process.once('SIGINT', stop);
@@ -324,20 +345,31 @@ async function main() {
     // The unit batch and the SSR smoke ride with `e2e-a`: they are seconds, they share this job's dev
     // server, and a copy in every shard would be the same checks twice on the same servers.
     const withCheap = wanted === null || wanted.includes('e2e-a');
-    const unit = withCheap ? SUITES.filter((suite) => !suite.browser).map(start) : [];
+    // A suite with no partition rides every dev-server lane; `fonts` opts into `bundle` because it
+    // reads `dist/assets` and would otherwise skip its checks wherever there is no bundle.
+    const unit = withCheap
+      ? SUITES.filter(
+          (suite) =>
+            !suite.browser && (!suite.partition || (needsBundle && suite.partition === 'bundle'))
+        ).map(start)
+      : [];
     const browser = SUITES.filter(
       (suite) => suite.browser && (wanted === null || wanted.includes(suite.partition))
     ).map(start);
     const smoke = withCheap ? [runSmoke(viteServer)] : [];
-    results = [
-      ...(await Promise.all([...smoke, ...unit.map((begin) => begin())])),
-      ...(await runWaves(browser, 4)),
-    ];
+    // The cheap batch and the browser waves start together: the unit batch is ~60 Node processes
+    // that finish in seconds, and making the waves wait for it put a barrier in front of the sweep
+    // that cost a wave on every run while four cores sat idle.
+    const [cheapResults, browserResults] = await Promise.all([
+      Promise.all([...smoke, ...unit.map((begin) => begin())]),
+      runWaves(browser, 4),
+    ]);
+    results = [...cheapResults, ...browserResults];
   } finally {
     process.off('SIGINT', stop);
     process.off('SIGTERM', stop);
     await viteServer.close();
-    distServer.close();
+    distServer?.close();
   }
 
   const failed = results.filter((result) => result.code !== 0);

@@ -9,6 +9,21 @@
  */
 
 export const GENERAL_SETTINGS_EVENT = 'mechalab-general-settings';
+
+/**
+ * Fired when a control outside the header asks for General settings (the sound door). The dialog is
+ * mounted once with the header, so a press on the speaker's detail button opens the same surface
+ * the gear does instead of a second popover with its own copy of the audio controls.
+ */
+export const OPEN_GENERAL_SETTINGS_EVENT = 'mechalab-open-general-settings';
+
+export function openGeneralSettings(): void {
+  try {
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event(OPEN_GENERAL_SETTINGS_EVENT));
+  } catch {
+    // A blocked event costs the press, never the page.
+  }
+}
 export const SHOW_ACTION_LABELS_KEY = 'mechalab_show_action_labels_v1';
 
 function store(): Storage | null {

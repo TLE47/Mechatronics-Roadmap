@@ -137,6 +137,12 @@ export function RunnerToolbar({
     onMoreOpenChange(false);
     moreButtonRef.current?.focus({ preventScroll: true });
   };
+  // The folded panel's controls are tiles: icon over a 10.5 px word, so thirteen tools read as a
+  // compact block of four rows instead of one long ribbon. The button itself keeps the 13 px floor
+  // `scripts/check_label_sizes.mjs` measures; only the word under the icon is small.
+  const tile =
+    'flex min-w-[74px] shrink-0 flex-col items-center justify-center gap-1 rounded-lg border px-2 py-1.5 text-[13px] font-mono cursor-pointer transition-colors';
+  const tileLabel = 'text-[10.5px] leading-tight text-center';
   return (
     <div data-testid="runner-toolbar" className="flex flex-wrap items-center gap-1.5">
       {/* The presets live on this card, not in the editor's own header: Read hides that header, and a
@@ -307,36 +313,28 @@ export function RunnerToolbar({
           if (event.key !== 'Escape') return;
           closeMore();
         }}
-        // One press is one action, so the panel folds itself away: leaving it open would shift the
-        // editor down while the learner is reading the answer to what they pressed, and would hide
-        // the row they came from. Focus goes back to More, so a keyboard user is never dropped into
-        // the document.
-        onClick={(event) => {
-          if (!(event.target as HTMLElement).closest('button')) return;
-          closeMore();
-        }}
+        // A press runs its action and leaves the panel open: the next tool is usually the one beside
+        // it (a breakpoint after a trace, a format after a reset), and a panel that folds under the
+        // pointer turns every second press into a re-open. Escape, a press on More, and a press on a
+        // control outside the panel still close it.
         className="order-last w-full rounded-xl border border-line bg-panel p-2.5"
       >
-        <p className="px-1 pb-2 text-[11px] font-mono uppercase tracking-[0.08em] text-faint">
+        <p className="px-1 pb-1.5 text-[11px] font-mono uppercase tracking-[0.08em] text-faint">
           More actions
         </p>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => {
-              onChooseLayout('debug');
-              onShowTrace();
-            }}
-            data-testid="btn-debugger"
-            title="Debugger — open the Debug layout and replay the last run line by line, with every variable's value"
-            className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-accent border border-accent/50 flex items-center gap-1.5 cursor-pointer"
-          >
-            <Bug className="w-3.5 h-3.5" />
-            <span>Debugger</span>
-          </button>
+        {/* Icon over a 10.5 px word: the folded controls are a tray of tools, so they read as one
+            compact block of tiles rather than a ribbon of thirteen full-width buttons. The button
+            itself keeps the 13 px floor the label gate measures; only the word is small. */}
+        <div className="flex flex-wrap items-start gap-1.5">
           <button
             onClick={onToggleSelfMarked}
             data-testid="btn-toggle-lesson-complete"
-            className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono border flex items-center gap-1.5 cursor-pointer ${
+            title={
+              isCurrentSelfMarked
+                ? 'Self-Marked Complete — press to untick this lesson on this device'
+                : 'Self-Mark Complete — record this lesson as finished without the graded check'
+            }
+            className={`${tile} ${
               isCurrentSelfMarked
                 ? 'bg-accent/20 border-accent text-accent'
                 : 'bg-canvas border-line text-body hover:border-accent'
@@ -347,32 +345,34 @@ export function RunnerToolbar({
             ) : (
               <Square className="w-3.5 h-3.5" />
             )}
-            <span>{isCurrentSelfMarked ? 'Self-Marked Complete' : 'Self-Mark Complete'}</span>
+            <span className={tileLabel}>{isCurrentSelfMarked ? 'Self-Marked' : 'Self-Mark'}</span>
           </button>
           <button
             onClick={onResetStarter}
             data-testid="btn-reset-starter"
-            className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
+            title="Reset Starter — put this lesson's starter code back, discarding your edits to the file"
+            className={`${tile} bg-canvas hover:bg-raise text-body border-line`}
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset Starter</span>
+            <span className={tileLabel}>Reset Starter</span>
           </button>
           <button
             onClick={onResetRuntime}
             data-testid="btn-reset-runtime"
             title="Terminate and restart the background Python Web Worker without losing editor code"
-            className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-accent border border-accent/40 flex items-center gap-1.5 cursor-pointer"
+            className={`${tile} bg-canvas hover:bg-raise text-accent border-accent/40`}
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            <span>Reset Runtime</span>
+            <span className={tileLabel}>Reset Runtime</span>
           </button>
           <button
             onClick={onLoadSolution}
             data-testid="btn-load-solution"
-            className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-amber border border-amber/40 flex items-center gap-1.5 cursor-pointer"
+            title="Load Solution — replace the editor with the worked solution for this lesson"
+            className={`${tile} bg-canvas hover:bg-raise text-amber border-amber/40`}
           >
             <Eye className="w-3.5 h-3.5" />
-            <span>Load Solution</span>
+            <span className={tileLabel}>Load Solution</span>
           </button>
           {/* Format is a text action, not a run one: it tidies the file in place, and the interpreter
               installs the formatter on the first press. Disabled while a program is running or
@@ -382,10 +382,10 @@ export function RunnerToolbar({
             disabled={isRunning || paused}
             data-testid="btn-format"
             title="Re-indent and tidy this file with Black (installs on the first press, then stays in this session)"
-            className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            className={`${tile} bg-canvas hover:bg-raise text-body border-line disabled:opacity-40 disabled:cursor-not-allowed`}
           >
             <Wand2 className="w-3.5 h-3.5" />
-            <span>Format</span>
+            <span className={tileLabel}>Format</span>
           </button>
           <button
             onClick={onToggleHistory}
@@ -393,37 +393,14 @@ export function RunnerToolbar({
             aria-controls="draft-history"
             data-testid="btn-draft-history"
             title="Every run files the code it started from, with its verdict, so a version that worked is one click away"
-            className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+            className={`${tile} bg-canvas hover:bg-raise border ${
               historyOpen ? 'text-accent border-accent/60' : 'text-body border-line'
             }`}
           >
             <History className="w-3.5 h-3.5" />
-            <span>History{draftHistory.length ? ` (${draftHistory.length})` : ''}</span>
-          </button>
-          {/* The dots the gutter is drawing, and the condition each one waits for. Always present,
-              not only once something is armed: a learner who has never clicked the gutter has no
-              other way to find out that a breakpoint can be narrowed. */}
-          <button
-            onClick={onShowTrace}
-            data-testid="btn-trace"
-            title="Replay the last run line by line, with the value every variable held at each step"
-            className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
-          >
-            <Activity className="w-3.5 h-3.5" />
-            <span>Trace</span>
-          </button>
-          <button
-            onClick={onToggleBreakpoints}
-            aria-expanded={breakpointsOpen}
-            aria-controls="breakpoint-panel"
-            data-testid="btn-breakpoints"
-            title="Every dot on the gutter, with the condition that lets the run stop on it"
-            className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-              breakpointsOpen ? 'text-accent border-accent/60' : 'text-body border-line'
-            }`}
-          >
-            <CircleDot className="w-3.5 h-3.5" />
-            <span>Breakpoints{breakpoints.length ? ` (${breakpoints.length})` : ''}</span>
+            <span className={tileLabel}>
+              History{draftHistory.length ? ` (${draftHistory.length})` : ''}
+            </span>
           </button>
           <button
             onClick={onToggleDiff}
@@ -431,12 +408,12 @@ export function RunnerToolbar({
             aria-controls="code-diff"
             data-testid="btn-diff"
             title="What you changed: your code against the starter, line by line"
-            className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+            className={`${tile} bg-canvas hover:bg-raise border ${
               diffOpen ? 'text-accent border-accent/60' : 'text-body border-line'
             }`}
           >
             <GitCompare className="w-3.5 h-3.5" />
-            <span>Diff</span>
+            <span className={tileLabel}>Diff</span>
           </button>
           {/* The one thing a stuck learner can send a person: this lesson and this code. The code
               rides in the URL fragment, so it never reaches the host — and it is base64, not
@@ -445,10 +422,10 @@ export function RunnerToolbar({
             onClick={onShare}
             data-testid="btn-share-attempt"
             title={`Copy a link to this lesson with your code in it (${MAX_SHARE_URL} characters max). The code rides in the link's fragment, encoded — not encrypted — so send it only where you would send the file.`}
-            className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
+            className={`${tile} bg-canvas hover:bg-raise text-body border-line`}
           >
             <Share2 className="w-3.5 h-3.5" />
-            <span>Share</span>
+            <span className={tileLabel}>Share</span>
           </button>
           {/* Pair study, beside the send: one session, two people, no server — the attempt travels
               over a direct channel and arrives as a card, not as an edit. */}
@@ -456,12 +433,12 @@ export function RunnerToolbar({
             onClick={onPair}
             data-testid="btn-pair-open"
             title="Pair study: connect to another workbench directly and pass attempts back and forth"
-            className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+            className={`${tile} bg-canvas hover:bg-raise border ${
               pair.state === 'connected' ? 'text-emerald border-emerald/60' : 'text-body border-line'
             }`}
           >
             <Users className="w-3.5 h-3.5" />
-            <span>
+            <span className={tileLabel}>
               {coEdit
                 ? 'Pair · co-editing'
                 : `Pair${pair.state === 'connected' && pair.peer ? ` · ${pair.peer}` : ''}`}
@@ -475,24 +452,76 @@ export function RunnerToolbar({
             aria-pressed={vimOn}
             data-testid="btn-vim"
             title={vimHint(vimOn)}
-            className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+            className={`${tile} bg-canvas hover:bg-raise border ${
               vimOn ? 'text-accent border-accent/60' : 'text-body border-line'
             }`}
           >
             <Keyboard className="w-3.5 h-3.5" />
-            <span>{VIM_LABEL}</span>
+            <span className={tileLabel}>{VIM_LABEL}</span>
           </button>
           <button
             onClick={onToggleWatch}
             aria-pressed={watchOn}
             data-testid="btn-watch"
             title="Watch mode: after a failed check, re-run 1.5 s after you stop typing"
-            className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+            className={`${tile} bg-canvas hover:bg-raise border ${
               watchOn ? 'text-emerald border-emerald/60' : 'text-body border-line'
             }`}
           >
             <Activity className="w-3.5 h-3.5" />
-            <span>{watchOn ? 'Watching' : 'Watch'}</span>
+            <span className={tileLabel}>{watchOn ? 'Watching' : 'Watch'}</span>
+          </button>
+        </div>
+
+        {/* The debugger is a set of tools, not one button: the heading names the group and the three
+            controls under it are the ones that read a finished run. They used to be scattered through
+            the general actions, where Trace and Breakpoints looked like formatting choices. */}
+        <p
+          data-testid="debugger-menu"
+          className="mt-2.5 border-t px-1 pb-1.5 pt-2 text-[11px] font-mono uppercase tracking-[0.08em] text-faint"
+          style={{ borderColor: 'var(--border)' }}
+        >
+          Debugger tools
+        </p>
+        <div className="flex flex-wrap items-start gap-1.5">
+          <button
+            onClick={() => {
+              onChooseLayout('debug');
+              onShowTrace();
+            }}
+            data-testid="btn-debugger"
+            title="Debug layout — open the Debug workspace and replay the last run line by line, with every variable's value"
+            className={`${tile} bg-canvas hover:bg-raise text-accent border-accent/50`}
+          >
+            <Bug className="w-3.5 h-3.5" />
+            <span className={tileLabel}>Debug layout</span>
+          </button>
+          {/* The dots the gutter is drawing, and the condition each one waits for. Always present,
+              not only once something is armed: a learner who has never clicked the gutter has no
+              other way to find out that a breakpoint can be narrowed. */}
+          <button
+            onClick={onShowTrace}
+            data-testid="btn-trace"
+            title="Replay the last run line by line, with the value every variable held at each step"
+            className={`${tile} bg-canvas hover:bg-raise text-body border-line`}
+          >
+            <Activity className="w-3.5 h-3.5" />
+            <span className={tileLabel}>Trace</span>
+          </button>
+          <button
+            onClick={onToggleBreakpoints}
+            aria-expanded={breakpointsOpen}
+            aria-controls="breakpoint-panel"
+            data-testid="btn-breakpoints"
+            title="Every dot on the gutter, with the condition that lets the run stop on it"
+            className={`${tile} bg-canvas hover:bg-raise border ${
+              breakpointsOpen ? 'text-accent border-accent/60' : 'text-body border-line'
+            }`}
+          >
+            <CircleDot className="w-3.5 h-3.5" />
+            <span className={tileLabel}>
+              Breakpoints{breakpoints.length ? ` (${breakpoints.length})` : ''}
+            </span>
           </button>
         </div>
       </div>

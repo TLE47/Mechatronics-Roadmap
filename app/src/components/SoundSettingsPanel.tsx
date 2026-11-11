@@ -18,6 +18,7 @@ import {
   tapeCredit,
 } from '../audio/musicCatalogue.ts';
 import type { UiRole } from '../audio/facade.ts';
+import type { InstrumentId } from '../audio/musicCatalogue.ts';
 
 /**
  * The audio settings panel (`app/src/components/SoundSettingsPanel.tsx`).
@@ -62,6 +63,8 @@ interface Props {
   onClicks: (on: boolean) => void;
   /** A catalogue tape id, or `drone`. */
   onTape: (tape: string) => void;
+  /** The drone's instrument recipe, which is what a solo track is. */
+  onInstrument: (instrument: InstrumentId) => void;
   /** Tapes the randomiser must never choose. */
   excluded: string[];
   /** Flip one tape in or out of the shuffle, without changing what is playing. */
@@ -98,6 +101,7 @@ export const SoundSettingsPanel: React.FC<Props> = ({
   onLevel,
   onClicks,
   onTape,
+  onInstrument,
   excluded,
   onExclude,
   onRandomize,
@@ -231,6 +235,13 @@ export const SoundSettingsPanel: React.FC<Props> = ({
             return (
               <div
                 key={entry.id}
+                // The tooltip is on the row, not only on the switch: a muted learner meets the switch
+                // disabled, and a disabled control is the one place a `title` is never shown.
+                title={
+                  shuffled
+                    ? `Let the randomiser choose ${entry.title}. Press the switch to keep it out of the shuffle.`
+                    : `${entry.title} is kept out of the shuffle. Press the switch to let the randomiser choose it again.`
+                }
                 className="flex items-stretch gap-1 rounded-md border text-[11px]"
                 style={{
                   borderColor: active ? 'var(--accent)' : 'var(--border)',
@@ -293,19 +304,24 @@ export const SoundSettingsPanel: React.FC<Props> = ({
       <div className="mt-2" role="group" aria-label="Solo instrument tracks">
         <span className="text-[11px] font-semibold uppercase tracking-wide">Solo instrument tracks</span>
         <p className="mt-0.5 text-[11px] leading-snug" style={{ color: 'var(--dim)' }}>
-          {SOLO_TRACKS.find((entry) => entry.tapeId === prefs.tape)?.hint ??
+          {SOLO_TRACKS.find((entry) => entry.id === prefs.instrument && prefs.tape === DRONE_ID)?.hint ??
             'Pick a full instrument-led track. These are songs, not the drone\u2019s held chord.'}
         </p>
         <div className="mt-1 flex flex-wrap gap-1">
           {SOLO_TRACKS.map((entry) => {
-            const active = prefs.tape === entry.tapeId;
+            const active = prefs.tape === entry.tapeId && prefs.instrument === entry.id;
             return (
               <button
                 key={entry.id}
                 type="button"
                 disabled={!prefs.on}
                 aria-pressed={active}
-                onClick={() => onTape(entry.tapeId)}
+                title={entry.hint}
+                onClick={() => {
+                  // One instrument on its own: the drone bed with this recipe, never a full tape.
+                  onTape(entry.tapeId);
+                  onInstrument(entry.id);
+                }}
                 data-testid={tid(`sound-instrument-${entry.id}`)}
                 className="min-h-[32px] rounded-full border px-2.5 py-0.5 text-[11px] font-semibold disabled:opacity-50"
                 style={{
