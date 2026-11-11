@@ -2000,19 +2000,39 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         // A point on bare paper, found rather than guessed: the seeded diagram's cards move as the
         // suite edits it, so a fixed coordinate can land on one and start a card drag instead of a
         // pan (or open that card's menu rather than the paper's).
+        // The seeded diagram is taller than the pane, so one windowful of paper is not guaranteed:
+        // the search walks the visible part of the canvas at every scroll offset until it finds a
+        // point the pointer can hit as bare paper. It stays clear of both scrollbars, because a
+        // right-click on a scrollbar reads as a canvas hit but opens no menu.
         const emptySpot = (minX) =>
           page.getByTestId('workflow-canvas').evaluate((canvas, minX) => {
-            const rect = canvas.getBoundingClientRect();
-            for (let y = rect.top + 60; y < rect.bottom - 60; y += 20) {
-              for (let x = Math.max(rect.left + 40, minX); x < rect.right - 30; x += 20) {
-                const hit = document.elementFromPoint(x, y);
-                const taken =
-                  hit?.closest(
-                    '[data-node-id],[data-lane-band],[data-testid^="workflow-edge-"],[data-testid^="workflow-group-"],button,input,textarea,select,a'
-                  ) ?? null;
-                if (!taken && hit?.closest('[data-testid="workflow-canvas"]')) return { x, y };
+            const scan = () => {
+              const rect = canvas.getBoundingClientRect();
+              const top = Math.max(rect.top + 40, 40);
+              const bottom = Math.min(rect.bottom - 20, window.innerHeight - 20);
+              const left = Math.max(rect.left + 40, minX);
+              const right = Math.min(rect.right - 30, window.innerWidth - 30);
+              for (let y = top; y < bottom; y += 16) {
+                for (let x = left; x < right; x += 16) {
+                  const hit = document.elementFromPoint(x, y);
+                  const taken =
+                    hit?.closest(
+                      '[data-node-id],[data-lane-band],[data-testid^="workflow-edge-"],[data-testid^="workflow-group-"],button,input,textarea,select,a'
+                    ) ?? null;
+                  if (!taken && hit?.closest('[data-testid="workflow-canvas"]')) return { x, y };
+                }
               }
+              return null;
+            };
+            canvas.scrollIntoView({ block: 'center', inline: 'nearest' });
+            const start = canvas.scrollTop;
+            const span = Math.max(0, canvas.scrollHeight - canvas.clientHeight);
+            for (let offset = 0; offset <= span; offset += 120) {
+              canvas.scrollTop = offset;
+              const found = scan();
+              if (found) return found;
             }
+            canvas.scrollTop = start;
             return null;
           }, minX);
 
