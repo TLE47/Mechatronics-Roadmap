@@ -1041,9 +1041,10 @@ self.onmessage = async (event) => {
     scopePending = 0;
     scopeRunId = runId;
     if (interruptView) Atomics.store(interruptView, 0, 0);
-    // A pause word left set by a previous run would stop this one at its first line.
+    // A Pause clicked while this run was still loading is a request for this run, not a leftover:
+    // the page clears the word when it starts a run, so anything still set here was asked for after
+    // that click and has to park at the first line the guard sees.
     if (pauseView) {
-      Atomics.store(pauseView, PAUSE_COMMAND, PAUSE_NONE);
       Atomics.store(pauseView, PAUSE_STATUS, 0);
     }
     const capturedOut = [];

@@ -26,7 +26,15 @@ import { createPortal } from 'react-dom';
 /** The width the trays print their labels at (`hidden 2xl:inline`); above it the bubble is redundant. */
 const LABELS_ON_THE_BUTTON = '(min-width: 1536px)';
 
-export const HeaderTips: React.FC<{ scope: React.RefObject<HTMLElement | null> }> = ({ scope }) => {
+export const HeaderTips: React.FC<{
+  scope: React.RefObject<HTMLElement | null>;
+  /**
+   * Keep the bubble at every width. The header hides it above `2xl` because the trays print their
+   * labels there; a tray whose words are always on the button (the workbench's More panel) is a
+   * different surface, and its tiles still deserve the sentence.
+   */
+  always?: boolean;
+}> = ({ scope, always = false }) => {
   const [tip, setTip] = React.useState<{ text: string; x: number; y: number; flip: boolean } | null>(null);
   const bubbleRef = React.useRef<HTMLDivElement | null>(null);
   /** The control the bubble is about, so a scroll can follow it instead of dropping it. */
@@ -54,7 +62,7 @@ export const HeaderTips: React.FC<{ scope: React.RefObject<HTMLElement | null> }
 
     const show = (node: HTMLElement) => {
       const text = (node.dataset.tip ?? '').trim();
-      if (!text || window.matchMedia(LABELS_ON_THE_BUTTON).matches) {
+      if (!text || (!always && window.matchMedia(LABELS_ON_THE_BUTTON).matches)) {
         setTip(null);
         return;
       }
@@ -129,7 +137,7 @@ export const HeaderTips: React.FC<{ scope: React.RefObject<HTMLElement | null> }
       window.removeEventListener('resize', onLayoutChange);
       window.removeEventListener('keydown', onKey);
     };
-  }, [scope]);
+  }, [scope, always]);
 
   if (!tip) return null;
 
@@ -139,7 +147,9 @@ export const HeaderTips: React.FC<{ scope: React.RefObject<HTMLElement | null> }
       className={`header-tip${tip.flip ? ' header-tip-above' : ''}`}
       data-testid="header-tip"
       aria-hidden="true"
-      style={{ left: tip.x, top: tip.y }}
+      /* An inline display beats the stylesheet rule that hides the header bubble above 2xl: this
+         toolbar's tiles print their words at every width, so its sentence has no width to defer to. */
+      style={{ left: tip.x, top: tip.y, display: always ? 'block' : undefined }}
     >
       {tip.text}
     </div>,

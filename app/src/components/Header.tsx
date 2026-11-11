@@ -16,7 +16,6 @@ import {
 import { focusLabel } from '../focusMode';
 import { motionHint, motionLabel } from '../motionPrefs';
 import { useMotion } from '../useMotion';
-import { SoundControlLazy } from './SoundControlLazy';
 const GeneralSettingsPanel = React.lazy(() =>
   import('./GeneralSettingsPanel').then((module) => ({ default: module.GeneralSettingsPanel }))
 );
@@ -442,18 +441,9 @@ export const Header: React.FC<HeaderProps> = ({
               <BookOpen className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span className={labelClass}>Paper</span>
             </button>
-            {/* Sound is a preference, so its control is on every screen — including this one, where
-                the switch is the first thing a learner reaches for after a loud surprise. Behind a
-                lazy boundary: the entry chunk is a first paint, and sound is opt-in. */}
-            <React.Suspense
-              fallback={
-                <span aria-hidden="true" className="btn" style={{ visibility: 'hidden' }}>
-                  Sound
-                </span>
-              }
-            >
-              <SoundControlLazy />
-            </React.Suspense>
+            {/* Sound is a preference, and its controls now live in General settings beside the rest
+                of them: a second switch in this tray said the same thing in one word and could not
+                show the tape, the level or the credit the panel shows. */}
             {onToggleFocus && (
               <button
                 onClick={onToggleFocus}

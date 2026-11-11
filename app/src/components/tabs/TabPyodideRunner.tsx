@@ -1869,6 +1869,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
   const runnerToolbar = (
     <RunnerToolbar
+      onAnswerPause={answerPause}
       layout={layout}
       onChooseLayout={chooseLayout}
       dockChoice={dockChoice}

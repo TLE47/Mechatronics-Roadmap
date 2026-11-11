@@ -74,8 +74,6 @@ export interface InstrumentInfo {
 export const INSTRUMENTS: readonly InstrumentInfo[] = [
   { id: 'piano', label: 'Piano' },
   { id: 'guitar', label: 'Guitar' },
-  { id: 'flute', label: 'Flute' },
-  { id: 'violin', label: 'Violin' },
 ];
 
 /** The category that is not a tape: two detuned oscillators the engine has always had. */
@@ -99,10 +97,8 @@ export interface SoloTrack {
 }
 
 export const SOLO_TRACKS: readonly SoloTrack[] = [
-  { id: 'piano', label: 'Piano', tapeId: 'drone', hint: 'Piano only — the held chord with a piano\u2019s harmonics, no other voice.' },
-  { id: 'guitar', label: 'Guitar', tapeId: 'drone', hint: 'Guitar only — the held chord with a plucked-string recipe, nothing else.' },
-  { id: 'flute', label: 'Flute', tapeId: 'drone', hint: 'Flute only — the held chord with a breathy flute voice, nothing else.' },
-  { id: 'violin', label: 'Violin', tapeId: 'drone', hint: 'Violin only — the held chord with a bowed-string recipe, nothing else.' },
+  { id: 'piano', label: 'Piano', tapeId: 'first-snow', hint: '\u201cFirst Snow\u201d — a real solo piano recording by HoliznaCC0 (CC0), not a held chord.' },
+  { id: 'guitar', label: 'Guitar', tapeId: 'winter-blues', hint: '\u201cWinter Blues\u201d — a recorded guitar walk by HoliznaCC0 (CC0), not a held chord.' },
 ];
 
 export function isInstrumentId(value: unknown): value is InstrumentId {

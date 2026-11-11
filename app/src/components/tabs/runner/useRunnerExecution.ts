@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { recordLessonComplete } from '../../../studyTimer.ts';
 import type { RobotCommandMessage, RobotReply, RobotRunApi, RobotScenario } from '../../../robotSim/model';
 import { armRobotWait, cancelRobotWait, writeRobotReply } from '../../../robotSim/protocol';
 import { announceVerifyFinished } from '../../../robotSim/robotAutoRun';
@@ -460,6 +461,14 @@ export function useRunnerExecution({
     // A new run is not paused: a bar left over from the previous one would describe a worker that
     // has already been replaced by this run.
     setPausedStep(null);
+    // The command word is per run and cleared here, on the page that owns the run. The worker must
+    // not clear it: a Pause clicked while the runtime is still loading is a real request and would
+    // otherwise be thrown away, leaving Pause enabled and silent.
+    if (pauseRef.current) {
+      const pauseWord = new Int32Array(pauseRef.current, 0, 2);
+      Atomics.store(pauseWord, 0, 0);
+      Atomics.store(pauseWord, 1, 0);
+    }
     setFrameEdit(null);
     setFrameEditError('');
     setStdout('');
@@ -702,6 +711,9 @@ export function useRunnerExecution({
       if (isBehaviorPassed && isOutputMatched) {
         setPassStatus('passed');
         markLessonVerified(lesson.id);
+        // The clock's session gets a line for the lesson being finished, so the card answers "when
+        // was this done" and not only "how long did I sit here".
+        recordLessonComplete(lesson.id);
       } else {
         setPassStatus('mismatch');
       }

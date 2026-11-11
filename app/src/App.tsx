@@ -1252,7 +1252,7 @@ export const App: React.FC = () => {
     <CommandPalette
       isOpen={isPaletteOpen}
       mode={paletteMode}
-      items={paletteMode === 'lessons' ? lessonPaletteItems : paletteItems}
+      items={paletteMode === 'lessons' || paletteMode === 'search' ? lessonPaletteItems : paletteItems}
       search={paletteSearch}
       note={proseNote}
       onClose={() => setIsPaletteOpen(false)}

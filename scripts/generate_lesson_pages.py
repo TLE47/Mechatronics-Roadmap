@@ -320,24 +320,35 @@ def split_row(line):
         line = line[1:]
     if line.endswith("|"):
         line = line[:-1]
-    cells, current, escaped, in_code = [], [], False, False
-    for char in line:
-        if escaped:
-            current.append(char)
-            escaped = False
-            continue
+    cells, current, in_code = [], [], False
+    index = 0
+    while index < len(line):
+        char = line[index]
+        # Only a backslash before `|` is an escape in a Markdown table cell: the pipe must not split
+        # the row. Every other backslash is LaTeX and dropping it turns a formula into prose - an
+        # `Omega` command printed as the word Omega, a `times` command as "times". The payload keeps
+        # the source the renderer typesets.
         if char == "\\":
-            escaped = True
+            following = line[index + 1] if index + 1 < len(line) else ""
+            if following == "|":
+                current.append("|")
+                index += 2
+                continue
+            current.append(char)
+            index += 1
             continue
         if char == "`":
             in_code = not in_code
             current.append(char)
+            index += 1
             continue
         if char == "|" and not in_code:
             cells.append("".join(current).strip())
             current = []
+            index += 1
             continue
         current.append(char)
+        index += 1
     cells.append("".join(current).strip())
     return cells
 

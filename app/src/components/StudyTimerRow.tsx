@@ -56,6 +56,7 @@ const PRESS_LABEL: Record<ClockAction, string> = {
   start: 'Started',
   pause: 'Paused',
   resume: 'Resumed',
+  complete: 'Lesson completed',
 };
 
 

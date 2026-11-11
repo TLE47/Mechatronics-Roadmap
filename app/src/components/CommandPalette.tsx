@@ -57,7 +57,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   // again: the index knows which lesson and which line a hit is, and `rankPalette` only knows words.
   const matches = useMemo<PaletteMatch[]>(
     () =>
-      mode === 'search'
+      mode === 'search' && query.trim() !== ''
         ? (search?.(query) ?? []).map((item) => ({ item, score: 0 }))
         : rankPalette(items, query),
     [mode, search, items, query]

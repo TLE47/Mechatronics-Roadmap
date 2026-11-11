@@ -39,8 +39,13 @@ import { IDLE_GAP_MS } from './sittingClock.ts';
 
 export const TIMER_STORAGE_KEY = 'mechalab_study_timer_v1';
 
-/** What the learner pressed: the three buttons a session has. */
-export type ClockAction = 'start' | 'pause' | 'resume';
+/**
+ * One line in a session: a press, or the lesson being finished.
+ *
+ * `complete` is not a press - nobody pressed it - but it belongs in the same log: "when did this
+ * session start, when did it pause, when was the lesson actually done".
+ */
+export type ClockAction = 'start' | 'pause' | 'resume' | 'complete';
 
 /**
  * One press in the session log.
@@ -176,6 +181,44 @@ export function pauseTimer(timer: StudyTimer, now: number): StudyTimer {
 }
 
 /** Say the page is still here. Called with each measured minute; the sitting is written beside it. */
+/**
+ * The lesson was finished, at `now`, on the clock's own reading.
+ *
+ * Finishing a lesson is the fact the clock exists to record, and it is not a press: the clock keeps
+ * running (the learner may keep reading), nothing is banked, and the stretch is untouched. The line
+ * joins the same session log a Start or Pause writes, so the card can say the lesson was done at
+ * 14:32 with 0:52:10 on the clock.
+ */
+export function completeTimer(timer: StudyTimer, now: number): StudyTimer {
+  const at = Math.round(now);
+  return {
+    ...timer,
+    log: addPress(timer, { action: 'complete', at, clockMs: elapsedMs(timer, at), stretchMs: null }),
+  };
+}
+
+/**
+ * One completion line per lesson per visit.
+ *
+ * `markLessonVerified` runs on every passing run, so this is the guard that keeps a second Run from
+ * writing a second "Lesson completed" line. The set is per page, not stored: a new visit is a new
+ * session, and a log that remembered last week's completions would be a history, not a session.
+ */
+const completionLogged = new Set<string>();
+
+export function recordLessonComplete(lessonId: string, now: number = Date.now()): StudyTimer {
+  if (!lessonId || completionLogged.has(lessonId)) return readTimer();
+  completionLogged.add(lessonId);
+  const next = completeTimer(readTimer(), now);
+  writeTimer(next);
+  try {
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event(STUDY_CLOCK_EVENT));
+  } catch {
+    // A blocked window costs the announcement, not the log line.
+  }
+  return next;
+}
+
 export function heartbeat(timer: StudyTimer, now: number): StudyTimer {
   if (timer.runningSince === null) return timer;
   return { ...timer, lastTick: Math.max(timer.lastTick, Math.round(now)) };
@@ -210,7 +253,13 @@ function count(value: unknown, fallback = 0): number {
 function parsePress(value: unknown): ClockLogEntry | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const press = value as Record<string, unknown>;
-  if (press.action !== 'start' && press.action !== 'pause' && press.action !== 'resume') return null;
+  if (
+    press.action !== 'start' &&
+    press.action !== 'pause' &&
+    press.action !== 'resume' &&
+    press.action !== 'complete'
+  )
+    return null;
   const at = count(press.at);
   // A press with no readable time is not a press: printing it at 00:00 would invent one.
   if (at <= 0) return null;

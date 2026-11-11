@@ -3,6 +3,9 @@ import {
   Activity,
   ArrowLeftRight,
   Bug,
+  CornerDownRight,
+  CornerUpLeft,
+  SkipForward,
   CheckSquare,
   CircleDot,
   Eye,
@@ -22,6 +25,7 @@ import {
   Users,
   Wand2,
 } from 'lucide-react';
+import { HeaderTips } from '../../HeaderTips';
 import { LAYOUTS, type WorkspaceLayout } from '../../../workspaceLayout';
 import { MAX_SHARE_URL } from '../../../shareLink';
 import { VIM_LABEL, vimHint } from '../../../vimMode';
@@ -46,6 +50,11 @@ interface RunnerToolbarProps {
   /** The tab mirrors this boolean for its sheet accounting; the panel itself is the toolbar's. */
   onMoreOpenChange: (open: boolean) => void;
   onShowTrace: () => void;
+  /**
+   * The interpreter's own answers while a run is parked (`PausedBar`'s modes): 2 continue,
+   * 3 step over, 6 step into, 7 step out. Absent when this runner cannot pause.
+   */
+  onAnswerPause?: (mode: 2 | 3 | 4 | 6 | 7) => void;
   runButtonRef: RefObject<HTMLButtonElement | null>;
   onRun: () => void;
   predictRecord: PredictionRecord | null;
@@ -95,6 +104,7 @@ export function RunnerToolbar({
   onStop,
   onMoreOpenChange,
   onShowTrace,
+  onAnswerPause,
   runButtonRef,
   onRun,
   predictRecord,
@@ -127,6 +137,7 @@ export function RunnerToolbar({
   // this component. The tab keeps a mirror for its sheet accounting, nothing else.
   const [moreOpen, setMoreOpen] = useState(false);
   const moreButtonRef = useRef<HTMLButtonElement | null>(null);
+  const toolbarRef = useRef<HTMLDivElement | null>(null);
   const toggleMore = () => {
     const next = !moreOpen;
     setMoreOpen(next);
@@ -144,7 +155,7 @@ export function RunnerToolbar({
     'flex min-w-[74px] shrink-0 flex-col items-center justify-center gap-1 rounded-lg border px-2 py-1.5 text-[13px] font-mono cursor-pointer transition-colors';
   const tileLabel = 'text-[10.5px] leading-tight text-center';
   return (
-    <div data-testid="runner-toolbar" className="flex flex-wrap items-center gap-1.5">
+    <div ref={toolbarRef} data-testid="runner-toolbar" className="flex flex-wrap items-center gap-1.5">
       {/* The presets live on this card, not in the editor's own header: Read hides that header, and a
           control that disappears with the panel it governs is a trap. A shortcut with no control is a
           feature only its author knows, so the shortcut is printed on the button. */}
@@ -249,7 +260,7 @@ export function RunnerToolbar({
         aria-controls="toolbar-more"
         data-testid="btn-more"
         aria-label="More actions"
-        title="Debugger, format with Black, history, diff, reset, sharing, pairing and editor preferences"
+        data-tip="Debugger, format with Black, history, diff, reset, sharing, pairing and editor preferences"
         className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono border flex items-center gap-1.5 cursor-pointer transition-colors ${
           moreOpen
             ? 'text-accent border-accent/60 bg-canvas'
@@ -329,7 +340,7 @@ export function RunnerToolbar({
           <button
             onClick={onToggleSelfMarked}
             data-testid="btn-toggle-lesson-complete"
-            title={
+            data-tip={
               isCurrentSelfMarked
                 ? 'Self-Marked Complete — press to untick this lesson on this device'
                 : 'Self-Mark Complete — record this lesson as finished without the graded check'
@@ -350,7 +361,7 @@ export function RunnerToolbar({
           <button
             onClick={onResetStarter}
             data-testid="btn-reset-starter"
-            title="Reset Starter — put this lesson's starter code back, discarding your edits to the file"
+            data-tip="Reset Starter — put this lesson's starter code back, discarding your edits to the file"
             className={`${tile} bg-canvas hover:bg-raise text-body border-line`}
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -359,7 +370,7 @@ export function RunnerToolbar({
           <button
             onClick={onResetRuntime}
             data-testid="btn-reset-runtime"
-            title="Terminate and restart the background Python Web Worker without losing editor code"
+            data-tip="Terminate and restart the background Python Web Worker without losing editor code"
             className={`${tile} bg-canvas hover:bg-raise text-accent border-accent/40`}
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -368,7 +379,7 @@ export function RunnerToolbar({
           <button
             onClick={onLoadSolution}
             data-testid="btn-load-solution"
-            title="Load Solution — replace the editor with the worked solution for this lesson"
+            data-tip="Load Solution — replace the editor with the worked solution for this lesson"
             className={`${tile} bg-canvas hover:bg-raise text-amber border-amber/40`}
           >
             <Eye className="w-3.5 h-3.5" />
@@ -381,7 +392,7 @@ export function RunnerToolbar({
             onClick={onFormat}
             disabled={isRunning || paused}
             data-testid="btn-format"
-            title="Re-indent and tidy this file with Black (installs on the first press, then stays in this session)"
+            data-tip="Re-indent and tidy this file with Black (installs on the first press, then stays in this session)"
             className={`${tile} bg-canvas hover:bg-raise text-body border-line disabled:opacity-40 disabled:cursor-not-allowed`}
           >
             <Wand2 className="w-3.5 h-3.5" />
@@ -392,7 +403,7 @@ export function RunnerToolbar({
             aria-expanded={historyOpen}
             aria-controls="draft-history"
             data-testid="btn-draft-history"
-            title="Every run files the code it started from, with its verdict, so a version that worked is one click away"
+            data-tip="Every run files the code it started from, with its verdict, so a version that worked is one click away"
             className={`${tile} bg-canvas hover:bg-raise border ${
               historyOpen ? 'text-accent border-accent/60' : 'text-body border-line'
             }`}
@@ -407,7 +418,7 @@ export function RunnerToolbar({
             aria-expanded={diffOpen}
             aria-controls="code-diff"
             data-testid="btn-diff"
-            title="What you changed: your code against the starter, line by line"
+            data-tip="What you changed: your code against the starter, line by line"
             className={`${tile} bg-canvas hover:bg-raise border ${
               diffOpen ? 'text-accent border-accent/60' : 'text-body border-line'
             }`}
@@ -421,7 +432,7 @@ export function RunnerToolbar({
           <button
             onClick={onShare}
             data-testid="btn-share-attempt"
-            title={`Copy a link to this lesson with your code in it (${MAX_SHARE_URL} characters max). The code rides in the link's fragment, encoded — not encrypted — so send it only where you would send the file.`}
+            data-tip={`Copy a link to this lesson with your code in it (${MAX_SHARE_URL} characters max). The code rides in the link's fragment, encoded — not encrypted — so send it only where you would send the file.`}
             className={`${tile} bg-canvas hover:bg-raise text-body border-line`}
           >
             <Share2 className="w-3.5 h-3.5" />
@@ -432,7 +443,7 @@ export function RunnerToolbar({
           <button
             onClick={onPair}
             data-testid="btn-pair-open"
-            title="Pair study: connect to another workbench directly and pass attempts back and forth"
+            data-tip="Pair study: connect to another workbench directly and pass attempts back and forth"
             className={`${tile} bg-canvas hover:bg-raise border ${
               pair.state === 'connected' ? 'text-emerald border-emerald/60' : 'text-body border-line'
             }`}
@@ -451,7 +462,7 @@ export function RunnerToolbar({
             onClick={onToggleVim}
             aria-pressed={vimOn}
             data-testid="btn-vim"
-            title={vimHint(vimOn)}
+            data-tip={vimHint(vimOn)}
             className={`${tile} bg-canvas hover:bg-raise border ${
               vimOn ? 'text-accent border-accent/60' : 'text-body border-line'
             }`}
@@ -463,7 +474,7 @@ export function RunnerToolbar({
             onClick={onToggleWatch}
             aria-pressed={watchOn}
             data-testid="btn-watch"
-            title="Watch mode: after a failed check, re-run 1.5 s after you stop typing"
+            data-tip="Watch mode: after a failed check, re-run 1.5 s after you stop typing"
             className={`${tile} bg-canvas hover:bg-raise border ${
               watchOn ? 'text-emerald border-emerald/60' : 'text-body border-line'
             }`}
@@ -476,21 +487,77 @@ export function RunnerToolbar({
         {/* The debugger is a set of tools, not one button: the heading names the group and the three
             controls under it are the ones that read a finished run. They used to be scattered through
             the general actions, where Trace and Breakpoints looked like formatting choices. */}
-        <p
+        <div
           data-testid="debugger-menu"
-          className="mt-2.5 border-t px-1 pb-1.5 pt-2 text-[11px] font-mono uppercase tracking-[0.08em] text-faint"
+          role="group"
+          aria-label="Debugger tools"
+          className="mt-2.5 border-t pt-2"
           style={{ borderColor: 'var(--border)' }}
         >
-          Debugger tools
-        </p>
+          <p className="px-1 pb-1.5 text-[11px] font-mono uppercase tracking-[0.08em] text-faint">
+            Debugger tools
+          </p>
         <div className="flex flex-wrap items-start gap-1.5">
+          {/* Like an IDE's step toolbar: always in the menu, disabled until there is a parked frame
+              to step. A control that only appears while paused is a control a learner cannot find
+              when they are looking for it — and its tooltip is what says why it is greyed. */}
+          <button
+            onClick={() => onAnswerPause?.(2)}
+            disabled={!paused}
+            data-testid="btn-debug-continue"
+            data-tip="Continue: run on to the end, the next breakpoint, or the next Pause"
+            className={`${tile} bg-canvas hover:bg-raise text-emerald border-emerald/40 disabled:opacity-40 disabled:cursor-not-allowed`}
+          >
+            <Play className="w-3.5 h-3.5" />
+            <span className={tileLabel}>Continue</span>
+          </button>
+          <button
+            onClick={() => onAnswerPause?.(3)}
+            disabled={!paused}
+            data-testid="btn-debug-step-over"
+            data-tip="Step over: run this line and stop at the next one in this file"
+            className={`${tile} bg-canvas hover:bg-raise text-body border-line disabled:opacity-40 disabled:cursor-not-allowed`}
+          >
+            <SkipForward className="w-3.5 h-3.5" />
+            <span className={tileLabel}>Step over</span>
+          </button>
+          <button
+            onClick={() => onAnswerPause?.(6)}
+            disabled={!paused}
+            data-testid="btn-debug-step-into"
+            data-tip="Step into: follow the call on this line into the function it calls"
+            className={`${tile} bg-canvas hover:bg-raise text-body border-line disabled:opacity-40 disabled:cursor-not-allowed`}
+          >
+            <CornerDownRight className="w-3.5 h-3.5" />
+            <span className={tileLabel}>Step in</span>
+          </button>
+          <button
+            onClick={() => onAnswerPause?.(7)}
+            disabled={!paused}
+            data-testid="btn-debug-step-out"
+            data-tip="Step out: finish this function and stop in its caller"
+            className={`${tile} bg-canvas hover:bg-raise text-body border-line disabled:opacity-40 disabled:cursor-not-allowed`}
+          >
+            <CornerUpLeft className="w-3.5 h-3.5" />
+            <span className={tileLabel}>Step out</span>
+          </button>
+          <button
+            onClick={() => (document.querySelector('[data-testid="watch-input"]') as HTMLInputElement | null)?.focus()}
+            disabled={!paused}
+            data-testid="btn-debug-watch"
+            data-tip="Watch: pin an expression and read it at every pause in this frame"
+            className={`${tile} bg-canvas hover:bg-raise text-body border-line disabled:opacity-40 disabled:cursor-not-allowed`}
+          >
+            <Eye className="w-3.5 h-3.5" />
+            <span className={tileLabel}>Watch</span>
+          </button>
           <button
             onClick={() => {
               onChooseLayout('debug');
               onShowTrace();
             }}
             data-testid="btn-debugger"
-            title="Debug layout — open the Debug workspace and replay the last run line by line, with every variable's value"
+            data-tip="Debug layout — open the Debug workspace and replay the last run line by line, with every variable's value"
             className={`${tile} bg-canvas hover:bg-raise text-accent border-accent/50`}
           >
             <Bug className="w-3.5 h-3.5" />
@@ -502,7 +569,7 @@ export function RunnerToolbar({
           <button
             onClick={onShowTrace}
             data-testid="btn-trace"
-            title="Replay the last run line by line, with the value every variable held at each step"
+            data-tip="Replay the last run line by line, with the value every variable held at each step"
             className={`${tile} bg-canvas hover:bg-raise text-body border-line`}
           >
             <Activity className="w-3.5 h-3.5" />
@@ -513,7 +580,7 @@ export function RunnerToolbar({
             aria-expanded={breakpointsOpen}
             aria-controls="breakpoint-panel"
             data-testid="btn-breakpoints"
-            title="Every dot on the gutter, with the condition that lets the run stop on it"
+            data-tip="Every dot on the gutter, with the condition that lets the run stop on it"
             className={`${tile} bg-canvas hover:bg-raise border ${
               breakpointsOpen ? 'text-accent border-accent/60' : 'text-body border-line'
             }`}
@@ -523,8 +590,43 @@ export function RunnerToolbar({
               Breakpoints{breakpoints.length ? ` (${breakpoints.length})` : ''}
             </span>
           </button>
+          {/* The rest of an IDE's run row: Pause, Stop and Restart, each enabled only where the
+              interpreter can honour it. They sit beside the step tools so the whole run state is in
+              one place while a program is parked. */}
+          <button
+            onClick={onPause}
+            disabled={!isRunning || !pauseCapable || paused}
+            data-testid="btn-debug-pause"
+            data-tip="Pause: stop at the next line of your file without losing the session"
+            className={`${tile} bg-canvas hover:bg-raise text-body border-line disabled:opacity-40 disabled:cursor-not-allowed`}
+          >
+            <Pause className="w-3.5 h-3.5" />
+            <span className={tileLabel}>Pause</span>
+          </button>
+          <button
+            onClick={onStop}
+            disabled={!isRunning}
+            data-testid="btn-debug-stop"
+            data-tip="Stop: end this run; the editor keeps your code"
+            className={`${tile} bg-canvas hover:bg-raise text-rose border-rose/40 disabled:opacity-40 disabled:cursor-not-allowed`}
+          >
+            <OctagonX className="w-3.5 h-3.5" />
+            <span className={tileLabel}>Stop</span>
+          </button>
+          <button
+            onClick={onResetRuntime}
+            disabled={isRunning}
+            data-testid="btn-debug-restart"
+            data-tip="Restart: terminate and start a fresh interpreter (code untouched)"
+            className={`${tile} bg-canvas hover:bg-raise text-body border-line disabled:opacity-40 disabled:cursor-not-allowed`}
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span className={tileLabel}>Restart</span>
+          </button>
+        </div>
         </div>
       </div>
+      <HeaderTips scope={toolbarRef} always />
     </div>
   );
 }

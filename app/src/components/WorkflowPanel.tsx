@@ -423,7 +423,9 @@ export function WorkflowPanel({
       <div
         ref={root}
         data-testid="panel-workflow"
-        className="flex h-full min-h-0 flex-col rounded-xl border border-line bg-panel p-4"
+        className={full
+          ? 'flex h-full min-h-0 flex-col rounded-xl border border-line bg-panel p-4'
+          : 'flex h-full min-h-0 flex-col rounded-lg border border-line bg-panel p-2 compact-workflow'}
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="flex items-center gap-1.5 font-mono text-[13px] text-accent">
@@ -516,8 +518,8 @@ export function WorkflowPanel({
     <div
       ref={root}
       data-testid="panel-workflow"
-      className={`flex min-h-0 flex-col bg-panel p-4 ${
-        full ? 'fixed inset-0 z-50 overflow-auto' : 'h-full rounded-xl border border-line'
+      className={`flex min-h-0 flex-col bg-panel ${
+        full ? 'fixed inset-0 z-50 overflow-auto p-4' : 'h-full rounded-lg border border-line p-2'
       }`}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -762,6 +764,11 @@ export function WorkflowPanel({
           fraction of a pixel of type difference on another machine repacks them into one line fewer
           — which moved the whole canvas below by a line. Stacked, the hint block is four lines
           everywhere, and the paper underneath starts at the same height on every machine. */}
+      {/* Tab mode is a pane beside the editor, not a page of its own: four lines of hints and a
+          padded header cost the diagram about a card's height. Compact, the rules are one line and
+          the padding is halved, so the paper - the learner's working room - is larger. Full screen
+          keeps the list, because there the page is the diagram. */}
+      {full ? (
       <div className="mt-1.5 flex flex-col gap-y-0.5 font-mono text-[10.5px] text-faint">
         <span className="flex items-center gap-1">
           <MousePointerClick className="h-3 w-3" aria-hidden="true" />
@@ -772,6 +779,11 @@ export function WorkflowPanel({
         <span>Ctrl/⌘ C, X, V copy, cut and paste; Delete removes the selection</span>
         <span>Ctrl/⌘ F finds a card; right-click a card for Wrap text and the card menu</span>
       </div>
+      ) : (
+        <p data-testid="workflow-hints-compact" className="mt-1 font-mono text-[10px] leading-tight text-faint">
+          Drag a card by its header · drag a dot to draw an arrow · Alt-drag pans · Ctrl/⌘ F finds a card
+        </p>
+      )}
 
       <Suspense
         fallback={
@@ -827,6 +839,7 @@ export function WorkflowPanel({
           onPaste={pasteNode}
           canPaste={canPaste}
           fullscreen={full}
+          compact={!full}
           sim={sim}
         />
       </Suspense>
