@@ -391,7 +391,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # This lane launches Chromium only; installing Firefox here was a browser no suite opened.
-      PLAYWRIGHT_BROWSERS: chromium
+      PW_BROWSERS: chromium
 
     steps:
       - name: Checkout repository
@@ -450,12 +450,12 @@ jobs:
       # packages from a throttled mirror, so the apt half is separate and conditional.
       - name: Install the Playwright browsers (only a cache miss needs them)
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright-core install ${{ env.PLAYWRIGHT_BROWSERS }}
+        run: npx playwright-core install ${{ env.PW_BROWSERS }}
         timeout-minutes: 8
 
       - name: Install the Playwright OS libraries (only a cache miss needs them)
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright-core install-deps ${{ env.PLAYWRIGHT_BROWSERS }}
+        run: npx playwright-core install-deps ${{ env.PW_BROWSERS }}
         timeout-minutes: 10
 
       - name: Run the e2e partition (the SSR smoke, the unit batch, the dev-server sweep with the robot examples and clock log, the light flows)
@@ -512,7 +512,10 @@ jobs:
     env:
       # The Pages sweep grades a sample in Firefox as the second browser; every other suite here is
       # Chromium, so this is the only lane that installs both.
-      PLAYWRIGHT_BROWSERS: chromium firefox
+      PW_BROWSERS: chromium firefox
+      # The suite reads this selector itself: `both` runs Chromium and Firefox, a browser name
+      # selects one. It is not the install list.
+      PLAYWRIGHT_BROWSERS: both
 
     steps:
       - name: Checkout repository
@@ -559,12 +562,12 @@ jobs:
 
       - name: Install the Playwright browsers (only a cache miss needs them)
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright-core install ${{ env.PLAYWRIGHT_BROWSERS }}
+        run: npx playwright-core install ${{ env.PW_BROWSERS }}
         timeout-minutes: 8
 
       - name: Install the Playwright OS libraries (only a cache miss needs them)
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright-core install-deps ${{ env.PLAYWRIGHT_BROWSERS }}
+        run: npx playwright-core install-deps ${{ env.PW_BROWSERS }}
         timeout-minutes: 10
 
       - name: Run the bundle partition (built bundle, control pairs, the tour, home)
@@ -615,7 +618,7 @@ jobs:
     if: github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.browser == 'true'
     runs-on: ubuntu-latest
     env:
-      PLAYWRIGHT_BROWSERS: chromium
+      PW_BROWSERS: chromium
 
     steps:
       - name: Checkout repository
@@ -662,12 +665,12 @@ jobs:
 
       - name: Install the Playwright browsers (only a cache miss needs them)
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright-core install ${{ env.PLAYWRIGHT_BROWSERS }}
+        run: npx playwright-core install ${{ env.PW_BROWSERS }}
         timeout-minutes: 8
 
       - name: Install the Playwright OS libraries (only a cache miss needs them)
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright-core install-deps ${{ env.PLAYWRIGHT_BROWSERS }}
+        run: npx playwright-core install-deps ${{ env.PW_BROWSERS }}
         timeout-minutes: 10
 
       # What the bundle costs, in gzipped bytes, against docs/weight-budget.json: a metric over its
@@ -750,7 +753,7 @@ jobs:
     if: github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.browser == 'true'
     runs-on: ubuntu-latest
     env:
-      PLAYWRIGHT_BROWSERS: chromium
+      PW_BROWSERS: chromium
 
     steps:
       - name: Checkout repository
@@ -797,12 +800,12 @@ jobs:
 
       - name: Install the Playwright browsers (only a cache miss needs them)
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright-core install ${{ env.PLAYWRIGHT_BROWSERS }}
+        run: npx playwright-core install ${{ env.PW_BROWSERS }}
         timeout-minutes: 8
 
       - name: Install the Playwright OS libraries (only a cache miss needs them)
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright-core install-deps ${{ env.PLAYWRIGHT_BROWSERS }}
+        run: npx playwright-core install-deps ${{ env.PW_BROWSERS }}
         timeout-minutes: 10
 
       - name: "Check the Python worker: in-place Stop, input(), isolation, and the no-buffer fallback"

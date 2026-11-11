@@ -361,12 +361,12 @@ class WorkflowSpeedTests(unittest.TestCase):
                     "on the one miss measured",
                 )
                 self.assertIn(
-                    "npx playwright-core install ${{ env.PLAYWRIGHT_BROWSERS }}",
+                    "npx playwright-core install ${{ env.PW_BROWSERS }}",
                     block,
                     msg="expected the lane to install only the browsers it launches",
                 )
                 self.assertIn(
-                    "npx playwright-core install-deps ${{ env.PLAYWRIGHT_BROWSERS }}",
+                    "npx playwright-core install-deps ${{ env.PW_BROWSERS }}",
                     block,
                     msg="expected the OS libraries installed on their own, so they can be conditional",
                 )
