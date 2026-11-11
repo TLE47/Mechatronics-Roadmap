@@ -400,8 +400,6 @@ jobs:
     env:
       # This lane launches Chromium only; installing Firefox here was a browser no suite opened.
       PW_BROWSERS: chromium
-      # TEMPORARY: sub-step marks for the workflow-scenario seam.
-      E2E_MARKS: "1"
 
     steps:
       - name: Checkout repository
