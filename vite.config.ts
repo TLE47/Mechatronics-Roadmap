@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -10,6 +11,21 @@ import { themeTokensFromCss } from './app/src/themeTokens.ts';
 const { version } = JSON.parse(
   readFileSync(new URL('./package.json', import.meta.url), 'utf8')
 ) as { version: string };
+
+// The release identity above names a version; it cannot name *which* build of that version. The
+// stamp is that second fact: the commit the bundle was cut from and the day it was built. Reading
+// git here keeps `package.json` free of a number a release tool would have to rewrite, and a
+// checkout without git (a tarball, a throwaway copy) is named honestly rather than pretending.
+const buildStamp = (() => {
+  let sha = 'unknown';
+  try {
+    sha = execFileSync('git', ['rev-parse', '--short=7', 'HEAD'], { encoding: 'utf8' }).trim();
+  } catch {
+    sha = 'unknown';
+  }
+  const date = new Date().toISOString().slice(0, 10);
+  return `${sha} \u00b7 ${date}`;
+})();
 
 // Project Pages serve this workbench from https://<owner>.github.io/Mechatronics-Roadmap/,
 // so every asset URL in a production bundle needs that prefix, while `npm run dev` keeps
@@ -87,7 +103,10 @@ export default defineConfig(({ command }) => ({
   // already covers, and CI passes the variables in the environment, which outranks this either way.
   envDir: '..',
   base: command === 'build' ? PAGES_BASE : '/',
-  define: { __APP_VERSION__: JSON.stringify(version) },
+  define: {
+    __APP_VERSION__: JSON.stringify(version),
+    __APP_BUILD__: JSON.stringify(buildStamp),
+  },
   plugins: [themeTokenTable(), katexWoff2Only(), react(), tailwindcss()],
   build: {
     outDir: '../dist',

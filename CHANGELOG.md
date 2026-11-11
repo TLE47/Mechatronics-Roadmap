@@ -28,6 +28,15 @@ Debug layout, Trace and Breakpoints; they used to sit among the formatting choic
 `__APP_VERSION__` define that fills the footer. Review mode keeps its own **Navigate** button
 (`btn-open-review`); with **Small text on the action buttons** on, its word sits under the icon.
 
+**Build stamp.** The version alone could not say *which* build of it you were looking at, so the
+header badge and the footer now print the commit the bundle was cut from and the day it was built
+(`ffa4069 · 2026-11-11`) beside `v3.3.0`. `vite.config.ts` reads git once and injects `__APP_BUILD__`
+next to `__APP_VERSION__`; a checkout without git says *local build* instead of inventing a commit.
+The stamp takes its own line under the version from `sm` up, because on the version's line its
+138 px of extra width wrapped the action tray onto a second header row (+47 px at 1440); below `sm`
+the badge stays the release version alone, which is what the phone's two-row ceiling was measured
+with.
+
 **Sound.** The speaker's detail door no longer opens a second popover: it opens **General settings**,
 where the whole sound surface already lived. One dialog, one mount of the store, and the speaker keeps
 only the one press that has to be in the header. General settings restores focus to whichever control

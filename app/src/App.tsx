@@ -106,7 +106,7 @@ import { useKeymap } from './useKeymap';
 import { ThemeTokens } from './components/ThemeTokens';
 import { themeViewFromLocation, themeViewSearch } from './themeRoute';
 import { PYTHON_TAB_NAME, labsSwitchLabel } from './tabNames';
-import { APP_VERSION } from './appVersion';
+import { APP_BUILD, APP_VERSION } from './appVersion';
 import { isKnownLesson, lessonIdFromLocation } from './lessonRoute';
 import { readSharedAttempt, type SharedAttempt } from './shareLink';
 import { readTrySnippet } from './tryLink';
@@ -308,7 +308,8 @@ const SiteFooter: React.FC<{ onOpenIntro?: () => void }> = ({ onOpenIntro }) => 
     data-chrome="footer"
     className="border-t border-line-soft bg-canvas px-4 py-3 text-center text-[11.5px] text-faint"
   >
-    MechaLab <span data-testid="app-version">{APP_VERSION}</span> · Ten-Step Spiral Mechatronics
+    MechaLab <span data-testid="app-version">{APP_VERSION}</span> ·{' '}
+    <span data-testid="app-build">build {APP_BUILD}</span> · Ten-Step Spiral Mechatronics
     Curriculum (Track P → Stage 0 → Depths 1–3) · Dual License: CC BY 4.0 (Docs) &amp; MIT (Code)
     ·{' '}
     {/* A real `href` with a click handler, the same shape as the wordmark: a modified click opens

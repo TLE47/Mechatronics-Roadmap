@@ -24,7 +24,7 @@ import {
   OPEN_GENERAL_SETTINGS_EVENT,
   readShowActionLabels,
 } from '../generalSettings';
-import { APP_VERSION } from '../appVersion';
+import { APP_BUILD, APP_VERSION } from '../appVersion';
 import { HeaderTips } from './HeaderTips';
 // The interface's own ear: one delegated listener for every control's click, mounted once with the
 // header (which every screen renders). It renders nothing and holds no state.
@@ -257,6 +257,18 @@ export const Header: React.FC<HeaderProps> = ({
                 style={{ color: 'var(--faint)' }}
               >
                 {APP_VERSION}
+              </span>
+              {/* The stamp gets a line of its own instead of the version's: the header is a wrapping
+                  row, and the 138 px of extra brand width an inline stamp needed pushed the action
+                  tray onto a second row (+47 px) on a 1440 laptop. A line is a third row in the brand
+                  block, so it is `sm` and up only — the phone header's 112 px ceiling is measured
+                  with two, and the badge there stays the release version alone. */}
+              <span
+                data-testid="brand-build"
+                className="hidden font-mono text-[9.5px] leading-none sm:mt-0.5 sm:block"
+                style={{ color: 'var(--faint)' }}
+              >
+                {APP_BUILD}
               </span>
             </span>
           </span>

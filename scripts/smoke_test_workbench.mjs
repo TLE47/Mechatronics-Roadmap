@@ -430,6 +430,13 @@ export async function runSmokeTests(viteServer) {
       htmlAdvanced.includes(`data-testid="app-version">v${releaseVersion}<`),
       `the footer must print package.json's version, v${releaseVersion}`
     );
+    // The release identity cannot say which build of it this is, so the footer names the build as
+    // well. This harness injects no stamp, which is the case the fallback is for: the element must
+    // still be there and still say something, rather than the footer quietly losing the fact.
+    assert(
+      /data-testid="app-build">build [^<]+</.test(htmlAdvanced),
+      'the footer must name the build beside the release version'
+    );
     assert(
       htmlAdvanced.includes('Run Python Lessons') ||
         htmlAdvanced.includes('In-Browser Python Runner (Pyodide WASM)'),

@@ -12,3 +12,10 @@ declare const __APP_VERSION__: string;
 export const APP_VERSION = `v${
   typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '0.0.0-dev'
 }`;
+
+/** Printed beside the release version: the commit and the day the bundle was built. */
+declare const __APP_BUILD__: string;
+
+/** `ffa4069 · 2026-11-11`, or `local build` outside Vite, where there is no commit to name. */
+export const APP_BUILD =
+  typeof __APP_BUILD__ === 'string' ? __APP_BUILD__ : 'local build';
