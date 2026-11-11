@@ -42,7 +42,12 @@ Your finished program must satisfy **all** of these conditions:
 
 ## Learn
 
-### Idea 1: Comments are the plan
+### Idea 1: Turning a problem into comments
+
+- **Primary resource:** [Lesson P.6: Modules, Assert Statements & Reading a Traceback](P.6-modules-and-automated-asserts.md)
+- **What to read:** the section that shows a passing self-check naming what must be true, and the traceback lines that name the failing line.
+- **What to skip:** the import mechanics; this lesson only uses names you already have.
+- **Key takeaway:** A comment that names the input, the output, the edge and the check is a plan you can turn into code one line at a time.
 
 A beginner often opens the editor and starts typing because that feels like starting. Then the hard questions arrive halfway through: is the runtime based on the whole pack or only the usable part? Is “charge used” per hour or for this test? Should the answer be a voltage or a percentage? Each question forces a rewrite.
 
@@ -64,6 +69,11 @@ Each line is a job you can finish:
 The rule of thumb: **one comment, one line of code.** If a comment needs three lines, it is really two or three steps; split it. If a line has no comment above it, ask whether you can explain why it exists.
 
 ### Idea 2: First draft, then make the edge fail
+
+- **Primary resource:** [Lesson P.1: Variables and Fundamental Data Types](P.1-variables-and-data-types.md)
+- **What to read:** how a name, a unit and a printed label are chosen before any arithmetic is written.
+- **What to skip:** the data-type catalogue; this lesson only needs plain numbers.
+- **Key takeaway:** A first draft is finished only when you have tried the normal case and the edge that would break it.
 
 The first draft is allowed to be incomplete; it is not allowed to be vague. Write it in this order:
 
@@ -88,7 +98,11 @@ flowchart LR
 
 ### Bridge Notes
 
-The same four comments work on every later P-track exercise. In P.3 the input is a raw command, the output is a clamped command, the edge is a value outside 0–255, and the check is the boundary case you can work out by hand. Writing those four lines first turns a page of instructions into a short list of jobs. The comments are also the debugging order: when the answer is wrong, you can ask which comment failed instead of rereading the whole program. A first draft in comments is cheap to change — moving a step or adding the edge is one line of prose, not a rewrite of working code.
+The same four comments work on every later P-track exercise. In P.3 the input is a raw command, the output is a clamped command, the edge is a value outside 0–255, and the check is the boundary case you can work out by hand. Writing those four lines first turns a page of instructions into a short list of jobs.
+
+The battery report shows why the plan is written before the formulas. Each answer has a unit, and the unit decides the arithmetic: runtime is minutes, so hours from the charge-and-current pair must be scaled; charge used is mAh, so the run time must be in hours. A learner who starts typing formulas meets those choices halfway through the file, when the names are already fixed and a wrong unit looks like a wrong number. A learner who writes the four comments first meets them on paper, where a change costs one line.
+
+The comments are also the debugging order: when the answer is wrong, you can ask which comment failed instead of rereading the whole program. A first draft in comments is cheap to change — moving a step or adding the edge is one line of prose, not a rewrite of working code. Keep the four lines at the top of the file as the record of what you checked.
 
 ## Do it yourself
 
@@ -109,10 +123,10 @@ run_minutes = 30
 # TODO 1: Usable voltage is the pack voltage above the cutoff.
 usable_mv = 0
 
-# TODO 2: Runtime in minutes is capacity divided by load, then hours converted to minutes.
+# TODO 2: Estimate the runtime in minutes from the charge the pack holds and the current the load draws.
 runtime_min = 0.0
 
-# TODO 3: Charge used is the load current multiplied by the run time in hours.
+# TODO 3: Charge used during that run, in mAh.
 charge_used_mah = 0.0
 
 # TODO 4: Charge left is the unused capacity as a percentage of the whole pack.

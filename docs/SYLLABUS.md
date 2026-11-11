@@ -25,15 +25,15 @@
 
 ```mermaid
 flowchart LR
-    Arm["Arm layer<br/>Steps 1-10 · 122.6-215 h"] --> Built["A verified 2-DOF arm"]
+    Arm["Arm layer<br/>Steps 1-10 · 123.6-217 h"] --> Built["A verified 2-DOF arm"]
     Built --> Depth["Depth layer<br/>Steps 3-10 again · 80 h"]
-    Depth --> Full["Full course<br/>202.6-295 h"]
+    Depth --> Full["Full course<br/>203.6-297 h"]
     Outside["Outside both routes<br/>10 modules"] -.-> Full
 ```
 
 | Step | Lessons | Arm layer | Depth 2 · practice | Depth 3 · derive | Focused hours |
 | :--- | ---: | :--- | :--- | :--- | ---: |
-| **1 · Python and the maths a robot needs** ([Track P](../track-p/README.md)) | 15 | — | — | — | **17.5-44.5** |
+| **1 · Python and the maths a robot needs** ([Track P](../track-p/README.md)) | 16 | — | — | — | **18.5-46.5** |
 | **2 · Circuits and your first microcontroller** ([Stage 0](../stage-0/README.md)) | 11 | — | — | — | **13.75-33** |
 | **3 · Make a joint move: foundations** ([Track 00](../00-foundations/README.md)) | 3 | 5 modules · 20.5-26.5 h | 10 modules · 29.5 h | 1 module · 5 h | **55-61** |
 | **4 · Power the joint: electronics** ([Track 01](../01-electronics-and-power/README.md)) | 4 | 4 modules · 18-25.5 h | 2 modules · 8.5 h | — | **26.5-34** |
@@ -43,13 +43,13 @@ flowchart LR
 | **8 · Make it hold still: control** ([Track 05](../05-control-and-estimation/README.md)) | 2 | 1 module · 6.5-10.5 h | 1 module · 4.5 h | 3 modules · 6 h | **17-21** |
 | **9 · Plan motion and bring it up safely** ([Track 06](../06-robotics-and-autonomy/README.md) + [Track 07](../07-systems-hil-and-production/README.md)) | 2 | 2 modules · 10-14 h | 1 module · 4.5 h | — | **14.5-18.5** |
 | **10 · Put it together: the 2-DOF arm** ([Track 08](../08-capstone-projects/README.md)) | 1 | 1 module · 6.5-9 h | — | — | **6.5-9** |
-| **Arm route, Steps 1-10** | 50 | 17 modules · 122.6-215 h | — | — | **122.6-215** |
+| **Arm route, Steps 1-10** | 51 | 17 modules · 123.6-217 h | — | — | **123.6-217** |
 | **Depth 2 pass, after Step 10** | — | — | 18 modules · 64 h | — | **64** |
 | **Depth 3 pass, after Step 10** | — | — | — | 5 modules · 16 h | **16** |
 | **Depth pass, after Step 10** | — | — | 18 modules | 5 modules | **80** |
-| **Full course** | 50 | 17 modules | 18 modules | 5 modules | **202.6-295** |
+| **Full course** | 51 | 17 modules | 18 modules | 5 modules | **203.6-297** |
 
-The arm route is **122.6-215 focused hours**, the depth pass adds **80** - of which Depth 2 practice is **64** and Depth 3 derivation is **16** - and the full course is **202.6-295**. The minimum viable finish - every Tier 1 bridge plus the capstone and the 5 lessons it opens - is **93.75-153 focused hours**; its page list is [`MINIMUM.md`](MINIMUM.md).
+The arm route is **123.6-217 focused hours**, the depth pass adds **80** - of which Depth 2 practice is **64** and Depth 3 derivation is **16** - and the full course is **203.6-297**. The minimum viable finish - every Tier 1 bridge plus the capstone and the 5 lessons it opens - is **94.75-155 focused hours**; its page list is [`MINIMUM.md`](MINIMUM.md).
 
 ## C. The teaching sequence every page follows
 
@@ -86,12 +86,13 @@ The depth layer's Tier 3 pages split into two levels, and both are graded:
 
 > Read a formula, write it in Python, and check your own answer.
 
-Starts at [`P.1`](../track-p/P.1-variables-and-data-types.md) · **17.5-44.5 focused hours** · 15 lessons.
+Starts at [`P.1`](../track-p/P.1-variables-and-data-types.md) · **18.5-46.5 focused hours** · 16 lessons.
 
 | Page | What it teaches | Layer | Focused hours |
 | :--- | :--- | :--- | ---: |
 | [`P.1`](../track-p/P.1-variables-and-data-types.md) | Variables and Fundamental Data Types | lesson | 1-3 |
 | [`P.2`](../track-p/P.2-arithmetic-and-order-of-operations.md) | Computer Arithmetic and Order of Operations | lesson | 1-2.5 |
+| [`P.2.5`](../track-p/P.2.5-thinking-in-comments.md) | Think in Comments — Plan the Job Before You Type Code | lesson | 1-2 |
 | [`P.3`](../track-p/P.3-decisions-and-clamping.md) | Conditional Decisions (if/elif/else) and Command Clamping | lesson | 1.5-3.5 |
 | [`P.4`](../track-p/P.4-lists-and-for-loops.md) | Ordered Lists and Repeating Actions with for Loops | lesson | 1.5-3.5 |
 | [`P.5`](../track-p/P.5-functions-and-while-loops.md) | Reusable Functions (def/return) and while Loops | lesson | 1.5-3.5 |
