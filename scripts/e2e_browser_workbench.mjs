@@ -2029,12 +2029,12 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           page.getByTestId('workflow-canvas').evaluate((canvas, minX) => {
             const scan = () => {
               const rect = canvas.getBoundingClientRect();
-              const top = Math.max(rect.top + 40, 40);
-              const bottom = Math.min(rect.bottom - 20, window.innerHeight - 20);
-              const left = Math.max(rect.left + 40, minX);
-              const right = Math.min(rect.right - 30, window.innerWidth - 30);
-              for (let y = top; y < bottom; y += 16) {
-                for (let x = left; x < right; x += 16) {
+              const top = Math.max(rect.top + 16, 16);
+              const bottom = Math.min(rect.bottom - 16, window.innerHeight - 16);
+              const left = Math.max(rect.left + 16, minX);
+              const right = Math.min(rect.right - 24, window.innerWidth - 24);
+              for (let y = top; y < bottom; y += 8) {
+                for (let x = left; x < right; x += 8) {
                   const hit = document.elementFromPoint(x, y);
                   const taken =
                     hit?.closest(
@@ -2063,12 +2063,12 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         const bareSpotHere = (minX) =>
           page.getByTestId('workflow-canvas').evaluate((canvas, minX) => {
             const rect = canvas.getBoundingClientRect();
-            const top = Math.max(rect.top + 40, 40);
-            const bottom = Math.min(rect.bottom - 20, window.innerHeight - 20);
-            const left = Math.max(rect.left + 40, minX);
-            const right = Math.min(rect.right - 30, window.innerWidth - 30);
-            for (let y = top; y < bottom; y += 16) {
-              for (let x = left; x < right; x += 16) {
+            const top = Math.max(rect.top + 16, 16);
+            const bottom = Math.min(rect.bottom - 16, window.innerHeight - 16);
+            const left = Math.max(rect.left + 16, minX);
+            const right = Math.min(rect.right - 24, window.innerWidth - 24);
+            for (let y = top; y < bottom; y += 8) {
+              for (let x = left; x < right; x += 8) {
                 const hit = document.elementFromPoint(x, y);
                 const taken =
                   hit?.closest(
@@ -2580,8 +2580,42 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           return Boolean(box) && box.top >= 0 && box.top < window.innerHeight;
         }, undefined, { timeout: 5000 });
 
-        const firstAt = await emptySpot(0);
-        assert.ok(firstAt, 'the canvas must have bare paper to right-click');
+        // A null spot says nothing about why, and this failure has been the difference between a
+        // covered paper and a paper that is not on screen at all. The message carries the state.
+        const paperReport = () =>
+          page.evaluate(() => {
+            const canvas = document.querySelector('[data-testid="workflow-canvas"]');
+            const dialogs = [...document.querySelectorAll('[role="dialog"],[aria-modal="true"]')]
+              .filter((el) => el.getBoundingClientRect().width > 0)
+              .map((el) => el.getAttribute('data-testid') || el.getAttribute('aria-label') || el.tagName);
+            if (!canvas) return { canvas: null, dialogs };
+            const rect = canvas.getBoundingClientRect();
+            const centre = document.elementFromPoint(
+              Math.min(Math.max(rect.left + rect.width / 2, 0), window.innerWidth - 1),
+              Math.min(Math.max(rect.top + rect.height / 2, 0), window.innerHeight - 1)
+            );
+            return {
+              rect: [Math.round(rect.left), Math.round(rect.top), Math.round(rect.width), Math.round(rect.height)],
+              cards: document.querySelectorAll('[data-node-id]').length,
+              lanes: document.querySelectorAll('[data-lane-band]').length,
+              centre: centre
+                ? `${centre.tagName.toLowerCase()}${centre.getAttribute('data-testid') ? `[${centre.getAttribute('data-testid')}]` : ''}`
+                : 'nothing',
+              dialogs,
+            };
+          });
+        let firstAt = await emptySpot(0);
+        if (!firstAt) {
+          // A diagram can be drawn wide enough to fill every windowful of paper. Fit is the app's
+          // own way to make room, so ask it for some and look again before calling it a failure.
+          await page.getByTestId('workflow-fit').click();
+          await page.waitForTimeout(350);
+          firstAt = await emptySpot(0);
+        }
+        assert.ok(
+          firstAt,
+          `the canvas must have bare paper to right-click (${JSON.stringify(await paperReport())})`
+        );
         const first = await menuAdd(firstAt.x, firstAt.y, 'Compute');
         assert.equal(await page.locator('[data-node-id]').count(), 4, 'the menu adds one card');
         // A press focuses the paper, and a focus can scroll it a pixel or two before the browser
