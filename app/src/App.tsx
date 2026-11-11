@@ -380,6 +380,12 @@ export const App: React.FC = () => {
   const [isPaletteOpen, setIsPaletteOpen] = useState<boolean>(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [paletteMode, setPaletteMode] = useState<PaletteMode>('all');
+  // The header's Search button is a text search, not the command palette: a learner typing
+  // "eight-bit range" wants the term and the lesson that explains it, which only search mode reads.
+  const openSearchPalette = React.useCallback(() => {
+    setPaletteMode('search');
+    setIsPaletteOpen(true);
+  }, []);
   // Refs because the key handler below is registered once: it closes over the first render, and
   // "is this door already open?" has to be answered by the value on screen now.
   const paletteOpenRef = useRef<boolean>(false);
@@ -1599,7 +1605,7 @@ export const App: React.FC = () => {
           showCourseLevels={false}
           accountEmail={accountEmail}
           onOpenAccount={() => setIsAccountOpen(true)}
-          onOpenPalette={() => setIsPaletteOpen(true)}
+          onOpenPalette={openSearchPalette}
           onOpenReview={() => setReviewOpen(true)}
           onOpenHome={() => openPage('home')}
           onOpenStudio={() => openTabFromHome('tab-studio')}
@@ -1711,7 +1717,7 @@ export const App: React.FC = () => {
           showCourseLevels={false}
           accountEmail={accountEmail}
           onOpenAccount={() => setIsAccountOpen(true)}
-          onOpenPalette={() => setIsPaletteOpen(true)}
+          onOpenPalette={openSearchPalette}
           onOpenReview={() => setReviewOpen(true)}
           onOpenHome={() => openPage('home')}
           onOpenStudio={() => openTabFromHome('tab-studio')}
@@ -1816,7 +1822,8 @@ export const App: React.FC = () => {
         showCourseLevels={passChangesContent(activeTab)}
         accountEmail={accountEmail}
         onOpenAccount={() => setIsAccountOpen(true)}
-        onOpenPalette={() => setIsPaletteOpen(true)}
+        onOpenPalette={openSearchPalette}
+        onOpenReview={() => setReviewOpen(true)}
         onOpenHome={() => openPage('home')}
         onOpenStudio={() => openTabFromHome('tab-studio')}
         onOpenLessons={() => openTabFromHome('tab-pyodide')}

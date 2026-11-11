@@ -49,6 +49,7 @@ import { STORE_RESTORED_EVENT } from '../backupBundle';
 import { markQuotes, wrapSelection } from '../lessonMarks';
 import { RESET_EVENT } from '../resetEvent';
 import { lessonPageUrl as sourceUrl } from '../startHere';
+import { StudyClockReminder } from './StudyClockReminder';
 
 /**
  * The lesson text, beside the code it is about (`app/src/components/LessonReader.tsx`).
@@ -136,6 +137,8 @@ interface LessonReaderProps {
    * just carried across a rotation (`readingPosition.ts`).
    */
   hidden?: boolean;
+  /** Show the start-the-clock reminder at the top of Study's prose (desktop only). */
+  showClock?: boolean;
   /**
    * Study starts at `## Learn` and stops at its `## Do it yourself` heading, because the workbench
    * below is the doing half. Read keeps the rest of the page, without the Learn section Study carries.
@@ -271,6 +274,7 @@ export function LessonReader({
   onJumpToEditor,
   onFocusMiss,
   hidden = false,
+  showClock = false,
   scope = 'full',
   continueAction = null,
 }: LessonReaderProps) {
@@ -1246,6 +1250,8 @@ export function LessonReader({
           tall ? 'max-h-[calc(100vh-11rem)]' : 'max-h-[760px]'
         }`}
       >
+        {showClock && scope === 'study' && <StudyClockReminder lessonId={lessonId} />}
+
         {!page && !error && (
           <p className="flex items-center gap-2 text-[13px] text-muted" data-testid="reader-loading">
             <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading the lesson text…

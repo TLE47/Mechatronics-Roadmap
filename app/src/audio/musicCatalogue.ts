@@ -69,15 +69,35 @@ export type InstrumentId = 'piano' | 'guitar' | 'flute' | 'violin';
 export interface InstrumentInfo {
   id: InstrumentId;
   label: string;
-  /** One line under the chips: what the recipe actually sounds like. */
-  hint: string;
 }
 
 export const INSTRUMENTS: readonly InstrumentInfo[] = [
-  { id: 'piano', label: 'Piano', hint: 'A soft struck chord — strong fundamental, quick upper partials.' },
-  { id: 'guitar', label: 'Guitar', hint: 'A plucked open chord — warm, with a slight chorusing detune.' },
-  { id: 'flute', label: 'Flute', hint: 'A hollow, breathy fifth — almost a pure sine with one octave above.' },
-  { id: 'violin', label: 'Violin', hint: 'A bowed chord — richer harmonics and a slow, wide vibrato detune.' },
+  { id: 'piano', label: 'Piano' },
+  { id: 'guitar', label: 'Guitar' },
+  { id: 'flute', label: 'Flute' },
+  { id: 'violin', label: 'Violin' },
+];
+
+/**
+ * Instrument-led tracks, not the drone's held recipes.
+ *
+ * These are shortcuts into the real tape list: choosing one starts a full loop whose lead instrument
+ * matches the chip. The held `INSTRUMENTS` above stay for the Drone preference, but the panel no
+ * longer offers them as music — a sustained chord is a texture, not a track a learner can study to.
+ */
+export interface SoloTrack {
+  id: InstrumentId;
+  label: string;
+  /** The catalogue tape this chip plays. */
+  tapeId: string;
+  hint: string;
+}
+
+export const SOLO_TRACKS: readonly SoloTrack[] = [
+  { id: 'piano', label: 'Piano', tapeId: 'first-snow', hint: 'First Snow — a real solo piano recording.' },
+  { id: 'guitar', label: 'Guitar', tapeId: 'winter-blues', hint: 'Winter Blues — a guitar-led CC0 recording.' },
+  { id: 'flute', label: 'Flute', tapeId: 'paper-lanterns', hint: 'Paper Lanterns — bell and breathy flute voices.' },
+  { id: 'violin', label: 'Violin', tapeId: 'city-lights', hint: 'City Lights — a warm string-pad lead.' },
 ];
 
 export function isInstrumentId(value: unknown): value is InstrumentId {

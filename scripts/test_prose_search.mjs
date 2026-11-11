@@ -3,12 +3,12 @@
  * Searching the course pages (`scripts/test_prose_search.mjs`, `npm run test:prose`).
  *
  * `⌘⇧F` promises that a word a learner half-remembers can be found in the course's own words. For
- * the runner's lessons that promise is kept by `lessonSearch.ts`; for the 67 reading pages it is
+ * the runner's lessons that promise is kept by `lessonSearch.ts`; for the 68 reading pages it is
  * kept by a file the app fetches on demand, and every way that promise breaks is silent:
  *
  * 1. **The index is not the route.** The generator reads `scripts/route_model.py`; a page added to a
  *    step without the file regenerated would still "work", quietly missing the new page. The count
- *    (50 lessons + 17 arm modules), the ids and the route order are pinned here.
+ *    (51 lessons + 17 arm modules), the ids and the route order are pinned here.
  * 2. **Code or a generated callout is indexed.** Every page carries a "Run this in the workbench"
  *    block and a "Next:" line written by scripts; if they were indexed, every page would match the
  *    next page's title and the search would be a second copy of the route table. Fences and tables
@@ -82,13 +82,13 @@ const bodyOf = (page) => page.sections.map((section) => section.t).join('\n');
 
 console.log('search the course pages');
 
-check('the index is the route: 50 prose lessons, 17 arm modules, in course order', () => {
+check('the index is the route: 51 prose lessons, 17 arm modules, in course order', () => {
   assert.ok(pages, 'the committed prose index must parse');
-  assert.equal(pages.length, 67, `the route declares 66 pages, the index has ${pages.length}`);
-  assert.equal(pages.filter((page) => !page.path.startsWith('modules/')).length, 50);
+  assert.equal(pages.length, 68, `the route declares 67 pages, the index has ${pages.length}`);
+  assert.equal(pages.filter((page) => !page.path.startsWith('modules/')).length, 51);
   assert.equal(pages.filter((page) => page.path.startsWith('modules/')).length, 17);
-  assert.equal(new Set(pages.map((page) => page.id)).size, 67, 'two pages share an id');
-  assert.equal(new Set(pages.map((page) => page.path)).size, 67, 'two pages share a path');
+  assert.equal(new Set(pages.map((page) => page.id)).size, 68, 'two pages share an id');
+  assert.equal(new Set(pages.map((page) => page.path)).size, 68, 'two pages share a path');
   assert.equal(pages[0].id, 'P.1', 'the first page a learner reads must come first');
   assert.equal(pages[pages.length - 1].id, '08-capstones.T3.07a', 'the capstone module must come last');
   for (const page of pages) {

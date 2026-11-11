@@ -6,7 +6,7 @@
 **This is the depth pass, and it is optional.** It is 23 Tier 2/3 modules and **80 focused hours**, taken after the arm route. It is
 not part of [`SIM_ROUTE.md`](SIM_ROUTE.md), which contains no depth work at all.
 
-The arm route is **≈123–215 focused hours**; this pass adds **80**; the full course is **≈203–295 focused hours**. Nothing on the arm route depends on
+The arm route is **≈124–217 focused hours**; this pass adds **80**; the full course is **≈204–297 focused hours**. Nothing on the arm route depends on
 these pages, and skipping all of them still leaves a working arm.
 
 ```mermaid

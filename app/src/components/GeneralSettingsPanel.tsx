@@ -28,7 +28,6 @@ const SoundSettingsLive: React.FC<{ id: string }> = ({ id }) => {
       onLevel={(key, value) => change({ [key]: value / 100 } as Partial<SoundPrefs>)}
       onClicks={(on) => change({ clicks: on })}
       onTape={(tape) => change({ tape })}
-      onInstrument={(instrument) => change({ instrument })}
       excluded={prefs.excluded}
       onExclude={(tape) =>
         change({

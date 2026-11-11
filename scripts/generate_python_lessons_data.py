@@ -147,6 +147,31 @@ assert math.isclose(_ns["sensor_pin"], 2.5, abs_tol=1e-4), "Formula for sensor_p
 assert math.isclose(_ns["kinetic_energy_j"], 24.0, abs_tol=1e-4), "Formula for kinetic_energy_j failed on (mass=3.0, speed=4.0 -> 24.0 J)"
 """,
     ),
+    "P.2.5": (
+        [
+            "Verify usable_mv (1300), runtime_min (314.3), charge_used_mah (210.0), and charge_left_percent (90.5%)",
+            "Re-evaluate all four formulas on unseen pack, load, capacity and run-time inputs",
+        ],
+        """import ast, math
+assert usable_mv == 1300, f"Expected usable_mv=1300, got {usable_mv}"
+assert math.isclose(runtime_min, 314.285714, abs_tol=1e-3), f"Expected runtime_min=314.2857, got {runtime_min}"
+assert math.isclose(charge_used_mah, 210.0, abs_tol=1e-6), f"Expected charge_used_mah=210.0, got {charge_used_mah}"
+assert math.isclose(charge_left_percent, 90.454545, abs_tol=1e-3), f"Expected charge_left_percent=90.4545, got {charge_left_percent}"
+_tree = ast.parse(__mechalab_student_source__)
+_targets = {"usable_mv", "runtime_min", "charge_used_mah", "charge_left_percent"}
+_stmts = [
+    s for s in _tree.body
+    if isinstance(s, ast.Assign)
+    and any(isinstance(t, ast.Name) and t.id in _targets for t in s.targets)
+]
+_ns = {"pack_mv": 12000, "cutoff_mv": 10000, "load_ma": 500, "capacity_mah": 2000, "run_minutes": 45}
+exec(compile(ast.Module(body=_stmts, type_ignores=[]), "<instructor_test>", "exec"), _ns)
+assert _ns["usable_mv"] == 2000, f"Unseen usable_mv failed: got {_ns['usable_mv']}"
+assert math.isclose(_ns["runtime_min"], 240.0, abs_tol=1e-6), f"Unseen runtime_min failed: got {_ns['runtime_min']}"
+assert math.isclose(_ns["charge_used_mah"], 375.0, abs_tol=1e-6), f"Unseen charge_used_mah failed: got {_ns['charge_used_mah']}"
+assert math.isclose(_ns["charge_left_percent"], 81.25, abs_tol=1e-6), f"Unseen charge_left_percent failed: got {_ns['charge_left_percent']}"
+""",
+    ),
     "P.3": (
         [
             "Verify clamped_high (255), clamped_low (0), and safe_output (0 when E-Stop active)",

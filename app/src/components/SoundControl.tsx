@@ -183,7 +183,6 @@ export const SoundControl: React.FC<{ variant?: 'header' | 'pill'; testIdSuffix?
               onLevel={setLevel}
               onClicks={(on) => change({ clicks: on })}
               onTape={(tape) => change({ tape })}
-              onInstrument={(instrument) => change({ instrument })}
               excluded={prefs.excluded}
               onExclude={(tape) =>
                 change({

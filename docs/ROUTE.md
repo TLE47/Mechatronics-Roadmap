@@ -44,10 +44,10 @@ There are three finish lines, and all are real:
   half the focused hours; the exact page list is [`MINIMUM.md`](MINIMUM.md). Stop here and
   you are done, not behind.
 - **Arm route** - all 50 prose lessons plus the 17 arm modules, page by page in
-  [`SIM_ROUTE.md`](SIM_ROUTE.md). That is **≈123–215 focused hours**, and it contains no depth
+  [`SIM_ROUTE.md`](SIM_ROUTE.md). That is **≈124–217 focused hours**, and it contains no depth
   modules and no Extensions. Stop here and the arm is finished.
 - **Full course** - the arm route plus the optional depth pass in [`DEPTH.md`](DEPTH.md):
-  **≈203–295 focused hours** for 40 practice modules (17 arm + 23 depth) plus all 50 lessons.
+  **≈204–297 focused hours** for 40 practice modules (17 arm + 23 depth) plus all 51 lessons.
   The depth pass comes after the arm and explains why it works rather than replacing it.
 
 Everything in Extensions is graded and badgeable but optional, and outside both routes. The front

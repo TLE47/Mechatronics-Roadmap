@@ -142,13 +142,13 @@ export const Header: React.FC<HeaderProps> = ({
   // The tray labels switch is a device preference, so the header follows the event its own dialog
   // fires rather than holding a copy that a second mounted header could disagree with.
   const [actionLabels, setActionLabels] = React.useState(readShowActionLabels);
+  // Stacked under the icon when the preference is on; beside it at 2xl otherwise.
+  const labelClass = actionLabels ? 'inline text-[11px] leading-none' : 'hidden 2xl:inline';
   React.useEffect(() => {
     const refresh = () => setActionLabels(readShowActionLabels());
     window.addEventListener(GENERAL_SETTINGS_EVENT, refresh);
     return () => window.removeEventListener(GENERAL_SETTINGS_EVENT, refresh);
   }, []);
-  /** Shown beside every tray icon when the switch is on, and at 2xl otherwise. */
-  const labelClass = actionLabels ? 'inline text-[11px] leading-none' : 'hidden 2xl:inline';
   // The tray row is the scope of the hover names (`HeaderTips`): one listener for the three trays,
   // the account chip's neighbours and whatever a child component puts in them.
   const actionsRef = React.useRef<HTMLDivElement | null>(null);
@@ -188,6 +188,7 @@ export const Header: React.FC<HeaderProps> = ({
     <header
       ref={headerRef}
       data-chrome="header"
+      data-action-labels={actionLabels ? 'on' : 'off'}
       className="sticky top-0 z-40 border-b backdrop-blur-md"
       style={{
         borderColor: 'var(--border)',
@@ -362,8 +363,8 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onOpenPalette}
               data-testid="btn-open-palette"
-              aria-keyshortcuts="Meta+K Control+K"
-              data-tip="Search — lessons, tabs and commands (⌘K)"
+              aria-keyshortcuts="Meta+Shift+F Control+Shift+F"
+              data-tip="Search — terms, lesson text and course pages (⌘⇧F)"
               className="btn"
             >
               <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -372,7 +373,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="ml-0.5 hidden rounded border px-1 py-0.5 text-[9.5px] font-semibold sm:inline"
                 style={{ borderColor: 'var(--border)', color: 'var(--dim)' }}
               >
-                ⌘K
+                ⌘⇧F
               </kbd>
             </button>
           </div>
@@ -490,10 +491,10 @@ export const Header: React.FC<HeaderProps> = ({
               className="btn"
             >
               <FileJson className="h-3.5 w-3.5" aria-hidden="true" />
-              <span className={labelClass}>Export Learning Log (.json)</span>
+              <span className={labelClass}>Log</span>
             </button>
             {/* Everything in this browser, out and back in: the two buttons report what they did. */}
-            <BackupControls />
+            <BackupControls labelClass={labelClass} />
             {/* The third half of the same conversation. It opens a panel rather than erasing on the
                 press, because "which part?" is the whole question a reset has to ask. */}
             <button
@@ -523,7 +524,7 @@ export const Header: React.FC<HeaderProps> = ({
               style={{ color: 'var(--emerald)' }}
             >
               <Download className="h-3.5 w-3.5" aria-hidden="true" />
-              <span className={labelClass}>Export Progress (.md)</span>
+              <span className={labelClass}>Progress</span>
             </button>
             <button
               onClick={onOpenCheatSheet}
@@ -534,7 +535,7 @@ export const Header: React.FC<HeaderProps> = ({
               style={{ borderColor: 'var(--border-strong)', color: 'var(--accent)' }}
             >
               <Printer className="h-3.5 w-3.5" aria-hidden="true" />
-              <span className={labelClass}>1-Page Cheat Sheet</span>
+              <span className={labelClass}>Cheat</span>
             </button>
           </div>
 

@@ -2425,7 +2425,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 the automatic sitting caught it. The hours land in the same store Today reads. On a
                 phone the compact strip above this card already carries it, and two clocks on one
                 screen would count the same stretch twice. */}
-            {!isPhone && <StudyClockReminder lessonId={selectedId} />}
             {!isPhone && <StudyTimerRow lessonId={selectedId} />}
             {/* The Share button's answer. A polite status, not an alert: it is a confirmation of
                 something the learner just asked for, and pressing Share twice must not trap them. */}
@@ -2813,6 +2812,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 // reader was on, and the page's own request is not free.
                 hidden={!phoneLessonVisible}
                 scope={shownLayout === 'study' ? 'study' : 'full'}
+                showClock={!isPhone}
                 continueAction={readerContinue(shownLayout, chooseLayout)}
               />
             )}

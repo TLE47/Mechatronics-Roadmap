@@ -22,6 +22,7 @@ flowchart LR
 | :--- | :--- | ---: |
 | Step 1 | [`P.1` Variables and Fundamental Data Types](../track-p/P.1-variables-and-data-types.md) | 1-3 |
 | Step 1 | [`P.2` Computer Arithmetic and Order of Operations](../track-p/P.2-arithmetic-and-order-of-operations.md) | 1-2.5 |
+| Step 1 | [`P.2.5` Think in Comments — Plan the Job Before You Type Code](../track-p/P.2.5-thinking-in-comments.md) | 1-2 |
 | Step 1 | [`P.3` Conditional Decisions (if/elif/else) and Command Clamping](../track-p/P.3-decisions-and-clamping.md) | 1.5-3.5 |
 | Step 1 | [`P.4` Ordered Lists and Repeating Actions with for Loops](../track-p/P.4-lists-and-for-loops.md) | 1.5-3.5 |
 | Step 1 | [`P.5` Reusable Functions (def/return) and while Loops](../track-p/P.5-functions-and-while-loops.md) | 1.5-3.5 |
@@ -68,7 +69,7 @@ flowchart LR
 | Arm prerequisites | [`06.1` Rest-to-Rest Cubic Polynomial Trajectories and Joint-Space Gravity Feedforward](../06-robotics-and-autonomy/06.1-cubic-trajectories-and-compliant-joints.md) | 1.5-3.5 |
 | Arm prerequisites | [`07.1` 10-Step Smoke-Free Hardware Bring-Up and Single-Tone Sine-Sweep System Identification](../07-systems-hil-and-production/07.1-safe-bringup-and-sine-sweep-sysid.md) | 1.5-3.5 |
 | Step 10 | [`08.1` Tier 1 Boss Milestone — 1 kHz 2-DOF Compliant Arm Plant, Figure-8 PD Control & CRC-8 Telemetry](../08-capstone-projects/08.1-tier1-2dof-compliant-arm-capstone.md) | 2-4.5 |
-| **Minimum viable finish** | **48 pages: 32 lessons + 16 modules** | **93.75-153** |
+| **Minimum viable finish** | **49 pages: 33 lessons + 16 modules** | **94.75-155** |
 
 At **6 focused hours a week** the page time is about 4-6 months. Add the first-time
 overhead the README explains (5x focused hours) and plan **1.5-2.5 years**; at 10x it is
@@ -85,6 +86,6 @@ overhead the README explains (5x focused hours) and plan **1.5-2.5 years**; at 1
 
 ## What the arm route adds
 
-The arm route is **122.6-215 focused hours**: 17 arm modules and all 50 lessons (67 pages). It is the same arm with all of its reading and the capstone's graded exercise, not a different project.
+The arm route is **123.6-217 focused hours**: 17 arm modules and all 51 lessons (68 pages). It is the same arm with all of its reading and the capstone's graded exercise, not a different project.
 
-The depth pass is a second, optional route: **23 modules, 80-80 focused hours**, page by page in [`DEPTH.md`](DEPTH.md). The full course is the arm plus the depth pass, **202.6-295 focused hours**.
+The depth pass is a second, optional route: **23 modules, 80-80 focused hours**, page by page in [`DEPTH.md`](DEPTH.md). The full course is the arm plus the depth pass, **203.6-297 focused hours**.

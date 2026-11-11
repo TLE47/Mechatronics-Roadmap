@@ -13,7 +13,7 @@ After it, there are two further layers, each with its own generated page: the **
 pass** in [`DEPTH.md`](DEPTH.md) (23 Tier 2/3 modules, taken in the same step order) and
 the **Extensions** in [`EXTENSIONS.md`](EXTENSIONS.md). Neither is required for the arm.
 
-**Arm route total: ≈123–215 focused hours** for 17 arm modules and all 50 lessons. The depth pass is 80 hours; the full course is ≈203–295.
+**Arm route total: ≈124–217 focused hours** for 17 arm modules and all 51 lessons. The depth pass is 80 hours; the full course is ≈204–297.
 
 **Route status: `author-dogfood`** — the author has run every page and no outside learner has finished this route, so every hour is a target rather than a measurement.
 
@@ -33,6 +33,7 @@ flowchart LR
 | :--- | :--- | ---: |
 | Step 1 · Python and the maths a robot needs | `P.1` Variables and Fundamental Data Types | 1-3 |
 | Step 1 · Python and the maths a robot needs | `P.2` Computer Arithmetic and Order of Operations | 1-2.5 |
+| Step 1 · Python and the maths a robot needs | `P.2.5` Think in Comments — Plan the Job Before You Type Code | 1-2 |
 | Step 1 · Python and the maths a robot needs | `P.3` Conditional Decisions (if/elif/else) and Command Clamping | 1.5-3.5 |
 | Step 1 · Python and the maths a robot needs | `P.4` Ordered Lists and Repeating Actions with for Loops | 1.5-3.5 |
 | Step 1 · Python and the maths a robot needs | `P.5` Reusable Functions (def/return) and while Loops | 1.5-3.5 |
@@ -46,7 +47,7 @@ flowchart LR
 | Step 1 · Python and the maths a robot needs | `P.14` Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds | 0.75-2 |
 | Step 1 · Python and the maths a robot needs | `P.15` The Analysis Workflow — Given, Unknown, Model, Compute, Check, Answer | 0.75-2 |
 | Step 1 · Python and the maths a robot needs | `P.M` Track P Milestone — Gravity-Holding Robot Arm Link Simulator | 1-2.5 |
-| Step 1 · Python and the maths a robot needs | **15 lessons, together** | ≈18–45 |
+| Step 1 · Python and the maths a robot needs | **16 lessons, together** | ≈19–47 |
 | Step 2 · Circuits and your first microcontroller | `S0.0` Why Electricity Is Like Water Flow — Effort, Flow & Pipe Constriction | 0.75-2 |
 | Step 2 · Circuits and your first microcontroller | `S0.1` Closed DC Circuits, Ground Reference (0 V) and Ohm's Law | 1-3 |
 | Step 2 · Circuits and your first microcontroller | `S0.2` Series vs. Parallel Resistor Networks, Voltage Dividers and Potentiometers | 1.5-3.5 |
@@ -108,26 +109,26 @@ flowchart LR
 | Step 10 · Put it together: the 2-DOF arm | `08.1` Tier 1 Boss Milestone — 1 kHz 2-DOF Compliant Arm Plant, Figure-8 PD Control & CRC-8 Telemetry | 2-4.5 |
 | Step 10 · Put it together: the 2-DOF arm | `08-capstones.T3.07a` System Error/Latency Budgeting, Cross-Domain Interface Contracts & Pre-Bring-Up Safety Sign-Off **· arm** | 4.5 |
 | Step 10 · Put it together: the 2-DOF arm | **1 lesson + 1 arm module, together** | ≈6–9 |
-| **Arm route total** | **17 arm modules + all 50 lessons (67 pages)** | **122.6-215** |
+| **Arm route total** | **17 arm modules + all 51 lessons (68 pages)** | **123.6-217** |
 
 These are **focused hours**: time with the page open, excluding setup, debugging and
 re-reading. The low end is every page's `est_hours` / `typical_hours`; the high end is
 its `slow_learner_hours` where the page states one. The README gives the calendar
 estimate these become once first-time overhead is counted.
 
-**Estimate coverage:** The route's high end is a slow-learner figure on 50 of 67 pages and a single estimate on the other 17, so plan against it as a floor and expect it to rise as those pages are measured.
+**Estimate coverage:** The route's high end is a slow-learner figure on 51 of 68 pages and a single estimate on the other 17, so plan against it as a floor and expect it to rise as those pages are measured.
 
 Nothing in this table is hand-entered, and `--check` fails when it drifts from the pages.
 
 The stage rows above are rounded to whole hours with the same allocation as the README's
 step table, so `16.75-42.5` appears as `≈17–43` in both places; the page rows and the
-arm total keep the exact sums (`122.6-215`).
+arm total keep the exact sums (`123.6-217`).
 
 ## What is not on this page
 
 - **The depth pass** - 23 Tier 2/3 modules, 80 focused hours, in [`DEPTH.md`](DEPTH.md). Take it after this route, in the same step order. Nothing on this
   page depends on it.
-- **The minimum finish** - 48 pages, 94-153 focused hours, in [`MINIMUM.md`](MINIMUM.md). A smaller finish that still builds the arm.
+- **The minimum finish** - 49 pages, 95-155 focused hours, in [`MINIMUM.md`](MINIMUM.md). A smaller finish that still builds the arm.
 - **The Extensions** - 10 optional modules, 47.5 focused hours, in
   [`EXTENSIONS.md`](EXTENSIONS.md). A third layer, outside both routes.
 

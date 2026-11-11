@@ -93,6 +93,40 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "instructorTests": "import ast, math\nassert math.isclose(new_pos_m, 2.0625, abs_tol=1e-5), f\"Expected new_pos_m=2.0625, got {new_pos_m}\"\nassert math.isclose(sensor_pin, 4.0, abs_tol=1e-4), f\"Expected sensor_pin=4.0, got {sensor_pin}\"\nassert math.isclose(kinetic_energy_j, 9.0, abs_tol=1e-4), f\"Expected kinetic_energy_j=9.0, got {kinetic_energy_j}\"\n_tree = ast.parse(__mechalab_student_source__)\n_expr_stmts = [\n    s for s in _tree.body\n    if isinstance(s, ast.Assign)\n    and any(isinstance(t, ast.Name) and t.id in (\"new_pos_m\", \"sensor_pin\", \"kinetic_energy_j\") for t in s.targets)\n]\n_ns = {\n    \"wheel_speed\": 3.0, \"elapsed_sec\": 0.5, \"start_pos_m\": -1.5,\n    \"supply_level\": 5.0, \"part_a\": 10000.0, \"part_b\": 10000.0,\n    \"cart_mass\": 3.0, \"cart_speed\": 4.0,\n}\nexec(compile(ast.Module(body=_expr_stmts, type_ignores=[]), \"<instructor_test>\", \"exec\"), _ns)\nassert math.isclose(_ns[\"new_pos_m\"], 0.0, abs_tol=1e-5), \"Formula for new_pos_m failed on unseen inputs (start=-1.5, speed=3.0, dt=0.5 -> 0.0)\"\nassert math.isclose(_ns[\"sensor_pin\"], 2.5, abs_tol=1e-4), \"Formula for sensor_pin failed on 1:1 divider (5.0V, 10k/10k -> 2.5V)\"\nassert math.isclose(_ns[\"kinetic_energy_j\"], 24.0, abs_tol=1e-4), \"Formula for kinetic_energy_j failed on (mass=3.0, speed=4.0 -> 24.0 J)\""
   },
   {
+    "id": "P.2.5",
+    "title": "Think in Comments \u2014 Plan the Job Before You Type Code",
+    "goal": "Plan a small robot battery report **in comments first**, then turn each comment into one line of arithmetic. The report answers four questions: how much voltage is usable, how long the pack should last, how much charge the test used, and what percentage is left.",
+    "requirements": [
+      "**Runs:** every TODO is completed and the script finishes without a Python error.",
+      "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
+      "**Required end state:** `usable_mv` is 1300, `runtime_min` is about 314.3, `charge_used_mah` is 210.0 and `charge_left_percent` is about 90.5.",
+      "**Output:** the four printed lines match the Expected Output block.",
+      "**Alternate inputs:** the grader changes the pack, load and run-time values, so a hard-coded answer fails."
+    ],
+    "track": "track-p",
+    "path": "track-p/P.2.5-thinking-in-comments.md",
+    "readerPath": "track-p/P.2.5-thinking-in-comments.md",
+    "ideas": [
+      "Turning a problem into comments: inputs, output, edge case, expected check",
+      "A first draft in prose, then one comment at a time, testing the normal case and the edge"
+    ],
+    "starterCode": "pack_mv = 11800\ncutoff_mv = 10500\nload_ma = 420\ncapacity_mah = 2200\nrun_minutes = 30\n\n# TODO 1: Usable voltage is the pack voltage above the cutoff.\nusable_mv = 0\n\n# TODO 2: Runtime in minutes is capacity divided by load, then hours converted to minutes.\nruntime_min = 0.0\n\n# TODO 3: Charge used is the load current multiplied by the run time in hours.\ncharge_used_mah = 0.0\n\n# TODO 4: Charge left is the unused capacity as a percentage of the whole pack.\ncharge_left_percent = 0.0\n\nprint(f\"Usable voltage: {usable_mv} mV\")\nprint(f\"Estimated runtime: {runtime_min:.1f} min\")\nprint(f\"Charge used: {charge_used_mah:.1f} mAh\")\nprint(f\"Charge left: {charge_left_percent:.1f}%\")",
+    "hints": [
+      "Write the units beside each answer before writing the formula. Runtime is minutes, so `capacity_mah / load_ma` gives hours and must be multiplied by 60. Charge used is in mAh, so the run time must be in hours: `run_minutes / 60`.",
+      "```python usable_mv = pack_mv - cutoff_mv runtime_min = (capacity_mah / load_ma) * 60 charge_used_mah = load_ma * (run_minutes / 60) charge_left_percent = ((capacity_mah - charge_used_mah) / capacity_mah) * 100 ```"
+    ],
+    "fullSolution": "pack_mv = 11800\ncutoff_mv = 10500\nload_ma = 420\ncapacity_mah = 2200\nrun_minutes = 30\n\nusable_mv = pack_mv - cutoff_mv\nruntime_min = (capacity_mah / load_ma) * 60\ncharge_used_mah = load_ma * (run_minutes / 60)\ncharge_left_percent = ((capacity_mah - charge_used_mah) / capacity_mah) * 100\n\nprint(f\"Usable voltage: {usable_mv} mV\")\nprint(f\"Estimated runtime: {runtime_min:.1f} min\")\nprint(f\"Charge used: {charge_used_mah:.1f} mAh\")\nprint(f\"Charge left: {charge_left_percent:.1f}%\")",
+    "expectedOutput": "Usable voltage: 1300 mV\nEstimated runtime: 314.3 min\nCharge used: 210.0 mAh\nCharge left: 90.5%",
+    "outputMatch": "normalized",
+    "instructorTestSummary": [
+      "Verify usable_mv (1300), runtime_min (314.3)",
+      "Verify charge_used_mah (210.0) and charge_left_percent (90.5%)",
+      "Re-evaluate all four formulas on unseen pack",
+      "Edge case \u2014 Re-evaluate load, capacity and run-time inputs"
+    ],
+    "instructorTests": "import ast, math\nassert usable_mv == 1300, f\"Expected usable_mv=1300, got {usable_mv}\"\nassert math.isclose(runtime_min, 314.285714, abs_tol=1e-3), f\"Expected runtime_min=314.2857, got {runtime_min}\"\nassert math.isclose(charge_used_mah, 210.0, abs_tol=1e-6), f\"Expected charge_used_mah=210.0, got {charge_used_mah}\"\nassert math.isclose(charge_left_percent, 90.454545, abs_tol=1e-3), f\"Expected charge_left_percent=90.4545, got {charge_left_percent}\"\n_tree = ast.parse(__mechalab_student_source__)\n_targets = {\"usable_mv\", \"runtime_min\", \"charge_used_mah\", \"charge_left_percent\"}\n_stmts = [\n    s for s in _tree.body\n    if isinstance(s, ast.Assign)\n    and any(isinstance(t, ast.Name) and t.id in _targets for t in s.targets)\n]\n_ns = {\"pack_mv\": 12000, \"cutoff_mv\": 10000, \"load_ma\": 500, \"capacity_mah\": 2000, \"run_minutes\": 45}\nexec(compile(ast.Module(body=_stmts, type_ignores=[]), \"<instructor_test>\", \"exec\"), _ns)\nassert _ns[\"usable_mv\"] == 2000, f\"Unseen usable_mv failed: got {_ns['usable_mv']}\"\nassert math.isclose(_ns[\"runtime_min\"], 240.0, abs_tol=1e-6), f\"Unseen runtime_min failed: got {_ns['runtime_min']}\"\nassert math.isclose(_ns[\"charge_used_mah\"], 375.0, abs_tol=1e-6), f\"Unseen charge_used_mah failed: got {_ns['charge_used_mah']}\"\nassert math.isclose(_ns[\"charge_left_percent\"], 81.25, abs_tol=1e-6), f\"Unseen charge_left_percent failed: got {_ns['charge_left_percent']}\""
+  },
+  {
     "id": "P.3",
     "title": "Conditional Decisions (if/elif/else) and Command Clamping",
     "goal": "Use comparison operators and `if / elif / else` statements to make safety decisions in code and clamp out-of-range motor commands into a safe hardware range (`[0, 255]`).",

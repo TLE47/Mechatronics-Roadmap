@@ -30,7 +30,10 @@ type Status = { tone: 'ok' | 'warn'; text: string };
 
 const STATUS_MS = 9000;
 
-export const BackupControls: React.FC<{ testIdSuffix?: string }> = ({ testIdSuffix }) => {
+export const BackupControls: React.FC<{ testIdSuffix?: string; labelClass?: string }> = ({
+  testIdSuffix,
+  labelClass = 'hidden 2xl:inline',
+}) => {
   const tid = (base: string) => (testIdSuffix ? `${base}-${testIdSuffix}` : base);
   const [status, setStatus] = useState<Status | null>(null);
   const [busy, setBusy] = useState(false);
@@ -109,7 +112,7 @@ export const BackupControls: React.FC<{ testIdSuffix?: string }> = ({ testIdSuff
         className="btn"
       >
         <Archive className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-        <span className="hidden 2xl:inline">Back Up (.zip)</span>
+        <span className={labelClass}>Backup</span>
       </button>
       <button
         onClick={() => inputRef.current?.click()}
@@ -121,7 +124,7 @@ export const BackupControls: React.FC<{ testIdSuffix?: string }> = ({ testIdSuff
         style={{ opacity: busy ? 0.6 : 1 }}
       >
         <Upload className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-        <span className="hidden 2xl:inline">{busy ? 'Reading…' : 'Restore (.zip)'}</span>
+        <span className={labelClass}>{busy ? 'Reading…' : 'Restore'}</span>
       </button>
       <input
         ref={inputRef}

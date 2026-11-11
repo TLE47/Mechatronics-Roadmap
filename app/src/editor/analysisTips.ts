@@ -39,6 +39,7 @@ import {
   type SignatureInfo,
 } from '../analysisClient.ts';
 import { callContext, hoverRange } from './callContext.ts';
+import { keywordSignature } from './keywordHelp.ts';
 
 /** A tooltip shell: one card, one test id, and the classes the editor theme colours. */
 function tipShell(testId: string): HTMLDivElement {
@@ -190,11 +191,24 @@ class SignatureWatcher {
   private async ask(): Promise<void> {
     const state = this.view.state;
     if (state.readOnly) return this.hide();
+    const doc = state.doc.toString();
+    const head = state.selection.main.head;
+    const context = callContext(doc, head);
+    // Statements such as assert/for/while have no call parentheses for Jedi to inspect. Their
+    // syntax card is local, so it works even before the analyzer worker has finished installing.
+    if (!context) {
+      const keyword = keywordSignature(doc, head);
+      if (!keyword) return this.hide();
+      const tip: Tooltip = {
+        pos: keyword.from,
+        above: false,
+        create: () => ({ dom: buildSignature(keyword.signature) }),
+      };
+      this.view.dispatch({ effects: setSignatureTip.of(tip) });
+      return;
+    }
     const session = this.getSession();
     if (!session) return this.hide();
-    const doc = state.doc.toString();
-    const context = callContext(doc, state.selection.main.head);
-    if (!context) return this.hide();
     const reply = await session.signature({ code: doc, line: context.line, column: context.column });
     if (this.view.state.doc.toString() !== doc) return; // the learner kept typing
     if (!reply.ok || !reply.value) return this.hide();

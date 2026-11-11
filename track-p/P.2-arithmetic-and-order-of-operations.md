@@ -232,5 +232,5 @@ print(f"Kinetic Energy: {kinetic_energy_j:.2f} J")
 - [ ] Your **Do it yourself** script prints `2.0625 m`, `4.00 V`, and `9.00 J`.
 
 <!-- next-step:start -->
-👉 **Next:** [Step 1 · Python and the maths a robot needs — Lesson P.3: Conditional Decisions (if/elif/else) and Command Clamping](P.3-decisions-and-clamping.md)
+👉 **Next:** [Step 1 · Python and the maths a robot needs — Lesson P.2.5: Think in Comments — Plan the Job Before You Type Code](P.2.5-thinking-in-comments.md)
 <!-- next-step:end -->

@@ -16,6 +16,13 @@
       "sourceFormat": "markdown"
     },
     {
+      "id": "P.2.5",
+      "subjectId": "python",
+      "title": "Think in Comments — Plan the Job Before You Type Code",
+      "path": "track-p/P.2.5-thinking-in-comments.md",
+      "sourceFormat": "markdown"
+    },
+    {
       "id": "P.3",
       "subjectId": "python",
       "title": "Conditional Decisions (if/elif/else) and Command Clamping",

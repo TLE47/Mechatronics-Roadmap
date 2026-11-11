@@ -763,6 +763,28 @@ body {
   border-color: transparent;
 }
 
+/* The small-text preference stacks the word under its icon instead of widening every tray. The
+   labels stay one line where they can and wrap only for a two-word name, so the header grows by a
+   few pixels of type rather than by a second row. */
+header[data-action-labels='on'] .action-tray .btn {
+  flex-direction: column;
+  gap: 0.14rem;
+  min-width: 2.85rem;
+  padding: 0.3rem 0.42rem;
+}
+header[data-action-labels='on'] .action-tray .btn > span {
+  display: inline;
+  max-width: 5.4rem;
+  overflow-wrap: anywhere;
+  text-align: center;
+  font-size: 9.5px;
+  line-height: 1.05;
+  white-space: normal;
+}
+header[data-action-labels='on'] .action-tray .btn > kbd {
+  display: none;
+}
+
 /*
  * The name of a tray control, on hover or focus (`components/HeaderTips.tsx`). Portalled to the body
  * and positioned from the control's own rect, so the sideways-scrolling tray row on a phone cannot

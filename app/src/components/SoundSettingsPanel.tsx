@@ -3,14 +3,13 @@ import { RotateCcw } from 'lucide-react';
 import {
   RANDOMIZE_INTERVAL_MINUTES,
   isRandomizeMode,
-  type InstrumentChoice,
   type RandomizeMode,
   type SoundPrefs,
 } from '../audio/prefs.ts';
 import {
   DRONE_ID,
-  INSTRUMENTS,
   MUSIC_CATEGORIES,
+  SOLO_TRACKS,
   TAPE_SCRIPT_PAGE,
   categoryOf,
   defaultTapeFor,
@@ -68,8 +67,6 @@ interface Props {
   /** Flip one tape in or out of the shuffle, without changing what is playing. */
   onExclude: (tape: string) => void;
   onRandomize: (mode: RandomizeMode) => void;
-  /** The drone's timbre; any instrument also chooses the drone, so the choice is audible at once. */
-  onInstrument: (instrument: InstrumentChoice) => void;
   onPreview: (role: UiRole) => void;
   onReset: () => void;
 }
@@ -104,7 +101,6 @@ export const SoundSettingsPanel: React.FC<Props> = ({
   excluded,
   onExclude,
   onRandomize,
-  onInstrument,
   onPreview,
   onReset,
 }) => {
@@ -269,14 +265,14 @@ export const SoundSettingsPanel: React.FC<Props> = ({
                       : 'Kept out of the shuffle. Press to let the randomiser choose it again.'
                   }
                   data-testid={tid(`sound-tape-exclude-${entry.id}`)}
-                  className="flex min-h-[34px] min-w-[34px] items-center justify-center rounded-r-md border-l px-1.5 disabled:opacity-50"
+                  className="flex min-h-[40px] min-w-[40px] items-center justify-center rounded-r-md border-l px-2 disabled:opacity-50"
                   style={{
                     borderColor: 'var(--border)',
                     color: shuffled ? 'var(--accent)' : 'var(--muted)',
                     backgroundColor: shuffled ? 'transparent' : 'var(--panel-2)',
                   }}
                 >
-                  <span aria-hidden="true" className="font-mono text-[12px]">
+                  <span aria-hidden="true" className="font-mono text-[15px]">
                     {shuffled ? '↻' : '✕'}
                   </span>
                 </button>
@@ -288,49 +284,28 @@ export const SoundSettingsPanel: React.FC<Props> = ({
 
       <p className="mt-1 text-[11px] leading-snug" style={{ color: 'var(--dim)' }}>
         {openCategoryHint ?? 'Two detuned oscillators — a texture rather than a song.'}{' '}
-        The arrow on a row keeps that tape in the random shuffle; the cross leaves it in the list but
-        out of the draw.
+        The big button at the end of each row is that tape's shuffle switch: ↻ keeps it in the random
+        draw, ✕ leaves it in the list but out of the draw. Hover it to read the current choice.
       </p>
 
-      {/* The instrument beds are not tapes: they are the drone's harmonic recipe, so they only
-          sound with the Drone chip. Pressing one selects the drone as well, because choosing a
-          timbre that then stays silent under a song would look broken. */}
-      <div className="mt-2" role="group" aria-label="Instrument bed">
-        <span className="text-[11px] font-semibold uppercase tracking-wide">Instrument bed</span>
+      {/* Instrument shortcuts are real tapes, not the drone's held chord recipes: pressing one
+          starts a full loop whose lead instrument matches the chip. */}
+      <div className="mt-2" role="group" aria-label="Solo instrument tracks">
+        <span className="text-[11px] font-semibold uppercase tracking-wide">Solo instrument tracks</span>
         <p className="mt-0.5 text-[11px] leading-snug" style={{ color: 'var(--dim)' }}>
-          {prefs.instrument === 'off'
-            ? 'The drone\u2019s plain two-sine texture. Pick an instrument to hear the same held chord as a piano, guitar, flute or violin.'
-            : INSTRUMENTS.find((entry) => entry.id === prefs.instrument)?.hint ?? ''}
+          {SOLO_TRACKS.find((entry) => entry.tapeId === prefs.tape)?.hint ??
+            'Pick a full instrument-led track. These are songs, not the drone\u2019s held chord.'}
         </p>
         <div className="mt-1 flex flex-wrap gap-1">
-          <button
-            type="button"
-            disabled={!prefs.on}
-            aria-pressed={prefs.instrument === 'off'}
-            onClick={() => onInstrument('off')}
-            data-testid={tid('sound-instrument-off')}
-            className="min-h-[32px] rounded-full border px-2.5 py-0.5 text-[11px] font-semibold disabled:opacity-50"
-            style={{
-              borderColor: prefs.instrument === 'off' ? 'var(--accent)' : 'var(--border)',
-              backgroundColor: prefs.instrument === 'off' ? 'var(--accent-soft)' : 'transparent',
-              color: prefs.instrument === 'off' ? 'var(--accent)' : 'var(--muted)',
-            }}
-          >
-            Plain
-          </button>
-          {INSTRUMENTS.map((entry) => {
-            const active = prefs.instrument === entry.id;
+          {SOLO_TRACKS.map((entry) => {
+            const active = prefs.tape === entry.tapeId;
             return (
               <button
                 key={entry.id}
                 type="button"
                 disabled={!prefs.on}
                 aria-pressed={active}
-                onClick={() => {
-                  onInstrument(entry.id);
-                  // Audible at once: the bed only plays with the drone.
-                  onTape(DRONE_ID);
-                }}
+                onClick={() => onTape(entry.tapeId)}
                 data-testid={tid(`sound-instrument-${entry.id}`)}
                 className="min-h-[32px] rounded-full border px-2.5 py-0.5 text-[11px] font-semibold disabled:opacity-50"
                 style={{

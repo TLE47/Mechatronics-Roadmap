@@ -2,6 +2,7 @@ import { useRef, useState, type RefObject } from 'react';
 import {
   Activity,
   ArrowLeftRight,
+  Bug,
   CheckSquare,
   CircleDot,
   Eye,
@@ -242,7 +243,7 @@ export function RunnerToolbar({
         aria-controls="toolbar-more"
         data-testid="btn-more"
         aria-label="More actions"
-        title="Format with Black, history, diff, reset, sharing, pairing and editor preferences"
+        title="Debugger, format with Black, history, diff, reset, sharing, pairing and editor preferences"
         className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono border flex items-center gap-1.5 cursor-pointer transition-colors ${
           moreOpen
             ? 'text-accent border-accent/60 bg-canvas'
@@ -320,6 +321,18 @@ export function RunnerToolbar({
           More actions
         </p>
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => {
+              onChooseLayout('debug');
+              onShowTrace();
+            }}
+            data-testid="btn-debugger"
+            title="Debugger — open the Debug layout and replay the last run line by line, with every variable's value"
+            className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-accent border border-accent/50 flex items-center gap-1.5 cursor-pointer"
+          >
+            <Bug className="w-3.5 h-3.5" />
+            <span>Debugger</span>
+          </button>
           <button
             onClick={onToggleSelfMarked}
             data-testid="btn-toggle-lesson-complete"

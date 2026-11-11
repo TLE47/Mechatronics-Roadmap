@@ -2,12 +2,12 @@
 """Write the searchable text of the course pages the workbench does not carry.
 
 The palette's `⌘⇧F` reads the runner's lessons — the starter, the hint ladder, the checks and the
-expected output. The reading pages are somewhere else: 48 prose lessons plus the 17 arm modules,
+expected output. The reading pages are somewhere else: 51 prose lessons plus the 17 arm modules,
 Markdown in this repository, rendered by GitHub and therefore **not** part of the app bundle. So a
 learner who remembers "the page about anti-windup" could find the lesson by its name and could not
 find the page by a word in its body.
 
-This generator copies what is searchable out of those 66 pages into `app/public/prose-index.json`,
+This generator copies what is searchable out of those 68 pages into `app/public/prose-index.json`,
 which the browser fetches **the first time** `⌘⇧F` is used, never on a normal visit. The copy is
 deliberately not a copy of the page:
 
@@ -22,8 +22,8 @@ deliberately not a copy of the page:
   recurrence/recap sections, one entry per heading so a hit can name its section and open the page
   at it.
 
-The page list is `scripts/route_model.py`'s, not a glob of this file's own: the 49 lessons and the
-17 arm modules the route declares are exactly the 66 pages a learner is sent to. `--check` fails
+The page list is `scripts/route_model.py`'s, not a glob of this file's own: the 51 lessons and the
+17 arm modules the route declares are exactly the 68 pages a learner is sent to. `--check` fails
 when the committed JSON differs from what those pages say now, so a page cannot be edited — or
 added — without the search knowing.
 
@@ -71,7 +71,7 @@ INLINE_NOISE = re.compile(r"[*`]+")
 
 
 def page_rows():
-    """The 66 pages a learner is sent to, in route order, as `{id, title, path}`."""
+    """The 68 pages a learner is sent to, in route order, as `{id, title, path}`."""
     rows = []
     seen = set()
     for step in route_model.STEPS:
