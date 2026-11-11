@@ -2029,10 +2029,10 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           page.getByTestId('workflow-canvas').evaluate((canvas, minX) => {
             const scan = () => {
               const rect = canvas.getBoundingClientRect();
-              const top = Math.max(rect.top + 16, 16);
-              const bottom = Math.min(rect.bottom - 16, window.innerHeight - 16);
-              const left = Math.max(rect.left + 16, minX);
-              const right = Math.min(rect.right - 24, window.innerWidth - 24);
+              const top = Math.max(rect.top + 40, 40);
+              const bottom = Math.min(rect.bottom - 20, window.innerHeight - 20);
+              const left = Math.max(rect.left + 40, minX);
+              const right = Math.min(rect.right - 30, window.innerWidth - 30);
               for (let y = top; y < bottom; y += 8) {
                 for (let x = left; x < right; x += 8) {
                   const hit = document.elementFromPoint(x, y);
@@ -2056,6 +2056,9 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
             canvas.scrollTop = start;
             return null;
           }, minX);
+        // The margins are a placement rule as much as a hit test: a press within a card's width of
+        // the canvas's edge makes the app clamp the card it adds inward, so a point nearer the
+        // border than that would fail the "lands under the pointer" check it is chosen for.
         // A drag from a dot must end on paper the pointer can reach in the same windowful: the
         // canvas may not scroll between the press and the release, or the dot slides out from
         // under the held button and no drag ever starts. This scan looks only at what is on
@@ -2063,10 +2066,10 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         const bareSpotHere = (minX) =>
           page.getByTestId('workflow-canvas').evaluate((canvas, minX) => {
             const rect = canvas.getBoundingClientRect();
-            const top = Math.max(rect.top + 16, 16);
-            const bottom = Math.min(rect.bottom - 16, window.innerHeight - 16);
-            const left = Math.max(rect.left + 16, minX);
-            const right = Math.min(rect.right - 24, window.innerWidth - 24);
+            const top = Math.max(rect.top + 40, 40);
+            const bottom = Math.min(rect.bottom - 20, window.innerHeight - 20);
+            const left = Math.max(rect.left + 40, minX);
+            const right = Math.min(rect.right - 30, window.innerWidth - 30);
             for (let y = top; y < bottom; y += 8) {
               for (let x = left; x < right; x += 8) {
                 const hit = document.elementFromPoint(x, y);
