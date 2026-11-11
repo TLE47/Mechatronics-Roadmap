@@ -98,7 +98,22 @@ BROWSER_SUITES = (
     "npm run test:runtime",
     "npm run test:offline",
 )
-SUITE_JOBS = ("e2e-suites", "bundle-suites", "audit-suites", "runtime-suites")
+SUITE_JOBS = (
+    "e2e-suites",
+    "bundle-suites",
+    "audit-suites",
+    "lighthouse",
+    "runtime-python",
+    "runtime-offline",
+)
+
+# A suite that left its own command behind: it rides a partition in the runner instead.
+PARTITION_SUITES = {"npm run test:e2e:game": "game2e"}
+
+# The browser jobs that grade the built bundle, and so download it. `e2e-suites` is not one of
+# them any more: its partitions run against the dev server, and making it download a `dist/` it
+# never reads is the rebuild-and-download cost the split removed.
+BUNDLE_JOBS = ("bundle-suites", "audit-suites", "lighthouse", "runtime-python", "runtime-offline")
 
 # The matrix runner and its lanes. A partition CI names and the runner does not have is a job that
 # dies on its first command; a browser suite in no lane is a gate nobody runs.
@@ -191,8 +206,18 @@ class WorkflowSpeedTests(unittest.TestCase):
 
     def test_every_browser_suite_still_runs_somewhere_exactly_once(self):
         ci = ci_text()
+        runner = read(MATRIX_RUNNER)
         for command in BROWSER_SUITES:
             with self.subTest(command=command):
+                suite = PARTITION_SUITES.get(command)
+                if suite:
+                    self.assertEqual(
+                        runner.count(f"label: '{suite}'"),
+                        1,
+                        msg=f"expected {suite} to be one suite in the partition runner: it is how "
+                        f"{command} runs now that the game rides a shard instead of its own step",
+                    )
+                    continue
                 self.assertEqual(
                     ci.count(command),
                     1,
@@ -209,7 +234,18 @@ class WorkflowSpeedTests(unittest.TestCase):
             msg="expected the build job to publish the bundle exactly once for the suite jobs",
         )
         self.assertIn("name: workbench-dist", build, msg="expected the published artifact to carry the name the suite jobs download")
-        for name in SUITE_JOBS:
+        e2e = job_block(ci, "e2e-suites")
+        self.assertNotIn(
+            "actions/download-artifact@v4",
+            e2e,
+            msg="expected the dev-server partitions not to fetch a bundle they never read",
+        )
+        self.assertNotIn(
+            "npm run build",
+            e2e,
+            msg="expected the dev-server partitions to test the source, not to build a bundle for it",
+        )
+        for name in BUNDLE_JOBS:
             block = job_block(ci, name)
             with self.subTest(job=name):
                 self.assertTrue(block, msg=f"expected a `{name}` job in ci.yml; check the job was not renamed or folded back into the build")
