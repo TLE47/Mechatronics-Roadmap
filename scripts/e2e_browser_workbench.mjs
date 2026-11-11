@@ -172,6 +172,11 @@ async function readTally(page) {
  */
 export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) {
   const repoRoot = process.cwd();
+  // TEMPORARY instrumentation (E2E_MARKS=1): sub-step times inside the Workflow scenario, which the
+  // last round could only see as one 124 s block. Emitted as check annotations; removed with the split.
+  const marks = [];
+  const tmark = (label) => marks.push([label, Date.now()]);
+  tmark('workflow-start');
   const own = externalBaseUrl ? null : await startDevServer(repoRoot);
   const baseUrl = externalBaseUrl
     ? externalBaseUrl.replace(/\/*$/, '/')
@@ -1604,6 +1609,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           'a palette press must spawn a card on the canvas'
         );
         // Inline editing: the card is the form. No edit mode, no second panel to open.
+        tmark('card-spawned');
         await page.getByTestId('workflow-node-title-1').fill('Divide');
         await page.getByTestId('workflow-node-detail-1').fill('12.0 / 2.4 = 5.00');
         await page.waitForTimeout(300);
@@ -1640,6 +1646,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
             requestAnimationFrame(() => requestAnimationFrame(() => resolve(window.scrollY === y)))
           );
         });
+        tmark('before-drag');
         const cardBefore = await page.getByTestId('workflow-node-1').boundingBox();
         const grip = await page.getByTestId('workflow-node-drag-1').boundingBox();
         await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
@@ -1675,6 +1682,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         // the viewport — so centre it, wait for its box to hold still (the save status arrives a beat
         // after the edit and rewraps the header), and measure the target *after* the press, because
         // starting an arrow opens the inspector below the paper and shortens it.
+        tmark('before-arrow');
         const outPort = page.getByTestId('workflow-node-port-right-0');
         const inPort = page.getByTestId('workflow-node-port-top-1');
         const still = async (locator) => {
@@ -1921,6 +1929,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         // 100% comes back to life size at the viewport's centre.
         await page.getByTestId('workflow-fit').click();
         await page.waitForTimeout(350);
+        tmark('before-fit');
         const fitted = await page.evaluate(() => {
           const canvas = document.querySelector('[data-testid="workflow-canvas"]');
           const grid = document.querySelector('[data-testid="workflow-canvas-grid"]');
@@ -2326,6 +2335,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         );
         await page.getByTestId('workflow-lane-title-0').fill('Mechanical');
         await page.waitForTimeout(300);
+        tmark('before-lanes');
         await page.getByTestId('workflow-node-title-1').click();
         await page.getByTestId('workflow-card-lane').selectOption('new');
         await page.waitForTimeout(300);
@@ -2344,6 +2354,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           '13px',
           'the size readout must name the chosen pixel size'
         );
+        tmark('before-math');
         await page.getByTestId('workflow-node-title-0').fill('Force $F = ma$');
         await page.getByTestId('workflow-node-title-0').evaluate((input) => input.blur());
         await page.waitForTimeout(200);
@@ -2834,6 +2845,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         // takes it back and redo restores it. Focus selects a card, which is what opens the
         // inspector; a pointer click here would have to land through the cards drawn on top.
         await page.getByTestId('workflow-node-drag-0').focus();
+        tmark('before-part');
         const partSelect = page.getByTestId('workflow-card-project');
         await partSelect.waitFor({ timeout: 5000 });
         await partSelect.selectOption('08-capstone1-foc-eda/u1');
@@ -2988,6 +3000,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         // finds the same part without its designation. Kept last in this block because leaving the
         // runner unmounts the panel and its in-memory undo history.
         await page.getByTestId('workflow-node-drag-0').focus();
+        tmark('before-door');
         const doorSelect = page.getByTestId('workflow-card-project');
         await doorSelect.waitFor({ timeout: 5000 });
         await doorSelect.selectOption('08-capstone1-foc-eda/u1');
@@ -3063,6 +3076,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.getByTestId('editor-tab-workflow').click();
         await page.waitForTimeout(400);
         await page.getByTestId('workflow-node-drag-0').focus();
+        tmark('before-object');
         const objectSelect = page.getByTestId('workflow-card-project');
         await objectSelect.waitFor({ timeout: 5000 });
         await objectSelect.selectOption('08-capstone1-foc-eda/req-therm-01');
@@ -3161,6 +3175,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await page.getByTestId('editor-tab-workflow').click();
         await page.waitForTimeout(400);
         await page.getByTestId('workflow-node-drag-0').focus();
+        tmark('before-test');
         const testSelect = page.getByTestId('workflow-card-project');
         await testSelect.waitFor({ timeout: 5000 });
         await testSelect.selectOption('08-capstone1-foc-eda/test-therm-01');
@@ -3226,6 +3241,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           'a reload must find the test citation it saved'
         );
 
+        tmark('before-authoring');
         // 5d-iii. The authoring controls: resize, fit, wrap, search, auto layout, Ctrl-multi-select
         //        and the right-click text toolbar. These are deliberately exercised on the saved
         //        document the reload above just proved, not on a fresh blank one.
@@ -3350,6 +3366,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
 
         // Select a range in the title, then right-click it: the browser menu is replaced with the
         // formatting toolbar, and Bold reaches the card's rendered words.
+        tmark('before-format-text');
         const titleField = page.getByTestId('workflow-node-title-0');
         const titleBox = await titleField.boundingBox();
         await titleField.evaluate((field, point) => {
@@ -3399,6 +3416,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         );
 
         // The goal folds with the editor body, so open the disclosure before reading it.
+        tmark('before-goal');
         const foldedGoalEditor = page.locator(
           '[data-testid="btn-toggle-editor"][aria-expanded="false"]'
         );
@@ -3425,6 +3443,8 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           '  ok the Workflow tab spawns, edits inline, drags, draws an arrow, frames cards, resizes, fits, wraps, searches, lays out, multi-selects, formats text, survives a reload, and shows a goal-only editor'
         );
       }
+
+      tmark('workflow-end');
 
       // The run controls share one row at 1280, even after a prediction was skipped: the state
       // must live in the button's name, not in 78 px of label that pushed Predict onto a row of
@@ -6579,6 +6599,17 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, Home’s Continue & hand-off, draft restore & step count, run history restore, Diff panel lines & earned solution reference, share link copied, opened and loaded, a pair session over hand-carried codes, two editors co-editing one document with undo staying each person’s own, inline values drawn then cleared by an edit, F12/Ctrl-click go-to-definition across the lesson’s files, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, ⌘P quick-open over lessons only, ⌘⇧F inside-the-lesson search landing on the hit’s line and finding a course page at its section, the ? key sheet open and inert in the editor, a sheet row rebound to a new key, a clash refused and a reset, study note & pinned highlight across a reload, gutter breakpoints clicked, keyed and remembered, a dot following an edit, the Board card showing its own sketch, a prediction graded against the verified serial, the sketch copied for the simulator, the simulator tab rail folded to icons, remembered and expanded again, the Study preset stacking the code above the lesson text, and the lesson list folded to a strip and back).'
     );
   } finally {
+    if (process.env.E2E_MARKS === '1' && marks.length > 1) {
+      const rows = marks.map(([label, at], index) => {
+        const previous = index === 0 ? at : marks[index - 1][1];
+        return `${label}=${((at - previous) / 1000).toFixed(1)}`;
+      });
+      const chunks = [];
+      for (let i = 0; i < rows.length; i += 10) chunks.push(rows.slice(i, i + 10));
+      chunks.forEach((chunk, index) => {
+        console.log(`::notice title=E2E marks ${index + 1}/${chunks.length}::${chunk.join(' ')}`);
+      });
+    }
     await browser.close();
     if (own) await own.viteServer.close();
   }
