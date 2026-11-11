@@ -173,6 +173,23 @@ export const LINK_HISTORY: LinkHistoryPoint[] = [
       "SERVER_ERROR": 0,
       "UNREACHABLE": 15
     }
+  },
+  {
+    "date": "2026-11-11T21:07:12+00:00",
+    "urls": 606,
+    "served": 559,
+    "notChecked": 47,
+    "failed": 0,
+    "blocked": 32,
+    "unreachable": 15,
+    "serverError": 0,
+    "verdicts": {
+      "BLOCKED": 32,
+      "FAIL": 0,
+      "PASS": 559,
+      "SERVER_ERROR": 0,
+      "UNREACHABLE": 15
+    }
   }
 ];
 
@@ -196,8 +213,8 @@ export interface LatestLinkReport {
 
 /** Null only for a run recorded before the checker added structured report rows. */
 export const LATEST_LINK_REPORT: LatestLinkReport | null = {
-  "date": "2026-11-09T14:28:47+00:00",
-  "totalUrls": 604,
+  "date": "2026-11-11T21:07:12+00:00",
+  "totalUrls": 606,
   "hardFailures": [],
   "notChecked": [
     {
@@ -323,6 +340,13 @@ export const LATEST_LINK_REPORT: LatestLinkReport | null = {
       ]
     },
     {
+      "url": "https://telesens.co/wp-content/uploads/2017/05/AllanVariance5087-1.pdf",
+      "reason": "UNREACHABLE (<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: certificate has expired (_ssl.c:1011)>)",
+      "sources": [
+        "03-sensors-and-actuators/README.md"
+      ]
+    },
+    {
       "url": "https://wiki.linuxfoundation.org/realtime/start",
       "reason": "BLOCKED (403)",
       "sources": [
@@ -402,13 +426,6 @@ export const LATEST_LINK_REPORT: LatestLinkReport | null = {
       "reason": "BLOCKED (403)",
       "sources": [
         "resources/open-source-toolchains.md"
-      ]
-    },
-    {
-      "url": "https://www.ieee-ies.org/conferences",
-      "reason": "UNREACHABLE (<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1011)>)",
-      "sources": [
-        "resources/textbooks-and-papers.md"
       ]
     },
     {
@@ -555,158 +572,158 @@ export interface HostRecurrence {
 }
 
 /** Runs whose record carried its unverified URL list; older rows cannot contribute. */
-export const HOST_RECURRENCE_RUNS: number = 8;
+export const HOST_RECURRENCE_RUNS: number = 9;
 
 export const HOST_RECURRENCE: HostRecurrence[] = [
   {
     "host": "st.com",
-    "runs": 8,
+    "runs": 9,
     "urls": 5,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "sciencedirect.com",
-    "runs": 8,
+    "runs": 9,
     "urls": 4,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "analog.com",
-    "runs": 8,
+    "runs": 9,
     "urls": 3,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "cds.caltech.edu",
-    "runs": 8,
+    "runs": 9,
     "urls": 2,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "ctms.engin.umich.edu",
-    "runs": 8,
+    "runs": 9,
     "urls": 2,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "doi.org",
-    "runs": 8,
+    "runs": 9,
     "urls": 2,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "mathworks.com",
-    "runs": 8,
+    "runs": 9,
     "urls": 2,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "raspberrypi.com",
-    "runs": 8,
+    "runs": 9,
     "urls": 2,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "wiki.st.com",
-    "runs": 8,
+    "runs": 9,
     "urls": 2,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "advanced.onlinelibrary.wiley.com",
-    "runs": 8,
+    "runs": 9,
     "urls": 1,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "allaboutcircuits.com",
-    "runs": 8,
+    "runs": 9,
     "urls": 1,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "dl.acm.org",
-    "runs": 8,
+    "runs": 9,
     "urls": 1,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "elmerfem.org",
-    "runs": 8,
+    "runs": 9,
     "urls": 1,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "iso.org",
-    "runs": 8,
+    "runs": 9,
     "urls": 1,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "journals.sagepub.com",
-    "runs": 8,
+    "runs": 9,
     "urls": 1,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "maxongroup.com",
-    "runs": 8,
+    "runs": 9,
     "urls": 1,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "mitpress.mit.edu",
-    "runs": 8,
+    "runs": 9,
     "urls": 1,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "ngspice.sourceforge.io",
-    "runs": 8,
+    "runs": 9,
     "urls": 1,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "onlinelibrary.wiley.com",
-    "runs": 8,
+    "runs": 9,
     "urls": 1,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "rug.nl",
-    "runs": 8,
+    "runs": 9,
     "urls": 1,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "sapien.ucsd.edu",
-    "runs": 8,
+    "runs": 9,
     "urls": 1,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "science.org",
-    "runs": 8,
+    "runs": 9,
     "urls": 1,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "w3.org",
-    "runs": 8,
+    "runs": 9,
     "urls": 1,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "wiki.linuxfoundation.org",
-    "runs": 8,
+    "runs": 9,
     "urls": 1,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "ww1.microchip.com",
-    "runs": 8,
+    "runs": 9,
     "urls": 1,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "fbsbook.org",
@@ -716,27 +733,27 @@ export const HOST_RECURRENCE: HostRecurrence[] = [
   },
   {
     "host": "reddit.com",
-    "runs": 4,
+    "runs": 5,
     "urls": 3,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "compliantmechanisms.byu.edu",
-    "runs": 4,
+    "runs": 5,
     "urls": 1,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "en.cppreference.com",
-    "runs": 4,
+    "runs": 5,
     "urls": 1,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "summerschool.stiff-project.org",
-    "runs": 4,
+    "runs": 5,
     "urls": 1,
-    "lastSeen": "2026-11-09T14:28:47+00:00"
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "learn.sparkfun.com",
@@ -765,8 +782,14 @@ export const HOST_RECURRENCE: HostRecurrence[] = [
   {
     "host": "ieee-ies.org",
     "runs": 2,
-    "urls": 1,
+    "urls": 0,
     "lastSeen": "2026-11-09T14:28:47+00:00"
+  },
+  {
+    "host": "telesens.co",
+    "runs": 1,
+    "urls": 1,
+    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "cs.stanford.edu",
