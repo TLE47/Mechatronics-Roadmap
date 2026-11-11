@@ -116,10 +116,14 @@ function pipe(stream, prefix) {
   stream.on('data', (chunk) => {
     const lines = (carry + chunk).split('\n');
     carry = lines.pop() ?? '';
-    for (const line of lines) process.stdout.write(`${prefix} ${line}\n`);
+    for (const line of lines) {
+      // A workflow command is addressed to the runner, not to the log: prefixing `::notice::` with a
+      // suite label turns it into text and the annotation is silently lost.
+      process.stdout.write(line.startsWith('::') ? `${line}\n` : `${prefix} ${line}\n`);
+    }
   });
   stream.on('end', () => {
-    if (carry) process.stdout.write(`${prefix} ${carry}\n`);
+    if (carry) process.stdout.write(carry.startsWith('::') ? `${carry}\n` : `${prefix} ${carry}\n`);
     carry = '';
   });
 }
