@@ -651,14 +651,31 @@ export function P5Scene({ reading, progress, highlight }: SceneProps) {
       </g>
 
       <line x1="52" y1="152" x2="308" y2="152" stroke="#2c4462" strokeWidth="4" strokeLinecap="round" />
-      {[0, 0.6, 1.2].map((mark) => (
-        <g key={mark}>
-          <line x1={xFor(mark)} y1="147" x2={xFor(mark)} y2="157" stroke="#3d5879" strokeWidth="1.5" />
-          <text x={xFor(mark)} y="170" textAnchor="middle" fill="#64748b" fontSize="8.5" fontFamily="var(--font-round)">
-            {mark.toFixed(2)} m
-          </text>
-        </g>
-      ))}
+      {[0, 0.6, 1.2].map((mark) => {
+        // The 1.2 m tick sits inside the dock's beacon (rings out to r=22), so its scale label steps
+        // left on a short leader instead of being drawn under the target. Everything else stays on the
+        // one baseline at 170, and the measured value is untouched.
+        const atDock = mark === 1.2;
+        const labelX = atDock ? xFor(mark) - 18 : xFor(mark);
+        return (
+          <g key={mark}>
+            <line x1={xFor(mark)} y1="147" x2={xFor(mark)} y2="157" stroke="#3d5879" strokeWidth="1.5" />
+            {atDock && (
+              <line x1={xFor(mark)} y1="157" x2={xFor(mark) - 14} y2="165" stroke="#3d5879" strokeWidth="1" />
+            )}
+            <text
+              x={labelX}
+              y="170"
+              textAnchor={atDock ? 'end' : 'middle'}
+              fill="#64748b"
+              fontSize="8.5"
+              fontFamily="var(--font-round)"
+            >
+              {mark.toFixed(2)} m
+            </text>
+          </g>
+        );
+      })}
       <line x1="52" y1="152" x2={Math.max(x, 52)} y2="152" stroke="#0ea5e9" strokeWidth="4" strokeLinecap="round" />
 
       <g className="robot-dock">
@@ -888,9 +905,14 @@ export function P6Scene({ reading, progress, highlight }: SceneProps) {
       {/* the scale, in metres, so a screenshot says what the rings mean */}
       <g fontSize="7" fill="#7f93ad" fontFamily="var(--font-mono, monospace)">
         {[1, 2, 3, 4, 5].map((metre) => (
-          <text key={metre} x={pivotX + metre * scale - 4} y={pivotY + 30}>
-            {metre} m
-          </text>
+          // The ruler runs across the dashed rings, so each label gets a plate of arena background
+          // rather than sitting on the dashes.
+          <g key={metre}>
+            <rect x={pivotX + metre * scale - 10} y={pivotY + 22} width={20} height={10} rx={2} fill="#050e1c" opacity={0.92} />
+            <text x={pivotX + metre * scale} y={pivotY + 30} textAnchor="middle">
+              {metre} m
+            </text>
+          </g>
         ))}
         <text x={pivotX} y={pivotY + 46} textAnchor="middle">
           outer ring {fixed(target1, 2)} m
