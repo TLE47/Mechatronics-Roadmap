@@ -380,7 +380,8 @@ function CommandLane({ label, y, raw, clamped, highlighted, badge }: LaneProps) 
       </text>
       <rect x="58" y={y - 11} width="244" height="22" rx="11" fill="#071a2c" stroke="#233a57" />
       <rect x="60" y={y - 9} width="240" height="18" rx="9" fill="#34d399" opacity="0.08" />
-      <line x1="58" y1={y} x2="302" y2={y} stroke="#223a56" strokeWidth="1" />
+      {/* Stops at the badge's plate: run to the bar's end it drew itself through the badge glyphs. */}
+      <line x1="58" y1={y} x2="242" y2={y} stroke="#223a56" strokeWidth="1" />
       {rawAt !== null && at !== null && outside && (
         <line x1={rawAt} y1={y} x2={at} y2={y} stroke="#fbbf24" strokeDasharray="2 2" opacity="0.65" />
       )}
@@ -410,11 +411,14 @@ function CommandLane({ label, y, raw, clamped, highlighted, badge }: LaneProps) 
         </text>
       )}
       {highlighted && at !== null && <Spotlight cx={at} cy={y} r={16} />}
-      <text x="58" y={y + 26} fill="#64748b" fontSize="8.5" fontFamily="var(--font-round)">
+      <text x="96" y={y + 24} fill="#64748b" fontSize="8.5" fontFamily="var(--font-round)">
         {/* the raw command, so the pull into range reads as one move */}
         {raw === null ? '—' : formatNumber(raw) + ' raw'}
       </text>
-      <text x="310" y={y + 4} textAnchor="end" fill={badge === 'inside' ? '#6ee7b7' : '#fbbf24'} fontSize="9" fontFamily="var(--font-round)">
+      {/* The badge sits inside the corridor's right end, on its own plate: at x=310 it used to run
+          past the bar and across the lane's centre line. */}
+      <rect x="242" y={y - 10} width="60" height="20" rx="10" fill="#071a2c" stroke="#233a57" />
+      <text x="296" y={y + 4} textAnchor="end" fill={badge === 'inside' ? '#6ee7b7' : '#fbbf24'} fontSize="9" fontFamily="var(--font-round)">
         {badge}
       </text>
     </g>
@@ -461,15 +465,19 @@ export function P3Scene({ reading, progress, highlight }: SceneProps) {
         badge={low === null ? '—' : metLow ? 'inside' : 'pulling'}
       />
 
-      <text x="58" y="150" fill="#64748b" fontSize="8.5" fontFamily="var(--font-round)">0</text>
-      <text x="302" y="150" textAnchor="end" fill="#64748b" fontSize="8.5" fontFamily="var(--font-round)">255</text>
+      {/* Under the output bar: at the lane's own baseline the corridor ends crowded the LOW lane's
+          raw caption, which the arena label sweep measured as a collision. */}
+      <text x="58" y="188" fill="#64748b" fontSize="8.5" fontFamily="var(--font-round)">0</text>
+      <text x="302" y="188" textAnchor="end" fill="#64748b" fontSize="8.5" fontFamily="var(--font-round)">255</text>
 
       {/* Above the bar, not beside it: the e-stop badge sits on this baseline at the left end, and
           the two used to be drawn through each other. */}
       <text x="14" y="160" fill="#9fb0c9" fontSize="10" fontFamily="var(--font-round)">OUTPUT</text>
       <rect x="58" y="168" width="244" height="10" rx="5" fill="#071a2c" stroke="#233a57" />
       <rect x="58" y="168" width={safeFill} height="10" rx="5" fill={estop ? '#f59e0b' : '#34d399'} />
-      <text x="310" y="177" textAnchor="end" fill="#dbeafe" fontSize="10" fontFamily="var(--font-round)">
+      {/* Above the bar: anchored at its right end on the bar's own baseline, the value crossed the
+          bar's edge. */}
+      <text x="310" y="164" textAnchor="end" fill="#dbeafe" fontSize="10" fontFamily="var(--font-round)">
         {safe === null ? '—' : formatNumber(safe)}
       </text>
       {estop && safe === 0 && (
@@ -523,7 +531,9 @@ export function P4Scene({ reading, progress, highlight }: SceneProps) {
         <text x="66" y="26" fill="#dbeafe" fontSize="12" fontFamily="var(--font-round)" style={{ fontVariantNumeric: 'tabular-nums' }}>
           {total === null ? '—' : formatNumber(total)}
         </text>
-        <rect x="112" y="12" width="140" height="20" rx="10" fill="#0b1a2e" stroke="#233a57" />
+        {/* Wide enough for a six-character mean (107.83) with its padding: the value used to cross the
+            pill's right border, which the label sweep now measures. */}
+        <rect x="112" y="12" width="156" height="20" rx="10" fill="#0b1a2e" stroke="#233a57" />
         <text x="122" y="25.5" fill="#9fb0c9" fontSize="9.5" fontFamily="var(--font-round)">MEAN</text>
         <rect x="166" y="19" width="52" height="6" rx="3" fill="#1b3552" />
         <rect x="166" y="19" width={meanFill} height="6" rx="3" fill="#38bdf8" />
@@ -656,12 +666,12 @@ export function P5Scene({ reading, progress, highlight }: SceneProps) {
         // left on a short leader instead of being drawn under the target. Everything else stays on the
         // one baseline at 170, and the measured value is untouched.
         const atDock = mark === 1.2;
-        const labelX = atDock ? xFor(mark) - 18 : xFor(mark);
+        const labelX = atDock ? xFor(mark) - 22 : xFor(mark);
         return (
           <g key={mark}>
             <line x1={xFor(mark)} y1="147" x2={xFor(mark)} y2="157" stroke="#3d5879" strokeWidth="1.5" />
             {atDock && (
-              <line x1={xFor(mark)} y1="157" x2={xFor(mark) - 14} y2="165" stroke="#3d5879" strokeWidth="1" />
+              <line x1={xFor(mark)} y1="157" x2={xFor(mark) - 18} y2="165" stroke="#3d5879" strokeWidth="1" />
             )}
             <text
               x={labelX}
@@ -894,9 +904,13 @@ export function P6Scene({ reading, progress, highlight }: SceneProps) {
 
       {/* the reading behind each beacon, at the end of its own ray */}
       <g fontSize="8" fontFamily="var(--font-mono, monospace)">
+        {/* Each range label crosses the dashed rings on its way out from the pivot, so it sits on a
+            patch of arena background the way the metre ruler does. */}
+        <rect x={reach(5).x - 12} y={reach(5).y - 17} width={42} height={13} rx={2} fill="#050e1c" opacity={0.92} />
         <text x={reach(5).x - 10} y={reach(5).y - 8} fill={metOf(progress, 'distanceD1') ? '#34d399' : '#7f93ad'}>
           d1 {d1 === null ? '\u2014' : fixed(d1, 2)} m
         </text>
+        <rect x={reach(1).x - 28} y={reach(1).y - 5} width={42} height={13} rx={2} fill="#050e1c" opacity={0.92} />
         <text x={reach(1).x - 26} y={reach(1).y + 4} fill={metOf(progress, 'distanceD2') ? '#34d399' : '#7f93ad'}>
           d2 {d2 === null ? '\u2014' : fixed(d2, 2)} m
         </text>
@@ -908,12 +922,13 @@ export function P6Scene({ reading, progress, highlight }: SceneProps) {
           // The ruler runs across the dashed rings, so each label gets a plate of arena background
           // rather than sitting on the dashes.
           <g key={metre}>
-            <rect x={pivotX + metre * scale - 10} y={pivotY + 22} width={20} height={10} rx={2} fill="#050e1c" opacity={0.92} />
+            <rect x={pivotX + metre * scale - 11} y={pivotY + 20} width={22} height={14} rx={2} fill="#050e1c" opacity={0.92} />
             <text x={pivotX + metre * scale} y={pivotY + 30} textAnchor="middle">
               {metre} m
             </text>
           </g>
         ))}
+        <rect x={pivotX - 34} y={pivotY + 39} width={68} height={13} rx={2} fill="#050e1c" opacity={0.92} />
         <text x={pivotX} y={pivotY + 46} textAnchor="middle">
           outer ring {fixed(target1, 2)} m
         </text>
@@ -968,12 +983,12 @@ export function P7Scene({ reading, progress, highlight }: SceneProps) {
       {/* the two converted windows */}
       <g fontSize="9" fontFamily="var(--font-mono, monospace)">
         <rect x="178" y="34" width="112" height="30" rx="5" fill="none" stroke="#7f93ad" strokeWidth="1" opacity="0.9" />
-        <text x="186" y="47" fill="#7f93ad" fontSize="7.5">CURRENT</text>
+        <text x="186" y="45" fill="#7f93ad" fontSize="7.5">CURRENT</text>
         <text x="186" y="59" fill={metOf(progress, 'currentA') ? '#34d399' : '#dbeafe'} fontSize="12" fontWeight="700">
           {amps === null ? '\u2014' : fixed(amps, 4)} A
         </text>
         <rect x="178" y="70" width="112" height="30" rx="5" fill="none" stroke="#7f93ad" strokeWidth="1" opacity="0.9" />
-        <text x="186" y="83" fill="#7f93ad" fontSize="7.5">RESISTANCE</text>
+        <text x="186" y="81" fill="#7f93ad" fontSize="7.5">RESISTANCE</text>
         <text x="186" y="95" fill={metOf(progress, 'resistanceOhm') ? '#34d399' : '#dbeafe'} fontSize="12" fontWeight="700">
           {ohms === null ? '\u2014' : fixed(ohms, 1)} {String.fromCharCode(937)}
         </text>

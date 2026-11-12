@@ -702,6 +702,12 @@ async function assertMobileViewport(browser, baseUrl, viewport, scenario) {
       at + ': no two phone arena labels may share pixels, got ' + arena.overlaps.join(', ')
     );
     assert.deepEqual(
+      arena.shapeCollisions,
+      [],
+      at + ': no phone arena label may sit on the arena art, got ' + arena.shapeCollisions.join(', ')
+    );
+    assert.equal(arena.detector, true, at + ': the phone label/shape detector must be proven');
+    assert.deepEqual(
       arena.outside,
       [],
       at + ': every phone arena label must stay inside the arena, got ' + arena.outside.join(', ')
@@ -1037,6 +1043,122 @@ async function measureArena(page) {
         }
       }
     }
+    // The labels are only half the drawing contract: a label must also keep off the scene's own art
+    // (P.5's `1.20 m` sat inside the dock beacon's rings and only a screenshot caught it). The scene
+    // root is the arena svg's last child — the first is the shared background, and its grid is meant
+    // to sit under the text.
+    const scene = svg ? svg.lastElementChild : null;
+    const shapes = scene
+      ? [...scene.querySelectorAll('rect,circle,ellipse,line,path,polygon,polyline')]
+          .map((node) => {
+            const box = node.getBoundingClientRect();
+            const paint = (name) => (node.getAttribute(name) || '').trim();
+            return {
+              tag: node.tagName.toLowerCase(),
+              visible:
+                Number(getComputedStyle(node).opacity) >= 0.05 &&
+                !paint('fill').startsWith('url(') &&
+                !paint('stroke').startsWith('url('),
+              // A stroked line has no area in its box, so give it the width of its stroke before
+              // asking whether a glyph touched it.
+              box: {
+                left: box.left - 1,
+                top: box.top - 1,
+                right: box.right + 1,
+                bottom: box.bottom + 1,
+              },
+            };
+          })
+          // A gradient wash or a fully transparent ring cannot hide a glyph, so it is not a collision:
+          // the beacon's soft halo is the first, and its idle pulse ring is the second.
+          .filter((entry) => entry.visible)
+          .filter((entry) => entry.box.right - entry.box.left > 0 && entry.box.bottom - entry.box.top > 0)
+      : [];
+    // A label inside a container is placed there on purpose (the CURRENT window, the metre ruler's
+    // plate); everything else — crossing an edge, or sitting on a ring, a rail, a bar — is a
+    // collision. The same predicate is proved against synthetic boxes below so a broken selector
+    // cannot make this check quietly vacuous.
+    const collides = (textBox, shapeBox) => {
+      // A pill's stroke is 1.5 px wide and a glyph's box carries its side bearings, so a value that
+      // fills its pill can measure a pixel or two past the drawn border while looking centred.
+      // Containment is judged against the stroke's outer edge, not the fill.
+      const inset = -2;
+      const inside =
+        textBox.left >= shapeBox.left + inset &&
+        textBox.right <= shapeBox.right - inset &&
+        textBox.top >= shapeBox.top + inset &&
+        textBox.bottom <= shapeBox.bottom - inset;
+      if (inside) return false;
+      const sharedX = Math.min(textBox.right, shapeBox.right) - Math.max(textBox.left, shapeBox.left);
+      const sharedY = Math.min(textBox.bottom, shapeBox.bottom) - Math.max(textBox.top, shapeBox.top);
+      return sharedX > 1 && sharedY > 1;
+    };
+    // A circle's box covers its whole face, so a label near the middle of a beacon would look like a
+    // collision with its box and is not one. Rings are graded on the stroke band itself: take the
+    // label's nearest and farthest distance from the centre in units of the ellipse's radii, and ask
+    // whether the band at 1 lies between them. A label wholly inside the ring misses the band; one
+    // that reaches across the stroke hits it — which is exactly the P.5 failure.
+    const hitsRing = (textBox, ring) => {
+      const at = (x, y) => Math.hypot((x - ring.cx) / ring.rx, (y - ring.cy) / ring.ry);
+      const nearX = Math.max(textBox.left, Math.min(ring.cx, textBox.right));
+      const nearY = Math.max(textBox.top, Math.min(ring.cy, textBox.bottom));
+      const near = at(nearX, nearY);
+      const far = Math.max(
+        at(textBox.left, textBox.top),
+        at(textBox.right, textBox.top),
+        at(textBox.left, textBox.bottom),
+        at(textBox.right, textBox.bottom)
+      );
+      const scale = Math.min(ring.rx, ring.ry);
+      return (near - 1) * scale <= 3 && (far - 1) * scale >= -3;
+    };
+    // A label on a plate is protected by it: P.6's metre ruler and P.3's lane badges both sit on a
+    // patch of arena background precisely so the art behind them stops at the plate. So a crossing is
+    // forgiven when one plate holds the label and the crossed part of the shape too. The plates are
+    // found, not named: any shape that fully contains the label.
+    const platesFor = (textBox) =>
+      shapes.filter(
+        (shape) =>
+          textBox.left >= shape.box.left &&
+          textBox.right <= shape.box.right &&
+          textBox.top >= shape.box.top &&
+          textBox.bottom <= shape.box.bottom
+      );
+    // Only the part of the shape that actually crosses the label has to be on the plate: a dashed
+    // guide runs the width of the arena, and the plate under one label is what stops it at that spot.
+    const covered = (plate, textBox, shape) => {
+      const left = Math.max(textBox.left, shape.box.left);
+      const right = Math.min(textBox.right, shape.box.right);
+      const top = Math.max(textBox.top, shape.box.top);
+      const bottom = Math.min(textBox.bottom, shape.box.bottom);
+      return (
+        left >= plate.box.left - 1 &&
+        right <= plate.box.right + 1 &&
+        top >= plate.box.top - 1 &&
+        bottom <= plate.box.bottom + 1
+      );
+    };
+    const shapeCollisions = [];
+    for (const label of labels) {
+      const plates = platesFor(label.box);
+      for (const shape of shapes) {
+        const isRing = shape.tag === 'circle' || shape.tag === 'ellipse';
+        const hit = isRing
+          ? hitsRing(label.box, {
+              cx: (shape.box.left + shape.box.right) / 2,
+              cy: (shape.box.top + shape.box.bottom) / 2,
+              rx: (shape.box.right - shape.box.left) / 2,
+              ry: (shape.box.bottom - shape.box.top) / 2,
+            })
+          : collides(label.box, shape.box);
+        if (hit && !plates.some((plate) => plate !== shape && covered(plate, label.box, shape))) {
+          shapeCollisions.push(label.text + ' / <' + shape.tag + '>');
+        }
+      }
+    }
+    const detector =
+      collides({ left: 0, top: 0, right: 10, bottom: 10 }, { left: 5, top: 5, right: 20, bottom: 20 }) === true &&
+      collides({ left: 6, top: 6, right: 9, bottom: 9 }, { left: 5, top: 5, right: 20, bottom: 20 }) === false;
     const frame = arena ? arena.getBoundingClientRect() : null;
     const outside = frame
       ? labels
@@ -1059,6 +1181,9 @@ async function measureArena(page) {
       labels: labels.length,
       undrawn,
       overlaps,
+      shapes: shapes.length,
+      shapeCollisions,
+      detector,
       outside,
       paneOverflow: pane ? pane.scrollWidth - pane.clientWidth : -1,
       pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -1138,6 +1263,20 @@ function assertArenaLayout(audit, tag) {
     [],
     tag + ': no two arena labels may share pixels, got ' + audit.overlaps.join(', ')
   );
+  assert.ok(
+    audit.shapes >= 5,
+    tag + ': the arena must draw its art for the label sweep to be meaningful, got ' + audit.shapes
+  );
+  assert.deepEqual(
+    audit.shapeCollisions,
+    [],
+    tag + ': no arena label may sit on the arena art, got ' + audit.shapeCollisions.join(', ')
+  );
+  assert.equal(
+    audit.detector,
+    true,
+    tag + ': the label/shape detector must flag a partial overlap and allow a contained label'
+  );
   assert.deepEqual(
     audit.outside,
     [],
@@ -1198,6 +1337,52 @@ async function assertDesktopArena(browser, baseUrl) {
   }
 }
 
+// P.5's `1.20 m` label on the dock ring was found by looking at a screenshot, which is not a gate.
+// This walks every arena as it stands and holds each one to the label contract: no label on another
+// label, and none on the scene's art. Containment is allowed on purpose (a readout window, the
+// ruler's plate) and the detector proves it still tells the two cases apart. The rendering is the
+// one a P.5 regression shows up in; the value-driven states stay covered by the palette walk above,
+// which runs P.1 and P.4's own solutions.
+async function assertEveryArena(browser, baseUrl) {
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 900 },
+    reducedMotion: 'reduce',
+  });
+  await seedTourSeen(context);
+  await seedRobotTourSeen(context);
+  const page = await context.newPage();
+  try {
+    for (const scenario of ROBOT_SCENARIOS) {
+      const lessonId = scenario.lessonId;
+      await openRobot(page, baseUrl, lessonId);
+      await waitForIdle(page);
+      const tag = lessonId + ' at 1440x900, at rest';
+      const audit = await measureArena(page);
+      assert.ok(audit.labels >= 4, tag + ': the arena must draw its labels, got ' + audit.labels);
+      assert.deepEqual(audit.undrawn, [], tag + ': every arena label must be drawn, got ' + audit.undrawn.join(', '));
+      assert.deepEqual(
+        audit.overlaps,
+        [],
+        tag + ': no two arena labels may share pixels, got ' + audit.overlaps.join(', ')
+      );
+      assert.ok(audit.shapes >= 5, tag + ': the arena must draw its art, got ' + audit.shapes);
+      assert.deepEqual(
+        audit.shapeCollisions,
+        [],
+        tag + ': no arena label may sit on the arena art, got ' + audit.shapeCollisions.join(', ')
+      );
+      assert.equal(audit.detector, true, tag + ': the label/shape detector must be proven');
+      assert.deepEqual(audit.outside, [], tag + ': every arena label must stay inside the arena');
+      console.log(
+        '  ok   ' + tag + ': ' + audit.labels + ' labels clear of ' + audit.shapes +
+          ' shapes and of each other'
+      );
+    }
+  } finally {
+    await context.close();
+  }
+}
+
 // The combined gate hands over its warm server; a standalone run owns one.
 const own = process.env.E2E_BASE_URL ? null : await startDevServer(process.cwd());
 const BASE = own ? own.baseUrl : (process.env.E2E_BASE_URL.replace(/\/+$/, '') + '/');
@@ -1233,6 +1418,7 @@ try {
 
   console.log('\nthe Robot tab at desktop width:');
   await assertDesktopArena(browser, BASE);
+  await assertEveryArena(browser, BASE);
 
   console.log('\nthe Robot tab at phone widths:');
   const phoneScenario = ROBOT_SCENARIOS.find((entry) => entry.lessonId === 'P.4');
