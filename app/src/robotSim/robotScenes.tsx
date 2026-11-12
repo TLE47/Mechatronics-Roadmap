@@ -84,6 +84,16 @@ export function primaryProgress(
     if (Math.abs(target - start) < 1e-9) return 1;
     return clamp((position - start) / (target - start), 0, 1);
   }
+  if (lessonId === 'P.6') {
+    const target = targetNumber(progress, 'distanceD1', 5);
+    const d1 = numberOrNull(reading?.distanceD1);
+    return d1 === null ? 0 : clamp(d1 / Math.max(target, 1e-9), 0, 1);
+  }
+  if (lessonId === 'P.7') {
+    const target = Math.max(targetNumber(progress, 'voltageV', 3.3), 1e-9);
+    const volts = numberOrNull(reading?.voltageV);
+    return volts === null ? 0 : clamp(volts / target, 0, 1);
+  }
   if (lessonId === 'P.3') {
     const value = numberOrNull(reading?.clampedHigh) ?? numberOrNull(reading?.rawHigh);
     return value === null ? 0 : clamp(value / 255, 0, 1);
@@ -795,6 +805,162 @@ export function P2Scene({ reading, progress, highlight }: SceneProps) {
         </text>
         <text x="228" y="140" fill={highlight === 'kineticEnergyJ' ? 'var(--accent)' : 'var(--faint)'}>
           E {energy === null ? '—' : fixed(energy, 2)} J
+        </text>
+      </g>
+    </svg>
+  );
+}
+
+
+/**
+ * P.6's arena: a survey table with rings in metres and two beacons on one bearing.
+ *
+ * Both pairs the lesson measures — (3, 4) and (0.6, 0.8) — sit on the same 3-4-5 line, so the
+ * drawing is one ray with two ranges rather than two unrelated dials: the same bearing, measured at
+ * 5 m and at 1 m. The rings are metres, so a short range still reads, and a run that has not bound
+ * `d1` or `d2` yet shows the table empty with the beacons at the pivot.
+ */
+export function P6Scene({ reading, progress, highlight }: SceneProps) {
+  const scale = 16; // px per metre: the 5 m target lands on the outer ring
+  const pivotX = 92;
+  const pivotY = 104;
+  const d1 = numberOrNull(reading?.distanceD1);
+  const d2 = numberOrNull(reading?.distanceD2);
+  const target1 = targetNumber(progress, 'distanceD1', 5);
+  const bearing = (53.130102 / 180) * Math.PI; // atan2(4, 3): both pairs share it
+  const reach = (metres: number) => {
+    const length = clamp(metres * scale, 0, 80);
+    return { x: pivotX + Math.cos(bearing) * length, y: pivotY - Math.sin(bearing) * length };
+  };
+  const far = reach(d1 ?? 0);
+  const near = reach(d2 ?? 0);
+
+  return (
+    <svg viewBox="0 0 320 168" x={20} y={21} width={320} height={168} preserveAspectRatio="xMidYMid meet" role="img" aria-label="A survey table measuring two ranges on one bearing">
+      {[16, 32, 48, 64, 80].map((radius, index) => (
+        <circle
+          key={radius}
+          cx={pivotX}
+          cy={pivotY}
+          r={radius}
+          fill="none"
+          stroke={index === 4 ? (metOf(progress, 'distanceD1') ? 'var(--emerald)' : 'var(--accent)') : 'var(--dim)'}
+          strokeWidth={index === 4 ? 2 : 1.1}
+          opacity={index === 4 ? 0.9 : 0.45}
+          strokeDasharray={index === 4 ? undefined : '3 5'}
+        />
+      ))}
+      <line x1={pivotX - 88} y1={pivotY} x2={pivotX + 88} y2={pivotY} stroke="var(--line-soft)" strokeWidth="1" strokeDasharray="2 6" />
+      <line x1={pivotX} y1={pivotY - 84} x2={pivotX} y2={pivotY + 22} stroke="var(--line-soft)" strokeWidth="1" strokeDasharray="2 6" />
+      <line
+        x1={pivotX}
+        y1={pivotY}
+        x2={far.x}
+        y2={far.y}
+        stroke={highlight === 'distanceD1' ? 'var(--accent)' : 'var(--dim)'}
+        strokeWidth="1.6"
+        style={{ transition: 'all 420ms ease-out' }}
+      />
+      <circle cx={pivotX} cy={pivotY} r="4" fill="var(--panel)" stroke="var(--dim)" strokeWidth="1.4" />
+      {/* the far beacon, at the lesson's own distance */}
+      <g style={{ transition: 'transform 420ms ease-out' }} transform={`translate(${far.x} ${far.y})`}>
+        <circle r="7" fill="none" stroke={metOf(progress, 'distanceD1') ? 'var(--emerald)' : 'var(--accent)'} strokeWidth="1.8" />
+        <circle r="2.6" fill={metOf(progress, 'distanceD1') ? 'var(--emerald)' : 'var(--accent)'} />
+      </g>
+      {/* the near beacon, measured from the same origin */}
+      <g style={{ transition: 'transform 420ms ease-out' }} transform={`translate(${near.x} ${near.y})`}>
+        <circle r="5" fill="none" stroke={metOf(progress, 'distanceD2') ? 'var(--emerald)' : 'var(--dim)'} strokeWidth="1.6" />
+        <circle r="1.8" fill={metOf(progress, 'distanceD2') ? 'var(--emerald)' : 'var(--dim)'} />
+      </g>
+
+      {/* the reading behind each beacon, at the end of its own ray */}
+      <g fontSize="7" fontFamily="var(--font-mono, monospace)">
+        <text x={reach(5).x - 10} y={reach(5).y - 8} fill={metOf(progress, 'distanceD1') ? 'var(--emerald)' : 'var(--faint)'}>
+          d1 {d1 === null ? '\u2014' : fixed(d1, 2)} m
+        </text>
+        <text x={reach(1).x - 26} y={reach(1).y + 4} fill={metOf(progress, 'distanceD2') ? 'var(--emerald)' : 'var(--faint)'}>
+          d2 {d2 === null ? '\u2014' : fixed(d2, 2)} m
+        </text>
+      </g>
+
+      {/* the scale, in metres, so a screenshot says what the rings mean */}
+      <g fontSize="7" fill="var(--dim)" fontFamily="var(--font-mono, monospace)">
+        {[1, 2, 3, 4, 5].map((metre) => (
+          <text key={metre} x={pivotX + metre * scale - 4} y={pivotY + 30}>
+            {metre} m
+          </text>
+        ))}
+        <text x={pivotX} y={pivotY + 46} textAnchor="middle">
+          target {fixed(target1, 2)} m
+        </text>
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * P.7's arena: a bench meter with a volt arc, two digital windows and a microsecond strip.
+ *
+ * The lesson converts three quantities before it multiplies two of them, so the machine shows the
+ * converted values as a bench instrument would: amps and ohms in their own windows, the voltage they
+ * produce on the arc, and the 500 us pulse drawn at the bottom. Microseconds are drawn on a log-ish
+ * strip, because 0.0005 s on a linear second scale is a line one pixel wide.
+ */
+export function P7Scene({ reading, progress, highlight }: SceneProps) {
+  const amps = numberOrNull(reading?.currentA);
+  const ohms = numberOrNull(reading?.resistanceOhm);
+  const volts = numberOrNull(reading?.voltageV);
+  const seconds = numberOrNull(reading?.timeS);
+  const voltTarget = Math.max(targetNumber(progress, 'voltageV', 3.3), 1e-9);
+  const arcFill = volts === null ? 0 : clamp(volts / (voltTarget * 1.5), 0, 1);
+  const pulseWidth = seconds === null ? 0 : clamp((Math.log10(seconds * 1e6 + 1) / 3) * 96, 2, 112);
+  const needle = -110 + arcFill * 220; // degrees, centred on the arc
+
+  return (
+    <svg viewBox="0 0 320 168" x={20} y={21} width={320} height={168} preserveAspectRatio="xMidYMid meet" role="img" aria-label="A bench meter reading converted amps, ohms, volts and microseconds">
+      <rect x="14" y="12" width="292" height="112" rx="8" fill="none" stroke="var(--dim)" strokeWidth="1.2" opacity="0.6" />
+      {/* the volt arc and its needle */}
+      <g transform="translate(96 88)">
+        <path d="M -52 0 A 52 52 0 0 1 52 0" fill="none" stroke="var(--dim)" strokeWidth="3" strokeLinecap="round" opacity="0.55" />
+        <path
+          d="M -52 0 A 52 52 0 0 1 52 0"
+          fill="none"
+          stroke={metOf(progress, 'voltageV') ? 'var(--emerald)' : 'var(--accent)'}
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray={`${(Math.PI * 52 * arcFill).toFixed(1)} 999`}
+          style={{ transition: 'stroke-dasharray 420ms ease-out' }}
+        />
+        <line x1="0" y1="0" x2="0" y2="-44" stroke="var(--dim)" strokeWidth="1.6" transform={`rotate(${needle})`} style={{ transition: 'transform 420ms ease-out' }} />
+        <circle r="4" fill="var(--canvas)" stroke="var(--dim)" strokeWidth="1.4" />
+        <text y="16" textAnchor="middle" fontSize="10" fontFamily="var(--font-mono, monospace)" fill={metOf(progress, 'voltageV') ? 'var(--emerald)' : 'var(--faint)'}>
+          {volts === null ? '\u2014' : fixed(volts, 2)} V
+        </text>
+        <text y="-60" textAnchor="middle" fontSize="7" fill="var(--dim)" fontFamily="var(--font-mono, monospace)">
+          V = I × R
+        </text>
+      </g>
+
+      {/* the two converted windows */}
+      <g fontSize="9" fontFamily="var(--font-mono, monospace)">
+        <rect x="178" y="34" width="112" height="30" rx="5" fill="none" stroke="var(--dim)" strokeWidth="1" opacity="0.7" />
+        <text x="186" y="47" fill="var(--dim)" fontSize="7.5">CURRENT</text>
+        <text x="186" y="59" fill={metOf(progress, 'currentA') ? 'var(--emerald)' : 'var(--text)'} fontSize="11">
+          {amps === null ? '\u2014' : fixed(amps, 4)} A
+        </text>
+        <rect x="178" y="70" width="112" height="30" rx="5" fill="none" stroke="var(--dim)" strokeWidth="1" opacity="0.7" />
+        <text x="186" y="83" fill="var(--dim)" fontSize="7.5">RESISTANCE</text>
+        <text x="186" y="95" fill={metOf(progress, 'resistanceOhm') ? 'var(--emerald)' : 'var(--text)'} fontSize="11">
+          {ohms === null ? '\u2014' : fixed(ohms, 1)} {String.fromCharCode(937)}
+        </text>
+      </g>
+
+      {/* the microsecond strip: one pulse, as wide as its converted period */}
+      <g transform="translate(14 132)">
+        <line x1="0" y1="12" x2="292" y2="12" stroke="var(--line-soft)" strokeWidth="1" />
+        <rect x="0" y="2" width={pulseWidth} height="10" rx="1.5" fill={metOf(progress, 'timeS') ? 'var(--emerald)' : 'var(--accent)'} style={{ transition: 'width 420ms ease-out' }} />
+        <text x="0" y="30" fontSize="7" fill="var(--dim)" fontFamily="var(--font-mono, monospace)">
+          500 µs = {seconds === null ? '\u2014' : fixed(seconds, 6)} s
         </text>
       </g>
     </svg>

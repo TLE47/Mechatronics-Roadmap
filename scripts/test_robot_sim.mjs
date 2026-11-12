@@ -49,10 +49,10 @@ const check = (name, fn) => {
   console.log(`ok ${passed} - ${name}`);
 };
 
-check('the five robot lessons are the lesson records themselves', () => {
+check('the seven robot lessons are the lesson records themselves', () => {
   assert.deepEqual(
     ROBOT_SCENARIOS.map((entry) => entry.lessonId),
-    ['P.1', 'P.2', 'P.3', 'P.4', 'P.5']
+    ['P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7']
   );
   for (const entry of ROBOT_SCENARIOS) {
     const lesson = PYTHON_LESSONS.find((candidate) => candidate.id === entry.lessonId);
@@ -63,7 +63,7 @@ check('the five robot lessons are the lesson records themselves', () => {
     assert.equal(entry.lesson.fullSolution, lesson.fullSolution);
     assert.equal(entry.lesson.expectedOutput, lesson.expectedOutput);
   }
-  assert.equal(robotScenario('P.6'), null);
+  assert.equal(robotScenario('P.8'), null);
 });
 
 check('the old grid exercise and its invented example are gone', () => {
@@ -109,10 +109,10 @@ check('every mission target is that lesson expected value, and the titles stay d
       assert.ok(target.hint.trim().length > 10, `${entry.lessonId} ${String(target.key)} has a hint`);
     }
   }
-  assert.equal(new Set(titles).size, titles.length, 'the five missions have five different titles');
+  assert.equal(new Set(titles).size, titles.length, 'the seven missions have seven different titles');
   assert.deepEqual(
     ROBOT_SCENARIOS.map((entry) => missionFor(entry).title),
-    ['Wake the rover', 'Drive one tick', 'Guard the motor', 'Sort the convoy', 'Dock the arm']
+    ['Wake the rover', 'Drive one tick', 'Guard the motor', 'Sort the convoy', 'Dock the arm', 'Measure the bench', 'Convert to base units']
   );
 });
 

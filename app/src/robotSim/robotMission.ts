@@ -54,7 +54,7 @@ interface MissionSpec {
 }
 
 /**
- * The five missions, in the learner's language.
+ * The seven missions, in the learner's language.
  *
  * The copy names the idea the lesson teaches (relative updates, clamping, a loop over a list, a
  * while loop) rather than repeating the expected output: a target's value is always read from
@@ -122,6 +122,66 @@ const MISSIONS: Record<RobotLessonId, MissionSpec> = {
         unit: 'J',
         tolerance: 0.01,
         hint: 'Half the mass times the speed squared.',
+      },
+    ],
+  },
+  'P.6': {
+    title: 'Measure the bench',
+    blurb: 'Two ranges from the same bearing: the square root of the squares turns a pair of coordinates into a distance.',
+    targets: [
+      {
+        key: 'distanceD1',
+        label: 'Range (3, 4)',
+        kind: 'number',
+        unit: 'm',
+        tolerance: 0.0001,
+        hint: 'Root of the sum of the squares of 3 and 4.',
+      },
+      {
+        key: 'distanceD2',
+        label: 'Range (0.6, 0.8)',
+        kind: 'number',
+        unit: 'm',
+        tolerance: 0.0001,
+        hint: 'The same 3-4-5 triangle, scaled down ten times.',
+      },
+    ],
+  },
+  'P.7': {
+    title: 'Convert to base units',
+    blurb: 'Milliamps, kilo-ohms and microseconds into amps, ohms and seconds — then Ohm\'s law on the converted values.',
+    targets: [
+      {
+        key: 'currentA',
+        label: 'Current',
+        kind: 'number',
+        unit: 'A',
+        tolerance: 1e-6,
+        hint: '15.0 mA in amps.',
+      },
+      {
+        key: 'resistanceOhm',
+        label: 'Resistance',
+        kind: 'number',
+        unit: '\u03a9',
+        tolerance: 0.05,
+        hint: '0.22 k\u03a9 in ohms.',
+      },
+      {
+        key: 'voltageV',
+        label: 'Drop',
+        kind: 'number',
+        unit: 'V',
+        tolerance: 0.005,
+        hint: 'The converted current times the converted resistance.',
+      },
+      {
+        key: 'timeS',
+        label: 'Time',
+        kind: 'number',
+        unit: 's',
+        tolerance: 1e-9,
+        hint: '500.0 \u00b5s in seconds.',
       },
     ],
   },

@@ -32,6 +32,8 @@ const SOURCE_LINES = {
   'P.1': { mode: 8, encoderTicks: 6, batteryVolts: 7, eStop: 4 },
   'P.2': { positionM: 12, sensorVolts: 13, kineticEnergyJ: 14 },
   'P.3': { clampedHigh: 8, clampedLow: 18, safeOutput: 23 },
+  'P.6': { distanceD1: 16, distanceD2: 17 },
+  'P.7': { currentA: 13, resistanceOhm: 14, voltageV: 15, timeS: 16 },
   'P.4': { clampedCommands: 12, totalCommand: 13, meanCommand: 15 },
   'P.5': { step: 12, positionM: 11 },
 };

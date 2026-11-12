@@ -14,6 +14,8 @@ import { formatNumber, type RobotProgress } from './robotMission';
 import {
   P1Scene,
   P2Scene,
+  P6Scene,
+  P7Scene,
   P3Scene,
   P4Scene,
   P5Scene,
@@ -221,6 +223,8 @@ export function RobotStage({
             <ArenaBackground />
             {lesson === 'P.1' && <P1Scene {...scene} />}
             {lesson === 'P.2' && <P2Scene {...scene} />}
+            {lesson === 'P.6' && <P6Scene {...scene} />}
+            {lesson === 'P.7' && <P7Scene {...scene} />}
             {lesson === 'P.3' && <P3Scene {...scene} />}
             {lesson === 'P.4' && <P4Scene {...scene} />}
             {lesson === 'P.5' && <P5Scene {...scene} />}

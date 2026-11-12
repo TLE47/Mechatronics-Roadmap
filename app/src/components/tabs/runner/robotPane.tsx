@@ -1,7 +1,7 @@
 /**
  * The Robot tab's slot (components/tabs/runner/robotPane.tsx).
  *
- * Only the five Python lessons whose goals bind robot values have the tab. The stage is lazy, so a
+ * Only the seven Python lessons whose goals bind robot values have the tab. The stage is lazy, so a
  * learner who never opens Robot never downloads the model or its arena; the tab itself just asks
  * this module for a slot. The pane reads the current main.py and never offers a second code path.
  */
@@ -10,7 +10,7 @@ import type { RobotRunApi } from '../../../robotSim/model';
 
 /** Keep in step with ROBOT_LESSON_IDS in app/src/robotLessons.ts. This gate is deliberately a
  * regex rather than an import: the eager slot should pay a few bytes, not pull the model in. */
-const ROBOT_TAB_LESSON = /^P\.[12345]$/;
+const ROBOT_TAB_LESSON = /^P\.[1234567]$/;
 
 const RobotPane = React.lazy(() => import('../../../robotSim/RobotPane'));
 

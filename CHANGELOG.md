@@ -33,7 +33,7 @@ rover, because "position after one tick" is a cart on a beam. Its arena draws th
 lesson binds — the carriage between `start_pos_m` and the computed `new_pos_m`, the divider's wiper at
 `sensor_pin`, and a flywheel band filled by `kinetic_energy_j` — and the mission's chips compare each
 against the lesson's own expected reading. The gantry is a second machine, not the rover recoloured:
-two legs, a beam and a clamped carriage, drawn from the same reading as the tiles.
+two legs, a beam and a clamped carriage, drawn from the same reading as the tiles. P.6 measures the bench: a survey table whose rings are metres, with both ranges — (3, 4) and (0.6, 0.8) — on one bearing, so the same 3-4-5 line is read at 5 m and 1 m. P.7 converts to base units on a bench meter: amps and ohms in their own windows, the voltage they make on the arc, and the 500 µs pulse as a strip. **P.8 has no robot view, on purpose:** its solution binds no names — the periods and bit-widths are computed inside its `assert` calls — so there is no reading to drive an arena, and the Robot tab leaves it out rather than inventing values.
 
 **Build stamp.** The version alone could not say *which* build of it you were looking at, so the
 header badge and the footer now print the commit the bundle was cut from and the day it was built

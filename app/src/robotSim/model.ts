@@ -44,6 +44,14 @@ export interface RobotReading {
   sensorVolts?: number | null;
   /** P.2's kinetic energy of the moving cart, in joules. */
   kineticEnergyJ?: number | null;
+  /** P.6's two measured distances from the origin, in metres. */
+  distanceD1?: number | null;
+  distanceD2?: number | null;
+  /** P.7's converted base-unit values: amps, ohms, volts and seconds. */
+  currentA?: number | null;
+  resistanceOhm?: number | null;
+  voltageV?: number | null;
+  timeS?: number | null;
   step?: number | null;
 }
 
@@ -166,6 +174,22 @@ const PROBES: Record<RobotLessonId, { fields: readonly RobotField[]; expected: R
     ],
     expected: { positionM: 2.0625, sensorVolts: 4, kineticEnergyJ: 9 },
   },
+  'P.6': {
+    fields: [
+      ['distanceD1', 'd1'],
+      ['distanceD2', 'd2'],
+    ],
+    expected: { distanceD1: 5, distanceD2: 1 },
+  },
+  'P.7': {
+    fields: [
+      ['currentA', 'i_a'],
+      ['resistanceOhm', 'r_ohm'],
+      ['voltageV', 'v_drop'],
+      ['timeS', 't_sec'],
+    ],
+    expected: { currentA: 0.015, resistanceOhm: 220, voltageV: 3.3, timeS: 0.0005 },
+  },
   'P.5': {
     fields: [
       ['positionM', 'pos_m'],
@@ -250,6 +274,12 @@ export function parseRobotReading(raw: unknown): RobotReading | null {
     velocityMS: readingNumber(source.velocityMS),
     sensorVolts: readingNumber(source.sensorVolts),
     kineticEnergyJ: readingNumber(source.kineticEnergyJ),
+    distanceD1: readingNumber(source.distanceD1),
+    distanceD2: readingNumber(source.distanceD2),
+    currentA: readingNumber(source.currentA),
+    resistanceOhm: readingNumber(source.resistanceOhm),
+    voltageV: readingNumber(source.voltageV),
+    timeS: readingNumber(source.timeS),
     step: readingNumber(source.step),
   };
 }
