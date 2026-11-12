@@ -891,7 +891,7 @@ export function P6Scene({ reading, progress, highlight }: SceneProps) {
           </text>
         ))}
         <text x={pivotX} y={pivotY + 46} textAnchor="middle">
-          target {fixed(target1, 2)} m
+          outer ring {fixed(target1, 2)} m
         </text>
       </g>
     </svg>
