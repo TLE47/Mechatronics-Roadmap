@@ -251,22 +251,24 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 Workbench
               </span>
-              {/* The stamp rides on the version's own line, and only from `2xl` up. The header is a
-                  wrapping row: at 1440 the 138 px this needs pushed the action tray onto a second row
-                  (+47 px), which a sticky header then paints over the pane below it; a line of its own
-                  cost 11 px and did the same to a click. From `2xl` the tray has already wrapped for
-                  its own reasons, so the stamp costs nothing there. Everywhere narrower the badge
-                  stays the release version alone and the footer still names the build. */}
+              {/* Three lines, the same three as before: the word, then the release, then the build.
+                  The release shares the word's line (`sm:ml-1.5`) and the build takes the line that
+                  frees. Side by side on one line the stamp needed ~120 px of brand width, and the
+                  header's wrapping row only has 50 px of slack at 1440 before it moves the action tray
+                  onto a second row — which a sticky header then paints over the pane below it. */}
               <span
                 data-testid="brand-version"
-                className="font-mono text-[9.5px] leading-none sm:mt-0.5 sm:block"
+                className="font-mono text-[9.5px] leading-none sm:ml-1.5"
                 style={{ color: 'var(--faint)' }}
               >
                 {APP_VERSION}
-                <span data-testid="brand-build" className="hidden 2xl:inline">
-                  {' \u00b7 '}
-                  {APP_BUILD}
-                </span>
+              </span>
+              <span
+                data-testid="brand-build"
+                className="hidden font-mono text-[9.5px] leading-none sm:mt-0.5 sm:block"
+                style={{ color: 'var(--faint)' }}
+              >
+                {APP_BUILD}
               </span>
             </span>
           </span>

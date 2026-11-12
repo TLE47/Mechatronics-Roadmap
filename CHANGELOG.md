@@ -32,11 +32,14 @@ Debug layout, Trace and Breakpoints; they used to sit among the formatting choic
 header badge and the footer now print the commit the bundle was cut from and the day it was built
 (`ffa4069 · 2026-11-11`) beside `v3.3.0`. `vite.config.ts` reads git once and injects `__APP_BUILD__`
 next to `__APP_VERSION__`; a checkout without git says *local build* instead of inventing a commit.
-The stamp rides beside the version from `2xl` up. At 1440 its 138 px width wrapped the header's action
-tray onto a second row (+47 px) and a line of its own cost 11 px; either way the now-taller sticky
-header painted over the pane below it, which the workflow suite caught as an intercepted click. From
-`2xl` the tray has already wrapped, so the stamp is free there; below that the badge stays the release
-version alone and the footer always carries the build.
+The badge keeps its three lines and swaps what is on two of them: the release shares the word's line
+(`WORKBENCH v3.3.0`), and the build takes the line that frees. Side by side on one line the stamp
+needed ~120 px of brand width, and the header's wrapping row has only 50 px of slack at 1440 (measured
+by padding the brand until the row wrapped) before it moves the action tray onto a second row — which
+the sticky header then paints over the pane below it, the intercepted click the workflow suite caught.
+Stacked, the brand grows 42 px: the header measures 68 px at 1440 on the workbench and on `tab-arch`,
+and 68 px at 1280, matching the pre-stamp heights, so the stamp is legible at ordinary desktop widths
+and the footer still spells it out at every width.
 
 **Sound.** The speaker's detail door no longer opens a second popover: it opens **General settings**,
 where the whole sound surface already lived. One dialog, one mount of the store, and the speaker keeps
