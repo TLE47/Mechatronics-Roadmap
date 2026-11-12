@@ -13,6 +13,7 @@ import type { RobotReading, RobotScenario } from './model';
 import { formatNumber, type RobotProgress } from './robotMission';
 import {
   P1Scene,
+  P2Scene,
   P3Scene,
   P4Scene,
   P5Scene,
@@ -219,6 +220,7 @@ export function RobotStage({
           <svg viewBox="0 0 360 210" role="img" aria-label={sceneLabel}>
             <ArenaBackground />
             {lesson === 'P.1' && <P1Scene {...scene} />}
+            {lesson === 'P.2' && <P2Scene {...scene} />}
             {lesson === 'P.3' && <P3Scene {...scene} />}
             {lesson === 'P.4' && <P4Scene {...scene} />}
             {lesson === 'P.5' && <P5Scene {...scene} />}

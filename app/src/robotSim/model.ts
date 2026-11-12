@@ -40,6 +40,10 @@ export interface RobotReading {
   meanCommand?: number | null;
   positionM?: number | null;
   velocityMS?: number | null;
+  /** P.2's divider output at the sense pin, in volts. */
+  sensorVolts?: number | null;
+  /** P.2's kinetic energy of the moving cart, in joules. */
+  kineticEnergyJ?: number | null;
   step?: number | null;
 }
 
@@ -154,6 +158,14 @@ const PROBES: Record<RobotLessonId, { fields: readonly RobotField[]; expected: R
       meanCommand: 107.83,
     },
   },
+  'P.2': {
+    fields: [
+      ['positionM', 'new_pos_m'],
+      ['sensorVolts', 'sensor_pin'],
+      ['kineticEnergyJ', 'kinetic_energy_j'],
+    ],
+    expected: { positionM: 2.0625, sensorVolts: 4, kineticEnergyJ: 9 },
+  },
   'P.5': {
     fields: [
       ['positionM', 'pos_m'],
@@ -236,6 +248,8 @@ export function parseRobotReading(raw: unknown): RobotReading | null {
     meanCommand: readingNumber(source.meanCommand),
     positionM: readingNumber(source.positionM),
     velocityMS: readingNumber(source.velocityMS),
+    sensorVolts: readingNumber(source.sensorVolts),
+    kineticEnergyJ: readingNumber(source.kineticEnergyJ),
     step: readingNumber(source.step),
   };
 }

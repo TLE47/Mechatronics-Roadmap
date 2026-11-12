@@ -28,6 +28,13 @@ Debug layout, Trace and Breakpoints; they used to sit among the formatting choic
 `__APP_VERSION__` define that fills the footer. Review mode keeps its own **Navigate** button
 (`btn-open-review`); with **Small text on the action buttons** on, its word sits under the icon.
 
+**Robot.** P.2 has a robot view now: the arithmetic lesson drives a rail gantry instead of the
+rover, because "position after one tick" is a cart on a beam. Its arena draws the three values the
+lesson binds — the carriage between `start_pos_m` and the computed `new_pos_m`, the divider's wiper at
+`sensor_pin`, and a flywheel band filled by `kinetic_energy_j` — and the mission's chips compare each
+against the lesson's own expected reading. The gantry is a second machine, not the rover recoloured:
+two legs, a beam and a clamped carriage, drawn from the same reading as the tiles.
+
 **Build stamp.** The version alone could not say *which* build of it you were looking at, so the
 header badge and the footer now print the commit the bundle was cut from and the day it was built
 (`ffa4069 · 2026-11-11`) beside `v3.3.0`. `vite.config.ts` reads git once and injects `__APP_BUILD__`

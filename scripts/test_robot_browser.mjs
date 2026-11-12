@@ -30,6 +30,7 @@ const MID_RUN_CODE = 'import time\n\nrobot_mode = "ACTIVE"\ntime.sleep(4)\n';
 // are branch lines: a static "last assignment" lookup would name 12 and 20, which never run.
 const SOURCE_LINES = {
   'P.1': { mode: 8, encoderTicks: 6, batteryVolts: 7, eStop: 4 },
+  'P.2': { positionM: 12, sensorVolts: 13, kineticEnergyJ: 14 },
   'P.3': { clampedHigh: 8, clampedLow: 18, safeOutput: 23 },
   'P.4': { clampedCommands: 12, totalCommand: 13, meanCommand: 15 },
   'P.5': { step: 12, positionM: 11 },

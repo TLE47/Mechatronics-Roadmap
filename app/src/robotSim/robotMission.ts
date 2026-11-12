@@ -54,7 +54,7 @@ interface MissionSpec {
 }
 
 /**
- * The four missions, in the learner's language.
+ * The five missions, in the learner's language.
  *
  * The copy names the idea the lesson teaches (relative updates, clamping, a loop over a list, a
  * while loop) rather than repeating the expected output: a target's value is always read from
@@ -92,6 +92,36 @@ const MISSIONS: Record<RobotLessonId, MissionSpec> = {
         label: 'E-stop',
         kind: 'boolean',
         hint: 'Leave the switch alone: it stays clear.',
+      },
+    ],
+  },
+  'P.2': {
+    title: 'Drive one tick',
+    blurb: 'Turn the formulas into arithmetic the cart can act on: where it is, what the divider reads, and the energy it carries.',
+    targets: [
+      {
+        key: 'positionM',
+        label: 'Position',
+        kind: 'number',
+        unit: 'm',
+        tolerance: 1e-6,
+        hint: 'Start position plus speed times elapsed time.',
+      },
+      {
+        key: 'sensorVolts',
+        label: 'Sense pin',
+        kind: 'number',
+        unit: 'V',
+        tolerance: 0.005,
+        hint: 'Supply times the bottom resistor over the sum of both.',
+      },
+      {
+        key: 'kineticEnergyJ',
+        label: 'Energy',
+        kind: 'number',
+        unit: 'J',
+        tolerance: 0.01,
+        hint: 'Half the mass times the speed squared.',
       },
     ],
   },

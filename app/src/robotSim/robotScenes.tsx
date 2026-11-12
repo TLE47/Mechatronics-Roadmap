@@ -74,6 +74,16 @@ export function primaryProgress(
     if (Math.abs(target - start) < 1e-9) return 1;
     return clamp((ticks - start) / (target - start), 0, 1);
   }
+  if (lessonId === 'P.2') {
+    // The lesson's own start position is the rail's zero: a 62.5 mm tick fills the drawing instead
+    // of being a speck on a 0-3 m scale, and a run that never moved leaves the cart at the stop.
+    const target = targetNumber(progress, 'positionM', 2.0625);
+    const position = numberOrNull(reading?.positionM);
+    if (position === null) return 0;
+    const start = anchor ?? Math.min(position, target);
+    if (Math.abs(target - start) < 1e-9) return 1;
+    return clamp((position - start) / (target - start), 0, 1);
+  }
   if (lessonId === 'P.3') {
     const value = numberOrNull(reading?.clampedHigh) ?? numberOrNull(reading?.rawHigh);
     return value === null ? 0 : clamp(value / 255, 0, 1);
@@ -672,5 +682,121 @@ export function P5Scene({ reading, progress, highlight }: SceneProps) {
         {highlight === 'step' && <Spotlight cx={180} cy={190} r={26} />}
       </g>
     </g>
+  );
+}
+
+
+/**
+ * P.2's arena: a rail gantry, a voltage divider and an energy store.
+ *
+ * Three numbers, three shapes a learner can watch move: the carriage runs along the rail between the
+ * start position and the computed one, the divider's wiper sits at the sense-pin fraction, and the
+ * flywheel's band fills with the kinetic energy. The gantry is a different machine from the rover on
+ * purpose — a cart on a beam is what "position after one tick" looks like — and it is drawn from the
+ * same reading the tiles show, never from a second set of numbers.
+ */
+/** A fixed-decimal string for the arena's own labels; the tiles keep `formatNumber`'s wording. */
+function fixed(value: number, digits: number): string {
+  return value.toFixed(digits);
+}
+
+export function P2Scene({ reading, progress, highlight }: SceneProps) {
+  const start = 2.0;
+  const target = targetNumber(progress, 'positionM', 2.0625);
+  const position = numberOrNull(reading?.positionM);
+  const span = Math.max(Math.abs(target - start), 0.0625);
+  const travelled = position === null ? 0 : clamp((position - start) / span, 0, 1);
+  const volts = numberOrNull(reading?.sensorVolts);
+  const voltTarget = Math.max(targetNumber(progress, 'sensorVolts', 4), 1e-6);
+  const voltFill = volts === null ? 0 : clamp(volts / (voltTarget * 1.5), 0, 1);
+  const energy = numberOrNull(reading?.kineticEnergyJ);
+  const energyTarget = Math.max(targetNumber(progress, 'kineticEnergyJ', 9), 1e-6);
+  const energyFill = energy === null ? 0 : clamp(energy / (energyTarget * 1.5), 0, 1);
+  const carriageX = 26 + travelled * 196;
+  const atTarget = metOf(progress, 'positionM');
+  const ink = highlight === 'positionM' ? 'var(--accent)' : 'var(--line-soft)';
+
+  return (
+    <svg viewBox="0 0 320 168" role="img" aria-label="A rail gantry, a voltage divider and an energy store" className="h-full w-full">
+      <defs>
+        <linearGradient id="p2-beam" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#5b7185" />
+          <stop offset="1" stopColor="#22364b" />
+        </linearGradient>
+        <linearGradient id="p2-volt" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0" stopColor="#0ea5e9" stopOpacity="0.35" />
+          <stop offset="1" stopColor="#7dd3fc" stopOpacity="0.95" />
+        </linearGradient>
+      </defs>
+
+      {/* the rail the carriage rides, with its start stop and the target flag */}
+      <line x1="18" y1="96" x2="286" y2="96" stroke={ink} strokeWidth="3" strokeLinecap="round" />
+      <g stroke="var(--dim)" strokeWidth="1.4">
+        {Array.from({ length: 14 }, (_, index) => (
+          <line key={index} x1={20 + index * 20} y1="99" x2={20 + index * 20} y2="105" />
+        ))}
+      </g>
+      <line x1="26" y1="86" x2="26" y2="92" stroke="var(--faint)" strokeWidth="2" />
+      <g transform="translate(222 74)">
+        <line x1="0" y1="0" x2="0" y2="22" stroke={atTarget ? 'var(--emerald)' : 'var(--dim)'} strokeWidth="1.6" />
+        <path d="M 0 0 L 15 5 L 0 10 Z" fill={atTarget ? 'var(--emerald)' : 'var(--dim)'} opacity="0.85" />
+        {atTarget && <path d="M -6 72 L 6 72" stroke="var(--emerald)" strokeWidth="2" />}
+      </g>
+
+      {/* the gantry: two legs and a beam, with the carriage clamped to it */}
+      <g transform={`translate(${carriageX} 0)`} style={{ transition: 'transform 420ms ease-out' }} data-robot-gantry>
+        <rect x="-13" y="34" width="26" height="9" rx="2" fill="url(#p2-beam)" stroke="#0a1727" strokeWidth="1.2" />
+        <rect x="-11" y="41" width="4" height="53" fill="#2d4156" stroke="#0a1727" strokeWidth="1" />
+        <rect x="7" y="41" width="4" height="53" fill="#2d4156" stroke="#0a1727" strokeWidth="1" />
+        <rect x="-9" y="52" width="18" height="22" rx="3" fill="#3d546a" stroke="#0a1727" strokeWidth="1.2" />
+        <circle cx="0" cy="63" r="4.2" fill={atTarget ? '#34d399' : '#38bdf8'} opacity="0.9" />
+        <rect x="-19" y="92" width="38" height="6" rx="2" fill="#14263a" stroke="#07111f" strokeWidth="1" />
+      </g>
+
+      {/* the divider: two resistors and the tapped sense pin */}
+      <g transform="translate(196 18)">
+        <rect x="0" y="0" width="16" height="16" rx="2" fill="#3d546a" stroke="#0a1727" strokeWidth="1.2" />
+        <rect x="0" y="34" width="16" height="16" rx="2" fill="#243b52" stroke="#0a1727" strokeWidth="1.2" />
+        <line x1="8" y1="16" x2="8" y2="34" stroke="var(--dim)" strokeWidth="1.4" />
+        <line x1="8" y1="25" x2="26" y2="25" stroke="var(--dim)" strokeWidth="1.4" />
+        <rect x="26" y="8" width="8" height="34" rx="3" fill="var(--canvas)" stroke="var(--line-soft)" strokeWidth="1" />
+        <rect x="27" y={42 - 32 * voltFill} width="6" height={32 * voltFill} rx="2" fill="url(#p2-volt)" />
+        <circle cx="30" cy="25" r="2.6" fill={metOf(progress, 'sensorVolts') ? 'var(--emerald)' : 'var(--dim)'} />
+      </g>
+
+      {/* the energy store: a flywheel band that fills with the cart's kinetic energy */}
+      <g transform="translate(288 60)">
+        <circle cx="0" cy="0" r="17" fill="none" stroke="var(--line-soft)" strokeWidth="3.4" />
+        <circle
+          cx="0"
+          cy="0"
+          r="17"
+          fill="none"
+          stroke={metOf(progress, 'kineticEnergyJ') ? 'var(--emerald)' : 'var(--accent)'}
+          strokeWidth="3.4"
+          strokeLinecap="round"
+          strokeDasharray={`${(2 * Math.PI * 17 * energyFill).toFixed(1)} 999`}
+          transform="rotate(-90)"
+          style={{ transition: 'stroke-dasharray 420ms ease-out' }}
+        />
+        <text x="0" y="3.5" textAnchor="middle" fontSize="8" fill="var(--dim)" fontFamily="var(--font-mono, monospace)">
+          {energy === null ? '—' : fixed(energy, 1)}
+        </text>
+      </g>
+
+      {/* the three values, in the arena so a screenshot carries the numbers */}
+      <g fontSize="9" fill="var(--faint)" fontFamily="var(--font-mono, monospace)">
+        <text x="18" y="126">start {fixed(start, 4)} m</text>
+        <text x="18" y="140" fill={highlight === 'positionM' ? 'var(--accent)' : 'var(--faint)'}>
+          x {position === null ? '—' : fixed(position, 4)} m / {fixed(target, 4)} m
+        </text>
+        <text x="150" y="140" fill={highlight === 'sensorVolts' ? 'var(--accent)' : 'var(--faint)'}>
+          sense {volts === null ? '—' : fixed(volts, 2)} V
+        </text>
+        <text x="228" y="140" fill={highlight === 'kineticEnergyJ' ? 'var(--accent)' : 'var(--faint)'}>
+          E {energy === null ? '—' : fixed(energy, 2)} J
+        </text>
+      </g>
+    </svg>
   );
 }
