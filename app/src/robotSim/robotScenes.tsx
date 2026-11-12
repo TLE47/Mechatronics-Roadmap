@@ -112,15 +112,17 @@ export function primaryProgress(
 }
 
 /** The target a scene is moving toward, as a chip reads it. */
+/** The value each arena moves first: the one the HUD reads out as the destination. */
+const PREFERRED_TARGET: Record<string, keyof RobotReading> = {
+  'P.1': 'encoderTicks',
+  'P.3': 'clampedHigh',
+  'P.4': 'clampedCommands',
+  'P.6': 'distanceD1',
+  'P.7': 'voltageV',
+};
+
 export function primaryTargetLabel(lessonId: string, progress: RobotProgress): string {
-  const key: keyof RobotReading =
-    lessonId === 'P.1'
-      ? 'encoderTicks'
-      : lessonId === 'P.3'
-        ? 'clampedHigh'
-        : lessonId === 'P.4'
-          ? 'clampedCommands'
-          : 'positionM';
+  const key = PREFERRED_TARGET[lessonId] ?? 'positionM';
   const value = targetOf(progress, key);
   const row = progress.rows.find((entry) => entry.target.key === key);
   if (!row || value === null) return '—';
