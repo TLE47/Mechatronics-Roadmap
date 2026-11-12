@@ -987,17 +987,21 @@ export async function auditPaneBottomResize(browser, baseUrl, name) {
       assert.ok(box, `${name}: the bottom grip has no pointer box`);
       const x = box.x + box.width / 2;
       const y = box.y + box.height / 2;
-      const hit = await page.evaluate(
-        ({ px, py }) => {
-          const element = document.elementFromPoint(px, py);
-          return {
-            tag: element?.tagName ?? null,
-            testid: element?.getAttribute('data-testid') ?? null,
-            onGrip: Boolean(element?.closest('[data-testid="pane-divider-bottom"]')),
-          };
-        },
-        { px: x, py: y }
-      );
+      // A transient overlay (a toast, the split tip) can be on top of the grip for a frame or two on a
+      // loaded runner, and the pointer then lands on it instead. Wait, briefly, for the grip to be the
+      // topmost element at that point; the assertion below still fails if it never is.
+      const hit = await page
+        .waitForFunction(
+          ({ px, py }) => {
+            const element = document.elementFromPoint(px, py);
+            if (!element?.closest('[data-testid="pane-divider-bottom"]')) return null;
+            return { tag: element.tagName, testid: element.getAttribute('data-testid'), onGrip: true };
+          },
+          { px: x, py: y },
+          { timeout: 5000, polling: 100 }
+        )
+        .then((handle) => handle.jsonValue())
+        .catch(() => ({ tag: null, testid: null, onGrip: false }));
       assert.ok(
         hit.onGrip,
         `${name}: the pointer at (${Math.round(x)}, ${Math.round(y)}) hits ` +
