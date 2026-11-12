@@ -38,12 +38,15 @@ LINK_REPORT.md
 .sweep-state.json
 .browser-verdicts.json
 
-# The music beds' 7 MB CC0 sources: `scripts/build_music.mjs` cuts the committed loops from these,
-# and `--download` puts them here. The loops ship; the sources do not.
-.cache/music/
-
+# Machine-local tool caches: the Playwright browser downloads a render pass needs, and the music beds'
+# 7 MB CC0 sources (`scripts/build_music.mjs` cuts the committed loops from these, and `--download`
+# puts them here). The loops ship; none of this does.
+.cache/
 
 screenshots/
+# Throwaway screenshots from a render pass (`artifacts/robot-*.png`); they illustrate a review, they
+# are not source.
+artifacts/
 .fb-scratch/
 
 # Pilot exports: a participant's whole session. The kit keeps them here and they are never committed
