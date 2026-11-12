@@ -726,7 +726,7 @@ export function P2Scene({ reading, progress, highlight }: SceneProps) {
   const energyFill = energy === null ? 0 : clamp(energy / (energyTarget * 1.5), 0, 1);
   const carriageX = 26 + travelled * 196;
   const atTarget = metOf(progress, 'positionM');
-  const ink = highlight === 'positionM' ? 'var(--accent)' : 'var(--line-soft)';
+  const ink = highlight === 'positionM' ? '#38bdf8' : '#233a57';
 
   return (
     <svg viewBox="0 0 320 168" role="img" aria-label="A rail gantry, a voltage divider and an energy store" className="h-full w-full">
@@ -743,16 +743,16 @@ export function P2Scene({ reading, progress, highlight }: SceneProps) {
 
       {/* the rail the carriage rides, with its start stop and the target flag */}
       <line x1="18" y1="96" x2="286" y2="96" stroke={ink} strokeWidth="3" strokeLinecap="round" />
-      <g stroke="var(--dim)" strokeWidth="1.4">
+      <g stroke="#7f93ad" strokeWidth="1.4">
         {Array.from({ length: 14 }, (_, index) => (
           <line key={index} x1={20 + index * 20} y1="99" x2={20 + index * 20} y2="105" />
         ))}
       </g>
-      <line x1="26" y1="86" x2="26" y2="92" stroke="var(--faint)" strokeWidth="2" />
+      <line x1="26" y1="86" x2="26" y2="92" stroke="#9fb0c9" strokeWidth="2" />
       <g transform="translate(222 74)">
-        <line x1="0" y1="0" x2="0" y2="22" stroke={atTarget ? 'var(--emerald)' : 'var(--dim)'} strokeWidth="1.6" />
-        <path d="M 0 0 L 15 5 L 0 10 Z" fill={atTarget ? 'var(--emerald)' : 'var(--dim)'} opacity="0.85" />
-        {atTarget && <path d="M -6 72 L 6 72" stroke="var(--emerald)" strokeWidth="2" />}
+        <line x1="0" y1="0" x2="0" y2="22" stroke={atTarget ? '#34d399' : '#7f93ad'} strokeWidth="1.6" />
+        <path d="M 0 0 L 15 5 L 0 10 Z" fill={atTarget ? '#34d399' : '#7f93ad'} opacity="0.85" />
+        {atTarget && <path d="M -6 72 L 6 72" stroke="#34d399" strokeWidth="2" />}
       </g>
 
       {/* the gantry: two legs and a beam, with the carriage clamped to it */}
@@ -769,43 +769,43 @@ export function P2Scene({ reading, progress, highlight }: SceneProps) {
       <g transform="translate(196 18)">
         <rect x="0" y="0" width="16" height="16" rx="2" fill="#3d546a" stroke="#0a1727" strokeWidth="1.2" />
         <rect x="0" y="34" width="16" height="16" rx="2" fill="#243b52" stroke="#0a1727" strokeWidth="1.2" />
-        <line x1="8" y1="16" x2="8" y2="34" stroke="var(--dim)" strokeWidth="1.4" />
-        <line x1="8" y1="25" x2="26" y2="25" stroke="var(--dim)" strokeWidth="1.4" />
-        <rect x="26" y="8" width="8" height="34" rx="3" fill="var(--canvas)" stroke="var(--line-soft)" strokeWidth="1" />
+        <line x1="8" y1="16" x2="8" y2="34" stroke="#7f93ad" strokeWidth="1.4" />
+        <line x1="8" y1="25" x2="26" y2="25" stroke="#7f93ad" strokeWidth="1.4" />
+        <rect x="26" y="8" width="8" height="34" rx="3" fill="#071a2c" stroke="#233a57" strokeWidth="1" />
         <rect x="27" y={42 - 32 * voltFill} width="6" height={32 * voltFill} rx="2" fill="url(#p2-volt)" />
-        <circle cx="30" cy="25" r="2.6" fill={metOf(progress, 'sensorVolts') ? 'var(--emerald)' : 'var(--dim)'} />
+        <circle cx="30" cy="25" r="2.6" fill={metOf(progress, 'sensorVolts') ? '#34d399' : '#7f93ad'} />
       </g>
 
       {/* the energy store: a flywheel band that fills with the cart's kinetic energy */}
       <g transform="translate(288 60)">
-        <circle cx="0" cy="0" r="17" fill="none" stroke="var(--line-soft)" strokeWidth="3.4" />
+        <circle cx="0" cy="0" r="17" fill="none" stroke="#233a57" strokeWidth="3.4" />
         <circle
           cx="0"
           cy="0"
           r="17"
           fill="none"
-          stroke={metOf(progress, 'kineticEnergyJ') ? 'var(--emerald)' : 'var(--accent)'}
+          stroke={metOf(progress, 'kineticEnergyJ') ? '#34d399' : '#38bdf8'}
           strokeWidth="3.4"
           strokeLinecap="round"
           strokeDasharray={`${(2 * Math.PI * 17 * energyFill).toFixed(1)} 999`}
           transform="rotate(-90)"
           style={{ transition: 'stroke-dasharray 420ms ease-out' }}
         />
-        <text x="0" y="3.5" textAnchor="middle" fontSize="8" fill="var(--dim)" fontFamily="var(--font-mono, monospace)">
+        <text x="0" y="3.5" textAnchor="middle" fontSize="8" fill="#7f93ad" fontFamily="var(--font-mono, monospace)">
           {energy === null ? '—' : fixed(energy, 1)}
         </text>
       </g>
 
       {/* the three values, in the arena so a screenshot carries the numbers */}
-      <g fontSize="9" fill="var(--faint)" fontFamily="var(--font-mono, monospace)">
+      <g fontSize="9" fill="#9fb0c9" fontFamily="var(--font-mono, monospace)">
         <text x="18" y="126">start {fixed(start, 4)} m</text>
-        <text x="18" y="140" fill={highlight === 'positionM' ? 'var(--accent)' : 'var(--faint)'}>
+        <text x="18" y="140" fill={highlight === 'positionM' ? '#38bdf8' : '#9fb0c9'}>
           x {position === null ? '—' : fixed(position, 4)} m / {fixed(target, 4)} m
         </text>
-        <text x="150" y="140" fill={highlight === 'sensorVolts' ? 'var(--accent)' : 'var(--faint)'}>
+        <text x="150" y="140" fill={highlight === 'sensorVolts' ? '#38bdf8' : '#9fb0c9'}>
           sense {volts === null ? '—' : fixed(volts, 2)} V
         </text>
-        <text x="228" y="140" fill={highlight === 'kineticEnergyJ' ? 'var(--accent)' : 'var(--faint)'}>
+        <text x="228" y="140" fill={highlight === 'kineticEnergyJ' ? '#38bdf8' : '#9fb0c9'}>
           E {energy === null ? '—' : fixed(energy, 2)} J
         </text>
       </g>
@@ -846,47 +846,47 @@ export function P6Scene({ reading, progress, highlight }: SceneProps) {
           cy={pivotY}
           r={radius}
           fill="none"
-          stroke={index === 4 ? (metOf(progress, 'distanceD1') ? 'var(--emerald)' : 'var(--accent)') : 'var(--dim)'}
+          stroke={index === 4 ? (metOf(progress, 'distanceD1') ? '#34d399' : '#38bdf8') : '#7f93ad'}
           strokeWidth={index === 4 ? 2 : 1.1}
           opacity={index === 4 ? 0.9 : 0.45}
           strokeDasharray={index === 4 ? undefined : '3 5'}
         />
       ))}
-      <line x1={pivotX - 88} y1={pivotY} x2={pivotX + 88} y2={pivotY} stroke="var(--line-soft)" strokeWidth="1" strokeDasharray="2 6" />
-      <line x1={pivotX} y1={pivotY - 84} x2={pivotX} y2={pivotY + 22} stroke="var(--line-soft)" strokeWidth="1" strokeDasharray="2 6" />
+      <line x1={pivotX - 88} y1={pivotY} x2={pivotX + 88} y2={pivotY} stroke="#233a57" strokeWidth="1" strokeDasharray="2 6" />
+      <line x1={pivotX} y1={pivotY - 84} x2={pivotX} y2={pivotY + 22} stroke="#233a57" strokeWidth="1" strokeDasharray="2 6" />
       <line
         x1={pivotX}
         y1={pivotY}
         x2={far.x}
         y2={far.y}
-        stroke={highlight === 'distanceD1' ? 'var(--accent)' : 'var(--dim)'}
+        stroke={highlight === 'distanceD1' ? '#38bdf8' : '#7f93ad'}
         strokeWidth="1.6"
         style={{ transition: 'all 420ms ease-out' }}
       />
-      <circle cx={pivotX} cy={pivotY} r="4" fill="var(--panel)" stroke="var(--dim)" strokeWidth="1.4" />
+      <circle cx={pivotX} cy={pivotY} r="4" fill="#0b1a2e" stroke="#7f93ad" strokeWidth="1.4" />
       {/* the far beacon, at the lesson's own distance */}
       <g style={{ transition: 'transform 420ms ease-out' }} transform={`translate(${far.x} ${far.y})`}>
-        <circle r="7" fill="none" stroke={metOf(progress, 'distanceD1') ? 'var(--emerald)' : 'var(--accent)'} strokeWidth="1.8" />
-        <circle r="2.6" fill={metOf(progress, 'distanceD1') ? 'var(--emerald)' : 'var(--accent)'} />
+        <circle r="7" fill="none" stroke={metOf(progress, 'distanceD1') ? '#34d399' : '#38bdf8'} strokeWidth="1.8" />
+        <circle r="2.6" fill={metOf(progress, 'distanceD1') ? '#34d399' : '#38bdf8'} />
       </g>
       {/* the near beacon, measured from the same origin */}
       <g style={{ transition: 'transform 420ms ease-out' }} transform={`translate(${near.x} ${near.y})`}>
-        <circle r="5" fill="none" stroke={metOf(progress, 'distanceD2') ? 'var(--emerald)' : 'var(--dim)'} strokeWidth="1.6" />
-        <circle r="1.8" fill={metOf(progress, 'distanceD2') ? 'var(--emerald)' : 'var(--dim)'} />
+        <circle r="5" fill="none" stroke={metOf(progress, 'distanceD2') ? '#34d399' : '#7f93ad'} strokeWidth="1.6" />
+        <circle r="1.8" fill={metOf(progress, 'distanceD2') ? '#34d399' : '#7f93ad'} />
       </g>
 
       {/* the reading behind each beacon, at the end of its own ray */}
-      <g fontSize="7" fontFamily="var(--font-mono, monospace)">
-        <text x={reach(5).x - 10} y={reach(5).y - 8} fill={metOf(progress, 'distanceD1') ? 'var(--emerald)' : 'var(--faint)'}>
+      <g fontSize="8" fontFamily="var(--font-mono, monospace)">
+        <text x={reach(5).x - 10} y={reach(5).y - 8} fill={metOf(progress, 'distanceD1') ? '#34d399' : '#7f93ad'}>
           d1 {d1 === null ? '\u2014' : fixed(d1, 2)} m
         </text>
-        <text x={reach(1).x - 26} y={reach(1).y + 4} fill={metOf(progress, 'distanceD2') ? 'var(--emerald)' : 'var(--faint)'}>
+        <text x={reach(1).x - 26} y={reach(1).y + 4} fill={metOf(progress, 'distanceD2') ? '#34d399' : '#7f93ad'}>
           d2 {d2 === null ? '\u2014' : fixed(d2, 2)} m
         </text>
       </g>
 
       {/* the scale, in metres, so a screenshot says what the rings mean */}
-      <g fontSize="7" fill="var(--dim)" fontFamily="var(--font-mono, monospace)">
+      <g fontSize="7" fill="#7f93ad" fontFamily="var(--font-mono, monospace)">
         {[1, 2, 3, 4, 5].map((metre) => (
           <text key={metre} x={pivotX + metre * scale - 4} y={pivotY + 30}>
             {metre} m
@@ -920,48 +920,48 @@ export function P7Scene({ reading, progress, highlight }: SceneProps) {
 
   return (
     <svg viewBox="0 0 320 168" x={20} y={21} width={320} height={168} preserveAspectRatio="xMidYMid meet" role="img" aria-label="A bench meter reading converted amps, ohms, volts and microseconds">
-      <rect x="14" y="12" width="292" height="112" rx="8" fill="none" stroke="var(--dim)" strokeWidth="1.2" opacity="0.6" />
+      <rect x="14" y="12" width="292" height="112" rx="8" fill="none" stroke="#7f93ad" strokeWidth="1.2" opacity="0.9" />
       {/* the volt arc and its needle */}
       <g transform="translate(96 88)">
-        <path d="M -52 0 A 52 52 0 0 1 52 0" fill="none" stroke="var(--dim)" strokeWidth="3" strokeLinecap="round" opacity="0.55" />
+        <path d="M -52 0 A 52 52 0 0 1 52 0" fill="none" stroke="#7f93ad" strokeWidth="3" strokeLinecap="round" opacity="0.85" />
         <path
           d="M -52 0 A 52 52 0 0 1 52 0"
           fill="none"
-          stroke={metOf(progress, 'voltageV') ? 'var(--emerald)' : 'var(--accent)'}
+          stroke={metOf(progress, 'voltageV') ? '#34d399' : '#38bdf8'}
           strokeWidth="3"
           strokeLinecap="round"
           strokeDasharray={`${(Math.PI * 52 * arcFill).toFixed(1)} 999`}
           style={{ transition: 'stroke-dasharray 420ms ease-out' }}
         />
-        <line x1="0" y1="0" x2="0" y2="-44" stroke="var(--dim)" strokeWidth="1.6" transform={`rotate(${needle})`} style={{ transition: 'transform 420ms ease-out' }} />
-        <circle r="4" fill="var(--canvas)" stroke="var(--dim)" strokeWidth="1.4" />
-        <text y="16" textAnchor="middle" fontSize="10" fontFamily="var(--font-mono, monospace)" fill={metOf(progress, 'voltageV') ? 'var(--emerald)' : 'var(--faint)'}>
+        <line x1="0" y1="0" x2="0" y2="-44" stroke="#7f93ad" strokeWidth="1.6" transform={`rotate(${needle})`} style={{ transition: 'transform 420ms ease-out' }} />
+        <circle r="4" fill="#071a2c" stroke="#7f93ad" strokeWidth="1.4" />
+        <text y="16" textAnchor="middle" fontSize="12" fontWeight="700" fontFamily="var(--font-mono, monospace)" fill={metOf(progress, 'voltageV') ? '#34d399' : '#dbeafe'}>
           {volts === null ? '\u2014' : fixed(volts, 2)} V
         </text>
-        <text y="-60" textAnchor="middle" fontSize="7" fill="var(--dim)" fontFamily="var(--font-mono, monospace)">
+        <text y="-60" textAnchor="middle" fontSize="7" fill="#7f93ad" fontFamily="var(--font-mono, monospace)">
           V = I × R
         </text>
       </g>
 
       {/* the two converted windows */}
       <g fontSize="9" fontFamily="var(--font-mono, monospace)">
-        <rect x="178" y="34" width="112" height="30" rx="5" fill="none" stroke="var(--dim)" strokeWidth="1" opacity="0.7" />
-        <text x="186" y="47" fill="var(--dim)" fontSize="7.5">CURRENT</text>
-        <text x="186" y="59" fill={metOf(progress, 'currentA') ? 'var(--emerald)' : 'var(--text)'} fontSize="11">
+        <rect x="178" y="34" width="112" height="30" rx="5" fill="none" stroke="#7f93ad" strokeWidth="1" opacity="0.9" />
+        <text x="186" y="47" fill="#7f93ad" fontSize="7.5">CURRENT</text>
+        <text x="186" y="59" fill={metOf(progress, 'currentA') ? '#34d399' : '#dbeafe'} fontSize="12" fontWeight="700">
           {amps === null ? '\u2014' : fixed(amps, 4)} A
         </text>
-        <rect x="178" y="70" width="112" height="30" rx="5" fill="none" stroke="var(--dim)" strokeWidth="1" opacity="0.7" />
-        <text x="186" y="83" fill="var(--dim)" fontSize="7.5">RESISTANCE</text>
-        <text x="186" y="95" fill={metOf(progress, 'resistanceOhm') ? 'var(--emerald)' : 'var(--text)'} fontSize="11">
+        <rect x="178" y="70" width="112" height="30" rx="5" fill="none" stroke="#7f93ad" strokeWidth="1" opacity="0.9" />
+        <text x="186" y="83" fill="#7f93ad" fontSize="7.5">RESISTANCE</text>
+        <text x="186" y="95" fill={metOf(progress, 'resistanceOhm') ? '#34d399' : '#dbeafe'} fontSize="12" fontWeight="700">
           {ohms === null ? '\u2014' : fixed(ohms, 1)} {String.fromCharCode(937)}
         </text>
       </g>
 
       {/* the microsecond strip: one pulse, as wide as its converted period */}
       <g transform="translate(14 132)">
-        <line x1="0" y1="12" x2="292" y2="12" stroke="var(--line-soft)" strokeWidth="1" />
-        <rect x="0" y="2" width={pulseWidth} height="10" rx="1.5" fill={metOf(progress, 'timeS') ? 'var(--emerald)' : 'var(--accent)'} style={{ transition: 'width 420ms ease-out' }} />
-        <text x="0" y="30" fontSize="7" fill="var(--dim)" fontFamily="var(--font-mono, monospace)">
+        <line x1="0" y1="12" x2="292" y2="12" stroke="#233a57" strokeWidth="1" />
+        <rect x="0" y="2" width={pulseWidth} height="10" rx="1.5" fill={metOf(progress, 'timeS') ? '#34d399' : '#38bdf8'} style={{ transition: 'width 420ms ease-out' }} />
+        <text x="0" y="30" fontSize="7" fill="#7f93ad" fontFamily="var(--font-mono, monospace)">
           500 µs = {seconds === null ? '\u2014' : fixed(seconds, 6)} s
         </text>
       </g>

@@ -596,6 +596,9 @@
   display: block;
   width: 100%;
   height: auto;
+  /* The arena paints its own night-sky background in every palette, so text inside it that inherits
+     its fill has to be light too — the theme's ink is near-black in the light and paper palettes. */
+  color: #dbeafe;
 }
 .robot-scan {
   position: absolute;
