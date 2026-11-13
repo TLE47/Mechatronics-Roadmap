@@ -467,6 +467,22 @@ async function main() {
     console.error('[FAIL] no Chromium to drive: set PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH or install one');
     process.exit(2);
   }
+  // The baseline was measured in the headless shell, and only that build reproduces it: the full
+  // Chrome for Testing binary lays the same markup out three pixels wider on the rail and sixty-seven
+  // wider in the document (see `docs/VERIFICATION.md`). A run on the wrong renderer is not a
+  // regression and must not be reported as one, so it stops here instead of printing seventy
+  // failures that invite someone to re-record a baseline that is still correct.
+  const renderer = path.basename(executablePath);
+  if (!renderer.includes('chrome-headless-shell') && process.env.SNAPSHOT_ALLOW_OTHER_BROWSER !== '1') {
+    console.error(
+      `[FAIL] ${renderer} is not the renderer this baseline was measured with.\n` +
+        '       The surfaces are recorded in chrome-headless-shell; full Chrome lays them out about\n' +
+        '       15 px wider on the rail and 67 px wider in the document, under every hinting value.\n' +
+        '       Install the headless shell (npx playwright install chromium-headless-shell) or set\n' +
+        '       SNAPSHOT_ALLOW_OTHER_BROWSER=1 to measure anyway.'
+    );
+    process.exit(2);
+  }
   const { server, port } = await startStaticServer();
   const baseUrl = `http://127.0.0.1:${port}/Mechatronics-Roadmap/`;
   if (PNG) fs.mkdirSync(PNG_DIR, { recursive: true });

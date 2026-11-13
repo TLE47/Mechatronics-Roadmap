@@ -1,16 +1,19 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Command, useCommandState } from 'cmdk';
+import { toast } from 'sonner';
 import { CheckCircle2, CornerDownLeft, Search } from 'lucide-react';
 import {
   PALETTE_MODE_TEXT,
   groupPalette,
+  lessonIdOf,
   paletteKindLabel,
   rankPalette,
   type PaletteItem,
   type PaletteMatch,
   type PaletteMode,
 } from '../palette';
+import { paletteBoost, readPaletteUses, recordPaletteUse } from '../paletteFrecency';
 
 /**
  * The `↵` on the row cmdk has selected.
@@ -94,15 +97,19 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
    * content has unmounted, before the focus guard releases) is the library's, not a `setTimeout`.
    */
   const openerRef = useRef<HTMLElement | null>(null);
+  /** The dialog panel, for the one thing cmdk will not lend us: its input's DOM node. */
+  const panelRef = useRef<HTMLDivElement | null>(null);
 
   // `search` answers with rows already in reading order and already capped, so it is not ranked
   // again: the index knows which lesson and which line a hit is, and `rankPalette` only knows words.
+  /** What this browser has opened before, for the empty query only (`app/src/paletteFrecency.ts`). */
+  const boost = useMemo(() => paletteBoost(readPaletteUses()), [isOpen]);
   const matches = useMemo<PaletteMatch[]>(
     () =>
       mode === 'search' && query.trim() !== ''
         ? (search?.(query) ?? []).map((item) => ({ item, score: 0 }))
-        : rankPalette(items, query),
-    [mode, search, items, query]
+        : rankPalette(items, query, 200, boost),
+    [mode, search, items, query, boost]
   );
   /**
    * The matches, grouped, with the group holding the best match drawn first.
@@ -137,16 +144,45 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   // its head, and the name is the id cmdk itself writes as soon as an arrow is pressed —
   // `palette-option-<row id>` — so the same name is set here, after every commit, which is what
   // survives cmdk dropping it.
-  useEffect(() => {
-    const input = inputRef.current;
-    if (!input) return;
-    const id = activeRowId ? `palette-option-${activeRowId}` : '';
-    if (id) {
+  // A layout effect, not a passive one: the name has to be on the field before the first frame the
+  // learner can read, or a reader opening `⌘K` announces a combobox with nothing selected.
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    // The field is found through the panel, not through `inputRef`: cmdk keeps its own selected id
+    // in its store and stamps `aria-activedescendant` from *that* after spreading our props, so the
+    // attribute cannot be set as a prop — and the panel arrives in a later commit than the open, so
+    // the node is watched for rather than assumed present.
+    let input: HTMLInputElement | null = null;
+    let patch: MutationObserver | undefined;
+    let wait: MutationObserver | undefined;
+    const apply = () => {
+      if (!input || !activeRowId) return;
+      const id = `palette-option-${activeRowId}`;
       if (input.getAttribute('aria-activedescendant') !== id) input.setAttribute('aria-activedescendant', id);
-    } else if (input.hasAttribute('aria-activedescendant')) {
-      input.removeAttribute('aria-activedescendant');
+    };
+    const attach = () => {
+      input =
+        panelRef.current?.querySelector<HTMLInputElement>('[data-testid="input-palette-search"]') ??
+        inputRef.current;
+      if (!input) return false;
+      apply();
+      // cmdk drops the attribute on the renders where it has no value, and those renders can land
+      // after this effect; watching the one attribute puts the name back the moment it is taken away.
+      patch = new MutationObserver(apply);
+      patch.observe(input, { attributes: true, attributeFilter: ['aria-activedescendant'] });
+      return true;
+    };
+    if (!attach()) {
+      wait = new MutationObserver(() => {
+        if (attach()) wait?.disconnect();
+      });
+      wait.observe(document.body, { childList: true, subtree: true });
     }
-  });
+    return () => {
+      wait?.disconnect();
+      patch?.disconnect();
+    };
+  }, [activeRowId, isOpen, mode]);
 
   // A fresh open — or a different door while it is open (`⌘P` after `⌘K`) — is a fresh question:
   // an old query would hide the thing being looked for, and `quadrature` typed for a text search is
@@ -166,7 +202,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   if (!isOpen) return null;
 
+  /** Where a row points, for the two modifier actions below. */
+  const urlOf = (item: PaletteItem): string | null => {
+    if (item.href) return item.href;
+    const lesson = lessonIdOf(item);
+    if (!lesson) return null;
+    const base = typeof window === 'undefined' ? '' : `${window.location.origin}${window.location.pathname}`;
+    return `${base}?lesson=${encodeURIComponent(lesson)}`;
+  };
+
   const choose = (item: PaletteItem) => {
+    recordPaletteUse(item.id);
     onSelect(item);
     onClose();
   };
@@ -176,6 +222,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/65 backdrop-blur-[1px]" />
         <Dialog.Content
+          ref={panelRef}
           data-testid="command-palette"
           data-palette-mode={mode}
           aria-describedby={undefined}
@@ -217,6 +264,26 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                 aria-label={text.label}
                 placeholder={text.placeholder}
                 className="w-full bg-transparent text-[14px] text-ink outline-none placeholder:text-faint"
+                // Two secondary actions on the active row, on the modifiers a browser already uses
+                // for exactly these: ⌘/Ctrl+↵ opens it in a new tab, ⌥+↵ copies its link. Neither
+                // navigates the workbench away, and both name what happened in a card.
+                onKeyDown={(event) => {
+                  if (event.key !== 'Enter' || !(event.metaKey || event.ctrlKey || event.altKey)) return;
+                  const item = matches.find((match) => match.item.id === activeRowId)?.item;
+                  const url = item ? urlOf(item) : null;
+                  if (!item || !url) return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  if (event.altKey) {
+                    void navigator.clipboard?.writeText(url).then(
+                      () => toast('Link copied', { duration: 2200 }),
+                      () => toast('This browser blocked the clipboard', { duration: 4000 })
+                    );
+                  } else {
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                  }
+                  onClose();
+                }}
               />
               <kbd className="hidden shrink-0 rounded border border-line px-1.5 py-0.5 text-[10px] font-semibold text-faint sm:inline">
                 esc
@@ -304,7 +371,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             </Command.List>
 
             <div className="flex items-center justify-between border-t border-line px-3.5 py-2 text-[11px] text-faint">
-              <span>↑ ↓ to move · ↵ to open · esc to close</span>
+              <span className="truncate">
+                ↑↓ move · ↵ open · ⌘↵ new tab · ⌥↵ copy link · esc close
+              </span>
               <span className="flex items-center gap-2">
                 {note && (
                   <span data-testid="palette-note" className="text-faint">
@@ -324,3 +393,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     </Dialog.Root>
   );
 };
+
+// `React.lazy` needs a default export; the named one stays for every existing import and test.
+export default CommandPalette;

@@ -3,8 +3,12 @@ import { Header } from './components/Header';
 import { StudyTips } from './components/StudyTips';
 import { GuidedTourBar, TourStepInfo } from './components/GuidedTourBar';
 import { CheatSheetModal } from './components/CheatSheetModal';
-import { CommandPalette } from './components/CommandPalette';
-import { Toaster, toast } from 'sonner';
+// The palette is opened on demand — `⌘K`, the header's Search button — so it is its own chunk,
+// fetched on idle after the first paint rather than paid for by every learner who never presses it
+// (`docs/VERIFICATION.md`, "UI primitives").
+const CommandPalette = React.lazy(() => import('./components/CommandPalette'));
+import { Toaster } from 'sonner';
+import { dismissCard, showCard } from './toastPolicy';
 import { ShortcutsModal } from './components/ShortcutsModal';
 import { lessonSearchItems } from './lessonSearch';
 import { termSearchItems } from './termSearch';
@@ -530,24 +534,39 @@ export const App: React.FC = () => {
   // `unstyled` keeps the card's own skin, which is drawn from the workbench tokens below.
   useEffect(() => {
     if (gameAwards.length === 0) return;
-    const id = toast.custom(
-      (toastId) => (
+    const id = showCard('award', (toastId) => (
         <React.Suspense fallback={null}>
           <AwardToast
             awards={gameAwards}
             onClose={() => {
-              toast.dismiss(toastId);
+              dismissCard(toastId);
               setGameAwards([]);
             }}
           />
         </React.Suspense>
-      ),
-      { duration: 6000, position: 'bottom-right', unstyled: true }
-    );
+      ));
     return () => {
-      toast.dismiss(id);
+      dismissCard(id);
     };
   }, [gameAwards]);
+
+  // The palette's chunk is fetched once the first screen is idle: `⌘K` still opens it on a cold
+  // cache (the dialog's Suspense fallback is nothing), and a learner who never asks pays for none
+  // of it.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const load = () => {
+      void import('./components/CommandPalette');
+    };
+    const idle =
+      typeof window.requestIdleCallback === 'function'
+        ? window.requestIdleCallback(load, { timeout: 2500 })
+        : window.setTimeout(load, 1200);
+    return () => {
+      if (typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(idle);
+      window.clearTimeout(idle);
+    };
+  }, []);
   const [storySeen, setStorySeen] = useState<boolean>(() => readStorySeen());
   const [verifiedLessons, setVerifiedLessons] = useState<Record<string, boolean>>(() => {
     try {
@@ -1297,15 +1316,17 @@ export const App: React.FC = () => {
   // One dialog for both whole-page and workbench layouts: Home has the same header search, and the
   // palette's own results move to the workbench when the target lives there.
   const paletteOverlay = (
-    <CommandPalette
-      isOpen={isPaletteOpen}
-      mode={paletteMode}
-      items={paletteMode === 'lessons' || paletteMode === 'search' ? lessonPaletteItems : paletteItems}
-      search={paletteSearch}
-      note={proseNote}
-      onClose={() => setIsPaletteOpen(false)}
-      onSelect={handlePaletteSelect}
-    />
+    <React.Suspense fallback={null}>
+      <CommandPalette
+        isOpen={isPaletteOpen}
+        mode={paletteMode}
+        items={paletteMode === 'lessons' || paletteMode === 'search' ? lessonPaletteItems : paletteItems}
+        search={paletteSearch}
+        note={proseNote}
+        onClose={() => setIsPaletteOpen(false)}
+        onSelect={handlePaletteSelect}
+      />
+    </React.Suspense>
   );
 
   // ⌘K / Ctrl+K from anywhere, including inside the editor: a palette that only opens when no

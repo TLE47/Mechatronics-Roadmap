@@ -100,6 +100,8 @@ Raising a ceiling is allowed, and it has to leave a trace: a fresh `--record` ro
 number is acceptable, and — if the rise was not intended — the change that caused it. Lowering one is
 always allowed, and is how the ceilings tighten over a few releases.
 
+The trace is now enforced rather than asked for: `check:weight` refuses a budget file with no `_why_budget_<date>_<slug>` key, and prints a headroom line when any metric is within 3% of its ceiling, so the note is written while the reason is still known instead of after the failure.
+
 ## Why this is not a CI step
 
 CI's runner is a shared virtual machine, and the six moments would be a function of its contention

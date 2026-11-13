@@ -167,6 +167,8 @@ npm run test:theme:e2e                  # the three controls + contrast on all 1
 npm run check:weight                    # the gzipped shell against docs/weight-budget.json in both build shapes: a local-only dist/ also builds the signed-in one into dist-signed-in/, grades it, and removes it
 npm run check:lighthouse                # Lighthouse on the built bundle: best-practices, SEO and accessibility against docs/lighthouse-allowlist.json (performance not run)
 npm run check:snapshot                  # the painted surface of all 72 surfaces (sixteen tabs, Home and the Workflow canvas, four palettes) against docs/surface-snapshot.json: geometry (2 px), control counts, resolved styles
+npm run test:primitives                 # the four installed primitives wear the workbench, not their library: the skip link is the first stop, ⌘K puts the caret in the field and names the head row, Tab never leaves the palette, the key sheet traps focus, and every colour a palette row paints is declared in index.css
+npm run check:animations                # at most one looping animation per surface, measured with document.getAnimations() against the ratchet in docs/animation-budget.json
 npm run test:settle                     # the gate that sweep waits on, driven against pages whose count arrives late: a copy of the previous silence-only gate is the failing control, and a count that lands with no loading marker plus one that never finishes pin the other two edges
 npm run check:labels                    # the first screen's type, rendered at 1280x800: eight controls at rest, twelve behind More, primary 13 px, controls 12 px, metadata 11 px, lesson text 17-18 px — and Home's controls and metadata at the same floors
 npm run test:perf                       # the visit, timed: six moments on the built bundle, on a laptop and on a throttled phone, each against docs/perf-budget.json (add --record to write docs/PERF.md)
@@ -728,6 +730,37 @@ the local-only build it builds the signed-in one beside it (placeholders, not cr
 it against `signed_in`'s ceilings and deletes it, so a breach that only exists with the account
 library present fails locally instead of on the runner (Run 226). CI's `dist/` is already signed-in,
 so nothing extra is built there.
+
+## UI primitives: the contract and the animation ratchet
+
+Two of the rules behind the 2026-11-13 library release could not be seen by any gate that already
+existed, so they have their own. Neither is wired into `scripts/check_all.py`: that list is an exact
+copy of CI's verify step (`tests/test_check_all.py` enforces the parity), and adding a browser gate
+there means adding a CI step, which is a separate decision. They run by hand, before a release that
+touches the palette, the sheets, the notices or the counters.
+
+`npm run test:primitives` (`scripts/test_primitive_contract.mjs`) drives the built bundle on the
+headless shell and asserts six things a dependency bump could quietly break:
+
+- the skip link is the first tab stop from a fresh document;
+- `⌘K` puts the caret in the palette field and `aria-activedescendant` names the highlighted row —
+  cmdk stamps that attribute from its own store, after spreading our props, and drops it on the
+  renders where it has no value, so the palette sets it from a layout effect and re-applies it with a
+  `MutationObserver` on the one attribute;
+- Tab, eight times, never leaves the open palette, and `?` opens the key sheet with focus inside it;
+- every colour a palette row paints is a colour declared somewhere in the app's CSS. The check reads
+  the colour literals out of `document.styleSheets` rather than resolving custom properties in a
+  probe, because the built bundle scopes tokens in ways a probe does not reproduce; what it catches is
+  a library default (a grey border, a white card) that survived an upgrade.
+
+`npm run check:animations` (`scripts/check_animation_budget.mjs`) counts, for each of the sixteen
+tabs, the animations in `document.getAnimations()` whose timing is `iterations: Infinity`, after the
+tab has painted. `docs/animation-budget.json` records today's numbers and the gate fails a surface
+that gains one — the rule is one standout animated element per page, and a second one is invisible in
+a diff. It proves the ruler first: it adds a known infinite animation and refuses to run if the
+counter cannot see it. Today every tab measures zero (the arm and the hero are JS-driven canvases,
+not CSS loops, and they are the page's one standout), so the file is a floor, not an allowance.
+Re-record with `node scripts/check_animation_budget.mjs --record` and say which element was added.
 
 ## The surface snapshot runs on the headless shell
 

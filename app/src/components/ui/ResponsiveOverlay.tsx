@@ -1,4 +1,4 @@
-import React, { useEffect, useId } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Drawer } from 'vaul';
 import { useMediaQuery } from '../../useMediaQuery';
@@ -62,8 +62,23 @@ export const ResponsiveOverlay: React.FC<ResponsiveOverlayProps> = ({
   initialFocusRef,
   showHandle = true,
 }) => {
-  const phone = useMediaQuery(breakpoint);
+  const detected = useMediaQuery(breakpoint);
   const titleId = useId();
+
+  /**
+   * Which branch this open started on.
+   *
+   * The breakpoint is a viewport fact and it can change while the sheet is up — a phone rotated, a
+   * window dragged across 640 px. Swapping libraries mid-open would unmount the panel's subtree,
+   * and its scroll position and focus with it: the reader would be looking at the top of a card
+   * they had scrolled, from a control they had not touched. So the branch is chosen when the sheet
+   * opens and only re-read while it is closed.
+   */
+  const [placement, setPlacement] = useState(detected);
+  useEffect(() => {
+    if (!open) setPlacement(detected);
+  }, [detected, open]);
+  const phone = open ? placement : detected;
 
   // The phone's fixed bottom bar reads this attribute in CSS and steps aside, exactly as the
   // shell's other sheet does: a drawer over a Run button is one the learner cannot press.

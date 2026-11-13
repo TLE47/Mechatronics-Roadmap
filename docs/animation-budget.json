@@ -1,0 +1,21 @@
+{
+  "_why": "Looping animations per surface, for `npm run check:animations` (`scripts/check_animation_budget.mjs`). The brief that rebuilt these surfaces allows one standout animated element per page; this file is the ratchet that keeps a surface from gaining a second. A number may only go up with a deliberate re-record and a sentence saying which element and why, and the printed list of surfaces above one is the debt to pay down.",
+  "counts": {
+    "tab-arch": 0,
+    "tab-board": 0,
+    "tab-bode": 0,
+    "tab-cadpcb": 0,
+    "tab-eskf": 0,
+    "tab-foc": 0,
+    "tab-links": 0,
+    "tab-micro": 0,
+    "tab-models": 0,
+    "tab-pend": 0,
+    "tab-placement": 0,
+    "tab-project": 0,
+    "tab-pyodide": 0,
+    "tab-req": 0,
+    "tab-studio": 0,
+    "tab-sysid": 0
+  }
+}

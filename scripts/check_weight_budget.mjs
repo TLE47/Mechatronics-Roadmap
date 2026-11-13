@@ -294,6 +294,14 @@ function printBuild(heading, build) {
     );
   }
   log('');
+  const tightest = [...build.rows].sort((a, b) => b.measured / b.budget - a.measured / a.budget)[0];
+  if (tightest && tightest.measured / tightest.budget > 0.97) {
+    log(
+      `  headroom: ${tightest.metric} is at ${formatUsed(tightest.measured, tightest.budget)} of its ceiling — ` +
+        'a raise needs a `_why_budget_<date>_<slug>` note in docs/weight-budget.json.'
+    );
+    log('');
+  }
 }
 
 function main() {
@@ -319,6 +327,15 @@ function main() {
   }
 
   const budgetFile = JSON.parse(fs.readFileSync(BUDGET_FILE, 'utf8'));
+  // A ceiling is a decision, so the file has to carry the decision: `_why_budget_<date>_<slug>` says
+  // what a raise bought and when. Without one, the next person can only see a number that drifted.
+  if (!Object.keys(budgetFile).some((key) => key.startsWith('_why_budget_'))) {
+    console.error(
+      '[FAIL] docs/weight-budget.json has no `_why_budget_<date>_<slug>` note — a ceiling may not be\n' +
+        '       changed without one sentence saying what it bought.'
+    );
+    process.exit(2);
+  }
   const primary = gradeBuild(measureBuild(DIST), budgetFile);
   const shapes = [primary];
 

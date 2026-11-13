@@ -1,5 +1,5 @@
 import React from 'react';
-import { toast } from 'sonner';
+import { showCard } from '../../../toastPolicy';
 import { Check } from 'lucide-react';
 
 /**
@@ -20,8 +20,7 @@ export interface PassNoticeInput {
 }
 
 export function showPassNotice({ lessonId, nextId, onNext }: PassNoticeInput): void {
-  toast.custom(
-    () => (
+  showCard('pass', () => (
       <div
         data-testid="pass-toast"
         className="pointer-events-auto flex items-center gap-3 rounded-[var(--r-full)] border py-2 pl-2.5 pr-2 shadow-[var(--shadow-lg)]"
@@ -51,7 +50,5 @@ export function showPassNotice({ lessonId, nextId, onNext }: PassNoticeInput): v
           </button>
         )}
       </div>
-    ),
-    { duration: 6000, position: 'bottom-center', unstyled: true }
-  );
+    ));
 }
