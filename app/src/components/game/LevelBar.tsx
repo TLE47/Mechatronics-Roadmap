@@ -1,5 +1,7 @@
 import React from 'react';
+import NumberFlow from '@number-flow/react';
 import { Lock, Unlock } from 'lucide-react';
+import { useMotion } from '../../useMotion';
 import {
   levelAt,
   levelProgress,
@@ -49,6 +51,9 @@ function PerkRow({ perk, dim = false }: { perk: Perk; dim?: boolean }) {
  */
 export const LevelBar: React.FC<LevelBarProps> = ({ verifiedMissions, checkpoints, missionName }) => {
   const [open, setOpen] = React.useState(false);
+  // The header's switch is the app's, not a copy: an animated counter and a moving figure answer to
+  // the same preference, so "motion off" is one setting rather than two.
+  const motion = useMotion();
   const progress = levelProgress(verifiedMissions, checkpoints);
   const current: Level = levelAt(progress.level);
   const next: Level | null = nextLevel(progress.level);
@@ -70,7 +75,17 @@ export const LevelBar: React.FC<LevelBarProps> = ({ verifiedMissions, checkpoint
           className="rounded-[var(--r-sm)] px-1.5 py-0.5 text-[12px] font-bold"
           style={{ color: 'var(--accent)', backgroundColor: 'var(--accent-soft)' }}
         >
-          LV {progress.level}
+          LV{' '}
+          <NumberFlow
+            value={progress.level}
+            animated={motion.on}
+            aria-hidden="true"
+            className="tabular-nums"
+          />
+          {/* The digits live in Number Flow's own shadow root, so the badge also carries the plain
+              value: the row's text is still "LV 1" to a test, a copy-paste and a reader that
+              ignores the shadow tree. */}
+          <span className="sr-only">{progress.level}</span>
         </span>
         <span className="text-[13.5px] font-bold" style={{ color: 'var(--text)' }}>
           {current.handle}
@@ -108,7 +123,13 @@ export const LevelBar: React.FC<LevelBarProps> = ({ verifiedMissions, checkpoint
             : 'Every mission verified. No proof, no power — you have both.'}
         </span>
         <span className="text-[11px]" style={{ color: 'var(--dim)' }}>
-          {checkpoints.verifiedCount} of {checkpoints.total} checks
+          <NumberFlow
+            value={checkpoints.verifiedCount}
+            animated={motion.on}
+            aria-hidden="true"
+            className="tabular-nums"
+          />
+          <span className="sr-only">{checkpoints.verifiedCount}</span> of {checkpoints.total} checks
         </span>
         <button
           type="button"
