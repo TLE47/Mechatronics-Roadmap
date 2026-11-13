@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Printer, Compass } from 'lucide-react';
 import { MathView } from './MathView';
+import { ResponsiveOverlay } from './ui/ResponsiveOverlay';
 
 interface CheatSheetModalProps {
   isOpen: boolean;
@@ -21,8 +22,16 @@ export const CheatSheetModal: React.FC<CheatSheetModalProps> = ({ isOpen, onClos
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm flex justify-center p-3 sm:p-6 max-sm:items-end max-sm:p-0 print:p-0 print:bg-white print:static">
-      <div className="bg-canvas border border-line rounded-xl w-full max-w-7xl max-h-[92vh] overflow-y-auto p-4 sm:p-6 text-ink shadow-2xl relative max-sm:max-h-[92dvh] max-sm:rounded-b-none max-sm:rounded-t-2xl max-sm:border-x-0 max-sm:border-b-0 max-sm:pb-[calc(1rem+env(safe-area-inset-bottom))] print:border-none print:shadow-none print:max-h-none print:p-2 print:text-black print:bg-white">
+    <ResponsiveOverlay
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose();
+      }}
+      label="One-page mechatronics and robotics reference card"
+      testId="cheat-sheet"
+      size="xl"
+      bodyClassName="p-4 sm:p-6"
+    >
         {/* Header */}
         <div className="flex justify-between items-start border-b-2 border-accent pb-3 mb-4 flex-wrap gap-2 print:border-b-black">
           <div>
@@ -227,7 +236,6 @@ export const CheatSheetModal: React.FC<CheatSheetModalProps> = ({ isOpen, onClos
             </div>
           </div>
         </div>
-      </div>
-    </div>
+    </ResponsiveOverlay>
   );
 };
