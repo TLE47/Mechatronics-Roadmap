@@ -37,7 +37,7 @@ upload the flags already used.
 requirements list — only knew `**bold**` and `` `code` ``, so 28 of the 95 lesson goals printed their
 LaTeX source in the middle of the sentence. It now splits with `parseInline`, the reader's own parser,
 and draws each `$…$` run through `MathView` (KaTeX). Maths nested in a bold phrase
-(`**Proportional ($K_p$)**`) is drawn because bold recurses, and money stays money: `$5 and $6` is
+(`**Proportional ($K_p$)**`) is drawn because bold recurses, and money stays money: `\$5 and \$6` is
 still two dollar amounts, not an unclosed formula.
 
 **Lesson P.8 explains "unsigned".** The lesson used the range `0 … 2^N − 1` without ever naming why

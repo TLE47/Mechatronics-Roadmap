@@ -104,7 +104,7 @@ Second, **binary bits ($2^N$)** explain why microcontrollers use seemingly stran
 
 Because counting starts at `0`, the maximum integer is always **$2^N - 1$**.
 
-**Unsigned** is the word for that range. An unsigned $N$-bit integer uses every bit for the number itself, so it has no room for a minus sign: 8 unsigned bits are 256 values, `0` to `255`. If you have met a byte that stopped at `127`, that one was *signed* — it spent its top bit saying "negative". The two things this lesson reads are unsigned by nature: an ADC count runs from `0` counts upward, and a motor command runs from `0` duty to full duty with a separate direction pin carrying the sign. That is why the function is `max_unsigned_int(n_bits)` and why it returns $2^N - 1$ rather than $2^{N-1} - 1$.
+**Unsigned** is the word for that range: all $N$ bits count the number, so there is no room for a minus sign, and 8 bits give `0` to `255`. A byte that stopped at `127` was *signed* — its top bit meant "negative". Both values this lesson computes are unsigned by nature, a count and a motor command, which is why `max_unsigned_int` returns $2^N - 1$.
 
 ---
 
