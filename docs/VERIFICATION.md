@@ -619,7 +619,7 @@ repository's own page, so the gate is green on the real file and not only on syn
 
 **The page's numbers are measured, not remembered (Run 206).** Run 204 swept every count on the page by
 hand and found eight stale; a sweep that has to be repeated is not a gate. So a number whose owner is a
-file or a generated artifact is now written with a marker after it — `42<!-- plan-fact:gates_total -->`,
+file or a generated artifact is now written with a marker after it — `44<!-- plan-fact:gates_total -->`,
 which Markdown renders as nothing — and [`docs/plan-facts.json`](plan-facts.json) names what owns each
 one: the gate list in `check_all.py` (all of it, and the subset every push runs), the tab registry, the
 surface snapshot, the prose index split into reading pages and arm modules, the error index, the
@@ -734,10 +734,16 @@ so nothing extra is built there.
 ## UI primitives: the contract and the animation ratchet
 
 Two of the rules behind the 2026-11-13 library release could not be seen by any gate that already
-existed, so they have their own. Neither is wired into `scripts/check_all.py`: that list is an exact
-copy of CI's verify step (`tests/test_check_all.py` enforces the parity), and adding a browser gate
-there means adding a CI step, which is a separate decision. They run by hand, before a release that
-touches the palette, the sheets, the notices or the counters.
+existed, so they have their own. Both are rows in `scripts/check_all.py`, which is the table CI's
+text job runs (`python3 scripts/check_all.py --ci`), so a pre-push `npm run check:all` and every push
+grade the same two rules; `tests/test_check_all.py` keeps that table and the workflow in step, so a
+gate cannot be dropped from CI without its parity test going red.
+
+That job therefore prepares what they measure: it builds the bundle once (`npm run prebuild` then
+`npx vite build`, so the two parallel gates never race on `dist/` and `ensureBuilt()` finds a fresh
+one) and installs the Playwright **headless shell** once, cached on Playwright's version — the shell
+is the renderer the surface baseline was measured with and the only browser these two launch. On a
+warm cache the pair costs about a minute; measured locally at 20 s and 45 s.
 
 `npm run test:primitives` (`scripts/test_primitive_contract.mjs`) drives the built bundle on the
 headless shell and asserts six things a dependency bump could quietly break:

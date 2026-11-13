@@ -2259,7 +2259,9 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
               }
               return null;
             };
-            canvas.scrollIntoView({ block: 'center', inline: 'nearest' });
+            // `instant`: a smooth scroll would still be moving when the point is clicked, and the
+            // press would land wherever the paper had got to. The scan and the click see one layout.
+            canvas.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
             const start = canvas.scrollTop;
             const span = Math.max(0, canvas.scrollHeight - canvas.clientHeight);
             for (let offset = 0; offset <= span; offset += 120) {
@@ -2273,7 +2275,80 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         // A diagram can be drawn wide enough that no windowful has a bare point left. Fit is the
         // app's own way to make room, so a search that finds nothing asks for it once and looks
         // again rather than reporting the paper missing.
+        // `scrollIntoView` is a hint, not a state: a pane whose layout has not settled yet swallows
+        // it, the scan is then handed a band of paper 160 px tall, and the step reads that as "the
+        // canvas has no bare paper" - which is what made this assertion fail on a busy runner and
+        // pass on a quiet one. The pane is therefore scrolled by hand, through the element that
+        // actually scrolls, and the geometry is waited on: the canvas must be at least one card
+        // tall inside the window before any scan runs. No timing assumption, and a failure says
+        // which element scrolls and where the canvas ended up.
+        const bringCanvasIntoView = async () => {
+          let last = null;
+          for (let attempt = 0; attempt < 4; attempt += 1) {
+            last = await page.getByTestId('workflow-canvas').evaluate(async (canvas) => {
+              const describe = (el) =>
+                `${el.tagName.toLowerCase()}${el.getAttribute('data-testid') ? `[${el.getAttribute('data-testid')}]` : ''}`;
+              let scroller = null;
+              for (let node = canvas.parentElement; node && node !== document.documentElement; node = node.parentElement) {
+                const style = getComputedStyle(node);
+                if (
+                  (style.overflowY === 'auto' || style.overflowY === 'scroll' || style.overflowY === 'overlay') &&
+                  node.scrollHeight > node.clientHeight + 1
+                ) {
+                  scroller = node;
+                  break;
+                }
+              }
+              const before = canvas.getBoundingClientRect();
+              if (scroller) {
+                const paneTop = scroller.getBoundingClientRect().top;
+                scroller.scrollTo({ top: scroller.scrollTop + before.top - paneTop - 8, behavior: 'instant' });
+              } else {
+                canvas.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'instant' });
+              }
+              // The scroll is settled on, not slept through: two frames that report the same top mean
+              // the pane has stopped moving, whatever it was doing when the scroll was asked for.
+              const settledAt = await new Promise((resolve) => {
+                let frames = 0;
+                let previous = null;
+                let stable = 0;
+                const tick = () => {
+                  const top = canvas.getBoundingClientRect().top;
+                  stable = previous !== null && Math.abs(top - previous) < 0.5 ? stable + 1 : 0;
+                  previous = top;
+                  frames += 1;
+                  if (stable >= 2) {
+                    resolve(top);
+                    return;
+                  }
+                  if (frames > 40) {
+                    resolve(null);
+                    return;
+                  }
+                  requestAnimationFrame(tick);
+                };
+                requestAnimationFrame(tick);
+              });
+              const rect = canvas.getBoundingClientRect();
+              return {
+                scroller: scroller ? `${describe(scroller)} ov=${getComputedStyle(scroller).overflowY}` : 'none',
+                settled: settledAt !== null,
+                top: Math.round(rect.top),
+                bottom: Math.round(rect.bottom),
+                visible: Math.round(Math.min(rect.bottom, window.innerHeight - 20) - Math.max(rect.top, 0)),
+              };
+            });
+            if (last.settled && last.visible >= 200) return last;
+            await page.waitForTimeout(120);
+          }
+          assert.fail(
+            `the workflow canvas could not be brought into view (${JSON.stringify(last)}): ` +
+              'the pane that scrolls it never gave it one card of height in the window, so no scan ' +
+              'could see bare paper'
+          );
+        };
         const emptySpot = async (minX) => {
+          await bringCanvasIntoView();
           const found = await scanPaper(minX);
           if (found) return found;
           const fit = page.getByTestId('workflow-fit');
@@ -2788,20 +2863,49 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
               y: (point.y - rect.top + canvas.scrollTop) / scale,
             };
           }, { x, y });
+        // A point measured a moment ago is not a promise: the pane can finish loading its content
+        // and scroll after the scan chose the spot, and the press then lands on a card or outside
+        // the canvas and opens nothing. So the press is preceded by the same hit test the scan uses,
+        // and a stale point is replaced with a fresh one instead of being reported as a missing menu.
+        const pointIsBarePaper = (x, y) =>
+          page.evaluate((point) => {
+            const hit = document.elementFromPoint(point.x, point.y);
+            if (!hit || !hit.closest('[data-testid="workflow-canvas"]')) return false;
+            return !hit.closest(
+              '[data-node-id],[data-lane-band],[data-testid^="workflow-edge-"],[data-testid^="workflow-group-"],button,input,textarea,select,a'
+            );
+          }, { x, y });
         const menuAdd = async (x, y, label) => {
-          const at = await paperPoint(x, y);
-          await page.mouse.click(x, y, { button: 'right' });
-          const menu = page.getByTestId('workflow-menu');
-          await menu.waitFor({ timeout: 5000 });
-          await menu.getByRole('button', { name: label }).click();
-          await page.waitForTimeout(350);
-          const box = await page.locator('[data-node-id]').last().evaluate((card) => ({
-            x: card.offsetLeft,
-            y: card.offsetTop,
-            width: card.offsetWidth,
-            height: card.offsetHeight,
-          }));
-          return { at, box };
+          let spot = { x, y };
+          for (let attempt = 0; ; attempt += 1) {
+            if (!(await pointIsBarePaper(spot.x, spot.y))) {
+              assert.ok(attempt < 3, `the bare spot chosen for ${label} was taken before the press (${JSON.stringify(spot)})`);
+              const fresh = await emptySpot(0);
+              assert.ok(fresh, `no bare paper was left to press for ${label}`);
+              spot = fresh;
+              continue;
+            }
+            const at = await paperPoint(spot.x, spot.y);
+            await page.mouse.click(spot.x, spot.y, { button: 'right' });
+            const menu = page.getByTestId('workflow-menu');
+            const opened = await menu.waitFor({ timeout: 3000 }).then(
+              () => true,
+              () => false
+            );
+            if (!opened) {
+              assert.ok(attempt < 3, `right-clicking bare paper at ${JSON.stringify(spot)} opened no menu`);
+              continue;
+            }
+            await menu.getByRole('button', { name: label }).click();
+            await page.waitForTimeout(350);
+            const box = await page.locator('[data-node-id]').last().evaluate((card) => ({
+              x: card.offsetLeft,
+              y: card.offsetTop,
+              width: card.offsetWidth,
+              height: card.offsetHeight,
+            }));
+            return { at, box };
+          }
         };
         await page.getByTestId('workflow-canvas').evaluate((canvas) => canvas.scrollIntoView({ block: 'center' }));
         await page.waitForFunction(() => {
@@ -2819,9 +2923,14 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
               .map((el) => el.getAttribute('data-testid') || el.getAttribute('aria-label') || el.tagName);
             if (!canvas) return { canvas: null, dialogs };
             const rect = canvas.getBoundingClientRect();
+            // The point the scan is about is the middle of the *visible* band: the canvas's own
+            // centre is below the fold whenever the pane has not scrolled, and reporting that point
+            // named the run bar instead of the state that produced it.
+            const bandTop = Math.max(rect.top, 0);
+            const bandBottom = Math.min(rect.bottom, window.innerHeight);
             const centre = document.elementFromPoint(
               Math.min(Math.max(rect.left + rect.width / 2, 0), window.innerWidth - 1),
-              Math.min(Math.max(rect.top + rect.height / 2, 0), window.innerHeight - 1)
+              Math.min(Math.max((bandTop + bandBottom) / 2, 0), window.innerHeight - 1)
             );
             return {
               rect: [Math.round(rect.left), Math.round(rect.top), Math.round(rect.width), Math.round(rect.height)],

@@ -114,6 +114,14 @@ GATES: list[tuple[str, list[str], bool]] = [
     ("consistency", ["scripts/check_consistency.py"], False),
     ("friction_report", ["scripts/friction_report.py", "--check"], False),
     ("assertions", ["scripts/lint_assertions.py"], False),
+    # The two rules the 2026-11-13 library release could not express as a text gate: the installed
+    # primitives wear the workbench's tokens and keep dialog focus, and no surface gains a second
+    # looping animation. Both drive the built bundle in the headless shell, so the job that runs this
+    # list builds `dist/` and installs that shell once — measured at 20 s and 45 s, which is why they
+    # are in the pass rather than in a lane of their own. A rule nothing runs is the rule that stops
+    # holding, so they run here, in CI, on every push.
+    ("primitives", ["npm", "run", "test:primitives"], False),
+    ("animations", ["npm", "run", "check:animations"], False),
     # Heavy from here down: same commands CI runs, including the report handoff that lets the
     # unittest discovery reuse the sweep instead of running all 48 packages a second time.
     ("exercise_sweep", ["scripts/run_exercise.py", "--verbose"], True),

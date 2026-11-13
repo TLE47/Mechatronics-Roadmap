@@ -104,6 +104,19 @@ try {
       { timeout: 4000 }
     )
     .catch(() => undefined);
+  // Radix moves focus into the content in an effect after the panel mounts, so "is the caret in the
+  // field" is a state to wait for, not a fact to read the instant the panel exists — reading it
+  // immediately made this check fail roughly one run in three.
+  const caretInField = await page
+    .waitForFunction(
+      () => document.activeElement === document.querySelector('[data-testid="input-palette-search"]'),
+      undefined,
+      { timeout: 4000 }
+    )
+    .then(
+      () => true,
+      () => false
+    );
   const palette = await page.evaluate(() => {
     const input = document.querySelector('[data-testid="input-palette-search"]');
     const id = input?.getAttribute('aria-activedescendant');
@@ -115,7 +128,11 @@ try {
       id,
     };
   });
-  check('⌘K puts the caret in the palette field', palette.focused);
+  check(
+    '⌘K puts the caret in the palette field',
+    caretInField && palette.focused,
+    caretInField ? '' : 'focus never reached the field'
+  );
   check(
     'the open palette names its active row',
     palette.names && palette.selected,
@@ -133,7 +150,16 @@ try {
   check('Tab stays inside the palette', inside.size === 1 && [...inside][0] === true);
 
   // 4. Every colour the primitives paint is a palette variable.
-  const audit = await page.evaluate(() => {
+  const audit = await page.evaluate(async () => {
+    // Sampled on a still page. A row's selection is a CSS transition, and a colour read halfway
+    // through it is an interpolation that no stylesheet declares — which made this check fail once
+    // in a dozen runs and would have made CI fail once in a dozen pushes. Transitions and animations
+    // are switched off for the sample and put back afterwards, then two frames are waited out so
+    // every computed value is the resting one.
+    const quiet = document.createElement('style');
+    quiet.textContent = '*,*::before,*::after{transition:none !important;animation:none !important}';
+    document.head.appendChild(quiet);
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     // The palette is the colours written in the app's own CSS. Reading them from the stylesheets —
     // rather than resolving every custom property in a probe, which depends on how a build scopes
     // them — means the contract is exactly what it claims: a primitive may paint what the workbench
@@ -188,6 +214,7 @@ try {
         }
       }
     }
+    quiet.remove();
     return { elements: elements.length, allowed: allowed.size, offenders: offenders.slice(0, 4) };
   });
 
@@ -200,14 +227,44 @@ try {
   await page.keyboard.press('Escape');
   await page.getByTestId('command-palette').waitFor({ state: 'detached', timeout: 8000 });
 
+  // Escape hands focus back to what opened the palette. That restoration is a Radix focus scope and
+  // it can land a moment after the panel is gone — if the next dialog opens inside that window, the
+  // restoration steals the focus the new dialog just took. Waiting for the documented result first
+  // is both the assertion this file wants and the reason the next step cannot race it.
+  const focusReturned = await page
+    .waitForFunction(() => Boolean(document.activeElement?.classList?.contains('skip-link')), undefined, {
+      timeout: 4000,
+    })
+    .then(
+      () => true,
+      () => false
+    );
+  check('Escape hands focus back to the control that opened the palette', focusReturned);
+
   // 5. The key sheet traps focus the same way.
   await page.keyboard.press('Shift+Slash');
   await page.getByTestId('shortcuts-modal').waitFor({ timeout: 8000 });
-  const sheet = await page.evaluate(() => ({
-    inside: Boolean(document.activeElement?.closest('[data-testid="shortcuts-modal"]')),
-    dialog: document.querySelector('[data-testid="shortcuts-modal"]')?.getAttribute('role'),
-  }));
-  check('? opens the key sheet with focus inside it', sheet.inside);
+  // Same rule as the palette: the sheet is up before its focus scope has run, so the focus is waited
+  // for and reported with where it actually is when it does not arrive.
+  const sheetFocused = await page
+    .waitForFunction(
+      () => Boolean(document.activeElement?.closest('[data-testid="shortcuts-modal"]')),
+      undefined,
+      { timeout: 4000 }
+    )
+    .then(
+      () => true,
+      () => false
+    );
+  const whereFocusIs = sheetFocused
+    ? ''
+    : await page.evaluate(() => {
+        const active = document.activeElement;
+        return `focus is on ${active?.tagName.toLowerCase() ?? 'nothing'}${
+          active?.getAttribute('data-testid') ? `[${active.getAttribute('data-testid')}]` : ''
+        }`;
+      });
+  check('? opens the key sheet with focus inside it', sheetFocused, whereFocusIs);
   await page.keyboard.press('Escape');
   await page.getByTestId('shortcuts-modal').waitFor({ state: 'detached', timeout: 8000 });
 

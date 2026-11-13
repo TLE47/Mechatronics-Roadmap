@@ -101,6 +101,43 @@ jobs:
       - name: Assert npm ci installed every optional binary recorded for linux/x64
         run: npm run check:native
 
+      # Two gates in the list below grade the built bundle in a browser: the primitive contract
+      # (tokens and focus) and the animation ratchet. Building here rather than inside them keeps
+      # two parallel gates from racing on `dist/`, and the build is the same one every other lane
+      # grades. `prebuild` first, so the generated data the build inlines is newer than its sources
+      # and `ensureBuilt()` in each gate sees a fresh bundle instead of rebuilding it.
+      - name: Build the bundle the two browser gates grade
+        run: |
+          npm run prebuild
+          npx vite build
+
+      # The cache key follows the Playwright version, not the lockfile hash: a dependency bump that
+      # leaves Playwright alone must not throw away the download. Only the headless shell is
+      # installed — it is the renderer the surface baseline was measured with and the only one these
+      # two gates launch (see `scripts/test_primitive_contract.mjs`).
+      - name: Read the installed Playwright version
+        id: pw
+        run: node -p "'v=' + require('playwright-core/package.json').version" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the Playwright headless shell
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-shell-${{ runner.os }}-${{ steps.pw.outputs.v }}
+          restore-keys: |
+            playwright-shell-${{ runner.os }}-
+
+      - name: Install the headless shell (only a cache miss needs it)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright-core install chromium-headless-shell
+        timeout-minutes: 8
+
+      - name: Install the shell's OS libraries (only a cache miss needs them)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright-core install-deps chromium-headless-shell
+        timeout-minutes: 10
+
       # The gate list is `scripts/check_all.py`, so CI and a pre-push run grade the same table.
       # `--ci` leaves out the audit gates (they need a browser) and the order-dependent sweeps
       # (the exercise report and the discovery run are the job below).
