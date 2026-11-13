@@ -409,6 +409,46 @@ async function seedWorkflow(page) {
   await page.waitForTimeout(300);
 }
 
+/**
+ * The Chromium the committed baseline was measured with.
+ *
+ * Playwright installs two builds of the same revision: Chrome for Testing (`chromium-<rev>`) and the
+ * headless shell (`chromium_headless_shell-<rev>`). They share an engine and a version string and
+ * still break text lines differently — on the Architecture tab the headless shell measures the
+ * activity rail at 1319 px and the main pane at 8664 px, Chrome for Testing at 1334 and 8731. The
+ * numbers in `docs/surface-snapshot.json` are the headless shell's: the runner recorded them that
+ * way (commit `120a961`, "Record the surface snapshot on the runner"), and no later re-record moved
+ * a single height. So the shell is asked for by name, the way the baseline was taken, before falling
+ * back to whatever `resolveChromiumExecutable()` finds; the caller prints which binary it got.
+ *
+ * `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` still wins, for a machine that keeps its browser elsewhere.
+ */
+function resolveSnapshotBrowser() {
+  const override = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
+  if (override && fs.existsSync(override)) return override;
+
+  const resolved = resolveChromiumExecutable();
+  if (!resolved) return resolved;
+  // <cache>/chromium-<rev>/chrome-linux64/chrome → <cache>
+  const cacheRoot = path.resolve(path.dirname(resolved), '..', '..');
+  try {
+    const builds = fs
+      .readdirSync(cacheRoot)
+      .filter((name) => name.startsWith('chromium_headless_shell-'))
+      .sort()
+      .reverse();
+    for (const build of builds) {
+      for (const inner of fs.readdirSync(path.join(cacheRoot, build))) {
+        const candidate = path.join(cacheRoot, build, inner, 'chrome-headless-shell');
+        if (fs.existsSync(candidate)) return candidate;
+      }
+    }
+  } catch {
+    // No browser cache to read: the resolved build is all there is.
+  }
+  return resolved;
+}
+
 async function main() {
   if (ONLY_TAB && ![...ALL_TABS, ...PAGES, ...EXTRAS].includes(ONLY_TAB)) {
     console.error(
@@ -422,7 +462,7 @@ async function main() {
   }
 
   ensureBuilt();
-  const executablePath = resolveChromiumExecutable();
+  const executablePath = resolveSnapshotBrowser();
   if (!executablePath) {
     console.error('[FAIL] no Chromium to drive: set PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH or install one');
     process.exit(2);
@@ -431,13 +471,14 @@ async function main() {
   const baseUrl = `http://127.0.0.1:${port}/Mechatronics-Roadmap/`;
   if (PNG) fs.mkdirSync(PNG_DIR, { recursive: true });
 
+  const build = path.basename(path.dirname(path.dirname(executablePath)));
+  console.log(`  browser ${build} (${path.basename(executablePath)})`);
   const browser = await chromium.launch({
     executablePath,
-    // Hinting is the one font setting that is not the app's choice. It comes from the host's
-    // fontconfig, and it moves where a line wraps: with the container's unhinted metrics the
-    // activity rail's subtitle takes one more line and the rail is 15 px taller than on the runner,
-    // which recorded a baseline that only reproduced on the machine that wrote it. Turned off here,
-    // every machine measures the same advances, and a box moves only when the layout does.
+    // Hinting stays off as well: it comes from the host's fontconfig, and turning it off keeps the
+    // advances the same from one Linux image to the next. It is not what makes the numbers portable
+    // though — the build is (`resolveSnapshotBrowser`): this is the same flag the committed baseline
+    // was recorded under, and Chrome for Testing still measured the rail 15 px taller than it.
     args: ['--no-sandbox', '--force-device-scale-factor=1', '--font-render-hinting=none'],
   });
   const surfaces = {};

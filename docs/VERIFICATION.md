@@ -729,6 +729,26 @@ it against `signed_in`'s ceilings and deletes it, so a breach that only exists w
 library present fails locally instead of on the runner (Run 226). CI's `dist/` is already signed-in,
 so nothing extra is built there.
 
+## The surface snapshot runs on the headless shell
+
+`npm run check:snapshot` compares 72 surfaces against `docs/surface-snapshot.json`, and those numbers
+were recorded by **`chrome-headless-shell`** — Playwright's second Chromium build, not Chrome for
+Testing. The two are the same revision and the same engine (chromium-1248, `156.0.8078.4`) and they
+still break text lines differently: on the Architecture tab the headless shell measures the activity
+rail at 1319 px and the main pane at 8664 px, while Chrome for Testing measures 1334 and 8731. The
+recorded heights (rail 1319, main 8664, panel 8624, document 8892) are unchanged in the file since the
+runner wrote them — commit `120a961` ("Record the surface snapshot on the runner",
+`snapshot-recorder@users.noreply.github.com`) — and every later re-record reproduced them.
+
+So `scripts/snapshot_surfaces.mjs` asks for the headless shell by name
+(`resolveSnapshotBrowser`, after `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`) and prints the binary it
+measured with. It is not hinting and it is not the host's fonts: every `--font-render-hinting` value
+(`none`, `full`, `medium`, `slight`) measures 1334 on the full build, and every character of the
+rail's labels resolves inside the bundled Geist face, so no fallback is involved. If a future
+Playwright ships no headless shell, the gate falls back to Chrome for Testing and will report the rail
+15 px and the main pane 67 px out on every surface — that is the renderer, not a layout regression,
+and the fix is the browser, never the baseline.
+
 ## Accounts, sync and the admin area
 
 `npm run test:accounts` runs the account rules under Node's type stripping, with no browser and no
