@@ -133,6 +133,9 @@ def freq_to_period_ms(freq_hz):
 
 def max_unsigned_int(n_bits):
     # TODO 2: Return the top count an n-bit unsigned register holds.
+    #         "Unsigned" means this count cannot be negative: no sign bit, so every
+    #         bit counts towards the magnitude. Counts start at zero, so the top one
+    #         is one below the pattern count (8 bits reach 255).
     #         Compute it from the function's parameters and the starter values; do not return a hard-coded final value.
     return 0
 

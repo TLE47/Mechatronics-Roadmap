@@ -47,7 +47,10 @@ then counts: eight bits make 256 on/off patterns from `0000 0000` to `1111 1111`
 zero makes the last `255`, and a register that does keep its top bit for the sign is *signed*, which is
 why a signed byte stops at `127`. A second note sits beside the TODO itself, where the learner meets
 `max_unsigned_int`: the top count is one less than the number of patterns (`255`, `1023`, `4095`, and
-`1` for a single bit), and there is no `-1` to return.
+`1` for a single bit), and there is no `-1` to return. Because the reader stops at *Do it yourself* and
+shows the starter only in the editor, the same definition now also opens the `TODO 2` comment block —
+no sign bit, every bit counts towards the magnitude, counts start at zero — so a learner who never
+opens the Markdown still reads the term beside the line that asks for the answer.
 
 **Lesson P.9 explains scaling as two dials.** The *Bridge Notes* paragraph that jumped straight to
 symbols became a picture: a reading dial from `0` to `1023`, an answer dial from `0.0` to `5.0`, and two
