@@ -127,16 +127,53 @@ $$
 s = \frac{x_{\text{final}} - x_0}{t}
 $$
 
-**Scaling is the same move, done twice.** A 10-bit reading is a position on a dial running `0` to `1023`; the answer is a position on a second dial, say `0.0` to `5.0` volts.
+## Scaling as a Two-Step Translation
 
-1. **Where is this on the first dial?** Divide by that dial's top: `raw / 1023.0`. `0` is the bottom (`0.0`), `1023` the top (`1.0`), `511.5` halfway (`0.5`). That decimal is the **fraction**, always between `0` and `1`.
-2. **Where does it land on the second dial?** Multiply the fraction by that dial's top: `* 5.0` for volts, `* 255.0` for an 8-bit command.
+Imagine two independent dials sitting side-by-side:
+1. **The Input Dial (Your Sensor):** Goes from `0` to `1023` (representing a 10-bit ADC resolution).
+2. **The Output Dial (Your Target):** Goes from `0.0` to `5.0` (for volts) or `0` to `255` (for an 8-bit PWM command).
+
+To convert a reading from the first dial to the second, you don't jump straight across—you use a **universal intermediate language (a fraction between 0 and 1)**.
+
+### Step 1: Find your position on the first dial (Normalization)
+* **What you ask:** *"What percentage of the way up is my current reading?"*
+* **How you do it:** Divide your raw reading by the input maximum (`1023.0`).
+* **The result:** A pure decimal fraction between `0.0` and `1.0`. 
+  * `0` becomes `0.0` (completely at the bottom)
+  * `1023` becomes `1.0` (completely at the top)
+  * `511.5` becomes `0.5` (exactly halfway)
+
+### Step 2: Land on the second dial (Projection)
+* **What you ask:** *"Where does that same percentage land on a completely different scale?"*
+* **How you do it:** Multiply that decimal fraction by the target dial's maximum value.
+  * For a **5.0V system**: Multiply by `5.0`.
+  * For an **8-bit register**: Multiply by `255.0`.
+
+---
+
+### The Master Equation
 
 $$
 y = \left(\frac{x}{X_{\max}}\right) \times Y_{\max}
 $$
 
-In words: *the fraction of my top, times the top of yours.* Checks: `1023` in gives the top out and `0` in gives `0` out, so equal steps stay equal — that is *linear*. For `511.5`: `511.5 / 1023.0 = 0.5`, so `0.5 * 5.0 = 2.50` and `0.5 * 255.0 = 127.5` — one reading, two tops, which is why the two functions cannot share a constant.
+**In plain English:** *Take your fraction of the input top, and apply it to the output top.*
+
+---
+
+### Concrete Walkthrough (Why It Makes Sense)
+
+Take a reading halfway up the input dial: $x = 511.5$. 
+
+1. **The Fraction:** 
+   $$\frac{511.5}{1023.0} = 0.5 \quad (\text{50\% of full scale})$$
+2. **Target A (5.0V Board):** 
+   $$0.5 \times 5.0 = 2.50\text{ volts}$$
+3. **Target B (8-bit PWM):** 
+   $$0.5 \times 255.0 = 127.5\text{ counts}$$
+
+### The Takeaway
+Notice that **the input reading ($0.5$) stays the same**, but it maps to entirely different numbers depending on which output top you plug into it. Because of this, you can never hardcode a single constant multiplier—your output scale ($Y_{\max}$) dictates the final destination.
 ---
 
 ## Do it yourself
