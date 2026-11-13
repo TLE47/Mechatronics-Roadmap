@@ -166,6 +166,141 @@ async function readTally(page) {
 }
 
 /**
+ * The workflow paper follows the pane area's bottom grip.
+ *
+ * The grip writes `--pane-body-h` on the body, and that is the paper's ceiling once a learner has
+ * used it; the old fixed 70 vh cap pinned the paper there instead, so the grip moved the panes and
+ * left the diagram behind. This drags the grip up and back down and insists the paper goes with it,
+ * then that the 24 cards are still a scroll box at every size rather than a page that grows.
+ */
+export async function assertWorkflowCanvasFollowsGrip(page) {
+  const read = () =>
+    page.evaluate(() => {
+      const body = document.querySelector('[data-testid="editor-panes"]');
+      const canvas = document.querySelector('[data-testid="workflow-canvas"]');
+      const box = canvas?.getBoundingClientRect();
+      return {
+        body: body ? body.getBoundingClientRect().height : null,
+        canvas: canvas ? canvas.clientHeight : null,
+        scroll: canvas ? canvas.scrollHeight : null,
+        top: box ? box.top : null,
+        viewport: window.innerHeight,
+        resized: Boolean(body?.hasAttribute('data-pane-resized')),
+        cards: document.querySelectorAll('[data-node-id]').length,
+      };
+    });
+
+  /**
+   * Press the grip where the page has held it for a frame, then drag it. The body can be taller
+   * than the window, so the grip starts below the fold: center it with an instant scroll (the page
+   * scrolls smoothly, and coordinates read during that motion point at where the bar used to be),
+   * then wait for the box to stop moving and for the grip to be the topmost element under the
+   * pointer, because a transient overlay would take the press instead.
+   */
+  const dragGrip = async (travel) => {
+    await page.evaluate(() => {
+      document
+        .querySelector('[data-testid="pane-divider-bottom"]')
+        ?.scrollIntoView({ block: 'center', behavior: 'instant' });
+    });
+    await page.waitForFunction(
+      () => {
+        const element = document.querySelector('[data-testid="pane-divider-bottom"]');
+        if (!element) return false;
+        const box = element.getBoundingClientRect();
+        const previous = window.__gripBox;
+        window.__gripBox = { x: box.x, y: box.y };
+        return (
+          previous !== undefined &&
+          Math.abs(previous.x - box.x) < 1 &&
+          Math.abs(previous.y - box.y) < 1 &&
+          box.top >= 0 &&
+          box.bottom <= window.innerHeight
+        );
+      },
+      undefined,
+      { timeout: 10000 }
+    );
+    const box = await page.getByTestId('pane-divider-bottom').boundingBox();
+    assert.ok(box, 'the pane area has no bottom grip to drag');
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height / 2;
+    const onGrip = await page
+      .waitForFunction(
+        ({ px, py }) => {
+          const element = document.elementFromPoint(px, py);
+          return element?.closest('[data-testid="pane-divider-bottom"]') ? true : null;
+        },
+        { px: x, py: y },
+        { timeout: 5000, polling: 100 }
+      )
+      .then((handle) => handle.jsonValue())
+      .catch(() => false);
+    assert.ok(onGrip, `the pointer at (${Math.round(x)}, ${Math.round(y)}) must hit the grip`);
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x, y + travel, { steps: 12 });
+    await page.mouse.up();
+    await page.waitForTimeout(300);
+  };
+
+  const before = await read();
+  assert.equal(before.cards, 24, 'the grip check measures the 24 cards the cap check left standing');
+  assert.equal(before.resized, false, 'a pane area nobody has dragged must not start resized');
+  assert.ok(
+    Math.abs(before.canvas - before.viewport * 0.7) <= 4,
+    `at rest the paper is 70% of the window, but it was ${before.canvas} of ${before.viewport}`
+  );
+  assert.ok(before.scroll > before.canvas + 100, 'the 24 cards are already a scroll box at rest');
+
+  // Pulling the bottom edge up trims the pane area. The paper has to take the new height: on the
+  // first touch that lifts the 70% cap, which is the whole point of the fix.
+  await dragGrip(-200);
+  const trimmed = await read();
+  assert.equal(trimmed.resized, true, 'dragging the grip must mark the pane area as resized');
+  assert.ok(trimmed.body < before.body - 150, `the grip must trim the pane area (${trimmed.body} vs ${before.body})`);
+  assert.ok(
+    trimmed.canvas > before.canvas + 100,
+    `the first grip touch must lift the 70% cap and let the paper fill the pane (${trimmed.canvas} vs ${before.canvas})`
+  );
+  assert.ok(
+    trimmed.canvas >= trimmed.body - 12 && trimmed.canvas <= trimmed.body,
+    `the paper must fill the ${Math.round(trimmed.body)}px pane area, but it was ${trimmed.canvas}px`
+  );
+  assert.ok(trimmed.scroll > trimmed.canvas, '24 cards must still scroll inside the taller paper');
+
+  // Further up is a smaller pane area, and a smaller diagram with it.
+  await dragGrip(-400);
+  const shrunk = await read();
+  assert.ok(
+    shrunk.canvas < trimmed.canvas - 250,
+    `trimming 400px more must shrink the paper (${shrunk.canvas} vs ${trimmed.canvas})`
+  );
+  assert.ok(shrunk.canvas >= shrunk.body - 12, `the paper must still fill the pane (${shrunk.canvas} of ${shrunk.body})`);
+  assert.ok(shrunk.scroll > shrunk.canvas, '24 cards must still scroll inside the smaller paper');
+
+  // And back down grows both again, without passing the grip's own ceiling.
+  await dragGrip(300);
+  const grown = await read();
+  assert.ok(
+    grown.canvas > shrunk.canvas + 200,
+    `putting the pane back must grow the paper (${grown.canvas} vs ${shrunk.canvas})`
+  );
+  assert.ok(grown.scroll > grown.canvas, '24 cards must still scroll inside the paper after a resize');
+
+  // Reset hands the body back to its default floor, and the paper with it.
+  await page.getByTestId('btn-pane-reset').click();
+  await page.waitForTimeout(300);
+  const reset = await read();
+  assert.equal(reset.resized, false, 'Reset size must clear the dragged pane area');
+  assert.ok(
+    Math.abs(reset.canvas - before.canvas) <= 3,
+    `Reset must put the paper back to ${before.canvas}px, not ${reset.canvas}px`
+  );
+  assert.ok(reset.scroll > reset.canvas, 'the 24 cards are still a scroll box after Reset');
+}
+
+/**
  * `baseUrl` is the already-running dev server (from `startDevServer`, via `E2E_BASE_URL`, or passed
  * by the combined runner). Without one this suite starts and closes its own, so `npm run test:e2e`
  * keeps working on its own.
@@ -1961,6 +2096,9 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           canvasBox.client <= canvasBox.viewport * 0.7 + 2,
           `the canvas must stay within 70% of the viewport, but it was ${canvasBox.client} of ${canvasBox.viewport}`
         );
+        // The grip is the learner's only way to ask for a bigger or smaller diagram, and the paper
+        // has to follow it both ways with the 24 cards still on the board.
+        await assertWorkflowCanvasFollowsGrip(page);
 
         // Fit is a lens on the graph, not a document edit: it frames every card in the canvas and
         // 100% comes back to life size at the viewport's centre.

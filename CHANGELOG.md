@@ -50,11 +50,20 @@ two named questions — *how much of full scale is this reading?* then *how far 
 scale?* — one formula whose symbols are read as names for those steps, the interval bracket explained,
 the two endpoint checks, and the lesson's own `511.5` carried through both tops to `2.50 V` and `127.5`.
 
-**Workflow.** The paper now takes its height from the pane that holds it: the compact canvas lost its
-280 px floor and its 70 vh cap, which together made a shorter pane overflow and made the resize grip
-stop moving the diagram at 70% of the window (full screen keeps its 280 px floor). The action row
-gained a **Collapse / Expand** button that hides the canvas and the drag hints without touching a single
-card, plus titles on Templates, Copy Mermaid, Copy Markdown and Clear.
+**Workflow.** The paper now takes its height from the pane that holds it. Its ceiling is the pane
+area's own height once the resize grip has been dragged — the `--pane-body-h` the grip writes — and
+70 vh until it has, which is what makes the grip move the diagram at all: a fixed cap left it at 70% of
+the window however far the learner dragged. The 280 px floor that made a shorter pane overflow is now
+only a full-screen rule, and the compact canvas keeps a 140 px floor so it cannot be dragged to
+nothing. The action row gained a **Collapse / Expand** button that hides the canvas and the drag hints
+without touching a single card, plus titles on Templates, Copy Mermaid, Copy Markdown and Clear.
+
+**The grip has its own browser check.** `assertWorkflowCanvasFollowsGrip` in
+`scripts/e2e_browser_workbench.mjs` drags the bottom grip up, up again, back down and then presses
+**Reset size**, with the 24 cards the cap check leaves standing: the paper must fill each new pane
+height, shrink and grow with it, and stay a scroll box (`scrollHeight > clientHeight`) at every size,
+and Reset must put it back where it started. It has teeth — restoring the old fixed cap fails it with
+`the first grip touch must lift the 70% cap and let the paper fill the pane (628 vs 628)`.
 
 **More ⋯.** The **Debugger tools** heading is a button: it folds the nine step/trace/breakpoint
 controls away and back, open by default, with the same tooltip rule every other tile follows.
