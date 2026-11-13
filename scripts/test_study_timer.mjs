@@ -11,6 +11,7 @@
 import assert from 'node:assert/strict';
 import {
   IDLE_TIMER,
+  completeTimer,
   MAX_CLOCK_LOG,
   TIMER_STORAGE_KEY,
   clearTimer,
@@ -382,6 +383,44 @@ check('a filed sitting is never longer than the cap', () => {
     lessons: [],
   });
   assert.equal(capped.end, T0 + MAX_SITTING_MS);
+});
+
+section('a finished lesson logs itself and stops the clock');
+
+check('a pass banks the stretch and stops the digits', () => {
+  const running = startTimer(IDLE_TIMER, T0, 'P.1');
+  const done = completeTimer(running, T0 + 5 * MIN);
+  assert.equal(done.runningSince, null);
+  assert.equal(done.bankedMs, 5 * MIN);
+  const last = done.log[done.log.length - 1];
+  assert.equal(last.action, 'complete');
+  assert.equal(last.clockMs, 5 * MIN);
+  // The stretch is closed on the line, so the card can say how long the last one ran.
+  assert.equal(last.stretchMs, 5 * MIN);
+});
+
+check('the stopped clock does not grow while the learner keeps reading', () => {
+  const running = startTimer(IDLE_TIMER, T0, 'P.1');
+  const done = completeTimer(running, T0 + 5 * MIN);
+  assert.equal(elapsedMs(done, T0 + 60 * MIN), 5 * MIN);
+  // A heartbeat only exists to keep a running stretch alive; a stopped clock is untouched by it.
+  assert.deepEqual(heartbeat(done, T0 + 60 * MIN), done);
+});
+
+check('a completion with the clock idle still logs, and the clock stays at zero', () => {
+  const done = completeTimer(IDLE_TIMER, T0);
+  assert.equal(done.bankedMs, 0);
+  assert.equal(done.runningSince, null);
+  assert.equal(done.log[done.log.length - 1].action, 'complete');
+  assert.equal(done.log[done.log.length - 1].stretchMs, null);
+});
+
+check('resuming after a pass starts a fresh stretch instead of editing the old one', () => {
+  const running = startTimer(IDLE_TIMER, T0, 'P.1');
+  const done = completeTimer(running, T0 + 5 * MIN);
+  const again = startTimer(done, T0 + 30 * MIN, 'P.1', 'resume');
+  assert.equal(again.runningSince, T0 + 30 * MIN);
+  assert.equal(elapsedMs(again, T0 + 31 * MIN), 6 * MIN);
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

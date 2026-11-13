@@ -19,6 +19,7 @@
  */
 
 import type { LearningEvent } from './learningLog';
+import type { StudyTimer } from './studyTimer';
 
 export const PROGRESS_SCHEMA = 'mechalab.progress/1';
 
@@ -38,6 +39,12 @@ export interface ProgressSnapshot extends ProgressMaps {
    * reset, which is every snapshot written before this field existed — an older reader ignores it.
    */
   resetAt?: number;
+  /**
+   * The study clock: the sitting in progress, not a flag. It travels with progress so a lesson
+   * started on a laptop is on the clock when the same learner opens the workbench on a phone.
+   * Optional, so every snapshot written before this field existed still validates.
+   */
+  studyTimer?: StudyTimer;
 }
 
 export function emptyProgress(): ProgressSnapshot {
@@ -85,6 +92,18 @@ export function mergeLearningLog(a: LearningEvent[], b: LearningEvent[]): Learni
 }
 
 /** Merge local and cloud snapshots. Neither side is mutated. */
+/**
+ * The clock is a running record, not a set of flags, so it has no union: the copy that ticked last is
+ * the one whose zero point and stretch are still true. `lastTick` is written by every press and every
+ * minute of the heartbeat, so "which side is the clock on" needs no other timestamp — and a clock that
+ * is already running beats a stopped one from a device the learner put away.
+ */
+function newerTimer(local?: StudyTimer, remote?: StudyTimer): StudyTimer | undefined {
+  if (!local) return remote;
+  if (!remote) return local;
+  return (remote.lastTick ?? 0) >= (local.lastTick ?? 0) ? remote : local;
+}
+
 export function mergeProgress(local: ProgressSnapshot, remote: ProgressSnapshot): ProgressSnapshot {
   const localIsNewer = local.updatedAt >= remote.updatedAt;
   const older = localIsNewer ? remote : local;
@@ -109,6 +128,8 @@ export function mergeProgress(local: ProgressSnapshot, remote: ProgressSnapshot)
     learningLog: resetWins
       ? [...newer.learningLog]
       : mergeLearningLog(local.learningLog, remote.learningLog),
+    // A reset erases progress, not the sitting: the clock is what the learner is doing right now.
+    studyTimer: newerTimer(local.studyTimer, remote.studyTimer),
   };
 }
 
@@ -123,6 +144,8 @@ export function isProgressSnapshot(value: unknown): value is ProgressSnapshot {
     typeof candidate.verifiedLessons === 'object' &&
     typeof candidate.completedLessons === 'object' &&
     typeof candidate.completedMilestones === 'object' &&
-    Array.isArray(candidate.learningLog)
+    Array.isArray(candidate.learningLog) &&
+    (candidate.studyTimer === undefined ||
+      (typeof candidate.studyTimer === 'object' && candidate.studyTimer !== null))
   );
 }

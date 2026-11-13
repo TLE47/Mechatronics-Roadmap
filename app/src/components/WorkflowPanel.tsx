@@ -165,6 +165,11 @@ export function WorkflowPanel({
   const sim = useWorkflowRun(doc);
 
   const [howTo, setHowTo] = useState(false);
+  // The paper is the working room, but it is not always the point: a learner reading the checklist,
+  // or typing into the note field below the canvas, may want the page's height back. Collapsing hides
+  // the canvas and the drag hints and leaves the document, its checks and its inspector in place, so
+  // expanding restores exactly what was there.
+  const [collapsed, setCollapsed] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [pendingTemplate, setPendingTemplate] = useState<WorkflowTemplate | null>(null);
   // The workflow has its own find field: the global palette searches lessons, not the cards on the
@@ -768,7 +773,20 @@ export function WorkflowPanel({
           padded header cost the diagram about a card's height. Compact, the rules are one line and
           the padding is halved, so the paper - the learner's working room - is larger. Full screen
           keeps the list, because there the page is the diagram. */}
-      {full ? (
+      {collapsed ? (
+        <button
+          type="button"
+          data-testid="workflow-collapsed"
+          title="Expand the workflow: show the diagram again"
+          onClick={() => setCollapsed(false)}
+          className="mt-2 flex w-full cursor-pointer items-center justify-between rounded-lg border border-dashed border-line bg-canvas px-2.5 py-2 text-left font-mono text-[11.5px] text-muted hover:border-accent hover:text-accent"
+        >
+          <span>
+            Diagram hidden · {doc.nodes.length} card{doc.nodes.length === 1 ? '' : 's'} kept
+          </span>
+          <span>Expand</span>
+        </button>
+      ) : full ? (
       <div className="mt-1.5 flex flex-col gap-y-0.5 font-mono text-[10.5px] text-faint">
         <span className="flex items-center gap-1">
           <MousePointerClick className="h-3 w-3" aria-hidden="true" />
@@ -785,6 +803,7 @@ export function WorkflowPanel({
         </p>
       )}
 
+      {!collapsed && (
       <Suspense
         fallback={
           <p data-testid="workflow-canvas-loading" className="mt-2 font-mono text-[11.5px] text-faint">
@@ -843,6 +862,7 @@ export function WorkflowPanel({
           sim={sim}
         />
       </Suspense>
+      )}
 
       {/* The advice sits below the paper, not above it. Adding or fixing one card changes the issue
           list, and a list above the canvas would move the diagram under the pointer between a drop
@@ -925,6 +945,7 @@ export function WorkflowPanel({
         <button
           type="button"
           data-testid="workflow-browse-templates"
+          title="Templates: start this lesson's diagram from a worked shape instead of a blank sheet"
           onClick={() => setTemplatesOpen((shown) => !shown)}
           className="btn btn-ghost text-[12px]"
         >
@@ -963,7 +984,27 @@ export function WorkflowPanel({
         </button>
         <button
           type="button"
+          data-testid="workflow-collapse"
+          aria-expanded={!collapsed}
+          aria-controls="workflow-canvas"
+          title={
+            collapsed
+              ? 'Expand the workflow: show the diagram again without changing a single card'
+              : 'Collapse the workflow: hide the diagram and give its height back to the page; nothing is deleted'
+          }
+          onClick={() => setCollapsed((hidden) => !hidden)}
+          className="btn btn-ghost text-[12px]"
+        >
+          <ChevronDown
+            className={`h-3.5 w-3.5 transition-transform ${collapsed ? '-rotate-90' : ''}`}
+            aria-hidden="true"
+          />
+          {collapsed ? 'Expand' : 'Collapse'}
+        </button>
+        <button
+          type="button"
           data-testid="workflow-copy-mermaid"
+          title="Copy the whole diagram as Mermaid text, for a README or a pull request"
           onClick={() => copy(workflowToMermaid(doc), 'Mermaid')}
           className="btn btn-ghost text-[12px]"
         >
@@ -972,6 +1013,7 @@ export function WorkflowPanel({
         <button
           type="button"
           data-testid="workflow-copy-markdown"
+          title="Copy the numbered steps as Markdown, in the order the arrows run"
           onClick={() => copy(workflowToMarkdown(doc), 'Markdown')}
           className="btn btn-ghost text-[12px]"
         >
@@ -980,6 +1022,7 @@ export function WorkflowPanel({
         <button
           type="button"
           data-testid="workflow-clear"
+          title="Clear: empty this lesson's diagram — it asks first, and Undo brings it back"
           onClick={() => armClear()}
           className="btn btn-ghost ml-auto text-[12px] text-rose"
         >

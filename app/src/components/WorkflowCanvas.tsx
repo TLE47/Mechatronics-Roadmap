@@ -347,6 +347,7 @@ export function WorkflowCanvas({
     >
       <div
         ref={viewport.surfaceRef}
+        id="workflow-canvas"
         data-testid="workflow-canvas"
         // Group/lane is the armed box; Shift keeps the old shortcut. A plain mouse drag is the
         // selection box now, and Alt-drag is the explicit pan (the surface's arrow keys still pan).
@@ -395,12 +396,15 @@ export function WorkflowCanvas({
         role="group"
         aria-label="Workflow canvas. Arrow keys pan it; drag a card by its header to move the card."
         aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
-        // The 70 vh cap is what makes this a canvas rather than a growing page; full screen is a
-        // bigger paper, so that cap is the one thing it removes. The 55 vh floor above keeps the
-        // paper at least half the viewport even with the checklist, the guide and the inspector open.
-        className={`relative isolate min-h-[280px] flex-1 overflow-auto overscroll-contain rounded-lg border border-line-soft bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
-          fullscreen ? '' : 'max-h-[70vh]'
-        } ${
+        // The paper takes its height from whatever holds it: in the tab that is the pane body, whose
+        // resize grip is the only way a learner can ask for more diagram, and full screen it is the
+        // 75 vh floor above. The old 280 px floor and 70 vh cap were both wrong for the pane — the
+        // floor made a shorter pane overflow instead of shrinking, and the cap made the grip stop
+        // moving the paper at 70% of the window — so compact mode now follows the pane, with a small
+        // floor that only stops it collapsing to nothing.
+        className={`relative isolate ${
+          fullscreen ? 'min-h-[280px]' : 'min-h-[140px]'
+        } flex-1 overflow-auto overscroll-contain rounded-lg border border-line-soft bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
           viewport.panning ? 'cursor-grabbing select-none' : 'cursor-grab'
         }`}
         style={{

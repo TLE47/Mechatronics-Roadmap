@@ -4,6 +4,8 @@ import {
   tokenizeInlineCode,
   type InlineCodeToken,
 } from '../../micro/inlineCode.ts';
+import { MathView } from '../MathView';
+import { parseInline } from '../../readerMarkdown';
 
 /**
  * Rich, hand-sized typography for micro-learning (`components/micro/MicroText.tsx`).
@@ -151,23 +153,46 @@ export function MicroOptionText({ text }: { text: string }) {
   );
 }
 
+/**
+ * A goal's inline marks, drawn with the reader's own parser.
+ *
+ * Goals are authored in Markdown — `**bold**`, `` `code` ``, `$math$` — and only the first two used
+ * to be drawn: a formula was printed as its own LaTeX source in the middle of the sentence, so every
+ * lesson with one showed `$\\pi\\text{ rad} = 180^\\circ$` instead of the formula. The split is
+ * `parseInline`, the parser the lesson reader and the workflow card use, so a goal and a page agree on
+ * what `$5 and $6` means (money, not an unclosed formula) and a formula inside a bold phrase is drawn
+ * rather than left as source. `MathView` is the same KaTeX component the cheat sheet renders with.
+ */
+function inlineRuns(text: string, keyPrefix: string): React.ReactNode[] {
+  return parseInline(text).map((run, index) => {
+    const key = `${keyPrefix}${index}`;
+    switch (run.k) {
+      case 'code':
+        return <InlineCode key={key} code={run.v} />;
+      case 'strong':
+        return (
+          <strong key={key} className="font-bold text-ink">
+            {inlineRuns(run.v, `${key}-`)}
+          </strong>
+        );
+      case 'em':
+        return <em key={key}>{inlineRuns(run.v, `${key}-`)}</em>;
+      case 'u':
+        return <u key={key}>{inlineRuns(run.v, `${key}-`)}</u>;
+      case 'link':
+        return (
+          <a key={key} href={run.href} className="text-accent underline">
+            {inlineRuns(run.v, `${key}-`)}
+          </a>
+        );
+      case 'math':
+        return <MathView key={key} math={run.v} className="mx-0.5 align-baseline" />;
+      default:
+        return <React.Fragment key={key}>{run.v}</React.Fragment>;
+    }
+  });
+}
+
 export function MicroRichText({ text, className = '' }: { text: string; className?: string }) {
-  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
-  return (
-    <span className={className}>
-      {parts.map((part, index) => {
-        if (part.startsWith('**') && part.endsWith('**')) {
-          return (
-            <strong key={`${part}-${index}`} className="font-bold text-ink">
-              {part.slice(2, -2)}
-            </strong>
-          );
-        }
-        if (part.startsWith('`') && part.endsWith('`')) {
-          return <InlineCode key={`${part}-${index}`} code={part.slice(1, -1)} />;
-        }
-        return <React.Fragment key={`${part}-${index}`}>{part}</React.Fragment>;
-      })}
-    </span>
-  );
+  return <span className={className}>{inlineRuns(text, 'inline')}</span>;
 }

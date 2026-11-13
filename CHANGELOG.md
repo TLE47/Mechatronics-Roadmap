@@ -16,6 +16,49 @@ flowchart LR
 
 ---
 
+## [2026-11-13] — The clock stops at the pass, goals show their formulas, and the diagram folds
+
+**Study clock.** A lesson that passes **now ends its stretch.** `completeTimer` banks the elapsed time
+and closes the running stretch exactly as a Pause does, so the digits stop instead of billing an
+unattended tab, and the session log gains a `Lesson completed` line carrying both the clock reading and
+the stretch it closed. The row opens its log by itself when that line arrives — a completion is written
+by a passing run, not by the learner's press — and its status line reads *Lesson completed — clock
+stopped at 0:12:30* rather than *Paused*. Pressing Resume afterwards starts a new stretch, because a
+learner who keeps reading is doing more work.
+
+**The clock now travels between devices.** The progress snapshot gained an optional `studyTimer`, so a
+sitting started on one machine is on the clock on the next one. `mergeProgress` picks the copy whose
+`lastTick` is newest — the clock is a running record, not a set of flags, so it has no union — and a
+progress reset does not stop the sitting. A sign-in applies the merged clock and writes it to storage
+before the row and the reminder read it, and every press or completion triggers the same debounced
+upload the flags already used.
+
+**Goals render their formulas.** `MicroRichText` — the renderer behind the editor goal and the
+requirements list — only knew `**bold**` and `` `code` ``, so 28 of the 95 lesson goals printed their
+LaTeX source in the middle of the sentence. It now splits with `parseInline`, the reader's own parser,
+and draws each `$…$` run through `MathView` (KaTeX). Maths nested in a bold phrase
+(`**Proportional ($K_p$)**`) is drawn because bold recurses, and money stays money: `$5 and $6` is
+still two dollar amounts, not an unclosed formula.
+
+**Lesson P.8 explains "unsigned".** The lesson used the range `0 … 2^N − 1` without ever naming why
+there is no negative, so Idea 2, a Micro focus and the Bridge Notes now say it: an unsigned N-bit
+integer spends every bit on the magnitude, has no sign bit, counts 0 to 255 in a byte, and that is why
+a signed byte stops at 127 and why the lesson's second function is `max_unsigned_int`.
+
+**Lesson P.9's closing note is worked, not asserted.** The dense paragraph under *Bridge Notes* became
+two named questions — *how much of full scale is this reading?* then *how far is that on the target
+scale?* — one formula whose symbols are read as names for those steps, the interval bracket explained,
+the two endpoint checks, and the lesson's own `511.5` carried through both tops to `2.50 V` and `127.5`.
+
+**Workflow.** The paper now takes its height from the pane that holds it: the compact canvas lost its
+280 px floor and its 70 vh cap, which together made a shorter pane overflow and made the resize grip
+stop moving the diagram at 70% of the window (full screen keeps its 280 px floor). The action row
+gained a **Collapse / Expand** button that hides the canvas and the drag hints without touching a single
+card, plus titles on Templates, Copy Mermaid, Copy Markdown and Clear.
+
+**More ⋯.** The **Debugger tools** heading is a button: it folds the nine step/trace/breakpoint
+controls away and back, open by default, with the same tooltip rule every other tile follows.
+
 ## [2026-11-11] — One settings surface, a debugger tray, and a version you can read
 
 **Runner.** **More ⋯** is now a tray of compact tiles — icon over a 10.5 px word — and a press on one

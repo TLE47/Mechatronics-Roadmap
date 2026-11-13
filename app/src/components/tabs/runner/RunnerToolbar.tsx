@@ -3,6 +3,7 @@ import {
   Activity,
   ArrowLeftRight,
   Bug,
+  ChevronDown,
   CornerDownRight,
   CornerUpLeft,
   SkipForward,
@@ -154,6 +155,10 @@ export function RunnerToolbar({
   const tile =
     'flex min-w-[74px] shrink-0 flex-col items-center justify-center gap-1 rounded-lg border px-2 py-1.5 text-[13px] font-mono cursor-pointer transition-colors';
   const tileLabel = 'text-[10.5px] leading-tight text-center';
+  // The debugger group folds. It is nine controls, and the learner who opens More to change Vim mode
+  // or replay the last run does not need all nine in front of them; the heading was a label over
+  // tools that could not be put away. Open by default, so More shows exactly what it always did.
+  const [debuggerOpen, setDebuggerOpen] = useState(true);
   return (
     <div ref={toolbarRef} data-testid="runner-toolbar" className="flex flex-wrap items-center gap-1.5">
       {/* The presets live on this card, not in the editor's own header: Read hides that header, and a
@@ -494,10 +499,32 @@ export function RunnerToolbar({
           className="mt-2.5 border-t pt-2"
           style={{ borderColor: 'var(--border)' }}
         >
-          <p className="px-1 pb-1.5 text-[11px] font-mono uppercase tracking-[0.08em] text-faint">
+          <button
+            type="button"
+            onClick={() => setDebuggerOpen((open) => !open)}
+            aria-expanded={debuggerOpen}
+            aria-controls="debugger-tools"
+            data-testid="btn-debugger-toggle"
+            data-tip={
+              debuggerOpen
+                ? 'Hide the debugger tools: the step, trace and breakpoint buttons fold away; nothing is turned off'
+                : 'Show the debugger tools: step through a paused run, replay a trace, list the breakpoints'
+            }
+            className="mb-1.5 flex w-full cursor-pointer items-center gap-1.5 rounded px-1 py-0.5 text-left font-mono text-[12px] uppercase tracking-[0.08em] text-faint hover:bg-raise hover:text-body"
+          >
+            <ChevronDown
+              className={`h-3 w-3 transition-transform ${debuggerOpen ? '' : '-rotate-90'}`}
+              aria-hidden="true"
+            />
             Debugger tools
-          </p>
-        <div className="flex flex-wrap items-start gap-1.5">
+            <span className="ml-auto normal-case tracking-normal">
+              {debuggerOpen ? 'Hide' : 'Show'}
+            </span>
+          </button>
+        <div
+          id="debugger-tools"
+          className={`${debuggerOpen ? 'flex' : 'hidden'} flex-wrap items-start gap-1.5`}
+        >
           {/* Like an IDE's step toolbar: always in the menu, disabled until there is a parked frame
               to step. A control that only appears while paused is a control a learner cannot find
               when they are looking for it — and its tooltip is what says why it is greyed. */}

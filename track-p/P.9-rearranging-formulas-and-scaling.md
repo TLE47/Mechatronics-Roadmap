@@ -91,9 +91,22 @@ $$
 s = \frac{x_{\text{final}} - x_0}{t}
 $$
 
-The exact same algebra powers **linear range scaling**. Whenever you map a 10-bit reading $x \in [0, X_{\max}]$ into a target range $y \in [0, Y_{\max}]$:
-1. Divide by the input maximum to get the normalized fraction $\frac{x}{X_{\max}} \in [0.0, 1.0]$.
-2. Multiply that fraction by the output maximum $Y_{\max}$: $y = \left(\frac{x}{X_{\max}}\right) \times Y_{\max}$.
+**Scaling is the same move, done twice.** A 10-bit reading is not a voltage. It is a count from `0` to `1023`, and the job is to say what that count means on a scale you care about. Ask it as two questions rather than one formula:
+
+1. **How much of full scale is this reading?** Divide the reading by the reading's own top count: `fraction = raw_10bit / 1023.0`. A reading of `0` gives `0.0`, a reading of `1023` gives `1.0`, and a reading of `511.5` gives `0.5`. It is the same idea as `percent / 100.0`, only for counts — a pure number between 0 and 1 with no units yet.
+2. **How far is that on the target scale?** Multiply the fraction by the target's top value: `volts = fraction * 5.0` for a 5 V board, or `command = fraction * 255.0` for an 8-bit motor command. A fraction of `0.0` lands on the bottom of the target, `1.0` on its top, and `0.5` exactly halfway.
+
+Written as one line, that is:
+
+$$
+y = \left(\frac{x}{X_{\max}}\right) \times Y_{\max}
+$$
+
+Read the symbols as names for what you just did, not as new maths: $x$ is the raw reading, $X_{\max}$ is its top count (`1023`), $y$ is the answer, and $Y_{\max}$ is the target's top value (`5.0` for volts, `255` for a command). The bracket $[0, X_{\max}]$ is only shorthand for "any reading from `0` up to $X_{\max}$" — the interval the raw count can land in.
+
+Two quick checks tell you the order is right. Put `1023` in and the target's own top must come out (`1023 / 1023.0 * 5.0 = 5.0` volts); put `0` in and `0` must come out. **Zero maps to zero, and equal steps stay equal** — that is what makes this *linear*.
+
+For the mid reading this lesson asks for, `511.5`: the fraction is `511.5 / 1023.0 = 0.5`, so `0.5 * 5.0 = 2.50` volts and `0.5 * 255.0 = 127.5` as an 8-bit command. One fraction, two tops, two different answers — which is exactly why the two scaling functions cannot share a single constant.
 
 ---
 

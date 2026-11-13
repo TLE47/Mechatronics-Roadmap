@@ -66,6 +66,7 @@ flowchart LR
   - **What to read:** Read exact headings **`Why Binary?`**, **`Counting in binary`**, and **`Converting binary to decimal`**.
   - **What to skip:** Skip **`Bitwise Operators`**, **`Hexadecimal`**, and **`Two's Complement`** (not needed until Track 04).
   - **Key takeaway:** Digital circuits store numbers using **bits** (binary digits that are either `0` for OFF or `1` for ON). Each extra bit doubles the number of possible combinations, so an **$N$-bit** register has **$2^N$ states** numbered from **`0` up to $2^N - 1$**.
+  - **Unsigned:** those counts are **unsigned integers** — whole numbers with **no sign bit**, because all $N$ bits count towards the magnitude. Nothing in the register says "minus", so the range is $0$ to $2^N - 1$ and there is no negative value to return: `max_unsigned_int(8)` is `255`, not `127`. A *signed* register spends its top bit on the sign instead, which is why a signed byte stops at `127`. Motor commands and sensor counts are unsigned — a duty cycle has no negative direction, a direction pin carries the sign — so this lesson's second function is named `max_unsigned_int` on purpose.
   - **Alternative resource:** [MathsIsFun — Binary Number System](https://www.mathsisfun.com/binary-number-system.html) `[HTTP 200 — Verified by scripts/check_links.py]` — Read exact headings **`How do we Count using Binary?`** and **`Position`** (powers of 2: $1, 2, 4, 8, 16, \dots$).
 
 #### Micro focus: period is the reciprocal of frequency
@@ -75,6 +76,10 @@ Frequency (`f`, in hertz `Hz`) counts cycles per second, and period (`T`) is the
 #### Micro focus: each bit doubles the states
 <a id="micro-binary-bits"></a>
 A bit holds 0 or 1, and an N-bit register has 2^N states, numbered from 0 to 2^N - 1. Eight bits give 256 states from 0 to 255, which is exactly why a motor command register stops at 255.
+
+#### Micro focus: unsigned means no room for a minus sign
+<a id="micro-unsigned"></a>
+"Unsigned" says what the bits are spent on: every one of the N bits counts for the number, and none is reserved for a sign. So an unsigned 8-bit register counts 0 to 255 — 256 positive-or-zero values — and it can never hold `-1`. A signed register gives up the top bit to mean "negative", so its positive range stops at 127. The motor commands and sensor counts this course reads are all unsigned.
 
 #### Micro focus: place values double
 <a id="micro-place-values"></a>
@@ -98,6 +103,8 @@ Second, **binary bits ($2^N$)** explain why microcontrollers use seemingly stran
 - **12-bit register** (used by 12-bit sensor inputs in later tracks): $2^{12} = 4{,}096$ states $\rightarrow$ integers **`0` to `4095`** ($2^{12} - 1$).
 
 Because counting starts at `0`, the maximum integer is always **$2^N - 1$**.
+
+**Unsigned** is the word for that range. An unsigned $N$-bit integer uses every bit for the number itself, so it has no room for a minus sign: 8 unsigned bits are 256 values, `0` to `255`. If you have met a byte that stopped at `127`, that one was *signed* — it spent its top bit saying "negative". The two things this lesson reads are unsigned by nature: an ADC count runs from `0` counts upward, and a motor command runs from `0` duty to full duty with a separate direction pin carrying the sign. That is why the function is `max_unsigned_int(n_bits)` and why it returns $2^N - 1$ rather than $2^{N-1} - 1$.
 
 ---
 

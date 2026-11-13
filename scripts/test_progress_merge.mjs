@@ -150,6 +150,43 @@ check('resetAt 0 is an ordinary snapshot, not a reset', () => {
   assert.equal(mergeProgress(local, remote).verifiedLessons['00.1'], true);
 });
 
+console.log('the study clock');
+
+check("the clock that ticked last wins, whichever side it came from", () => {
+  const lapstop = { bankedMs: 60000, runningSince: 500, lastTick: 600, lesson: 'P.1', log: [] };
+  const phone = { bankedMs: 120000, runningSince: null, lastTick: 900, lesson: 'P.2', log: [] };
+  const merged = mergeProgress(base({ updatedAt: 2000, studyTimer: lapstop }), base({ studyTimer: phone }));
+  assert.equal(merged.studyTimer, phone);
+  const other = mergeProgress(base({ studyTimer: phone }), base({ updatedAt: 2000, studyTimer: lapstop }));
+  assert.equal(other.studyTimer, phone);
+});
+
+check('a clock on one side is carried, and none on both is undefined', () => {
+  const only = { bankedMs: 0, runningSince: 42, lastTick: 42, lesson: '', log: [] };
+  assert.equal(mergeProgress(base({ studyTimer: only }), base()).studyTimer, only);
+  assert.equal(mergeProgress(base(), base({ studyTimer: only })).studyTimer, only);
+  assert.equal(mergeProgress(base(), base()).studyTimer, undefined);
+});
+
+check('a reset does not stop the sitting', () => {
+  const timer = { bankedMs: 0, runningSince: 42, lastTick: 42, lesson: '', log: [] };
+  const local = base({ updatedAt: 1000, resetAt: 900, studyTimer: timer });
+  const remote = base({ updatedAt: 500 });
+  assert.deepEqual(mergeProgress(local, remote).studyTimer, timer);
+});
+
+check('a snapshot carrying a clock is still accepted, and garbage in the field is not fatal', () => {
+  assert.equal(
+    isProgressSnapshot(
+      base({ studyTimer: { bankedMs: 0, runningSince: null, lastTick: 1, lesson: '', log: [] } })
+    ),
+    true
+  );
+  // Old rows simply have no clock; a clock is never required for the row to be readable.
+  assert.equal(isProgressSnapshot(base()), true);
+  assert.equal(isProgressSnapshot(base({ studyTimer: 'nope' })), false);
+});
+
 console.log('snapshot shape');
 
 check('the current schema is accepted', () => {

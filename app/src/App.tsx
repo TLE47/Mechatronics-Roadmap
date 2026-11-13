@@ -16,6 +16,7 @@ import { PhoneTabPicker } from './components/PhoneTabPicker';
 import { StartHereCard } from './components/StartHereCard';
 import { StoryCard } from './components/game/StoryCard';
 import { markStorySeen, readStorySeen } from './story';
+import { readTimer, writeTimer, STUDY_CLOCK_EVENT } from './studyTimer';
 // The toast ships with the reward engine, not with the first screen: it can only appear after a
 // verification, and by then its chunk is already fetched beside the rules that decided it.
 const AwardToast = React.lazy(() =>
@@ -286,6 +287,10 @@ function localSnapshot(): ProgressSnapshot {
     learningLog: readLearningLog(),
     // Carried so a merge on this machine can tell "erased" from "nothing to say" (`progressReset.ts`).
     resetAt: readResetAt(),
+    // The sitting travels with the flags so a lesson started on one device is on the clock on the
+    // next one. Read here, at upload time, rather than held in state: the timer writes itself to
+    // storage on every press, and this snapshot must carry the clock as it is now.
+    studyTimer: readTimer(),
   };
 }
 
@@ -696,13 +701,23 @@ export const App: React.FC = () => {
     }
   }, [completedLessons]);
 
+  // The clock is not React state at the top of the app — it lives in storage and in its own rows — so
+  // this is the one signal that it moved: a Start, a Pause, or the completion a passing run writes.
+  // Counting them is what makes the debounced upload below run for a clock change as well as a flag.
+  const [clockNonce, setClockNonce] = useState(0);
+  useEffect(() => {
+    const bump = () => setClockNonce((nonce) => nonce + 1);
+    window.addEventListener(STUDY_CLOCK_EVENT, bump);
+    return () => window.removeEventListener(STUDY_CLOCK_EVENT, bump);
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY_PROGRESS_UPDATED, String(Date.now()));
     } catch {
       // ignore storage errors
     }
-  }, [completedMilestones, verifiedLessons, completedLessons]);
+  }, [completedMilestones, verifiedLessons, completedLessons, clockNonce]);
 
   useEffect(() => {
     if (!accountsConfigured) return;
@@ -743,6 +758,12 @@ export const App: React.FC = () => {
         setCompletedLessons(merged.completedLessons);
         setCompletedMilestones(merged.completedMilestones);
         replaceLearningLog(merged.learningLog);
+        // The clock the merge chose is now this browser's clock — the row and the reminder read the
+        // same storage, so one write plus the event moves the digits on this screen too.
+        if (merged.studyTimer) {
+          writeTimer(merged.studyTimer);
+          window.dispatchEvent(new Event(STUDY_CLOCK_EVENT));
+        }
         syncReady.current = true;
         await saveProgress(session.user.id, { ...merged, updatedAt: Date.now() });
         if (!cancelled) setSyncNote(remote ? 'Progress merged with your account.' : 'Progress saved to your account.');
@@ -799,7 +820,7 @@ export const App: React.FC = () => {
         );
     }, 1200);
     return () => window.clearTimeout(timer);
-  }, [completedMilestones, verifiedLessons, completedLessons, accountUserId]);
+  }, [completedMilestones, verifiedLessons, completedLessons, accountUserId, clockNonce]);
 
   /** The address bar as an internal destination: `?lesson=P.1`, `?view=dashboard`, or the root. */
   const intendedDestination = (): string =>

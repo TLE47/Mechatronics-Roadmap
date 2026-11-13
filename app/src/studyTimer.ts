@@ -184,16 +184,25 @@ export function pauseTimer(timer: StudyTimer, now: number): StudyTimer {
 /**
  * The lesson was finished, at `now`, on the clock's own reading.
  *
- * Finishing a lesson is the fact the clock exists to record, and it is not a press: the clock keeps
- * running (the learner may keep reading), nothing is banked, and the stretch is untouched. The line
- * joins the same session log a Start or Pause writes, so the card can say the lesson was done at
- * 14:32 with 0:52:10 on the clock.
+ * Finishing a lesson is the fact the clock exists to record, and it is not a press — nobody pressed
+ * it. It is also where the clock stops: the pass is what the sitting was for, so the stretch is
+ * banked at that instant exactly as a Pause would bank it, and the digits stop counting so an
+ * unattended tab cannot keep billing after the lesson is done. The line joins the same session log a
+ * Start or Pause writes — `Lesson completed` with the stretch it closed — so the card answers "when
+ * was this done, and how long did the last stretch run".
+ *
+ * Resuming afterwards is allowed and is its own press: a learner who keeps reading presses Resume.
  */
 export function completeTimer(timer: StudyTimer, now: number): StudyTimer {
   const at = Math.round(now);
+  const clockMs = elapsedMs(timer, at);
+  const stretchMs = timer.runningSince === null ? null : Math.max(0, at - timer.runningSince);
   return {
-    ...timer,
-    log: addPress(timer, { action: 'complete', at, clockMs: elapsedMs(timer, at), stretchMs: null }),
+    bankedMs: clockMs,
+    runningSince: null,
+    lastTick: at,
+    lesson: timer.lesson,
+    log: addPress(timer, { action: 'complete', at, clockMs, stretchMs }),
   };
 }
 
@@ -203,6 +212,9 @@ export function completeTimer(timer: StudyTimer, now: number): StudyTimer {
  * `markLessonVerified` runs on every passing run, so this is the guard that keeps a second Run from
  * writing a second "Lesson completed" line. The set is per page, not stored: a new visit is a new
  * session, and a log that remembered last week's completions would be a history, not a session.
+ *
+ * A lesson finished while the clock was idle still writes its line — the fact is the fact — and the
+ * clock stays at zero; a clock that stops on a completion it did not see running has nothing to stop.
  */
 const completionLogged = new Set<string>();
 

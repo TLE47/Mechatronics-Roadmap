@@ -97,8 +97,15 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
   }, []);
 
   // The lesson's reminder starts the same clock, so this row follows a write it did not make.
+  // A completion is written by a passing run rather than by this row, and it is the one write the
+  // learner should not have to go looking for: the log opens itself so the `Lesson completed` line
+  // and the stopped clock are in front of them the moment the pass lands.
   useEffect(() => {
-    const refresh = () => setTimer(resumeTimer(readTimer(), Date.now()));
+    const refresh = () => {
+      const stored = resumeTimer(readTimer(), Date.now());
+      if (stored.log[stored.log.length - 1]?.action === 'complete') setLogOpen(true);
+      setTimer(stored);
+    };
     window.addEventListener(STUDY_CLOCK_EVENT, refresh);
     return () => window.removeEventListener(STUDY_CLOCK_EVENT, refresh);
   }, []);
@@ -136,6 +143,9 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
   const elapsed = elapsedMs(timer, Date.now());
   const running = timer.runningSince !== null;
   const state = running ? 'running' : elapsed > 0 ? 'paused' : 'idle';
+  // The last thing the session recorded being the lesson's completion is what the row says in its
+  // status line: the digits are stopped, and the reason is the pass, not a stray pause.
+  const lastAction = timer.log[timer.log.length - 1]?.action ?? null;
   const today = formatDuration(todayMs);
 
   const onToggle = () => {
@@ -228,9 +238,11 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
             ? `Logged ${logged}`
             : running
               ? 'Counting this lesson'
-              : elapsed > 0
-                ? 'Paused — press Resume'
-                : 'Press Start'}
+              : lastAction === 'complete' && elapsed > 0
+                ? `Lesson completed — clock stopped at ${formatClock(elapsed)}`
+                : elapsed > 0
+                  ? 'Paused — press Resume'
+                  : 'Press Start'}
         </span>
       )}
       {!compact && timer.log.length > 0 && (
