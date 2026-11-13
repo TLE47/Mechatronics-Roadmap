@@ -396,14 +396,17 @@ export function WorkflowCanvas({
         role="group"
         aria-label="Workflow canvas. Arrow keys pan it; drag a card by its header to move the card."
         aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
-        // The paper takes its height from whatever holds it: in the tab that is the pane body, whose
-        // resize grip is the only way a learner can ask for more diagram, and full screen it is the
-        // 75 vh floor above. The old 280 px floor and 70 vh cap were both wrong for the pane — the
-        // floor made a shorter pane overflow instead of shrinking, and the cap made the grip stop
-        // moving the paper at 70% of the window — so compact mode now follows the pane, with a small
-        // floor that only stops it collapsing to nothing.
+        // The paper is still a bounded surface: 24 cards scroll inside it rather than growing the
+        // lesson (the suite asserts both). Its ceiling is the pane body's own height while that body
+        // has been resized — `--pane-body-h`, written by the grip at the body's bottom edge — and
+        // 70 vh when it has not. That is what makes the grip move the diagram both ways: a taller
+        // body lifts the cap, a shorter one lowers it, and the 280 px floor that used to block every
+        // shrink is now only a full-screen rule. The 140 px compact floor stops the paper collapsing
+        // to nothing in a pane that has been dragged almost shut.
         className={`relative isolate ${
-          fullscreen ? 'min-h-[280px]' : 'min-h-[140px]'
+          fullscreen
+            ? 'min-h-[280px]'
+            : 'min-h-[140px] max-h-[var(--pane-body-h,70vh)]'
         } flex-1 overflow-auto overscroll-contain rounded-lg border border-line-soft bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
           viewport.panning ? 'cursor-grabbing select-none' : 'cursor-grab'
         }`}
