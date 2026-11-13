@@ -4,6 +4,7 @@ import { StudyTips } from './components/StudyTips';
 import { GuidedTourBar, TourStepInfo } from './components/GuidedTourBar';
 import { CheatSheetModal } from './components/CheatSheetModal';
 import { CommandPalette } from './components/CommandPalette';
+import { Toaster, toast } from 'sonner';
 import { ShortcutsModal } from './components/ShortcutsModal';
 import { lessonSearchItems } from './lessonSearch';
 import { termSearchItems } from './termSearch';
@@ -522,6 +523,31 @@ export const App: React.FC = () => {
   // last verification earned. Both are local; a restore merges rather than replaces.
   const [awardsLedger, setAwardsLedger] = useState<Award[]>([]);
   const [gameAwards, setGameAwards] = useState<Award[]>([]);
+
+  // The ledger's newest lines, said once. The card is still `AwardToast` — the certificate a learner
+  // reads — but the toast around it is sonner's: the queue, the portal, the live region, the
+  // six-second hold and its dismissal are the library's rules, not a `setTimeout` this file owns.
+  // `unstyled` keeps the card's own skin, which is drawn from the workbench tokens below.
+  useEffect(() => {
+    if (gameAwards.length === 0) return;
+    const id = toast.custom(
+      (toastId) => (
+        <React.Suspense fallback={null}>
+          <AwardToast
+            awards={gameAwards}
+            onClose={() => {
+              toast.dismiss(toastId);
+              setGameAwards([]);
+            }}
+          />
+        </React.Suspense>
+      ),
+      { duration: 6000, position: 'bottom-right', unstyled: true }
+    );
+    return () => {
+      toast.dismiss(id);
+    };
+  }, [gameAwards]);
   const [storySeen, setStorySeen] = useState<boolean>(() => readStorySeen());
   const [verifiedLessons, setVerifiedLessons] = useState<Record<string, boolean>>(() => {
     try {
@@ -2228,11 +2254,16 @@ export const App: React.FC = () => {
 
       {/* What the last verification earned. It never takes focus and never blocks the editor, and
           its source is the ledger write that just happened — not a replay of the whole ledger. */}
-      {gameAwards.length > 0 && (
-        <React.Suspense fallback={null}>
-          <AwardToast awards={gameAwards} onClose={() => setGameAwards([])} />
-        </React.Suspense>
-      )}
+      {/* One stack for the whole app. The cards are the app's own, the queue and the live region are
+          sonner's, and its position is per-toast so the pass card can sit bottom-centre while an
+          award sits in the corner. */}
+      <Toaster
+        position="bottom-right"
+        closeButton={false}
+        visibleToasts={2}
+        offset={{ bottom: 80, right: 16 }}
+        mobileOffset={{ bottom: 96 }}
+      />
 
       {/* Focus mode hides every control that would offer a different task, so the way out has to be
           on screen itself: one pill, and Escape doing the same thing. */}

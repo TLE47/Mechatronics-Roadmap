@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { showPassNotice } from './runner/PassNotice';
 import { PYTHON_LESSONS, PythonLessonItem } from '../../data/pythonLessonsData';
 import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabPlant';
 import { pyodideCdn } from '../../runtime/pyodideCdn';
@@ -528,8 +529,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     watchError,
     setWatchError,
     pauseCapable,
-    showPassToast,
-    setShowPassToast,
     pyodideStatus,
     setPyodideStatus,
     passStatus,
@@ -1474,9 +1473,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     runShortcutRef.current();
   }, [runRequest]);
 
-  // A verdict earns a toast once, and the lesson pass requests the next tape once.
-  usePassToast(passStatus, selectedId, setShowPassToast);
-
   const filteredLessons = PYTHON_LESSONS.filter((l) => {
     const matchesTrack =
       trackFilter === 'all' ||
@@ -1501,6 +1497,17 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     currentIdx >= 0 && currentIdx < PYTHON_LESSONS.length - 1
       ? PYTHON_LESSONS[currentIdx + 1]
       : null;
+
+  // A verdict earns a toast once, and the lesson pass requests the next tape once. The card is a
+  // module of its own (`runner/PassNotice.tsx`) because the tab has a line budget and a toast is a
+  // view; sonner owns the stack, the hold and the dismissal.
+  usePassToast(passStatus, selectedId, () =>
+    showPassNotice({
+      lessonId: currentLesson.id,
+      nextId: nextLesson?.id ?? null,
+      onNext: nextLesson ? () => openNextLesson(nextLesson.id) : null,
+    })
+  );
 
   const verifiedCount = PYTHON_LESSONS.filter((l) => verifiedLessons[l.id]).length;
   const completedCount = PYTHON_LESSONS.filter((l) => completedLessons[l.id]).length;
@@ -2875,43 +2882,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         })}
       </p>
 
-      {showPassToast && passStatus === 'passed' && (
-        <div
-          className="pointer-events-none fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 flex justify-center px-4 sm:bottom-6"
-          data-testid="pass-toast"
-        >
-          <div
-            className="pointer-events-auto flex animate-pop items-center gap-3 rounded-[var(--r-full)] border py-2 pl-2.5 pr-2 shadow-[var(--shadow-lg)]"
-            style={{
-              borderColor: 'color-mix(in srgb, var(--emerald) 45%, transparent)',
-              backgroundColor: 'var(--panel-2)',
-            }}
-          >
-            <span
-              className="grid h-8 w-8 shrink-0 place-items-center rounded-full"
-              style={{ backgroundColor: 'var(--emerald)', color: 'var(--inverse)' }}
-              aria-hidden="true"
-            >
-              <Check className="h-4 w-4" strokeWidth={3} />
-            </span>
-            <div className="pr-1">
-              <p className="text-[12.5px] font-semibold" style={{ color: 'var(--text)' }}>
-                Lesson {currentLesson.id} passed
-              </p>
-              <p className="text-[12px]" style={{ color: 'var(--dim)' }}>
-                Behavioural checks and output both green
-              </p>
-            </div>
-            {nextLesson && (                <button
-                onClick={() => openNextLesson(nextLesson.id)}
-                className="btn btn-primary px-3 py-1.5 text-[13px]"
-              >
-                Next lesson →
-              </button>
-            )}
-          </div>
-        </div>
-      )}
       {/* The phone's one row of Study controls. Fixed, because the Run button being a scroll away
           is the bug the whole surface split exists to fix; hidden while a sheet is open, because
           the sheet owns the screen (`index.css`). */}
