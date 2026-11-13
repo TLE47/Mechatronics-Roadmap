@@ -352,7 +352,13 @@ async function seedWorkflow(page) {
     // The palette presses above leave the page scrolling for a frame or two; a handle read while
     // that settles is pressed at a point the card has already left, and the drag lands on paper.
     const grip = page.getByTestId(`workflow-node-drag-${index}`);
-    await grip.scrollIntoViewIfNeeded();
+    // Centre the card before pressing its handle. `scrollIntoViewIfNeeded` calls a card that merely
+    // peeks out below the sticky header "visible" and scrolls nothing, and a press at that height
+    // lands on the header, so the nudge silently does nothing and the card keeps its auto position.
+    // Centring is a fact about the viewport, not about the drawing.
+    await page
+      .getByTestId(`workflow-node-${index}`)
+      .evaluate((element) => element.scrollIntoView({ block: 'center' }));
     await page.waitForTimeout(80);
     const handle = await grip.boundingBox();
     await page.mouse.move(handle.x + 16, handle.y + handle.height / 2);
