@@ -47,8 +47,18 @@ export function useViewport(
   /** View scale, not document data: a fit is a lens on the graph, never a coordinate written to it. */
   const [scale, setScale] = useState(1);
   const viewTarget = useRef<{ left: number; top: number } | null>(null);
-  /** Whether the learner's last lens was Fit: a resize re-fits a fitted view, never a 100% one. */
-  const fitted = useRef(false);
+  /**
+   * Whether the learner pinned the lens at life size.
+   *
+   * The view follows the paper until someone presses 100%: a resize re-fits it, the same way Fit
+   * does, so the diagram and its text grow and shrink with the room they are given. Pressing 100%
+   * is a deliberate look at life size and a resize must not undo it; pressing Fit takes the pin back
+   * off and the view follows the pane again.
+   */
+  const pinnedAtFullSize = useRef(false);
+  /** The observer below is mounted once, so it reads the current scale through a ref. */
+  const scaleRef = useRef(scale);
+  scaleRef.current = scale;
   const [viewSeq, setViewSeq] = useState(0);
   const panStart = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
   const [panning, setPanning] = useState(false);
@@ -138,10 +148,35 @@ export function useViewport(
     setViewSeq((seq) => seq + 1);
     return true;
   };
-  // The resize observer below is mounted once, so it reads the current `applyFit` through a ref
-  // rather than closing over the first render's cards.
+  // The resize observer below is mounted once, so it reads the current fit through a ref rather
+  // than closing over the first render's cards.
   const applyFitRef = useRef(applyFit);
   applyFitRef.current = applyFit;
+
+  /**
+   * Re-measure the lens after the paper changed size.
+   *
+   * Unlike a press of Fit, this keeps the canvas point at the middle of the viewport where it was,
+   * so the card being read does not jump away when the pane moves. It returns without touching
+   * anything when the scale would not move: a diagram already at life size must not get a new scroll
+   * offset just because the window changed.
+   */
+  const refitToPaper = () => {
+    const surface = surfaceRef.current;
+    const fit = measureFit();
+    if (!surface || !fit) return;
+    if (Math.abs(fit.scale - scaleRef.current) < 0.005) return;
+    const centreX = (surface.scrollLeft + surface.clientWidth / 2) / scaleRef.current;
+    const centreY = (surface.scrollTop + surface.clientHeight / 2) / scaleRef.current;
+    setScale(fit.scale);
+    viewTarget.current = {
+      left: centreX * fit.scale - surface.clientWidth / 2,
+      top: centreY * fit.scale - surface.clientHeight / 2,
+    };
+    setViewSeq((seq) => seq + 1);
+  };
+  const refitRef = useRef(refitToPaper);
+  refitRef.current = refitToPaper;
 
   const fitOrReset = () => {
     const surface = surfaceRef.current;
@@ -150,7 +185,7 @@ export function useViewport(
       const centreX = (surface.scrollLeft + surface.clientWidth / 2) / scale;
       const centreY = (surface.scrollTop + surface.clientHeight / 2) / scale;
       setScale(1);
-      fitted.current = false;
+      pinnedAtFullSize.current = true;
       viewTarget.current = {
         left: centreX - surface.clientWidth / 2,
         top: centreY - surface.clientHeight / 2,
@@ -158,7 +193,7 @@ export function useViewport(
       setViewSeq((seq) => seq + 1);
       return;
     }
-    if (applyFit()) fitted.current = true;
+    if (applyFit()) pinnedAtFullSize.current = false;
   };
 
   /**
@@ -166,9 +201,11 @@ export function useViewport(
    *
    * Resizing the pane (the bottom grip, a split divider, the window) used to leave the diagram at the
    * scale it had been fitted to, so a bigger canvas got a bigger page of empty paper and the cards'
-   * text stayed the size it was. While the view is a fit, a resize re-measures it, and the cards - and
-   * their text - grow and shrink with the room they are given. At 100% nothing happens, because life
-   * size is life size.
+   * text stayed the size it was. It used to be re-measured only after a press of Fit, which left the
+   * default view - a diagram wider than its paper, at 100% - with text that ignored the pane
+   * entirely. Now every resize re-measures it, so the cards and their text grow and shrink with the
+   * room they are given whether or not Fit was ever pressed. Life size is still the ceiling, and a
+   * deliberate 100% keeps the diagram where the learner put it.
    */
   useEffect(() => {
     const surface = surfaceRef.current;
@@ -181,14 +218,17 @@ export function useViewport(
       const nextHeight = surface.clientHeight;
       // A scrollbar appearing changes the surface by a few pixels; that is not a resize to re-fit.
       if (Math.abs(nextWidth - width) < 2 && Math.abs(nextHeight - height) < 2) return;
+      // A paper that was not measurable when the observer started has just been born, not resized.
+      const born = width <= 0 || height <= 0;
       width = nextWidth;
       height = nextHeight;
-      if (!fitted.current) return;
+      if (born) return;
+      if (pinnedAtFullSize.current) return;
       if (frame) cancelAnimationFrame(frame);
       // A grip drag reports every frame; the fit is measured once the size has settled for a frame.
       frame = requestAnimationFrame(() => {
         frame = 0;
-        applyFitRef.current();
+        refitRef.current();
       });
     });
     observer.observe(surface);

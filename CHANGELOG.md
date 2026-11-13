@@ -65,11 +65,14 @@ there for the learner who wants it.
 until the resize grip has been dragged, and the pane area's own height — the `--pane-body-h` the grip
 writes — afterwards. Two things follow. It no longer shrinks back to its cards, so a three-card diagram
 and a fitted 24-card one leave the paper the same size, and it is `grow`, not `flex-1`, on a set height,
-which is what makes the set height the starting point instead of a suggestion. And a **fitted** view
-re-measures when the surface changes size (`useViewport` observes it, one frame after the size settles),
-so the grip now scales the drawing and its text: 8 cards fitted at 0.31 in a 502 px paper re-fit to 0.77
-when the pane grew to 1 198 px, and back to 0.31 when it shrank again. 100% stays 100%, because life
-size is life size. The action row's new **Add cards** button folds the Add row's card buttons away and
+which is what makes the set height the starting point instead of a suggestion. Every view re-measures when the surface changes size
+(`useViewport` observes it, one frame after the size settles) — not only one that had been fitted: the
+default 100% view of a diagram wider than its paper used to ignore the pane entirely and only started
+scaling once Fit was pressed. Eight cards at 100% in a 628 px paper now read at 0.58 in a 908 px one,
+0.28 at 453 px and 0.39 in a 938 px wide paper, so the drawing and its text grow and shrink with the room
+they are given. Life size is still the ceiling — a diagram that already fits stays at 100% instead of
+being magnified — and pressing **100%** pins it there, because a deliberate look at life size is not a
+resize to undo. The action row's new **Add cards** button folds the Add row's card buttons away and
 back — the diagram is never touched, and the toggle lives in the tools row so a folded row can always be
 brought back — and it replaces the canvas collapse of the previous build, which hid the very thing the
 learner was working on. Templates, Copy Mermaid, Copy Markdown and Clear keep their titles.
