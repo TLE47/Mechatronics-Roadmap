@@ -77,9 +77,9 @@ Frequency (`f`, in hertz `Hz`) counts cycles per second, and period (`T`) is the
 <a id="micro-binary-bits"></a>
 A bit holds 0 or 1, and an N-bit register has 2^N states, numbered from 0 to 2^N - 1. Eight bits give 256 states from 0 to 255, which is exactly why a motor command register stops at 255.
 
-#### Micro focus: unsigned means no room for a minus sign
+#### Micro focus: what an unsigned integer is
 <a id="micro-unsigned"></a>
-"Unsigned" says what the bits are spent on: every one of the N bits counts for the number, and none is reserved for a sign. So an unsigned 8-bit register counts 0 to 255 — 256 positive-or-zero values — and it can never hold `-1`. A signed register gives up the top bit to mean "negative", so its positive range stops at 127. The motor commands and sensor counts this course reads are all unsigned.
+An **unsigned integer** is a whole number that cannot go below zero: no minus sign, no decimal point. Eight bits make $2^8 = 256$ different on/off patterns — `0000 0000`, `0000 0001`, `0000 0010`, … `1111 1111` — and numbering those patterns from zero makes the last one `255`. That is the whole idea: every bit is spent on how big the number is, and no bit is held back to mean "negative". So $N$ bits hold the whole numbers `0` to $2^N - 1$, and `-1` is simply not one of them. A register that *does* keep its top bit for the sign is called **signed**, which is why a signed byte stops at `127`; the motor commands and sensor counts this course reads are all unsigned.
 
 #### Micro focus: place values double
 <a id="micro-place-values"></a>
@@ -115,6 +115,8 @@ Because counting starts at `0`, the maximum integer is always **$2^N - 1$**.
 
 ### Starter Code (runs as-is — fill in the TODOs)
 Complete `freq_to_period_ms` (`TODO 1`) and `max_unsigned_int` (`TODO 2`) to compute the period in milliseconds (`ms`) and the maximum integer value of 8-bit, 10-bit, and 12-bit registers:
+
+**What "unsigned" means in `max_unsigned_int`:** a count that cannot be negative — no minus sign anywhere, and no bit kept back for one. `n_bits` bits give `2 ** n_bits` on/off patterns numbered from `0`, so the top count is one less than that: 8 bits reach `255`, 10 bits reach `1023`, 12 bits reach `4095`, and a single bit reaches `1`. There is no `-1` to return.
 
 **What each name means** (read this beside the code):
 

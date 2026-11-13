@@ -73,7 +73,13 @@ An equation is a balanced scale, so you undo whatever is attached to it by perfo
 
 #### Micro focus: scale by the fraction of full range
 <a id="micro-linear-scaling"></a>
-A proportion keeps two ratios equal: a reading's fraction of full scale (`x / 1023.0`, between 0.0 and 1.0) equals the output's fraction of its range. Multiplying by the output range gives `y = (x / 1023.0) * 5.0`, so zero counts is 0.0 V and the full count is 5.0 V.
+Picture two dials. The **reading dial** runs from `0` at the bottom to `1023` at the top, because ten bits count that far. The **answer dial** runs from `0.0` to `5.0` volts. Moving a position from one dial to the other is two steps.
+
+First, find *where on the reading dial you are*. Divide the reading by that dial's top: `raw / 1023.0`. A reading of `0` gives `0.0`, `1023` gives `1.0`, and `511.5` gives `0.5` — a number between 0 and 1 with no units left on it. That decimal is the reading's **fraction of full scale**.
+
+Second, find *where that lands on the answer dial*. Multiply the fraction by that dial's top: `fraction * 5.0`. The bottom stays at the bottom, the top reaches the top, and halfway lands halfway.
+
+Worked once, slowly. A reading of `511` counts on a 10-bit sensor: `511 / 1023.0 = 0.4995`, so `0.4995 * 5.0 = 2.50` volts. Half the counts is half the volts, which is what a straight line through zero means. A proportion writes the same thing as two equal ratios, $\frac{x}{1023} = \frac{y}{5.0}$, and multiplying both sides by `5.0` is the second step — in code, `y = (x / 1023.0) * 5.0`.
 
 #### Micro focus: the output range sets the top
 <a id="micro-scale-output"></a>
@@ -91,19 +97,16 @@ $$
 s = \frac{x_{\text{final}} - x_0}{t}
 $$
 
-**Scaling is the same move, done twice.** A 10-bit reading is a count, not a measurement. Ask two questions:
+**Scaling is the same move, done twice.** A 10-bit reading is a position on a dial running `0` to `1023`; the answer is a position on a second dial, say `0.0` to `5.0` volts.
 
-1. **How much of full scale is this?** `fraction = raw_10bit / 1023.0`: `0` gives `0.0`, `1023` gives `1.0`, `511.5` gives `0.5`.
-2. **How far is that on the target?** Multiply the fraction by the target's top value: `fraction * 5.0`, or `fraction * 255.0` for an 8-bit command. `0.0` lands at the bottom, `1.0` at the top, `0.5` halfway.
+1. **Where is this on the first dial?** Divide by that dial's top: `raw / 1023.0`. `0` is the bottom (`0.0`), `1023` the top (`1.0`), `511.5` halfway (`0.5`). That decimal is the **fraction**, always between `0` and `1`.
+2. **Where does it land on the second dial?** Multiply the fraction by that dial's top: `* 5.0` for volts, `* 255.0` for an 8-bit command.
 
 $$
 y = \left(\frac{x}{X_{\max}}\right) \times Y_{\max}
 $$
 
-$x$ is the reading, $X_{\max}$ its top count (`1023`), $y$ the answer, $Y_{\max}$ the target's top. The bracket $[0, X_{\max}]$ only means "any reading from `0` up to $X_{\max}$".
-
-Two checks: `1023` in gives the target's top out, `0` in gives `0` out — zero maps to zero, and equal steps stay equal, which is what *linear* means. For `511.5`, `511.5 / 1023.0 = 0.5`, so `0.5 * 5.0 = 2.50` and `0.5 * 255.0 = 127.5`. That is why the two scaling functions cannot share one constant.
-
+In words: *the fraction of my top, times the top of yours.* Checks: `1023` in gives the top out and `0` in gives `0` out, so equal steps stay equal — that is *linear*. For `511.5`: `511.5 / 1023.0 = 0.5`, so `0.5 * 5.0 = 2.50` and `0.5 * 255.0 = 127.5` — one reading, two tops, which is why the two functions cannot share a constant.
 ---
 
 ## Do it yourself

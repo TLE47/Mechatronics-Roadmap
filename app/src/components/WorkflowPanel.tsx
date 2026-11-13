@@ -165,11 +165,10 @@ export function WorkflowPanel({
   const sim = useWorkflowRun(doc);
 
   const [howTo, setHowTo] = useState(false);
-  // The paper is the working room, but it is not always the point: a learner reading the checklist,
-  // or typing into the note field below the canvas, may want the page's height back. Collapsing hides
-  // the canvas and the drag hints and leaves the document, its checks and its inspector in place, so
-  // expanding restores exactly what was there.
-  const [collapsed, setCollapsed] = useState(false);
+  // The card buttons are the paper's palette, not the page: a learner who has finished adding wants
+  // the row's height back, and the diagram itself is never touched. The toggle lives in the tools
+  // row below, so a folded row can always be brought back.
+  const [addsOpen, setAddsOpen] = useState(true);
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [pendingTemplate, setPendingTemplate] = useState<WorkflowTemplate | null>(null);
   // The workflow has its own find field: the global palette searches lessons, not the cards on the
@@ -773,20 +772,7 @@ export function WorkflowPanel({
           padded header cost the diagram about a card's height. Compact, the rules are one line and
           the padding is halved, so the paper - the learner's working room - is larger. Full screen
           keeps the list, because there the page is the diagram. */}
-      {collapsed ? (
-        <button
-          type="button"
-          data-testid="workflow-collapsed"
-          title="Expand the workflow: show the diagram again"
-          onClick={() => setCollapsed(false)}
-          className="mt-2 flex w-full cursor-pointer items-center justify-between rounded-lg border border-dashed border-line bg-canvas px-2.5 py-2 text-left font-mono text-[11.5px] text-muted hover:border-accent hover:text-accent"
-        >
-          <span>
-            Diagram hidden · {doc.nodes.length} card{doc.nodes.length === 1 ? '' : 's'} kept
-          </span>
-          <span>Expand</span>
-        </button>
-      ) : full ? (
+      {full ? (
       <div className="mt-1.5 flex flex-col gap-y-0.5 font-mono text-[10.5px] text-faint">
         <span className="flex items-center gap-1">
           <MousePointerClick className="h-3 w-3" aria-hidden="true" />
@@ -803,7 +789,6 @@ export function WorkflowPanel({
         </p>
       )}
 
-      {!collapsed && (
       <Suspense
         fallback={
           <p data-testid="workflow-canvas-loading" className="mt-2 font-mono text-[11.5px] text-faint">
@@ -862,7 +847,6 @@ export function WorkflowPanel({
           sim={sim}
         />
       </Suspense>
-      )}
 
       {/* The advice sits below the paper, not above it. Adding or fixing one card changes the issue
           list, and a list above the canvas would move the diagram under the pointer between a drop
@@ -921,9 +905,18 @@ export function WorkflowPanel({
         />
       )}
 
-      <div data-testid="workflow-add" className="mt-2 flex flex-wrap items-center gap-1.5">
+      <div
+        id="workflow-add"
+        data-testid="workflow-add"
+        data-folded={addsOpen ? 'false' : 'true'}
+        className="mt-2 flex flex-wrap items-center gap-1.5"
+      >
         <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-faint">Add</span>
-        {STEPS_BY_MODE[doc.mode].map((kind) => {
+        <span hidden={addsOpen} className="font-mono text-[10.5px] text-faint">
+          card buttons hidden — press Add cards below to bring them back
+        </span>
+        {addsOpen &&
+          STEPS_BY_MODE[doc.mode].map((kind) => {
           const Icon = iconForKind(kind);
           return (
             <button
@@ -984,22 +977,22 @@ export function WorkflowPanel({
         </button>
         <button
           type="button"
-          data-testid="workflow-collapse"
-          aria-expanded={!collapsed}
-          aria-controls="workflow-canvas"
+          data-testid="workflow-adds-toggle"
+          aria-expanded={addsOpen}
+          aria-controls="workflow-add"
           title={
-            collapsed
-              ? 'Expand the workflow: show the diagram again without changing a single card'
-              : 'Collapse the workflow: hide the diagram and give its height back to the page; nothing is deleted'
+            addsOpen
+              ? 'Hide the Add row’s card buttons and give that row back to the page; the diagram stays exactly as it is'
+              : 'Show the card buttons again'
           }
-          onClick={() => setCollapsed((hidden) => !hidden)}
+          onClick={() => setAddsOpen((open) => !open)}
           className="btn btn-ghost text-[12px]"
         >
           <ChevronDown
-            className={`h-3.5 w-3.5 transition-transform ${collapsed ? '-rotate-90' : ''}`}
+            className={`h-3.5 w-3.5 transition-transform ${addsOpen ? '' : '-rotate-90'}`}
             aria-hidden="true"
           />
-          {collapsed ? 'Expand' : 'Collapse'}
+          Add cards
         </button>
         <button
           type="button"

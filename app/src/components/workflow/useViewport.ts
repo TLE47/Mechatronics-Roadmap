@@ -47,6 +47,8 @@ export function useViewport(
   /** View scale, not document data: a fit is a lens on the graph, never a coordinate written to it. */
   const [scale, setScale] = useState(1);
   const viewTarget = useRef<{ left: number; top: number } | null>(null);
+  /** Whether the learner's last lens was Fit: a resize re-fits a fitted view, never a 100% one. */
+  const fitted = useRef(false);
   const [viewSeq, setViewSeq] = useState(0);
   const panStart = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
   const [panning, setPanning] = useState(false);
@@ -95,24 +97,16 @@ export function useViewport(
    * keeps the viewport's centre so the card being read does not jump away. The button is a lens, not
    * a document edit — no position, zoom or lesson field is written.
    */
-  const fitOrReset = () => {
+  /**
+   * The scale and centre that frame every card in the surface as it is now, or null when there is
+   * nothing to frame. Read from the DOM rather than from the document: a fit is a lens.
+   */
+  const measureFit = () => {
     const surface = surfaceRef.current;
-    if (!surface) return;
-    if (scale < 1) {
-      const centreX = (surface.scrollLeft + surface.clientWidth / 2) / scale;
-      const centreY = (surface.scrollTop + surface.clientHeight / 2) / scale;
-      setScale(1);
-      viewTarget.current = {
-        left: centreX - surface.clientWidth / 2,
-        top: centreY - surface.clientHeight / 2,
-      };
-      setViewSeq((seq) => seq + 1);
-      return;
-    }
     const grid = gridRef.current;
-    if (!grid) return;
+    if (!surface || !grid) return null;
     const cards = Array.from(grid.querySelectorAll<HTMLElement>('[data-node-id]'));
-    if (!cards.length) return;
+    if (!cards.length) return null;
     let minX = Infinity;
     let minY = Infinity;
     let maxX = -Infinity;
@@ -128,13 +122,81 @@ export function useViewport(
       (surface.clientHeight - FIT_PAD * 2) / Math.max(1, maxY - minY)
     );
     const next = clamp(fit, FIT_MIN_SCALE, 1);
-    setScale(next);
-    viewTarget.current = {
+    return {
+      scale: next,
       left: ((minX + maxX) / 2) * next - surface.clientWidth / 2,
       top: ((minY + maxY) / 2) * next - surface.clientHeight / 2,
     };
-    setViewSeq((seq) => seq + 1);
   };
+
+  /** Apply that lens. Returns false when there is nothing on the paper to frame. */
+  const applyFit = () => {
+    const fit = measureFit();
+    if (!fit) return false;
+    setScale(fit.scale);
+    viewTarget.current = { left: fit.left, top: fit.top };
+    setViewSeq((seq) => seq + 1);
+    return true;
+  };
+  // The resize observer below is mounted once, so it reads the current `applyFit` through a ref
+  // rather than closing over the first render's cards.
+  const applyFitRef = useRef(applyFit);
+  applyFitRef.current = applyFit;
+
+  const fitOrReset = () => {
+    const surface = surfaceRef.current;
+    if (!surface) return;
+    if (scale < 1) {
+      const centreX = (surface.scrollLeft + surface.clientWidth / 2) / scale;
+      const centreY = (surface.scrollTop + surface.clientHeight / 2) / scale;
+      setScale(1);
+      fitted.current = false;
+      viewTarget.current = {
+        left: centreX - surface.clientWidth / 2,
+        top: centreY - surface.clientHeight / 2,
+      };
+      setViewSeq((seq) => seq + 1);
+      return;
+    }
+    if (applyFit()) fitted.current = true;
+  };
+
+  /**
+   * A fit is a lens on the surface, so it has to be a lens on the *current* surface.
+   *
+   * Resizing the pane (the bottom grip, a split divider, the window) used to leave the diagram at the
+   * scale it had been fitted to, so a bigger canvas got a bigger page of empty paper and the cards'
+   * text stayed the size it was. While the view is a fit, a resize re-measures it, and the cards - and
+   * their text - grow and shrink with the room they are given. At 100% nothing happens, because life
+   * size is life size.
+   */
+  useEffect(() => {
+    const surface = surfaceRef.current;
+    if (!surface || typeof ResizeObserver === 'undefined') return;
+    let width = surface.clientWidth;
+    let height = surface.clientHeight;
+    let frame = 0;
+    const observer = new ResizeObserver(() => {
+      const nextWidth = surface.clientWidth;
+      const nextHeight = surface.clientHeight;
+      // A scrollbar appearing changes the surface by a few pixels; that is not a resize to re-fit.
+      if (Math.abs(nextWidth - width) < 2 && Math.abs(nextHeight - height) < 2) return;
+      width = nextWidth;
+      height = nextHeight;
+      if (!fitted.current) return;
+      if (frame) cancelAnimationFrame(frame);
+      // A grip drag reports every frame; the fit is measured once the size has settled for a frame.
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        applyFitRef.current();
+      });
+    });
+    observer.observe(surface);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, []);
 
   /**
    * Drag the empty paper to pan. Cards, fields and dots keep their own gestures; a finger keeps the

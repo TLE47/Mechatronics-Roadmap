@@ -40,23 +40,36 @@ and draws each `$…$` run through `MathView` (KaTeX). Maths nested in a bold ph
 (`**Proportional ($K_p$)**`) is drawn because bold recurses, and money stays money: `\$5 and \$6` is
 still two dollar amounts, not an unclosed formula.
 
-**Lesson P.8 explains "unsigned".** The lesson used the range `0 … 2^N − 1` without ever naming why
-there is no negative, so Idea 2, a Micro focus and the Bridge Notes now say it: an unsigned N-bit
-integer spends every bit on the magnitude, has no sign bit, counts 0 to 255 in a byte, and that is why
-a signed byte stops at 127 and why the lesson's second function is `max_unsigned_int`.
+**Lesson P.8 says what an unsigned integer is, not just what it does.** The lesson used the range
+`0 … 2^N − 1` and named `max_unsigned_int` without ever defining the term, so the Micro focus now
+defines it first — a whole number that cannot go below zero, no minus sign and no decimal point — and
+then counts: eight bits make 256 on/off patterns from `0000 0000` to `1111 1111`, numbering them from
+zero makes the last `255`, and a register that does keep its top bit for the sign is *signed*, which is
+why a signed byte stops at `127`. A second note sits beside the TODO itself, where the learner meets
+`max_unsigned_int`: the top count is one less than the number of patterns (`255`, `1023`, `4095`, and
+`1` for a single bit), and there is no `-1` to return.
 
-**Lesson P.9's closing note is worked, not asserted.** The dense paragraph under *Bridge Notes* became
-two named questions — *how much of full scale is this reading?* then *how far is that on the target
-scale?* — one formula whose symbols are read as names for those steps, the interval bracket explained,
-the two endpoint checks, and the lesson's own `511.5` carried through both tops to `2.50 V` and `127.5`.
+**Lesson P.9 explains scaling as two dials.** The *Bridge Notes* paragraph that jumped straight to
+symbols became a picture: a reading dial from `0` to `1023`, an answer dial from `0.0` to `5.0`, and two
+short steps between them — divide by the first dial's top to get the fraction (always between 0 and 1),
+multiply by the second dial's top to land on it. The formula is then read out loud (*the fraction of my
+top, times the top of yours*), followed by the two endpoint checks and `511.5` carried through both tops
+to `2.50 V` and `127.5`. The *Micro focus* under Idea 2 carries the longer walkthrough, including `511`
+counts onto `2.50` volts and the proportion it comes from, so the bridge stays short and the detail is
+there for the learner who wants it.
 
-**Workflow.** The paper now takes its height from the pane that holds it. Its ceiling is the pane
-area's own height once the resize grip has been dragged — the `--pane-body-h` the grip writes — and
-70 vh until it has, which is what makes the grip move the diagram at all: a fixed cap left it at 70% of
-the window however far the learner dragged. The 280 px floor that made a shorter pane overflow is now
-only a full-screen rule, and the compact canvas keeps a 140 px floor so it cannot be dragged to
-nothing. The action row gained a **Collapse / Expand** button that hides the canvas and the drag hints
-without touching a single card, plus titles on Templates, Copy Mermaid, Copy Markdown and Clear.
+**Workflow.** The paper has a size of its own now, and takes it from the pane that holds it: 70 vh
+until the resize grip has been dragged, and the pane area's own height — the `--pane-body-h` the grip
+writes — afterwards. Two things follow. It no longer shrinks back to its cards, so a three-card diagram
+and a fitted 24-card one leave the paper the same size, and it is `grow`, not `flex-1`, on a set height,
+which is what makes the set height the starting point instead of a suggestion. And a **fitted** view
+re-measures when the surface changes size (`useViewport` observes it, one frame after the size settles),
+so the grip now scales the drawing and its text: 8 cards fitted at 0.31 in a 502 px paper re-fit to 0.77
+when the pane grew to 1 198 px, and back to 0.31 when it shrank again. 100% stays 100%, because life
+size is life size. The action row's new **Add cards** button folds the Add row's card buttons away and
+back — the diagram is never touched, and the toggle lives in the tools row so a folded row can always be
+brought back — and it replaces the canvas collapse of the previous build, which hid the very thing the
+learner was working on. Templates, Copy Mermaid, Copy Markdown and Clear keep their titles.
 
 **The grip has its own browser check.** `assertWorkflowCanvasFollowsGrip` in
 `scripts/e2e_browser_workbench.mjs` drags the bottom grip up, up again, back down and then presses
