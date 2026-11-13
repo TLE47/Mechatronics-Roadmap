@@ -171,13 +171,24 @@ async function readTally(page) {
  * The grip writes `--pane-body-h` on the body, and that is the paper's ceiling once a learner has
  * used it; the old fixed 70 vh cap pinned the paper there instead, so the grip moved the panes and
  * left the diagram behind. This drags the grip up and back down and insists the paper goes with it,
- * then that the 24 cards are still a scroll box at every size rather than a page that grows.
+ * then that the paper stays a bounded box at every size rather than a page that grows, and that a
+ * resize scales the drawing with it: the 24 cards are 1:1 and scroll at life size, and a re-fit puts
+ * them inside the paper at a scale that follows its height.
+ *
+ * A resize re-fits the view now, the default 100% one included, so "the cards always scroll" is no
+ * longer the invariant - that was the old lens, where only a view that had been fitted moved. What has
+ * to hold is that the paper fills the pane area and its content lives inside it: at 100% that means a
+ * scroll box, and at a fit that means a drawing exactly the size of the paper.
  */
 export async function assertWorkflowCanvasFollowsGrip(page) {
   const read = () =>
     page.evaluate(() => {
       const body = document.querySelector('[data-testid="editor-panes"]');
       const canvas = document.querySelector('[data-testid="workflow-canvas"]');
+      const grid = document.querySelector('[data-testid="workflow-canvas-grid"]');
+      const title = document.querySelector('[data-testid="workflow-node-title-0"]');
+      const transform = grid ? getComputedStyle(grid).transform : 'none';
+      const scale = transform && transform !== 'none' ? Number(transform.split('(')[1].split(',')[0]) : 1;
       const box = canvas?.getBoundingClientRect();
       return {
         body: body ? body.getBoundingClientRect().height : null,
@@ -187,6 +198,10 @@ export async function assertWorkflowCanvasFollowsGrip(page) {
         viewport: window.innerHeight,
         resized: Boolean(body?.hasAttribute('data-pane-resized')),
         cards: document.querySelectorAll('[data-node-id]').length,
+        // The lens the paper is drawn at, and the pixel height of one card's title: a resize has to
+        // move both, because the text is part of the drawing.
+        scale,
+        title: title ? title.getBoundingClientRect().height : null,
       };
     });
 
@@ -252,6 +267,35 @@ export async function assertWorkflowCanvasFollowsGrip(page) {
     `at rest the paper is 70% of the window, but it was ${before.canvas} of ${before.viewport}`
   );
   assert.ok(before.scroll > before.canvas + 100, 'the 24 cards are already a scroll box at rest');
+  assert.equal(before.scale, 1, 'the paper opens at life size, before any resize has re-fitted it');
+
+  /**
+   * The paper is a box: a fit fits inside it, and (while it owns its pane) it fills that pane's area.
+   *
+   * Reset returns the panes to their default split, where the workflow paper shares the column with
+   * the other panes, so the fill relation is checked where the pane has just been dragged instead.
+   */
+  const assertBoundedPaper = (state, label, { fills = true } = {}) => {
+    if (fills)
+      assert.ok(
+        state.canvas >= state.body - 12 && state.canvas <= state.body,
+        `${label}: the paper must fill the ${Math.round(state.body)}px pane area, but it was ${state.canvas}px`
+      );
+    if (state.scale < 0.999) {
+      // The spacer reserves the paper's extents, which keep 48 px of air right of the last card and
+      // 40 px under it for a frame's name chip; a fit frames the cards, so that air is what is left
+      // over once the drawing is scaled to fit. Anything more than it means the fit did not happen.
+      assert.ok(
+        state.scroll <= state.canvas + 60,
+        `${label}: a view fitted at ${state.scale.toFixed(2)} must fit inside the paper (${state.scroll} vs ${state.canvas})`
+      );
+    } else {
+      assert.ok(
+        state.scroll > state.canvas,
+        `${label}: at 100% the 24 cards must scroll inside the paper (${state.scroll} vs ${state.canvas})`
+      );
+    }
+  };
 
   // Pulling the bottom edge up trims the pane area. The paper has to take the new height: on the
   // first touch that lifts the 70% cap, which is the whole point of the fix.
@@ -267,7 +311,18 @@ export async function assertWorkflowCanvasFollowsGrip(page) {
     trimmed.canvas >= trimmed.body - 12 && trimmed.canvas <= trimmed.body,
     `the paper must fill the ${Math.round(trimmed.body)}px pane area, but it was ${trimmed.canvas}px`
   );
-  assert.ok(trimmed.scroll > trimmed.canvas, '24 cards must still scroll inside the taller paper');
+  assertBoundedPaper(trimmed, 'after the first grip touch');
+  // The point of a lens that follows the pane: the drawing and its text move with it, with no press
+  // of Fit in between. At 100% the 24 cards are taller than the taller paper, so this trim re-fits
+  // them, and both the scale and the rendered title shrink with it.
+  assert.ok(
+    trimmed.scale < before.scale - 0.05,
+    `a resize must scale the drawing before Fit is pressed (${trimmed.scale} vs ${before.scale})`
+  );
+  assert.ok(
+    trimmed.title < before.title - 0.5,
+    `a resize must scale the diagram's text (${trimmed.title}px vs ${before.title}px)`
+  );
 
   // Further up is a smaller pane area, and a smaller diagram with it.
   await dragGrip(-400);
@@ -277,7 +332,11 @@ export async function assertWorkflowCanvasFollowsGrip(page) {
     `trimming 400px more must shrink the paper (${shrunk.canvas} vs ${trimmed.canvas})`
   );
   assert.ok(shrunk.canvas >= shrunk.body - 12, `the paper must still fill the pane (${shrunk.canvas} of ${shrunk.body})`);
-  assert.ok(shrunk.scroll > shrunk.canvas, '24 cards must still scroll inside the smaller paper');
+  assertBoundedPaper(shrunk, 'after shrinking the pane');
+  assert.ok(
+    shrunk.title < trimmed.title,
+    `a smaller paper must draw smaller text (${shrunk.title}px vs ${trimmed.title}px)`
+  );
 
   // And back down grows both again, without passing the grip's own ceiling.
   await dragGrip(300);
@@ -286,7 +345,11 @@ export async function assertWorkflowCanvasFollowsGrip(page) {
     grown.canvas > shrunk.canvas + 200,
     `putting the pane back must grow the paper (${grown.canvas} vs ${shrunk.canvas})`
   );
-  assert.ok(grown.scroll > grown.canvas, '24 cards must still scroll inside the paper after a resize');
+  assertBoundedPaper(grown, 'after growing the pane again');
+  assert.ok(
+    grown.title > shrunk.title,
+    `a bigger paper must draw bigger text (${grown.title}px vs ${shrunk.title}px)`
+  );
 
   // Reset hands the body back to its default floor, and the paper with it.
   await page.getByTestId('btn-pane-reset').click();
@@ -297,7 +360,8 @@ export async function assertWorkflowCanvasFollowsGrip(page) {
     Math.abs(reset.canvas - before.canvas) <= 3,
     `Reset must put the paper back to ${before.canvas}px, not ${reset.canvas}px`
   );
-  assert.ok(reset.scroll > reset.canvas, 'the 24 cards are still a scroll box after Reset');
+  assertBoundedPaper(reset, 'after Reset size', { fills: false });
+  assert.equal(reset.canvas, before.canvas, 'Reset size must give the paper back its born height');
 }
 
 /**
@@ -2101,7 +2165,19 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         await assertWorkflowCanvasFollowsGrip(page);
 
         // Fit is a lens on the graph, not a document edit: it frames every card in the canvas and
-        // 100% comes back to life size at the viewport's centre.
+        // 100% comes back to life size at the viewport's centre. The grip check above ends at the
+        // lens the last resize left, and one control means both directions: while the view is shrunk
+        // the same press is "back to 100%", so take that press first and start this check at life
+        // size.
+        const lensBeforeFit = await page.evaluate(() => {
+          const grid = document.querySelector('[data-testid="workflow-canvas-grid"]');
+          const transform = grid ? getComputedStyle(grid).transform : 'none';
+          return transform && transform !== 'none' ? Number(transform.split('(')[1].split(',')[0]) : 1;
+        });
+        if (lensBeforeFit < 0.999) {
+          await page.getByTestId('workflow-fit').click();
+          await page.waitForTimeout(350);
+        }
         await page.getByTestId('workflow-fit').click();
         await page.waitForTimeout(350);
         const fitted = await page.evaluate(() => {

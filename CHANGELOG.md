@@ -57,9 +57,14 @@ symbols became a picture: a reading dial from `0` to `1023`, an answer dial from
 short steps between them — divide by the first dial's top to get the fraction (always between 0 and 1),
 multiply by the second dial's top to land on it. The formula is then read out loud (*the fraction of my
 top, times the top of yours*), followed by the two endpoint checks and `511.5` carried through both tops
-to `2.50 V` and `127.5`. The *Micro focus* under Idea 2 carries the longer walkthrough, including `511`
-counts onto `2.50` volts and the proportion it comes from, so the bridge stays short and the detail is
-there for the learner who wants it.
+to `2.50 V` and `127.5`. Under Idea 2 the *Micro focus* became a short section of its own,
+**Scaling as a Two-Step Translation**: an input dial from `0` to `1023` and an output dial from `0.0` to
+`5.0` (or `0` to `255`), the conversion written as two questions — *what percentage of the way up is the
+reading?* and *where does that percentage land on the other dial?* — then the master equation with the
+code it stands for, `511.5` carried through to `2.50` volts and `127.5` counts, and a closing takeaway
+that it is the fraction, never one hardcoded multiplier, that does the travel. The dials are described
+as a 10-bit sensor reading and an 8-bit output command rather than by the converter's and the driver's
+names, because P.9 comes before the lessons that define those terms.
 
 **Workflow.** The paper has a size of its own now, and takes it from the pane that holds it: 70 vh
 until the resize grip has been dragged, and the pane area's own height — the `--pane-body-h` the grip
@@ -80,8 +85,12 @@ learner was working on. Templates, Copy Mermaid, Copy Markdown and Clear keep th
 **The grip has its own browser check.** `assertWorkflowCanvasFollowsGrip` in
 `scripts/e2e_browser_workbench.mjs` drags the bottom grip up, up again, back down and then presses
 **Reset size**, with the 24 cards the cap check leaves standing: the paper must fill each new pane
-height, shrink and grow with it, and stay a scroll box (`scrollHeight > clientHeight`) at every size,
-and Reset must put it back where it started. It has teeth — restoring the old fixed cap fails it with
+height, and the leverage must follow it. The check used to insist the 24 cards stay a scroll box
+(`scrollHeight > clientHeight`) at every size, which described the old lens; now that a resize re-fits
+the view, it reads the grid's scale instead — a fitted paper holds the cards (whatever scrolls is the
+paper's own air right of and under the last card), 100% still scrolls, the first card's title measures
+smaller and bigger with the paper (25.19 px at 628 px of paper, 14.59 at 908, 7.01 at 453), and Reset
+must give the paper back its born height. It has teeth — restoring the old fixed cap fails it with
 `the first grip touch must lift the 70% cap and let the paper fill the pane (628 vs 628)`.
 
 **More ⋯.** The **Debugger tools** heading is a button: it folds the nine step/trace/breakpoint
