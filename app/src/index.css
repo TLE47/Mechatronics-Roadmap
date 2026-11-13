@@ -978,3 +978,105 @@ header[data-action-labels='on'] .action-tray .btn > kbd {
     scroll-margin-top: calc(var(--header-h, 57px) + 3.6rem);
   }
 }
+
+/* ----------------------------------------------------------------------------
+   Installed primitives, wearing the workbench's own clothes.
+
+   The dialog and its phone drawer, the palette, the toasts and the counters come
+   from Radix, vaul, cmdk, sonner and Number Flow; nothing below re-implements a
+   focus trap, a portal or a timer. What is set here is only what the tokens
+   already decide — the panel surface, the line, the radius scale, the two faces
+   and tabular figures — so a theme change re-skins a component it has never
+   heard of, and no new palette is invented.
+   -------------------------------------------------------------------------- */
+
+[data-overlay-panel] {
+  color: var(--text);
+}
+
+/* The drawer's grab bar is the thing a thumb finds at 390 px; it is the same line colour as the
+   buttons it sits above, not a second grey. */
+[data-drawer-handle] {
+  background: var(--border-strong);
+}
+
+/* cmdk: the palette's list is the app's list. The rows are buttons (so the palette's own
+   `palette-option-*` ids survive), and the selected row says so with the accent, in one place. */
+[cmdk-root] {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+[cmdk-input] {
+  font-family: var(--font-sans);
+  caret-color: var(--accent);
+}
+[cmdk-input]::placeholder {
+  color: var(--dim);
+}
+[cmdk-list] {
+  scrollbar-width: thin;
+}
+[cmdk-item] {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.875rem;
+  border-left: 2px solid transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+[cmdk-item][data-selected='true'] {
+  border-left-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Number Flow draws its digits in its own shadow root; the figures stay tabular so a changing
+   number cannot push the words beside it. */
+number-flow {
+  font-variant-numeric: tabular-nums;
+}
+
+/* sonner: the cards keep their own skin (`unstyled`), so only the stack's geometry and the reduced
+   motion rule are set from here. */
+[data-sonner-toaster] {
+  --width: 19rem;
+  font-family: var(--font-sans);
+}
+[data-sonner-toast] {
+  border-radius: var(--r-lg);
+}
+[data-sonner-toast] [data-close-button] {
+  border-color: var(--border);
+  background: var(--panel-2);
+  color: var(--muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-sonner-toast] {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* The reference card is a printed page, not a dialog: while printing, the panel leaves the viewport
+   box and the scrim steps out of the paper. This is what the old full-screen markup got from
+   `print:static`, and it has to survive the move into a portal. */
+@media print {
+  [data-overlay-scrim] {
+    display: none !important;
+  }
+  [data-overlay-panel] {
+    position: static !important;
+    max-height: none !important;
+    width: 100% !important;
+    max-width: none !important;
+    transform: none !important;
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+}
