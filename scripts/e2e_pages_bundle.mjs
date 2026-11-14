@@ -65,6 +65,7 @@ import {
   auditStackedCodeRows,
 } from './narrow_workbench_audit.mjs';
 import {
+  auditBridgeVisual,
   auditLessonSurface,
   auditPaneBottomResize,
   auditPaneOrientations,
@@ -1694,6 +1695,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     await auditPaneSwapsAndCapacity(browser, baseUrl, name);
     await auditPaneOrientations(browser, baseUrl, name);
     await auditPaneBottomResize(browser, baseUrl, name);
+    await auditBridgeVisual(browser, baseUrl, name);
     return 'pass';
   } finally {
     await browser.close();

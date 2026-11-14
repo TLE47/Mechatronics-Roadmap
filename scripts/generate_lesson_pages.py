@@ -46,13 +46,24 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(ROOT, "app", "public", "lesson-pages")
-# 6 adds `anchor` (5 was `reveal`, 4 `graph`, 3 `route`, 2 `figure`): the reader's validator
-# refuses a version it does not know rather than guessing at a shape that changed, and a lesson
-# written before any of them reads the same.
-PAYLOAD_VERSION = 6
+# 7 adds `v` on a heading (6 was `anchor`, 5 `reveal`, 4 `graph`, 3 `route`, 2 `figure`): the
+# reader's validator refuses a version it does not know rather than guessing at a shape that changed,
+# and a lesson written before any of them reads the same. `v` names the interactive a Bridge Notes
+# heading carries (`resources/bridge-visuals.json`), so the reader learns a page has one from the
+# payload it already fetched and the app ships no list of lessons.
+PAYLOAD_VERSION = 7
 
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 import generate_python_lessons_data as registry  # noqa: E402
+
+
+def _bridge_visuals():
+    """`{page path: visual name}` from `resources/bridge-visuals.json`."""
+    with open(os.path.join(ROOT, "resources", "bridge-visuals.json"), encoding="utf-8") as handle:
+        return json.load(handle)["pages"]
+
+
+BRIDGE_VISUALS = _bridge_visuals()
 
 # A marker pair wraps text a script writes into every page. Removed with its content, for the same
 # reason `generate_prose_index.py` removes it: it is about the app, not about the lesson.
@@ -625,6 +636,26 @@ def parse_blocks(raw, depth=0):
     return [block for block in blocks if block.get("t") != "code" or block.get("text")]
 
 
+def bridge_visual_for(path, blocks):
+    """Name the visual on this page's Bridge Notes heading, when it has one.
+
+    The list is `resources/bridge-visuals.json`, keyed by page path. A page the file does not name
+    is left exactly as it was, which is why a lesson without a visual costs no payload bytes at all.
+    """
+    name = BRIDGE_VISUALS.get(path)
+    if not name:
+        return blocks
+    for block in blocks:
+        if (
+            block.get("t") == "h"
+            and block.get("l") == 3
+            and block.get("x", "").strip().lower() == "bridge notes"
+        ):
+            block["v"] = name
+            break
+    return blocks
+
+
 def payload_for(path):
     """One page's reader payload, or None when its file is missing."""
     full = os.path.join(ROOT, path)
@@ -637,7 +668,7 @@ def payload_for(path):
         "v": PAYLOAD_VERSION,
         "path": path,
         "title": title,
-        "blocks": parse_blocks(raw),
+        "blocks": bridge_visual_for(path, parse_blocks(raw)),
     }
 
 

@@ -50,6 +50,7 @@ import { markQuotes, wrapSelection } from '../lessonMarks';
 import { RESET_EVENT } from '../resetEvent';
 import { lessonPageUrl as sourceUrl } from '../startHere';
 import { StudyClockReminder } from './StudyClockReminder';
+import { BridgeNotesVisual } from '../bridges/bridgeNotesVisual';
 
 /**
  * The lesson text, beside the code it is about (`app/src/components/LessonReader.tsx`).
@@ -903,7 +904,8 @@ export function LessonReader({
       case 'h': {
         const anchor = anchors.get(block) ?? '';
         const Tag = (block.l === 2 ? 'h2' : block.l === 3 ? 'h3' : 'h4') as 'h2' | 'h3' | 'h4';
-        return (
+        const isBridgeNotes = block.l === 3 && /^bridge notes$/i.test(inlinePlain(block.x));
+        const heading = (
           <Tag
             key={key}
             id={anchor}
@@ -927,6 +929,19 @@ export function LessonReader({
             )}
           </Tag>
         );
+        // A Bridge Notes section ends a lesson by handing over to the next idea, which is the one
+        // place an interactive earns its keep: the paragraph's own worked numbers, made draggable.
+        // The page's payload names the visual (`block.v`), so a lesson without one is the heading it
+        // always was, and the picture itself is a lazy chunk (`bridges/bridgeNotesVisual.tsx`).
+        if (isBridgeNotes && block.v) {
+          return (
+            <React.Fragment key={key}>
+              {heading}
+              <BridgeNotesVisual name={block.v} />
+            </React.Fragment>
+          );
+        }
+        return heading;
       }
       case 'p':
         return (

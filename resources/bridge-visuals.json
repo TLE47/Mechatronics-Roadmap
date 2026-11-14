@@ -1,0 +1,6 @@
+{
+  "_why": "Which lesson pages carry an interactive visual under their Bridge Notes heading, and which visual it is. The generator (`scripts/generate_lesson_pages.py`) copies the name onto that page's heading block as `v`, so the reader learns that a page has a visual from the payload it already fetched — the app ships no list of lessons, and a lesson without one costs nothing. The visual itself lives in `app/src/bridges/` behind a React.lazy boundary, in its own chunk. `scripts/test_bridge_visuals.mjs` checks every entry here has a page, a Bridge Notes heading, and a payload that carries the name.",
+  "pages": {
+    "track-p/P.9-rearranging-formulas-and-scaling.md": "scaling-dials"
+  }
+}

@@ -1127,3 +1127,99 @@ export async function auditPaneBottomResize(browser, baseUrl, name) {
     await context.close();
   }
 }
+
+/**
+ * P.9's Bridge Notes visual: mounted, dragged, and read (`app/src/bridges/`).
+ *
+ * The claim this section makes is small and testable — the dial's numbers are the ones the lesson
+ * works out, and dragging it moves the picture and the readouts together. So the check does what a
+ * learner does: open the lesson, scroll to Bridge Notes, then drive the slider to both stops and
+ * assert what it prints. It also asserts that the visual is not in the bundle the page already
+ * fetched: the chunk named after the component is its own file, requested when the reader renders,
+ * so a lesson with a visual pays for it and a lesson without one never asks. That is the weight
+ * claim, and it is the one this checks — the picture is not in the entry chunk.
+ */
+export async function auditBridgeVisual(browser, baseUrl, name) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 950 } });
+  await seedTourSeen(context);
+  const page = await context.newPage();
+  const pageErrors = [];
+  page.on('pageerror', (error) => pageErrors.push(String(error)));
+  const scripts = [];
+  page.on('request', (request) => {
+    const url = request.url();
+    if (url.endsWith('.js')) scripts.push(url);
+  });
+
+  const readouts = async () => ({
+    fraction: (await page.getByTestId('bridge-scaling-fraction').textContent())?.trim(),
+    volts: (await page.getByTestId('bridge-scaling-volts').textContent())?.trim(),
+    command: (await page.getByTestId('bridge-scaling-command').textContent())?.trim(),
+    tip: await page.getByTestId('bridge-scaling-needle').getAttribute('x2'),
+  });
+
+  try {
+    await page.goto(`${baseUrl}?lesson=P.9`, { waitUntil: 'networkidle', timeout: 45000 });
+    await page.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, {
+      timeout: 20000,
+    });
+    await page.keyboard.press('Alt+1');
+    await page.waitForFunction(
+      () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'study',
+      undefined,
+      { timeout: 10000 }
+    );
+    await page.getByTestId('lesson-list-card').waitFor({ state: 'visible', timeout: 10000 });
+    await expandEditorBody(page);
+
+    const heading = page.getByRole('heading', { name: 'Bridge Notes', exact: true });
+    await heading.scrollIntoViewIfNeeded();
+    const visual = page.getByTestId('bridge-visual-scaling-dials');
+    await visual.waitFor({ state: 'visible', timeout: 20000 });
+
+    let shown = await readouts();
+    // The page's worked example, on screen: 511.5 is 0.500, and one reading is 2.50 V and 127.5.
+    assert.equal(shown.fraction, '0.500', `${name}: the dial must open on the page's worked reading`);
+    assert.equal(shown.volts, '2.50 V', `${name}: 0.5 of 5.0 V is 2.50 V`);
+    assert.equal(shown.command, '127.5', `${name}: the same fraction of 255 is 127.5`);
+
+    const slider = page.getByTestId('bridge-scaling-raw');
+    await slider.focus();
+    await page.keyboard.press('Home');
+    const bottom = await readouts();
+    assert.equal(bottom.fraction, '0.000', `${name}: the bottom stop must read 0`);
+    assert.equal(bottom.volts, '0.00 V', `${name}: 0 in gives 0 out`);
+    assert.equal(bottom.command, '0.0', `${name}: the command dial lands on 0 too`);
+
+    await page.keyboard.press('End');
+    const top = await readouts();
+    assert.equal(top.fraction, '1.000', `${name}: the top stop must read 1.000`);
+    assert.equal(top.volts, '5.00 V', `${name}: 1023 in gives the top out`);
+    assert.equal(top.command, '255.0', `${name}: and 255 on the command dial`);
+    assert.notEqual(top.tip, bottom.tip, `${name}: the needle did not move with the reading`);
+
+    // Stepping back is a real move, not a jump to the next stop: half a count per press needs a
+    // couple of dozen presses before the two-decimal volts has to admit it left 5.00.
+    for (let press = 0; press < 40; press += 1) await page.keyboard.press('ArrowLeft');
+    const nearTop = await readouts();
+    assert.notEqual(nearTop.fraction, '1.000', `${name}: the arrow keys do not move the dial`);
+    assert.ok(
+      Number(nearTop.volts.replace(' V', '')) < 5,
+      `${name}: stepping back must lower the volts, got ${nearTop.volts}`
+    );
+    assert.notEqual(nearTop.tip, top.tip, `${name}: the needle did not follow the stepped reading`);
+
+    const chunks = scripts.filter((url) => /ScalingDialsVisual-/.test(url));
+    assert.ok(chunks.length > 0, `${name}: the visual never arrived as its own chunk`);
+    assert.ok(
+      chunks.every((url) => !/\/index-[^/]+\.js$/.test(url)),
+      `${name}: the visual was bundled into the entry chunk instead of its own`
+    );
+    console.log(
+      `  ok ${name}: P.9's Bridge Notes visual is dragged from 0 to 1023, and prints the lesson's own 0.500 / 2.50 V / 127.5 in its own lazy chunk`
+    );
+    assert.equal(pageErrors.length, 0, `${name}: page errors in the Bridge Notes visual: ${pageErrors.join(' | ')}`);
+  } finally {
+    await context.close();
+  }
+}

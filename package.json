@@ -173,7 +173,8 @@
     "test:tour": "node scripts/e2e_tour_presets.mjs",
     "test:runtime": "node scripts/e2e_runtime.mjs",
     "test:primitives": "node scripts/test_primitive_contract.mjs",
-    "check:animations": "node scripts/check_animation_budget.mjs"
+    "check:animations": "node scripts/check_animation_budget.mjs",
+    "test:bridge-visuals": "node --experimental-strip-types scripts/test_bridge_visuals.mjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.4",

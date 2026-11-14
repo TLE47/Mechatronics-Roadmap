@@ -1,4 +1,4 @@
-{"v":6,"path":"track-p/P.1-variables-and-data-types.md","title":"Variables and Fundamental Data Types","blocks":[
+{"v":7,"path":"track-p/P.1-variables-and-data-types.md","title":"Variables and Fundamental Data Types","blocks":[
 {"t":"p","x":"**Step 1 of the Python on-ramp — start here.** The callout above opens this entry directly; the roadmap shows the same on-ramp above Level 0, with a count of the entries you have actually run and passed. Read on if you prefer to work in your own Python 3."},
 {"t":"h","l":2,"x":"Goal"},
 {"t":"p","x":"Update three robot-state values in place: `encoder_ticks` must end 25 ticks above its starting value, `battery_level` must end 0.45 V below its starting value, and `robot_mode` must become the active mode string. Keep every type unchanged, leave `is_estop_active` alone, and compute both numeric updates from the variable's own previous value so they also work on unseen starting states."},
