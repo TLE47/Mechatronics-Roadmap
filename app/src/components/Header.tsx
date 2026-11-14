@@ -1,5 +1,5 @@
 import React from 'react';
-import { Printer, Download, FileJson, User, ChevronRight, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, House, Pause, Play, RotateCcw, FlaskConical, Brain, Settings2, ListChecks } from 'lucide-react';
+import { Printer, Download, FileJson, User, ChevronRight, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, ChevronsDownUp, House, Pause, Play, RotateCcw, FlaskConical, Brain, Settings2, ListChecks } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
 import { downloadLearningLog } from '../learningLog';
 import { BackupControls } from './BackupControls';
@@ -14,6 +14,7 @@ import {
   type Theme,
 } from '../theme';
 import { focusLabel } from '../focusMode';
+import { LAYOUT_CHANGE_EVENT, readLayout, writeLayout } from '../workspaceLayout';
 import { motionHint, motionLabel } from '../motionPrefs';
 import { useMotion } from '../useMotion';
 const GeneralSettingsPanel = React.lazy(() =>
@@ -146,6 +147,14 @@ export const Header: React.FC<HeaderProps> = ({
   // The tray labels switch is a device preference, so the header follows the event its own dialog
   // fires rather than holding a copy that a second mounted header could disagree with.
   const [actionLabels, setActionLabels] = React.useState(readShowActionLabels);
+  // Compact is the runner's preset, not the header's: the button reads it so it can say which way
+  // it will move the screen, and follows the runner when a shortcut or the preset bar changes it.
+  const [compactMode, setCompactMode] = React.useState(() => readLayout() === 'compact');
+  React.useEffect(() => {
+    const follow = () => setCompactMode(readLayout() === 'compact');
+    window.addEventListener(LAYOUT_CHANGE_EVENT, follow);
+    return () => window.removeEventListener(LAYOUT_CHANGE_EVENT, follow);
+  }, []);
   // Stacked under the icon when the preference is on; beside it at 2xl otherwise.
   const labelClass = actionLabels ? 'inline text-[11px] leading-none' : 'hidden 2xl:inline';
   React.useEffect(() => {
@@ -474,6 +483,25 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className={labelClass}>Focus</span>
               </button>
             )}
+            {/* Compact is a lesson-layout preset, but it belongs here rather than on the runner's
+                own bar: a learner folds the whole screen when the lesson is the thing they are
+                reading, and the tray is the one row of the app that never moves. The runner owns the
+                preset; this button only asks for it to flip over one event
+                (`useRunnerArrangement.ts`). */}
+            <button
+              onClick={() => {
+                setCompactMode(writeLayout(compactMode ? 'study' : 'compact') === 'compact');
+              }}
+              data-testid="btn-compact-layout"
+              aria-pressed={compactMode}
+              aria-label="Compact lesson layout"
+              data-tip="Compact — the text and the editor keep the screen; everything else folds into one strip (⌥5)"
+              className="btn"
+              style={pressed(compactMode)}
+            >
+              <ChevronsDownUp className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className={labelClass}>Compact</span>
+            </button>
             {/* One switch for the moving drawings, on every screen. Off is also the cheap setting:
                 each figure stops its frame loop instead of drawing frames nobody sees. */}
             <button

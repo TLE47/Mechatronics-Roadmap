@@ -8,7 +8,8 @@
  *
  * 1. **The table is pinned region by region.** Study shows the lesson text, the editor and the
  *    results; Write hides the lesson text and the results; Read hides the results but keeps the
- *    editor's bar, folded; Debug hides the lesson text and puts the editor and results in columns.
+ *    editor's bar, folded; Debug hides the lesson text and puts the editor and results in columns;
+ *    Compact shows all three stacked, because its small print is the *drawing*, not the table.
  * 2. **Nothing stored, nothing broken.** No `localStorage` at all (a booted page in a test harness, a
  *    browser that throws on access) reads as the default, and the toggle still returns what to render.
  * 3. **A stored value is validated, not trusted.** `'grid'` from an older build, or a half-written
@@ -92,14 +93,14 @@ const REGIONS = ['lesson', 'editor', 'results'];
 
 console.log('layout presets');
 
-check('four presets, each printing its own shortcut', () => {
+check('five presets, each printing its own shortcut', () => {
   assert.deepEqual(
     LAYOUTS.map((option) => option.id),
-    ['study', 'read', 'write', 'debug']
+    ['study', 'read', 'write', 'debug', 'compact']
   );
   assert.deepEqual(
     LAYOUTS.map((option) => option.shortcut),
-    ['⌥1', '⌥2', '⌥3', '⌥4']
+    ['⌥1', '⌥2', '⌥3', '⌥4', '⌥5']
   );
   for (const option of LAYOUTS) {
     assert.ok(option.label.length > 0, `${option.id} needs a label for its button`);
@@ -115,6 +116,9 @@ check('the table: what each preset shows', () => {
   assert.deepEqual(REGIONS.filter((r) => layoutShows('read', r)), ['lesson', 'editor']);
   // Debug is the only preset that hides one region and shows the other two in two columns.
   assert.deepEqual(REGIONS.filter((r) => layoutShows('debug', r)), ['editor', 'results']);
+  // Compact hides nothing: the same three regions Study shows, drawn as one column with the
+  // reporting half folded into a single block (`index.css`, `.compact-dock`).
+  assert.deepEqual(REGIONS.filter((r) => layoutShows('compact', r)), ['lesson', 'editor', 'results']);
 });
 
 check('the arrangement is a separate rule: Study is a workbench, Debug is two columns', () => {
@@ -125,6 +129,7 @@ check('the arrangement is a separate rule: Study is a workbench, Debug is two co
       ['read', 'stack'],
       ['write', 'stack'],
       ['debug', 'columns'],
+      ['compact', 'stack'],
     ]
   );
 });
@@ -143,6 +148,17 @@ check('a stored preset is read back, and is written where the reader looks', () 
     assert.equal(writeLayout('read'), 'read');
     assert.equal(globalThis.localStorage.data.get(STORAGE_KEY_LAYOUT), 'read');
     assert.equal(readLayout(), 'read');
+  } finally {
+    delete globalThis.localStorage;
+  }
+});
+
+check('Compact is remembered like any other preset', () => {
+  globalThis.localStorage = fakeStorage();
+  try {
+    assert.equal(writeLayout('compact'), 'compact');
+    assert.equal(globalThis.localStorage.data.get(STORAGE_KEY_LAYOUT), 'compact');
+    assert.equal(readLayout(), 'compact');
   } finally {
     delete globalThis.localStorage;
   }
@@ -191,8 +207,8 @@ check('the shortcut is the physical key, so ⌥2 works where it types ™', () =
   assert.equal(layoutShortcutFor('1'), 'study');
   assert.equal(layoutShortcutFor('3'), 'write');
   assert.equal(layoutShortcutFor('4'), 'debug');
-  assert.equal(layoutShortcutFor('Digit5'), null, 'there is no fifth preset');
-  assert.equal(layoutShortcutFor('5'), null);
+  assert.equal(layoutShortcutFor('Digit5'), 'compact', 'the header button prints ⌥5');
+  assert.equal(layoutShortcutFor('5'), 'compact');
   assert.equal(layoutShortcutFor('KeyQ'), null);
   assert.equal(layoutShortcutFor('Digit12'), null);
   assert.equal(layoutShortcutFor(''), null);
@@ -327,6 +343,8 @@ check('the one button names the panel this preset can move, and the other side',
   // Write and Read have nothing beside anything: no button, rather than one that does nothing.
   assert.equal(dockControl(DEFAULT_DOCK, 'write'), null);
   assert.equal(dockControl(DEFAULT_DOCK, 'read'), null);
+  // Compact stacks all three, so there is no second column for a dock to move.
+  assert.equal(dockControl(DEFAULT_DOCK, 'compact'), null);
 });
 
 check('a flip moves only the panel the preset is showing', () => {
@@ -334,6 +352,7 @@ check('a flip moves only the panel the preset is showing', () => {
   assert.deepEqual(flippedDock(DEFAULT_DOCK, 'debug'), { lesson: 'left', results: 'left' });
   assert.deepEqual(flippedDock(DEFAULT_DOCK, 'write'), DEFAULT_DOCK, 'Write has nothing to move');
   assert.deepEqual(flippedDock(DEFAULT_DOCK, 'read'), DEFAULT_DOCK, 'Read has nothing to move');
+  assert.deepEqual(flippedDock(DEFAULT_DOCK, 'compact'), DEFAULT_DOCK, 'Compact stacks, so nothing moves');
   assert.deepEqual(
     flippedDock({ lesson: 'right', results: 'left' }, 'study'),
     { lesson: 'left', results: 'left' },

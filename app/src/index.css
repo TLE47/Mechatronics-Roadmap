@@ -1080,3 +1080,48 @@ number-flow {
     color: #000 !important;
   }
 }
+
+/* ── Compact lesson ─────────────────────────────────────────────────────────────
+   The fifth preset (`workspaceLayout.ts`): the lesson text and the editor keep the screen, and
+   every surface that reports on them — the runtime strip, the checks, the panes, the log — folds
+   into one dense block under both (`TabPyodideRunner.tsx`, `data-testid="compact-dock"`). The dock
+   wrapper is `display: contents` in the other four presets, so none of this reaches them: outside
+   Compact it is not a box at all. */
+[data-layout='compact'] {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+[data-layout='compact'] > * {
+  min-width: 0;
+}
+.compact-dock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: min(48vh, 32rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 0.5rem 0.625rem 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--panel);
+}
+.compact-dock > * {
+  min-width: 0;
+}
+.compact-dock :is(h2, h3, h4) {
+  margin-block: 0 0.25rem;
+  font-size: 12.5px;
+}
+.compact-dock :is(p, li) {
+  line-height: 1.5;
+}
+/* One step tighter than the page's own rhythm, and the decorations that only teach the first
+   lesson stay out of the way: Compact is the mode a learner is in once they know the screen. */
+.lesson-compact.space-y-5 > * + * {
+  margin-top: 0.75rem;
+}
+.lesson-compact [data-testid='tour-chip'] {
+  display: none;
+}

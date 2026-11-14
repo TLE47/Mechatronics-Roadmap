@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
+  LAYOUT_CHANGE_EVENT,
   dockControl,
   flippedDock,
   layoutArrangement,
@@ -59,6 +60,14 @@ export function useRunnerArrangement(): RunnerArrangement {
     keepLayoutTop.current = bar ? bar.getBoundingClientRect().top : null;
     setLayout(writeLayout(next));
   };
+  // The header's Compact button writes the preset (`workspaceLayout.ts`); a preset held here has to
+  // follow a write it did not make, or the workbench would keep drawing the layout it had at mount.
+  useEffect(() => {
+    const follow = () => setLayout(readLayout());
+    window.addEventListener(LAYOUT_CHANGE_EVENT, follow);
+    return () => window.removeEventListener(LAYOUT_CHANGE_EVENT, follow);
+  }, []);
+
   useLayoutEffect(() => {
     const top = keepLayoutTop.current;
     keepLayoutTop.current = null;

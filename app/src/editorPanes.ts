@@ -183,7 +183,9 @@ export function paneCapacity(width: number, height: number): number {
  * Type-only import: the runtime dependency runs the other way (the runner imports this module), and
  * a value import here would close the cycle.
  */
-export function viewsForLayout(layout: 'study' | 'write' | 'read' | 'debug'): EditorView[] {
+export function viewsForLayout(
+  layout: 'study' | 'write' | 'read' | 'debug' | 'compact'
+): EditorView[] {
   if (layout === 'read') return [];
   if (layout === 'write') return ['requirements', 'predict', 'cases', 'workflow', 'robot'];
   return [

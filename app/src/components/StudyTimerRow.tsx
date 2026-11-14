@@ -301,20 +301,51 @@ export const StudyTimerRow: React.FC<{
       {!compact && timer.log.length > 0 && (
         <div
           data-testid="study-clock-log"
-          className="w-full rounded-lg border border-line bg-canvas px-2.5 py-2 font-mono text-[11.5px] text-muted"
+          className="w-full overflow-hidden rounded-xl border border-line bg-canvas shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
         >
-          <p className="text-body">
-            Session{' '}
-            <span data-testid="study-clock-session" className="font-semibold">
+          {/* The session's own line: a small label, the total, and how many presses are under it. */}
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-b border-line bg-raise/60 px-3 py-1.5">
+            <span className="flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-[0.14em] text-faint">
+              <span
+                className={`inline-block h-1.5 w-1.5 rounded-full bg-accent ${running ? 'animate-pulse' : ''}`}
+                aria-hidden="true"
+              />
+              Session
+            </span>
+            <span
+              data-testid="study-clock-session"
+              className="font-mono text-[15px] font-semibold leading-none tabular-nums text-ink"
+            >
               {formatClock(elapsed)}
             </span>
-          </p>
-          <ol className="mt-1 space-y-0.5">
+          </div>
+          {/* One line per press, in the clock's own monospace: the time of day, what was pressed,
+              the digits at that moment, and the stretch a pause closed. The dot and the coloured
+              word carry the action, so a paused session reads down the left edge at a glance. */}
+          <ol className="px-3 py-1.5">
             {timer.log.map((press, index) => (
-              <li key={`${press.at}-${index}`} data-testid="study-clock-entry">
-                {`${formatTimeOfDay(press.at)} ${PRESS_LABEL[press.action]} · study clock ${formatClock(
-                  press.clockMs
-                )}${press.stretchMs === null ? '' : ` · stretch ${formatClock(press.stretchMs)}`}`}
+              <li
+                key={`${press.at}-${index}`}
+                data-testid="study-clock-entry"
+                className="truncate font-mono text-[11px] leading-[1.65] text-muted"
+              >
+                <span
+                  className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full align-middle ${
+                    press.action === 'pause' ? 'bg-line' : 'bg-accent'
+                  }`}
+                  aria-hidden="true"
+                />
+                <span className="tabular-nums text-faint">{formatTimeOfDay(press.at)}</span>{' '}
+                <span
+                  className={`font-semibold ${
+                    press.action === 'pause' ? 'text-muted' : 'text-accent'
+                  }`}
+                >
+                  {PRESS_LABEL[press.action]}
+                </span>
+                {' · study clock '}
+                <span className="tabular-nums text-ink">{formatClock(press.clockMs)}</span>
+                {press.stretchMs === null ? '' : ` · stretch ${formatClock(press.stretchMs)}`}
               </li>
             ))}
           </ol>

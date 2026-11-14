@@ -1453,6 +1453,89 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     assert.equal(await visible('lesson-list-card'), true, 'the Study button comes back');
     console.log('  ok ⌥1–⌥4 choose the regions and their arrangement, and the choice is remembered');
 
+    // 5d-ii. Compact, from the header's action tray: the lesson text and the editor keep the screen,
+    //        and everything that reports on them is one dense block under both. The wrapper is
+    //        `display: contents` in the other presets, so the same element is measured both ways.
+    {
+      const shape = () =>
+        page.evaluate(() => {
+          const dock = document.querySelector('[data-testid="compact-dock"]');
+          const root = document.querySelector('[data-compact]');
+          const editor = document.querySelector('[data-testid="editor-panel"]');
+          const reader = document.querySelector('[data-testid="lesson-reader"]');
+          const column = document.querySelector('[data-testid="results-column"]');
+          const box = dock.getBoundingClientRect();
+          return {
+            layout: document.querySelector('[data-layout]')?.getAttribute('data-layout') ?? null,
+            compact: root?.getAttribute('data-compact') ?? null,
+            wrapper: getComputedStyle(dock).display,
+            dockHeight: Math.round(box.height),
+            dockWidth: Math.round(box.width),
+            viewportHeight: window.innerHeight,
+            viewportWidth: window.innerWidth,
+            dockHoldsColumn: !!dock.querySelector('[data-testid="results-column"]'),
+            dockHoldsRuntime: !!dock.querySelector('[data-testid="runner-runtime-status"]'),
+            columnInDock: !!column && !!dock.contains(column),
+            editorWidth: Math.round(editor.getBoundingClientRect().width),
+            readerVisible: !!reader && reader.getBoundingClientRect().height > 0,
+            editorVisible: !!editor && editor.getBoundingClientRect().height > 0,
+            minimised: root
+              ? [...root.children].filter(
+                  (child) => !child.matches('[data-testid="compact-dock"]') &&
+                    (child.contains(editor) || child.contains(reader))
+                ).length
+              : -1,
+          };
+        });
+
+      const before = await shape();
+      assert.equal(before.wrapper, 'contents', 'outside Compact the dock is not a box at all');
+
+      await page.getByTestId('btn-compact-layout').click();
+      await page.waitForTimeout(300);
+      const compact = await shape();
+      assert.equal(compact.layout, 'compact', 'the header button must put the workbench in Compact');
+      assert.equal(compact.compact, 'on', 'the page must say which mode it is drawn in');
+      assert.equal(
+        await page.getByTestId('btn-compact-layout').getAttribute('aria-pressed'),
+        'true',
+        'the button must report that it is the preset in force'
+      );
+      assert.equal(compact.wrapper, 'flex', 'Compact turns the dock into one block');
+      assert.equal(compact.columnInDock, true, 'the results must be inside the dock, not beside it');
+      assert.equal(compact.dockHoldsRuntime, true, 'the runtime strip folds in with the results');
+      assert.equal(compact.editorVisible, true, 'the editor stays, full size');
+      assert.equal(compact.readerVisible, true, 'the lesson text stays');
+      assert.ok(
+        compact.dockHeight <= Math.round(compact.viewportHeight * 0.5),
+        `the dock must be a strip, not a second page (${compact.dockHeight} of ${compact.viewportHeight})`
+      );
+      assert.ok(
+        compact.editorWidth >= Math.round(compact.viewportWidth * 0.6),
+        `the editor must keep the width it had in one column (${compact.editorWidth} of ${compact.viewportWidth})`
+      );
+      assert.ok(
+        compact.editorWidth >= before.editorWidth - 40,
+        'folding the page must not squeeze the editor'
+      );
+
+      // It is a preset like the others: the shortcut reaches it and a reload remembers it.
+      await page.reload();
+      await page.getByTestId('btn-compact-layout').waitFor({ timeout: 10000 });
+      assert.equal(
+        await page.getByTestId('btn-compact-layout').getAttribute('aria-pressed'),
+        'true',
+        'Compact must survive a reload'
+      );
+      await page.getByTestId('btn-compact-layout').click();
+      await page.waitForTimeout(300);
+      const restored = await shape();
+      assert.equal(restored.layout, 'study', 'the same button unfolds the page');
+      assert.equal(restored.wrapper, 'contents', 'and the dock stops being a box again');
+      assert.equal(restored.dockHeight, 0, 'a `contents` wrapper takes no space of its own');
+      console.log('  ok Compact folds the page into one dock, keeps the editor full width, and unfolds again');
+    }
+
     // 5d-i. The editor's tabs: the code and the two outputs are views of one card, the output is a tab
     //       rather than a block that pushes the code up, and a split shows two views at once.
     {

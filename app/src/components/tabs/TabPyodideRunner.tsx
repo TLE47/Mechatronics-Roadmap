@@ -1961,12 +1961,34 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     />
   );
 
+  // Compact is a preset of the whole page, not of the grid alone: the editor and the lesson text
+  // keep their size and everything that reports on them folds into the dock below (see the root's
+  // `data-compact` and `index.css`). `shownLayout` is what the arrangement resolved, so a hidden
+  // results region never leaves an empty dock behind.
+  const compactLesson = shownLayout === 'compact';
+
+  // Where the interpreter is, while it is there. One node, because Compact moves it: in every other
+  // preset it sits under the tour and above the editor, and in Compact it joins the dock below them.
+  const runtimeStrip = (
+    <RunnerRuntimeStrip
+      pyodideStatus={pyodideStatus}
+      runtimeBoot={runtimeBoot}
+      readyMs={readyMs}
+      verifiedCount={verifiedCount}
+      completedCount={completedCount}
+      lessonCount={PYTHON_LESSONS.length}
+      offline={offline}
+      onTakeOffline={takeOffline}
+    />
+  );
+
   return (
     <div
+      data-compact={compactLesson ? 'on' : undefined}
       className={
-        phoneStudy
+        (phoneStudy
           ? 'relative isolate space-y-5 pb-[calc(4.75rem+env(safe-area-inset-bottom))]'
-          : 'relative isolate space-y-5'
+          : 'relative isolate space-y-5') + (compactLesson ? ' lesson-compact' : '')
       }
     >
       <LessonAmbience />
@@ -2015,16 +2037,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         </div>
       )}
 
-      <RunnerRuntimeStrip
-        pyodideStatus={pyodideStatus}
-        runtimeBoot={runtimeBoot}
-        readyMs={readyMs}
-        verifiedCount={verifiedCount}
-        completedCount={completedCount}
-        lessonCount={PYTHON_LESSONS.length}
-        offline={offline}
-        onTakeOffline={takeOffline}
-      />
+      {!compactLesson && runtimeStrip}
       {showFirstGuide && isPhone && !guideOpen && !guideHidden && (
         <GuideOffer onOpen={() => setGuideOpen(true)} />
       )}
@@ -2850,8 +2863,17 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               />
             )}
 
-          {/* Everything that reports on the editor (`runner/ResultsColumn.tsx`). */}
-          <ResultsColumn
+          {/* Everything that reports on the editor, in one block. In every preset but Compact the
+              wrapper is `display: contents`, so the dock is not a box at all and the results are the
+              same grid child they were; in Compact it becomes the one dense strip that holds the
+              runtime, the checks, the panes and the log, while the editor and the lesson text keep
+              the screen (`index.css`, `.compact-dock`). */}
+          <div
+            data-testid="compact-dock"
+            className={compactLesson ? 'compact-dock' : 'contents'}
+          >
+            {compactLesson && runtimeStrip}
+            <ResultsColumn
             split={{
               side: resultsSide,
               visible: phoneEditorVisible && resultsAllowed,
@@ -2889,6 +2911,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               onUnpin: () => setPinnedScope(null),
             }}
           />
+          </div>
         </div>
         </div>
       </div>
