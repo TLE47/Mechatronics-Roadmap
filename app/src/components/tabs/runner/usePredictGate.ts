@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   checkPrediction,
   clearPrediction,
+  clearPredictionDraft,
   predictionFor,
+  readPredictionDraft,
   savePrediction,
+  savePredictionDraft,
   type PredictionRecord,
 } from '../../../predictGate';
 import type { PythonLessonItem } from '../../../data/pythonLessonsData';
@@ -52,14 +55,47 @@ export function usePredictGate({
   const [text, setText] = useState('');
   /** The run the gate is holding: set when Run was pressed before a prediction was made. */
   const [held, setHeld] = useState<{ code: string; lesson: PythonLessonItem } | null>(null);
+  /** The draft writer, and the two values it needs after a render has already moved on. */
+  const draftTimer = useRef<number | null>(null);
+  const lessonRef = useRef(selectedId);
+  lessonRef.current = selectedId;
+  const textRef = useRef(text);
+  textRef.current = text;
 
-  // A new lesson is a new question: the half-typed guess goes, and the record is read for the lesson
-  // now on screen rather than the one just left.
+  /**
+   * A new lesson is a new question: the record is read for the lesson now on screen, and the box comes
+   * back with whatever was half-typed for it rather than with the last lesson's words.
+   */
   useEffect(() => {
     setRecord(predictionFor(selectedId));
-    setText('');
+    setText(readPredictionDraft(selectedId));
     setHeld(null);
   }, [selectedId]);
+
+  // A draft is written a beat after the last keystroke rather than on each one, and any pending write
+  // is flushed when the gate goes away (a lesson switch, the pane closing, the tab closing) so the
+  // sentence survives the thing it was interrupted by.
+  useEffect(
+    () => () => {
+      if (draftTimer.current !== null) {
+        window.clearTimeout(draftTimer.current);
+        draftTimer.current = null;
+        savePredictionDraft(lessonRef.current, textRef.current);
+      }
+    },
+    []
+  );
+
+  /** Typing: the state moves now, the store follows 400 ms later. */
+  const updateText = (next: string) => {
+    setText(next);
+    textRef.current = next;
+    if (draftTimer.current !== null) window.clearTimeout(draftTimer.current);
+    draftTimer.current = window.setTimeout(() => {
+      draftTimer.current = null;
+      savePredictionDraft(lessonRef.current, next);
+    }, 400);
+  };
 
   const requestRun = (sourceCode: string, lesson: PythonLessonItem = currentLesson) => {
     if (isRunning) return;
@@ -98,6 +134,13 @@ export function usePredictGate({
     const pending = held;
     const lesson = pending?.lesson ?? currentLesson;
     if (!text.trim()) return;
+    // The guess is now a record: the draft has nothing left to hold, and leaving it behind would put
+    // the same words back in the box as if they had never been judged.
+    if (draftTimer.current !== null) {
+      window.clearTimeout(draftTimer.current);
+      draftTimer.current = null;
+    }
+    clearPredictionDraft(lesson.id);
     const check = checkPrediction(text, lesson.expectedOutput);
     setRecord(
       savePrediction({
@@ -120,6 +163,11 @@ export function usePredictGate({
   const skip = () => {
     const pending = held;
     const lesson = pending?.lesson ?? currentLesson;
+    if (draftTimer.current !== null) {
+      window.clearTimeout(draftTimer.current);
+      draftTimer.current = null;
+    }
+    clearPredictionDraft(lesson.id);
     setRecord(
       savePrediction({
         lessonId: lesson.id,
@@ -143,15 +191,17 @@ export function usePredictGate({
   const again = () => {
     const previous = predictionFor(selectedId);
     clearPrediction(selectedId);
+    clearPredictionDraft(selectedId);
     setRecord(null);
     setText(previous?.text ?? '');
+    textRef.current = previous?.text ?? '';
     setHeld(null);
   };
 
   return {
     record,
     text,
-    setText,
+    setText: updateText,
     holding: held !== null,
     requestRun,
     open,
