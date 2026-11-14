@@ -561,6 +561,12 @@ export function useRunnerExecution({
             }
             const step = (data.step as PausedStep) ?? null;
             setPausedStep(step);
+            // A park arrives with the lines this run has executed so far: Trace answers how the
+            // program reached this breakpoint, which is exactly the question a breakpoint asks.
+            if (data.trace) {
+              setTrace(readTrace(data.trace));
+              setTraceStep(0);
+            }
             // An edit that landed re-posts this park with the frame's new values: the form closes and
             // the chips show what the program will use. One that was refused keeps the form open and
             // says why, in the interpreter's own words.

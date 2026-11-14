@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Activity, Bot, CheckSquare, ClipboardList, GitBranch, ListChecks, Sparkles, Terminal } from 'lucide-react';
+import { Activity, Bug, Bot, CheckSquare, ClipboardList, GitBranch, ListChecks, Sparkles, Terminal } from 'lucide-react';
 import type { EditorView } from '../../../editorPanes';
 
 /**
@@ -65,6 +65,14 @@ export function resultTabMeta(view: EditorView): ResultTabMeta {
         title:
           'The robot arena watches the values your current main.py binds — Run robot never edits or grades the code',
         icon: <Bot className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
+      };
+    case 'breakpoints':
+      // The pane used to fall through to the default and be labelled `main.py`, which put two
+      // `main.py` tabs in the strip. A pane says what it shows.
+      return {
+        label: 'Breakpoints',
+        title: 'The lines this lesson will stop on, each with an optional condition',
+        icon: <Bug className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
       };
     case 'trace':
       return {

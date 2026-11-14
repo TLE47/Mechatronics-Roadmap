@@ -12,11 +12,13 @@ import { createPortal } from 'react-dom';
 import {
   KIND_META,
   MAX_BRANCH_CONDITION_CHARS,
+  MAX_FONT_SIZE,
   MAX_NODE_HEIGHT,
   MAX_NODE_WIDTH,
   MAX_STEP_DETAIL_CHARS,
   MAX_STEP_TITLE_CHARS,
   MAX_STEP_UNIT_CHARS,
+  MIN_FONT_SIZE,
   MIN_NODE_HEIGHT,
   MIN_NODE_WIDTH,
   NODE_HEIGHT,
@@ -374,7 +376,17 @@ export function WorkflowNodeCard({
       const patch: Partial<WorkflowNode> = {};
       if (Math.round(next.width) !== startWidth) patch.width = Math.round(next.width);
       if (Math.round(next.height) !== startHeight) patch.height = Math.round(next.height);
-      if (patch.width || patch.height) onUpdate(node.id, patch);
+      // The words grow with the plate, or a card dragged to twice its height is a stretched box
+      // with the same 12 px sentence in it. Both axes scale the type by the smaller ratio, so
+      // neither one can push a line past the edge the learner just chose; the size the inspector's
+      // own slider can hold is the range, and 12 (every card's default) stores no field.
+      const ratio = Math.min(next.width / startWidth, next.height / startHeight);
+      const scaled = Math.round(type.title * ratio);
+      if (ratio !== 1 && scaled !== type.title) {
+        const size = Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, scaled));
+        if (size !== type.title) patch.size = size === 12 ? undefined : size;
+      }
+      if (patch.width || patch.height || patch.size !== undefined) onUpdate(node.id, patch);
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', finish);

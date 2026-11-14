@@ -75,6 +75,14 @@ export interface StudyTimer {
   lastTick: number;
   /** The lesson the current stretch belongs to, so the sitting can name it. */
   lesson: string;
+  /**
+   * The lessons this visitor has finished, newest last.
+   *
+   * Not part of the session: Log & reset clears the digits and the presses, and the fact that a
+   * lesson was completed is not a session's to forget — a clock that went back to "in progress" on
+   * the next visit would be unlearning the one thing it exists to record.
+   */
+  completed: string[];
   /** This session's presses, oldest first. Log & reset starts an empty log. */
   log: ClockLogEntry[];
 }
@@ -84,8 +92,20 @@ export const IDLE_TIMER: StudyTimer = {
   runningSince: null,
   lastTick: 0,
   lesson: '',
+  completed: [],
   log: [],
 };
+
+/** How many finished lessons the clock remembers. Older ones drop off the front. */
+export const MAX_COMPLETED = 24;
+
+/** The completions list with `lesson` added once, newest last. */
+function withCompleted(timer: StudyTimer, lesson: string): string[] {
+  const list = Array.isArray(timer.completed) ? timer.completed : [];
+  const id = typeof lesson === 'string' ? lesson.trim() : '';
+  if (!id) return list;
+  return [...list.filter((each) => each !== id), id].slice(-MAX_COMPLETED);
+}
 
 /** The clock's reading at `now`: banked time plus the stretch in progress. Never negative. */
 export function elapsedMs(timer: StudyTimer, now: number): number {
@@ -152,6 +172,7 @@ export function startTimer(
     runningSince: at,
     lastTick: at,
     lesson: lesson || timer.lesson,
+    completed: Array.isArray(timer.completed) ? timer.completed : [],
     log: addPress(timer, { action, at, clockMs: banked, stretchMs: null }),
   };
 }
@@ -171,6 +192,7 @@ export function pauseTimer(timer: StudyTimer, now: number): StudyTimer {
     runningSince: null,
     lastTick: at,
     lesson: timer.lesson,
+    completed: Array.isArray(timer.completed) ? timer.completed : [],
     log: addPress(timer, {
       action: 'pause',
       at,
@@ -193,7 +215,7 @@ export function pauseTimer(timer: StudyTimer, now: number): StudyTimer {
  *
  * Resuming afterwards is allowed and is its own press: a learner who keeps reading presses Resume.
  */
-export function completeTimer(timer: StudyTimer, now: number): StudyTimer {
+export function completeTimer(timer: StudyTimer, now: number, lesson = timer.lesson): StudyTimer {
   const at = Math.round(now);
   const clockMs = elapsedMs(timer, at);
   const stretchMs = timer.runningSince === null ? null : Math.max(0, at - timer.runningSince);
@@ -202,6 +224,9 @@ export function completeTimer(timer: StudyTimer, now: number): StudyTimer {
     runningSince: null,
     lastTick: at,
     lesson: timer.lesson,
+    // The completion is written beside the press rather than only in it: Log & reset keeps this
+    // list, so the row can still name the lesson it finished on the next visit.
+    completed: withCompleted(timer, lesson),
     log: addPress(timer, { action: 'complete', at, clockMs, stretchMs }),
   };
 }
@@ -221,7 +246,7 @@ const completionLogged = new Set<string>();
 export function recordLessonComplete(lessonId: string, now: number = Date.now()): StudyTimer {
   if (!lessonId || completionLogged.has(lessonId)) return readTimer();
   completionLogged.add(lessonId);
-  const next = completeTimer(readTimer(), now);
+  const next = completeTimer(readTimer(), now, lessonId);
   writeTimer(next);
   try {
     if (typeof window !== 'undefined') window.dispatchEvent(new Event(STUDY_CLOCK_EVENT));
@@ -236,9 +261,9 @@ export function heartbeat(timer: StudyTimer, now: number): StudyTimer {
   return { ...timer, lastTick: Math.max(timer.lastTick, Math.round(now)) };
 }
 
-/** Zero the clock, keeping the lesson the next stretch will belong to. */
-export function clearedTimer(lesson = ''): StudyTimer {
-  return { ...IDLE_TIMER, lesson };
+/** Zero the clock, keeping the lesson the next stretch belongs to and what was completed. */
+export function clearedTimer(lesson = '', completed: string[] = []): StudyTimer {
+  return { ...IDLE_TIMER, lesson, completed };
 }
 
 /**
@@ -294,11 +319,19 @@ export function parseTimer(raw: string | null): StudyTimer {
         : count(entry.runningSince, 0) || null;
     const bankedMs = count(entry.bankedMs);
     const lastTick = running === null ? count(entry.lastTick) : Math.max(running, count(entry.lastTick));
+    const completed = Array.isArray(entry.completed)
+      ? entry.completed
+          .filter((each): each is string => typeof each === 'string' && each.trim().length > 0)
+          // One entry per lesson, last occurrence kept: a store written twice about the same pass
+          // must not read as two finished lessons.
+          .filter((each, index, list) => list.lastIndexOf(each) === index)
+          .slice(-MAX_COMPLETED)
+      : [];
     const log = (Array.isArray(entry.log) ? entry.log : [])
       .map(parsePress)
       .filter((press): press is ClockLogEntry => press !== null)
       .slice(-MAX_CLOCK_LOG);
-    return { bankedMs, runningSince: running, lastTick, lesson, log };
+    return { bankedMs, runningSince: running, lastTick, lesson, completed, log };
   } catch {
     return { ...IDLE_TIMER };
   }
@@ -329,7 +362,8 @@ export function writeTimer(timer: StudyTimer, store: Storage | null = bucket()):
       timer.bankedMs === 0 &&
       timer.runningSince === null &&
       !timer.lastTick &&
-      timer.log.length === 0
+      timer.log.length === 0 &&
+      (timer.completed ?? []).length === 0
     ) {
       store.removeItem(TIMER_STORAGE_KEY);
       return;

@@ -155,6 +155,11 @@ export const StudyTimerRow: React.FC<{
   // The last thing the session recorded being the lesson's completion is what the row says in its
   // status line: the digits are stopped, and the reason is the pass, not a stray pause.
   const lastAction = timer.log[timer.log.length - 1]?.action ?? null;
+  // Finished here, whether or not the pass that finished it was on this visit: the clock's own
+  // record of completions is what survives Log & reset and a reload.
+  const completed = Array.isArray(timer.completed) ? timer.completed : [];
+  const clockComplete = completed.includes(lessonId);
+  const complete = verified || clockComplete;
   const today = formatDuration(todayMs);
 
   const onToggle = () => {
@@ -176,7 +181,9 @@ export const StudyTimerRow: React.FC<{
     if (total <= 0) return;
     recordSittingEvent({ at, kind: 'study', lesson: lessonId });
     setLogged(formatDuration(total));
-    persist(clearedTimer(lessonId));
+    // The digits and the presses are the session's; the lessons this clock has seen finished are
+    // not, so Log & reset carries them across instead of unlearning them.
+    persist(clearedTimer(lessonId, timer.completed));
   };
 
   return (
@@ -209,23 +216,25 @@ export const StudyTimerRow: React.FC<{
         // "complete" says the learner finished; next to nothing it says they are still working.
         <span
           data-testid="study-timer-lesson-state"
-          data-state={verified ? 'verified' : selfMarked ? 'self-marked' : 'open'}
+          data-state={complete ? 'verified' : selfMarked ? 'self-marked' : 'open'}
           title={
             verified
               ? `${label} is verified: a run passed it`
-              : selfMarked
+              : clockComplete
+                ? `${label} was completed — this study clock remembers it across visits`
+                : selfMarked
                 ? `${label} is marked done by you, without help`
                 : `${label} is not finished yet`
           }
           className={
-            verified
+            complete
               ? 'rounded border border-accent/40 bg-accent/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-accent'
               : selfMarked
                 ? 'rounded border border-line bg-canvas px-1.5 py-0.5 font-mono text-[11px] text-body'
                 : 'rounded border border-line-soft bg-canvas px-1.5 py-0.5 font-mono text-[11px] text-faint'
           }
         >
-          {verified ? '✓ complete' : selfMarked ? 'self-done' : 'in progress'}
+          {complete ? '✓ complete' : selfMarked ? 'self-done' : 'in progress'}
         </span>
       )}
       <span
@@ -284,7 +293,9 @@ export const StudyTimerRow: React.FC<{
                 ? `Lesson completed — clock stopped at ${formatClock(elapsed)}`
                 : elapsed > 0
                   ? 'Paused — press Resume'
-                  : 'Press Start'}
+                  : clockComplete
+                    ? 'Lesson completed — press Start for more time'
+                    : 'Press Start'}
         </span>
       )}
       {!compact && timer.log.length > 0 && (
@@ -343,6 +354,10 @@ export const StudyTimerRow: React.FC<{
             A sitting is one stretch, counted whole for every lesson it touched.
           </p>
           <p className="mt-0.5">Today, all lessons: {todayMs > 0 ? today : 'nothing logged yet'}</p>
+          <p className="mt-0.5" data-testid="study-timer-completed">
+            Completed on this clock:{' '}
+            {completed.length ? completed.join(' · ') : 'nothing yet'}
+          </p>
         </div>
       )}
     </div>

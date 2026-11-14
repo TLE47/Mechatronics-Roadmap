@@ -284,6 +284,7 @@ check('the store round-trips, and a cleared clock removes the key', () => {
     runningSince: T0,
     lastTick: T0 + MIN,
     lesson: 'P.1',
+    completed: [],
     log: [{ action: 'start', at: T0, clockMs: 0, stretchMs: null }],
   };
   writeTimer(running, store);
@@ -421,6 +422,36 @@ check('resuming after a pass starts a fresh stretch instead of editing the old o
   const again = startTimer(done, T0 + 30 * MIN, 'P.1', 'resume');
   assert.equal(again.runningSince, T0 + 30 * MIN);
   assert.equal(elapsedMs(again, T0 + 31 * MIN), 6 * MIN);
+});
+
+check('a completion is remembered as a fact, and Log & reset does not forget it', () => {
+  const running = startTimer(IDLE_TIMER, T0, 'P.1');
+  const done = completeTimer(running, T0 + 5 * MIN, 'P.2');
+  assert.deepEqual(done.completed, ['P.2'], 'the lesson that finished is the one recorded');
+  const cleared = clearedTimer('P.2', done.completed);
+  assert.equal(cleared.bankedMs, 0, 'Log & reset zeroes the digits');
+  assert.equal(cleared.log.length, 0, 'and starts a new session log');
+  assert.deepEqual(cleared.completed, ['P.2'], 'but a finished lesson is not a session fact');
+  // Two completions, newest last, one entry each: a lesson finished twice is still one lesson.
+  const twice = completeTimer(completeTimer(cleared, T0 + 9 * MIN, 'P.2'), T0 + 9 * MIN, 'P.3');
+  assert.deepEqual(twice.completed, ['P.2', 'P.3']);
+});
+
+check('a stored clock keeps its completions, and junk in them costs only the junk', () => {
+  const stored = parseTimer(
+    JSON.stringify({
+      bankedMs: 0,
+      runningSince: null,
+      lastTick: 0,
+      lesson: 'P.1',
+      completed: ['P.1', '', 7, 'P.1', 'P.4'],
+      log: [],
+    })
+  );
+  assert.deepEqual(stored.completed, ['P.1', 'P.4'], 'empty, numeric and duplicate ids are dropped');
+  const junk = parseTimer(JSON.stringify({ completed: 'P.1' }));
+  assert.deepEqual(junk.completed, [], 'a stored string is not a list of lessons');
+  assert.deepEqual(parseTimer(null).completed, []);
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);
