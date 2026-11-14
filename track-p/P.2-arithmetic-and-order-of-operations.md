@@ -108,16 +108,16 @@ Complete `TODO 1`, `TODO 2`, and `TODO 3` to calculate a robot's updated positio
 1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
-wheel_speed = 1.25
+wheel_speed = 1.25  # m/s, wheel speed
 elapsed_sec = 0.05
 start_pos_m = 2.0
 
-supply_level = 12.0
-part_a = 20000
-part_b = 10000
+supply_level = 12.0  # V, the supply rail
+part_a = 20000  # ohm, upper leg of the divider
+part_b = 10000  # ohm, lower leg of the divider
 
-cart_mass = 2.0
-cart_speed = 3.0
+cart_mass = 2.0  # kg, cart mass
+cart_speed = 3.0  # m/s, cart speed
 
 # TODO 1: Set new_pos_m to the position of the wheel after this tick.
 #         Use the start position, speed, and elapsed time already in the starter; do not type the Expected Output position.

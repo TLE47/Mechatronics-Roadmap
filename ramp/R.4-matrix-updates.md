@@ -93,9 +93,9 @@ Complete `mat_vec` (`TODO 1`), `step_matrix` (`TODO 2`) and `step_two_lines` (`T
 
 ```python
 DT_S = 0.01
-J = 0.02
-B = 0.05
-TAU = 0.40
+J = 0.02  # kg m^2, arm joint inertia
+B = 0.05  # N m s / rad, viscous friction
+TAU = 0.40  # N m, constant commanded torque
 
 # Rows are outputs, columns are inputs: row 0 says "q-dot = 0*q + 1*qd", row 1 says
 # "qd-dot = 0*q + (-B/J)*qd". The torque enters through its own 2x1 vector.

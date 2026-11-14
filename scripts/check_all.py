@@ -114,6 +114,10 @@ GATES: list[tuple[str, list[str], bool]] = [
     ("consistency", ["scripts/check_consistency.py"], False),
     ("friction_report", ["scripts/friction_report.py", "--check"], False),
     ("assertions", ["scripts/lint_assertions.py"], False),
+    # A starter block hands the learner a set of numbers to compute a torque or a current from; a given
+    # whose name and comment both omit the unit teaches that the unit does not matter. Reads every
+    # lesson page's starter blocks, needs no browser, so it belongs in this pass rather than a lane.
+    ("units", ["scripts/check_starter_units.py"], False),
     # The two rules the 2026-11-13 library release could not express as a text gate: the installed
     # primitives wear the workbench's tokens and keep dialog focus, and no surface gains a second
     # looping animation. Both drive the built bundle in the headless shell, so the job that runs this
