@@ -336,6 +336,7 @@ import { buildPortfolioMarkdown } from './portfolio';
 import { readStudy } from './studyNotes';
 import { readCardList } from './studyCards';
 import { readSittings } from './sittingClock';
+import { LAYOUT_CHANGE_EVENT, readLayout } from './workspaceLayout';
 
 /**
  * The one footer, so the palette page and the workbench cannot drift apart. The token reference is
@@ -484,6 +485,10 @@ export const App: React.FC = () => {
   // At `xl` the rail is a 232 px activity bar on every lesson; a press folds it to its icons. A
   // preference like the layout, so it is remembered (`app/src/railCollapse.ts`).
   const [railCollapsed, setRailCollapsed] = useState<boolean>(() => readRailCollapsed());
+  // Compact folds the page's own chrome as well as the lesson's: the mode bar keeps its short labels
+  // and the rail is its icon column, so the lesson's dock is the first full row on the page.
+  const [compactChrome, setCompactChrome] = useState<boolean>(() => readLayout() === 'compact');
+  const railFolded = railCollapsed || compactChrome;
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState<boolean>(false);
   const [portfolioCopied, setPortfolioCopied] = useState<boolean>(false);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
@@ -751,6 +756,12 @@ export const App: React.FC = () => {
   useEffect(() => {
     writeRailCollapsed(railCollapsed);
   }, [railCollapsed]);
+
+  useEffect(() => {
+    const sync = () => setCompactChrome(readLayout() === 'compact');
+    window.addEventListener(LAYOUT_CHANGE_EVENT, sync);
+    return () => window.removeEventListener(LAYOUT_CHANGE_EVENT, sync);
+  }, []);
 
   useEffect(() => {
     try {
@@ -1977,6 +1988,7 @@ export const App: React.FC = () => {
     <div
       id="top"
       data-focus={focus ? 'on' : 'off'}
+      data-density={compactChrome ? 'compact' : undefined}
       className="min-h-screen flex flex-col bg-canvas text-ink"
     >
       <SoundClicks />
@@ -2130,9 +2142,9 @@ export const App: React.FC = () => {
           aria-label="Simulator Tabs"
           data-chrome="rail"
           data-testid="tab-rail-nav"
-          data-collapsed={railCollapsed ? 'true' : 'false'}
+          data-collapsed={railFolded ? 'true' : 'false'}
           className={`border-b xl:shrink-0 xl:border-b-0 xl:border-r ${
-            railCollapsed ? 'xl:w-[68px]' : 'xl:w-[232px]'
+            railFolded ? 'xl:w-[68px]' : 'xl:w-[232px]'
           }`}
           style={{ backgroundColor: 'var(--panel)', borderColor: 'var(--border)' }}
         >
@@ -2145,17 +2157,17 @@ export const App: React.FC = () => {
               onClick={() => setRailCollapsed((collapsed) => !collapsed)}
               data-testid="btn-rail-toggle"
               data-sound="nav"
-              aria-expanded={!railCollapsed}
+              aria-expanded={!railFolded}
               aria-controls="simulator-tab-rail"
-              aria-label={railCollapsed ? 'Expand the simulator tabs' : 'Collapse the simulator tabs'}
+              aria-label={railFolded ? 'Expand the simulator tabs' : 'Collapse the simulator tabs'}
               title={
-                railCollapsed
+                railFolded
                   ? 'Expand the rail: every tab by name and subtitle'
                   : 'Collapse the rail to its icons; every tab keeps its name for a keyboard and a screen reader'
               }
               className="mx-2 mb-1 mt-2 hidden w-[calc(100%-1rem)] cursor-pointer items-center justify-center gap-2 rounded-[var(--r-sm)] border border-line-soft px-2 py-1 text-[11px] font-mono uppercase tracking-wider text-muted transition-colors hover:border-line hover:text-ink xl:flex"
             >
-              {railCollapsed ? (
+              {railFolded ? (
                 <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
               ) : (
                 <>
@@ -2200,10 +2212,10 @@ export const App: React.FC = () => {
                   onPointerEnter={() => prefetchTab(tab.id)}
                   onFocus={() => prefetchTab(tab.id)}
                   aria-current={isActive ? 'page' : undefined}
-                  aria-label={railCollapsed ? `${label} — ${subtitle}` : undefined}
-                  title={railCollapsed ? `${label} — ${subtitle}` : undefined}
+                  aria-label={railFolded ? `${label} — ${subtitle}` : undefined}
+                  title={railFolded ? `${label} — ${subtitle}` : undefined}
                   className={`group flex min-w-[12rem] shrink-0 cursor-pointer snap-start items-center gap-2.5 rounded-[var(--r-md)] border px-2.5 py-2 text-left transition-colors xl:w-full xl:min-w-0 ${
-                    railCollapsed ? 'xl:justify-center xl:px-0' : ''
+                    railFolded ? 'xl:justify-center xl:px-0' : ''
                   }`}
                   style={{
                     borderColor: isActive ? 'var(--accent)' : 'var(--border)',
@@ -2223,7 +2235,7 @@ export const App: React.FC = () => {
                   >
                     <Icon className="h-4 w-4" />
                   </span>
-                  <span className={`min-w-0${railCollapsed ? ' xl:hidden' : ''}`}>
+                  <span className={`min-w-0${railFolded ? ' xl:hidden' : ''}`}>
                     <span
                       className="block text-[12px] font-semibold leading-tight"
                       style={{ color: isActive ? 'var(--accent)' : 'var(--text)' }}

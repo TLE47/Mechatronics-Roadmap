@@ -89,6 +89,7 @@ import { LessonAmbience } from './runner/LessonAmbience';
 
 import { PausedBar } from './runner/PausedBar';
 import { ResultsColumn } from './runner/ResultsColumn';
+import { CompactShelf } from './runner/CompactShelf';
 import { DraftHistoryPanel } from './runner/DraftHistoryPanel';
 import { BreakpointPanel } from './runner/BreakpointPanel';
 import { RunnerToolbar } from './runner/RunnerToolbar';
@@ -439,19 +440,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     commitCode(trySnippet.code);
   }, [trySnippet]);
 
-  // A palette pick (or a roadmap practice chip) is an instruction, not a prop sync: the nonce is
-  // what makes it land even when it names the entry already in `initialLessonId`, and the address
-  // bar follows because a learner's own pick is what a copied URL should reopen.
+  // A palette pick (or a roadmap practice chip) is an instruction, not a prop sync: the nonce makes
+  // it land even when it names the entry already in `initialLessonId`, and the address bar follows.
   //
-  // A search hit may also name a line. A line is counted in a text, so it is only that line while the
-  // editor holds the text it was counted in: the starter. Two cases, and they land differently.
-  //
-  // - **The lesson is already open**: nothing remounts, so the caret can move now.
-  // - **The pick switches lessons**: the editor is keyed by the lesson it holds, so a new one mounts.
-  //   A reveal asked *now* would land in the text about to be replaced — and would be dropped
-  //   entirely by a remount that arrives a moment later (a strict double mount). The line therefore
-  //   travels as a mount prop (`pendingJump` → `initialLine`), so whichever editor mounts is born on
-  //   that line rather than being told to go there afterwards.
+  // A search hit's line travels as a mount prop (`pendingJump` → `initialLine`) when the pick
+  // switches lessons: a reveal asked now would land in the text about to be replaced and be dropped
+  // by the remount, so whichever editor mounts is born on that line. Only an already-open lesson
+  // remounts nothing, and the caret can move now.
   const lastLessonRequest = useRef<number>(0);
   useEffect(() => {
     if (!lessonRequest || lessonRequest.nonce <= lastLessonRequest.current) return;
@@ -685,17 +680,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // The secondary half of the toolbar, folded away by default (`docs/PLAN-2.1a.md` §3). Closed is
   // the first screen a beginner sees; a control that is opened on purpose is read before it is used.
   const [moreOpen, setMoreOpen] = useState(false);
-  // One `lesson_open` per visit, including the first render: it is the denominator for abandon rate.
-  // The sitting clock takes the same event, because it is the moment the learner is here: it opens a
-  // sitting, or extends the one they were already in when they switched lesson without a break.
+  // One `lesson_open` per visit, including the first render: the denominator for abandon rate. The
+  // sitting clock takes the same event, because it is the moment the learner is here.
   //
-  // The guard is for the replay, not for the learner. `main.tsx` mounts under `React.StrictMode`, which
-  // in development runs every effect a second time on the same instance to surface cleanup bugs — so
-  // a dev visit filed two opens 7 ms apart, and a pilot exporting from `npm run dev` read a visit count
-  // doubled (`docs/pilot-results.md`, Run 214). A ref survives that replay, so the second pass is a
-  // no-op; a real re-open is a *new* instance, whose ref starts empty, so visiting A → B → A still
-  // files three opens. Removing StrictMode would hide this and every other effect that cannot be
-  // replayed, which is the reason it is on.
+  // The guard is for StrictMode's replay, not for the learner: development ran every effect twice,
+  // so a dev visit filed two opens and a pilot's export read the count doubled
+  // (`docs/pilot-results.md`, Run 214). A ref survives the replay and a real re-open is a new
+  // instance, so A → B → A still files three opens.
   const openedRef = useRef<string | null>(null);
   useEffect(() => {
     if (openedRef.current === selectedId) return;
@@ -1122,14 +1113,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   /**
    * The session, but only once the interpreter is up.
    *
-   * Before that a completion request would queue behind the 10 MB load and arrive long after the
-   * learner moved on; the keyword completions answer immediately instead, which is what the editor
-   * shipped with. The analyzers themselves install on the first request, so a learner who never
-   * types never pays for them.
-   *
-   * A run is the other thing that blocks this worker: a hover, a signature or a completion asked
-   * while Python is running would wait in the queue until the run ended and then answer a request
-   * whose keystroke is long gone - so nothing is asked at all, and the card simply does not open.
+   * Before that a completion request would queue behind the 10 MB load; keyword completions answer
+   * immediately instead, and the analyzers install on the first request. A run blocks this worker
+   * too: a hover or a completion asked then would answer a keystroke long gone, so nothing is asked.
    */
   const getReadyAnalysis = () =>
     pyodideStatusRef.current === 'ready' && !isRunning ? analysisSession() : null;
@@ -1260,15 +1246,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   /**
    * Tidy the editor's file with Black, in place.
    *
-   * The formatter is a pure-Python library inside the same worker, so this is one request: the worker
-   * installs Black on first use (its `format-status` stretches the session's clock while it does),
-   * formats the text and answers with the file. It refuses instead of queueing while a run is in flight
-   * or a park is waiting: the worker is one thread, and a format asked at either moment would wait
-   * behind the very program it is meant to tidy.
+   * Black is a pure-Python library in the same worker, so this is one request: the worker installs
+   * it on first use (`format-status` stretches the clock while it does), formats and answers. It
+   * refuses rather than queueing while a run is in flight, because one thread would have to finish
+   * the very program it is meant to tidy.
    *
-   * The answer is applied only to the text it was asked about. A learner who typed while the worker
-   * worked keeps what they typed and is told to press again — replacing their last sentence with a tidy
-   * version of the previous one is the one outcome nobody would forgive.
+   * The answer is applied only to the text it was asked about: a learner who typed while the worker
+   * worked keeps what they typed and is told to press again.
    */
   const formatCode = async () => {
     if (isRunning) {
@@ -2310,6 +2294,48 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     />
   );
 
+  // The report column, written once: the dock's last module in Compact, the column beside the editor otherwise.
+  const resultsColumn = (
+            <ResultsColumn
+            split={{
+              side: resultsSide,
+              visible: phoneEditorVisible && resultsAllowed,
+              columns: layoutArrangement(layout) === 'columns',
+              ratio: splitRatio,
+              dragging: draggingSplit,
+              onBeginDrag: beginSplitDrag,
+              onMoveDrag: moveSplitDrag,
+              onEndDrag: endSplitDrag,
+              onCommitRatio: commitSplitRatio,
+            }}
+            checks={{
+              lintNotes,
+              analysisNotice,
+              lessonId: selectedId,
+              onOpenWorkflow: openWorkflowTab,
+              assessmentRef: guideAssessmentRef,
+              behaviorCheck,
+              outputCheck,
+              outputMatchMode,
+              exactFormatting: !lessonDowngradesFormatting,
+              instructorTestSummary: currentLesson.instructorTestSummary,
+              checkFailures,
+              revealedHints,
+              hintCount,
+              onRevealHint: revealHint,
+              instructorError,
+              passStatus,
+              harnessResult,
+            }}
+            scope={{
+              series: scopeSeries,
+              pinned: pinnedScope,
+              onPin: () => setPinnedScope(scopeSeries),
+              onUnpin: () => setPinnedScope(null),
+            }}
+          />
+  );
+
   return (
     <div data-compact={compactLesson ? 'on' : undefined}
       className={`${phoneStudy ? 'relative isolate space-y-5 pb-[calc(4.75rem+env(safe-area-inset-bottom))]' : 'relative isolate space-y-5'}${compactLesson ? ' lesson-compact' : ''}`}
@@ -2847,49 +2873,25 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               />
             )}
 
-          {/* Everything that reports on the editor: `contents` outside Compact, the dock in it. */}
+          {/* Everything that reports on the editor: `contents` outside Compact, the shelf in it. */}
           <div data-testid="compact-dock" className={compactLesson ? 'compact-dock' : 'contents'}>
-            {compactLesson && runtimeStrip}
-            {compactLesson && briefCard}
-            {compactLesson && hintLadder}
-            <ResultsColumn
-            split={{
-              side: resultsSide,
-              visible: phoneEditorVisible && resultsAllowed,
-              columns: layoutArrangement(layout) === 'columns',
-              ratio: splitRatio,
-              dragging: draggingSplit,
-              onBeginDrag: beginSplitDrag,
-              onMoveDrag: moveSplitDrag,
-              onEndDrag: endSplitDrag,
-              onCommitRatio: commitSplitRatio,
-            }}
-            checks={{
-              lintNotes,
-              analysisNotice,
-              lessonId: selectedId,
-              onOpenWorkflow: openWorkflowTab,
-              assessmentRef: guideAssessmentRef,
-              behaviorCheck,
-              outputCheck,
-              outputMatchMode,
-              exactFormatting: !lessonDowngradesFormatting,
-              instructorTestSummary: currentLesson.instructorTestSummary,
-              checkFailures,
-              revealedHints,
-              hintCount,
-              onRevealHint: revealHint,
-              instructorError,
-              passStatus,
-              harnessResult,
-            }}
-            scope={{
-              series: scopeSeries,
-              pinned: pinnedScope,
-              onPin: () => setPinnedScope(scopeSeries),
-              onUnpin: () => setPinnedScope(null),
-            }}
-          />
+            {compactLesson ? (
+              <CompactShelf
+                items={[
+                  { id: 'run', label: 'Run', meta: `${verifiedCount}/${PYTHON_LESSONS.length}`, body: runtimeStrip },
+                  { id: 'brief', label: 'Brief', meta: currentLesson.id, body: briefCard },
+                  { id: 'hints', label: 'Hints', meta: `${revealedHints}/${hintCount}`, body: hintLadder },
+                  {
+                    id: 'report',
+                    label: 'Report',
+                    meta: passStatus === 'untested' ? 'not run' : passStatus.replace(/_/g, ' '),
+                    body: resultsColumn,
+                  },
+                ]}
+              />
+            ) : (
+              resultsColumn
+            )}
           </div>
         </div>
         </div>
