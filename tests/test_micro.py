@@ -224,10 +224,14 @@ class MicroContentTests(unittest.TestCase):
             )
             with open(path, encoding="utf-8") as handle:
                 payload = json.load(handle)
-            self.assertEqual(
+            # Anchors landed in format 6 and the format only ever grows: a later version still
+            # carries them, and pinning the exact number made every later bump fail this test for
+            # a reason that was not about micro anchors.
+            self.assertGreaterEqual(
                 payload["v"],
                 6,
-                "expected payload v6 so the reader knows anchor blocks exist; check the lesson generator",
+                "expected payload v6 or later so the reader knows anchor blocks exist; "
+                "check the lesson generator",
             )
             anchors = {block["id"] for block in payload["blocks"] if block.get("t") == "anchor"}
             for concept in source["concepts"]:
