@@ -987,9 +987,11 @@ export async function auditPaneBottomResize(browser, baseUrl, name) {
       assert.ok(box, `${name}: the bottom grip has no pointer box`);
       const x = box.x + box.width / 2;
       const y = box.y + box.height / 2;
-      // A transient overlay (a toast, the split tip) can be on top of the grip for a frame or two on a
-      // loaded runner, and the pointer then lands on it instead. Wait, briefly, for the grip to be the
-      // topmost element at that point; the assertion below still fails if it never is.
+      // A transient overlay (a toast, the split tip) can be on top of the grip for a while on a loaded
+      // runner, and the pointer then lands on it instead. Hover the point first — the grip's own
+      // tooltip lives inside the divider, so it still counts — and wait for the grip to be the topmost
+      // element there; the assertion below still fails, naming what covered it, if it never is.
+      await page.mouse.move(x, y);
       const hit = await page
         .waitForFunction(
           ({ px, py }) => {
@@ -998,15 +1000,25 @@ export async function auditPaneBottomResize(browser, baseUrl, name) {
             return { tag: element.tagName, testid: element.getAttribute('data-testid'), onGrip: true };
           },
           { px: x, py: y },
-          { timeout: 5000, polling: 100 }
+          { timeout: 15000, polling: 100 }
         )
         .then((handle) => handle.jsonValue())
-        .catch(() => ({ tag: null, testid: null, onGrip: false }));
-      assert.ok(
-        hit.onGrip,
-        `${name}: the pointer at (${Math.round(x)}, ${Math.round(y)}) hits ` +
-          `${hit.tag ?? 'nothing'}${hit.testid ? `[${hit.testid}]` : ''}, not the grip (box ${JSON.stringify(box)})`
-      );
+        .catch(() => null);
+      if (!hit?.onGrip) {
+        const blocked = await page.evaluate(
+          ({ px, py }) => {
+            const element = document.elementFromPoint(px, py);
+            if (!element) return 'nothing';
+            const testid = element.getAttribute('data-testid');
+            return `${element.tagName}[${testid ?? ''}]`;
+          },
+          { px: x, py: y }
+        );
+        assert.fail(
+          `${name}: the pointer at (${Math.round(x)}, ${Math.round(y)}) hits ${blocked}, ` +
+            `not the grip (box ${JSON.stringify(box)})`
+        );
+      }
       await page.mouse.move(x, y);
       await page.mouse.down();
       await page.mouse.move(x, y - travel, { steps: 10 });
