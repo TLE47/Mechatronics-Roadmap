@@ -107,7 +107,7 @@ Complete `TODO 1` and `TODO 2` to loop through `raw_commands`, clamp each value 
 ```python
 raw_commands = [-30, 0, 64, 128, 200, 310]
 clamped_commands = []
-total_cmd = 0  # count, running sum of the clamped commands (0-255)
+total_cmd = 0  # count, sum
 
 for cmd in raw_commands:
     # TODO 1: Set safe_cmd to the command clamped inside the allowed range.

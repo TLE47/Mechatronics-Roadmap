@@ -124,7 +124,7 @@ Copy this starter script into your Python editor. It runs right now without cras
 
 ```python
 # Robot state variables (units documented in comments)
-battery_level = 12.60        # float, V: battery reading
+battery_level = 12.60        # V, float
 encoder_ticks = 400          # int: wheel sensor pulse count
 robot_mode = "STANDBY"       # str: active status label
 is_estop_active = False      # bool: emergency stop switch state

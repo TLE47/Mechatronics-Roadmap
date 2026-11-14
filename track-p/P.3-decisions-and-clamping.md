@@ -117,9 +117,9 @@ Neither name is a limit itself: `0` and `255` are the limits, and each name is a
 1. **Given values** — keep every value that a TODO does not name unchanged.
 
 ```python
-raw_cmd_high = 310  # count, raw command on the 0-255 register
-raw_cmd_low = -45  # count, raw command on the 0-255 register
-raw_cmd_normal = 180  # count, raw command on the 0-255 register
+raw_cmd_high = 310  # count, 0-255
+raw_cmd_low = -45  # count, 0-255
+raw_cmd_normal = 180  # count, 0-255
 is_estop_pressed = True
 
 # TODO 1: Set clamped_high and clamped_low to their input commands held inside the allowed 0-255 range.
