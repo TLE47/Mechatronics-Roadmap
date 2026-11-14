@@ -20,6 +20,16 @@ import { clamp } from './canvasGeometry.ts';
 
 /** A 24-card column is ~4,100 px tall; the map view may shrink it to a sixth, not to a speck. */
 const FIT_MIN_SCALE = 0.1;
+/**
+ * How far past life size the lens may enlarge the drawing.
+ *
+ * A fit used to stop at 100%, so making the paper bigger changed nothing: the drawing sat at life
+ * size in a larger box and the cards' text stayed the size it had been authored at, which is the one
+ * thing a resize of the diagram is expected to change. Enlarging now continues past life size up to a
+ * ceiling, so the text follows the room it is given in both directions; the ceiling is what stops a
+ * few cards on a wide screen from being drawn to poster scale.
+ */
+const FIT_MAX_SCALE = 1.8;
 const FIT_PAD = 16;
 const PAN_STEP = 40;
 const PAN_STEP_FAST = 160;
@@ -103,8 +113,8 @@ export function useViewport(
   /**
    * Fit every card in the canvas, or return to 100%.
    *
-   * One control rather than two: while the map is smaller than life it says 100%, and pressing it
-   * keeps the viewport's centre so the card being read does not jump away. The button is a lens, not
+   * One control rather than two: while the map is drawn off life size the button offers 100%, and
+   * pressing it keeps the viewport's centre so the card being read does not jump away. The button is a lens, not
    * a document edit — no position, zoom or lesson field is written.
    */
   /**
@@ -131,7 +141,7 @@ export function useViewport(
       (surface.clientWidth - FIT_PAD * 2) / Math.max(1, maxX - minX),
       (surface.clientHeight - FIT_PAD * 2) / Math.max(1, maxY - minY)
     );
-    const next = clamp(fit, FIT_MIN_SCALE, 1);
+    const next = clamp(fit, FIT_MIN_SCALE, FIT_MAX_SCALE);
     return {
       scale: next,
       left: ((minX + maxX) / 2) * next - surface.clientWidth / 2,
@@ -181,7 +191,7 @@ export function useViewport(
   const fitOrReset = () => {
     const surface = surfaceRef.current;
     if (!surface) return;
-    if (scale < 1) {
+    if (Math.abs(scale - 1) > 0.005) {
       const centreX = (surface.scrollLeft + surface.clientWidth / 2) / scale;
       const centreY = (surface.scrollTop + surface.clientHeight / 2) / scale;
       setScale(1);
@@ -204,8 +214,9 @@ export function useViewport(
    * text stayed the size it was. It used to be re-measured only after a press of Fit, which left the
    * default view - a diagram wider than its paper, at 100% - with text that ignored the pane
    * entirely. Now every resize re-measures it, so the cards and their text grow and shrink with the
-   * room they are given whether or not Fit was ever pressed. Life size is still the ceiling, and a
-   * deliberate 100% keeps the diagram where the learner put it.
+   * room they are given whether or not Fit was ever pressed, in both directions: a paper given more
+   * room draws larger text (`FIT_MAX_SCALE`), and a deliberate life size still keeps the diagram
+   * where the learner put it.
    */
   useEffect(() => {
     const surface = surfaceRef.current;

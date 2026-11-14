@@ -66,10 +66,16 @@ const BUTTON =
 const LINK_BUTTON =
   'inline-flex items-center gap-1 font-mono text-[12px] text-accent underline decoration-dotted cursor-pointer';
 
-export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = ({
-  lessonId,
-  compact = false,
-}) => {
+export const StudyTimerRow: React.FC<{
+  lessonId: string;
+  compact?: boolean;
+  /** The lesson's own name, so the digits say which lesson is being counted. */
+  label?: string;
+  /** Whether this lesson is verified — the clock row can then say the lesson it counted was finished. */
+  verified?: boolean;
+  /** Whether the lesson is marked done by the learner rather than passed; shown when not verified. */
+  selfMarked?: boolean;
+}> = ({ lessonId, compact = false, label, verified = false, selfMarked = false }) => {
   const [timer, setTimer] = useState<StudyTimer>(() => resumeTimer(readTimer(), Date.now()));
   /** The filed stretch's own duration, so Log & reset can say what it just kept. */
   const [logged, setLogged] = useState('');
@@ -135,6 +141,9 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
       if (now - current.lastTick < HEARTBEAT_MS) return;
       recordSittingEvent({ at: now, kind: 'study', lesson: lessonId });
       persist(heartbeat(current, now));
+      // The minute heartbeat is a write to the clock, so it is a change to sync: announcing it is what
+      // carries a running clock to the other device without anyone pressing anything.
+      window.dispatchEvent(new Event(STUDY_CLOCK_EVENT));
     }, 1000);
     return () => window.clearInterval(id);
     // `runningSince` is the whole switch: a paused clock needs no interval at all.
@@ -185,7 +194,40 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
       <span className="flex items-center gap-1.5 eyebrow">
         <Timer className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
         {compact ? 'Clock' : 'Study clock'}
+        {label && (
+          <span
+            data-testid="study-timer-lesson"
+            title={`Counting study time on ${label}`}
+            className="max-w-[22ch] truncate normal-case tracking-normal text-[11.5px] font-normal text-muted"
+          >
+            · {label}
+          </span>
+        )}
       </span>
+      {label && (
+        // What became of the lesson the digits are counting: a clock that reads 12 minutes next to
+        // "complete" says the learner finished; next to nothing it says they are still working.
+        <span
+          data-testid="study-timer-lesson-state"
+          data-state={verified ? 'verified' : selfMarked ? 'self-marked' : 'open'}
+          title={
+            verified
+              ? `${label} is verified: a run passed it`
+              : selfMarked
+                ? `${label} is marked done by you, without help`
+                : `${label} is not finished yet`
+          }
+          className={
+            verified
+              ? 'rounded border border-accent/40 bg-accent/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-accent'
+              : selfMarked
+                ? 'rounded border border-line bg-canvas px-1.5 py-0.5 font-mono text-[11px] text-body'
+                : 'rounded border border-line-soft bg-canvas px-1.5 py-0.5 font-mono text-[11px] text-faint'
+          }
+        >
+          {verified ? '✓ complete' : selfMarked ? 'self-done' : 'in progress'}
+        </span>
+      )}
       <span
         data-testid="study-timer-elapsed"
         title={`${formatDuration(elapsed)} counted this session`}

@@ -106,6 +106,7 @@ import { usePassToast } from './runner/usePassToast';
 import { AttemptOffers } from './runner/AttemptOffers';
 import { useDraftComparison } from './runner/useDraftComparison';
 import { DiffPanel } from './runner/DiffPanel';
+import { SelfDoneChecklist } from './runner/SelfDoneChecklist';
 import { type PythonEditorHandle } from '../PythonEditor';
 
 import { roadmapStepForLesson } from '../../practiceLinks';
@@ -381,9 +382,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const [breakpoints, setBreakpoints] = useState<Breakpoint[]>(() =>
     readBreakpoints(initialLessonId || PYTHON_LESSONS[0].id)
   );
-  // The Breakpoints panel: on request only. A dot alone does not say what it is waiting for, so the
-  // conditions live in one place the toolbar can open, titled with the count the gutter is drawing.
-  const [breakpointsOpen, setBreakpointsOpen] = useState(false);
+  // The breakpoints are a pane, not a strip under the code: the conditions want the width a column
+  // gives them, and they belong beside the file they are armed in. The toolbar's press opens the
+  // view, and whether it is open is read off the arrangement rather than kept in a second state that
+  // could disagree with it.
+  const breakpointsOpen = visibleViews(panes).includes('breakpoints');
 
   // The worker session, the state a run writes and the park commands have one home
   // (`runner/useRunnerExecution.ts`); this tab composes them with the lesson and the chrome.
@@ -966,7 +969,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     // A breakpoint belongs to the file it was placed in: the new lesson reads its own list, and the
     // panel that lists them closes rather than showing another file's lines under this one's title.
     setBreakpoints(readBreakpoints(id));
-    setBreakpointsOpen(false);
+    // The pane goes with the file it was listing: another lesson's lines under this lesson's name
+    // would be worse than no list at all.
+    if (breakpointsOpen) commitPanes(closeView(panes, 'breakpoints'));
     // A watch belongs to the program it was written for, for the same reason.
     setWatches(readWatches(id));
     setWatchDraft('');
@@ -1925,7 +1930,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       onToggleHistory={comparison.toggleHistory}
       breakpoints={breakpoints}
       breakpointsOpen={breakpointsOpen}
-      onToggleBreakpoints={() => setBreakpointsOpen((open) => !open)}
+      onToggleBreakpoints={() =>
+        commitPanes(
+          breakpointsOpen
+            ? closeView(panes, 'breakpoints')
+            : isSplit(panes)
+              ? showView(panes, 'breakpoints')
+              : splitPane(panes, 'breakpoints')
+        )
+      }
       diffOpen={comparison.diffOpen}
       onToggleDiff={comparison.toggleDiff}
       onShare={share.share}
@@ -2281,7 +2294,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               </div>
               <StudyClockReminder lessonId={selectedId} />
               <div className="overflow-x-auto">
-                <StudyTimerRow lessonId={selectedId} compact />
+                <StudyTimerRow
+                  lessonId={selectedId}
+                  compact
+                  label={currentLesson.title}
+                  verified={Boolean(verifiedLessons[selectedId])}
+                  selfMarked={Boolean(completedLessons[selectedId])}
+                />
               </div>
             </div>
           )}
@@ -2323,7 +2342,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 <summary className="cursor-pointer font-mono text-[12px] text-muted">
                   Study clock &amp; hours
                 </summary>
-                <StudyTimerRow lessonId={selectedId} />
+                <StudyTimerRow
+                  lessonId={selectedId}
+                  label={currentLesson.title}
+                  verified={Boolean(verifiedLessons[selectedId])}
+                  selfMarked={Boolean(completedLessons[selectedId])}
+                />
               </details>
             </div>
           )}
@@ -2432,7 +2456,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 the automatic sitting caught it. The hours land in the same store Today reads. On a
                 phone the compact strip above this card already carries it, and two clocks on one
                 screen would count the same stretch twice. */}
-            {!isPhone && <StudyTimerRow lessonId={selectedId} />}
+            {!isPhone && (
+              <StudyTimerRow
+                lessonId={selectedId}
+                label={currentLesson.title}
+                verified={Boolean(verifiedLessons[selectedId])}
+                selfMarked={Boolean(completedLessons[selectedId])}
+              />
+            )}
             {/* The Share button's answer. A polite status, not an alert: it is a confirmation of
                 something the learner just asked for, and pressing Share twice must not trap them. */}
             {/* Format's answer: the file was tidied, it already was, or why not. A formatter that
@@ -2535,13 +2566,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               history={comparison.history}
               onClear={comparison.clear}
               onRestore={comparison.restore}
-            />
-            {/* The dots and their conditions (`runner/BreakpointPanel.tsx`). */}
-            <BreakpointPanel
-              open={breakpointsOpen}
-              breakpoints={breakpoints}
-              onSetCondition={setConditionAt}
-              onToggle={toggleBreakpointAt}
             />
 
             {/* The learner's own change, line by line (`runner/DiffPanel.tsx`). */}
@@ -2770,6 +2794,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               }}
               panes={{ value: panes, onPanes: commitPanes }}
               gate={gate}
+              selfDone={
+                <SelfDoneChecklist
+                  lessonId={selectedId}
+                  marked={Boolean(completedLessons[selectedId])}
+                  onChange={(next) => toggleLessonSelfMarked(selectedId, next)}
+                />
+              }
               run={{ isRunning, passStatus, harnessResult, asksForFinish: gateAsksForFinish }}
               slots={{
                 toolbar: runnerToolbar,
@@ -2779,6 +2810,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 expectedOutputPane,
                 casesPane: <CasesPane lesson={currentLesson} passStatus={passStatus} instructorError={instructorError} />,
                 workflowPane,
+                breakpointsPane: (
+                  <BreakpointPanel
+                    open
+                    breakpoints={breakpoints}
+                    onSetCondition={setConditionAt}
+                    onToggle={toggleBreakpointAt}
+                  />
+                ),
                 tracePane: (
                   <TracePanel
                     trace={trace}

@@ -299,6 +299,34 @@ function localSnapshot(): ProgressSnapshot {
   };
 }
 
+/**
+ * What a snapshot says, with the timestamps that say *when* it said it taken out.
+ *
+ * Two devices that have converged hold snapshots that differ only in `updatedAt`; without this, every
+ * pull would look like news and every pulse would write the row again. The learning log is compared by
+ * its length and its last entry — entries are only ever appended or merged by time, so a change at the
+ * end is the only change a second device can add.
+ */
+export function progressFingerprint(snapshot: ProgressSnapshot): string {
+  const flags = (map: Record<string, unknown>): string =>
+    Object.keys(map)
+      .sort()
+      .map((key) => `${key}:${String(map[key])}`)
+      .join(',');
+  const last = snapshot.learningLog[snapshot.learningLog.length - 1];
+  const timer = snapshot.studyTimer;
+  return [
+    flags(snapshot.verifiedLessons),
+    flags(snapshot.completedLessons),
+    flags(snapshot.completedMilestones),
+    String(snapshot.learningLog.length),
+    last ? JSON.stringify(last) : '',
+    timer
+      ? `${timer.lesson}~${timer.bankedMs}~${timer.runningSince}~${timer.lastTick}~${timer.log.length}`
+      : '',
+  ].join('|');
+}
+
 export type WorkbenchViewMode = 'beginner' | 'advanced';
 
 // The document itself lives in its own module so a unit suite can pin it without React; this stays
@@ -472,6 +500,8 @@ export const App: React.FC = () => {
   const [syncNote, setSyncNote] = useState<string>('');
   // True only after the account's copy has been merged in; a save before that would overwrite it.
   const syncReady = useRef<boolean>(false);
+  /** What the account was last told, so a pulse with nothing new to say writes nothing (`progressFingerprint`). */
+  const lastPushed = useRef<string>('');
   const [accountProviders, setAccountProviders] = useState<string[]>([]);
   const [accountRole, setAccountRole] = useState<string | null>(null);
   // A reset link lands on `?type=recovery`: the panel then opens on "set a new password".
@@ -811,6 +841,7 @@ export const App: React.FC = () => {
         }
         syncReady.current = true;
         await saveProgress(session.user.id, { ...merged, updatedAt: Date.now() });
+        lastPushed.current = progressFingerprint(merged);
         if (!cancelled) setSyncNote(remote ? 'Progress merged with your account.' : 'Progress saved to your account.');
         // Only when this browser opted in. A project without the workspace migration throws here;
         // that must not take progress sync down with it, so it has its own catch.
@@ -857,15 +888,92 @@ export const App: React.FC = () => {
     if (!accountsConfigured || !accountUserId || !syncReady.current) return;
     const userId = accountUserId;
     const timer = window.setTimeout(() => {
+      const snapshot = localSnapshot();
+      const fingerprint = progressFingerprint(snapshot);
+      // Nothing has been said since the last save: a pulse that fired between two real changes must not
+      // rewrite the row, and a merge applied from the other device must not be echoed straight back.
+      if (fingerprint === lastPushed.current) return;
       setSyncNote('Saving…');
-      saveProgress(userId, localSnapshot())
-        .then(() => setSyncNote('Saved to your account.'))
+      saveProgress(userId, snapshot)
+        .then(() => {
+          lastPushed.current = fingerprint;
+          setSyncNote('Saved to your account.');
+        })
         .catch((error) =>
           setSyncNote(error instanceof Error ? `Sync failed: ${error.message}` : 'Sync failed.')
         );
     }, 1200);
     return () => window.clearTimeout(timer);
   }, [completedMilestones, verifiedLessons, completedLessons, accountUserId, clockNonce]);
+
+  /**
+   * The pull half of sync, on a pulse rather than only at sign-in.
+   *
+   * Signing in was the only moment this browser ever asked the account what it knew, so a clock started
+   * on the laptop never appeared on the desktop that was already open — the two sat side by side at
+   * different times until someone reloaded. Now a signed-in screen asks every 45 seconds, and again the
+   * moment it comes back into view, is focused, or finds the network again, which is when the learner is
+   * looking at it and a stale number would be the thing they notice.
+   *
+   * Two rules keep it quiet. It never writes back what it just read: the row it uploads has to differ
+   * from the account's own copy, so converged devices trade no traffic at all. And it never overwrites a
+   * clock this browser is already running: `mergeProgress` picks the later `lastTick`, and the write is
+   * made only when the chosen clock is ahead of the one held here — a pull can start a stale clock, never
+   * stop a moving one.
+   */
+  useEffect(() => {
+    if (!accountsConfigured || !accountUserId) return;
+    const userId = accountUserId;
+    let cancelled = false;
+    let inFlight = false;
+    const pull = async () => {
+      if (cancelled || inFlight || !syncReady.current) return;
+      // A hidden tab has nobody to show a merged flag to; it also has no reason to spend a request.
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      inFlight = true;
+      try {
+        const remote = await loadProgress(userId);
+        if (cancelled || !remote) return;
+        const local = localSnapshot();
+        const merged = mergeProgress(local, remote);
+        if (progressFingerprint(merged) !== progressFingerprint(local)) {
+          setVerifiedLessons(merged.verifiedLessons);
+          setCompletedLessons(merged.completedLessons);
+          setCompletedMilestones(merged.completedMilestones);
+          replaceLearningLog(merged.learningLog);
+          const chosen = merged.studyTimer;
+          const held = readTimer();
+          if (chosen && chosen.lastTick > held.lastTick) {
+            writeTimer(chosen);
+            window.dispatchEvent(new Event(STUDY_CLOCK_EVENT));
+          }
+          if (!cancelled) setSyncNote('Picked up changes from your other device.');
+        }
+        if (progressFingerprint(merged) !== progressFingerprint(remote)) {
+          await saveProgress(userId, { ...merged, updatedAt: Math.max(Date.now(), merged.updatedAt + 1) });
+          lastPushed.current = progressFingerprint(merged);
+        }
+      } catch {
+        // Offline is not a failure to shout about: the work is in storage and the next pulse retries it.
+      } finally {
+        inFlight = false;
+      }
+    };
+    const timer = window.setInterval(() => void pull(), 45_000);
+    const wake = () => {
+      if (document.visibilityState === 'visible') void pull();
+    };
+    window.addEventListener('focus', wake);
+    window.addEventListener('online', wake);
+    document.addEventListener('visibilitychange', wake);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      window.removeEventListener('focus', wake);
+      window.removeEventListener('online', wake);
+      document.removeEventListener('visibilitychange', wake);
+    };
+  }, [accountUserId]);
 
   /** The address bar as an internal destination: `?lesson=P.1`, `?view=dashboard`, or the root. */
   const intendedDestination = (): string =>

@@ -281,7 +281,9 @@ export async function assertWorkflowCanvasFollowsGrip(page) {
         state.canvas >= state.body - 12 && state.canvas <= state.body,
         `${label}: the paper must fill the ${Math.round(state.body)}px pane area, but it was ${state.canvas}px`
       );
-    if (state.scale < 0.999) {
+    // A fit may now draw larger than life (`FIT_MAX_SCALE`) as well as smaller, so "fitted" is any
+    // lens that is not 1:1 rather than only one below life size.
+    if (Math.abs(state.scale - 1) > 0.002) {
       // The spacer reserves the paper's extents, which keep 48 px of air right of the last card and
       // 40 px under it for a frame's name chip; a fit frames the cards, so that air is what is left
       // over once the drawing is scaled to fit. Anything more than it means the fit did not happen.

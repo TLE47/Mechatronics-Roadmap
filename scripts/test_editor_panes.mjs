@@ -129,6 +129,7 @@ check('the view names are the only names, including requirements', () => {
     'expected',
     'cases',
     'workflow',
+    'breakpoints',
     'trace',
     'robot',
   ]);

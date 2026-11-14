@@ -33,7 +33,7 @@ import {
   readReadingPosition,
   writeReadingPosition,
 } from '../app/src/readingPosition.ts';
-import { markQuotes, wrapSelection } from '../app/src/lessonMarks.ts';
+import { markQuotes, markRanges, unlocatedQuotes, wrapSelection } from '../app/src/lessonMarks.ts';
 import { blocksForScope } from '../app/src/readerScope.ts';
 
 let passed = 0;
@@ -586,6 +586,38 @@ check('a store that throws costs the memory, never the scroll', () => {
   } finally {
     delete globalThis.localStorage;
   }
+});
+
+check('a quote that crosses an inline run is found in the paragraph, not lost by the run split', () => {
+  // The reader splits `battery_level` into a code run and the rest into plain runs. A note selected
+  // across that boundary used to match neither run and draw nothing at all.
+  const paragraph = 'Set battery_level to 12.6 before the loop.';
+  assert.deepEqual(markRanges(paragraph, ['battery_level to 12.6']), [
+    { start: 4, end: 25, quote: 'battery_level to 12.6' },
+  ]);
+  assert.deepEqual(markRanges(paragraph, ['Set battery_level']), [
+    { start: 0, end: 17, quote: 'Set battery_level' },
+  ]);
+});
+
+check('ranges never overlap and stay in reading order', () => {
+  const ranges = markRanges('the gain term and the gain', ['the gain', 'the gain term']);
+  assert.deepEqual(
+    ranges.map((range) => [range.start, range.end]),
+    [
+      [0, 13],
+      [18, 26],
+    ]
+  );
+});
+
+check('a note whose words left the paragraph is named by the guard', () => {
+  assert.deepEqual(unlocatedQuotes('Set battery_level now', ['battery_level']), []);
+  assert.deepEqual(unlocatedQuotes('Set battery_level now', ['battery_level', 'old wording']), [
+    'old wording',
+  ]);
+  assert.deepEqual(unlocatedQuotes('', ['anything']), ['anything']);
+  assert.deepEqual(unlocatedQuotes('text', []), [], 'no notes, nothing to report');
 });
 
 console.log(`\nreader: ${passed} passed, ${failed} failed`);
