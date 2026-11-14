@@ -959,7 +959,6 @@ export async function auditPaneBottomResize(browser, baseUrl, name) {
      * the box measured before that lands on the editor instead of the grip.
      */
     const dragBottomGrip = async (travel) => {
-      const grip = page.getByTestId('pane-divider-bottom');
       await page.evaluate(() => {
         document
           .querySelector('[data-testid="pane-divider-bottom"]')
@@ -983,51 +982,82 @@ export async function auditPaneBottomResize(browser, baseUrl, name) {
         undefined,
         { timeout: 10000 }
       );
-      const box = await grip.boundingBox();
-      assert.ok(box, `${name}: the bottom grip has no pointer box`);
-      const x = box.x + box.width / 2;
-      const y = box.y + box.height / 2;
       // A transient overlay (a toast, the split tip) can sit over part of the grip on a loaded runner,
       // and it hides the point being dragged from rather than the grip. Hover the row first, then take
       // the first point along it where the divider really is the topmost thing: a 691 px grip is still
       // grabbable with a card over its middle. The check fails only when no point along it is free, and
       // names what is over the centre when it does.
-      await page.mouse.move(x, y);
+      //
+      // Every poll re-reads the rect rather than trusting one boundingBox(): on a loaded runner a lazy
+      // chunk or a font can still settle after the stability wait above and scroll the page, which
+      // moves the grip out from under coordinates measured a moment earlier (Run 657 lost the press
+      // to a CodeMirror line sitting exactly where the grip had been). A moved-away grip is scrolled
+      // back and re-measured; the point that is returned is one this poll hit-tested.
+      const measure = () =>
+        page.evaluate(() => {
+          const element = document.querySelector('[data-testid="pane-divider-bottom"]');
+          if (!element) return null;
+          const box = element.getBoundingClientRect();
+          if (box.width <= 0 || box.height <= 0) return null;
+          if (box.top < 0 || box.bottom > window.innerHeight) {
+            element.scrollIntoView({ block: 'end', behavior: 'instant' });
+            return null;
+          }
+          return { left: box.left, right: box.right, py: box.top + box.height / 2 };
+        });
+      await measure().then((box) => box && page.mouse.move((box.left + box.right) / 2, box.py));
       const point = await page
         .waitForFunction(
-          ({ left, right, py }) => {
-            for (let px = left + 8; px <= right - 8; px += 16) {
-              const element = document.elementFromPoint(px, py);
-              if (element?.closest('[data-testid="pane-divider-bottom"]')) return { px, py, onGrip: true };
+          () => {
+            const element = document.querySelector('[data-testid="pane-divider-bottom"]');
+            if (!element) return null;
+            const box = element.getBoundingClientRect();
+            if (box.width <= 0 || box.height <= 0) return null;
+            if (box.top < 0 || box.bottom > window.innerHeight) {
+              element.scrollIntoView({ block: 'end', behavior: 'instant' });
+              return null;
+            }
+            const py = box.top + box.height / 2;
+            for (let px = box.left + 8; px <= box.right - 8; px += 16) {
+              const hit = document.elementFromPoint(px, py);
+              if (hit?.closest('[data-testid="pane-divider-bottom"]')) return { px, py };
             }
             return null;
           },
-          { left: box.x, right: box.x + box.width, py: y },
+          undefined,
           { timeout: 15000, polling: 100 }
         )
         .then((handle) => handle.jsonValue())
         .catch(() => null);
-      if (!point?.onGrip) {
-        const blocked = await page.evaluate(
-          ({ px, py }) => {
-            const element = document.elementFromPoint(px, py);
-            if (!element) return 'nothing';
-            const testid = element.getAttribute('data-testid');
-            // A bare wrapper still has to be identifiable in the failure, so the class list is the name.
-            const label = testid ?? (element.getAttribute('class') ?? '').slice(0, 60);
-            return `${element.tagName}[${label}]`;
-          },
-          { px: x, py: y }
-        );
+      if (!point) {
+        const blocker = await page.evaluate(() => {
+          const element = document.querySelector('[data-testid="pane-divider-bottom"]');
+          if (!element) return { box: null, blocked: 'no grip in the document' };
+          const box = element.getBoundingClientRect();
+          const centre = document.elementFromPoint(
+            box.left + box.width / 2,
+            box.top + box.height / 2
+          );
+          if (!centre) return { box, blocked: 'nothing' };
+          const testid = centre.getAttribute('data-testid');
+          // A bare wrapper still has to be identifiable in the failure, so the class list is the name.
+          const label = testid ?? (centre.getAttribute('class') ?? '').slice(0, 60);
+          return {
+            box: { x: box.x, y: box.y, width: box.width, height: box.height },
+            blocked: `${centre.tagName}[${label}]`,
+          };
+        });
         assert.fail(
           `${name}: no point along the bottom grip is the topmost element; its centre at ` +
-            `(${Math.round(x)}, ${Math.round(y)}) hits ${blocked} (box ${JSON.stringify(box)})`
+            `(${Math.round((blocker.box?.x ?? 0) + (blocker.box?.width ?? 0) / 2)}, ` +
+            `${Math.round((blocker.box?.y ?? 0) + (blocker.box?.height ?? 0) / 2)}) hits ` +
+            `${blocker.blocked} (box ${JSON.stringify(blocker.box)})`
         );
       }
       const gripX = point.px;
-      await page.mouse.move(gripX, y);
+      await page.mouse.move(gripX, point.py);
       await page.mouse.down();
-      await page.mouse.move(gripX, y - travel, { steps: 10 });
+      await page.mouse.move(gripX, point.py - travel, { steps: 10 });
       await page.mouse.up();
     };
     const resizedFlag = () =>
