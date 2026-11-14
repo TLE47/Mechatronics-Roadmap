@@ -66,6 +66,7 @@ import {
 } from './narrow_workbench_audit.mjs';
 import {
   auditBridgeVisual,
+  auditBridgeVisualThemes,
   auditLessonSurface,
   auditPaneBottomResize,
   auditPaneOrientations,
@@ -1696,6 +1697,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     await auditPaneOrientations(browser, baseUrl, name);
     await auditPaneBottomResize(browser, baseUrl, name);
     await auditBridgeVisual(browser, baseUrl, name);
+    await auditBridgeVisualThemes(browser, baseUrl, name);
     return 'pass';
   } finally {
     await browser.close();

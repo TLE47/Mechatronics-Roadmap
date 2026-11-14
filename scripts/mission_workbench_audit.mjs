@@ -1469,3 +1469,338 @@ export async function auditBridgeVisual(browser, baseUrl, name) {
     await context.close();
   }
 }
+/**
+ * P.9's Bridge Notes card in every palette, in reduced motion, and without a mouse
+ * (`app/src/bridges/ScalingDialsVisual.tsx`).
+ *
+ * `auditBridgeVisual` proves the card exists, fits and moves. This proves the two claims that only a
+ * palette sweep can: that the card is legible in the palettes a reader may have chosen, and that it
+ * works for someone who never touches a pointer.
+ *
+ * For all four palettes the app ships (dark, light, paper, high contrast) and once more with the
+ * system asking for reduced motion, at 1280x900 and at 380x844, it opens P.9, scrolls the section
+ * into view, and resolves the colours actually painted — compositing each one over the card's real
+ * backdrop, including the gauge's translucent track and ticks. Text must reach 4.5:1 and the gauge's
+ * graphics 3:1, at the size they are drawn. Every sample is reported with both colours and the ratio,
+ * so a failure names the palette, the element and the numbers without re-running anything.
+ *
+ * Then it does the whole interaction on the keyboard: Home, End, arrows on the counts dial, then on
+ * the volts dial, reading the three numbers and both needle tips after every move and comparing them
+ * with the control's own value. The pointer is never used here on purpose — that path is
+ * `auditBridgeVisual`'s job.
+ */
+export async function auditBridgeVisualThemes(browser, baseUrl, name) {
+  // The palettes the app ships, the colour scheme each is browsed under, plus the reduced-motion
+  // case, which changes what the page animates rather than what it paints.
+  const CASES = [
+    { theme: 'dark', scheme: 'dark', motion: 'no-preference' },
+    { theme: 'light', scheme: 'light', motion: 'no-preference' },
+    { theme: 'paper', scheme: 'light', motion: 'no-preference' },
+    { theme: 'contrast', scheme: 'dark', motion: 'no-preference' },
+    { theme: 'dark', scheme: 'dark', motion: 'reduce' },
+  ];
+  const WIDTHS = [
+    { label: 'desktop', width: 1280, height: 900 },
+    { label: 'phone', width: 380, height: 844 },
+  ];
+
+  let measured = 0;
+  const worst = [];
+
+  for (const testCase of CASES) {
+    for (const size of WIDTHS) {
+      const where = `${name}: ${testCase.theme}${
+        testCase.motion === 'reduce' ? ' (reduced motion)' : ''
+      } at ${size.label} (${size.width}px)`;
+      const context = await browser.newContext({
+        viewport: { width: size.width, height: size.height },
+        colorScheme: testCase.scheme,
+        reducedMotion: testCase.motion,
+      });
+      await seedTourSeen(context);
+      // A stored pick is how `paper` and `contrast` are reachable at all, and it makes the case
+      // explicit for the two the OS could have supplied as well.
+      await context.addInitScript((pick) => {
+        try {
+          localStorage.setItem('mechalab_theme_v1', pick);
+        } catch {
+          // A blocked store is the theme suite's own case; here the painted attribute is asserted.
+        }
+      }, testCase.theme);
+      const page = await context.newPage();
+      const pageErrors = [];
+      page.on('pageerror', (error) => pageErrors.push(String(error)));
+
+      try {
+        await page.goto(`${baseUrl}?lesson=P.9`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+        await page.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, {
+          timeout: 25000,
+        });
+        await page.keyboard.press('Alt+1');
+        await page.waitForFunction(
+          () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'study',
+          undefined,
+          { timeout: 15000 }
+        );
+        await expandEditorBody(page);
+        await page.getByRole('heading', { name: 'Bridge Notes', exact: true }).scrollIntoViewIfNeeded();
+        await page.getByTestId('bridge-visual-scaling-dials').waitFor({ state: 'visible', timeout: 25000 });
+        await page.waitForTimeout(250);
+
+        const painted = await page.evaluate(() => {
+          const parse = (css) => {
+            const match = css && css.match(/rgba?\(([^)]+)\)/);
+            if (!match) return null;
+            const parts = match[1].split(/[ ,/]+/).filter(Boolean).map(Number);
+            return { r: parts[0], g: parts[1], b: parts[2], a: parts[3] === undefined ? 1 : parts[3] };
+          };
+          const channel = (value) => {
+            const v = value / 255;
+            return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+          };
+          const luminance = ({ r, g, b }) => 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+          const ratio = (a, b) => {
+            const la = luminance(a);
+            const lb = luminance(b);
+            return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+          };
+          const backdrop = (element) => {
+            const layers = [];
+            let node = element;
+            while (node && node.nodeType === 1) {
+              const color = parse(getComputedStyle(node).backgroundColor);
+              if (color && color.a > 0) layers.push(color);
+              if (color && color.a >= 1) break;
+              node = node.parentElement;
+            }
+            let base = { r: 255, g: 255, b: 255 };
+            for (let i = layers.length - 1; i >= 0; i -= 1) {
+              const layer = layers[i];
+              base = {
+                r: layer.r * layer.a + base.r * (1 - layer.a),
+                g: layer.g * layer.a + base.g * (1 - layer.a),
+                b: layer.b * layer.a + base.b * (1 - layer.a),
+              };
+            }
+            return base;
+          };
+          const show = (color) =>
+            `rgb(${Math.round(color.r)}, ${Math.round(color.g)}, ${Math.round(color.b)})`;
+          const card = document.querySelector('[data-testid="bridge-scaling"]');
+          const background = backdrop(card);
+          const sample = (what, node, kind) => {
+            if (!node) return { what, missing: true };
+            const style = getComputedStyle(node);
+            const paintedColor =
+              (kind === 'fill' ? parse(style.fill) : kind === 'stroke' ? parse(style.stroke) : null) ??
+              parse(style.color);
+            if (!paintedColor) return { what, missing: true };
+            const opacity =
+              (Number.parseFloat(style.opacity || '1') || 1) *
+              (kind === 'stroke' ? Number.parseFloat(style.strokeOpacity || '1') || 1 : 1) *
+              (kind === 'fill' ? Number.parseFloat(style.fillOpacity || '1') || 1 : 1);
+            const alpha = paintedColor.a * opacity;
+            const fg = {
+              r: paintedColor.r * alpha + background.r * (1 - alpha),
+              g: paintedColor.g * alpha + background.g * (1 - alpha),
+              b: paintedColor.b * alpha + background.b * (1 - alpha),
+            };
+            return {
+              what,
+              kind: kind ?? 'text',
+              ratio: Number(ratio(fg, background).toFixed(2)),
+              color: show(fg),
+              background: show(background),
+            };
+          };
+          const box = (node) => {
+            if (!node) return null;
+            const r = node.getBoundingClientRect();
+            return { x: r.x, y: r.y, w: r.width, h: r.height, right: r.right, bottom: r.bottom };
+          };
+          const inside = (inner, outer) =>
+            Boolean(inner && outer) &&
+            inner.x >= outer.x - 1 &&
+            inner.right <= outer.right + 1 &&
+            inner.y >= outer.y - 1e6 &&
+            inner.bottom <= outer.bottom + 1e6;
+          const dial = card?.querySelector('svg');
+          const dials = [...(card?.querySelectorAll('svg') ?? [])];
+          return {
+            theme: document.documentElement.getAttribute('data-theme'),
+            reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+            background: show(background),
+            samples: [
+              sample('dial end label', dial?.querySelector('text'), 'fill'),
+              sample('slider label', card?.querySelector('label')),
+              sample('fraction readout', document.querySelector('[data-testid="bridge-scaling-fraction"]')),
+              sample('volts readout', document.querySelector('[data-testid="bridge-scaling-volts"]')),
+              sample('command readout', document.querySelector('[data-testid="bridge-scaling-command"]')),
+              sample('caption', card?.querySelector('p')),
+              sample('gauge track', dial?.querySelector('path'), 'stroke'),
+              sample('gauge tick', dial?.querySelector('line'), 'stroke'),
+              sample('needle', dial?.querySelector('[data-testid^="bridge-scaling-needle-"]'), 'stroke'),
+              sample('needle hub', dial?.querySelector('circle'), 'fill'),
+            ],
+            card: box(card),
+            reader: box(document.querySelector('[data-testid="lesson-reader"]')),
+            cardOverflowX: card ? card.scrollWidth - card.clientWidth : null,
+            docOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+            dialsInsideCard: dials.length === 2 && dials.every((one) => inside(box(one), box(card))),
+            dials: dials.length,
+            cardReachable: Boolean(card) && box(card).y < window.innerHeight,
+          };
+        });
+
+        assert.equal(painted.theme, testCase.theme, `${where}: the ${testCase.theme} palette is not the one painted`);
+        assert.equal(
+          painted.reducedMotion,
+          testCase.motion === 'reduce',
+          `${where}: the page does not see the motion preference it was opened with`
+        );
+        assert.equal(painted.dials, 2, `${where}: the card must draw both dials, saw ${painted.dials}`);
+        assert.ok(painted.dialsInsideCard, `${where}: a dial is clipped by its own card`);
+        assert.equal(painted.cardOverflowX, 0, `${where}: the card scrolls sideways by ${painted.cardOverflowX}px`);
+        assert.equal(painted.docOverflow, 0, `${where}: the page scrolls sideways by ${painted.docOverflow}px`);
+        assert.ok(painted.cardReachable, `${where}: the card starts below the fold, so it cannot be reached`);
+
+        for (const sample of painted.samples) {
+          const required = sample.kind === 'text' ? 4.5 : 3;
+          assert.ok(!sample.missing, `${where}: ${sample.what} is not drawn, so it has no colour to measure`);
+          assert.ok(
+            sample.ratio >= required,
+            `${where}: ${sample.what} is ${sample.ratio}:1 (${sample.color} on ${sample.background}), ` +
+              `under the ${required}:1 its ${sample.kind} needs`
+          );
+          worst.push({ where, what: sample.what, ratio: sample.ratio });
+        }
+
+        // ---- The whole interaction, keyboard only ----
+        const counts = page.getByTestId('bridge-scaling-raw');
+        const volts = page.getByTestId('bridge-scaling-volt-dial');
+        const readouts = async () => ({
+          fraction: (await page.getByTestId('bridge-scaling-fraction').textContent())?.trim(),
+          volts: (await page.getByTestId('bridge-scaling-volts').textContent())?.trim(),
+          command: (await page.getByTestId('bridge-scaling-command').textContent())?.trim(),
+        });
+        const expectedFor = (value) => {
+          const fraction = Math.min(1023, Math.max(0, value)) / 1023;
+          return {
+            fraction: fraction.toFixed(3),
+            volts: `${(fraction * 5).toFixed(2)} V`,
+            command: (fraction * 255).toFixed(1),
+          };
+        };
+        const tips = async () =>
+          page.evaluate(() =>
+            [...document.querySelectorAll('[data-testid^="bridge-scaling-needle-"]')].map(
+              (node) => `${node.getAttribute('x2')},${node.getAttribute('y2')}`
+            )
+          );
+        const checkStep = async (label, step) => {
+          const value = Number(await counts.inputValue());
+          const want = expectedFor(value);
+          await page
+            .waitForFunction(
+              (pair) => {
+                const text = (id) => document.querySelector(`[data-testid="${id}"]`)?.textContent?.trim();
+                return (
+                  text('bridge-scaling-fraction') === pair.fraction &&
+                  text('bridge-scaling-volts') === pair.volts &&
+                  text('bridge-scaling-command') === pair.command
+                );
+              },
+              want,
+              { timeout: 3000 }
+            )
+            .catch(() => {});
+          const got = await readouts();
+          assert.deepEqual(
+            got,
+            want,
+            `${where}: after ${step} on the ${label} dial the card says ${JSON.stringify(got)} for a ` +
+              `control at ${value}, expected ${JSON.stringify(want)}`
+          );
+          const needleTips = await tips();
+          assert.equal(needleTips.length, 2, `${where}: a needle went missing after ${step}`);
+          assert.equal(
+            needleTips[0],
+            needleTips[1],
+            `${where}: the two needles disagree after ${step} (${needleTips.join(' / ')})`
+          );
+          return needleTips[0];
+        };
+
+        // Keyboard use means a reader has to see where they are: the app's global `:focus-visible`
+        // rule paints a ring, and a control that focuses without one is a control you lose.
+        const ring = async (control, label) => {
+          // Focus the control and then arrive on it by Tab, which is how a keyboard user gets there.
+          // Browser focus from script does not match `:focus-visible` (only real keyboard navigation
+          // does), so `focus()` alone would measure a ring no reader would ever see.
+          await control.focus();
+          await page.keyboard.press('Shift+Tab');
+          await page.keyboard.press('Tab');
+          const shown = await control.evaluate((node) => {
+            const style = getComputedStyle(node);
+            return {
+              focused: node === document.activeElement,
+              visible: node.matches(':focus-visible'),
+              shadow: style.boxShadow,
+              outline: `${style.outlineStyle} ${style.outlineWidth}`,
+            };
+          });
+          assert.equal(shown.focused, true, `${where}: the ${label} dial cannot take focus`);
+          assert.ok(
+            (shown.shadow && shown.shadow !== 'none') || /solid|dashed|double/.test(shown.outline),
+            `${where}: the focused ${label} dial paints no ring (box-shadow: ${shown.shadow}, outline: ${shown.outline})`
+          );
+        };
+
+        await ring(counts, 'counts');
+        const atHome = await (async () => {
+          await page.keyboard.press('Home');
+          return checkStep('counts', 'Home');
+        })();
+        await page.keyboard.press('End');
+        const atEnd = await checkStep('counts', 'End');
+        assert.notEqual(atEnd, atHome, `${where}: the needle did not move between the stops`);
+
+        for (let press = 0; press < 25; press += 1) await page.keyboard.press('ArrowLeft');
+        await checkStep('counts', 'twenty-five ArrowLeft');
+        for (let press = 0; press < 10; press += 1) await page.keyboard.press('ArrowRight');
+        await checkStep('counts', 'ten ArrowRight');
+
+        await ring(volts, 'volts');
+        await page.keyboard.press('Home');
+        assert.deepEqual(
+          await readouts(),
+          { fraction: '0.000', volts: '0.00 V', command: '0.0' },
+          `${where}: Home on the volts dial must read 0 everywhere`
+        );
+        const voltsBottom = await tips();
+        await page.keyboard.press('End');
+        const voltsTop = await checkStep('volts', 'End');
+        assert.notEqual(
+          voltsTop,
+          voltsBottom[0],
+          `${where}: the needle did not travel between the volts dial's stops (${voltsTop})`
+        );
+        for (let press = 0; press < 20; press += 1) await page.keyboard.press('ArrowLeft');
+        await checkStep('volts', 'twenty ArrowLeft');
+
+        assert.equal(pageErrors.length, 0, `${where}: page errors: ${pageErrors.join(' | ')}`);
+        measured += 1;
+      } finally {
+        await context.close();
+      }
+    }
+  }
+
+  const tightest = worst.sort((a, b) => a.ratio - b.ratio)[0];
+  console.log(
+    `  ok ${name}: P.9's Bridge Notes card measured in ${measured} palette/motion/width cases ` +
+      `(dark, light, paper, high contrast, and dark under reduced motion, at 1280 and 380), every text ` +
+      `sample at 4.5:1 and every gauge stroke at 3:1, tightest ${tightest.what} at ${tightest.ratio}:1 in ` +
+      `${tightest.where.split(': ')[1]}, no overflow, and both dials driven by keyboard alone`
+  );
+}

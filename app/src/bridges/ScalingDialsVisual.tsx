@@ -66,7 +66,10 @@ function Dial({ name, top, mid, fraction }: { name: string; top: number; mid: st
       <title id={`${LABEL_ID}-${name}`}>
         {`${name} dial, 0 to ${top}: the needle sits at ${formatFraction(fraction)} of its travel.`}
       </title>
-      <path d={arcPath(R)} fill="none" stroke="currentColor" strokeOpacity="0.28" strokeWidth="6" strokeLinecap="round" className="text-body" />
+      {/* The track and the ticks are the gauge's own scale, and a scale a reader cannot resolve is
+          not a scale: both take the muted ink at full strength, which clears 3:1 in every palette,
+          rather than the body ink at a third of it, which measured 2.03:1 in the dark one. */}
+      <path d={arcPath(R)} fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" className="text-muted" />
       {tickLines.map((tick) => (
         <line
           key={tick.fraction}
@@ -75,9 +78,8 @@ function Dial({ name, top, mid, fraction }: { name: string; top: number; mid: st
           x2={tick.x2}
           y2={tick.y2}
           stroke="currentColor"
-          strokeOpacity="0.5"
           strokeWidth="1.5"
-          className="text-body"
+          className="text-muted"
         />
       ))}
       <line
