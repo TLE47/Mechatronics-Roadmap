@@ -1129,18 +1129,26 @@ export async function auditPaneBottomResize(browser, baseUrl, name) {
 }
 
 /**
- * P.9's Bridge Notes visual: mounted, dragged, and read (`app/src/bridges/`).
+ * P.9's Bridge Notes visual, as a reader meets it (`app/src/bridges/`).
  *
- * The claim this section makes is small and testable — the dial's numbers are the ones the lesson
- * works out, and dragging it moves the picture and the readouts together. So the check does what a
- * learner does: open the lesson, scroll to Bridge Notes, then drive the slider to both stops and
- * assert what it prints. It also asserts that the visual is not in the bundle the page already
- * fetched: the chunk named after the component is its own file, requested when the reader renders,
- * so a lesson with a visual pays for it and a lesson without one never asks. That is the weight
- * claim, and it is the one this checks — the picture is not in the entry chunk.
+ * The node suite already holds the arithmetic; this holds the *picture*. Three things only a browser
+ * can see go wrong here: a dial clipped by its own card or spilling out of the lesson text, the lazy
+ * chunk leaving a visible empty gap, and controls that cannot be reached — no name, no keyboard, no
+ * pointer. So the check opens the page the way a learner does, puts the section in view at a desktop
+ * width and again at a phone width, and measures what is actually on screen: two dials, two needles,
+ * two sliders and three readouts, every one with a box, inside the card, and the card inside the
+ * reader with nothing overflowing either way.
+ *
+ * Then it drives both dials — a real pointer drag on each track, and the keyboard on each — and reads
+ * the needles and the three numbers back. The page's own worked example is the value it starts on
+ * (511.5 -> 0.500 -> 2.50 V and 127.5), and every reading after that is checked against the control's
+ * own value, so a picture that lags its control fails here rather than looking fine.
+ *
+ * Finally it asserts the weight claim: the component arrived as its own chunk, not in `index-*.js`,
+ * so a lesson without a visual never downloads it.
  */
 export async function auditBridgeVisual(browser, baseUrl, name) {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 950 } });
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   await seedTourSeen(context);
   const page = await context.newPage();
   const pageErrors = [];
@@ -1151,12 +1159,200 @@ export async function auditBridgeVisual(browser, baseUrl, name) {
     if (url.endsWith('.js')) scripts.push(url);
   });
 
+  /** What is on the page, measured: boxes, names, and what the card says. */
+  const measure = () =>
+    page.evaluate(() => {
+      const box = (el) => {
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        const style = getComputedStyle(el);
+        return {
+          x: r.x,
+          y: r.y,
+          w: r.width,
+          h: r.height,
+          right: r.right,
+          bottom: r.bottom,
+          shown: r.width > 0 && r.height > 0 && style.visibility !== 'hidden' && style.display !== 'none',
+        };
+      };
+      const inside = (inner, outer) =>
+        Boolean(inner && outer) &&
+        inner.x >= outer.x - 1 &&
+        inner.y >= outer.y - 1 &&
+        inner.right <= outer.right + 1 &&
+        inner.bottom <= outer.bottom + 1;
+      const overlaps = (a, b) =>
+        Boolean(a && b) && a.x < b.right - 1 && b.x < a.right - 1 && a.y < b.bottom - 1 && b.y < a.bottom - 1;
+      const card = document.querySelector('[data-testid="bridge-scaling"]');
+      const reader = document.querySelector('[data-testid="lesson-reader"]');
+      const heading = [...document.querySelectorAll('h1,h2,h3,h4')].find(
+        (node) => node.textContent?.trim() === 'Bridge Notes'
+      );
+      const dials = [...document.querySelectorAll('[data-testid="bridge-scaling"] svg')].map(box);
+      // A needle is a stroked line, so its box has no width when it points straight up: measure the
+      // drawn length from the line's own ends rather than asking the box for an area it never has.
+      const needles = [...document.querySelectorAll('[data-testid^="bridge-scaling-needle-"]')].map((node) => {
+        const x1 = Number(node.getAttribute('x1'));
+        const y1 = Number(node.getAttribute('y1'));
+        const x2 = Number(node.getAttribute('x2'));
+        const y2 = Number(node.getAttribute('y2'));
+        const r = node.getBoundingClientRect();
+        return {
+          id: node.getAttribute('data-testid'),
+          tip: `${node.getAttribute('x2')},${node.getAttribute('y2')}`,
+          length: Math.hypot(x2 - x1, y2 - y1),
+          x: r.x,
+          y: r.y,
+          right: r.x + r.width,
+          bottom: r.y + r.height,
+        };
+      });
+      const sliders = ['bridge-scaling-raw', 'bridge-scaling-volt-dial'].map((id) => {
+        const node = document.querySelector(`[data-testid="${id}"]`);
+        return {
+          id,
+          ...box(node),
+          value: node?.value ?? null,
+          label: node?.getAttribute('aria-label') ?? null,
+        };
+      });
+      const readouts = ['bridge-scaling-fraction', 'bridge-scaling-volts', 'bridge-scaling-command'].map((id) => {
+        const node = document.querySelector(`[data-testid="${id}"]`);
+        return { id, ...box(node), text: node?.textContent?.trim() ?? null };
+      });
+      return {
+        viewport: { w: innerWidth, h: innerHeight },
+        card: box(card),
+        // Width, not height: the lesson text is a scroller, so a card taller than the pane is normal
+        // and reachable; a card wider than it is clipped with no way to see the rest.
+        cardWithinReader: Boolean(card && reader) && inside({
+          ...box(card),
+          y: box(reader).y,
+          bottom: box(reader).y + 1,
+        }, { ...box(reader), bottom: box(reader).bottom + 1e6 }),
+        cardOverflowX: card ? card.scrollWidth - card.clientWidth : null,
+        reader: box(reader),
+        heading: box(heading),
+        cardBelowHeading: Boolean(heading && card && box(card).y >= box(heading).bottom - 1),
+        overlapHeading: heading ? overlaps(box(card), box(heading)) : false,
+        docOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        dials,
+        dialsInsideCard: dials.every((dial) => inside(dial, box(card))),
+        dialsOverlapEachOther: dials.length === 2 ? overlaps(dials[0], dials[1]) : false,
+        needles,
+        needlesInsideCard: needles.every((needle) => inside(needle, box(card))),
+        sliders,
+        slidersInsideCard: sliders.every((slider) => inside(slider, box(card))),
+        readouts,
+        readoutsInsideCard: readouts.every((row) => inside(row, box(card))),
+        readoutsOverlapDials: readouts.some((row) => dials.some((dial) => overlaps(row, dial))),
+      };
+    });
+
   const readouts = async () => ({
     fraction: (await page.getByTestId('bridge-scaling-fraction').textContent())?.trim(),
     volts: (await page.getByTestId('bridge-scaling-volts').textContent())?.trim(),
     command: (await page.getByTestId('bridge-scaling-command').textContent())?.trim(),
-    tip: await page.getByTestId('bridge-scaling-needle').getAttribute('x2'),
   });
+
+  /**
+   * The readouts once they agree with a control's own value.
+   *
+   * A range input's `value` is committed by the browser before React has re-rendered the numbers
+   * beside it, so reading the two in the same tick can see the new control and the old readout. The
+   * check is that they *converge*, so it waits for that and then reports both sides.
+   */
+  const settled = async (control) => {
+    const value = Number(await control.inputValue());
+    const want = expected(value);
+    await page
+      .waitForFunction(
+        (pair) => {
+          const text = (id) => document.querySelector(`[data-testid="${id}"]`)?.textContent?.trim();
+          return (
+            text('bridge-scaling-fraction') === pair.fraction &&
+            text('bridge-scaling-volts') === pair.volts &&
+            text('bridge-scaling-command') === pair.command
+          );
+        },
+        want,
+        { timeout: 2000 }
+      )
+      .catch(() => {});
+    return { value, want, got: await readouts() };
+  };
+
+  /** The three numbers the model says this control value must print. */
+  const expected = (counts) => {
+    // The dial has 1024 stops, not one: clamping the counts to 1 before dividing by 1023 would make
+    // every reading but zero read as "full scale" to this helper while the page printed the truth.
+    const fraction = Math.min(1023, Math.max(0, counts)) / 1023;
+    return {
+      fraction: fraction.toFixed(3),
+      volts: `${(fraction * 5).toFixed(2)} V`,
+      command: (fraction * 255).toFixed(1),
+    };
+  };
+
+  const auditWidth = async (label, width, height) => {
+    await page.setViewportSize({ width, height });
+    const heading = page.getByRole('heading', { name: 'Bridge Notes', exact: true });
+    await heading.scrollIntoViewIfNeeded();
+    await page.getByTestId('bridge-visual-scaling-dials').waitFor({ state: 'visible', timeout: 20000 });
+    await page.waitForTimeout(300);
+
+    const seen = await measure();
+    const where = `${name} at ${label} (${width}px)`;
+
+    assert.equal(seen.dials.length, 2, `${where}: the card must draw both dials, saw ${seen.dials.length}`);
+    assert.ok(
+      seen.dials.every((dial) => dial.shown && dial.w >= 200 && dial.h >= 110),
+      `${where}: a dial is not drawn at its size (${JSON.stringify(seen.dials)})`
+    );
+    assert.ok(seen.dialsInsideCard, `${where}: a dial is clipped by its own card`);
+    assert.ok(
+      seen.cardWithinReader,
+      `${where}: the card is wider than the lesson text (card ${Math.round(seen.card.x)}..${Math.round(
+        seen.card.right
+      )}, reader ${Math.round(seen.reader.x)}..${Math.round(seen.reader.right)})`
+    );
+    assert.equal(seen.cardOverflowX, 0, `${where}: the card scrolls sideways by ${seen.cardOverflowX}px`);
+    assert.equal(seen.docOverflow, 0, `${where}: the page scrolls sideways by ${seen.docOverflow}px`);
+    assert.ok(seen.cardBelowHeading, `${where}: the card is not under its Bridge Notes heading`);
+    assert.ok(!seen.overlapHeading, `${where}: the card overlaps the Bridge Notes heading`);
+    assert.ok(
+      seen.card.y < seen.viewport.h,
+      `${where}: the card starts below the fold at ${Math.round(seen.card.y)}px, so it cannot be reached`
+    );
+    assert.ok(
+      seen.needles.length === 2 && seen.needles.every((needle) => needle.length > 20),
+      `${where}: a needle is missing or drawn with no length (${JSON.stringify(seen.needles)})`
+    );
+    assert.ok(seen.needlesInsideCard, `${where}: a needle is drawn outside the card`);
+    assert.ok(seen.slidersInsideCard, `${where}: a slider is outside the card`);
+    assert.ok(
+      seen.sliders.every((slider) => slider.shown && slider.w >= 60 && slider.h >= 10),
+      `${where}: a slider is not drawn at its size (${JSON.stringify(seen.sliders)})`
+    );
+    assert.ok(
+      seen.sliders.every((slider) => (slider.label ?? '').trim().length > 8),
+      `${where}: a slider has no name for a screen reader (${JSON.stringify(seen.sliders.map((one) => one.label))})`
+    );
+    assert.ok(seen.readoutsInsideCard, `${where}: a readout is outside the card`);
+    assert.ok(
+      seen.readouts.every((row) => row.shown && (row.text ?? '').length > 0),
+      `${where}: a readout is blank`
+    );
+    assert.ok(!seen.readoutsOverlapDials, `${where}: the readouts overlap a dial`);
+    if (width < 500) {
+      assert.ok(
+        !seen.dialsOverlapEachOther,
+        `${where}: the two dials overlap each other on a phone (${JSON.stringify(seen.dials)})`
+      );
+    }
+    return seen;
+  };
 
   try {
     await page.goto(`${baseUrl}?lesson=P.9`, { waitUntil: 'networkidle', timeout: 45000 });
@@ -1172,53 +1368,103 @@ export async function auditBridgeVisual(browser, baseUrl, name) {
     await page.getByTestId('lesson-list-card').waitFor({ state: 'visible', timeout: 10000 });
     await expandEditorBody(page);
 
-    const heading = page.getByRole('heading', { name: 'Bridge Notes', exact: true });
-    await heading.scrollIntoViewIfNeeded();
-    const visual = page.getByTestId('bridge-visual-scaling-dials');
-    await visual.waitFor({ state: 'visible', timeout: 20000 });
+    // ---- 1. Both dials, in place, at a desktop width and at a phone width ----
+    await auditWidth('desktop', 1280, 900);
+    const phone = await auditWidth('phone', 380, 844);
 
-    let shown = await readouts();
-    // The page's worked example, on screen: 511.5 is 0.500, and one reading is 2.50 V and 127.5.
-    assert.equal(shown.fraction, '0.500', `${name}: the dial must open on the page's worked reading`);
-    assert.equal(shown.volts, '2.50 V', `${name}: 0.5 of 5.0 V is 2.50 V`);
-    assert.equal(shown.command, '127.5', `${name}: the same fraction of 255 is 127.5`);
+    // ---- 2. The page's own worked example, on screen ----
+    const opening = await readouts();
+    assert.equal(opening.fraction, '0.500', `${name}: the dials must open on the page's worked reading`);
+    assert.equal(opening.volts, '2.50 V', `${name}: 0.5 of 5.0 V is 2.50 V`);
+    assert.equal(opening.command, '127.5', `${name}: the same fraction of 255 is 127.5`);
+    assert.equal(
+      phone.needles[0].tip,
+      phone.needles[1].tip,
+      `${name}: both needles must sit at the same fraction, saw ${JSON.stringify(phone.needles.map((needle) => needle.tip))}`
+    );
 
-    const slider = page.getByTestId('bridge-scaling-raw');
-    await slider.focus();
-    await page.keyboard.press('Home');
-    const bottom = await readouts();
-    assert.equal(bottom.fraction, '0.000', `${name}: the bottom stop must read 0`);
-    assert.equal(bottom.volts, '0.00 V', `${name}: 0 in gives 0 out`);
-    assert.equal(bottom.command, '0.0', `${name}: the command dial lands on 0 too`);
-
-    await page.keyboard.press('End');
-    const top = await readouts();
-    assert.equal(top.fraction, '1.000', `${name}: the top stop must read 1.000`);
-    assert.equal(top.volts, '5.00 V', `${name}: 1023 in gives the top out`);
-    assert.equal(top.command, '255.0', `${name}: and 255 on the command dial`);
-    assert.notEqual(top.tip, bottom.tip, `${name}: the needle did not move with the reading`);
+    // ---- 3. The keyboard reaches both dials, and the numbers follow ----
+    const counts = page.getByTestId('bridge-scaling-raw');
+    const volts = page.getByTestId('bridge-scaling-volt-dial');
+    for (const [label, control] of [
+      ['counts', counts],
+      ['volts', volts],
+    ]) {
+      await control.focus();
+      assert.equal(
+        await control.evaluate((node) => node === document.activeElement),
+        true,
+        `${name}: the ${label} dial cannot take focus`
+      );
+      await page.keyboard.press('Home');
+      let shown = await readouts();
+      assert.deepEqual(
+        shown,
+        { fraction: '0.000', volts: '0.00 V', command: '0.0' },
+        `${name}: Home on the ${label} dial must read 0 everywhere`
+      );
+      await page.keyboard.press('End');
+      shown = await readouts();
+      assert.deepEqual(
+        shown,
+        { fraction: '1.000', volts: '5.00 V', command: '255.0' },
+        `${name}: End on the ${label} dial must read full scale everywhere`
+      );
+    }
 
     // Stepping back is a real move, not a jump to the next stop: half a count per press needs a
     // couple of dozen presses before the two-decimal volts has to admit it left 5.00.
+    await counts.focus();
     for (let press = 0; press < 40; press += 1) await page.keyboard.press('ArrowLeft');
-    const nearTop = await readouts();
-    assert.notEqual(nearTop.fraction, '1.000', `${name}: the arrow keys do not move the dial`);
-    assert.ok(
-      Number(nearTop.volts.replace(' V', '')) < 5,
-      `${name}: stepping back must lower the volts, got ${nearTop.volts}`
+    const stepped = await settled(counts);
+    assert.deepEqual(
+      stepped.got,
+      stepped.want,
+      `${name}: the readouts lag the stepped control value (${JSON.stringify(stepped)})`
     );
-    assert.notEqual(nearTop.tip, top.tip, `${name}: the needle did not follow the stepped reading`);
+    assert.ok(stepped.value < 1023, `${name}: the arrow keys do not move the counts dial`);
 
+    // ---- 4. Dragging each dial with the pointer, and both needles following ----
+    for (const [label, testId, target, ok] of [
+      ['counts', 'bridge-scaling-raw', 0.8, (fraction) => fraction > 0.7],
+      ['volts', 'bridge-scaling-volt-dial', 0.2, (fraction) => fraction < 0.3],
+    ]) {
+      const control = page.getByTestId(testId);
+      const start = await control.boundingBox();
+      assert.ok(start, `${name}: the ${label} dial has no box to drag`);
+      const before = Number(await control.inputValue());
+      await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(start.x + start.width * target, start.y + start.height / 2, { steps: 8 });
+      await page.mouse.up();
+      const after = Number(await control.inputValue());
+      assert.notEqual(after, before, `${name}: dragging the ${label} dial does not move it`);
+      const max = Number(await control.getAttribute('max'));
+      assert.ok(ok(after / max), `${name}: the ${label} drag landed at ${after} of ${max}`);
+      const afterDrag = await settled(counts);
+      assert.deepEqual(
+        afterDrag.got,
+        afterDrag.want,
+        `${name}: the readouts lag the dragged ${label} dial at ${afterDrag.value}`
+      );
+      const tips = (await measure()).needles.map((needle) => needle.tip);
+      assert.equal(tips[0], tips[1], `${name}: the two needles disagree after dragging the ${label} dial`);
+    }
+
+    // ---- 5. It is its own chunk, not the entry ----
     const chunks = scripts.filter((url) => /ScalingDialsVisual-/.test(url));
     assert.ok(chunks.length > 0, `${name}: the visual never arrived as its own chunk`);
     assert.ok(
       chunks.every((url) => !/\/index-[^/]+\.js$/.test(url)),
       `${name}: the visual was bundled into the entry chunk instead of its own`
     );
-    console.log(
-      `  ok ${name}: P.9's Bridge Notes visual is dragged from 0 to 1023, and prints the lesson's own 0.500 / 2.50 V / 127.5 in its own lazy chunk`
-    );
     assert.equal(pageErrors.length, 0, `${name}: page errors in the Bridge Notes visual: ${pageErrors.join(' | ')}`);
+
+    console.log(
+      `  ok ${name}: P.9's Bridge Notes visual draws two dials with a needle each and three readouts inside ` +
+        `the section at 1280 and 380, both dials drag and take the keyboard, and the numbers read the ` +
+        `lesson's own 0.500 / 2.50 V / 127.5`
+    );
   } finally {
     await context.close();
   }
