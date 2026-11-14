@@ -38,7 +38,7 @@ const bOf = (values: LabValues) => numberAt(values, 'b', PART_B_OHM);
 export const orderOfOperationsLab: LabSpec = {
   testid: 'bridge-pemdas',
   title: 'The bar you have to type',
-  prompt: '12.0 V across 20 kΩ and 10 kΩ is 4.00 V. Without the bar it stops being a divider.',
+  prompt: '12.0 V across 20 kΩ and 10 kΩ is 4.00 V. Without the bar it is not a divider.',
   controls: [
     {
       kind: 'range',
@@ -49,7 +49,6 @@ export const orderOfOperationsLab: LabSpec = {
       max: 24,
       step: 0.5,
       start: SUPPLY_V,
-      hint: 'The rail it hangs from.',
     },
     {
       kind: 'range',
@@ -60,7 +59,6 @@ export const orderOfOperationsLab: LabSpec = {
       max: 100_000,
       step: 1_000,
       start: PART_A_OHM,
-      hint: 'Rail to sense pin.',
     },
     {
       kind: 'range',
@@ -71,38 +69,36 @@ export const orderOfOperationsLab: LabSpec = {
       max: 100_000,
       step: 1_000,
       start: PART_B_OHM,
-      hint: 'Sense pin to ground.',
     },
   ],
+  scale: {
+    min: 0,
+    max: 1,
+    label: 'Ground (0) … rail (1)',
+    marks: [
+      {
+        id: 'fraction',
+        at: (values) => bOf(values) / (aOf(values) + bOf(values)),
+        caption: (values) => `${bOf(values)} / (${aOf(values)} + ${bOf(values)})`,
+      },
+    ],
+  },
   readouts: [
     {
       id: 'right',
-      label: 'With parentheses',
+      label: 'With the bar',
       unit: 'V',
       text: (values) => formatReading(dividerRight(yOf(values), aOf(values), bOf(values))),
-      note: () => 'the bar, typed',
+      note: (values) =>
+        `${yOf(values)} * (${bOf(values)} / (${aOf(values)} + ${bOf(values)}))`,
     },
     {
       id: 'wrong',
-      label: 'Typed left to right',
+      label: 'Left to right',
       unit: 'V',
       text: (values) => formatReading(dividerWrong(yOf(values), aOf(values), bOf(values))),
-      note: (values) => {
-        const wrong = dividerWrong(yOf(values), aOf(values), bOf(values));
-        const right = dividerRight(yOf(values), aOf(values), bOf(values));
-        if (Math.abs(wrong - right) < 1e-9) return 'equal: b is tiny';
-        return `${formatReading((wrong - right) / right, 1)}× too big: b was added, not divided`;
-      },
-    },
-    {
-      id: 'fraction',
-      label: 'The fraction b / (a + b)',
-      text: (values) => formatReading(bOf(values) / (aOf(values) + bOf(values)), 4),
+      note: (values) =>
+        `${yOf(values)} * ${bOf(values)} / ${aOf(values)} + ${bOf(values)}`,
     },
   ],
-  verdict: (values) => {
-    const right = dividerRight(yOf(values), aOf(values), bOf(values));
-    const wrong = dividerWrong(yOf(values), aOf(values), bOf(values));
-    return `Two answers from three names: ${formatReading(right)} V and ${formatReading(wrong)} V. Only the first is the pin.`;
-  },
 };

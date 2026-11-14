@@ -2166,9 +2166,42 @@ export async function auditBridgeLabs(browser, baseUrl, name) {
   await expect('bridge-clamp-clamped', '255 counts', `${name} P.3 opens on 310 clamped`);
   await expect('bridge-clamp-register', '54 counts', `${name} P.3 shows the wrap the section warns about`);
   await expect('bridge-clamp-output', '255 counts', `${name} P.3 output starts clamped`);
+  // The drawn register is the part a paragraph cannot do: two marks on the same 0…255 axis, the
+  // clamp at the top stop and the wrap back near the bottom, with the arithmetic that put them there.
+  await expect(
+    'bridge-clamp-scale-text',
+    'clamp: 310 → 255 · wrap: 310 % 256 = 54',
+    `${name} P.3 draws both landings on one axis`
+  );
+  const marks = async () =>
+    page.evaluate(() => {
+      const read = (id) => {
+        const node = document.querySelector(`[data-testid="bridge-clamp-mark-${id}"]`);
+        // The offset is written as `calc(N% - 1px)` so the mark is centred on its value.
+        return node ? Number.parseFloat(node.style.left.match(/(-?[\d.]+)%/)?.[1] ?? 'NaN') : null;
+      };
+      return { clamped: read('clamped'), wrapped: read('wrapped') };
+    });
+  let placed = await marks();
+  assert.ok(Math.abs(placed.clamped - 100) < 0.2, `${name} P.3 clamp mark sits at the top stop, saw ${placed.clamped}%`);
+  assert.ok(
+    Math.abs(placed.wrapped - (54 / 255) * 100) < 0.2,
+    `${name} P.3 wrap mark sits at 54/255, saw ${placed.wrapped}%`
+  );
   await key('bridge-clamp-raw', 'Home');
   await expect('bridge-clamp-clamped', '0 counts', `${name} P.3 keyboard Home hits the bottom stop`);
   await expect('bridge-clamp-register', '196 counts', `${name} P.3 -60 wraps to 196`);
+  await expect(
+    'bridge-clamp-scale-text',
+    'clamp: -60 → 0 · wrap: -60 % 256 = 196',
+    `${name} P.3 the drawing follows the keyboard`
+  );
+  placed = await marks();
+  assert.ok(Math.abs(placed.clamped) < 0.2, `${name} P.3 clamp mark moves to the bottom stop`);
+  assert.ok(
+    Math.abs(placed.wrapped - (196 / 255) * 100) < 0.2,
+    `${name} P.3 wrap mark moves up to 196`
+  );
   await key('bridge-clamp-raw', 'End');
   await page.getByTestId('bridge-clamp-estop').click();
   await expect('bridge-clamp-output', '0 counts', `${name} P.3 e-stop forces the output to 0`);
@@ -2182,6 +2215,28 @@ export async function auditBridgeLabs(browser, baseUrl, name) {
   await open('P.2', 'bridge-pemdas');
   await expect('bridge-pemdas-right', '4.00 V', `${name} P.2 opens on the page's 4.00 V`);
   await expect('bridge-pemdas-wrong', '10006.00 V', `${name} P.2 shows the unparenthesised answer`);
+  // Each reading prints the expression that produced it, so the card shows the parenthesis doing work.
+  await expect('bridge-pemdas-scale-text', '10000 / (20000 + 10000)', `${name} P.2 names the fraction`);
+  const fractionMark = await page.evaluate(() => {
+    const node = document.querySelector('[data-testid="bridge-pemdas-mark-fraction"]');
+    return node ? Number.parseFloat(node.style.left.match(/(-?[\d.]+)%/)?.[1] ?? 'NaN') : null;
+  });
+  assert.ok(
+    Math.abs(fractionMark - (10000 / 30000) * 100) < 0.2,
+    `${name} P.2 the sense pin sits a third of the way up, saw ${fractionMark}%`
+  );
+  const rows = await page.evaluate(() => {
+    const row = (id) => document.querySelector(`[data-testid="${id}"]`)?.parentElement?.textContent ?? '';
+    return { right: row('bridge-pemdas-right'), wrong: row('bridge-pemdas-wrong') };
+  });
+  assert.ok(
+    rows.right.includes('12 * (10000 / (20000 + 10000))'),
+    `${name} P.2 the parenthesised row prints its expression: ${JSON.stringify(rows.right)}`
+  );
+  assert.ok(
+    rows.wrong.includes('12 * 10000 / 20000 + 10000'),
+    `${name} P.2 the left-to-right row prints its expression: ${JSON.stringify(rows.wrong)}`
+  );
   await key('bridge-pemdas-b', 'Home');
   await expect('bridge-pemdas-right', '0.57 V', `${name} P.2 b = 1000 gives 0.57 V`);
   await expect('bridge-pemdas-wrong', '1000.60 V', `${name} P.2 and 1000.60 V unparenthesised`);

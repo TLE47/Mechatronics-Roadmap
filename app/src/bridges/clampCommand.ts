@@ -49,7 +49,7 @@ const estopOf = (values: LabValues) => toggleAt(values, 'estop');
 export const clampCommandLab: LabSpec = {
   testid: 'bridge-clamp',
   title: 'Clamp before the register',
-  prompt: 'Push the request past the ends. 0 … 255 is not a wall: an unclamped write wraps.',
+  prompt: 'Push the request past the ends: 0 … 255 has no wall, so a raw write wraps.',
   controls: [
     {
       kind: 'range',
@@ -60,43 +60,49 @@ export const clampCommandLab: LabSpec = {
       max: 320,
       step: 1,
       start: 310,
-      hint: '310 catches a fall; -45 brakes.',
     },
     { kind: 'toggle', id: 'estop', label: 'E-stop pressed', start: false },
   ],
+  scale: {
+    min: COMMAND_MIN,
+    max: COMMAND_MAX,
+    label: '0 … 255',
+    marks: [
+      {
+        id: 'clamped',
+        at: (values) => clampCommand(rawOf(values)),
+        caption: (values) => `clamp: ${Math.trunc(rawOf(values))} → ${clampCommand(rawOf(values))}`,
+      },
+      {
+        id: 'wrapped',
+        at: (values) => registerByte(rawOf(values)),
+        caption: (values) => `wrap: ${Math.trunc(rawOf(values))} % 256 = ${registerByte(rawOf(values))}`,
+      },
+    ],
+  },
   readouts: [
     {
-      id: 'asked',
-      label: 'Before the limits',
-      text: (values) => String(Math.trunc(rawOf(values))),
-      unit: 'counts',
-    },
-    {
       id: 'clamped',
-      label: 'After clamping',
+      label: 'Clamped',
       text: (values) => String(clampCommand(rawOf(values))),
       unit: 'counts',
       note: (values) => {
         const raw = rawOf(values);
-        if (raw > COMMAND_MAX) return 'top stop';
-        if (raw < COMMAND_MIN) return 'bottom stop';
-        return 'passes through';
+        if (raw > COMMAND_MAX) return `if ${raw} > 255: motor_cmd = 255`;
+        if (raw < COMMAND_MIN) return `elif ${raw} < 0: motor_cmd = 0`;
+        return 'inside the range: unchanged';
       },
     },
     {
       id: 'register',
-      label: 'Register if you skip the clamp',
+      label: 'Unclamped register',
       text: (values) => String(registerByte(rawOf(values))),
       unit: 'counts',
-      note: (values) => {
-        const wrapped = registerByte(rawOf(values));
-        if (wrapped === clampCommand(rawOf(values))) return 'nothing overflowed';
-        return `${Math.trunc(rawOf(values))} wraps to ${wrapped}`;
-      },
+      note: (values) => `${Math.trunc(rawOf(values))} % 256 = ${registerByte(rawOf(values))}`,
     },
     {
       id: 'output',
-      label: 'Motor output',
+      label: 'Output',
       text: (values) => String(motorCommand(rawOf(values), estopOf(values))),
       unit: 'counts',
       note: (values) => (estopOf(values) ? 'e-stop: 0 whatever arrived' : ''),
@@ -104,9 +110,9 @@ export const clampCommandLab: LabSpec = {
   ],
   verdict: (values) => {
     const raw = rawOf(values);
-    if (estopOf(values)) return 'E-stop: the output is 0.';
-    if (raw > COMMAND_MAX) return `Held at ${COMMAND_MAX}, not wrapped to ${registerByte(raw)}: full effort.`;
-    if (raw < COMMAND_MIN) return `Held at ${COMMAND_MIN}, not wrapped to ${registerByte(raw)}: braking.`;
+    if (estopOf(values)) return 'E-stop: 0, whatever arrived.';
+    if (raw > COMMAND_MAX) return `Held at ${COMMAND_MAX}, not wrapped to ${registerByte(raw)}.`;
+    if (raw < COMMAND_MIN) return `Held at ${COMMAND_MIN}, not wrapped to ${registerByte(raw)}.`;
     return `Inside the range: ${raw} arrives unchanged.`;
   },
 };

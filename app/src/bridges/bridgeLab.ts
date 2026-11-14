@@ -25,8 +25,6 @@ export type LabControl =
       max: number;
       step: number;
       start: number;
-      /** One clause under the slider: what moving it is like, in the section's own terms. */
-      hint: string;
     }
   | {
       kind: 'toggle';
@@ -51,7 +49,22 @@ export interface LabReadout {
   note?: (values: LabValues) => string;
 }
 
-/** The whole lab: controls, the arithmetic written as code, and the readings. */
+/**
+ * A drawn scale the section's own sentence is about.
+ *
+ * Two facts a paragraph cannot show at once: where a value sits inside its real ends, and how far
+ * apart two values are on that same axis — the clamp at the top stop against the wrap back at 54,
+ * or a fraction of one third of the way along its bar. Each mark carries the arithmetic that put it
+ * there, so the picture and the numbers agree by construction.
+ */
+export interface LabScale {
+  min: number;
+  max: number;
+  label: string;
+  marks: { id: string; at: (values: LabValues) => number; caption: (values: LabValues) => string }[];
+}
+
+/** The whole lab: controls, the drawn scale, and the readings. */
 export interface LabSpec {
   /** The `data-testid` prefix for the card and everything in it. */
   testid: string;
@@ -59,6 +72,7 @@ export interface LabSpec {
   /** The section's claim, in one sentence, above the experiment. */
   prompt: string;
   controls: LabControl[];
+  scale?: LabScale;
   readouts: LabReadout[];
   verdict?: (values: LabValues) => string;
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ChangeEvent } from 'react';
-import { numberAt, startValues, toggleAt, type LabSpec, type LabValues } from './bridgeLab';
+import { numberAt, startValues, toggleAt, type LabScale, type LabSpec, type LabValues } from './bridgeLab';
 
 /**
  * One Bridge Notes lab, drawn (`app/src/bridges/bridgeLabShell.tsx`).
@@ -16,8 +16,17 @@ import { numberAt, startValues, toggleAt, type LabSpec, type LabValues } from '.
  * `text-muted`, `--accent`), which is what lets it sit in every palette the reader offers.
  */
 
+/** Where a value sits on the scale, as a percentage the track can place. */
+function place(scale: LabScale, value: number): number {
+  const span = scale.max - scale.min;
+  if (!Number.isFinite(span) || span === 0) return 0;
+  return Math.min(100, Math.max(0, ((value - scale.min) / span) * 100));
+}
+
 export default function BridgeLab({ spec }: { spec: LabSpec }) {
   const [values, setValues] = useState<LabValues>(() => startValues(spec.controls));
+
+  const scale = spec.scale;
 
   const set = (id: string, value: number | string | boolean) =>
     setValues((previous) => ({ ...previous, [id]: value }));
@@ -59,7 +68,6 @@ export default function BridgeLab({ spec }: { spec: LabSpec }) {
                   className="mt-1 h-5 w-full cursor-pointer"
                   style={{ accentColor: 'var(--accent)' }}
                 />
-                <span className="block text-[10.5px] text-faint">{control.hint}</span>
               </label>
             );
           }
@@ -81,6 +89,28 @@ export default function BridgeLab({ spec }: { spec: LabSpec }) {
         })}
       </div>
 
+
+      {scale ? (
+        <div data-testid={`${spec.testid}-scale`} className="mt-2">
+          <span className="text-[11px] text-muted">{scale.label}</span>
+          <div className="relative mt-1 h-1 rounded bg-line">
+            {scale.marks.map((mark) => (
+              <span
+                key={mark.id}
+                data-testid={`${spec.testid}-mark-${mark.id}`}
+                className="absolute -top-1 h-3 w-0.5 bg-accent"
+                style={{ left: `calc(${place(scale, mark.at(values)).toFixed(1)}% - 1px)` }}
+              />
+            ))}
+          </div>
+          <p
+            data-testid={`${spec.testid}-scale-text`}
+            className="m-0 mt-1 font-mono text-[10.5px] text-faint"
+          >
+            {scale.marks.map((mark) => mark.caption(values)).join(' · ')}
+          </p>
+        </div>
+      ) : null}
 
       <div className="mt-2 grid gap-1" aria-live="polite">
         {spec.readouts.map((readout) => {

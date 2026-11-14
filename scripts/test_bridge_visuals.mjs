@@ -52,6 +52,7 @@ import {
   COMMAND_MAX,
   COMMAND_MIN,
   clampCommand,
+  clampCommandLab,
   motorCommand,
   registerByte,
 } from '../app/src/bridges/clampCommand.ts';
@@ -62,6 +63,7 @@ import {
   SUPPLY_V,
   dividerRight,
   dividerWrong,
+  orderOfOperationsLab,
 } from '../app/src/bridges/orderOfOperations.ts';
 
 let passed = 0;
@@ -298,6 +300,36 @@ check('P.2: the divider gives 4.00 V with parentheses and 10006.00 V without', (
   }
   assert.throws(() => dividerRight(12, 0, 0), /positive/);
   assert.throws(() => dividerWrong(12, 0, 1), /positive/);
+});
+
+check('P.3: the drawn register puts the clamp at 255 and the wrap at 54 on the same axis', () => {
+  const scale = clampCommandLab.scale;
+  assert.ok(scale, 'the clamp card draws its register');
+  assert.equal(scale.min, 0);
+  assert.equal(scale.max, 255);
+  const high = { raw: 310, estop: false };
+  assert.equal(scale.marks[0].at(high), 255, 'the clamp lands at the top stop');
+  assert.equal(scale.marks[1].at(high), 54, 'the wrap lands at 54');
+  assert.equal(scale.marks[0].caption(high), 'clamp: 310 → 255');
+  assert.equal(scale.marks[1].caption(high), 'wrap: 310 % 256 = 54');
+  const low = { raw: -60, estop: false };
+  assert.equal(scale.marks[0].at(low), 0);
+  assert.equal(scale.marks[1].at(low), 196);
+  assert.equal(scale.marks[0].caption(low), 'clamp: -60 → 0');
+  assert.equal(scale.marks[1].caption(low), 'wrap: -60 % 256 = 196');
+});
+
+check('P.2: the card prints the expression behind each reading, and draws the fraction', () => {
+  const values = { y_in: SUPPLY_V, a: PART_A_OHM, b: PART_B_OHM };
+  const byId = (id) => orderOfOperationsLab.readouts.find((readout) => readout.id === id);
+  assert.equal(byId('right').note(values), '12 * (10000 / (20000 + 10000))');
+  assert.equal(byId('wrong').note(values), '12 * 10000 / 20000 + 10000');
+  assert.equal(byId('right').text(values), '4.00');
+  assert.equal(byId('wrong').text(values), '10006.00');
+  const scale = orderOfOperationsLab.scale;
+  assert.ok(scale, 'the divider card draws its fraction');
+  assert.equal(scale.marks[0].at(values), 1 / 3);
+  assert.equal(scale.marks[0].caption(values), '10000 / (20000 + 10000)');
 });
 
 check('the pages still say the numbers their labs print', () => {
