@@ -987,41 +987,47 @@ export async function auditPaneBottomResize(browser, baseUrl, name) {
       assert.ok(box, `${name}: the bottom grip has no pointer box`);
       const x = box.x + box.width / 2;
       const y = box.y + box.height / 2;
-      // A transient overlay (a toast, the split tip) can be on top of the grip for a while on a loaded
-      // runner, and the pointer then lands on it instead. Hover the point first — the grip's own
-      // tooltip lives inside the divider, so it still counts — and wait for the grip to be the topmost
-      // element there; the assertion below still fails, naming what covered it, if it never is.
+      // A transient overlay (a toast, the split tip) can sit over part of the grip on a loaded runner,
+      // and it hides the point being dragged from rather than the grip. Hover the row first, then take
+      // the first point along it where the divider really is the topmost thing: a 691 px grip is still
+      // grabbable with a card over its middle. The check fails only when no point along it is free, and
+      // names what is over the centre when it does.
       await page.mouse.move(x, y);
-      const hit = await page
+      const point = await page
         .waitForFunction(
-          ({ px, py }) => {
-            const element = document.elementFromPoint(px, py);
-            if (!element?.closest('[data-testid="pane-divider-bottom"]')) return null;
-            return { tag: element.tagName, testid: element.getAttribute('data-testid'), onGrip: true };
+          ({ left, right, py }) => {
+            for (let px = left + 8; px <= right - 8; px += 16) {
+              const element = document.elementFromPoint(px, py);
+              if (element?.closest('[data-testid="pane-divider-bottom"]')) return { px, py, onGrip: true };
+            }
+            return null;
           },
-          { px: x, py: y },
+          { left: box.x, right: box.x + box.width, py: y },
           { timeout: 15000, polling: 100 }
         )
         .then((handle) => handle.jsonValue())
         .catch(() => null);
-      if (!hit?.onGrip) {
+      if (!point?.onGrip) {
         const blocked = await page.evaluate(
           ({ px, py }) => {
             const element = document.elementFromPoint(px, py);
             if (!element) return 'nothing';
             const testid = element.getAttribute('data-testid');
-            return `${element.tagName}[${testid ?? ''}]`;
+            // A bare wrapper still has to be identifiable in the failure, so the class list is the name.
+            const label = testid ?? (element.getAttribute('class') ?? '').slice(0, 60);
+            return `${element.tagName}[${label}]`;
           },
           { px: x, py: y }
         );
         assert.fail(
-          `${name}: the pointer at (${Math.round(x)}, ${Math.round(y)}) hits ${blocked}, ` +
-            `not the grip (box ${JSON.stringify(box)})`
+          `${name}: no point along the bottom grip is the topmost element; its centre at ` +
+            `(${Math.round(x)}, ${Math.round(y)}) hits ${blocked} (box ${JSON.stringify(box)})`
         );
       }
-      await page.mouse.move(x, y);
+      const gripX = point.px;
+      await page.mouse.move(gripX, y);
       await page.mouse.down();
-      await page.mouse.move(x, y - travel, { steps: 10 });
+      await page.mouse.move(gripX, y - travel, { steps: 10 });
       await page.mouse.up();
     };
     const resizedFlag = () =>
