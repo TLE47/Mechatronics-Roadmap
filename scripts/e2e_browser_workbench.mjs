@@ -1475,6 +1475,9 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
             viewportWidth: window.innerWidth,
             dockHoldsColumn: !!dock.querySelector('[data-testid="results-column"]'),
             dockHoldsRuntime: !!dock.querySelector('[data-testid="runner-runtime-status"]'),
+            dockHoldsBrief: !!dock.querySelector('[data-testid="lesson-brief"]'),
+            dockHoldsHints: !!dock.querySelector('[data-tour="hint-ladder"]'),
+            dockCards: dock.querySelectorAll(':scope > [data-testid], :scope > *').length,
             columnInDock: !!column && !!dock.contains(column),
             editorWidth: Math.round(editor.getBoundingClientRect().width),
             readerVisible: !!reader && reader.getBoundingClientRect().height > 0,
@@ -1504,6 +1507,16 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       assert.equal(compact.wrapper, 'flex', 'Compact turns the dock into one block');
       assert.equal(compact.columnInDock, true, 'the results must be inside the dock, not beside it');
       assert.equal(compact.dockHoldsRuntime, true, 'the runtime strip folds in with the results');
+      assert.equal(
+        compact.dockHoldsBrief,
+        true,
+        'the lesson brief — the clock, the pass badge, the roadmap link — folds into the dock'
+      );
+      assert.equal(
+        compact.dockHoldsHints,
+        true,
+        'the hint ladder folds into the dock too, so the page is dock, editor and lesson text'
+      );
       assert.equal(compact.editorVisible, true, 'the editor stays, full size');
       assert.equal(compact.readerVisible, true, 'the lesson text stays');
       assert.ok(

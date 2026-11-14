@@ -1963,6 +1963,341 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
   // A preset of the whole page: the text and the editor keep their size, the rest folds into the dock.
   const compactLesson = shownLayout === 'compact';
+  // Compact folds the lesson's own reading matter — the brief and the hint ladder — in with the
+  // results, so the page is three blocks: this dock, the editor, the lesson text.
+  const briefCard = (
+          <div
+            data-tour={isPhone ? undefined : 'lesson-brief'}
+            data-testid="lesson-brief"
+            className={`bg-panel border border-line rounded-xl p-4 ${phoneCode || (isPhone && !phoneBriefOpen) ? 'hidden' : ''}`}
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                {/* Whole items wrap and none breaks inside a word: every chip is nowrap and no dotted
+                    separator can dangle at the start of a wrapped line. */}
+                <div
+                  data-testid="lesson-meta"
+                  className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono text-muted"
+                >
+                  <span className="text-accent font-bold whitespace-nowrap">
+                    Lesson {currentLesson.id}
+                  </span>
+                  <span
+                    className="hidden max-w-[16rem] truncate sm:inline sm:max-w-[22rem]"
+                    title={currentLesson.path}
+                  >
+                    {currentLesson.path}
+                  </span>
+                  {currentRoadmapStep ? (
+                    <button
+                      onClick={() =>
+                        onOpenRoadmap?.(
+                          currentRoadmapStep.pass,
+                          currentRoadmapStep.step.milestoneId
+                        )
+                      }
+                      data-testid="lesson-roadmap-step"
+                      title="Show the roadmap step this entry practises"
+                      className="whitespace-nowrap text-accent hover:underline cursor-pointer"
+                    >
+                      Roadmap: {stepBreadcrumb(currentRoadmapStep)} ↗
+                    </button>
+                  ) : (
+                    <span className="whitespace-nowrap" data-testid="lesson-roadmap-step">
+                      Python on-ramp — before the roadmap
+                    </span>
+                  )}
+                  {currentSpineStep && (
+                    <span
+                      data-testid="lesson-step-cost"
+                      title="Focused hours from each page's own metadata: the arm pass you are in, and the depth pass after Step 10"
+                      className="whitespace-nowrap tabular-nums text-body"
+                    >
+                      {stepCostLabel(currentSpineStep)}
+                    </span>
+                  )}
+                  <a
+                    data-testid="link-lesson-page"
+                    href={lessonPageUrl(currentLesson.path)}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="The lesson text is the pane on this screen. The GitHub page remains for copying, printing and filing an issue; nothing you type is saved there."
+                    className="hidden whitespace-nowrap text-muted underline underline-offset-2 hover:text-accent sm:inline"
+                  >
+                    View source on GitHub ↗
+                  </a>
+                  {isCurrentVerified && (
+                    <span className="text-emerald font-semibold whitespace-nowrap">
+                      Executed &amp; Passed (WASM)
+                    </span>
+                  )}
+                  {/* The 224 px chooser rail needs `lg`, and a phone's strip needs `md` to be
+                      absent: between them a tablet had no door to the lesson list at all. This is
+                      that door, and it opens the same sheet the phone uses. */}
+                  <button
+                    type="button"
+                    onClick={() => setLessonSheetOpen(true)}
+                    data-testid="btn-lessons-tablet"
+                    className="hidden items-center gap-1 whitespace-nowrap rounded border border-line bg-canvas px-2 py-0.5 text-[11px] font-semibold text-body hover:text-ink cursor-pointer md:inline-flex lg:hidden"
+                  >
+                    <BookOpen className="h-3 w-3" aria-hidden="true" />
+                    Lessons
+                  </button>
+                </div>
+                <h2
+                  data-testid={isPhone ? undefined : 'lesson-title'}
+                  className="text-base font-bold text-ink mt-1"
+                >
+                  {currentLesson.title}
+                </h2>
+                {/* Study folds its rail; the other presets have no rail, so the press opens the sheet. */}
+                <LessonRailToggle folded={chooserFold.folded} count={filteredLessons.length} opensSheet={shownLayout !== 'study'} onToggle={shownLayout === 'study' ? chooserFold.toggle : () => setLessonSheetOpen(true)} />
+              </div>
+
+              {showFirstGuide && <GuideToggle hidden={guideHidden} onToggle={toggleGuide} />}
+              {editorShown ? null : runnerToolbar}
+            </div>
+
+            {/* The visible half of the sitting clock: Start/Resume and Log & reset, so an hour of
+                reading can be filed on purpose. The phone strip above already carries it, and two
+                clocks on one screen would count the same stretch twice. */}
+            {!isPhone && (
+              <StudyTimerRow {...clockRow} />
+            )}
+            {/* The Share button's answer. A polite status, not an alert: it is a confirmation of
+                something the learner just asked for, and pressing Share twice must not trap them. */}
+            {/* Format's answer: the file was tidied, it already was, or why not. A formatter that
+                silently did nothing would leave the learner diffing their own file to find out. */}
+            {formatStatus.kind !== 'idle' && (
+              <p
+                role="status"
+                data-testid="format-status"
+                data-format-state={formatStatus.kind}
+                className="mt-2 text-[12px] leading-relaxed"
+                style={{
+                  color: formatStatus.kind === 'failed' ? 'var(--rose)' : 'var(--body)',
+                }}
+              >
+                {formatStatus.kind === 'working' && 'Formatting with Black… (it installs once)'}
+                {formatStatus.kind === 'done' &&
+                  (formatStatus.changed
+                    ? 'Formatted with Black — ⌘Z puts it back.'
+                    : 'Already tidy: Black changed nothing.')}
+                {formatStatus.kind === 'failed' && formatStatus.message}
+              </p>
+            )}
+
+            {share.status.kind !== 'idle' && (
+              <p
+                role="status"
+                data-testid="share-status"
+                className="mt-2 rounded-lg border border-line-soft bg-panel px-3 py-2 text-[12px] leading-relaxed"
+                style={{ color: 'var(--body)' }}
+              >
+                {share.status.kind === 'copied' && (
+                  <>
+                    Link copied — {share.status.characters} characters, this lesson and your code. It is
+                    encoded in the link, not encrypted: send it only where you would send the file.
+                  </>
+                )}
+                {share.status.kind === 'no-code' && (
+                  <>The editor matches nothing yet, so there is nothing to send. Type your attempt first.</>
+                )}
+                {share.status.kind === 'too-long' && (
+                  <>
+                    This link would be {share.status.characters} characters, and chat and mail cut off
+                    around {MAX_SHARE_URL}. Trim the file (or share the Diff) and press Share again.
+                  </>
+                )}
+                {share.status.kind === 'loaded' && <>Loaded the shared code into the editor.</>}
+                {share.status.kind === 'failed' && (
+                  <>
+                    Could not copy automatically. Select this link instead:{' '}
+                    <code className="break-all" data-testid="share-url">
+                      {share.status.url}
+                    </code>
+                  </>
+                )}
+              </p>
+            )}
+
+            {/* Scratch: a lesson page's block, opened from its **Try this in the workbench** link. It
+                is not the learner's draft and is never graded, and the card says so before Run. */}
+            {scratch && (
+              <div
+                data-testid="scratch-banner"
+                className="mt-2 rounded-lg border border-amber/40 bg-canvas px-3 py-2.5"
+              >
+                <p className="eyebrow">Scratch · the page's snippet</p>
+                <p className="mt-1 text-[12.5px]" style={{ color: 'var(--body)' }}>
+                  This is the block from the lesson page, not your draft for {selectedId}. Runs here
+                  are ungraded: nothing is verified and nothing is saved, and your own draft is still
+                  where you left it — so anything you type here is discarded when you go back.
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={endScratch}
+                    data-testid="btn-end-scratch"
+                    className="btn px-2.5 py-1.5 text-[12px]"
+                  >
+                    Back to my draft
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* An attempt from a pair session, or a shared link: offered, never applied. */}
+            <AttemptOffers
+              lessonId={selectedId}
+              pairAttempt={pairAttempt}
+              sharedAttempt={sharedAttempt}
+              onLoadPair={loadPairAttempt}
+              onOpenPairLesson={selectLesson}
+              onDismissPair={() => setPairAttempt(null)}
+              onLoadShared={loadSharedAttempt}
+              onDismissShared={onDismissShared}
+            />
+            {/* The versions behind the draft (`runner/DraftHistoryPanel.tsx`). */}
+            <DraftHistoryPanel
+              open={comparison.historyOpen}
+              history={comparison.history}
+              onClear={comparison.clear}
+              onRestore={comparison.restore}
+            />
+
+            {/* The learner's own change, line by line (`runner/DiffPanel.tsx`). */}
+            <DiffPanel comparison={comparison} />
+
+            {/* A program blocked in input() is waiting on this box. The run is alive, not stuck:
+                the worker is parked on the shared word until a line arrives. */}
+            {stdinPrompt !== null && (
+              <div
+                className="mt-3 rounded-lg border p-3"
+                style={{ borderColor: 'var(--accent)', backgroundColor: 'var(--bg)' }}
+                data-testid="stdin-prompt"
+              >
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    submitStdin(stdinValue);
+                  }}
+                  className="flex flex-wrap items-center gap-2"
+                >
+                  <label
+                    htmlFor="stdin-line"
+                    className="font-mono text-xs"
+                    style={{ color: 'var(--accent)' }}
+                  >
+                    {stdinPrompt || 'input()'}
+                  </label>
+                  <input
+                    id="stdin-line"
+                    data-testid="input-stdin"
+                    autoFocus
+                    value={stdinValue}
+                    onChange={(event) => setStdinValue(event.target.value)}
+                    className="min-w-[12rem] flex-1 rounded-lg border px-2 py-1.5 font-mono text-xs outline-none"
+                    style={{
+                      borderColor: 'var(--border)',
+                      backgroundColor: 'var(--panel)',
+                      color: 'var(--text)',
+                    }}
+                  />
+                  <button type="submit" className="btn btn-primary" data-testid="btn-stdin-submit">
+                    Send ⏎
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => stopExecution()}
+                  >
+                    Stop
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* <= 2 Ideas Unboxed Metadata List */}
+            <div className="mt-3 pt-3 border-t border-line-soft flex flex-wrap items-center gap-2 text-xs text-body">
+              <span className="font-mono text-muted flex items-center gap-1">
+                <BookOpen className="w-3.5 h-3.5 text-accent" />
+                <span>New Ideas (≤2 rule):</span>
+              </span>
+              {currentLesson.ideas.map((idea, idx) => (
+                <React.Fragment key={idx}>
+                  {idx > 0 && <span aria-hidden="true" className="text-faint">·</span>}
+                  <span>
+                    {idx + 1}. {idea}
+                  </span>
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+  );
+  const hintLadder = (
+    <>
+          {currentLesson.hints.length > 0 && (
+            <div data-tour="hint-ladder" className="bg-panel border border-line rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-mono text-amber flex items-center gap-1.5">
+                  <Lightbulb className="w-4 h-4" />
+                  <span>
+                    Progressive 3-Step Hint Ladder ({revealedHints} / {currentLesson.hints.length} unlocked)
+                  </span>
+                </div>
+                {revealedHints < currentLesson.hints.length && (
+                  <button
+                    onClick={() => {
+                      if (nextHintNeedsAttempt) return;
+                      revealHint(nextHintNumber);
+                    }}
+                    disabled={nextHintNeedsAttempt}
+                    title={
+                      hintLockState === 'no-attempt'
+                        ? 'Run & Verify once to unlock the next hint'
+                        : hintLockState === 'stale-attempt'
+                          ? 'Run again after reading Hint 1 to unlock Hint 2'
+                          : undefined
+                    }
+                    data-testid="btn-reveal-hint"
+                    className="px-2.5 py-1 rounded text-xs font-mono bg-amber/15 hover:bg-amber/25 text-amber-strong border border-amber/40 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {nextHintLabel}
+                  </button>
+                )}
+              </div>
+              {revealedHints > 0 && (
+                <div className="mt-3 space-y-2">
+                  {currentLesson.hints.slice(0, revealedHints).map((hint, idx) => {
+                    // The rung the failing check points at says so where the hint is read.
+                    const answersCheck = rungAnswersCheck(idx + 1, checkFailures);
+                    return (
+                      <div
+                        key={idx}
+                        data-testid={answersCheck ? 'hint-for-check' : undefined}
+                        className={
+                          answersCheck
+                            ? 'p-2.5 rounded-lg bg-canvas border border-amber/50 text-xs text-ink'
+                            : 'p-2.5 rounded-lg bg-canvas border border-line text-xs text-ink'
+                        }
+                      >
+                        <span className="font-mono font-bold text-amber mr-1.5">
+                          Hint {idx + 1}:
+                        </span>
+                        {answersCheck && (
+                          <span className="font-mono text-[10.5px] text-amber mr-1.5">
+                            for the failing check
+                          </span>
+                        )}
+                        <span dangerouslySetInnerHTML={{ __html: hint }} />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}    </>
+  );
   const runtimeStrip = (
     <RunnerRuntimeStrip pyodideStatus={pyodideStatus}
       runtimeBoot={runtimeBoot}
@@ -2351,285 +2686,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             </div>
           )}
 
-          {/* Active Lesson Metadata Card. `data-tour` names it for the first-run tour's second step
-              (`app/src/tour.ts`), and `scripts/test_tour.mjs` fails if the name goes away. */}
-          <div
-            data-tour={isPhone ? undefined : 'lesson-brief'}
-            data-testid="lesson-brief"
-            className={`bg-panel border border-line rounded-xl p-4 ${
-              phoneCode || (isPhone && !phoneBriefOpen) ? 'hidden' : ''
-            }`}
-          >
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                {/* Whole items wrap; none of them breaks inside a word. Before this, the row was a
-                    single nowrap flex line whose spans could shrink, so at tablet width "Lesson
-                    P.1" split across two lines and the pass badge read "Executed & Passed
-                    (WASM)" on three. Each chip is nowrap and the separators went with them: a
-                    dotted separator cannot dangle at the start of a wrapped line. */}
-                <div
-                  data-testid="lesson-meta"
-                  className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono text-muted"
-                >
-                  <span className="text-accent font-bold whitespace-nowrap">
-                    Lesson {currentLesson.id}
-                  </span>
-                  <span
-                    className="hidden max-w-[16rem] truncate sm:inline sm:max-w-[22rem]"
-                    title={currentLesson.path}
-                  >
-                    {currentLesson.path}
-                  </span>
-                  {currentRoadmapStep ? (
-                    <button
-                      onClick={() =>
-                        onOpenRoadmap?.(
-                          currentRoadmapStep.pass,
-                          currentRoadmapStep.step.milestoneId
-                        )
-                      }
-                      data-testid="lesson-roadmap-step"
-                      title="Show the roadmap step this entry practises"
-                      className="whitespace-nowrap text-accent hover:underline cursor-pointer"
-                    >
-                      Roadmap: {stepBreadcrumb(currentRoadmapStep)} ↗
-                    </button>
-                  ) : (
-                    <span className="whitespace-nowrap" data-testid="lesson-roadmap-step">
-                      Python on-ramp — before the roadmap
-                    </span>
-                  )}
-                  {currentSpineStep && (
-                    <span
-                      data-testid="lesson-step-cost"
-                      title="Focused hours from each page's own metadata: the arm pass you are in, and the depth pass after Step 10"
-                      className="whitespace-nowrap tabular-nums text-body"
-                    >
-                      {stepCostLabel(currentSpineStep)}
-                    </span>
-                  )}
-                  <a
-                    data-testid="link-lesson-page"
-                    href={lessonPageUrl(currentLesson.path)}
-                    target="_blank"
-                    rel="noreferrer"
-                    title="The lesson text is the pane on this screen. The GitHub page remains for copying, printing and filing an issue; nothing you type is saved there."
-                    className="hidden whitespace-nowrap text-muted underline underline-offset-2 hover:text-accent sm:inline"
-                  >
-                    View source on GitHub ↗
-                  </a>
-                  {isCurrentVerified && (
-                    <span className="text-emerald font-semibold whitespace-nowrap">
-                      Executed &amp; Passed (WASM)
-                    </span>
-                  )}
-                  {/* The 224 px chooser rail needs `lg`, and a phone's strip needs `md` to be
-                      absent: between them a tablet had no door to the lesson list at all. This is
-                      that door, and it opens the same sheet the phone uses. */}
-                  <button
-                    type="button"
-                    onClick={() => setLessonSheetOpen(true)}
-                    data-testid="btn-lessons-tablet"
-                    className="hidden items-center gap-1 whitespace-nowrap rounded border border-line bg-canvas px-2 py-0.5 text-[11px] font-semibold text-body hover:text-ink cursor-pointer md:inline-flex lg:hidden"
-                  >
-                    <BookOpen className="h-3 w-3" aria-hidden="true" />
-                    Lessons
-                  </button>
-                </div>
-                <h2
-                  data-testid={isPhone ? undefined : 'lesson-title'}
-                  className="text-base font-bold text-ink mt-1"
-                >
-                  {currentLesson.title}
-                </h2>
-                {/* Study folds its rail; the other presets have no rail, so the press opens the sheet. */}
-                <LessonRailToggle folded={chooserFold.folded} count={filteredLessons.length} opensSheet={shownLayout !== 'study'} onToggle={shownLayout === 'study' ? chooserFold.toggle : () => setLessonSheetOpen(true)} />
-              </div>
-
-              {showFirstGuide && <GuideToggle hidden={guideHidden} onToggle={toggleGuide} />}
-              {editorShown ? null : runnerToolbar}
-            </div>
-
-            {/* The visible half of the sitting clock: Start/Resume and Log & reset, so an hour of
-                reading the lesson is something the learner can file on purpose instead of hoping
-                the automatic sitting caught it. The hours land in the same store Today reads. On a
-                phone the compact strip above this card already carries it, and two clocks on one
-                screen would count the same stretch twice. */}
-            {!isPhone && (
-              <StudyTimerRow {...clockRow} />
-            )}
-            {/* The Share button's answer. A polite status, not an alert: it is a confirmation of
-                something the learner just asked for, and pressing Share twice must not trap them. */}
-            {/* Format's answer: the file was tidied, it already was, or why not. A formatter that
-                silently did nothing would leave the learner diffing their own file to find out. */}
-            {formatStatus.kind !== 'idle' && (
-              <p
-                role="status"
-                data-testid="format-status"
-                data-format-state={formatStatus.kind}
-                className="mt-2 text-[12px] leading-relaxed"
-                style={{
-                  color: formatStatus.kind === 'failed' ? 'var(--rose)' : 'var(--body)',
-                }}
-              >
-                {formatStatus.kind === 'working' && 'Formatting with Black… (it installs once)'}
-                {formatStatus.kind === 'done' &&
-                  (formatStatus.changed
-                    ? 'Formatted with Black — ⌘Z puts it back.'
-                    : 'Already tidy: Black changed nothing.')}
-                {formatStatus.kind === 'failed' && formatStatus.message}
-              </p>
-            )}
-
-            {share.status.kind !== 'idle' && (
-              <p
-                role="status"
-                data-testid="share-status"
-                className="mt-2 rounded-lg border border-line-soft bg-panel px-3 py-2 text-[12px] leading-relaxed"
-                style={{ color: 'var(--body)' }}
-              >
-                {share.status.kind === 'copied' && (
-                  <>
-                    Link copied — {share.status.characters} characters, this lesson and your code. It is
-                    encoded in the link, not encrypted: send it only where you would send the file.
-                  </>
-                )}
-                {share.status.kind === 'no-code' && (
-                  <>The editor matches nothing yet, so there is nothing to send. Type your attempt first.</>
-                )}
-                {share.status.kind === 'too-long' && (
-                  <>
-                    This link would be {share.status.characters} characters, and chat and mail cut off
-                    around {MAX_SHARE_URL}. Trim the file (or share the Diff) and press Share again.
-                  </>
-                )}
-                {share.status.kind === 'loaded' && <>Loaded the shared code into the editor.</>}
-                {share.status.kind === 'failed' && (
-                  <>
-                    Could not copy automatically. Select this link instead:{' '}
-                    <code className="break-all" data-testid="share-url">
-                      {share.status.url}
-                    </code>
-                  </>
-                )}
-              </p>
-            )}
-
-            {/* Scratch: a lesson page's block, opened from its **Try this in the workbench** link. It
-                is not the learner's draft and it is never graded, and the card says both before they
-                press Run - a snippet that quietly counted as an attempt would be a verdict on code
-                they did not write. `bg-canvas` rather than a tint of the amber, because body text on
-                the canvas is a pair the theme suite already measures in all four palettes. */}
-            {scratch && (
-              <div
-                data-testid="scratch-banner"
-                className="mt-2 rounded-lg border border-amber/40 bg-canvas px-3 py-2.5"
-              >
-                <p className="eyebrow">Scratch · the page's snippet</p>
-                <p className="mt-1 text-[12.5px]" style={{ color: 'var(--body)' }}>
-                  This is the block from the lesson page, not your draft for {selectedId}. Runs here
-                  are ungraded: nothing is verified and nothing is saved, and your own draft is still
-                  where you left it — so anything you type here is discarded when you go back.
-                </p>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <button
-                    onClick={endScratch}
-                    data-testid="btn-end-scratch"
-                    className="btn px-2.5 py-1.5 text-[12px]"
-                  >
-                    Back to my draft
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* An attempt from a pair session, or a shared link: offered, never applied. */}
-            <AttemptOffers
-              lessonId={selectedId}
-              pairAttempt={pairAttempt}
-              sharedAttempt={sharedAttempt}
-              onLoadPair={loadPairAttempt}
-              onOpenPairLesson={selectLesson}
-              onDismissPair={() => setPairAttempt(null)}
-              onLoadShared={loadSharedAttempt}
-              onDismissShared={onDismissShared}
-            />
-            {/* The versions behind the draft (`runner/DraftHistoryPanel.tsx`). */}
-            <DraftHistoryPanel
-              open={comparison.historyOpen}
-              history={comparison.history}
-              onClear={comparison.clear}
-              onRestore={comparison.restore}
-            />
-
-            {/* The learner's own change, line by line (`runner/DiffPanel.tsx`). */}
-            <DiffPanel comparison={comparison} />
-
-            {/* A program blocked in input() is waiting on this box. The run is alive, not stuck:
-                the worker is parked on the shared word until a line arrives. */}
-            {stdinPrompt !== null && (
-              <div
-                className="mt-3 rounded-lg border p-3"
-                style={{ borderColor: 'var(--accent)', backgroundColor: 'var(--bg)' }}
-                data-testid="stdin-prompt"
-              >
-                <form
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    submitStdin(stdinValue);
-                  }}
-                  className="flex flex-wrap items-center gap-2"
-                >
-                  <label
-                    htmlFor="stdin-line"
-                    className="font-mono text-xs"
-                    style={{ color: 'var(--accent)' }}
-                  >
-                    {stdinPrompt || 'input()'}
-                  </label>
-                  <input
-                    id="stdin-line"
-                    data-testid="input-stdin"
-                    autoFocus
-                    value={stdinValue}
-                    onChange={(event) => setStdinValue(event.target.value)}
-                    className="min-w-[12rem] flex-1 rounded-lg border px-2 py-1.5 font-mono text-xs outline-none"
-                    style={{
-                      borderColor: 'var(--border)',
-                      backgroundColor: 'var(--panel)',
-                      color: 'var(--text)',
-                    }}
-                  />
-                  <button type="submit" className="btn btn-primary" data-testid="btn-stdin-submit">
-                    Send ⏎
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={() => stopExecution()}
-                  >
-                    Stop
-                  </button>
-                </form>
-              </div>
-            )}
-
-            {/* <= 2 Ideas Unboxed Metadata List */}
-            <div className="mt-3 pt-3 border-t border-line-soft flex flex-wrap items-center gap-2 text-xs text-body">
-              <span className="font-mono text-muted flex items-center gap-1">
-                <BookOpen className="w-3.5 h-3.5 text-accent" />
-                <span>New Ideas (≤2 rule):</span>
-              </span>
-              {currentLesson.ideas.map((idea, idx) => (
-                <React.Fragment key={idx}>
-                  {idx > 0 && <span aria-hidden="true" className="text-faint">·</span>}
-                  <span>
-                    {idx + 1}. {idea}
-                  </span>
-                </React.Fragment>
-              ))}
-            </div>
-          </div>
+          {compactLesson ? null : briefCard}
 
           {currentHarness && currentLesson.id === '08.1' && (
             <FaultBench08
@@ -2647,69 +2704,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             />
           )}
 
-          {/* Progressive 3-Step Hint Ladder */}
-          {currentLesson.hints.length > 0 && (
-            <div data-tour="hint-ladder" className="bg-panel border border-line rounded-xl p-4">
-              <div className="flex items-center justify-between">
-                <div className="text-xs font-mono text-amber flex items-center gap-1.5">
-                  <Lightbulb className="w-4 h-4" />
-                  <span>
-                    Progressive 3-Step Hint Ladder ({revealedHints} / {currentLesson.hints.length} unlocked)
-                  </span>
-                </div>
-                {revealedHints < currentLesson.hints.length && (
-                  <button
-                    onClick={() => {
-                      if (nextHintNeedsAttempt) return;
-                      revealHint(nextHintNumber);
-                    }}
-                    disabled={nextHintNeedsAttempt}
-                    title={
-                      hintLockState === 'no-attempt'
-                        ? 'Run & Verify once to unlock the next hint'
-                        : hintLockState === 'stale-attempt'
-                          ? 'Run again after reading Hint 1 to unlock Hint 2'
-                          : undefined
-                    }
-                    data-testid="btn-reveal-hint"
-                    className="px-2.5 py-1 rounded text-xs font-mono bg-amber/15 hover:bg-amber/25 text-amber-strong border border-amber/40 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {nextHintLabel}
-                  </button>
-                )}
-              </div>
-              {revealedHints > 0 && (
-                <div className="mt-3 space-y-2">
-                  {currentLesson.hints.slice(0, revealedHints).map((hint, idx) => {
-                    // The rung the failing check points at says so where the hint is read, not only
-                    // on the card that sent the learner here.
-                    const answersCheck = rungAnswersCheck(idx + 1, checkFailures);
-                    return (
-                      <div
-                        key={idx}
-                        data-testid={answersCheck ? 'hint-for-check' : undefined}
-                        className={
-                          answersCheck
-                            ? 'p-2.5 rounded-lg bg-canvas border border-amber/50 text-xs text-ink'
-                            : 'p-2.5 rounded-lg bg-canvas border border-line text-xs text-ink'
-                        }
-                      >
-                        <span className="font-mono font-bold text-amber mr-1.5">
-                          Hint {idx + 1}:
-                        </span>
-                        {answersCheck && (
-                          <span className="font-mono text-[10.5px] text-amber mr-1.5">
-                            for the failing check
-                          </span>
-                        )}
-                        <span dangerouslySetInnerHTML={{ __html: hint }} />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
+          {compactLesson ? null : hintLadder}
+
           {/* Where the interpreter is, while it is there (`runner/PausedBar.tsx`). */}
           {pausedStep && (
             <PausedBar
@@ -2854,6 +2850,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           {/* Everything that reports on the editor: `contents` outside Compact, the dock in it. */}
           <div data-testid="compact-dock" className={compactLesson ? 'compact-dock' : 'contents'}>
             {compactLesson && runtimeStrip}
+            {compactLesson && briefCard}
+            {compactLesson && hintLadder}
             <ResultsColumn
             split={{
               side: resultsSide,

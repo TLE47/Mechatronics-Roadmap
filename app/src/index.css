@@ -1127,11 +1127,21 @@ number-flow {
 .compact-dock :is(p, li) {
   line-height: 1.5;
 }
+/* The brief and the hint ladder keep their words and lose their card: inside the dock a nested
+   panel with its own border, radius and padding reads as a second box in the one box. */
+.compact-dock :is([data-testid='lesson-brief'], [data-tour='hint-ladder']) {
+  padding: 0.35rem 0.4rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
 /* One step tighter than the page's own rhythm, and the decorations that only teach the first
    lesson stay out of the way: Compact is the mode a learner is in once they know the screen. */
 .lesson-compact.space-y-5 > * + * {
   margin-top: 0.75rem;
 }
-.lesson-compact [data-testid='tour-chip'] {
+.lesson-compact [data-testid='tour-chip'],
+.lesson-compact [data-testid='first-lesson-guide'],
+.lesson-compact [data-testid='guide-offer'] {
   display: none;
 }
