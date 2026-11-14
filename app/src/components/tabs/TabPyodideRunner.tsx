@@ -1961,17 +1961,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     />
   );
 
-  // Compact is a preset of the whole page, not of the grid alone: the editor and the lesson text
-  // keep their size and everything that reports on them folds into the dock below (see the root's
-  // `data-compact` and `index.css`). `shownLayout` is what the arrangement resolved, so a hidden
-  // results region never leaves an empty dock behind.
+  // A preset of the whole page: the text and the editor keep their size, the rest folds into the dock.
   const compactLesson = shownLayout === 'compact';
-
-  // Where the interpreter is, while it is there. One node, because Compact moves it: in every other
-  // preset it sits under the tour and above the editor, and in Compact it joins the dock below them.
   const runtimeStrip = (
-    <RunnerRuntimeStrip
-      pyodideStatus={pyodideStatus}
+    <RunnerRuntimeStrip pyodideStatus={pyodideStatus}
       runtimeBoot={runtimeBoot}
       readyMs={readyMs}
       verifiedCount={verifiedCount}
@@ -1983,13 +1976,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   );
 
   return (
-    <div
-      data-compact={compactLesson ? 'on' : undefined}
-      className={
-        (phoneStudy
-          ? 'relative isolate space-y-5 pb-[calc(4.75rem+env(safe-area-inset-bottom))]'
-          : 'relative isolate space-y-5') + (compactLesson ? ' lesson-compact' : '')
-      }
+    <div data-compact={compactLesson ? 'on' : undefined}
+      className={`${phoneStudy ? 'relative isolate space-y-5 pb-[calc(4.75rem+env(safe-area-inset-bottom))]' : 'relative isolate space-y-5'}${compactLesson ? ' lesson-compact' : ''}`}
     >
       <LessonAmbience />
       {/* The coach mark, then the chip, before anything else on the page: the tour is about this
@@ -2863,15 +2851,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               />
             )}
 
-          {/* Everything that reports on the editor, in one block. In every preset but Compact the
-              wrapper is `display: contents`, so the dock is not a box at all and the results are the
-              same grid child they were; in Compact it becomes the one dense strip that holds the
-              runtime, the checks, the panes and the log, while the editor and the lesson text keep
-              the screen (`index.css`, `.compact-dock`). */}
-          <div
-            data-testid="compact-dock"
-            className={compactLesson ? 'compact-dock' : 'contents'}
-          >
+          {/* Everything that reports on the editor: `contents` outside Compact, the dock in it. */}
+          <div data-testid="compact-dock" className={compactLesson ? 'compact-dock' : 'contents'}>
             {compactLesson && runtimeStrip}
             <ResultsColumn
             split={{

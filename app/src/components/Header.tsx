@@ -499,8 +499,8 @@ export const Header: React.FC<HeaderProps> = ({
               className="btn"
               style={pressed(compactMode)}
             >
+              {/* No word: the tray is the width it is, and this button is one more control in it. */}
               <ChevronsDownUp className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span className={labelClass}>Compact</span>
             </button>
             {/* One switch for the moving drawings, on every screen. Off is also the cheap setting:
                 each figure stops its frame loop instead of drawing frames nobody sees. */}

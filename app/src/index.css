@@ -758,6 +758,16 @@ body {
   font-size: 0.8rem;
   background: transparent;
 }
+
+/* The header's tray row is one line at 1440 until a control is added, and a second line costs the
+   page 47 px above every panel. Narrowing the pill's two hollows by a third buys the row back
+   without touching a letter: the trays together save more than a button's width. */
+@media (max-width: 1599px) {
+  .action-tray .btn {
+    padding-inline: 0.4rem;
+  }
+}
+
 .action-tray .btn:hover {
   background: var(--panel-3);
   border-color: transparent;
