@@ -23,7 +23,7 @@
 {"t":"h","l":4,"x":"Micro focus: combining questions"},
 {"t":"anchor","id":"micro-logic"},
 {"t":"p","x":"`and` is True only when both sides are True, `or` is True when at least one side is, and `not` flips a boolean. Use them to write one safe condition instead of nested ifs: `if temp > 80 and fan_ok:` asks both questions before its body runs."},
-{"t":"h","l":3,"x":"Bridge Notes"},
+{"t":"h","l":3,"x":"Bridge Notes","v":"clamp-command"},
 {"t":"p","x":"Look closely at the difference between a single equals sign `=` and a double equals sign `==`:"},
 {"t":"ul","items":[{"x":"**`x = 255` (Assignment):** Stores the number `255` into variable `x`.","d":0},{"x":"**`x == 255` (Comparison):** Asks the question *\"Is `x` currently equal to `255`?\"* and produces `True` or `False`.","d":0}]},
 {"t":"p","x":"In Python, every `if`, `elif`, and `else` header ends with a colon `:`, and the lines that belong inside that decision branch must be **indented** by 4 spaces."},

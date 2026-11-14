@@ -20,9 +20,13 @@ import type { ComponentType, ReactElement } from 'react';
  */
 
 const ScalingDials = lazy(() => import('./ScalingDialsVisual'));
+const ClampCommand = lazy(() => import('./ClampCommandLab'));
+const OrderOfOperations = lazy(() => import('./OrderOfOperationsLab'));
 
 const VISUALS: Record<string, ComponentType> = {
   'scaling-dials': ScalingDials,
+  'clamp-command': ClampCommand,
+  'order-of-operations': OrderOfOperations,
 };
 
 /**

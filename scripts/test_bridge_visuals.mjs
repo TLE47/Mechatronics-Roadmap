@@ -48,6 +48,21 @@ import {
   writeChase,
   writeMuted,
 } from '../app/src/bridges/bridgeChase.ts';
+import {
+  COMMAND_MAX,
+  COMMAND_MIN,
+  clampCommand,
+  motorCommand,
+  registerByte,
+} from '../app/src/bridges/clampCommand.ts';
+import { formatReading, startValues } from '../app/src/bridges/bridgeLab.ts';
+import {
+  PART_A_OHM,
+  PART_B_OHM,
+  SUPPLY_V,
+  dividerRight,
+  dividerWrong,
+} from '../app/src/bridges/orderOfOperations.ts';
 
 let passed = 0;
 let failed = 0;
@@ -244,6 +259,56 @@ check('a landing is a window around the mark, with edges', () => {
   assert.ok(isLanded(MARKS[0], MARKS[0]));
   assert.ok(isLanded(MARKS[0] + LANDED * 0.9, MARKS[0]));
   assert.equal(isLanded(MARKS[0] + LANDED * 1.1, MARKS[0]), false);
+});
+
+// ---- P.3's clamp: the section's own numbers, and the wrap it warns about ----
+check('P.3: 310 clamps to 255 and wraps to 54 without the clamp', () => {
+  assert.equal(COMMAND_MIN, 0);
+  assert.equal(COMMAND_MAX, 255);
+  assert.equal(clampCommand(310), 255, 'the section high command');
+  assert.equal(clampCommand(-45), 0, 'the starter code low command');
+  assert.equal(clampCommand(128), 128, 'a command inside the range passes through');
+  assert.equal(registerByte(310), 54, 'the section says 310 wraps to 54');
+  assert.equal(registerByte(-40), 216, 'and -40 wraps upwards');
+  assert.equal(registerByte(-45), 211, 'the starter code uses -45');
+  assert.equal(motorCommand(310, true), 0, 'the e-stop forces the output to 0');
+  assert.equal(motorCommand(310, false), 255);
+
+});
+
+check('P.3: the card opens on the section high command, with 255 / 54 / 255', () => {
+  const values = startValues([
+    { kind: 'range', id: 'raw', label: '', unit: '', min: -60, max: 320, step: 1, start: 310, hint: '' },
+    { kind: 'toggle', id: 'estop', label: '', start: false },
+  ]);
+  assert.equal(values.raw, 310);
+  assert.equal(values.estop, false);
+});
+
+// ---- P.2's fraction bar ----
+check('P.2: the divider gives 4.00 V with parentheses and 10006.00 V without', () => {
+  assert.equal(dividerRight(SUPPLY_V, PART_A_OHM, PART_B_OHM), 4);
+  assert.equal(dividerWrong(SUPPLY_V, PART_A_OHM, PART_B_OHM), 10006);
+  assert.equal(formatReading(dividerRight(SUPPLY_V, PART_A_OHM, PART_B_OHM)), '4.00');
+  assert.equal(formatReading(dividerWrong(SUPPLY_V, PART_A_OHM, PART_B_OHM)), '10006.00');
+  // The fraction is b over the sum, so it is between 0 and 1 for any positive pair.
+  for (const [a, b] of [[1, 1], [20000, 10000], [100000, 1000]]) {
+    const fraction = b / (a + b);
+    assert.ok(fraction > 0 && fraction < 1);
+  }
+  assert.throws(() => dividerRight(12, 0, 0), /positive/);
+  assert.throws(() => dividerWrong(12, 0, 1), /positive/);
+});
+
+check('the pages still say the numbers their labs print', () => {
+  const read = (page) => fs.readFileSync(path.join(root, page), 'utf8');
+  const p3 = read('track-p/P.3-decisions-and-clamping.md');
+  assert.ok(p3.includes('310'), 'P.3 must still use the 310 command');
+  assert.ok(p3.includes('54'), 'P.3 must still work out the wrapped 54');
+  assert.ok(p3.includes('-45'), 'P.3 must still use the -45 braking case');
+  const p2 = read('track-p/P.2-arithmetic-and-order-of-operations.md');
+  assert.ok(p2.includes('20000') && p2.includes('10000'), 'P.2 must keep its two resistors');
+  assert.ok(p2.includes('y_in * (b / (a + b))'), 'P.2 must keep the parenthesised form');
 });
 
 // The manifest half: every lesson listed for a visual must have a Bridge Notes section to sit under,

@@ -2090,3 +2090,131 @@ export async function auditBridgeChase(browser, baseUrl, name) {
       `completely silent, and a blocked store degrades to zeros without a page error`
   );
 }
+
+/**
+ * The spec-driven Bridge Notes labs, driven (`scripts/mission_workbench_audit.mjs`).
+ *
+ * `auditBridgeVisual` grades the P.9 dials, which are a drawing with a needle. The four labs added
+ * after it are cards of controls and `<output>`s (`app/src/bridges/bridgeLabShell.tsx`), and what
+ * has to be true of them is different: the card exists under that page's Bridge Notes heading, its
+ * readings are the page's own numbers when it opens, and they change to the *expected* numbers when a
+ * learner actually works the control — by keyboard, or by choosing a prefix — not merely that a
+ * module loaded.
+ *
+ * So every step below is a real input event (Home/End/arrow on a focused range, a click on a radio
+ * or checkbox) followed by a read of the rendered `<output>`, and each expected string is the
+ * arithmetic of the lesson that section sits under. A wrong number on the page fails here.
+ */
+export async function auditBridgeLabs(browser, baseUrl, name) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  await seedTourSeen(context);
+  const page = await context.newPage();
+  const pageErrors = [];
+  page.on('pageerror', (error) => pageErrors.push(String(error)));
+
+  const read = async (id) => {
+    const node = page.getByTestId(id);
+    await node.waitFor({ state: 'attached', timeout: 20000 });
+    return ((await node.textContent()) ?? '').replace(/\s+/g, ' ').trim();
+  };
+
+  const open = async (lesson, testid) => {
+    await page.goto(`${baseUrl}?lesson=${lesson}`, { waitUntil: 'networkidle', timeout: 45000 });
+    const card = page.getByTestId(testid);
+    await card.waitFor({ state: 'visible', timeout: 30000 });
+    const heading = page.getByRole('heading', { name: 'Bridge Notes', exact: true });
+    await heading.scrollIntoViewIfNeeded();
+    await card.scrollIntoViewIfNeeded();
+    // Under the heading it belongs to, not floating elsewhere in the reader.
+    const geometry = await page.evaluate(
+      ({ id }) => {
+        const cardNode = document.querySelector(`[data-testid="${id}"]`);
+        const headingNode = [...document.querySelectorAll('h1,h2,h3,h4')].find(
+          (node) => node.textContent?.trim() === 'Bridge Notes'
+        );
+        if (!cardNode || !headingNode) return null;
+        return {
+          cardBelow: cardNode.getBoundingClientRect().y >= headingNode.getBoundingClientRect().bottom - 1,
+          overflowX: cardNode.scrollWidth - cardNode.clientWidth,
+          docOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        };
+      },
+      { id: testid }
+    );
+    assert.ok(geometry, `${name}: the ${testid} card must be on the ${lesson} page`);
+    assert.ok(geometry.cardBelow, `${name}: ${testid} must follow its Bridge Notes heading`);
+    assert.ok(geometry.overflowX <= 1, `${name}: ${testid} must not scroll sideways inside itself`);
+    assert.ok(geometry.docOverflow <= 0, `${name}: ${testid} must not widen the page`);
+    return card;
+  };
+
+  /** A real key on a real focused control, which is how a keyboard reader works a range. */
+  const key = async (id, pressed, times = 1) => {
+    const control = page.getByTestId(id);
+    await control.focus();
+    for (let index = 0; index < times; index += 1) await page.keyboard.press(pressed);
+    await page.waitForTimeout(60);
+  };
+
+  const expect = async (id, expected, where) => {
+    const seen = await read(id);
+    assert.equal(seen, expected, `${where}: expected ${JSON.stringify(expected)}, saw ${JSON.stringify(seen)}`);
+  };
+
+  // ---- P.3: clamp the command, do not let it wrap ----
+  await open('P.3', 'bridge-clamp');
+  await expect('bridge-clamp-clamped', '255 counts', `${name} P.3 opens on 310 clamped`);
+  await expect('bridge-clamp-register', '54 counts', `${name} P.3 shows the wrap the section warns about`);
+  await expect('bridge-clamp-output', '255 counts', `${name} P.3 output starts clamped`);
+  await key('bridge-clamp-raw', 'Home');
+  await expect('bridge-clamp-clamped', '0 counts', `${name} P.3 keyboard Home hits the bottom stop`);
+  await expect('bridge-clamp-register', '196 counts', `${name} P.3 -60 wraps to 196`);
+  await key('bridge-clamp-raw', 'End');
+  await page.getByTestId('bridge-clamp-estop').click();
+  await expect('bridge-clamp-output', '0 counts', `${name} P.3 e-stop forces the output to 0`);
+  await page.getByTestId('bridge-clamp-estop').click();
+  await expect('bridge-clamp-output', '255 counts', `${name} P.3 releasing the e-stop restores the clamp`);
+  console.log(
+    `  ok ${name} P.3 clamp lab: 310 → 255, wrap 54, keyboard Home → 0 / 196, e-stop → 0`
+  );
+
+  // ---- P.2: the same three names, with and without the parentheses ----
+  await open('P.2', 'bridge-pemdas');
+  await expect('bridge-pemdas-right', '4.00 V', `${name} P.2 opens on the page's 4.00 V`);
+  await expect('bridge-pemdas-wrong', '10006.00 V', `${name} P.2 shows the unparenthesised answer`);
+  await key('bridge-pemdas-b', 'Home');
+  await expect('bridge-pemdas-right', '0.57 V', `${name} P.2 b = 1000 gives 0.57 V`);
+  await expect('bridge-pemdas-wrong', '1000.60 V', `${name} P.2 and 1000.60 V unparenthesised`);
+  await key('bridge-pemdas-a', 'End');
+  await expect('bridge-pemdas-right', '0.12 V', `${name} P.2 a = 100 kΩ with b = 1 kΩ gives 0.12 V`);
+  await expect('bridge-pemdas-wrong', '1000.12 V', `${name} P.2 and 1000.12 V unparenthesised`);
+  console.log(`  ok ${name} P.2 order-of-operations lab: 4.00 V with parentheses, 10006.00 V without`);
+
+  // ---- The same cards on a phone: one column, no sideways scroll ----
+  await page.setViewportSize({ width: 380, height: 800 });
+  for (const [lesson, testid] of [
+    ['P.2', 'bridge-pemdas'],
+    ['P.3', 'bridge-clamp'],
+  ]) {
+    await open(lesson, testid);
+    const width = await page.evaluate(
+      ({ id }) => {
+        const card = document.querySelector(`[data-testid="${id}"]`);
+        const reader = document.querySelector('[data-testid="lesson-reader"]');
+        return {
+          card: card ? card.getBoundingClientRect().width : 0,
+          viewport: innerWidth,
+          docOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+          readerWidth: reader ? reader.getBoundingClientRect().width : 0,
+        };
+      },
+      { id: testid }
+    );
+    assert.ok(width.docOverflow <= 0, `${name}: ${testid} at 380px must not scroll the page sideways`);
+    assert.ok(width.card > 0 && width.card <= width.viewport, `${name}: ${testid} must fit the phone`);
+  }
+
+  assert.deepEqual(pageErrors, [], `${name}: the labs must render without a page error`);
+  console.log(`  ok ${name} both labs fit a 380px phone with no sideways scroll and no page errors`);
+  await context.close();
+}

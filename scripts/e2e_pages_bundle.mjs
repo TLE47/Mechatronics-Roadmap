@@ -67,6 +67,7 @@ import {
 import {
   auditBridgeVisual,
   auditBridgeChase,
+  auditBridgeLabs,
   auditBridgeVisualThemes,
   auditLessonSurface,
   auditPaneBottomResize,
@@ -1700,6 +1701,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     await auditBridgeVisual(browser, baseUrl, name);
     await auditBridgeVisualThemes(browser, baseUrl, name);
     await auditBridgeChase(browser, baseUrl, name);
+    await auditBridgeLabs(browser, baseUrl, name);
     return 'pass';
   } finally {
     await browser.close();

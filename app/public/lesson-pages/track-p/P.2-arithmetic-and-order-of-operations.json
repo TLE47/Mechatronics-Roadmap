@@ -23,7 +23,7 @@
 {"t":"h","l":4,"x":"Micro focus: parentheses and order"},
 {"t":"anchor","id":"micro-order-of-operations"},
 {"t":"p","x":"Python evaluates **Parentheses `()`** first, then **Exponents `**`**, then multiplication and division from left to right, and finally addition and subtraction. That fixed order is why `2 + 3 * 4` is 14, and why a fraction needs its own brackets: `(top) / (bottom)` keeps the denominator together."},
-{"t":"h","l":3,"x":"Bridge Notes"},
+{"t":"h","l":3,"x":"Bridge Notes","v":"order-of-operations"},
 {"t":"p","x":"On paper, engineers write multiplication by placing letters side by side ($d = s \\cdot t$) and write fractions with a horizontal bar:"},
 {"t":"math","tex":"y_{\\text{out}} = y_{\\text{in}} \\cdot \\frac{b}{a + b}"},
 {"t":"p","x":"When you translate equations into **computer arithmetic operators** (`+`, `-`, `*`, `/`, `**`) on a single line of code, the horizontal fraction bar disappears! You must always write `*` explicitly for multiplication, `/` for floating-point division, and `**` for exponents. If you type `y_in * b / a + b` without parentheses, Python's **order of operations** (`PEMDAS`) performs `y_in * b / a` first and then adds `b` at the very end—producing a completely wrong answer. Wrapping the denominator in **parentheses** (`y_in * (b / (a + b))`) forces Python to add `a + b` first, just like the horizontal bar on paper."},
