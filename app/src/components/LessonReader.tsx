@@ -1,4 +1,12 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  Suspense,
+  lazy,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import {
   ArrowRight,
@@ -18,8 +26,6 @@ import {
 } from 'lucide-react';
 import { MathView } from './MathView';
 import { InlineMarkdown as Inline } from './InlineMarkdown';
-import { Diagram } from '../visuals/Diagram';
-import { sceneFor } from '../visuals/scenes';
 import {
   loadLessonPage,
   type LessonPage,
@@ -50,7 +56,12 @@ import { markQuotes, wrapSelection } from '../lessonMarks';
 import { RESET_EVENT } from '../resetEvent';
 import { lessonPageUrl as sourceUrl } from '../startHere';
 import { StudyClockReminder } from './StudyClockReminder';
-import { BridgeNotesVisual } from '../bridges/bridgeNotesVisual';
+// One dynamic import is all the entry chunk keeps of the Bridge Notes visuals: the table of names
+// and the pictures themselves travel in their own chunks (`bridges/bridgeNotesVisual.tsx`).
+const BridgeNotesVisual = lazy(() => import('../bridges/bridgeNotesVisual'));
+// The figures are 5.6 kB of scene data and SVG renderers that a lesson only needs once it is open,
+// so the picture arrives through the same kind of boundary (`visuals/ReaderFigure.tsx`).
+const ReaderFigure = lazy(() => import('../visuals/ReaderFigure'));
 
 /**
  * The lesson text, beside the code it is about (`app/src/components/LessonReader.tsx`).
@@ -937,7 +948,9 @@ export function LessonReader({
           return (
             <React.Fragment key={key}>
               {heading}
-              <BridgeNotesVisual name={block.v} />
+              <Suspense fallback={null}>
+                <BridgeNotesVisual name={block.v} />
+              </Suspense>
             </React.Fragment>
           );
         }
@@ -1052,61 +1065,48 @@ export function LessonReader({
             <MathView math={block.tex} block />
           </div>
         );
-      case 'figure': {
-        const spec = sceneFor(block.id);
-        if (!spec) {
-          return (
-            <p
-              key={key}
-              data-testid="reader-figure-missing"
-              data-reader-block={blockKey}
-              className="my-3 rounded-lg border border-amber/40 bg-amber/5 px-3 py-2 text-[13px] text-body"
-            >
-              This build has no figure called <code className="font-mono text-ink">{block.id}</code>.
-              The page asks for one; the picture is missing rather than the paragraph that explains it.
-            </p>
-          );
-        }
+      case 'figure':
         return (
           <div key={key} data-reader-block={blockKey}>
-            <Diagram
-              id={block.id}
-              live
-              spec={block.caption ? { ...spec, caption: block.caption } : spec}
-            />
+            <Suspense fallback={null}>
+              <ReaderFigure id={block.id} caption={block.caption} live />
+            </Suspense>
           </div>
         );
-      }
       case 'route':
         return (
           <div key={key} data-reader-block={blockKey}>
-            <Diagram
-              id="route"
-              live
-              spec={{
-                kind: 'route',
-                title: 'Where this lesson goes',
-                caption: block.caption ?? ROUTE_CAPTION,
-                steps: block.steps,
-              }}
-            />
+            <Suspense fallback={null}>
+              <ReaderFigure
+                id="route"
+                live
+                spec={{
+                  kind: 'route',
+                  title: 'Where this lesson goes',
+                  caption: block.caption ?? ROUTE_CAPTION,
+                  steps: block.steps,
+                }}
+              />
+            </Suspense>
           </div>
         );
       case 'graph':
         return (
           <div key={key} data-reader-block={blockKey}>
-            <Diagram
-              id="graph"
-              live
-              spec={{
-                kind: 'graph',
-                title: 'How this page fits together',
-                caption: block.caption ?? '',
-                direction: block.direction,
-                nodes: block.nodes.map((node) => ({ id: node.id, label: node.label })),
-                edges: block.edges,
-              }}
-            />
+            <Suspense fallback={null}>
+              <ReaderFigure
+                id="graph"
+                live
+                spec={{
+                  kind: 'graph',
+                  title: 'How this page fits together',
+                  caption: block.caption ?? '',
+                  direction: block.direction,
+                  nodes: block.nodes.map((node) => ({ id: node.id, label: node.label })),
+                  edges: block.edges,
+                }}
+              />
+            </Suspense>
           </div>
         );
       case 'img':

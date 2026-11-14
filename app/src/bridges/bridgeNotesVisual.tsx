@@ -3,7 +3,7 @@ import type { ComponentType, ReactElement } from 'react';
 
 /**
  * The Bridge Notes visuals and the one boundary that reaches them
- * (`app/src/bridges/BridgeNotesVisual.tsx`).
+ * (`app/src/bridges/bridgeNotesVisual.tsx`).
  *
  * A Bridge Notes section is where a lesson hands over to the next idea, and the ask is a small
  * interactive under every one of them. At this repository's weight that means the pictures must not
@@ -12,6 +12,11 @@ import type { ComponentType, ReactElement } from 'react';
  * a page's payload carries the one it carries (`generate_lesson_pages.py`, `resources/bridge-visuals.json`),
  * so a lesson without a visual costs no bytes and no fetch, and adding the fifty-sixth visual adds
  * nothing to the entry chunk.
+ *
+ * This module is itself loaded with `React.lazy` from the reader, so the table and the `Suspense`
+ * below live in a chunk rather than in the entry: what the entry keeps is one dynamic import. A page
+ * with a visual therefore costs two fetches (this table, then the picture) and a page without one
+ * costs neither.
  */
 
 const ScalingDials = lazy(() => import('./ScalingDialsVisual'));
@@ -26,7 +31,7 @@ const VISUALS: Record<string, ComponentType> = {
  * `fallback={null}` is deliberate: the section's own text is already on screen, so a spinner would
  * be a promise to move something the reader has not asked to move yet.
  */
-export function BridgeNotesVisual({ name }: { name: string }): ReactElement | null {
+export default function BridgeNotesVisual({ name }: { name: string }): ReactElement | null {
   const Visual = VISUALS[name];
   if (!Visual) return null;
   return (
