@@ -53,7 +53,8 @@ flowchart LR
 | `AssessmentPanel.tsx` | Instructor behavioural assessment: badges, graded checks and the hint each one unlocks. |
 | `PausedBar.tsx` (+ `parkSource.ts`) | The parked-run bar: step controls, the quoted line, frame values, watches and frame edits. `PausedStep` is the worker's park payload. |
 | `DraftHistoryPanel.tsx` | The filed runs behind a draft, and restoring one. |
-| `BreakpointPanel.tsx` | Armed breakpoints and their conditions. |
+| `BreakpointPanel.tsx` | Armed breakpoints and their conditions, now a pane of the editor body. |
+| `SelfDoneChecklist.tsx` | The three questions beside a pass that turn it into "and I did it unaided", backed by the self-marked store. |
 | `useFirstRunTour.ts` | The first-run tour: record, offer/chip, gates, focus and dismissal. |
 | `useGuideFold.ts` | The brief's remembered hide/show switch for the first-run guide, one value for every lesson. |
 | `GuideToggle.tsx` | The brief's and the phone strip's door onto that switch, in two target sizes and one behaviour. |

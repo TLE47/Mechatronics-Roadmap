@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState, type ReactNode, type RefObject } f
 import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Lock } from 'lucide-react';
 import type { PythonEditorHandle } from '../../PythonEditor';
 import { RunVerdict } from './RunVerdict';
+import { SelfDoneChecklist } from './SelfDoneChecklist';
 import { EditorGoalCard } from './EditorGoal';
 import { EditorPaneBody } from './EditorPaneBody';
 import { resultTabMeta } from './resultTabMeta';
@@ -124,8 +125,11 @@ interface RunnerEditorCardProps {
    * output alone, because it has no expected output, no prediction and no lesson workflow.
    */
   resultViews?: EditorView[];
-  /** The self-done checklist, shown beside the pass mark when a run passes. */
-  selfDone?: ReactNode;
+  /**
+   * The self-done checklist's own inputs, not a node: the card renders it beside the pass mark, and the
+   * tab passes the three facts the checklist needs instead of building its markup.
+   */
+  selfDone?: { lessonId: string; marked: boolean; onChange: (next: boolean) => void };
 }
 
 /**
@@ -440,7 +444,9 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
         {editorShown && (
           <div className="mt-1 flex min-w-0 flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-1.5">
             <RunVerdict passStatus={passStatus} harnessResult={harnessResult} />
-            {passStatus === 'passed' && props.selfDone}
+            {passStatus === 'passed' && props.selfDone && (
+              <SelfDoneChecklist {...props.selfDone} />
+            )}
             {passStatus === 'passed' && nextChapter && (
               <button
                 type="button"
