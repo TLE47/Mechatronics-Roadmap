@@ -33,6 +33,21 @@ import {
   reading,
   scaleTo,
 } from '../app/src/bridges/scalingDials.ts';
+import {
+  CHASE_KEY,
+  LANDED,
+  MARKS,
+  SOUND_KEY,
+  clearChase,
+  isLanded,
+  landed,
+  markAt,
+  readChase,
+  readMuted,
+  soundAllowed,
+  writeChase,
+  writeMuted,
+} from '../app/src/bridges/bridgeChase.ts';
 
 let passed = 0;
 let failed = 0;
@@ -124,6 +139,111 @@ check('the round trip: a fraction of one dial is the same fraction of the other'
     assert.equal(scaleTo(raw, DIAL_TOP, VOLT_TOP), landOn(fraction, VOLT_TOP));
     assert.ok(Math.abs(reading(raw).command / COMMAND_TOP - fraction) < 1e-12);
   }
+});
+
+// The chase half: progress and the sound choice are remembered per visitor, and a store that is
+// missing, blocked or full of someone else's bytes costs the reader nothing but the memory.
+function fakeStore(seed = {}) {
+  const data = new Map(Object.entries(seed));
+  return {
+    getItem: (key) => (data.has(key) ? data.get(key) : null),
+    setItem: (key, value) => data.set(key, String(value)),
+    removeItem: (key) => data.delete(key),
+    has: (key) => data.has(key),
+    read: (key) => data.get(key),
+  };
+}
+
+check('a fresh visitor starts at the first mark, with no best run and sound off', () => {
+  const store = fakeStore();
+  assert.deepEqual(readChase(store), { marks: 0, best: 0 });
+  assert.equal(markAt(0), MARKS[0]);
+  assert.equal(readMuted(store), true, 'a lesson does not make noise unasked');
+});
+
+check('landing a mark counts it and survives a reload', () => {
+  const store = fakeStore();
+  let chase = readChase(store);
+  for (let i = 0; i < 3; i += 1) {
+    chase = landed(chase);
+    writeChase(chase, store);
+  }
+  assert.deepEqual(chase, { marks: 3, best: 3 });
+  assert.deepEqual(readChase(store), { marks: 3, best: 3 }, 'the reload reads the same progress');
+  assert.equal(markAt(readChase(store).marks), MARKS[3], 'the fourth mark is the one waiting');
+});
+
+check('the chase cycles its five marks and the best run never goes backwards', () => {
+  let chase = { marks: 0, best: 0 };
+  for (let i = 0; i < 11; i += 1) chase = landed(chase);
+  assert.equal(chase.marks, 11);
+  assert.equal(markAt(chase.marks), MARKS[1], 'eleven landings is the second mark of a third lap');
+  assert.equal(chase.best, 11);
+});
+
+check('reset forgets progress and keeps the sound choice', () => {
+  const store = fakeStore();
+  writeChase({ marks: 4, best: 4 }, store);
+  writeMuted(false, store);
+  clearChase(store);
+  assert.deepEqual(readChase(store), { marks: 0, best: 0 });
+  assert.equal(readMuted(store), false, 'a reset of progress is not a reset of the reader');
+  assert.equal(store.has(CHASE_KEY), false, 'the key is gone, not zeroed');
+});
+
+check('the sound choice is remembered both ways, and only "on" turns it on', () => {
+  const store = fakeStore();
+  assert.equal(readMuted(store), true);
+  writeMuted(false, store);
+  assert.equal(readMuted(store), false);
+  assert.equal(store.read(SOUND_KEY), 'on');
+  writeMuted(true, store);
+  assert.equal(readMuted(store), true);
+  assert.equal(store.read(SOUND_KEY), 'off');
+});
+
+check('a corrupt or blocked store is zeros, not a crash', () => {
+  const corrupt = fakeStore({ [CHASE_KEY]: '{not json', [SOUND_KEY]: 'yes' });
+  assert.deepEqual(readChase(corrupt), { marks: 0, best: 0 });
+  assert.equal(readMuted(corrupt), true, 'only "on" turns sound on');
+  const hostile = {
+    getItem() {
+      throw new Error('blocked');
+    },
+    setItem() {
+      throw new Error('blocked');
+    },
+    removeItem() {
+      throw new Error('blocked');
+    },
+  };
+  assert.deepEqual(readChase(hostile), { marks: 0, best: 0 });
+  assert.equal(readMuted(hostile), true);
+  writeChase({ marks: 2, best: 2 }, hostile);
+  clearChase(hostile);
+  writeMuted(false, hostile);
+  assert.deepEqual(readChase(null), { marks: 0, best: 0 }, 'no store at all is zeros');
+  assert.equal(readMuted(null), true, 'and sound off');
+});
+
+check('nonsense numbers in a store are clamped, not trusted', () => {
+  const store = fakeStore({ [CHASE_KEY]: JSON.stringify({ marks: -4, best: 9999 }) });
+  assert.deepEqual(readChase(store), { marks: 0, best: MARKS.length * 20 });
+  const half = fakeStore({ [CHASE_KEY]: JSON.stringify({ marks: 2.7, best: 'x' }) });
+  assert.deepEqual(readChase(half), { marks: 2, best: 0 });
+});
+
+check('sound needs the reader to have asked for it and normal motion', () => {
+  assert.equal(soundAllowed(true, false), false, 'muted is silent');
+  assert.equal(soundAllowed(true, true), false);
+  assert.equal(soundAllowed(false, true), false, 'reduced motion is silent even unmuted');
+  assert.equal(soundAllowed(false, false), true);
+});
+
+check('a landing is a window around the mark, with edges', () => {
+  assert.ok(isLanded(MARKS[0], MARKS[0]));
+  assert.ok(isLanded(MARKS[0] + LANDED * 0.9, MARKS[0]));
+  assert.equal(isLanded(MARKS[0] + LANDED * 1.1, MARKS[0]), false);
 });
 
 // The manifest half: every lesson listed for a visual must have a Bridge Notes section to sit under,

@@ -1807,3 +1807,286 @@ export async function auditBridgeVisualThemes(browser, baseUrl, name) {
       `${tightest.where.split(': ')[1]}, no overflow, and both dials driven by keyboard alone`
   );
 }
+/**
+ * P.9's Bridge Notes chase as a reader experiences it: sound, memory and the reset
+ * (`app/src/bridges/bridgeChase.ts`, `app/src/bridges/bridgeAudio.ts`).
+ *
+ * The palette sweep proves the card is readable; this proves touching it has a consequence. In a
+ * real browser it checks that sound starts off and stays off until the reader asks; that turning it
+ * on is what builds an `AudioContext` and that a landing on a mark is two notes while a plain
+ * detent is one and the fifth mark is three; that reduced motion silences the card even with sound
+ * switched on; that progress and the best run survive a reload and a reset; that every landing —
+ * keyboard included — is scored the same way; and that a store which refuses to keep anything costs
+ * the reader nothing but the memory.
+ *
+ * Every assertion runs against the card's own `data-` attributes and the readouts, so a failure
+ * names the state rather than the pixel.
+ */
+export async function auditBridgeChase(browser, baseUrl, name) {
+  const where = `${name}: P.9's chase`;
+
+  /** Records the audio the page actually built: contexts, and the frequency of every oscillator. */
+  const audioSpy = () => {
+    window.__bridgeAudio = { contexts: 0, tones: [] };
+    const Base = window.AudioContext;
+    if (!Base) return;
+    window.AudioContext = class extends Base {
+      constructor(...args) {
+        super(...args);
+        window.__bridgeAudio.contexts += 1;
+      }
+
+      createOscillator() {
+        const oscillator = super.createOscillator();
+        const set = oscillator.frequency.setValueAtTime.bind(oscillator.frequency);
+        oscillator.frequency.setValueAtTime = (value, when) => {
+          window.__bridgeAudio.tones.push(value);
+          return set(value, when);
+        };
+        return oscillator;
+      }
+    };
+  };
+
+  /** Only this card's keys are blocked, so the rest of the workbench still has its own storage. */
+  const blockBridgeStorage = () => {
+    for (const method of ['getItem', 'setItem', 'removeItem']) {
+      const real = Storage.prototype[method];
+      Storage.prototype[method] = function (key, ...rest) {
+        if (String(key).startsWith('mechalab_bridge')) {
+          throw new DOMException('the store is blocked', 'SecurityError');
+        }
+        return real.call(this, key, ...rest);
+      };
+    }
+  };
+
+  const open = async ({ reduced = false, blocked = false } = {}) => {
+    const context = await browser.newContext({
+      viewport: { width: 1280, height: 900 },
+      colorScheme: 'dark',
+      reducedMotion: reduced ? 'reduce' : 'no-preference',
+    });
+    await seedTourSeen(context);
+    await context.addInitScript(audioSpy);
+    if (blocked) await context.addInitScript(blockBridgeStorage);
+    const page = await context.newPage();
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(String(error)));
+    await page.goto(`${baseUrl}?lesson=P.9`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    await page.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, {
+      timeout: 25000,
+    });
+    await page.keyboard.press('Alt+1');
+    await page.waitForFunction(
+      () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'study',
+      undefined,
+      { timeout: 15000 }
+    );
+    await expandEditorBody(page);
+    await page.getByRole('heading', { name: 'Bridge Notes', exact: true }).scrollIntoViewIfNeeded();
+    await page.getByTestId('bridge-scaling').waitFor({ state: 'visible', timeout: 25000 });
+    return { context, page, errors };
+  };
+
+  const state = (page) =>
+    page.getByTestId('bridge-scaling').evaluate((node) => ({
+      marks: Number(node.getAttribute('data-marks')),
+      best: Number(node.getAttribute('data-best')),
+      sound: node.getAttribute('data-sound'),
+      pill: document.querySelector('[data-testid="bridge-scaling-chase"]')?.textContent?.trim() ?? '',
+      flourish: Boolean(node.querySelector('.bridge-done')),
+    }));
+
+  const audio = (page) => page.evaluate(() => window.__bridgeAudio);
+
+  /** One press on a dial at this fraction of its travel — the shortest real drag there is. */
+  const putNeedle = async (page, fraction) => {
+    const dial = page.locator('[data-testid="bridge-scaling"] svg').first();
+    await dial.scrollIntoViewIfNeeded();
+    const box = await dial.boundingBox();
+    const scale = Math.min(box.width / 208, box.height / 120);
+    const radians = ((-120 + fraction * 240) * Math.PI) / 180;
+    await page.mouse.move(box.x + (104 + 60 * Math.sin(radians)) * scale, box.y + (100 - 60 * Math.cos(radians)) * scale);
+    await page.mouse.down();
+    await page.mouse.up();
+  };
+
+  /** Land the live mark with the keyboard only: PageUp to get near, then ArrowRight to the window. */
+  const landByKeyboard = async (page) => {
+    const volts = page.getByTestId('bridge-scaling-volt-dial');
+    await volts.scrollIntoViewIfNeeded();
+    await volts.focus();
+    await page.keyboard.press('Home');
+    const target = await page
+      .getByTestId('bridge-scaling')
+      .evaluate((node) => Number(node.getAttribute('data-mark')));
+    for (let press = 0; press < 5; press += 1) {
+      const value = Number(await volts.inputValue());
+      if (value + 0.5 > target * 5) break;
+      await page.keyboard.press('PageUp');
+    }
+    for (let press = 0; press < 80; press += 1) {
+      const fraction = Number(await volts.inputValue()) / 5;
+      if (Math.abs(fraction - target) < 0.004) return;
+      await page.keyboard.press('ArrowRight');
+    }
+    assert.fail(`${where}: the keyboard could not reach the mark at ${target}`);
+  };
+
+  // ---- 1. Sound starts off, and only the reader can turn it on ----
+  const first = await open();
+  try {
+    const page = first.page;
+    let shown = await state(page);
+    assert.deepEqual(
+      { marks: shown.marks, best: shown.best, sound: shown.sound },
+      { marks: 0, best: 0, sound: 'off' },
+      `${where}: a fresh card must start silent and unstarted, saw ${JSON.stringify(shown)}`
+    );
+    assert.equal((await audio(page)).contexts, 0, `${where}: an audio context was built before any gesture`);
+
+    await page.getByTestId('bridge-scaling-sound').click();
+    shown = await state(page);
+    assert.equal(shown.sound, 'on', `${where}: the sound control did not turn sound on`);
+    assert.ok((await audio(page)).contexts >= 1, `${where}: the gesture that asked for sound built no context`);
+
+    // ---- 2. A mark landed from the keyboard is scored, heard and remembered ----
+    // Turning sound on plays one confirmation tick, so the landing's notes are counted from here.
+    const beforeLanding = (await audio(page)).tones.length;
+    await landByKeyboard(page);
+    shown = await state(page);
+    assert.equal(shown.marks, 1, `${where}: a keyboard landing did not score (${JSON.stringify(shown)})`);
+    assert.equal(shown.best, 1, `${where}: the best run did not follow the keyboard landing`);
+    const markTones = (await audio(page)).tones.slice(beforeLanding);
+    assert.ok(
+      markTones.length >= 2,
+      `${where}: a mark landing must be more than one note, heard ${JSON.stringify(markTones)}`
+    );
+    assert.ok(
+      !markTones.includes(880),
+      `${where}: a mark landing must not be the detent's single 880 Hz tick (${JSON.stringify(markTones)})`
+    );
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByTestId('bridge-scaling').waitFor({ state: 'visible', timeout: 25000 });
+    shown = await state(page);
+    assert.deepEqual(
+      { marks: shown.marks, best: shown.best, sound: shown.sound },
+      { marks: 1, best: 1, sound: 'on' },
+      `${where}: progress and the sound choice must survive a reload, saw ${JSON.stringify(shown)}`
+    );
+    assert.match(shown.pill, /mark 2\/5/, `${where}: the reloaded card must wait on the second mark (${shown.pill})`);
+
+    // ---- 3. A plain detent is one note, and not the mark's notes ----
+    const beforeDetent = (await audio(page)).tones.length;
+    await putNeedle(page, 0.5);
+    const detent = await audio(page);
+    const detentTones = detent.tones.slice(beforeDetent);
+    assert.equal(detentTones.length, 1, `${where}: a detent must be a single tick, heard ${JSON.stringify(detentTones)}`);
+    assert.ok(
+      !markTones.includes(detentTones[0]),
+      `${where}: the detent (${detentTones[0]} Hz) must not sound like the mark (${markTones.join('/')} Hz)`
+    );
+
+    // ---- 4. Five landings finish the lap with a bigger sound and a flourish ----
+    const lapStart = (await audio(page)).tones.length;
+    for (const fraction of [0.375, 0.75, 0.125, 0.5, 0.875]) {
+      await putNeedle(page, fraction);
+      if ((await state(page)).marks === 5) break;
+    }
+    shown = await state(page);
+    assert.equal(shown.marks, 5, `${where}: five landings on the five marks must finish the lap (${JSON.stringify(shown)})`);
+    assert.equal(shown.best, 5, `${where}: the best run must reach five`);
+    assert.ok(shown.flourish, `${where}: the fifth mark must draw the completion flourish`);
+    const lapTones = (await audio(page)).tones.slice(lapStart);
+    assert.equal(
+      lapTones.filter((frequency) => frequency === 523).length,
+      1,
+      `${where}: the fifth mark must play its own finish, heard ${JSON.stringify(lapTones)}`
+    );
+    assert.ok(lapTones.includes(1047), `${where}: the finish must rise to its last note (${JSON.stringify(lapTones)})`);
+
+    // ---- 5. Reset forgets the progress, keeps the sound choice, and survives a reload ----
+    await page.getByTestId('bridge-scaling-reset').click();
+    shown = await state(page);
+    assert.deepEqual(
+      { marks: shown.marks, best: shown.best, sound: shown.sound },
+      { marks: 0, best: 0, sound: 'on' },
+      `${where}: reset must clear progress and keep the sound choice, saw ${JSON.stringify(shown)}`
+    );
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByTestId('bridge-scaling').waitFor({ state: 'visible', timeout: 25000 });
+    shown = await state(page);
+    assert.deepEqual(
+      { marks: shown.marks, best: shown.best, sound: shown.sound },
+      { marks: 0, best: 0, sound: 'on' },
+      `${where}: the reset must survive a reload too, saw ${JSON.stringify(shown)}`
+    );
+    assert.equal(first.errors.length, 0, `${where}: page errors: ${first.errors.join(' | ')}`);
+  } finally {
+    await first.context.close();
+  }
+
+  // ---- 6. Reduced motion is silence, even with sound switched on ----
+  const quiet = await open({ reduced: true });
+  try {
+    const page = quiet.page;
+    await page.getByTestId('bridge-scaling-sound').click();
+    assert.equal((await state(page)).sound, 'on', `${where}: reduced motion must not stop the choice being made`);
+    await landByKeyboard(page);
+    assert.equal(
+      (await state(page)).marks,
+      1,
+      `${where}: a landing under reduced motion is still a landing`
+    );
+    const heard = await audio(page);
+    assert.equal(heard.contexts, 0, `${where}: reduced motion must build no audio context at all`);
+    assert.deepEqual(heard.tones, [], `${where}: reduced motion must be silent, heard ${JSON.stringify(heard.tones)}`);
+    assert.equal(quiet.errors.length, 0, `${where}: page errors under reduced motion: ${quiet.errors.join(' | ')}`);
+  } finally {
+    await quiet.context.close();
+  }
+
+  // ---- 7. A blocked store costs the memory and nothing else ----
+  const blocked = await open({ blocked: true });
+  try {
+    const page = blocked.page;
+    let shown = await state(page);
+    assert.deepEqual(
+      { marks: shown.marks, best: shown.best, sound: shown.sound },
+      { marks: 0, best: 0, sound: 'off' },
+      `${where}: a blocked store must read as a fresh card, saw ${JSON.stringify(shown)}`
+    );
+    await page.getByTestId('bridge-scaling-sound').click();
+    await landByKeyboard(page);
+    shown = await state(page);
+    assert.deepEqual(
+      { marks: shown.marks, best: shown.best, sound: shown.sound },
+      { marks: 1, best: 1, sound: 'on' },
+      `${where}: with storage blocked the card must still work in-visit, saw ${JSON.stringify(shown)}`
+    );
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByTestId('bridge-scaling').waitFor({ state: 'visible', timeout: 25000 });
+    shown = await state(page);
+    assert.deepEqual(
+      { marks: shown.marks, best: shown.best, sound: shown.sound },
+      { marks: 0, best: 0, sound: 'off' },
+      `${where}: a blocked store must not remember anything, saw ${JSON.stringify(shown)}`
+    );
+    assert.equal(
+      blocked.errors.length,
+      0,
+      `${where}: a blocked store must not raise a page error, saw ${blocked.errors.join(' | ')}`
+    );
+  } finally {
+    await blocked.context.close();
+  }
+
+  console.log(
+    `  ok ${name}: P.9's chase starts silent and builds no audio before a gesture, a keyboard landing ` +
+      `scores and is two notes, a detent is one and different, the fifth mark is three notes with a ` +
+      `flourish, progress and the sound choice survive a reload, reset clears it, reduced motion is ` +
+      `completely silent, and a blocked store degrades to zeros without a page error`
+  );
+}

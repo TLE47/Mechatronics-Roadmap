@@ -13,6 +13,18 @@ import {
   needleAngle,
   reading,
 } from './scalingDials';
+import {
+  MARKS,
+  clearChase,
+  isLanded,
+  landed as advance,
+  markAt,
+  readChase,
+  readMuted,
+  writeChase,
+  writeMuted,
+} from './bridgeChase';
+import { tick, unlock } from './bridgeAudio';
 
 /**
  * P.9's Bridge Notes, as two dials you grab by the needle (`app/src/bridges/ScalingDialsVisual.tsx`).
@@ -24,29 +36,28 @@ import {
  *
  * A paragraph cannot make that feel like a meter, so the drawing is a control: press anywhere on a
  * dial and the needle follows your finger, a band of accent ink filling the arc behind it, and the
- * bridge between the dials carries the same fraction across in one and the same stride. The three
+ * bridge between the dials carries the same fraction across in one and the same stride. The two
  * marked fractions pull like a notch within 1.2% so the reading *lands* instead of hovering.
  *
  * Then there is something to do with it. A mark is drawn on both arcs; sweep the needle onto it and
- * the card flashes, the mark advances, and the fraction you found is read out on both scales — five
- * marks, and the sentence the lesson is making is the thing you keep doing.
+ * the card flashes, a two-note tick sounds if sound is on, the mark advances, and the fraction you
+ * found is read out on both scales. The fifth is a small arpeggio and a wider ring. Progress and the
+ * best run are remembered per visitor and can be reset from the card itself (`bridgeChase.ts`), and
+ * a store that refuses to keep them costs the reader nothing but the memory (`bridgeChase.ts`).
  *
- * Keyboard and screen readers get the same control as a range slider under each dial, so nothing
- * here is pointer-only, and both paths run through `move` — which is also where a mark is scored, so
- * the chase respects a reader who never touches a mouse. Every number drawn here comes from
- * `scalingDials.ts`, so the needles, the numbers and the model test cannot drift apart. Each SVG is
- * a `role="img"` named with its own reading. This chunk is lazy (`bridgeNotesVisual.tsx`), so a
- * lesson without a visual never downloads it.
+ * Keyboard and screen readers get the same control as a range slider under each dial. Both paths run
+ * through `move` — which is where a mark is scored and its tick is played — so nothing here is
+ * pointer-only, and a keyboard landing is heard exactly like a dragged one.
+ *
+ * Every number drawn here comes from `scalingDials.ts`, so the needles, the numbers and the model
+ * test cannot drift apart. Each SVG is a `role="img"` named with its own reading. This chunk is lazy
+ * (`bridgeNotesVisual.tsx`), so a lesson without a visual never downloads it.
  */
 
 const CX = 104;
 const CY = 100;
 const R = 72;
 const TICKS = [0, 0.25, 0.5, 0.75, 1];
-/** The five marks of the chase, in the order they are drawn. */
-const MARKS = [0.375, 0.75, 0.125, 0.5, 0.875];
-/** How close counts as landed, and how far away undoes it, in fractions of a dial's top. */
-const LANDED = 0.006;
 /** The magnetic notch: within this much travel a drag snaps to a marked fraction. */
 const NOTCH = 0.012;
 const LABEL_ID = 'bridge-scaling-reading';
@@ -201,41 +212,81 @@ export default function ScalingDialsVisual(): ReactElement {
   // The sensor's reading is the source of truth: the answer dial is the same fraction of 5.0 V, so
   // setting it back-computes the counts rather than keeping a second copy of the state.
   const [raw, setRaw] = useState<number>(DIAL_TOP / 2);
-  const [marks, setMarks] = useState(0);
-  const [landed, setLanded] = useState(false);
+  const [chase, setChase] = useState(readChase);
+  const [muted, setMuted] = useState(readMuted);
+  // The depth at which the last landing was scored: `chase.marks` itself, so a mark cannot be
+  // counted twice and the next one is always live — a single press from one mark to the next counts.
+  const [scored, setScored] = useState(-1);
+  const [flash, setFlash] = useState(0);
+  const [finished, setFinished] = useState(0);
+  const notch = useRef<number | null>(null);
   const shown = reading(raw);
-  const mark = MARKS[marks % MARKS.length];
-  const landedNow = marks > 0 && Math.abs(shown.fraction - MARKS[(marks - 1) % MARKS.length]) < LANDED;
+  const mark = markAt(chase.marks);
 
   /**
    * Every move, from a graze of the pointer or from a key on a slider, lands here: the reading is
-   * set and the mark is scored, so the chase cannot be driven by one input and not the other.
+   * set, the mark is scored, its tick is played and progress is remembered. One path, so the chase
+   * cannot be driven by one input and not the other.
    */
   const move = (next: number): void => {
     const value = Math.min(DIAL_TOP, Math.max(0, next));
     setRaw(value);
-    const at = Math.abs(value / DIAL_TOP - mark) < LANDED;
-    if (at && !landed) {
-      setMarks(marks + 1);
-      setLanded(true);
-      return;
+    if (isLanded(value / DIAL_TOP, mark) && scored !== chase.marks) {
+      const after = advance(chase);
+      const lap = after.marks % MARKS.length === 0;
+      setChase(after);
+      writeChase(after);
+      setScored(chase.marks);
+      setFlash(flash + 1);
+      if (lap) setFinished(after.marks);
+      tick(lap ? 'done' : 'mark', muted);
     }
-    if (!at && Math.abs(value / DIAL_TOP - mark) > LANDED * 3) setLanded(false);
   };
 
   /** A drag pulls toward the live mark and the halfway notch, the way a meter has detents. */
   const sweepTo = (fraction: number): void => {
-    const notch = [mark, 0.5].find((each) => Math.abs(each - fraction) < NOTCH) ?? fraction;
-    move(notch * DIAL_TOP);
+    const at = [mark, 0.5].find((each) => Math.abs(each - fraction) < NOTCH) ?? fraction;
+    if (at !== fraction) {
+      if (notch.current !== at) {
+        notch.current = at;
+        tick('detent', muted);
+      }
+    } else {
+      notch.current = null;
+    }
+    move(at * DIAL_TOP);
+  };
+
+  const toggleSound = (): void => {
+    const next = !muted;
+    setMuted(next);
+    writeMuted(next);
+    unlock(next);
+    if (!next) tick('detent', next);
+  };
+
+  const reset = (): void => {
+    clearChase();
+    setChase({ marks: 0, best: 0 });
+    setScored(-1);
+    setFinished(0);
+    setFlash(0);
   };
 
   return (
     <div
       className="relative mt-3 overflow-hidden rounded-lg border bg-panel-2 px-3 py-3"
       data-testid="bridge-scaling"
+      data-marks={chase.marks}
+      data-mark={mark}
+      data-best={chase.best}
+      data-sound={muted ? 'off' : 'on'}
     >
-      {landedNow && (
-        <span key={marks} aria-hidden="true" className="bridge-flash pointer-events-none absolute inset-0" />
+      {flash > 0 && (
+        <span key={flash} aria-hidden="true" className="bridge-flash pointer-events-none absolute inset-0" />
+      )}
+      {finished > 0 && (
+        <span key={`done${finished}`} aria-hidden="true" className="bridge-done pointer-events-none absolute inset-0" />
       )}
       <div className="relative flex flex-wrap items-start gap-x-5 gap-y-4">
         <div className="min-w-[190px] flex-1">
@@ -336,17 +387,35 @@ export default function ScalingDialsVisual(): ReactElement {
         ))}
       </dl>
 
-      <div
-        role="status"
-        data-testid="bridge-scaling-chase"
-        className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-full bg-panel-3 px-2.5 py-1 text-[11px] font-mono text-ink"
-      >
-        <span>
-          {marks >= MARKS.length * 2
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-mono text-ink">
+        <span
+          className="flex items-center gap-2 rounded-full bg-panel-3 px-2.5 py-1"
+          data-testid="bridge-scaling-chase"
+        >
+          {chase.marks >= MARKS.length * 2
             ? 'every mark, twice'
-            : `mark ${(marks % MARKS.length) + 1}/${MARKS.length} · put the needle on ${formatFraction(mark)}`}
+            : `mark ${(chase.marks % MARKS.length) + 1}/${MARKS.length} · needle on ${formatFraction(mark)}`}
         </span>
-
+        <span className="rounded-full bg-panel-3 px-2.5 py-1" data-testid="bridge-scaling-best">
+          best {chase.best}
+        </span>
+        <button
+          type="button"
+          data-testid="bridge-scaling-sound"
+          aria-pressed={!muted}
+          onClick={toggleSound}
+          className="rounded-full border border-line px-2.5 py-1 hover:border-accent"
+        >
+          sound {muted ? 'off' : 'on'}
+        </button>
+        <button
+          type="button"
+          data-testid="bridge-scaling-reset"
+          onClick={reset}
+          className="rounded-full border border-line px-2.5 py-1 hover:border-accent"
+        >
+          reset
+        </button>
       </div>
 
       <p className="mt-2 text-[12px] leading-snug text-body">
