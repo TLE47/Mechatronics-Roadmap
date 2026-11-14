@@ -1430,6 +1430,9 @@ export async function auditBridgeVisual(browser, baseUrl, name) {
       ['volts', 'bridge-scaling-volt-dial', 0.2, (fraction) => fraction < 0.3],
     ]) {
       const control = page.getByTestId(testId);
+      // The reader pane is a scroller, so a control can sit a few pixels past the fold while its
+      // heading is on screen; a pointer drag has to start on a visible target.
+      await control.scrollIntoViewIfNeeded();
       const start = await control.boundingBox();
       assert.ok(start, `${name}: the ${label} dial has no box to drag`);
       const before = Number(await control.inputValue());
