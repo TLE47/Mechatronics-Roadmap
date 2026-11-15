@@ -39,8 +39,8 @@ class RegistryTests(unittest.TestCase):
     def test_every_python_page_is_covered(self):
         pages = gr.workbench_pages()
         self.assertEqual(
-            len(pages), 95,
-            msg="expected 45 lesson pages (39 lessons plus the six ramp lessons) and 50 "
+            len(pages), 97,
+            msg="expected 47 lesson pages (41 lessons plus the six ramp lessons) and 50 "
                 "graded-module pages in the registry; a smaller count means an entry's page was "
                 "skipped, so its callout cannot be checked",
         )
@@ -66,9 +66,9 @@ class RegistryTests(unittest.TestCase):
     def test_bench_lessons_are_marked_as_having_no_entry(self):
         pages = gr.no_entry_pages()
         self.assertEqual(
-            len(pages), 12,
-            msg="expected the 12 bench lessons (S0.1-S0.9, S0.M, 01.1, 01.2) to be the only pages "
-                "without an entry; another count means a runnable page is being told it has "
+            len(pages), 10,
+            msg="expected the 10 bench lessons (S0.1-S0.5, S0.7-S0.9, S0.M, 01.2) to be the only "
+                "pages without an entry; another count means a runnable page is being told it has "
                 "nothing to load - check the registry parse",
         )
         by_path = dict((rel, lesson_id) for lesson_id, rel in pages)

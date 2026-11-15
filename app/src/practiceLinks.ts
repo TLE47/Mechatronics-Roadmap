@@ -82,17 +82,30 @@ function trackIndicesForStep(step: LinearTrackStep): number[] {
 }
 
 /**
+ * Level 0's three modules, by the Stage 0 page each one sends the learner to read.
+ *
+ * Written out rather than counted: Level 0 is a bench module, so most of its steps have no page in
+ * the runner, and an "Nth runnable Stage 0 page for the Nth module" rule silently handed a page to
+ * the wrong module the moment a second Stage 0 page became runnable (S0.6, module 2's own decoupling
+ * capacitor question, arrived under module 3). A module missing here is a step that says plainly
+ * there is nothing to load.
+ */
+const LEVEL_0_PAGE: Readonly<Record<string, string>> = {
+  l0_m1: 'S0.0',
+  l0_m2: 'S0.6',
+};
+
+/**
  * The workbench entries a roadmap step asks the learner to run.
  *
  * - A pass step takes that track's reading lessons (tier 1 only: they are written once) and the
  *   graded modules for its own pass, `EX.<track>.T<pass>.<n>`.
- * - The bench on-ramp has a single Stage 0 entry, so the first step claims it and the rest say
- *   plainly that there is nothing to load.
+ * - A bench on-ramp step takes the one Stage 0 page `LEVEL_0_PAGE` names, or nothing at all.
  */
 export function entriesForStep(step: LinearTrackStep): PythonLessonItem[] {
   if (step.milestoneId.startsWith('l0_')) {
-    const index = Number(/^l0_m(\d+)$/.exec(step.milestoneId)?.[1] ?? 0) - 1;
-    return PYTHON_LESSONS.filter((entry) => entry.id.startsWith('S0.')).slice(index, index + 1);
+    const pageId = LEVEL_0_PAGE[step.milestoneId];
+    return pageId ? PYTHON_LESSONS.filter((entry) => entry.id === pageId) : [];
   }
   const tier = tierOf(step.milestoneId);
   const trackIndices = trackIndicesForStep(step);
