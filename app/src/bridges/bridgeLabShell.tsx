@@ -66,14 +66,14 @@ function Reading({
       </output>
       {tag ? (
         <span
-          className={`font-mono text-[10px] uppercase tracking-wide ${
+          className={`font-mono text-[11px] uppercase tracking-wide ${
             tag.wrong ? 'text-faint' : 'text-accent'
           }`}
         >
           {tag.text}
         </span>
       ) : null}
-      {note ? <span className="text-[10.5px] text-faint">{note}</span> : null}
+      {note ? <span className="text-[11px] text-faint">{note}</span> : null}
     </p>
   );
 }
@@ -193,7 +193,7 @@ export default function BridgeLab({ spec }: { spec: LabSpec }) {
           </div>
           <p
             data-testid={`${spec.testid}-scale-text`}
-            className="m-0 mt-1 font-mono text-[10.5px] text-faint"
+            className="m-0 mt-1 font-mono text-[11px] text-faint"
           >
             {scale.marks.map((markItem) => markItem.caption(values)).join(' · ')}
           </p>
@@ -259,7 +259,7 @@ export default function BridgeLab({ spec }: { spec: LabSpec }) {
                   />
                 ))}
               </span>
-              <label className="flex items-center gap-1 text-[10.5px] text-faint">
+              <label className="flex items-center gap-1 text-[12px] text-faint">
                 <input
                   type="checkbox"
                   data-testid={`${spec.testid}-mark-sound`}
@@ -274,7 +274,7 @@ export default function BridgeLab({ spec }: { spec: LabSpec }) {
                 type="button"
                 data-testid={`${spec.testid}-mark-reset`}
                 onClick={mark.reset}
-                className="border-0 bg-transparent p-0 text-[10.5px] text-faint underline"
+                className="border-0 bg-transparent p-0 text-[12px] text-faint underline"
               >
                 reset
               </button>
@@ -283,7 +283,7 @@ export default function BridgeLab({ spec }: { spec: LabSpec }) {
           <p
             data-testid={`${spec.testid}-mark-announce`}
             aria-live="polite"
-            className="m-0 mt-1 min-h-[1em] font-mono text-[10.5px] text-faint"
+            className="m-0 mt-1 min-h-[1em] font-mono text-[11px] text-faint"
           >
             {mark.announcement}
           </p>
