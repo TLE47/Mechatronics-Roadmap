@@ -36,7 +36,7 @@
 {"t":"h","l":4,"x":"Micro focus: f-strings"},
 {"t":"anchor","id":"micro-f-strings"},
 {"t":"p","x":"An **f-string** puts an `f` before the opening quote and evaluates names inside braces: `f\"Plant: {plant_height:.2f} cm\"`. The `.2f` format shows two digits after the decimal point."},
-{"t":"h","l":3,"x":"Bridge Notes"},
+{"t":"h","l":3,"x":"Bridge Notes","v":"string-sum"},
 {"t":"p","x":"In mechatronics, every value inside your **program** (an ordered list of instructions executed top-to-bottom) represents a physical measurement or hardware state. When you write `battery_level = 12.60`, the **assignment** operator (`=`) creates a variable named `battery_level` holding the **float** (floating-point decimal number) `12.60`. Because Python always evaluates the right-hand side of `=` before storing it into the name on the left, writing `wheel_ticks = wheel_ticks + 25` reads the stored **int** (integer whole number) in `wheel_ticks`, adds `25`, and saves the updated total back into `wheel_ticks`."},
 {"t":"p","x":"Text wrapped in quotes like `\"ARMED\"` is a **str** (string), whereas a safety switch state like `is_estop_active = False` is a **bool** (boolean, written strictly `True` or `False` with capital first letters). Never put quotation marks around numbers you plan to use in calculations: `12 + 5` adds two integers to give `17`, whereas `\"12\" + \"5\"` glues two strings together into `\"125\"`. Finally, use a **comment** (`#`) to write human-readable unit reminders that Python ignores, and use an **f-string** (`f\"Battery: {battery_level:.2f}\"`) inside `print()` to display values cleanly."},
 {"t":"h","l":2,"x":"Do it yourself"},

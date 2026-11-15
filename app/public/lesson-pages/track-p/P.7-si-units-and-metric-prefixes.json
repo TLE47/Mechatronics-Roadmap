@@ -23,7 +23,7 @@
 {"t":"h","l":4,"x":"Micro focus: the units are the check"},
 {"t":"anchor","id":"micro-unit-cancel"},
 {"t":"p","x":"Units travel through arithmetic: meters divided by seconds leaves `m/s`, and meters multiplied by meters leaves `m²`. Because the answer's unit is part of the check, a result in the wrong unit points at a wrong formula or a missing conversion before the robot moves."},
-{"t":"h","l":3,"x":"Bridge Notes"},
+{"t":"h","l":3,"x":"Bridge Notes","v":"prefix-shift"},
 {"t":"p","x":"Mixing un-converted prefixes into an equation is the #1 calculation error in beginner robotics. Every formula you will meet in this roadmap—such as distance ($d = s \\cdot t$) and kinetic energy ($E_k = \\frac{1}{2} m s^2$)—strictly expects **un-prefixed base SI units**: meters (`m`), kilograms (`kg`), seconds (`s`), Amperes (`A`), Volts (`V`), and Ohms (`Ω`)."},
 {"t":"figure","id":"unit-cancellation","caption":"Carry the units through the arithmetic and the equation checks itself."},
 {"t":"p","x":"For example, if a datasheet says a sensor is $15\\text{ mm}$ (millimeters) wide or a pulse lasts $500\\ \\mu\\text{s}$ (microseconds) and you forget to convert to meters or seconds before multiplying, your answer will be off by a factor of **$1{,}000\\times$** or **$1{,}000{,}000\\times$**! Follow a two-step habit on every problem:"},

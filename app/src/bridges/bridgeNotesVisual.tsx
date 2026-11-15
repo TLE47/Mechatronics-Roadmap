@@ -22,11 +22,75 @@ import type { ComponentType, ReactElement } from 'react';
 const ScalingDials = lazy(() => import('./ScalingDialsVisual'));
 const ClampCommand = lazy(() => import('./ClampCommandLab'));
 const OrderOfOperations = lazy(() => import('./OrderOfOperationsLab'));
+const StringSum = lazy(() => import('./StringSumLab'));
+const PrefixShift = lazy(() => import('./PrefixShiftLab'));
+const FreqBits = lazy(() => import('./FreqBitsLab'));
+const RadianConvert = lazy(() => import('./RadianConvertLab'));
+const LeverCos = lazy(() => import('./LeverCosLab'));
+const GearSquared = lazy(() => import('./GearSquaredLab'));
+const SignFlip = lazy(() => import('./SignFlipLab'));
+const ClampFunction = lazy(() => import('./ClampFunctionLab'));
+const AssertGuard = lazy(() => import('./AssertGuardLab'));
+const AnswerCheck = lazy(() => import('./AnswerCheckLab'));
+const DatasheetLimits = lazy(() => import('./DatasheetLimitsLab'));
+const RegulatorBudget = lazy(() => import('./RegulatorBudgetLab'));
+const TimerWrap = lazy(() => import('./TimerWrapLab'));
+const PointerBox = lazy(() => import('./PointerBoxLab'));
+const LagPower = lazy(() => import('./LagPowerLab'));
+const WaterAnalogue = lazy(() => import('./WaterAnalogueLab'));
+const CountRate = lazy(() => import('./CountRateLab'));
+const Accumulate = lazy(() => import('./AccumulateLab'));
+const StateSlots = lazy(() => import('./StateSlotsLab'));
+const MatrixTick = lazy(() => import('./MatrixTickLab'));
+const ArrowMultiply = lazy(() => import('./ArrowMultiplyLab'));
+const Bringup = lazy(() => import('./BringupLab'));
+const BeltGeometry = lazy(() => import('./BeltGeometryLab'));
+const MassSpring = lazy(() => import('./MassSpringLab'));
+const RcFilter = lazy(() => import('./RcFilterLab'));
+const ElectricalAngle = lazy(() => import('./ElectricalAngleLab'));
+const PidWindup = lazy(() => import('./PidWindupLab'));
+const ComplementaryImu = lazy(() => import('./ComplementaryImuLab'));
+const CubicTrajectory = lazy(() => import('./CubicTrajectoryLab'));
+const CapstoneFrame = lazy(() => import('./CapstoneFrameLab'));
+const FlybackSpike = lazy(() => import('./FlybackSpikeLab'));
+const RcCharge = lazy(() => import('./RcChargeLab'));
 
 const VISUALS: Record<string, ComponentType> = {
   'scaling-dials': ScalingDials,
   'clamp-command': ClampCommand,
   'order-of-operations': OrderOfOperations,
+  'string-sum': StringSum,
+  'prefix-shift': PrefixShift,
+  'freq-bits': FreqBits,
+  'radian-convert': RadianConvert,
+  'lever-cos': LeverCos,
+  'gear-squared': GearSquared,
+  'sign-flip': SignFlip,
+  'clamp-function': ClampFunction,
+  'assert-guard': AssertGuard,
+  'answer-check': AnswerCheck,
+  'datasheet-limits': DatasheetLimits,
+  'regulator-budget': RegulatorBudget,
+  'timer-wrap': TimerWrap,
+  'pointer-box': PointerBox,
+  'lag-power': LagPower,
+  'water-analogue': WaterAnalogue,
+  'count-rate': CountRate,
+  'accumulate': Accumulate,
+  'state-slots': StateSlots,
+  'matrix-tick': MatrixTick,
+  'arrow-multiply': ArrowMultiply,
+  'bringup': Bringup,
+  'belt-geometry': BeltGeometry,
+  'mass-spring': MassSpring,
+  'rc-filter': RcFilter,
+  'electrical-angle': ElectricalAngle,
+  'pid-windup': PidWindup,
+  'complementary-imu': ComplementaryImu,
+  'cubic-trajectory': CubicTrajectory,
+  'capstone-frame': CapstoneFrame,
+  'flyback-spike': FlybackSpike,
+  'rc-charge': RcCharge,
 };
 
 /**

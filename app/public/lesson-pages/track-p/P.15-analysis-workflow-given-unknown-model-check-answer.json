@@ -23,7 +23,7 @@
 {"t":"h","l":4,"x":"Micro focus: clamp and name the limit"},
 {"t":"anchor","id":"micro-bounds-check"},
 {"t":"p","x":"The check asks whether the value fits the **bounds** of the real part and whether its unit matches the question. When it does not, clamp the answer to 3.2 A and name the part that set the ceiling, rather than printing the impossible number as if it were a result."},
-{"t":"h","l":3,"x":"Bridge Notes"},
+{"t":"h","l":3,"x":"Bridge Notes","v":"answer-check"},
 {"t":"p","x":"Two engineers can compute the same number and only one of them produces a usable answer. The difference is not arithmetic; it is order. The workflow makes the order visible. Start with the **given** list and write every value with its unit, because a number without a unit cannot be checked later. Name the **unknown** next: it decides which **model** you are allowed to use. Then **compute** without dressing the result up as a conclusion. The **check** step asks the question arithmetic cannot: is this value inside the **bounds** of the part, and does its unit match what the answer needs? At 12 V across 2.4 ohm the computed value is 5.0 A, while the driver passes 3.2 A — so the workflow takes the failure **branch**, clamps the result, and writes an **answer** that names the limit instead of hiding it. That last step, writing the answer after the check rather than before it, is the whole habit this lesson teaches."},
 {"t":"h","l":2,"x":"Do it yourself"},
 {"t":"ul","items":[{"x":"**What is simulated and in which tool:** Runs 100% in Python (zero-install in the MechaLab Browser Runner or locally via `python3`).","d":0},{"x":"**What is real-hardware only:** Nothing in this lesson requires hardware.","d":0}]},

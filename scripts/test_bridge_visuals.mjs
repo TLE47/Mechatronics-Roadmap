@@ -65,6 +65,101 @@ import {
   dividerWrong,
   orderOfOperationsLab,
 } from '../app/src/bridges/orderOfOperations.ts';
+import {
+  LEGACY_MARK_KEY,
+  MARK_KEY,
+  advanceMark,
+  clearMark,
+  onMark,
+  readMark,
+  stepAt,
+  targetAt,
+  toleranceAt,
+  writeMark,
+} from '../app/src/bridges/bridgeMark.ts';
+import { LEFT, RIGHT, stringSumLab, summed, typed } from '../app/src/bridges/stringSum.ts';
+import { KILO_EXAMPLE, PREFIXES, prefixShiftLab, toBase } from '../app/src/bridges/prefixShift.ts';
+import { freqBitsLab, periodMs, states, topOf } from '../app/src/bridges/freqBits.ts';
+import {
+  cosRight,
+  cosWrong,
+  radianConvertLab,
+  rpmToRadPerSecond,
+  toRadians,
+} from '../app/src/bridges/radianConvert.ts';
+import { gravityTorque, leverArm, leverCosLab } from '../app/src/bridges/leverCos.ts';
+import { gearSquaredLab, inertiaFactor, outputSpeed, reflectedFraction } from '../app/src/bridges/gearSquared.ts';
+import { formatTorque, holdTorque, signFlipLab, sinBug } from '../app/src/bridges/signFlip.ts';
+import { clampCommand as clampFn, clampFunctionLab } from '../app/src/bridges/clampFunction.ts';
+import { assertGuardLab, distance2d, rounded, FLOAT_TAIL } from '../app/src/bridges/assertGuard.ts';
+import { answerCheckLab, ohmsCurrent, withinLimit } from '../app/src/bridges/answerCheck.ts';
+import { DRIVERS, datasheetLimitsLab, headroom, inRecommended } from '../app/src/bridges/datasheetLimits.ts';
+import { buckHeat, buckInputCurrent, ldoHeat, regulatorBudgetLab } from '../app/src/bridges/regulatorBudget.ts';
+import { timerWrapLab, velocity, wrap16 } from '../app/src/bridges/timerWrap.ts';
+import { countsToRadians, pointerBoxLab } from '../app/src/bridges/pointerBox.ts';
+import { lagPowerLab, power as lagPower, stepFraction } from '../app/src/bridges/lagPower.ts';
+import { flowAmps, powerWatts, waterAnalogueLab } from '../app/src/bridges/waterAnalogue.ts';
+import { countRateLab, radiansPerCount, rateRadPerSecond } from '../app/src/bridges/countRate.ts';
+import { accumulateLab, leftSum, rightSum, trapezoidSum } from '../app/src/bridges/accumulate.ts';
+import { slotOne, slotTwo, stateSlotsLab, swappedRow } from '../app/src/bridges/stateSlots.ts';
+import { bakedDelta, deltaQ, deltaQd, matrixTickLab } from '../app/src/bridges/matrixTick.ts';
+import { arrowMultiplyLab, imaginaryPart, mixedCosine, realPart } from '../app/src/bridges/arrowMultiply.ts';
+import { bHat, bringupLab, railMargin } from '../app/src/bridges/bringup.ts';
+import { beltForce, beltGeometryLab, pitchRadiusMm, ratio as beltRatio } from '../app/src/bridges/beltGeometry.ts';
+import {
+  criticalDamping,
+  dampingRatio,
+  massSpringLab,
+  naturalFrequency,
+  ratioWithoutTwo,
+  regimeOf,
+} from '../app/src/bridges/massSpring.ts';
+import { cutoffHz, cutoffNoTwoPi, gainAt, rcFilterLab, tauSeconds } from '../app/src/bridges/rcFilter.ts';
+import {
+  electricalAngle,
+  electricalAngleLab,
+  leadMechanicalDeg,
+  torqueFraction,
+  wrapDegrees,
+} from '../app/src/bridges/electricalAngle.ts';
+import {
+  overshootClamped,
+  overshootUnclamped,
+  pidWindupLab,
+  sagRad,
+  windupRatio,
+} from '../app/src/bridges/pidWindup.ts';
+import {
+  biasErrorDeg,
+  complementaryImuLab,
+  crossoverSeconds,
+  gyroDriftDeg,
+} from '../app/src/bridges/complementaryImu.ts';
+import {
+  cubicFraction,
+  cubicTrajectoryLab,
+  peakVelocityRadPerSecond,
+  positionRad,
+  velocityRadPerSecond,
+} from '../app/src/bridges/cubicTrajectory.ts';
+import {
+  capstoneFrameLab,
+  droppedFrames,
+  requiredBitsPerSecond,
+} from '../app/src/bridges/capstoneFrame.ts';
+import {
+  clampVoltage,
+  conductionLoss,
+  flybackSpikeLab,
+  inductiveKickbackVoltage,
+} from '../app/src/bridges/flybackSpike.ts';
+import {
+  capacitorVolts,
+  chargeFraction,
+  linearEstimate,
+  rcChargeLab,
+  timeConstant,
+} from '../app/src/bridges/rcCharge.ts';
 
 let passed = 0;
 let failed = 0;
@@ -341,6 +436,622 @@ check('the pages still say the numbers their labs print', () => {
   const p2 = read('track-p/P.2-arithmetic-and-order-of-operations.md');
   assert.ok(p2.includes('20000') && p2.includes('10000'), 'P.2 must keep its two resistors');
   assert.ok(p2.includes('y_in * (b / (a + b))'), 'P.2 must keep the parenthesised form');
+});
+
+// The shared ladder: the same five-mark chase P.9 proved, now declared by every card.
+check('the mark ladder follows the page and tightens to a fifth', () => {
+  const ladder = [17, 0, 5];
+  assert.equal(targetAt(ladder, 0), 17);
+  assert.equal(targetAt(ladder, 1), 0);
+  assert.equal(targetAt(ladder, 3), 17, 'the ladder repeats after its last number');
+  assert.equal(stepAt(ladder, 2), 2);
+  assert.equal(toleranceAt(1, 0), 1);
+  assert.ok(Math.abs(toleranceAt(1, 4) - 0.2) < 1e-12);
+  assert.ok(toleranceAt(1, 2) < toleranceAt(1, 1), 'each rung is tighter than the last');
+  assert.ok(toleranceAt(1, 9) === toleranceAt(1, 4), 'the fifth is as tight as it gets');
+  assert.ok(onMark(17.5, 17, 0.5), 'the edge counts');
+  assert.ok(!onMark(17.6, 17, 0.5));
+  assert.ok(!onMark(Number.NaN, 17, 0.5), 'a broken reading is not a landing');
+});
+
+check('a landing survives a store, and reads P.9\'s old key once', () => {
+  const fake = (seed = {}) => {
+    const data = new Map(Object.entries(seed));
+    return {
+      getItem: (key) => (data.has(key) ? data.get(key) : null),
+      setItem: (key, value) => data.set(key, String(value)),
+      removeItem: (key) => data.delete(key),
+    };
+  };
+
+  const fresh = fake();
+  assert.deepEqual(readMark(fresh), { marks: 0, best: 0 });
+  writeMark(advanceMark(advanceMark({ marks: 0, best: 0 })), fresh);
+  assert.equal(readMark(fresh).marks, 2);
+  assert.equal(readMark(fresh).best, 2);
+  assert.equal(JSON.parse(fresh.getItem(MARK_KEY)).marks, 2);
+
+  const legacy = fake({ [LEGACY_MARK_KEY]: JSON.stringify({ marks: 3, best: 4 }) });
+  assert.deepEqual(readMark(legacy), { marks: 3, best: 4 }, 'P.9 progress is not lost');
+
+  clearMark(legacy);
+  assert.equal(legacy.getItem(LEGACY_MARK_KEY), null);
+  assert.deepEqual(readMark(legacy), { marks: 0, best: 0 });
+
+  const corrupt = fake({ [MARK_KEY]: 'not json' });
+  assert.deepEqual(readMark(corrupt), { marks: 0, best: 0 }, 'a corrupt record reads as zeros');
+  assert.deepEqual(readMark(null), { marks: 0, best: 0 }, 'a blocked store reads as zeros');
+  writeMark({ marks: 1, best: 1 }, null);
+  clearMark(null);
+});
+
+check('P.1: 12 + 5 is 17, "12" + "5" is "125"', () => {
+  assert.equal(typed(LEFT, RIGHT), '125');
+  assert.equal(summed(LEFT, RIGHT), 17);
+  assert.equal(stringSumLab.mark.ladder[0], 17);
+  assert.equal(stringSumLab.pair.wrong, 'typed');
+  assert.equal(stringSumLab.pair.right, 'sum');
+});
+
+check('P.7: milli is 1e-3 and micro is 1e-6 in base units', () => {
+  assert.equal(PREFIXES.milli.factor, 1e-3);
+  assert.equal(PREFIXES.micro.factor, 1e-6);
+  assert.equal(toBase(15, 'milli'), 0.015);
+  assert.equal(toBase(500, 'micro'), 0.0005);
+  assert.equal(toBase(4_700, 'milli'), 4.7, 'the page\'s 4,700 mV is 4.7 V');
+  assert.equal(KILO_EXAMPLE, 4_700, '4.7 kΩ is 4,700 Ω');
+  assert.equal(prefixShiftLab.mark.ladder[0], 0.015);
+});
+
+check('P.8: 50 Hz is 20 ms, and 10 bits counts 0 to 1023', () => {
+  assert.equal(periodMs(50), 20);
+  assert.equal(periodMs(1000), 1);
+  assert.equal(states(8), 256);
+  assert.equal(topOf(8), 255);
+  assert.equal(states(10), 1024);
+  assert.equal(topOf(10), 1023);
+  assert.equal(states(12), 4096);
+  assert.equal(topOf(12), 4095);
+  assert.equal(Number(freqBitsLab.controls[1].start), 10);
+});
+
+check('P.10: cos wants radians, so cos(90) is not zero', () => {
+  assert.ok(Math.abs(toRadians(180) - Math.PI) < 1e-12);
+  assert.ok(Math.abs(cosRight(90)) < 1e-12);
+  assert.equal(cosWrong(90).toFixed(4), '-0.4481');
+  assert.equal(cosRight(90).toFixed(4), '0.0000');
+  assert.ok(Math.abs(rpmToRadPerSecond(30) - Math.PI) < 1e-12);
+  assert.equal(radianConvertLab.pair.wrong, 'cos_wrong');
+});
+
+check('P.12: m g L cos θ is 0.981 N·m at horizontal and 0 at vertical', () => {
+  assert.ok(Math.abs(leverArm(0.25, 0) - 0.25) < 1e-12);
+  assert.ok(Math.abs(gravityTorque(0.4, 0.25, 0) - 0.981) < 1e-9);
+  assert.ok(Math.abs(gravityTorque(0.4, 0.25, 90)) < 1e-12);
+  assert.equal(leverCosLab.mark.ladder[0], 0.981);
+});
+
+check('02.4: a 50:1 box makes reflected inertia 2,500 times smaller', () => {
+  assert.equal(inertiaFactor(50), 2500);
+  assert.equal(reflectedFraction(50), 0.0004);
+  assert.equal(outputSpeed(50, 50), 1);
+  assert.equal(outputSpeed(100, 50), 2);
+  assert.equal(gearSquaredLab.mark.ladder[0], 2500);
+});
+
+check('00.3: +1.962 at horizontal, +0.981 at 60°, +0.000 at vertical', () => {
+  assert.ok(Math.abs(holdTorque(0) - 1.962) < 1e-9);
+  assert.ok(Math.abs(holdTorque(60) - 0.981) < 1e-9);
+  assert.ok(Math.abs(holdTorque(90)) < 1e-12);
+  assert.equal(sinBug(0), 0);
+  assert.equal(formatTorque(0.981), '+0.981');
+  assert.equal(formatTorque(-1), '-1.000');
+  assert.equal(signFlipLab.mark.ladder[0], 1.962);
+});
+
+check('P.5: return hands back 255, print hands back None', () => {
+  assert.equal(clampFn(310), 255);
+  assert.equal(clampFn(-40), 0);
+  assert.equal(clampFn(17), 17);
+  assert.equal(clampFunctionLab.pair.wrong, 'via_print');
+  assert.equal(clampFunctionLab.pair.right, 'via_return');
+  const values = startValues(clampFunctionLab.controls);
+  assert.equal(clampFunctionLab.readouts.find((r) => r.id === 'via_print').text(values), 'None');
+  assert.match(
+    clampFunctionLab.readouts.find((r) => r.id === 'after_math').text({ ...values, returns: false }),
+    /TypeError/
+  );
+});
+
+check('P.6: 3–4–5 is 5.0, and 0.1 + 0.2 is the long tail', () => {
+  assert.equal(distance2d(3, 4), 5);
+  assert.equal(FLOAT_TAIL.toFixed(17), '0.30000000000000004');
+  assert.equal(rounded(FLOAT_TAIL), 0.3);
+  assert.equal(FLOAT_TAIL === 0.3, false);
+  assert.equal(assertGuardLab.pair.wrong, 'strict');
+  assert.equal(assertGuardLab.pair.right, 'tolerant');
+});
+
+check('P.15: 5.0 A computed, 3.2 A commanded', () => {
+  assert.equal(ohmsCurrent(12, 2.4), 5);
+  assert.equal(withinLimit(5, 3.2), 3.2);
+  assert.equal(answerCheckLab.pair.wrong, 'computed');
+  assert.equal(answerCheckLab.pair.right, 'commanded');
+});
+
+check('P.14: 12.0 V is over the DRV8833 on both limits and inside the TB6612', () => {
+  assert.equal(DRIVERS.drv8833.recommended, 10.8);
+  assert.equal(DRIVERS.drv8833.absolute, 11.8);
+  assert.equal(DRIVERS.tb6612.recommended, 13.5);
+  assert.equal(DRIVERS.tb6612.absolute, 15);
+  assert.equal(headroom(12, 10.8).toFixed(1), '-1.2');
+  assert.equal(inRecommended(12, 'tb6612'), true);
+  assert.equal(inRecommended(12, 'drv8833'), false);
+  assert.equal(datasheetLimitsLab.pair.wrong, 'recommended_gap');
+  assert.equal(datasheetLimitsLab.pair.right, 'absolute_gap');
+});
+
+check('01.3: the LDO burns 3.50 W where the buck loses 0.28 W', () => {
+  assert.equal(ldoHeat(12, 5, 0.5), 3.5);
+  assert.equal(buckInputCurrent(12, 5, 0.5).toFixed(3), '0.231');
+  assert.equal(buckHeat(12, 5, 0.5).toFixed(2), '0.28');
+  assert.equal(regulatorBudgetLab.pair.wrong, 'ldo_w');
+  assert.equal(regulatorBudgetLab.pair.right, 'buck_w');
+});
+
+check('04.1: 0.020 rad in 1 ms is 20.0 rad/s, and one count back is 65,535', () => {
+  assert.equal(velocity(0.02, 0.001), 20);
+  assert.equal(wrap16(-1), 65535);
+  assert.equal(wrap16(65536), 0);
+  assert.equal(timerWrapLab.pair.wrong, 'speed_stalled');
+  assert.equal(timerWrapLab.pair.right, 'speed_honest');
+});
+
+check('04.3: 1024 counts is 1.5708 rad, and the photocopy stays 0.0', () => {
+  assert.ok(Math.abs(countsToRadians(1024) - 1.5708) < 1e-4);
+  assert.equal(countsToRadians(0), 0);
+  assert.equal(pointerBoxLab.pair.wrong, 'caller_value');
+  assert.equal(pointerBoxLab.pair.right, 'caller_pointer');
+  const values = startValues(pointerBoxLab.controls);
+  assert.equal(pointerBoxLab.readouts.find((r) => r.id === 'caller_value').text(values), '0.0000');
+});
+
+check('00.1: 1τ is 63.2 %, 5τ is 99.3 %, and 9 V × 0 A is 0 W', () => {
+  assert.equal((stepFraction(1) * 100).toFixed(1), '63.2');
+  assert.equal((stepFraction(5) * 100).toFixed(1), '99.3');
+  assert.equal(lagPower(9, 0), 0);
+  assert.equal(lagPowerLab.pair.wrong, 'at_one');
+  assert.equal(lagPowerLab.pair.right, 'fraction');
+});
+
+check('S0.0: 9 V across 100 Ω is 0.09 A, and an open pipe is 0 A', () => {
+  assert.equal(flowAmps(9, 100, false), 0.09);
+  assert.equal(flowAmps(9, 100, true), 0);
+  assert.equal(powerWatts(9, 0), 0);
+  assert.equal(waterAnalogueLab.pair.wrong, 'power_no_flow');
+  assert.equal(waterAnalogueLab.pair.right, 'power_w');
+});
+
+check('R.1: one count is 0.00153 rad, and 1 ms makes it 1.53 rad/s', () => {
+  assert.equal(radiansPerCount().toFixed(6), '0.001534');
+  assert.equal(rateRadPerSecond(1, 0.001).toFixed(3), '1.534');
+  assert.ok(Math.abs(rateRadPerSecond(1, 0.001) / rateRadPerSecond(1, 1) - 1000) < 1e-9);
+  assert.equal(countRateLab.pair.wrong, 'per_ms');
+  assert.equal(countRateLab.pair.right, 'rate');
+});
+
+check('R.2: left and right bracket the area, the trapezoid is their midpoint', () => {
+  assert.equal(leftSum(1, 0.01), 0.01);
+  assert.ok(Math.abs(rightSum(1, 0.01) - 0.0101) < 1e-12);
+  assert.ok(Math.abs(trapezoidSum(1, 0.01) - 0.01005) < 1e-12);
+  assert.ok(
+    Math.abs(
+      trapezoidSum(1, 0.01) - (leftSum(1, 0.01) + rightSum(1, 0.01)) / 2
+    ) < 1e-12,
+    'the trapezoid is exactly the midpoint of the bracket'
+  );
+  assert.equal(accumulateLab.pair.wrong, 'left');
+  assert.equal(accumulateLab.pair.right, 'trapezoid');
+});
+
+check('R.3: slot one reads qd, slot two is (τ − B·qd)/J', () => {
+  assert.equal(slotOne(1), 1);
+  assert.ok(Math.abs(slotTwo(0.6, 0.1, 0.05, 1) - 10) < 1e-12);
+  assert.ok(Math.abs(swappedRow(0.6, 0.1, 0.05, 1) - 5.5) < 1e-12);
+  assert.equal(stateSlotsLab.pair.wrong, 'swapped');
+  assert.equal(stateSlotsLab.pair.right, 'qddot');
+});
+
+check('R.4: the clean tick scales with dt and the baked one does not', () => {
+  assert.equal(deltaQ(1, 0.001), 0.001);
+  assert.equal(deltaQ(1, 0.01), 0.01);
+  assert.equal(bakedDelta(1), 0.001);
+  assert.equal(deltaQd(1, 0.001, 2), -0.002);
+  assert.equal(matrixTickLab.pair.wrong, 'baked');
+  assert.equal(matrixTickLab.pair.right, 'dq');
+});
+
+check('R.5: 2.0 at 90° is 0.000 + 2.000j, not −0.896', () => {
+  assert.ok(Math.abs(realPart(2, 90)) < 1e-12);
+  assert.ok(Math.abs(imaginaryPart(2, 90) - 2) < 1e-12);
+  assert.equal(mixedCosine(2, 90).toFixed(3), '-0.896');
+  assert.equal(arrowMultiplyLab.pair.wrong, 'mixed');
+  assert.equal(arrowMultiplyLab.pair.right, 'real');
+});
+
+check('07.1: 100 Ω is the floor, not a pass', () => {
+  assert.equal(railMargin(120), 20);
+  assert.equal(railMargin(100), 0);
+  assert.equal(bHat(0.5, 1).toFixed(4), '0.0796');
+  assert.equal(
+    bringupLab.readouts.find((r) => r.id === 'rail_gate').text({ r_rail: 100, i_limit: 0.15, sign_ok: true }),
+    'fail'
+  );
+});
+
+check('02.5: 60 teeth on 2.0 mm pitch is 19.10 mm and 78.5 N', () => {
+  assert.equal(pitchRadiusMm(60).toFixed(2), '19.10');
+  assert.equal(beltForce(1.5, pitchRadiusMm(60)).toFixed(1), '78.5');
+  assert.equal(beltRatio(60), 3);
+  assert.equal(beltGeometryLab.pair.wrong, 'outside_force');
+  assert.equal(beltGeometryLab.pair.right, 'force');
+});
+
+check('00.2: ζ = b / (2√(mk)) classifies 4 / 20 / 40 as ring / stop / crawl', () => {
+  assert.equal(naturalFrequency(1, 100), 10);
+  assert.equal(criticalDamping(1, 100), 20);
+  assert.ok(Math.abs(dampingRatio(1, 100, 4) - 0.2) < 1e-12);
+  assert.equal(dampingRatio(1, 100, 20), 1);
+  assert.equal(dampingRatio(1, 100, 40), 2);
+  assert.equal(regimeOf(0.2), 'underdamped');
+  assert.equal(regimeOf(1), 'critically_damped');
+  assert.equal(regimeOf(2), 'overdamped');
+  assert.equal(ratioWithoutTwo(1, 100, 20), 2, 'the missing 2 doubles the same damper');
+  assert.equal(massSpringLab.mark.ladder[0], 1);
+  assert.equal(massSpringLab.pair.wrong, 'zeta_no_two');
+  assert.equal(massSpringLab.pair.right, 'zeta');
+});
+
+check('01.4: fc = 1/(2πRC) is 159.15 Hz and keeps 0.00796 at 20 kHz, not 0.0499', () => {
+  assert.ok(Math.abs(tauSeconds(1000, 1) - 0.001) < 1e-15);
+  assert.equal(cutoffHz(1000, 1).toFixed(2), '159.15');
+  assert.equal(cutoffNoTwoPi(1000, 1), 1000);
+  assert.equal(gainAt(20000, cutoffHz(1000, 1)).toFixed(4), '0.0080');
+  assert.equal(gainAt(20000, cutoffNoTwoPi(1000, 1)).toFixed(4), '0.0499');
+  assert.equal(gainAt(2, cutoffHz(1000, 1)).toFixed(4), '0.9999');
+  assert.equal(rcFilterLab.pair.wrong, 'gain_no_2pi');
+  assert.equal(rcFilterLab.pair.right, 'gain');
+});
+
+check('03.2: 4 pole pairs turn 30° into 120°, and the mechanical drive leaves 0° of lead', () => {
+  assert.equal(electricalAngle(30, 4), 120);
+  assert.equal(wrapDegrees(400), 40);
+  assert.equal(torqueFraction(90), 1);
+  assert.ok(Math.abs(torqueFraction(0)) < 1e-12);
+  assert.equal(leadMechanicalDeg(30, 4), 0, '90° − (Np − 1)·θm at 30° and 4 pairs');
+  assert.ok(Math.abs(torqueFraction(leadMechanicalDeg(30, 4))) < 1e-12);
+  assert.ok(Math.abs(torqueFraction(90) * 100 - 100) < 1e-12);
+  assert.equal(electricalAngleLab.pair.wrong, 'torque_mech');
+  assert.equal(electricalAngleLab.pair.right, 'torque');
+});
+
+check('05.1: Kp = 4 sags 0.150 rad, overshoots 0.372 unclamped and 0.047 clamped', () => {
+  assert.ok(Math.abs(sagRad(4) - 0.15) < 1e-12);
+  assert.ok(Math.abs(overshootUnclamped(4) - 0.372) < 1e-12);
+  assert.ok(Math.abs(overshootClamped(4) - 0.047) < 1e-12);
+  assert.ok(Math.abs(windupRatio(4) - 0.372 / 0.047) < 1e-12);
+  assert.ok(windupRatio(4) > 7.9 && windupRatio(4) < 8, 'the page says nearly 8×');
+  assert.equal(pidWindupLab.mark.ladder[0], 0.15);
+  assert.equal(pidWindupLab.pair.wrong, 'overshoot_unclamped');
+  assert.equal(pidWindupLab.pair.right, 'overshoot_clamped');
+});
+
+check('05.2: α = 0.98 at 100 Hz is τc = 0.490 s, and a 1 °/s bias stops at 0.49°', () => {
+  assert.ok(Math.abs(crossoverSeconds(0.98, 0.01) - 0.49) < 1e-12);
+  assert.ok(Math.abs(biasErrorDeg(0.98, 0.01, 1) - 0.49) < 1e-12);
+  assert.equal(gyroDriftDeg(1), 60);
+  assert.ok(crossoverSeconds(0.9, 0.01) < crossoverSeconds(0.98, 0.01), 'a smaller α trusts the accelerometer more');
+  assert.equal(complementaryImuLab.mark.ladder[0], 0.49);
+  assert.equal(complementaryImuLab.pair.wrong, 'drift');
+  assert.equal(complementaryImuLab.pair.right, 'bias_error');
+});
+
+check('06.1: the cubic covers 0.156 at a quarter of the move where the line has 0.250', () => {
+  assert.ok(Math.abs(cubicFraction(0.25) - 0.15625) < 1e-12);
+  assert.equal(cubicFraction(0.5), 0.5);
+  assert.ok(Math.abs(cubicFraction(0.75) - 0.84375) < 1e-12);
+  assert.ok(Math.abs(positionRad(0.25, 1) - 0.15625) < 1e-12);
+  assert.ok(Math.abs(velocityRadPerSecond(0.25, 1, 0.5) - 2.25) < 1e-12);
+  assert.ok(Math.abs(peakVelocityRadPerSecond(1, 0.5) - 3) < 1e-12);
+  assert.equal(cubicTrajectoryLab.pair.wrong, 'linear');
+  assert.equal(cubicTrajectoryLab.pair.right, 'cubic');
+});
+
+check('01.1: 0.5 mH at 2 A off in 2 µs is 512.0 V, clamped to 12.7 V, 80.0 mW on', () => {
+  assert.equal(inductiveKickbackVoltage(12, 0.5e-3, 2, 2e-6), 512);
+  assert.equal(inductiveKickbackVoltage(12, 0.5e-3, 2, 0), 0, 'a zero switch time refuses to answer');
+  assert.ok(Math.abs(clampVoltage(12) - 12.7) < 1e-12);
+  assert.ok(Math.abs(conductionLoss(2, 0.02) - 0.08) < 1e-12);
+  assert.equal(conductionLoss(0, 0.02), 0);
+  assert.equal(flybackSpikeLab.pair.wrong, 'spike');
+  assert.equal(flybackSpikeLab.pair.right, 'clamp');
+});
+
+check('S0.6: 10 kΩ and 100 µF is τ = 1.00 s — 63.2 % / 86.5 % / 99.3 %', () => {
+  assert.ok(Math.abs(timeConstant(10_000, 100) - 1) < 1e-12);
+  assert.equal(chargeFraction(1, 1).toFixed(4), '0.6321');
+  assert.equal(chargeFraction(2, 1).toFixed(4), '0.8647');
+  assert.equal(chargeFraction(5, 1).toFixed(4), '0.9933');
+  assert.equal(chargeFraction(0, 1), 0);
+  assert.equal(linearEstimate(1, 1), 1, 'the straight line claims 100 % at one τ');
+  assert.ok(Math.abs(capacitorVolts(5, 1, 5) - 4.9663) < 1e-4);
+  assert.equal(rcChargeLab.pair.wrong, 'linear');
+  assert.equal(rcChargeLab.pair.right, 'curve');
+});
+
+check('08.1: 20 B at 1 kHz needs 200 kbit/s and drops 412 frames at 115.2 kbaud', () => {
+  assert.equal(requiredBitsPerSecond(20, 1000), 200000);
+  assert.equal(droppedFrames(115200), 412);
+  assert.equal(droppedFrames(230400), 0);
+  assert.equal(droppedFrames(500000), 0);
+  assert.equal(capstoneFrameLab.pair.wrong, 'dropped_slow');
+  assert.equal(capstoneFrameLab.pair.right, 'dropped_fast');
+});
+
+check('every card\'s readings stay finite across its own controls', () => {
+  const cards = {
+    'string-sum': stringSumLab,
+    'prefix-shift': prefixShiftLab,
+    'freq-bits': freqBitsLab,
+    'radian-convert': radianConvertLab,
+    'lever-cos': leverCosLab,
+    'gear-squared': gearSquaredLab,
+    'sign-flip': signFlipLab,
+    'order-of-operations': orderOfOperationsLab,
+    'clamp-command': clampCommandLab,
+    'clamp-function': clampFunctionLab,
+    'assert-guard': assertGuardLab,
+    'answer-check': answerCheckLab,
+    'datasheet-limits': datasheetLimitsLab,
+    'regulator-budget': regulatorBudgetLab,
+    'timer-wrap': timerWrapLab,
+    'pointer-box': pointerBoxLab,
+    'lag-power': lagPowerLab,
+    'water-analogue': waterAnalogueLab,
+    'count-rate': countRateLab,
+    accumulate: accumulateLab,
+    'state-slots': stateSlotsLab,
+    'matrix-tick': matrixTickLab,
+    'arrow-multiply': arrowMultiplyLab,
+    bringup: bringupLab,
+    'belt-geometry': beltGeometryLab,
+    'mass-spring': massSpringLab,
+    'rc-filter': rcFilterLab,
+    'electrical-angle': electricalAngleLab,
+    'pid-windup': pidWindupLab,
+    'complementary-imu': complementaryImuLab,
+    'cubic-trajectory': cubicTrajectoryLab,
+    'capstone-frame': capstoneFrameLab,
+    'flyback-spike': flybackSpikeLab,
+    'rc-charge': rcChargeLab,
+  };
+
+  const points = (control) => {
+    if (control.kind === 'range') return [control.min, control.start, control.max];
+    if (control.kind === 'toggle') return [false, true];
+    return control.options.map((option) => option.value);
+  };
+
+  const combos = (controls, index = 0, values = {}) => {
+    if (index === controls.length) return [{ ...values }];
+    const control = controls[index];
+    return points(control).flatMap((point) =>
+      combos(controls, index + 1, { ...values, [control.id]: point })
+    );
+  };
+
+  for (const [name, spec] of Object.entries(cards)) {
+    const ids = new Set(spec.readouts.map((readout) => readout.id));
+    if (spec.pair) {
+      const wrong = spec.readouts.find((readout) => readout.id === spec.pair.wrong);
+      const right = spec.readouts.find((readout) => readout.id === spec.pair.right);
+      assert.ok(
+        combos(spec.controls).some((values) => wrong.text(values) !== right.text(values)),
+        `${name}: the pair prints the same number on both sides at every setting`
+      );
+    }
+    if (spec.mark) {
+      assert.ok(ids.has(spec.mark.readout), `${name}: the mark names no readout`);
+      assert.ok(spec.mark.ladder.length > 0, `${name}: an empty ladder is not a chase`);
+      assert.ok(spec.mark.tolerance > 0, `${name}: a zero tolerance cannot be hit`);
+    }
+    if (spec.pair) {
+      assert.ok(
+        spec.readouts.some((readout) => readout.id === spec.pair.wrong),
+        `${name}: the pair names a missing wrong readout`
+      );
+      assert.ok(
+        spec.readouts.some((readout) => readout.id === spec.pair.right),
+        `${name}: the pair names a missing right readout`
+      );
+    }
+    for (const values of combos(spec.controls)) {
+      for (const readout of spec.readouts) {
+        const text = readout.text(values);
+        assert.equal(typeof text, 'string', `${name}/${readout.id} did not print a string`);
+        assert.ok(!/NaN|Infinity|undefined/.test(text), `${name}/${readout.id} printed ${text}`);
+      }
+      if (spec.mark) {
+        assert.ok(Number.isFinite(spec.mark.value(values)), `${name}: the mark read a broken value`);
+      }
+      if (spec.verdict) {
+        assert.equal(typeof spec.verdict(values), 'string', `${name}: the verdict is not a line`);
+      }
+    }
+  }
+});
+
+check('the new pages still say the numbers their cards print', () => {
+  const read = (page) => fs.readFileSync(path.join(root, page), 'utf8');
+  const section = (page) => {
+    const text = read(page);
+    return text.slice(text.indexOf('### Bridge Notes'));
+  };
+
+  const p1 = section('track-p/P.1-variables-and-data-types.md');
+  for (const token of ['12', '5', '17', '125']) assert.ok(p1.includes(token), `P.1 lost ${token}`);
+
+  const p7 = section('track-p/P.7-si-units-and-metric-prefixes.md');
+  for (const token of ['15', '500', '1{,}000', '1{,}000{,}000', '4{,}700']) {
+    assert.ok(p7.includes(token), `P.7 lost ${token}`);
+  }
+
+  const p8 = section('track-p/P.8-frequency-and-binary-bits.md');
+  for (const token of ['50', '20', '255', '1023', '4095']) {
+    assert.ok(p8.includes(token), `P.8 lost ${token}`);
+  }
+
+  const p10 = section('track-p/P.10-radians-and-right-triangle-trig.md');
+  for (const token of ['3.1416', '6.2832', 'math.radians']) {
+    assert.ok(p10.includes(token), `P.10 lost ${token}`);
+  }
+
+  const p12 = section('track-p/P.12-forces-and-lever-torque.md');
+  for (const token of ['9.81', 'm \\cdot g \\cdot L', 'L\\cos\\theta', '0.0']) {
+    assert.ok(p12.includes(token), `P.12 lost ${token}`);
+  }
+
+  const p24 = section('02-mechanics-kinematics-dynamics/02.4-rotational-inertia-and-gear-ratios.md');
+  for (const token of ['N^2', 'I_{\\text{load}}', 'N_{\\text{out}}']) {
+    assert.ok(p24.includes(token), `02.4 lost ${token}`);
+  }
+
+  const p003 = section('00-foundations/00.3-modeling-discipline-and-sanity-checks.md');
+  for (const token of ['\\cos(0)', '\\sin(0)', '+m', '0.0']) {
+    assert.ok(p003.includes(token), `00.3 lost ${token}`);
+  }
+});
+
+check('the batch-2 pages still say the numbers their cards print', () => {
+  const section = (page) => {
+    const text = fs.readFileSync(path.join(root, page), 'utf8');
+    return text.slice(text.indexOf('### Bridge Notes'));
+  };
+  const pins = {
+    'track-p/P.5-functions-and-while-loops.md': ['255', 'None', 'TypeError', '20'],
+    'track-p/P.6-modules-and-automated-asserts.md': ['3.0', '4.0', '5.0', '0.30000000000000004'],
+    'track-p/P.15-analysis-workflow-given-unknown-model-check-answer.md': ['12', '2.4', '5.0', '3.2'],
+    'track-p/P.14-reading-a-datasheet-table.md': ['2.7', '10.8', '11.8', '4.5', '13.5', '15.0'],
+    '01-electronics-and-power/01.3-power-regulators-and-power-budget.md': [
+      '12.0',
+      '5.0',
+      '0.50',
+      '3.50',
+      '0.231',
+      '0.28',
+    ],
+    '04-embedded-and-realtime/04.1-c-types-and-hardware-timer-isr.md': [
+      '0.020',
+      '0.0010',
+      '20.0',
+      '100.0',
+      '0xFFFF',
+    ],
+    '04-embedded-and-realtime/04.3-structs-and-pointers-labeled-boxes.md': [
+      '4096.0f',
+      '6.2831853f',
+      '0.0',
+      '4',
+    ],
+    '00-foundations/00.1-effort-flow-and-first-order-lag.md': ['63.2', '99.3'],
+    'stage-0/S0.0-why-electricity-is-like-flow.md': ['0 Pa', '0 V', 'Effort', 'Flow'],
+    'ramp/R.1-rate-of-change.md': ['4096'],
+    'ramp/R.2-accumulation.md': ['Tustin', 'v * dt', 'dt'],
+    'ramp/R.3-state-vectors.md': ['qd', 'Ax + Bu'],
+    'ramp/R.4-matrix-updates.md': ['2 × 2', '2 × 1', '1 kHz', '100 Hz'],
+    'ramp/R.5-phasors.md': ['abs', 'cmath.phase', 'radians'],
+    '07-systems-hil-and-production/07.1-safe-bringup-and-sine-sweep-sysid.md': ['100', '0.15', 'sign'],
+    '02-mechanics-kinematics-dynamics/02.5-bearings-belts-and-3d-printing.md': ['2.0', 'r_p'],
+  };
+  for (const [page, tokens] of Object.entries(pins)) {
+    const text = section(page);
+    for (const token of tokens) {
+      assert.ok(text.includes(token), `${page} lost ${token}`);
+    }
+  }
+});
+
+check('the batch-3 pages still say the numbers their cards print', () => {
+  const section = (page) => {
+    const text = fs.readFileSync(path.join(root, page), 'utf8');
+    return text.slice(text.indexOf('### Bridge Notes'));
+  };
+  const pins = {
+    '00-foundations/00.2-mass-spring-damper-oscillations.md': [
+      '2\\sqrt{m k}',
+      'zeta=0.20',
+      'zeta=1.00',
+      'zeta=2.00',
+      'underdamped',
+      'critically_damped',
+      'overdamped',
+    ],
+    '01-electronics-and-power/01.4-grounding-and-rc-lowpass-filters.md': [
+      '159.15',
+      '1.0\\text{ ms}',
+      '20{,}000',
+      '0.008',
+    ],
+    '03-sensors-and-actuators/03.2-three-phase-bldc-and-electrical-angle.md': [
+      'N_p',
+      '90',
+      '100\\%',
+      '0\\%',
+    ],
+    '05-control-and-estimation/05.1-pid-virtual-spring-damper-and-anti-windup.md': [
+      '0.60',
+      '1.20',
+      '0.150',
+      '0.372',
+      '0.047',
+    ],
+    '05-control-and-estimation/05.2-complementary-imu-sensor-fusion.md': [
+      '0.010',
+      '0.98',
+      '0.490',
+    ],
+    '06-robotics-and-autonomy/06.1-cubic-trajectories-and-compliant-joints.md': [
+      '3s^2 - 2s^3',
+      '2.0',
+      '0.000',
+    ],
+    '08-capstone-projects/08.1-tier1-2dof-compliant-arm-capstone.md': [
+      '412',
+      '500',
+      '200',
+      '0.91',
+      '2.5',
+    ],
+    '01-electronics-and-power/01.1-mosfet-inductor-flyback.md': [
+      '512.0',
+      '12.7',
+      '80.0',
+      '0.02',
+    ],
+    'stage-0/S0.6-capacitors-and-decoupling.md': [
+      '1.00',
+      '3.16',
+      '4.32',
+      '4.97',
+      '63.2',
+    ],
+  };
+  for (const [page, tokens] of Object.entries(pins)) {
+    const text = section(page);
+    for (const token of tokens) {
+      assert.ok(text.includes(token), `${page} lost ${token}`);
+    }
+  }
 });
 
 // The manifest half: every lesson listed for a visual must have a Bridge Notes section to sit under,

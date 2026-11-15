@@ -23,7 +23,7 @@
 {"t":"h","l":4,"x":"Micro focus: an assert that explains"},
 {"t":"anchor","id":"micro-assert-message"},
 {"t":"p","x":"An assert can carry its reason: `assert condition, \"message\"` stays silent when it passes, and the message is shown with the `AssertionError` when it fails. Write the message as the rule that broke, such as `assert cmd <= 255, \"command above the limit\"`."},
-{"t":"h","l":3,"x":"Bridge Notes"},
+{"t":"h","l":3,"x":"Bridge Notes","v":"assert-guard"},
 {"t":"p","x":"When calculating the straight-line distance from a robot's shoulder joint at $(0, 0)$ to a target at $(x, y)$, we use the Pythagorean theorem $d = \\sqrt{x^2 + y^2}$. Instead of raising to the $0.5$ power, we load Python's built-in **`math` module** at the top of our file with `import math` and call `math.sqrt((x ** 2) + (y ** 2))`."},
 {"t":"p","x":"How do professional robotics engineers make sure a bug never slips into a formula? They write **unit tests** right below their functions using **`assert`**. For example, we know a $3\\text{–}4\\text{–}5$ right triangle ($x = 3.0\\text{ m}, y = 4.0\\text{ m}$) has hypotenuse $\\sqrt{3^2 + 4^2} = \\sqrt{25} = 5.0\\text{ m}$. Writing:"},
 {"t":"code","lang":"python","text":"assert distance_2d(3.0, 4.0) == 5.0"},

@@ -14,7 +14,14 @@
  * numbers is the failure mode this file is trying to make hard.
  */
 
-/** One control a lab offers: a slider over a real range, or a switch the section talks about. */
+/**
+ * One control a lab offers: a slider over a real range, a switch the section talks about, or a
+ * short set of named states (`8 / 10 / 12 bits`, `DRV8833 / TB6612`, `115.2k / 230.4k / 500k`).
+ *
+ * A choice is not a slider with names: a beginner should not have to drag past 9 to reach 10 bits,
+ * and a screen reader should hear three radios rather than one thousand steps. It renders as a real
+ * radio group, so arrow keys move between the states for free.
+ */
 export type LabControl =
   | {
       kind: 'range';
@@ -31,6 +38,13 @@ export type LabControl =
       id: string;
       label: string;
       start: boolean;
+    }
+  | {
+      kind: 'choice';
+      id: string;
+      label: string;
+      options: readonly { value: string; label: string }[];
+      start: string;
     };
 
 /** What the controls currently hold, by control id. */
@@ -64,7 +78,48 @@ export interface LabScale {
   marks: { id: string; at: (values: LabValues) => number; caption: (values: LabValues) => string }[];
 }
 
-/** The whole lab: controls, the drawn scale, and the readings. */
+/**
+ * A target the learner can hit by moving the controls (`useMarkChase.ts`).
+ *
+ * P.9's dials proved the mechanic: a mark is drawn, sweeping onto it flashes the card and advances a
+ * five-mark chase. The dial was the only part specific to P.9; the ladder, the tolerance and the
+ * sound belong to every lab whose claim is a number, so they are declared here and the shell draws
+ * them once.
+ *
+ * `ladder` holds the page's own numbers in the order it prints them, so the chase is a tour of the
+ * section's worked examples rather than five arbitrary positions. Each landing tightens the
+ * tolerance, which is the whole game: the first hit is easy, the fifth has to be aimed.
+ */
+export interface LabMark {
+  /** Which readout this mark belongs to; the shell puts the target beside it. */
+  readout: string;
+  /** The number the mark is on, read from the same functions the readout prints. */
+  value: (values: LabValues) => number;
+  /** The section's numbers, in the order it prints them. */
+  ladder: number[];
+  /** Absolute tolerance for the first mark; the ladder tightens it to a fifth by the fifth hit. */
+  tolerance: number;
+  /** How the target is written on the card. Defaults to two decimals. */
+  format?: (target: number) => string;
+}
+
+/**
+ * Two readings the section warns about, drawn side by side.
+ *
+ * The rule for a Bridge visual is that a warned-about mistake is shown, not described. A pair is the
+ * cheapest way to obey it: the same controls feed both numbers, so the wrong one is not a warning in
+ * prose but a number the learner can watch move away.
+ */
+export interface LabPair {
+  /** The readout id of the version the section warns about. */
+  wrong: string;
+  /** The readout id of the version the section wants. */
+  right: string;
+  wrongLabel?: string;
+  rightLabel?: string;
+}
+
+/** The whole lab: controls, the drawn scale, the readings, and what to aim at. */
 export interface LabSpec {
   /** The `data-testid` prefix for the card and everything in it. */
   testid: string;
@@ -74,6 +129,8 @@ export interface LabSpec {
   controls: LabControl[];
   scale?: LabScale;
   readouts: LabReadout[];
+  pair?: LabPair;
+  mark?: LabMark;
   verdict?: (values: LabValues) => string;
 }
 
@@ -93,6 +150,12 @@ export function numberAt(values: LabValues, id: string, fallback = 0): number {
 /** A toggle control's value. */
 export function toggleAt(values: LabValues, id: string): boolean {
   return values[id] === true;
+}
+
+/** A choice control's value, and the first option when the value is missing or not one of them. */
+export function choiceAt(values: LabValues, id: string, fallback: string): string {
+  const value = values[id];
+  return typeof value === 'string' && value.length > 0 ? value : fallback;
 }
 
 /**

@@ -26,7 +26,7 @@
 {"t":"h","l":4,"x":"Micro focus: place values double"},
 {"t":"anchor","id":"micro-place-values"},
 {"t":"p","x":"Read binary with its place values: the place values are `1, 2, 4, 8, ...`, doubling to the left, and a 1 adds that value while a 0 adds nothing. So 1011 is 8 + 0 + 2 + 1 = 11, and 1000 is 8."},
-{"t":"h","l":3,"x":"Bridge Notes"},
+{"t":"h","l":3,"x":"Bridge Notes","v":"freq-bits"},
 {"t":"p","x":"Two sets of numbers appear in almost every microcontroller program you will ever write:"},
 {"t":"p","x":"First, **frequency ($f$)** and **period ($T$)** are two ways of describing the same clock tick:"},
 {"t":"math","tex":"T = \\frac{1}{f}, \\qquad f = \\frac{1}{T}"},

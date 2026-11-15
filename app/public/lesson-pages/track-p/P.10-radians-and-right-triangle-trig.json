@@ -23,7 +23,7 @@
 {"t":"h","l":4,"x":"Micro focus: a point back to an angle"},
 {"t":"anchor","id":"micro-atan2"},
 {"t":"p","x":"To recover a joint angle from a target, use `math.atan2(y, x)` (which takes `y` first, then `x`) and convert the result with `math.degrees(rad)` for a display. It returns radians, handles x = 0, and keeps the sign of every quadrant."},
-{"t":"h","l":3,"x":"Bridge Notes"},
+{"t":"h","l":3,"x":"Bridge Notes","v":"radian-convert"},
 {"t":"p","x":"Every programming language (`Python`, `C`, `C++`, `MATLAB`) expects angles inside `cos()` and `sin()` to be in **radians**, never degrees! A radian measures an angle by the distance walked around a unit circle of radius $r = 1$: walking halfway around the circle ($180^\\circ$) covers $\\pi \\approx 3.1416\\text{ radians}$, and walking a full turn ($360^\\circ$) covers $2\\pi \\approx 6.2832\\text{ radians}$. Use these two conversion rules constantly:"},
 {"t":"ol","items":[{"x":"**Degrees $\\leftrightarrow$ Radians:** $\\text{rad} = \\text{deg} \\times \\frac{\\pi}{180}$ (`math.radians(deg)`), and $\\text{deg} = \\text{rad} \\times \\frac{180}{\\pi}$ (`math.degrees(rad)`).","d":0},{"x":"**`RPM` $\\rightarrow$ `rad/s` (Angular Velocity $\\omega$):** Motor datasheets list rotational speed in **Revolutions Per Minute (`RPM`)**, whereas physics equations need **radians per second (`rad/s`)**. Since $1\\text{ rev} = 2\\pi\\text{ rad}$ and $1\\text{ minute} = 60\\text{ s}$:","d":0}]},
 {"t":"math","tex":"\\omega_{\\text{rad/s}} = \\text{RPM} \\times \\frac{2\\pi}{60}"},

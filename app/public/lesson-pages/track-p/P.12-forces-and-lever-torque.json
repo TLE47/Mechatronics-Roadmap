@@ -23,7 +23,7 @@
 {"t":"h","l":4,"x":"Micro focus: torque and the lever arm"},
 {"t":"anchor","id":"micro-torque"},
 {"t":"p","x":"Torque is force times distance, and for a tip payload the **perpendicular lever arm** is the horizontal reach $r_\\perp = L\\cos\\theta$, giving $\\tau_{\\text{grav}} = m \\cdot g \\cdot L \\cdot \\cos(\\theta)$. It is largest at 0° (arm horizontal) and zero at 90° (weight over the pivot)."},
-{"t":"h","l":3,"x":"Bridge Notes"},
+{"t":"h","l":3,"x":"Bridge Notes","v":"lever-cos"},
 {"t":"p","x":"We use **one consistent angle convention** for robot arm links everywhere in this roadmap:"},
 {"t":"ul","items":[{"x":"Arm angle $\\theta$ is always measured upward from the **horizontal $x$-axis** ($\\theta = 0^\\circ$ when stretched out horizontally; $\\theta = 90^\\circ$ when pointing straight up).","d":0},{"x":"Gravity pulls a tip payload $m$ straight down with vertical weight force $W = m \\cdot g$ ($g = 9.81\\text{ m/s}^2$).","d":0},{"x":"By definition, the **lever arm ($r_\\perp$)** is the perpendicular horizontal distance from the joint pivot to that vertical line of gravity force—which you already calculated in Lesson P.10 as the horizontal coordinate $x = L\\cos\\theta$!","d":0}]},
 {"t":"p","x":"Multiplying the downward weight $W = mg$ by the horizontal lever arm $r_\\perp = L\\cos\\theta$ gives the gravity torque formula used across the entire roadmap:"},
