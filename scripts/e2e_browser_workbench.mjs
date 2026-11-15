@@ -1533,36 +1533,35 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       );
 
       // The dock is a shelf, not a scroller: one row of module names with their one number, the
-      // panel a press opens under it, and the page chrome folded to a short row and an icon rail.
+      // panel a press opens under it — and the page's own mode bar and rail are two of the modules,
+      // so the page above the dock carries neither.
       const shelf = await page.evaluate(() => {
         const dock = document.querySelector('[data-testid="compact-dock"]');
         const editor = document.querySelector('[data-testid="editor-panel"]');
-        const rail = document.querySelector('[data-testid="tab-rail-nav"]');
         const modeBar = document.querySelector('[data-chrome="mode-bar"]');
+        const rail = document.querySelector('[data-testid="tab-rail-nav"]');
         const box = dock.getBoundingClientRect();
         return {
           tabs: [...dock.querySelectorAll('[role="tab"]')].map((b) => b.getAttribute('data-testid')),
           closed: Math.round(box.height),
           scrolls: dock.scrollHeight > dock.clientHeight + 2,
           above: box.top < editor.getBoundingClientRect().top,
-          railWidth: Math.round(rail.getBoundingClientRect().width),
-          modeHeight: Math.round(modeBar.getBoundingClientRect().height),
+          modeBarHidden: !modeBar || getComputedStyle(modeBar).display === 'none',
+          railHidden: !rail || getComputedStyle(rail).display === 'none',
           briefHidden: document.querySelector('[data-testid="compact-panel-brief"]').hidden,
-          toggleHidden: getComputedStyle(document.querySelector('[data-testid="btn-rail-toggle"]')).display === 'none',
         };
       });
       assert.deepEqual(
         shelf.tabs,
-        ['compact-tab-run', 'compact-tab-brief', 'compact-tab-hints', 'compact-tab-report'],
-        'the dock must be one row of the four modules, each with its summary'
+        ['compact-tab-run', 'compact-tab-brief', 'compact-tab-hints', 'compact-tab-report', 'compact-tab-mode', 'compact-tab-tabs'],
+        'the dock must be one row of the six modules, each with its summary'
       );
       assert.ok(shelf.closed <= 44, `a closed dock is a strip (${shelf.closed} px)`);
       assert.equal(shelf.scrolls, false, 'nothing scrolls inside the dock; the page does');
       assert.equal(shelf.above, true, 'the dock sits on top of the editor, not under it');
       assert.equal(shelf.briefHidden, true, 'every module starts closed');
-      assert.ok(shelf.railWidth <= 72, `the simulator tabs fold to their icon column (${shelf.railWidth} px)`);
-      assert.ok(shelf.modeHeight <= 46, `the mode bar is one short row (${shelf.modeHeight} px)`);
-      assert.equal(shelf.toggleHidden, true, 'Compact keeps the rail folded, so its toggle stands down');
+      assert.equal(shelf.modeBarHidden, true, 'the mode bar is not drawn above the dock twice');
+      assert.equal(shelf.railHidden, true, 'nor is the simulator rail');
 
       await page.getByTestId('compact-tab-hints').click();
       await page.getByTestId('compact-panel-hints').waitFor({ state: 'visible', timeout: 3000 });
@@ -1585,6 +1584,30 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         false,
         'the same press closes the module again'
       );
+
+      // The page's own controls survive the fold as dock modules: the mode switch flips the same
+      // state the mode bar used, and the simulator tabs are all there as chips.
+      await page.getByTestId('compact-tab-mode').click();
+      await page.getByTestId('compact-mode-row').waitFor({ state: 'visible', timeout: 3000 });
+      await page.getByTestId('compact-mode-advanced').click();
+      assert.equal(
+        await page.getByTestId('btn-mode-advanced').getAttribute('aria-pressed'),
+        'true',
+        'the dock’s mode switch is the page’s mode switch, not a copy'
+      );
+      await page.getByTestId('compact-mode-beginner').click();
+      await page.getByTestId('compact-tab-tabs').click();
+      await page.getByTestId('compact-tab-chips').waitFor({ state: 'visible', timeout: 3000 });
+      const chips = await page.evaluate(() => {
+        const list = document.querySelector('[data-testid="compact-tab-chips"]');
+        return {
+          count: list ? list.querySelectorAll('[data-testid^="compact-rail-"]').length : 0,
+          current: !!list?.querySelector('[aria-current="page"]'),
+        };
+      });
+      assert.ok(chips.count >= 5, `the simulator tabs are chips in the dock (${chips.count})`);
+      assert.equal(chips.current, true, 'the open tab is marked among them');
+      await page.getByTestId('compact-tab-tabs').click();
 
       // It is a preset like the others: the shortcut reaches it and a reload remembers it.
       await page.reload();

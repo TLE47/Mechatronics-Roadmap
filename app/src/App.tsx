@@ -337,6 +337,7 @@ import { readStudy } from './studyNotes';
 import { readCardList } from './studyCards';
 import { readSittings } from './sittingClock';
 import { LAYOUT_CHANGE_EVENT, readLayout } from './workspaceLayout';
+import { CompactChromeContext, type CompactChrome } from './compactChrome';
 
 /**
  * The one footer, so the palette page and the workbench cannot drift apart. The token reference is
@@ -1610,6 +1611,32 @@ export const App: React.FC = () => {
       : WORKBENCH_TABS
   ).filter((t) => microEnabled || t.id !== 'tab-micro');
 
+  // The dock's `Mode` and `Tabs` modules (`runner/CompactPageChrome.tsx`): the page's own controls,
+  // typed once here, so the folded rail and the dock cannot disagree about which tab is open.
+  const compactChromeData: CompactChrome | null = compactChrome
+    ? {
+        mode: viewMode,
+        onMode: setViewMode,
+        tabs: visibleTabs.map((tab) => {
+          const Icon = tab.Icon;
+          return {
+            id: tab.id,
+            label: viewMode === 'beginner' ? tab.beginnerLabel : tab.technicalLabel,
+            active: activeTab === tab.id,
+            icon: <Icon className="h-3.5 w-3.5" aria-hidden="true" />,
+            onSelect: () => setActiveTab(tab.id),
+          };
+        }),
+        counts: {
+          verified: totalVerifiedLessons,
+          lessons: PYTHON_LESSONS.length,
+          marked: totalCompletedLessons,
+          milestones: totalCompletedMilestones,
+          milestoneTotal: allMilestoneIds.length,
+        },
+      }
+    : null;
+
   // The phone picker lists every tab, not the rail's filtered subset: on a 390 px screen the rail
   // is one row and a beginner's five-tab view would leave seven labs with no way in. The mode still
   // decides the words, which is the promise the mode switch makes.
@@ -2265,6 +2292,7 @@ export const App: React.FC = () => {
         {/* Main Tab Pane. One Suspense boundary around the pane: only one tab is on screen, and every
             lazy tab's chunk is fetched the first time it is opened, so the fallback is a panel rather
             than a page. The runner is static, so the opening screen never shows it. */}
+        <CompactChromeContext.Provider value={compactChromeData}>
         <main id="main" tabIndex={-1} className="flex-1 min-w-0 p-3.5 sm:p-5 max-w-[1540px] w-full mx-auto space-y-4 outline-none">
           <React.Suspense
             fallback={
@@ -2325,6 +2353,7 @@ export const App: React.FC = () => {
           {renderTab(activeTab, workbenchTabContext)}
           </React.Suspense>
         </main>
+        </CompactChromeContext.Provider>
       </div>
 
       {/* Cheat sheet modal */}

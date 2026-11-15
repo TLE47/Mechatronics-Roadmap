@@ -90,6 +90,7 @@ import { LessonAmbience } from './runner/LessonAmbience';
 import { PausedBar } from './runner/PausedBar';
 import { ResultsColumn } from './runner/ResultsColumn';
 import { CompactShelf } from './runner/CompactShelf';
+import { CompactModeRow, CompactTabChips } from './runner/CompactPageChrome';
 import { DraftHistoryPanel } from './runner/DraftHistoryPanel';
 import { BreakpointPanel } from './runner/BreakpointPanel';
 import { RunnerToolbar } from './runner/RunnerToolbar';
@@ -2294,7 +2295,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     />
   );
 
-  // The report column, written once: the dock's last module in Compact, the column beside the editor otherwise.
+  // The report column: a module in Compact, the column beside the editor otherwise.
   const resultsColumn = (
             <ResultsColumn
             split={{
@@ -2887,6 +2888,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     meta: passStatus === 'untested' ? 'not run' : passStatus.replace(/_/g, ' '),
                     body: resultsColumn,
                   },
+                  { id: 'mode', label: 'Mode', body: <CompactModeRow /> },
+                  { id: 'tabs', label: 'Tabs', body: <CompactTabChips /> },
                 ]}
               />
             ) : (
@@ -2897,10 +2900,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         </div>
       </div>
 
-      {/* The verdict is announced, not only coloured: a screen reader hears the outcome and the
-          failing line itself, rather than an instruction to go and find a coloured one. The words
-          come from `app/src/announce.ts`, which is a pure function and pinned by `npm run
-          test:announce`. */}
+      {/* The verdict is announced, not only coloured (`app/src/announce.ts`, `test:announce`). */}
       <p className="sr-only" role="status" aria-live="polite" data-testid="run-announcement">
         {runAnnouncement({
           lessonId: currentLesson.id,

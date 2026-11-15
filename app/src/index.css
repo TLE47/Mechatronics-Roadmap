@@ -1178,36 +1178,12 @@ number-flow {
 .lesson-compact.space-y-5 > * + * {
   margin-top: 0.75rem;
 }
-/* The page chrome folds with the lesson: one short row of short labels in place of the mode bar,
-   and the simulator rail as its icon column (`App.tsx` sets `data-density` from the stored preset). */
-[data-density='compact'] [data-chrome='mode-bar'] > div {
-  padding-block: 0.2rem;
-}
-[data-density='compact'] [data-chrome='mode-bar'] [role='group'] {
-  padding: 0.125rem;
-}
-[data-density='compact'] [data-chrome='mode-bar'] [role='group'] button {
-  padding-block: 0.1rem;
-}
-[data-density='compact'] [data-chrome='mode-bar'] .sm\:inline {
+/* Compact folds the page's own chrome into the dock's `Mode` and `Tabs` modules
+   (`runner/CompactPageChrome.tsx`): the mode bar and the simulator rail are not drawn above it as
+   well, or the page would carry two of each. */
+[data-density='compact'] [data-chrome='mode-bar'],
+[data-density='compact'] [data-chrome='rail'] {
   display: none;
-}
-[data-density='compact'] [data-chrome='mode-bar'] .sm\:hidden {
-  display: inline;
-}
-[data-density='compact'] [data-testid='btn-rail-toggle'] {
-  display: none;
-}
-[data-density='compact'] nav[data-chrome='rail'] .min-w-0 {
-  display: none;
-}
-[data-density='compact'] nav[data-chrome='rail'] [data-testid='tab-rail'] {
-  gap: 0.25rem;
-  padding: 0.25rem;
-}
-[data-density='compact'] nav[data-chrome='rail'] [data-testid='tab-rail'] > button {
-  min-width: 0;
-  padding-inline: 0.3rem;
 }
 .lesson-compact [data-testid='tour-chip'],
 .lesson-compact [data-testid='first-lesson-guide'],
