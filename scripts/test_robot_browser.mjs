@@ -748,11 +748,14 @@ async function robotTourRing(page, anchor, timeout = 5000) {
         if (!ring || !target) return null;
         const r = ring.getBoundingClientRect();
         const a = target.getBoundingClientRect();
+        // Gates a pixel inside the assertions that follow (9 px of drift, 16 px of size), so a frame
+        // that is still settling between the helper's window and theirs is never returned: under a
+        // loaded runner that frame used to arrive as a 6 px / 9 px ring and fail the >9 px check.
         if (
-          Math.abs(r.left - a.left) >= 12 ||
-          Math.abs(r.top - a.top) >= 12 ||
-          Math.abs(r.width - a.width) >= 16 ||
-          Math.abs(r.height - a.height) >= 16
+          Math.abs(r.left - a.left) >= 8 ||
+          Math.abs(r.top - a.top) >= 8 ||
+          Math.abs(r.width - a.width) >= 15 ||
+          Math.abs(r.height - a.height) >= 15
         ) {
           return null;
         }
