@@ -826,6 +826,41 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "instructorTests": "import math\nassert math.isclose(compute_flow(12.0, 60.0), 0.20, abs_tol=1e-9)\nassert math.isclose(compute_flow(12.0, 120.0), 0.10, abs_tol=1e-9)\ntry:\n    compute_flow(12.0, 0.0)\nexcept ValueError:\n    pass\nelse:\n    raise AssertionError(\"a zero-ohm short must be rejected, not reported as zero flow\")\nassert math.isclose(compute_effort_flow_power(12.0, 0.20), 2.40, abs_tol=1e-9)\nassert math.isclose(compute_effort_flow_power(12.0, 0.0), 0.0, abs_tol=1e-9)"
   },
   {
+    "id": "S0.6",
+    "title": "Capacitors \u2014 Charge Storage (tau = R*C) and Power-Rail Decoupling",
+    "goal": "Calculate how fast a **capacitor** charges or discharges through a resistor using the **RC time constant** ($\\tau = R \\cdot C$) in Falstad, and place a $100\\text{ nF}$ ($0.1\\ \\mu\\text{F}$) **decoupling capacitor** across a microcontroller's power pins to prevent motor current spikes from resetting the chip.",
+    "requirements": [
+      "**Runs:** every TODO is completed and the script finishes without a Python error.",
+      "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
+      "**Required end state:** the grader checks `rc_time_constant` returns `R * C` in seconds and raises `ValueError` for a non-positive resistance or capacitance; `charge_fraction` returns `1 - e ** (-t / tau)` and raises `ValueError` for a non-positive time constant.",
+      "**Exact strings:** the printed labels and the `ValueError` message match the starter's spelling.",
+      "**Output:** the printed output matches the Expected Output block.",
+      "**Alternate inputs:** the grader also runs $R = 4{,}700\\ \\Omega$ with $C = 10\\ \\mu\\text{F}$ and a $1.0\\text{ ms}$ constant, so a hardcoded `1.00` fails."
+    ],
+    "track": "stage-0",
+    "path": "stage-0/S0.6-capacitors-and-decoupling.md",
+    "readerPath": "stage-0/S0.6-capacitors-and-decoupling.md",
+    "ideas": [
+      "Capacitor charge storage and RC time constant (tau = R*C)",
+      "Power-rail decoupling (bypass) capacitors"
+    ],
+    "starterCode": "import math\n\n\ndef rc_time_constant(resistance_ohm, capacitance_f):\n    # TODO 1: Return the capacitor's time constant in seconds \u2014 and raise ValueError for a non-positive resistance or capacitance instead of returning a meaningless zero.\n    return 0.0\n\n\ndef charge_fraction(elapsed_s, tau_s):\n    # TODO 2: Return the fraction of the supply this capacitor has charged to \u2014 and raise ValueError for a non-positive time constant.\n    return 0.0\n\n\ntau_s = rc_time_constant(10_000.0, 100e-6)\nprint(f\"RC time constant tau = {tau_s:.2f} s\")\nfor t_s in (1.0, 2.0, 5.0):\n    v_c = 5.0 * charge_fraction(t_s, tau_s)\n    print(f\"t = {t_s:.1f} s -> V_C = {v_c:.2f} V\")",
+    "hints": [
+      "In `TODO 1`, the time constant is the product of the two component values in base units: `10_000.0 * 100e-6` is `1.0` second. Refuse a non-positive resistance or capacitance with `ValueError` instead of returning `0.0`. In `TODO 2`, the fraction is `1 - math.exp(-elapsed_s / tau_s)`: `63.2 %` at one `tau`, `86.5 %` at two, `99.3 %` at five.",
+      "```python def rc_time_constant(resistance_ohm, capacitance_f): if resistance_ohm <= 0 or capacitance_f <= 0: raise ValueError(\"resistance_ohm and capacitance_f must be positive\") return resistance_ohm * capacitance_f def charge_fraction(elapsed_s, tau_s): if tau_s <= 0: raise ValueError(\"tau_s must be positive; a zero time constant has no curve\") return 1 - math.exp(-elapsed_s / tau_s) ```"
+    ],
+    "fullSolution": "import math\n\n\ndef rc_time_constant(resistance_ohm, capacitance_f):\n    if resistance_ohm <= 0 or capacitance_f <= 0:\n        raise ValueError(\"resistance_ohm and capacitance_f must be positive\")\n    return resistance_ohm * capacitance_f\n\n\ndef charge_fraction(elapsed_s, tau_s):\n    if tau_s <= 0:\n        raise ValueError(\"tau_s must be positive; a zero time constant has no curve\")\n    return 1 - math.exp(-elapsed_s / tau_s)\n\n\ntau_s = rc_time_constant(10_000.0, 100e-6)\nprint(f\"RC time constant tau = {tau_s:.2f} s\")\nfor t_s in (1.0, 2.0, 5.0):\n    v_c = 5.0 * charge_fraction(t_s, tau_s)\n    print(f\"t = {t_s:.1f} s -> V_C = {v_c:.2f} V\")\nassert abs(tau_s - 1.0) < 1e-12\nassert abs(charge_fraction(1.0, 1.0) - 0.6321205588285577) < 1e-12\nassert abs(charge_fraction(5.0, 1.0) - 0.9932620530009145) < 1e-12",
+    "expectedOutput": "RC time constant tau = 1.00 s\nt = 1.0 s -> V_C = 3.16 V\nt = 2.0 s -> V_C = 4.32 V\nt = 5.0 s -> V_C = 4.97 V",
+    "outputMatch": "normalized",
+    "instructorTestSummary": [
+      "Test rc_time_constant on unseen 4,700 ohm / 10 uF",
+      "Test 1 kohm / 1 uF pairs",
+      "Test charge_fraction at one time constant (0.6321)",
+      "Edge case \u2014 Test at zero seconds and its non-positive-tau refusal"
+    ],
+    "instructorTests": "import math\n_tau_47 = rc_time_constant(4700.0, 10e-6)\nassert math.isclose(_tau_47, 0.047, abs_tol=1e-12), f\"Expected tau=0.047 s for 4,700 ohm and 10 uF, got {_tau_47!r}\"\n_tau_1k = rc_time_constant(1000.0, 1e-6)\nassert math.isclose(_tau_1k, 0.001, abs_tol=1e-15), f\"Expected tau=0.001 s for 1 kohm and 1 uF, got {_tau_1k!r}\"\nassert math.isclose(charge_fraction(1.0, 1.0), 0.6321205588285577, abs_tol=1e-12), \"One time constant must be 63.2 % of the step\"\nassert charge_fraction(0.0, 1.0) == 0.0, \"At t=0 the capacitor has not charged yet\"\ntry:\n    charge_fraction(1.0, 0.0)\nexcept ValueError:\n    pass\nelse:\n    raise AssertionError(\"A zero time constant must raise ValueError, not return a fraction\")"
+  },
+  {
     "id": "00.1",
     "title": "Cross-Domain Power (P = Effort * Flow) and First-Order Lag",
     "goal": "Connect electrical, linear mechanical, and rotational mechanical systems through the universal power law ($\\text{Power} = \\text{Effort} \\times \\text{Flow}$, measured in Watts `W`), and simulate a **first-order lag** step response in Python to see why every real sensor, thermal body, and RC circuit reaches $63.2\\%$ of a step command in $1\\tau$ and $99.3\\%$ in $5\\tau$.",
@@ -929,6 +964,41 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Edge case \u2014 (1.962, 0.981, 0.0) within numerical tolerance"
     ],
     "instructorTests": "import math\nassert math.isclose(holding_torque_nm(0.0, 400.0, 0.0), 0.0, abs_tol=1e-9)\nassert math.isclose(holding_torque_nm(1.0, 500.0, 0.0), 4.905, abs_tol=1e-4)\nassert math.isclose(holding_torque_nm(1.0, 500.0, 90.0), 0.0, abs_tol=1e-6)\nassert math.isclose(holding_torque_nm(1.0, 500.0, 180.0), -4.905, abs_tol=1e-4)\n_s0, _s60, _s90 = run_sanity_checks()\nassert math.isclose(_s0, 1.962, abs_tol=1e-4) and math.isclose(_s60, 0.981, abs_tol=1e-4) and math.isclose(_s90, 0.0, abs_tol=1e-6)"
+  },
+  {
+    "id": "01.1",
+    "title": "High-Current Switching \u2014 MOSFETs, Inductors (Motor Coils) and Flyback Diodes",
+    "goal": "Use a logic-level **N-Channel MOSFET** (`Gate`, `Drain`, `Source`) so a $5.0\\text{ V}$ Arduino Uno pin can safely switch a high-current $12.0\\text{ V}$ motor load sharing a **common ground**, and place a parallel **flyback diode** across an **inductor** (motor coil) in Falstad to clamp destructive turn-off voltage spikes.",
+    "requirements": [
+      "**Runs:** every TODO is completed and the script finishes without a Python error.",
+      "**Types and given values:** keep the names, types, and units the starter gives; leave any value a TODO does not name unchanged.",
+      "**Required end state:** the grader checks `inductive_kickback_voltage` returns `supply + L * dI/dt` and raises `ValueError` for a non-positive switch-off time; `mosfet_conduction_loss` returns `I ** 2 * R_DS(on)`.",
+      "**Exact strings:** the printed labels and the `ValueError` message match the starter's spelling.",
+      "**Output:** the printed output matches the Expected Output block.",
+      "**Alternate inputs:** the grader also runs a $24.0\\text{ V}$, $1.0\\text{ mH}$, $1.5\\text{ A}$, $1.0\\ \\mu\\text{s}$ coil and a $5.0\\text{ A}$, $0.01\\ \\Omega$ MOSFET, so a hardcoded `512.0` fails."
+    ],
+    "track": "01-electronics-and-power",
+    "path": "01-electronics-and-power/01.1-mosfet-inductor-flyback.md",
+    "readerPath": "01-electronics-and-power/01.1-mosfet-inductor-flyback.md",
+    "ideas": [
+      "Low-side N-Channel MOSFET switching and common ground",
+      "Inductive kickback (V_L = L * dI/dt) and flyback diode clamping"
+    ],
+    "starterCode": "def inductive_kickback_voltage(supply_v, inductance_h, current_a, switch_off_s):\n    # TODO 1: Return the coil's turn-off Drain voltage, in volts \u2014 and raise ValueError for a non-positive switch-off time rather than returning an invented number.\n    return 0.0\n\n\ndef mosfet_conduction_loss(current_a, rds_on_ohm):\n    # TODO 2: Return the heat this MOSFET makes while it is on, in watts.\n    return 0.0\n\n\nspike_v = inductive_kickback_voltage(12.0, 0.5e-3, 2.0, 2.0e-6)\nclamp_v = 12.0 + 0.7\nloss_w = mosfet_conduction_loss(2.0, 0.02)\n\nprint(f\"MOSFET heat at 2.0 A (R_DS_on=0.02 ohm): {loss_w * 1000.0:.1f} mW\")\nprint(f\"Peak Drain voltage WITHOUT flyback diode: {spike_v:.1f} V (DESTROYS 60V MOSFET!)\")\nprint(f\"Peak Drain voltage WITH flyback diode: {clamp_v:.1f} V (SAFE!)\")",
+    "hints": [
+      "In `TODO 1`, the coil fights the change in current: `L * (current / switch_off_s)` is $500.0\\text{ V}$, and the Drain sits on top of the $12.0\\text{ V}$ rail, so the answer is $512.0\\text{ V}$. Refuse `switch_off_s <= 0` with `ValueError` before dividing. In `TODO 2`, the MOSFET's heat is `current_a ** 2 * rds_on_ohm`.",
+      "```python def inductive_kickback_voltage(supply_v, inductance_h, current_a, switch_off_s): if switch_off_s <= 0: raise ValueError(\"switch_off_s must be positive; a zero switch time is not a measurement\") return supply_v + inductance_h * (current_a / switch_off_s) def mosfet_conduction_loss(current_a, rds_on_ohm): return current_a ** 2 * rds_on_ohm ```"
+    ],
+    "fullSolution": "def inductive_kickback_voltage(supply_v, inductance_h, current_a, switch_off_s):\n    if switch_off_s <= 0:\n        raise ValueError(\"switch_off_s must be positive; a zero switch time is not a measurement\")\n    return supply_v + inductance_h * (current_a / switch_off_s)\n\n\ndef mosfet_conduction_loss(current_a, rds_on_ohm):\n    return current_a ** 2 * rds_on_ohm\n\n\nspike_v = inductive_kickback_voltage(12.0, 0.5e-3, 2.0, 2.0e-6)\nclamp_v = 12.0 + 0.7\nloss_w = mosfet_conduction_loss(2.0, 0.02)\n\nprint(f\"MOSFET heat at 2.0 A (R_DS_on=0.02 ohm): {loss_w * 1000.0:.1f} mW\")\nprint(f\"Peak Drain voltage WITHOUT flyback diode: {spike_v:.1f} V (DESTROYS 60V MOSFET!)\")\nprint(f\"Peak Drain voltage WITH flyback diode: {clamp_v:.1f} V (SAFE!)\")\nassert abs(spike_v - 512.0) < 1e-9\nassert abs(clamp_v - 12.7) < 1e-9\nassert abs(loss_w - 0.08) < 1e-12",
+    "expectedOutput": "MOSFET heat at 2.0 A (R_DS_on=0.02 ohm): 80.0 mW\nPeak Drain voltage WITHOUT flyback diode: 512.0 V (DESTROYS 60V MOSFET!)\nPeak Drain voltage WITH flyback diode: 12.7 V (SAFE!)",
+    "outputMatch": "normalized",
+    "instructorTestSummary": [
+      "Test inductive_kickback_voltage on a 24 V / 1.0 mH / 1.5 A / 1.0 us coil",
+      "Test its zero-time refusal",
+      "Test mosfet_conduction_loss at 5.0 A through 0.01 ohm",
+      "Edge case \u2014 Test at 0 A"
+    ],
+    "instructorTests": "import math\n_v_24 = inductive_kickback_voltage(24.0, 1.0e-3, 1.5, 1.0e-6)\nassert math.isclose(_v_24, 1524.0, abs_tol=1e-6), f\"Expected 1524.0 V from 24 V + 1.0 mH * 1.5 A / 1.0 us, got {_v_24!r}\"\n_p_5 = mosfet_conduction_loss(5.0, 0.01)\nassert math.isclose(_p_5, 0.25, abs_tol=1e-12), f\"Expected 0.25 W from 5.0 A through 0.01 ohm, got {_p_5!r}\"\nassert mosfet_conduction_loss(0.0, 0.02) == 0.0, \"No current means no conduction heat\"\ntry:\n    inductive_kickback_voltage(12.0, 0.5e-3, 2.0, 0.0)\nexcept ValueError:\n    pass\nelse:\n    raise AssertionError(\"A zero switch-off time must raise ValueError, not divide by zero\")"
   },
   {
     "id": "01.3",

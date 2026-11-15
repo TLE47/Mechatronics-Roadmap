@@ -14,7 +14,7 @@ Enforces all curriculum design rules across all 51 beginner lessons:
 - `06-robotics-and-autonomy/06.1-*.md` (1 lesson: 06.1)
 - `07-systems-hil-and-production/07.1-*.md` (1 lesson: 07.1)
 - `08-capstone-projects/08.1-*.md` (1 lesson: 08.1)
-Total: 51 beginner lessons (39 Python lessons, two of them the P.2.5/02.6 critical-thinking lessons; 7 Falstad circuit lessons; 5 Wokwi Arduino lessons).
+Total: 51 beginner lessons (41 Python lessons, two of them the P.2.5/02.6 critical-thinking lessons; 5 Falstad circuit lessons; 5 Wokwi Arduino lessons).
 
 Checks enforced on every lesson:
 1. Valid YAML front matter (`--- ... ---`) containing `lesson_id`, `title`, `ideas` (1..2 entries),
@@ -30,8 +30,8 @@ Checks enforced on every lesson:
      phase-space ellipses, complex numbers, decibels/dB, Laplace s, SO(2)/SO(3), beam deflection 3EI).
 4. Simulator/code separation in `## Do it yourself`:
    - Wokwi Arduino lessons (`S0.7`-`S0.M`, `01.2`, 5 lessons): `cpp` sketch only (no Python mirror in lesson).
-   - Falstad-only circuit lessons (`S0.1`-`S0.6`, `01.1`, 7 lessons): Falstad netlist (`$ 1 ...`) only (no Python mirror in lesson).
-   - Python lessons (`P.1`-`P.M`, `00.1`-`00.3`, `01.3`-`01.4`, `02.1`-`08.1`, 32 lessons): `python` Starter Code and Full Solution.
+   - Falstad-only circuit lessons (`S0.1`-`S0.5`, 5 lessons): Falstad netlist (`$ 1 ...`) only (no Python mirror in lesson).
+   - Python lessons (`P.1`-`P.M`, `00.1`-`00.3`, `01.1`, `01.3`-`01.4`, `S0.0`, `S0.6`, `02.1`-`08.1`, 34 lessons): `python` Starter Code and Full Solution.
 """
 
 from __future__ import annotations
@@ -69,8 +69,6 @@ FALSTAD_ONLY_LESSONS = {
     "S0.3-breadboards-and-short-circuits.md",
     "S0.4-leds-and-resistor-power.md",
     "S0.5-multimeters-and-current-limited-supplies.md",
-    "S0.6-capacitors-and-decoupling.md",
-    "01.1-mosfet-inductor-flyback.md",
 }
 
 STOPWORDS = {

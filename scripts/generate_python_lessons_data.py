@@ -46,9 +46,11 @@ def get_python_lesson_files():
     ramp = sorted(glob.glob(os.path.join(ROOT, "ramp", "R.*.md")), key=natural_sort_key)
     stage_0_py = [
         os.path.join(ROOT, "stage-0", "S0.0-why-electricity-is-like-flow.md"),
+        os.path.join(ROOT, "stage-0", "S0.6-capacitors-and-decoupling.md"),
     ]
     track_00 = sorted(glob.glob(os.path.join(ROOT, "00-foundations", "00.*.md")), key=natural_sort_key)
     track_01_py = [
+        os.path.join(ROOT, "01-electronics-and-power", "01.1-mosfet-inductor-flyback.md"),
         os.path.join(ROOT, "01-electronics-and-power", "01.3-power-regulators-and-power-budget.md"),
         os.path.join(ROOT, "01-electronics-and-power", "01.4-grounding-and-rc-lowpass-filters.md"),
     ]
@@ -547,6 +549,26 @@ assert math.isclose(compute_effort_flow_power(12.0, 0.20), 2.40, abs_tol=1e-9)
 assert math.isclose(compute_effort_flow_power(12.0, 0.0), 0.0, abs_tol=1e-9)
 """,
     ),
+    "S0.6": (
+        [
+            "Test rc_time_constant on unseen 4,700 ohm / 10 uF and 1 kohm / 1 uF pairs",
+            "Test charge_fraction at one time constant (0.6321), at zero seconds, and its non-positive-tau refusal",
+        ],
+        """import math
+_tau_47 = rc_time_constant(4700.0, 10e-6)
+assert math.isclose(_tau_47, 0.047, abs_tol=1e-12), f"Expected tau=0.047 s for 4,700 ohm and 10 uF, got {_tau_47!r}"
+_tau_1k = rc_time_constant(1000.0, 1e-6)
+assert math.isclose(_tau_1k, 0.001, abs_tol=1e-15), f"Expected tau=0.001 s for 1 kohm and 1 uF, got {_tau_1k!r}"
+assert math.isclose(charge_fraction(1.0, 1.0), 0.6321205588285577, abs_tol=1e-12), "One time constant must be 63.2 % of the step"
+assert charge_fraction(0.0, 1.0) == 0.0, "At t=0 the capacitor has not charged yet"
+try:
+    charge_fraction(1.0, 0.0)
+except ValueError:
+    pass
+else:
+    raise AssertionError("A zero time constant must raise ValueError, not return a fraction")
+""",
+    ),
     "00.1": (
         [
             "Test cross_domain_power on unseen 24V/3A electrical to 0.5 N*m @ 108 rad/s mechanical operating point",
@@ -589,6 +611,25 @@ assert math.isclose(holding_torque_nm(1.0, 500.0, 90.0), 0.0, abs_tol=1e-6)
 assert math.isclose(holding_torque_nm(1.0, 500.0, 180.0), -4.905, abs_tol=1e-4)
 _s0, _s60, _s90 = run_sanity_checks()
 assert math.isclose(_s0, 1.962, abs_tol=1e-4) and math.isclose(_s60, 0.981, abs_tol=1e-4) and math.isclose(_s90, 0.0, abs_tol=1e-6)
+""",
+    ),
+    "01.1": (
+        [
+            "Test inductive_kickback_voltage on a 24 V / 1.0 mH / 1.5 A / 1.0 us coil and its zero-time refusal",
+            "Test mosfet_conduction_loss at 5.0 A through 0.01 ohm and at 0 A",
+        ],
+        """import math
+_v_24 = inductive_kickback_voltage(24.0, 1.0e-3, 1.5, 1.0e-6)
+assert math.isclose(_v_24, 1524.0, abs_tol=1e-6), f"Expected 1524.0 V from 24 V + 1.0 mH * 1.5 A / 1.0 us, got {_v_24!r}"
+_p_5 = mosfet_conduction_loss(5.0, 0.01)
+assert math.isclose(_p_5, 0.25, abs_tol=1e-12), f"Expected 0.25 W from 5.0 A through 0.01 ohm, got {_p_5!r}"
+assert mosfet_conduction_loss(0.0, 0.02) == 0.0, "No current means no conduction heat"
+try:
+    inductive_kickback_voltage(12.0, 0.5e-3, 2.0, 0.0)
+except ValueError:
+    pass
+else:
+    raise AssertionError("A zero switch-off time must raise ValueError, not divide by zero")
 """,
     ),
     "01.3": (
