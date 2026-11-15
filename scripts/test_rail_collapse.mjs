@@ -116,16 +116,16 @@ check('the shell reads the store at mount and saves the press', () => {
 });
 
 check('the rail is what folds, and says so for a test and a screen reader', () => {
-  assert.match(appSource, /data-collapsed=\{railCollapsed \? 'true' : 'false'\}/);
+  assert.match(appSource, /data-collapsed=\{railFolded \? 'true' : 'false'\}/);
   assert.match(appSource, /data-testid="btn-rail-toggle"/);
-  assert.match(appSource, /aria-expanded=\{!railCollapsed\}/);
+  assert.match(appSource, /aria-expanded=\{!railFolded\}/);
   assert.match(appSource, /aria-controls="simulator-tab-rail"/);
   assert.match(appSource, /id="simulator-tab-rail"/);
 });
 
 check('a folded tab draws no text but keeps its name', () => {
-  assert.match(appSource, /aria-label=\{railCollapsed \? `\$\{label\} — \$\{subtitle\}` : undefined\}/);
-  assert.match(appSource, /railCollapsed \? ' xl:hidden' : ''/);
+  assert.match(appSource, /aria-label=\{railFolded \? `\$\{label\} — \$\{subtitle\}` : undefined\}/);
+  assert.match(appSource, /railFolded \? ' xl:hidden' : ''/);
 });
 
 check('below xl the strip offers no fold', () => {

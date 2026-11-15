@@ -6957,10 +6957,10 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
         `  ok ⌘⇧F finds the lesson by its text and puts the caret on line ${expectedLine} (${(landed?.lineText ?? '').slice(0, 40)}…)`
       );
 
-      // The other half of the same door: the 65 reading pages, which are fetched the first time
-      // `⌘⇧F` opens and are not part of the bundle. `decoupling` is a word the runner's lessons do
-      // not carry, so a row for it can only have come from the prose index, and the row must name
-      // the section and the GitHub anchor rather than some page called S0.6.
+      // The other half of the same door: the reading pages, which are fetched the first time
+      // `⌘⇧F` opens and are not part of the bundle. A page the runner carries opens in the
+      // workbench at the matched section, so its row keeps no GitHub address; a bench-only page
+      // keeps one, with the anchor of the section the row names.
       await searchPage.keyboard.press('Control+Shift+F');
       await searchPage.getByTestId('command-palette').waitFor({ timeout: 10000 });
       await searchPage.waitForFunction(
@@ -6969,6 +6969,19 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
         { timeout: 5000 }
       );
       await searchPage.getByTestId('input-palette-search').fill('decoupling');
+      const carriedRow = searchPage.locator('[data-testid^="palette-item-prose-"]').first();
+      await carriedRow.waitFor({ timeout: 15000 });
+      assert.match(
+        (await carriedRow.innerText()).replace(/\s+/g, ' '),
+        /S0\.6/,
+        'the decoupling page is a runner entry now, so its first hit must be that page'
+      );
+      assert.equal(
+        await carriedRow.getAttribute('data-href'),
+        null,
+        'a page the runner carries must open here, not leave for GitHub'
+      );
+      await searchPage.getByTestId('input-palette-search').fill('shoot-through');
       const proseRow = searchPage.locator('[data-testid^="palette-item-prose-"]').first();
       await proseRow.waitFor({ timeout: 15000 });
       assert.equal(
@@ -6982,12 +6995,12 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       // without its stylesheet (see the note on `startDevServer`), so matching the case would tie this
       // check to a bug that has since been fixed.
       assert.match(proseText, /Course page/i, 'the row must say what it is');
-      assert.match(proseText, /S0\.6/, 'the row must name the page');
-      assert.match(proseText, /§ Idea 2: Power-rail decoupling/, 'the row must name the section it opens');
+      assert.match(proseText, /01\.2/, 'the row must name the page');
+      assert.match(proseText, /§ Idea 1: H-Bridge 4-switch topology/, 'the row must name the section it opens');
       const proseHref = await proseRow.getAttribute('data-href');
       assert.equal(
         proseHref,
-        'https://github.com/TLE47/Mechatronics-Roadmap/blob/main/stage-0/S0.6-capacitors-and-decoupling.md#idea-2-power-rail-decoupling-bypass-capacitors',
+        'https://github.com/TLE47/Mechatronics-Roadmap/blob/main/01-electronics-and-power/01.2-h-bridge-and-stall-current.md#idea-1-h-bridge-4-switch-topology-forward-reverse-coast-brake-and-shoot-through-prevention',
         `the row must open the page at its section; got ${proseHref}`
       );
       // Once the file is in, the footer says nothing about it: a permanent "65 pages" is furniture.
