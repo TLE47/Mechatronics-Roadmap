@@ -1125,6 +1125,8 @@ number-flow {
   display: inline-flex;
   align-items: baseline;
   gap: 0.375rem;
+  /* A chip is a whole word and its number: the bar wraps to a second line before a chip breaks. */
+  white-space: nowrap;
   padding: 0.125rem 0.5rem;
   border: 0;
   border-radius: var(--r-sm);
@@ -1154,6 +1156,22 @@ number-flow {
 .compact-shelf-panel {
   padding: 0.5rem 0.625rem 0.625rem;
   border-top: 1px solid var(--border);
+}
+/* Nothing inside the dock clips or scrolls: the page is what scrolls, and a sentence cut off inside a
+   module would be one the learner cannot reach without opening another surface. A label that was
+   truncated beside the editor wraps here instead, and a panel that capped its own height lets go. */
+.compact-dock .truncate {
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+}
+.compact-dock :is([data-testid='panel-instructor-tests'], [data-testid='analysis-notes']) {
+  overflow: visible;
+}
+/* A glow is drawn past its panel's edge on purpose, and the panel it belongs to is clamped beside the
+   editor. In the dock nothing is clamped, so the decoration would be the one thing sticking out. */
+.compact-dock [aria-hidden='true'].pointer-events-none {
+  display: none;
 }
 .compact-dock > * {
   min-width: 0;

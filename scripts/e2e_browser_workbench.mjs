@@ -1609,6 +1609,86 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       assert.equal(chips.current, true, 'the open tab is marked among them');
       await page.getByTestId('compact-tab-tabs').click();
 
+      // Every width it is actually seen at: at 1280 the six chips share one line, at a phone they
+      // wrap to a second — and in both states no chip is clipped or outside the dock, nothing inside
+      // the dock scrolls, and the dock still sits above the editor and the lesson text.
+      const dockFit = () =>
+        page.evaluate(() => {
+          const dock = document.querySelector('[data-testid="compact-dock"]');
+          const box = dock.getBoundingClientRect();
+          const reader = document.querySelector('[data-testid="lesson-reader"]');
+          const editor = document.querySelector('[data-testid="editor-panel"]');
+          const chips = [...dock.querySelectorAll('[role="tab"]')];
+          const clipped = chips
+            .filter((chip) => {
+              const r = chip.getBoundingClientRect();
+              return (
+                r.width < 8 ||
+                r.height < 8 ||
+                r.left < box.left - 1 ||
+                r.right > box.right + 1 ||
+                r.top < box.top - 1 ||
+                r.bottom > box.bottom + 1 ||
+                chip.scrollWidth > chip.clientWidth + 1
+              );
+            })
+            .map((chip) => chip.getAttribute('data-testid'));
+          const scrolling = [...dock.querySelectorAll('*')]
+            .filter((el) => {
+              const cs = getComputedStyle(el);
+              if (cs.overflowX === 'visible' && cs.overflowY === 'visible') return false;
+              return el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1;
+            })
+            .map((el) => el.getAttribute('data-testid') || String(el.className).slice(0, 24));
+          return {
+            chips: chips.length,
+            clipped,
+            scrolling: scrolling.slice(0, 4),
+            dockScrolls: dock.scrollWidth > dock.clientWidth + 1 || dock.scrollHeight > dock.clientHeight + 1,
+            pageScrollsSideways: document.documentElement.scrollWidth > window.innerWidth + 1,
+            above: box.top < (reader?.getBoundingClientRect().top ?? Infinity) && box.top < (editor?.getBoundingClientRect().top ?? Infinity),
+            briefHeight: Math.round(document.querySelector('[data-testid="compact-panel-brief"]')?.getBoundingClientRect().height ?? 0),
+            reportHeight: Math.round(document.querySelector('[data-testid="compact-panel-report"]')?.getBoundingClientRect().height ?? 0),
+          };
+        });
+      const assertFit = (fit, width) => {
+        assert.equal(fit.chips, 6, `all six modules are on the row at ${width} px`);
+        assert.deepEqual(fit.clipped, [], `no chip is clipped or outside the dock at ${width} px`);
+        assert.deepEqual(fit.scrolling, [], `nothing inside the dock scrolls at ${width} px`);
+        assert.equal(fit.dockScrolls, false, `the dock does not scroll at ${width} px`);
+        assert.equal(fit.pageScrollsSideways, false, `the dock does not push the page sideways at ${width} px`);
+        assert.equal(fit.above, true, `the dock stays above the editor and the text at ${width} px`);
+      };
+
+      await page.getByTestId('compact-tab-tabs').click();
+      assertFit(await dockFit(), 1280);
+      await page.getByTestId('compact-tab-brief').click();
+      await page.getByTestId('compact-panel-brief').waitFor({ state: 'visible', timeout: 3000 });
+      const wideBrief = await dockFit();
+      assertFit(wideBrief, 1280);
+      assert.ok(wideBrief.briefHeight > 80, `the brief has its content open at 1280 px (${wideBrief.briefHeight} px)`);
+      await page.getByTestId('compact-tab-brief').click();
+
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(600);
+      assertFit(await dockFit(), 390);
+      await page.getByTestId('compact-tab-brief').click();
+      await page.getByTestId('compact-panel-brief').waitFor({ state: 'visible', timeout: 3000 });
+      const phoneBrief = await dockFit();
+      assertFit(phoneBrief, 390);
+      assert.ok(
+        phoneBrief.briefHeight > 80,
+        `the brief is not an empty box on a phone (${phoneBrief.briefHeight} px)`
+      );
+      await page.getByTestId('compact-tab-report').click();
+      await page.getByTestId('compact-panel-report').waitFor({ state: 'visible', timeout: 3000 });
+      const phoneReport = await dockFit();
+      assertFit(phoneReport, 390);
+      assert.ok(phoneReport.reportHeight > 200, 'the report still opens at 390 px');
+      await page.getByTestId('compact-tab-report').click();
+      await page.setViewportSize({ width: 1280, height: 720 });
+      await page.waitForTimeout(400);
+
       // It is a preset like the others: the shortcut reaches it and a reload remembers it.
       await page.reload();
       await page.getByTestId('btn-compact-layout').waitFor({ timeout: 10000 });

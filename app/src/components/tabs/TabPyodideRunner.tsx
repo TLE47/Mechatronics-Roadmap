@@ -1954,7 +1954,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           <div
             data-tour={isPhone ? undefined : 'lesson-brief'}
             data-testid="lesson-brief"
-            className={`bg-panel border border-line rounded-xl p-4 ${phoneCode || (isPhone && !phoneBriefOpen) ? 'hidden' : ''}`}
+            className={`bg-panel border border-line rounded-xl p-4 ${!compactLesson && (phoneCode || (isPhone && !phoneBriefOpen)) ? 'hidden' : ''}`}
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
