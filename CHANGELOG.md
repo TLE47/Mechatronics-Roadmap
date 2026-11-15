@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `3.4.0`.** `package.json` is the one place the number lives; the workbench's footer
+****Release identity: `3.4.1`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -13,6 +13,17 @@ flowchart LR
     S0 --> B1["Pass 1 Tier 1 (23 Files: 00.1–08.1 across Tracks 00–08)"]
     B1 --> QA["Automated CI: verify_repo + validate_modules + lint_lessons + lint_modules + check_term_order + clean_tex + audit_math + test_exercises + run_all_labs + smoke & browser E2E (dev server and built Pages bundle)"]
 ```
+
+---
+
+## [2026-11-15] — Run 3.4.1: the reader sweep fetches every page from the server
+
+The new reader-route suite opens all 97 pages on the built bundle and asserts each one asks the static
+server for its own payload. The offline take-along installs a service worker, and when it claimed a
+fresh page before the reader asked, Chromium served the payload from the worker's cache and emitted no
+page-level response: three of ninety-seven pages failed at random on CI. Those contexts now block the
+service worker, so the route suite grades the static fetch it names while offline stays the offline
+suite's job. A repair, so patch.
 
 ---
 

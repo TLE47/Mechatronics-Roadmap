@@ -127,7 +127,15 @@ async function visit(lesson) {
   } catch (error) {
     return { id: lesson.id, error: error.message };
   }
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  // No service worker: the offline take-along installs one, and when it claims the page before the
+  // reader asks for its payload, Chromium serves that payload from the worker's cache and emits no
+  // page-level response for it. That is a property of the offline suite, not of this route, and it
+  // made three of ninety-seven pages fail here at random. Blocking the worker keeps this suite
+  // grading what it says it grades: every page fetched from the static server on its own address.
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 900 },
+    serviceWorkers: 'block',
+  });
   await seedTourSeen(context);
   const page = await context.newPage();
   const errors = [];
@@ -268,7 +276,15 @@ async function visit(lesson) {
 /** The gallery renders every card's chunk, so a visual that only works inside one lesson shows up. */
 async function visitGallery() {
   if (!visualNames.length) return { skipped: 'no visual map' };
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  // No service worker: the offline take-along installs one, and when it claims the page before the
+  // reader asks for its payload, Chromium serves that payload from the worker's cache and emits no
+  // page-level response for it. That is a property of the offline suite, not of this route, and it
+  // made three of ninety-seven pages fail here at random. Blocking the worker keeps this suite
+  // grading what it says it grades: every page fetched from the static server on its own address.
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 900 },
+    serviceWorkers: 'block',
+  });
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (error) => errors.push(String(error)));
