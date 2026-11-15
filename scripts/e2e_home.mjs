@@ -778,6 +778,111 @@ async function main() {
         (stored?.lastTick ?? 0) > 0,
         'the cleared record must carry the press that cleared it, or a stale copy wins the merge'
       );
+      // ---- 7a-ii. A refresh, not a re-read: three real reloads ----
+      // The stored record reading zero is necessary and not sufficient: what the learner sees after a
+      // refresh is what the app makes of it. These variants load the page again through the same
+      // storage, the same mount effects and the same sync the learner gets.
+      const readStored = () =>
+        page.evaluate(() => JSON.parse(window.localStorage.getItem('mechalab_study_timer_v1') ?? 'null'));
+      const assertZero = async (label, target = page) => {
+        const row = target.getByTestId('study-timer');
+        await row.waitFor({ timeout: 30000 });
+        assert.equal(await row.getAttribute('data-state'), 'idle', `${label}: no running state`);
+        assert.equal(
+          (await target.getByTestId('study-timer-elapsed').textContent())?.trim(),
+          '0:00:00',
+          `${label}: the digits must still read zero`
+        );
+        assert.equal(
+          await target.getByTestId('btn-study-timer-reset').isDisabled(),
+          true,
+          `${label}: a zero clock has nothing to log`
+        );
+        assert.equal(
+          await target.getByTestId('study-clock-log').count(),
+          0,
+          `${label}: Log & reset starts a new session, so no press of the logged one comes back`
+        );
+      };
+      const assertBank = async (record, label) => {
+        assert.ok(
+          Array.isArray(record?.completed) && record.completed.includes('P.9'),
+          `${label}: the completed bank must survive`
+        );
+      };
+
+      // A completion the clock was already carrying, the way a pass on an earlier visit leaves it.
+      // It is not the current lesson, so it changes no status the rest of this step asserts.
+      await page.evaluate(() => {
+        const raw = JSON.parse(window.localStorage.getItem('mechalab_study_timer_v1') ?? '{}');
+        const completed = [...new Set([...(raw.completed ?? []), 'P.9'])];
+        window.localStorage.setItem(
+          'mechalab_study_timer_v1',
+          JSON.stringify({ ...raw, completed })
+        );
+      });
+      // The row holds its own copy of the record; the same announcement a write from another square
+      // makes is what tells it the bank is there.
+      await page.evaluate(() => window.dispatchEvent(new Event('mechalab-study-clock')));
+      await page.waitForTimeout(250);
+      // One more stretch through the real buttons, so the reset that follows carries that bank.
+      await toggle.click();
+      await page.waitForTimeout(1200);
+      await reset.click();
+      await page.waitForTimeout(300);
+      const clearedWithBank = await readStored();
+      assert.equal(clearedWithBank?.runningSince ?? null, null, 'the reset stores no running stretch');
+      await assertBank(clearedWithBank, 'after reset');
+
+      // (i) A refresh immediately after the press.
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(500);
+      await assertZero('immediate reload');
+      await assertBank(await readStored(), 'immediate reload');
+
+      // (ii) Reset while a second window holds the same running clock. The other window is the surface
+      //      that used to write the old stretch back at its next press or heartbeat.
+      const second = await page.context().newPage();
+      await second.goto(page.url(), { waitUntil: 'domcontentloaded' });
+      await second.getByTestId('study-timer').waitFor({ timeout: 30000 });
+      await toggle.click();
+      await page.waitForTimeout(1400);
+      assert.equal(
+        await second.getByTestId('study-timer').getAttribute('data-state'),
+        'running',
+        'the second window sees the stretch the first one started'
+      );
+      await reset.click();
+      await page.waitForTimeout(800);
+      await assertZero('reset with a second window open');
+      await assertZero('the second window after that reset', second);
+      assert.equal(
+        (await second.getByTestId('btn-study-timer').textContent())?.trim(),
+        'Start',
+        'the second window must not offer Resume for time the reset took away'
+      );
+      assert.equal((await readStored())?.runningSince ?? null, null, 'the stored record stays cleared');
+      await second.close();
+
+      // (iii) A second tab on another lesson route, reloaded: it reads the same record and must agree.
+      const third = await page.context().newPage();
+      await third.goto(`${page.url().split('?')[0]}?lesson=P.2`, { waitUntil: 'domcontentloaded' });
+      await third.getByTestId('study-timer').waitFor({ timeout: 30000 });
+      await third.reload({ waitUntil: 'domcontentloaded' });
+      await assertZero('a second lesson route', third);
+      await assertBank(await third.evaluate(() =>
+        JSON.parse(window.localStorage.getItem('mechalab_study_timer_v1') ?? 'null')
+      ), 'a second lesson route');
+      await third.close();
+
+      // (iv) A refresh after the minute heartbeat could have fired. Nothing may put the stretch back.
+      await page.waitForTimeout(61_000);
+      assert.equal((await readStored())?.runningSince ?? null, null, 'no heartbeat revives the cleared clock');
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(500);
+      await assertZero('a reload after the heartbeat interval');
+      await assertBank(await readStored(), 'a reload after the heartbeat interval');
+      console.log('  ok a real refresh, a second window, another route and the heartbeat all keep the clock at zero');
       console.log('  ok the brief’s study clock starts, pauses, resumes, files its stretch and stores the zero');
     }
 

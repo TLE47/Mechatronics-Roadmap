@@ -1,8 +1,9 @@
 /**
  * The pure half of cloud sync: merging two progress snapshots.
  *
- * It imports nothing but a type, so `scripts/test_progress_merge.mjs` can run it under
- * `node --experimental-strip-types` without a browser, a network or a Supabase project.
+ * Its only runtime import is the clock comparison (`newerClock`), which is itself pure, so
+ * `scripts/test_progress_merge.mjs` can run it under `node --experimental-strip-types` without a
+ * browser, a network or a Supabase project.
  *
  * The merge rule is "never lose work, but let an uncheck stick":
  *  - a flag true on either side stays true (one device's completions survive a stale upload);
@@ -19,6 +20,7 @@
  */
 
 import type { LearningEvent } from './learningLog';
+import { newerClock } from './studyTimer.ts';
 import type { StudyTimer } from './studyTimer';
 
 export const PROGRESS_SCHEMA = 'mechalab.progress/1';
@@ -97,11 +99,15 @@ export function mergeLearningLog(a: LearningEvent[], b: LearningEvent[]): Learni
  * the one whose zero point and stretch are still true. `lastTick` is written by every press and every
  * minute of the heartbeat, so "which side is the clock on" needs no other timestamp — and a clock that
  * is already running beats a stopped one from a device the learner put away.
+ *
+ * The one exception is a clear (`newerClock`): a running stretch that began before the learner pressed
+ * Log & reset is the same old stretch ticking, and an upload of it can arrive after the reset with a
+ * later `lastTick`. It must not put the cleared time back; only a stretch begun after the reset does.
  */
 function newerTimer(local?: StudyTimer, remote?: StudyTimer): StudyTimer | undefined {
   if (!local) return remote;
   if (!remote) return local;
-  return (remote.lastTick ?? 0) >= (local.lastTick ?? 0) ? remote : local;
+  return newerClock(local, remote);
 }
 
 export function mergeProgress(local: ProgressSnapshot, remote: ProgressSnapshot): ProgressSnapshot {

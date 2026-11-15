@@ -6,8 +6,10 @@ import {
   formatClock,
   formatTimeOfDay,
   heartbeat,
+  newerClock,
   pauseTimer,
   readTimer,
+  TIMER_STORAGE_KEY,
   resumeTimer,
   startTimer,
   STUDY_CLOCK_EVENT,
@@ -116,6 +118,26 @@ export const StudyTimerRow: React.FC<{
     return () => window.removeEventListener(STUDY_CLOCK_EVENT, refresh);
   }, []);
 
+  // Another tab writes the same record, and `STUDY_CLOCK_EVENT` does not cross documents. Without
+  // this, a second tab that held the running stretch never learned about a Log & reset: its next
+  // press — or its next heartbeat, a minute later — wrote the old time over the cleared record, and
+  // the learner's refresh brought it back. A storage event is the browser telling this document the
+  // record moved; adopt it, then announce it so the app's upload sees the newer clock too.
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== null && event.key !== TIMER_STORAGE_KEY) return;
+      const stored = resumeTimer(readTimer(), Date.now());
+      setTimer(stored);
+      try {
+        window.dispatchEvent(new Event(STUDY_CLOCK_EVENT));
+      } catch {
+        // The announcement is a nicety; adopting the record is the point.
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
   // Today's hours, and this lesson's, follow the store wherever the write came from — a run, a
   // review, this clock. One listener for both, so they can never disagree about the same write.
   useEffect(() => {
@@ -138,6 +160,15 @@ export const StudyTimerRow: React.FC<{
       setTick((count) => count + 1);
       const current = timerRef.current;
       if (current.runningSince === null) return;
+      // A heartbeat is a write, so it has to be the newest fact: if the store moved on while this
+      // tab was busy (another tab cleared the clock, or paused it), adopt that instead of writing
+      // the stretch this tab still remembers over it.
+      const chosen = newerClock(current, readTimer());
+      if (chosen !== current) {
+        setTimer(resumeTimer(chosen, now));
+        window.dispatchEvent(new Event(STUDY_CLOCK_EVENT));
+        return;
+      }
       if (now - current.lastTick < HEARTBEAT_MS) return;
       recordSittingEvent({ at: now, kind: 'study', lesson: lessonId });
       persist(heartbeat(current, now));
@@ -162,22 +193,33 @@ export const StudyTimerRow: React.FC<{
   const complete = verified || clockComplete;
   const today = formatDuration(todayMs);
 
+  /** The record this press acts on: this row's, unless the store has moved on to a newer one. */
+  const currentRecord = () => {
+    const stored = readTimer();
+    const chosen = newerClock(timer, stored);
+    if (chosen !== timer) setTimer(resumeTimer(chosen, Date.now()));
+    return chosen;
+  };
+
   const onToggle = () => {
     const now = Date.now();
+    const base = currentRecord();
     setLogged('');
     recordSittingEvent({ at: now, kind: 'study', lesson: lessonId });
     // One control for both directions: the press means what its label says. A resume after a pause
     // is its own press in the log, not a second start.
+    const at = elapsedMs(base, now);
     persist(
-      running
-        ? pauseTimer(timer, now)
-        : startTimer(timer, now, lessonId, elapsed > 0 ? 'resume' : 'start')
+      base.runningSince !== null
+        ? pauseTimer(base, now)
+        : startTimer(base, now, lessonId, at > 0 ? 'resume' : 'start')
     );
   };
 
   const onReset = () => {
     const at = Date.now();
-    const total = elapsedMs(timer, at);
+    const base = currentRecord();
+    const total = elapsedMs(base, at);
     if (total <= 0) return;
     recordSittingEvent({ at, kind: 'study', lesson: lessonId });
     setLogged(formatDuration(total));
@@ -185,7 +227,7 @@ export const StudyTimerRow: React.FC<{
     // not, so Log & reset carries them across instead of unlearning them. The press's own time is
     // written into the record, so a stale copy of the old clock cannot win the next merge and put
     // the logged time back after a refresh.
-    persist(clearedTimer(lessonId, timer.completed, at));
+    persist(clearedTimer(lessonId, base.completed, at));
     // The reminder at the top of the lesson and the phone strip's compact clock are two more views
     // of this one store. Without the announcement they keep the timer they read at mount — and a
     // running one among them would heartbeat the old record back a minute later.

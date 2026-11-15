@@ -4977,6 +4977,73 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     await setEditorCode(page, afterScratch);
 
+    // 5j-ii. A park moves the replay with the interpreter, not back to the top of the recording. The
+    //       breakpoint stops on the call, Step in stops in its body, and Step out stops in the caller;
+    //       at each stop the Trace pane has to quote that same line, because "where am I" is the one
+    //       question the pane exists to answer while a run is parked.
+    {
+      const stepCode =
+        '# %% step and trace\ndef add(a, b):\n    total = a + b\n    return total\n\nx = add(2, 3)\nprint(x)\n';
+      await setEditorCode(page, stepCode);
+      await page.getByTestId('cell-run-0').waitFor({ timeout: 5000 });
+      await page.getByTestId('breakpoint-slot-6').click();
+      await armed(6);
+      await page.getByTestId('cell-run-0').click();
+      await page.getByTestId('paused-bar').waitFor({ timeout: 30000 });
+
+      if ((await page.getByTestId('trace-panel').count()) === 0) await clickToolbar(page, 'btn-trace');
+      await page.getByTestId('trace-panel').waitFor({ timeout: 10000 });
+      const traceLine = async () =>
+        (await page.getByTestId('trace-step-label').textContent())?.match(/line (\d+)/)?.[1];
+      const traceText = async () => (await page.getByTestId('trace-code').textContent())?.trim();
+      const waitPaused = (line) =>
+        page.waitForFunction(
+          (text) =>
+            (document.querySelector('[data-testid="paused-line"]')?.textContent ?? '').trim() === text,
+          line,
+          { timeout: 20000 }
+        );
+      const waitTrace = (line) =>
+        page.waitForFunction(
+          (number) =>
+            new RegExp(`line ${number}\\b`).test(
+              document.querySelector('[data-testid="trace-step-label"]')?.textContent ?? ''
+            ),
+          line,
+          { timeout: 10000 }
+        );
+
+      assert.equal(await traceLine(), '6', 'the breakpoint park must open Trace on the line it stopped on');
+      assert.equal(await traceText(), 'x = add(2, 3)', 'and quote that line, not the recording\u2019s first');
+
+      await page.getByTestId('btn-step-in').click();
+      await waitPaused('total = a + b');
+      await waitTrace(3);
+      assert.equal(await traceText(), 'total = a + b', 'Step in must move Trace into the call it entered');
+
+      await page.getByTestId('btn-step-out').click();
+      await waitPaused('x = add(2, 3)');
+      await waitTrace(6);
+      assert.equal(await traceText(), 'x = add(2, 3)', 'Step out must move Trace back to the caller\u2019s line');
+
+      await page.getByTestId('btn-continue').click();
+      await page.waitForFunction(
+        () => (document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '').trim() === '5',
+        undefined,
+        { timeout: 20000 }
+      );
+      await page.getByTestId('breakpoint-slot-6').click();
+      await page.waitForFunction(
+        () =>
+          document.querySelector('[data-testid="breakpoint-slot-6"]')?.getAttribute('data-breakpoint') ===
+          'off',
+        undefined,
+        { timeout: 5000 }
+      );
+      await setEditorCode(page, afterScratch);
+      console.log('  ok a breakpoint, Step in and Step out each move Trace to the line the interpreter is on');
+    }
+
     // 6. CDN failure never awards verification (even with full solution loaded)
     await page.getByTestId('lesson-item-P.7').click();
     await clickToolbar(page, 'btn-load-solution');

@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-****Release identity: `3.4.1`.** `package.json` is the one place the number lives; the workbench's footer
+******Release identity: `3.4.2`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -13,6 +13,30 @@ flowchart LR
     S0 --> B1["Pass 1 Tier 1 (23 Files: 00.1–08.1 across Tracks 00–08)"]
     B1 --> QA["Automated CI: verify_repo + validate_modules + lint_lessons + lint_modules + check_term_order + clean_tex + audit_math + test_exercises + run_all_labs + smoke & browser E2E (dev server and built Pages bundle)"]
 ```
+
+---
+
+## [2026-11-15] — Run 3.4.2: the reset that a second window could undo
+
+Log & reset held in one tab and came back after a refresh when another window was open on the
+workbench. The cleared record was stamped, but the second window still held the running stretch in
+its own state and never heard the same-document announcement; its next press wrote the old banked
+time straight over the cleared record, and its minute heartbeat would have done the same. Measured in
+a browser before the repair: reset in tab A, one press in tab B, reload A — `0:00:03`, paused.
+
+The store is now the authority every surface checks. `newerClock` makes a clear outrank a running
+stretch that began before it, in both directions, while a stretch begun after the clear still wins;
+cloud merge (`newerTimer`) uses the same rule, so an upload with a later heartbeat cannot restore
+the time either. A tab listens for `storage` and adopts the record it did not write, and the
+heartbeat re-reads before writing, so a missed event costs one second rather than a minute. A
+stopped record after the clear — a pause or a completion — is newer work and still wins.
+
+Home's clock step now reloads for real in four shapes: immediately after Log & reset, with a second
+window holding the running stretch, on a second tab at another lesson route (reloaded), and after
+61 s so the heartbeat interval has passed. Each asserts idle, `0:00:00`, nothing to log, no press of
+the logged session, and a completed bank that survives; the second window must offer Start, not
+Resume. The trace step also parks on a breakpoint and presses Step in and Step out, asserting the
+rendered Trace step quotes the line the interpreter is on each time.
 
 ---
 

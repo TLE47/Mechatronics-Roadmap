@@ -295,6 +295,45 @@ export function resumeTimer(timer: StudyTimer, now: number): StudyTimer {
   return { ...timer, lastTick: Math.max(timer.lastTick, timer.runningSince) };
 }
 
+/**
+ * The record Log & reset leaves: nothing banked, nothing running, no presses, and a stamp.
+ *
+ * The stamp is what tells it apart from a store nobody has written: `IDLE_TIMER` has `lastTick: 0`,
+ * and a cleared clock has the moment the learner cleared it.
+ */
+export function isClearedTimer(timer: StudyTimer): boolean {
+  return (
+    timer.runningSince === null &&
+    Math.max(0, timer.bankedMs || 0) === 0 &&
+    (timer.log?.length ?? 0) === 0 &&
+    (timer.lastTick ?? 0) > 0
+  );
+}
+
+/**
+ * Which of two records is the clock now: the newer one, unless one of them is a Log & reset that
+ * outranks the other's running stretch.
+ *
+ * A clear is a decision, a running stretch is a reading. If a clock was cleared at T while another
+ * window still held a stretch that began before T, that window's later heartbeat is the same old
+ * stretch ticking — not new study — and letting it win is exactly how the reset came back after a
+ * refresh. A stretch that began *after* T is new activity on another device, and it wins as usual.
+ * A stopped record after T (a pause, a completion) is also a new fact and wins on `lastTick`.
+ *
+ * Returns one of its two arguments, so a caller can compare identity to learn whether it must move.
+ */
+export function newerClock(held: StudyTimer, other: StudyTimer): StudyTimer {
+  if (isClearedTimer(held) && other.runningSince !== null && (held.lastTick ?? 0) >= other.runningSince) {
+    return held;
+  }
+  if (isClearedTimer(other) && held.runningSince !== null && (other.lastTick ?? 0) >= held.runningSince) {
+    return other;
+  }
+  // Strictly later, so the record a tab already holds is returned unchanged when nothing moved:
+  // a caller can compare identity and know it has nothing to adopt.
+  return (other.lastTick ?? 0) > (held.lastTick ?? 0) ? other : held;
+}
+
 function count(value: unknown, fallback = 0): number {
   const raw = Number(value);
   return Number.isFinite(raw) && raw >= 0 ? Math.round(raw) : fallback;

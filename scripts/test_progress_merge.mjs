@@ -155,6 +155,25 @@ console.log('the study clock');
 check("the clock that ticked last wins, whichever side it came from", () => {
   const lapstop = { bankedMs: 60000, runningSince: 500, lastTick: 600, lesson: 'P.1', log: [] };
   const phone = { bankedMs: 120000, runningSince: null, lastTick: 900, lesson: 'P.2', log: [] };
+  const T = 5_000;
+  const cleared = { bankedMs: 0, runningSince: null, lastTick: T, lesson: 'P.1', completed: ['P.2'], log: [] };
+  const staleRunning = {
+    bankedMs: 0,
+    runningSince: 1_000,
+    lastTick: T + 20_000,
+    lesson: 'P.1',
+    completed: [],
+    log: [{ action: 'start', at: 1_000, clockMs: 0, stretchMs: null }],
+  };
+  // The upload that lands after a reset with a later heartbeat: same stretch, still running from
+  // before the clear. It must not undo the zero or drop the completed bank.
+  const afterReset = mergeProgress(base({ studyTimer: cleared }), base({ updatedAt: 2_000, studyTimer: staleRunning }));
+  assert.deepEqual(afterReset.studyTimer, cleared, 'a later heartbeat of the pre-reset stretch cannot restore the clock');
+  assert.deepEqual(afterReset.studyTimer.completed, ['P.2']);
+  // A stretch begun after the reset is new work on another device and wins.
+  const fresh = { ...staleRunning, runningSince: T + 1_000, lastTick: T + 30_000 };
+  assert.deepEqual(mergeProgress(base({ studyTimer: cleared }), base({ updatedAt: 6_000, studyTimer: fresh })).studyTimer, fresh);
+
   const merged = mergeProgress(base({ updatedAt: 2000, studyTimer: lapstop }), base({ studyTimer: phone }));
   assert.equal(merged.studyTimer, phone);
   const other = mergeProgress(base({ studyTimer: phone }), base({ updatedAt: 2000, studyTimer: lapstop }));

@@ -16,6 +16,8 @@ import {
   TIMER_STORAGE_KEY,
   clearTimer,
   clearedTimer,
+  isClearedTimer,
+  newerClock,
   elapsedMs,
   formatClock,
   formatTimeOfDay,
@@ -487,6 +489,48 @@ check('a refresh of a cleared clock still reads zero', () => {
   const read = resumeTimer(readTimer(store), T0 + 50_000);
   assert.equal(elapsedMs(read, T0 + 50_000), 0);
   assert.equal(read.runningSince, null);
+});
+
+check('a clear outranks the stretch that was already running when it was pressed', () => {
+  // The shape this exists for: tab A presses Log & reset at T; tab B still holds a stretch that began
+  // before T and writes a later heartbeat. Later `lastTick` would pick B, and the logged time would
+  // come back on the next refresh.
+  const T = T0 + 60_000;
+  const cleared = clearedTimer('P.1', ['P.2'], T);
+  const runningSince = T0 + 1_000;
+  const staleHeartbeat = {
+    bankedMs: 0,
+    runningSince,
+    lastTick: T + 30_000,
+    lesson: 'P.1',
+    completed: [],
+    log: [{ action: 'start', at: runningSince, clockMs: 0, stretchMs: null }],
+  };
+  assert.equal(newerClock(cleared, staleHeartbeat), cleared, 'the reset keeps the clock at zero');
+  assert.equal(newerClock(staleHeartbeat, cleared), cleared, 'and it is symmetric');
+  assert.equal(elapsedMs(newerClock(cleared, staleHeartbeat), T + 40_000), 0);
+
+  // A stretch begun after the reset is new study on another device; it is not the old one ticking.
+  const freshStretch = { ...staleHeartbeat, runningSince: T + 5_000, lastTick: T + 35_000 };
+  assert.equal(newerClock(cleared, freshStretch), freshStretch, 'a stretch started after the clear wins');
+
+  // A stopped record after the clear is a fact too (a pause or a completion), so it wins on lastTick.
+  const pausedAfter = {
+    bankedMs: 5_000,
+    runningSince: null,
+    lastTick: T + 10_000,
+    lesson: 'P.1',
+    completed: [],
+    log: [{ action: 'pause', at: T + 10_000, clockMs: 5_000, stretchMs: 5_000 }],
+  };
+  assert.equal(newerClock(cleared, pausedAfter), pausedAfter, 'a pause after the clear is newer work');
+
+  // Equal stamps keep the record the caller already holds, so a heartbeat does not adopt itself.
+  const same = { ...cleared };
+  assert.equal(newerClock(cleared, same), cleared);
+  assert.equal(isClearedTimer(cleared), true);
+  assert.equal(isClearedTimer(IDLE_TIMER), false, 'a store nobody wrote is not a clear');
+  assert.equal(isClearedTimer(pausedAfter), false, 'banked time is not a clear');
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);
