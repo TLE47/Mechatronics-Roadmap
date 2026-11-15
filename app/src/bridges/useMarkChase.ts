@@ -46,8 +46,11 @@ export function useMarkChase(mark: LabMark | undefined, value: number): MarkCont
   const [announcement, setAnnouncement] = useState('');
   const [muted, setMuted] = useState(() => readMuted());
 
-  /* Armed means "the value has left the last landing", so a drag that rests on a mark scores once. */
-  const armed = useRef(true);
+  /* Armed means "the value has left the last landing", so a drag that rests on a mark scores once.
+   * It starts disarmed: a card whose dial already rests on the first rung when it paints (P.9's
+   * answer dial sits on 63.2 % at one time constant) must not count that as a landing the learner
+   * earned. Only a move out of the window and back into it scores. */
+  const armed = useRef(false);
   const ladder = mark?.ladder ?? [];
   const step = ladder.length > 0 ? stepAt(ladder, hits) : 0;
   const target = ladder.length > 0 ? targetAt(ladder, hits) : Number.NaN;

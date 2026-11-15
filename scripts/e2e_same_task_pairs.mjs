@@ -170,6 +170,10 @@ window.__pairs = {
       performance.now() - started < budgetMs &&
       (document.querySelector('[data-testid="tab-loading"]') ||
         document.querySelector('[data-editor-ready="false"]') ||
+        // A lesson's Bridge Notes card is a lazy chunk behind a deliberately empty fallback, so a page
+        // that has painted its prose can still be missing the card. Its marker is the only thing that
+        // tells "this lesson has no visual" from "the chunk is still in flight".
+        document.querySelector('[data-testid="bridge-visual-pending"]') ||
         document.body.innerText.includes('Loading this tab'))
     ) {
       await new Promise((resolve) => setTimeout(resolve, 25));
@@ -184,6 +188,7 @@ window.__pairs = {
       const skeleton =
         document.querySelector('[data-testid="tab-loading"]') ||
         document.querySelector('[data-editor-ready="false"]') ||
+        document.querySelector('[data-testid="bridge-visual-pending"]') ||
         document.body.innerText.includes('Loading this tab');
       const now = skeleton ? null : this.digest();
       if (now && now === previous) return true;

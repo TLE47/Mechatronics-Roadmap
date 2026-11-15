@@ -96,14 +96,16 @@ const VISUALS: Record<string, ComponentType> = {
 /**
  * The visual the payload named, or nothing.
  *
- * `fallback={null}` is deliberate: the section's own text is already on screen, so a spinner would
- * be a promise to move something the reader has not asked to move yet.
+ * Each fallback is an empty, hidden marker rather than nothing at all: the section's own text is
+ * already on screen, so a spinner would be a promise to move something the reader has not asked to
+ * move yet, but the *pending* state still has to be visible to anything comparing one render with
+ * another. This module's own boundary in `LessonReader` draws the same marker.
  */
 export default function BridgeNotesVisual({ name }: { name: string }): ReactElement | null {
   const Visual = VISUALS[name];
   if (!Visual) return null;
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<span data-testid="bridge-visual-pending" hidden />}>
       <div data-testid={`bridge-visual-${name}`}>
         <Visual />
       </div>

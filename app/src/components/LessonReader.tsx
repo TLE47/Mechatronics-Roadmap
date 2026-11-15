@@ -948,7 +948,11 @@ export function LessonReader({
           return (
             <React.Fragment key={key}>
               {heading}
-              <Suspense fallback={null}>
+              {/* The empty fallback is still a *state*: the section's text is on screen and the
+                  picture is on its way. Hidden, so nothing moves, but in the DOM, so a harness that
+                  compares a slow page with a fast one can tell "this lesson has no visual" from
+                  "this lesson's visual has not arrived". */}
+              <Suspense fallback={<span data-testid="bridge-visual-pending" hidden />}>
                 <BridgeNotesVisual name={block.v} />
               </Suspense>
             </React.Fragment>
