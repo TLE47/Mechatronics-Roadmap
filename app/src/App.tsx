@@ -27,6 +27,9 @@ import { readTimer, writeTimer, STUDY_CLOCK_EVENT } from './studyTimer';
 const AwardToast = React.lazy(() =>
   import('./components/game/AwardToast').then((module) => ({ default: module.AwardToast }))
 );
+// Every Bridge Notes visual on one page, for review (`?gallery=bridges`). Fetched only when the
+// query asks for it, so a learner's first paint never pays for a page they did not ask to see.
+const BridgeGallery = React.lazy(() => import('./components/BridgeGallery'));
 // The reward engine is fetched when a verification earns something, not on every visit: the rules,
 // the ladder and the mission model are ~4 kB gzipped that a learner who never verifies never needs.
 // `import type` is erased, so the type does not pull the module back into the entry chunk.
@@ -34,6 +37,7 @@ import type { Award } from './gamification/rewards';
 import { readPredictions } from './predictGate';
 import { STORAGE_KEY_START_HERE_DISMISSED } from './startHere';
 import { readRailCollapsed, writeRailCollapsed } from './railCollapse';
+import { LazyPending } from './components/LazyPending';
 import { SPINE_STEP_COUNT, stepForMilestone } from './spine';
 import { passChangesContent } from './courseLevels';
 // One entry per tab — its id, labels, icon, chunk and render — lives in `tabRegistry.tsx`. The shell
@@ -571,7 +575,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     if (gameAwards.length === 0) return;
     const id = showCard('award', (toastId) => (
-        <React.Suspense fallback={null}>
+        <React.Suspense fallback={<LazyPending what="award-toast" />}>
           <AwardToast
             awards={gameAwards}
             onClose={() => {
@@ -2010,6 +2014,26 @@ export const App: React.FC = () => {
     trySnippet,
     dismissTry: () => setTrySnippet(null),
   };
+
+  // A review page, not a route: `?gallery=bridges` renders the cards and nothing else. Guarded for
+  // the server-side render, where there is no `window` and therefore no gallery a reader asked for.
+  const gallery =
+    typeof window !== 'undefined' && typeof window.location !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('gallery')
+      : null;
+  if (gallery === 'bridges') {
+    return (
+      <React.Suspense
+        fallback={
+          <p className="p-6 text-xs" style={{ color: 'var(--muted)' }}>
+            Loading…
+          </p>
+        }
+      >
+        <BridgeGallery />
+      </React.Suspense>
+    );
+  }
 
   return (
     <div

@@ -97,7 +97,7 @@ import { RunnerToolbar } from './runner/RunnerToolbar';
 import { RunnerEditorCard } from './runner/RunnerEditorCard';
 import { robotPaneFor } from './runner/robotPane';
 import { CasesPane } from './runner/CasesPane';
-import { readerContinue } from './runner/readerContinue';
+import { readerNavigation } from './runner/readerContinue';
 import { useRunnerExecution } from './runner/useRunnerExecution';
 import { useFirstRunTour } from './runner/useFirstRunTour';
 import { useCollab } from './runner/useCollab';
@@ -2870,7 +2870,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 hidden={!phoneLessonVisible}
                 scope={shownLayout === 'study' ? 'study' : 'full'}
                 showClock={!isPhone}
-                continueAction={readerContinue(shownLayout, chooseLayout)}
+                {...readerNavigation(shownLayout, chooseLayout)}
               />
             )}
 

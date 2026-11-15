@@ -82,6 +82,21 @@ assert.deepEqual(
   ['b', 'c', 'e', 'a'],
   `prefix first, then word-start, then substring, each in catalogue order; got ${ranking.map((m) => m.item.id).join(', ')}`
 );
+const lessonFixture = (id, label, extra = {}) => ({ id: `lesson-${id}`, kind: 'lesson', label, ...extra });
+const courseOrder = rankPalette(
+  [
+    lessonFixture('P.2', 'Loops count through a list'),
+    lessonFixture('P.5', 'A loop over numbers'),
+    lessonFixture('P.8', 'While loops repeat a condition'),
+  ],
+  'loop'
+);
+assert.deepEqual(
+  courseOrder.map((match) => match.item.id),
+  ['lesson-P.2', 'lesson-P.5', 'lesson-P.8'],
+  `lessons must come back in course order, not score order; got ${courseOrder.map((m) => m.item.id).join(', ')}`
+);
+console.log('  ok lessons answer a query in course order');
 const tokenPrefix = rankPalette([fixture('ten', 'P.10 · Loops'), fixture('one', 'P.1 · Variables')], 'P.1');
 assert.equal(tokenPrefix[0]?.item.id, 'one', 'a numbered prefix must prefer the entry that ends the token (P.1 over P.10)');
 console.log('  ok P.1 ranks above P.10 for the query P.1');

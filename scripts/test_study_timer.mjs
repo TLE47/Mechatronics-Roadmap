@@ -28,6 +28,7 @@ import {
   writeTimer,
 } from '../app/src/studyTimer.ts';
 import { MAX_SITTING_MS, closeSitting, lessonTotals, nextSitting } from '../app/src/sittingClock.ts';
+import { mergeProgress } from '../app/src/progressMerge.ts';
 
 let passed = 0;
 let failed = 0;
@@ -452,6 +453,40 @@ check('a stored clock keeps its completions, and junk in them costs only the jun
   const junk = parseTimer(JSON.stringify({ completed: 'P.1' }));
   assert.deepEqual(junk.completed, [], 'a stored string is not a list of lessons');
   assert.deepEqual(parseTimer(null).completed, []);
+});
+
+// Log & reset is a fact about the clock, not only about the digits: after a refresh the learner must
+// still read 0:00:00. The record is therefore stamped with the press, and that stamp is what beats a
+// stale cloud copy of the running clock in the merge.
+check('a cleared clock reads zero but is newer than the clock it replaced', () => {
+  const running = startTimer(IDLE_TIMER, T0, 'P.1');
+  const cleared = clearedTimer('P.1', ['P.2'], T0 + 90_000);
+  assert.equal(elapsedMs(cleared, T0 + 120_000), 0, 'the digits are zero');
+  assert.equal(cleared.runningSince, null, 'nothing is running');
+  assert.equal(cleared.lastTick, T0 + 90_000, 'the clearing press is the record time');
+  assert.deepEqual(cleared.completed, ['P.2'], 'what was completed survives the reset');
+
+  const snapshot = (timer) => ({
+    schema: 'mechalab.progress/1',
+    updatedAt: T0,
+    resetAt: 0,
+    verifiedLessons: {},
+    completedLessons: {},
+    completedMilestones: {},
+    learningLog: [],
+    studyTimer: timer,
+  });
+  const merged = mergeProgress(snapshot(cleared), snapshot(running));
+  assert.equal(merged.studyTimer.lastTick, cleared.lastTick, 'the cleared clock wins the merge');
+  assert.equal(elapsedMs(merged.studyTimer, T0 + 120_000), 0, 'a pull cannot put the logged time back');
+});
+
+check('a refresh of a cleared clock still reads zero', () => {
+  const store = fakeStorage();
+  writeTimer(clearedTimer('P.1', [], T0 + 30_000), store);
+  const read = resumeTimer(readTimer(store), T0 + 50_000);
+  assert.equal(elapsedMs(read, T0 + 50_000), 0);
+  assert.equal(read.runningSince, null);
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

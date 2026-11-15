@@ -182,8 +182,18 @@ export const StudyTimerRow: React.FC<{
     recordSittingEvent({ at, kind: 'study', lesson: lessonId });
     setLogged(formatDuration(total));
     // The digits and the presses are the session's; the lessons this clock has seen finished are
-    // not, so Log & reset carries them across instead of unlearning them.
-    persist(clearedTimer(lessonId, timer.completed));
+    // not, so Log & reset carries them across instead of unlearning them. The press's own time is
+    // written into the record, so a stale copy of the old clock cannot win the next merge and put
+    // the logged time back after a refresh.
+    persist(clearedTimer(lessonId, timer.completed, at));
+    // The reminder at the top of the lesson and the phone strip's compact clock are two more views
+    // of this one store. Without the announcement they keep the timer they read at mount — and a
+    // running one among them would heartbeat the old record back a minute later.
+    try {
+      window.dispatchEvent(new Event(STUDY_CLOCK_EVENT));
+    } catch {
+      // A blocked window costs the announcement, not the reset.
+    }
   };
 
   return (

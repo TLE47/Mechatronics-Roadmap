@@ -16,7 +16,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { LabMark } from './bridgeLab.ts';
-import { readMark, writeMark, clearMark, onMark, stepAt, targetAt, toleranceAt } from './bridgeMark.ts';
+import { readMark, writeMark, clearMark, stepAt, targetAt, toleranceAt } from './bridgeMark.ts';
+import { nextMarkState } from './markArmed.ts';
 import { readMuted, writeMuted } from './bridgeChase.ts';
 import { tick, unlock } from './bridgeAudio.ts';
 
@@ -59,21 +60,20 @@ export function useMarkChase(mark: LabMark | undefined, value: number): MarkCont
 
   useEffect(() => {
     if (!mark || ladder.length === 0) return;
-    if (!armed.current) {
-      if (Math.abs(value - target) > tolerance * 2.5) armed.current = true;
-      return;
-    }
-    if (!onMark(value, target, tolerance)) return;
+    // The latch itself is arithmetic (`markArmed.ts`): a card that opens on its mark scores nothing,
+    // and a value that rests on the mark after a landing does not score again.
+    const latch = nextMarkState(armed.current, value, target, tolerance);
+    armed.current = latch.armed;
+    if (!latch.land) return;
 
-    armed.current = false;
-    const next = hits + 1;
-    const nextBest = Math.max(next, best);
-    writeMark({ marks: next, best: nextBest });
-    setHits(next);
+    const nextHits = hits + 1;
+    const nextBest = Math.max(nextHits, best);
+    writeMark({ marks: nextHits, best: nextBest });
+    setHits(nextHits);
     setBest(nextBest);
-    const finished = stepAt(ladder, next) === 0;
+    const finished = stepAt(ladder, nextHits) === 0;
     tick(finished ? 'done' : 'mark', readMuted());
-    setAnnouncement(`landed ${format(target)} — ${finished ? 'ladder complete' : `${next} landed`}`);
+    setAnnouncement(`landed ${format(target)} — ${finished ? 'ladder complete' : `${nextHits} landed`}`);
   }, [value, mark, ladder.length, target, tolerance, hits, best, format]);
 
   const toggleSound = useCallback(() => {

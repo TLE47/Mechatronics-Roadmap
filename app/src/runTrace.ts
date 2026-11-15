@@ -135,6 +135,28 @@ export function moveStep(trace: TraceSnapshot, index: number, delta: number): nu
   return clampStep(trace, clampStep(trace, index) + delta);
 }
 
+/**
+ * The step that is *where the program is now*: the last one recorded on `line`.
+ *
+ * A park posts the trace of everything the run has executed so far, and Trace used to open at step 0
+ * — the top of the program — every time. Pressing Step into a call then parked on line 12 while the
+ * panel still described line 1: the two halves of the debugger disagreed about where the learner was,
+ * and the panel that exists to answer "how did I get here" answered "this is where you started".
+ *
+ * The **last** matching step, not the first: a line inside a loop ran several times, and the one the
+ * interpreter is parked on is the most recent visit. A park whose line the recording never reached
+ * (a step onto a line the tracer skipped) falls back to the end of the recording, which is still the
+ * present rather than the past.
+ */
+export function stepForLine(trace: TraceSnapshot, line: number | null | undefined): number {
+  if (!Number.isFinite(Number(line))) return Math.max(0, trace.steps.length - 1);
+  const wanted = Math.trunc(Number(line));
+  for (let index = trace.steps.length - 1; index >= 0; index -= 1) {
+    if (trace.steps[index].line === wanted) return index;
+  }
+  return Math.max(0, trace.steps.length - 1);
+}
+
 /** `34 steps`, or `300 of 12,431 steps · capped` when the worker stopped collecting. */
 export function traceSummary(trace: TraceSnapshot): string {
   const kept = trace.steps.length;

@@ -73,6 +73,10 @@ GATES: list[tuple[str, list[str], bool]] = [
     ("plant_data", ["scripts/generate_plant_data.py", "--check"], False),
     ("term_order", ["scripts/check_term_order.py"], False),
     ("python_lessons_data", ["scripts/generate_python_lessons_data.py", "--check"], False),
+    # The joins a lesson spans, across five registries: a page that becomes runnable can be
+    # half-wired while every individual `--check` above stays green. Reads the registry, the
+    # payloads, the visual map and the callouts, and names the page and file that disagree.
+    ("registry_joins", ["scripts/check_registry_joins.py"], False),
     # The 3.0 story, missions and reward rules: `content/` is the source of truth and the bundle the
     # site imports is a build of it. A story edited without rebuilding fails here, so the site can
     # never render a mission the repository does not have.
@@ -106,6 +110,9 @@ GATES: list[tuple[str, list[str], bool]] = [
     ("firmware", ["scripts/extract_and_compile_sketches.py", "--check-firmware"], False),
     # The instruction pages are a list of commands, and a command that names a script which no longer
     # exists is worse than no instructions. Reads the pages and the workflow files; never history.
+    # The header prints package.json's version and the changelog leads with its own copy; this is the
+    # one place the two can disagree, and the release a bug report names depends on them agreeing.
+    ("version", ["npm", "run", "version:check"], False),
     ("doc_commands", ["scripts/check_doc_commands.py"], False),
     # The 2.0 gap page is a claim, not a wish list: every row is closed, and a `ships` row names a
     # command or a browser step a reader can run. Both directions were wrong once — Run 200 fixed two
@@ -141,6 +148,9 @@ GATES: list[tuple[str, list[str], bool]] = [
 # now measures it too.
 AUDIT_GATES: list[tuple[str, list[str], bool]] = [
     ("labels", ["npm", "run", "check:labels"], False),
+    # Every Bridge Notes card in every palette, at 1280 and 380: the P.9-only contrast audit,
+    # generalised. A card added without this is a card nobody measured.
+    ("bridge_contrast", ["npm", "run", "check:bridge-contrast"], False),
 ]
 
 REPORT_PATH = os.path.join(os.environ.get("RUNNER_TEMP", "/tmp"), "run-exercise.json")

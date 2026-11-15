@@ -1,7 +1,7 @@
 import React from 'react';
 import { MathView } from './MathView';
 import { parseInline } from '../readerMarkdown';
-import { markRanges, unlocatedQuotes, type MarkRange } from '../lessonMarks';
+import { markQuoteFragments, type MarkRange } from '../lessonMarks';
 import type { Highlight } from '../studyNotes';
 
 /**
@@ -88,7 +88,16 @@ function MarkedRange({
               event.stopPropagation();
               if (mark && onMark) onMark(mark, event.currentTarget);
             }}
-            className="inline cursor-pointer rounded-sm bg-amber/15 px-0.5 text-inherit underline decoration-amber decoration-dotted underline-offset-2 hover:bg-amber/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+            // Two kinds, one wash each. A highlight is a passage worth finding again, so it takes the
+            // accent's wash; a sticky note is a thought attached to a passage, so it takes the amber
+            // one and a dotted edge. Both are painted, because a saved note that only underlines its
+            // words reads as a link, not as something the learner put there.
+            data-mark-kind={mark && mark.comment.trim() ? 'sticky' : 'highlight'}
+            className={
+              mark && mark.comment.trim()
+                ? 'inline cursor-pointer rounded-sm border-b-2 border-amber/70 bg-amber/20 px-0.5 text-inherit hover:bg-amber/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent'
+                : 'inline cursor-pointer rounded-sm bg-accent/15 px-0.5 text-inherit underline decoration-accent/70 decoration-dotted underline-offset-2 hover:bg-accent/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent'
+            }
           >
             {piece.text}
           </button>
@@ -208,21 +217,10 @@ export function InlineMarkdown({
   }
   const whole = inlinePlainText(text);
   const quotes = live.map((mark) => mark.quote);
-  const ranges = markRanges(whole, quotes);
-  const missing = unlocatedQuotes(whole, quotes);
-  return (
-    <>
-      <InlineRuns text={text} ranges={ranges} offset={0} marks={live} onMark={onMark} />
-      {missing.length > 0 && (
-        // The guard: a note anchored to words this paragraph no longer has is named, not dropped.
-        <span
-          data-testid="sticky-note-unlocated"
-          title={`Not on this text any more: ${missing.map((quote) => `“${quote}”`).join(' · ')}`}
-          className="ml-1 cursor-help rounded border border-amber/40 bg-amber/10 px-1 font-mono text-[10.5px] text-amber"
-        >
-          {missing.length} note{missing.length === 1 ? '' : 's'} not on this text
-        </span>
-      )}
-    </>
-  );
+  // Fragments, not only whole quotes: a selection that crosses a paragraph boundary is in no one
+  // paragraph whole, and each paragraph still draws the part of it that it holds. The page names a
+  // note as unlocated once, in the reader, when *no* paragraph could draw any of it — the old
+  // per-paragraph badge made every other paragraph accuse a perfectly placed note.
+  const ranges = markQuoteFragments(whole, quotes);
+  return <InlineRuns text={text} ranges={ranges} offset={0} marks={live} onMark={onMark} />;
 }

@@ -4610,6 +4610,30 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     assert.match(p1ReadProse, /^Goal$/m, 'Read must keep P.1’s Goal and requirements');
     assert.doesNotMatch(p1ReadProse, /^Learn$/m, 'Read must not repeat the Learn section');
     assert.match(p1ReadProse, /Do it yourself/i, 'Read must keep P.1’s exercise section');
+    // Read has a way back as well as a way on: the left-hand pill returns to Study, the right-hand
+    // one continues to Write. A learner reading the whole page had no route to Study before it.
+    const backToStudy = page.getByTestId('btn-reader-back');
+    await backToStudy.waitFor({ timeout: 5000 });
+    assert.match(
+      (await backToStudy.textContent()) ?? '',
+      /Back to Study/,
+      'Read must offer the way back to Study'
+    );
+    assert.equal(
+      await page.getByTestId('reader-continue').evaluateAll(
+        (rows) => getComputedStyle(rows[0]).justifyContent
+      ),
+      'space-between',
+      'the two pills sit at opposite ends of the row, not stacked together'
+    );
+    await backToStudy.click();
+    assert.equal(
+      await page.getByTestId('layout-study').getAttribute('aria-pressed'),
+      'true',
+      'Back to Study must select Study'
+    );
+    await page.getByTestId('layout-read').click();
+    await page.waitForTimeout(250);
     const continueToWrite = page.getByTestId('btn-reader-continue');
     await continueToWrite.waitFor({ timeout: 5000 });
     assert.match(

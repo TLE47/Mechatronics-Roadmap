@@ -9,6 +9,7 @@ import React, {
 } from 'react';
 import { createPortal } from 'react-dom';
 import {
+  ArrowLeft,
   ArrowRight,
   Bold,
   BookOpen,
@@ -19,13 +20,14 @@ import {
   Loader2,
   PanelsTopLeft,
   RotateCcw,
+  Sigma,
   StickyNote,
   Trash2,
   Underline,
   X,
 } from 'lucide-react';
 import { MathView } from './MathView';
-import { InlineMarkdown as Inline } from './InlineMarkdown';
+import { InlineMarkdown as Inline, inlinePlainText } from './InlineMarkdown';
 import {
   loadLessonPage,
   type LessonPage,
@@ -52,10 +54,11 @@ import {
 } from '../studyNotes';
 import { checkId, readTicks, toggleTicked } from '../lessonChecks';
 import { STORE_RESTORED_EVENT } from '../backupBundle';
-import { markQuotes, wrapSelection } from '../lessonMarks';
+import { markQuotes, unlocatedQuotes, wrapSelection } from '../lessonMarks';
 import { RESET_EVENT } from '../resetEvent';
 import { lessonPageUrl as sourceUrl } from '../startHere';
 import { StudyClockReminder } from './StudyClockReminder';
+import { LazyPending } from './LazyPending';
 // One dynamic import is all the entry chunk keeps of the Bridge Notes visuals: the table of names
 // and the pictures themselves travel in their own chunks (`bridges/bridgeNotesVisual.tsx`).
 const BridgeNotesVisual = lazy(() => import('../bridges/bridgeNotesVisual'));
@@ -87,6 +90,45 @@ const ReaderFigure = lazy(() => import('../visuals/ReaderFigure'));
  * (`scripts/generate_lesson_pages.py` skips it), the code in the editor is the code that runs, and
  * the one link out is the source page, kept for copying, printing and filing an issue.
  */
+/**
+ * The page's drawn words, for asking whether a saved note is on it at all.
+ *
+ * Built from the payload rather than from the DOM: a scope draws only half the page, and a note
+ * written in Read would be accused by Study if the guard looked at what is currently painted. It
+ * walks reveals because a note can be written inside an opened hint, and code blocks because a
+ * highlight can be taken from one (`markQuotes(..., { loose: true })` draws it).
+ */
+function pagePlainText(blocks: ReaderBlock[]): string {
+  const parts: string[] = [];
+  for (const block of blocks) {
+    switch (block.t) {
+      case 'p':
+      case 'h':
+      case 'quote':
+        parts.push(inlinePlainText(block.x));
+        break;
+      case 'ul':
+      case 'ol':
+        parts.push(block.items.map((item) => inlinePlainText(item.x)).join(' '));
+        break;
+      case 'table':
+        parts.push(
+          [...block.head, ...block.rows.flat()].map((cell) => inlinePlainText(cell)).join(' ')
+        );
+        break;
+      case 'code':
+        parts.push(block.text);
+        break;
+      case 'reveal':
+        parts.push(pagePlainText(block.blocks));
+        break;
+      default:
+        break;
+    }
+  }
+  return parts.filter(Boolean).join(' ');
+}
+
 /** What a route block says when the page gives no caption of its own. */
 const ROUTE_CAPTION = 'Each box is a checkpoint in order; the last one is the verified pass this page ends on.';
 
@@ -164,6 +206,14 @@ interface LessonReaderProps {
    * compete with the exercise the learner has just read.
    */
   continueAction?: { label: string; title: string; onClick: () => void } | null;
+  /**
+   * The way back from Read: the pill at the bottom left, mirroring `continueAction` on the right.
+   *
+   * Read is the one scope that puts the editor and the chooser away, so the pill that led into it
+   * is the only route a reader has back to the half of the page they came from without reaching for
+   * the header's layout chips.
+   */
+  backAction?: { label: string; title: string; onClick: () => void } | null;
 }
 
 /** The page's absolute URL, for the source link a heading or a figure points back to. */
@@ -223,7 +273,12 @@ function CodeBlock({
                       event.stopPropagation();
                       if (mark) onMark(mark, event.currentTarget);
                     }}
-                    className="inline cursor-pointer rounded-sm bg-amber/15 p-0 text-inherit underline decoration-amber decoration-dotted underline-offset-2 hover:bg-amber/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                    data-mark-kind={mark?.comment.trim() ? 'sticky' : 'highlight'}
+                    className={
+                      mark?.comment.trim()
+                        ? 'inline cursor-pointer rounded-sm border-b-2 border-amber/70 bg-amber/20 p-0 text-inherit hover:bg-amber/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent'
+                        : 'inline cursor-pointer rounded-sm bg-accent/15 p-0 text-inherit underline decoration-accent/70 decoration-dotted underline-offset-2 hover:bg-accent/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent'
+                    }
                   >
                     {piece.text}
                   </button>
@@ -289,6 +344,7 @@ export function LessonReader({
   showClock = false,
   scope = 'full',
   continueAction = null,
+  backAction = null,
 }: LessonReaderProps) {
   /** Whether the reader is showing its one-line split-view suggestion. */
   const [splitTip, setSplitTip] = useState(false);
@@ -315,6 +371,21 @@ export function LessonReader({
   /** The lesson's ticks, and the highlights drawn into the prose; both are re-read after a write. */
   const [ticks, setTicks] = useState<string[]>([]);
   const [marks, setMarks] = useState<Highlight[]>([]);
+  /**
+   * The notes that are nowhere on this page any more, named once at the end of the text.
+   *
+   * This used to be drawn by every inline paragraph, which made a note written on one sentence
+   * accuse all the others: each `<Inline>` only knew its own words, so "1 note not on this text"
+   * appeared on every paragraph that did not hold it. The check belongs to the page, and so does
+   * the sentence.
+   */
+  const unlocated = useMemo(
+    () =>
+      page && marks.length > 0
+        ? unlocatedQuotes(pagePlainText(page.blocks), marks.map((mark) => mark.quote))
+        : [],
+    [page, marks]
+  );
   /** The passage the popover points at, and where the popover ended up after measuring itself. */
   const [stickyAnchor, setStickyAnchor] = useState<StickyAnchor | null>(null);
   const [stickyPlacement, setStickyPlacement] = useState<StickyPlacement | null>(null);
@@ -952,7 +1023,7 @@ export function LessonReader({
                   picture is on its way. Hidden, so nothing moves, but in the DOM, so a harness that
                   compares a slow page with a fast one can tell "this lesson has no visual" from
                   "this lesson's visual has not arrived". */}
-              <Suspense fallback={<span data-testid="bridge-visual-pending" hidden />}>
+              <Suspense fallback={<LazyPending what="bridge-visual" />}>
                 <BridgeNotesVisual name={block.v} />
               </Suspense>
             </React.Fragment>
@@ -1072,7 +1143,7 @@ export function LessonReader({
       case 'figure':
         return (
           <div key={key} data-reader-block={blockKey}>
-            <Suspense fallback={null}>
+            <Suspense fallback={<LazyPending what="reader-figure" />}>
               <ReaderFigure id={block.id} caption={block.caption} live />
             </Suspense>
           </div>
@@ -1080,7 +1151,7 @@ export function LessonReader({
       case 'route':
         return (
           <div key={key} data-reader-block={blockKey}>
-            <Suspense fallback={null}>
+            <Suspense fallback={<LazyPending what="reader-figure" />}>
               <ReaderFigure
                 id="route"
                 live
@@ -1097,7 +1168,7 @@ export function LessonReader({
       case 'graph':
         return (
           <div key={key} data-reader-block={blockKey}>
-            <Suspense fallback={null}>
+            <Suspense fallback={<LazyPending what="reader-figure" />}>
               <ReaderFigure
                 id="graph"
                 live
@@ -1311,28 +1382,55 @@ export function LessonReader({
             className={tall ? 'mx-auto max-w-[68ch] space-y-3' : 'space-y-3'}
           >
             {blocksForScope(page.blocks, scope).map((block, index) => renderBlock(block, `b${index}`))}
+            {unlocated.length > 0 && (
+              <p
+                data-testid="sticky-note-unlocated"
+                title={`Not on this text any more: ${unlocated.map((quote) => `“${quote}”`).join(' · ')}`}
+                className="cursor-help rounded border border-amber/40 bg-amber/10 px-2 py-1 font-mono text-[11px] leading-snug text-amber"
+              >
+                {unlocated.length} note{unlocated.length === 1 ? '' : 's'} not on this text:{' '}
+                {unlocated.map((quote) => `“${quote.length > 48 ? `${quote.slice(0, 45)}…` : quote}”`).join(' · ')}
+              </p>
+            )}
           </article>
         )}
       </div>
 
-      {continueAction && (
+      {(continueAction || backAction) && (
         <div
           data-testid="reader-continue"
-          className="flex justify-end px-3 pt-3 pb-1"
+          className={`flex px-3 pt-3 pb-1 ${backAction ? 'justify-between gap-2' : 'justify-end'}`}
         >
-          <button
-            type="button"
-            data-testid="btn-reader-continue"
-            onClick={continueAction.onClick}
-            title={continueAction.title}
-            className="group flex cursor-pointer items-center gap-1.5 rounded-full border border-line bg-panel px-3 py-1.5 font-mono text-[12px] text-muted transition-colors hover:border-accent/60 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-          >
-            {continueAction.label}
-            <ArrowRight
-              className="h-3 w-3 transition-transform group-hover:translate-x-0.5"
-              aria-hidden="true"
-            />
-          </button>
+          {backAction && (
+            <button
+              type="button"
+              data-testid="btn-reader-back"
+              onClick={backAction.onClick}
+              title={backAction.title}
+              className="group flex cursor-pointer items-center gap-1.5 rounded-full border border-line bg-panel px-3 py-1.5 font-mono text-[12px] text-muted transition-colors hover:border-accent/60 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
+              <ArrowLeft
+                className="h-3 w-3 transition-transform group-hover:-translate-x-0.5"
+                aria-hidden="true"
+              />
+              {backAction.label}
+            </button>
+          )}
+          {continueAction && (
+            <button
+              type="button"
+              data-testid="btn-reader-continue"
+              onClick={continueAction.onClick}
+              title={continueAction.title}
+              className="group ml-auto flex cursor-pointer items-center gap-1.5 rounded-full border border-line bg-panel px-3 py-1.5 font-mono text-[12px] text-muted transition-colors hover:border-accent/60 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
+              {continueAction.label}
+              <ArrowRight
+                className="h-3 w-3 transition-transform group-hover:translate-x-0.5"
+                aria-hidden="true"
+              />
+            </button>
+          )}
         </div>
       )}
 
@@ -1438,6 +1536,7 @@ export function LessonReader({
                     { marker: '**', label: 'Bold', hint: 'Bold (⌘B / Ctrl+B)', id: 'btn-sticky-bold', Icon: Bold },
                     { marker: '*', label: 'Italic', hint: 'Italic (⌘I / Ctrl+I)', id: 'btn-sticky-italic', Icon: Italic },
                     { marker: '++', label: 'Underline', hint: 'Underline (⌘U / Ctrl+U)', id: 'btn-sticky-underline', Icon: Underline },
+                    { marker: '$', label: 'Maths', hint: 'Inline maths: wrap the formula in $…$ and it renders below as it will on the card', id: 'btn-sticky-math', Icon: Sigma },
                   ].map(({ marker, label, hint, id, Icon }) => (
                     <button
                       key={id}
@@ -1455,7 +1554,7 @@ export function LessonReader({
                     </button>
                   ))}
                   <span className="ml-1 font-mono text-[10.5px]" style={{ color: 'var(--dim)' }}>
-                    Markdown · ⌘B / ⌘I / ⌘U
+                    Markdown · <span title="$…$ renders as maths">$…$</span> · ⌘B / ⌘I / ⌘U
                   </span>
                 </div>
                 <textarea
@@ -1473,12 +1572,15 @@ export function LessonReader({
                   style={{ borderColor: 'var(--border)' }}
                 />
                 {stickyText.trim() && (
-                  <p
+                  <div
                     data-testid="sticky-note-preview"
-                    className="max-h-24 overflow-y-auto rounded border border-line-soft bg-canvas px-2 py-1 text-[12.5px] leading-snug text-body"
+                    className="max-h-28 overflow-y-auto rounded border border-line-soft bg-canvas px-2 py-1.5 text-[12.5px] leading-snug text-body"
                   >
+                    <span className="mb-0.5 block font-mono text-[9.5px] uppercase tracking-[0.14em] text-faint">
+                      Preview · rendered, maths included
+                    </span>
                     <Inline text={stickyText} />
-                  </p>
+                  </div>
                 )}
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[10.5px]" style={{ color: 'var(--dim)' }}>

@@ -143,6 +143,61 @@ export function markQuotes(
 }
 
 /**
+ * Every place the quotes appear, including the pieces of a quote that crosses a block boundary.
+ *
+ * A learner selects a sentence, and `cleanQuote` collapses it to one line — but the reader draws the
+ * page as separate paragraphs, so a quote that began in one paragraph and ended in the next is in
+ * neither of them whole. The old scan found nothing and the note had no mark on either paragraph.
+ *
+ * This is `markRanges` first (exact passages, the common case), then, for a quote that was not found
+ * whole, the **longest run of its words** that this text does contain. A two-paragraph selection
+ * therefore marks its first half in paragraph one and its second half in paragraph two, both keyed to
+ * the whole quote so a press still opens the one note. Fragments shorter than three words or twelve
+ * characters are refused: "the gain" is half of every second lesson and would smear amber over the
+ * page.
+ */
+export function markQuoteFragments(
+  text: string,
+  quotes: readonly string[],
+  options: { loose?: boolean } = {}
+): MarkRange[] {
+  const ranges = markRanges(text, quotes, options);
+  const located = new Set(ranges.map((range) => range.quote));
+  const unique = [...new Set(quotes.map((quote) => quote.trim()).filter(Boolean))];
+  const extra: MarkRange[] = [];
+  for (const quote of unique) {
+    if (located.has(quote)) continue;
+    const words = quote.split(/\s+/).filter(Boolean);
+    let best = '';
+    for (let size = Math.min(words.length, 24); size >= 3 && !best; size -= 1) {
+      for (let start = 0; start + size <= words.length; start += 1) {
+        const fragment = words.slice(start, start + size).join(' ');
+        if (fragment.length < 12) continue;
+        if (!text.includes(fragment)) continue;
+        best = fragment;
+        break;
+      }
+    }
+    if (!best) continue;
+    let at = text.indexOf(best);
+    while (at !== -1) {
+      extra.push({ start: at, end: at + best.length, quote });
+      at = text.indexOf(best, at + best.length);
+    }
+  }
+  if (extra.length === 0) return ranges;
+  const all = [...ranges, ...extra].sort((a, b) => a.start - b.start || b.end - a.end);
+  const kept: MarkRange[] = [];
+  let cursor = 0;
+  for (const range of all) {
+    if (range.start < cursor) continue;
+    kept.push(range);
+    cursor = range.end;
+  }
+  return kept;
+}
+
+/**
  * The quotes this text cannot find — the guard behind the reader's "not on this text" line.
  *
  * A note keeps its quote forever; the lesson it was written on does not. Wording gets edited, a card

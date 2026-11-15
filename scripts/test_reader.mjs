@@ -33,7 +33,13 @@ import {
   readReadingPosition,
   writeReadingPosition,
 } from '../app/src/readingPosition.ts';
-import { markQuotes, markRanges, unlocatedQuotes, wrapSelection } from '../app/src/lessonMarks.ts';
+import {
+  markQuoteFragments,
+  markQuotes,
+  markRanges,
+  unlocatedQuotes,
+  wrapSelection,
+} from '../app/src/lessonMarks.ts';
 import { blocksForScope } from '../app/src/readerScope.ts';
 
 let passed = 0;
@@ -182,6 +188,30 @@ check('a loose mark finds a code passage whose whitespace a quote collapsed', ()
     { text: 'x = ', quote: null },
     { text: 'a[0] + 1', quote: 'a[0] + 1' },
   ]);
+});
+
+check('a quote that crosses a paragraph is drawn in both halves', () => {
+  // The learner selected two sentences in two paragraphs. `cleanQuote` stored one line, and neither
+  // paragraph holds it whole; the old scan marked nothing, and every *other* paragraph printed the
+  // "not on this text" badge. Each paragraph now marks its own half, keyed to the same note.
+  const quote = 'as the loop turns the gain rises';
+  const first = markQuoteFragments('chapter two: as the loop turns', [quote]);
+  const second = markQuoteFragments('the gain rises, then settles', [quote]);
+  assert.deepEqual(first.map((range) => range.quote), [quote]);
+  assert.equal('chapter two: as the loop turns'.slice(first[0].start, first[0].end), 'as the loop turns');
+  assert.deepEqual(second.map((range) => range.quote), [quote]);
+  assert.equal('the gain rises, then settles'.slice(second[0].start, second[0].end), 'the gain rises');
+});
+
+check('an exact passage is still one whole mark, and a short fragment is refused', () => {
+  const exact = markQuoteFragments('the gain term matters', ['the gain term']);
+  assert.deepEqual(exact, [{ start: 0, end: 13, quote: 'the gain term' }], 'no fragment on top of an exact match');
+  // "the gain" is two words and seven characters: half of every second lesson. A fragment has to be
+  // long enough to be that note and not a smear of amber.
+  assert.deepEqual(markQuoteFragments('the gain', ['the gain and the loop']), []);
+  const lengths = markQuoteFragments('one two three four five six', ['one two three four five six seven']);
+  assert.equal(lengths.length, 1);
+  assert.equal('one two three four five six'.slice(lengths[0].start, lengths[0].end), 'one two three four five six');
 });
 
 check('duplicate and empty quotes do not draw two marks or an empty one', () => {

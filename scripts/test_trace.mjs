@@ -29,6 +29,7 @@ import {
   depthLabel,
   moveStep,
   readTrace,
+  stepForLine,
   sourceLine,
   stepLabel,
   traceSummary,
@@ -195,6 +196,41 @@ check('depth reads as words, so the panel never prints a bare number', () => {
   assert.equal(depthLabel(1), 'top level');
   assert.equal(depthLabel(0), 'top level');
   assert.equal(depthLabel(3), 'call depth 3');
+});
+
+// The debugger's two halves have to agree about where the program is. A park posts the trace of
+// everything executed so far; the panel used to open at step 0, so stepping into a call left it
+// describing the top of the file while the paused bar named line 12.
+check('a park selects the step the interpreter stopped on', () => {
+  const trace = readTrace({
+    steps: [
+      { line: 1, fn: '<module>', depth: 1 },
+      { line: 4, fn: '<module>', depth: 1 },
+      { line: 9, fn: 'charge', depth: 2 },
+      { line: 4, fn: '<module>', depth: 1 },
+      { line: 9, fn: 'charge', depth: 2 },
+    ],
+    total: 5,
+  });
+  assert.ok(trace);
+  // The last visit, not the first: a line in a loop ran more than once, and this is the current pass.
+  assert.equal(stepForLine(trace, 9), 4);
+  assert.equal(stepForLine(trace, 4), 3);
+  assert.equal(stepForLine(trace, 1), 0);
+});
+
+check('a line the recording never reached reads as the present, not the past', () => {
+  const trace = readTrace({
+    steps: [
+      { line: 2, fn: '<module>', depth: 1 },
+      { line: 3, fn: '<module>', depth: 1 },
+    ],
+    total: 2,
+  });
+  assert.ok(trace);
+  assert.equal(stepForLine(trace, 99), 1, 'an unrecorded line falls back to the end of the trace');
+  assert.equal(stepForLine(trace, null), 1);
+  assert.equal(stepForLine(trace, Number.NaN), 1);
 });
 
 console.log(`run trace: ${passed} passed, ${failed} failed`);

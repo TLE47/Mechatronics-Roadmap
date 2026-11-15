@@ -55,6 +55,7 @@ import {
   readWalkthroughKeys,
   updateWalkthroughKey,
 } from '../app/src/micro/walkthroughKeys.ts';
+import { hasVisual, visualConceptIds, visualKind, visualPlacement } from '../app/src/micro/visuals.ts';
 import {
   ActivityClock,
   MICRO_OVER_TARGET_SECONDS,
@@ -847,6 +848,29 @@ check('a snapshot restores the session and a backwards clock clamps to zero', ()
   assert.equal(backwards.adjustedSeconds, 30);
   assert.equal(formatClock(125), '2:05');
   assert.equal(formatClock(-1), '0:00');
+});
+
+// The teaching stage used to open every micro focus with the same row of chips. Each concept now
+// names a picture family, and the families are drawn by MicroFigures; a concept added without one
+// would throw at render time, so the map is checked against the generated catalogue here.
+check('every generated concept has a picture family of its own', () => {
+  const ids = MICRO_CONCEPTS.map((concept) => concept.id);
+  assert.deepEqual(ids.filter((id) => !hasVisual(id)), [], 'concepts with no visual');
+  const kinds = new Set(ids.map((id) => visualKind(id)));
+  assert.ok(kinds.size >= 12, `expected at least twelve distinct picture families, got ${kinds.size}`);
+  assert.deepEqual(
+    visualConceptIds().filter((id) => !ids.includes(id)),
+    [],
+    'the visual map names concepts the catalogue does not have'
+  );
+});
+
+check('pictures cycle right, left and underneath so no two lessons open alike', () => {
+  assert.deepEqual(
+    [0, 1, 2, 3, 4, 5].map(visualPlacement),
+    ['right', 'left', 'bottom', 'right', 'left', 'bottom']
+  );
+  assert.equal(visualPlacement(-1), 'left', 'a negative index is still a placement');
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

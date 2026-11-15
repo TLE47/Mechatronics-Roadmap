@@ -261,9 +261,18 @@ export function heartbeat(timer: StudyTimer, now: number): StudyTimer {
   return { ...timer, lastTick: Math.max(timer.lastTick, Math.round(now)) };
 }
 
-/** Zero the clock, keeping the lesson the next stretch belongs to and what was completed. */
-export function clearedTimer(lesson = '', completed: string[] = []): StudyTimer {
-  return { ...IDLE_TIMER, lesson, completed };
+/**
+ * Zero the clock, keeping the lesson the next stretch belongs to and what was completed.
+ *
+ * `at` is the moment of the press, and it is stored as `lastTick` on purpose: the digits must read
+ * `0:00:00`, but the record must still be the *newest* clock this browser has. Cloud sync picks the
+ * copy with the later `lastTick` (`mergeProgress`'s `newerTimer`), so a cleared clock stamped 0 loses
+ * to the running clock another device uploaded an hour ago and the old time comes back on the next
+ * pull — the reset looked like it worked until a refresh. Stamped with the press, the zero is the
+ * newest fact and it wins.
+ */
+export function clearedTimer(lesson = '', completed: string[] = [], at = 0): StudyTimer {
+  return { ...IDLE_TIMER, lastTick: Math.max(0, Math.round(at)), lesson, completed };
 }
 
 /**
@@ -272,6 +281,11 @@ export function clearedTimer(lesson = '', completed: string[] = []): StudyTimer 
  * A running stretch whose heartbeat is older than a sitting's break means the page was gone, not
  * that the learner was studying: it is paused at that heartbeat, so the absence is never credited
  * and the time before it is kept.
+ *
+ * A clock with nothing banked and nothing running is the cleared one: it keeps its `lastTick` (the
+ * press that cleared it) rather than being reset to 0, because that stamp is what stops a stale
+ * cloud copy from restoring the time the learner just logged. `elapsedMs` never reads `lastTick`,
+ * so the digits still say zero.
  */
 export function resumeTimer(timer: StudyTimer, now: number): StudyTimer {
   if (timer.runningSince === null) return timer;

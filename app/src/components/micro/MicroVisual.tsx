@@ -9,6 +9,8 @@ import {
   TriangleAlert,
 } from 'lucide-react';
 import type { PrimitiveSample } from '../../micro/randomize.ts';
+import { MicroFigure } from './MicroFigures.tsx';
+import { hasVisual, visualKind } from '../../micro/visuals.ts';
 
 /**
  * A tiny, concept-specific picture for micro-learning (`components/micro/MicroVisual.tsx`).
@@ -505,7 +507,16 @@ function Picture({ conceptId }: { conceptId: string }) {
   );
 }
 
-export function MicroVisual({ conceptId, sample }: { conceptId: string; sample?: PrimitiveSample }) {
+export function MicroVisual({
+  conceptId,
+  sample,
+  placement = 'bottom',
+}: {
+  conceptId: string;
+  sample?: PrimitiveSample;
+  /** Where the reader put it: left or right of the explanation, or underneath it. */
+  placement?: 'left' | 'right' | 'bottom';
+}) {
   const tone = TONE[conceptId] ?? TONE.variables;
   const body =
     conceptId === 'assignment-order' ? (
@@ -526,6 +537,11 @@ export function MicroVisual({ conceptId, sample }: { conceptId: string; sample?:
       <FloorDivision />
     ) : conceptId === 'order-of-operations' ? (
       <OrderOfOperations />
+    ) : hasVisual(conceptId) ? (
+      // Every catalogue concept has a family here (a rail of list cells, a loop cycle, a dial, a
+      // plot, a bit grid...). The chip row below stays as the fallback for an id from an older or
+      // hand-edited bundle, so a visual is never blank.
+      <MicroFigure kind={visualKind(conceptId)} />
     ) : PICTURE[conceptId] ? (
       <Picture conceptId={conceptId} />
     ) : (
@@ -536,7 +552,10 @@ export function MicroVisual({ conceptId, sample }: { conceptId: string; sample?:
       role="img"
       aria-label={tone.label}
       data-testid={`micro-visual-${conceptId}`}
-      className={`rounded-xl border ${tone.border} ${tone.bg} p-3.5`}
+      data-placement={placement}
+      className={`rounded-xl border ${tone.border} ${tone.bg} p-3.5 ${
+        placement === 'bottom' ? 'w-full' : 'w-full lg:sticky lg:top-3'
+      }`}
     >
       <div className="mb-2 flex items-center gap-1.5">
         {conceptId === 'mixed-types' ? (

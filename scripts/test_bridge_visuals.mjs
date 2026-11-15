@@ -57,6 +57,7 @@ import {
   registerByte,
 } from '../app/src/bridges/clampCommand.ts';
 import { formatReading, startValues } from '../app/src/bridges/bridgeLab.ts';
+import { nextMarkState } from '../app/src/bridges/markArmed.ts';
 import {
   PART_A_OHM,
   PART_B_OHM,
@@ -452,6 +453,33 @@ check('the mark ladder follows the page and tightens to a fifth', () => {
   assert.ok(onMark(17.5, 17, 0.5), 'the edge counts');
   assert.ok(!onMark(17.6, 17, 0.5));
   assert.ok(!onMark(Number.NaN, 17, 0.5), 'a broken reading is not a landing');
+});
+
+// The bug the latch closes: P.9's answer dial is already on its first mark when the card paints, so a
+// rule that only compared numbers counted the first paint as a landing and announced it.
+check('a card that opens on its mark scores nothing until the value moves', () => {
+  assert.deepEqual(nextMarkState(false, 63.2, 63.2, 0.5), { armed: false, land: false }, 'the first paint is not a landing');
+  assert.deepEqual(nextMarkState(false, 63.7, 63.2, 0.5), { armed: false, land: false }, 'a value inside the window does not arm');
+  assert.deepEqual(nextMarkState(false, 64.0, 63.2, 0.5), { armed: false, land: false }, 'nor does one just outside it');
+  assert.deepEqual(nextMarkState(false, 64.5, 63.2, 0.5), { armed: true, land: false }, 'leaving the window arms it');
+  assert.deepEqual(nextMarkState(true, 63.0, 63.2, 0.5), { armed: false, land: true }, 'arriving inside it scores');
+  assert.deepEqual(nextMarkState(false, 63.2, 63.2, 0.5), { armed: false, land: false }, 'and a landing disarms it again');
+});
+
+check('a value that rests on the mark cannot score twice', () => {
+  // After a landing the latch is disarmed; the same value on the next frame is not a second landing.
+  let state = nextMarkState(true, 17, 17, 0.2);
+  assert.deepEqual(state, { armed: false, land: true });
+  for (let frame = 0; frame < 5; frame += 1) {
+    state = nextMarkState(state.armed, 17, 17, 0.2);
+    assert.equal(state.land, false, `frame ${frame} scored again while resting on the mark`);
+  }
+});
+
+check('a broken reading neither lands nor arms', () => {
+  assert.deepEqual(nextMarkState(true, Number.NaN, 17, 0.5), { armed: false, land: false });
+  assert.deepEqual(nextMarkState(true, 17, Number.NaN, 0.5), { armed: false, land: false });
+  assert.deepEqual(nextMarkState(true, 17, 17, 0), { armed: false, land: false }, 'a zero window is not a landing');
 });
 
 check('a landing survives a store, and reads P.9\'s old key once', () => {

@@ -1,7 +1,7 @@
 {
   "name": "mechalab",
   "private": true,
-  "version": "3.3.0",
+  "version": "3.4.0",
   "type": "module",
   "scripts": {
     "predev": "python3 scripts/generate_python_lessons_data.py",
@@ -170,6 +170,14 @@
     "test:theme:tokens": "node --experimental-strip-types scripts/test_theme_tokens.mjs",
     "test:faultbench": "node --experimental-strip-types scripts/test_fault_bench.mjs",
     "test:pairs": "node scripts/e2e_same_task_pairs.mjs",
+    "test:reader-route": "node --experimental-strip-types scripts/e2e_reader_route.mjs",
+    "test:verify-ci": "node --experimental-strip-types scripts/test_verify_ci.mjs",
+    "verify:ci": "node scripts/verify_ci.mjs",
+    "version:bump": "node scripts/bump_version.mjs",
+    "version:check": "node scripts/bump_version.mjs --check",
+    "check:registry": "python3 scripts/check_registry_joins.py",
+    "check:bridge-contrast": "node --experimental-strip-types scripts/check_bridge_contrast.mjs",
+    "report:bridges": "python3 scripts/bridge_notes_coverage.py",
     "test:tour": "node scripts/e2e_tour_presets.mjs",
     "test:runtime": "node scripts/e2e_runtime.mjs",
     "test:primitives": "node scripts/test_primitive_contract.mjs",

@@ -771,6 +771,12 @@ jobs:
       - name: "Check label sizes: the quiet row, the folded toolbar, and reading text at 17-18 px"
         run: npm run check:labels
 
+      # The P.9 contrast audit, generalised: every card the reader can mount, in all four palettes
+      # and under reduced motion, at 1280 and 380 px. A card added without this is a card nobody
+      # measured — the 10 px label on the string-sum card survived exactly that gap.
+      - name: "Check every Bridge Notes card: 4.5:1 text, 3:1 strokes, no sideways scroll, every palette"
+        run: npm run check:bridge-contrast
+
   # Lighthouse is the one audit that owns a browser for minutes, and it used to make the five cheap
   # browser gates above queue behind it. Same setup, one gate, its own runner.
   lighthouse:

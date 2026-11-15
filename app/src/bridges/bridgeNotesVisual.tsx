@@ -1,5 +1,6 @@
 import { Suspense, lazy } from 'react';
 import type { ComponentType, ReactElement } from 'react';
+import { LazyPending } from '../components/LazyPending';
 
 /**
  * The Bridge Notes visuals and the one boundary that reaches them
@@ -93,22 +94,31 @@ const VISUALS: Record<string, ComponentType> = {
   'rc-charge': RcCharge,
 };
 
+/** Every card this module can draw, sorted. The gallery (`components/BridgeGallery.tsx`) and a
+ * harness that wants to name a card read this rather than a second copy of the table. */
+export const BRIDGE_VISUAL_NAMES: string[] = Object.keys(VISUALS).sort();
+
 /**
  * The visual the payload named, or nothing.
  *
- * Each fallback is an empty, hidden marker rather than nothing at all: the section's own text is
+ * The fallback is a hidden pending marker rather than nothing at all: the section's own text is
  * already on screen, so a spinner would be a promise to move something the reader has not asked to
  * move yet, but the *pending* state still has to be visible to anything comparing one render with
  * another. This module's own boundary in `LessonReader` draws the same marker.
  */
-export default function BridgeNotesVisual({ name }: { name: string }): ReactElement | null {
+export function BridgeVisual({ name }: { name: string }): ReactElement | null {
   const Visual = VISUALS[name];
   if (!Visual) return null;
   return (
-    <Suspense fallback={<span data-testid="bridge-visual-pending" hidden />}>
+    <Suspense fallback={<LazyPending what="bridge-visual" />}>
       <div data-testid={`bridge-visual-${name}`}>
         <Visual />
       </div>
     </Suspense>
   );
+}
+
+/** The named visual in the section that reads it (the entry point `LessonReader` lazy-loads). */
+export default function BridgeNotesVisual({ name }: { name: string }): ReactElement | null {
+  return <BridgeVisual name={name} />;
 }

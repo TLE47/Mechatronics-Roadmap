@@ -766,7 +766,19 @@ async function main() {
         0,
         'Log & reset must start a new session, so its log must be empty'
       );
-      console.log('  ok the brief’s study clock starts, pauses, resumes and files its stretch');
+      // What a refresh reads. The zero has to be the *stored* state, and stamped with the press:
+      // an unstamped zero loses `mergeProgress`'s later-lastTick rule to a stale upload and the
+      // logged time comes back on the next pull.
+      const stored = await page.evaluate(() =>
+        JSON.parse(window.localStorage.getItem('mechalab_study_timer_v1') ?? 'null')
+      );
+      assert.equal(stored?.runningSince ?? null, null, 'a reload must not find a running stretch');
+      assert.equal(stored?.bankedMs ?? 0, 0, 'a reload must not find the logged time banked');
+      assert.ok(
+        (stored?.lastTick ?? 0) > 0,
+        'the cleared record must carry the press that cleared it, or a stale copy wins the merge'
+      );
+      console.log('  ok the brief’s study clock starts, pauses, resumes, files its stretch and stores the zero');
     }
 
     // ---- 7b. Continue puts the reader back where it was left ----
@@ -899,6 +911,14 @@ async function main() {
         1,
         'the preview must draw the underline'
       );
+      // Maths is typed as `$…$` and drawn by the reader's own KaTeX view in the preview, not printed
+      // as TeX source. The box is put back to the text the rest of this step expects afterwards.
+      await page.getByTestId('sticky-note-text').fill(`$v^2$ and **${note}**`);
+      assert.ok(
+        (await page.getByTestId('sticky-note-preview').locator('.katex').count()) >= 1,
+        'a $…$ formula in a note must render, not print its TeX source'
+      );
+      await page.getByTestId('sticky-note-text').fill(`**++${note}++**`);
       await page.getByTestId('btn-sticky-save').click();
       await page.waitForFunction(
         () => /Sticky note updated/.test(document.querySelector('[data-testid="reader-status"]')?.textContent ?? ''),
@@ -906,6 +926,13 @@ async function main() {
         { timeout: 10000 }
       );
       assert.equal(await page.getByTestId('sticky-note-popup').count(), 0, 'an edit saves and closes');
+      // The page-level guard: the note that was just saved is on the text, so nothing may say it is
+      // not. (It used to print on every paragraph that did not hold the quote.)
+      assert.equal(
+        await page.getByTestId('sticky-note-unlocated').count(),
+        0,
+        'a note written on this page must not be reported as missing from it'
+      );
       // Writes are queued a tick and land in IndexedDB; wait for the queue instead of a reload racing it.
       await page.evaluate(() => window.__mechalabFlushStorage?.());
       console.log('  ok a mark reopens its note, B/Underline format it, and Save updates it in place');

@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `3.3.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `3.4.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -13,6 +13,66 @@ flowchart LR
     S0 --> B1["Pass 1 Tier 1 (23 Files: 00.1–08.1 across Tracks 00–08)"]
     B1 --> QA["Automated CI: verify_repo + validate_modules + lint_lessons + lint_modules + check_term_order + clean_tex + audit_math + test_exercises + run_all_labs + smoke & browser E2E (dev server and built Pages bundle)"]
 ```
+
+---
+
+## [2026-11-15] — Run 3.4: the clock that stays cleared, a trace that follows the park, and pictures for every micro focus
+
+**Log & reset now survives a refresh.** The button zeroed the digits and wrote a cleared record, but
+the record carried `lastTick: 0` and no announcement: the reminder and the phone strip's compact clock
+kept their old timer (a running one heartbeat the old record back), and cloud sync's `newerTimer` saw
+the stale upload as newer and restored it. The cleared record is now stamped with the press, the row
+announces the write on the same event a Start uses, and a merge therefore keeps the zero. Tested for
+the digits, the stamp, the completed list and the merge.
+
+**Trace opens where the interpreter stopped.** A park posts the lines executed so far and the panel
+reset to step 0, so Step into a call left the paused bar naming line 12 while Trace described line 1.
+`stepForLine` selects the most recent recorded step on the parked line (a later visit of a loop line,
+not an earlier one) and falls back to the end of the recording.
+
+**Micro focuses have pictures, and not the same picture twice.** Every one of the 46 concepts now names
+a drawing family (`micro/visuals.ts`): sticky notes, number boxes, a quotation with index ticks, a list
+rail, a loop cycle, a function machine, an assert gate, a prefix ladder, a bit grid, a balance beam, a
+clamped range bar, an angle dial, a plot with axes, force arrows, a limits table, a given→check→answer
+strip and a branch fork. The teaching stage places the picture right, left or underneath on a cycle,
+so consecutive lessons do not open alike. The map is pure and tested against the generated catalogue.
+
+**A been-read page has a way back.** Read's bottom row keeps **Continue to Write** on the right and
+gains **Back to Study** on the left; Study has no left-hand pill, because returning to where you are
+is not a control.
+
+**Notes anchor and read the way they were written.** A selection that crossed a paragraph boundary was
+in no paragraph whole, so both halves stayed unmarked and every other paragraph printed "not on this
+text" — each `<Inline>` only knew its own words. Marks now fall back to the longest word run a block
+does contain, the unlocated guard moved to the page (named once, with the quotes), a highlight paints
+the accent wash and a sticky note the amber one, and the popup's preview is labelled as rendered and
+gains a `$…$` button: maths in a note is drawn by the reader's own KaTeX view as it is typed.
+
+**Search lists lessons in course order.** `rankPalette` keeps its score ranking for commands and tabs
+but puts lesson rows back in catalogue order, so a query that matches several lessons reads P.2, P.5,
+P.8 rather than the order their titles happened to score.
+
+**A card counts only a move the learner made.** P.9's answer dial opens resting on its first mark,
+and the old rule compared numbers alone: the first paint advanced the ladder and announced "landed
+63.2" to a screen reader before anyone touched the card. The latch is now arithmetic in
+`bridges/markArmed.ts` — a card opens disarmed, leaving the window arms it, a landing disarms it — so
+opening on the mark and resting on it after a landing both score nothing, and the hook only wires the
+latch to state and sound. Graded over the whole sequence, without a browser.
+
+**Every Bridge Notes card on one page.** Thirty-five interactives under thirty-five lessons are
+reviewable only by opening thirty-five lessons, so `?gallery=bridges` renders the same lazy
+components side by side at 1280, 768 and 380 px. Its names come from the reader's own table, so a new
+card appears with no second list; `check_registry_joins.py` proves every page's declared visual is in
+that table, and `check:bridge-contrast` measures every card in all four palettes and under reduced
+motion (4.5:1 text, 3:1 strokes, no sideways scroll). That gate now runs in CI above Lighthouse.
+
+**One command runs the release check.** `npm run verify:ci` walks CI's lanes in order
+(`--list`, `--keep-going`, `--lane`), so a release can be reproduced locally instead of waiting for a
+runner to find the gate that fails.
+
+**The brand version has a rule.** `npm run version:bump -- major|minor|patch` moves `package.json`,
+stamps the changelog's release-identity line, and `version:check` fails when the two disagree. Major is
+a restructure a learner can feel (course order, saved state), minor a new capability, patch a repair.
 
 ---
 

@@ -198,6 +198,29 @@ export function rankPalette(
   // Array.prototype.sort is stable in every engine this ships to, so equal scores keep catalogue
   // order: lessons stay in course order, tabs stay in rail order, actions stay in reading order.
   matches.sort((a, b) => b.score - a.score);
+  // Lessons are the course, so a query that matches several of them lists them in course order
+  // rather than in the order the scoring happened to produce. Typing `loop` used to lead with
+  // whichever lesson's *title* scored highest and then fall away through the rest by score; the
+  // palette is how a learner moves through the course, and a result list that reshuffles the
+  // curriculum makes them hunt for P.8 above P.2. Commands and tabs keep their ranking: their order
+  // is usefulness, not a sequence to walk. The sort is over the slots lesson rows already occupy, so
+  // the groups still lead with the best row of any kind.
+  const lessons: number[] = [];
+  matches.forEach((match, index) => {
+    if (match.item.kind === 'lesson') lessons.push(index);
+  });
+  if (lessons.length > 1) {
+    const order = new Map<string, number>();
+    items.forEach((item, index) => {
+      if (item.kind === 'lesson') order.set(item.id, index);
+    });
+    const sorted = lessons
+      .map((slot) => matches[slot])
+      .sort((a, b) => (order.get(a.item.id) ?? 0) - (order.get(b.item.id) ?? 0));
+    lessons.forEach((slot, index) => {
+      matches[slot] = sorted[index];
+    });
+  }
   return matches.slice(0, limit);
 }
 

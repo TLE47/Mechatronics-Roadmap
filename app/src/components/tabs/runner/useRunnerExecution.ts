@@ -14,7 +14,7 @@ import type { PythonEditorHandle } from '../../PythonEditor';
 import { pyodideCdn } from '../../../runtime/pyodideCdn';
 import { asOutputMatchMode, compareStdout, type OutputMatchMode } from '../../../outputMatch';
 import { inlineValuesFor, readRunValues } from '../../../inlineValues';
-import { readTrace, TRACE_NAME_CAP, TRACE_STEP_CAP, TRACE_VALUE_CHARS } from '../../../runTrace';
+import { readTrace, stepForLine, TRACE_NAME_CAP, TRACE_STEP_CAP, TRACE_VALUE_CHARS } from '../../../runTrace';
 import { harnessGate, parseHarnessReport } from '../../../harnessGrading';
 import { harnessForLesson, harnessSourceForLesson } from '../../../lessonHarnesses';
 import { normalizeScopeSeries } from '../../../scopeModel';
@@ -563,9 +563,13 @@ export function useRunnerExecution({
             setPausedStep(step);
             // A park arrives with the lines this run has executed so far: Trace answers how the
             // program reached this breakpoint, which is exactly the question a breakpoint asks.
+            // The panel opens on the step that is *this* park, not step 0: after Step into or Step
+            // out, the line the interpreter stopped on is the one the learner is looking at, and a
+            // panel still describing line 1 is a second, stale answer beside it.
             if (data.trace) {
-              setTrace(readTrace(data.trace));
-              setTraceStep(0);
+              const parked = readTrace(data.trace);
+              setTrace(parked);
+              setTraceStep(parked ? stepForLine(parked, step?.line) : 0);
             }
             // An edit that landed re-posts this park with the frame's new values: the form closes and
             // the chips show what the program will use. One that was refused keeps the form open and
