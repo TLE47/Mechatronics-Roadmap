@@ -2,9 +2,14 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import { CheckCircle2, CornerDownLeft, Search } from 'lucide-react';
 import {
   PALETTE_MODE_TEXT,
+  filterPaletteMatches,
   groupPalette,
+  paletteFilterCounts,
+  paletteFilterLabel,
+  paletteFilterOptions,
   paletteKindLabel,
   rankPalette,
+  type PaletteFilter,
   type PaletteItem,
   type PaletteMatch,
   type PaletteMode,
@@ -50,6 +55,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 }) => {
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
+  /** Which chip is on: a lens on the answer (`filterPaletteMatches`), never a second search. */
+  const [filter, setFilter] = useState<PaletteFilter>('all');
   const inputRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
 
@@ -62,7 +69,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         : rankPalette(items, query),
     [mode, search, items, query]
   );
-  const groups = useMemo(() => groupPalette(matches), [matches]);
+  const visible = useMemo(() => filterPaletteMatches(matches, filter), [matches, filter]);
+  const groups = useMemo(() => groupPalette(visible), [visible]);
+  const counts = useMemo(() => paletteFilterCounts(matches), [matches]);
+  const filterOptions = paletteFilterOptions(mode);
   const text = PALETTE_MODE_TEXT[mode];
 
   // A fresh open — or a different door while it is open (`⌘P` after `⌘K`) — is a fresh question:
@@ -77,17 +87,23 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     if (!isOpen) return;
     setQuery('');
     setActiveIndex(0);
+    setFilter('all');
     inputRef.current?.focus();
   }, [isOpen, mode]);
 
   // The arrow keys move a highlight; keep it on screen when the list is longer than the panel.
   useEffect(() => {
     if (!isOpen) return;
-    const active = matches[activeIndex]?.item;
+    const active = visible[activeIndex]?.item;
     if (!active) return;
     const option = listRef.current?.querySelector<HTMLElement>(`[data-palette-id="${active.id}"]`);
     option?.scrollIntoView({ block: 'nearest' });
-  }, [isOpen, activeIndex, matches]);
+  }, [isOpen, activeIndex, visible]);
+
+  // A shorter answer (a keystroke, a deleted row) can leave the highlight past the end of the list.
+  useEffect(() => {
+    if (activeIndex >= visible.length) setActiveIndex(0);
+  }, [activeIndex, visible.length]);
 
   if (!isOpen) return null;
 
@@ -97,11 +113,18 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   };
 
   const move = (delta: number) => {
-    if (!matches.length) return;
-    setActiveIndex((prev) => (prev + delta + matches.length) % matches.length);
+    if (!visible.length) return;
+    setActiveIndex((prev) => (prev + delta + visible.length) % visible.length);
   };
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    // A focused chip is a button: Enter and Space belong to it, not to the row the list highlights.
+    if (
+      event.target instanceof HTMLElement &&
+      event.target.closest('[data-palette-filter]') &&
+      (event.key === 'Enter' || event.key === ' ')
+    )
+      return;
     if (event.key === 'ArrowDown') {
       event.preventDefault();
       move(1);
@@ -113,9 +136,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       setActiveIndex(0);
     } else if (event.key === 'End') {
       event.preventDefault();
-      setActiveIndex(Math.max(0, matches.length - 1));
+      setActiveIndex(Math.max(0, visible.length - 1));
     } else if (event.key === 'Enter') {
-      const chosen = matches[activeIndex]?.item;
+      const chosen = visible[activeIndex]?.item;
       if (!chosen) return;
       event.preventDefault();
       choose(chosen);
@@ -123,12 +146,26 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       event.preventDefault();
       onClose();
     } else if (event.key === 'Tab') {
-      // One field, one list: Tab would only walk out of the dialog and leave it open behind.
+      // One field, one list: Tab would only walk out of the dialog and leave it open behind. The
+      // filter chips are the one row in here a keyboard can stand on, so Tab cycles field <-> chips
+      // and nothing else; the rows stay on the arrow keys.
       event.preventDefault();
+      const chips = Array.from(
+        listRef.current?.parentElement?.querySelectorAll<HTMLButtonElement>('[data-palette-filter]') ?? []
+      ).filter((chip) => !chip.disabled);
+      const focused = document.activeElement;
+      if (!chips.length || focused === inputRef.current) {
+        (event.shiftKey ? chips[chips.length - 1] : chips[0])?.focus();
+        return;
+      }
+      const at = chips.indexOf(focused as HTMLButtonElement);
+      const next = at + (event.shiftKey ? -1 : 1);
+      if (at === -1 || next < 0 || next >= chips.length) inputRef.current?.focus();
+      else chips[next].focus();
     }
   };
 
-  const activeId = matches[activeIndex]?.item.id;
+  const activeId = visible[activeIndex]?.item.id;
 
   return (
     <div
@@ -178,6 +215,47 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           </kbd>
         </div>
 
+        {filterOptions.length > 1 && (
+          <div
+            role="radiogroup"
+            aria-label="Filter these results"
+            data-testid="palette-filters"
+            className="flex flex-wrap items-center gap-1.5 border-b px-3.5 py-2"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            {filterOptions.map((option) => {
+              const count = counts[option];
+              const on = filter === option;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  data-testid={`palette-filter-${option}`}
+                  data-palette-filter={option}
+                  disabled={count === 0 && option !== 'all'}
+                  onClick={() => {
+                    setFilter(option);
+                    setActiveIndex(0);
+                  }}
+                  className="inline-flex cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium disabled:cursor-default disabled:opacity-40"
+                  style={{
+                    borderColor: on ? 'var(--accent)' : 'var(--border)',
+                    backgroundColor: on ? 'var(--accent-soft)' : 'transparent',
+                    color: on ? 'var(--accent)' : 'var(--muted)',
+                  }}
+                >
+                  {paletteFilterLabel(option)}
+                  <span className="tabular-nums opacity-70" data-testid={`palette-filter-count-${option}`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <div
           ref={listRef}
           id="palette-results"
@@ -185,7 +263,18 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           aria-label="Palette results"
           className="max-h-[52vh] overflow-y-auto py-1"
         >
-          {matches.length === 0 && (
+          {mode === 'search' && query.trim() === '' && (
+            <p
+              data-testid="palette-order-hint"
+              className="px-3.5 pb-1 pt-2 text-[11px]"
+              style={{ color: 'var(--dim)' }}
+            >
+              Every lesson in course order, first to last — type to search their text and the course
+              pages.
+            </p>
+          )}
+
+          {visible.length === 0 && (
             <p
               data-testid="palette-empty"
               className="px-4 py-6 text-center text-[12.5px]"
@@ -204,7 +293,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                 {paletteKindLabel(group.kind)}s
               </p>
               {group.matches.map(({ item }) => {
-                const index = matches.findIndex((match) => match.item.id === item.id);
+                const index = visible.findIndex((match) => match.item.id === item.id);
                 const isActive = index === activeIndex;
                 return (
                   <button
@@ -278,8 +367,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             )}
             <span data-testid="palette-match-count" data-palette-mode={mode}>
               {mode === 'search'
-                ? `${matches.length} hit${matches.length === 1 ? '' : 's'}`
-                : `${matches.length} of ${items.length}`}
+                ? `${visible.length} hit${visible.length === 1 ? '' : 's'}`
+                : `${visible.length} of ${items.length}`}
             </span>
           </span>
         </div>

@@ -105,6 +105,53 @@ export function paletteKindLabel(kind: PaletteKind): string {
 export const PALETTE_KIND_ORDER: PaletteKind[] = ['lesson', 'page', 'tab', 'action'];
 
 /**
+ * The lens a learner can put on the list: all of it, or one kind of row (`app/src/palette.ts`).
+ *
+ * Search answers one query with three kinds in a single band - the term, the lesson's own lines,
+ * and the reading pages - so a learner who wants *the page that explains anti-windup* should not
+ * have to read past every code line that mentions it. A chip narrows the answer already on screen;
+ * it is never a second search, and the field keeps its words when the lens changes.
+ */
+export type PaletteFilter = 'all' | PaletteKind;
+
+/**
+ * The chips each door offers. `⌘P` has one kind of row, so a filter there would be furniture; the
+ * other two name exactly the kinds their answer can contain.
+ */
+export function paletteFilterOptions(mode: PaletteMode): PaletteFilter[] {
+  if (mode === 'lessons') return ['all'];
+  if (mode === 'search') return ['all', 'lesson', 'page'];
+  // `⌘K`'s catalogue is the lessons, the tabs and the commands: a Course pages chip there would be
+  // a permanently empty lens, because the pages are only ever searched from `⌘⇧F`.
+  return ['all', 'lesson', 'tab', 'action'];
+}
+
+/** A chip's own words: plural, because the number beside it counts rows (`Lessons 95`). */
+const FILTER_LABELS: Record<PaletteFilter, string> = {
+  all: 'All',
+  lesson: 'Lessons',
+  page: 'Course pages',
+  tab: 'Tabs',
+  action: 'Commands',
+};
+
+export function paletteFilterLabel(filter: PaletteFilter): string {
+  return FILTER_LABELS[filter];
+}
+
+/** How many rows each chip would show for this answer, so a lens never hides that it is empty. */
+export function paletteFilterCounts(matches: PaletteMatch[]): Record<PaletteFilter, number> {
+  const counts: Record<PaletteFilter, number> = { all: matches.length, lesson: 0, page: 0, tab: 0, action: 0 };
+  for (const match of matches) counts[match.item.kind] += 1;
+  return counts;
+}
+
+/** The rows one chip shows, in the order the search gave them: a filter never re-ranks. */
+export function filterPaletteMatches(matches: PaletteMatch[], filter: PaletteFilter): PaletteMatch[] {
+  return filter === 'all' ? matches : matches.filter((match) => match.item.kind === filter);
+}
+
+/**
  * An in-order subsequence score, for queries that skip letters (`pyrun`).
  *
  * Gaps cost far more than a later start, so "p**y**thon **run**ner" still beats a label that just

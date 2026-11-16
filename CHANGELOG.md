@@ -16,6 +16,30 @@ flowchart LR
 
 ---
 
+## [2026-11-16] — The palette opens on the course, with a lens for the row you wanted
+
+**The empty search says what it is showing.** An empty `⌘K` or `⌘⇧F` field already listed the
+lessons in course order — the registry the catalogue is built from *is* the teaching order — but
+nothing on screen said so, and nothing pinned it. It now opens with a line under the field saying
+**every lesson in course order, first to last**, and `scripts/test_palette.mjs` asserts the first two
+rows are `P.1` and `P.2` and the last is the capstone, so a future sort cannot quietly turn the list
+into an alphabetical or most-recent guess. The browser check reads the same two ids from a real
+`⌘⇧F` open.
+
+**The filters are a lens, not a second search.** A chip row now sits under the field: **All**,
+**Lessons**, **Course pages** in `⌘⇧F`; **Lessons**, **Tabs** and **Commands** in `⌘K`, where pages are
+never part of the catalog. Each chip
+carries the number of rows behind it, a chip with none is disabled rather than a dead end, and
+pressing one filters the answer already on screen without touching the words typed — the order the
+search gave is kept, never re-ranked (`filterPaletteMatches`, `paletteFilterCounts`). `⌘P` has one
+kind of row, so it gets no chips at all. A focused chip owns Enter and Space; Tab now cycles field ↔
+chips (the rows stay on the arrows) so the row is reachable without a mouse and Tab still cannot
+walk out of the modal.
+
+**Checked in a browser**, not only in the unit suite: `⌘K` presses **Commands**, asserts the list is
+exactly the command rows, that no lesson row survives, and that the footer counts the filtered list
+before **All** puts it back; `⌘⇧F` asserts its empty list begins `P.1`, `P.2` and holds all 95.
+
 ## [2026-11-13] — The clock stops at the pass, goals show their formulas, and the diagram folds
 
 **Study clock.** A lesson that passes **now ends its stretch.** `completeTimer` banks the elapsed time
