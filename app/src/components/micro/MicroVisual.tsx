@@ -12,11 +12,31 @@ import { MicroConceptVisual } from './MicroConceptVisual.tsx';
 type ToneName = 'accent' | 'emerald' | 'rose' | 'amber' | 'purple';
 
 const TONE_CLASS: Record<ToneName, { border: string; bg: string; text: string }> = {
-  accent: { border: 'border-accent/40', bg: 'bg-accent/10', text: 'text-accent' },
-  emerald: { border: 'border-emerald/40', bg: 'bg-emerald/10', text: 'text-emerald' },
-  rose: { border: 'border-rose/40', bg: 'bg-rose/10', text: 'text-rose' },
-  amber: { border: 'border-amber/40', bg: 'bg-amber/10', text: 'text-amber' },
-  purple: { border: 'border-purple/40', bg: 'bg-purple/10', text: 'text-purple' },
+  accent: {
+    border: 'border-accent/45',
+    bg: 'bg-panel bg-gradient-to-br from-accent/10 via-panel to-panel',
+    text: 'text-accent',
+  },
+  emerald: {
+    border: 'border-emerald/45',
+    bg: 'bg-panel bg-gradient-to-br from-emerald/10 via-panel to-panel',
+    text: 'text-emerald',
+  },
+  rose: {
+    border: 'border-rose/45',
+    bg: 'bg-panel bg-gradient-to-br from-rose/10 via-panel to-panel',
+    text: 'text-rose',
+  },
+  amber: {
+    border: 'border-amber/45',
+    bg: 'bg-panel bg-gradient-to-br from-amber/10 via-panel to-panel',
+    text: 'text-amber',
+  },
+  purple: {
+    border: 'border-purple/45',
+    bg: 'bg-panel bg-gradient-to-br from-purple/10 via-panel to-panel',
+    text: 'text-purple',
+  },
 };
 
 const META: Record<string, { tone: ToneName; label: string }> = {
@@ -93,7 +113,7 @@ export function MicroVisual({
       aria-label={meta.label}
       data-testid={`micro-visual-${conceptId}`}
       data-placement={placement}
-      className={`rounded-xl border ${tone.border} ${tone.bg} p-3.5 ${
+      className={`rounded-2xl border ${tone.border} ${tone.bg} p-3.5 shadow-sm ${
         placement === 'bottom' || !sticky ? 'w-full' : 'w-full lg:sticky lg:top-3'
       }`}
     >
