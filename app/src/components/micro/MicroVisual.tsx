@@ -72,11 +72,18 @@ export function MicroVisual({
   conceptId,
   sample,
   placement = 'bottom',
+  sticky = true,
 }: {
   conceptId: string;
   sample?: PrimitiveSample;
   /** Where the reader put it: left or right of the explanation, or underneath it. */
   placement?: 'left' | 'right' | 'bottom';
+  /**
+   * The Micro-learning stage keeps a side picture in view while its walkthrough scrolls. The reader
+   * lays the same scene inside prose, where a sticky figure would leave its paragraph behind, so it
+   * asks for the frame without that behaviour.
+   */
+  sticky?: boolean;
 }) {
   const meta = META[conceptId] ?? META.variables;
   const tone = TONE_CLASS[meta.tone];
@@ -87,7 +94,7 @@ export function MicroVisual({
       data-testid={`micro-visual-${conceptId}`}
       data-placement={placement}
       className={`rounded-xl border ${tone.border} ${tone.bg} p-3.5 ${
-        placement === 'bottom' ? 'w-full' : 'w-full lg:sticky lg:top-3'
+        placement === 'bottom' || !sticky ? 'w-full' : 'w-full lg:sticky lg:top-3'
       }`}
     >
       <figcaption className={`mb-2 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] ${tone.text}`}>

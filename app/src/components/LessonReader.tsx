@@ -34,6 +34,7 @@ import {
   type ReaderBlock,
 } from '../lessonPage';
 import { headingAnchors, inlinePlain } from '../readerMarkdown';
+import { hasConceptVisual, visualPlacementForConcept } from '../micro/visuals';
 import { blocksForScope, type ReaderScope } from '../readerScope';
 import {
   clearReadingPosition,
@@ -66,6 +67,12 @@ const BridgeNotesVisual = lazy(() => import('../bridges/bridgeNotesVisual'));
 // The figures are 5.6 kB of scene data and SVG renderers that a lesson only needs once it is open,
 // so the picture arrives through the same kind of boundary (`visuals/ReaderFigure.tsx`).
 const ReaderFigure = lazy(() => import('../visuals/ReaderFigure'));
+// The micro-focus scenes are the same components the Micro-learning tab draws. They arrive in their
+// own chunk only when a page actually carries a `micro-*` anchored section, so a lesson with no
+// micro focus pays no picture code.
+const MicroVisual = lazy(() =>
+  import('./micro/MicroVisual').then((module) => ({ default: module.MicroVisual }))
+);
 
 /**
  * The lesson text, beside the code it is about (`app/src/components/LessonReader.tsx`).
@@ -1209,6 +1216,93 @@ export function LessonReader({
     }
   };
 
+  /**
+   * One micro-focus, with the same picture the Micro-learning tab draws.
+   *
+   * The page already separates each focus with an h4 and a stable `micro-*` anchor. The reader groups
+   * that heading, anchor and first paragraph so the visual can sit beside the prose instead of
+   * becoming a full-width interruption at every width. Side placement starts at `xl`, where the pane
+   * has room for both columns; below that the scene takes the full reader width, before the paragraph
+   * for a side scene and after it for a bottom one. `flow-root` contains the float, so the next
+   * section always starts below the whole focus.
+   */
+  const renderMicroSection = (
+    heading: Extract<ReaderBlock, { t: 'h' }>,
+    anchor: Extract<ReaderBlock, { t: 'anchor' }>,
+    paragraph: Extract<ReaderBlock, { t: 'p' }>,
+    conceptId: string,
+    placement: 'left' | 'right' | 'bottom',
+    key: string
+  ) => {
+    const visual = (
+      <div
+        data-testid={`reader-micro-visual-${conceptId}`}
+        data-micro-concept={conceptId}
+        data-micro-placement={placement}
+        className={
+          placement === 'bottom'
+            ? 'mt-2'
+            : `mb-2 mt-1 xl:w-[17.5rem] ${
+                placement === 'left' ? 'xl:float-left xl:mr-4' : 'xl:float-right xl:ml-4'
+              }`
+        }
+      >
+        <Suspense fallback={<LazyPending what="micro-visual" />}>
+          <MicroVisual conceptId={conceptId} placement={placement} sticky={false} />
+        </Suspense>
+      </div>
+    );
+    return (
+      <section key={key} data-testid={`reader-micro-${conceptId}`} className="flow-root">
+        {renderBlock(heading, `${key}.heading`)}
+        {renderBlock(anchor, `${key}.anchor`)}
+        {placement === 'bottom' ? (
+          <>
+            {renderBlock(paragraph, `${key}.text`)}
+            {visual}
+          </>
+        ) : (
+          <>
+            {visual}
+            {renderBlock(paragraph, `${key}.text`)}
+          </>
+        )}
+      </section>
+    );
+  };
+
+  /**
+   * The page blocks, with a micro focus promoted to one illustration-plus-text section.
+   *
+   * A concept with no designed scene (`micro-unsigned` is the page's own extra focus) is left as the
+   * heading, anchor and paragraph it was; the reader never borrows another concept's picture.
+   */
+  const renderReaderBlocks = (blocks: ReaderBlock[], prefix: string): React.ReactNode[] => {
+    const nodes: React.ReactNode[] = [];
+    for (let index = 0; index < blocks.length; index += 1) {
+      const heading = blocks[index];
+      const anchor = blocks[index + 1];
+      const paragraph = blocks[index + 2];
+      if (
+        heading?.t === 'h' &&
+        heading.l === 4 &&
+        anchor?.t === 'anchor' &&
+        anchor.id.startsWith('micro-') &&
+        paragraph?.t === 'p'
+      ) {
+        const conceptId = anchor.id.slice('micro-'.length);
+        const placement = visualPlacementForConcept(conceptId);
+        if (placement && hasConceptVisual(conceptId)) {
+          nodes.push(renderMicroSection(heading, anchor, paragraph, conceptId, placement, `${prefix}${index}`));
+          index += 2;
+          continue;
+        }
+      }
+      nodes.push(renderBlock(blocks[index], `${prefix}${index}`));
+    }
+    return nodes;
+  };
+
   return (
     <>
     <section
@@ -1355,7 +1449,7 @@ export function LessonReader({
             data-testid="reader-prose"
             className={tall ? 'mx-auto max-w-[68ch] space-y-3' : 'space-y-3'}
           >
-            {blocksForScope(page.blocks, scope).map((block, index) => renderBlock(block, `b${index}`))}
+            {renderReaderBlocks(blocksForScope(page.blocks, scope), 'b')}
             {unlocated.length > 0 && (
               <p
                 data-testid="sticky-note-unlocated"

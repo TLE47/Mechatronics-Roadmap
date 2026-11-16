@@ -55,7 +55,12 @@ import {
   readWalkthroughKeys,
   updateWalkthroughKey,
 } from '../app/src/micro/walkthroughKeys.ts';
-import { CONCEPT_VISUAL_SCENES, conceptVisualIds, visualPlacement } from '../app/src/micro/visuals.ts';
+import {
+  CONCEPT_VISUAL_SCENES,
+  conceptVisualIds,
+  visualPlacement,
+  visualPlacementForConcept,
+} from '../app/src/micro/visuals.ts';
 import {
   ActivityClock,
   MICRO_OVER_TARGET_SECONDS,
@@ -876,6 +881,14 @@ check('pictures cycle right, left and underneath so no two lessons open alike', 
     ['right', 'left', 'bottom', 'right', 'left', 'bottom']
   );
   assert.equal(visualPlacement(-1), 'left', 'a negative index is still a placement');
+});
+
+check('the reader gives each concept the same side as the micro stage', () => {
+  const ids = MICRO_CONCEPTS.map((concept) => concept.id);
+  for (const [index, id] of ids.entries()) {
+    assert.equal(visualPlacementForConcept(id), visualPlacement(index), `${id} changed sides in the reader`);
+  }
+  assert.equal(visualPlacementForConcept('unsigned'), null, 'an extra page focus must not borrow a scene');
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

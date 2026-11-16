@@ -40,6 +40,7 @@ import { resolveChromiumExecutable } from './e2e_browser_workbench.mjs';
 import { BASE, startStaticServer } from './e2e_pages_bundle.mjs';
 import { seedTourSeen } from './tour_seed.mjs';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
+import { CONCEPT_VISUAL_SCENES, visualPlacementForConcept } from '../app/src/micro/visuals.ts';
 
 const ROOT = process.cwd();
 const DIST = path.join(ROOT, 'dist');
@@ -222,6 +223,99 @@ async function visit(lesson) {
     if (sample) assert.ok(has(studyText, sample), `prose is missing: "${sample.slice(0, 60)}"`);
     evidence.study = { chars: studyText.length, headings, code };
 
+    // The reader's own micro-focus sections must carry the same scene as the Micro-learning stage.
+    // Unknown page-only focuses (`micro-unsigned`) are left as text, never given another concept's
+    // picture; the page's heading and paragraph still have to be there.
+    const microIds = (payload.blocks ?? [])
+      .filter((block) => block.t === 'anchor' && String(block.id).startsWith('micro-'))
+      .map((block) => String(block.id).slice('micro-'.length));
+    const expectedMicro = microIds.filter((id) => id in CONCEPT_VISUAL_SCENES);
+    for (const id of expectedMicro) {
+      const visual = reader.getByTestId(`reader-micro-visual-${id}`);
+      await visual.waitFor({ state: 'visible', timeout: 25000 });
+      const expectedPlacement = visualPlacementForConcept(id);
+      assert.equal(
+        await visual.getAttribute('data-micro-placement'),
+        expectedPlacement,
+        `${id} took a different side in the reader`
+      );
+      const layout = await visual.evaluate((node, placement) => {
+        const section = node.closest('section[data-testid^="reader-micro-"]');
+        const paragraph = section?.querySelector(':scope > p[data-reader-block]');
+        if (!section || !paragraph) return null;
+        const visualBox = node.getBoundingClientRect();
+        const paragraphBox = paragraph.getBoundingClientRect();
+        const range = document.createRange();
+        range.selectNodeContents(paragraph);
+        const firstLine = [...range.getClientRects()].find((rect) => rect.width > 1);
+        return {
+          placement,
+          width: visualBox.width,
+          height: visualBox.height,
+          visualLeft: visualBox.left,
+          visualRight: visualBox.right,
+          visualTop: visualBox.top,
+          sectionLeft: section.getBoundingClientRect().left,
+          sectionWidth: section.getBoundingClientRect().width,
+          paragraphBottom: paragraphBox.bottom,
+          lineLeft: firstLine?.left ?? null,
+          lineRight: firstLine?.right ?? null,
+          overflow: section.scrollWidth - section.clientWidth,
+        };
+      }, expectedPlacement);
+      assert.ok(layout, `${id} lost its micro-focus section`);
+      assert.ok(
+        layout.width > 100 && layout.height > 40,
+        `${id} painted no inline reader picture (${layout.width}x${layout.height})`
+      );
+      assert.ok(layout.overflow <= 2, `${id} overflows its reader section by ${layout.overflow}px`);
+      if (layout.placement === 'right') {
+        assert.ok(
+          layout.visualLeft > layout.sectionLeft + layout.sectionWidth * 0.4,
+          `${id} should float to the right of its paragraph`
+        );
+        assert.ok(
+          layout.lineRight === null || layout.lineRight <= layout.visualLeft + 2,
+          `${id} text runs under its right-hand picture`
+        );
+      } else if (layout.placement === 'left') {
+        assert.ok(
+          layout.visualLeft < layout.sectionLeft + layout.sectionWidth * 0.4,
+          `${id} should float to the left of its paragraph`
+        );
+        assert.ok(
+          layout.lineLeft === null || layout.lineLeft >= layout.visualRight - 2,
+          `${id} text runs under its left-hand picture`
+        );
+      } else {
+        assert.ok(
+          layout.visualTop >= layout.paragraphBottom - 2,
+          `${id} should sit below its paragraph`
+        );
+      }
+    }
+    for (const id of microIds.filter((value) => !(value in CONCEPT_VISUAL_SCENES))) {
+      assert.equal(
+        await reader.getByTestId(`reader-micro-visual-${id}`).count(),
+        0,
+        `${id} has no visual but the reader borrowed one`
+      );
+      const anchorIndex = (payload.blocks ?? []).findIndex(
+        (block) => block.t === 'anchor' && block.id === `micro-${id}`
+      );
+      const heading = payload.blocks?.[anchorIndex - 1];
+      const paragraph = payload.blocks?.[anchorIndex + 1];
+      assert.ok(
+        heading?.t === 'h' && has(studyText, heading.x),
+        `${id} lost its micro-focus heading`
+      );
+      assert.ok(
+        paragraph?.t === 'p' && has(studyText, paragraph.x.slice(0, 80)),
+        `${id} lost its micro-focus prose`
+      );
+    }
+    evidence.microVisuals = expectedMicro.length;
+
     // 4. Read: the rest of the page, which is where a P-style lesson keeps its hints and solution.
     const switchTo = async (layout) => {
       const chip = page.getByTestId(`layout-${layout}`);
@@ -330,7 +424,7 @@ const worker = async () => {
     if (!evidence.error) {
       console.log(
         `  ok ${lesson.id.padEnd(26)} study=${evidence.study.chars}c read=${evidence.read.chars}c` +
-          `${evidence.visual ? ` visual=${evidence.visual}` : ''}${evidence.markAtRest ? ' at-rest' : ''}`
+          `${evidence.visual ? ` visual=${evidence.visual}` : ''}${evidence.microVisuals ? ` micro=${evidence.microVisuals}` : ''}${evidence.markAtRest ? ' at-rest' : ''}`
       );
     }
   }

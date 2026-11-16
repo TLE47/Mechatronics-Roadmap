@@ -62,6 +62,22 @@ export function conceptVisualIds(): ConceptVisualId[] {
   return Object.keys(CONCEPT_VISUAL_SCENES) as ConceptVisualId[];
 }
 
+/** Whether a micro id has a designed scene, without falling back to another concept's art. */
+export function hasConceptVisual(conceptId: string): conceptId is ConceptVisualId {
+  return Object.prototype.hasOwnProperty.call(CONCEPT_VISUAL_SCENES, conceptId);
+}
+
+/**
+ * The placement the reader uses for this concept's inline picture.
+ *
+ * The scene map is authored in catalogue order, so the reader and the Micro-learning stage give a
+ * concept the same side of the text. `pictures cycle…` in `scripts/test_micro.mjs` pins that order.
+ */
+export function visualPlacementForConcept(conceptId: string): 'left' | 'right' | 'bottom' | null {
+  if (!hasConceptVisual(conceptId)) return null;
+  return visualPlacement(conceptVisualIds().indexOf(conceptId));
+}
+
 /**
  * Where this concept's scene sits at `lg` and up.
  *

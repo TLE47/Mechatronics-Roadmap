@@ -71,7 +71,7 @@ function VariablesVisual({ sample }: Props) {
 function AssignmentOrderVisual() {
   return (
     <div className="space-y-2">
-      <div className="grid gap-2 sm:grid-cols-[1fr_auto_1fr_auto_1fr] sm:items-center">
+      <div className="grid gap-2 @md:grid-cols-[1fr_auto_1fr_auto_1fr] @md:items-center">
         <Tile title="old x" value="4" className="border-line bg-canvas text-muted" />
         <Arrow />
         <Tile
@@ -95,7 +95,7 @@ function AssignmentOrderVisual() {
 
 function IntFloatVisual({ sample }: Props) {
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
+    <div className="grid gap-2 @sm:grid-cols-2">
       <Tile
         title="int · whole"
         value={sample?.intText ?? '400'}
@@ -138,7 +138,7 @@ function StringsVisual() {
 
 function BooleansVisual() {
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
+    <div className="grid gap-2 @sm:grid-cols-2">
       <div className="flex items-center gap-2 rounded-lg border border-emerald/40 bg-emerald/10 p-2.5">
         <span className="grid h-7 w-7 place-items-center rounded-full border-2 border-emerald bg-panel font-mono text-[12px] font-bold text-emerald">
           1
@@ -443,7 +443,7 @@ function WhileLoopsVisual() {
 
 function NoneVisual() {
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
+    <div className="grid gap-2 @sm:grid-cols-2">
       <div className="rounded-lg border border-dashed border-amber/40 bg-amber/5 p-2.5">
         <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-amber">return tray</p>
         <p className="mt-1 font-mono text-[13px] font-bold text-amber">None</p>
@@ -1027,7 +1027,7 @@ export function MicroConceptVisual({ conceptId, sample }: { conceptId: string; s
   const Visual = VISUALS[conceptId as ConceptVisualId] ?? VariablesVisual;
   const scene = CONCEPT_VISUAL_SCENES[conceptId as ConceptVisualId] ?? 'fallback';
   return (
-    <div data-visual={conceptId} data-visual-scene={scene} className="w-full">
+    <div data-visual={conceptId} data-visual-scene={scene} className="@container w-full">
       <Visual sample={sample} />
     </div>
   );
