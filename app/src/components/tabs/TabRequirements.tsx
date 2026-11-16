@@ -53,8 +53,16 @@ function focusTarget(id: string): {
  */
 export const TabRequirements: React.FC<TabRequirementsProps> = ({ focus, onOpenPart }) => {
   const [query, setQuery] = useState('');
-  const [selectedId, setSelectedId] = useState<string>(PROJECT.requirements[0].id);
-  const [focusedTestId, setFocusedTestId] = useState<string | null>(null);
+  // The cited requirement is the first render's selection: a citation must not show the register's
+  // first row for a frame before an effect moves it.
+  const [selectedId, setSelectedId] = useState<string>(() => {
+    const asked = focus ? focusTarget(focus.id).requirement : null;
+    return asked?.id ?? PROJECT.requirements[0].id;
+  });
+  const [focusedTestId, setFocusedTestId] = useState<string | null>(() => {
+    const asked = focus ? focusTarget(focus.id).test : null;
+    return asked?.id ?? null;
+  });
 
   const filtered = useMemo(
     () => filterProjectObjects<ProjectRequirement>('requirement', PROJECT, query),

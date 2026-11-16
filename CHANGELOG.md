@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-******Release identity: `3.4.2`.** `package.json` is the one place the number lives; the workbench's footer
+********Release identity: `3.4.3`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -13,6 +13,25 @@ flowchart LR
     S0 --> B1["Pass 1 Tier 1 (23 Files: 00.1–08.1 across Tracks 00–08)"]
     B1 --> QA["Automated CI: verify_repo + validate_modules + lint_lessons + lint_modules + check_term_order + clean_tex + audit_math + test_exercises + run_all_labs + smoke & browser E2E (dev server and built Pages bundle)"]
 ```
+
+---
+
+## [2026-11-16] — Run 3.4.3: the citation opens on the cited object
+
+CI on 3.4.2 found two races a local pass did not. The clock work itself held: the built bundle's
+Home suite passed all four real reloads. The failures were elsewhere.
+
+**Project Mode showed its default part before the cited one.** A requirement's Q1 link set the tab
+and the focus id together, but `TabProject` mounted on its first part and applied the citation in an
+effect after the first paint, so a reader could see `U1` for a frame. `TabProject` and
+`TabRequirements` now take the cited object as their initial selection; the effect remains for a
+second citation while the tab is mounted. A repair, so patch.
+
+**The reader sweep watched responses, not requests.** A payload served from Chromium's HTTP cache
+can arrive with no page-level `response` event, and under the bundle lane's load the first five pages
+failed at random while their text had painted. The suite now records the URL the page requests,
+requires the exact subpath, and fetches it itself to prove a 200 JSON answer with the page's version
+and block count, no longer ignoring the status and content type.
 
 ---
 

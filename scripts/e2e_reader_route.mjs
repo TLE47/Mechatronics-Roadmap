@@ -144,11 +144,13 @@ async function visit(lesson) {
   });
   page.on('pageerror', (error) => errors.push(`page: ${squash(String(error)).slice(0, 200)}`));
   const payloadPath = lesson.readerPath.replace(/\.md$/, '.json');
-  const responses = [];
-  page.on('response', (response) => {
-    if (response.url().includes('/lesson-pages/')) {
-      responses.push({ url: response.url(), status: response.status(), type: response.headers()['content-type'] ?? '' });
-    }
+  // The request, not its response: a page payload served from Chromium's HTTP cache can arrive with
+  // no page-level response event, which failed the first five pages at random under the bundle
+  // lane's load. The URL the reader asks for is the route's contract; the fetch below proves the
+  // server answers it 200 as JSON with this page's version and blocks.
+  const requests = [];
+  page.on('request', (request) => {
+    if (request.url().includes('/lesson-pages/')) requests.push(request.url());
   });
   const evidence = { id: lesson.id };
 
@@ -183,18 +185,25 @@ async function visit(lesson) {
     }
 
     // 2. The static document: exact subpath, 200, JSON, the version this build reads.
-    const mine = responses.filter((response) => response.url.endsWith(payloadPath));
-    assert.ok(mine.length > 0, `no request for ${payloadPath}`);
+    const asked = requests.filter((url) => url.endsWith(payloadPath));
+    assert.ok(asked.length > 0, `no request for ${payloadPath}`);
     const expectedUrl = `${origin}${BASE}lesson-pages/${payloadPath}`;
-    for (const response of mine) {
-      assert.equal(response.url, expectedUrl, `payload served from ${response.url}`);
-      assert.equal(response.status, 200, `payload answered ${response.status}`);
-      assert.ok(/application\/json/i.test(response.type), `payload typed as "${response.type}"`);
+    for (const url of asked) {
+      assert.equal(url, expectedUrl, `payload requested from ${url}`);
     }
     const fetched = await page.evaluate(async (url) => {
-      const body = await fetch(url).then((response) => response.json());
-      return { v: body.v, title: body.title, blocks: body.blocks.length };
+      const response = await fetch(url);
+      const body = await response.json();
+      return {
+        status: response.status,
+        type: response.headers.get('content-type') ?? '',
+        v: body.v,
+        title: body.title,
+        blocks: body.blocks.length,
+      };
     }, expectedUrl);
+    assert.equal(fetched.status, 200, `payload answered ${fetched.status}`);
+    assert.ok(/application\/json/i.test(fetched.type), `payload typed as "${fetched.type}"`);
     assert.equal(fetched.v, payload.v, 'payload answered a different version');
     assert.equal(fetched.title, payload.title, 'payload is another page');
     assert.equal(fetched.blocks, payload.blocks.length, 'payload block count changed under a cached build');
