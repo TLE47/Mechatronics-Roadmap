@@ -26,6 +26,7 @@ import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workben
 import { seedTourSeen } from './tour_seed.mjs';
 import { MICRO_CONCEPTS } from '../app/src/micro/catalog.ts';
 import { reviewSet } from '../app/src/micro/engine.ts';
+import { CONCEPT_VISUAL_SCENES } from '../app/src/micro/visuals.ts';
 
 const MICRO_KEY = 'mechalab_micro_progress_v1';
 const VERIFIED_KEY = 'mechalab_pyodide_verified_v1';
@@ -583,9 +584,10 @@ async function main() {
       '  ok the micro tab responds to viewport changes: compact at 390 px, one column at 768 px, two columns at 1024 and 1280 px, compact again'
     );
 
-    // Every concept names a picture family in the catalogue, and the unit suite checks that map. The
-    // browser has to prove those pictures actually paint, and that the three placements are real
-    // positions rather than a class name: right of the explanation, left of it, then beneath it.
+    // Every concept names its own scene in the catalogue, and the unit suite checks that map. The
+    // browser now walks all forty-six focuses and proves each one paints that scene, adds a distinct
+    // scene id, and keeps the right / left / bottom placement cycle. The first three also check the
+    // actual geometry of the three placements rather than trusting the class name.
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.waitForFunction(() => window.matchMedia('(min-width: 1024px)').matches);
     const openConcept = async (id) => {
@@ -594,23 +596,23 @@ async function main() {
       await page.getByTestId(`micro-learn-${id}`).click();
       await page.getByTestId(`micro-visual-${id}`).waitFor({ timeout: 5000 });
     };
-    for (const [id, placement, kind] of [
-      ['variables', 'right', 'notes'],
-      ['assignment-order', 'left', 'notes'],
-      ['int-float', 'bottom', 'numbers'],
-    ]) {
-      await openConcept(id);
+    const paintedScenes = new Set();
+    for (const [index, concept] of MICRO_CONCEPTS.entries()) {
+      const expectedPlacement = ['right', 'left', 'bottom'][index % 3];
+      await openConcept(concept.id);
       const visual = await page.evaluate((conceptId) => {
         const figure = document.querySelector(`[data-testid="micro-visual-${conceptId}"]`);
         const teaching = figure?.closest('[data-testid="micro-teaching"]');
         const prose = teaching?.querySelector('p');
-        if (!figure || !prose) return null;
+        const sceneNode = figure?.querySelector('[data-visual]');
+        if (!figure || !prose || !sceneNode) return null;
         const box = figure.getBoundingClientRect();
         const words = prose.getBoundingClientRect();
         return {
           placement: figure.getAttribute('data-placement'),
-          kind: figure.getAttribute('data-figure-kind'),
-          children: figure.children.length,
+          visualId: sceneNode.getAttribute('data-visual'),
+          scene: sceneNode.getAttribute('data-visual-scene'),
+          elements: figure.querySelectorAll('*').length,
           width: box.width,
           height: box.height,
           left: box.left,
@@ -620,23 +622,36 @@ async function main() {
           wordsRight: words.right,
           wordsBottom: words.bottom,
         };
-      }, id);
-      assert.ok(visual, `${id} must draw its teaching picture`);
-      assert.equal(visual.placement, placement, `${id} must declare the ${placement} placement`);
-      assert.equal(visual.kind, kind, `${id} must draw its ${kind} picture family`);
-      assert.ok(
-        visual.children >= 2 && visual.width > 100 && visual.height > 40,
-        `${id} must paint a non-empty picture (${visual.children} children, ${visual.width}x${visual.height})`
+      }, concept.id);
+      assert.ok(visual, `${concept.id} must draw its teaching picture`);
+      assert.equal(
+        visual.placement,
+        expectedPlacement,
+        `${concept.id} must declare the ${expectedPlacement} placement`
       );
-      if (placement === 'right') {
-        assert.ok(visual.left > visual.wordsRight - 1, `${id} must sit to the right of the explanation`);
-      } else if (placement === 'left') {
-        assert.ok(visual.right <= visual.wordsLeft + 1, `${id} must sit to the left of the explanation`);
-      } else {
-        assert.ok(visual.top >= visual.wordsBottom - 1, `${id} must sit beneath the explanation`);
+      assert.equal(visual.visualId, concept.id, `${concept.id} must render its own scene component`);
+      assert.equal(
+        visual.scene,
+        CONCEPT_VISUAL_SCENES[concept.id],
+        `${concept.id} must match its catalogue scene`
+      );
+      assert.ok(
+        visual.elements >= 5 && visual.width > 100 && visual.height > 40,
+        `${concept.id} must paint a non-empty picture (${visual.elements} elements, ${visual.width}x${visual.height})`
+      );
+      paintedScenes.add(visual.scene);
+      if (index < 3) {
+        if (expectedPlacement === 'right') {
+          assert.ok(visual.left > visual.wordsRight - 1, `${concept.id} must sit to the right of the explanation`);
+        } else if (expectedPlacement === 'left') {
+          assert.ok(visual.right <= visual.wordsLeft + 1, `${concept.id} must sit to the left of the explanation`);
+        } else {
+          assert.ok(visual.top >= visual.wordsBottom - 1, `${concept.id} must sit beneath the explanation`);
+        }
       }
     }
-    console.log('  ok every sampled concept paints its picture, with right, left and bottom placements');
+    assert.equal(paintedScenes.size, MICRO_CONCEPTS.length, 'two concepts painted the same scene');
+    console.log('  ok all forty-six concepts paint a distinct scene, with the right / left / bottom cycle intact');
 
     assert.deepEqual(pageErrors, [], `the micro tab threw: ${pageErrors.join('; ')}`);
     await context.close();

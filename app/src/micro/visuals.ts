@@ -1,99 +1,69 @@
 /**
- * Which picture a micro focus draws, and where it sits (`app/src/micro/visuals.ts`).
+ * The scene each micro focus draws, and where it sits (`app/src/micro/visuals.ts`).
  *
- * Kept out of the component file so it can be read by Node with type stripping: the map is data, and
- * a map that cannot be tested without React is a map nobody notices going stale. `MicroFigures.tsx`
- * draws the families this names.
+ * Every concept has its own named scene, not a family shared with its neighbours. The names are data
+ * so a Node test can prove the catalogue and the renderer did not drift; `MicroConceptVisual.tsx`
+ * draws each one. Placements still cycle right, left, bottom from the catalogue's own order.
  */
 
-export type MicroFigureKind =
-  | 'assert'
-  | 'balance'
-  | 'bits'
-  | 'branch'
-  | 'function'
-  | 'limits'
-  | 'list'
-  | 'loop'
-  | 'mechanics'
-  | 'notes'
-  | 'numbers'
-  | 'operators'
-  | 'plot'
-  | 'angle'
-  | 'range'
-  | 'strings'
-  | 'units'
-  | 'answer';
+export const CONCEPT_VISUAL_SCENES = {
+  variables: 'sticky-note',
+  'assignment-order': 'conveyor',
+  'int-float': 'two-number-boxes',
+  strings: 'character-cells',
+  booleans: 'toggle-cards',
+  'mixed-types': 'mismatched-pieces',
+  'f-strings': 'sentence-slot',
+  operators: 'symbol-dial',
+  'floor-division': 'grouping-tray',
+  'order-of-operations': 'nested-brackets',
+  comparisons: 'balance-question',
+  clamping: 'clamped-rail',
+  logic: 'logic-gate',
+  lists: 'indexed-rack',
+  'for-loops': 'visit-cycle',
+  'index-error': 'out-of-range',
+  functions: 'function-machine',
+  'while-loops': 'test-cycle',
+  none: 'empty-return',
+  imports: 'toolbox',
+  asserts: 'checkpoint',
+  'assert-message': 'failure-note',
+  'si-units': 'unit-ruler',
+  'metric-prefixes': 'prefix-ladder',
+  'unit-cancel': 'cancel-fraction',
+  'frequency-period': 'reciprocal-waves',
+  'binary-bits': 'bit-radix',
+  'place-values': 'place-columns',
+  rearranging: 'balance-scale',
+  'linear-scaling': 'fraction-bar',
+  'scale-output': 'two-ranges',
+  radians: 'radian-arc',
+  'trig-reach': 'reach-triangle',
+  atan2: 'quadrant-arrow',
+  'graph-slope': 'slope-line',
+  'area-under-curve': 'area-slices',
+  'graph-units': 'labelled-axes',
+  force: 'force-block',
+  weight: 'weight-scale',
+  torque: 'lever-arm',
+  'datasheet-units': 'unit-table',
+  'datasheet-bounds': 'bounds-band',
+  'datasheet-conditions': 'min-typ-max',
+  'given-unknown': 'given-unknown-board',
+  'answer-check': 'answer-checklist',
+  'bounds-check': 'limit-gauge',
+} as const;
 
-const KINDS: Record<string, MicroFigureKind> = {
-  variables: 'notes',
-  'assignment-order': 'notes',
-  'int-float': 'numbers',
-  strings: 'strings',
-  booleans: 'numbers',
-  'mixed-types': 'numbers',
-  'f-strings': 'strings',
-  operators: 'operators',
-  'floor-division': 'operators',
-  'order-of-operations': 'operators',
-  comparisons: 'range',
-  clamping: 'range',
-  logic: 'branch',
-  lists: 'list',
-  'for-loops': 'loop',
-  'index-error': 'list',
-  functions: 'function',
-  'while-loops': 'loop',
-  none: 'function',
-  imports: 'function',
-  asserts: 'assert',
-  'assert-message': 'assert',
-  'si-units': 'units',
-  'metric-prefixes': 'units',
-  'unit-cancel': 'units',
-  'frequency-period': 'units',
-  'binary-bits': 'bits',
-  'place-values': 'bits',
-  rearranging: 'balance',
-  'linear-scaling': 'range',
-  'scale-output': 'range',
-  radians: 'angle',
-  'trig-reach': 'angle',
-  atan2: 'angle',
-  'graph-slope': 'plot',
-  'area-under-curve': 'plot',
-  'graph-units': 'plot',
-  force: 'mechanics',
-  weight: 'mechanics',
-  torque: 'mechanics',
-  'datasheet-units': 'units',
-  'datasheet-bounds': 'limits',
-  'datasheet-conditions': 'limits',
-  'given-unknown': 'answer',
-  'answer-check': 'answer',
-  'bounds-check': 'answer',
-};
+export type ConceptVisualId = keyof typeof CONCEPT_VISUAL_SCENES;
 
-/** Every concept id with a picture family. Unknown ids throw, so a new lesson cannot ship blank. */
-export function visualKind(conceptId: string): MicroFigureKind {
-  const kind = KINDS[conceptId];
-  if (!kind) throw new Error(`micro concept ${conceptId} has no picture family; add it to KINDS`);
-  return kind;
-}
-
-/** Concept ids the map knows: what a test asks against the generated catalogue. */
-export function visualConceptIds(): string[] {
-  return Object.keys(KINDS);
-}
-
-/** Whether a concept has a family of its own, without throwing for an id that predates this file. */
-export function hasVisual(conceptId: string): boolean {
-  return Boolean(KINDS[conceptId]);
+/** Every concept with a specific scene. A new catalogue entry must add one here. */
+export function conceptVisualIds(): ConceptVisualId[] {
+  return Object.keys(CONCEPT_VISUAL_SCENES) as ConceptVisualId[];
 }
 
 /**
- * Where this concept's picture sits at `lg` and up.
+ * Where this concept's scene sits at `lg` and up.
  *
  * Three placements, cycling through the catalogue rather than chosen per lesson: right of the
  * explanation, left of it, then across the full width underneath. The cycle is deterministic (the

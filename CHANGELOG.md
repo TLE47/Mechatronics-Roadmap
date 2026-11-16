@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `3.5.3`.** `package.json` is the one place the number lives; the workbench's footer
+****Release identity: `3.6.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -13,6 +13,27 @@ flowchart LR
     S0 --> B1["Pass 1 Tier 1 (23 Files: 00.1–08.1 across Tracks 00–08)"]
     B1 --> QA["Automated CI: verify_repo + validate_modules + lint_lessons + lint_modules + check_term_order + clean_tex + audit_math + test_exercises + run_all_labs + smoke & browser E2E (dev server and built Pages bundle)"]
 ```
+
+---
+
+## [2026-11-16] — Run 3.6.0: every micro focus has its own designed scene
+
+**The shared picture families are gone.** All forty-six micro concepts now draw a scene built for
+that one idea: a conveyor for `x = x + 1`, a grouping tray for `1023 // 4`, a balance with pans for a
+comparison, a clamped rail for a command above 255, a gate for logic, a bit radix for powers of two,
+a lever for torque, a bounds band for a datasheet limit. The old renderer assigned concepts to one of
+eighteen families, so thirty-seven of the forty-six opened with a diagram a neighbouring lesson also
+used; `MicroFigures.tsx` is deleted rather than left as a second path. The scenes share only small
+primitives (a tile, a chip, an arrow) and reuse the tab's existing accent, emerald, rose, amber and
+purple tokens, so they need no dependency, font or interaction.
+
+**The placement cycle is unchanged.** The catalogue index still sends the picture right, then left,
+then below the explanation at wide widths. The frame keeps `data-testid=micro-visual-<id>` and
+`data-placement`; each scene adds a stable `data-visual` and `data-visual-scene`, and the old
+`data-figure-kind` family attribute is removed. The unit suite now proves the catalogue and scene map
+agree on all forty-six ids with no repeated scene, and the browser suite walks every concept, checks
+its scene id and non-empty paint, and keeps the geometry checks for the right, left and bottom
+placements.
 
 ---
 

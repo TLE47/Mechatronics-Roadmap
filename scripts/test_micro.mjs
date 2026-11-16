@@ -55,7 +55,7 @@ import {
   readWalkthroughKeys,
   updateWalkthroughKey,
 } from '../app/src/micro/walkthroughKeys.ts';
-import { hasVisual, visualConceptIds, visualKind, visualPlacement } from '../app/src/micro/visuals.ts';
+import { CONCEPT_VISUAL_SCENES, conceptVisualIds, visualPlacement } from '../app/src/micro/visuals.ts';
 import {
   ActivityClock,
   MICRO_OVER_TARGET_SECONDS,
@@ -850,19 +850,24 @@ check('a snapshot restores the session and a backwards clock clamps to zero', ()
   assert.equal(formatClock(-1), '0:00');
 });
 
-// The teaching stage used to open every micro focus with the same row of chips. Each concept now
-// names a picture family, and the families are drawn by MicroFigures; a concept added without one
-// would throw at render time, so the map is checked against the generated catalogue here.
-check('every generated concept has a picture family of its own', () => {
+// Each concept now has its own drawn scene rather than a shared picture family. The renderer is a
+// TSX switch, so this pure map is the contract a Node test can check: every catalogue id must name a
+// scene, no scene may be reused, and no stale id may linger after a catalogue edit.
+check('every generated concept has a scene designed only for it', () => {
   const ids = MICRO_CONCEPTS.map((concept) => concept.id);
-  assert.deepEqual(ids.filter((id) => !hasVisual(id)), [], 'concepts with no visual');
-  const kinds = new Set(ids.map((id) => visualKind(id)));
-  assert.ok(kinds.size >= 12, `expected at least twelve distinct picture families, got ${kinds.size}`);
   assert.deepEqual(
-    visualConceptIds().filter((id) => !ids.includes(id)),
+    ids.filter((id) => !CONCEPT_VISUAL_SCENES[id]),
+    [],
+    'concepts with no specific scene'
+  );
+  assert.deepEqual(
+    conceptVisualIds().filter((id) => !ids.includes(id)),
     [],
     'the visual map names concepts the catalogue does not have'
   );
+  const scenes = ids.map((id) => CONCEPT_VISUAL_SCENES[id]);
+  assert.equal(new Set(scenes).size, ids.length, 'two concepts still share a scene');
+  assert.equal(new Set(scenes).size, 46, 'the catalogue should expose forty-six distinct scenes');
 });
 
 check('pictures cycle right, left and underneath so no two lessons open alike', () => {
