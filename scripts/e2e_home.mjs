@@ -36,6 +36,8 @@ const TAB_IDS = Object.keys(
 );
 
 const FIRST_LESSON = PYTHON_LESSONS[0];
+/** A mark's quote collapses whitespace, so compare it to the selection the same way. */
+const normalizeMarkText = (value) => (value ?? '').replace(/\s+/g, ' ').trim();
 /** The entry Home's Today panel starts with, from the same join the page calls. */
 const TODAY_ENTRY = nextMission({})?.entries[0] ?? null;
 const TODAY_TITLE = PYTHON_LESSONS.find((lesson) => lesson.id === TODAY_ENTRY?.id)?.title ?? null;
@@ -548,6 +550,41 @@ async function main() {
       0,
       'Escape must close the palette'
     );
+    // Search is a course index, not a ranking: lessons stay in catalogue order across hits. The
+    // unit suite pins the function; this checks the order the palette actually paints, in the
+    // text-search mode the Search button opens.
+    await page.keyboard.press('Control+Shift+f');
+    await page.getByTestId('command-palette').waitFor({ timeout: 10000 });
+    assert.equal(
+      await page.getByTestId('command-palette').getAttribute('data-palette-mode'),
+      'search',
+      'the search shortcut must open the lesson-text mode'
+    );
+    await page.getByTestId('input-palette-search').fill('th');
+    await page.waitForFunction(
+      () => document.querySelectorAll('[data-testid^="palette-item-search-"]').length > 1,
+      undefined,
+      { timeout: 10000 }
+    );
+    const paletteIds = await page
+      .locator('[data-testid^="palette-item-search-"]')
+      .evaluateAll((rows) => rows.map((row) => row.getAttribute('data-palette-id') ?? ''));
+    const courseOrder = paletteIds.map((id) =>
+      PYTHON_LESSONS.findIndex((lesson) => id.startsWith(`search-${lesson.id}-`))
+    );
+    assert.ok(courseOrder.length > 1, 'the broad query must paint more than one lesson hit');
+    assert.ok(courseOrder.every((index) => index >= 0), 'every painted hit must name a real lesson');
+    assert.deepEqual(
+      courseOrder,
+      [...courseOrder].sort((a, b) => a - b),
+      'search results must stay in catalogue order rather than being re-ranked'
+    );
+    await page.keyboard.press('Escape');
+    assert.equal(
+      await page.getByTestId('command-palette').count(),
+      0,
+      'Escape must close the text search'
+    );
     await page.keyboard.press('Control+k');
     await page.getByTestId('command-palette').waitFor({ timeout: 10000 });
     await page.getByTestId('input-palette-search').fill(FIRST_LESSON.id);
@@ -997,6 +1034,21 @@ async function main() {
       assert.ok(
         (await page.locator('[data-testid="sticky-mark"]').count()) >= 1,
         'the saved quote must be marked in the lesson text, not only listed in Notes'
+      );
+      assert.equal(
+        normalizeMarkText(await mark.getAttribute('data-quote')),
+        normalizeMarkText(selected),
+        'the mark must cover the passage that was selected, not a shifted neighbour'
+      );
+      assert.equal(
+        normalizeMarkText(await mark.textContent()),
+        normalizeMarkText(selected),
+        'the visible mark must render the selected words themselves'
+      );
+      assert.equal(
+        await mark.getAttribute('data-mark-kind'),
+        'sticky',
+        'a saved note must be drawn as a sticky mark, not left as a plain highlight'
       );
       await mark.click();
       await page.getByTestId('sticky-note-popup').waitFor({ timeout: 10000 });
@@ -1606,6 +1658,16 @@ async function main() {
         (await inCode.count()) >= 1,
         'a highlight taken inside a code block must be drawn there, not only stored in Notes'
       );
+      assert.equal(
+        normalizeMarkText(await inCode.first().getAttribute('data-quote')),
+        normalizeMarkText(picked),
+        'the code mark must cover the selected line, not a shifted neighbour'
+      );
+      assert.equal(
+        await inCode.first().getAttribute('data-mark-kind'),
+        'highlight',
+        'a highlight without a note must be drawn as a highlight'
+      );
       await inCode.first().click();
       await page.getByTestId('sticky-note-popup').waitFor({ timeout: 10000 });
       // The code block carries a note, not only a pin: saving here is what the reader reported as
@@ -1623,6 +1685,16 @@ async function main() {
       assert.ok(
         (await pre.locator('[data-testid="sticky-mark"]').count()) >= 1,
         'the note must still be marked on the code after it is saved'
+      );
+      assert.equal(
+        normalizeMarkText(await inCode.first().textContent()),
+        normalizeMarkText(picked),
+        'saving a note must keep the mark on the selected code line'
+      );
+      assert.equal(
+        await inCode.first().getAttribute('data-mark-kind'),
+        'sticky',
+        'a code highlight with a note must turn into a sticky mark'
       );
       console.log('  ok a highlight inside a code block is drawn there, and a note on it saves');
 
@@ -1645,12 +1717,34 @@ async function main() {
       assert.ok(inlinePicked.trim().length > 1, 'the page must have an inline code run to select');
       await page.getByTestId('btn-highlight').click();
       await page.waitForTimeout(250);
-      const inlineMark = await page.evaluate(() =>
-        [...document.querySelectorAll('[data-testid="reader-prose"] [data-testid="sticky-mark"]')].filter(
-          (node) => !node.closest('pre') && node.closest('code')
-        ).length
+      const inlineMark = await page.evaluate(() => {
+        const node = [...document.querySelectorAll('[data-testid="reader-prose"] [data-testid="sticky-mark"]')]
+          .find((candidate) => !candidate.closest('pre') && candidate.closest('code'));
+        return node
+          ? {
+              text: node.textContent ?? '',
+              quote: node.getAttribute('data-quote') ?? '',
+              kind: node.getAttribute('data-mark-kind') ?? '',
+            }
+          : null;
+      });
+      assert.ok(inlineMark, 'a highlight on inline code must be drawn on the code span');
+      assert.equal(
+        normalizeMarkText(inlineMark.quote),
+        normalizeMarkText(inlinePicked),
+        'the inline mark must cover the selected code run, not a shifted neighbour'
       );
-      assert.ok(inlineMark >= 1, 'a highlight on inline code must be drawn on the code span');      console.log('  ok a highlight on inline code is drawn on the span');
+      assert.equal(
+        normalizeMarkText(inlineMark.text),
+        normalizeMarkText(inlinePicked),
+        'the inline mark must show those words'
+      );
+      assert.equal(
+        inlineMark.kind,
+        'highlight',
+        'an inline-code highlight without a note must be drawn as a highlight'
+      );
+      console.log('  ok a highlight on inline code is drawn on the span');
 
       // Read keeps the page's own "Do it yourself" heading, and its jump switches to Write.
       assert.equal(

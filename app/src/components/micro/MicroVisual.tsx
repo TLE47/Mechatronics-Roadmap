@@ -552,6 +552,7 @@ export function MicroVisual({
       role="img"
       aria-label={tone.label}
       data-testid={`micro-visual-${conceptId}`}
+      data-figure-kind={hasVisual(conceptId) ? visualKind(conceptId) : 'fallback'}
       data-placement={placement}
       className={`rounded-xl border ${tone.border} ${tone.bg} p-3.5 ${
         placement === 'bottom' ? 'w-full' : 'w-full lg:sticky lg:top-3'

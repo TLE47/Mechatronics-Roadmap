@@ -583,6 +583,61 @@ async function main() {
       '  ok the micro tab responds to viewport changes: compact at 390 px, one column at 768 px, two columns at 1024 and 1280 px, compact again'
     );
 
+    // Every concept names a picture family in the catalogue, and the unit suite checks that map. The
+    // browser has to prove those pictures actually paint, and that the three placements are real
+    // positions rather than a class name: right of the explanation, left of it, then beneath it.
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.waitForFunction(() => window.matchMedia('(min-width: 1024px)').matches);
+    const openConcept = async (id) => {
+      const back = page.getByTestId('micro-back');
+      if ((await back.count()) > 0) await back.click();
+      await page.getByTestId(`micro-learn-${id}`).click();
+      await page.getByTestId(`micro-visual-${id}`).waitFor({ timeout: 5000 });
+    };
+    for (const [id, placement, kind] of [
+      ['variables', 'right', 'notes'],
+      ['assignment-order', 'left', 'notes'],
+      ['int-float', 'bottom', 'numbers'],
+    ]) {
+      await openConcept(id);
+      const visual = await page.evaluate((conceptId) => {
+        const figure = document.querySelector(`[data-testid="micro-visual-${conceptId}"]`);
+        const teaching = figure?.closest('[data-testid="micro-teaching"]');
+        const prose = teaching?.querySelector('p');
+        if (!figure || !prose) return null;
+        const box = figure.getBoundingClientRect();
+        const words = prose.getBoundingClientRect();
+        return {
+          placement: figure.getAttribute('data-placement'),
+          kind: figure.getAttribute('data-figure-kind'),
+          children: figure.children.length,
+          width: box.width,
+          height: box.height,
+          left: box.left,
+          right: box.right,
+          top: box.top,
+          wordsLeft: words.left,
+          wordsRight: words.right,
+          wordsBottom: words.bottom,
+        };
+      }, id);
+      assert.ok(visual, `${id} must draw its teaching picture`);
+      assert.equal(visual.placement, placement, `${id} must declare the ${placement} placement`);
+      assert.equal(visual.kind, kind, `${id} must draw its ${kind} picture family`);
+      assert.ok(
+        visual.children >= 2 && visual.width > 100 && visual.height > 40,
+        `${id} must paint a non-empty picture (${visual.children} children, ${visual.width}x${visual.height})`
+      );
+      if (placement === 'right') {
+        assert.ok(visual.left > visual.wordsRight - 1, `${id} must sit to the right of the explanation`);
+      } else if (placement === 'left') {
+        assert.ok(visual.right <= visual.wordsLeft + 1, `${id} must sit to the left of the explanation`);
+      } else {
+        assert.ok(visual.top >= visual.wordsBottom - 1, `${id} must sit beneath the explanation`);
+      }
+    }
+    console.log('  ok every sampled concept paints its picture, with right, left and bottom placements');
+
     assert.deepEqual(pageErrors, [], `the micro tab threw: ${pageErrors.join('; ')}`);
     await context.close();
     console.log('\nmicro e2e: passed');

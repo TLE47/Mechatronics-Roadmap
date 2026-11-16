@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `3.5.2`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `3.5.3`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -13,6 +13,21 @@ flowchart LR
     S0 --> B1["Pass 1 Tier 1 (23 Files: 00.1–08.1 across Tracks 00–08)"]
     B1 --> QA["Automated CI: verify_repo + validate_modules + lint_lessons + lint_modules + check_term_order + clean_tex + audit_math + test_exercises + run_all_labs + smoke & browser E2E (dev server and built Pages bundle)"]
 ```
+
+---
+
+## [2026-11-16] — Run 3.5.3: the reader mission's claims are pinned by tests
+
+**The five reader promises now have assertions, and two gaps were closed.** The micro catalogue's
+unit suite already proved every concept names a picture family and that the families cover at least
+twelve kinds; the browser suite now also opens sampled concepts and proves the picture paints to the
+right, left and beneath the explanation, with its family exposed as `data-figure-kind`. The Home
+suite now checks a saved note's mark against the exact selected quote, checks the inline and code
+mark paths the same way, and distinguishes a plain highlight from a sticky mark through
+`data-mark-kind`. Search results are asserted to stay in catalogue order in the palette's text-search
+mode, not merely in the pure search module. The bottom-left Back to Study pill keeps its existing
+browser assertion in the workbench suite, and the collapsed Maths and blur commits keep the Home
+suite's existing formula assertions.
 
 ---
 
