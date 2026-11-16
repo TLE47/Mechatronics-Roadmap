@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-********Release identity: `3.4.3`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `3.5.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -13,6 +13,30 @@ flowchart LR
     S0 --> B1["Pass 1 Tier 1 (23 Files: 00.1–08.1 across Tracks 00–08)"]
     B1 --> QA["Automated CI: verify_repo + validate_modules + lint_lessons + lint_modules + check_term_order + clean_tex + audit_math + test_exercises + run_all_labs + smoke & browser E2E (dev server and built Pages bundle)"]
 ```
+
+---
+
+## [2026-11-16] — Run 3.5.0: the note draws its maths where it is typed
+
+**The sticky-note field is now the rendering.** A `$v^2$` typed into the note becomes a KaTeX atom
+inside the same field the caret is in, and a completed `**…**`, `*…*` or `++…++` becomes bold,
+italic or underlined where it stands. The toolbar and ⌘B/⌘I/⌘U act on the DOM selection, so Bold then
+Underline still nest, and the separate “Preview · rendered” pane is gone because it was never the
+editor. The Home browser suite types real keystrokes and asserts `.katex`, `<strong>`, `<em>` and
+`<u>` inside `sticky-note-text`, not in a preview node; it also checks that a selected formula
+deletes in one Backspace, that Enter makes a Markdown line, and that the editor logs no console
+errors while a note is created and edited.
+
+**The stored note is still portable Markdown.** The editing surface carries a formula's TeX in
+`data-math` and serialises it back to `$…$`; formatting serialises to the reader's existing markers.
+Saving reads the editor itself, so a save in the same task as the last keystroke keeps the current
+maths, and reopening the note after a reload round-trips the Markdown and redraws the same formula
+and bold run. A caret sentinel bridges the redraw; a formula cannot swallow it. At the 400-character
+comment cap the editor restores the last whole note rather than slicing off a closing marker.
+
+**A taller card is placed again once it settles.** The new editor made the popover grow after its
+first measurement, which put an above-placed card over the words it was about. The placement now
+re-runs when the card's height changes and once more after focus settles.
 
 ---
 

@@ -54,10 +54,11 @@ import {
 } from '../studyNotes';
 import { checkId, readTicks, toggleTicked } from '../lessonChecks';
 import { STORE_RESTORED_EVENT } from '../backupBundle';
-import { markQuotes, unlocatedQuotes, wrapSelection } from '../lessonMarks';
+import { markQuotes, unlocatedQuotes } from '../lessonMarks';
 import { RESET_EVENT } from '../resetEvent';
 import { lessonPageUrl as sourceUrl } from '../startHere';
 import { StudyClockReminder } from './StudyClockReminder';
+import StickyNoteEditor, { type StickyNoteEditorHandle } from './StickyNoteEditor';
 import { LazyPending } from './LazyPending';
 // One dynamic import is all the entry chunk keeps of the Bridge Notes visuals: the table of names
 // and the pictures themselves travel in their own chunks (`bridges/bridgeNotesVisual.tsx`).
@@ -155,6 +156,8 @@ interface StickyPlacement {
   side: 'above' | 'below';
   /** The notch's distance from the popover's left edge, so it points at the words. */
   caret: number;
+  /** The card height this placement was measured against, so a late line can trigger a re-place. */
+  height: number;
 }
 
 /** The gap between the words and the popover, and the least margin kept from the window's edges. */
@@ -389,10 +392,8 @@ export function LessonReader({
   /** The passage the popover points at, and where the popover ended up after measuring itself. */
   const [stickyAnchor, setStickyAnchor] = useState<StickyAnchor | null>(null);
   const [stickyPlacement, setStickyPlacement] = useState<StickyPlacement | null>(null);
-  const stickyRef = useRef<HTMLTextAreaElement | null>(null);
+  const stickyRef = useRef<StickyNoteEditorHandle | null>(null);
   const stickyCardRef = useRef<HTMLDivElement | null>(null);
-  /** Where the caret goes when the next render commits, because a controlled box forgets it. */
-  const stickyCaretRef = useRef<{ start: number; end: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const onFocusMissRef = useRef(onFocusMiss);
   onFocusMissRef.current = onFocusMiss;
@@ -723,22 +724,6 @@ export function LessonReader({
     saverFor(lessonId).remember(position);
   };
 
-  // A controlled textarea loses its selection when React writes the value back. Restoring it in a
-  // layout effect (after the commit, before paint) is what lets Bold then Underline nest: the second
-  // press has to see the selection the first one left, not a whole box selected from before.
-  useLayoutEffect(() => {
-    const box = stickyRef.current;
-    const caret = stickyCaretRef.current;
-    if (!box || !caret) return;
-    stickyCaretRef.current = null;
-    box.focus();
-    try {
-      box.setSelectionRange(caret.start, caret.end);
-    } catch {
-      // A box that went away between the press and the commit has nothing to restore.
-    }
-  }, [stickyText]);
-
   /** Re-read the lesson's highlights after a write, so the marks in the prose match the store. */
   const syncMarks = () => setMarks(readLessonStudy(lessonId)?.highlights ?? []);
 
@@ -774,6 +759,7 @@ export function LessonReader({
           width,
           side: 'below',
           caret: width / 2,
+          height,
         });
         return;
       }
@@ -795,16 +781,33 @@ export function LessonReader({
         Math.min(window.innerWidth - width - STICKY_EDGE, rect.left + rect.width / 2 - width / 2)
       );
       const caret = Math.max(18, Math.min(width - 18, rect.left + rect.width / 2 - left));
-      setStickyPlacement({ top, left, width, side, caret });
+      setStickyPlacement({ top, left, width, side, caret, height });
     };
     place();
     window.addEventListener('scroll', place, true);
     window.addEventListener('resize', place);
+    // The card can finish a line after the first measure (a font settles, focus paints the empty
+    // editor's placeholder, KaTeX finishes a formula). An observer turns that growth into a fresh
+    // placement; otherwise a note that grew by one line can overlap the words it is about.
+    const card = stickyCardRef.current;
+    const observer =
+      typeof ResizeObserver !== 'undefined' && card ? new ResizeObserver(() => place()) : null;
+    if (card && observer) observer.observe(card);
+    const frame = requestAnimationFrame(place);
+    // Opening the popover can restore a scroll or finish a focus layout a frame later; one settle
+    // pass after that is what keeps an above-placed card clear of words that moved up under it.
+    const settle = window.setTimeout(place, 120);
     return () => {
       window.removeEventListener('scroll', place, true);
       window.removeEventListener('resize', place);
+      observer?.disconnect();
+      cancelAnimationFrame(frame);
+      clearTimeout(settle);
     };
-  }, [stickyOpen, stickyAnchor, stickyText, stickyQuote, stickyEditing]);
+    // The first measurement can precede the last line of the card. Re-running on the measured
+    // height turns that late growth into a second placement instead of a card that overlaps the
+    // words it is about.
+  }, [stickyOpen, stickyAnchor, stickyText, stickyQuote, stickyEditing, stickyPlacement?.height]);
 
   // Not modal: a press anywhere but the card closes it. A press on another marked passage is left
   // alone - that press opens that passage's own note.
@@ -882,38 +885,6 @@ export function LessonReader({
     setStickyOpen(true);
   };
 
-  /** Wrap the textarea's selection in a Markdown marker, keeping the selection inside the pair. */
-  const applyMarker = (marker: string) => {
-    const box = stickyRef.current;
-    const start = box?.selectionStart ?? stickyText.length;
-    const end = box?.selectionEnd ?? start;
-    const wrapped = wrapSelection(stickyText, start, end, marker);
-    // The store's comment cap includes the markers: a box that could wrap 400 characters into 404
-    // would save 400 and silently lose the closing pair on reload.
-    const next = wrapped.text.slice(0, MAX_COMMENT_CHARS);
-    // Bold then Underline nests: the layout effect below puts the selection back inside the markers
-    // this press wrote, so the next press wraps that range rather than the whole box.
-    stickyCaretRef.current = {
-      start: Math.min(wrapped.start, next.length),
-      end: Math.min(wrapped.end, next.length),
-    };
-    setStickyText(next);
-  };
-
-  const onStickyKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === 'Escape') {
-      event.stopPropagation();
-      closeSticky();
-      return;
-    }
-    if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
-    const key = event.key.toLowerCase();
-    const marker = key === 'b' ? '**' : key === 'i' ? '*' : key === 'u' ? '++' : '';
-    if (!marker) return;
-    event.preventDefault();
-    applyMarker(marker);
-  };
-
   /** Tick or untick one bullet. The box is only redrawn from the store after the write lands. */
   const toggleItem = (text: string) => {
     const result = toggleTicked(lessonId, text);
@@ -937,9 +908,12 @@ export function LessonReader({
    */
   const saveSticky = () => {
     if (!stickyQuote) return;
+    // Read the editor itself, not only React state: a save can be pressed in the same task as the
+    // last keystroke, and the DOM is the current truth. It is still Markdown, never rendered glyphs.
+    const text = stickyRef.current?.getMarkdown() ?? stickyText;
     const saved = stickyEditing
-      ? setComment(lessonId, stickyQuote, stickyText)
-      : addHighlight(lessonId, stickyQuote, stickyText);
+      ? setComment(lessonId, stickyQuote, text)
+      : addHighlight(lessonId, stickyQuote, text);
     if (!saved) {
       setStatus('Not saved — storage is blocked or full.');
       return;
@@ -949,10 +923,10 @@ export function LessonReader({
     syncMarks();
     setStatus(
       stickyEditing
-        ? stickyText.trim()
+        ? text.trim()
           ? 'Sticky note updated.'
           : 'Sticky note cleared; the passage is still pinned.'
-        : stickyText.trim()
+        : text.trim()
           ? 'Sticky note saved to Notes.'
           : 'Passage pinned to Notes.'
     );
@@ -1529,62 +1503,46 @@ export function LessonReader({
                 >
                   {stickyQuote}
                 </p>
-                {/* The editor stores Markdown, so the shortcuts are the familiar ones and the
-                    preview shows what a reader of the note (the review card, the export) sees. */}
+                {/* The surface itself is the rendering: a `$…$` becomes its formula and a
+                    completed `**…**` becomes bold where it is typed. The stored note is still the
+                    Markdown a review card or an export reads. */}
                 <div className="flex items-center gap-1" data-testid="sticky-format-bar">
                   {[
-                    { marker: '**', label: 'Bold', hint: 'Bold (⌘B / Ctrl+B)', id: 'btn-sticky-bold', Icon: Bold },
-                    { marker: '*', label: 'Italic', hint: 'Italic (⌘I / Ctrl+I)', id: 'btn-sticky-italic', Icon: Italic },
-                    { marker: '++', label: 'Underline', hint: 'Underline (⌘U / Ctrl+U)', id: 'btn-sticky-underline', Icon: Underline },
-                    { marker: '$', label: 'Maths', hint: 'Inline maths: wrap the formula in $…$ and it renders below as it will on the card', id: 'btn-sticky-math', Icon: Sigma },
-                  ].map(({ marker, label, hint, id, Icon }) => (
+                    { style: 'bold' as const, label: 'Bold', hint: 'Bold (⌘B / Ctrl+B) — drawn bold in the note', id: 'btn-sticky-bold', Icon: Bold },
+                    { style: 'italic' as const, label: 'Italic', hint: 'Italic (⌘I / Ctrl+I) — drawn italic in the note', id: 'btn-sticky-italic', Icon: Italic },
+                    { style: 'underline' as const, label: 'Underline', hint: 'Underline (⌘U / Ctrl+U) — drawn underlined in the note', id: 'btn-sticky-underline', Icon: Underline },
+                    { style: 'math' as const, label: 'Maths', hint: 'Inline maths: select a formula, or type $…$, and it renders in this note', id: 'btn-sticky-math', Icon: Sigma },
+                  ].map(({ style, label, hint, id, Icon }) => (
                     <button
                       key={id}
                       type="button"
                       data-testid={id}
                       aria-label={label}
                       title={hint}
-                      // Keep the selection in the box: a press that moves focus first would wrap
+                      // Keep the selection in the editor: a press that moves focus first would wrap
                       // nothing, which is the one way a Bold button can look broken.
                       onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => applyMarker(marker)}
+                      onClick={() => stickyRef.current?.applyStyle(style)}
                       className="btn px-1.5 py-1"
                     >
                       <Icon className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
                   ))}
                   <span className="ml-1 font-mono text-[10.5px]" style={{ color: 'var(--dim)' }}>
-                    Markdown · <span title="$…$ renders as maths">$…$</span> · ⌘B / ⌘I / ⌘U
+                    Markdown stored · <span title="$…$ renders in place">$…$</span> renders here
                   </span>
                 </div>
-                <textarea
+                <StickyNoteEditor
+                  key={stickyEditing ? `edit:${stickyQuote}` : 'new'}
                   ref={stickyRef}
-                  autoFocus
-                  value={stickyText}
-                  onChange={(event) => setStickyText(event.target.value)}
-                  onKeyDown={onStickyKeyDown}
+                  initialMarkdown={stickyText}
                   maxLength={MAX_COMMENT_CHARS}
-                  rows={4}
-                  data-testid="sticky-note-text"
-                  aria-label="What you want to remember about this passage"
-                  placeholder="What do you want to remember? It comes back as a review card."
-                  className="w-full resize-y rounded border bg-canvas px-2 py-1.5 text-[13px] leading-snug text-ink"
-                  style={{ borderColor: 'var(--border)' }}
+                  onChange={setStickyText}
+                  onEscape={closeSticky}
                 />
-                {stickyText.trim() && (
-                  <div
-                    data-testid="sticky-note-preview"
-                    className="max-h-28 overflow-y-auto rounded border border-line-soft bg-canvas px-2 py-1.5 text-[12.5px] leading-snug text-body"
-                  >
-                    <span className="mb-0.5 block font-mono text-[9.5px] uppercase tracking-[0.14em] text-faint">
-                      Preview · rendered, maths included
-                    </span>
-                    <Inline text={stickyText} />
-                  </div>
-                )}
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[10.5px]" style={{ color: 'var(--dim)' }}>
-                    {stickyText.length}/{MAX_COMMENT_CHARS} · saved in Notes
+                    {stickyText.length}/{MAX_COMMENT_CHARS} · Markdown saved in Notes
                   </span>
                   <div className="flex items-center gap-1">
                     {stickyEditing && (
