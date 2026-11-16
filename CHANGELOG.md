@@ -18,8 +18,9 @@ flowchart LR
 
 ## [2026-11-16] — Run 3.5.1: the Maths button's pair commits where it is left
 
-**The collapsed Maths button could strand raw TeX.** Pressing Maths with no selection inserted
-`$$` with the caret between the dollars, so typing a formula always left the caret inside the pair.
+**The collapsed Maths button could strand raw TeX.** Pressing Maths with no selection inserted an
+empty `$…$` pair with the caret between its delimiters, so typing a formula always left the caret
+inside the pair.
 The editor only redrew a formula when a keystroke produced its closing delimiter, which this path
 never does: the source stayed raw, and Enter put its line break into the TeX (`$v^2⏎$`) so the next
 save was no longer the formula the learner typed. The pair now stays editable while the caret is
