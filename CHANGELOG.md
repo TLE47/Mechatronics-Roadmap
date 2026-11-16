@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `3.5.1`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `3.5.2`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -13,6 +13,17 @@ flowchart LR
     S0 --> B1["Pass 1 Tier 1 (23 Files: 00.1–08.1 across Tracks 00–08)"]
     B1 --> QA["Automated CI: verify_repo + validate_modules + lint_lessons + lint_modules + check_term_order + clean_tex + audit_math + test_exercises + run_all_labs + smoke & browser E2E (dev server and built Pages bundle)"]
 ```
+
+---
+
+## [2026-11-16] — Run 3.5.2: leaving the note draws its pending formula
+
+**A click away now commits the collapsed Maths pair.** Losing focus used to leave the raw `$…$`
+TeX in the field because the commit path only ran on caret movement and Enter. The blur handler now
+redraws a pending formula from the same Markdown without calling the caret-restoring sync path, so
+the formula appears in place and focus stays on whatever the learner clicked. The Home browser suite
+clicks the note's quoted passage while `$m^2$` is still raw, then asserts the formula is drawn, the
+Markdown still stores it, and the editor is no longer the active element.
 
 ---
 

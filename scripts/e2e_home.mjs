@@ -1175,6 +1175,34 @@ async function main() {
       );
       assert.equal(await editor.locator('.katex').count(), 1, 'the Enter commit must keep the formula drawn');
 
+      // Clicking away from the field inside the note card is the third exit. Blur must commit the
+      // raw pair on screen, and must not pull focus back to the editor the learner just left.
+      await editor.fill('');
+      await page.getByTestId('btn-sticky-math').click();
+      await editor.pressSequentially('m^2');
+      assert.equal(await editorMarkdown(), '$m^2$', 'the click-away formula must build its TeX');
+      assert.equal(
+        await editor.locator('.katex').count(),
+        0,
+        'the click-away formula must stay raw while the caret is still inside its pair'
+      );
+      await page.getByTestId('sticky-note-quote').click();
+      assert.equal(
+        await editor.evaluate((node) => document.activeElement === node),
+        false,
+        'blurring the editor must not steal focus back from the click target'
+      );
+      assert.equal(
+        await editor.locator('[data-math="m^2"]').count(),
+        1,
+        'losing focus must draw the collapsed formula instead of leaving raw TeX'
+      );
+      assert.equal(
+        await editorMarkdown(),
+        '$m^2$',
+        'the click-away commit must still store the formula as $…$ Markdown'
+      );
+
       // The saved note is maths and bold, so the reopen can prove both halves of the round-trip.
       await editor.fill('');
       const savedNote = `$v^2$ and **${note}**`;

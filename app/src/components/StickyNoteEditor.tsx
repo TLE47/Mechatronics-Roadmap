@@ -269,6 +269,24 @@ const StickyNoteEditor = forwardRef<StickyNoteEditorHandle, Props>(function Stic
     return true;
   };
 
+  /**
+   * Draw a pending formula when the editor loses focus, without taking focus back.
+   *
+   * `sync()` restores the caret through the sentinel and therefore focuses the editor. That is right
+   * while the learner is typing, but wrong on blur: they just clicked somewhere else. The Markdown is
+   * already serialisable from the raw text, so this redraws it and publishes the same value.
+   */
+  const commitMathDraftOnBlur = (root: HTMLElement): boolean => {
+    if (!pendingMath.current) return false;
+    const markdown = noteMarkdownFromDom(root);
+    renderNoteMarkdown(root, markdown);
+    lastGood.current = markdown;
+    root.dataset.markdown = markdown;
+    pendingMath.current = false;
+    onChangeRef.current(markdown);
+    return true;
+  };
+
   useLayoutEffect(() => {
     const root = editorRef.current;
     if (!root) return;
@@ -461,7 +479,9 @@ const StickyNoteEditor = forwardRef<StickyNoteEditorHandle, Props>(function Stic
       }}
       onBlur={() => {
         const root = editorRef.current;
-        if (root) root.dataset.markdown = noteMarkdownFromDom(root);
+        if (!root) return;
+        if (commitMathDraftOnBlur(root)) return;
+        root.dataset.markdown = noteMarkdownFromDom(root);
       }}
       className="min-h-[5.5rem] w-full resize-y overflow-y-auto whitespace-pre-wrap break-words rounded border bg-canvas px-2 py-1.5 text-[13px] leading-snug text-ink outline-none focus-visible:border-accent focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-accent empty:before:pointer-events-none empty:before:text-faint empty:before:content-[attr(data-placeholder)]"
       style={{ borderColor: 'var(--border)', resize: 'vertical' }}

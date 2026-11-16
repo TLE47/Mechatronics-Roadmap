@@ -1,7 +1,7 @@
 {
   "name": "mechalab",
   "private": true,
-  "version": "3.5.1",
+  "version": "3.5.2",
   "type": "module",
   "scripts": {
     "predev": "python3 scripts/generate_python_lessons_data.py",
