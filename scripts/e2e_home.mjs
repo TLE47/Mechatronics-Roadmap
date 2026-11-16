@@ -1106,6 +1106,75 @@ async function main() {
         'the Maths button must store the wrapped selection as $…$ Markdown'
       );
 
+      // The same button with no selection inserts the whole pair and leaves the caret inside it.
+      // Nothing can be drawn under a live caret, so the source stays visible until the caret leaves;
+      // ArrowRight is that exit, and it must draw the formula rather than strand raw TeX.
+      await editor.fill('');
+      await page.getByTestId('btn-sticky-math').click();
+      assert.equal(
+        await editorMarkdown(),
+        '$$',
+        'the Maths button must open an empty pair when there is nothing selected'
+      );
+      await editor.pressSequentially('v^2');
+      assert.equal(
+        await editorMarkdown(),
+        '$v^2$',
+        'typing inside the collapsed pair must build its TeX in place'
+      );
+      assert.equal(
+        await editor.locator('.katex').count(),
+        0,
+        'the formula must stay as source while the caret is still inside the pair'
+      );
+      await page.keyboard.press('ArrowRight');
+      assert.equal(
+        await editor.locator('[data-math="v^2"]').count(),
+        1,
+        'moving the caret out of the collapsed pair must draw the formula in the field'
+      );
+      assert.equal(
+        await editorMarkdown(),
+        '$v^2$',
+        'the committed collapsed formula must still store as $…$ Markdown'
+      );
+      await editor.pressSequentially(' is squared');
+      assert.equal(
+        await editorMarkdown(),
+        '$v^2$ is squared',
+        'after committing, the caret must continue after the formula rather than inside it'
+      );
+
+      // Enter is the other exit. Press it while the caret is still inside the raw pair: the formula
+      // must be committed before the line break, or the break lands inside the TeX and breaks it.
+      await editor.fill('');
+      await page.getByTestId('btn-sticky-math').click();
+      await editor.pressSequentially('a^2');
+      assert.equal(await editorMarkdown(), '$a^2$', 'the second collapsed formula must build its TeX');
+      assert.equal(
+        await editor.locator('.katex').count(),
+        0,
+        'the second formula must stay raw while the caret is still in its pair'
+      );
+      await page.keyboard.press('Enter');
+      assert.equal(
+        await editor.locator('[data-math="a^2"]').count(),
+        1,
+        'Enter inside the collapsed pair must commit the formula, not put a break into its TeX'
+      );
+      assert.equal(
+        await editorMarkdown(),
+        '$a^2$',
+        'the commit must leave the formula as valid Markdown before the break'
+      );
+      await editor.pressSequentially('after enter');
+      assert.equal(
+        await editorMarkdown(),
+        '$a^2$\nafter enter',
+        'typing after that Enter must land on the next Markdown line'
+      );
+      assert.equal(await editor.locator('.katex').count(), 1, 'the Enter commit must keep the formula drawn');
+
       // The saved note is maths and bold, so the reopen can prove both halves of the round-trip.
       await editor.fill('');
       const savedNote = `$v^2$ and **${note}**`;

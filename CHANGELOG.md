@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `3.5.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `3.5.1`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -13,6 +13,23 @@ flowchart LR
     S0 --> B1["Pass 1 Tier 1 (23 Files: 00.1–08.1 across Tracks 00–08)"]
     B1 --> QA["Automated CI: verify_repo + validate_modules + lint_lessons + lint_modules + check_term_order + clean_tex + audit_math + test_exercises + run_all_labs + smoke & browser E2E (dev server and built Pages bundle)"]
 ```
+
+---
+
+## [2026-11-16] — Run 3.5.1: the Maths button's pair commits where it is left
+
+**The collapsed Maths button could strand raw TeX.** Pressing Maths with no selection inserted
+`$$` with the caret between the dollars, so typing a formula always left the caret inside the pair.
+The editor only redrew a formula when a keystroke produced its closing delimiter, which this path
+never does: the source stayed raw, and Enter put its line break into the TeX (`$v^2⏎$`) so the next
+save was no longer the formula the learner typed. The pair now stays editable while the caret is
+inside it, then commits when the caret leaves — by arrow key, click, or Enter, which commits before
+inserting its Markdown line. The caret has to be carried through a redraw by U+FEFF, which JavaScript
+treats as whitespace; inserting it inside `$…$` made both the editor's flanking check and the reader
+parser refuse the formula. The editor now checks for the live pair before inserting that marker, so
+the marker only ever sits outside the TeX. The Home browser suite covers both exits: ArrowRight out
+of `$v^2$` and Enter inside `$a^2$`, with the formula drawn, the Markdown intact, and the next line
+where Enter put it.
 
 ---
 

@@ -135,6 +135,46 @@ function hasRichContent(root: HTMLElement, markdown: string): boolean {
 }
 
 /**
+ * Move a caret that is inside a raw `$…$` pair to just past its closing `$`.
+ *
+ * The Maths button with no selection inserts the whole pair, so the learner never types the closing
+ * delimiter that normally triggers the redraw. Leaving the pair is the commit: this puts the caret
+ * where it would have been had they typed that delimiter. The caller then syncs the now-complete
+ * Markdown into the rendered widget.
+ */
+function moveCaretPastMathSource(root: HTMLElement): boolean {
+  const range = rangeInEditor(root);
+  if (!range || !range.collapsed) return false;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let node = walker.nextNode();
+  while (node) {
+    const text = node as Text;
+    if (!text.parentElement?.closest('[data-math]')) {
+      const from =
+        text === range.startContainer
+          ? range.startOffset
+          : range.comparePoint(text, 0) >= 0
+            ? 0
+            : -1;
+      if (from >= 0) {
+        const close = text.data.indexOf('$', from);
+        if (close >= 0) {
+          const after = document.createRange();
+          after.setStart(text, close + 1);
+          after.collapse(true);
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(after);
+          return true;
+        }
+      }
+    }
+    node = walker.nextNode();
+  }
+  return false;
+}
+
+/**
  * The sticky-note composer (`app/src/components/StickyNoteEditor.tsx`).
  *
  * This is a real contenteditable editor rather than a textarea plus preview. As the caret passes a
@@ -152,6 +192,8 @@ const StickyNoteEditor = forwardRef<StickyNoteEditorHandle, Props>(function Stic
   onChangeRef.current = onChange;
   /** The last complete Markdown under the store's cap, used to refuse a keystroke that would cut it. */
   const lastGood = useRef(initialMarkdown.slice(0, maxLength));
+  /** True while the caret sits inside visible `$…$` source that has not been drawn yet. */
+  const pendingMath = useRef(false);
 
   const publish = (root: HTMLElement, markdown: string) => {
     let accepted = markdown;
@@ -171,6 +213,7 @@ const StickyNoteEditor = forwardRef<StickyNoteEditorHandle, Props>(function Stic
   const sync = () => {
     const root = editorRef.current;
     if (!root) return;
+    pendingMath.current = false;
     const markdown = noteMarkdownFromDom(root);
     if (!markdown.trim()) {
       // Clearing a formatted note leaves Chromium's typing style switched on even after all the
@@ -189,16 +232,41 @@ const StickyNoteEditor = forwardRef<StickyNoteEditorHandle, Props>(function Stic
       publish(root, markdown);
       return;
     }
-    const marked = insertCaretMarker(root);
-    const source = noteMarkdownFromDom(root, true);
+    // Check the raw pair *before* placing the caret marker. That marker is U+FEFF, which JavaScript
+    // treats as whitespace: put inside `$…$` it would make the formula fail both the editor's own
+    // flanking check and `parseInline`, leaving raw TeX on screen. While the caret is inside the
+    // pair nothing is redrawn anyway, so the marker has no caret to carry yet.
     if (caretInsideMathSource(root)) {
-      if (marked) removeCaretMarker(root);
+      pendingMath.current = true;
       publish(root, markdown);
       return;
     }
+    const marked = insertCaretMarker(root);
+    const source = noteMarkdownFromDom(root, true);
     renderNoteMarkdown(root, source);
     if (!removeCaretMarker(root) && !marked) setCaretToEnd(root);
     publish(root, markdown);
+  };
+
+  /**
+   * Redraw a raw formula once the caret has left it, without moving the caret itself.
+   *
+   * `onInput` already handles the typed `$…$` case (the closing keystroke is the exit). This is for
+   * the toolbar's empty pair, where caret movement is the only signal that the formula is done.
+   * Clicking inside the pair leaves the caret inside it, so that gesture does not commit it early.
+   */
+  const settleMathDraft = (root: HTMLElement) => {
+    if (!pendingMath.current || caretInsideMathSource(root)) return;
+    sync();
+  };
+
+  /** Commit a raw formula even when the caret is still inside it, as Enter must before its break. */
+  const commitMathDraft = (root: HTMLElement): boolean => {
+    const inside = caretInsideMathSource(root);
+    if (!inside && !pendingMath.current) return false;
+    if (inside && !moveCaretPastMathSource(root)) return false;
+    sync();
+    return true;
   };
 
   useLayoutEffect(() => {
@@ -262,6 +330,7 @@ const StickyNoteEditor = forwardRef<StickyNoteEditorHandle, Props>(function Stic
       const selection = window.getSelection();
       selection?.removeAllRanges();
       selection?.addRange(inside);
+      pendingMath.current = true;
       publish(root, noteMarkdownFromDom(root));
       return;
     }
@@ -311,8 +380,13 @@ const StickyNoteEditor = forwardRef<StickyNoteEditorHandle, Props>(function Stic
       // note's real line break, and the caret after it stays after it.
       event.preventDefault();
       const root = editorRef.current;
-      const range = root ? rangeInEditor(root) : null;
-      if (!root || !range) return;
+      if (!root) return;
+      // Enter while the caret is still inside the toolbar's raw pair would insert the break into
+      // the TeX. Commit the formula first, then make the line at the position after it.
+      const wasInsideMath = caretInsideMathSource(root);
+      if ((wasInsideMath || pendingMath.current) && !commitMathDraft(root)) return;
+      const range = rangeInEditor(root);
+      if (!range) return;
       range.deleteContents();
       const line = document.createTextNode('\n');
       range.insertNode(line);
@@ -377,6 +451,14 @@ const StickyNoteEditor = forwardRef<StickyNoteEditorHandle, Props>(function Stic
       }}
       onKeyDown={onKeyDown}
       onPaste={onPaste}
+      onKeyUp={() => {
+        const root = editorRef.current;
+        if (root) settleMathDraft(root);
+      }}
+      onPointerUp={() => {
+        const root = editorRef.current;
+        if (root) settleMathDraft(root);
+      }}
       onBlur={() => {
         const root = editorRef.current;
         if (root) root.dataset.markdown = noteMarkdownFromDom(root);
