@@ -7,8 +7,6 @@ export interface AwardToastProps {
   /** What was granted just now — never a replay of the whole ledger. */
   awards: readonly Award[];
   onClose: () => void;
-  /** How long the card stays, ms. Six seconds, and it never takes focus or covers the editor. */
-  holdMs?: number;
 }
 
 /**
@@ -19,15 +17,9 @@ export interface AwardToastProps {
  * certificate rather than a slot machine: the handle, the one line, the perk now usable, and a
  * Skip for anyone who does not want to read it.
  */
-export const AwardToast: React.FC<AwardToastProps> = ({ awards, onClose, holdMs = 6000 }) => {
+export const AwardToast: React.FC<AwardToastProps> = ({ awards, onClose }) => {
   const level = awards.find((award) => award.kind === 'level');
   const rest = awards.filter((award) => award.kind !== 'level');
-
-  React.useEffect(() => {
-    if (holdMs <= 0) return;
-    const timer = window.setTimeout(onClose, holdMs);
-    return () => window.clearTimeout(timer);
-  }, [holdMs, onClose, awards]);
 
   if (awards.length === 0) return null;
   const levelInfo = level ? levelAt(level.mission ?? 0) : null;
@@ -38,8 +30,9 @@ export const AwardToast: React.FC<AwardToastProps> = ({ awards, onClose, holdMs 
       data-kind={level ? 'level' : 'award'}
       role="status"
       aria-live="polite"
-      // Above the focus-mode pill, which owns the very bottom-right corner.
-      className="fixed bottom-20 right-4 z-50 w-[19rem] rounded-xl border p-3 shadow-lg"
+      // sonner places the stack (above the focus-mode pill, which owns the very bottom-right
+      // corner); this is the card itself, so it carries no position of its own.
+      className="w-[19rem] max-w-[calc(100vw-2rem)] rounded-[var(--r-lg)] border p-3 shadow-[var(--shadow-lg)]"
       style={{
         borderColor: level ? 'var(--accent)' : 'var(--border)',
         backgroundColor: 'var(--panel)',
@@ -58,7 +51,7 @@ export const AwardToast: React.FC<AwardToastProps> = ({ awards, onClose, holdMs 
               <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--accent)' }}>
                 Level {levelInfo.number}
               </p>
-              <p className="text-[14px] font-bold" data-testid="level-up-handle">
+              <p className="font-display text-[14px] font-bold" data-testid="level-up-handle">
                 {levelInfo.handle}
               </p>
               <p className="text-[12px]" style={{ color: 'var(--muted)' }}>

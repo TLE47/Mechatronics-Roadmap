@@ -5,11 +5,13 @@
  * wrong and cheap to pin: which passage a saved note is anchored to, and what a Bold press does to
  * the characters around a textarea's selection.
  *
- * **Marks.** A highlight stores its quote, not an offset. The renderer asks this module to cut one
- * text run into plain and marked pieces, so a sticky note shows up on the page it was written on
- * instead of only in the Notes panel. The longest matching quote wins where two overlap, and pieces
- * are emitted in reading order; a quote that spans two inline runs (half a sentence in bold) is not
- * marked rather than marked wrongly, and the note is still reachable from Notes.
+ * **Marks.** A highlight stores its quote, not an offset. The renderer asks this module to find the
+ * passage in the paragraph's own text and then cut each inline run by those character ranges, so a
+ * sticky note shows up on the page it was written on instead of only in the Notes panel. The longest
+ * matching quote wins where two overlap, and ranges are emitted in reading order. Because the scan is
+ * over the paragraph rather than one run, a quote that spans a bold word or a code span is marked
+ * too — the mark is drawn piece by piece across the runs it covers. `unlocatedQuotes` is the guard:
+ * a note whose words are not on this screen any more is named rather than silently absent.
  *
  * **Wrapping.** The note editor stores Markdown, not HTML: `**bold**` for strong, `*italic*` for
  * emphasis, `++underline++` for the one mark Markdown has no syntax for. Wrapping the selection
@@ -36,16 +38,34 @@ export interface MarkPiece {
  * single space a stored quote has. A code block needs it: `cleanQuote` collapses the newlines of a
  * selected snippet, and a highlight of three lines would otherwise be stored and never drawn.
  */
-export function markQuotes(
+/** Where a stored quote sits in a paragraph's text. */
+export interface MarkRange {
+  /** Offset of the first drawn character, in the text the scan was given. */
+  start: number;
+  /** Offset one past the last drawn character. */
+  end: number;
+  /** The stored quote this range is: the note's own key, not the drawn characters. */
+  quote: string;
+}
+
+/**
+ * Every place the quotes appear in `text`, in reading order.
+ *
+ * This is the scan `markQuotes` used to do per run, lifted out so a caller that has a whole paragraph
+ * (the reader, whose paragraph is several inline runs) can find a passage that crosses a run
+ * boundary. At each position the longest quote is tried first, so `the gain` inside `the gain term`
+ * is one range rather than two overlapping ones, and no two ranges overlap.
+ */
+export function markRanges(
   text: string,
   quotes: readonly string[],
   options: { loose?: boolean } = {}
-): MarkPiece[] {
+): MarkRange[] {
   if (!text) return [];
   const unique = [...new Set(quotes.map((quote) => quote.trim()).filter(Boolean))].sort(
     (a, b) => b.length - a.length
   );
-  if (unique.length === 0) return [{ text, quote: null }];
+  if (unique.length === 0) return [];
 
   // A quote is a phrase, not a regex: escape it, then let any whitespace run stand in for the one
   // space `cleanQuote` left in it. A newline in the code is the same passage as that space. Sticky
@@ -63,12 +83,9 @@ export function markQuotes(
       : null,
   }));
 
-  const pieces: MarkPiece[] = [];
-  let plain = '';
+  const ranges: MarkRange[] = [];
   let index = 0;
   while (index < text.length) {
-    // The stored quote names the mark; the drawn characters are what the page holds, which may be a
-    // newline where the quote has a space. The click handler looks the note up by the stored quote.
     let hit: { text: string; quote: string } | null = null;
     for (const matcher of matchers) {
       if (matcher.pattern) {
@@ -84,21 +101,122 @@ export function markQuotes(
       }
     }
     if (!hit) {
-      plain += text[index];
       index += 1;
       continue;
     }
-    if (plain) {
-      pieces.push({ text: plain, quote: null });
-      plain = '';
-    }
-    pieces.push(hit);
+    ranges.push({ start: index, end: index + hit.text.length, quote: hit.quote });
     index += hit.text.length;
   }
-  if (plain) pieces.push({ text: plain, quote: null });
-  return pieces.length > 0 ? pieces : [{ text, quote: null }];
+  return ranges;
 }
 
+/**
+ * Cut one text run into plain and marked pieces for the quotes it contains.
+ *
+ * Quotes are compared as stored (already whitespace-collapsed by `cleanQuote`). The scan moves left
+ * to right and, at each position, tries the longest quote first, so `the gain` inside `the gain term`
+ * marks the longer phrase and the shorter one never produces a second, overlapping button. A quote
+ * not found in this run contributes nothing; a caller with more than one run should use
+ * `markRanges` over the paragraph and cut each run by the ranges instead.
+ *
+ * `loose` compares words rather than characters, so any run of whitespace in the text matches the
+ * single space a stored quote has. A code block needs it: `cleanQuote` collapses the newlines of a
+ * selected snippet, and a highlight of three lines would otherwise be stored and never drawn.
+ */
+export function markQuotes(
+  text: string,
+  quotes: readonly string[],
+  options: { loose?: boolean } = {}
+): MarkPiece[] {
+  if (!text) return [];
+  const ranges = markRanges(text, quotes, options);
+  if (ranges.length === 0) return [{ text, quote: null }];
+  const pieces: MarkPiece[] = [];
+  let cursor = 0;
+  for (const range of ranges) {
+    if (range.start > cursor) pieces.push({ text: text.slice(cursor, range.start), quote: null });
+    pieces.push({ text: text.slice(range.start, range.end), quote: range.quote });
+    cursor = range.end;
+  }
+  if (cursor < text.length) pieces.push({ text: text.slice(cursor), quote: null });
+  return pieces;
+}
+
+/**
+ * Every place the quotes appear, including the pieces of a quote that crosses a block boundary.
+ *
+ * A learner selects a sentence, and `cleanQuote` collapses it to one line — but the reader draws the
+ * page as separate paragraphs, so a quote that began in one paragraph and ended in the next is in
+ * neither of them whole. The old scan found nothing and the note had no mark on either paragraph.
+ *
+ * This is `markRanges` first (exact passages, the common case), then, for a quote that was not found
+ * whole, the **longest run of its words** that this text does contain. A two-paragraph selection
+ * therefore marks its first half in paragraph one and its second half in paragraph two, both keyed to
+ * the whole quote so a press still opens the one note. Fragments shorter than three words or twelve
+ * characters are refused: "the gain" is half of every second lesson and would smear amber over the
+ * page.
+ */
+export function markQuoteFragments(
+  text: string,
+  quotes: readonly string[],
+  options: { loose?: boolean } = {}
+): MarkRange[] {
+  const ranges = markRanges(text, quotes, options);
+  const located = new Set(ranges.map((range) => range.quote));
+  const unique = [...new Set(quotes.map((quote) => quote.trim()).filter(Boolean))];
+  const extra: MarkRange[] = [];
+  for (const quote of unique) {
+    if (located.has(quote)) continue;
+    const words = quote.split(/\s+/).filter(Boolean);
+    let best = '';
+    for (let size = Math.min(words.length, 24); size >= 3 && !best; size -= 1) {
+      for (let start = 0; start + size <= words.length; start += 1) {
+        const fragment = words.slice(start, start + size).join(' ');
+        if (fragment.length < 12) continue;
+        if (!text.includes(fragment)) continue;
+        best = fragment;
+        break;
+      }
+    }
+    if (!best) continue;
+    let at = text.indexOf(best);
+    while (at !== -1) {
+      extra.push({ start: at, end: at + best.length, quote });
+      at = text.indexOf(best, at + best.length);
+    }
+  }
+  if (extra.length === 0) return ranges;
+  const all = [...ranges, ...extra].sort((a, b) => a.start - b.start || b.end - a.end);
+  const kept: MarkRange[] = [];
+  let cursor = 0;
+  for (const range of all) {
+    if (range.start < cursor) continue;
+    kept.push(range);
+    cursor = range.end;
+  }
+  return kept;
+}
+
+/**
+ * The quotes this text cannot find — the guard behind the reader's "not on this text" line.
+ *
+ * A note keeps its quote forever; the lesson it was written on does not. Wording gets edited, a card
+ * is rewritten, a passage moves to another section, and the note would then be listed in Notes while
+ * the page it belongs to says nothing. Naming the missing ones is what turns that silence into a
+ * fact a learner can act on.
+ */
+export function unlocatedQuotes(
+  text: string,
+  quotes: readonly string[],
+  options: { loose?: boolean } = {}
+): string[] {
+  const unique = [...new Set(quotes.map((quote) => quote.trim()).filter(Boolean))];
+  if (unique.length === 0) return [];
+  const located = new Set(markRanges(text, unique, options).map((range) => range.quote));
+  return unique.filter((quote) => !located.has(quote));
+}
+
+/** What a marker pair did to the box, as the textarea needs to hear it. */
 export interface WrappedSelection {
   /** The whole new value for the box. */
   text: string;

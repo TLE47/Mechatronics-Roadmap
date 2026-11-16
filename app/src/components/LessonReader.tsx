@@ -1,6 +1,15 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  Suspense,
+  lazy,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import {
+  ArrowLeft,
   ArrowRight,
   Bold,
   BookOpen,
@@ -11,21 +20,21 @@ import {
   Loader2,
   PanelsTopLeft,
   RotateCcw,
+  Sigma,
   StickyNote,
   Trash2,
   Underline,
   X,
 } from 'lucide-react';
 import { MathView } from './MathView';
-import { InlineMarkdown as Inline } from './InlineMarkdown';
-import { Diagram } from '../visuals/Diagram';
-import { sceneFor } from '../visuals/scenes';
+import { InlineMarkdown as Inline, inlinePlainText } from './InlineMarkdown';
 import {
   loadLessonPage,
   type LessonPage,
   type ReaderBlock,
 } from '../lessonPage';
 import { headingAnchors, inlinePlain } from '../readerMarkdown';
+import { hasConceptVisual, visualPlacementForConcept } from '../micro/visuals';
 import { blocksForScope, type ReaderScope } from '../readerScope';
 import {
   clearReadingPosition,
@@ -46,10 +55,24 @@ import {
 } from '../studyNotes';
 import { checkId, readTicks, toggleTicked } from '../lessonChecks';
 import { STORE_RESTORED_EVENT } from '../backupBundle';
-import { markQuotes, wrapSelection } from '../lessonMarks';
+import { markQuotes, unlocatedQuotes } from '../lessonMarks';
 import { RESET_EVENT } from '../resetEvent';
 import { lessonPageUrl as sourceUrl } from '../startHere';
 import { StudyClockReminder } from './StudyClockReminder';
+import StickyNoteEditor, { type StickyNoteEditorHandle } from './StickyNoteEditor';
+import { LazyPending } from './LazyPending';
+// One dynamic import is all the entry chunk keeps of the Bridge Notes visuals: the table of names
+// and the pictures themselves travel in their own chunks (`bridges/bridgeNotesVisual.tsx`).
+const BridgeNotesVisual = lazy(() => import('../bridges/bridgeNotesVisual'));
+// The figures are 5.6 kB of scene data and SVG renderers that a lesson only needs once it is open,
+// so the picture arrives through the same kind of boundary (`visuals/ReaderFigure.tsx`).
+const ReaderFigure = lazy(() => import('../visuals/ReaderFigure'));
+// The micro-focus scenes are the same components the Micro-learning tab draws. They arrive in their
+// own chunk only when a page actually carries a `micro-*` anchored section, so a lesson with no
+// micro focus pays no picture code.
+const MicroVisual = lazy(() =>
+  import('./micro/MicroVisual').then((module) => ({ default: module.MicroVisual }))
+);
 
 /**
  * The lesson text, beside the code it is about (`app/src/components/LessonReader.tsx`).
@@ -75,6 +98,45 @@ import { StudyClockReminder } from './StudyClockReminder';
  * (`scripts/generate_lesson_pages.py` skips it), the code in the editor is the code that runs, and
  * the one link out is the source page, kept for copying, printing and filing an issue.
  */
+/**
+ * The page's drawn words, for asking whether a saved note is on it at all.
+ *
+ * Built from the payload rather than from the DOM: a scope draws only half the page, and a note
+ * written in Read would be accused by Study if the guard looked at what is currently painted. It
+ * walks reveals because a note can be written inside an opened hint, and code blocks because a
+ * highlight can be taken from one (`markQuotes(..., { loose: true })` draws it).
+ */
+function pagePlainText(blocks: ReaderBlock[]): string {
+  const parts: string[] = [];
+  for (const block of blocks) {
+    switch (block.t) {
+      case 'p':
+      case 'h':
+      case 'quote':
+        parts.push(inlinePlainText(block.x));
+        break;
+      case 'ul':
+      case 'ol':
+        parts.push(block.items.map((item) => inlinePlainText(item.x)).join(' '));
+        break;
+      case 'table':
+        parts.push(
+          [...block.head, ...block.rows.flat()].map((cell) => inlinePlainText(cell)).join(' ')
+        );
+        break;
+      case 'code':
+        parts.push(block.text);
+        break;
+      case 'reveal':
+        parts.push(pagePlainText(block.blocks));
+        break;
+      default:
+        break;
+    }
+  }
+  return parts.filter(Boolean).join(' ');
+}
+
 /** What a route block says when the page gives no caption of its own. */
 const ROUTE_CAPTION = 'Each box is a checkpoint in order; the last one is the verified pass this page ends on.';
 
@@ -101,6 +163,8 @@ interface StickyPlacement {
   side: 'above' | 'below';
   /** The notch's distance from the popover's left edge, so it points at the words. */
   caret: number;
+  /** The card height this placement was measured against, so a late line can trigger a re-place. */
+  height: number;
 }
 
 /** The gap between the words and the popover, and the least margin kept from the window's edges. */
@@ -152,6 +216,14 @@ interface LessonReaderProps {
    * compete with the exercise the learner has just read.
    */
   continueAction?: { label: string; title: string; onClick: () => void } | null;
+  /**
+   * The way back from Read: the pill at the bottom left, mirroring `continueAction` on the right.
+   *
+   * Read is the one scope that puts the editor and the chooser away, so the pill that led into it
+   * is the only route a reader has back to the half of the page they came from without reaching for
+   * the header's layout chips.
+   */
+  backAction?: { label: string; title: string; onClick: () => void } | null;
 }
 
 /** The page's absolute URL, for the source link a heading or a figure points back to. */
@@ -211,7 +283,12 @@ function CodeBlock({
                       event.stopPropagation();
                       if (mark) onMark(mark, event.currentTarget);
                     }}
-                    className="inline cursor-pointer rounded-sm bg-amber/15 p-0 text-inherit underline decoration-amber decoration-dotted underline-offset-2 hover:bg-amber/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                    data-mark-kind={mark?.comment.trim() ? 'sticky' : 'highlight'}
+                    className={
+                      mark?.comment.trim()
+                        ? 'inline cursor-pointer rounded-sm border-b-2 border-amber/70 bg-amber/20 p-0 text-inherit hover:bg-amber/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent'
+                        : 'inline cursor-pointer rounded-sm bg-accent/15 p-0 text-inherit underline decoration-accent/70 decoration-dotted underline-offset-2 hover:bg-accent/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent'
+                    }
                   >
                     {piece.text}
                   </button>
@@ -277,6 +354,7 @@ export function LessonReader({
   showClock = false,
   scope = 'full',
   continueAction = null,
+  backAction = null,
 }: LessonReaderProps) {
   /** Whether the reader is showing its one-line split-view suggestion. */
   const [splitTip, setSplitTip] = useState(false);
@@ -303,13 +381,26 @@ export function LessonReader({
   /** The lesson's ticks, and the highlights drawn into the prose; both are re-read after a write. */
   const [ticks, setTicks] = useState<string[]>([]);
   const [marks, setMarks] = useState<Highlight[]>([]);
+  /**
+   * The notes that are nowhere on this page any more, named once at the end of the text.
+   *
+   * This used to be drawn by every inline paragraph, which made a note written on one sentence
+   * accuse all the others: each `<Inline>` only knew its own words, so "1 note not on this text"
+   * appeared on every paragraph that did not hold it. The check belongs to the page, and so does
+   * the sentence.
+   */
+  const unlocated = useMemo(
+    () =>
+      page && marks.length > 0
+        ? unlocatedQuotes(pagePlainText(page.blocks), marks.map((mark) => mark.quote))
+        : [],
+    [page, marks]
+  );
   /** The passage the popover points at, and where the popover ended up after measuring itself. */
   const [stickyAnchor, setStickyAnchor] = useState<StickyAnchor | null>(null);
   const [stickyPlacement, setStickyPlacement] = useState<StickyPlacement | null>(null);
-  const stickyRef = useRef<HTMLTextAreaElement | null>(null);
+  const stickyRef = useRef<StickyNoteEditorHandle | null>(null);
   const stickyCardRef = useRef<HTMLDivElement | null>(null);
-  /** Where the caret goes when the next render commits, because a controlled box forgets it. */
-  const stickyCaretRef = useRef<{ start: number; end: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const onFocusMissRef = useRef(onFocusMiss);
   onFocusMissRef.current = onFocusMiss;
@@ -640,22 +731,6 @@ export function LessonReader({
     saverFor(lessonId).remember(position);
   };
 
-  // A controlled textarea loses its selection when React writes the value back. Restoring it in a
-  // layout effect (after the commit, before paint) is what lets Bold then Underline nest: the second
-  // press has to see the selection the first one left, not a whole box selected from before.
-  useLayoutEffect(() => {
-    const box = stickyRef.current;
-    const caret = stickyCaretRef.current;
-    if (!box || !caret) return;
-    stickyCaretRef.current = null;
-    box.focus();
-    try {
-      box.setSelectionRange(caret.start, caret.end);
-    } catch {
-      // A box that went away between the press and the commit has nothing to restore.
-    }
-  }, [stickyText]);
-
   /** Re-read the lesson's highlights after a write, so the marks in the prose match the store. */
   const syncMarks = () => setMarks(readLessonStudy(lessonId)?.highlights ?? []);
 
@@ -691,6 +766,7 @@ export function LessonReader({
           width,
           side: 'below',
           caret: width / 2,
+          height,
         });
         return;
       }
@@ -712,16 +788,33 @@ export function LessonReader({
         Math.min(window.innerWidth - width - STICKY_EDGE, rect.left + rect.width / 2 - width / 2)
       );
       const caret = Math.max(18, Math.min(width - 18, rect.left + rect.width / 2 - left));
-      setStickyPlacement({ top, left, width, side, caret });
+      setStickyPlacement({ top, left, width, side, caret, height });
     };
     place();
     window.addEventListener('scroll', place, true);
     window.addEventListener('resize', place);
+    // The card can finish a line after the first measure (a font settles, focus paints the empty
+    // editor's placeholder, KaTeX finishes a formula). An observer turns that growth into a fresh
+    // placement; otherwise a note that grew by one line can overlap the words it is about.
+    const card = stickyCardRef.current;
+    const observer =
+      typeof ResizeObserver !== 'undefined' && card ? new ResizeObserver(() => place()) : null;
+    if (card && observer) observer.observe(card);
+    const frame = requestAnimationFrame(place);
+    // Opening the popover can restore a scroll or finish a focus layout a frame later; one settle
+    // pass after that is what keeps an above-placed card clear of words that moved up under it.
+    const settle = window.setTimeout(place, 120);
     return () => {
       window.removeEventListener('scroll', place, true);
       window.removeEventListener('resize', place);
+      observer?.disconnect();
+      cancelAnimationFrame(frame);
+      clearTimeout(settle);
     };
-  }, [stickyOpen, stickyAnchor, stickyText, stickyQuote, stickyEditing]);
+    // The first measurement can precede the last line of the card. Re-running on the measured
+    // height turns that late growth into a second placement instead of a card that overlaps the
+    // words it is about.
+  }, [stickyOpen, stickyAnchor, stickyText, stickyQuote, stickyEditing, stickyPlacement?.height]);
 
   // Not modal: a press anywhere but the card closes it. A press on another marked passage is left
   // alone - that press opens that passage's own note.
@@ -799,38 +892,6 @@ export function LessonReader({
     setStickyOpen(true);
   };
 
-  /** Wrap the textarea's selection in a Markdown marker, keeping the selection inside the pair. */
-  const applyMarker = (marker: string) => {
-    const box = stickyRef.current;
-    const start = box?.selectionStart ?? stickyText.length;
-    const end = box?.selectionEnd ?? start;
-    const wrapped = wrapSelection(stickyText, start, end, marker);
-    // The store's comment cap includes the markers: a box that could wrap 400 characters into 404
-    // would save 400 and silently lose the closing pair on reload.
-    const next = wrapped.text.slice(0, MAX_COMMENT_CHARS);
-    // Bold then Underline nests: the layout effect below puts the selection back inside the markers
-    // this press wrote, so the next press wraps that range rather than the whole box.
-    stickyCaretRef.current = {
-      start: Math.min(wrapped.start, next.length),
-      end: Math.min(wrapped.end, next.length),
-    };
-    setStickyText(next);
-  };
-
-  const onStickyKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === 'Escape') {
-      event.stopPropagation();
-      closeSticky();
-      return;
-    }
-    if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
-    const key = event.key.toLowerCase();
-    const marker = key === 'b' ? '**' : key === 'i' ? '*' : key === 'u' ? '++' : '';
-    if (!marker) return;
-    event.preventDefault();
-    applyMarker(marker);
-  };
-
   /** Tick or untick one bullet. The box is only redrawn from the store after the write lands. */
   const toggleItem = (text: string) => {
     const result = toggleTicked(lessonId, text);
@@ -854,9 +915,12 @@ export function LessonReader({
    */
   const saveSticky = () => {
     if (!stickyQuote) return;
+    // Read the editor itself, not only React state: a save can be pressed in the same task as the
+    // last keystroke, and the DOM is the current truth. It is still Markdown, never rendered glyphs.
+    const text = stickyRef.current?.getMarkdown() ?? stickyText;
     const saved = stickyEditing
-      ? setComment(lessonId, stickyQuote, stickyText)
-      : addHighlight(lessonId, stickyQuote, stickyText);
+      ? setComment(lessonId, stickyQuote, text)
+      : addHighlight(lessonId, stickyQuote, text);
     if (!saved) {
       setStatus('Not saved — storage is blocked or full.');
       return;
@@ -866,10 +930,10 @@ export function LessonReader({
     syncMarks();
     setStatus(
       stickyEditing
-        ? stickyText.trim()
+        ? text.trim()
           ? 'Sticky note updated.'
           : 'Sticky note cleared; the passage is still pinned.'
-        : stickyText.trim()
+        : text.trim()
           ? 'Sticky note saved to Notes.'
           : 'Passage pinned to Notes.'
     );
@@ -903,7 +967,8 @@ export function LessonReader({
       case 'h': {
         const anchor = anchors.get(block) ?? '';
         const Tag = (block.l === 2 ? 'h2' : block.l === 3 ? 'h3' : 'h4') as 'h2' | 'h3' | 'h4';
-        return (
+        const isBridgeNotes = block.l === 3 && /^bridge notes$/i.test(inlinePlain(block.x));
+        const heading = (
           <Tag
             key={key}
             id={anchor}
@@ -927,6 +992,25 @@ export function LessonReader({
             )}
           </Tag>
         );
+        // A Bridge Notes section ends a lesson by handing over to the next idea, which is the one
+        // place an interactive earns its keep: the paragraph's own worked numbers, made draggable.
+        // The page's payload names the visual (`block.v`), so a lesson without one is the heading it
+        // always was, and the picture itself is a lazy chunk (`bridges/bridgeNotesVisual.tsx`).
+        if (isBridgeNotes && block.v) {
+          return (
+            <React.Fragment key={key}>
+              {heading}
+              {/* The empty fallback is still a *state*: the section's text is on screen and the
+                  picture is on its way. Hidden, so nothing moves, but in the DOM, so a harness that
+                  compares a slow page with a fast one can tell "this lesson has no visual" from
+                  "this lesson's visual has not arrived". */}
+              <Suspense fallback={<LazyPending what="bridge-visual" />}>
+                <BridgeNotesVisual name={block.v} />
+              </Suspense>
+            </React.Fragment>
+          );
+        }
+        return heading;
       }
       case 'p':
         return (
@@ -1037,61 +1121,48 @@ export function LessonReader({
             <MathView math={block.tex} block />
           </div>
         );
-      case 'figure': {
-        const spec = sceneFor(block.id);
-        if (!spec) {
-          return (
-            <p
-              key={key}
-              data-testid="reader-figure-missing"
-              data-reader-block={blockKey}
-              className="my-3 rounded-lg border border-amber/40 bg-amber/5 px-3 py-2 text-[13px] text-body"
-            >
-              This build has no figure called <code className="font-mono text-ink">{block.id}</code>.
-              The page asks for one; the picture is missing rather than the paragraph that explains it.
-            </p>
-          );
-        }
+      case 'figure':
         return (
           <div key={key} data-reader-block={blockKey}>
-            <Diagram
-              id={block.id}
-              live
-              spec={block.caption ? { ...spec, caption: block.caption } : spec}
-            />
+            <Suspense fallback={<LazyPending what="reader-figure" />}>
+              <ReaderFigure id={block.id} caption={block.caption} live />
+            </Suspense>
           </div>
         );
-      }
       case 'route':
         return (
           <div key={key} data-reader-block={blockKey}>
-            <Diagram
-              id="route"
-              live
-              spec={{
-                kind: 'route',
-                title: 'Where this lesson goes',
-                caption: block.caption ?? ROUTE_CAPTION,
-                steps: block.steps,
-              }}
-            />
+            <Suspense fallback={<LazyPending what="reader-figure" />}>
+              <ReaderFigure
+                id="route"
+                live
+                spec={{
+                  kind: 'route',
+                  title: 'Where this lesson goes',
+                  caption: block.caption ?? ROUTE_CAPTION,
+                  steps: block.steps,
+                }}
+              />
+            </Suspense>
           </div>
         );
       case 'graph':
         return (
           <div key={key} data-reader-block={blockKey}>
-            <Diagram
-              id="graph"
-              live
-              spec={{
-                kind: 'graph',
-                title: 'How this page fits together',
-                caption: block.caption ?? '',
-                direction: block.direction,
-                nodes: block.nodes.map((node) => ({ id: node.id, label: node.label })),
-                edges: block.edges,
-              }}
-            />
+            <Suspense fallback={<LazyPending what="reader-figure" />}>
+              <ReaderFigure
+                id="graph"
+                live
+                spec={{
+                  kind: 'graph',
+                  title: 'How this page fits together',
+                  caption: block.caption ?? '',
+                  direction: block.direction,
+                  nodes: block.nodes.map((node) => ({ id: node.id, label: node.label })),
+                  edges: block.edges,
+                }}
+              />
+            </Suspense>
           </div>
         );
       case 'img':
@@ -1143,6 +1214,94 @@ export function LessonReader({
       default:
         return null;
     }
+  };
+
+  /**
+   * One micro-focus, with the same picture the Micro-learning tab draws.
+   *
+   * The page already separates each focus with an h4 and a stable `micro-*` anchor. The reader groups
+   * that heading, anchor and first paragraph so the visual can sit beside the prose instead of
+   * becoming a full-width interruption at every width. Side placement starts at `xl`, where the pane
+   * has room for both columns; below that the scene takes the full reader width, before the paragraph
+   * for a side scene and after it for a bottom one. `flow-root` contains the float, and `space-y-3`
+   * keeps the article's rhythm inside the group (the explicit anchor must stay a paragraph-gap below
+   * its heading, or the reading-position recorder picks the anchor instead of the heading).
+   */
+  const renderMicroSection = (
+    heading: Extract<ReaderBlock, { t: 'h' }>,
+    anchor: Extract<ReaderBlock, { t: 'anchor' }>,
+    paragraph: Extract<ReaderBlock, { t: 'p' }>,
+    conceptId: string,
+    placement: 'left' | 'right' | 'bottom',
+    key: string
+  ) => {
+    const visual = (
+      <div
+        data-testid={`reader-micro-visual-${conceptId}`}
+        data-micro-concept={conceptId}
+        data-micro-placement={placement}
+        className={
+          placement === 'bottom'
+            ? 'mt-2'
+            : `mb-2 mt-1 xl:w-[17.5rem] ${
+                placement === 'left' ? 'xl:float-left xl:mr-4' : 'xl:float-right xl:ml-4'
+              }`
+        }
+      >
+        <Suspense fallback={<LazyPending what="micro-visual" />}>
+          <MicroVisual conceptId={conceptId} placement={placement} sticky={false} />
+        </Suspense>
+      </div>
+    );
+    return (
+      <section key={key} data-testid={`reader-micro-${conceptId}`} className="flow-root space-y-3">
+        {renderBlock(heading, `${key}.heading`)}
+        {renderBlock(anchor, `${key}.anchor`)}
+        {placement === 'bottom' ? (
+          <>
+            {renderBlock(paragraph, `${key}.text`)}
+            {visual}
+          </>
+        ) : (
+          <>
+            {visual}
+            {renderBlock(paragraph, `${key}.text`)}
+          </>
+        )}
+      </section>
+    );
+  };
+
+  /**
+   * The page blocks, with a micro focus promoted to one illustration-plus-text section.
+   *
+   * A concept with no designed scene (`micro-unsigned` is the page's own extra focus) is left as the
+   * heading, anchor and paragraph it was; the reader never borrows another concept's picture.
+   */
+  const renderReaderBlocks = (blocks: ReaderBlock[], prefix: string): React.ReactNode[] => {
+    const nodes: React.ReactNode[] = [];
+    for (let index = 0; index < blocks.length; index += 1) {
+      const heading = blocks[index];
+      const anchor = blocks[index + 1];
+      const paragraph = blocks[index + 2];
+      if (
+        heading?.t === 'h' &&
+        heading.l === 4 &&
+        anchor?.t === 'anchor' &&
+        anchor.id.startsWith('micro-') &&
+        paragraph?.t === 'p'
+      ) {
+        const conceptId = anchor.id.slice('micro-'.length);
+        const placement = visualPlacementForConcept(conceptId);
+        if (placement && hasConceptVisual(conceptId)) {
+          nodes.push(renderMicroSection(heading, anchor, paragraph, conceptId, placement, `${prefix}${index}`));
+          index += 2;
+          continue;
+        }
+      }
+      nodes.push(renderBlock(blocks[index], `${prefix}${index}`));
+    }
+    return nodes;
   };
 
   return (
@@ -1291,29 +1450,56 @@ export function LessonReader({
             data-testid="reader-prose"
             className={tall ? 'mx-auto max-w-[68ch] space-y-3' : 'space-y-3'}
           >
-            {blocksForScope(page.blocks, scope).map((block, index) => renderBlock(block, `b${index}`))}
+            {renderReaderBlocks(blocksForScope(page.blocks, scope), 'b')}
+            {unlocated.length > 0 && (
+              <p
+                data-testid="sticky-note-unlocated"
+                title={`Not on this text any more: ${unlocated.map((quote) => `“${quote}”`).join(' · ')}`}
+                className="cursor-help rounded border border-amber/40 bg-amber/10 px-2 py-1 font-mono text-[11px] leading-snug text-amber"
+              >
+                {unlocated.length} note{unlocated.length === 1 ? '' : 's'} not on this text:{' '}
+                {unlocated.map((quote) => `“${quote.length > 48 ? `${quote.slice(0, 45)}…` : quote}”`).join(' · ')}
+              </p>
+            )}
           </article>
         )}
       </div>
 
-      {continueAction && (
+      {(continueAction || backAction) && (
         <div
           data-testid="reader-continue"
-          className="flex justify-end px-3 pt-3 pb-1"
+          className={`flex px-3 pt-3 pb-1 ${backAction ? 'justify-between gap-2' : 'justify-end'}`}
         >
-          <button
-            type="button"
-            data-testid="btn-reader-continue"
-            onClick={continueAction.onClick}
-            title={continueAction.title}
-            className="group flex cursor-pointer items-center gap-1.5 rounded-full border border-line bg-panel px-3 py-1.5 font-mono text-[12px] text-muted transition-colors hover:border-accent/60 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-          >
-            {continueAction.label}
-            <ArrowRight
-              className="h-3 w-3 transition-transform group-hover:translate-x-0.5"
-              aria-hidden="true"
-            />
-          </button>
+          {backAction && (
+            <button
+              type="button"
+              data-testid="btn-reader-back"
+              onClick={backAction.onClick}
+              title={backAction.title}
+              className="group flex cursor-pointer items-center gap-1.5 rounded-full border border-line bg-panel px-3 py-1.5 font-mono text-[12px] text-muted transition-colors hover:border-accent/60 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
+              <ArrowLeft
+                className="h-3 w-3 transition-transform group-hover:-translate-x-0.5"
+                aria-hidden="true"
+              />
+              {backAction.label}
+            </button>
+          )}
+          {continueAction && (
+            <button
+              type="button"
+              data-testid="btn-reader-continue"
+              onClick={continueAction.onClick}
+              title={continueAction.title}
+              className="group ml-auto flex cursor-pointer items-center gap-1.5 rounded-full border border-line bg-panel px-3 py-1.5 font-mono text-[12px] text-muted transition-colors hover:border-accent/60 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
+              {continueAction.label}
+              <ArrowRight
+                className="h-3 w-3 transition-transform group-hover:translate-x-0.5"
+                aria-hidden="true"
+              />
+            </button>
+          )}
         </div>
       )}
 
@@ -1412,58 +1598,46 @@ export function LessonReader({
                 >
                   {stickyQuote}
                 </p>
-                {/* The editor stores Markdown, so the shortcuts are the familiar ones and the
-                    preview shows what a reader of the note (the review card, the export) sees. */}
+                {/* The surface itself is the rendering: a `$…$` becomes its formula and a
+                    completed `**…**` becomes bold where it is typed. The stored note is still the
+                    Markdown a review card or an export reads. */}
                 <div className="flex items-center gap-1" data-testid="sticky-format-bar">
                   {[
-                    { marker: '**', label: 'Bold', hint: 'Bold (⌘B / Ctrl+B)', id: 'btn-sticky-bold', Icon: Bold },
-                    { marker: '*', label: 'Italic', hint: 'Italic (⌘I / Ctrl+I)', id: 'btn-sticky-italic', Icon: Italic },
-                    { marker: '++', label: 'Underline', hint: 'Underline (⌘U / Ctrl+U)', id: 'btn-sticky-underline', Icon: Underline },
-                  ].map(({ marker, label, hint, id, Icon }) => (
+                    { style: 'bold' as const, label: 'Bold', hint: 'Bold (⌘B / Ctrl+B) — drawn bold in the note', id: 'btn-sticky-bold', Icon: Bold },
+                    { style: 'italic' as const, label: 'Italic', hint: 'Italic (⌘I / Ctrl+I) — drawn italic in the note', id: 'btn-sticky-italic', Icon: Italic },
+                    { style: 'underline' as const, label: 'Underline', hint: 'Underline (⌘U / Ctrl+U) — drawn underlined in the note', id: 'btn-sticky-underline', Icon: Underline },
+                    { style: 'math' as const, label: 'Maths', hint: 'Inline maths: select a formula, or type $…$, and it renders in this note', id: 'btn-sticky-math', Icon: Sigma },
+                  ].map(({ style, label, hint, id, Icon }) => (
                     <button
                       key={id}
                       type="button"
                       data-testid={id}
                       aria-label={label}
                       title={hint}
-                      // Keep the selection in the box: a press that moves focus first would wrap
+                      // Keep the selection in the editor: a press that moves focus first would wrap
                       // nothing, which is the one way a Bold button can look broken.
                       onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => applyMarker(marker)}
+                      onClick={() => stickyRef.current?.applyStyle(style)}
                       className="btn px-1.5 py-1"
                     >
                       <Icon className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
                   ))}
                   <span className="ml-1 font-mono text-[10.5px]" style={{ color: 'var(--dim)' }}>
-                    Markdown · ⌘B / ⌘I / ⌘U
+                    Markdown stored · <span title="$…$ renders in place">$…$</span> renders here
                   </span>
                 </div>
-                <textarea
+                <StickyNoteEditor
+                  key={stickyEditing ? `edit:${stickyQuote}` : 'new'}
                   ref={stickyRef}
-                  autoFocus
-                  value={stickyText}
-                  onChange={(event) => setStickyText(event.target.value)}
-                  onKeyDown={onStickyKeyDown}
+                  initialMarkdown={stickyText}
                   maxLength={MAX_COMMENT_CHARS}
-                  rows={4}
-                  data-testid="sticky-note-text"
-                  aria-label="What you want to remember about this passage"
-                  placeholder="What do you want to remember? It comes back as a review card."
-                  className="w-full resize-y rounded border bg-canvas px-2 py-1.5 text-[13px] leading-snug text-ink"
-                  style={{ borderColor: 'var(--border)' }}
+                  onChange={setStickyText}
+                  onEscape={closeSticky}
                 />
-                {stickyText.trim() && (
-                  <p
-                    data-testid="sticky-note-preview"
-                    className="max-h-24 overflow-y-auto rounded border border-line-soft bg-canvas px-2 py-1 text-[12.5px] leading-snug text-body"
-                  >
-                    <Inline text={stickyText} />
-                  </p>
-                )}
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[10.5px]" style={{ color: 'var(--dim)' }}>
-                    {stickyText.length}/{MAX_COMMENT_CHARS} · saved in Notes
+                    {stickyText.length}/{MAX_COMMENT_CHARS} · Markdown saved in Notes
                   </span>
                   <div className="flex items-center gap-1">
                     {stickyEditing && (

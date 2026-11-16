@@ -1273,7 +1273,14 @@ async function main() {
     );
     // Narrowed to the first pass, so Continue really does run to the end: an unconditional dot in
     // the loop would park again on the second turn and the run would never finish.
-    if (!(await page.locator('[data-testid="breakpoint-condition-3"]').count())) {
+    // The list is a pane now: its views stay mounted and a hidden one is display:none, so presence is
+    // no longer the question — visibility is. Open the pane only when the row is not on screen.
+    if (
+      !(await page
+        .locator('[data-testid="breakpoint-condition-3"]')
+        .isVisible()
+        .catch(() => false))
+    ) {
       await clickToolbar(page, 'btn-breakpoints');
     }
     await page.waitForSelector('[data-testid="breakpoint-condition-3"]', { timeout: 5000 });

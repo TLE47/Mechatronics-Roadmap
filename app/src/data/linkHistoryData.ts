@@ -190,6 +190,23 @@ export const LINK_HISTORY: LinkHistoryPoint[] = [
       "SERVER_ERROR": 0,
       "UNREACHABLE": 15
     }
+  },
+  {
+    "date": "2026-11-16T14:04:36+00:00",
+    "urls": 608,
+    "served": 564,
+    "notChecked": 44,
+    "failed": 0,
+    "blocked": 31,
+    "unreachable": 13,
+    "serverError": 0,
+    "verdicts": {
+      "BLOCKED": 31,
+      "FAIL": 0,
+      "PASS": 564,
+      "SERVER_ERROR": 0,
+      "UNREACHABLE": 13
+    }
   }
 ];
 
@@ -213,8 +230,8 @@ export interface LatestLinkReport {
 
 /** Null only for a run recorded before the checker added structured report rows. */
 export const LATEST_LINK_REPORT: LatestLinkReport | null = {
-  "date": "2026-11-11T21:07:12+00:00",
-  "totalUrls": 606,
+  "date": "2026-11-16T14:04:36+00:00",
+  "totalUrls": 608,
   "hardFailures": [],
   "notChecked": [
     {
@@ -375,15 +392,6 @@ export const LATEST_LINK_REPORT: LatestLinkReport | null = {
       ]
     },
     {
-      "url": "https://www.allaboutcircuits.com/textbook/direct-current/",
-      "reason": "BLOCKED (403)",
-      "sources": [
-        "00-foundations/README.md",
-        "modules/01-electronics.T1.01a.md",
-        "modules/01-electronics.T1.01d.md"
-      ]
-    },
-    {
       "url": "https://www.analog.com/en/resources/design-tools-and-calculators/ltspice-simulator.html",
       "reason": "UNREACHABLE (The read operation timed out)",
       "sources": [
@@ -405,20 +413,6 @@ export const LATEST_LINK_REPORT: LatestLinkReport | null = {
       "sources": [
         "01-electronics-and-power/README.md",
         "modules/01-electronics.T1.01b.md"
-      ]
-    },
-    {
-      "url": "https://www.cds.caltech.edu/~murray/books/AM08/pdf/fbs-pid_24Jul2020.pdf",
-      "reason": "UNREACHABLE (<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1011)>)",
-      "sources": [
-        "05-control-and-estimation/README.md"
-      ]
-    },
-    {
-      "url": "https://www.cds.caltech.edu/~murray/books/AM08/pdf/fbs-public_24Jul2020.pdf",
-      "reason": "UNREACHABLE (<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1011)>)",
-      "sources": [
-        "05-control-and-estimation/README.md"
       ]
     },
     {
@@ -572,157 +566,157 @@ export interface HostRecurrence {
 }
 
 /** Runs whose record carried its unverified URL list; older rows cannot contribute. */
-export const HOST_RECURRENCE_RUNS: number = 9;
+export const HOST_RECURRENCE_RUNS: number = 10;
 
 export const HOST_RECURRENCE: HostRecurrence[] = [
   {
     "host": "st.com",
-    "runs": 9,
+    "runs": 10,
     "urls": 5,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
+    "lastSeen": "2026-11-16T14:04:36+00:00"
   },
   {
     "host": "sciencedirect.com",
-    "runs": 9,
+    "runs": 10,
     "urls": 4,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
+    "lastSeen": "2026-11-16T14:04:36+00:00"
   },
   {
     "host": "analog.com",
-    "runs": 9,
+    "runs": 10,
     "urls": 3,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "ctms.engin.umich.edu",
+    "runs": 10,
+    "urls": 2,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "doi.org",
+    "runs": 10,
+    "urls": 2,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "mathworks.com",
+    "runs": 10,
+    "urls": 2,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "raspberrypi.com",
+    "runs": 10,
+    "urls": 2,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "wiki.st.com",
+    "runs": 10,
+    "urls": 2,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "advanced.onlinelibrary.wiley.com",
+    "runs": 10,
+    "urls": 1,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "dl.acm.org",
+    "runs": 10,
+    "urls": 1,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "elmerfem.org",
+    "runs": 10,
+    "urls": 1,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "iso.org",
+    "runs": 10,
+    "urls": 1,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "journals.sagepub.com",
+    "runs": 10,
+    "urls": 1,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "maxongroup.com",
+    "runs": 10,
+    "urls": 1,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "mitpress.mit.edu",
+    "runs": 10,
+    "urls": 1,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "ngspice.sourceforge.io",
+    "runs": 10,
+    "urls": 1,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "onlinelibrary.wiley.com",
+    "runs": 10,
+    "urls": 1,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "rug.nl",
+    "runs": 10,
+    "urls": 1,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "sapien.ucsd.edu",
+    "runs": 10,
+    "urls": 1,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "science.org",
+    "runs": 10,
+    "urls": 1,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "w3.org",
+    "runs": 10,
+    "urls": 1,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "wiki.linuxfoundation.org",
+    "runs": 10,
+    "urls": 1,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "ww1.microchip.com",
+    "runs": 10,
+    "urls": 1,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
+    "host": "allaboutcircuits.com",
+    "runs": 9,
+    "urls": 0,
     "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "cds.caltech.edu",
     "runs": 9,
-    "urls": 2,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "ctms.engin.umich.edu",
-    "runs": 9,
-    "urls": 2,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "doi.org",
-    "runs": 9,
-    "urls": 2,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "mathworks.com",
-    "runs": 9,
-    "urls": 2,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "raspberrypi.com",
-    "runs": 9,
-    "urls": 2,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "wiki.st.com",
-    "runs": 9,
-    "urls": 2,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "advanced.onlinelibrary.wiley.com",
-    "runs": 9,
-    "urls": 1,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "allaboutcircuits.com",
-    "runs": 9,
-    "urls": 1,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "dl.acm.org",
-    "runs": 9,
-    "urls": 1,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "elmerfem.org",
-    "runs": 9,
-    "urls": 1,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "iso.org",
-    "runs": 9,
-    "urls": 1,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "journals.sagepub.com",
-    "runs": 9,
-    "urls": 1,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "maxongroup.com",
-    "runs": 9,
-    "urls": 1,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "mitpress.mit.edu",
-    "runs": 9,
-    "urls": 1,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "ngspice.sourceforge.io",
-    "runs": 9,
-    "urls": 1,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "onlinelibrary.wiley.com",
-    "runs": 9,
-    "urls": 1,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "rug.nl",
-    "runs": 9,
-    "urls": 1,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "sapien.ucsd.edu",
-    "runs": 9,
-    "urls": 1,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "science.org",
-    "runs": 9,
-    "urls": 1,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "w3.org",
-    "runs": 9,
-    "urls": 1,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "wiki.linuxfoundation.org",
-    "runs": 9,
-    "urls": 1,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
-  },
-  {
-    "host": "ww1.microchip.com",
-    "runs": 9,
-    "urls": 1,
+    "urls": 0,
     "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
@@ -733,27 +727,27 @@ export const HOST_RECURRENCE: HostRecurrence[] = [
   },
   {
     "host": "reddit.com",
-    "runs": 5,
+    "runs": 6,
     "urls": 3,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
+    "lastSeen": "2026-11-16T14:04:36+00:00"
   },
   {
     "host": "compliantmechanisms.byu.edu",
-    "runs": 5,
+    "runs": 6,
     "urls": 1,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
+    "lastSeen": "2026-11-16T14:04:36+00:00"
   },
   {
     "host": "en.cppreference.com",
-    "runs": 5,
+    "runs": 6,
     "urls": 1,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
+    "lastSeen": "2026-11-16T14:04:36+00:00"
   },
   {
     "host": "summerschool.stiff-project.org",
-    "runs": 5,
+    "runs": 6,
     "urls": 1,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
+    "lastSeen": "2026-11-16T14:04:36+00:00"
   },
   {
     "host": "learn.sparkfun.com",
@@ -780,16 +774,16 @@ export const HOST_RECURRENCE: HostRecurrence[] = [
     "lastSeen": "2026-10-19T22:24:26+00:00"
   },
   {
+    "host": "telesens.co",
+    "runs": 2,
+    "urls": 1,
+    "lastSeen": "2026-11-16T14:04:36+00:00"
+  },
+  {
     "host": "ieee-ies.org",
     "runs": 2,
     "urls": 0,
     "lastSeen": "2026-11-09T14:28:47+00:00"
-  },
-  {
-    "host": "telesens.co",
-    "runs": 1,
-    "urls": 1,
-    "lastSeen": "2026-11-11T21:07:12+00:00"
   },
   {
     "host": "cs.stanford.edu",

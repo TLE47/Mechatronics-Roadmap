@@ -79,7 +79,12 @@ check('a Level 0 step gets the one Stage 0 entry, and the rest say there is none
     'the bench on-ramp starts with the Stage 0 entry'
   );
   assert.deepEqual(
-    entriesForStep(stepById('l0_m2').step),
+    entriesForStep(stepById('l0_m2').step).map((entry) => entry.id),
+    ['S0.6'],
+    'module 2 owns the decoupling-capacitor page, and its neighbour must not move into it'
+  );
+  assert.deepEqual(
+    entriesForStep(stepById('l0_m3').step),
     [],
     'a bench step with no entry must return an empty list, not a neighbour\'s entry'
   );
@@ -142,7 +147,8 @@ check('"open the next one" skips what is already passed and never returns null f
   const next = firstUnverifiedEntry(step, { '00.1': true, '00.2': true });
   assert.equal(next.id, '00.3');
   assert.ok(firstUnverifiedEntry(stepById('l0_m1').step, {}), 'a step with one entry still has one');
-  assert.equal(firstUnverifiedEntry(stepById('l0_m2').step, {}), null);
+  assert.equal(firstUnverifiedEntry(stepById('l0_m2').step, {}).id, 'S0.6');
+  assert.equal(firstUnverifiedEntry(stepById('l0_m3').step, {}), null);
 });
 
 check('all 27 pass steps exist, with unique milestone ids', () => {

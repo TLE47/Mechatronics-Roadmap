@@ -36,6 +36,7 @@ export const EDITOR_VIEWS = [
   'expected',
   'cases',
   'workflow',
+  'breakpoints',
   'trace',
   'robot',
 ] as const;
@@ -51,6 +52,7 @@ export const EDITOR_VIEW_LABELS: Record<EditorView, string> = {
   expected: 'Expected',
   cases: 'Cases',
   workflow: 'Workflow',
+  breakpoints: 'Breakpoints',
   trace: 'Trace',
   robot: 'Robot',
 };
@@ -181,10 +183,22 @@ export function paneCapacity(width: number, height: number): number {
  * Type-only import: the runtime dependency runs the other way (the runner imports this module), and
  * a value import here would close the cycle.
  */
-export function viewsForLayout(layout: 'study' | 'write' | 'read' | 'debug'): EditorView[] {
+export function viewsForLayout(
+  layout: 'study' | 'write' | 'read' | 'debug' | 'compact'
+): EditorView[] {
   if (layout === 'read') return [];
   if (layout === 'write') return ['requirements', 'predict', 'cases', 'workflow', 'robot'];
-  return ['requirements', 'predict', 'actual', 'expected', 'cases', 'workflow', 'trace', 'robot'];
+  return [
+    'requirements',
+    'predict',
+    'actual',
+    'expected',
+    'cases',
+    'workflow',
+    'breakpoints',
+    'trace',
+    'robot',
+  ];
 }
 
 export function isPaneAxis(value: unknown): value is PaneAxis {

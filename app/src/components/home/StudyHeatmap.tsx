@@ -1,6 +1,8 @@
 import React from 'react';
+import NumberFlow from '@number-flow/react';
 import { CalendarDays, Flame, Sparkles, TrendingUp } from 'lucide-react';
 import type { DashboardEvent } from '../../dashboardData';
+import { useMotion } from '../../useMotion';
 
 /**
  * Home's study heatmap (`components/home/StudyHeatmap.tsx`).
@@ -48,6 +50,8 @@ function dayLabel(time: number): string {
 }
 
 export const StudyHeatmap: React.FC<{ events: readonly DashboardEvent[] }> = ({ events }) => {
+  // The same switch every moving figure reads: a counter that ticks is motion, and "off" means off.
+  const motion = useMotion();
   const today = startOfDay(Date.now());
   const start = addDays(today, -(WEEKS - 1) * 7 - new Date(today).getDay());
 
@@ -131,20 +135,27 @@ export const StudyHeatmap: React.FC<{ events: readonly DashboardEvent[] }> = ({ 
           </p>
         </div>
         <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {[
-            { Icon: Flame, label: 'Streak', value: `${current}d` },
-            { Icon: TrendingUp, label: 'Best', value: `${best}d` },
-            { Icon: CalendarDays, label: 'Active', value: `${activeDays}` },
-            { Icon: Sparkles, label: 'Events', value: `${total}` },
-          ].map(({ Icon, label, value }) => (
-            <div key={label} className="rounded-xl border border-line-soft bg-canvas/70 px-2.5 py-1.5">
-              <dt className="flex items-center gap-1 text-[11px] uppercase tracking-[0.1em] text-faint">
-                <Icon className="h-3 w-3" aria-hidden="true" />
-                {label}
-              </dt>
-              <dd className="font-mono text-[15px] font-bold leading-tight tabular-nums text-ink">{value}</dd>
-            </div>
-          ))}
+                      {[
+              { Icon: Flame, label: 'Streak', value: current, suffix: 'd' },
+              { Icon: TrendingUp, label: 'Best', value: best, suffix: 'd' },
+              { Icon: CalendarDays, label: 'Active', value: activeDays, suffix: '' },
+              { Icon: Sparkles, label: 'Events', value: total, suffix: '' },
+            ].map(({ Icon, label, value, suffix }) => (
+              <div key={label} className="rounded-xl border border-line-soft bg-canvas/70 px-2.5 py-1.5">
+                <dt className="flex items-center gap-1 text-[11px] uppercase tracking-[0.1em] text-faint">
+                  <Icon className="h-3 w-3" aria-hidden="true" />
+                  {label}
+                </dt>
+                <dd className="font-mono text-[15px] font-bold leading-tight tabular-nums text-ink">
+                  <NumberFlow value={value} animated={motion.on} aria-hidden="true" />
+                  {/* Number Flow draws its digits in a shadow root, so the tile also carries the
+                      plain value: the row still reads "3d" to a test, a copy-paste and a reader
+                      that ignores the shadow tree. */}
+                  <span className="sr-only">{value}</span>
+                  {suffix}
+                </dd>
+              </div>
+            ))}
         </dl>
       </div>
 

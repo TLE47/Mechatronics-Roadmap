@@ -3,17 +3,22 @@
 // the store's bounds, and the one thing the gate must never do — block a learner for good.
 import assert from 'node:assert/strict';
 import {
+  MAX_DRAFTS,
   MAX_PREDICTION_CHARS,
   MAX_PREDICTIONS,
   PREDICTIONS_KEY,
   checkPrediction,
+  clearAllPredictionDrafts,
   clearAllPredictions,
   clearPrediction,
+  clearPredictionDraft,
   describeCheck,
   predictionFor,
   predictionLines,
+  readPredictionDraft,
   readPredictions,
   savePrediction,
+  savePredictionDraft,
 } from '../app/src/predictGate.ts';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 
@@ -199,6 +204,56 @@ check('an unreadable or foreign store reads as no predictions', () => {
     JSON.stringify({ schema: 'mechalab.predictions/1', records: [RECORD(), { lessonId: 'P.9' }, null] })
   );
   assert.equal(readPredictions().length, 1, 'a record missing its verdict is dropped, the good one stays');
+});
+
+
+console.log('the draft the box keeps while the learner types');
+
+check('a half-typed guess comes back for the lesson it was typed on', () => {
+  clearAllPredictionDrafts();
+  savePredictionDraft('P.1', 'Mode: ACTIVE', 1000);
+  savePredictionDraft('P.2', 'E-Stop: True', 2000);
+  assert.equal(readPredictionDraft('P.1'), 'Mode: ACTIVE');
+  assert.equal(readPredictionDraft('P.2'), 'E-Stop: True');
+  assert.equal(readPredictionDraft('P.3'), '', 'a lesson never typed on has an empty box');
+});
+
+check('the newest draft per lesson wins, and a draft is not a prediction', () => {
+  clearAllPredictions();
+  clearAllPredictionDrafts();
+  savePredictionDraft('P.1', 'first', 1000);
+  savePredictionDraft('P.1', 'second', 2000);
+  assert.equal(readPredictionDraft('P.1'), 'second');
+  assert.equal(predictionFor('P.1'), null, 'typing must not record a judged guess');
+});
+
+check('an emptied box clears its draft instead of storing whitespace', () => {
+  savePredictionDraft('P.1', '   ', 3000);
+  assert.equal(readPredictionDraft('P.1'), '');
+  savePredictionDraft('P.2', '', 3001);
+  assert.equal(readPredictionDraft('P.2'), '');
+});
+
+check('a draft is held to the prediction cap, and only the newest lessons are kept', () => {
+  clearAllPredictionDrafts();
+  savePredictionDraft('P.1', 'x'.repeat(MAX_PREDICTION_CHARS + 50), 1000);
+  assert.equal(readPredictionDraft('P.1').length, MAX_PREDICTION_CHARS);
+  for (let index = 0; index < MAX_DRAFTS + 4; index += 1) {
+    savePredictionDraft(`L.${index}`, `draft ${index}`, 5000 + index);
+  }
+  assert.equal(readPredictionDraft('L.0'), '', 'the oldest drafts go first');
+  assert.equal(readPredictionDraft(`L.${MAX_DRAFTS + 3}`), `draft ${MAX_DRAFTS + 3}`);
+});
+
+check('clearing one lesson leaves the others, and a committed guess cannot come back', () => {
+  clearAllPredictionDrafts();
+  savePredictionDraft('P.1', 'kept', 1000);
+  savePredictionDraft('P.2', 'gone', 2000);
+  clearPredictionDraft('P.2');
+  assert.equal(readPredictionDraft('P.2'), '');
+  assert.equal(readPredictionDraft('P.1'), 'kept');
+  clearAllPredictionDrafts();
+  assert.equal(readPredictionDraft('P.1'), '');
 });
 
 if (failures) {

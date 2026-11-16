@@ -531,6 +531,35 @@ async function main() {
     await page.getByTestId('panel-workflow').waitFor({ timeout: 30000 });
     await page.getByTestId('workflow-start-blank').click();
     await page.getByTestId('workflow-add-given').click();
+
+    // ---- 6a. The words grow with the plate ----
+    // Dragging the corner used to make a bigger box holding the same 12 px sentence, so a card
+    // resized to twice its height read as a stretched rectangle rather than a bigger card.
+    const handle = page.locator('[data-testid^="workflow-node-resize-"]').first();
+    const nodeIndex = (await handle.getAttribute('data-testid')).replace('workflow-node-resize-', '');
+    const nodeTitle = page.getByTestId(`workflow-node-title-${nodeIndex}`);
+    const fontSize = async () =>
+      Number.parseFloat(
+        await nodeTitle.evaluate((element) => getComputedStyle(element).fontSize).catch(() => '0')
+      );
+    const beforeSize = await fontSize();
+    const box = await handle.boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 + 140, box.y + box.height / 2 + 160, { steps: 14 });
+    await page.mouse.up();
+    await page.waitForTimeout(250);
+    const afterSize = await fontSize();
+    assert.ok(
+      afterSize > beforeSize,
+      `resizing a card bigger must grow its text, saw ${beforeSize}px → ${afterSize}px`
+    );
+    assert.ok(
+      afterSize <= 24 && afterSize > beforeSize,
+      `a resized card's text stays inside the inspector's own 9–24 px range, saw ${afterSize}px`
+    );
+    ok(`corner resize scaled the text ${beforeSize}px → ${afterSize}px`);
+
     const titles = page.locator('[data-testid^="workflow-node-title-"]');
     await titles.last().waitFor({ timeout: 10000 });
     const cards = await titles.count();

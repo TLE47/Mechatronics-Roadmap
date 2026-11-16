@@ -72,6 +72,8 @@ interface PaneSlots {
   expectedOutputPane: ReactNode;
   casesPane?: ReactNode;
   workflowPane: ReactNode;
+  /** The breakpoint list as a pane of its own, beside the code it belongs to. */
+  breakpointsPane?: ReactNode;
   tracePane?: ReactNode;
   robotPane?: ReactNode;
 }
@@ -173,7 +175,15 @@ export function EditorPaneBody({
     editorTestId = 'editor-main',
   } = draft;
   const { coEdit, collabNotice, peerLabel } = collab;
-  const { actualOutputPane, expectedOutputPane, casesPane, workflowPane, tracePane, robotPane } = slots;
+  const {
+    actualOutputPane,
+    expectedOutputPane,
+    casesPane,
+    workflowPane,
+    breakpointsPane,
+    tracePane,
+    robotPane,
+  } = slots;
   const paneSplit = allowedViews.length > 0 && views.length > 1 && shownViews.size > 1;
   const paneSlots = views.filter((view) => shownViews.has(view));
   /** The arrangement's own slot numbers for the panes on screen, which is what boundaries index. */
@@ -320,6 +330,7 @@ export function EditorPaneBody({
     }
     if (view === 'predict') return Boolean(gate);
     if (view === 'cases') return Boolean(casesPane);
+    if (view === 'breakpoints') return Boolean(breakpointsPane);
     if (view === 'trace') return Boolean(tracePane);
     if (view === 'robot') return allowedViews.includes('robot') && Boolean(robotPane);
     return true;
@@ -428,6 +439,7 @@ export function EditorPaneBody({
         />
       ) : null;
     }
+    if (view === 'breakpoints') return breakpointsPane ?? null;
     if (view === 'robot') return robotPane ?? null;
     if (view === 'actual') return actualOutputPane;
     if (view === 'expected') return expectedOutputPane;

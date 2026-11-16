@@ -84,6 +84,73 @@ try {
   console.log(
     '  ok   every Start, Pause and Resume prints its time + study clock; the session 0:09:00 is separate'
   );
+  // ---- The completion survives Log & reset and a reload ----
+  // The clock used to forget, on reset, that this lesson had been finished: the digits came back at
+  // 0:00:00 (right) and the chip fell back to "in progress" (wrong) on the next visit. Seeding the
+  // stored shape with a completion pins the rendering: a paused 2-minute stretch on a lesson that
+  // was already completed.
+  const doneContext = await browser.newContext();
+  await seedTourSeen(doneContext);
+  // Seed only when the store is empty: an init script runs on every navigation, and a reload has
+  // to see what the reset wrote rather than the timer this context started with.
+  await doneContext.addInitScript((seed) => {
+    if (!localStorage.getItem('mechalab_study_timer_v1')) {
+      localStorage.setItem('mechalab_study_timer_v1', JSON.stringify(seed));
+    }
+    window.__mechalabPredictFirst = false;
+  }, {
+    bankedMs: 2 * MINUTE,
+    runningSince: null,
+    lastTick: now,
+    lesson: 'P.1',
+    completed: ['P.1'],
+    log: [],
+  });
+  const donePage = await doneContext.newPage();
+  const chip = () => donePage.getByTestId('study-timer-lesson-state').first();
+  const digits = () => donePage.getByTestId('study-timer-elapsed').first();
+  await donePage.goto(new URL('?lesson=P.1', baseUrl).href, { waitUntil: 'domcontentloaded' });
+  await chip().waitFor({ timeout: 30_000 });
+  assert.equal((await chip().innerText()).trim(), '✓ complete', 'a completed lesson must say so');
+  assert.equal(await chip().getAttribute('data-state'), 'verified');
+
+  await donePage.getByTestId('btn-study-timer-reset').first().click();
+  // The write and the re-render are two ticks; the assertion is about the state it settles in.
+  await donePage
+    .waitForFunction(
+      () =>
+        document.querySelector('[data-testid="study-timer-elapsed"]')?.textContent?.trim() === '0:00:00',
+      undefined,
+      { timeout: 5000 }
+    )
+    .catch(async () => {
+      const seen = await donePage.evaluate(() => ({
+        digits: document.querySelector('[data-testid="study-timer-elapsed"]')?.textContent?.trim(),
+        rows: document.querySelectorAll('[data-testid="study-timer"]').length,
+        store: localStorage.getItem('mechalab_study_timer_v1'),
+      }));
+      assert.fail(`Log & reset did not zero the digits: ${JSON.stringify(seen)}`);
+    });
+  assert.equal((await digits().innerText()).trim(), '0:00:00', 'Log & reset zeroes the digits');
+  assert.equal(
+    (await chip().innerText()).trim(),
+    '✓ complete',
+    'Log & reset must not turn a finished lesson back into "in progress"'
+  );
+
+  await donePage.reload({ waitUntil: 'domcontentloaded' });
+  await chip().waitFor({ timeout: 30_000 });
+  assert.equal((await digits().innerText()).trim(), '0:00:00', 'and the digits stay reset after a reload');
+  assert.equal(
+    (await chip().innerText()).trim(),
+    '✓ complete',
+    'a reload must remember the completion when the digits are gone'
+  );
+  const stored = await donePage.evaluate(() => localStorage.getItem('mechalab_study_timer_v1'));
+  assert.match(String(stored), /"completed":\["P\.1"\]/, 'the completion is what the store keeps');
+  console.log('  ok   Log & reset keeps "✓ complete" for the lesson, across a reload');
+  await doneContext.close();
+
   console.log('\nstudy clock rendered-log checks passed\n');
 } finally {
   await browser.close();

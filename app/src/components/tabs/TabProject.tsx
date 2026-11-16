@@ -35,7 +35,12 @@ const PROJECT = readProject(projectDocument);
  */
 export const TabProject: React.FC<TabProjectProps> = ({ focus, onOpenRequirement }) => {
   const [query, setQuery] = useState('');
-  const [selectedId, setSelectedId] = useState<string>(PROJECT.components[0].id);
+  // A focus is the page's first fact, not an effect: mounting on the default part and moving to the
+  // cited one after the first paint showed U1 for a frame when a slower machine opened Q1.
+  const [selectedId, setSelectedId] = useState<string>(() => {
+    const asked = focus ? findProjectObject<ProjectComponent>(PROJECT, 'component', focus.id) : null;
+    return asked?.id ?? PROJECT.components[0].id;
+  });
   const [copied, setCopied] = useState(false);
 
   const filtered = useMemo(

@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `3.3.0`.** `package.json` is the one place the number lives; the workbench's footer
+****Release identity: `3.6.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -39,6 +39,209 @@ walk out of the modal.
 **Checked in a browser**, not only in the unit suite: `⌘K` presses **Commands**, asserts the list is
 exactly the command rows, that no lesson row survives, and that the footer counts the filtered list
 before **All** puts it back; `⌘⇧F` asserts its empty list begins `P.1`, `P.2` and holds all 95.
+
+## [2026-11-16] — Run 3.6.0: every micro focus has its own designed scene
+
+**The shared picture families are gone.** All forty-six micro concepts now draw a scene built for
+that one idea: a conveyor for `x = x + 1`, a grouping tray for `1023 // 4`, a balance with pans for a
+comparison, a clamped rail for a command above 255, a gate for logic, a bit radix for powers of two,
+a lever for torque, a bounds band for a datasheet limit. The old renderer assigned concepts to one of
+eighteen families, so thirty-seven of the forty-six opened with a diagram a neighbouring lesson also
+used; `MicroFigures.tsx` is deleted rather than left as a second path. The scenes share only small
+primitives (a tile, a chip, an arrow) and reuse the tab's existing accent, emerald, rose, amber and
+purple tokens, so they need no dependency, font or interaction.
+
+**The placement cycle is unchanged.** The catalogue index still sends the picture right, then left,
+then below the explanation at wide widths. The frame keeps `data-testid=micro-visual-<id>` and
+`data-placement`; each scene adds a stable `data-visual` and `data-visual-scene`, and the old
+`data-figure-kind` family attribute is removed. The unit suite now proves the catalogue and scene map
+agree on all forty-six ids with no repeated scene, and the browser suite walks every concept, checks
+its scene id and non-empty paint, and keeps the geometry checks for the right, left and bottom
+placements.
+
+---
+
+## [2026-11-16] — Run 3.5.3: the reader mission's claims are pinned by tests
+
+**The five reader promises now have assertions, and two gaps were closed.** The micro catalogue's
+unit suite already proved every concept names a picture family and that the families cover at least
+twelve kinds; the browser suite now also opens sampled concepts and proves the picture paints to the
+right, left and beneath the explanation, with its family exposed as `data-figure-kind`. The Home
+suite now checks a saved note's mark against the exact selected quote, checks the inline and code
+mark paths the same way, and distinguishes a plain highlight from a sticky mark through
+`data-mark-kind`. Search results are asserted to stay in catalogue order in the palette's text-search
+mode, not merely in the pure search module. The bottom-left Back to Study pill keeps its existing
+browser assertion in the workbench suite, and the collapsed Maths and blur commits keep the Home
+suite's existing formula assertions.
+
+---
+
+## [2026-11-16] — Run 3.5.2: leaving the note draws its pending formula
+
+**A click away now commits the collapsed Maths pair.** Losing focus used to leave the raw `$…$`
+TeX in the field because the commit path only ran on caret movement and Enter. The blur handler now
+redraws a pending formula from the same Markdown without calling the caret-restoring sync path, so
+the formula appears in place and focus stays on whatever the learner clicked. The Home browser suite
+clicks the note's quoted passage while `$m^2$` is still raw, then asserts the formula is drawn, the
+Markdown still stores it, and the editor is no longer the active element.
+
+---
+
+## [2026-11-16] — Run 3.5.1: the Maths button's pair commits where it is left
+
+**The collapsed Maths button could strand raw TeX.** Pressing Maths with no selection inserted an
+empty `$…$` pair with the caret between its delimiters, so typing a formula always left the caret
+inside the pair.
+The editor only redrew a formula when a keystroke produced its closing delimiter, which this path
+never does: the source stayed raw, and Enter put its line break into the TeX (`$v^2⏎$`) so the next
+save was no longer the formula the learner typed. The pair now stays editable while the caret is
+inside it, then commits when the caret leaves — by arrow key, click, or Enter, which commits before
+inserting its Markdown line. The caret has to be carried through a redraw by U+FEFF, which JavaScript
+treats as whitespace; inserting it inside `$…$` made both the editor's flanking check and the reader
+parser refuse the formula. The editor now checks for the live pair before inserting that marker, so
+the marker only ever sits outside the TeX. The Home browser suite covers both exits: ArrowRight out
+of `$v^2$` and Enter inside `$a^2$`, with the formula drawn, the Markdown intact, and the next line
+where Enter put it.
+
+---
+
+## [2026-11-16] — Run 3.5.0: the note draws its maths where it is typed
+
+**The sticky-note field is now the rendering.** A `$v^2$` typed into the note becomes a KaTeX atom
+inside the same field the caret is in, and a completed `**…**`, `*…*` or `++…++` becomes bold,
+italic or underlined where it stands. The toolbar and ⌘B/⌘I/⌘U act on the DOM selection, so Bold then
+Underline still nest, and the separate “Preview · rendered” pane is gone because it was never the
+editor. The Home browser suite types real keystrokes and asserts `.katex`, `<strong>`, `<em>` and
+`<u>` inside `sticky-note-text`, not in a preview node; it also checks that a selected formula
+deletes in one Backspace, that Enter makes a Markdown line, and that the editor logs no console
+errors while a note is created and edited.
+
+**The stored note is still portable Markdown.** The editing surface carries a formula's TeX in
+`data-math` and serialises it back to `$…$`; formatting serialises to the reader's existing markers.
+Saving reads the editor itself, so a save in the same task as the last keystroke keeps the current
+maths, and reopening the note after a reload round-trips the Markdown and redraws the same formula
+and bold run. A caret sentinel bridges the redraw; a formula cannot swallow it. At the 400-character
+comment cap the editor restores the last whole note rather than slicing off a closing marker.
+
+**A taller card is placed again once it settles.** The new editor made the popover grow after its
+first measurement, which put an above-placed card over the words it was about. The placement now
+re-runs when the card's height changes and once more after focus settles.
+
+---
+
+## [2026-11-16] — Run 3.4.3: the citation opens on the cited object
+
+CI on 3.4.2 found two races a local pass did not. The clock work itself held: the built bundle's
+Home suite passed all four real reloads. The failures were elsewhere.
+
+**Project Mode showed its default part before the cited one.** A requirement's Q1 link set the tab
+and the focus id together, but `TabProject` mounted on its first part and applied the citation in an
+effect after the first paint, so a reader could see `U1` for a frame. `TabProject` and
+`TabRequirements` now take the cited object as their initial selection; the effect remains for a
+second citation while the tab is mounted. A repair, so patch.
+
+**The reader sweep watched responses, not requests.** A payload served from Chromium's HTTP cache
+can arrive with no page-level `response` event, and under the bundle lane's load the first five pages
+failed at random while their text had painted. The suite now records the URL the page requests,
+requires the exact subpath, and fetches it itself to prove a 200 JSON answer with the page's version
+and block count, no longer ignoring the status and content type.
+
+---
+
+## [2026-11-15] — Run 3.4.2: the reset that a second window could undo
+
+Log & reset held in one tab and came back after a refresh when another window was open on the
+workbench. The cleared record was stamped, but the second window still held the running stretch in
+its own state and never heard the same-document announcement; its next press wrote the old banked
+time straight over the cleared record, and its minute heartbeat would have done the same. Measured in
+a browser before the repair: reset in tab A, one press in tab B, reload A — `0:00:03`, paused.
+
+The store is now the authority every surface checks. `newerClock` makes a clear outrank a running
+stretch that began before it, in both directions, while a stretch begun after the clear still wins;
+cloud merge (`newerTimer`) uses the same rule, so an upload with a later heartbeat cannot restore
+the time either. A tab listens for `storage` and adopts the record it did not write, and the
+heartbeat re-reads before writing, so a missed event costs one second rather than a minute. A
+stopped record after the clear — a pause or a completion — is newer work and still wins.
+
+Home's clock step now reloads for real in four shapes: immediately after Log & reset, with a second
+window holding the running stretch, on a second tab at another lesson route (reloaded), and after
+61 s so the heartbeat interval has passed. Each asserts idle, `0:00:00`, nothing to log, no press of
+the logged session, and a completed bank that survives; the second window must offer Start, not
+Resume. The trace step also parks on a breakpoint and presses Step in and Step out, asserting the
+rendered Trace step quotes the line the interpreter is on each time.
+
+---
+
+## [2026-11-15] — Run 3.4.1: the reader sweep fetches every page from the server
+
+The new reader-route suite opens all 97 pages on the built bundle and asserts each one asks the static
+server for its own payload. The offline take-along installs a service worker, and when it claimed a
+fresh page before the reader asked, Chromium served the payload from the worker's cache and emitted no
+page-level response: three of ninety-seven pages failed at random on CI. Those contexts now block the
+service worker, so the route suite grades the static fetch it names while offline stays the offline
+suite's job. A repair, so patch.
+
+---
+
+## [2026-11-15] — Run 3.4: the clock that stays cleared, a trace that follows the park, and pictures for every micro focus
+
+**Log & reset now survives a refresh.** The button zeroed the digits and wrote a cleared record, but
+the record carried `lastTick: 0` and no announcement: the reminder and the phone strip's compact clock
+kept their old timer (a running one heartbeat the old record back), and cloud sync's `newerTimer` saw
+the stale upload as newer and restored it. The cleared record is now stamped with the press, the row
+announces the write on the same event a Start uses, and a merge therefore keeps the zero. Tested for
+the digits, the stamp, the completed list and the merge.
+
+**Trace opens where the interpreter stopped.** A park posts the lines executed so far and the panel
+reset to step 0, so Step into a call left the paused bar naming line 12 while Trace described line 1.
+`stepForLine` selects the most recent recorded step on the parked line (a later visit of a loop line,
+not an earlier one) and falls back to the end of the recording.
+
+**Micro focuses have pictures, and not the same picture twice.** Every one of the 46 concepts now names
+a drawing family (`micro/visuals.ts`): sticky notes, number boxes, a quotation with index ticks, a list
+rail, a loop cycle, a function machine, an assert gate, a prefix ladder, a bit grid, a balance beam, a
+clamped range bar, an angle dial, a plot with axes, force arrows, a limits table, a given→check→answer
+strip and a branch fork. The teaching stage places the picture right, left or underneath on a cycle,
+so consecutive lessons do not open alike. The map is pure and tested against the generated catalogue.
+
+**A been-read page has a way back.** Read's bottom row keeps **Continue to Write** on the right and
+gains **Back to Study** on the left; Study has no left-hand pill, because returning to where you are
+is not a control.
+
+**Notes anchor and read the way they were written.** A selection that crossed a paragraph boundary was
+in no paragraph whole, so both halves stayed unmarked and every other paragraph printed "not on this
+text" — each `<Inline>` only knew its own words. Marks now fall back to the longest word run a block
+does contain, the unlocated guard moved to the page (named once, with the quotes), a highlight paints
+the accent wash and a sticky note the amber one, and the popup's preview is labelled as rendered and
+gains a `$…$` button: maths in a note is drawn by the reader's own KaTeX view as it is typed.
+
+**Search lists lessons in course order.** `rankPalette` keeps its score ranking for commands and tabs
+but puts lesson rows back in catalogue order, so a query that matches several lessons reads P.2, P.5,
+P.8 rather than the order their titles happened to score.
+
+**A card counts only a move the learner made.** P.9's answer dial opens resting on its first mark,
+and the old rule compared numbers alone: the first paint advanced the ladder and announced "landed
+63.2" to a screen reader before anyone touched the card. The latch is now arithmetic in
+`bridges/markArmed.ts` — a card opens disarmed, leaving the window arms it, a landing disarms it — so
+opening on the mark and resting on it after a landing both score nothing, and the hook only wires the
+latch to state and sound. Graded over the whole sequence, without a browser.
+
+**Every Bridge Notes card on one page.** Thirty-five interactives under thirty-five lessons are
+reviewable only by opening thirty-five lessons, so `?gallery=bridges` renders the same lazy
+components side by side at 1280, 768 and 380 px. Its names come from the reader's own table, so a new
+card appears with no second list; `check_registry_joins.py` proves every page's declared visual is in
+that table, and `check:bridge-contrast` measures every card in all four palettes and under reduced
+motion (4.5:1 text, 3:1 strokes, no sideways scroll). That gate now runs in CI above Lighthouse.
+
+**One command runs the release check.** `npm run verify:ci` walks CI's lanes in order
+(`--list`, `--keep-going`, `--lane`), so a release can be reproduced locally instead of waiting for a
+runner to find the gate that fails.
+
+**The brand version has a rule.** `npm run version:bump -- major|minor|patch` moves `package.json`,
+stamps the changelog's release-identity line, and `version:check` fails when the two disagree. Major is
+a restructure a learner can feel (course order, saved state), minor a new capability, patch a repair.
+
+---
 
 ## [2026-11-13] — The clock stops at the pass, goals show their formulas, and the diagram folds
 

@@ -232,14 +232,21 @@ function serializeWatches(list) {
 function pauseAt(payloadJson) {
   if (!pauseView) return 'continue';
   let step = null;
+  let trace = null;
   try {
     step = JSON.parse(String(payloadJson));
   } catch {
     step = { line: 0, fn: '', depth: 1, values: [] };
   }
+  // The replay rides beside the step rather than inside it: the bar reads a step, the Trace pane
+  // reads a trace, and a step carrying 300 frames would make the bar's own quote the slow part.
+  if (step && typeof step === 'object' && step.trace) {
+    trace = step.trace;
+    delete step.trace;
+  }
   Atomics.store(pauseView, PAUSE_COMMAND, PAUSE_NONE);
   Atomics.store(pauseView, PAUSE_STATUS, 1);
-  self.postMessage({ type: 'paused', runId: activeRunId, step });
+  self.postMessage({ type: 'paused', runId: activeRunId, step, trace });
   for (;;) {
     Atomics.wait(pauseView, PAUSE_COMMAND, PAUSE_NONE);
     const command = Atomics.load(pauseView, PAUSE_COMMAND);
@@ -1402,6 +1409,11 @@ def __mechalab_execute():
                 payload["watch_error"] = watch_error
             if watch_expressions:
                 payload["watches"] = _watch_values(frame)
+            # The replay so far, so the Trace pane answers "how did I get here" while the run is
+            # parked. Cheap because the hook already appends to this same list; the cap the page
+            # sent is what keeps it small.
+            if trace_steps:
+                payload["trace"] = {"steps": trace_steps, "total": trace_total}
             verdict = __mechalab_pause__(_json.dumps(payload))
             if verdict == "edit":
                 # Applied, or rejected with a sentence: either way the bar is posted again with this

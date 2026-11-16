@@ -73,6 +73,10 @@ GATES: list[tuple[str, list[str], bool]] = [
     ("plant_data", ["scripts/generate_plant_data.py", "--check"], False),
     ("term_order", ["scripts/check_term_order.py"], False),
     ("python_lessons_data", ["scripts/generate_python_lessons_data.py", "--check"], False),
+    # The joins a lesson spans, across five registries: a page that becomes runnable can be
+    # half-wired while every individual `--check` above stays green. Reads the registry, the
+    # payloads, the visual map and the callouts, and names the page and file that disagree.
+    ("registry_joins", ["scripts/check_registry_joins.py"], False),
     # The 3.0 story, missions and reward rules: `content/` is the source of truth and the bundle the
     # site imports is a build of it. A story edited without rebuilding fails here, so the site can
     # never render a mission the repository does not have.
@@ -106,6 +110,9 @@ GATES: list[tuple[str, list[str], bool]] = [
     ("firmware", ["scripts/extract_and_compile_sketches.py", "--check-firmware"], False),
     # The instruction pages are a list of commands, and a command that names a script which no longer
     # exists is worse than no instructions. Reads the pages and the workflow files; never history.
+    # The header prints package.json's version and the changelog leads with its own copy; this is the
+    # one place the two can disagree, and the release a bug report names depends on them agreeing.
+    ("version", ["npm", "run", "version:check"], False),
     ("doc_commands", ["scripts/check_doc_commands.py"], False),
     # The 2.0 gap page is a claim, not a wish list: every row is closed, and a `ships` row names a
     # command or a browser step a reader can run. Both directions were wrong once — Run 200 fixed two
@@ -114,6 +121,18 @@ GATES: list[tuple[str, list[str], bool]] = [
     ("consistency", ["scripts/check_consistency.py"], False),
     ("friction_report", ["scripts/friction_report.py", "--check"], False),
     ("assertions", ["scripts/lint_assertions.py"], False),
+    # A starter block hands the learner a set of numbers to compute a torque or a current from; a given
+    # whose name and comment both omit the unit teaches that the unit does not matter. Reads every
+    # lesson page's starter blocks, needs no browser, so it belongs in this pass rather than a lane.
+    ("units", ["scripts/check_starter_units.py"], False),
+    # The two rules the 2026-11-13 library release could not express as a text gate: the installed
+    # primitives wear the workbench's tokens and keep dialog focus, and no surface gains a second
+    # looping animation. Both drive the built bundle in the headless shell, so the job that runs this
+    # list builds `dist/` and installs that shell once — measured at 20 s and 45 s, which is why they
+    # are in the pass rather than in a lane of their own. A rule nothing runs is the rule that stops
+    # holding, so they run here, in CI, on every push.
+    ("primitives", ["npm", "run", "test:primitives"], False),
+    ("animations", ["npm", "run", "check:animations"], False),
     # Heavy from here down: same commands CI runs, including the report handoff that lets the
     # unittest discovery reuse the sweep instead of running all 48 packages a second time.
     ("exercise_sweep", ["scripts/run_exercise.py", "--verbose"], True),
@@ -129,6 +148,9 @@ GATES: list[tuple[str, list[str], bool]] = [
 # now measures it too.
 AUDIT_GATES: list[tuple[str, list[str], bool]] = [
     ("labels", ["npm", "run", "check:labels"], False),
+    # Every Bridge Notes card in every palette, at 1280 and 380: the P.9-only contrast audit,
+    # generalised. A card added without this is a card nobody measured.
+    ("bridge_contrast", ["npm", "run", "check:bridge-contrast"], False),
 ]
 
 REPORT_PATH = os.path.join(os.environ.get("RUNNER_TEMP", "/tmp"), "run-exercise.json")

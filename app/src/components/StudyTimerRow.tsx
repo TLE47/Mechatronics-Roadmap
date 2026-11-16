@@ -6,8 +6,10 @@ import {
   formatClock,
   formatTimeOfDay,
   heartbeat,
+  newerClock,
   pauseTimer,
   readTimer,
+  TIMER_STORAGE_KEY,
   resumeTimer,
   startTimer,
   STUDY_CLOCK_EVENT,
@@ -66,10 +68,16 @@ const BUTTON =
 const LINK_BUTTON =
   'inline-flex items-center gap-1 font-mono text-[12px] text-accent underline decoration-dotted cursor-pointer';
 
-export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = ({
-  lessonId,
-  compact = false,
-}) => {
+export const StudyTimerRow: React.FC<{
+  lessonId: string;
+  compact?: boolean;
+  /** The lesson's own name, so the digits say which lesson is being counted. */
+  label?: string;
+  /** Whether this lesson is verified — the clock row can then say the lesson it counted was finished. */
+  verified?: boolean;
+  /** Whether the lesson is marked done by the learner rather than passed; shown when not verified. */
+  selfMarked?: boolean;
+}> = ({ lessonId, compact = false, label, verified = false, selfMarked = false }) => {
   const [timer, setTimer] = useState<StudyTimer>(() => resumeTimer(readTimer(), Date.now()));
   /** The filed stretch's own duration, so Log & reset can say what it just kept. */
   const [logged, setLogged] = useState('');
@@ -110,6 +118,26 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
     return () => window.removeEventListener(STUDY_CLOCK_EVENT, refresh);
   }, []);
 
+  // Another tab writes the same record, and `STUDY_CLOCK_EVENT` does not cross documents. Without
+  // this, a second tab that held the running stretch never learned about a Log & reset: its next
+  // press — or its next heartbeat, a minute later — wrote the old time over the cleared record, and
+  // the learner's refresh brought it back. A storage event is the browser telling this document the
+  // record moved; adopt it, then announce it so the app's upload sees the newer clock too.
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== null && event.key !== TIMER_STORAGE_KEY) return;
+      const stored = resumeTimer(readTimer(), Date.now());
+      setTimer(stored);
+      try {
+        window.dispatchEvent(new Event(STUDY_CLOCK_EVENT));
+      } catch {
+        // The announcement is a nicety; adopting the record is the point.
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
   // Today's hours, and this lesson's, follow the store wherever the write came from — a run, a
   // review, this clock. One listener for both, so they can never disagree about the same write.
   useEffect(() => {
@@ -132,9 +160,21 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
       setTick((count) => count + 1);
       const current = timerRef.current;
       if (current.runningSince === null) return;
+      // A heartbeat is a write, so it has to be the newest fact: if the store moved on while this
+      // tab was busy (another tab cleared the clock, or paused it), adopt that instead of writing
+      // the stretch this tab still remembers over it.
+      const chosen = newerClock(current, readTimer());
+      if (chosen !== current) {
+        setTimer(resumeTimer(chosen, now));
+        window.dispatchEvent(new Event(STUDY_CLOCK_EVENT));
+        return;
+      }
       if (now - current.lastTick < HEARTBEAT_MS) return;
       recordSittingEvent({ at: now, kind: 'study', lesson: lessonId });
       persist(heartbeat(current, now));
+      // The minute heartbeat is a write to the clock, so it is a change to sync: announcing it is what
+      // carries a running clock to the other device without anyone pressing anything.
+      window.dispatchEvent(new Event(STUDY_CLOCK_EVENT));
     }, 1000);
     return () => window.clearInterval(id);
     // `runningSince` is the whole switch: a paused clock needs no interval at all.
@@ -146,28 +186,56 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
   // The last thing the session recorded being the lesson's completion is what the row says in its
   // status line: the digits are stopped, and the reason is the pass, not a stray pause.
   const lastAction = timer.log[timer.log.length - 1]?.action ?? null;
+  // Finished here, whether or not the pass that finished it was on this visit: the clock's own
+  // record of completions is what survives Log & reset and a reload.
+  const completed = Array.isArray(timer.completed) ? timer.completed : [];
+  const clockComplete = completed.includes(lessonId);
+  const complete = verified || clockComplete;
   const today = formatDuration(todayMs);
+
+  /** The record this press acts on: this row's, unless the store has moved on to a newer one. */
+  const currentRecord = () => {
+    const stored = readTimer();
+    const chosen = newerClock(timer, stored);
+    if (chosen !== timer) setTimer(resumeTimer(chosen, Date.now()));
+    return chosen;
+  };
 
   const onToggle = () => {
     const now = Date.now();
+    const base = currentRecord();
     setLogged('');
     recordSittingEvent({ at: now, kind: 'study', lesson: lessonId });
     // One control for both directions: the press means what its label says. A resume after a pause
     // is its own press in the log, not a second start.
+    const at = elapsedMs(base, now);
     persist(
-      running
-        ? pauseTimer(timer, now)
-        : startTimer(timer, now, lessonId, elapsed > 0 ? 'resume' : 'start')
+      base.runningSince !== null
+        ? pauseTimer(base, now)
+        : startTimer(base, now, lessonId, at > 0 ? 'resume' : 'start')
     );
   };
 
   const onReset = () => {
     const at = Date.now();
-    const total = elapsedMs(timer, at);
+    const base = currentRecord();
+    const total = elapsedMs(base, at);
     if (total <= 0) return;
     recordSittingEvent({ at, kind: 'study', lesson: lessonId });
     setLogged(formatDuration(total));
-    persist(clearedTimer(lessonId));
+    // The digits and the presses are the session's; the lessons this clock has seen finished are
+    // not, so Log & reset carries them across instead of unlearning them. The press's own time is
+    // written into the record, so a stale copy of the old clock cannot win the next merge and put
+    // the logged time back after a refresh.
+    persist(clearedTimer(lessonId, base.completed, at));
+    // The reminder at the top of the lesson and the phone strip's compact clock are two more views
+    // of this one store. Without the announcement they keep the timer they read at mount — and a
+    // running one among them would heartbeat the old record back a minute later.
+    try {
+      window.dispatchEvent(new Event(STUDY_CLOCK_EVENT));
+    } catch {
+      // A blocked window costs the announcement, not the reset.
+    }
   };
 
   return (
@@ -185,7 +253,42 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
       <span className="flex items-center gap-1.5 eyebrow">
         <Timer className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
         {compact ? 'Clock' : 'Study clock'}
+        {label && (
+          <span
+            data-testid="study-timer-lesson"
+            title={`Counting study time on ${label}`}
+            className="max-w-[22ch] truncate normal-case tracking-normal text-[11.5px] font-normal text-muted"
+          >
+            · {label}
+          </span>
+        )}
       </span>
+      {label && (
+        // What became of the lesson the digits are counting: a clock that reads 12 minutes next to
+        // "complete" says the learner finished; next to nothing it says they are still working.
+        <span
+          data-testid="study-timer-lesson-state"
+          data-state={complete ? 'verified' : selfMarked ? 'self-marked' : 'open'}
+          title={
+            verified
+              ? `${label} is verified: a run passed it`
+              : clockComplete
+                ? `${label} was completed — this study clock remembers it across visits`
+                : selfMarked
+                ? `${label} is marked done by you, without help`
+                : `${label} is not finished yet`
+          }
+          className={
+            complete
+              ? 'rounded border border-accent/40 bg-accent/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-accent'
+              : selfMarked
+                ? 'rounded border border-line bg-canvas px-1.5 py-0.5 font-mono text-[11px] text-body'
+                : 'rounded border border-line-soft bg-canvas px-1.5 py-0.5 font-mono text-[11px] text-faint'
+          }
+        >
+          {complete ? '✓ complete' : selfMarked ? 'self-done' : 'in progress'}
+        </span>
+      )}
       <span
         data-testid="study-timer-elapsed"
         title={`${formatDuration(elapsed)} counted this session`}
@@ -242,26 +345,59 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
                 ? `Lesson completed — clock stopped at ${formatClock(elapsed)}`
                 : elapsed > 0
                   ? 'Paused — press Resume'
-                  : 'Press Start'}
+                  : clockComplete
+                    ? 'Lesson completed — press Start for more time'
+                    : 'Press Start'}
         </span>
       )}
       {!compact && timer.log.length > 0 && (
         <div
           data-testid="study-clock-log"
-          className="w-full rounded-lg border border-line bg-canvas px-2.5 py-2 font-mono text-[11.5px] text-muted"
+          className="w-full overflow-hidden rounded-xl border border-line bg-canvas shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
         >
-          <p className="text-body">
-            Session{' '}
-            <span data-testid="study-clock-session" className="font-semibold">
+          {/* The session's own line: a small label, the total, and how many presses are under it. */}
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-b border-line bg-raise/60 px-3 py-1.5">
+            <span className="flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-[0.14em] text-faint">
+              <span
+                className={`inline-block h-1.5 w-1.5 rounded-full bg-accent ${running ? 'animate-pulse' : ''}`}
+                aria-hidden="true"
+              />
+              Session
+            </span>
+            <span
+              data-testid="study-clock-session"
+              className="font-mono text-[15px] font-semibold leading-none tabular-nums text-ink"
+            >
               {formatClock(elapsed)}
             </span>
-          </p>
-          <ol className="mt-1 space-y-0.5">
+          </div>
+          {/* One line per press, in the clock's own monospace: the time of day, what was pressed,
+              the digits at that moment, and the stretch a pause closed. The dot and the coloured
+              word carry the action, so a paused session reads down the left edge at a glance. */}
+          <ol className="px-3 py-1.5">
             {timer.log.map((press, index) => (
-              <li key={`${press.at}-${index}`} data-testid="study-clock-entry">
-                {`${formatTimeOfDay(press.at)} ${PRESS_LABEL[press.action]} · study clock ${formatClock(
-                  press.clockMs
-                )}${press.stretchMs === null ? '' : ` · stretch ${formatClock(press.stretchMs)}`}`}
+              <li
+                key={`${press.at}-${index}`}
+                data-testid="study-clock-entry"
+                className="truncate font-mono text-[11px] leading-[1.65] text-muted"
+              >
+                <span
+                  className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full align-middle ${
+                    press.action === 'pause' ? 'bg-line' : 'bg-accent'
+                  }`}
+                  aria-hidden="true"
+                />
+                <span className="tabular-nums text-faint">{formatTimeOfDay(press.at)}</span>{' '}
+                <span
+                  className={`font-semibold ${
+                    press.action === 'pause' ? 'text-muted' : 'text-accent'
+                  }`}
+                >
+                  {PRESS_LABEL[press.action]}
+                </span>
+                {' · study clock '}
+                <span className="tabular-nums text-ink">{formatClock(press.clockMs)}</span>
+                {press.stretchMs === null ? '' : ` · stretch ${formatClock(press.stretchMs)}`}
               </li>
             ))}
           </ol>
@@ -301,6 +437,10 @@ export const StudyTimerRow: React.FC<{ lessonId: string; compact?: boolean }> = 
             A sitting is one stretch, counted whole for every lesson it touched.
           </p>
           <p className="mt-0.5">Today, all lessons: {todayMs > 0 ? today : 'nothing logged yet'}</p>
+          <p className="mt-0.5" data-testid="study-timer-completed">
+            Completed on this clock:{' '}
+            {completed.length ? completed.join(' · ') : 'nothing yet'}
+          </p>
         </div>
       )}
     </div>

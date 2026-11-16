@@ -26,10 +26,13 @@ flowchart LR
 | `AttemptOffers.tsx` | The two offers of someone else's code — a pair attempt and a shared link — with the lesson check before either can replace a draft. |
 | `useShareLink.ts` | The Share press and its five outcomes, including the printed URL when the clipboard refuses. |
 | `useVimKeys.ts` | The remembered Vim opt-in and the mode the editor reads keys in while it is on. |
-| `usePassToast.ts` | The pass toast and the once-per-lesson shuffle: one tape change per verified lesson, and the toast's own six-second life. |
+| `usePassToast.ts` | When a pass is news: the once-per-lesson tape change, and the callback that raises the card. The six-second life is sonner's, not this module's. |
+| `PassNotice.tsx` | The pass card itself — the lesson, both halves of the verdict and the door to the next lesson — handed to sonner's toast, which owns its stack, live region and hold. |
 | `useProgressFlags.ts` | The verified and self-marked lesson stores, parent-owned or local, and the two writers. |
 | `useRunnerArrangement.ts` | The editor/results split share, which side results sit on, and the persisted layout record. |
 | `RunnerToolbar.tsx` | The run controls: presets and dock, Pause/Stop/Run, Predict, and the More panel's actions. |
+| `CompactPageChrome.tsx` | The page's own controls drawn inside the dock: the Beginner/All labs switch with the three tallies, and the simulator tabs as icon chips where only the open tab prints its name. It reads `app/src/compactChrome.tsx`, which `App.tsx` fills from the state the rail and the mode bar already use, so there is one copy of each control. |
+| `CompactShelf.tsx` | The Compact preset's one dock: a single row of module names with the number worth reading while each is closed, and the one panel a press opens under the row. One module at a time, no scrolling inside it, so the dock's height with everything closed is the same whatever the open module holds. |
 | `RunnerEditorCard.tsx` | The editor surface: main/helper tabs, the pane strip, and the editor body beside Requirements, Predict, Run output, Expected, Cases and Workflow. |
 | `EditorPaneBody.tsx` | The pane body: up to four panes in a mixed grid (three side by side put the first at full height and stack the other two beside it, so no cell is empty), the same arrangement stacked on a phone, the dividers a pointer drags to resize them, each split pane's own close — that view leaves, the rest stay in order — and the offer that puts a closed view back in its slot. The prediction gate's own Close records the same arrangement through `paneUndo.ts`. |
 | `EditorPaneArrangement.tsx` | Horizontal/vertical axis, Add pane, pane swapping and Close — the split's controls, lazy beside the eager Split door and outside the tablist. Close records the arrangement it takes away, so the same Undo a pane's corner close offers restores the whole split. It also reads how many panes the viewport allows: two on a phone, three on a laptop, four on a large desktop, re-read on resize. |
@@ -52,7 +55,8 @@ flowchart LR
 | `AssessmentPanel.tsx` | Instructor behavioural assessment: badges, graded checks and the hint each one unlocks. |
 | `PausedBar.tsx` (+ `parkSource.ts`) | The parked-run bar: step controls, the quoted line, frame values, watches and frame edits. `PausedStep` is the worker's park payload. |
 | `DraftHistoryPanel.tsx` | The filed runs behind a draft, and restoring one. |
-| `BreakpointPanel.tsx` | Armed breakpoints and their conditions. |
+| `BreakpointPanel.tsx` | Armed breakpoints and their conditions, now a pane of the editor body. |
+| `SelfDoneChecklist.tsx` | The three questions beside a pass that turn it into "and I did it unaided", backed by the self-marked store. |
 | `useFirstRunTour.ts` | The first-run tour: record, offer/chip, gates, focus and dismissal. |
 | `useGuideFold.ts` | The brief's remembered hide/show switch for the first-run guide, one value for every lesson. |
 | `GuideToggle.tsx` | The brief's and the phone strip's door onto that switch, in two target sizes and one behaviour. |

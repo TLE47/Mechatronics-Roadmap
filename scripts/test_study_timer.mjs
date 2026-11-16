@@ -16,6 +16,8 @@ import {
   TIMER_STORAGE_KEY,
   clearTimer,
   clearedTimer,
+  isClearedTimer,
+  newerClock,
   elapsedMs,
   formatClock,
   formatTimeOfDay,
@@ -28,6 +30,7 @@ import {
   writeTimer,
 } from '../app/src/studyTimer.ts';
 import { MAX_SITTING_MS, closeSitting, lessonTotals, nextSitting } from '../app/src/sittingClock.ts';
+import { mergeProgress } from '../app/src/progressMerge.ts';
 
 let passed = 0;
 let failed = 0;
@@ -284,6 +287,7 @@ check('the store round-trips, and a cleared clock removes the key', () => {
     runningSince: T0,
     lastTick: T0 + MIN,
     lesson: 'P.1',
+    completed: [],
     log: [{ action: 'start', at: T0, clockMs: 0, stretchMs: null }],
   };
   writeTimer(running, store);
@@ -421,6 +425,112 @@ check('resuming after a pass starts a fresh stretch instead of editing the old o
   const again = startTimer(done, T0 + 30 * MIN, 'P.1', 'resume');
   assert.equal(again.runningSince, T0 + 30 * MIN);
   assert.equal(elapsedMs(again, T0 + 31 * MIN), 6 * MIN);
+});
+
+check('a completion is remembered as a fact, and Log & reset does not forget it', () => {
+  const running = startTimer(IDLE_TIMER, T0, 'P.1');
+  const done = completeTimer(running, T0 + 5 * MIN, 'P.2');
+  assert.deepEqual(done.completed, ['P.2'], 'the lesson that finished is the one recorded');
+  const cleared = clearedTimer('P.2', done.completed);
+  assert.equal(cleared.bankedMs, 0, 'Log & reset zeroes the digits');
+  assert.equal(cleared.log.length, 0, 'and starts a new session log');
+  assert.deepEqual(cleared.completed, ['P.2'], 'but a finished lesson is not a session fact');
+  // Two completions, newest last, one entry each: a lesson finished twice is still one lesson.
+  const twice = completeTimer(completeTimer(cleared, T0 + 9 * MIN, 'P.2'), T0 + 9 * MIN, 'P.3');
+  assert.deepEqual(twice.completed, ['P.2', 'P.3']);
+});
+
+check('a stored clock keeps its completions, and junk in them costs only the junk', () => {
+  const stored = parseTimer(
+    JSON.stringify({
+      bankedMs: 0,
+      runningSince: null,
+      lastTick: 0,
+      lesson: 'P.1',
+      completed: ['P.1', '', 7, 'P.1', 'P.4'],
+      log: [],
+    })
+  );
+  assert.deepEqual(stored.completed, ['P.1', 'P.4'], 'empty, numeric and duplicate ids are dropped');
+  const junk = parseTimer(JSON.stringify({ completed: 'P.1' }));
+  assert.deepEqual(junk.completed, [], 'a stored string is not a list of lessons');
+  assert.deepEqual(parseTimer(null).completed, []);
+});
+
+// Log & reset is a fact about the clock, not only about the digits: after a refresh the learner must
+// still read 0:00:00. The record is therefore stamped with the press, and that stamp is what beats a
+// stale cloud copy of the running clock in the merge.
+check('a cleared clock reads zero but is newer than the clock it replaced', () => {
+  const running = startTimer(IDLE_TIMER, T0, 'P.1');
+  const cleared = clearedTimer('P.1', ['P.2'], T0 + 90_000);
+  assert.equal(elapsedMs(cleared, T0 + 120_000), 0, 'the digits are zero');
+  assert.equal(cleared.runningSince, null, 'nothing is running');
+  assert.equal(cleared.lastTick, T0 + 90_000, 'the clearing press is the record time');
+  assert.deepEqual(cleared.completed, ['P.2'], 'what was completed survives the reset');
+
+  const snapshot = (timer) => ({
+    schema: 'mechalab.progress/1',
+    updatedAt: T0,
+    resetAt: 0,
+    verifiedLessons: {},
+    completedLessons: {},
+    completedMilestones: {},
+    learningLog: [],
+    studyTimer: timer,
+  });
+  const merged = mergeProgress(snapshot(cleared), snapshot(running));
+  assert.equal(merged.studyTimer.lastTick, cleared.lastTick, 'the cleared clock wins the merge');
+  assert.equal(elapsedMs(merged.studyTimer, T0 + 120_000), 0, 'a pull cannot put the logged time back');
+});
+
+check('a refresh of a cleared clock still reads zero', () => {
+  const store = fakeStorage();
+  writeTimer(clearedTimer('P.1', [], T0 + 30_000), store);
+  const read = resumeTimer(readTimer(store), T0 + 50_000);
+  assert.equal(elapsedMs(read, T0 + 50_000), 0);
+  assert.equal(read.runningSince, null);
+});
+
+check('a clear outranks the stretch that was already running when it was pressed', () => {
+  // The shape this exists for: tab A presses Log & reset at T; tab B still holds a stretch that began
+  // before T and writes a later heartbeat. Later `lastTick` would pick B, and the logged time would
+  // come back on the next refresh.
+  const T = T0 + 60_000;
+  const cleared = clearedTimer('P.1', ['P.2'], T);
+  const runningSince = T0 + 1_000;
+  const staleHeartbeat = {
+    bankedMs: 0,
+    runningSince,
+    lastTick: T + 30_000,
+    lesson: 'P.1',
+    completed: [],
+    log: [{ action: 'start', at: runningSince, clockMs: 0, stretchMs: null }],
+  };
+  assert.equal(newerClock(cleared, staleHeartbeat), cleared, 'the reset keeps the clock at zero');
+  assert.equal(newerClock(staleHeartbeat, cleared), cleared, 'and it is symmetric');
+  assert.equal(elapsedMs(newerClock(cleared, staleHeartbeat), T + 40_000), 0);
+
+  // A stretch begun after the reset is new study on another device; it is not the old one ticking.
+  const freshStretch = { ...staleHeartbeat, runningSince: T + 5_000, lastTick: T + 35_000 };
+  assert.equal(newerClock(cleared, freshStretch), freshStretch, 'a stretch started after the clear wins');
+
+  // A stopped record after the clear is a fact too (a pause or a completion), so it wins on lastTick.
+  const pausedAfter = {
+    bankedMs: 5_000,
+    runningSince: null,
+    lastTick: T + 10_000,
+    lesson: 'P.1',
+    completed: [],
+    log: [{ action: 'pause', at: T + 10_000, clockMs: 5_000, stretchMs: 5_000 }],
+  };
+  assert.equal(newerClock(cleared, pausedAfter), pausedAfter, 'a pause after the clear is newer work');
+
+  // Equal stamps keep the record the caller already holds, so a heartbeat does not adopt itself.
+  const same = { ...cleared };
+  assert.equal(newerClock(cleared, same), cleared);
+  assert.equal(isClearedTimer(cleared), true);
+  assert.equal(isClearedTimer(IDLE_TIMER), false, 'a store nobody wrote is not a clear');
+  assert.equal(isClearedTimer(pausedAfter), false, 'banked time is not a clear');
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

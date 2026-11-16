@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { ClipboardCopy, ExternalLink, LifeBuoy, X } from 'lucide-react';
+import { ResponsiveOverlay } from './ui/ResponsiveOverlay';
 import {
   HELP_BLOCK_CHARS,
   HELP_CODE_LINES,
@@ -44,20 +45,6 @@ export const HelpSheet: React.FC<HelpSheetProps> = ({ input, onClose }) => {
   );
   const issue = useMemo(() => helpIssueUrl(report), [report]);
 
-  useEffect(() => {
-    questionRef.current?.focus();
-  }, []);
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      event.preventDefault();
-      onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(report.markdown);
@@ -69,20 +56,17 @@ export const HelpSheet: React.FC<HelpSheetProps> = ({ input, onClose }) => {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/65 p-4 pt-[8vh] max-sm:items-end max-sm:p-0 max-sm:pt-0"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
+    <ResponsiveOverlay
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose();
       }}
+      label="Ask for help"
+      testId="help-sheet"
+      size="md"
+      bodyClassName="flex flex-col"
+      initialFocusRef={questionRef}
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="help-title"
-        data-testid="help-sheet"
-        className="flex max-h-[84vh] w-full max-w-2xl flex-col overflow-hidden rounded-[var(--r-lg)] border shadow-2xl max-sm:max-h-[92dvh] max-sm:rounded-b-none max-sm:rounded-t-2xl max-sm:border-x-0 max-sm:border-b-0 max-sm:pb-[env(safe-area-inset-bottom)]"
-        style={{ backgroundColor: 'var(--panel)', borderColor: 'var(--border-strong)' }}
-      >
         <div
           className="flex items-center justify-between gap-3 border-b px-4 py-3"
           style={{ borderColor: 'var(--border)' }}
@@ -232,7 +216,6 @@ export const HelpSheet: React.FC<HelpSheetProps> = ({ input, onClose }) => {
             )}
           </div>
         </div>
-      </div>
-    </div>
+    </ResponsiveOverlay>
   );
 };

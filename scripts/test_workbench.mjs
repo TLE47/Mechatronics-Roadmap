@@ -290,6 +290,8 @@ async function main() {
     { label: 'reading', script: 'test_trail_reading.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'paint', script: 'test_paint_timing.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'home', script: 'test_home.mjs', env: { NODE_OPTIONS: TYPES } },
+    // The local CI plan's own integrity: every command it names must exist (`verify_ci.mjs`).
+    { label: 'verify-ci', script: 'test_verify_ci.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'weight', script: 'test_weight_budget.mjs' },
     { label: 'audio', script: 'test_audio.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'fonts', script: 'test_fonts.mjs', partition: 'bundle' },
@@ -298,6 +300,9 @@ async function main() {
     { label: 'clock2e', script: 'e2e_study_clock.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-a', browser: true },
     { label: 'pages', script: 'e2e_pages_bundle.mjs', env: { PAGES_SERVER_URL: pagesUrl }, partition: 'bundle', browser: true },
     { label: 'pairs', script: 'e2e_same_task_pairs.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'bundle', browser: true },
+    // Every registry page on the built bundle: its own address, its payload, both scopes, its card,
+    // and the gallery. It reads `dist/` through the runner's static server like the Pages sweep.
+    { label: 'reader-route', script: 'e2e_reader_route.mjs', env: { PAGES_SERVER_URL: pagesUrl, NODE_OPTIONS: TYPES }, partition: 'bundle', browser: true },
     { label: 'firstrun-e2e', script: 'e2e_tour.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'bundle', browser: true },
     { label: 'tour', script: 'e2e_tour_presets.mjs', env: { E2E_BASE_URL: devUrl }, partition: 'bundle', browser: true },
     { label: 'defer', script: 'e2e_editor_deferred.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, partition: 'e2e-a', browser: true },

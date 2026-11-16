@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState, type ReactNode, type RefObject } f
 import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Lock } from 'lucide-react';
 import type { PythonEditorHandle } from '../../PythonEditor';
 import { RunVerdict } from './RunVerdict';
+import { SelfDoneChecklist } from './SelfDoneChecklist';
 import { EditorGoalCard } from './EditorGoal';
 import { EditorPaneBody } from './EditorPaneBody';
 import { resultTabMeta } from './resultTabMeta';
@@ -94,6 +95,8 @@ interface EditorSlots {
   expectedOutputPane: ReactNode;
   casesPane?: ReactNode;
   workflowPane: ReactNode;
+  /** The breakpoint list, as a pane beside the code (`runner/BreakpointPanel.tsx`). */
+  breakpointsPane?: ReactNode;
   tracePane?: ReactNode;
   robotPane?: ReactNode;
 }
@@ -122,6 +125,11 @@ interface RunnerEditorCardProps {
    * output alone, because it has no expected output, no prediction and no lesson workflow.
    */
   resultViews?: EditorView[];
+  /**
+   * The self-done checklist's own inputs, not a node: the card renders it beside the pass mark, and the
+   * tab passes the three facts the checklist needs instead of building its markup.
+   */
+  selfDone?: { lessonId: string; marked: boolean; onChange: (next: boolean) => void };
 }
 
 /**
@@ -207,7 +215,8 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
    * view the preset forbids is not shown and is not written away, so it comes back with Study.
    */
   const baseResultViews =
-    declaredResultViews ?? ['requirements', 'predict', 'actual', 'expected', 'cases', 'workflow', 'trace'];
+    declaredResultViews ??
+    ['requirements', 'predict', 'actual', 'expected', 'cases', 'workflow', 'breakpoints', 'trace'];
   // The Robot tab exists only where the lesson has a robot reading; every other lesson keeps the
   // same strip. It is a normal result view, so a split can put it beside the code.
   const resultViews: EditorView[] =
@@ -435,6 +444,9 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
         {editorShown && (
           <div className="mt-1 flex min-w-0 flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-1.5">
             <RunVerdict passStatus={passStatus} harnessResult={harnessResult} />
+            {passStatus === 'passed' && props.selfDone && (
+              <SelfDoneChecklist {...props.selfDone} />
+            )}
             {passStatus === 'passed' && nextChapter && (
               <button
                 type="button"

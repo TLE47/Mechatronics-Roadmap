@@ -188,7 +188,11 @@ export function RunnerToolbar({
         data-testid="layout-presets"
         className="mr-1 hidden items-center gap-1 md:flex"
       >
-        {LAYOUTS.map((option) => (
+        {/* Compact is a preset, but its button lives in the header's action tray rather than here:
+            at 1280 px this row already fits exactly four chips plus dock, More, Run and Predict
+            (`scripts/check_label_sizes.mjs`), and a learner who folds the page is not looking at the
+            editor's bar. The phone select below lists it, and ⌥5 reaches it from anywhere. */}
+        {LAYOUTS.filter((option) => option.id !== 'compact').map((option) => (
           <button
             key={option.id}
             type="button"

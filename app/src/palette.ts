@@ -219,10 +219,23 @@ function itemScore(item: PaletteItem, query: string): number | null {
  * An empty query returns the catalogue as given: the palette then reads as a table of contents
  * rather than a ranked guess about what the learner meant. `limit` bounds the DOM, not the search.
  */
-export function rankPalette(items: PaletteItem[], query: string, limit = 200): PaletteMatch[] {
+export function rankPalette(
+  items: PaletteItem[],
+  query: string,
+  limit = 200,
+  /**
+   * How often a row has been used, for the empty query only (`app/src/paletteFrecency.ts`).
+   *
+   * Omitted by every unit test and by every typed query, so the catalogue's own order — lessons in
+   * course order, tabs in rail order — is still what an empty field shows by default. A sort key
+   * that is equal everywhere leaves that order untouched, because the sort is stable.
+   */
+  boost?: (id: string) => number
+): PaletteMatch[] {
   const wanted = query.trim().toLowerCase();
   if (!wanted) {
-    return items.slice(0, limit).map((item) => ({ item, score: 0 }));
+    const ordered = boost ? [...items].sort((a, b) => boost(b.id) - boost(a.id)) : items;
+    return ordered.slice(0, limit).map((item) => ({ item, score: 0 }));
   }
   const matches: PaletteMatch[] = [];
   items.forEach((item) => {
@@ -232,6 +245,29 @@ export function rankPalette(items: PaletteItem[], query: string, limit = 200): P
   // Array.prototype.sort is stable in every engine this ships to, so equal scores keep catalogue
   // order: lessons stay in course order, tabs stay in rail order, actions stay in reading order.
   matches.sort((a, b) => b.score - a.score);
+  // Lessons are the course, so a query that matches several of them lists them in course order
+  // rather than in the order the scoring happened to produce. Typing `loop` used to lead with
+  // whichever lesson's *title* scored highest and then fall away through the rest by score; the
+  // palette is how a learner moves through the course, and a result list that reshuffles the
+  // curriculum makes them hunt for P.8 above P.2. Commands and tabs keep their ranking: their order
+  // is usefulness, not a sequence to walk. The sort is over the slots lesson rows already occupy, so
+  // the groups still lead with the best row of any kind.
+  const lessons: number[] = [];
+  matches.forEach((match, index) => {
+    if (match.item.kind === 'lesson') lessons.push(index);
+  });
+  if (lessons.length > 1) {
+    const order = new Map<string, number>();
+    items.forEach((item, index) => {
+      if (item.kind === 'lesson') order.set(item.id, index);
+    });
+    const sorted = lessons
+      .map((slot) => matches[slot])
+      .sort((a, b) => (order.get(a.item.id) ?? 0) - (order.get(b.item.id) ?? 0));
+    lessons.forEach((slot, index) => {
+      matches[slot] = sorted[index];
+    });
+  }
   return matches.slice(0, limit);
 }
 

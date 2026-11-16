@@ -109,23 +109,58 @@ check('a page with no storage at all still reads expanded and writes quietly', (
   assert.doesNotThrow(() => store.writeRailCollapsed(true));
 });
 
+/**
+ * The fold's local state name, discovered from its mount line rather than hard-coded.
+ *
+ * This suite used to spell `railFolded` in five regexes, and when the mode bar moved into the
+ * Compact dock the state was renamed: every one of them quietly stopped matching, which is the red
+ * CI spent a run on. A test that reads its identifier from the source it grades follows a rename;
+ * when the mount line goes away the first check fails *by name* instead of matching nothing.
+ */
+const foldState =
+  (/const \[(\w+), \w+\] = useState<boolean>\(\(\) => readRailCollapsed\(\)\)/.exec(appSource) ?? [])[1] ??
+  null;
+/** The name the render actually reads: the state itself, or the const that folds the compact dock into it. */
+const foldName = foldState
+  ? (new RegExp(`const (\\w+) = ${foldState} \\|\\| compactChrome`).exec(appSource) ?? [])[1] ?? foldState
+  : null;
+
 check('the shell reads the store at mount and saves the press', () => {
   assert.match(appSource, /import \{ readRailCollapsed, writeRailCollapsed \} from '\.\/railCollapse'/);
-  assert.match(appSource, /useState<boolean>\(\(\) => readRailCollapsed\(\)\)/);
-  assert.match(appSource, /writeRailCollapsed\(railCollapsed\)/);
+  assert.ok(
+    foldState,
+    'App.tsx no longer mounts a boolean from readRailCollapsed(); if the fold moved, update this suite with it'
+  );
+  assert.match(appSource, /writeRailCollapsed\(/);
 });
 
 check('the rail is what folds, and says so for a test and a screen reader', () => {
-  assert.match(appSource, /data-collapsed=\{railCollapsed \? 'true' : 'false'\}/);
+  assert.ok(foldName, 'no fold state to check');
+  assert.ok(
+    appSource.includes(`data-collapsed={${foldName} ? 'true' : 'false'}`),
+    `the rail no longer folds on ${foldName}`
+  );
   assert.match(appSource, /data-testid="btn-rail-toggle"/);
-  assert.match(appSource, /aria-expanded=\{!railCollapsed\}/);
+  assert.ok(appSource.includes(`aria-expanded={!${foldName}}`), `the toggle no longer reports ${foldName}`);
   assert.match(appSource, /aria-controls="simulator-tab-rail"/);
   assert.match(appSource, /id="simulator-tab-rail"/);
 });
 
 check('a folded tab draws no text but keeps its name', () => {
-  assert.match(appSource, /aria-label=\{railCollapsed \? `\$\{label\} — \$\{subtitle\}` : undefined\}/);
-  assert.match(appSource, /railCollapsed \? ' xl:hidden' : ''/);
+  assert.ok(foldName, 'no fold state to check');
+  assert.ok(appSource.includes(`aria-label={${foldName} ?`), `the folded tab's label no longer follows ${foldName}`);
+  assert.ok(appSource.includes('${label} — ${subtitle}'), 'the folded tab no longer keeps its name and subtitle');
+  assert.ok(
+    appSource.includes(`${foldName} ? ' xl:hidden' : ''`),
+    `the folded tab's text no longer hides on ${foldName}`
+  );
+});
+
+check('the fold scan follows a rename rather than one spelling of it', () => {
+  assert.ok(foldName, 'no fold state to check');
+  const renamed = `${foldName}AfterARename`;
+  assert.ok(!appSource.includes(`data-collapsed={${renamed} ?`), 'the scan is not tied to the real state name');
+  assert.ok(!appSource.includes(`aria-expanded={!${renamed}}`), 'the scan is not tied to the real state name');
 });
 
 check('below xl the strip offers no fold', () => {

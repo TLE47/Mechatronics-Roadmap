@@ -105,7 +105,7 @@ Complete `winding_draw` (`TODO 1`), `check_against_limit` (`TODO 2`), and `answe
 ```python
 SUPPLY_V = 12.0
 WINDING_OHM = 2.4
-DRIVER_LIMIT_A = 3.2
+DRIVER_LIMIT_A = 3.2  # A, what the driver will pass
 
 
 def winding_draw(supply_v, winding_ohm):

@@ -208,6 +208,101 @@ export function clearPrediction(lessonId: string): void {
   writeAll(kept);
 }
 
+/**
+ * A half-typed guess, kept while the learner types (`PREDICT_DRAFT_KEY`).
+ *
+ * The committed record is a judgement, so it is only written when the learner presses Save — but the
+ * sentence they were halfway through is work too, and the pane is one tab press away from the code it
+ * is about: switching to the editor to check a name, or scrolling the lesson, used to lose it. So the
+ * box keeps a draft per lesson, written a beat after the last keystroke and restored when the lesson
+ * comes back.
+ *
+ * The draft is deliberately **not** a prediction: nothing here is judged, counted, or read by the
+ * verdict, and committing or skipping deletes it so the two can never disagree about what was said.
+ */
+export const PREDICT_DRAFT_KEY = 'mechalab_predict_draft_v1';
+export const PREDICT_DRAFTS_SCHEMA = 'mechalab.predict-drafts/1';
+/** Lessons whose half-typed guess is remembered. The newest win. */
+export const MAX_DRAFTS = 24;
+
+interface PredictionDraft {
+  lessonId: string;
+  text: string;
+  /** When the last keystroke was saved, so the oldest draft is the one that goes. */
+  at: number;
+}
+
+interface DraftFile {
+  schema: string;
+  drafts: PredictionDraft[];
+}
+
+function readDrafts(): PredictionDraft[] {
+  const store = storage();
+  if (!store) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(store.getItem(PREDICT_DRAFT_KEY) ?? 'null');
+  } catch {
+    return [];
+  }
+  const file = parsed as DraftFile | null;
+  if (!file || file.schema !== PREDICT_DRAFTS_SCHEMA || !Array.isArray(file.drafts)) return [];
+  return file.drafts.filter(
+    (draft) =>
+      draft &&
+      typeof draft.lessonId === 'string' &&
+      typeof draft.text === 'string' &&
+      typeof draft.at === 'number'
+  );
+}
+
+function writeDrafts(drafts: PredictionDraft[]): void {
+  const store = storage();
+  if (!store) return;
+  if (drafts.length === 0) {
+    store.removeItem(PREDICT_DRAFT_KEY);
+    return;
+  }
+  const file: DraftFile = {
+    schema: PREDICT_DRAFTS_SCHEMA,
+    drafts: drafts.slice(Math.max(0, drafts.length - MAX_DRAFTS)),
+  };
+  store.setItem(PREDICT_DRAFT_KEY, JSON.stringify(file));
+}
+
+/** What is in the box for this lesson, or '' when nothing was typed and left. */
+export function readPredictionDraft(lessonId: string): string {
+  if (!lessonId) return '';
+  const draft = readDrafts().find((entry) => entry.lessonId === lessonId);
+  return draft ? draft.text : '';
+}
+
+/** Keep the box's text for this lesson. An empty box clears the draft instead of storing one. */
+export function savePredictionDraft(lessonId: string, text: string, now: number = Date.now()): void {
+  if (!lessonId) return;
+  const kept = readDrafts().filter((entry) => entry.lessonId !== lessonId);
+  const trimmed = text.slice(0, MAX_PREDICTION_CHARS);
+  if (!trimmed.trim()) {
+    writeDrafts(kept);
+    return;
+  }
+  writeDrafts([...kept, { lessonId, text: trimmed, at: Math.round(now) }]);
+}
+
+/** Drop this lesson's draft: what committing and skipping do, so a judged guess is not re-offered. */
+export function clearPredictionDraft(lessonId: string): void {
+  const kept = readDrafts().filter((entry) => entry.lessonId !== lessonId);
+  writeDrafts(kept);
+}
+
+/** Forget every draft — a wiped browser, and the tests. */
+export function clearAllPredictionDrafts(): void {
+  const store = storage();
+  if (!store) return;
+  store.removeItem(PREDICT_DRAFT_KEY);
+}
+
 /** Forget everything — the tests use this, and so does a wiped browser. */
 export function clearAllPredictions(): void {
   const store = storage();

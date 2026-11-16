@@ -47,7 +47,7 @@
  * blank screen, and it is trivial to pin without a browser (`npm run test:layout`).
  */
 
-export type WorkspaceLayout = 'study' | 'write' | 'read' | 'debug';
+export type WorkspaceLayout = 'study' | 'write' | 'read' | 'debug' | 'compact';
 
 export type WorkspaceArrangement = 'stack' | 'columns' | 'workbench';
 
@@ -95,6 +95,15 @@ export const LAYOUTS: LayoutOption[] = [
     title:
       'Debug layout (⌥4): the editor and the results side by side — the results dock on either edge',
     arrangement: 'columns',
+  },
+  {
+    // The one preset a learner reaches for when the screen is the lesson: everything the runner
+    // reports on is still there, folded into one dense block under the two surfaces that matter.
+    id: 'compact',
+    label: 'Compact',
+    shortcut: '⌥5',
+    title: 'Compact (⌥5): the text and the editor keep the screen; everything else folds into one strip',
+    arrangement: 'stack',
   },
 ];
 
@@ -339,10 +348,19 @@ const SHOWN: Record<WorkspaceLayout, Record<WorkspaceRegion, boolean>> = {
   read: { lesson: true, editor: true, results: false },
   // Debug hides the lesson text and arranges the editor and the results in two columns.
   debug: { lesson: false, editor: true, results: true },
+  // Compact keeps everything mounted: what changes is that the reporting half is drawn as one
+  // dense block instead of a column of its own (`index.css`, `.compact-dock`).
+  compact: { lesson: true, editor: true, results: true },
 };
 
 export function isLayout(value: unknown): value is WorkspaceLayout {
-  return value === 'study' || value === 'write' || value === 'read' || value === 'debug';
+  return (
+    value === 'study' ||
+    value === 'write' ||
+    value === 'read' ||
+    value === 'debug' ||
+    value === 'compact'
+  );
 }
 
 /**
@@ -439,6 +457,21 @@ export function writeSplitRatio(ratio: number): number {
   return clamped;
 }
 
+/**
+ * A preset was chosen, here or in another component.
+ *
+ * The header's Compact button and the runner's own preset bar are different components holding the
+ * same preference, so the write announces itself rather than leaving one of them drawing a state
+ * the store no longer has.
+ */
+export const LAYOUT_CHANGE_EVENT = 'mechalab:layout-change';
+
+/** Tell anyone listening that the preset is now this one. */
+export function announceLayout(layout: WorkspaceLayout): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent<WorkspaceLayout>(LAYOUT_CHANGE_EVENT, { detail: layout }));
+}
+
 export function writeLayout(layout: WorkspaceLayout): WorkspaceLayout {
   const store = storage();
   if (store) {
@@ -448,5 +481,6 @@ export function writeLayout(layout: WorkspaceLayout): WorkspaceLayout {
       // Blocked or full: the choice lasts this visit only.
     }
   }
+  announceLayout(layout);
   return layout;
 }

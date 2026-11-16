@@ -1,4 +1,4 @@
-{"v":6,"path":"track-p/P.7-si-units-and-metric-prefixes.md","title":"Base SI Units and Metric Prefixes (M, k, m, µ)","blocks":[
+{"v":7,"path":"track-p/P.7-si-units-and-metric-prefixes.md","title":"Base SI Units and Metric Prefixes (M, k, m, µ)","blocks":[
 {"t":"h","l":2,"x":"Goal"},
 {"t":"p","x":"Identify the base SI units (`m`, `kg`, `s`) and unit symbols (`A`, `V`, `Ω`) used in mechatronics, and convert values with metric prefixes (`M`, `k`, `m`, `µ`) into base units before plugging them into equations."},
 {"t":"ul","items":[{"x":"**New ideas (max 2):**","d":0},{"x":"**Base SI units for mechatronics**: Why engineering formulas require standard base units (meters `m`, kilograms `kg`, seconds `s`, plus electrical unit symbols `A`, `V`, `Ω`).","d":1},{"x":"**Metric prefixes (`M`, `k`, `m`, `µ`)**: Scaling numbers by powers of $1{,}000$ (`mega` $= 10^6$, `kilo` $= 10^3$, `milli` $= 10^{-3}$, `micro` $= 10^{-6}$).","d":1},{"x":"**New syntax:** Python scientific notation `1e6`, `1e3`, `1e-3`, `1e-6`.","d":0},{"x":"**Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–2.5 hours","d":0}]},
@@ -23,7 +23,7 @@
 {"t":"h","l":4,"x":"Micro focus: the units are the check"},
 {"t":"anchor","id":"micro-unit-cancel"},
 {"t":"p","x":"Units travel through arithmetic: meters divided by seconds leaves `m/s`, and meters multiplied by meters leaves `m²`. Because the answer's unit is part of the check, a result in the wrong unit points at a wrong formula or a missing conversion before the robot moves."},
-{"t":"h","l":3,"x":"Bridge Notes"},
+{"t":"h","l":3,"x":"Bridge Notes","v":"prefix-shift"},
 {"t":"p","x":"Mixing un-converted prefixes into an equation is the #1 calculation error in beginner robotics. Every formula you will meet in this roadmap—such as distance ($d = s \\cdot t$) and kinetic energy ($E_k = \\frac{1}{2} m s^2$)—strictly expects **un-prefixed base SI units**: meters (`m`), kilograms (`kg`), seconds (`s`), Amperes (`A`), Volts (`V`), and Ohms (`Ω`)."},
 {"t":"figure","id":"unit-cancellation","caption":"Carry the units through the arithmetic and the equation checks itself."},
 {"t":"p","x":"For example, if a datasheet says a sensor is $15\\text{ mm}$ (millimeters) wide or a pulse lasts $500\\ \\mu\\text{s}$ (microseconds) and you forget to convert to meters or seconds before multiplying, your answer will be off by a factor of **$1{,}000\\times$** or **$1{,}000{,}000\\times$**! Follow a two-step habit on every problem:"},

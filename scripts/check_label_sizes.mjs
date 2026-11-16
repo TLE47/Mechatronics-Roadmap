@@ -21,7 +21,9 @@
  * 3. **Primary actions lead.** Run, Stop, Pause, More, the layout presets and the dock toggle are
  *    13 px or larger.
  * 4. **Reading text is reading size.** The lesson pane's paragraphs measure 17–18 px, and metadata
- *    (the status lines, counters and captions) is never smaller than 11 px.
+ *    (the status lines, counters and captions) is never smaller than 11 px. A `<figure>` is a drawing:
+ *    its labels belong to the scene and are read by the visual gates, just like SVG text, so this
+ *    page-type measurement starts after the figure and skips its internal paragraphs.
  * 5. **Home is measured too.** Home is a whole page rather than a tab, and it is where a returning
  *    learner starts: its controls and metadata are held to the same 12 px / 11 px floors, while the
  *    row, fold and lesson-paragraph rules stay the runner's own.
@@ -152,8 +154,10 @@ function measure({ primary, folded }) {
     if (['SCRIPT', 'STYLE', 'CODE', 'PRE', 'svg', 'SVG'].includes(element.tagName)) continue;
     // Labels inside a drawing are part of the picture, not the page's type: their size is set in the
     // figure's own viewBox and scales with it, and `test:visuals` is the gate that reads them. A
-    // lesson's plotted values are text at 10–10.5 px in SVG and are not a 10.5 px caption.
-    if (element.closest('svg')) continue;
+    // lesson's plotted values are text at 10–10.5 px in SVG and are not a 10.5 px caption. The new
+    // micro scenes draw the same kind of labels with HTML inside a `<figure>`, so the whole figure
+    // gets the same treatment.
+    if (element.closest('svg') || element.closest('figure')) continue;
     const own = [...element.childNodes]
       .filter((node) => node.nodeType === Node.TEXT_NODE)
       .map((node) => node.textContent ?? '')
@@ -168,7 +172,11 @@ function measure({ primary, folded }) {
     });
   }
 
-  const prose = [...document.querySelectorAll('[data-testid="reader-prose"] p')].find(visible);
+  // A figure can contain its own `<p>` labels (`name`, `value`); those are drawing text, not the
+  // lesson paragraph whose size this gate holds to 17–18 px.
+  const prose = [...document.querySelectorAll('[data-testid="reader-prose"] p')].find(
+    (element) => visible(element) && !element.closest('figure')
+  );
   const reading = prose
     ? {
         size: Number.parseFloat(getComputedStyle(prose).fontSize),

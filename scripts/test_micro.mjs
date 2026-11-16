@@ -56,6 +56,12 @@ import {
   updateWalkthroughKey,
 } from '../app/src/micro/walkthroughKeys.ts';
 import {
+  CONCEPT_VISUAL_SCENES,
+  conceptVisualIds,
+  visualPlacement,
+  visualPlacementForConcept,
+} from '../app/src/micro/visuals.ts';
+import {
   ActivityClock,
   MICRO_OVER_TARGET_SECONDS,
   MICRO_VISIBLE_ALERT_SECONDS,
@@ -847,6 +853,42 @@ check('a snapshot restores the session and a backwards clock clamps to zero', ()
   assert.equal(backwards.adjustedSeconds, 30);
   assert.equal(formatClock(125), '2:05');
   assert.equal(formatClock(-1), '0:00');
+});
+
+// Each concept now has its own drawn scene rather than a shared picture family. The renderer is a
+// TSX switch, so this pure map is the contract a Node test can check: every catalogue id must name a
+// scene, no scene may be reused, and no stale id may linger after a catalogue edit.
+check('every generated concept has a scene designed only for it', () => {
+  const ids = MICRO_CONCEPTS.map((concept) => concept.id);
+  assert.deepEqual(
+    ids.filter((id) => !CONCEPT_VISUAL_SCENES[id]),
+    [],
+    'concepts with no specific scene'
+  );
+  assert.deepEqual(
+    conceptVisualIds().filter((id) => !ids.includes(id)),
+    [],
+    'the visual map names concepts the catalogue does not have'
+  );
+  const scenes = ids.map((id) => CONCEPT_VISUAL_SCENES[id]);
+  assert.equal(new Set(scenes).size, ids.length, 'two concepts still share a scene');
+  assert.equal(new Set(scenes).size, 46, 'the catalogue should expose forty-six distinct scenes');
+});
+
+check('pictures cycle right, left and underneath so no two lessons open alike', () => {
+  assert.deepEqual(
+    [0, 1, 2, 3, 4, 5].map(visualPlacement),
+    ['right', 'left', 'bottom', 'right', 'left', 'bottom']
+  );
+  assert.equal(visualPlacement(-1), 'left', 'a negative index is still a placement');
+});
+
+check('the reader gives each concept the same side as the micro stage', () => {
+  const ids = MICRO_CONCEPTS.map((concept) => concept.id);
+  for (const [index, id] of ids.entries()) {
+    assert.equal(visualPlacementForConcept(id), visualPlacement(index), `${id} changed sides in the reader`);
+  }
+  assert.equal(visualPlacementForConcept('unsigned'), null, 'an extra page focus must not borrow a scene');
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

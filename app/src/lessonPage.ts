@@ -36,12 +36,18 @@
  * and the reader must keep it rather than stripping the HTML tag. An older payload with the anchor
  * dropped looks the same as a page that never had one, which is why the version moved.
  */
-export const LESSON_PAGE_VERSION = 6;
+export const LESSON_PAGE_VERSION = 7;
 
 export type ReaderCodeLanguage = string;
 
 export type ReaderBlock =
-  | { t: 'h'; l: number; x: string }
+  /**
+   * A heading. `v` is set on the one heading a page draws an interactive under — its `Bridge Notes`
+   * — and names the visual (`resources/bridge-visuals.json`). It travels in the payload because the
+   * reader already fetches that: a list of lessons in the app would put every visual's id in the
+   * entry chunk, and this lives in the page's own file, which is already being read.
+   */
+  | { t: 'h'; l: number; x: string; v?: string }
   | { t: 'p'; x: string }
   | { t: 'ul' | 'ol'; items: { x: string; d: number }[] }
   | { t: 'code'; lang: ReaderCodeLanguage; text: string }
@@ -111,7 +117,13 @@ function isBlock(value: unknown, depth = 0): value is ReaderBlock {
         block.blocks.every((child) => isBlock(child, depth + 1))
       );
     case 'h':
-      return Number.isInteger(block.l) && Number(block.l) >= 1 && Number(block.l) <= 6 && isText(block.x);
+      return (
+        Number.isInteger(block.l) &&
+        Number(block.l) >= 1 &&
+        Number(block.l) <= 6 &&
+        isText(block.x) &&
+        (block.v === undefined || (isText(block.v) && /^[a-z][a-z0-9-]{0,40}$/.test(block.v)))
+      );
     case 'p':
     case 'quote':
       return isText(block.x);

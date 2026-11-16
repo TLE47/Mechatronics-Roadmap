@@ -167,6 +167,8 @@ npm run test:theme:e2e                  # the three controls + contrast on all 1
 npm run check:weight                    # the gzipped shell against docs/weight-budget.json in both build shapes: a local-only dist/ also builds the signed-in one into dist-signed-in/, grades it, and removes it
 npm run check:lighthouse                # Lighthouse on the built bundle: best-practices, SEO and accessibility against docs/lighthouse-allowlist.json (performance not run)
 npm run check:snapshot                  # the painted surface of all 72 surfaces (sixteen tabs, Home and the Workflow canvas, four palettes) against docs/surface-snapshot.json: geometry (2 px), control counts, resolved styles
+npm run test:primitives                 # the four installed primitives wear the workbench, not their library: the skip link is the first stop, ⌘K puts the caret in the field and names the head row, Tab never leaves the palette, the key sheet traps focus, and every colour a palette row paints is declared in index.css
+npm run check:animations                # at most one looping animation per surface, measured with document.getAnimations() against the ratchet in docs/animation-budget.json
 npm run test:settle                     # the gate that sweep waits on, driven against pages whose count arrives late: a copy of the previous silence-only gate is the failing control, and a count that lands with no loading marker plus one that never finishes pin the other two edges
 npm run check:labels                    # the first screen's type, rendered at 1280x800: eight controls at rest, twelve behind More, primary 13 px, controls 12 px, metadata 11 px, lesson text 17-18 px — and Home's controls and metadata at the same floors
 npm run test:perf                       # the visit, timed: six moments on the built bundle, on a laptop and on a throttled phone, each against docs/perf-budget.json (add --record to write docs/PERF.md)
@@ -189,6 +191,13 @@ npm run test:symbols                    # go to definition: what counts as a def
 npm run test:layout                     # layout presets: which regions each shows, a stored value validated, the ⌥ digits, docking (the panel a preset can move, one field at a time), and Debug's divider (clamped, remembered, arrow-keyed, and reversed with the results docked left)
 npm run test:panes                      # the editor's tabs and panes: one view is the floor and two the cap, a tab press never duplicates, a split opens on code-and-output, closing keeps slot 0, and the stored arrangement is validated
 npm run test:reader                     # the lesson pane without a browser: inline Markdown and GitHub's anchor rule, the payload guard, and the reading-position store (anchors, clamps, a blocked store)
+npm run test:reader-route              # every registry page on the built bundle: its own address, its payload's subpath and version, the Study and Read scopes, the card it names, a card that opens at rest, and the gallery (97 pages, 35 cards)
+npm run check:bridge-contrast          # every Bridge Notes card in four palettes and under reduced motion, at 1280 and 380 px: 4.5:1 text, 3:1 strokes, no sideways scroll
+npm run check:registry                 # the five joins a lesson spans: reader payloads, the visual map, callouts, Stage 0 steps and the registry
+npm run report:bridges                 # which of the 97 pages carry a Bridge Notes visual, by track, and the queue of the ones that do not (--check for integrity)
+npm run verify:ci                      # CI's three lanes on this machine, one step at a time (--list, --keep-going, --lane)
+npm run version:check                  # the header's brand version and the changelog's release identity are the same number
+npm run version:bump -- minor          # move both: major is a restructure a learner can feel, minor a new capability, patch a repair
 npm run test:keymap                     # the sheet's keys: the shipped six print as they always have, ⌘ and Ctrl are one chord, a character shortcut is the character, a rebind frees its old key, a clash or a browser key is refused with its sentence, a stored map is read field by field, and the sheet prints the map
 npm run test:vim                        # Vim keys: off until asked for, remembered, blocked storage, and the mode word the badge prints
 npm run test:trace                      # the run trace: a payload from another thread, the step cap and its honest total, unreadable values cut
@@ -617,7 +626,7 @@ repository's own page, so the gate is green on the real file and not only on syn
 
 **The page's numbers are measured, not remembered (Run 206).** Run 204 swept every count on the page by
 hand and found eight stale; a sweep that has to be repeated is not a gate. So a number whose owner is a
-file or a generated artifact is now written with a marker after it — `42<!-- plan-fact:gates_total -->`,
+file or a generated artifact is now written with a marker after it — `45<!-- plan-fact:gates_total -->`,
 which Markdown renders as nothing — and [`docs/plan-facts.json`](plan-facts.json) names what owns each
 one: the gate list in `check_all.py` (all of it, and the subset every push runs), the tab registry, the
 surface snapshot, the prose index split into reading pages and arm modules, the error index, the
@@ -728,6 +737,63 @@ the local-only build it builds the signed-in one beside it (placeholders, not cr
 it against `signed_in`'s ceilings and deletes it, so a breach that only exists with the account
 library present fails locally instead of on the runner (Run 226). CI's `dist/` is already signed-in,
 so nothing extra is built there.
+
+## UI primitives: the contract and the animation ratchet
+
+Two of the rules behind the 2026-11-13 library release could not be seen by any gate that already
+existed, so they have their own. Both are rows in `scripts/check_all.py`, which is the table CI's
+text job runs (`python3 scripts/check_all.py --ci`), so a pre-push `npm run check:all` and every push
+grade the same two rules; `tests/test_check_all.py` keeps that table and the workflow in step, so a
+gate cannot be dropped from CI without its parity test going red.
+
+That job therefore prepares what they measure: it builds the bundle once (`npm run prebuild` then
+`npx vite build`, so the two parallel gates never race on `dist/` and `ensureBuilt()` finds a fresh
+one) and installs the Playwright **headless shell** once, cached on Playwright's version — the shell
+is the renderer the surface baseline was measured with and the only browser these two launch. On a
+warm cache the pair costs about a minute; measured locally at 20 s and 45 s.
+
+`npm run test:primitives` (`scripts/test_primitive_contract.mjs`) drives the built bundle on the
+headless shell and asserts six things a dependency bump could quietly break:
+
+- the skip link is the first tab stop from a fresh document;
+- `⌘K` puts the caret in the palette field and `aria-activedescendant` names the highlighted row —
+  cmdk stamps that attribute from its own store, after spreading our props, and drops it on the
+  renders where it has no value, so the palette sets it from a layout effect and re-applies it with a
+  `MutationObserver` on the one attribute;
+- Tab, eight times, never leaves the open palette, and `?` opens the key sheet with focus inside it;
+- every colour a palette row paints is a colour declared somewhere in the app's CSS. The check reads
+  the colour literals out of `document.styleSheets` rather than resolving custom properties in a
+  probe, because the built bundle scopes tokens in ways a probe does not reproduce; what it catches is
+  a library default (a grey border, a white card) that survived an upgrade.
+
+`npm run check:animations` (`scripts/check_animation_budget.mjs`) counts, for each of the sixteen
+tabs, the animations in `document.getAnimations()` whose timing is `iterations: Infinity`, after the
+tab has painted. `docs/animation-budget.json` records today's numbers and the gate fails a surface
+that gains one — the rule is one standout animated element per page, and a second one is invisible in
+a diff. It proves the ruler first: it adds a known infinite animation and refuses to run if the
+counter cannot see it. Today every tab measures zero (the arm and the hero are JS-driven canvases,
+not CSS loops, and they are the page's one standout), so the file is a floor, not an allowance.
+Re-record with `node scripts/check_animation_budget.mjs --record` and say which element was added.
+
+## The surface snapshot runs on the headless shell
+
+`npm run check:snapshot` compares 72 surfaces against `docs/surface-snapshot.json`, and those numbers
+were recorded by **`chrome-headless-shell`** — Playwright's second Chromium build, not Chrome for
+Testing. The two are the same revision and the same engine (chromium-1248, `156.0.8078.4`) and they
+still break text lines differently: on the Architecture tab the headless shell measures the activity
+rail at 1319 px and the main pane at 8664 px, while Chrome for Testing measures 1334 and 8731. The
+recorded heights (rail 1319, main 8664, panel 8624, document 8892) are unchanged in the file since the
+runner wrote them — commit `120a961` ("Record the surface snapshot on the runner",
+`snapshot-recorder@users.noreply.github.com`) — and every later re-record reproduced them.
+
+So `scripts/snapshot_surfaces.mjs` asks for the headless shell by name
+(`resolveSnapshotBrowser`, after `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`) and prints the binary it
+measured with. It is not hinting and it is not the host's fonts: every `--font-render-hinting` value
+(`none`, `full`, `medium`, `slight`) measures 1334 on the full build, and every character of the
+rail's labels resolves inside the bundled Geist face, so no fallback is involved. If a future
+Playwright ships no headless shell, the gate falls back to Chrome for Testing and will report the rail
+15 px and the main pane 67 px out on every surface — that is the renderer, not a layout regression,
+and the fix is the browser, never the baseline.
 
 ## Accounts, sync and the admin area
 

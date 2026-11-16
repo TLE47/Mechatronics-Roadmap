@@ -1,7 +1,7 @@
 import React from 'react';
 import { MathView } from './MathView';
-import { inlinePlain, parseInline } from '../readerMarkdown';
-import { markQuotes } from '../lessonMarks';
+import { parseInline } from '../readerMarkdown';
+import { markQuoteFragments, type MarkRange } from '../lessonMarks';
 import type { Highlight } from '../studyNotes';
 
 /**
@@ -12,28 +12,65 @@ import type { Highlight } from '../studyNotes';
  * answer draws the same `**bold**`, `*italic*` and `++underline++` a learner typed into the popup.
  * Keeping one renderer is what stops the editor and the card from disagreeing about what a note says.
  *
- * A quote that spans two inline runs (half a sentence in bold, say) is not marked: the note is still
- * in Notes, and a mark on the wrong words would be worse than no mark at all. A quote *inside* one
- * run is marked, and inline code is one run too - a note on `battery_level` is drawn on the code
- * span, not only listed in Notes. That is the same rule the fenced blocks follow (`CodeBlock`).
+ * **Marks are found in the paragraph, not in a run.** The old rule cut each run on its own, so a note
+ * whose words crossed a bold or a code span matched nothing and simply did not highlight — the note
+ * was in Notes, the sentence was on screen, and nothing connected them. Now the paragraph's drawn text
+ * is assembled first, `markRanges` finds the passage in it, and each run is cut by the ranges that
+ * overlap it: a mark can start in plain text, cross a `battery_level` span, and end after it, and the
+ * words on both sides are still drawn with their own formatting.
  *
- * The handler is handed the pressed element as well as the note: the reader opens the note *beside the
- * words* it is about, and the mark's own box is what tells it where the words are.
+ * A note whose words are no longer on this text is named once, after the paragraph, rather than
+ * silently missing: wording changes under a note and the learner should be told which one moved.
  */
-function MarkedRun({
+function plainOf(run: ReturnType<typeof parseInline>[number]): string {
+  switch (run.k) {
+    case 'strong':
+    case 'em':
+    case 'u':
+    case 'link':
+      return parseInline(run.v).map(plainOf).join('');
+    default:
+      return run.v;
+  }
+}
+
+/** The paragraph's drawn characters, which is what a stored quote was selected from. */
+export function inlinePlainText(text: string): string {
+  return parseInline(text).map(plainOf).join('');
+}
+
+function MarkedRange({
   text,
+  ranges,
+  offset,
   marks,
   onMark,
 }: {
   text: string;
+  /** The paragraph's marks, in paragraph offsets. */
+  ranges: readonly MarkRange[];
+  /** Where this run starts in the paragraph. */
+  offset: number;
   marks: Highlight[];
   onMark?: (mark: Highlight, anchor?: HTMLElement) => void;
 }) {
-  if (!onMark || marks.length === 0) return <>{text}</>;
-  const quotes = marks.map((mark) => mark.quote);
+  if (!onMark || ranges.length === 0) return <>{text}</>;
+  const end = offset + text.length;
+  const pieces: { text: string; quote: string | null }[] = [];
+  let cursor = 0;
+  for (const range of ranges) {
+    if (range.end <= offset || range.start >= end) continue;
+    const from = Math.max(0, range.start - offset);
+    const to = Math.min(text.length, range.end - offset);
+    if (to <= cursor) continue;
+    if (from > cursor) pieces.push({ text: text.slice(cursor, from), quote: null });
+    pieces.push({ text: text.slice(from, to), quote: range.quote });
+    cursor = to;
+  }
+  if (cursor < text.length) pieces.push({ text: text.slice(cursor), quote: null });
   return (
     <>
-      {markQuotes(text, quotes).map((piece, index) => {
+      {pieces.map((piece, index) => {
         if (!piece.quote) return <React.Fragment key={index}>{piece.text}</React.Fragment>;
         const mark = marks.find((entry) => entry.quote === piece.quote);
         return (
@@ -44,18 +81,122 @@ function MarkedRun({
             data-quote={piece.quote}
             title={
               mark?.comment
-                ? `Open the note: ${inlinePlain(mark.comment)}`
+                ? `Open the note: ${inlineText(mark.comment)}`
                 : 'Open this passage in Notes'
             }
             onClick={(event) => {
               event.stopPropagation();
               if (mark && onMark) onMark(mark, event.currentTarget);
             }}
-            className="inline cursor-pointer rounded-sm bg-amber/15 px-0.5 text-inherit underline decoration-amber decoration-dotted underline-offset-2 hover:bg-amber/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+            // Two kinds, one wash each. A highlight is a passage worth finding again, so it takes the
+            // accent's wash; a sticky note is a thought attached to a passage, so it takes the amber
+            // one and a dotted edge. Both are painted, because a saved note that only underlines its
+            // words reads as a link, not as something the learner put there.
+            data-mark-kind={mark && mark.comment.trim() ? 'sticky' : 'highlight'}
+            className={
+              mark && mark.comment.trim()
+                ? 'inline cursor-pointer rounded-sm border-b-2 border-amber/70 bg-amber/20 px-0.5 text-inherit hover:bg-amber/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent'
+                : 'inline cursor-pointer rounded-sm bg-accent/15 px-0.5 text-inherit underline decoration-accent/70 decoration-dotted underline-offset-2 hover:bg-accent/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent'
+            }
           >
             {piece.text}
           </button>
         );
+      })}
+    </>
+  );
+}
+
+/** `strip` of the note's own Markdown, for the mark's tooltip. */
+function inlineText(text: string): string {
+  return inlinePlainText(text);
+}
+
+/**
+ * One paragraph's runs, drawn with the paragraph's marks cut across them.
+ *
+ * `offset` is where `text` starts inside the paragraph the ranges were measured on, so the recursion
+ * into `strong`, `em` and `u` keeps the same coordinate system instead of re-scanning a fragment.
+ */
+function InlineRuns({
+  text,
+  ranges,
+  offset,
+  marks,
+  onMark,
+}: {
+  text: string;
+  ranges: readonly MarkRange[];
+  offset: number;
+  marks: Highlight[];
+  onMark?: (mark: Highlight, anchor?: HTMLElement) => void;
+}) {
+  let cursor = offset;
+  return (
+    <>
+      {parseInline(text).map((run, index) => {
+        const start = cursor;
+        cursor += plainOf(run).length;
+        switch (run.k) {
+          case 'code':
+            return (
+              <code
+                key={index}
+                className="rounded bg-canvas border border-line-soft px-1 py-0.5 font-mono text-[0.87em] text-ink"
+              >
+                <MarkedRange
+                  text={run.v}
+                  ranges={ranges}
+                  offset={start}
+                  marks={marks}
+                  onMark={onMark}
+                />
+              </code>
+            );
+          case 'strong':
+            return (
+              <strong key={index} className="font-bold text-ink">
+                <InlineRuns text={run.v} ranges={ranges} offset={start} marks={marks} onMark={onMark} />
+              </strong>
+            );
+          case 'em':
+            return (
+              <em key={index} className="italic">
+                <InlineRuns text={run.v} ranges={ranges} offset={start} marks={marks} onMark={onMark} />
+              </em>
+            );
+          case 'u':
+            return (
+              <u key={index} className="underline underline-offset-2">
+                <InlineRuns text={run.v} ranges={ranges} offset={start} marks={marks} onMark={onMark} />
+              </u>
+            );
+          case 'link':
+            return (
+              <a
+                key={index}
+                href={run.href}
+                target="_blank"
+                rel="noreferrer"
+                className="text-accent underline underline-offset-2 hover:text-accent-strong"
+              >
+                <InlineRuns text={run.v} ranges={ranges} offset={start} marks={[]} />
+              </a>
+            );
+          case 'math':
+            return <MathView key={index} math={run.v} />;
+          default:
+            return (
+              <MarkedRange
+                key={index}
+                text={run.v}
+                ranges={ranges}
+                offset={start}
+                marks={marks}
+                onMark={onMark}
+              />
+            );
+        }
       })}
     </>
   );
@@ -70,55 +211,16 @@ export function InlineMarkdown({
   marks?: Highlight[];
   onMark?: (mark: Highlight, anchor?: HTMLElement) => void;
 }) {
-  return (
-    <>
-      {parseInline(text).map((run, index) => {
-        switch (run.k) {
-          case 'code':
-            return (
-              <code
-                key={index}
-                className="rounded bg-canvas border border-line-soft px-1 py-0.5 font-mono text-[0.87em] text-ink"
-              >
-                <MarkedRun text={run.v} marks={marks} onMark={onMark} />
-              </code>
-            );
-          case 'strong':
-            return (
-              <strong key={index} className="font-bold text-ink">
-                <InlineMarkdown text={run.v} marks={marks} onMark={onMark} />
-              </strong>
-            );
-          case 'em':
-            return (
-              <em key={index} className="italic">
-                <InlineMarkdown text={run.v} marks={marks} onMark={onMark} />
-              </em>
-            );
-          case 'u':
-            return (
-              <u key={index} className="underline underline-offset-2">
-                <InlineMarkdown text={run.v} marks={marks} onMark={onMark} />
-              </u>
-            );
-          case 'link':
-            return (
-              <a
-                key={index}
-                href={run.href}
-                target="_blank"
-                rel="noreferrer"
-                className="text-accent underline underline-offset-2 hover:text-accent-strong"
-              >
-                <InlineMarkdown text={run.v} />
-              </a>
-            );
-          case 'math':
-            return <MathView key={index} math={run.v} />;
-          default:
-            return <MarkedRun key={index} text={run.v} marks={marks} onMark={onMark} />;
-        }
-      })}
-    </>
-  );
+  const live = marks.filter((mark) => mark.quote.trim().length > 0);
+  if (!onMark || live.length === 0) {
+    return <InlineRuns text={text} ranges={[]} offset={0} marks={[]} />;
+  }
+  const whole = inlinePlainText(text);
+  const quotes = live.map((mark) => mark.quote);
+  // Fragments, not only whole quotes: a selection that crosses a paragraph boundary is in no one
+  // paragraph whole, and each paragraph still draws the part of it that it holds. The page names a
+  // note as unlocated once, in the reader, when *no* paragraph could draw any of it — the old
+  // per-paragraph badge made every other paragraph accuse a perfectly placed note.
+  const ranges = markQuoteFragments(whole, quotes);
+  return <InlineRuns text={text} ranges={ranges} offset={0} marks={live} onMark={onMark} />;
 }

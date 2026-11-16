@@ -758,6 +758,16 @@ body {
   font-size: 0.8rem;
   background: transparent;
 }
+
+/* The header's tray row is one line at 1440 until a control is added, and a second line costs the
+   page 47 px above every panel. Narrowing the pill's two hollows by a third buys the row back
+   without touching a letter: the trays together save more than a button's width. */
+@media (max-width: 1599px) {
+  .action-tray .btn {
+    padding-inline: 0.4rem;
+  }
+}
+
 .action-tray .btn:hover {
   background: var(--panel-3);
   border-color: transparent;
@@ -977,4 +987,224 @@ header[data-action-labels='on'] .action-tray .btn > kbd {
   [data-testid='editor-panel'] {
     scroll-margin-top: calc(var(--header-h, 57px) + 3.6rem);
   }
+}
+
+/* ----------------------------------------------------------------------------
+   Installed primitives, wearing the workbench's own clothes.
+
+   The dialog and its phone drawer, the palette, the toasts and the counters come
+   from Radix, vaul, cmdk, sonner and Number Flow; nothing below re-implements a
+   focus trap, a portal or a timer. What is set here is only what the tokens
+   already decide — the panel surface, the line, the radius scale, the two faces
+   and tabular figures — so a theme change re-skins a component it has never
+   heard of, and no new palette is invented.
+   -------------------------------------------------------------------------- */
+
+[data-overlay-panel] {
+  color: var(--text);
+}
+
+/* The drawer's grab bar is the thing a thumb finds at 390 px; it is the same line colour as the
+   buttons it sits above, not a second grey. */
+[data-drawer-handle] {
+  background: var(--border-strong);
+}
+
+/* cmdk: the palette's list is the app's list. The rows are buttons (so the palette's own
+   `palette-option-*` ids survive), and the selected row says so with the accent, in one place. */
+[cmdk-root] {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+[cmdk-input] {
+  font-family: var(--font-sans);
+  caret-color: var(--accent);
+}
+[cmdk-input]::placeholder {
+  color: var(--dim);
+}
+[cmdk-list] {
+  scrollbar-width: thin;
+}
+[cmdk-item] {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.875rem;
+  border-left: 2px solid transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+[cmdk-item][data-selected='true'] {
+  border-left-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Number Flow draws its digits in its own shadow root; the figures stay tabular so a changing
+   number cannot push the words beside it. */
+number-flow {
+  font-variant-numeric: tabular-nums;
+}
+
+/* sonner: the cards keep their own skin (`unstyled`), so only the stack's geometry and the reduced
+   motion rule are set from here. */
+[data-sonner-toaster] {
+  --width: 19rem;
+  font-family: var(--font-sans);
+}
+[data-sonner-toast] {
+  border-radius: var(--r-lg);
+}
+[data-sonner-toast] [data-close-button] {
+  border-color: var(--border);
+  background: var(--panel-2);
+  color: var(--muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-sonner-toast] {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* The reference card is a printed page, not a dialog: while printing, the panel leaves the viewport
+   box and the scrim steps out of the paper. This is what the old full-screen markup got from
+   `print:static`, and it has to survive the move into a portal. */
+@media print {
+  [data-overlay-scrim] {
+    display: none !important;
+  }
+  [data-overlay-panel] {
+    position: static !important;
+    max-height: none !important;
+    width: 100% !important;
+    max-width: none !important;
+    transform: none !important;
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+}
+
+/* ── Compact lesson ─────────────────────────────────────────────────────────────
+   The fifth preset (`workspaceLayout.ts`): the lesson text and the editor keep the screen, and
+   every surface that reports on them — the runtime strip, the checks, the panes, the log — folds
+   into one dense block under both (`TabPyodideRunner.tsx`, `data-testid="compact-dock"`). The dock
+   wrapper is `display: contents` in the other four presets, so none of this reaches them: outside
+   Compact it is not a box at all. */
+[data-layout='compact'] {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+[data-layout='compact'] > * {
+  min-width: 0;
+}
+.compact-dock {
+  /* Above the editor and the text: the dock is the page's status row, read before the columns. */
+  order: -1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--panel);
+}
+.compact-shelf-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.1875rem 0.25rem;
+}
+.compact-shelf-tab {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  /* A chip is a whole word and its number: the bar wraps to a second line before a chip breaks. */
+  white-space: nowrap;
+  padding: 0.125rem 0.5rem;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--muted);
+  cursor: pointer;
+}
+.compact-shelf-tab:hover {
+  color: var(--ink);
+  background: var(--bg);
+}
+.compact-shelf-tab[aria-selected='true'] {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+.compact-shelf-meta {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--dim);
+}
+.compact-shelf-tab[aria-selected='true'] .compact-shelf-meta {
+  color: var(--accent);
+}
+.compact-shelf-panel {
+  padding: 0.5rem 0.625rem 0.625rem;
+  border-top: 1px solid var(--border);
+}
+/* Nothing inside the dock clips or scrolls: the page is what scrolls, and a sentence cut off inside a
+   module would be one the learner cannot reach without opening another surface. A label that was
+   truncated beside the editor wraps here instead, and a panel that capped its own height lets go. */
+.compact-dock .truncate {
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+}
+.compact-dock :is([data-testid='panel-instructor-tests'], [data-testid='analysis-notes']) {
+  overflow: visible;
+}
+/* A glow is drawn past its panel's edge on purpose, and the panel it belongs to is clamped beside the
+   editor. In the dock nothing is clamped, so the decoration would be the one thing sticking out. */
+.compact-dock [aria-hidden='true'].pointer-events-none {
+  display: none;
+}
+.compact-dock > * {
+  min-width: 0;
+}
+.compact-dock :is(h2, h3, h4) {
+  margin-block: 0 0.25rem;
+  font-size: 12.5px;
+}
+.compact-dock :is(p, li) {
+  line-height: 1.5;
+}
+/* The brief and the hint ladder keep their words and lose their card: inside the dock a nested
+   panel with its own border, radius and padding reads as a second box in the one box. */
+.compact-dock :is([data-testid='lesson-brief'], [data-tour='hint-ladder']) {
+  padding: 0.35rem 0.4rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+/* One step tighter than the page's own rhythm, and the decorations that only teach the first
+   lesson stay out of the way: Compact is the mode a learner is in once they know the screen. */
+.lesson-compact.space-y-5 > * + * {
+  margin-top: 0.75rem;
+}
+/* Compact folds the page's own chrome into the dock's `Mode` and `Tabs` modules
+   (`runner/CompactPageChrome.tsx`): the mode bar and the simulator rail are not drawn above it as
+   well, or the page would carry two of each. */
+[data-density='compact'] [data-chrome='mode-bar'],
+[data-density='compact'] [data-chrome='rail'] {
+  display: none;
+}
+.lesson-compact [data-testid='tour-chip'],
+.lesson-compact [data-testid='first-lesson-guide'],
+.lesson-compact [data-testid='guide-offer'] {
+  display: none;
 }

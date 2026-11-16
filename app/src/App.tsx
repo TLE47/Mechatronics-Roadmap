@@ -3,7 +3,12 @@ import { Header } from './components/Header';
 import { StudyTips } from './components/StudyTips';
 import { GuidedTourBar, TourStepInfo } from './components/GuidedTourBar';
 import { CheatSheetModal } from './components/CheatSheetModal';
-import { CommandPalette } from './components/CommandPalette';
+// The palette is opened on demand — `⌘K`, the header's Search button — so it is its own chunk,
+// fetched on idle after the first paint rather than paid for by every learner who never presses it
+// (`docs/VERIFICATION.md`, "UI primitives").
+const CommandPalette = React.lazy(() => import('./components/CommandPalette'));
+import { Toaster } from 'sonner';
+import { dismissCard, showCard } from './toastPolicy';
 import { ShortcutsModal } from './components/ShortcutsModal';
 import { lessonSearchItems } from './lessonSearch';
 import { termSearchItems } from './termSearch';
@@ -22,6 +27,9 @@ import { readTimer, writeTimer, STUDY_CLOCK_EVENT } from './studyTimer';
 const AwardToast = React.lazy(() =>
   import('./components/game/AwardToast').then((module) => ({ default: module.AwardToast }))
 );
+// Every Bridge Notes visual on one page, for review (`?gallery=bridges`). Fetched only when the
+// query asks for it, so a learner's first paint never pays for a page they did not ask to see.
+const BridgeGallery = React.lazy(() => import('./components/BridgeGallery'));
 // The reward engine is fetched when a verification earns something, not on every visit: the rules,
 // the ladder and the mission model are ~4 kB gzipped that a learner who never verifies never needs.
 // `import type` is erased, so the type does not pull the module back into the entry chunk.
@@ -29,6 +37,7 @@ import type { Award } from './gamification/rewards';
 import { readPredictions } from './predictGate';
 import { STORAGE_KEY_START_HERE_DISMISSED } from './startHere';
 import { readRailCollapsed, writeRailCollapsed } from './railCollapse';
+import { LazyPending } from './components/LazyPending';
 import { SPINE_STEP_COUNT, stepForMilestone } from './spine';
 import { passChangesContent } from './courseLevels';
 // One entry per tab — its id, labels, icon, chunk and render — lives in `tabRegistry.tsx`. The shell
@@ -294,6 +303,34 @@ function localSnapshot(): ProgressSnapshot {
   };
 }
 
+/**
+ * What a snapshot says, with the timestamps that say *when* it said it taken out.
+ *
+ * Two devices that have converged hold snapshots that differ only in `updatedAt`; without this, every
+ * pull would look like news and every pulse would write the row again. The learning log is compared by
+ * its length and its last entry — entries are only ever appended or merged by time, so a change at the
+ * end is the only change a second device can add.
+ */
+export function progressFingerprint(snapshot: ProgressSnapshot): string {
+  const flags = (map: Record<string, unknown>): string =>
+    Object.keys(map)
+      .sort()
+      .map((key) => `${key}:${String(map[key])}`)
+      .join(',');
+  const last = snapshot.learningLog[snapshot.learningLog.length - 1];
+  const timer = snapshot.studyTimer;
+  return [
+    flags(snapshot.verifiedLessons),
+    flags(snapshot.completedLessons),
+    flags(snapshot.completedMilestones),
+    String(snapshot.learningLog.length),
+    last ? JSON.stringify(last) : '',
+    timer
+      ? `${timer.lesson}~${timer.bankedMs}~${timer.runningSince}~${timer.lastTick}~${timer.log.length}`
+      : '',
+  ].join('|');
+}
+
 export type WorkbenchViewMode = 'beginner' | 'advanced';
 
 // The document itself lives in its own module so a unit suite can pin it without React; this stays
@@ -303,6 +340,8 @@ import { buildPortfolioMarkdown } from './portfolio';
 import { readStudy } from './studyNotes';
 import { readCardList } from './studyCards';
 import { readSittings } from './sittingClock';
+import { LAYOUT_CHANGE_EVENT, readLayout } from './workspaceLayout';
+import { CompactChromeContext, type CompactChrome } from './compactChrome';
 
 /**
  * The one footer, so the palette page and the workbench cannot drift apart. The token reference is
@@ -451,6 +490,10 @@ export const App: React.FC = () => {
   // At `xl` the rail is a 232 px activity bar on every lesson; a press folds it to its icons. A
   // preference like the layout, so it is remembered (`app/src/railCollapse.ts`).
   const [railCollapsed, setRailCollapsed] = useState<boolean>(() => readRailCollapsed());
+  // Compact folds the page's own chrome as well as the lesson's: the mode bar keeps its short labels
+  // and the rail is its icon column, so the lesson's dock is the first full row on the page.
+  const [compactChrome, setCompactChrome] = useState<boolean>(() => readLayout() === 'compact');
+  const railFolded = railCollapsed || compactChrome;
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState<boolean>(false);
   const [portfolioCopied, setPortfolioCopied] = useState<boolean>(false);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
@@ -467,6 +510,8 @@ export const App: React.FC = () => {
   const [syncNote, setSyncNote] = useState<string>('');
   // True only after the account's copy has been merged in; a save before that would overwrite it.
   const syncReady = useRef<boolean>(false);
+  /** What the account was last told, so a pulse with nothing new to say writes nothing (`progressFingerprint`). */
+  const lastPushed = useRef<string>('');
   const [accountProviders, setAccountProviders] = useState<string[]>([]);
   const [accountRole, setAccountRole] = useState<string | null>(null);
   // A reset link lands on `?type=recovery`: the panel then opens on "set a new password".
@@ -522,6 +567,46 @@ export const App: React.FC = () => {
   // last verification earned. Both are local; a restore merges rather than replaces.
   const [awardsLedger, setAwardsLedger] = useState<Award[]>([]);
   const [gameAwards, setGameAwards] = useState<Award[]>([]);
+
+  // The ledger's newest lines, said once. The card is still `AwardToast` — the certificate a learner
+  // reads — but the toast around it is sonner's: the queue, the portal, the live region, the
+  // six-second hold and its dismissal are the library's rules, not a `setTimeout` this file owns.
+  // `unstyled` keeps the card's own skin, which is drawn from the workbench tokens below.
+  useEffect(() => {
+    if (gameAwards.length === 0) return;
+    const id = showCard('award', (toastId) => (
+        <React.Suspense fallback={<LazyPending what="award-toast" />}>
+          <AwardToast
+            awards={gameAwards}
+            onClose={() => {
+              dismissCard(toastId);
+              setGameAwards([]);
+            }}
+          />
+        </React.Suspense>
+      ));
+    return () => {
+      dismissCard(id);
+    };
+  }, [gameAwards]);
+
+  // The palette's chunk is fetched once the first screen is idle: `⌘K` still opens it on a cold
+  // cache (the dialog's Suspense fallback is nothing), and a learner who never asks pays for none
+  // of it.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const load = () => {
+      void import('./components/CommandPalette');
+    };
+    const idle =
+      typeof window.requestIdleCallback === 'function'
+        ? window.requestIdleCallback(load, { timeout: 2500 })
+        : window.setTimeout(load, 1200);
+    return () => {
+      if (typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(idle);
+      window.clearTimeout(idle);
+    };
+  }, []);
   const [storySeen, setStorySeen] = useState<boolean>(() => readStorySeen());
   const [verifiedLessons, setVerifiedLessons] = useState<Record<string, boolean>>(() => {
     try {
@@ -678,6 +763,12 @@ export const App: React.FC = () => {
   }, [railCollapsed]);
 
   useEffect(() => {
+    const sync = () => setCompactChrome(readLayout() === 'compact');
+    window.addEventListener(LAYOUT_CHANGE_EVENT, sync);
+    return () => window.removeEventListener(LAYOUT_CHANGE_EVENT, sync);
+  }, []);
+
+  useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY_MILESTONES, JSON.stringify(completedMilestones));
     } catch {
@@ -766,6 +857,7 @@ export const App: React.FC = () => {
         }
         syncReady.current = true;
         await saveProgress(session.user.id, { ...merged, updatedAt: Date.now() });
+        lastPushed.current = progressFingerprint(merged);
         if (!cancelled) setSyncNote(remote ? 'Progress merged with your account.' : 'Progress saved to your account.');
         // Only when this browser opted in. A project without the workspace migration throws here;
         // that must not take progress sync down with it, so it has its own catch.
@@ -812,15 +904,92 @@ export const App: React.FC = () => {
     if (!accountsConfigured || !accountUserId || !syncReady.current) return;
     const userId = accountUserId;
     const timer = window.setTimeout(() => {
+      const snapshot = localSnapshot();
+      const fingerprint = progressFingerprint(snapshot);
+      // Nothing has been said since the last save: a pulse that fired between two real changes must not
+      // rewrite the row, and a merge applied from the other device must not be echoed straight back.
+      if (fingerprint === lastPushed.current) return;
       setSyncNote('Saving…');
-      saveProgress(userId, localSnapshot())
-        .then(() => setSyncNote('Saved to your account.'))
+      saveProgress(userId, snapshot)
+        .then(() => {
+          lastPushed.current = fingerprint;
+          setSyncNote('Saved to your account.');
+        })
         .catch((error) =>
           setSyncNote(error instanceof Error ? `Sync failed: ${error.message}` : 'Sync failed.')
         );
     }, 1200);
     return () => window.clearTimeout(timer);
   }, [completedMilestones, verifiedLessons, completedLessons, accountUserId, clockNonce]);
+
+  /**
+   * The pull half of sync, on a pulse rather than only at sign-in.
+   *
+   * Signing in was the only moment this browser ever asked the account what it knew, so a clock started
+   * on the laptop never appeared on the desktop that was already open — the two sat side by side at
+   * different times until someone reloaded. Now a signed-in screen asks every 45 seconds, and again the
+   * moment it comes back into view, is focused, or finds the network again, which is when the learner is
+   * looking at it and a stale number would be the thing they notice.
+   *
+   * Two rules keep it quiet. It never writes back what it just read: the row it uploads has to differ
+   * from the account's own copy, so converged devices trade no traffic at all. And it never overwrites a
+   * clock this browser is already running: `mergeProgress` picks the later `lastTick`, and the write is
+   * made only when the chosen clock is ahead of the one held here — a pull can start a stale clock, never
+   * stop a moving one.
+   */
+  useEffect(() => {
+    if (!accountsConfigured || !accountUserId) return;
+    const userId = accountUserId;
+    let cancelled = false;
+    let inFlight = false;
+    const pull = async () => {
+      if (cancelled || inFlight || !syncReady.current) return;
+      // A hidden tab has nobody to show a merged flag to; it also has no reason to spend a request.
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      inFlight = true;
+      try {
+        const remote = await loadProgress(userId);
+        if (cancelled || !remote) return;
+        const local = localSnapshot();
+        const merged = mergeProgress(local, remote);
+        if (progressFingerprint(merged) !== progressFingerprint(local)) {
+          setVerifiedLessons(merged.verifiedLessons);
+          setCompletedLessons(merged.completedLessons);
+          setCompletedMilestones(merged.completedMilestones);
+          replaceLearningLog(merged.learningLog);
+          const chosen = merged.studyTimer;
+          const held = readTimer();
+          if (chosen && chosen.lastTick > held.lastTick) {
+            writeTimer(chosen);
+            window.dispatchEvent(new Event(STUDY_CLOCK_EVENT));
+          }
+          if (!cancelled) setSyncNote('Picked up changes from your other device.');
+        }
+        if (progressFingerprint(merged) !== progressFingerprint(remote)) {
+          await saveProgress(userId, { ...merged, updatedAt: Math.max(Date.now(), merged.updatedAt + 1) });
+          lastPushed.current = progressFingerprint(merged);
+        }
+      } catch {
+        // Offline is not a failure to shout about: the work is in storage and the next pulse retries it.
+      } finally {
+        inFlight = false;
+      }
+    };
+    const timer = window.setInterval(() => void pull(), 45_000);
+    const wake = () => {
+      if (document.visibilityState === 'visible') void pull();
+    };
+    window.addEventListener('focus', wake);
+    window.addEventListener('online', wake);
+    document.addEventListener('visibilitychange', wake);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      window.removeEventListener('focus', wake);
+      window.removeEventListener('online', wake);
+      document.removeEventListener('visibilitychange', wake);
+    };
+  }, [accountUserId]);
 
   /** The address bar as an internal destination: `?lesson=P.1`, `?view=dashboard`, or the root. */
   const intendedDestination = (): string =>
@@ -1271,15 +1440,17 @@ export const App: React.FC = () => {
   // One dialog for both whole-page and workbench layouts: Home has the same header search, and the
   // palette's own results move to the workbench when the target lives there.
   const paletteOverlay = (
-    <CommandPalette
-      isOpen={isPaletteOpen}
-      mode={paletteMode}
-      items={paletteMode === 'lessons' || paletteMode === 'search' ? lessonPaletteItems : paletteItems}
-      search={paletteSearch}
-      note={proseNote}
-      onClose={() => setIsPaletteOpen(false)}
-      onSelect={handlePaletteSelect}
-    />
+    <React.Suspense fallback={null}>
+      <CommandPalette
+        isOpen={isPaletteOpen}
+        mode={paletteMode}
+        items={paletteMode === 'lessons' || paletteMode === 'search' ? lessonPaletteItems : paletteItems}
+        search={paletteSearch}
+        note={proseNote}
+        onClose={() => setIsPaletteOpen(false)}
+        onSelect={handlePaletteSelect}
+      />
+    </React.Suspense>
   );
 
   // ⌘K / Ctrl+K from anywhere, including inside the editor: a palette that only opens when no
@@ -1443,6 +1614,32 @@ export const App: React.FC = () => {
       ? WORKBENCH_TABS.filter((t) => t.isBeginnerCore || t.id === activeTab)
       : WORKBENCH_TABS
   ).filter((t) => microEnabled || t.id !== 'tab-micro');
+
+  // The dock's `Mode` and `Tabs` modules (`runner/CompactPageChrome.tsx`): the page's own controls,
+  // typed once here, so the folded rail and the dock cannot disagree about which tab is open.
+  const compactChromeData: CompactChrome | null = compactChrome
+    ? {
+        mode: viewMode,
+        onMode: setViewMode,
+        tabs: visibleTabs.map((tab) => {
+          const Icon = tab.Icon;
+          return {
+            id: tab.id,
+            label: viewMode === 'beginner' ? tab.beginnerLabel : tab.technicalLabel,
+            active: activeTab === tab.id,
+            icon: <Icon className="h-3.5 w-3.5" aria-hidden="true" />,
+            onSelect: () => setActiveTab(tab.id),
+          };
+        }),
+        counts: {
+          verified: totalVerifiedLessons,
+          lessons: PYTHON_LESSONS.length,
+          marked: totalCompletedLessons,
+          milestones: totalCompletedMilestones,
+          milestoneTotal: allMilestoneIds.length,
+        },
+      }
+    : null;
 
   // The phone picker lists every tab, not the rail's filtered subset: on a 390 px screen the rail
   // is one row and a beginner's five-tab view would leave seven labs with no way in. The mode still
@@ -1818,10 +2015,31 @@ export const App: React.FC = () => {
     dismissTry: () => setTrySnippet(null),
   };
 
+  // A review page, not a route: `?gallery=bridges` renders the cards and nothing else. Guarded for
+  // the server-side render, where there is no `window` and therefore no gallery a reader asked for.
+  const gallery =
+    typeof window !== 'undefined' && typeof window.location !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('gallery')
+      : null;
+  if (gallery === 'bridges') {
+    return (
+      <React.Suspense
+        fallback={
+          <p className="p-6 text-xs" style={{ color: 'var(--muted)' }}>
+            Loading…
+          </p>
+        }
+      >
+        <BridgeGallery />
+      </React.Suspense>
+    );
+  }
+
   return (
     <div
       id="top"
       data-focus={focus ? 'on' : 'off'}
+      data-density={compactChrome ? 'compact' : undefined}
       className="min-h-screen flex flex-col bg-canvas text-ink"
     >
       <SoundClicks />
@@ -1975,9 +2193,9 @@ export const App: React.FC = () => {
           aria-label="Simulator Tabs"
           data-chrome="rail"
           data-testid="tab-rail-nav"
-          data-collapsed={railCollapsed ? 'true' : 'false'}
+          data-collapsed={railFolded ? 'true' : 'false'}
           className={`border-b xl:shrink-0 xl:border-b-0 xl:border-r ${
-            railCollapsed ? 'xl:w-[68px]' : 'xl:w-[232px]'
+            railFolded ? 'xl:w-[68px]' : 'xl:w-[232px]'
           }`}
           style={{ backgroundColor: 'var(--panel)', borderColor: 'var(--border)' }}
         >
@@ -1990,17 +2208,17 @@ export const App: React.FC = () => {
               onClick={() => setRailCollapsed((collapsed) => !collapsed)}
               data-testid="btn-rail-toggle"
               data-sound="nav"
-              aria-expanded={!railCollapsed}
+              aria-expanded={!railFolded}
               aria-controls="simulator-tab-rail"
-              aria-label={railCollapsed ? 'Expand the simulator tabs' : 'Collapse the simulator tabs'}
+              aria-label={railFolded ? 'Expand the simulator tabs' : 'Collapse the simulator tabs'}
               title={
-                railCollapsed
+                railFolded
                   ? 'Expand the rail: every tab by name and subtitle'
                   : 'Collapse the rail to its icons; every tab keeps its name for a keyboard and a screen reader'
               }
               className="mx-2 mb-1 mt-2 hidden w-[calc(100%-1rem)] cursor-pointer items-center justify-center gap-2 rounded-[var(--r-sm)] border border-line-soft px-2 py-1 text-[11px] font-mono uppercase tracking-wider text-muted transition-colors hover:border-line hover:text-ink xl:flex"
             >
-              {railCollapsed ? (
+              {railFolded ? (
                 <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
               ) : (
                 <>
@@ -2045,10 +2263,10 @@ export const App: React.FC = () => {
                   onPointerEnter={() => prefetchTab(tab.id)}
                   onFocus={() => prefetchTab(tab.id)}
                   aria-current={isActive ? 'page' : undefined}
-                  aria-label={railCollapsed ? `${label} — ${subtitle}` : undefined}
-                  title={railCollapsed ? `${label} — ${subtitle}` : undefined}
+                  aria-label={railFolded ? `${label} — ${subtitle}` : undefined}
+                  title={railFolded ? `${label} — ${subtitle}` : undefined}
                   className={`group flex min-w-[12rem] shrink-0 cursor-pointer snap-start items-center gap-2.5 rounded-[var(--r-md)] border px-2.5 py-2 text-left transition-colors xl:w-full xl:min-w-0 ${
-                    railCollapsed ? 'xl:justify-center xl:px-0' : ''
+                    railFolded ? 'xl:justify-center xl:px-0' : ''
                   }`}
                   style={{
                     borderColor: isActive ? 'var(--accent)' : 'var(--border)',
@@ -2068,7 +2286,7 @@ export const App: React.FC = () => {
                   >
                     <Icon className="h-4 w-4" />
                   </span>
-                  <span className={`min-w-0${railCollapsed ? ' xl:hidden' : ''}`}>
+                  <span className={`min-w-0${railFolded ? ' xl:hidden' : ''}`}>
                     <span
                       className="block text-[12px] font-semibold leading-tight"
                       style={{ color: isActive ? 'var(--accent)' : 'var(--text)' }}
@@ -2098,6 +2316,7 @@ export const App: React.FC = () => {
         {/* Main Tab Pane. One Suspense boundary around the pane: only one tab is on screen, and every
             lazy tab's chunk is fetched the first time it is opened, so the fallback is a panel rather
             than a page. The runner is static, so the opening screen never shows it. */}
+        <CompactChromeContext.Provider value={compactChromeData}>
         <main id="main" tabIndex={-1} className="flex-1 min-w-0 p-3.5 sm:p-5 max-w-[1540px] w-full mx-auto space-y-4 outline-none">
           <React.Suspense
             fallback={
@@ -2158,6 +2377,7 @@ export const App: React.FC = () => {
           {renderTab(activeTab, workbenchTabContext)}
           </React.Suspense>
         </main>
+        </CompactChromeContext.Provider>
       </div>
 
       {/* Cheat sheet modal */}
@@ -2228,11 +2448,16 @@ export const App: React.FC = () => {
 
       {/* What the last verification earned. It never takes focus and never blocks the editor, and
           its source is the ledger write that just happened — not a replay of the whole ledger. */}
-      {gameAwards.length > 0 && (
-        <React.Suspense fallback={null}>
-          <AwardToast awards={gameAwards} onClose={() => setGameAwards([])} />
-        </React.Suspense>
-      )}
+      {/* One stack for the whole app. The cards are the app's own, the queue and the live region are
+          sonner's, and its position is per-toast so the pass card can sit bottom-centre while an
+          award sits in the corner. */}
+      <Toaster
+        position="bottom-right"
+        closeButton={false}
+        visibleToasts={2}
+        offset={{ bottom: 80, right: 16 }}
+        mobileOffset={{ bottom: 96 }}
+      />
 
       {/* Focus mode hides every control that would offer a different task, so the way out has to be
           on screen itself: one pill, and Escape doing the same thing. */}

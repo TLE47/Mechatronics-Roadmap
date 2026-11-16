@@ -7,6 +7,7 @@ import {
   readTimer,
   resumeTimer,
   startClockFromReminder,
+  TIMER_STORAGE_KEY,
 } from '../studyTimer';
 
 /**
@@ -23,8 +24,15 @@ export const StudyClockReminder: React.FC<{ lessonId: string }> = ({ lessonId })
 
   useEffect(() => {
     const refresh = () => setTimer(resumeTimer(readTimer(), Date.now()));
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === null || event.key === TIMER_STORAGE_KEY) refresh();
+    };
     window.addEventListener(STUDY_CLOCK_EVENT, refresh);
-    return () => window.removeEventListener(STUDY_CLOCK_EVENT, refresh);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener(STUDY_CLOCK_EVENT, refresh);
+      window.removeEventListener('storage', onStorage);
+    };
   }, []);
 
   const elapsed = elapsedMs(timer, Date.now());

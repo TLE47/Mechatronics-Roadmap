@@ -36,6 +36,8 @@ const TAB_IDS = Object.keys(
 );
 
 const FIRST_LESSON = PYTHON_LESSONS[0];
+/** A mark's quote collapses whitespace, so compare it to the selection the same way. */
+const normalizeMarkText = (value) => (value ?? '').replace(/\s+/g, ' ').trim();
 /** The entry Home's Today panel starts with, from the same join the page calls. */
 const TODAY_ENTRY = nextMission({})?.entries[0] ?? null;
 const TODAY_TITLE = PYTHON_LESSONS.find((lesson) => lesson.id === TODAY_ENTRY?.id)?.title ?? null;
@@ -548,6 +550,41 @@ async function main() {
       0,
       'Escape must close the palette'
     );
+    // Search is a course index, not a ranking: lessons stay in catalogue order across hits. The
+    // unit suite pins the function; this checks the order the palette actually paints, in the
+    // text-search mode the Search button opens.
+    await page.keyboard.press('Control+Shift+f');
+    await page.getByTestId('command-palette').waitFor({ timeout: 10000 });
+    assert.equal(
+      await page.getByTestId('command-palette').getAttribute('data-palette-mode'),
+      'search',
+      'the search shortcut must open the lesson-text mode'
+    );
+    await page.getByTestId('input-palette-search').fill('th');
+    await page.waitForFunction(
+      () => document.querySelectorAll('[data-testid^="palette-item-search-"]').length > 1,
+      undefined,
+      { timeout: 10000 }
+    );
+    const paletteIds = await page
+      .locator('[data-testid^="palette-item-search-"]')
+      .evaluateAll((rows) => rows.map((row) => row.getAttribute('data-palette-id') ?? ''));
+    const courseOrder = paletteIds.map((id) =>
+      PYTHON_LESSONS.findIndex((lesson) => id.startsWith(`search-${lesson.id}-`))
+    );
+    assert.ok(courseOrder.length > 1, 'the broad query must paint more than one lesson hit');
+    assert.ok(courseOrder.every((index) => index >= 0), 'every painted hit must name a real lesson');
+    assert.deepEqual(
+      courseOrder,
+      [...courseOrder].sort((a, b) => a - b),
+      'search results must stay in catalogue order rather than being re-ranked'
+    );
+    await page.keyboard.press('Escape');
+    assert.equal(
+      await page.getByTestId('command-palette').count(),
+      0,
+      'Escape must close the text search'
+    );
     await page.keyboard.press('Control+k');
     await page.getByTestId('command-palette').waitFor({ timeout: 10000 });
     await page.getByTestId('input-palette-search').fill(FIRST_LESSON.id);
@@ -766,7 +803,124 @@ async function main() {
         0,
         'Log & reset must start a new session, so its log must be empty'
       );
-      console.log('  ok the brief’s study clock starts, pauses, resumes and files its stretch');
+      // What a refresh reads. The zero has to be the *stored* state, and stamped with the press:
+      // an unstamped zero loses `mergeProgress`'s later-lastTick rule to a stale upload and the
+      // logged time comes back on the next pull.
+      const stored = await page.evaluate(() =>
+        JSON.parse(window.localStorage.getItem('mechalab_study_timer_v1') ?? 'null')
+      );
+      assert.equal(stored?.runningSince ?? null, null, 'a reload must not find a running stretch');
+      assert.equal(stored?.bankedMs ?? 0, 0, 'a reload must not find the logged time banked');
+      assert.ok(
+        (stored?.lastTick ?? 0) > 0,
+        'the cleared record must carry the press that cleared it, or a stale copy wins the merge'
+      );
+      // ---- 7a-ii. A refresh, not a re-read: three real reloads ----
+      // The stored record reading zero is necessary and not sufficient: what the learner sees after a
+      // refresh is what the app makes of it. These variants load the page again through the same
+      // storage, the same mount effects and the same sync the learner gets.
+      const readStored = () =>
+        page.evaluate(() => JSON.parse(window.localStorage.getItem('mechalab_study_timer_v1') ?? 'null'));
+      const assertZero = async (label, target = page) => {
+        const row = target.getByTestId('study-timer');
+        await row.waitFor({ timeout: 30000 });
+        assert.equal(await row.getAttribute('data-state'), 'idle', `${label}: no running state`);
+        assert.equal(
+          (await target.getByTestId('study-timer-elapsed').textContent())?.trim(),
+          '0:00:00',
+          `${label}: the digits must still read zero`
+        );
+        assert.equal(
+          await target.getByTestId('btn-study-timer-reset').isDisabled(),
+          true,
+          `${label}: a zero clock has nothing to log`
+        );
+        assert.equal(
+          await target.getByTestId('study-clock-log').count(),
+          0,
+          `${label}: Log & reset starts a new session, so no press of the logged one comes back`
+        );
+      };
+      const assertBank = async (record, label) => {
+        assert.ok(
+          Array.isArray(record?.completed) && record.completed.includes('P.9'),
+          `${label}: the completed bank must survive`
+        );
+      };
+
+      // A completion the clock was already carrying, the way a pass on an earlier visit leaves it.
+      // It is not the current lesson, so it changes no status the rest of this step asserts.
+      await page.evaluate(() => {
+        const raw = JSON.parse(window.localStorage.getItem('mechalab_study_timer_v1') ?? '{}');
+        const completed = [...new Set([...(raw.completed ?? []), 'P.9'])];
+        window.localStorage.setItem(
+          'mechalab_study_timer_v1',
+          JSON.stringify({ ...raw, completed })
+        );
+      });
+      // The row holds its own copy of the record; the same announcement a write from another square
+      // makes is what tells it the bank is there.
+      await page.evaluate(() => window.dispatchEvent(new Event('mechalab-study-clock')));
+      await page.waitForTimeout(250);
+      // One more stretch through the real buttons, so the reset that follows carries that bank.
+      await toggle.click();
+      await page.waitForTimeout(1200);
+      await reset.click();
+      await page.waitForTimeout(300);
+      const clearedWithBank = await readStored();
+      assert.equal(clearedWithBank?.runningSince ?? null, null, 'the reset stores no running stretch');
+      await assertBank(clearedWithBank, 'after reset');
+
+      // (i) A refresh immediately after the press.
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(500);
+      await assertZero('immediate reload');
+      await assertBank(await readStored(), 'immediate reload');
+
+      // (ii) Reset while a second window holds the same running clock. The other window is the surface
+      //      that used to write the old stretch back at its next press or heartbeat.
+      const second = await page.context().newPage();
+      await second.goto(page.url(), { waitUntil: 'domcontentloaded' });
+      await second.getByTestId('study-timer').waitFor({ timeout: 30000 });
+      await toggle.click();
+      await page.waitForTimeout(1400);
+      assert.equal(
+        await second.getByTestId('study-timer').getAttribute('data-state'),
+        'running',
+        'the second window sees the stretch the first one started'
+      );
+      await reset.click();
+      await page.waitForTimeout(800);
+      await assertZero('reset with a second window open');
+      await assertZero('the second window after that reset', second);
+      assert.equal(
+        (await second.getByTestId('btn-study-timer').textContent())?.trim(),
+        'Start',
+        'the second window must not offer Resume for time the reset took away'
+      );
+      assert.equal((await readStored())?.runningSince ?? null, null, 'the stored record stays cleared');
+      await second.close();
+
+      // (iii) A second tab on another lesson route, reloaded: it reads the same record and must agree.
+      const third = await page.context().newPage();
+      await third.goto(`${page.url().split('?')[0]}?lesson=P.2`, { waitUntil: 'domcontentloaded' });
+      await third.getByTestId('study-timer').waitFor({ timeout: 30000 });
+      await third.reload({ waitUntil: 'domcontentloaded' });
+      await assertZero('a second lesson route', third);
+      await assertBank(await third.evaluate(() =>
+        JSON.parse(window.localStorage.getItem('mechalab_study_timer_v1') ?? 'null')
+      ), 'a second lesson route');
+      await third.close();
+
+      // (iv) A refresh after the minute heartbeat could have fired. Nothing may put the stretch back.
+      await page.waitForTimeout(61_000);
+      assert.equal((await readStored())?.runningSince ?? null, null, 'no heartbeat revives the cleared clock');
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(500);
+      await assertZero('a reload after the heartbeat interval');
+      await assertBank(await readStored(), 'a reload after the heartbeat interval');
+      console.log('  ok a real refresh, a second window, another route and the heartbeat all keep the clock at zero');
+      console.log('  ok the brief’s study clock starts, pauses, resumes, files its stretch and stores the zero');
     }
 
     // ---- 7b. Continue puts the reader back where it was left ----
@@ -813,6 +967,13 @@ async function main() {
 
     // ---- 7d. A selected passage can become a sticky note, marked in the prose ----
     {
+      // The note editor is the one surface where a console error would be invisible in a screenshot:
+      // a bad range or a KaTeX failure would leave a note that looks saved but cannot be reopened.
+      const noteConsoleErrors = [];
+      const noteConsole = (message) => {
+        if (message.type() === 'error') noteConsoleErrors.push(message.text());
+      };
+      page.on('console', noteConsole);
       const pane = page.getByTestId('reader-scroll');
       // Select inside one prose text node, not the whole paragraph: a note's anchor is its quote,
       // and a mark has to be able to find that quote inside the run it was taken from.
@@ -848,7 +1009,14 @@ async function main() {
       await page.getByTestId('btn-sticky').click();
       await page.getByTestId('sticky-note-popup').waitFor({ timeout: 10000 });
       const note = 'The sampling time is the thing I keep forgetting.';
-      await page.getByTestId('sticky-note-text').fill(note);
+      const editor = page.getByTestId('sticky-note-text');
+      const editorMarkdown = () => editor.getAttribute('data-markdown');
+      await editor.fill(note);
+      assert.equal(
+        await editorMarkdown(),
+        note,
+        'typing a plain note must publish its Markdown without waiting for a preview'
+      );
       await page.getByTestId('btn-sticky-save').click();
       await page.waitForFunction(
         () => /Sticky note saved/.test(document.querySelector('[data-testid="reader-status"]')?.textContent ?? ''),
@@ -867,37 +1035,240 @@ async function main() {
         (await page.locator('[data-testid="sticky-mark"]').count()) >= 1,
         'the saved quote must be marked in the lesson text, not only listed in Notes'
       );
+      assert.equal(
+        normalizeMarkText(await mark.getAttribute('data-quote')),
+        normalizeMarkText(selected),
+        'the mark must cover the passage that was selected, not a shifted neighbour'
+      );
+      assert.equal(
+        normalizeMarkText(await mark.textContent()),
+        normalizeMarkText(selected),
+        'the visible mark must render the selected words themselves'
+      );
+      assert.equal(
+        await mark.getAttribute('data-mark-kind'),
+        'sticky',
+        'a saved note must be drawn as a sticky mark, not left as a plain highlight'
+      );
       await mark.click();
       await page.getByTestId('sticky-note-popup').waitFor({ timeout: 10000 });
       assert.equal(
-        await page.getByTestId('sticky-note-text').inputValue(),
+        await editorMarkdown(),
         note,
         'pressing a mark must reopen the note written for that passage'
       );
 
-      // Bold by shortcut, underline from the bar: both are the same Markdown the note stores.
-      await page.getByTestId('sticky-note-text').press('ControlOrMeta+a');
+      // Bold by shortcut, then underline and italic from the bar, all drawn in the editing surface
+      // itself. The selection has to survive each press for the next one to nest inside it.
+      await editor.press('ControlOrMeta+a');
       await page.keyboard.press('ControlOrMeta+b');
       assert.equal(
-        await page.getByTestId('sticky-note-text').inputValue(),
+        await editorMarkdown(),
         `**${note}**`,
-        '⌘B / Ctrl+B must wrap the selected note text'
+        '⌘B / Ctrl+B must wrap the selected note text in stored Markdown'
       );
       assert.equal(
-        await page.getByTestId('sticky-note-preview').locator('strong').count(),
+        await editor.locator('strong').count(),
         1,
-        'the preview must draw the bold run as bold, not as asterisks'
+        'the editing surface itself must draw the bold run, not print its asterisks'
       );
       await page.getByTestId('btn-sticky-underline').click();
       assert.equal(
-        await page.getByTestId('sticky-note-text').inputValue(),
+        await editorMarkdown(),
         `**++${note}++**`,
-        'the Underline button must wrap the text the shortcut left selected'
+        'the Underline button must nest inside the bold run the shortcut left selected'
       );
       assert.equal(
-        await page.getByTestId('sticky-note-preview').locator('u').count(),
+        await editor.locator('u').count(),
         1,
-        'the preview must draw the underline'
+        'the editing surface itself must draw the underline'
+      );
+      await page.getByTestId('btn-sticky-italic').click();
+      assert.equal(
+        await editorMarkdown(),
+        `**++*${note}*++**`,
+        'the Italic button must nest inside the underlined, bold run'
+      );
+      assert.equal(
+        await editor.locator('em').count(),
+        1,
+        'the editing surface itself must draw the italic run'
+      );
+
+      // Maths is typed as `$…$` and becomes a KaTeX widget in the same field. The keystrokes are real
+      // typing, not a bulk fill, so each input pass has to keep the caret after the rendered formula.
+      await editor.fill('');
+      await editor.pressSequentially('$v^2$');
+      assert.equal(
+        await editor.locator('.katex').count(),
+        1,
+        'typing $…$ must draw the formula in the editing surface itself'
+      );
+      assert.equal(await editorMarkdown(), '$v^2$', 'the rendered widget must still serialise as $…$');
+      await editor.pressSequentially(' is squared');
+      assert.equal(
+        await editorMarkdown(),
+        '$v^2$ is squared',
+        'after the closing $, the caret must continue after the rendered formula'
+      );
+
+      // A formula is an atomic widget: selecting it and pressing Backspace removes it in one edit.
+      await editor.evaluate((element) => {
+        const math = element.querySelector('[data-math]');
+        if (!math) throw new Error('the rendered formula is missing from the editor');
+        const range = document.createRange();
+        range.selectNode(math);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      });
+      await page.keyboard.press('Backspace');
+      assert.equal(
+        await editor.locator('.katex').count(),
+        0,
+        'Backspace on a selected formula must remove it, not leave half a widget'
+      );
+
+      // Enter after a formula keeps the formula and starts the next line in the same note.
+      await editor.fill('');
+      await editor.pressSequentially('$v^2$');
+      await page.keyboard.press('Enter');
+      await editor.pressSequentially('next line');
+      assert.equal(
+        await editorMarkdown(),
+        '$v^2$\nnext line',
+        'Enter after a rendered formula must make a Markdown line break'
+      );
+      assert.equal(await editor.locator('.katex').count(), 1, 'Enter must not drop the formula');
+
+      // The maths button is the other way in: select the TeX source, press it, and the same field
+      // turns it into a formula. This is the toolbar action the old textarea implemented with `$`
+      // wrappers, so it must keep working after the editor change.
+      await editor.fill('v^2');
+      await editor.press('ControlOrMeta+a');
+      await page.getByTestId('btn-sticky-math').click();
+      assert.equal(
+        await editor.locator('.katex').count(),
+        1,
+        'the Maths button must wrap the selection as a rendered formula in the field'
+      );
+      assert.equal(
+        await editorMarkdown(),
+        '$v^2$',
+        'the Maths button must store the wrapped selection as $…$ Markdown'
+      );
+
+      // The same button with no selection inserts the whole pair and leaves the caret inside it.
+      // Nothing can be drawn under a live caret, so the source stays visible until the caret leaves;
+      // ArrowRight is that exit, and it must draw the formula rather than strand raw TeX.
+      await editor.fill('');
+      await page.getByTestId('btn-sticky-math').click();
+      assert.equal(
+        await editorMarkdown(),
+        '$$',
+        'the Maths button must open an empty pair when there is nothing selected'
+      );
+      await editor.pressSequentially('v^2');
+      assert.equal(
+        await editorMarkdown(),
+        '$v^2$',
+        'typing inside the collapsed pair must build its TeX in place'
+      );
+      assert.equal(
+        await editor.locator('.katex').count(),
+        0,
+        'the formula must stay as source while the caret is still inside the pair'
+      );
+      await page.keyboard.press('ArrowRight');
+      assert.equal(
+        await editor.locator('[data-math="v^2"]').count(),
+        1,
+        'moving the caret out of the collapsed pair must draw the formula in the field'
+      );
+      assert.equal(
+        await editorMarkdown(),
+        '$v^2$',
+        'the committed collapsed formula must still store as $…$ Markdown'
+      );
+      await editor.pressSequentially(' is squared');
+      assert.equal(
+        await editorMarkdown(),
+        '$v^2$ is squared',
+        'after committing, the caret must continue after the formula rather than inside it'
+      );
+
+      // Enter is the other exit. Press it while the caret is still inside the raw pair: the formula
+      // must be committed before the line break, or the break lands inside the TeX and breaks it.
+      await editor.fill('');
+      await page.getByTestId('btn-sticky-math').click();
+      await editor.pressSequentially('a^2');
+      assert.equal(await editorMarkdown(), '$a^2$', 'the second collapsed formula must build its TeX');
+      assert.equal(
+        await editor.locator('.katex').count(),
+        0,
+        'the second formula must stay raw while the caret is still in its pair'
+      );
+      await page.keyboard.press('Enter');
+      assert.equal(
+        await editor.locator('[data-math="a^2"]').count(),
+        1,
+        'Enter inside the collapsed pair must commit the formula, not put a break into its TeX'
+      );
+      assert.equal(
+        await editorMarkdown(),
+        '$a^2$',
+        'the commit must leave the formula as valid Markdown before the break'
+      );
+      await editor.pressSequentially('after enter');
+      assert.equal(
+        await editorMarkdown(),
+        '$a^2$\nafter enter',
+        'typing after that Enter must land on the next Markdown line'
+      );
+      assert.equal(await editor.locator('.katex').count(), 1, 'the Enter commit must keep the formula drawn');
+
+      // Clicking away from the field inside the note card is the third exit. Blur must commit the
+      // raw pair on screen, and must not pull focus back to the editor the learner just left.
+      await editor.fill('');
+      await page.getByTestId('btn-sticky-math').click();
+      await editor.pressSequentially('m^2');
+      assert.equal(await editorMarkdown(), '$m^2$', 'the click-away formula must build its TeX');
+      assert.equal(
+        await editor.locator('.katex').count(),
+        0,
+        'the click-away formula must stay raw while the caret is still inside its pair'
+      );
+      await page.getByTestId('sticky-note-quote').click();
+      assert.equal(
+        await editor.evaluate((node) => document.activeElement === node),
+        false,
+        'blurring the editor must not steal focus back from the click target'
+      );
+      assert.equal(
+        await editor.locator('[data-math="m^2"]').count(),
+        1,
+        'losing focus must draw the collapsed formula instead of leaving raw TeX'
+      );
+      assert.equal(
+        await editorMarkdown(),
+        '$m^2$',
+        'the click-away commit must still store the formula as $…$ Markdown'
+      );
+
+      // The saved note is maths and bold, so the reopen can prove both halves of the round-trip.
+      await editor.fill('');
+      const savedNote = `$v^2$ and **${note}**`;
+      await editor.pressSequentially(savedNote);
+      assert.equal(await editorMarkdown(), savedNote, 'typing the complete note must preserve its Markdown');
+      assert.equal(
+        await editor.locator('.katex').count(),
+        1,
+        'the formula typed inside the sentence must be drawn in the field'
+      );
+      assert.equal(
+        await editor.locator('strong').count(),
+        1,
+        'the bold run typed with ** must be drawn in the field'
       );
       await page.getByTestId('btn-sticky-save').click();
       await page.waitForFunction(
@@ -906,6 +1277,13 @@ async function main() {
         { timeout: 10000 }
       );
       assert.equal(await page.getByTestId('sticky-note-popup').count(), 0, 'an edit saves and closes');
+      // The page-level guard: the note that was just saved is on the text, so nothing may say it is
+      // not. (It used to print on every paragraph that did not hold the quote.)
+      assert.equal(
+        await page.getByTestId('sticky-note-unlocated').count(),
+        0,
+        'a note written on this page must not be reported as missing from it'
+      );
       // Writes are queued a tick and land in IndexedDB; wait for the queue instead of a reload racing it.
       await page.evaluate(() => window.__mechalabFlushStorage?.());
       console.log('  ok a mark reopens its note, B/Underline format it, and Save updates it in place');
@@ -931,9 +1309,19 @@ async function main() {
       await page.locator('[data-testid="sticky-mark"]').first().click();
       await page.getByTestId('sticky-note-popup').waitFor({ timeout: 10000 });
       assert.equal(
-        await page.getByTestId('sticky-note-text').inputValue(),
-        `**++${note}++**`,
-        'the mark must reopen the formatted note after a reload'
+        await editorMarkdown(),
+        savedNote,
+        'the mark must reopen the note with its Markdown intact after a reload'
+      );
+      assert.equal(
+        await editor.locator('.katex').count(),
+        1,
+        'the reopened mark must draw its formula in the editing surface'
+      );
+      assert.equal(
+        await editor.locator('strong').count(),
+        1,
+        'the reopened mark must draw its bold run in the editing surface'
       );
       // The edit popup is also the way out: deleting is an edit, not a trip to the Study panel.
       assert.equal(
@@ -959,6 +1347,12 @@ async function main() {
         await page.locator('[data-testid="sticky-mark"]').count(),
         0,
         'removing the note must take its mark out of the page'
+      );
+      page.off('console', noteConsole);
+      assert.deepEqual(
+        noteConsoleErrors,
+        [],
+        `the note editor logged console errors: ${noteConsoleErrors.join(' | ')}`
       );
       console.log(
         '  ok the checklist tick and the formatted note survive a reload, and Remove deletes the note'
@@ -1071,6 +1465,9 @@ async function main() {
         await page.evaluate(() => document.querySelector('[data-testid="btn-sticky"]')?.click());
         const popup = page.getByTestId('sticky-note-popup');
         await popup.waitFor({ timeout: 10000 });
+        // The card is measured after its first paint. One settle frame is enough for a focus/placeholder
+        // line to finish and the placement observer to move the card clear of the words.
+        await page.waitForTimeout(180);
         // Pressing the button is allowed to scroll the pane (the toolbar has to be in view), so the
         // passage is measured again *now*: the popover is placed against where the words are after
         // that scroll, and a comparison with the box from before it would be a different passage.
@@ -1261,6 +1658,16 @@ async function main() {
         (await inCode.count()) >= 1,
         'a highlight taken inside a code block must be drawn there, not only stored in Notes'
       );
+      assert.equal(
+        normalizeMarkText(await inCode.first().getAttribute('data-quote')),
+        normalizeMarkText(picked),
+        'the code mark must cover the selected line, not a shifted neighbour'
+      );
+      assert.equal(
+        await inCode.first().getAttribute('data-mark-kind'),
+        'highlight',
+        'a highlight without a note must be drawn as a highlight'
+      );
       await inCode.first().click();
       await page.getByTestId('sticky-note-popup').waitFor({ timeout: 10000 });
       // The code block carries a note, not only a pin: saving here is what the reader reported as
@@ -1278,6 +1685,16 @@ async function main() {
       assert.ok(
         (await pre.locator('[data-testid="sticky-mark"]').count()) >= 1,
         'the note must still be marked on the code after it is saved'
+      );
+      assert.equal(
+        normalizeMarkText(await inCode.first().textContent()),
+        normalizeMarkText(picked),
+        'saving a note must keep the mark on the selected code line'
+      );
+      assert.equal(
+        await inCode.first().getAttribute('data-mark-kind'),
+        'sticky',
+        'a code highlight with a note must turn into a sticky mark'
       );
       console.log('  ok a highlight inside a code block is drawn there, and a note on it saves');
 
@@ -1300,12 +1717,34 @@ async function main() {
       assert.ok(inlinePicked.trim().length > 1, 'the page must have an inline code run to select');
       await page.getByTestId('btn-highlight').click();
       await page.waitForTimeout(250);
-      const inlineMark = await page.evaluate(() =>
-        [...document.querySelectorAll('[data-testid="reader-prose"] [data-testid="sticky-mark"]')].filter(
-          (node) => !node.closest('pre') && node.closest('code')
-        ).length
+      const inlineMark = await page.evaluate(() => {
+        const node = [...document.querySelectorAll('[data-testid="reader-prose"] [data-testid="sticky-mark"]')]
+          .find((candidate) => !candidate.closest('pre') && candidate.closest('code'));
+        return node
+          ? {
+              text: node.textContent ?? '',
+              quote: node.getAttribute('data-quote') ?? '',
+              kind: node.getAttribute('data-mark-kind') ?? '',
+            }
+          : null;
+      });
+      assert.ok(inlineMark, 'a highlight on inline code must be drawn on the code span');
+      assert.equal(
+        normalizeMarkText(inlineMark.quote),
+        normalizeMarkText(inlinePicked),
+        'the inline mark must cover the selected code run, not a shifted neighbour'
       );
-      assert.ok(inlineMark >= 1, 'a highlight on inline code must be drawn on the code span');      console.log('  ok a highlight on inline code is drawn on the span');
+      assert.equal(
+        normalizeMarkText(inlineMark.text),
+        normalizeMarkText(inlinePicked),
+        'the inline mark must show those words'
+      );
+      assert.equal(
+        inlineMark.kind,
+        'highlight',
+        'an inline-code highlight without a note must be drawn as a highlight'
+      );
+      console.log('  ok a highlight on inline code is drawn on the span');
 
       // Read keeps the page's own "Do it yourself" heading, and its jump switches to Write.
       assert.equal(

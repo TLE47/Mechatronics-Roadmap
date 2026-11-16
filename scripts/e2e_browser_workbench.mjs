@@ -281,7 +281,9 @@ export async function assertWorkflowCanvasFollowsGrip(page) {
         state.canvas >= state.body - 12 && state.canvas <= state.body,
         `${label}: the paper must fill the ${Math.round(state.body)}px pane area, but it was ${state.canvas}px`
       );
-    if (state.scale < 0.999) {
+    // A fit may now draw larger than life (`FIT_MAX_SCALE`) as well as smaller, so "fitted" is any
+    // lens that is not 1:1 rather than only one below life size.
+    if (Math.abs(state.scale - 1) > 0.002) {
       // The spacer reserves the paper's extents, which keep 48 px of air right of the last card and
       // 40 px under it for a frame's name chip; a fit frames the cards, so that air is what is left
       // over once the drawing is scaled to fit. Anything more than it means the fit did not happen.
@@ -1451,6 +1453,259 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     assert.equal(await visible('lesson-list-card'), true, 'the Study button comes back');
     console.log('  ok ⌥1–⌥4 choose the regions and their arrangement, and the choice is remembered');
 
+    // 5d-ii. Compact, from the header's action tray: the lesson text and the editor keep the screen,
+    //        and everything that reports on them is one dense block under both. The wrapper is
+    //        `display: contents` in the other presets, so the same element is measured both ways.
+    {
+      const shape = () =>
+        page.evaluate(() => {
+          const dock = document.querySelector('[data-testid="compact-dock"]');
+          const root = document.querySelector('[data-compact]');
+          const editor = document.querySelector('[data-testid="editor-panel"]');
+          const reader = document.querySelector('[data-testid="lesson-reader"]');
+          const column = document.querySelector('[data-testid="results-column"]');
+          const box = dock.getBoundingClientRect();
+          return {
+            layout: document.querySelector('[data-layout]')?.getAttribute('data-layout') ?? null,
+            compact: root?.getAttribute('data-compact') ?? null,
+            wrapper: getComputedStyle(dock).display,
+            dockHeight: Math.round(box.height),
+            dockWidth: Math.round(box.width),
+            viewportHeight: window.innerHeight,
+            viewportWidth: window.innerWidth,
+            dockHoldsColumn: !!dock.querySelector('[data-testid="results-column"]'),
+            dockHoldsRuntime: !!dock.querySelector('[data-testid="runner-runtime-status"]'),
+            dockHoldsBrief: !!dock.querySelector('[data-testid="lesson-brief"]'),
+            dockHoldsHints: !!dock.querySelector('[data-tour="hint-ladder"]'),
+            dockCards: dock.querySelectorAll(':scope > [data-testid], :scope > *').length,
+            columnInDock: !!column && !!dock.contains(column),
+            editorWidth: Math.round(editor.getBoundingClientRect().width),
+            readerVisible: !!reader && reader.getBoundingClientRect().height > 0,
+            editorVisible: !!editor && editor.getBoundingClientRect().height > 0,
+            minimised: root
+              ? [...root.children].filter(
+                  (child) => !child.matches('[data-testid="compact-dock"]') &&
+                    (child.contains(editor) || child.contains(reader))
+                ).length
+              : -1,
+          };
+        });
+
+      const before = await shape();
+      assert.equal(before.wrapper, 'contents', 'outside Compact the dock is not a box at all');
+
+      await page.getByTestId('btn-compact-layout').click();
+      await page.waitForTimeout(300);
+      const compact = await shape();
+      assert.equal(compact.layout, 'compact', 'the header button must put the workbench in Compact');
+      assert.equal(compact.compact, 'on', 'the page must say which mode it is drawn in');
+      assert.equal(
+        await page.getByTestId('btn-compact-layout').getAttribute('aria-pressed'),
+        'true',
+        'the button must report that it is the preset in force'
+      );
+      assert.equal(compact.wrapper, 'flex', 'Compact turns the dock into one block');
+      assert.equal(compact.columnInDock, true, 'the results must be inside the dock, not beside it');
+      assert.equal(compact.dockHoldsRuntime, true, 'the runtime strip folds in with the results');
+      assert.equal(
+        compact.dockHoldsBrief,
+        true,
+        'the lesson brief — the clock, the pass badge, the roadmap link — folds into the dock'
+      );
+      assert.equal(
+        compact.dockHoldsHints,
+        true,
+        'the hint ladder folds into the dock too, so the page is dock, editor and lesson text'
+      );
+      assert.equal(compact.editorVisible, true, 'the editor stays, full size');
+      assert.equal(compact.readerVisible, true, 'the lesson text stays');
+      assert.ok(
+        compact.dockHeight <= Math.round(compact.viewportHeight * 0.5),
+        `the dock must be a strip, not a second page (${compact.dockHeight} of ${compact.viewportHeight})`
+      );
+      assert.ok(
+        compact.editorWidth >= Math.round(compact.viewportWidth * 0.6),
+        `the editor must keep the width it had in one column (${compact.editorWidth} of ${compact.viewportWidth})`
+      );
+      assert.ok(
+        compact.editorWidth >= before.editorWidth - 40,
+        'folding the page must not squeeze the editor'
+      );
+
+      // The dock is a shelf, not a scroller: one row of module names with their one number, the
+      // panel a press opens under it — and the page's own mode bar and rail are two of the modules,
+      // so the page above the dock carries neither.
+      const shelf = await page.evaluate(() => {
+        const dock = document.querySelector('[data-testid="compact-dock"]');
+        const editor = document.querySelector('[data-testid="editor-panel"]');
+        const modeBar = document.querySelector('[data-chrome="mode-bar"]');
+        const rail = document.querySelector('[data-testid="tab-rail-nav"]');
+        const box = dock.getBoundingClientRect();
+        return {
+          tabs: [...dock.querySelectorAll('[role="tab"]')].map((b) => b.getAttribute('data-testid')),
+          closed: Math.round(box.height),
+          scrolls: dock.scrollHeight > dock.clientHeight + 2,
+          above: box.top < editor.getBoundingClientRect().top,
+          modeBarHidden: !modeBar || getComputedStyle(modeBar).display === 'none',
+          railHidden: !rail || getComputedStyle(rail).display === 'none',
+          briefHidden: document.querySelector('[data-testid="compact-panel-brief"]').hidden,
+        };
+      });
+      assert.deepEqual(
+        shelf.tabs,
+        ['compact-tab-run', 'compact-tab-brief', 'compact-tab-hints', 'compact-tab-report', 'compact-tab-mode', 'compact-tab-tabs'],
+        'the dock must be one row of the six modules, each with its summary'
+      );
+      assert.ok(shelf.closed <= 44, `a closed dock is a strip (${shelf.closed} px)`);
+      assert.equal(shelf.scrolls, false, 'nothing scrolls inside the dock; the page does');
+      assert.equal(shelf.above, true, 'the dock sits on top of the editor, not under it');
+      assert.equal(shelf.briefHidden, true, 'every module starts closed');
+      assert.equal(shelf.modeBarHidden, true, 'the mode bar is not drawn above the dock twice');
+      assert.equal(shelf.railHidden, true, 'nor is the simulator rail');
+
+      await page.getByTestId('compact-tab-hints').click();
+      await page.getByTestId('compact-panel-hints').waitFor({ state: 'visible', timeout: 3000 });
+      assert.equal(
+        await page.getByTestId('compact-panel-brief').isVisible(),
+        false,
+        'one module opens at a time'
+      );
+      assert.equal(
+        await page.evaluate(() => {
+          const dock = document.querySelector('[data-testid="compact-dock"]');
+          return dock.scrollHeight > dock.clientHeight + 2;
+        }),
+        false,
+        'an open module grows the dock with the page, it does not scroll inside it'
+      );
+      await page.getByTestId('compact-tab-hints').click();
+      assert.equal(
+        await page.getByTestId('compact-panel-hints').isVisible(),
+        false,
+        'the same press closes the module again'
+      );
+
+      // The page's own controls survive the fold as dock modules: the mode switch flips the same
+      // state the mode bar used, and the simulator tabs are all there as chips.
+      await page.getByTestId('compact-tab-mode').click();
+      await page.getByTestId('compact-mode-row').waitFor({ state: 'visible', timeout: 3000 });
+      await page.getByTestId('compact-mode-advanced').click();
+      assert.equal(
+        await page.getByTestId('btn-mode-advanced').getAttribute('aria-pressed'),
+        'true',
+        'the dock’s mode switch is the page’s mode switch, not a copy'
+      );
+      await page.getByTestId('compact-mode-beginner').click();
+      await page.getByTestId('compact-tab-tabs').click();
+      await page.getByTestId('compact-tab-chips').waitFor({ state: 'visible', timeout: 3000 });
+      const chips = await page.evaluate(() => {
+        const list = document.querySelector('[data-testid="compact-tab-chips"]');
+        return {
+          count: list ? list.querySelectorAll('[data-testid^="compact-rail-"]').length : 0,
+          current: !!list?.querySelector('[aria-current="page"]'),
+        };
+      });
+      assert.ok(chips.count >= 5, `the simulator tabs are chips in the dock (${chips.count})`);
+      assert.equal(chips.current, true, 'the open tab is marked among them');
+      await page.getByTestId('compact-tab-tabs').click();
+
+      // Every width it is actually seen at: at 1280 the six chips share one line, at a phone they
+      // wrap to a second — and in both states no chip is clipped or outside the dock, nothing inside
+      // the dock scrolls, and the dock still sits above the editor and the lesson text.
+      const dockFit = () =>
+        page.evaluate(() => {
+          const dock = document.querySelector('[data-testid="compact-dock"]');
+          const box = dock.getBoundingClientRect();
+          const reader = document.querySelector('[data-testid="lesson-reader"]');
+          const editor = document.querySelector('[data-testid="editor-panel"]');
+          const chips = [...dock.querySelectorAll('[role="tab"]')];
+          const clipped = chips
+            .filter((chip) => {
+              const r = chip.getBoundingClientRect();
+              return (
+                r.width < 8 ||
+                r.height < 8 ||
+                r.left < box.left - 1 ||
+                r.right > box.right + 1 ||
+                r.top < box.top - 1 ||
+                r.bottom > box.bottom + 1 ||
+                chip.scrollWidth > chip.clientWidth + 1
+              );
+            })
+            .map((chip) => chip.getAttribute('data-testid'));
+          const scrolling = [...dock.querySelectorAll('*')]
+            .filter((el) => {
+              const cs = getComputedStyle(el);
+              if (cs.overflowX === 'visible' && cs.overflowY === 'visible') return false;
+              return el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1;
+            })
+            .map((el) => el.getAttribute('data-testid') || String(el.className).slice(0, 24));
+          return {
+            chips: chips.length,
+            clipped,
+            scrolling: scrolling.slice(0, 4),
+            dockScrolls: dock.scrollWidth > dock.clientWidth + 1 || dock.scrollHeight > dock.clientHeight + 1,
+            pageScrollsSideways: document.documentElement.scrollWidth > window.innerWidth + 1,
+            above: box.top < (reader?.getBoundingClientRect().top ?? Infinity) && box.top < (editor?.getBoundingClientRect().top ?? Infinity),
+            briefHeight: Math.round(document.querySelector('[data-testid="compact-panel-brief"]')?.getBoundingClientRect().height ?? 0),
+            reportHeight: Math.round(document.querySelector('[data-testid="compact-panel-report"]')?.getBoundingClientRect().height ?? 0),
+          };
+        });
+      const assertFit = (fit, width) => {
+        assert.equal(fit.chips, 6, `all six modules are on the row at ${width} px`);
+        assert.deepEqual(fit.clipped, [], `no chip is clipped or outside the dock at ${width} px`);
+        assert.deepEqual(fit.scrolling, [], `nothing inside the dock scrolls at ${width} px`);
+        assert.equal(fit.dockScrolls, false, `the dock does not scroll at ${width} px`);
+        assert.equal(fit.pageScrollsSideways, false, `the dock does not push the page sideways at ${width} px`);
+        assert.equal(fit.above, true, `the dock stays above the editor and the text at ${width} px`);
+      };
+
+      await page.getByTestId('compact-tab-tabs').click();
+      assertFit(await dockFit(), 1280);
+      await page.getByTestId('compact-tab-brief').click();
+      await page.getByTestId('compact-panel-brief').waitFor({ state: 'visible', timeout: 3000 });
+      const wideBrief = await dockFit();
+      assertFit(wideBrief, 1280);
+      assert.ok(wideBrief.briefHeight > 80, `the brief has its content open at 1280 px (${wideBrief.briefHeight} px)`);
+      await page.getByTestId('compact-tab-brief').click();
+
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(600);
+      assertFit(await dockFit(), 390);
+      await page.getByTestId('compact-tab-brief').click();
+      await page.getByTestId('compact-panel-brief').waitFor({ state: 'visible', timeout: 3000 });
+      const phoneBrief = await dockFit();
+      assertFit(phoneBrief, 390);
+      assert.ok(
+        phoneBrief.briefHeight > 80,
+        `the brief is not an empty box on a phone (${phoneBrief.briefHeight} px)`
+      );
+      await page.getByTestId('compact-tab-report').click();
+      await page.getByTestId('compact-panel-report').waitFor({ state: 'visible', timeout: 3000 });
+      const phoneReport = await dockFit();
+      assertFit(phoneReport, 390);
+      assert.ok(phoneReport.reportHeight > 200, 'the report still opens at 390 px');
+      await page.getByTestId('compact-tab-report').click();
+      await page.setViewportSize({ width: 1280, height: 720 });
+      await page.waitForTimeout(400);
+
+      // It is a preset like the others: the shortcut reaches it and a reload remembers it.
+      await page.reload();
+      await page.getByTestId('btn-compact-layout').waitFor({ timeout: 10000 });
+      assert.equal(
+        await page.getByTestId('btn-compact-layout').getAttribute('aria-pressed'),
+        'true',
+        'Compact must survive a reload'
+      );
+      await page.getByTestId('btn-compact-layout').click();
+      await page.waitForTimeout(300);
+      const restored = await shape();
+      assert.equal(restored.layout, 'study', 'the same button unfolds the page');
+      assert.equal(restored.wrapper, 'contents', 'and the dock stops being a box again');
+      assert.equal(restored.dockHeight, 0, 'a `contents` wrapper takes no space of its own');
+      console.log('  ok Compact folds the page into one dock, keeps the editor full width, and unfolds again');
+    }
+
     // 5d-i. The editor's tabs: the code and the two outputs are views of one card, the output is a tab
     //       rather than a block that pushes the code up, and a split shows two views at once.
     {
@@ -2259,7 +2514,9 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
               }
               return null;
             };
-            canvas.scrollIntoView({ block: 'center', inline: 'nearest' });
+            // `instant`: a smooth scroll would still be moving when the point is clicked, and the
+            // press would land wherever the paper had got to. The scan and the click see one layout.
+            canvas.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
             const start = canvas.scrollTop;
             const span = Math.max(0, canvas.scrollHeight - canvas.clientHeight);
             for (let offset = 0; offset <= span; offset += 120) {
@@ -2273,7 +2530,80 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         // A diagram can be drawn wide enough that no windowful has a bare point left. Fit is the
         // app's own way to make room, so a search that finds nothing asks for it once and looks
         // again rather than reporting the paper missing.
+        // `scrollIntoView` is a hint, not a state: a pane whose layout has not settled yet swallows
+        // it, the scan is then handed a band of paper 160 px tall, and the step reads that as "the
+        // canvas has no bare paper" - which is what made this assertion fail on a busy runner and
+        // pass on a quiet one. The pane is therefore scrolled by hand, through the element that
+        // actually scrolls, and the geometry is waited on: the canvas must be at least one card
+        // tall inside the window before any scan runs. No timing assumption, and a failure says
+        // which element scrolls and where the canvas ended up.
+        const bringCanvasIntoView = async () => {
+          let last = null;
+          for (let attempt = 0; attempt < 4; attempt += 1) {
+            last = await page.getByTestId('workflow-canvas').evaluate(async (canvas) => {
+              const describe = (el) =>
+                `${el.tagName.toLowerCase()}${el.getAttribute('data-testid') ? `[${el.getAttribute('data-testid')}]` : ''}`;
+              let scroller = null;
+              for (let node = canvas.parentElement; node && node !== document.documentElement; node = node.parentElement) {
+                const style = getComputedStyle(node);
+                if (
+                  (style.overflowY === 'auto' || style.overflowY === 'scroll' || style.overflowY === 'overlay') &&
+                  node.scrollHeight > node.clientHeight + 1
+                ) {
+                  scroller = node;
+                  break;
+                }
+              }
+              const before = canvas.getBoundingClientRect();
+              if (scroller) {
+                const paneTop = scroller.getBoundingClientRect().top;
+                scroller.scrollTo({ top: scroller.scrollTop + before.top - paneTop - 8, behavior: 'instant' });
+              } else {
+                canvas.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'instant' });
+              }
+              // The scroll is settled on, not slept through: two frames that report the same top mean
+              // the pane has stopped moving, whatever it was doing when the scroll was asked for.
+              const settledAt = await new Promise((resolve) => {
+                let frames = 0;
+                let previous = null;
+                let stable = 0;
+                const tick = () => {
+                  const top = canvas.getBoundingClientRect().top;
+                  stable = previous !== null && Math.abs(top - previous) < 0.5 ? stable + 1 : 0;
+                  previous = top;
+                  frames += 1;
+                  if (stable >= 2) {
+                    resolve(top);
+                    return;
+                  }
+                  if (frames > 40) {
+                    resolve(null);
+                    return;
+                  }
+                  requestAnimationFrame(tick);
+                };
+                requestAnimationFrame(tick);
+              });
+              const rect = canvas.getBoundingClientRect();
+              return {
+                scroller: scroller ? `${describe(scroller)} ov=${getComputedStyle(scroller).overflowY}` : 'none',
+                settled: settledAt !== null,
+                top: Math.round(rect.top),
+                bottom: Math.round(rect.bottom),
+                visible: Math.round(Math.min(rect.bottom, window.innerHeight - 20) - Math.max(rect.top, 0)),
+              };
+            });
+            if (last.settled && last.visible >= 200) return last;
+            await page.waitForTimeout(120);
+          }
+          assert.fail(
+            `the workflow canvas could not be brought into view (${JSON.stringify(last)}): ` +
+              'the pane that scrolls it never gave it one card of height in the window, so no scan ' +
+              'could see bare paper'
+          );
+        };
         const emptySpot = async (minX) => {
+          await bringCanvasIntoView();
           const found = await scanPaper(minX);
           if (found) return found;
           const fit = page.getByTestId('workflow-fit');
@@ -2788,20 +3118,49 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
               y: (point.y - rect.top + canvas.scrollTop) / scale,
             };
           }, { x, y });
+        // A point measured a moment ago is not a promise: the pane can finish loading its content
+        // and scroll after the scan chose the spot, and the press then lands on a card or outside
+        // the canvas and opens nothing. So the press is preceded by the same hit test the scan uses,
+        // and a stale point is replaced with a fresh one instead of being reported as a missing menu.
+        const pointIsBarePaper = (x, y) =>
+          page.evaluate((point) => {
+            const hit = document.elementFromPoint(point.x, point.y);
+            if (!hit || !hit.closest('[data-testid="workflow-canvas"]')) return false;
+            return !hit.closest(
+              '[data-node-id],[data-lane-band],[data-testid^="workflow-edge-"],[data-testid^="workflow-group-"],button,input,textarea,select,a'
+            );
+          }, { x, y });
         const menuAdd = async (x, y, label) => {
-          const at = await paperPoint(x, y);
-          await page.mouse.click(x, y, { button: 'right' });
-          const menu = page.getByTestId('workflow-menu');
-          await menu.waitFor({ timeout: 5000 });
-          await menu.getByRole('button', { name: label }).click();
-          await page.waitForTimeout(350);
-          const box = await page.locator('[data-node-id]').last().evaluate((card) => ({
-            x: card.offsetLeft,
-            y: card.offsetTop,
-            width: card.offsetWidth,
-            height: card.offsetHeight,
-          }));
-          return { at, box };
+          let spot = { x, y };
+          for (let attempt = 0; ; attempt += 1) {
+            if (!(await pointIsBarePaper(spot.x, spot.y))) {
+              assert.ok(attempt < 3, `the bare spot chosen for ${label} was taken before the press (${JSON.stringify(spot)})`);
+              const fresh = await emptySpot(0);
+              assert.ok(fresh, `no bare paper was left to press for ${label}`);
+              spot = fresh;
+              continue;
+            }
+            const at = await paperPoint(spot.x, spot.y);
+            await page.mouse.click(spot.x, spot.y, { button: 'right' });
+            const menu = page.getByTestId('workflow-menu');
+            const opened = await menu.waitFor({ timeout: 3000 }).then(
+              () => true,
+              () => false
+            );
+            if (!opened) {
+              assert.ok(attempt < 3, `right-clicking bare paper at ${JSON.stringify(spot)} opened no menu`);
+              continue;
+            }
+            await menu.getByRole('button', { name: label }).click();
+            await page.waitForTimeout(350);
+            const box = await page.locator('[data-node-id]').last().evaluate((card) => ({
+              x: card.offsetLeft,
+              y: card.offsetTop,
+              width: card.offsetWidth,
+              height: card.offsetHeight,
+            }));
+            return { at, box };
+          }
         };
         await page.getByTestId('workflow-canvas').evaluate((canvas) => canvas.scrollIntoView({ block: 'center' }));
         await page.waitForFunction(() => {
@@ -2819,9 +3178,14 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
               .map((el) => el.getAttribute('data-testid') || el.getAttribute('aria-label') || el.tagName);
             if (!canvas) return { canvas: null, dialogs };
             const rect = canvas.getBoundingClientRect();
+            // The point the scan is about is the middle of the *visible* band: the canvas's own
+            // centre is below the fold whenever the pane has not scrolled, and reporting that point
+            // named the run bar instead of the state that produced it.
+            const bandTop = Math.max(rect.top, 0);
+            const bandBottom = Math.min(rect.bottom, window.innerHeight);
             const centre = document.elementFromPoint(
               Math.min(Math.max(rect.left + rect.width / 2, 0), window.innerWidth - 1),
-              Math.min(Math.max(rect.top + rect.height / 2, 0), window.innerHeight - 1)
+              Math.min(Math.max((bandTop + bandBottom) / 2, 0), window.innerHeight - 1)
             );
             return {
               rect: [Math.round(rect.left), Math.round(rect.top), Math.round(rect.width), Math.round(rect.height)],
@@ -4262,6 +4626,30 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     assert.match(p1ReadProse, /^Goal$/m, 'Read must keep P.1’s Goal and requirements');
     assert.doesNotMatch(p1ReadProse, /^Learn$/m, 'Read must not repeat the Learn section');
     assert.match(p1ReadProse, /Do it yourself/i, 'Read must keep P.1’s exercise section');
+    // Read has a way back as well as a way on: the left-hand pill returns to Study, the right-hand
+    // one continues to Write. A learner reading the whole page had no route to Study before it.
+    const backToStudy = page.getByTestId('btn-reader-back');
+    await backToStudy.waitFor({ timeout: 5000 });
+    assert.match(
+      (await backToStudy.textContent()) ?? '',
+      /Back to Study/,
+      'Read must offer the way back to Study'
+    );
+    assert.equal(
+      await page.getByTestId('reader-continue').evaluateAll(
+        (rows) => getComputedStyle(rows[0]).justifyContent
+      ),
+      'space-between',
+      'the two pills sit at opposite ends of the row, not stacked together'
+    );
+    await backToStudy.click();
+    assert.equal(
+      await page.getByTestId('layout-study').getAttribute('aria-pressed'),
+      'true',
+      'Back to Study must select Study'
+    );
+    await page.getByTestId('layout-read').click();
+    await page.waitForTimeout(250);
     const continueToWrite = page.getByTestId('btn-reader-continue');
     await continueToWrite.waitFor({ timeout: 5000 });
     assert.match(
@@ -4604,6 +4992,73 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       { timeout: 5000 }
     );
     await setEditorCode(page, afterScratch);
+
+    // 5j-ii. A park moves the replay with the interpreter, not back to the top of the recording. The
+    //       breakpoint stops on the call, Step in stops in its body, and Step out stops in the caller;
+    //       at each stop the Trace pane has to quote that same line, because "where am I" is the one
+    //       question the pane exists to answer while a run is parked.
+    {
+      const stepCode =
+        '# %% step and trace\ndef add(a, b):\n    total = a + b\n    return total\n\nx = add(2, 3)\nprint(x)\n';
+      await setEditorCode(page, stepCode);
+      await page.getByTestId('cell-run-0').waitFor({ timeout: 5000 });
+      await page.getByTestId('breakpoint-slot-6').click();
+      await armed(6);
+      await page.getByTestId('cell-run-0').click();
+      await page.getByTestId('paused-bar').waitFor({ timeout: 30000 });
+
+      if ((await page.getByTestId('trace-panel').count()) === 0) await clickToolbar(page, 'btn-trace');
+      await page.getByTestId('trace-panel').waitFor({ timeout: 10000 });
+      const traceLine = async () =>
+        (await page.getByTestId('trace-step-label').textContent())?.match(/line (\d+)/)?.[1];
+      const traceText = async () => (await page.getByTestId('trace-code').textContent())?.trim();
+      const waitPaused = (line) =>
+        page.waitForFunction(
+          (text) =>
+            (document.querySelector('[data-testid="paused-line"]')?.textContent ?? '').trim() === text,
+          line,
+          { timeout: 20000 }
+        );
+      const waitTrace = (line) =>
+        page.waitForFunction(
+          (number) =>
+            new RegExp(`line ${number}\\b`).test(
+              document.querySelector('[data-testid="trace-step-label"]')?.textContent ?? ''
+            ),
+          line,
+          { timeout: 10000 }
+        );
+
+      assert.equal(await traceLine(), '6', 'the breakpoint park must open Trace on the line it stopped on');
+      assert.equal(await traceText(), 'x = add(2, 3)', 'and quote that line, not the recording\u2019s first');
+
+      await page.getByTestId('btn-step-in').click();
+      await waitPaused('total = a + b');
+      await waitTrace(3);
+      assert.equal(await traceText(), 'total = a + b', 'Step in must move Trace into the call it entered');
+
+      await page.getByTestId('btn-step-out').click();
+      await waitPaused('x = add(2, 3)');
+      await waitTrace(6);
+      assert.equal(await traceText(), 'x = add(2, 3)', 'Step out must move Trace back to the caller\u2019s line');
+
+      await page.getByTestId('btn-continue').click();
+      await page.waitForFunction(
+        () => (document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '').trim() === '5',
+        undefined,
+        { timeout: 20000 }
+      );
+      await page.getByTestId('breakpoint-slot-6').click();
+      await page.waitForFunction(
+        () =>
+          document.querySelector('[data-testid="breakpoint-slot-6"]')?.getAttribute('data-breakpoint') ===
+          'off',
+        undefined,
+        { timeout: 5000 }
+      );
+      await setEditorCode(page, afterScratch);
+      console.log('  ok a breakpoint, Step in and Step out each move Trace to the line the interpreter is on');
+    }
 
     // 6. CDN failure never awards verification (even with full solution loaded)
     await page.getByTestId('lesson-item-P.7').click();
@@ -6563,10 +7018,12 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
         ['lesson-P.1', 'lesson-P.2'],
         '⌘⇧F must open on the course in order, from the first lesson'
       );
-      assert.equal(
-        await searchPage.getByTestId('command-palette').getByRole('option').count(),
-        95,
-        'and list every lesson, not a page of them'
+      const lessonRows = await searchPage.getByTestId('command-palette').getByRole('option').count();
+      assert(lessonRows > 90, `and list every lesson, not a page of them; read ${lessonRows}`);
+      assert.match(
+        await searchPage.getByTestId('palette-match-count').innerText(),
+        new RegExp(`^${lessonRows} hits?$`),
+        'the footer must count the rows on screen'
       );
       // The dialog clears its field in an effect on open: filling before that lands would be wiped
       // by the reset, which reads as "the search found nothing" rather than as a race.
@@ -6650,10 +7107,10 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
         `  ok ⌘⇧F finds the lesson by its text and puts the caret on line ${expectedLine} (${(landed?.lineText ?? '').slice(0, 40)}…)`
       );
 
-      // The other half of the same door: the 65 reading pages, which are fetched the first time
-      // `⌘⇧F` opens and are not part of the bundle. `decoupling` is a word the runner's lessons do
-      // not carry, so a row for it can only have come from the prose index, and the row must name
-      // the section and the GitHub anchor rather than some page called S0.6.
+      // The other half of the same door: the reading pages, which are fetched the first time
+      // `⌘⇧F` opens and are not part of the bundle. A page the runner carries opens in the
+      // workbench at the matched section, so its row keeps no GitHub address; a bench-only page
+      // keeps one, with the anchor of the section the row names.
       await searchPage.keyboard.press('Control+Shift+F');
       await searchPage.getByTestId('command-palette').waitFor({ timeout: 10000 });
       await searchPage.waitForFunction(
@@ -6662,6 +7119,19 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
         { timeout: 5000 }
       );
       await searchPage.getByTestId('input-palette-search').fill('decoupling');
+      const carriedRow = searchPage.locator('[data-testid^="palette-item-prose-"]').first();
+      await carriedRow.waitFor({ timeout: 15000 });
+      assert.match(
+        (await carriedRow.innerText()).replace(/\s+/g, ' '),
+        /S0\.6/,
+        'the decoupling page is a runner entry now, so its first hit must be that page'
+      );
+      assert.equal(
+        await carriedRow.getAttribute('data-href'),
+        null,
+        'a page the runner carries must open here, not leave for GitHub'
+      );
+      await searchPage.getByTestId('input-palette-search').fill('shoot-through');
       const proseRow = searchPage.locator('[data-testid^="palette-item-prose-"]').first();
       await proseRow.waitFor({ timeout: 15000 });
       assert.equal(
@@ -6675,12 +7145,12 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       // without its stylesheet (see the note on `startDevServer`), so matching the case would tie this
       // check to a bug that has since been fixed.
       assert.match(proseText, /Course page/i, 'the row must say what it is');
-      assert.match(proseText, /S0\.6/, 'the row must name the page');
-      assert.match(proseText, /§ Idea 2: Power-rail decoupling/, 'the row must name the section it opens');
+      assert.match(proseText, /01\.2/, 'the row must name the page');
+      assert.match(proseText, /§ Idea 1: H-Bridge 4-switch topology/, 'the row must name the section it opens');
       const proseHref = await proseRow.getAttribute('data-href');
       assert.equal(
         proseHref,
-        'https://github.com/TLE47/Mechatronics-Roadmap/blob/main/stage-0/S0.6-capacitors-and-decoupling.md#idea-2-power-rail-decoupling-bypass-capacitors',
+        'https://github.com/TLE47/Mechatronics-Roadmap/blob/main/01-electronics-and-power/01.2-h-bridge-and-stall-current.md#idea-1-h-bridge-4-switch-topology-forward-reverse-coast-brake-and-shoot-through-prevention',
         `the row must open the page at its section; got ${proseHref}`
       );
       // Once the file is in, the footer says nothing about it: a permanent "65 pages" is furniture.

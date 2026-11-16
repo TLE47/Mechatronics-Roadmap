@@ -1,4 +1,4 @@
-{"v":6,"path":"track-p/P.5-functions-and-while-loops.md","title":"Reusable Functions (def/return) and while Loops","blocks":[
+{"v":7,"path":"track-p/P.5-functions-and-while-loops.md","title":"Reusable Functions (def/return) and while Loops","blocks":[
 {"t":"h","l":2,"x":"Goal"},
 {"t":"p","x":"Package repeatable engineering calculations into named functions using `def` and `return`, and step physical simulations forward in time using `while` loops."},
 {"t":"ul","items":[{"x":"**New ideas (max 2):**","d":0},{"x":"**Reusable functions (`def` and `return`)**: Defining a named block of code that accepts input parameters, performs a calculation, and hands the numerical answer back via `return`.","d":1},{"x":"**Condition-controlled `while` loops**: Repeating an indented simulation step for as long as a condition (`step < total_steps`) remains `True`.","d":1},{"x":"**New syntax:** `def func_name(param1, param2):`, `return value`, `while condition:`.","d":0},{"x":"**Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours","d":0}]},
@@ -23,7 +23,7 @@
 {"t":"h","l":4,"x":"Micro focus: when nothing is returned"},
 {"t":"anchor","id":"micro-none"},
 {"t":"p","x":"`None` is a value of its own, meaning there is no answer here, and a function without `return` hands back `None` even when it printed something. Test it with `result is None`; printing a value is a side effect, not a return."},
-{"t":"h","l":3,"x":"Bridge Notes"},
+{"t":"h","l":3,"x":"Bridge Notes","v":"clamp-function"},
 {"t":"p","x":"In Lesson P.3, you wrote an `if / elif / else` block to clamp an actuator command into `[0, 255]`. What if you need to clamp 20 different commands across your robot program? Instead of copy-pasting the same 6 lines 20 times, you wrap them once inside a **function**:"},
 {"t":"code","lang":"python","text":"def clamp_cmd(cmd):\n    if cmd > 255:\n        return 255\n    elif cmd < 0:\n        return 0\n    return cmd"},
 {"t":"p","x":"Here, `cmd` is the input **parameter**, and `return` sends the clamped number back to wherever `clamp_cmd(...)` was called. If a function uses `print(cmd)` instead of `return cmd`, Python returns the empty value `None`, and any math that tries to use the result will crash with a `TypeError`."},

@@ -58,6 +58,18 @@ async function main() {
     await check('breakpoints and trace and debug layout toggle real UI', async () => {
       await page.getByTestId('btn-breakpoints').click();
       assert.equal(await page.locator('[data-testid="breakpoint-panel"]').isVisible(), true, 'breakpoint panel did not open');
+      // The pane used to fall through to the default label, so the strip showed two `main.py` tabs.
+      const labels = (await page.locator('[role="tab"]').allInnerTexts()).map((each) => each.trim());
+      assert.equal(
+        labels.filter((each) => each === 'main.py').length,
+        1,
+        `exactly one tab may be main.py, saw ${JSON.stringify(labels)}`
+      );
+      assert.equal(
+        (await page.getByTestId('editor-tab-breakpoints').innerText()).trim(),
+        'Breakpoints',
+        'the breakpoint pane names itself'
+      );
       await page.getByTestId('btn-breakpoints').click();
       await page.getByTestId('btn-debugger').click();
       assert.equal(await page.getByTestId('layout-debug').getAttribute('aria-pressed'), 'true', 'debug layout not selected');
@@ -86,6 +98,17 @@ async function main() {
         runButtonDisabled: await page.evaluate(() => document.querySelector('[data-testid="btn-run-verify"]')?.disabled === true),
       }));
       assert.equal(await disabled('btn-debug-step-over'), false, 'step over should be enabled while parked');
+      // Trace answers "how did the program reach this park", so a parked run must have one: the
+      // trace used to arrive only with the final outcome, leaving this pane empty at every
+      // breakpoint, which is the one place it is asked for.
+      if (!(await page.locator('[data-testid="trace-panel"]').count())) await page.getByTestId('btn-trace').click();
+      await page.waitForSelector('[data-testid="trace-panel"]', { timeout: 10000 });
+      const traceSummary = ((await page.textContent('[data-testid="trace-summary"]')) ?? '').trim();
+      const traceStep = ((await page.textContent('[data-testid="trace-step-label"]')) ?? '').trim();
+      assert.match(traceSummary, /^\d+\s+steps?/, `a parked run must carry its steps, saw ${JSON.stringify(traceSummary)}`);
+      assert.notEqual(traceStep, '', 'the parked trace must name the step it is showing');
+      ok(`parked trace: ${JSON.stringify({ traceSummary, traceStep: traceStep.slice(0, 40) })}`);
+      await ensureMore();
       assert.equal(await disabled('btn-debug-watch'), false, 'watch should be enabled while parked');
       await page.getByTestId('btn-debug-step-over').click();
       await page.waitForTimeout(400);

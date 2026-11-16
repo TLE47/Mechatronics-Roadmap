@@ -35,6 +35,7 @@ import { lessonPageUrl } from '../../startHere';
 import { playCue } from '../../audio/facade';
 import { randomizeConcept, samplePrimitiveData, type PrimitiveSample } from '../../micro/randomize.ts';
 import { MicroVisual } from '../micro/MicroVisual.tsx';
+import { visualPlacement } from '../../micro/visuals.ts';
 import { MicroWalkthrough } from '../micro/MicroWalkthrough.tsx';
 import { MicroAnswerPreview } from '../micro/MicroAnswerPreview.tsx';
 import { MicroCodeBlock, MicroOptionText, MicroRichText } from '../micro/MicroText.tsx';
@@ -137,6 +138,16 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
     const base = MICRO_CONCEPTS.find((concept) => concept.id === activeId) ?? null;
     return base ? randomizeConcept(base, sample) : null;
   }, [activeId, sample]);
+  /**
+   * Where this concept's picture sits on a wide screen.
+   *
+   * The catalogue's own index, so the three placements cycle right → left → bottom as the learner
+   * moves through the course, and the same lesson is laid out the same way on every visit. A single
+   * fixed "picture above the text" is what made twelve lessons look like one long page.
+   */
+  const placement = visualPlacement(
+    Math.max(0, MICRO_CONCEPTS.findIndex((concept) => concept.id === activeId))
+  );
 
   const refresh = useCallback(() => {
     setStore(microProgress.read());
@@ -760,15 +771,32 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
       </section>
 
       {stage === 'learn' ? (
-        <section className={`${CARD} micro-stage micro-reveal space-y-3 sm:space-y-4`} data-testid="micro-teaching" data-input={inputMode}>
-          <MicroVisual conceptId={active.id} sample={sample} />
-          <div className="max-w-[72ch]">
-            {active.teaching[0] ? (
-              <p className="text-[14.5px] font-medium leading-7 text-ink sm:text-[16px] sm:leading-8">
-                <MicroRichText text={active.teaching[0]} />
-              </p>
-            ) : null}
-          </div>
+        <section className={`${CARD} micro-stage micro-reveal space-y-3 sm:space-y-4`} data-testid="micro-teaching" data-input={inputMode} data-visual-placement={placement}>
+          {placement === 'bottom' ? (
+            <div className="space-y-3">
+              <div className="max-w-[72ch]">
+                {active.teaching[0] ? (
+                  <p className="text-[14.5px] font-medium leading-7 text-ink sm:text-[16px] sm:leading-8">
+                    <MicroRichText text={active.teaching[0]} />
+                  </p>
+                ) : null}
+              </div>
+              <MicroVisual conceptId={active.id} sample={sample} placement={placement} />
+            </div>
+          ) : (
+            <div className="grid gap-3 lg:grid-cols-2 lg:items-start">
+              <div className={`max-w-[72ch] ${placement === 'left' ? 'lg:order-2' : 'lg:order-1'}`}>
+                {active.teaching[0] ? (
+                  <p className="text-[14.5px] font-medium leading-7 text-ink sm:text-[16px] sm:leading-8">
+                    <MicroRichText text={active.teaching[0]} />
+                  </p>
+                ) : null}
+              </div>
+              <div className={placement === 'left' ? 'lg:order-1' : 'lg:order-2'}>
+                <MicroVisual conceptId={active.id} sample={sample} placement={placement} />
+              </div>
+            </div>
+          )}
           <MicroWalkthrough
             key={`${active.id}-${sample.intText}-${sample.floatText}`}
             concept={active}

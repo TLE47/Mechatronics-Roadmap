@@ -1,4 +1,4 @@
-{"v":6,"path":"track-p/P.9-rearranging-formulas-and-scaling.md","title":"Rearranging Physics Formulas and Linear Range Scaling","blocks":[
+{"v":7,"path":"track-p/P.9-rearranging-formulas-and-scaling.md","title":"Rearranging Physics Formulas and Linear Range Scaling","blocks":[
 {"t":"h","l":2,"x":"Goal"},
 {"t":"p","x":"Rearrange physics formulas to isolate any unknown variable on the left side of `=`, and linearly map 10-bit sensor counts (`0..1023`) into physical units (`0..5.0`) or 8-bit actuator commands (`0..255`)."},
 {"t":"ul","items":[{"x":"**New ideas (max 2):**","d":0},{"x":"**Rearranging three-variable physics formulas**: Doing the exact same opposite operation to both sides of an equation to solve for any unknown variable ($d = s \\cdot t \\leftrightarrow s = d/t \\leftrightarrow t = d/s$).","d":1},{"x":"**Linear range scaling**: Converting a number from an input interval $[0, X_{\\max}]$ to an output interval $[0, Y_{\\max}]$ via the fraction of full scale $\\left(\\frac{x}{X_{\\max}}\\right) \\times Y_{\\max}$.","d":1},{"x":"**New syntax:** None (uses Python functions and arithmetic from Lessons P.2 and P.5).","d":0},{"x":"**Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–3.0 hours","d":0}]},
@@ -35,7 +35,7 @@
 {"t":"h","l":4,"x":"Micro focus: the output range sets the top"},
 {"t":"anchor","id":"micro-scale-output"},
 {"t":"p","x":"The fraction of full scale is between 0 and 1; the multiplier is the output's top value, so a 3.3 V board maps full scale to 3.3 and a 5 V chain maps it to 5.0. The same counts describe different volts on different boards."},
-{"t":"h","l":3,"x":"Bridge Notes"},
+{"t":"h","l":3,"x":"Bridge Notes","v":"scaling-dials"},
 {"t":"p","x":"In mechatronics, you do not need to memorize three separate formulas for every physical law—you only need one formula and the balance rule:"},
 {"t":"ul","items":[{"x":"Start with distance equals speed times time: $d = s \\cdot t$.","d":0},{"x":"Need speed $s$? Divide both sides by $t$: $s = \\frac{d}{t}$.","d":0},{"x":"Need time $t$? Divide both sides by $s$: $t = \\frac{d}{s}$.","d":0}]},
 {"t":"p","x":"What if an equation has both addition and multiplication, like a cart starting at offset $x_0$ ($x_{\\text{final}} = s \\cdot t + x_0$)? Undo addition/subtraction **first** by subtracting $x_0$ from both sides ($x_{\\text{final}} - x_0 = s \\cdot t$), and then divide both sides by $t$:"},

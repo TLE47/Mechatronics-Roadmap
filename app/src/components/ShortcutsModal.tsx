@@ -5,6 +5,7 @@ import {
   chordFromEvent,
   formatChord,
   isDefaultKeymap,
+  keymapSnapshot,
   rebind,
   resetKeymap,
   writeKeymap,
@@ -12,6 +13,7 @@ import {
   type KeymapAction,
 } from '../keymap';
 import { useKeymap } from '../useKeymap';
+import { showUndo } from '../toastPolicy';
 
 interface ShortcutsModalProps {
   isOpen: boolean;
@@ -237,9 +239,17 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
                 type="button"
                 data-testid="btn-reset-keymap"
                 onClick={() => {
+                  // Reset is a one-press undo job, not a confirmation: the sheet remembers what the
+                  // map was, says what happened, and the card carries the way back for eight
+                  // seconds (`app/src/toastPolicy.ts`).
+                  const previous = keymapSnapshot();
                   resetKeymap();
                   setListening(null);
                   setNote({ kind: 'ok', text: 'Every key is back to its shipped shortcut.' });
+                  showUndo('Every key is back to its shipped shortcut.', () => {
+                    writeKeymap(previous);
+                    setNote({ kind: 'ok', text: 'Your keys are back.' });
+                  });
                 }}
                 className="flex shrink-0 cursor-pointer items-center gap-1 rounded border px-2 py-1 font-mono text-[10.5px]"
                 style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
