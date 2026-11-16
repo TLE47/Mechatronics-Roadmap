@@ -1223,8 +1223,9 @@ export function LessonReader({
    * that heading, anchor and first paragraph so the visual can sit beside the prose instead of
    * becoming a full-width interruption at every width. Side placement starts at `xl`, where the pane
    * has room for both columns; below that the scene takes the full reader width, before the paragraph
-   * for a side scene and after it for a bottom one. `flow-root` contains the float, so the next
-   * section always starts below the whole focus.
+   * for a side scene and after it for a bottom one. `flow-root` contains the float, and `space-y-3`
+   * keeps the article's rhythm inside the group (the explicit anchor must stay a paragraph-gap below
+   * its heading, or the reading-position recorder picks the anchor instead of the heading).
    */
   const renderMicroSection = (
     heading: Extract<ReaderBlock, { t: 'h' }>,
@@ -1253,7 +1254,7 @@ export function LessonReader({
       </div>
     );
     return (
-      <section key={key} data-testid={`reader-micro-${conceptId}`} className="flow-root">
+      <section key={key} data-testid={`reader-micro-${conceptId}`} className="flow-root space-y-3">
         {renderBlock(heading, `${key}.heading`)}
         {renderBlock(anchor, `${key}.anchor`)}
         {placement === 'bottom' ? (
