@@ -6081,6 +6081,11 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       `  ok the export carries the paint reading (first paint ${latest.fcp} ms, editor ${latest.editor} ms, Run ${latest.run} ms)`
     );
 
+    // The exports live in General settings now, and its backdrop covers the tab rail: close it the
+    // way a learner does before the next press, or the rail is under a modal for the rest of the run.
+    await page.getByTestId('btn-general-settings-close').click();
+    await page.getByTestId('general-settings').waitFor({ state: 'hidden', timeout: 10000 });
+
     // 9. Verify School-Math Diagnostic & Tier 1 -> Tier 2 Exit Readiness Review interactive sub-tabs
     await page.getByTestId('tab-btn-tab-placement').click();
     await page.getByTestId('tab-math-diagnostic').click();
