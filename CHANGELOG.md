@@ -2,19 +2,133 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-****Release identity: `3.6.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.0.3`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
 
 ```mermaid
 flowchart LR
-    TP["Track P (14 Files: P.1–P.12 + P.14 + P.M)"] --> S0["Stage 0 (11 Files: S0.0–S0.9 + S0.M)"]
+    TP["Track P (16 Files: P.1–P.14 + P.2.5 + P.M)"] --> S0["Stage 0 (11 Files: S0.0–S0.9 + S0.M)"]
     S0 --> B1["Pass 1 Tier 1 (23 Files: 00.1–08.1 across Tracks 00–08)"]
     B1 --> QA["Automated CI: verify_repo + validate_modules + lint_lessons + lint_modules + check_term_order + clean_tex + audit_math + test_exercises + run_all_labs + smoke & browser E2E (dev server and built Pages bundle)"]
 ```
 
 ---
+
+## [2026-11-17] — The Track P table lists all sixteen files it sits beside
+
+**Two lessons were missing from the table and the totals said 13.** `P.2.5` (Think in Comments) and
+`P.14` (The Analysis Workflow) have their own pages, entries in the workbench and rows in
+`docs/SIM_ROUTE.md`, but not in the hand-kept `track-p/README.md` table, whose total row advertised
+"13 Lessons + 1 Milestone (14 Files)" and 27 ideas beside the folder's 16 files and 31 ideas.
+
+**The per-row targets now come from the lesson front matter.** The old rows were a second, quieter set
+of estimates that disagreed with the YAML every other generated page reads, so the table summed to
+12–17 hours beside `docs/CURRICULUM.md`'s 18.5–46.5 for the same sixteen files. Each row now carries its
+lesson's own typical/slow range, the total reads ≈18.5–26 h (≈33.5–46.5 h slow-paced), and the routing
+note quotes the ≈19–47 focused hours `docs/SIM_ROUTE.md` actually prints. The table's step diagram also
+names the analysis workflow in the last group instead of calling P.14 another physics lesson.
+
+## [2026-11-17] — A live lesson keeps its own address, and the Track P table reads straight through
+
+**`?lesson=P.14` is a current address again.** The renumber left a URL alias so old bookmarks still
+opened their lesson, but `P.14` is now the analysis-workflow lesson's live id, and the alias sent it
+to the datasheet page. A string cannot say whether `P.14` was written before or after the renumber, so
+the live id wins: only an id this build no longer lists — the retired `P.15` — is translated. The
+reader-route suite walks all 97 pages by their current ids and is green again.
+
+**Two tests carried the old ids in escaped form.** A regex is not the string `P.15`, so the renumber's
+sweep left `/P\.15/` assertions behind in `scripts/test_workflow.mjs`; they now assert the P.14 the
+seed writes. The Track P table check also expected every lesson in the folder, while that hand-kept
+table has always listed the main path (P.1–P.13 and the milestone, with P.2.5 and the analysis lesson
+carried in the folder's own pages); it now asserts the table's ids run without a gap instead of
+inventing rows, and the table's own P.11–P.14 range label is corrected.
+
+## [2026-11-17] — The renumber leaves records that already use the new ids alone
+
+**A migration needs to know whether it has already run.** 4.0.0's boot migration moved every stored
+`P.14` down to `P.13`, which is right for data written before the renumber and wrong for data written
+after it: the browser suites seed a verified map in the new ids and saw the workflow lesson slide
+onto the datasheet key, so Mission 1 stopped reading as complete. A record that already names `P.13`
+— an id the old numbering never had — is proof it was written by 4.0.0 or later, and both the browser
+migration and the cloud-snapshot translation now skip those records instead of translating them a
+second time. `scripts/test_progress_merge.mjs` pins the case, and the golden-path game suite reads
+LV 1 again.
+
+## [2026-11-17] — Track P closes the P.13 gap, and every saved id follows its lesson
+
+**The missing lesson was a missing number.** Track P jumped from P.12 to P.14 because a lesson id is
+not a label: it is the key of every saved flag, draft, reading position and shared link, and
+renumbering would have orphaned all of them. This release pays that cost once. P.15 became P.14
+(The Analysis Workflow: Given, Unknown, Model, Compute, Check, Answer) and P.14 became P.13 (Reading a
+Datasheet Table), so the track now reads P.1, P.2, P.2.5, P.3 … P.14 with no gap, and the "there is no
+Lesson P.13" note is gone from the README, the route page and the microlearning guide.
+
+**Stored work moves with the ids, in one simultaneous pass.** `app/src/lessonRenames.ts` maps old
+`P.15` → `P.14` and old `P.14` → `P.13` against the original string, so the two moves cannot chain and
+send the analysis lesson down to P.13. The map runs at boot, after the IndexedDB cache is hydrated and
+before React reads it, over every `mechalab*` store: the verified/completed/milestone flags, lesson
+checks, drafts and their filed versions, reading positions, notes and sittings. It rewrites only ids —
+top-level keys, exact ids in scalars and string lists — never prose or code inside a draft. A marker
+(`mechalab_lesson_renames_v1`) makes it idempotent, so a later visit cannot shift a record twice.
+
+**Cloud snapshots and old links are translated too.** A signed-in learner's stored document still
+names the old ids; `withCurrentLessonIds` maps both sides of `mergeProgress` before the merge, so a
+finished lesson does not reappear as unfinished, and the next save writes the new ids back. A
+`?lesson=P.15` link opens the analysis lesson (now P.14) and `?lesson=P.14` opens the datasheet
+lesson (now P.13), so no page, bookmark or shared link lands on a not-found id.
+
+**Everything generated was regenerated, not hand-edited.** The two lesson sources, their micro
+concept files and lesson pages were renamed; the Python-lesson registry, micro lessons, parent-lesson
+index, prose index, route page, README counts, next-lesson links and try-links were rebuilt from
+them, and the bridge visuals, workflow templates, layout quiz, exercises and lint term order now
+name the current ids. `scripts/test_progress_merge.mjs` pins the one-pass map, the cloud translation
+and the once-only migration; `tests/test_readme_route.py` and `tests/test_sim_route.py` now require
+the contiguous track instead of documenting the gap. This is a **major** release because saved state
+is migrated, not because the lessons themselves changed.
+
+## [2026-11-16] — The course list keeps its order, and a release cannot forget its number
+
+**The empty search had started reordering itself.** A habit store — rows this browser had opened
+before — was sorted to the top of the empty list, so a learner who opened P.9 and came back found
+P.9 first and the course shuffled around it. The list is the table of contents: it now reads in
+course order every time, P.1, P.2, P.2.5, … whatever was opened yesterday, and the store is gone.
+`rankPalette` has no sort of its own on an empty query, so there is nothing left to drift;
+`scripts/test_palette.mjs` pins the first two rows and the last, and the browser suite reads them
+from a real `⌘⇧F` open.
+
+**`npm run version:check` now also asks whether the change was released.** It compares the paths a
+change touches with the version it carries: uncommitted learner-facing paths must come with a
+`package.json` newer than `HEAD`, and a pushed commit must carry a version its first parent did not
+have. Bookkeeping and gate-only changes (the changelog, docs, scripts, workflow files, tests) are
+neutral, and a merge passes if either side already moved the number. The message names the files and
+the command to run, so a lesson edit that forgot its patch fails with `3 learner-facing file(s)
+changed … but the version is still 3.6.0`, not with a silent header that shows last week's release.
+
+## [2026-11-16] — The palette opens on the course, with a lens for the row you wanted
+
+**The empty search says what it is showing.** An empty `⌘K` or `⌘⇧F` field already listed the
+lessons in course order — the registry the catalogue is built from *is* the teaching order — but
+nothing on screen said so, and nothing pinned it. It now opens with a line under the field saying
+**every lesson in course order, first to last**, and `scripts/test_palette.mjs` asserts the first two
+rows are `P.1` and `P.2` and the last is the capstone, so a future sort cannot quietly turn the list
+into an alphabetical or most-recent guess. The browser check reads the same two ids from a real
+`⌘⇧F` open.
+
+**The filters are a lens, not a second search.** A chip row now sits under the field: **All**,
+**Lessons**, **Course pages** in `⌘⇧F`; **Lessons**, **Tabs** and **Commands** in `⌘K`, where pages are
+never part of the catalog. Each chip
+carries the number of rows behind it, a chip with none is disabled rather than a dead end, and
+pressing one filters the answer already on screen without touching the words typed — the order the
+search gave is kept, never re-ranked (`filterPaletteMatches`, `paletteFilterCounts`). `⌘P` has one
+kind of row, so it gets no chips at all. A focused chip owns Enter and Space; Tab now cycles field ↔
+chips (the rows stay on the arrows) so the row is reachable without a mouse and Tab still cannot
+walk out of the modal.
+
+**Checked in a browser**, not only in the unit suite: `⌘K` presses **Commands**, asserts the list is
+exactly the command rows, that no lesson row survives, and that the footer counts the filtered list
+before **All** puts it back; `⌘⇧F` asserts its empty list begins `P.1`, `P.2` and holds all 95.
 
 ## [2026-11-16] — Run 3.6.0: every micro focus has its own designed scene
 
@@ -1618,7 +1732,7 @@ copy wins, nothing is deleted). The study panel grew a strip that names the flow
 checks — with **Open workflow**, and **Copy into note** appends the numbered flow to the lesson's note,
 clamped to the note's own cap.
 
-**P.15.** [Lesson P.15](track-p/P.15-analysis-workflow-given-unknown-model-check-answer.md) teaches the
+**P.15.** [Lesson P.15](track-p/P.14-analysis-workflow-given-unknown-model-check-answer.md) (renumbered P.14 in 4.0.0) teaches the
 method end-to-end on the motor-stall problem — 12 V, 2.4 Ω, a driver that peaks at 3.2 A — with its
 own graded exercise, a `workflow` figure in the reader, and the callout and next-chain entries every
 page carries. `npm run test:workflow` pins the model, the ten issue codes, both exports, all seven

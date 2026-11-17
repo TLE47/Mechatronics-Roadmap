@@ -24,14 +24,32 @@
  * Usage
  *   node scripts/bump_version.mjs minor          # 3.3.0 -> 3.4.0
  *   node scripts/bump_version.mjs patch --dry    # print the next version, write nothing
- *   node scripts/bump_version.mjs --check        # package.json and the changelog agree
+ *   node scripts/bump_version.mjs --check        # they agree, and this change moved the number
  *
  * Exit codes: 0 done (or a clean check), 1 refused, 2 usage.
  */
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
 const ROOT = process.cwd();
+/**
+ * Paths a release does not have to move for.
+ *
+ * These are the release's own bookkeeping (the number, the entry that explains it) and the gates
+ * that read it; a change confined to them cannot change what a learner sees. Everything else — a
+ * lesson page, a micro concept, the workbench — is learner-facing, and changing it without moving
+ * the number is how a bug report ends up naming a version whose behaviour no longer exists.
+ */
+const RELEASE_NEUTRAL = [
+  /^package\.json$/,
+  /^CHANGELOG\.md$/,
+  /^docs\//,
+  /^scripts\//,
+  /^\.github\//,
+  /^tests?\//,
+  /(^|\/)[^/]+\.test\.[cm]?[jt]sx?$/,
+];
 const PKG = path.join(ROOT, 'package.json');
 const CHANGELOG = path.join(ROOT, 'CHANGELOG.md');
 const LEVELS = ['major', 'minor', 'patch'];
@@ -61,6 +79,91 @@ function changelogLine(version) {
   return `**Release identity: \`${version}\`.**`;
 }
 
+/** One git question, or null when git cannot answer (no repository, no history, no `git`). */
+function git(args) {
+  try {
+    // Only the trailing newline goes: `git status --porcelain` puts the worktree flag in column
+    // one, and trimming the first line would shift every path on it by a character.
+    return execFileSync('git', args, { cwd: ROOT, stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString()
+      .replace(/\s+$/, '');
+  } catch {
+    return null;
+  }
+}
+
+/** The version a revision records, or null when git cannot say. */
+function versionAt(revision) {
+  try {
+    return JSON.parse(git(['show', `${revision}:package.json`]) ?? '{}').version ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** What is uncommitted right now: staged, unstaged and untracked, with renames read as their end. */
+function workingTreePaths() {
+  const status = git(['status', '--porcelain']);
+  if (!status) return [];
+  return status
+    .split('\n')
+    .filter((line) => line.trim())
+    .map((line) => line.slice(3).split(' -> ').pop().trim())
+    .filter(Boolean);
+}
+
+/** What the commit itself changed, measured against its first parent. */
+function commitPaths(parent) {
+  if (!parent) return [];
+  const diff = git(['diff', '--name-only', parent, 'HEAD']);
+  if (!diff) return [];
+  return diff
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Did this change move the number?
+ *
+ * A learner-facing path that changed while `package.json` still carries the version that shipped
+ * before it is a release that forgot to say it was one. The check is about paths versus the
+ * version, not about the size of the diff: a one-word lesson correction is a patch, a new lesson is
+ * a minor, and both have to say so somewhere the learner can read.
+ *
+ * Two questions, because there are two places a change can sit: the working tree (what a developer
+ * runs before committing) and the commit itself against its first parent (what CI runs on a pushed
+ * commit, where the working tree is clean). A merge commit is not asked to move the number twice —
+ * if either side already did, the merge carries the newer number and passes.
+ */
+function releaseGuard(current) {
+  if (!git(['rev-parse', '--verify', 'HEAD'])) {
+    return { ok: true, note: 'no git history here, so what changed cannot be read' };
+  }
+  const parent = git(['rev-parse', '--verify', 'HEAD^1']);
+  const learnerFacing = (paths) =>
+    paths.filter((file) => !RELEASE_NEUTRAL.some((pattern) => pattern.test(file)));
+
+  const head = versionAt('HEAD');
+  const pending = learnerFacing(workingTreePaths());
+  if (pending.length && current === head) {
+    return { ok: false, problem: forgot(pending, current, 'the working tree') };
+  }
+  const committed = learnerFacing(commitPaths(parent));
+  if (committed.length && parent && head === versionAt('HEAD^1')) {
+    return { ok: false, problem: forgot(committed, head, 'this commit') };
+  }
+  return { ok: true, note: null };
+
+  function forgot(paths, version, where) {
+    const named = paths.slice(0, 3).join(', ') + (paths.length > 3 ? ', …' : '');
+    return (
+      `${paths.length} learner-facing file(s) changed in ${where} (${named}) but the version is ` +
+      `still ${version}.\n  run: node scripts/bump_version.mjs patch   (or the level this change deserves)`
+    );
+  }
+}
+
 function main() {
   const pkg = JSON.parse(fs.readFileSync(PKG, 'utf8'));
   const changelog = fs.readFileSync(CHANGELOG, 'utf8');
@@ -79,7 +182,15 @@ function main() {
       );
       return 1;
     }
-    console.log(`[PASS] brand version ${current}: package.json and the changelog agree`);
+    const guard = releaseGuard(current);
+    if (!guard.ok) {
+      console.error(`[FAIL] ${guard.problem}`);
+      return 1;
+    }
+    console.log(
+      `[PASS] brand version ${current}: package.json and the changelog agree` +
+        (guard.note ? ` (${guard.note})` : '')
+    );
     return 0;
   }
 
@@ -102,8 +213,10 @@ function main() {
   fs.writeFileSync(PKG, `${JSON.stringify(pkg, null, 2)}\n`);
 
   const stamped = changelogLine(next);
-  const updated = /Release identity: `[^`]+`\.\*\*/.test(changelog)
-    ? changelog.replace(/Release identity: `[^`]+`\.\*\*/, stamped)
+  // The leading stars belong to the stamp: matching from `Release identity` replaced only the words
+  // and left the old `**` behind, so every bump added a pair. A new file still gets the line inserted.
+  const updated = /\*+Release identity: `[^`]+`\.\*\*/.test(changelog)
+    ? changelog.replace(/\*+Release identity: `[^`]+`\.\*\*/, stamped)
     : `${changelog.replace(/^(# .*\n)/, `$1\n${stamped} `)}`;
   fs.writeFileSync(CHANGELOG, updated);
   console.log(`${current} -> ${next} (${level}); package.json and CHANGELOG.md stamped`);

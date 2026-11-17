@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Automated test suite for all 51 beginner lessons:
-- Track P (`P.1` through `P.12` + `P.14` + `P.15` + `P.2.5` + `P.M`: 16 Python lessons)
+- Track P (`P.1` through `P.12` + `P.13` + `P.14` + `P.2.5` + `P.M`: 16 Python lessons)
 - Stage 0 (`S0.0` and `S0.6`: 2 Python lessons; `S0.1` through `S0.5`: 5 Falstad circuit lessons; `S0.7` through `S0.M`: 4 Arduino Uno Wokwi lessons)
 - Track 00 (`00.1` through `00.3`: 3 Python physics-modeling lessons)
 - Track 01 (`01.1`, `01.3` and `01.4`: 3 Python electronics-modeling lessons; `01.2`: 1 Wokwi Arduino + Falstad lesson)

@@ -196,7 +196,7 @@ npm run check:bridge-contrast          # every Bridge Notes card in four palette
 npm run check:registry                 # the five joins a lesson spans: reader payloads, the visual map, callouts, Stage 0 steps and the registry
 npm run report:bridges                 # which of the 97 pages carry a Bridge Notes visual, by track, and the queue of the ones that do not (--check for integrity)
 npm run verify:ci                      # CI's three lanes on this machine, one step at a time (--list, --keep-going, --lane)
-npm run version:check                  # the header's brand version and the changelog's release identity are the same number
+npm run version:check                  # the header's brand version and the changelog's release identity are the same number, and this change moved it (learner-facing paths need a new version; docs, gates and tests do not)
 npm run version:bump -- minor          # move both: major is a restructure a learner can feel, minor a new capability, patch a repair
 npm run test:keymap                     # the sheet's keys: the shipped six print as they always have, ⌘ and Ctrl are one chord, a character shortcut is the character, a rebind frees its old key, a clash or a browser key is refused with its sentence, a stored map is read field by field, and the sheet prints the map
 npm run test:vim                        # Vim keys: off until asked for, remembered, blocked storage, and the mode word the badge prints

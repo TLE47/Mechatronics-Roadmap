@@ -477,7 +477,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "instructorTests": "import math\nassert math.isclose(weight_newtons(0.0), 0.0, abs_tol=1e-6)\nassert math.isclose(weight_newtons(2.5), 24.525, abs_tol=1e-4)\nassert math.isclose(gravity_torque_nm(1.0, 0.5, 0.0), 4.905, abs_tol=1e-4)\nassert math.isclose(gravity_torque_nm(1.0, 0.5, 60.0), 2.4525, abs_tol=1e-4)\nassert math.isclose(gravity_torque_nm(1.0, 0.5, 90.0), 0.0, abs_tol=1e-6)"
   },
   {
-    "id": "P.14",
+    "id": "P.13",
     "title": "Reading a Datasheet Table \u2014 Unit Columns, Min/Typ/Max & Safe Operating Bounds",
     "goal": "Read a real hardware **datasheet specification table** (`DRV8833` vs. `TB6612FNG` motor driver ICs) by checking the **Unit** column for metric prefixes (`mV`, `mA`, `kHz`) and distinguishing **Recommended Operating Conditions (`Min` / `Typ` / `Max`)** from destructive **Absolute Maximum Ratings**.",
     "requirements": [
@@ -489,8 +489,8 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Alternate inputs:** the grader also covers mV, ms, kHz, and base SI units; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "track-p",
-    "path": "track-p/P.14-reading-a-datasheet-table.md",
-    "readerPath": "track-p/P.14-reading-a-datasheet-table.md",
+    "path": "track-p/P.13-reading-a-datasheet-table.md",
+    "readerPath": "track-p/P.13-reading-a-datasheet-table.md",
     "ideas": [
       "Reading datasheet specification tables and unit columns",
       "Recommended operating bounds (Min/Typ/Max) versus Absolute Maximum Ratings"
@@ -512,7 +512,7 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "instructorTests": "import math\nassert is_within_recommended_bounds(10.8, 2.7, 10.8) is True\nassert is_within_recommended_bounds(11.5, 2.7, 10.8) is False\nassert select_safe_driver(3.3) == [\"DRV8833\"]\nassert select_safe_driver(6.0) == [\"DRV8833\", \"TB6612FNG\"]\nassert select_safe_driver(12.0) == [\"TB6612FNG\"]\nassert select_safe_driver(14.5) == []\nassert math.isclose(datasheet_val_to_base_si(250.0, \"mA\"), 0.25, abs_tol=1e-9)\nassert math.isclose(datasheet_val_to_base_si(20.0, \"kHz\"), 20000.0, abs_tol=1e-6)"
   },
   {
-    "id": "P.15",
+    "id": "P.14",
     "title": "The Analysis Workflow \u2014 Given, Unknown, Model, Compute, Check, Answer",
     "goal": "Turn a word problem into an ordered **analysis workflow** \u2014 state what is **given**, name the **unknown**, choose the **model**, **compute**, **check** the result against its unit and its limits, then write the **answer** \u2014 and build the same six steps as a small Python program you can reuse.",
     "requirements": [
@@ -524,8 +524,8 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "**Alternate inputs:** the grader also covers answer_line on both the inside-limit and clamped branches; it changes the inputs, so a hardcoded result fails."
     ],
     "track": "track-p",
-    "path": "track-p/P.15-analysis-workflow-given-unknown-model-check-answer.md",
-    "readerPath": "track-p/P.15-analysis-workflow-given-unknown-model-check-answer.md",
+    "path": "track-p/P.14-analysis-workflow-given-unknown-model-check-answer.md",
+    "readerPath": "track-p/P.14-analysis-workflow-given-unknown-model-check-answer.md",
     "ideas": [
       "Ordering an analysis: Given, Unknown, Model, Compute, Check, Answer",
       "Checking an answer against units, bounds, and the driver limit before trusting it"

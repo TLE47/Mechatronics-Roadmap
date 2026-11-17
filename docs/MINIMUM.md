@@ -33,8 +33,8 @@ flowchart LR
 | Step 1 | [`P.10` Radians, Rotational Speed (rad/s) and Right-Triangle Trigonometry](../track-p/P.10-radians-and-right-triangle-trig.md) | 1.5-3.5 |
 | Step 1 | [`P.11` Reading Time-Series Graphs — Slope and Area](../track-p/P.11-reading-time-series-graphs.md) | 1.5-3.5 |
 | Step 1 | [`P.12` Linear Forces (F = ma) and Lever Torque (tau = m*g*L*cos(theta))](../track-p/P.12-forces-and-lever-torque.md) | 1.5-3.5 |
-| Step 1 | [`P.14` Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds](../track-p/P.14-reading-a-datasheet-table.md) | 0.75-2 |
-| Step 1 | [`P.15` The Analysis Workflow — Given, Unknown, Model, Compute, Check, Answer](../track-p/P.15-analysis-workflow-given-unknown-model-check-answer.md) | 0.75-2 |
+| Step 1 | [`P.13` Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds](../track-p/P.13-reading-a-datasheet-table.md) | 0.75-2 |
+| Step 1 | [`P.14` The Analysis Workflow — Given, Unknown, Model, Compute, Check, Answer](../track-p/P.14-analysis-workflow-given-unknown-model-check-answer.md) | 0.75-2 |
 | Step 1 | [`P.M` Track P Milestone — Gravity-Holding Robot Arm Link Simulator](../track-p/P.M-track-p-milestone.md) | 1-2.5 |
 | Step 2 | [`S0.0` Why Electricity Is Like Water Flow — Effort, Flow & Pipe Constriction](../stage-0/S0.0-why-electricity-is-like-flow.md) | 0.75-2 |
 | Step 2 | [`S0.1` Closed DC Circuits, Ground Reference (0 V) and Ohm's Law](../stage-0/S0.1-closed-circuits-and-ohms-law.md) | 1-3 |

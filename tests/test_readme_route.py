@@ -152,8 +152,14 @@ class GeneratorTests(unittest.TestCase):
             f"additively instead of rounding each step on its own",
         )
 
-    def test_track_p_targets_add_up_and_name_the_id_gap(self):
-        """The hand-kept Track P table must sum its own rows, and say why P.13 is absent."""
+    def test_track_p_targets_add_up_and_the_ids_run_without_a_gap(self):
+        """The hand-kept Track P table must sum its own rows and list P.1, P.2, P.2.5, P.3–P.14 and P.M once each.
+
+        P.13 was filled in on 2026-11-17 by renumbering the two lessons after it; the app migrates
+        the old ids, so a table that still skipped P.13 would name a lesson a learner cannot open.
+        P.2.5 and P.14 were missing rows the folder always had, so the totals read 13 lessons and 27
+        ideas beside a sixteen-file folder; the rows now carry their front-matter targets and add up.
+        """
         with open(os.path.join(ROOT, "track-p", "README.md"), encoding="utf-8") as handle:
             text = handle.read()
         rows = re.findall(
@@ -162,8 +168,8 @@ class GeneratorTests(unittest.TestCase):
             text,
         )
         self.assertEqual(
-            len(rows), 14,
-            f"expected the 14 Track P lessons to each carry both target columns, found "
+            len(rows), 16,
+            f"expected the 16 Track P files to each carry both target columns, found "
             f"{len(rows)}; check the table's row shape",
         )
         low = sum(int(row[0]) for row in rows)
@@ -171,8 +177,8 @@ class GeneratorTests(unittest.TestCase):
         slow_low = sum(int(row[2]) for row in rows)
         slow_high = sum(int(row[3]) for row in rows)
         total = re.search(
-            r"\| \*\*Total Track P\*\* .*?\| \*\*≈(\d+)–(\d+) h\*\* "
-            r"\| \*\*≈(\d+)–(\d+) h\*\* \|",
+            r"\| \*\*Total Track P\*\* .*?\| \*\*≈(\d+(?:\.\d+)?)–(\d+(?:\.\d+)?) h\*\* "
+            r"\| \*\*≈(\d+(?:\.\d+)?)–(\d+(?:\.\d+)?) h\*\* \|",
             text,
         )
         self.assertIsNotNone(
@@ -180,17 +186,19 @@ class GeneratorTests(unittest.TestCase):
             "expected the Track P total row to carry both column sums; without it the table has "
             "nothing to add up to",
         )
+        expected_minutes = tuple(round(float(value) * 60) for value in total.groups())
         self.assertEqual(
             (low, high, slow_low, slow_high),
-            tuple(int(value) * 60 for value in total.groups()),
-            f"expected the Track P rows to sum to the totals row "
-            f"{tuple(int(value) * 60 for value in total.groups())} minutes, got "
+            expected_minutes,
+            f"expected the Track P rows to sum to the totals row {expected_minutes} minutes, got "
             f"{(low, high, slow_low, slow_high)} - update the total when a target moves",
         )
-        self.assertIn(
-            "There is no Lesson P.13", text,
-            "expected the Track P README to say why the ids skip P.13, so the gap does not read "
-            "as a missing lesson",
+        listed = re.findall(r"^\| \*\*\[Lesson (P\.[^\]]+)\]", text, re.M)
+        expected = ["P.1", "P.2", "P.2.5"] + [f"P.{n}" for n in range(3, 15)] + ["P.M"]
+        self.assertEqual(
+            listed, expected,
+            f"expected the Track P table to read {expected}, got {listed}; after the 4.0.0 "
+            f"renumber the ids must run without a gap instead of starting again at P.14",
         )
 
     def test_the_committed_readme_is_the_rendered_table(self):

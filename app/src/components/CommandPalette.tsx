@@ -5,15 +5,19 @@ import { toast } from 'sonner';
 import { CheckCircle2, CornerDownLeft, Search } from 'lucide-react';
 import {
   PALETTE_MODE_TEXT,
+  filterPaletteMatches,
   groupPalette,
   lessonIdOf,
+  paletteFilterCounts,
+  paletteFilterLabel,
+  paletteFilterOptions,
   paletteKindLabel,
   rankPalette,
+  type PaletteFilter,
   type PaletteItem,
   type PaletteMatch,
   type PaletteMode,
 } from '../palette';
-import { paletteBoost, readPaletteUses, recordPaletteUse } from '../paletteFrecency';
 
 /**
  * The `↵` on the row cmdk has selected.
@@ -83,6 +87,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
    * returns to the new head instead of staying on a row that used to match.
    */
   const [selection, setSelection] = useState<string | undefined>(undefined);
+  /**
+   * Which chip is on. A lens on the answer already on screen — the query is untouched, the ranking
+   * is untouched, and pressing a chip is never a second search (`filterPaletteMatches`).
+   */
+  const [filter, setFilter] = useState<PaletteFilter>('all');
   const lastQuery = useRef<string | null>(null);
   if (lastQuery.current !== query) {
     lastQuery.current = query;
@@ -102,15 +111,19 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   // `search` answers with rows already in reading order and already capped, so it is not ranked
   // again: the index knows which lesson and which line a hit is, and `rankPalette` only knows words.
-  /** What this browser has opened before, for the empty query only (`app/src/paletteFrecency.ts`). */
-  const boost = useMemo(() => paletteBoost(readPaletteUses()), [isOpen]);
+  // The empty query is the catalogue exactly as built — course order, always — and nothing here
+  // reorders it, so a learner who opened P.9 yesterday still finds P.2 second today.
   const matches = useMemo<PaletteMatch[]>(
     () =>
       mode === 'search' && query.trim() !== ''
         ? (search?.(query) ?? []).map((item) => ({ item, score: 0 }))
-        : rankPalette(items, query, 200, boost),
-    [mode, search, items, query, boost]
+        : rankPalette(items, query, 200),
+    [mode, search, items, query]
   );
+  /** The rows the live chip keeps: the same answer, narrowed by kind. */
+  const visible = useMemo(() => filterPaletteMatches(matches, filter), [matches, filter]);
+  const counts = useMemo(() => paletteFilterCounts(matches), [matches]);
+  const filterOptions = paletteFilterOptions(mode);
   /**
    * The matches, grouped, with the group holding the best match drawn first.
    *
@@ -121,11 +134,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
    * its rows: `shortcuts` still reaches the sheet, and `p.1` still opens the lesson.
    */
   const groups = useMemo(() => {
-    const rank = new Map(matches.map((match, index) => [match.item.id, index]));
-    return groupPalette(matches).sort(
+    const rank = new Map(visible.map((match, index) => [match.item.id, index]));
+    return groupPalette(visible).sort(
       (a, b) => (rank.get(a.matches[0].item.id) ?? 0) - (rank.get(b.matches[0].item.id) ?? 0)
     );
-  }, [matches]);
+  }, [visible]);
   const text = PALETTE_MODE_TEXT[mode];
 
   /**
@@ -136,7 +149,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
    * only just opened has no value of its own, and the first row *is* the head because the groups
    * are drawn in rank order — so the two agree by construction rather than by coincidence.
    */
-  const activeRowId = selection ?? matches[0]?.item.id;
+  const activeRowId = selection ?? visible[0]?.item.id;
 
   // A fresh list has a selected row but no `aria-activedescendant`: cmdk writes that attribute only
   // once a key has moved the highlight, and drops it again on the renders where it has no value, so
@@ -197,6 +210,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     const opener = document.activeElement;
     openerRef.current = opener instanceof HTMLElement ? opener : null;
     setQuery('');
+    setFilter('all');
     inputRef.current?.focus();
   }, [isOpen, mode]);
 
@@ -212,7 +226,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   };
 
   const choose = (item: PaletteItem) => {
-    recordPaletteUse(item.id);
     onSelect(item);
     onClose();
   };
@@ -269,7 +282,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                 // navigates the workbench away, and both name what happened in a card.
                 onKeyDown={(event) => {
                   if (event.key !== 'Enter' || !(event.metaKey || event.ctrlKey || event.altKey)) return;
-                  const item = matches.find((match) => match.item.id === activeRowId)?.item;
+                  const item = visible.find((match) => match.item.id === activeRowId)?.item;
                   const url = item ? urlOf(item) : null;
                   if (!item || !url) return;
                   event.preventDefault();
@@ -290,17 +303,65 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               </kbd>
             </div>
 
+            {filterOptions.length > 1 && (
+              <div
+                role="radiogroup"
+                aria-label="Filter these results"
+                data-testid="palette-filters"
+                className="flex flex-wrap items-center gap-1.5 border-b border-line px-3.5 py-2"
+              >
+                {filterOptions.map((option) => {
+                  const count = counts[option];
+                  // A lens that would show nothing is not offered at all: a chip that is always
+                  // greyed out reads as broken, and a kind with no rows this question is not a
+                  // choice. `All` is always there, so a way back is too.
+                  if (option !== 'all' && count === 0) return null;
+                  const on = filter === option;
+                  return (
+                    <button
+                      key={option}
+                      type="button"
+                      role="radio"
+                      aria-checked={on}
+                      data-testid={`palette-filter-${option}`}
+                      data-palette-filter={option}
+                      onClick={() => {
+                        setFilter(option);
+                        setSelection(undefined);
+                      }}
+                      className={`inline-flex cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+                        on ? 'border-accent bg-accent-soft text-accent' : 'border-line text-muted'
+                      }`}
+                    >
+                      {paletteFilterLabel(option)}
+                      <span className="text-faint" data-testid={`palette-filter-count-${option}`}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             <Command.List
               // A new question is a new list: remounting it re-registers the rows, so the highlight
-              // starts at the new head instead of holding a row that used to match.
-              key={query}
+              // starts at the new head instead of holding a row that used to match. The lens a row
+              // is under remounts it too, for the same reason.
+              key={`${query}|${filter}`}
               id="palette-results"
               // cmdk names the listbox through `label` (its own default is "Suggestions"); this is
               // the same name the hand-written list had, so a screen reader hears no change.
               label="Palette results"
               className="max-h-[52vh] overflow-y-auto py-1"
             >
-              {matches.length === 0 && (
+              {mode === 'search' && query.trim() === '' && (
+                <p data-testid="palette-order-hint" className="px-3.5 pb-1 pt-2 text-[11px] text-faint">
+                  Every lesson in course order, first to last — type to search their text and the
+                  course pages.
+                </p>
+              )}
+
+              {visible.length === 0 && (
                 <p
                   data-testid="palette-empty"
                   className="px-4 py-6 text-center text-[12.5px] text-muted"
@@ -382,8 +443,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                 )}
                 <span data-testid="palette-match-count" data-palette-mode={mode}>
                   {mode === 'search'
-                    ? `${matches.length} hit${matches.length === 1 ? '' : 's'}`
-                    : `${matches.length} of ${items.length}`}
+                    ? `${visible.length} hit${visible.length === 1 ? '' : 's'}`
+                    : `${visible.length} of ${items.length}`}
                 </span>
               </span>
             </div>

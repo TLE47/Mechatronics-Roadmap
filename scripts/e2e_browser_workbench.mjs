@@ -3899,7 +3899,23 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           const canvas = document.querySelector('[data-testid="workflow-canvas"]');
           return Boolean(canvas) && canvas.scrollTop === 0 && canvas.scrollLeft === 0;
         }, undefined, { timeout: 5000 });
-        const citePasteAt = await emptySpot(0);
+        // A menu only needs paper under the pointer, not a point a card can be dropped at: a paper
+        // whose diagram was fitted to it leaves its 16 px pad ring bare, and `emptySpot`'s 40 px
+        // placement margin (there so an added card is not clamped) steps right over that ring.
+        const citePasteAt = await page.getByTestId('workflow-canvas').evaluate((canvas) => {
+          const rect = canvas.getBoundingClientRect();
+          for (let y = rect.top + 4; y < rect.bottom - 4; y += 6) {
+            for (let x = rect.left + 4; x < rect.right - 4; x += 6) {
+              const hit = document.elementFromPoint(x, y);
+              const taken =
+                hit?.closest(
+                  '[data-node-id],[data-lane-band],[data-testid^="workflow-edge-"],[data-testid^="workflow-group-"]'
+                ) ?? null;
+              if (!taken && hit?.closest('[data-testid="workflow-canvas"]')) return { x, y };
+            }
+          }
+          return null;
+        });
         assert.ok(citePasteAt, 'pasting a cited card needs bare paper to start on');
         await page.mouse.click(citePasteAt.x, citePasteAt.y, { button: 'right' });
         await page.getByTestId('workflow-menu').waitFor({ timeout: 5000 });
@@ -6861,6 +6877,32 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     );
     const listed = (await formattingPage.getByTestId('palette-match-count').innerText()).match(/(\d+) of (\d+)/);
     assert(listed && Number(listed[2]) > 90, `the empty palette must list the whole catalogue, not a subset; read: ${listed?.[0]}`);
+    // The lens: one press keeps one kind of row, the footer counts what is left, and the other kinds
+    // are gone rather than merely hidden behind the scroll. All puts the catalogue back.
+    const commandRows = await formattingPage.locator('[data-testid^="palette-item-action-"]').count();
+    await formattingPage.getByTestId('input-palette-search').fill('');
+    await formattingPage.getByTestId('palette-filter-action').click();
+    assert.equal(
+      await formattingPage.getByTestId('command-palette').getByRole('option').count(),
+      commandRows,
+      'the Commands chip must leave exactly the commands, not the whole catalogue'
+    );
+    assert.equal(
+      await formattingPage.locator('[data-testid^="palette-item-lesson-"]').count(),
+      0,
+      'a chip must hide the other kinds rather than dim them'
+    );
+    assert.match(
+      await formattingPage.getByTestId('palette-match-count').innerText(),
+      new RegExp(`^${commandRows} of \\d+$`),
+      'the footer must count the filtered list, not the catalogue it came from'
+    );
+    await formattingPage.getByTestId('palette-filter-all').click();
+    await formattingPage.waitForFunction(
+      (count) => document.querySelectorAll('[data-testid^="palette-item-"]').length > count,
+      commandRows,
+      { timeout: 5000 }
+    );
 
     await formattingPage.getByTestId('input-palette-search').fill('P.1');
     await formattingPage.getByTestId('palette-item-lesson-P.1').waitFor({ timeout: 5000 });
@@ -6965,6 +7007,23 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
         await searchPage.getByTestId('command-palette').getAttribute('data-palette-mode'),
         'search',
         '⌘⇧F must open the palette on the lesson text'
+      );
+      // The empty list is the course itself, in teaching order: P.1 first, then P.2, and the
+      // hint says so. A learner who does not know what to type can still read down the list.
+      await searchPage.getByTestId('palette-order-hint').waitFor({ timeout: 5000 });
+      assert.deepEqual(
+        await searchPage
+          .locator('[data-testid^="palette-item-"]')
+          .evaluateAll((rows) => rows.slice(0, 2).map((row) => row.dataset.paletteId)),
+        ['lesson-P.1', 'lesson-P.2'],
+        '⌘⇧F must open on the course in order, from the first lesson'
+      );
+      const lessonRows = await searchPage.getByTestId('command-palette').getByRole('option').count();
+      assert(lessonRows > 90, `and list every lesson, not a page of them; read ${lessonRows}`);
+      assert.match(
+        await searchPage.getByTestId('palette-match-count').innerText(),
+        new RegExp(`^${lessonRows} hits?$`),
+        'the footer must count the rows on screen'
       );
       // The dialog clears its field in an effect on open: filling before that lands would be wiped
       // by the reset, which reads as "the search found nothing" rather than as a race.

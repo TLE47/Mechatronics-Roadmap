@@ -1,7 +1,7 @@
 /**
  * The arithmetic is right and the answer is incomplete (`app/src/bridges/answerCheck.ts`).
  *
- * Lesson P.15's Bridge Notes runs the given / unknown / model / compute / check / answer order and
+ * Lesson P.14's Bridge Notes runs the given / unknown / model / compute / check / answer order and
  * prints the case that makes the `check` step earn its place: 12 V across 2.4 Ω is `5.0 A`, the
  * driver passes `3.2 A`, so the workflow takes the failure branch, clamps, and writes an answer that
  * *names the limit*.

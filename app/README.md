@@ -1033,7 +1033,7 @@ and never disables Run or a lesson. On a phone the list is
 folded to its count, one press from the sentences, so the canvas is what follows the palette rather
 than twenty-four wrapped lines of advice. A card's badge, the
 checklist's "Step 3" and the Markdown numbering are one reading order, so advice always names the
-card it is about. P.15 opens on its own example; any lesson can start from one of six templates or a
+card it is about. P.14 opens on its own example; any lesson can start from one of six templates or a
 single Given card; the three-line how-to is always one press away; Copy Mermaid and Copy Markdown
 export the numbered flow,
 and a version-1 list is migrated on read, its branches becoming labelled arrows.

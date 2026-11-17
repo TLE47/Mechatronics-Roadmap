@@ -8,7 +8,7 @@
  * would solve the problem, so the first press produces something to edit rather than something to
  * invent.
  *
- * `templateForLesson` is the one lesson-aware join: P.15 teaches the motor-stall flow, so its tab
+ * `templateForLesson` is the one lesson-aware join: P.14 teaches the motor-stall flow, so its tab
  * opens with that example ready. Every other lesson's tab opens on the empty state, which offers the
  * same templates without pretending one of them is that lesson's answer.
  */
@@ -323,7 +323,7 @@ export function templatesForMode(mode: WorkflowMode): WorkflowTemplate[] {
   return WORKFLOW_TEMPLATES.filter((template) => template.mode === mode);
 }
 
-/** The one lesson-aware join: P.15 is the lesson that teaches this exact flow. */
+/** The one lesson-aware join: P.14 is the lesson that teaches this exact flow. */
 export function templateForLesson(lessonId: string): WorkflowTemplate | null {
-  return lessonId === 'P.15' ? motorStall : null;
+  return lessonId === 'P.14' ? motorStall : null;
 }

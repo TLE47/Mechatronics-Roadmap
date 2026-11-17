@@ -93,17 +93,17 @@
       "sourceFormat": "markdown"
     },
     {
-      "id": "P.14",
+      "id": "P.13",
       "subjectId": "python",
       "title": "Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds",
-      "path": "track-p/P.14-reading-a-datasheet-table.md",
+      "path": "track-p/P.13-reading-a-datasheet-table.md",
       "sourceFormat": "markdown"
     },
     {
-      "id": "P.15",
+      "id": "P.14",
       "subjectId": "python",
       "title": "The Analysis Workflow — Given, Unknown, Model, Compute, Check, Answer",
-      "path": "track-p/P.15-analysis-workflow-given-unknown-model-check-answer.md",
+      "path": "track-p/P.14-analysis-workflow-given-unknown-model-check-answer.md",
       "sourceFormat": "markdown"
     },
     {

@@ -20,6 +20,7 @@
  */
 
 import type { LearningEvent } from './learningLog';
+import { canonicalLessonId, looksRenumbered, renameLessonMap } from './lessonRenames.ts';
 import { newerClock } from './studyTimer.ts';
 import type { StudyTimer } from './studyTimer';
 
@@ -110,7 +111,44 @@ function newerTimer(local?: StudyTimer, remote?: StudyTimer): StudyTimer | undef
   return newerClock(local, remote);
 }
 
-export function mergeProgress(local: ProgressSnapshot, remote: ProgressSnapshot): ProgressSnapshot {
+/**
+ * A snapshot as this build's ids name it.
+ *
+ * The 4.0.0 renumber left old `P.14`/`P.15` flags on every account saved before it. Translating on
+ * the way in — rather than only migrating the browser's own copy — is what stops a signed-in learner
+ * from seeing their finished lessons as unfinished, and what heals the stored document on the next
+ * save.
+ */
+export function withCurrentLessonIds(snapshot: ProgressSnapshot): ProgressSnapshot {
+  // A document that already names P.13 was written after the renumber; its P.14 is the workflow
+  // lesson, not the datasheet lesson, and translating it would move it one lesson too far.
+  if (
+    looksRenumbered(snapshot.verifiedLessons) ||
+    looksRenumbered(snapshot.completedLessons) ||
+    looksRenumbered(snapshot.completedMilestones)
+  ) {
+    return snapshot;
+  }
+  const log = snapshot.learningLog.map((event) => {
+    if (!event.lesson) return event;
+    const lesson = canonicalLessonId(event.lesson);
+    return lesson === event.lesson ? event : { ...event, lesson };
+  });
+  return {
+    ...snapshot,
+    verifiedLessons: renameLessonMap(snapshot.verifiedLessons),
+    completedLessons: renameLessonMap(snapshot.completedLessons),
+    completedMilestones: renameLessonMap(snapshot.completedMilestones),
+    learningLog: log,
+  };
+}
+
+export function mergeProgress(
+  localSnapshot: ProgressSnapshot,
+  remoteSnapshot: ProgressSnapshot
+): ProgressSnapshot {
+  const local = withCurrentLessonIds(localSnapshot);
+  const remote = withCurrentLessonIds(remoteSnapshot);
   const localIsNewer = local.updatedAt >= remote.updatedAt;
   const older = localIsNewer ? remote : local;
   const newer = localIsNewer ? local : remote;

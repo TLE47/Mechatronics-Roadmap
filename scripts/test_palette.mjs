@@ -24,7 +24,16 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 import { TERM_ENTRIES, termSearchItems } from '../app/src/termSearch.ts';
-import { PALETTE_MODE_TEXT, rankPalette, groupPalette, lessonIdOf } from '../app/src/palette.ts';
+import {
+  PALETTE_MODE_TEXT,
+  filterPaletteMatches,
+  groupPalette,
+  lessonIdOf,
+  paletteFilterCounts,
+  paletteFilterLabel,
+  paletteFilterOptions,
+  rankPalette,
+} from '../app/src/palette.ts';
 import { PALETTE_ACTIONS, paletteCatalog, lessonPaletteItems } from '../app/src/paletteCatalog.ts';
 import { SHORTCUT_ROWS, shortcutRows } from '../app/src/shortcuts.ts';
 
@@ -172,6 +181,55 @@ assert(
   '⌘P\'s list is the catalogue\'s lesson rows, so there must be some'
 );
 console.log('  ok ⌘K, ⌘P and ⌘⇧F each name what they search');
+
+// --- the default list and its lens -----------------------------------------------------------
+
+// Open `⌘K` or `⌘⇧F` with an empty field and the list is the course itself: every lesson, in the
+// order the curriculum teaches them, first lesson first. That is the table of contents the palette
+// opens on; a filter narrows it, and a query ranks it, but nothing else reorders it.
+const byCourse = rankPalette(lessonPaletteItems(), '');
+assert.equal(byCourse.length, PYTHON_LESSONS.length, 'the default list must be every lesson, not a page of them');
+assert.deepEqual(
+  byCourse.slice(0, 3).map((match) => match.item.id),
+  ['lesson-P.1', 'lesson-P.2', 'lesson-P.2.5'],
+  `the default list must start at the first lesson; got ${byCourse.slice(0, 3).map((match) => match.item.id).join(', ')}`
+);
+assert.equal(
+  byCourse.at(-1)?.item.id,
+  `lesson-${PYTHON_LESSONS.at(-1).id}`,
+  'and end at the last one, so "from the beginning" is the whole course and not a subset'
+);
+console.log(`  ok the default list is ${byCourse.length} lessons in course order, P.1 first`);
+
+// The chips are a lens on that list: counts that add up, one kind per chip, and the order untouched.
+const mixed = [
+  ...rankPalette(lessonPaletteItems(), '').slice(0, 4),
+  ...rankPalette(catalog, '').filter((match) => match.item.kind === 'tab').slice(0, 2),
+  ...rankPalette(catalog, '').filter((match) => match.item.kind === 'action').slice(0, 3),
+];
+const counts = paletteFilterCounts(mixed);
+assert.equal(
+  counts.lesson + counts.page + counts.tab + counts.action,
+  counts.all,
+  'every row must be behind exactly one chip'
+);
+assert.equal(counts.all, mixed.length, 'the All chip counts the whole answer');
+assert.equal(counts.tab, 2, 'the Tabs chip counts the tab rows');
+assert.deepEqual(
+  filterPaletteMatches(mixed, 'lesson').map((match) => match.item.id),
+  mixed.filter((match) => match.item.kind === 'lesson').map((match) => match.item.id),
+  'a filter must keep the order the search gave, never re-rank'
+);
+assert.equal(filterPaletteMatches(mixed, 'all').length, mixed.length, 'All is the list, not a filtered copy');
+assert.deepEqual(paletteFilterOptions('search'), ['all', 'lesson', 'page'], '⌘⇧F offers exactly the kinds it can answer with');
+assert.deepEqual(paletteFilterOptions('lessons'), ['all'], '⌘P has one kind of row, so a chip row there would be furniture');
+assert.deepEqual(
+  paletteFilterOptions('all'),
+  ['all', 'lesson', 'tab', 'action'],
+  '⌘K offers a chip for every kind in its catalogue — and no Course pages chip, which would be empty'
+);
+assert.equal(paletteFilterLabel('page'), 'Course pages', 'a chip must say what it keeps, in the learner\'s words');
+console.log('  ok each door names its chips, and a chip keeps its own rows in order');
 
 // --- the keyboard sheet ----------------------------------------------------------------------
 

@@ -205,8 +205,8 @@ export const MICRO_LESSONS: MicroCatalog = {
       ]
     },
     {
-      "parentLessonId": "P.14",
-      "parentPath": "track-p/P.14-reading-a-datasheet-table.md",
+      "parentLessonId": "P.13",
+      "parentPath": "track-p/P.13-reading-a-datasheet-table.md",
       "title": "Reading a datasheet in small steps",
       "conceptIds": [
         "datasheet-units",
@@ -215,8 +215,8 @@ export const MICRO_LESSONS: MicroCatalog = {
       ]
     },
     {
-      "parentLessonId": "P.15",
-      "parentPath": "track-p/P.15-analysis-workflow-given-unknown-model-check-answer.md",
+      "parentLessonId": "P.14",
+      "parentPath": "track-p/P.14-analysis-workflow-given-unknown-model-check-answer.md",
       "title": "The analysis workflow in small steps",
       "conceptIds": [
         "given-unknown",
@@ -11021,7 +11021,7 @@ export const MICRO_LESSONS: MicroCatalog = {
     {
       "id": "datasheet-units",
       "title": "The unit column is part of the value",
-      "parentLessonId": "P.14",
+      "parentLessonId": "P.13",
       "anchor": "micro-datasheet-units",
       "sourceFocus": [
         "Always check the **Unit** column",
@@ -11282,7 +11282,7 @@ export const MICRO_LESSONS: MicroCatalog = {
     {
       "id": "datasheet-bounds",
       "title": "Recommended bounds are not the destruction limit",
-      "parentLessonId": "P.14",
+      "parentLessonId": "P.13",
       "anchor": "micro-datasheet-bounds",
       "sourceFocus": [
         "**Recommended Operating Conditions (`Min` $\\le x \\le$ `Max`)**",
@@ -11541,7 +11541,7 @@ export const MICRO_LESSONS: MicroCatalog = {
     {
       "id": "datasheet-conditions",
       "title": "Typ is not a promise — design to Max",
-      "parentLessonId": "P.14",
+      "parentLessonId": "P.13",
       "anchor": "micro-datasheet-conditions",
       "sourceFocus": [
         "`Typ`",
@@ -11802,7 +11802,7 @@ export const MICRO_LESSONS: MicroCatalog = {
     {
       "id": "given-unknown",
       "title": "Name the given list before the model",
-      "parentLessonId": "P.15",
+      "parentLessonId": "P.14",
       "anchor": "micro-given-unknown",
       "sourceFocus": [
         "Write the **given** quantities with their units",
@@ -12059,7 +12059,7 @@ export const MICRO_LESSONS: MicroCatalog = {
     {
       "id": "answer-check",
       "title": "A number becomes an answer after the check",
-      "parentLessonId": "P.15",
+      "parentLessonId": "P.14",
       "anchor": "micro-answer-check",
       "sourceFocus": [
         "A computed number is not an answer until it carries a **unit**",
@@ -12319,7 +12319,7 @@ export const MICRO_LESSONS: MicroCatalog = {
     {
       "id": "bounds-check",
       "title": "When the check fails, name the limit",
-      "parentLessonId": "P.15",
+      "parentLessonId": "P.14",
       "anchor": "micro-bounds-check",
       "sourceFocus": [
         "fits the **bounds** of the real part",
