@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.0.2`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.0.3`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,20 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-17] — The Track P table lists all sixteen files it sits beside
+
+**Two lessons were missing from the table and the totals said 13.** `P.2.5` (Think in Comments) and
+`P.14` (The Analysis Workflow) have their own pages, entries in the workbench and rows in
+`docs/SIM_ROUTE.md`, but not in the hand-kept `track-p/README.md` table, whose total row advertised
+"13 Lessons + 1 Milestone (14 Files)" and 27 ideas beside the folder's 16 files and 31 ideas.
+
+**The per-row targets now come from the lesson front matter.** The old rows were a second, quieter set
+of estimates that disagreed with the YAML every other generated page reads, so the table summed to
+12–17 hours beside `docs/CURRICULUM.md`'s 18.5–46.5 for the same sixteen files. Each row now carries its
+lesson's own typical/slow range, the total reads ≈18.5–26 h (≈33.5–46.5 h slow-paced), and the routing
+note quotes the ≈19–47 focused hours `docs/SIM_ROUTE.md` actually prints. The table's step diagram also
+names the analysis workflow in the last group instead of calling P.14 another physics lesson.
 
 ## [2026-11-17] — A live lesson keeps its own address, and the Track P table reads straight through
 
