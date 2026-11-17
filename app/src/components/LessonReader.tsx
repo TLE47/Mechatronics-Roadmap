@@ -1346,7 +1346,7 @@ export function LessonReader({
       data-reader-hidden={hidden || collapsed || undefined}
       // `min-w-0` is what keeps a long code line inside the pane's own scroller: as a flex child
       // the default `min-width: auto` lets its widest `<pre>` widen the whole work area instead.
-      className="group/reader flex min-w-0 flex-col overflow-hidden rounded-xl border border-line bg-panel"
+      className="group/reader flex min-w-0 flex-col overflow-hidden rounded-xl border border-line bg-panel shadow-[var(--shadow-sm)]"
       style={{ display: hidden || collapsed ? 'none' : undefined }}
     >
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line-soft bg-canvas px-3 py-1.5">

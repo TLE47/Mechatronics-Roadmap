@@ -51,7 +51,7 @@ export const TracePanel: React.FC<{
       data-trace-steps={trace.steps.length}
       data-trace-total={trace.total}
       aria-label="Run trace"
-      className={`bg-panel border border-line rounded-xl p-4 ${className ?? ''}`}
+      className={`bg-panel border border-line rounded-xl p-4 shadow-[var(--shadow-sm)] ${className ?? ''}`}
     >
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
         <span className="text-xs font-mono text-muted">TRACE · what your last run executed</span>

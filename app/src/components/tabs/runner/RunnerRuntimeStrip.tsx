@@ -31,7 +31,7 @@ export function RunnerRuntimeStrip({
 }) {
   return (
     <div
-      className="rounded-[var(--r-md)] border"
+      className="rounded-[var(--r-md)] border shadow-[var(--shadow-sm)]"
       style={{ borderColor: 'var(--border)', backgroundColor: 'var(--panel)' }}
     >
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">

@@ -95,7 +95,7 @@ export function LessonChooser({
     <div
       data-testid="lesson-list-card"
       data-chrome="lesson-list"
-      className={`flex max-h-[760px] flex-col overflow-hidden rounded-xl border border-line bg-panel ${className}`}
+      className={`flex max-h-[760px] flex-col overflow-hidden rounded-xl border border-line bg-panel shadow-[var(--shadow-sm)] ${className}`}
       style={maxHeight ? { maxHeight } : undefined}
     >
       <div className="border-b border-line-soft bg-canvas/60 px-3 pt-3 pb-2">

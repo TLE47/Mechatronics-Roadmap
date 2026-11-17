@@ -7691,8 +7691,82 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     await page.getByTestId('editor-tab-main').click();
     console.log('  ok the calculator keeps its answers in a readable tape and its angle in a pill');
 
+    // 9. General settings can put three workbench blocks away without disabling what they report:
+    //    the runtime strip, the hint ladder, and the Instructor Behavioral Assessment. The choice is
+    //    remembered, and each block comes back from the same switch.
+    const blockCounts = async () =>
+      page.evaluate(() => ({
+        runtime: document.querySelectorAll('[data-testid="runner-runtime-status"]').length,
+        hints: document.querySelectorAll('[data-tour="hint-ladder"]').length,
+        assessment: document.querySelectorAll('[data-testid="panel-instructor-tests"]').length,
+      }));
+    await page.getByTestId('layout-study').click();
+    await page.waitForTimeout(200);
+    const defaults = await blockCounts();
+    assert.deepEqual(
+      defaults,
+      { runtime: 1, hints: 1, assessment: 1 },
+      'all three blocks must be on by default'
+    );
+    await page.getByTestId('btn-general-settings').click();
+    await page.getByTestId('general-blocks').waitFor({ timeout: 5000 });
+    for (const id of ['btn-show-runtime-strip', 'btn-show-hint-ladder', 'btn-show-instructor-tests']) {
+      assert.equal(
+        await page.getByTestId(id).getAttribute('aria-pressed'),
+        'true',
+        `${id} must start on`
+      );
+      await page.getByTestId(id).click();
+      assert.equal(
+        await page.getByTestId(id).getAttribute('aria-pressed'),
+        'false',
+        `${id} must turn off in one press`
+      );
+    }
+    await page.getByTestId('btn-general-settings-close').click();
+    await page.getByTestId('general-settings').waitFor({ state: 'hidden', timeout: 5000 });
+    assert.deepEqual(
+      await blockCounts(),
+      { runtime: 0, hints: 0, assessment: 0 },
+      'turning a block off must take it off the page'
+    );
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await waitForEditor(page);
+    assert.deepEqual(
+      await blockCounts(),
+      { runtime: 0, hints: 0, assessment: 0 },
+      'the three blocks must stay away across a reload'
+    );
+    assert.deepEqual(
+      await page.evaluate(() => ({
+        runtime: localStorage.getItem('mechalab_show_runtime_strip_v1'),
+        hints: localStorage.getItem('mechalab_show_hint_ladder_v1'),
+        assessment: localStorage.getItem('mechalab_show_instructor_tests_v1'),
+      })),
+      { runtime: '0', hints: '0', assessment: '0' },
+      'the switches must record their own choice'
+    );
+    await page.getByTestId('btn-general-settings').click();
+    await page.getByTestId('general-blocks').waitFor({ timeout: 5000 });
+    for (const id of ['btn-show-runtime-strip', 'btn-show-hint-ladder', 'btn-show-instructor-tests']) {
+      assert.equal(
+        await page.getByTestId(id).getAttribute('aria-pressed'),
+        'false',
+        `${id} must read its remembered state`
+      );
+      await page.getByTestId(id).click();
+    }
+    await page.getByTestId('btn-general-settings-close').click();
+    await page.getByTestId('general-settings').waitFor({ state: 'hidden', timeout: 5000 });
+    assert.deepEqual(
+      await blockCounts(),
+      { runtime: 1, hints: 1, assessment: 1 },
+      'each block must come back from the same switch'
+    );
+    console.log('  ok General settings puts the runtime strip, hint ladder and assessment away and brings them back');
+
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, Home’s Continue & hand-off, draft restore & step count, run history restore, Diff panel lines & earned solution reference, share link copied, opened and loaded, a pair session over hand-carried codes, two editors co-editing one document with undo staying each person’s own, inline values drawn then cleared by an edit, F12/Ctrl-click go-to-definition across the lesson’s files, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, ⌘P quick-open over lessons only, ⌘⇧F inside-the-lesson search landing on the hit’s line and finding a course page at its section, the ? key sheet open and inert in the editor, a sheet row rebound to a new key, a clash refused and a reset, study note & pinned highlight across a reload, gutter breakpoints clicked, keyed and remembered, a dot following an edit, the Board card showing its own sketch, a prediction graded against the verified serial, the sketch copied for the simulator, the simulator tab rail folded to icons, remembered and expanded again, the Study preset stacking the code above the lesson text, the lesson list folded to a strip and back, and the calculator’s keys keeping a readable tape).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, Home’s Continue & hand-off, draft restore & step count, run history restore, Diff panel lines & earned solution reference, share link copied, opened and loaded, a pair session over hand-carried codes, two editors co-editing one document with undo staying each person’s own, inline values drawn then cleared by an edit, F12/Ctrl-click go-to-definition across the lesson’s files, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, ⌘P quick-open over lessons only, ⌘⇧F inside-the-lesson search landing on the hit’s line and finding a course page at its section, the ? key sheet open and inert in the editor, a sheet row rebound to a new key, a clash refused and a reset, study note & pinned highlight across a reload, gutter breakpoints clicked, keyed and remembered, a dot following an edit, the Board card showing its own sketch, a prediction graded against the verified serial, the sketch copied for the simulator, the simulator tab rail folded to icons, remembered and expanded again, the Study preset stacking the code above the lesson text, the lesson list folded to a strip and back, the calculator’s keys keeping a readable tape, and General settings putting the runtime strip, hint ladder and assessment away and back).'
     );
   } finally {
     await browser.close();

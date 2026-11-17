@@ -328,7 +328,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
       // phone's Lesson surface it is hidden too, and kept mounted once opened so a switch back is
       // instant.
       style={{ display: editorShown && phoneEditorVisible ? undefined : 'none' }}
-      className="bg-panel border border-line rounded-xl overflow-hidden scroll-mt-4"
+      className="bg-panel border border-line rounded-xl overflow-hidden scroll-mt-4 shadow-[var(--shadow-sm)]"
     >
       <div className="bg-canvas border-b border-line-soft">
         <div className="px-3 pb-1.5 pt-1.5">

@@ -49,11 +49,11 @@ flowchart LR
 | `readerContinue.ts` | Where the page goes next: Study into Read, Read into Write. |
 | `LessonChooserRail.tsx` | The Study preset's left column, the brief's button that brings a folded rail back, and the grid width that follows the fold. In Read, Write and Debug, which have no rail column, that same button opens the lesson sheet. |
 | `LessonAmbience.tsx` | The pointer-free atmosphere behind the runner: aurora, instrument grid, orbit and four HUD chips. |
-| `RunnerRuntimeStrip.tsx` | Where the interpreter is while it loads: first-run guide and runtime sentence. |
+| `RunnerRuntimeStrip.tsx` | Where the interpreter is while it loads: first-run guide and runtime sentence. General settings can put the whole strip away; Compact drops its `run` module with it. |
 | `RunVerdict.tsx` | The one-line verdict under the run controls, from the last outcome. |
 | `PredictPane.tsx` | The prediction gate's pane: the question, the committed guess and its reading. Its own Close is a pane close like the corner ×, so it leaves the same Undo, which puts the pane back with the guess still on it. |
-| `ResultsColumn.tsx` | The column that reports on the code: checker notes, assessment, scope, and the split divider. |
-| `AssessmentPanel.tsx` | Instructor behavioural assessment: badges, graded checks and the hint each one unlocks. |
+| `ResultsColumn.tsx` | The column that reports on the code: checker notes, assessment, scope, and the split divider. The assessment is conditional on General settings' Workspace blocks switch. |
+| `AssessmentPanel.tsx` | Instructor behavioural assessment: badges, graded checks and the hint each one unlocks. Hidden, with its records untouched, when the learner turns it off in General settings. |
 | `PausedBar.tsx` (+ `parkSource.ts`) | The parked-run bar: step controls, the quoted line, frame values, watches and frame edits. `PausedStep` is the worker's park payload. |
 | `DraftHistoryPanel.tsx` | The filed runs behind a draft, and restoring one. |
 | `BreakpointPanel.tsx` | Armed breakpoints and their conditions, now a pane of the editor body. |

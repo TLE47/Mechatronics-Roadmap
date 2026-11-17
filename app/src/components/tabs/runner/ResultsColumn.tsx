@@ -36,6 +36,10 @@ interface ResultsChecks {
   outputCheck: 'untested' | 'matched' | 'differs';
   outputMatchMode: string;
   exactFormatting: boolean;
+  /** General settings can put the assessment away; the column keeps its checker and scope. */
+  showAssessment: boolean;
+  /** False when the hint ladder is put away; the check cards then offer no hint shortcut. */
+  showHints: boolean;
   instructorTestSummary: string[] | undefined;
   checkFailures: FailingCheck[];
   revealedHints: number;
@@ -87,6 +91,8 @@ export function ResultsColumn({ split, checks, scope }: ResultsColumnProps) {
     outputCheck,
     outputMatchMode,
     exactFormatting,
+    showAssessment,
+    showHints,
     instructorTestSummary,
     checkFailures,
     revealedHints,
@@ -153,7 +159,7 @@ export function ResultsColumn({ split, checks, scope }: ResultsColumnProps) {
         <div
           data-testid="analysis-notes"
           data-lint-count={lintNotes.length}
-          className="bg-panel border border-line rounded-xl px-3.5 py-2.5 text-[11.5px]"
+          className="bg-panel border border-line rounded-xl px-3.5 py-2.5 text-[11.5px] shadow-[var(--shadow-sm)]"
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted">
@@ -188,21 +194,24 @@ export function ResultsColumn({ split, checks, scope }: ResultsColumnProps) {
         </div>
       )}
 
-      <AssessmentPanel
-        panelRef={assessmentRef}
-        behaviorCheck={behaviorCheck}
-        outputCheck={outputCheck}
-        outputMatchMode={outputMatchMode}
-        exactFormatting={exactFormatting}
-        instructorTestSummary={instructorTestSummary}
-        checkFailures={checkFailures}
-        revealedHints={revealedHints}
-        hintCount={hintCount}
-        onRevealHint={onRevealHint}
-        instructorError={instructorError}
-        passStatus={passStatus}
-        harnessResult={harnessResult}
-      />
+      {showAssessment && (
+        <AssessmentPanel
+          panelRef={assessmentRef}
+          behaviorCheck={behaviorCheck}
+          outputCheck={outputCheck}
+          outputMatchMode={outputMatchMode}
+          exactFormatting={exactFormatting}
+          instructorTestSummary={instructorTestSummary}
+          checkFailures={checkFailures}
+          revealedHints={revealedHints}
+          hintCount={hintCount}
+          showHints={showHints}
+          onRevealHint={onRevealHint}
+          instructorError={instructorError}
+          passStatus={passStatus}
+          harnessResult={harnessResult}
+        />
+      )}
 
       {/* The Scope: the learner's own traced signal, drawn the moment the first batch lands. */}
       <ScopePanel series={scopeSeries} pinned={pinnedScope} onPin={onPinScope} onUnpin={onUnpinScope} />

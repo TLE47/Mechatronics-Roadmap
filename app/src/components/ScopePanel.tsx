@@ -292,7 +292,7 @@ export const ScopePanel: React.FC<{
   return (
     <section
       data-testid="scope-panel"
-      className={`bg-panel border border-line rounded-xl p-4 ${className}`}
+      className={`bg-panel border border-line rounded-xl p-4 shadow-[var(--shadow-sm)] ${className}`}
       aria-label="Scope"
     >
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2">

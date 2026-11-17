@@ -233,7 +233,7 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
   const soonestDue = nextDueAt(cards);
 
   return (
-    <div data-testid="panel-study" className="bg-panel border border-line rounded-xl p-4">
+    <div data-testid="panel-study" className="bg-panel border border-line rounded-xl p-4 shadow-[var(--shadow-sm)]">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-[13px] font-mono text-accent flex items-center gap-1.5">
           <NotebookPen className="w-4 h-4" />

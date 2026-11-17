@@ -1,7 +1,14 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { Download, FileJson, Settings2, X } from 'lucide-react';
-import { GENERAL_SETTINGS_EVENT, readShowActionLabels, writeShowActionLabels } from '../generalSettings';
+import {
+  GENERAL_SETTINGS_EVENT,
+  readShowActionLabels,
+  readWorkspaceBlocks,
+  writeShowActionLabels,
+  writeWorkspaceBlock,
+  type WorkspaceBlock,
+} from '../generalSettings';
 import { downloadLearningLog } from '../learningLog';
 import { BackupControls } from './BackupControls';
 import { cachedSoundPrefs, subscribeSoundPrefs, type SoundPrefs } from '../audio/prefs.ts';
@@ -51,19 +58,73 @@ const SoundSettingsLive: React.FC<{ id: string }> = ({ id }) => {
  * General settings (`components/GeneralSettingsPanel.tsx`).
  *
  * One dialog for the preferences that are about the workbench rather than the lesson: the action
- * tray's small text labels, the ways of taking work out of this browser, and the whole sound
- * surface, which used to live behind the speaker icon alone. The speaker still mutes in one press;
- * this is where the detail is read and changed.
+ * tray's small text labels, which of the three workbench blocks are drawn, the ways of taking work
+ * out of this browser, and the whole sound surface, which used to live behind the speaker icon
+ * alone. The speaker still mutes in one press; this is where the detail is read and changed.
  *
  * The exports and the backup live here rather than on the header row because they are occasional
  * jobs, not navigation: four buttons for them competed with the trays a learner actually uses.
  */
+
+const WORKSPACE_BLOCKS: { id: WorkspaceBlock; testid: string; label: string; hint: string }[] = [
+  {
+    id: 'runtime',
+    testid: 'btn-show-runtime-strip',
+    label: 'Python 3.12 runtime strip',
+    hint: 'The “Python 3.12 in an isolated Web Worker” box: its ready state, verified count and offline control.',
+  },
+  {
+    id: 'hints',
+    testid: 'btn-show-hint-ladder',
+    label: 'Hint ladder',
+    hint: 'The Progressive 3-Step Hint Ladder and its Reveal Hint button. Open hints leave the page with it.',
+  },
+  {
+    id: 'assessment',
+    testid: 'btn-show-instructor-tests',
+    label: 'Instructor Behavioral Assessment',
+    hint: 'The badges, graded checks and the hint each failing check points at.',
+  },
+];
+
+const WorkspaceBlockToggle: React.FC<{
+  testid: string;
+  label: string;
+  hint: string;
+  on: boolean;
+  onChange: () => void;
+}> = ({ testid, label, hint, on, onChange }) => (
+  <button
+    type="button"
+    onClick={onChange}
+    aria-pressed={on}
+    data-testid={testid}
+    title={on ? 'Hide this block' : 'Show this block again'}
+    className="mt-1.5 flex w-full items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-left"
+    style={{
+      borderColor: on ? 'var(--accent)' : 'var(--border)',
+      backgroundColor: on ? 'var(--accent-soft)' : 'transparent',
+    }}
+  >
+    <span>
+      <span className="block text-[12px] font-semibold">{label}</span>
+      <span className="block text-[11px] leading-snug" style={{ color: 'var(--dim)' }}>
+        {hint}
+      </span>
+    </span>
+    <span aria-hidden="true" className="shrink-0 font-mono text-[11px]">
+      {on ? 'on' : 'off'}
+    </span>
+  </button>
+);
+
 export const GeneralSettingsPanel: React.FC<{
   open: boolean;
   onClose: () => void;
   onExportPortfolio: () => void;
 }> = ({ open, onClose, onExportPortfolio }) => {
   const [labels, setLabels] = React.useState(readShowActionLabels());
+  const [blocks, setBlocks] = React.useState(readWorkspaceBlocks);
   const closeRef = React.useRef<HTMLButtonElement | null>(null);
   // Whoever opened the dialog gets the focus back: the gear, or the speaker's detail button, which
   // is the same door now that sound lives here.
@@ -74,7 +135,10 @@ export const GeneralSettingsPanel: React.FC<{
     if (!open) return;
     returnFocusRef.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const refresh = () => setLabels(readShowActionLabels());
+    const refresh = () => {
+      setLabels(readShowActionLabels());
+      setBlocks(readWorkspaceBlocks());
+    };
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
     };
@@ -105,7 +169,7 @@ export const GeneralSettingsPanel: React.FC<{
         aria-modal="true"
         aria-label="General settings"
         data-testid="general-settings"
-        className="w-full max-w-lg overflow-hidden rounded-xl border shadow-2xl max-sm:max-h-[92dvh] max-sm:rounded-b-none"
+        className="w-full max-w-lg overflow-hidden rounded-xl border shadow-[var(--shadow-lg)] max-sm:max-h-[92dvh] max-sm:rounded-b-none"
         style={{ borderColor: 'var(--border-strong)', backgroundColor: 'var(--panel)', color: 'var(--text)' }}
       >
         <div className="flex items-center justify-between gap-2 border-b px-3.5 py-2.5" style={{ borderColor: 'var(--border)' }}>
@@ -149,6 +213,33 @@ export const GeneralSettingsPanel: React.FC<{
                 {labels ? 'on' : 'off'}
               </span>
             </button>
+          </section>
+          <section
+            aria-label="Workspace blocks"
+            data-testid="general-blocks"
+            className="mt-3 border-t pt-3"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>
+              Workspace blocks
+            </p>
+            <p className="mt-1 text-[11px] leading-snug" style={{ color: 'var(--dim)' }}>
+              Put away a block you do not use. Its records and its work stay put; this choice is
+              remembered on this device.
+            </p>
+            {WORKSPACE_BLOCKS.map((block) => (
+              <WorkspaceBlockToggle
+                key={block.id}
+                testid={block.testid}
+                label={block.label}
+                hint={block.hint}
+                on={blocks[block.id]}
+                onChange={() => {
+                  writeWorkspaceBlock(block.id, !blocks[block.id]);
+                  setBlocks(readWorkspaceBlocks());
+                }}
+              />
+            ))}
           </section>
           <section
             aria-label="Export and backup"

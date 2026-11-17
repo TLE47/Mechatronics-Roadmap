@@ -23,6 +23,8 @@ interface AssessmentPanelProps {
   checkFailures: FailingCheck[];
   revealedHints: number;
   hintCount: number;
+  /** False when General settings has put the hint ladder away; no hint control is offered then. */
+  showHints: boolean;
   onRevealHint: (rung: number) => void;
   instructorError: string;
   passStatus: string;
@@ -52,6 +54,7 @@ export function AssessmentPanel({
   checkFailures,
   revealedHints,
   hintCount,
+  showHints,
   onRevealHint,
   instructorError,
   passStatus,
@@ -89,7 +92,7 @@ export function AssessmentPanel({
       ref={panelRef}
       data-testid="panel-instructor-tests"
       data-tour="checks-panel"
-      className="relative overflow-hidden rounded-xl border border-line bg-panel p-4"
+      className="relative overflow-hidden rounded-xl border border-line bg-panel p-4 shadow-[var(--shadow-sm)]"
     >
       <div
         aria-hidden="true"                className="pointer-events-none absolute right-0 top-0 h-56 w-56 rounded-full bg-accent/10 blur-3xl"
@@ -261,7 +264,7 @@ export function AssessmentPanel({
             </div>
             <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] font-mono">
               <span className="break-words text-muted">{check.why}</span>
-              {check.hint > 0 && revealedHints < check.hint && (
+              {showHints && check.hint > 0 && revealedHints < check.hint && (
                 <button
                   data-testid={`btn-check-hint-${check.id}`}
                   onClick={() => onRevealHint(check.hint)}
@@ -271,7 +274,7 @@ export function AssessmentPanel({
                   Show Hint {check.hint}
                 </button>
               )}
-              {check.hint > 0 && revealedHints >= check.hint && (
+              {showHints && check.hint > 0 && revealedHints >= check.hint && (
                 <span data-testid={`check-hint-open-${check.id}`} className="text-amber">
                   {revealedHints < hintCount
                     ? `Hint ${check.hint} is open below · Hint ${revealedHints + 1} waits for your next run`

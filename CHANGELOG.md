@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.3.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.4.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,24 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-17] — Three workbench blocks can step aside, with the cards sitting on a quieter shadow
+
+**General settings can put three blocks away.** A new **Workspace blocks** section carries switches
+for the **Python 3.12 in an isolated Web Worker** runtime strip, the **Progressive 3-Step Hint
+Ladder**, and the **Instructor Behavioral Assessment** card. They are visibility preferences, not
+feature switches: Python still warms and runs, the checks still grade, hints already recorded stay in
+the lesson record, and turning a block back on restores it. Each choice is remembered on this device
+and every switch starts **on**, so an existing workbench looks unchanged until someone asks for less.
+In Compact, the runtime and hint modules leave the dock with their blocks instead of opening an
+empty panel.
+
+**Elevation is now part of the surface language.** The editor, lesson reader, lesson chooser,
+runtime strip, hint ladder, assessment, trace, scope and study cards sit on the theme's low shadow,
+and General settings on its deep one. Every palette supplies the value, so light and paper keep a
+soft edge and high contrast keeps a readable one; the calculator's two panes keep the deeper shadow
+they were designed around. Nothing is lifted twice, and the shadows are one step of separation, not
+a glow.
 
 ## [2026-11-17] — The calculator becomes an instrument, and the tab strip makes room
 

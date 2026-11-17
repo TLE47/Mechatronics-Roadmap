@@ -127,6 +127,17 @@ isolation headers (the dev server, a preview) has no service worker in front of 
 so instead of claiming a cache it cannot build. `npm run test:takealong` pins the URL list, the size
 wording, and the rule that only the interpreter's own files let the button call itself ready.
 
+### Workspace blocks
+
+Three of the workbench's blocks can step aside without changing what they do. **General settings →
+Workspace blocks** carries a switch for the **Python 3.12 in an isolated Web Worker** runtime strip,
+the **Progressive 3-Step Hint Ladder**, and the **Instructor Behavioral Assessment** card. The
+runtime still runs, the grader still grades, and every saved hint and check record stays where it
+was; the block simply leaves the page. Each choice is remembered in `localStorage` and every switch
+starts on, so a browser that never opens the dialog looks unchanged. Compact follows the same choice
+by leaving the runtime or hint module out of its dock rather than opening an empty panel. The
+browser suite toggles all three off, reloads, and brings them back.
+
 ### Backup
 
 The work lives in several stores, so getting it out is one file, not a pile: **Back Up (.zip)** in

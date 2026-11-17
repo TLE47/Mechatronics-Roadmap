@@ -35,6 +35,7 @@ import { FirstRunTour } from '../FirstRunTour';
 import { layoutForStep } from '../../tour';
 import { resumeLabel } from '../../tourState';
 import { playCue } from '../../audio/facade';
+import { GENERAL_SETTINGS_EVENT, readWorkspaceBlocks, type WorkspaceBlocks } from '../../generalSettings';
 
 import { harnessGate } from '../../harnessGrading.ts';
 import { harnessForLesson } from '../../lessonHarnesses.ts';
@@ -343,6 +344,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     commitPanes,
   } = useRunnerArrangement();
   const guideAssessmentRef = useRef<HTMLDivElement | null>(null);
+  // The three blocks General settings can put away. Read once, then kept in step with the dialog;
+  // every record and every check still runs, only the block leaves the page.
+  const [workspaceBlocks, setWorkspaceBlocks] = useState<WorkspaceBlocks>(readWorkspaceBlocks);
+  useEffect(() => {
+    const refresh = () => setWorkspaceBlocks(readWorkspaceBlocks());
+    window.addEventListener(GENERAL_SETTINGS_EVENT, refresh);
+    return () => window.removeEventListener(GENERAL_SETTINGS_EVENT, refresh);
+  }, []);
   // Named groups the roadmap also uses; the old "Step 1 / Steps 3-5 / Steps 6-10" numbering was a
   // third scheme, belonging to neither the roadmap's passes nor any tab the learner can open.
   const [trackFilter, setTrackFilter] = useState<TrackFilter>('all');
@@ -2205,10 +2214,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             </div>
           </div>
   );
-  const hintLadder = (
+  const hintLadder = workspaceBlocks.hints ? (
     <>
           {currentLesson.hints.length > 0 && (
-            <div data-tour="hint-ladder" className="bg-panel border border-line rounded-xl p-4">
+            <div data-tour="hint-ladder" className="bg-panel border border-line rounded-xl p-4 shadow-[var(--shadow-sm)]">
               <div className="flex items-center justify-between">
                 <div className="text-xs font-mono text-amber flex items-center gap-1.5">
                   <Lightbulb className="w-4 h-4" />
@@ -2268,8 +2277,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               )}
             </div>
           )}    </>
-  );
-  const runtimeStrip = (
+  ) : null;
+  const runtimeStrip = workspaceBlocks.runtime ? (
     <RunnerRuntimeStrip pyodideStatus={pyodideStatus}
       runtimeBoot={runtimeBoot}
       readyMs={readyMs}
@@ -2279,7 +2288,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       offline={offline}
       onTakeOffline={takeOffline}
     />
-  );
+  ) : null;
 
   // The report column: a module in Compact, the column beside the editor otherwise.
   const resultsColumn = (
@@ -2303,6 +2312,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               outputCheck,
               outputMatchMode,
               exactFormatting: !lessonDowngradesFormatting,
+              showAssessment: workspaceBlocks.assessment,
+              showHints: workspaceBlocks.hints,
               instructorTestSummary: currentLesson.instructorTestSummary,
               checkFailures,
               revealedHints,
@@ -2506,17 +2517,19 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               <p className="text-[11px] text-muted mt-1">
                 Hint 1 is a nudge; it never gives the answer.
               </p>
-              <button
-                onClick={() => {
-                  revealHint(1);
-                  guideAssessmentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }}
-                disabled={currentLesson.hints.length === 0}
-                data-testid="btn-guide-hint"
-                className="mt-2 px-2.5 py-1 rounded text-[12.5px] font-mono bg-amber/15 hover:bg-amber/25 text-amber-strong border border-amber/40 disabled:opacity-50 cursor-pointer"
-              >
-                {revealedHints > 0 ? 'Hint 1 is open below' : 'Reveal Hint 1'}
-              </button>
+              {workspaceBlocks.hints && (
+                <button
+                  onClick={() => {
+                    revealHint(1);
+                    guideAssessmentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }}
+                  disabled={currentLesson.hints.length === 0}
+                  data-testid="btn-guide-hint"
+                  className="mt-2 px-2.5 py-1 rounded text-[12.5px] font-mono bg-amber/15 hover:bg-amber/25 text-amber-strong border border-amber/40 disabled:opacity-50 cursor-pointer"
+                >
+                  {revealedHints > 0 ? 'Hint 1 is open below' : 'Reveal Hint 1'}
+                </button>
+              )}
             </li>
           </ol>
 
@@ -2863,9 +2876,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             {compactLesson ? (
               <CompactShelf
                 items={[
-                  { id: 'run', label: 'Run', meta: `${verifiedCount}/${PYTHON_LESSONS.length}`, body: runtimeStrip },
+                  ...(workspaceBlocks.runtime
+                    ? [{ id: 'run', label: 'Run', meta: `${verifiedCount}/${PYTHON_LESSONS.length}`, body: runtimeStrip }]
+                    : []),
                   { id: 'brief', label: 'Brief', meta: currentLesson.id, body: briefCard },
-                  { id: 'hints', label: 'Hints', meta: `${revealedHints}/${hintCount}`, body: hintLadder },
+                  ...(workspaceBlocks.hints
+                    ? [{ id: 'hints', label: 'Hints', meta: `${revealedHints}/${hintCount}`, body: hintLadder }]
+                    : []),
                   {
                     id: 'report',
                     label: 'Report',
