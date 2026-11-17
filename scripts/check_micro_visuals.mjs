@@ -52,6 +52,10 @@ const TOLERANCE = 2;
 /** Text may touch an ancestor's clip edge by a subpixel before it is actually cut. */
 const CLIP_TOLERANCE = 1.5;
 const VIEWPORT = { width: 1280, height: 900 };
+/** The catalogue is the coverage contract: one measured scene per concept. */
+const EXPECTED_SCENE_COUNT = 46;
+/** The authored cycle, repeated independently of the renderer's helper so a reorder cannot hide. */
+const PLACEMENT_CYCLE = ['right', 'left', 'bottom'];
 
 const argv = process.argv.slice(2);
 const RECORD = argv.includes('--record');
@@ -61,6 +65,16 @@ const targets = ONLY ? MICRO_CONCEPTS.filter((concept) => concept.id === ONLY) :
 
 if (ONLY && targets.length === 0) {
   console.error(`[FAIL] no micro concept is named ${ONLY}`);
+  process.exit(2);
+}
+if (!ONLY && targets.length !== EXPECTED_SCENE_COUNT) {
+  console.error(
+    `[FAIL] expected ${EXPECTED_SCENE_COUNT} micro scenes, found ${targets.length}; the visual sweep must cover every concept`
+  );
+  process.exit(2);
+}
+if (new Set(targets.map((concept) => concept.id)).size !== targets.length) {
+  console.error('[FAIL] the micro scene sweep contains duplicate concept ids');
   process.exit(2);
 }
 
@@ -91,7 +105,7 @@ function relativeFile(file) {
  * leaving every visual class intact. A measurement issue is an array entry rather than a throw, so
  * one clipped label cannot hide the rest of the scene's drift.
  */
-const measureScenes = async ({ selector, widths, tolerance, clipTolerance }) => {
+const measureScenes = async ({ selector, widths, tolerance, clipTolerance, expectedPlacement }) => {
   const original = document.querySelector(selector);
   if (!original) throw new Error(`no figure matched ${selector}`);
 
@@ -192,7 +206,12 @@ const measureScenes = async ({ selector, widths, tolerance, clipTolerance }) => 
     if (Math.abs(frame.width - width) > 1) {
       issues.push(`figure-width:${round(frame.width)}px instead of ${width}px`);
     }
-    if (!figure.innerText?.trim()) issues.push('missing-caption-text');
+    const caption = figure.querySelector('figcaption');
+    if (!caption?.textContent?.trim()) issues.push('missing-caption-text');
+    const placement = figure.getAttribute('data-placement');
+    if (expectedPlacement && placement !== expectedPlacement) {
+      issues.push(`placement:${placement ?? 'missing'} instead of ${expectedPlacement}`);
+    }
 
     if (scene) {
       const overflowX = scene.scrollWidth - scene.clientWidth;
@@ -332,7 +351,7 @@ async function proveDetector(page) {
     host.id = 'micro-gate-selftest';
     host.style.cssText = 'position:fixed;left:-20000px;top:0;width:300px;';
     host.innerHTML = `
-      <figure data-testid="micro-visual-selftest" style="box-sizing:border-box;width:300px;padding:14px;border:1px solid #000;font:12px monospace">
+      <figure data-testid="micro-visual-selftest" data-placement="left" style="box-sizing:border-box;width:300px;padding:14px;border:1px solid #000;font:12px monospace">
         <figcaption>Fixture card</figcaption>
         <div data-visual>
           <div style="width:80px;overflow:hidden;white-space:nowrap">
@@ -349,10 +368,14 @@ async function proveDetector(page) {
       widths: [300],
       tolerance: TOLERANCE,
       clipTolerance: CLIP_TOLERANCE,
+      expectedPlacement: 'right',
     });
     const issues = measured['300']?.issues ?? [];
     if (!issues.some((issue) => issue.startsWith('text-clipped:'))) {
       throw new Error(`the clipping detector did not name the synthetic clipped label: ${issues.join(' | ')}`);
+    }
+    if (!issues.some((issue) => issue.startsWith('placement:'))) {
+      throw new Error(`the placement detector did not name the synthetic side swap: ${issues.join(' | ')}`);
     }
     if (
       !issues.some(
@@ -464,11 +487,13 @@ async function main() {
       await page.getByTestId(`micro-learn-${concept.id}`).click();
       await page.getByTestId(`micro-visual-${concept.id}`).waitFor({ timeout: 5000 });
       await page.evaluate(() => document.fonts.ready);
+      const catalogueIndex = MICRO_CONCEPTS.findIndex((entry) => entry.id === concept.id);
       scenes[concept.id] = await page.evaluate(measureScenes, {
         selector: `[data-testid="micro-visual-${concept.id}"]`,
         widths: WIDTHS,
         tolerance: TOLERANCE,
         clipTolerance: CLIP_TOLERANCE,
+        expectedPlacement: PLACEMENT_CYCLE[catalogueIndex % PLACEMENT_CYCLE.length],
       });
       if ((index + 1) % 10 === 0) log(`  measured ${index + 1}/${targets.length} scenes`);
     }
