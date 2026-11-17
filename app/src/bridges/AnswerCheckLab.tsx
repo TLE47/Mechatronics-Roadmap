@@ -2,7 +2,7 @@ import BridgeLab from './bridgeLabShell';
 import { answerCheckLab } from './answerCheck';
 
 /**
- * The Bridge Notes lab for Lesson P.15 (`app/src/bridges/AnswerCheckLab.tsx`).
+ * The Bridge Notes lab for Lesson P.14 (`app/src/bridges/AnswerCheckLab.tsx`).
  *
  * All of the arithmetic, every number and every label lives in `answerCheck`; this is the React
  * boundary the lazy table names, so the card can be graded without a render and the model can be

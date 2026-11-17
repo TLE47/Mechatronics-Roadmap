@@ -1,4 +1,5 @@
 import { PYTHON_LESSONS } from './data/pythonLessonsData';
+import { canonicalLessonId } from './lessonRenames';
 
 /**
  * A lesson's own address: `?lesson=P.1`.
@@ -16,11 +17,17 @@ export function isKnownLesson(id: string | null | undefined): boolean {
   return !!id && PYTHON_LESSONS.some((lesson) => lesson.id === id);
 }
 
-/** The id in a query string, or null when it is absent or names nothing the runner lists. */
+/**
+ * The id in a query string, or null when it is absent or names nothing the runner lists.
+ *
+ * An id written before the 4.0.0 renumber is translated first, so a `?lesson=P.15` link still opens
+ * the analysis-workflow lesson it named (now `P.14`) instead of a not-found page.
+ */
 export function lessonIdFromSearch(search: string): string | null {
   const wanted = new URLSearchParams(search).get(LESSON_QUERY_KEY);
   if (!wanted) return null;
-  return isKnownLesson(wanted) ? wanted : null;
+  const id = canonicalLessonId(wanted);
+  return isKnownLesson(id) ? id : null;
 }
 
 /**

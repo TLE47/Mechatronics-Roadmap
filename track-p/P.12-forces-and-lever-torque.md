@@ -236,5 +236,5 @@ for angle_deg in [0.0, 60.0, 90.0]:
 - [ ] Your **Do it yourself** script prints `1.4715 N*m`, `0.7358 N*m`, and `0.0000 N*m`.
 
 <!-- next-step:start -->
-👉 **Next:** [Step 1 · Python and the maths a robot needs — Lesson P.14: Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds](P.14-reading-a-datasheet-table.md)
+👉 **Next:** [Step 1 · Python and the maths a robot needs — Lesson P.13: Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds](P.13-reading-a-datasheet-table.md)
 <!-- next-step:end -->

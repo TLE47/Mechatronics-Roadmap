@@ -17,9 +17,6 @@ the **Extensions** in [`EXTENSIONS.md`](EXTENSIONS.md). Neither is required for 
 
 **Route status: `author-dogfood`** — the author has run every page and no outside learner has finished this route, so every hour is a target rather than a measurement.
 
-Track P's lesson ids skip `P.13` on purpose: saved progress and every link are keyed by
-lesson id, so `P.14` keeps the number it shipped with. The gap is not a missing lesson.
-
 ```mermaid
 flowchart LR
     Arm["Steps 1-10<br/>arm route"] --> ArmDone["Working arm<br/>a real finish"]
@@ -44,8 +41,8 @@ flowchart LR
 | Step 1 · Python and the maths a robot needs | `P.10` Radians, Rotational Speed (rad/s) and Right-Triangle Trigonometry | 1.5-3.5 |
 | Step 1 · Python and the maths a robot needs | `P.11` Reading Time-Series Graphs — Slope and Area | 1.5-3.5 |
 | Step 1 · Python and the maths a robot needs | `P.12` Linear Forces (F = ma) and Lever Torque (tau = m*g*L*cos(theta)) | 1.5-3.5 |
-| Step 1 · Python and the maths a robot needs | `P.14` Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds | 0.75-2 |
-| Step 1 · Python and the maths a robot needs | `P.15` The Analysis Workflow — Given, Unknown, Model, Compute, Check, Answer | 0.75-2 |
+| Step 1 · Python and the maths a robot needs | `P.13` Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds | 0.75-2 |
+| Step 1 · Python and the maths a robot needs | `P.14` The Analysis Workflow — Given, Unknown, Model, Compute, Check, Answer | 0.75-2 |
 | Step 1 · Python and the maths a robot needs | `P.M` Track P Milestone — Gravity-Holding Robot Arm Link Simulator | 1-2.5 |
 | Step 1 · Python and the maths a robot needs | **16 lessons, together** | ≈19–47 |
 | Step 2 · Circuits and your first microcontroller | `S0.0` Why Electricity Is Like Water Flow — Effort, Flow & Pipe Constriction | 0.75-2 |

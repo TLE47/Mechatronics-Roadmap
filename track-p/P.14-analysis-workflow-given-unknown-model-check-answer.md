@@ -1,5 +1,5 @@
 ---
-lesson_id: "P.15"
+lesson_id: "P.14"
 title: "The Analysis Workflow — Given, Unknown, Model, Compute, Check, Answer"
 ideas:
   - "Ordering an analysis: Given, Unknown, Model, Compute, Check, Answer"
@@ -8,12 +8,12 @@ typical_hours: "0.75-1.0"
 slow_learner_hours: "1.5-2.0"
 ---
 
-# Lesson P.15: The Analysis Workflow — Given, Unknown, Model, Compute, Check, Answer
+# Lesson P.14: The Analysis Workflow — Given, Unknown, Model, Compute, Check, Answer
 
 <!-- run-callout:start -->
 > **Step 1 of 10 · Python and the maths a robot needs**
 >
-> **Run this in the workbench.** [Open MechaLab with `P.15` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=P.15) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
+> **Run this in the workbench.** [Open MechaLab with `P.14` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=P.14) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## Goal
@@ -41,13 +41,13 @@ Your finished program must satisfy **all** of these conditions:
 ## Prerequisites
 - [Lesson P.3: Conditional Decisions (`if/elif/else`) & Command Clamping](P.3-decisions-and-clamping.md)
 - [Lesson P.5: Functions & `while` Loops](P.5-functions-and-while-loops.md)
-- [Lesson P.14: Reading a Datasheet Table — Min/Typ/Max & Safe Operating Bounds](P.14-reading-a-datasheet-table.md)
+- [Lesson P.13: Reading a Datasheet Table — Min/Typ/Max & Safe Operating Bounds](P.13-reading-a-datasheet-table.md)
 
 ```mermaid
 flowchart LR
-    P3["P.3: Conditional Decisions"] --> P15["P.15: The Analysis Workflow"]
+    P3["P.3: Conditional Decisions"] --> P15["P.14: The Analysis Workflow"]
     P5["P.5: Functions"] --> P15
-    P14["P.14: Reading a Datasheet Table"] --> P15
+    P14["P.13: Reading a Datasheet Table"] --> P15
     P15 --> PM["P.M: Track P Milestone"]
 ```
 

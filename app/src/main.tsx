@@ -12,7 +12,8 @@ import '@fontsource-variable/geist-mono';
 // from the `katex` package through `MathView.tsx`.
 import 'katex/dist/katex.min.css';
 import App from './App';
-import { flushBulkStorage, hydrateBulkStorage } from './bulkStorage';
+import { bulkStorage, flushBulkStorage, hydrateBulkStorage } from './bulkStorage';
+import { migrateRenamedLessonIds } from './lessonRenames';
 import { startPaintTiming } from './paintTiming';
 import './index.css';
 
@@ -38,6 +39,16 @@ async function start(): Promise<void> {
   } catch {
     // Nothing to do: `bulkStorage()` falls back to `localStorage`, and the lesson still opens.
   }
+  // After the bulk stores are readable and before any component reads them: the two Track P lessons
+  // renumbered in the 4.0.0 release moved every id P.14/P.15 down by one, and stored flags, drafts,
+  // positions and checks still carry the old keys. See `lessonRenames.ts` for why it is one pass.
+  let local: Storage | null = null;
+  try {
+    local = localStorage;
+  } catch {
+    // Blocked storage: there is nothing stored to move, and the bulk store still gets its pass.
+  }
+  migrateRenamedLessonIds([local, bulkStorage()]);
   // A browser suite has to wait for the write-behind queue before reloading; pagehide starts the
   // flush, but a navigation cannot await the transaction it issued.
   Object.assign(window, { __mechalabFlushStorage: flushBulkStorage });

@@ -600,14 +600,14 @@ check('P.6: 3–4–5 is 5.0, and 0.1 + 0.2 is the long tail', () => {
   assert.equal(assertGuardLab.pair.right, 'tolerant');
 });
 
-check('P.15: 5.0 A computed, 3.2 A commanded', () => {
+check('P.14: 5.0 A computed, 3.2 A commanded', () => {
   assert.equal(ohmsCurrent(12, 2.4), 5);
   assert.equal(withinLimit(5, 3.2), 3.2);
   assert.equal(answerCheckLab.pair.wrong, 'computed');
   assert.equal(answerCheckLab.pair.right, 'commanded');
 });
 
-check('P.14: 12.0 V is over the DRV8833 on both limits and inside the TB6612', () => {
+check('P.13: 12.0 V is over the DRV8833 on both limits and inside the TB6612', () => {
   assert.equal(DRIVERS.drv8833.recommended, 10.8);
   assert.equal(DRIVERS.drv8833.absolute, 11.8);
   assert.equal(DRIVERS.tb6612.recommended, 13.5);
@@ -968,8 +968,8 @@ check('the batch-2 pages still say the numbers their cards print', () => {
   const pins = {
     'track-p/P.5-functions-and-while-loops.md': ['255', 'None', 'TypeError', '20'],
     'track-p/P.6-modules-and-automated-asserts.md': ['3.0', '4.0', '5.0', '0.30000000000000004'],
-    'track-p/P.15-analysis-workflow-given-unknown-model-check-answer.md': ['12', '2.4', '5.0', '3.2'],
-    'track-p/P.14-reading-a-datasheet-table.md': ['2.7', '10.8', '11.8', '4.5', '13.5', '15.0'],
+    'track-p/P.14-analysis-workflow-given-unknown-model-check-answer.md': ['12', '2.4', '5.0', '3.2'],
+    'track-p/P.13-reading-a-datasheet-table.md': ['2.7', '10.8', '11.8', '4.5', '13.5', '15.0'],
     '01-electronics-and-power/01.3-power-regulators-and-power-budget.md': [
       '12.0',
       '5.0',

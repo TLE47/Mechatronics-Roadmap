@@ -1,5 +1,5 @@
 ---
-lesson_id: "P.14"
+lesson_id: "P.13"
 title: "Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds"
 ideas:
   - "Reading datasheet specification tables and unit columns"
@@ -8,12 +8,12 @@ typical_hours: "0.75-1.0"
 slow_learner_hours: "1.5-2.0"
 ---
 
-# Lesson P.14: Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds
+# Lesson P.13: Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds
 
 <!-- run-callout:start -->
 > **Step 1 of 10 · Python and the maths a robot needs**
 >
-> **Run this in the workbench.** [Open MechaLab with `P.14` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=P.14) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
+> **Run this in the workbench.** [Open MechaLab with `P.13` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=P.13) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## Goal
@@ -44,7 +44,7 @@ Your finished program must satisfy **all** of these conditions:
 
 ```mermaid
 flowchart LR
-    P3["P.3: Conditional Decisions & Bounds"] --> P14["P.14: Reading a Datasheet Table"]
+    P3["P.3: Conditional Decisions & Bounds"] --> P14["P.13: Reading a Datasheet Table"]
     P7["P.7: SI Units & Metric Prefixes"] --> P14
     P14 --> PM["P.M: Track P Milestone"]
 ```
@@ -247,5 +247,5 @@ assert abs(i_cont_a - 1.50) < 1e-9
 - [ ] I can distinguish **Recommended Operating Conditions** from **Absolute Maximum Ratings** and verify why `DRV8833` (`2.7–10.8 V`) is for $6\text{–}9\text{ V}$ rails while `TB6612FNG` (`4.5–13.5 V`) covers $12\text{ V}$.
 
 <!-- next-step:start -->
-👉 **Next:** [Step 1 · Python and the maths a robot needs — Lesson P.15: The Analysis Workflow — Given, Unknown, Model, Compute, Check, Answer](P.15-analysis-workflow-given-unknown-model-check-answer.md)
+👉 **Next:** [Step 1 · Python and the maths a robot needs — Lesson P.14: The Analysis Workflow — Given, Unknown, Model, Compute, Check, Answer](P.14-analysis-workflow-given-unknown-model-check-answer.md)
 <!-- next-step:end -->

@@ -483,7 +483,7 @@ assert math.isclose(gravity_torque_nm(1.0, 0.5, 60.0), 2.4525, abs_tol=1e-4)
 assert math.isclose(gravity_torque_nm(1.0, 0.5, 90.0), 0.0, abs_tol=1e-6)
 """,
     ),
-    "P.14": (
+    "P.13": (
         [
             "Test is_within_recommended_bounds and select_safe_driver across 3.3 V, 6.0 V, 10.8 V, 11.5 V, and 12.0 V supply rails",
             "Test datasheet_val_to_base_si across mA, mV, ms, kHz, and base SI units",
@@ -499,7 +499,7 @@ assert math.isclose(datasheet_val_to_base_si(250.0, "mA"), 0.25, abs_tol=1e-9)
 assert math.isclose(datasheet_val_to_base_si(20.0, "kHz"), 20000.0, abs_tol=1e-6)
 """,
     ),
-    "P.15": (
+    "P.14": (
         [
             "Test winding_draw on unseen 24 V/2.4 ohm and 9 V/3 ohm givens",
             "Test check_against_limit and answer_line on both the inside-limit and clamped branches",

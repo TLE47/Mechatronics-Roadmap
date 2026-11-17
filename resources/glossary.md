@@ -46,7 +46,7 @@ flowchart LR
 | **Force ($F$) and Weight ($W$)** | Push or pull in Newtons ($F = m \cdot a$); gravitational weight is $W = m \cdot g$ where $g = 9.81\text{ m/s}^2$. | Newton (`N` $= \text{kg}\cdot\text{m/s}^2$) | [Lesson P.12](../track-p/P.12-forces-and-lever-torque.md) |
 | **Lever Arm ($r_\perp$)** | The perpendicular distance from a joint pivot to the line of action of a force ($r_\perp = L\cos\theta$ for gravity when arm angle $\theta$ is measured from the horizontal). | Meter (`m`) | [Lesson P.12](../track-p/P.12-forces-and-lever-torque.md) |
 | **Lever Torque ($\tau$)** | Rotational twisting effort around a pivot: $\tau = F \cdot r_\perp = m \cdot g \cdot L \cdot \cos\theta$ (with $\theta$ measured from horizontal). | Newton-meter (`N·m`) | [Lesson P.12](../track-p/P.12-forces-and-lever-torque.md) |
-| **Recommended Operating Conditions** | The `Min` / `Typ` / `Max` datasheet operating window within which a part is guaranteed to work reliably (distinct from destructive **Absolute Maximum Ratings**). | `Min`, `Typ`, `Max` | [Lesson P.14](../track-p/P.14-reading-a-datasheet-table.md) |
+| **Recommended Operating Conditions** | The `Min` / `Typ` / `Max` datasheet operating window within which a part is guaranteed to work reliably (distinct from destructive **Absolute Maximum Ratings**). | `Min`, `Typ`, `Max` | [Lesson P.13](../track-p/P.13-reading-a-datasheet-table.md) |
 
 ---
 

@@ -118,7 +118,7 @@ flowchart LR
 | `weight` | `#micro-weight` | Weight is the force gravity adds: W = m · g. |
 | `torque` | `#micro-torque` | Torque uses the perpendicular lever arm, L cos θ. |
 
-### P.14 — reading a datasheet table
+### P.13 — reading a datasheet table
 
 | Unit | Parent anchor | The one idea |
 | :--- | :--- | :--- |
@@ -126,7 +126,7 @@ flowchart LR
 | `datasheet-bounds` | `#micro-datasheet-bounds` | Recommended bounds are not the destruction limit. |
 | `datasheet-conditions` | `#micro-datasheet-conditions` | Typ is not a promise; budget on Max. |
 
-### P.15 — the analysis workflow
+### P.14 — the analysis workflow
 
 | Unit | Parent anchor | The one idea |
 | :--- | :--- | :--- |
@@ -188,7 +188,7 @@ build-time check; `npm run check:micro-debug` proves the production bundle does 
 
 ## Self-study protocol
 
-Day 1: all forty-six Learn units, P.1 through P.15 (P.13 is not a lesson). Deliberately answer some diagnostics wrong so the 1/2 and 0/2 paths,
+Day 1: all forty-six Learn units, P.1 through P.14. Deliberately answer some diagnostics wrong so the 1/2 and 0/2 paths,
 the targeted notes and the practice branches are exercised. Scripted browser runs are allowed.
 
 Day 2, at least 18 hours later: reviews (launched manually if not due) plus challenges on variables

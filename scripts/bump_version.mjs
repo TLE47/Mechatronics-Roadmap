@@ -213,8 +213,10 @@ function main() {
   fs.writeFileSync(PKG, `${JSON.stringify(pkg, null, 2)}\n`);
 
   const stamped = changelogLine(next);
-  const updated = /Release identity: `[^`]+`\.\*\*/.test(changelog)
-    ? changelog.replace(/Release identity: `[^`]+`\.\*\*/, stamped)
+  // The leading stars belong to the stamp: matching from `Release identity` replaced only the words
+  // and left the old `**` behind, so every bump added a pair. A new file still gets the line inserted.
+  const updated = /\*+Release identity: `[^`]+`\.\*\*/.test(changelog)
+    ? changelog.replace(/\*+Release identity: `[^`]+`\.\*\*/, stamped)
     : `${changelog.replace(/^(# .*\n)/, `$1\n${stamped} `)}`;
   fs.writeFileSync(CHANGELOG, updated);
   console.log(`${current} -> ${next} (${level}); package.json and CHANGELOG.md stamped`);

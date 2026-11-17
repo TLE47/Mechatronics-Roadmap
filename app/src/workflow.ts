@@ -438,7 +438,7 @@ export interface WorkflowNode {
    * Mermaid comment and a Markdown sub-item so no diagram label grows with it.
    */
   note?: string;
-  /** The lesson this card came from or explains, by the runner's own id (e.g. `P.15`). */
+  /** The lesson this card came from or explains, by the runner's own id (e.g. `P.14`). */
   lesson?: string;
   /**
    * The project object this step touches, by its stable id (`08-capstone1-foc-eda/u1`,

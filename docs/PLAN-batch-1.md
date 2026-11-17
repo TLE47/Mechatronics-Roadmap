@@ -1,6 +1,6 @@
 # PLAN — Batch 1: Tracks 00, 01 (01.2–01.4), and 02 (Tier 1 Only)
 
-This plan specifies the Tier 1 beginner lesson sequence for **Track 00 (`00-foundations`)**, **Track 01 (`01-electronics-and-power`, continuing after `01.1`)**, and **Track 02 (`02-mechanics-kinematics-dynamics`)**, following **Track P (`P.1–P.12 + P.14 + P.M`)** and **Stage 0 (`S0.0–S0.9 + S0.M`)**.
+This plan specifies the Tier 1 beginner lesson sequence for **Track 00 (`00-foundations`)**, **Track 01 (`01-electronics-and-power`, continuing after `01.1`)**, and **Track 02 (`02-mechanics-kinematics-dynamics`)**, following **Track P (`P.1–P.12 + P.13 + P.M`)** and **Stage 0 (`S0.0–S0.9 + S0.M`)**.
 
 ## Curriculum Path Order (Track P $\rightarrow$ Stage 0 $\rightarrow$ Batch 1)
 
@@ -12,7 +12,7 @@ flowchart LR
     T01 --> T02["Track 02: 02.1 - 02.5"]
 ```
 
-1. **Track P (`track-p/`):** `P.1` $\rightarrow$ `P.2` $\rightarrow$ `P.3` $\rightarrow$ `P.4` $\rightarrow$ `P.5` $\rightarrow$ `P.6` $\rightarrow$ `P.7` $\rightarrow$ `P.8` $\rightarrow$ `P.9` $\rightarrow$ `P.10` $\rightarrow$ `P.11` $\rightarrow$ `P.12` $\rightarrow$ `P.14` (Reading a Datasheet Table) $\rightarrow$ `P.M`
+1. **Track P (`track-p/`):** `P.1` $\rightarrow$ `P.2` $\rightarrow$ `P.3` $\rightarrow$ `P.4` $\rightarrow$ `P.5` $\rightarrow$ `P.6` $\rightarrow$ `P.7` $\rightarrow$ `P.8` $\rightarrow$ `P.9` $\rightarrow$ `P.10` $\rightarrow$ `P.11` $\rightarrow$ `P.12` $\rightarrow$ `P.13` (Reading a Datasheet Table) $\rightarrow$ `P.M`
 2. **Stage 0 (`stage-0/`):** `S0.0` (Why Electricity Is Like Flow: Water Analogy for Effort $\times$ Flow) $\rightarrow$ `S0.1` (Closed Circuits & Ohm's Law) $\rightarrow$ `S0.2` (Series/Parallel, Voltage Dividers & Potentiometers) $\rightarrow$ `S0.3` (Schematics, Breadboards & Short Circuits) $\rightarrow$ `S0.4` (Diodes, LEDs & Resistor Power Ratings) $\rightarrow$ `S0.5` (Multimeters & Current-Limited `CC/CV` Supplies) $\rightarrow$ `S0.6` (Capacitors & Power-Rail Decoupling) $\rightarrow$ `S0.7` (Arduino Uno Digital I/O & `INPUT_PULLUP` + Falstad Twin + C-from-Python Sidebar) $\rightarrow$ `S0.8` (10-Bit ADC `analogRead` & Serial Monitor + Falstad Twin) $\rightarrow$ `S0.9` (PWM Duty Cycle & `analogWrite` + Falstad Twin) $\rightarrow$ `S0.M` (Stage 0 Milestone + Falstad Twin)
 3. **Track 00 (`00-foundations/`, Tier 1):** `00.1` $\rightarrow$ `00.2` $\rightarrow$ `00.3`
 4. **Track 01 (`01-electronics-and-power/`, Tier 1):** `01.1` $\rightarrow$ `01.2` $\rightarrow$ `01.3` $\rightarrow$ `01.4`

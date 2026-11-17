@@ -59,10 +59,10 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
   },
   {
     id: 'q2-si-trig-torque',
-    stageBadge: 'Gate P→0 · P.7–P.14 & P.M',
+    stageBadge: 'Gate P→0 · P.7–P.13 & P.M',
     moduleId: '00-foundations.T1.00c',
-    lessonId: 'P.14',
-    lessonTitle: 'Gate P→0: SI Prefixes, Loop+Assert & DRV8833 Datasheet Table (P.7–P.14)',
+    lessonId: 'P.13',
+    lessonTitle: 'Gate P→0: SI Prefixes, Loop+Assert & DRV8833 Datasheet Table (P.7–P.13)',
     prereqChain: ['P.1–P.6', '00-foundations.T1.00a'],
     question:
       'Skip-Gate 2 / Gate P→0 (15-Min Track P → Stage 0 Check): Convert (15 mA, 4.7 kΩ, 500 µs) to base SI units, and read the DRV8833 datasheet table (VM Recommended: 2.7–10.8 V, Abs Max: 11.8 V) to check if a 12.0 V supply is safe:',
@@ -77,13 +77,13 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
         label: '1.5 A, 470 Ω, 0.05 s; 12.0 V is safe because 12.0 V is close to 11.8 V',
         isCorrect: false,
         explanation:
-          'Targeted review (not "start over"): review Lesson P.7 (SI prefixes) and Lesson P.14 (Reading a Datasheet Table: Recommended vs. Abs Max).',
+          'Targeted review (not "start over"): review Lesson P.7 (SI prefixes) and Lesson P.13 (Reading a Datasheet Table: Recommended vs. Abs Max).',
       },
       {
         label: '0.0015 A, 47000 Ω, 0.005 s; DRV8833 operates up to 24 V',
         isCorrect: false,
         explanation:
-          'Targeted review (not "start over"): review Lesson P.7 (milli = ÷1000, kilo = ×1000, micro = ÷1e6) and Lesson P.14 (DRV8833 datasheet table).',
+          'Targeted review (not "start over"): review Lesson P.7 (milli = ÷1000, kilo = ×1000, micro = ÷1e6) and Lesson P.13 (DRV8833 datasheet table).',
       },
     ],
     recommendedTab: 8,

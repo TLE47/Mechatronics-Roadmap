@@ -103,8 +103,8 @@ Starts at [`P.1`](../track-p/P.1-variables-and-data-types.md) · **18.5-46.5 foc
 | [`P.10`](../track-p/P.10-radians-and-right-triangle-trig.md) | Radians, Rotational Speed (rad/s) and Right-Triangle Trigonometry | lesson | 1.5-3.5 |
 | [`P.11`](../track-p/P.11-reading-time-series-graphs.md) | Reading Time-Series Graphs — Slope and Area | lesson | 1.5-3.5 |
 | [`P.12`](../track-p/P.12-forces-and-lever-torque.md) | Linear Forces (F = ma) and Lever Torque (tau = m*g*L*cos(theta)) | lesson | 1.5-3.5 |
-| [`P.14`](../track-p/P.14-reading-a-datasheet-table.md) | Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds | lesson | 0.75-2 |
-| [`P.15`](../track-p/P.15-analysis-workflow-given-unknown-model-check-answer.md) | The Analysis Workflow — Given, Unknown, Model, Compute, Check, Answer | lesson | 0.75-2 |
+| [`P.13`](../track-p/P.13-reading-a-datasheet-table.md) | Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds | lesson | 0.75-2 |
+| [`P.14`](../track-p/P.14-analysis-workflow-given-unknown-model-check-answer.md) | The Analysis Workflow — Given, Unknown, Model, Compute, Check, Answer | lesson | 0.75-2 |
 | [`P.M`](../track-p/P.M-track-p-milestone.md) | Track P Milestone — Gravity-Holding Robot Arm Link Simulator | lesson | 1-2.5 |
 
 ### Step 2 · Circuits and your first microcontroller

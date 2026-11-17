@@ -37,12 +37,12 @@ Your finished program must satisfy **all** of these conditions:
 ---
 
 ## Prerequisites
-- All Track P lessons: [P.1](P.1-variables-and-data-types.md)–[P.12](P.12-forces-and-lever-torque.md), [P.14](P.14-reading-a-datasheet-table.md), and [P.15](P.15-analysis-workflow-given-unknown-model-check-answer.md).
+- All Track P lessons: [P.1](P.1-variables-and-data-types.md)–[P.12](P.12-forces-and-lever-torque.md), [P.13](P.13-reading-a-datasheet-table.md), and [P.14](P.14-analysis-workflow-given-unknown-model-check-answer.md).
 
 ```mermaid
 flowchart LR
-    P12["P.12: Forces & Lever Torque"] --> P14["P.14: Reading a Datasheet Table"]
-    P14 --> P15["P.15: The Analysis Workflow"]
+    P12["P.12: Forces & Lever Torque"] --> P14["P.13: Reading a Datasheet Table"]
+    P14 --> P15["P.14: The Analysis Workflow"]
     P15 --> PM["P.M: Track P Milestone"]
     PM --> S00["Stage 0 (S0.0): Why Electricity Is Like Flow"]
 ```

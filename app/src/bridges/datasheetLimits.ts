@@ -1,7 +1,7 @@
 /**
  * Recommended is a limit; absolute maximum is a dare (`app/src/bridges/datasheetLimits.ts`).
  *
- * Lesson P.14's Bridge Notes prints both columns for the two drivers a beginner will hold: the
+ * Lesson P.13's Bridge Notes prints both columns for the two drivers a beginner will hold: the
  * `DRV8833` recommends 2.7–10.8 V and dies at 11.8 V, while the `TB6612FNG` recommends 4.5–13.5 V
  * and dies at 15.0 V. A 12.0 V pack is 1.2 V past the first driver's recommended top *and* past its
  * absolute maximum, and comfortably inside the second's — which is why the page's answer is "read

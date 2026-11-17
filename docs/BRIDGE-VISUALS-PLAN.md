@@ -74,8 +74,8 @@ flowchart LR
 | P.10 | `track-p/P.10-radians-and-right-triangle-trig.md` | yes | 1 | A | radian-convert | shipped | cos/sin want radians (180° = 3.1416), so cos(90) is −0.4481. |
 | P.11 | `track-p/P.11-reading-time-series-graphs.md` | yes | 3 | B | — | planned | Slope divides by Δt (velocity); a rectangle multiplies by it (distance). |
 | P.12 | `track-p/P.12-forces-and-lever-torque.md` | yes | 1 | A | lever-cos | shipped | τ_grav = mgLcosθ: 0.981 N·m at 0° and 0.000 at 90°. |
-| P.14 | `track-p/P.14-reading-a-datasheet-table.md` | yes | 2 | A | datasheet-limits | shipped | DRV8833 stops at 10.8 V rec / 11.8 V abs; 12.0 V is a TB6612 job. |
-| P.15 | `track-p/P.15-analysis-workflow-given-unknown-model-check-answer.md` | yes | 2 | A | answer-check | shipped | 12 V / 2.4 Ω = 5.0 A against a 3.2 A limit: the answer names the limit. |
+| P.13 | `track-p/P.13-reading-a-datasheet-table.md` | yes | 2 | A | datasheet-limits | shipped | DRV8833 stops at 10.8 V rec / 11.8 V abs; 12.0 V is a TB6612 job. |
+| P.14 | `track-p/P.14-analysis-workflow-given-unknown-model-check-answer.md` | yes | 2 | A | answer-check | shipped | 12 V / 2.4 Ω = 5.0 A against a 3.2 A limit: the answer names the limit. |
 | P.M | `track-p/P.M-track-p-milestone.md` | yes | 4 | A | — | planned | 502 of 1023 is the 0.981 N·m that holds the arm; 30 RPM for 3×100 ms is 0.942 rad. |
 
 ## Blocked by the registry gap

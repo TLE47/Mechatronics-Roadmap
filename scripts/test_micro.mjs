@@ -156,7 +156,7 @@ function challengeEvent(concept, correct, overrides = {}) {
   };
 }
 
-section('the content is forty-six concepts from P.1 to P.15');
+section('the content is forty-six concepts from P.1 to P.14');
 
 check('forty-six concepts in teaching order, each with two four-option diagnostics', () => {
   assert.equal(MICRO_CONCEPTS.length, 46);
@@ -243,8 +243,8 @@ check('every concept belongs to a parent lesson whose path is the one it cites',
       'P.10',
       'P.11',
       'P.12',
+      'P.13',
       'P.14',
-      'P.15',
     ]
   );
   for (const parent of MICRO_PARENTS) {

@@ -434,7 +434,7 @@ check('a copied card pastes with its words and look, as a new card and without i
   const source = normalizeWorkflow(
     graph(
       [
-        { kind: 'branch', title: 'Load $F$ ok?', detail: 'read the rail', condition: 'draw > 3 A', fill: 'amber', ink: 'rose', size: 15, note: 'check the supply', lesson: 'P.15' },
+        { kind: 'branch', title: 'Load $F$ ok?', detail: 'read the rail', condition: 'draw > 3 A', fill: 'amber', ink: 'rose', size: 15, note: 'check the supply', lesson: 'P.14' },
         { kind: 'answer', title: 'done' },
       ],
       [{ from: 's1', to: 's2' }]
@@ -922,12 +922,12 @@ check('a note and a lesson link are card metadata, exported without becoming ano
     ...exporting,
     nodes: exporting.nodes.map((node, index) =>
       index === 0
-        ? { ...node, note: '  read the supply first  ', lesson: 'P.15' }
+        ? { ...node, note: '  read the supply first  ', lesson: 'P.14' }
         : node
     ),
   });
   assert.equal(annotated.nodes[0].note, 'read the supply first');
-  assert.equal(annotated.nodes[0].lesson, 'P.15');
+  assert.equal(annotated.nodes[0].lesson, 'P.14');
   assert.equal('note' in annotated.nodes[1], false, 'a card without a note gains no field');
   assert.equal('lesson' in annotated.nodes[1], false, 'a card without a link gains no field');
   const mermaid = workflowToMermaid(annotated);
@@ -1647,8 +1647,8 @@ check('there are both palettes, six seeded templates and one blank', () => {
   assert.equal(templateById('nope'), null);
 });
 
-check('P.15 opens on the motor-stall example, and no other lesson claims one', () => {
-  assert.equal(templateForLesson('P.15').id, 'motor-stall');
+check('P.14 opens on the motor-stall example, and no other lesson claims one', () => {
+  assert.equal(templateForLesson('P.14').id, 'motor-stall');
   assert.equal(templateForLesson('P.1'), null);
   assert.equal(templateForLesson(''), null);
 });
@@ -1657,9 +1657,9 @@ section('10. One workflow per lesson survives the store');
 
 check('a written workflow reads back with the timestamp the write set', () => {
   freshBrowser();
-  assert.equal(readWorkflow('P.15'), null);
-  assert.equal(saveWorkflow('P.15', good, 2000), true);
-  const read = readWorkflow('P.15');
+  assert.equal(readWorkflow('P.14'), null);
+  assert.equal(saveWorkflow('P.14', good, 2000), true);
+  const read = readWorkflow('P.14');
   assert.equal(read.updatedAt, 2000);
   assert.equal(read.nodes.length, 6);
   assert.equal(read.edges.length, 5);
@@ -1673,13 +1673,13 @@ check('a version-1 document in the bucket is read as a version-2 graph', () => {
   globalThis.localStorage.setItem(
     STORAGE_KEY_WORKFLOW,
     JSON.stringify({
-      'P.15': v1([
+      'P.14': v1([
         { kind: 'given', title: 'a', detail: '12 V', unit: 'V' },
         { kind: 'answer', title: 'b', detail: '5 A', unit: 'A', branch: { when: 'hot', to: 's1' } },
       ]),
     })
   );
-  const read = readWorkflow('P.15');
+  const read = readWorkflow('P.14');
   assert.equal(read.version, 2);
   assert.equal(read.nodes.length, 2);
   assert.equal(read.edges.length, 2, 'the implied chain and the branch');
@@ -1690,72 +1690,72 @@ check('a version-1 document in the bucket is read as a version-2 graph', () => {
 
 check('a second lesson is a second entry, not a replacement', () => {
   freshBrowser();
-  saveWorkflow('P.15', good, 1000);
-  saveWorkflow('P.14', good, 1001);
-  assert.deepEqual(Object.keys(readWorkflowStore()).sort(), ['P.14', 'P.15']);
+  saveWorkflow('P.14', good, 1000);
+  saveWorkflow('P.13', good, 1001);
+  assert.deepEqual(Object.keys(readWorkflowStore()).sort(), ['P.13', 'P.14']);
 });
 
 check('a workflow with no cards clears the lesson instead of storing a blank', () => {
   freshBrowser();
-  saveWorkflow('P.15', good, 1000);
-  saveWorkflow('P.15', { ...good, nodes: [] }, 2000);
-  assert.equal(readWorkflow('P.15'), null);
+  saveWorkflow('P.14', good, 1000);
+  saveWorkflow('P.14', { ...good, nodes: [] }, 2000);
+  assert.equal(readWorkflow('P.14'), null);
   assert.deepEqual(readWorkflowStore(), {});
 });
 
 check('clearing removes one lesson and leaves the others', () => {
   freshBrowser();
-  saveWorkflow('P.15', good, 1000);
   saveWorkflow('P.14', good, 1000);
-  clearWorkflow('P.15');
-  assert.deepEqual(Object.keys(readWorkflowStore()), ['P.14']);
+  saveWorkflow('P.13', good, 1000);
+  clearWorkflow('P.14');
+  assert.deepEqual(Object.keys(readWorkflowStore()), ['P.13']);
 });
 
 check('a bucket that throws on access reads as nothing and refuses the write', () => {
   freshBrowser({ store: 'throws' });
   assert.deepEqual(readWorkflowStore(), {});
-  assert.equal(readWorkflow('P.15'), null);
-  assert.equal(saveWorkflow('P.15', good, 1000), false);
+  assert.equal(readWorkflow('P.14'), null);
+  assert.equal(saveWorkflow('P.14', good, 1000), false);
 });
 
 check('a full bucket reports the refusal rather than pretending', () => {
   freshBrowser({ store: 'full' });
-  assert.equal(saveWorkflow('P.15', good, 1000), false);
+  assert.equal(saveWorkflow('P.14', good, 1000), false);
 });
 
 check('a store from a hand-edited file keeps the good entries only', () => {
-  const parsed = parseWorkflowStore(JSON.stringify({ 'P.15': good, 'P.1': { nodes: [] }, junk: 4 }));
-  assert.deepEqual(Object.keys(parsed), ['P.15']);
+  const parsed = parseWorkflowStore(JSON.stringify({ 'P.14': good, 'P.1': { nodes: [] }, junk: 4 }));
+  assert.deepEqual(Object.keys(parsed), ['P.14']);
   assert.deepEqual(parseWorkflowStore('{not json'), {});
   assert.deepEqual(parseWorkflowStore(null), {});
 });
 
 check('a replace writes the whole store it is given', () => {
   freshBrowser();
-  saveWorkflow('P.15', good, 1000);
-  assert.equal(replaceWorkflows({ 'P.14': normalizeWorkflow(good) }), true);
-  assert.deepEqual(Object.keys(readWorkflowStore()), ['P.14']);
+  saveWorkflow('P.14', good, 1000);
+  assert.equal(replaceWorkflows({ 'P.13': normalizeWorkflow(good) }), true);
+  assert.deepEqual(Object.keys(readWorkflowStore()), ['P.13']);
 });
 
 check('a merge adds a lesson it does not have and keeps one it does', () => {
-  const local = { 'P.15': { ...normalizeWorkflow(good), updatedAt: 2000 } };
+  const local = { 'P.14': { ...normalizeWorkflow(good), updatedAt: 2000 } };
   const incoming = {
-    'P.15': { ...normalizeWorkflow(good), updatedAt: 1000 },
-    'P.14': { ...normalizeWorkflow(good), updatedAt: 1500 },
+    'P.14': { ...normalizeWorkflow(good), updatedAt: 1000 },
+    'P.13': { ...normalizeWorkflow(good), updatedAt: 1500 },
   };
   const { store, added, updated } = mergeWorkflows(local, incoming);
   assert.equal(added, 1);
   assert.equal(updated, 0);
-  assert.equal(store['P.15'].updatedAt, 2000, 'an older restore cannot undo this morning');
-  assert.ok(store['P.14']);
+  assert.equal(store['P.14'].updatedAt, 2000, 'an older restore cannot undo this morning');
+  assert.ok(store['P.13']);
 });
 
 check('a newer restored copy wins, and a merge never deletes', () => {
-  const local = { 'P.15': { ...normalizeWorkflow(good), updatedAt: 1000 } };
-  const incoming = { 'P.15': { ...normalizeWorkflow(good), updatedAt: 3000 } };
+  const local = { 'P.14': { ...normalizeWorkflow(good), updatedAt: 1000 } };
+  const incoming = { 'P.14': { ...normalizeWorkflow(good), updatedAt: 3000 } };
   const { store, updated } = mergeWorkflows(local, incoming);
   assert.equal(updated, 1);
-  assert.equal(store['P.15'].updatedAt, 3000);
+  assert.equal(store['P.14'].updatedAt, 3000);
   assert.deepEqual(mergeWorkflows(local, {}).store, local);
 });
 

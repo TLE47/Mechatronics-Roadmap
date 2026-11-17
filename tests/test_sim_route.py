@@ -623,15 +623,17 @@ class SimRouteTests(unittest.TestCase):
         )
 
     def test_track_p_ids_are_the_documented_set(self):
-        """Track P has no P.13: the numbering skips it on purpose, and the route must show exactly the
-        documented set. Renumbering P.14 would orphan learners' saved progress, which is keyed by id;
-        P.15 was added after it so every shipped id keeps its page, and P.2.5 slots in after P.2
-        rather than renumbering the lessons a saved draft may already point at."""
+        """Track P is P.1, P.2, P.2.5, P.3-P.14 and the P.M milestone, with no gaps.
+
+        P.13 used to be absent because ids are saved-progress keys; on 2026-11-17 the two lessons
+        after it were renumbered into the gap and the app migrates the old ids on first load. The
+        route must show exactly this set, and P.2.5 still slots in after P.2 rather than renumbering
+        the lessons a saved draft may already point at."""
         ids = [row["id"] for row in gen.track_rows("track-p/*.md", None)]
-        expected = ["P.1", "P.2", "P.2.5"] + [f"P.{n}" for n in range(3, 13)] + ["P.14", "P.15", "P.M"]
+        expected = ["P.1", "P.2", "P.2.5"] + [f"P.{n}" for n in range(3, 13)] + ["P.13", "P.14", "P.M"]
         self.assertEqual(
             sorted(ids, key=gen.lesson_order), expected,
-            f"expected Track P to be P.1, P.2, P.2.5, P.3-P.12, P.14, P.15 and the P.M milestone, got {ids}; a new or "
+            f"expected Track P to be P.1, P.2, P.2.5, P.3-P.12, P.13, P.14 and the P.M milestone, got {ids}; a new or "
             f"missing id changes saved progress and the lint/test sets that name these ids",
         )
         for ident in expected:

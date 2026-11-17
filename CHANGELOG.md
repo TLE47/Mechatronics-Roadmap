@@ -2,19 +2,51 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-******Release identity: `3.6.1`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.0.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
 
 ```mermaid
 flowchart LR
-    TP["Track P (14 Files: P.1–P.12 + P.14 + P.M)"] --> S0["Stage 0 (11 Files: S0.0–S0.9 + S0.M)"]
+    TP["Track P (16 Files: P.1–P.14 + P.2.5 + P.M)"] --> S0["Stage 0 (11 Files: S0.0–S0.9 + S0.M)"]
     S0 --> B1["Pass 1 Tier 1 (23 Files: 00.1–08.1 across Tracks 00–08)"]
     B1 --> QA["Automated CI: verify_repo + validate_modules + lint_lessons + lint_modules + check_term_order + clean_tex + audit_math + test_exercises + run_all_labs + smoke & browser E2E (dev server and built Pages bundle)"]
 ```
 
 ---
+
+## [2026-11-17] — Track P closes the P.13 gap, and every saved id follows its lesson
+
+**The missing lesson was a missing number.** Track P jumped from P.12 to P.14 because a lesson id is
+not a label: it is the key of every saved flag, draft, reading position and shared link, and
+renumbering would have orphaned all of them. This release pays that cost once. P.15 became P.14
+(The Analysis Workflow: Given, Unknown, Model, Compute, Check, Answer) and P.14 became P.13 (Reading a
+Datasheet Table), so the track now reads P.1, P.2, P.2.5, P.3 … P.14 with no gap, and the "there is no
+Lesson P.13" note is gone from the README, the route page and the microlearning guide.
+
+**Stored work moves with the ids, in one simultaneous pass.** `app/src/lessonRenames.ts` maps old
+`P.15` → `P.14` and old `P.14` → `P.13` against the original string, so the two moves cannot chain and
+send the analysis lesson down to P.13. The map runs at boot, after the IndexedDB cache is hydrated and
+before React reads it, over every `mechalab*` store: the verified/completed/milestone flags, lesson
+checks, drafts and their filed versions, reading positions, notes and sittings. It rewrites only ids —
+top-level keys, exact ids in scalars and string lists — never prose or code inside a draft. A marker
+(`mechalab_lesson_renames_v1`) makes it idempotent, so a later visit cannot shift a record twice.
+
+**Cloud snapshots and old links are translated too.** A signed-in learner's stored document still
+names the old ids; `withCurrentLessonIds` maps both sides of `mergeProgress` before the merge, so a
+finished lesson does not reappear as unfinished, and the next save writes the new ids back. A
+`?lesson=P.15` link opens the analysis lesson (now P.14) and `?lesson=P.14` opens the datasheet
+lesson (now P.13), so no page, bookmark or shared link lands on a not-found id.
+
+**Everything generated was regenerated, not hand-edited.** The two lesson sources, their micro
+concept files and lesson pages were renamed; the Python-lesson registry, micro lessons, parent-lesson
+index, prose index, route page, README counts, next-lesson links and try-links were rebuilt from
+them, and the bridge visuals, workflow templates, layout quiz, exercises and lint term order now
+name the current ids. `scripts/test_progress_merge.mjs` pins the one-pass map, the cloud translation
+and the once-only migration; `tests/test_readme_route.py` and `tests/test_sim_route.py` now require
+the contiguous track instead of documenting the gap. This is a **major** release because saved state
+is migrated, not because the lessons themselves changed.
 
 ## [2026-11-16] — The course list keeps its order, and a release cannot forget its number
 
@@ -1660,7 +1692,7 @@ copy wins, nothing is deleted). The study panel grew a strip that names the flow
 checks — with **Open workflow**, and **Copy into note** appends the numbered flow to the lesson's note,
 clamped to the note's own cap.
 
-**P.15.** [Lesson P.15](track-p/P.15-analysis-workflow-given-unknown-model-check-answer.md) teaches the
+**P.15.** [Lesson P.15](track-p/P.14-analysis-workflow-given-unknown-model-check-answer.md) (renumbered P.14 in 4.0.0) teaches the
 method end-to-end on the motor-stall problem — 12 V, 2.4 Ω, a driver that peaks at 3.2 A — with its
 own graded exercise, a `workflow` figure in the reader, and the callout and next-chain entries every
 page carries. `npm run test:workflow` pins the model, the ten issue codes, both exports, all seven

@@ -17,6 +17,33 @@ import {
   mergeProgress,
   PROGRESS_SCHEMA,
 } from '../app/src/progressMerge.ts';
+import {
+  canonicalLessonId,
+  migrateRenamedLessonIds,
+  RENAMES_MARKER_KEY,
+  RENAMES_MARKER_VALUE,
+  renameLessonMap,
+} from '../app/src/lessonRenames.ts';
+
+/** The slice of `Storage` the migration uses, so the test needs no browser. */
+class MemoryStorage {
+  #data = new Map();
+  get length() {
+    return this.#data.size;
+  }
+  key(index) {
+    return [...this.#data.keys()][index] ?? null;
+  }
+  getItem(key) {
+    return this.#data.has(key) ? this.#data.get(key) : null;
+  }
+  setItem(key, value) {
+    this.#data.set(key, String(value));
+  }
+  removeItem(key) {
+    this.#data.delete(key);
+  }
+}
 
 let passed = 0;
 let failed = 0;
@@ -217,6 +244,66 @@ check('an older or hand-edited row is refused', () => {
   assert.equal(isProgressSnapshot({ ...base(), learningLog: 'nope' }), false);
   assert.equal(isProgressSnapshot(null), false);
   assert.equal(isProgressSnapshot({ schema: PROGRESS_SCHEMA }), false);
+});
+
+console.log('the 4.0.0 renumber (P.15 -> P.14, P.14 -> P.13)');
+
+check('the renumber map moves every old id down one lesson, in one pass', () => {
+  assert.deepEqual(renameLessonMap({ 'P.14': 'datasheet', 'P.15': 'workflow' }), {
+    'P.13': 'datasheet',
+    'P.14': 'workflow',
+  });
+  // A current id is not "old P.14": only the ids that shipped before the renumber move.
+  assert.equal(canonicalLessonId('P.13'), 'P.13');
+  assert.equal(canonicalLessonId('P.14'), 'P.13');
+  assert.equal(canonicalLessonId('P.15'), 'P.14');
+  assert.deepEqual(renameLessonMap({ 'P.1': true }), { 'P.1': true });
+});
+
+check('a cloud snapshot saved before the renumber is read as the new ids', () => {
+  const old = base({
+    verifiedLessons: { 'P.14': true },
+    completedLessons: { 'P.15': true },
+    learningLog: [{ t: 1, kind: 'run', lesson: 'P.14', outcome: 'verified' }],
+  });
+  const merged = mergeProgress(base({ updatedAt: 2000 }), old);
+  assert.equal(merged.verifiedLessons['P.13'], true);
+  assert.equal(merged.verifiedLessons['P.14'], undefined);
+  assert.equal(merged.completedLessons['P.14'], true);
+  assert.equal(merged.completedLessons['P.15'], undefined);
+  assert.equal(merged.learningLog[0].lesson, 'P.13');
+  // Both old flags map to ids that exist, so nothing is left pointing at a lesson the runner lacks.
+  assert.equal(Object.keys(merged.completedLessons).includes('P.15'), false);
+});
+
+check('the browser migration rewrites a store once, then never shifts it again', () => {
+  const store = new MemoryStorage();
+  store.setItem('mechalab_pyodide_verified_v1', JSON.stringify({ 'P.14': true, 'P.15': true, 'P.1': true }));
+  store.setItem('mechalab_drafts_v1', JSON.stringify({ 'P.15': 'print(1)' }));
+  store.setItem('mechalab_last_lesson_v1', JSON.stringify('P.15'));
+  store.setItem('mechalab_theme_v1', JSON.stringify('dark'));
+  assert.equal(migrateRenamedLessonIds([store]), true);
+  assert.deepEqual(JSON.parse(store.getItem('mechalab_pyodide_verified_v1')), {
+    'P.1': true,
+    'P.13': true,
+    'P.14': true,
+  });
+  assert.deepEqual(JSON.parse(store.getItem('mechalab_drafts_v1')), { 'P.14': 'print(1)' });
+  assert.equal(JSON.parse(store.getItem('mechalab_last_lesson_v1')), 'P.14');
+  assert.equal(JSON.parse(store.getItem('mechalab_theme_v1')), 'dark');
+  assert.equal(store.getItem(RENAMES_MARKER_KEY), RENAMES_MARKER_VALUE);
+  // A second boot must not move the same ids again (P.14 would slide to P.13).
+  assert.equal(migrateRenamedLessonIds([store]), false);
+  assert.deepEqual(JSON.parse(store.getItem('mechalab_drafts_v1')), { 'P.14': 'print(1)' });
+});
+
+check('a prose draft that mentions a lesson id is text, not a key', () => {
+  const store = new MemoryStorage();
+  store.setItem('mechalab_drafts_v1', JSON.stringify({ 'P.14': 'print("Lesson P.15 says hi")' }));
+  migrateRenamedLessonIds([store]);
+  assert.deepEqual(JSON.parse(store.getItem('mechalab_drafts_v1')), {
+    'P.13': 'print("Lesson P.15 says hi")',
+  });
 });
 
 console.log(`\n${failed === 0 ? 'OK' : 'FAILED'}: ${passed} passed, ${failed} failed`);

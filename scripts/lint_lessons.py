@@ -3,7 +3,7 @@
 Automated Lesson Template & Topic-Alignment Linter (`scripts/lint_lessons.py`)
 
 Enforces all curriculum design rules across all 51 beginner lessons:
-- `track-p/P.*.md` (16 lessons: P.1 through P.12 + P.14 + P.15 + P.2.5 + P.M)
+- `track-p/P.*.md` (16 lessons: P.1 through P.12 + P.13 + P.14 + P.2.5 + P.M)
 - `stage-0/S0.*.md` (11 lessons: S0.0 through S0.9 + S0.M)
 - `00-foundations/00.*.md` (3 lessons: 00.1 through 00.3)
 - `01-electronics-and-power/01.*.md` (4 lessons: 01.1 through 01.4)

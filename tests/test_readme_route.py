@@ -152,8 +152,12 @@ class GeneratorTests(unittest.TestCase):
             f"additively instead of rounding each step on its own",
         )
 
-    def test_track_p_targets_add_up_and_name_the_id_gap(self):
-        """The hand-kept Track P table must sum its own rows, and say why P.13 is absent."""
+    def test_track_p_targets_add_up_and_the_ids_run_without_a_gap(self):
+        """The hand-kept Track P table must sum its own rows and list P.1 through P.14 once each.
+
+        P.13 was filled in on 2026-11-17 by renumbering the two lessons after it; the app migrates
+        the old ids, so a table that still skipped P.13 would name a lesson a learner cannot open.
+        """
         with open(os.path.join(ROOT, "track-p", "README.md"), encoding="utf-8") as handle:
             text = handle.read()
         rows = re.findall(
@@ -187,10 +191,12 @@ class GeneratorTests(unittest.TestCase):
             f"{tuple(int(value) * 60 for value in total.groups())} minutes, got "
             f"{(low, high, slow_low, slow_high)} - update the total when a target moves",
         )
-        self.assertIn(
-            "There is no Lesson P.13", text,
-            "expected the Track P README to say why the ids skip P.13, so the gap does not read "
-            "as a missing lesson",
+        listed = re.findall(r"\| \*\*\[Lesson (P\.[^\]]+)\]", text)
+        expected = ["P.1", "P.2", "P.2.5"] + [f"P.{n}" for n in range(3, 15)]
+        self.assertEqual(
+            listed, expected,
+            f"expected the Track P table to list {expected} in order, got {listed}; a missing id "
+            f"is a lesson the table cannot point at",
         )
 
     def test_the_committed_readme_is_the_rendered_table(self):
