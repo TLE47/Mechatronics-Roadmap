@@ -370,7 +370,6 @@ export const TabStudio: React.FC = () => {
           step={traceStep}
           onStep={setTraceStep}
           source={traceSource}
-          onReveal={(line) => mainEditorRef.current?.revealLine(line)}
         />
       ) : (
         <div className="rounded-xl border border-dashed border-line px-3 py-4">

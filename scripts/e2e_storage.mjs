@@ -34,6 +34,23 @@ const QUOTE = 'a passage kept before the move';
 const CARRIED_AT = 1_700_000_000_000;
 const TYPED = 'typed after the move: this lands in IndexedDB';
 
+/**
+ * The study panel is a tab of the editor, and Study opens with its body folded. Reveal it before
+ * reading the note: expand the body, put the panel beside the code on a fresh one-pane card, and
+ * press Study. A restored arrangement that already holds the tab just needs the press.
+ */
+async function revealStudy(page) {
+  const noteBox = page.getByTestId('study-note');
+  if (await noteBox.isVisible().catch(() => false)) return noteBox;
+  const folded = page.locator('[data-testid="btn-toggle-editor"][aria-expanded="false"]');
+  if (await folded.count()) await folded.first().click();
+  const split = page.getByTestId('btn-pane-split');
+  if (await split.count()) await split.click();
+  await page.getByTestId('editor-tab-study').click();
+  await page.getByTestId('panel-study').waitFor({ state: 'visible', timeout: 20000 });
+  return page.getByTestId('study-note');
+}
+
 const KEYS = {
   drafts: 'mechalab_drafts_v1',
   history: 'mechalab_draft_history_v1',
@@ -147,8 +164,7 @@ async function main() {
     // ---- The screen shows the carried-over work, without a frame of empty state ----
     await openLesson(page);
     assert.equal(await getEditorCode(page), DRAFT, 'the draft must be the text the editor opens with');
-    const noteBox = page.getByTestId('study-note');
-    await noteBox.waitFor({ timeout: 20000 });
+    const noteBox = await revealStudy(page);
     assert.equal(await noteBox.inputValue(), NOTE, 'the study panel must show the note that was written');
     const deck = page.getByTestId('btn-review-deck');
     await deck.waitFor({ timeout: 20000 });
@@ -180,9 +196,9 @@ async function main() {
       timeout: 30000,
     });
     await openLesson(page);
-    await page.getByTestId('study-note').waitFor({ timeout: 20000 });
+    const reloadedNote = await revealStudy(page);
     assert.equal(
-      await page.getByTestId('study-note').inputValue(),
+      await reloadedNote.inputValue(),
       TYPED,
       'a reload must read the note back from IndexedDB, not from a bucket the move emptied'
     );

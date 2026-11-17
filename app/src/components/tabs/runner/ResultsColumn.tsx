@@ -1,5 +1,4 @@
 import type { PointerEvent as ReactPointerEvent, RefObject } from 'react';
-import { StudyPanel } from '../../StudyPanel';
 import { ScopePanel } from '../../ScopePanel';
 import { noteLabel, type LintNote } from '../../../analysisClient';
 import type { FailingCheck } from '../../../checkHints';
@@ -32,8 +31,6 @@ interface ResultsSplit {
 interface ResultsChecks {
   lintNotes: LintNote[];
   analysisNotice: string | null;
-  lessonId: string;
-  onOpenWorkflow: () => void;
   assessmentRef: RefObject<HTMLDivElement | null>;
   behaviorCheck: 'untested' | 'passed' | 'failed';
   outputCheck: 'untested' | 'matched' | 'differs';
@@ -85,8 +82,6 @@ export function ResultsColumn({ split, checks, scope }: ResultsColumnProps) {
   const {
     lintNotes,
     analysisNotice,
-    lessonId,
-    onOpenWorkflow,
     assessmentRef,
     behaviorCheck,
     outputCheck,
@@ -192,10 +187,6 @@ export function ResultsColumn({ split, checks, scope }: ResultsColumnProps) {
           )}
         </div>
       )}
-
-      {/* What the learner wrote down about this lesson. It sits between the code and the checks
-          because it is about the learner's understanding rather than about the run. */}
-      <StudyPanel lessonId={lessonId} onOpenWorkflow={onOpenWorkflow} />
 
       <AssessmentPanel
         panelRef={assessmentRef}

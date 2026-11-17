@@ -1364,8 +1364,9 @@ The recording is the history; the park is the present.
 | A value in the bar is a **button**, and the edit runs **in that frame** | "What if `total` were 41" is answered before the learner decides to continue: the worker evaluates the expression with the frame's own globals and locals, writes it back, and stays parked. Inside a function that needs `PyFrame_LocalsToFast` (a function frame's `f_locals` is a snapshot on CPython 3.12); a failure says so rather than leaving a value that only looks applied. The learner's file is never touched. |
 
 The panel says in a sentence that it is a recording — this is where the program has been, not where it
-is — and offers **Show line** to put the caret on the step's line; the values are that step's frame, so
-the quote and the numbers always describe the same moment.
+is — and the editor's line box follows the step while the tab is open; the values are that step's
+frame, so the quote and the numbers always describe the same moment. The panel has no separate
+**Show line** button: the line box is the route, and the replay never moves the learner's caret.
 
 ### Sharing an attempt
 

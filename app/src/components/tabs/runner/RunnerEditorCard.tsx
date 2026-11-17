@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode, type RefObject } from 'react';
-import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Lock } from 'lucide-react';
+import { ChevronDown, ChevronRight, ChevronUp, Columns2, FileCode2, Lock } from 'lucide-react';
 import type { PythonEditorHandle } from '../../PythonEditor';
 import { RunVerdict } from './RunVerdict';
 import { SelfDoneChecklist } from './SelfDoneChecklist';
@@ -24,6 +24,13 @@ import type { AnalysisSession } from '../../../analysisClient';
 import type { HarnessGate } from '../../../harnessGrading';
 import type { PredictGate } from './usePredictGate';
 import { vimModeLabel as vimModeLabelFor } from '../../../vimMode';
+
+/**
+ * Views that are instruments rather than reports on the last run. They are the tools rail's list;
+ * a future view defaults to the checks rail, and moving it here is one line. Order still follows
+ * the surface's own view order, so a preset can put Study first without changing this set.
+ */
+const TOOL_VIEWS = new Set<EditorView>(['workflow', 'robot', 'calculator', 'study']);
 
 // Axis, Add, Swap and Close only exist after a split, so the arrangement is a second lazy boundary.
 const EditorPaneArrangement = lazy(() =>
@@ -104,6 +111,7 @@ interface EditorSlots {
   breakpointsPane?: ReactNode;
   tracePane?: ReactNode;
   robotPane?: ReactNode;
+  studyPane?: ReactNode;
 }
 
 /** The other workbench, when this document is shared. */
@@ -221,7 +229,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
    */
   const baseResultViews =
     declaredResultViews ??
-    ['requirements', 'predict', 'actual', 'expected', 'cases', 'workflow', 'breakpoints', 'trace', 'calculator'];
+    ['requirements', 'predict', 'actual', 'expected', 'cases', 'workflow', 'breakpoints', 'trace', 'calculator', 'study'];
   // The Robot tab exists only where the lesson has a robot reading; every other lesson keeps the
   // same strip. It is a normal result view, so a split can put it beside the code.
   const resultViews: EditorView[] =
@@ -267,6 +275,45 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
   // A preset owns a bounded workbench; a lesson-less surface such as the studio lets its card size
   // itself to its content. Only a bounded body may make its panes shrink and scroll inside it.
   const boundedBody = layout !== undefined;
+  /** The tabs this surface can draw, in its order, split into the two rails they belong to. */
+  const visibleResultViews = resultViews.filter(
+    (view) =>
+      allowedViews.includes(view) &&
+      (view !== 'requirements' || lessonRequirements.length > 0)
+  );
+  const checkViews = visibleResultViews.filter((view) => !TOOL_VIEWS.has(view));
+  const toolViews = visibleResultViews.filter((view) => TOOL_VIEWS.has(view));
+
+  /** One tab, whether it opens a report or a tool. The active state is a pill, not an underline. */
+  const resultTab = (view: EditorView) => {
+    const selected = shownViews.has(view);
+    const meta = resultTabMeta(view);
+    return (
+      <button
+        key={view}
+        role="tab"
+        aria-selected={selected}
+        data-testid={`editor-tab-${view}`}
+        title={`${meta.title} — drag this tab onto the editor to split it`}
+        draggable
+        onDragStart={(event) => {
+          event.dataTransfer.setData(EDITOR_TAB_DRAG_TYPE, view);
+          event.dataTransfer.effectAllowed = 'copy';
+        }}
+        onClick={() => onShowView(view)}
+        // Predict has its own fixed button in the phone bar; its tab would take the width that
+        // keeps Run output and Expected on screen.
+        className={`flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border px-2 py-1 font-mono text-[11.5px] transition-colors ${
+          selected
+            ? 'border-accent/25 bg-accent/10 text-accent shadow-sm'
+            : 'border-transparent text-muted hover:border-line-soft hover:bg-raise hover:text-body'
+        } ${view === 'predict' ? 'hidden md:flex' : ''}`}
+      >
+        {meta.icon}
+        {meta.label}
+      </button>
+    );
+  };
 
   return (
     <div
@@ -283,177 +330,172 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
       style={{ display: editorShown && phoneEditorVisible ? undefined : 'none' }}
       className="bg-panel border border-line rounded-xl overflow-hidden scroll-mt-4"
     >
-      <div className="bg-canvas border-b border-line-soft px-3 py-1.5">
-        <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-          {/* The strip takes the row's spare width and wraps when its tabs do not fit, at any width:
-              a second header row costs less than a view nobody can see, and a helper file is what
-              makes the six tabs overrun a 1280 px card. No sideways scroll, so every view is on
-              screen on a phone and on a desktop. The 12rem floor is what keeps the arrangement
-              controls from squeezing the strip into one tab per line on a phone: when both cannot
-              fit, the controls wrap below the tabs instead of drawing over them. */}
-          <div className="flex min-w-[12rem] flex-1 flex-wrap items-center gap-1" role="tablist" aria-label="Editor tabs">
-            <button
-              role="tab"
-              aria-selected={openHelper === null && shownViews.has('main')}
-              data-testid="editor-tab-main"
-              title="main.py — F12 on a name jumps to the line that defines it"
-              onClick={() => {
-                onClearJump();
-                onOpenHelper(null);
-                onShowView('main');
-              }}
-              className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t px-2.5 py-1.5 text-[12.5px] font-mono cursor-pointer"
-              style={{
-                color: openHelper === null && shownViews.has('main') ? 'var(--accent)' : 'var(--muted)',
-                borderBottom:
-                  openHelper === null && shownViews.has('main')
-                    ? '2px solid var(--accent)'
-                    : '2px solid transparent',
-              }}
-            >
-              <CheckCircle2 className="hidden h-3 w-3 sm:block" aria-hidden="true" />
-              {MAIN_FILE_NAME}
-            </button>
-            {helperFiles.map((file) => (
+      <div className="bg-canvas border-b border-line-soft">
+        <div className="px-3 pb-1.5 pt-1.5">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+            <div role="tablist" aria-label="Editor files" className="flex min-w-0 flex-wrap items-center gap-1">
               <button
-                key={file.name}
                 role="tab"
-                aria-selected={openHelper === file.name && shownViews.has('main')}
-                data-testid={`editor-tab-${file.name}`}
+                aria-selected={openHelper === null && shownViews.has('main')}
+                data-testid="editor-tab-main"
+                title="main.py — F12 on a name jumps to the line that defines it"
                 onClick={() => {
                   onClearJump();
-                  onOpenHelper(file.name);
+                  onOpenHelper(null);
                   onShowView('main');
                 }}
-                title={`${file.name} is read-only: it is the module the checks import. F12 on a name jumps to its definition.`}
-                className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t px-2.5 py-1.5 text-[12.5px] font-mono cursor-pointer"
-                style={{
-                  color: openHelper === file.name && shownViews.has('main') ? 'var(--accent)' : 'var(--muted)',
-                  borderBottom:
-                    openHelper === file.name && shownViews.has('main')
-                      ? '2px solid var(--accent)'
-                      : '2px solid transparent',
-                }}
+                className={`flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border px-2 py-1 font-mono text-[11.5px] transition-colors ${
+                  openHelper === null && shownViews.has('main')
+                    ? 'border-accent/30 bg-panel text-accent shadow-sm'
+                    : 'border-line-soft bg-panel/55 text-muted hover:bg-panel hover:text-body'
+                }`}
               >
-                <Lock className="hidden h-3 w-3 sm:block" aria-hidden="true" />
-                {file.name}
+                <FileCode2 className="hidden h-3 w-3 sm:block" aria-hidden="true" />
+                {MAIN_FILE_NAME}
               </button>
-            ))}
-            {allowedViews.length > 0 && (
-              <>
-                <span aria-hidden="true" className="mx-1 h-4 w-px shrink-0 self-center bg-line-soft" />
-                {resultViews
-                  .filter(
-                    (view) =>
-                      allowedViews.includes(view) &&
-                      (view !== 'requirements' || lessonRequirements.length > 0)
-                  )
-                  .map((view) => {
-                  const selected = shownViews.has(view);
-                  const meta = resultTabMeta(view);
-                  return (
-                    <button
-                      key={view}
-                      role="tab"
-                      aria-selected={selected}
-                      data-testid={`editor-tab-${view}`}
-                      title={`${meta.title} — drag this tab onto the editor to split it`}
-                      draggable
-                      onDragStart={(event) => {
-                        event.dataTransfer.setData(EDITOR_TAB_DRAG_TYPE, view);
-                        event.dataTransfer.effectAllowed = 'copy';
-                      }}
-                      onClick={() => onShowView(view)}
-                      // Predict has its own fixed button in the phone bar; its tab would take the
-                      // width that keeps Run output and Expected on screen.
-                      className={`shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t px-2.5 py-1.5 text-[12.5px] font-mono cursor-pointer ${
-                        view === 'predict' ? 'hidden md:flex' : 'flex'
-                      }`}
-                      style={{
-                        color: selected ? 'var(--accent)' : 'var(--muted)',
-                        borderBottom: selected ? '2px solid var(--accent)' : '2px solid transparent',
-                      }}
-                    >
-                      {meta.icon}
-                      {meta.label}
-                    </button>
-                  );
-                })}
-              </>
-            )}
-          </div>
-          {/* The terminal split, in the tab row rather than the run row: §3 caps the run controls at
-              eight, and this is a property of the body instead of an action of the run. Side by side
-              by default; the arrows choose a stacked split, which is the shape a narrow window gets
-              anyway.
-
-              A sibling of the tablist, not a child: a tablist may only own tabs, and axe reports any
-              other child role inside it as an aria-required-children violation. Outside it the
-              controls also stay put while the tabs scroll. */}
-          {allowedViews.length > 0 && (
-            <div className="ml-1 flex shrink-0 items-center gap-0.5 pl-1">
-              {!paneSplit ? (
+              {helperFiles.map((file) => (
                 <button
-                  type="button"
-                  data-testid="btn-pane-split"
-                  onClick={() => onPanes(splitPane(panes, undefined, allowedViews))}
-                  className="cursor-pointer rounded border border-line bg-canvas px-2 py-0.5 text-[12px] font-mono text-body hover:bg-raise"
+                  key={file.name}
+                  role="tab"
+                  aria-selected={openHelper === file.name && shownViews.has('main')}
+                  data-testid={`editor-tab-${file.name}`}
+                  onClick={() => {
+                    onClearJump();
+                    onOpenHelper(file.name);
+                    onShowView('main');
+                  }}
+                  title={`${file.name} is read-only: it is the module the checks import. F12 on a name jumps to its definition.`}
+                  className={`flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border px-2 py-1 font-mono text-[11.5px] transition-colors ${
+                    openHelper === file.name && shownViews.has('main')
+                      ? 'border-accent/30 bg-panel text-accent shadow-sm'
+                      : 'border-line-soft bg-panel/55 text-muted hover:bg-panel hover:text-body'
+                  }`}
                 >
-                  Split
+                  <Lock className="hidden h-3 w-3 sm:block" aria-hidden="true" />
+                  {file.name}
                 </button>
-              ) : (
-                <Suspense fallback={null}>
-                  <EditorPaneArrangement panes={panes} onPanes={onPanes} candidates={allowedViews} />
-                </Suspense>
+              ))}
+            </div>
+
+            {/* The card's own controls, deliberately outside both tablists: they are properties of
+                the body, not tabs, and they wrap below the files rather than squeezing a rail into
+                one tab per line on a phone. */}
+            <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-1.5">
+              <span className="min-w-0 max-w-full truncate whitespace-nowrap font-mono text-[10.5px] tabular-nums text-faint">
+                {symbolMiss ? (
+                  <span role="status" data-testid="symbol-miss" style={{ color: 'var(--muted)' }}>
+                    no definition for <code style={{ color: 'var(--accent)' }}>{symbolMiss}</code>
+                  </span>
+                ) : openHelperFile ? (
+                  `${openHelperFile.content.split('\n').length} lines · read-only`
+                ) : (
+                  // On a phone the count costs the strip the width of a tab, so it steps aside
+                  // there; a symbol miss and a read-only helper still say their piece.
+                  <span className="hidden sm:inline">
+                    {`${code.split('\n').length} lines${sliderCount ? ` · ${sliderCount} slider${sliderCount === 1 ? '' : 's'}` : ''}`}
+                  </span>
+                )}
+                {/* Which mode is reading the keys. A live region, not decoration: with Vim on, a
+                    keystroke that does nothing is correct behaviour, and this is the only place the
+                    screen says which mode it is correct in. */}
+                {vimOn && (
+                  <span
+                    role="status"
+                    data-testid="vim-mode"
+                    title="The mode the editor is reading keys in — Escape for NORMAL, i for INSERT"
+                    className="ml-2 rounded border px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em]"
+                    style={{ borderColor: 'var(--border)', color: 'var(--accent)' }}
+                  >
+                    {vimModeLabel}
+                  </span>
+                )}
+              </span>
+              <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+                {allowedViews.length > 0 && (
+                  <>
+                    {!paneSplit ? (
+                      <button
+                        type="button"
+                        data-testid="btn-pane-split"
+                        aria-label="Split the editor into panes"
+                        title="Split the editor: a second pane beside this one"
+                        onClick={() => onPanes(splitPane(panes, undefined, allowedViews))}
+                        className="flex h-7 cursor-pointer items-center gap-1.5 rounded-lg border border-line-soft bg-panel px-2 font-mono text-[11px] text-body transition-colors hover:border-accent/40 hover:text-accent"
+                      >
+                        <Columns2 className="h-3.5 w-3.5" aria-hidden="true" />
+                        <span className="hidden sm:inline">Split</span>
+                      </button>
+                    ) : (
+                      <Suspense fallback={null}>
+                        <EditorPaneArrangement panes={panes} onPanes={onPanes} candidates={allowedViews} />
+                      </Suspense>
+                    )}
+                    <button
+                      type="button"
+                      data-testid="btn-toggle-editor"
+                      aria-expanded={!bodyCollapsed}
+                      aria-controls="editor-panes-body"
+                      aria-label={bodyCollapsed ? 'Expand editor and goal' : 'Collapse editor and goal'}
+                      title={bodyCollapsed ? 'Expand the editor and the goal' : 'Collapse the editor and the goal'}
+                      onClick={() => setBodyCollapsed((open) => !open)}
+                      className="flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-lg border border-line-soft bg-panel px-1.5 font-mono text-[11px] text-muted transition-colors hover:border-accent/40 hover:text-accent"
+                    >
+                      {bodyCollapsed ? (
+                        <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+                      ) : (
+                        <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" />
+                      )}
+                      <span className="hidden sm:inline">{bodyCollapsed ? 'Expand' : 'Collapse'}</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Two rails, one row of files. Reports and instruments are different questions, and with
+              more tools arriving the split is the part that scales: Checks can keep growing without
+              pushing Study out of reach, and a new tool is one entry in TOOL_VIEWS. Each rail is its
+              own tablist because a tablist may only own tabs; labels sit beside them, never inside.
+              Both rails wrap rather than scroll, so every view stays on screen at 390 px. */}
+          {allowedViews.length > 0 && (
+            <div
+              data-testid="editor-viewbar"
+              className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 border-t border-line-soft pt-1.5"
+            >
+              {checkViews.length > 0 && (
+                <div className="contents sm:flex sm:min-w-0 sm:flex-1 sm:flex-wrap sm:items-center sm:gap-x-2 sm:gap-y-1">
+                  <span className="hidden shrink-0 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-faint sm:inline">
+                    Checks
+                  </span>
+                  <div
+                    role="tablist"
+                    aria-label="Editor checks"
+                    className="contents sm:flex sm:min-w-0 sm:max-w-full sm:flex-wrap sm:items-center sm:gap-1"
+                  >
+                    {checkViews.map(resultTab)}
+                  </div>
+                </div>
+              )}
+              {checkViews.length > 0 && toolViews.length > 0 && (
+                <span aria-hidden="true" className="hidden h-4 w-px shrink-0 bg-line sm:block" />
+              )}
+              {toolViews.length > 0 && (
+                <div className="contents sm:flex sm:min-w-0 sm:flex-wrap sm:items-center sm:gap-x-2 sm:gap-y-1">
+                  <span className="hidden shrink-0 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-faint sm:inline">
+                    Tools
+                  </span>
+                  <div
+                    role="tablist"
+                    aria-label="Editor tools"
+                    className="contents sm:flex sm:min-w-0 sm:max-w-full sm:flex-wrap sm:items-center sm:gap-1"
+                  >
+                    {toolViews.map(resultTab)}
+                  </div>
+                </div>
               )}
             </div>
           )}
-          <button
-            type="button"
-            data-testid="btn-toggle-editor"
-            aria-expanded={!bodyCollapsed}
-            aria-controls="editor-panes-body"
-            aria-label={bodyCollapsed ? 'Expand editor and goal' : 'Collapse editor and goal'}
-            title={bodyCollapsed ? 'Expand the editor and the goal' : 'Collapse the editor and the goal'}
-            onClick={() => setBodyCollapsed((open) => !open)}
-            className="flex shrink-0 items-center gap-1 rounded border border-line bg-canvas px-1.5 py-0.5 text-[12px] font-mono text-muted hover:border-accent hover:text-accent cursor-pointer"
-          >
-            {bodyCollapsed ? (
-              <ChevronDown className="h-3 w-3" aria-hidden="true" />
-            ) : (
-              <ChevronUp className="h-3 w-3" aria-hidden="true" />
-            )}
-            <span className="hidden sm:inline">{bodyCollapsed ? 'Expand' : 'Collapse'}</span>
-          </button>
-          <span className="shrink-0 whitespace-nowrap text-[11px] font-mono text-faint tabular-nums">
-            {symbolMiss ? (
-              <span role="status" data-testid="symbol-miss" style={{ color: 'var(--muted)' }}>
-                no definition for <code style={{ color: 'var(--accent)' }}>{symbolMiss}</code>
-              </span>
-            ) : openHelperFile ? (
-              `${openHelperFile.content.split('\n').length} lines · read-only`
-            ) : (
-              // On a phone the count costs the strip the width of a tab, so it steps aside there; a
-              // symbol miss and a read-only helper still say their piece.
-              <span className="hidden sm:inline">
-                {`${code.split('\n').length} lines${sliderCount ? ` · ${sliderCount} slider${sliderCount === 1 ? '' : 's'}` : ''}`}
-              </span>
-            )}
-            {/* Which mode is reading the keys. A live region, not decoration: with Vim on, a
-                keystroke that does nothing is correct behaviour, and this is the only place the
-                screen says which mode it is correct in. */}
-            {vimOn && (
-              <span
-                role="status"
-                data-testid="vim-mode"
-                title="The mode the editor is reading keys in — Escape for NORMAL, i for INSERT"
-                className="ml-2 rounded border px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em]"
-                style={{ borderColor: 'var(--border)', color: 'var(--accent)' }}
-              >
-                {vimModeLabel}
-              </span>
-            )}
-          </span>
         </div>
         {/* The run controls live in the editor's own header: a learner's eyes are in the code, and
             crossing the screen to press Run was the one trip this card can save. Read hides this
@@ -461,7 +503,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
             toolbar sharing a row with four tabs was what pushed this header to 175 px - more than
             the editor it sits above. */}
         {editorShown && (
-          <div className="mt-1 flex min-w-0 flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-1.5">
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 border-t border-line-soft px-3 pb-1.5 pt-1.5">
             <RunVerdict passStatus={passStatus} harnessResult={harnessResult} />
             {passStatus === 'passed' && props.selfDone && (
               <SelfDoneChecklist {...props.selfDone} />

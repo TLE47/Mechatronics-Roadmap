@@ -133,6 +133,7 @@ check('the view names are the only names, including requirements', () => {
     'trace',
     'robot',
     'calculator',
+    'study',
   ]);
   for (const view of EDITOR_VIEWS) assert.equal(isEditorView(view), true);
   assert.equal(isEditorView('output'), false);
@@ -195,8 +196,9 @@ check('splitting from an output brings the editor back beside it', () => {
   assert.equal(nextView('main'), 'requirements', 'Requirements sit between the code and its outputs');
   assert.equal(nextView('requirements'), 'predict');
   assert.equal(nextView('trace'), 'robot', 'the robot sits between the trace and the calculator');
-  assert.equal(nextView('robot'), 'calculator', 'the calculator is the last view');
-  assert.equal(nextView('calculator'), 'main', 'the list wraps');
+  assert.equal(nextView('robot'), 'calculator');
+  assert.equal(nextView('calculator'), 'study', 'the study panel is the last view');
+  assert.equal(nextView('study'), 'main', 'the list wraps');
 });
 check('a split can open on the prediction gate, the workflow or the calculator', () => {
   assert.deepEqual(splitPane(DEFAULT_PANES, 'predict').views, ['main', 'predict']);
@@ -207,6 +209,11 @@ check('the calculator is a tool beside the code, never a duplicate of it', () =>
   const split = splitPane(DEFAULT_PANES, 'calculator');
   assert.equal(showView(split, 'calculator').focus, 1, 'asking again focuses the open pane');
   assert.deepEqual(closeView(split, 'calculator').views, ['main']);
+});
+check('the study panel is a normal pane and can sit beside the code', () => {
+  const split = splitPane(DEFAULT_PANES, 'study');
+  assert.deepEqual(split.views, ['main', 'study']);
+  assert.deepEqual(closeView(split, 'study').views, ['main']);
 });
 check("Add pane chooses from the surface's own views", () => {
   const studio = ['actual', 'workflow', 'trace'];

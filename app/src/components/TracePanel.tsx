@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, CornerUpLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   moveStep,
   sourceLine,
@@ -20,8 +20,9 @@ import {
  * Three constraints, each of them the honest half of a shortcut:
  *
  * - **The code line is quoted from the text that ran**, not coloured inside the editor. A decoration
- *   would be wrong the moment the learner edits, and this panel describes a run, not a document; the
- *   **Show line** button moves the caret for the learner who wants to work there.
+ *   would be wrong the moment the learner edits, and this panel describes a run, not a document.
+ *   While the tab is open the editor's line box follows the step, so the quote has a place in the
+ *   file without this panel moving the learner's caret.
  * - **The frame's own values are shown, and only six of them.** A step is one line with what it could
  *   see; a full frame dump would be a wall a beginner cannot read, and the worker already cut the
  *   reprs to a width (`runTrace.ts`).
@@ -36,9 +37,8 @@ export const TracePanel: React.FC<{
   onStep: (index: number) => void;
   /** The program text the trace was recorded from: the line is quoted from it, never from the editor. */
   source: string;
-  onReveal?: (line: number) => void;
   className?: string;
-}> = ({ trace, step, onStep, source, onReveal, className }) => {
+}> = ({ trace, step, onStep, source, className }) => {
   if (!trace || trace.steps.length === 0) return null;
   const at = trace.steps[Math.max(0, Math.min(step, trace.steps.length - 1))];
   const code = sourceLine(source, at.line);
@@ -105,17 +105,6 @@ export const TracePanel: React.FC<{
         >
           {stepLabel(trace, step)}
         </span>
-        {onReveal && (
-          <button
-            onClick={() => onReveal(at.line)}
-            data-testid="trace-show-line"
-            title={`Put the cursor on line ${at.line}`}
-            className="ml-auto px-2 py-1 rounded-lg text-[11px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1 cursor-pointer"
-          >
-            <CornerUpLeft className="h-3 w-3" aria-hidden="true" />
-            Show line
-          </button>
-        )}
       </div>
 
       <pre

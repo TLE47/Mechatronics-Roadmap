@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.2.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.3.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,40 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-17] — The calculator becomes an instrument, and the tab strip makes room
+
+**The Calculator tab is a desk calculator now, not a form with a keypad under it.** The expression and
+its answer share a display with a soft instrument wash, the answer is the largest thing on the card,
+and the keys are grouped by what they do: quiet functions, raised digits, accent operators, a rose
+clear and a wide answer key. The angle switch is a two-state pill in the header, the history is a
+tape beside the calculator on a wide pane and under it on a narrow one, and each kept calculation
+brings its expression back with one press. The grammar, the refusals and the promise that it never
+touches `main.py` are unchanged; this is the same calculator with a surface worth using.
+
+**The editor's tabs are two rails over one row of files.** The file tabs keep the top row with the
+line count and the split/collapse controls. Below them, **Checks** (Requirements, Predict, Run output,
+Expected, Cases, Breakpoints, Trace) and **Tools** (Workflow, Calculator, Study, Robot) are separate
+groups with their own labels and a divider, so a report never looks like an instrument and a new tool
+has an obvious place to land. The active view is a filled pill instead of an underline. Both rails
+wrap, so every view is still on screen at 390 px; the groups collapse to plain tabs there rather than
+taking a row each.
+
+**The Trace panel's Show line button is gone.** The editor's own line box already follows the step
+while the tab is open, and a second control that moved the learner's caret was a duplicate of a
+better answer. The quoted line, the values and the recording's own sentence are untouched.
+
+## [2026-11-17] — The study panel becomes an editor tab
+
+**The study panel lives in the editor now.** It used to be a block in the results column, which only
+the Study and Debug presets render, so Write had no way to reach the notes. It is a **Study** tab in
+the one `python-runner-editor`, allowed in Write, Debug and Study, and it can sit in a pane beside the
+code like every other view. The panel itself is unchanged: the note box saves as you type, pinned
+passages keep their comments, and the review deck schedules cards.
+
+**The panel's workflow strip is gone.** The summary, **Copy into note** and **Open workflow** block
+was a second door into the Workflow tab and no longer belongs under the study note; the Workflow tab
+remains the one place the plan is drawn.
 
 ## [2026-11-17] — A scientific calculator, tabs that split by drag, and a trace that keeps its line
 

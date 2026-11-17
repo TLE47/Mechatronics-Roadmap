@@ -342,7 +342,7 @@ async function main() {
       // Every editor view has to be on screen at 390 px: the strip wraps rather than hiding its
       // last tab, and Workflow is the view a phone could not reach while the strip was nowrap.
       const editorTabs = await page.evaluate(() => {
-        const list = document.querySelector('[role="tablist"][aria-label="Editor tabs"]');
+        const list = document.querySelector('[data-testid="editor-viewbar"]');
         const box = list.getBoundingClientRect();
         const tabs = [...list.querySelectorAll('[role="tab"]')].filter(
           (tab) => tab.getBoundingClientRect().width > 0

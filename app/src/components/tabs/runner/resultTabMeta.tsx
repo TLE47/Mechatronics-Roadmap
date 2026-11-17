@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Activity, Bug, Bot, Calculator, CheckSquare, ClipboardList, GitBranch, ListChecks, Sparkles, Terminal } from 'lucide-react';
+import { Activity, Bug, Bot, Calculator, CheckSquare, ClipboardList, GitBranch, ListChecks, NotebookPen, Sparkles, Terminal } from 'lucide-react';
 import type { EditorView } from '../../../editorPanes';
 
 /**
@@ -86,6 +86,13 @@ export function resultTabMeta(view: EditorView): ResultTabMeta {
         title:
           'A scientific calculator: trig, logs, powers and factorials with DEG/RAD — it never edits your code',
         icon: <Calculator className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
+      };
+    case 'study':
+      return {
+        label: 'Study',
+        title:
+          'Your note, the passages you pinned and the review deck for this lesson — it never edits your code',
+        icon: <NotebookPen className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
       };
     default:
       return { label: 'main.py', title: 'The lesson’s Python file', icon: null };

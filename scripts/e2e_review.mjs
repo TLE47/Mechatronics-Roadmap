@@ -48,6 +48,9 @@ async function openLesson(page) {
   await page.getByTestId(`lesson-item-${LESSON.id}`).click();
   await waitForEditor(page, undefined, 20000);
   await page.getByTestId('lesson-title').waitFor({ timeout: 20000 });
+  // The study panel is a tab of the editor now, not a block in the results column.
+  await page.getByTestId('editor-tab-study').click();
+  await page.getByTestId('panel-study').waitFor({ timeout: 20000 });
 }
 
 async function deckButton(page) {

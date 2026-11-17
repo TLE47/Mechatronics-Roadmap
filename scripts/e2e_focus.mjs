@@ -71,6 +71,11 @@ async function main() {
     await page.getByTestId('tab-btn-tab-pyodide').click();
     await page.getByTestId(`lesson-item-${LESSON.id}`).click();
     await waitForEditor(page, undefined, 20000);
+    // The study panel is a tab of the editor now: open it beside the code so the clock line and
+    // the editor are both on screen for the focus checks below.
+    await page.getByTestId('btn-pane-split').click();
+    await page.getByTestId('editor-tab-study').click();
+    await page.getByTestId('panel-study').waitFor({ state: 'visible', timeout: 10000 });
 
     // ---- The clock: opening a lesson is one sitting, and the panel says so ----
     // Sittings are in IndexedDB (`app/src/bulkStorage.ts`): the open is written on a tick, so the read
@@ -108,10 +113,6 @@ async function main() {
     );
     console.log('  ok one visit filed exactly one lesson_open');
 
-    // Study opens with the editor body folded. This suite is about focus keeping the work, not about
-    // the fold: open the body first so the assertion below is about focus mode.
-    const foldedEditor = page.locator('[data-testid="btn-toggle-editor"][aria-expanded="false"]');
-    if (await foldedEditor.count()) await foldedEditor.first().click();
     await page.getByTestId('editor-panes').waitFor({ state: 'visible', timeout: 10000 });
 
     // ---- Everything is on screen before the toggle ----

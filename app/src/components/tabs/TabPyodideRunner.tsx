@@ -58,6 +58,7 @@ import { runAnnouncement } from '../../announce';
 import { MAX_SHARE_URL, type SharedAttempt } from '../../shareLink';
 import { StudyTimerRow } from '../StudyTimerRow';
 import { StudyClockReminder } from '../StudyClockReminder';
+import { StudyPanel } from '../StudyPanel';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { findDefinition } from '../../symbolIndex';
 
@@ -608,7 +609,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setOpenHelper(targetTab);
   };
   /**
-   * Put the caret on a line of the learner's own file — what the trace panel's **Show line** asks for.
+   * Put the caret on a line of the learner's own file, for a lesson switch that keeps the starter.
    *
    * The same two paths `goToDefinition` uses: already open, so the mounted editor can take a jump right
    * now; or the helper tab is open, so `main.py` has to mount first and the line goes with the mount.
@@ -636,21 +637,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     }
     editorPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     window.setTimeout(() => guideEditorRef.current?.focus(), 0);
-  };
-
-  /**
-   * The study panel's door into the Workflow tab.
-   *
-   * It chooses the pane first, then lands on it: on a phone that means switching to the code surface
-   * before the scroll, or the card the learner asked for is on a surface they cannot see.
-   */
-  const openWorkflowTab = () => {
-    commitPanes(showView(panes, 'workflow'));
-    if (isPhone) choosePhoneSurface('code');
-    window.setTimeout(
-      () => editorPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
-      isPhone ? 60 : 0
-    );
   };
 
   const showMainLine = (line: number) => {
@@ -2312,8 +2298,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             checks={{
               lintNotes,
               analysisNotice,
-              lessonId: selectedId,
-              onOpenWorkflow: openWorkflowTab,
               assessmentRef: guideAssessmentRef,
               behaviorCheck,
               outputCheck,
@@ -2835,9 +2819,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     step={traceStep}
                     onStep={setTraceStep}
                     source={runCodeRef.current || code}
-                    onReveal={showMainLine}
                   />
                 ),
+                studyPane: <StudyPanel lessonId={selectedId} />,
               }}
               nextChapter={
                 nextLesson

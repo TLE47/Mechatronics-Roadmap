@@ -1848,6 +1848,8 @@ async function main() {
     await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });
     await waitForHome(page);
     await page.getByTestId('btn-home-review').click();
+    await page.getByTestId('editor-tab-study').waitFor({ timeout: 30000 });
+    await page.getByTestId('editor-tab-study').click();
     await page.getByTestId('panel-study').waitFor({ timeout: 30000 });
     assert.equal(
       await page.getByTestId('tab-btn-tab-pyodide').getAttribute('aria-current'),

@@ -86,6 +86,7 @@ interface PaneSlots {
   breakpointsPane?: ReactNode;
   tracePane?: ReactNode;
   robotPane?: ReactNode;
+  studyPane?: ReactNode;
 }
 
 interface PaneCollab {
@@ -199,6 +200,7 @@ export function EditorPaneBody({
     breakpointsPane,
     tracePane,
     robotPane,
+    studyPane,
   } = slots;
   const paneSplit = allowedViews.length > 0 && views.length > 1 && shownViews.size > 1;
   const paneSlots = views.filter((view) => shownViews.has(view));
@@ -519,6 +521,7 @@ export function EditorPaneBody({
     if (view === 'expected') return expectedOutputPane;
     if (view === 'cases') return casesPane ?? null;
     if (view === 'workflow') return workflowPane;
+    if (view === 'study') return studyPane ?? null;
     return tracePane ?? null;
   };
 

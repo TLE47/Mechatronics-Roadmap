@@ -2248,11 +2248,6 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           1,
           'the arrow is authored work too: a reload must find it'
         );
-        assert.match(
-          (await page.getByTestId('study-workflow-note').textContent()) ?? '',
-          /2 cards/,
-          'the study panel must summarise the workflow this lesson now has'
-        );
         // A branch card owns its condition, and that condition is what its arrow says: typed on the
         // card, shown on the canvas, exported, and still there after a reload.
         await page.getByTestId('workflow-mode-code').click();
@@ -4403,7 +4398,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       await page.setViewportSize({ width: 390, height: 844 });
       await page.waitForTimeout(500);
       const phone = await page.evaluate(() => {
-        const strip = document.querySelector('[role="tablist"]');
+        const strip = document.querySelector('[data-testid="editor-viewbar"]');
         const tab = document.querySelector('[data-testid="editor-tab-expected"]').getBoundingClientRect();
         const split = document.querySelector('[data-testid="btn-pane-split"]')?.parentElement;
         const splitBox = split?.getBoundingClientRect();
@@ -4889,13 +4884,12 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       true,
       'the last step has nowhere to go forward to'
     );
-    // Show line puts the caret on the line that step ran, in the learner's own file.
-    await page.getByTestId('trace-show-line').click();
-    const caret = await page.evaluate(() => window.__mechalabEditors['editor-main'].getCursor());
+    // The replay never moves the learner's caret: the editor's own line box marks the step while
+    // the Trace tab is open, and the old Show line button is gone from the panel.
     assert.equal(
-      caret,
-      traceCode.indexOf('print(total)'),
-      'Show line must put the cursor at the start of the step\u2019s line'
+      await page.getByTestId('trace-show-line').count(),
+      0,
+      'the trace panel must not offer a Show line button'
     );
     assert.equal(
       (await page.getByTestId('trace-panel').textContent())?.includes('this run has already finished'),
@@ -7429,6 +7423,13 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     // Study notes: what the learner writes down is stored as they type, and a pinned passage keeps
     // its place with it. A reload is the assertion that matters - anything the panel held in React
     // state alone would be gone, and the note is the part of a lesson that cannot be regenerated.
+    // The panel is a tab of the editor now: put it beside the code so a line can be selected while
+    // the note box is on screen.
+    await formattingPage.getByTestId('editor-tab-main').click();
+    const studySplit = formattingPage.getByTestId('btn-pane-split');
+    if (await studySplit.count()) await studySplit.click();
+    await formattingPage.getByTestId('editor-tab-study').click();
+    await formattingPage.getByTestId('panel-study').waitFor({ state: 'visible', timeout: 30000 });
     const studyNote = 'Tolerance is on the angle, not the position.';
     await formattingPage.getByTestId('study-note').fill(studyNote);
     const storedStudy = await waitForBulk(formattingPage, STUDY_KEY, (study) =>
@@ -7471,6 +7472,10 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     );
 
     await formattingPage.reload({ waitUntil: 'domcontentloaded' });
+    // The panel is a tab and Study restores folded: bring the body back before reading the note.
+    if (!(await formattingPage.getByTestId('study-note').isVisible().catch(() => false))) {
+      await formattingPage.getByTestId('editor-tab-study').click();
+    }
     await formattingPage.getByTestId('study-note').waitFor({ timeout: 60000 });
     assert.equal(
       await formattingPage.getByTestId('study-note').inputValue(),
@@ -7639,8 +7644,55 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     await formattingPage.setViewportSize({ width: 1280, height: 720 });
     console.log('  ok the simulator tab rail folds to icons, remembers it, and expands from the same button');
 
+    // 8. The Calculator is a desk instrument: its keys write the expression, Enter/equals keeps
+    //    the answer in the history tape, and the angle pill changes the unit the display names.
+    //    Earlier sections leave a split body, and a key under its divider is a pointer target this
+    //    test cannot honestly press: reset the remembered arrangement first.
+    await page.evaluate(() => localStorage.removeItem('mechalab_editor_panes_v1'));
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await waitForEditor(page);
+    await page.getByTestId('editor-tab-calculator').click();
+    await page.getByTestId('calculator-pane').waitFor({ state: 'visible', timeout: 10000 });
+    for (const key of ['1', '2', 'multiply', '7', 'equals']) {
+      await page.getByTestId(`calculator-key-${key}`).click();
+    }
+    assert.equal(
+      (await page.getByTestId('calculator-result').textContent())?.trim(),
+      '84',
+      'the keypad must evaluate 12 × 7'
+    );
+    assert.equal(
+      await page.getByTestId('calculator-pane').getAttribute('data-value'),
+      '84',
+      'the pane exposes the displayed answer to the rest of the workbench'
+    );
+    assert.equal(
+      await page.getByTestId('calculator-history-row').count(),
+      1,
+      'equals must file the calculation in the history tape'
+    );
+    assert.match(
+      (await page.getByTestId('calculator-history').textContent()) ?? '',
+      /12×7[\s\S]*84/,
+      'the tape row must keep both the expression and its answer'
+    );
+    await page.getByTestId('calculator-angle-deg').click();
+    assert.equal(
+      await page.getByTestId('calculator-pane').getAttribute('data-angle'),
+      'deg',
+      'the angle pill must switch the unit the display names'
+    );
+    await page.getByTestId('calculator-history-clear').click();
+    assert.equal(
+      await page.getByTestId('calculator-history-row').count(),
+      0,
+      'Clear must empty the history tape without touching the expression'
+    );
+    await page.getByTestId('editor-tab-main').click();
+    console.log('  ok the calculator keeps its answers in a readable tape and its angle in a pill');
+
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, Home’s Continue & hand-off, draft restore & step count, run history restore, Diff panel lines & earned solution reference, share link copied, opened and loaded, a pair session over hand-carried codes, two editors co-editing one document with undo staying each person’s own, inline values drawn then cleared by an edit, F12/Ctrl-click go-to-definition across the lesson’s files, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, ⌘P quick-open over lessons only, ⌘⇧F inside-the-lesson search landing on the hit’s line and finding a course page at its section, the ? key sheet open and inert in the editor, a sheet row rebound to a new key, a clash refused and a reset, study note & pinned highlight across a reload, gutter breakpoints clicked, keyed and remembered, a dot following an edit, the Board card showing its own sketch, a prediction graded against the verified serial, the sketch copied for the simulator, the simulator tab rail folded to icons, remembered and expanded again, the Study preset stacking the code above the lesson text, and the lesson list folded to a strip and back).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, Home’s Continue & hand-off, draft restore & step count, run history restore, Diff panel lines & earned solution reference, share link copied, opened and loaded, a pair session over hand-carried codes, two editors co-editing one document with undo staying each person’s own, inline values drawn then cleared by an edit, F12/Ctrl-click go-to-definition across the lesson’s files, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, ⌘P quick-open over lessons only, ⌘⇧F inside-the-lesson search landing on the hit’s line and finding a course page at its section, the ? key sheet open and inert in the editor, a sheet row rebound to a new key, a clash refused and a reset, study note & pinned highlight across a reload, gutter breakpoints clicked, keyed and remembered, a dot following an edit, the Board card showing its own sketch, a prediction graded against the verified serial, the sketch copied for the simulator, the simulator tab rail folded to icons, remembered and expanded again, the Study preset stacking the code above the lesson text, the lesson list folded to a strip and back, and the calculator’s keys keeping a readable tape).'
     );
   } finally {
     await browser.close();

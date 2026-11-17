@@ -144,7 +144,7 @@ async function auditAtWidth(browser, baseUrl, name, { label, width, height }) {
 
     const arrangement = await page.evaluate(() => {
       const panel = document.querySelector('[data-testid="editor-panel"]');
-      const strip = panel.querySelector('[role="tablist"][aria-label="Editor tabs"]');
+      const strip = panel.querySelector('[data-testid="editor-viewbar"]');
       const tabs = [...strip.querySelectorAll('[role="tab"]')].filter((tab) => tab.getClientRects().length);
       const controls = [
         ...panel.querySelectorAll(

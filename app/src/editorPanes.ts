@@ -40,6 +40,7 @@ export const EDITOR_VIEWS = [
   'trace',
   'robot',
   'calculator',
+  'study',
 ] as const;
 
 export type EditorView = (typeof EDITOR_VIEWS)[number];
@@ -65,6 +66,7 @@ export const EDITOR_VIEW_LABELS: Record<EditorView, string> = {
   trace: 'Trace',
   robot: 'Robot',
   calculator: 'Calculator',
+  study: 'Study',
 };
 
 /** Which way the panes divide the body. Columns become a grid at three or more. */
@@ -187,8 +189,9 @@ export function paneCapacity(width: number, height: number): number {
  *
  * A preset still owns the regions (`workspaceLayout.ts`), and this is that rule read as tabs. Read
  * shows the editor's bar but none of its results — its job is the page. Write has the views a draft
- * is about: requirements, Predict, Workflow and the cases the draft will be checked against — no run
- * output, because that describes code which has already changed. Study and Debug have them all.
+ * is about: requirements, Predict, Workflow, the cases the draft will be checked against and the
+ * study panel — no run output, because that describes code which has already changed. Study and
+ * Debug have them all.
  *
  * Type-only import: the runtime dependency runs the other way (the runner imports this module), and
  * a value import here would close the cycle.
@@ -197,7 +200,8 @@ export function viewsForLayout(
   layout: 'study' | 'write' | 'read' | 'debug' | 'compact'
 ): EditorView[] {
   if (layout === 'read') return [];
-  if (layout === 'write') return ['requirements', 'predict', 'cases', 'workflow', 'robot', 'calculator'];
+  if (layout === 'write')
+    return ['requirements', 'predict', 'cases', 'workflow', 'robot', 'calculator', 'study'];
   return [
     'requirements',
     'predict',
@@ -209,6 +213,7 @@ export function viewsForLayout(
     'trace',
     'robot',
     'calculator',
+    'study',
   ];
 }
 
