@@ -26,6 +26,24 @@ export const LESSON_ID_RENAMES: Readonly<Record<string, string>> = Object.freeze
 export const RENAMES_MARKER_KEY = 'mechalab_lesson_renames_v1';
 export const RENAMES_MARKER_VALUE = 'P.13,P.14@2026-11-17';
 
+/**
+ * The id that did not exist before the renumber.
+ *
+ * Seeing it in a stored record is proof the record was written by this build or later: the old
+ * numbering had no P.13 at all. That is what keeps "migrate once" from also rewriting data the new
+ * build has already written under the new ids (a browser that seeded P.14 as the workflow lesson).
+ */
+export const FIRST_NEW_LESSON_ID = 'P.13';
+
+/** True when a stored value already uses an id the old numbering could not have written. */
+export function looksRenumbered(value: unknown): boolean {
+  if (Array.isArray(value)) return value.some((item) => item === FIRST_NEW_LESSON_ID);
+  if (value && typeof value === 'object') {
+    return FIRST_NEW_LESSON_ID in (value as Record<string, unknown>);
+  }
+  return false;
+}
+
 /** The id a stored or linked id means in this build. Every old id lands on its own lesson. */
 export function canonicalLessonId(id: string): string {
   return LESSON_ID_RENAMES[id] ?? id;
@@ -96,6 +114,9 @@ function rewriteStore(store: Storage): void {
       const raw = store.getItem(key);
       if (!raw || !raw.includes('P.1')) continue;
       const parsed: unknown = JSON.parse(raw);
+      // Already written under the new ids (see `FIRST_NEW_LESSON_ID`): moving it again would slide
+      // the workflow lesson down onto the datasheet lesson's key.
+      if (looksRenumbered(parsed)) continue;
       const rewritten = renameStoredValue(parsed);
       if (rewritten === parsed) continue;
       store.setItem(key, JSON.stringify(rewritten));

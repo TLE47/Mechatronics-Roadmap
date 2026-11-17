@@ -18,6 +18,9 @@ import {
   PROGRESS_SCHEMA,
 } from '../app/src/progressMerge.ts';
 import {
+  withCurrentLessonIds,
+} from '../app/src/progressMerge.ts';
+import {
   canonicalLessonId,
   migrateRenamedLessonIds,
   RENAMES_MARKER_KEY,
@@ -295,6 +298,18 @@ check('the browser migration rewrites a store once, then never shifts it again',
   // A second boot must not move the same ids again (P.14 would slide to P.13).
   assert.equal(migrateRenamedLessonIds([store]), false);
   assert.deepEqual(JSON.parse(store.getItem('mechalab_drafts_v1')), { 'P.14': 'print(1)' });
+});
+
+check('a record that already names P.13 is left alone, not moved twice', () => {
+  const store = new MemoryStorage();
+  store.setItem('mechalab_pyodide_verified_v1', JSON.stringify({ 'P.13': true, 'P.14': true }));
+  migrateRenamedLessonIds([store]);
+  assert.deepEqual(JSON.parse(store.getItem('mechalab_pyodide_verified_v1')), {
+    'P.13': true,
+    'P.14': true,
+  });
+  const current = base({ verifiedLessons: { 'P.13': true, 'P.14': true } });
+  assert.deepEqual(withCurrentLessonIds(current).verifiedLessons, { 'P.13': true, 'P.14': true });
 });
 
 check('a prose draft that mentions a lesson id is text, not a key', () => {

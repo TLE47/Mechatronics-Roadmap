@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.0.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.0.1`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,17 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-17] — The renumber leaves records that already use the new ids alone
+
+**A migration needs to know whether it has already run.** 4.0.0's boot migration moved every stored
+`P.14` down to `P.13`, which is right for data written before the renumber and wrong for data written
+after it: the browser suites seed a verified map in the new ids and saw the workflow lesson slide
+onto the datasheet key, so Mission 1 stopped reading as complete. A record that already names `P.13`
+— an id the old numbering never had — is proof it was written by 4.0.0 or later, and both the browser
+migration and the cloud-snapshot translation now skip those records instead of translating them a
+second time. `scripts/test_progress_merge.mjs` pins the case, and the golden-path game suite reads
+LV 1 again.
 
 ## [2026-11-17] — Track P closes the P.13 gap, and every saved id follows its lesson
 

@@ -20,7 +20,7 @@
  */
 
 import type { LearningEvent } from './learningLog';
-import { canonicalLessonId, renameLessonMap } from './lessonRenames.ts';
+import { canonicalLessonId, looksRenumbered, renameLessonMap } from './lessonRenames.ts';
 import { newerClock } from './studyTimer.ts';
 import type { StudyTimer } from './studyTimer';
 
@@ -120,6 +120,15 @@ function newerTimer(local?: StudyTimer, remote?: StudyTimer): StudyTimer | undef
  * save.
  */
 export function withCurrentLessonIds(snapshot: ProgressSnapshot): ProgressSnapshot {
+  // A document that already names P.13 was written after the renumber; its P.14 is the workflow
+  // lesson, not the datasheet lesson, and translating it would move it one lesson too far.
+  if (
+    looksRenumbered(snapshot.verifiedLessons) ||
+    looksRenumbered(snapshot.completedLessons) ||
+    looksRenumbered(snapshot.completedMilestones)
+  ) {
+    return snapshot;
+  }
   const log = snapshot.learningLog.map((event) => {
     if (!event.lesson) return event;
     const lesson = canonicalLessonId(event.lesson);
