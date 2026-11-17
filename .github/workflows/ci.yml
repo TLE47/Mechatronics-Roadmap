@@ -771,6 +771,13 @@ jobs:
       - name: "Check label sizes: the quiet row, the folded toolbar, and reading text at 17-18 px"
         run: npm run check:labels
 
+      # Every scene has to survive both placements, not only the one its index happens to choose:
+      # the browser clones each into 477 px and 966 px stages, then compares text, boxes, resolved
+      # styles and vector markup against docs/micro-visual-snapshot.json. Overflow, clipped text and
+      # elements outside the card fail before the snapshot is even consulted.
+      - name: "Check all 46 micro visuals at 477 and 966 px: no overflow, clipped text, or missing labels"
+        run: npm run check:micro-visuals
+
       # The P.9 contrast audit, generalised: every card the reader can mount, in all four palettes
       # and under reduced motion, at 1280 and 380 px. A card added without this is a card nobody
       # measured — the 10 px label on the string-sum card survived exactly that gap.

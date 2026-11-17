@@ -163,6 +163,7 @@
     "check:snapshot": "node scripts/snapshot_surfaces.mjs",
     "test:settle": "node scripts/test_settle_counts.mjs",
     "check:labels": "node scripts/check_label_sizes.mjs",
+    "check:micro-visuals": "node --experimental-strip-types scripts/check_micro_visuals.mjs",
     "test:perf": "node scripts/perf_walk.mjs",
     "test:perf:unit": "node scripts/test_perf_walk.mjs",
     "check:weight": "node scripts/check_weight_budget.mjs",
