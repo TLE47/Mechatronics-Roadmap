@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.4.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.4.1`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -17,6 +17,10 @@ flowchart LR
 ---
 
 ## [2026-11-17] — Three workbench blocks can step aside, with the cards sitting on a quieter shadow
+
+**The runner's line ratchet stays shut.** The hint ladder's visibility travels with the existing
+workspace-blocks object the tab hands to the results column, rather than as a fifth flag on the tab.
+`TabPyodideRunner.tsx` stays at its 3,020-line budget, and `runner-shape` passes without raising it.
 
 **General settings can put three blocks away.** A new **Workspace blocks** section carries switches
 for the **Python 3.12 in an isolated Web Worker** runtime strip, the **Progressive 3-Step Hint

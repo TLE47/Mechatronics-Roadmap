@@ -11,6 +11,7 @@ import {
   splitRatioPercent,
 } from '../../../workspaceLayout';
 import type { ScopeSeries } from '../../../scopeModel';
+import type { WorkspaceBlocks } from '../../../generalSettings';
 import { AssessmentPanel } from './AssessmentPanel';
 
 /** Where the column sits and how its split is dragged. */
@@ -36,10 +37,8 @@ interface ResultsChecks {
   outputCheck: 'untested' | 'matched' | 'differs';
   outputMatchMode: string;
   exactFormatting: boolean;
-  /** General settings can put the assessment away; the column keeps its checker and scope. */
-  showAssessment: boolean;
-  /** False when the hint ladder is put away; the check cards then offer no hint shortcut. */
-  showHints: boolean;
+  /** General settings can put the assessment or the hint ladder away; the checker still reports. */
+  blocks: WorkspaceBlocks;
   instructorTestSummary: string[] | undefined;
   checkFailures: FailingCheck[];
   revealedHints: number;
@@ -91,8 +90,7 @@ export function ResultsColumn({ split, checks, scope }: ResultsColumnProps) {
     outputCheck,
     outputMatchMode,
     exactFormatting,
-    showAssessment,
-    showHints,
+    blocks,
     instructorTestSummary,
     checkFailures,
     revealedHints,
@@ -102,6 +100,7 @@ export function ResultsColumn({ split, checks, scope }: ResultsColumnProps) {
     passStatus,
     harnessResult,
   } = checks;
+  const { assessment: showAssessment, hints: showHints } = blocks;
   const { series: scopeSeries, pinned: pinnedScope, onPin: onPinScope, onUnpin: onUnpinScope } = scope;
   return (
     <div
