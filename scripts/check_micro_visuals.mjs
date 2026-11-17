@@ -407,7 +407,18 @@ async function main() {
     await seedTourSeen(context);
     const page = await context.newPage();
     const pageErrors = [];
+    const fontResponses = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));
+    page.on('response', (response) => {
+      if (/\.woff2?($|\?)/.test(response.url())) {
+        fontResponses.push(`${response.status()} ${response.url().split('/').pop()}`);
+      }
+    });
+    page.on('requestfailed', (request) => {
+      if (/\.woff2?($|\?)/.test(request.url())) {
+        fontResponses.push(`failed ${request.url().split('/').pop()}: ${request.failure()?.errorText}`);
+      }
+    });
 
     await page.goto(`${base}?view=home`, { waitUntil: 'domcontentloaded' });
     await page.getByTestId('home-micro').waitFor({ timeout: 30000 });
@@ -433,6 +444,14 @@ async function main() {
       await Promise.all(faces.map((font) => document.fonts.load(font).catch(() => [])));
       await document.fonts.ready;
     });
+    const fontReport = await page.evaluate(() => ({
+      status: document.fonts.status,
+      loaded: [...new Set([...document.fonts].filter((face) => face.status === 'loaded').map((face) => face.family))],
+      mono: document.fonts.check('700 14px "Geist Mono Variable"'),
+      sans: document.fonts.check('400 13px "Geist Variable"'),
+      display: document.fonts.check('650 16px "Space Grotesk"'),
+    }));
+    log(`[font] ${JSON.stringify({ ...fontReport, responses: fontResponses })}`);
 
     const scenes = {};
     for (const [index, concept] of targets.entries()) {
