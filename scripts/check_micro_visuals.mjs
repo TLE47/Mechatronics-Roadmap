@@ -309,6 +309,10 @@ const measureScenes = async ({ selector, widths, tolerance, clipTolerance }) => 
     document.body.append(host);
     try {
       await nextFrame();
+      // A cloned node asks for its font faces only once it is laid out; `swap` would measure the
+      // fallback if we stopped at that first frame. Wait for the faces the clone just requested.
+      await document.fonts.ready;
+      await nextFrame();
       measured[width] = auditFigure(clone, width);
     } finally {
       host.remove();
@@ -412,7 +416,23 @@ async function main() {
 
     await page.getByTestId('home-micro-open').click();
     await page.getByTestId('tab-micro').waitFor({ timeout: 30000 });
-    await page.evaluate(() => document.fonts.ready);
+    // The overview does not use every face a scene does. Load the scene faces up front, so the first
+    // measured scene cannot be the one that pays the font request under `font-display: swap`.
+    await page.evaluate(async () => {
+      const faces = [
+        '400 12px "Geist Mono Variable"',
+        '400 14px "Geist Mono Variable"',
+        '500 12px "Geist Mono Variable"',
+        '700 12px "Geist Mono Variable"',
+        '700 14px "Geist Mono Variable"',
+        '400 13px "Geist Variable"',
+        '500 13px "Geist Variable"',
+        '600 13px "Geist Variable"',
+        '650 16px "Space Grotesk"',
+      ];
+      await Promise.all(faces.map((font) => document.fonts.load(font).catch(() => [])));
+      await document.fonts.ready;
+    });
 
     const scenes = {};
     for (const [index, concept] of targets.entries()) {
@@ -420,6 +440,7 @@ async function main() {
       if ((await back.count()) > 0) await back.click();
       await page.getByTestId(`micro-learn-${concept.id}`).click();
       await page.getByTestId(`micro-visual-${concept.id}`).waitFor({ timeout: 5000 });
+      await page.evaluate(() => document.fonts.ready);
       scenes[concept.id] = await page.evaluate(measureScenes, {
         selector: `[data-testid="micro-visual-${concept.id}"]`,
         widths: WIDTHS,
