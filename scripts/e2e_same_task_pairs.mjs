@@ -342,14 +342,17 @@ const CASES = [
 
   // --- Header modals: two independent modals, both open in either order.
   {
-    name: 'header: Cheat Sheet + Reset panel (control)',
+    // Two header surfaces that write different state: a modal and the motion switch. Both used to
+    // be on this row with the export; the export's own pair could not survive the move into General
+    // settings, because a control that only exists after another click is out of scope here.
+    name: 'header: Cheat Sheet + Motion switch (control)',
     setup: [],
-    pair: [{ testid: 'btn-open-cheatsheet' }, { testid: 'btn-open-reset' }],
+    pair: [{ testid: 'btn-open-cheatsheet' }, { testid: 'btn-motion-toggle' }],
   },
   {
-    name: 'header: Reset panel + Cheat Sheet (control)',
+    name: 'header: Motion switch + Cheat Sheet (control)',
     setup: [],
-    pair: [{ testid: 'btn-open-reset' }, { testid: 'btn-open-cheatsheet' }],
+    pair: [{ testid: 'btn-motion-toggle' }, { testid: 'btn-open-cheatsheet' }],
   },
 ];
 

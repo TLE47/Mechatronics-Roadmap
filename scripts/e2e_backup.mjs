@@ -189,6 +189,9 @@ async function main() {
     console.log('  ok the wipe leaves the milestone unticked');
 
     // ---- Restore it, and see the tick come back without a reload ----
+    // The restore control lives in General settings now: open it the way a learner does.
+    await page.getByTestId('btn-general-settings').click();
+    await page.getByTestId('general-settings').waitFor({ state: 'visible', timeout: 20000 });
     await page.getByTestId('input-backup-file').setInputFiles(zipPath);
     const status = page.getByTestId('backup-status');
     await status.waitFor({ timeout: 20000 });
@@ -214,6 +217,9 @@ async function main() {
     );
     assert.equal(restoredFlags[milestoneId], true, 'the flag must be back in the store as well as on screen');
     console.log(`  ok restore reports "${statusText}" and the milestone is ticked again, no reload`);
+    // Back to the page before reaching the tab rail: the dialog covers it while it is open.
+    await page.getByTestId('btn-general-settings-close').click();
+    await page.getByTestId('general-settings').waitFor({ state: 'hidden', timeout: 10000 });
 
     // ---- The draft arrives in the editor, which is the only place it is useful ----
     await page.getByTestId('tab-btn-tab-pyodide').click();
@@ -235,6 +241,8 @@ async function main() {
     // ---- The negative path: a file that is not a backup, refused with a sentence ----
     const notBackup = path.join(scratch, 'not-a-backup.zip');
     fs.writeFileSync(notBackup, 'this is a shopping list, not a backup\n');
+    await page.getByTestId('btn-general-settings').click();
+    await page.getByTestId('general-settings').waitFor({ state: 'visible', timeout: 20000 });
     await page.getByTestId('input-backup-file').setInputFiles(notBackup);
     await page.waitForFunction(
       () =>

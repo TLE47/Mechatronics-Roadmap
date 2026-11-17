@@ -175,7 +175,12 @@ export const GeneralSettingsPanel: React.FC<{
               <BackupControls labelClass="inline" />
               <button
                 type="button"
-                onClick={onExportPortfolio}
+                // Export is its own dialog, drawn above this one: closing settings first means the
+                // learner sees the file it writes instead of a panel stacked behind a backdrop.
+                onClick={() => {
+                  onClose();
+                  onExportPortfolio();
+                }}
                 data-testid="btn-export-portfolio"
                 // The label repeats the visible text rather than describing it: a name that differs
                 // from what is drawn fails WCAG 2.5.3 (`label-content-name-mismatch`).

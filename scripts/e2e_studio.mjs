@@ -619,6 +619,9 @@ async function main() {
       'the wipe must leave the studio plan empty, or the restore proves nothing'
     );
 
+    // Back on a fresh page the dialog is closed: the restore lives behind the gear now.
+    await page.getByTestId('btn-general-settings').click();
+    await page.getByTestId('general-settings').waitFor({ state: 'visible', timeout: 20000 });
     await page.getByTestId('input-backup-file').setInputFiles(zipPath);
     const status = page.getByTestId('backup-status');
     await status.waitFor({ timeout: 20000 });
