@@ -803,7 +803,7 @@ function RadiansVisual() {
         <line x1="110" y1="46" x2="148" y2="46" stroke="currentColor" strokeWidth="2" />
         <circle cx="110" cy="46" r="3" fill="currentColor" />
         <text x="152" y="42" fill="currentColor" fontSize="10">r</text>
-        <text x="72" y="86" fill="currentColor" fontSize="10">π rad</text>
+        <text x="72" y="82" fill="currentColor" fontSize="10">π rad</text>
         <text x="162" y="30" fill="currentColor" fontSize="10">180°</text>
       </svg>
       <p className="text-center font-mono text-[10.5px] text-muted">arc length = radius × angle</p>

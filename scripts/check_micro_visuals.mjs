@@ -389,6 +389,10 @@ async function main() {
   try {
     browser = await chromium.launch({
       ...(resolveChromiumExecutable() ? { executablePath: resolveChromiumExecutable() } : {}),
+      // Text advances are rounded to whole pixels with subpixel positioning off. Headless runners
+      // differ on that default, which made the same Geist Mono label 40 px here and 42 px in CI;
+      // pinning it makes the snapshot's text boxes portable without loosening the 2 px tolerance.
+      args: ['--disable-font-subpixel-positioning', '--font-render-hinting=none'],
       headless: true,
     });
     const context = await browser.newContext({
