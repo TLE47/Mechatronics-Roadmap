@@ -42,10 +42,12 @@ function Chip({ children, className = 'border-line bg-panel text-muted' }: { chi
   );
 }
 
-function Arrow({ children = '→', className = '' }: { children?: ReactNode; className?: string }) {
+function Arrow({ className = '' }: { className?: string }) {
   return (
-    <span className={`shrink-0 text-[15px] text-faint ${className}`} aria-hidden="true">
-      {children}
+    <span className={`inline-flex h-4 w-4 shrink-0 items-center justify-center text-faint ${className}`} aria-hidden="true">
+      <svg viewBox="0 0 16 16" className="h-3.5 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2.5 8h10M9 4.5 12.5 8 9 11.5" />
+      </svg>
     </span>
   );
 }
@@ -486,11 +488,11 @@ function WhileLoopsVisual() {
           <span className="rounded-full border border-emerald/40 bg-emerald/10 px-2.5 py-1 font-mono text-[9.5px] text-emerald">
             test step &lt; 3
           </span>
-          <Arrow>→</Arrow>
+          <Arrow />
           <span className="rounded-lg border border-line bg-panel px-2.5 py-1 font-mono text-[9.5px] text-ink">
             print(step)
           </span>
-          <Arrow>→</Arrow>
+          <Arrow />
           <span className="rounded-lg border border-amber/40 bg-amber/10 px-2.5 py-1 font-mono text-[9.5px] text-amber">
             step += 1
           </span>
