@@ -70,6 +70,41 @@ function InlineArrow({ className = '' }: { className?: string }) {
   );
 }
 
+function CheckMark({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      className={`inline-block shrink-0 ${className}`}
+      style={{ width: '0.8em', height: '0.8em', verticalAlign: '-0.08em' }}
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m3.5 8.5 3 3 6-7" />
+    </svg>
+  );
+}
+
+function CrossMark({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      className={`inline-block shrink-0 ${className}`}
+      style={{ width: '0.8em', height: '0.8em', verticalAlign: '-0.08em' }}
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
+      <path d="m4 4 8 8M12 4l-8 8" />
+    </svg>
+  );
+}
+
 function LoopArrow({ className = '' }: { className?: string }) {
   return (
     <svg
@@ -495,7 +530,9 @@ function IndexErrorVisual() {
         <InlineArrow className="mb-1 text-faint" />
         <div className="rounded border border-dashed border-rose/50 bg-rose/10 px-2 py-1.5 text-center">
           <p className="font-mono text-[9px] text-rose">index 3</p>
-          <p className="font-mono text-[13px] font-bold text-rose">✕</p>
+          <p className="font-mono text-[13px] font-bold text-rose">
+            <CrossMark />
+          </p>
         </div>
       </div>
       <p className="font-mono text-[10.5px] text-ink">len = 3 · last index = 2</p>
@@ -1179,7 +1216,9 @@ function AnswerCheckVisual() {
           ['part is the driver', '✓'],
         ].map(([label, mark]) => (
           <p key={label} className="flex items-center gap-1.5 text-[9.5px] text-muted">
-            <span className={mark === '✓' ? 'text-emerald' : 'text-rose'}>{mark}</span>
+            <span className={mark === '✓' ? 'text-emerald' : 'text-rose'}>
+              {mark === '✓' ? <CheckMark /> : <CrossMark />}
+            </span>
             {label}
           </p>
         ))}

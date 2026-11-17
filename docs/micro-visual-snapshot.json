@@ -9406,7 +9406,7 @@
         "width": 477,
         "height": 128,
         "frameStyle": "f4a523f681f2a03c",
-        "text": "THE LAST INDEX IS ONE LESS THAN THE COUNT 0 5 1 6 2 7 index 3 ✕ len = 3 · last index = 2",
+        "text": "THE LAST INDEX IS ONE LESS THAN THE COUNT 0 5 1 6 2 7 index 3 len = 3 · last index = 2",
         "textRuns": [
           [
             "The last index is one less than the count",
@@ -9478,15 +9478,6 @@
               47,
               38,
               12
-            ]
-          ],
-          [
-            "✕",
-            [
-              144,
-              61,
-              11,
-              17
             ]
           ],
           [
@@ -9691,6 +9682,26 @@
             "068f4eaee44f7d34"
           ],
           [
+            "svg",
+            [
+              144,
+              65,
+              10,
+              10
+            ],
+            "be496c0bf1fc61cd"
+          ],
+          [
+            "path",
+            [
+              147,
+              68,
+              5,
+              5
+            ],
+            "be496c0bf1fc61cd"
+          ],
+          [
             "p",
             [
               15,
@@ -9702,7 +9713,8 @@
           ]
         ],
         "svgs": [
-          "09c41a55901d7d27"
+          "09c41a55901d7d27",
+          "75dcb034b4aea49e"
         ],
         "issues": []
       },
@@ -9710,7 +9722,7 @@
         "width": 966,
         "height": 128,
         "frameStyle": "f4a523f681f2a03c",
-        "text": "THE LAST INDEX IS ONE LESS THAN THE COUNT 0 5 1 6 2 7 index 3 ✕ len = 3 · last index = 2",
+        "text": "THE LAST INDEX IS ONE LESS THAN THE COUNT 0 5 1 6 2 7 index 3 len = 3 · last index = 2",
         "textRuns": [
           [
             "The last index is one less than the count",
@@ -9782,15 +9794,6 @@
               47,
               38,
               12
-            ]
-          ],
-          [
-            "✕",
-            [
-              144,
-              61,
-              11,
-              17
             ]
           ],
           [
@@ -9995,6 +9998,26 @@
             "068f4eaee44f7d34"
           ],
           [
+            "svg",
+            [
+              144,
+              65,
+              10,
+              10
+            ],
+            "be496c0bf1fc61cd"
+          ],
+          [
+            "path",
+            [
+              147,
+              68,
+              5,
+              5
+            ],
+            "be496c0bf1fc61cd"
+          ],
+          [
             "p",
             [
               15,
@@ -10006,7 +10029,8 @@
           ]
         ],
         "svgs": [
-          "09c41a55901d7d27"
+          "09c41a55901d7d27",
+          "75dcb034b4aea49e"
         ],
         "issues": []
       }
@@ -25194,7 +25218,7 @@
         "width": 477,
         "height": 108,
         "frameStyle": "0e10ae2c26e39dea",
-        "text": "A NUMBER BECOMES AN ANSWER AFTER THE CHECK 5.0 A ✓ unit names amperes ✕ fits the 3.2 A limit ✓ part is the driver not an answer yet",
+        "text": "A NUMBER BECOMES AN ANSWER AFTER THE CHECK 5.0 A unit names amperes fits the 3.2 A limit part is the driver not an answer yet",
         "textRuns": [
           [
             "A number becomes an answer after the check",
@@ -25215,15 +25239,6 @@
             ]
           ],
           [
-            "✓",
-            [
-              101,
-              40,
-              8,
-              13
-            ]
-          ],
-          [
             "unit names amperes",
             [
               115,
@@ -25233,29 +25248,11 @@
             ]
           ],
           [
-            "✕",
-            [
-              101,
-              59,
-              8,
-              13
-            ]
-          ],
-          [
             "fits the 3.2 A limit",
             [
               115,
               59,
               76,
-              13
-            ]
-          ],
-          [
-            "✓",
-            [
-              101,
-              78,
-              8,
               13
             ]
           ],
@@ -25364,7 +25361,7 @@
             [
               101,
               39,
-              102,
+              101,
               54
             ],
             "b22d6877e40be969"
@@ -25374,7 +25371,7 @@
             [
               101,
               39,
-              102,
+              101,
               15
             ],
             "ee0a37c5be1b9deb"
@@ -25390,11 +25387,31 @@
             "f10b11a8abdcb22e"
           ],
           [
+            "svg",
+            [
+              101,
+              43,
+              8,
+              8
+            ],
+            "ddfa683d259c5def"
+          ],
+          [
+            "path",
+            [
+              103,
+              45,
+              4,
+              3
+            ],
+            "ddfa683d259c5def"
+          ],
+          [
             "p",
             [
               101,
               58,
-              102,
+              101,
               15
             ],
             "ee0a37c5be1b9deb"
@@ -25410,11 +25427,31 @@
             "101fb82e51f309e4"
           ],
           [
+            "svg",
+            [
+              101,
+              62,
+              8,
+              8
+            ],
+            "e70c488b5cc0213d"
+          ],
+          [
+            "path",
+            [
+              103,
+              64,
+              4,
+              4
+            ],
+            "e70c488b5cc0213d"
+          ],
+          [
             "p",
             [
               101,
               77,
-              102,
+              101,
               15
             ],
             "ee0a37c5be1b9deb"
@@ -25430,6 +25467,26 @@
             "f10b11a8abdcb22e"
           ],
           [
+            "svg",
+            [
+              101,
+              82,
+              8,
+              8
+            ],
+            "ddfa683d259c5def"
+          ],
+          [
+            "path",
+            [
+              103,
+              84,
+              4,
+              3
+            ],
+            "ddfa683d259c5def"
+          ],
+          [
             "span",
             [
               211,
@@ -25441,7 +25498,10 @@
           ]
         ],
         "svgs": [
-          "ee4b48499082cd33"
+          "ee4b48499082cd33",
+          "af0764b2bf97caf8",
+          "75dcb034b4aea49e",
+          "af0764b2bf97caf8"
         ],
         "issues": []
       },
@@ -25449,7 +25509,7 @@
         "width": 966,
         "height": 108,
         "frameStyle": "0e10ae2c26e39dea",
-        "text": "A NUMBER BECOMES AN ANSWER AFTER THE CHECK 5.0 A ✓ unit names amperes ✕ fits the 3.2 A limit ✓ part is the driver not an answer yet",
+        "text": "A NUMBER BECOMES AN ANSWER AFTER THE CHECK 5.0 A unit names amperes fits the 3.2 A limit part is the driver not an answer yet",
         "textRuns": [
           [
             "A number becomes an answer after the check",
@@ -25470,15 +25530,6 @@
             ]
           ],
           [
-            "✓",
-            [
-              101,
-              40,
-              8,
-              13
-            ]
-          ],
-          [
             "unit names amperes",
             [
               115,
@@ -25488,29 +25539,11 @@
             ]
           ],
           [
-            "✕",
-            [
-              101,
-              59,
-              8,
-              13
-            ]
-          ],
-          [
             "fits the 3.2 A limit",
             [
               115,
               59,
               76,
-              13
-            ]
-          ],
-          [
-            "✓",
-            [
-              101,
-              78,
-              8,
               13
             ]
           ],
@@ -25619,7 +25652,7 @@
             [
               101,
               39,
-              102,
+              101,
               54
             ],
             "b22d6877e40be969"
@@ -25629,7 +25662,7 @@
             [
               101,
               39,
-              102,
+              101,
               15
             ],
             "ee0a37c5be1b9deb"
@@ -25645,11 +25678,31 @@
             "f10b11a8abdcb22e"
           ],
           [
+            "svg",
+            [
+              101,
+              43,
+              8,
+              8
+            ],
+            "ddfa683d259c5def"
+          ],
+          [
+            "path",
+            [
+              103,
+              45,
+              4,
+              3
+            ],
+            "ddfa683d259c5def"
+          ],
+          [
             "p",
             [
               101,
               58,
-              102,
+              101,
               15
             ],
             "ee0a37c5be1b9deb"
@@ -25665,11 +25718,31 @@
             "101fb82e51f309e4"
           ],
           [
+            "svg",
+            [
+              101,
+              62,
+              8,
+              8
+            ],
+            "e70c488b5cc0213d"
+          ],
+          [
+            "path",
+            [
+              103,
+              64,
+              4,
+              4
+            ],
+            "e70c488b5cc0213d"
+          ],
+          [
             "p",
             [
               101,
               77,
-              102,
+              101,
               15
             ],
             "ee0a37c5be1b9deb"
@@ -25685,6 +25758,26 @@
             "f10b11a8abdcb22e"
           ],
           [
+            "svg",
+            [
+              101,
+              82,
+              8,
+              8
+            ],
+            "ddfa683d259c5def"
+          ],
+          [
+            "path",
+            [
+              103,
+              84,
+              4,
+              3
+            ],
+            "ddfa683d259c5def"
+          ],
+          [
             "span",
             [
               211,
@@ -25696,7 +25789,10 @@
           ]
         ],
         "svgs": [
-          "ee4b48499082cd33"
+          "ee4b48499082cd33",
+          "af0764b2bf97caf8",
+          "75dcb034b4aea49e",
+          "af0764b2bf97caf8"
         ],
         "issues": []
       }
