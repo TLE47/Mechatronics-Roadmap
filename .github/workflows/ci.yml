@@ -776,7 +776,20 @@ jobs:
       # styles and vector markup against docs/micro-visual-snapshot.json. Overflow, clipped text and
       # elements outside the card fail before the snapshot is even consulted.
       - name: "Check all 46 micro visuals at 477 and 966 px: no overflow, clipped text, or missing labels"
-        run: npm run check:micro-visuals
+        # A failed run's log is not readable without repository admin. The checker's own drift rows
+        # are republished as annotations so the red step names the scene and field it moved, not just
+        # "exit code 1". `set +e` lets the log be read before the step keeps the checker's status.
+        run: |
+          set +e
+          npm run check:micro-visuals > /tmp/micro-visuals.log 2>&1
+          status=$?
+          cat /tmp/micro-visuals.log
+          if [ "$status" -ne 0 ]; then
+            grep -E '^(  [a-z0-9-]+@|\[FAIL\])' /tmp/micro-visuals.log | head -n 20 | while IFS= read -r line; do
+              echo "::error title=Micro visual gate::${line#  }"
+            done
+          fi
+          exit "$status"
 
       # The P.9 contrast audit, generalised: every card the reader can mount, in all four palettes
       # and under reduced motion, at 1280 and 380 px. A card added without this is a card nobody
