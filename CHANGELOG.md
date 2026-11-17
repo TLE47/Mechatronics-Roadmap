@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.0.3`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.1.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,38 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-17] — The pictures get bigger type, the notes get real maths, and the header loses weight
+
+**Micro-learning's drawings read at arm's length.** Their labels were 8.5–11 px — legible on a laptop
+held close, a crawl on a phone or across a desk. Every drawing's type is a step larger (the SVG's own
+`fontSize` labels and the Tailwind text sizes alike), and the caption over each visual moved with them.
+The geometry is untouched, so nothing had to be re-laid-out.
+
+**A sticky note's LaTeX now survives its own backslashes.** The editor drew `$…$` as KaTeX, but the
+serialiser escaped every backslash on the way to Markdown, and a doubled backslash is not the command
+it was: KaTeX reads the second one as a line break, so every real formula came out wrong or was
+refused and the note kept raw source on screen. A `$…$` run is now passed through as typed (the same
+flanking rule the reader uses), and only ordinary text outside a formula still escapes its backslashes.
+
+**The reader's two marks are keys, and all of them can be rebound.** `⌥N` writes a sticky note on the
+selected passage and `⌥H` pins it as a highlight; both fire only while a passage is selected, so the
+chords stay free everywhere else, and both appear in the `?` sheet next to the six doors. That sheet
+now holds eight rebindable rows, and `⌥` was chosen because `⌘N` and `⌘H` belong to the browser.
+
+**Search can be narrowed by track.** `⌘⇧F` answers one query with terms, lesson lines and reading
+pages; the chips under the field could only say *what sort of row* a hit was. Each search row now
+carries the track it came from, and a second row of chips names the tracks the answer actually
+contains — `All`, `Track P`, `Track 05` — so a learner looking for a control-track derivation does not
+read past the capstone first.
+
+**The header stopped saying the same thing three ways.** The wordmark lost the build stamp under it
+(a release already names its build), the gap between `MechaLab` and `WORKBENCH` is one line height
+tighter, and **Compact** now carries the same small word under its icon as the buttons beside it, so
+the preset is legible without a tooltip. The occasional jobs left the row: **Export progress**,
+**Export learning log** and the backup pair moved into General settings, where the rest of the
+workbench's preferences already live. Four buttons for them competed with the trays a learner uses
+every minute.
 
 ## [2026-11-17] — The Track P table lists all sixteen files it sits beside
 

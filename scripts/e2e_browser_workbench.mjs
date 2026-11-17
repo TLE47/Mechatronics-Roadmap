@@ -5988,7 +5988,10 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     console.log('  ok a run traces its own signal into the Scope, as a plot and as a table');
 
-    // 8. Portfolio export contains the correct completion categories
+    // 8. Portfolio export contains the correct completion categories. The export lives in General
+    // settings now, so it is opened from there the way a learner opens it.
+    await page.getByTestId('btn-general-settings').click();
+    await page.getByTestId('general-settings').waitFor({ state: 'visible', timeout: 20000 });
     await page.getByTestId('btn-export-portfolio').click();
     const portfolioPreview = await page.getByTestId('portfolio-markdown-preview').textContent();
     assert(
@@ -6032,6 +6035,12 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         return original(blob);
       };
     });
+    // Closing the export modal returns to General settings; if it ever does not, reopen the dialog
+    // rather than clicking at a button that is not on screen.
+    if (!(await page.getByTestId('general-settings').isVisible())) {
+      await page.getByTestId('btn-general-settings').click();
+      await page.getByTestId('general-settings').waitFor({ state: 'visible', timeout: 20000 });
+    }
     await page.getByTestId('btn-export-learning-log').click();
     const paint = await page
       .waitForFunction(

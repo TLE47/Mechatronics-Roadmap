@@ -129,8 +129,8 @@ wording, and the rule that only the interpreter's own files let the button call 
 
 ### Backup
 
-The work lives in several stores, so getting it out is one file, not a pile: **Back Up (.zip)** in the
-header writes a small archive — `manifest.json`, `progress.json`, `drafts.json`, `history.json`,
+The work lives in several stores, so getting it out is one file, not a pile: **Back Up (.zip)** in
+General settings (the gear at the end of the header row) writes a small archive — `manifest.json`, `progress.json`, `drafts.json`, `history.json`,
 `study.json`, `checks.json`, `study-cards.json`, `learning-log.json`, `tour.json`, `README.txt` — with
 the counts and date in the manifest, and a README that still explains the file if it is opened years
 later. [`src/backupZip.ts`](src/backupZip.ts) is a stored-method
@@ -154,7 +154,7 @@ wonder where their folded cards went, the archive's own `README.txt` says what i
 the three keys. The one carried exception is `tour.json` — that the tour was *shown* is a fact about
 the learner, not a preference about a screen.
 
-Erasing is the third half of the same conversation: **Reset…** in that tray opens twelve named parts
+Erasing is the third half of the same conversation: **Reset…** in the header's own tray opens twelve named parts
 (Lessons, Lesson checklists, Milestones, XP and awards, Practice cards, Notes and highlights, Drafts and
 versions, Learning log, Sittings, Predictions, Onboarding, Where I was), prints what each holds, and
 erases one or all of them after a second press — with **Back up first** beside it because there is no undo. A reset of a
@@ -218,13 +218,15 @@ IndexedDB and comes back after a reload.
 | `⌘⇧F` / `Ctrl+⇧+F` | Search **inside** the course: the lessons' starter code, hint ladder, instructor's checks and expected output, and the 66 reading pages' prose. A starter hit opens the lesson with the caret on that line; a hint, check or output hit says which panel it is in; a course-page hit names its section and opens that page in the reader at the matched paragraph, or in a new tab on GitHub when the runner has no copy of it. |
 | `?` | The sheet of every key, from [`src/shortcuts.ts`](src/shortcuts.ts) — one table, so the list cannot go stale. It must be typed outside an editor or a field, where `?` is a character. `⌘K` finds it too, by typing `shortcuts`. |
 | `⌘↵` / `Ctrl+↵` | Run the open lesson. |
+| `⌥N` | Write a sticky note on the passage selected in the lesson text. The key only fires while a passage is selected, so it stays free everywhere else. |
+| `⌥H` | Pin the selected passage to the lesson's notes as a highlight. |
 | `Escape`, then `i` | With **Vim keys** on (**More ⋯ → Vim keys**), normal mode reads `dd`, `u`, `/` and the rest; the badge beside the line count names the mode that is reading them. Off by default, and remembered once turned on ([`src/vimMode.ts`](src/vimMode.ts)). |
 
-**Six of those keys are yours to change.** A row's key in the sheet is a button: press it, press a
+**Eight of those keys are yours to change.** A row's key in the sheet is a button: press it, press a
 new chord, and that is the key — `⌘⇧J` for focus, say. A key another action already has is refused
 with that action's name, one the browser keeps (⌘W, ⌘R, ⌘1) as the browser's, and a bare letter as
 typing; the old chord is freed by the move, so nothing has to be unbound first. **Reset all keys**
-puts the shipped six back, and the choice is remembered. A chord is stored **physically** —
+puts the shipped eight back, and the choice is remembered. A chord is stored **physically** —
 `KeyboardEvent.code` plus its modifiers — so `⌥1` still opens Study on a Mac that types `¡` for it;
 the sheet's own `?` is stored as the **character**, because `?` is Shift+Slash on a US keyboard, its
 own key on a French one, and the character is the thing the learner pressed. What stays fixed is
@@ -589,8 +591,9 @@ word, and each card carries `data-collapsed` so a test reads the state instead o
 
 ### The portfolio export
 
-**Export Progress (.md)** writes one Markdown file a learner can put in a repository, a CV or a course
-submission, and it now carries the work rather than only the ticks: the three progress sections, then
+**Export Progress (.md)**, beside the backup in General settings, writes one Markdown file a learner can
+put in a repository, a CV or a course submission, and it now carries the work rather than only the
+ticks: the three progress sections, then
 **Study Notes and Kept Passages** (each lesson's note as a blockquote, its passages with their
 comments), **Review Deck (FSRS-5)** (cards, how many are due, when the next comes back, the first
 twenty), and **Measured Study Time** (total, median and longest, plus a table of the most recent

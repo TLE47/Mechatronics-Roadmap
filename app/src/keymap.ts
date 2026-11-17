@@ -19,7 +19,8 @@
  * 3. **Two actions never share a chord.** A clash is refused with the name of the action that has
  *    it, rather than silently giving one of them the key.
  *
- * Only the six app-wide actions are remappable. The four layout presets are a positional family
+ * Only the app-wide actions are remappable — the six doors, plus the two the reader answers to a
+ * selection with (a sticky note and a highlight). The four layout presets are a positional family
  * (⌥1–⌥4 are the first to fourth arrangement), the editor's own F9/F12 belong to the caret, and
  * Escape/Tab belong to dialogs — the sheet prints that instead of pretending they are free.
  *
@@ -28,7 +29,18 @@
  * the memory of the change, never the rebind.
  */
 
-export const KEYMAP_ACTIONS = ['palette', 'lessons', 'search', 'sheet', 'run', 'focus'] as const;
+export const KEYMAP_ACTIONS = [
+  'palette',
+  'lessons',
+  'search',
+  'sheet',
+  'run',
+  'focus',
+  // The reader's two mark keys. They only fire while a passage is selected, so the same chord is
+  // still free everywhere else in the app — and both are rebindable like the doors above.
+  'sticky',
+  'highlight',
+] as const;
 
 export type KeymapAction = (typeof KEYMAP_ACTIONS)[number];
 
@@ -61,6 +73,8 @@ export const ACTION_NAMES: Record<KeymapAction, string> = {
   sheet: 'this sheet',
   run: 'run the lesson',
   focus: 'focus mode',
+  sticky: 'write a sticky note on the selection',
+  highlight: 'highlight the selection',
 };
 
 export const DEFAULT_KEYMAP: Keymap = {
@@ -71,6 +85,9 @@ export const DEFAULT_KEYMAP: Keymap = {
   sheet: { code: 'Slash', char: '?', mod: false, alt: false, shift: false },
   run: { code: 'Enter', mod: true, alt: false, shift: false },
   focus: { code: 'Period', mod: true, alt: false, shift: false },
+  // ⌥ rather than ⌘: ⌘N/⌘H are a browser's own (new window, hide), and ⌥ is free on both platforms.
+  sticky: { code: 'KeyN', mod: false, alt: true, shift: false },
+  highlight: { code: 'KeyH', mod: false, alt: true, shift: false },
 };
 
 export const STORAGE_KEY_KEYMAP = 'mechalab_keymap_v1';

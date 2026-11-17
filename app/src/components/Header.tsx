@@ -1,8 +1,6 @@
 import React from 'react';
-import { Printer, Download, FileJson, User, ChevronRight, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, ChevronsDownUp, House, Pause, Play, RotateCcw, FlaskConical, Brain, Settings2, ListChecks } from 'lucide-react';
+import { Printer, User, ChevronRight, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, ChevronsDownUp, House, Pause, Play, RotateCcw, FlaskConical, Brain, Settings2, ListChecks } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
-import { downloadLearningLog } from '../learningLog';
-import { BackupControls } from './BackupControls';
 import { ResetProgressLazy } from './ResetProgressLazy';
 import {
   CONTRAST_LABEL,
@@ -25,7 +23,7 @@ import {
   OPEN_GENERAL_SETTINGS_EVENT,
   readShowActionLabels,
 } from '../generalSettings';
-import { APP_BUILD, APP_VERSION } from '../appVersion';
+import { APP_VERSION } from '../appVersion';
 import { HeaderTips } from './HeaderTips';
 // The interface's own ear: one delegated listener for every control's click, mounted once with the
 // header (which every screen renders). It renders nothing and holds no state.
@@ -218,9 +216,13 @@ export const Header: React.FC<HeaderProps> = ({
     >
       <SoundClicks />
       {settingsOpen && (
-        <React.Suspense fallback={null}>
-          <GeneralSettingsPanel open onClose={() => setSettingsOpen(false)} />
-        </React.Suspense>
+                  <React.Suspense fallback={null}>
+            <GeneralSettingsPanel
+              open
+              onClose={() => setSettingsOpen(false)}
+              onExportPortfolio={onExportPortfolio}
+            />
+          </React.Suspense>
       )}
       <div className="mx-auto flex max-w-[var(--shell-max)] flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2.5 sm:px-6">
         {/* Zone 1: brand lockup. The mark is the arm a learner is working towards, and the lockup is
@@ -253,31 +255,23 @@ export const Header: React.FC<HeaderProps> = ({
             {/* On a phone the version rides beside the wordmark instead of under it: the two-row
                 header has a 112 px ceiling, and a third line in the brand block broke it by ~7 px.
                 From `sm` up it sits directly under the word, which is where a screenshot shows it. */}
-            <span className="mt-1 flex items-center gap-1.5 sm:block">
+            <span className="mt-0.5 flex items-center gap-1.5 sm:block">
               <span
                 className="text-[10px] font-medium uppercase tracking-[0.18em]"
                 style={{ color: 'var(--dim)' }}
               >
                 Workbench
               </span>
-              {/* Three lines, the same three as before: the word, then the release, then the build.
-                  The release shares the word's line (`sm:ml-1.5`) and the build takes the line that
-                  frees. Side by side on one line the stamp needed ~120 px of brand width, and the
-                  header's wrapping row only has 50 px of slack at 1440 before it moves the action tray
-                  onto a second row — which a sticky header then paints over the pane below it. */}
+              {/* Two lines: the word, then the release. The build stamp is not drawn — the release
+                  already names this build, and a third line under the wordmark was the widest part
+                  of the brand block for a fact nobody reads twice. The release shares the word's
+                  line (`sm:ml-1.5`). */}
               <span
                 data-testid="brand-version"
                 className="font-mono text-[9.5px] leading-none sm:ml-1.5"
                 style={{ color: 'var(--faint)' }}
               >
                 {APP_VERSION}
-              </span>
-              <span
-                data-testid="brand-build"
-                className="hidden font-mono text-[9.5px] leading-none sm:mt-0.5 sm:block"
-                style={{ color: 'var(--faint)' }}
-              >
-                {APP_BUILD}
               </span>
             </span>
           </span>
@@ -499,8 +493,8 @@ export const Header: React.FC<HeaderProps> = ({
               className="btn"
               style={pressed(compactMode)}
             >
-              {/* No word: the tray is the width it is, and this button is one more control in it. */}
               <ChevronsDownUp className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className={labelClass}>Compact</span>
             </button>
             {/* One switch for the moving drawings, on every screen. Off is also the cheap setting:
                 each figure stops its frame loop instead of drawing frames nobody sees. */}
@@ -527,7 +521,7 @@ export const Header: React.FC<HeaderProps> = ({
               aria-haspopup="dialog"
               aria-expanded={settingsOpen}
               aria-label="General settings"
-              data-tip="Settings — action-tray labels and the full sound controls"
+              data-tip="Settings — action-tray labels, exports and backup, and the full sound controls"
               className="btn"
             >
               <Settings2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -535,22 +529,13 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </div>
 
-          {/* Take it with you: four exports and the pair that puts it all back. */}
-          <div className="action-tray" role="group" aria-label="Export and backup">
-            <button
-              onClick={downloadLearningLog}
-              data-testid="btn-export-learning-log"
-              aria-label="Export Learning Log (.json)"
-              data-tip="Export learning log (.json) — opens, runs, failures and hints. It never leaves this browser."
-              className="btn"
-            >
-              <FileJson className="h-3.5 w-3.5" aria-hidden="true" />
-              <span className={labelClass}>Log</span>
-            </button>
-            {/* Everything in this browser, out and back in: the two buttons report what they did. */}
-            <BackupControls labelClass={labelClass} />
-            {/* The third half of the same conversation. It opens a panel rather than erasing on the
-                press, because "which part?" is the whole question a reset has to ask. */}
+          {/* What is left of the taking-it-with-you tray: the two controls that belong on the row.
+              The exports and the backup moved to General settings, where a learner reads the rest of
+              their preferences; they are occasional jobs, and four buttons for them competed with
+              the ones this row is for. */}
+          <div className="action-tray" role="group" aria-label="Reset and cheat sheet">
+            {/* Reset opens a panel rather than erasing on the press, because "which part?" is the
+                whole question a reset has to ask. */}
             <button
               onClick={() => setResetOpen(true)}
               data-testid="btn-open-reset"
@@ -565,21 +550,6 @@ export const Header: React.FC<HeaderProps> = ({
             <React.Suspense fallback={null}>
               <ResetProgressLazy isOpen={resetOpen} onClose={() => setResetOpen(false)} />
             </React.Suspense>
-            <button
-              onClick={onExportPortfolio}
-              data-testid="btn-export-portfolio"
-              // The words are `hidden` below 1536 px, so the button is an icon with no name on most
-              // screens. The label repeats the visible text rather than describing it: a name that
-              // differs from what is drawn fails WCAG 2.5.3, and Lighthouse's `label-content-name-mismatch`
-              // found exactly that in the sibling buttons this fix matches.
-              aria-label="Export Progress (.md)"
-              data-tip="Export progress (.md)"
-              className="btn"
-              style={{ color: 'var(--emerald)' }}
-            >
-              <Download className="h-3.5 w-3.5" aria-hidden="true" />
-              <span className={labelClass}>Progress</span>
-            </button>
             <button
               onClick={onOpenCheatSheet}
               data-testid="btn-open-cheatsheet"

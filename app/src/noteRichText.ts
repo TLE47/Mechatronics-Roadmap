@@ -110,11 +110,29 @@ export function renderNoteMarkdown(root: HTMLElement, markdown: string): void {
   appendRuns(root, markdown, root.ownerDocument);
 }
 
+/**
+ * Escape a literal backslash so it survives the parser, but never inside a `$…$` pair.
+ *
+ * Every real formula carries backslashes (`\frac`, `\theta`, `\cos`). Doubling those turns the TeX
+ * into `\\frac` — a line break followed by the word `frac` — so the widget drew the wrong formula,
+ * or KaTeX refused it and the note kept raw source on screen. The delimiters themselves are the
+ * editor's Markdown, so the run between them is passed through as the learner typed it; everywhere
+ * else a backslash still doubles, or the parser would eat it on the next reopen.
+ */
 function escapeText(value: string): string {
-  // The editor is a Markdown composer: the learner's delimiters must survive as delimiters so a
-  // completed `$…$` can become maths. Only a literal backslash needs a second one, because the
-  // parser would otherwise eat it as an escape on the next reopen.
-  return value.replace(/\\/g, '\\\\');
+  const MATH = /\$[^$\n]+?\$/g;
+  let out = '';
+  let last = 0;
+  for (const match of value.matchAll(MATH)) {
+    const tex = match[0].slice(1, -1);
+    // The same flanking rule `parseInline` uses: `$5 and $6` is money, not a formula. A run that
+    // fails it is ordinary text, backslashes and all.
+    if (!tex.length || /^\s/.test(tex) || /\s$/.test(tex)) continue;
+    out += value.slice(last, match.index).replace(/\\/g, '\\\\');
+    out += match[0];
+    last = match.index + match[0].length;
+  }
+  return out + value.slice(last).replace(/\\/g, '\\\\');
 }
 
 function wrapFormatted(open: string, close: string, children: string): string {

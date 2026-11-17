@@ -143,6 +143,9 @@ export function lessonSearchItems(
     ...(isEditorLine(hit) ? { line: hit.line } : {}),
     ...(verified[hit.lessonId] ? { verified: true } : {}),
     label: `${hit.lessonId} · ${hit.title}`,
+    // The track is what a lens chip narrows by; the row's own second line stays about where in the
+    // lesson the hit is, which is the question a searcher is asking next.
+    track: lessons.find((lesson) => lesson.id === hit.lessonId)?.track,
     detail:
       hit.field === 'title'
         ? 'title or ideas — the lesson itself matches'

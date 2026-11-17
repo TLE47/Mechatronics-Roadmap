@@ -583,6 +583,10 @@ async function main() {
     ok('a plan drawn with no lesson survives a reload');
 
     // ---- 7. The plan is in the backup, and comes back after a wipe and a restore ----
+    // The backup lives in General settings now: open the dialog the way a learner does before the
+    // press that saves the archive.
+    await page.getByTestId('btn-general-settings').click();
+    await page.getByTestId('general-settings').waitFor({ state: 'visible', timeout: 20000 });
     const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
     await page.getByTestId('btn-backup-download').click();
     const download = await downloadPromise;

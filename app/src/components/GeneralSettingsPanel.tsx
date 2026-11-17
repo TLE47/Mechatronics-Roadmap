@@ -1,7 +1,9 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { Settings2, X } from 'lucide-react';
+import { Download, FileJson, Settings2, X } from 'lucide-react';
 import { GENERAL_SETTINGS_EVENT, readShowActionLabels, writeShowActionLabels } from '../generalSettings';
+import { downloadLearningLog } from '../learningLog';
+import { BackupControls } from './BackupControls';
 import { cachedSoundPrefs, subscribeSoundPrefs, type SoundPrefs } from '../audio/prefs.ts';
 import { change, install, preview, reset, subscribeArmed, togglePlay } from '../audio/musicManager.ts';
 import type { UiRole } from '../audio/facade.ts';
@@ -49,10 +51,18 @@ const SoundSettingsLive: React.FC<{ id: string }> = ({ id }) => {
  * General settings (`components/GeneralSettingsPanel.tsx`).
  *
  * One dialog for the preferences that are about the workbench rather than the lesson: the action
- * tray's small text labels, and the whole sound surface, which used to live behind the speaker icon
- * alone. The speaker still mutes in one press; this is where the detail is read and changed.
+ * tray's small text labels, the ways of taking work out of this browser, and the whole sound
+ * surface, which used to live behind the speaker icon alone. The speaker still mutes in one press;
+ * this is where the detail is read and changed.
+ *
+ * The exports and the backup live here rather than on the header row because they are occasional
+ * jobs, not navigation: four buttons for them competed with the trays a learner actually uses.
  */
-export const GeneralSettingsPanel: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
+export const GeneralSettingsPanel: React.FC<{
+  open: boolean;
+  onClose: () => void;
+  onExportPortfolio: () => void;
+}> = ({ open, onClose, onExportPortfolio }) => {
   const [labels, setLabels] = React.useState(readShowActionLabels());
   const closeRef = React.useRef<HTMLButtonElement | null>(null);
   // Whoever opened the dialog gets the focus back: the gear, or the speaker's detail button, which
@@ -139,6 +149,49 @@ export const GeneralSettingsPanel: React.FC<{ open: boolean; onClose: () => void
                 {labels ? 'on' : 'off'}
               </span>
             </button>
+          </section>
+          <section
+            aria-label="Export and backup"
+            data-testid="general-export"
+            className="mt-3 border-t pt-3"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>
+              Export and backup
+            </p>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={downloadLearningLog}
+                data-testid="btn-export-learning-log"
+                aria-label="Export Learning Log (.json)"
+                data-tip="Export learning log (.json) — opens, runs, failures and hints. It never leaves this browser."
+                className="btn"
+              >
+                <FileJson className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span>Log</span>
+              </button>
+              {/* Everything in this browser, out and back in: the two buttons report what they did. */}
+              <BackupControls labelClass="inline" />
+              <button
+                type="button"
+                onClick={onExportPortfolio}
+                data-testid="btn-export-portfolio"
+                // The label repeats the visible text rather than describing it: a name that differs
+                // from what is drawn fails WCAG 2.5.3 (`label-content-name-mismatch`).
+                aria-label="Export Progress (.md)"
+                data-tip="Export progress (.md)"
+                className="btn"
+                style={{ color: 'var(--emerald)' }}
+              >
+                <Download className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span>Progress</span>
+              </button>
+            </div>
+            <p className="mt-1.5 text-[11px]" style={{ color: 'var(--dim)' }}>
+              Progress, drafts and the learning log stay in this browser until you export them.
+              A backup is one <code>.zip</code>; restoring one merges it and deletes nothing.
+            </p>
           </section>
           <section aria-label="Sound settings" data-testid="general-sound" className="mt-3 border-t pt-3" style={{ borderColor: 'var(--border)' }}>
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>

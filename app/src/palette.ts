@@ -9,7 +9,14 @@
  * Search is deliberately tiny and predictable: a plain prefix/word-start/substring match, falling
  * back to an in-order subsequence (`pyrun` finds "Python runner"). Scores are integers so the order
  * of equally good matches is the catalogue's order, never the engine's.
+ *
+ * A search answer carries one more thing the list can be narrowed by: the **track** each hit belongs
+ * to. A learner looking for the gain formula in the control track should not have to read past every
+ * hit in the capstone or the prerequisite ramp, so the chips under the field can name a track as
+ * well as a kind of row.
  */
+
+import { trackLabel } from './trackLabel.ts';
 
 export type PaletteKind = 'lesson' | 'page' | 'tab' | 'action';
 
@@ -18,6 +25,14 @@ export interface PaletteItem {
   id: string;
   kind: PaletteKind;
   label: string;
+  /**
+   * The course track the row belongs to (`track-p`, `05-control-and-estimation`), when it has one.
+   *
+   * Search hits set it from the lesson they came from, so the palette can offer one chip per track
+   * in the answer. Catalogue rows and page hits leave it out: a command is not in a track, and a
+   * reading page is known by its path rather than by a registry bucket.
+   */
+  track?: string;
   /** The second line: a lesson's track, a tab's plain-English subtitle, an action's shortcut. */
   detail?: string;
   /** Extra words that should find this item without appearing in its label. */
@@ -149,6 +164,35 @@ export function paletteFilterCounts(matches: PaletteMatch[]): Record<PaletteFilt
 /** The rows one chip shows, in the order the search gave them: a filter never re-ranks. */
 export function filterPaletteMatches(matches: PaletteMatch[], filter: PaletteFilter): PaletteMatch[] {
   return filter === 'all' ? matches : matches.filter((match) => match.item.kind === filter);
+}
+
+/** One track chip: the registry bucket, the words a learner reads, and how many rows it would show. */
+export interface PaletteTrackOption {
+  track: string;
+  label: string;
+  count: number;
+}
+
+/**
+ * The track chips an answer has earned, in the course's own order.
+ *
+ * A chip is offered only when the answer holds a row in that track, so a lens is never a chip that
+ * shows nothing; the order is first appearance, which for search hits is the lesson order the
+ * index walks. One track alone is no choice at all, so the caller draws the row only above one.
+ */
+export function paletteTrackOptions(matches: PaletteMatch[]): PaletteTrackOption[] {
+  const counts = new Map<string, number>();
+  for (const match of matches) {
+    const track = match.item.track;
+    if (!track) continue;
+    counts.set(track, (counts.get(track) ?? 0) + 1);
+  }
+  return [...counts].map(([track, count]) => ({ track, label: trackLabel(track), count }));
+}
+
+/** The rows one track chip shows. A null track is `All`, the answer untouched. */
+export function filterPaletteByTrack(matches: PaletteMatch[], track: string | null): PaletteMatch[] {
+  return track === null ? matches : matches.filter((match) => match.item.track === track);
 }
 
 /**

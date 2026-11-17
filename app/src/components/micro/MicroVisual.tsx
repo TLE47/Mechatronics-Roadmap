@@ -117,7 +117,7 @@ export function MicroVisual({
         placement === 'bottom' || !sticky ? 'w-full' : 'w-full lg:sticky lg:top-3'
       }`}
     >
-      <figcaption className={`mb-2 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] ${tone.text}`}>
+      <figcaption className={`mb-2 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] ${tone.text}`}>
         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" aria-hidden="true" />
         {meta.label}
       </figcaption>

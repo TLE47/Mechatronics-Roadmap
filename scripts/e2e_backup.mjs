@@ -137,6 +137,10 @@ async function main() {
 
 
     // ---- One press: a zip the browser saves ----
+    // The backup lives in General settings now: open the dialog the way a learner does before the
+    // press that saves the archive.
+    await page.getByTestId('btn-general-settings').click();
+    await page.getByTestId('general-settings').waitFor({ state: 'visible', timeout: 20000 });
     const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
     await page.getByTestId('btn-backup-download').click();
     const download = await downloadPromise;

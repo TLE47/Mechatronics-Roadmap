@@ -7,14 +7,14 @@ be the browser's own "clear site data", which takes the theme, the sound choice 
 it, because those live in the same bucket.
 
 The reset panel is the deliberate opposite of the backup, in the same vocabulary. It is opened by
-**Reset…** at the end of the header's *Export and backup* tray, and it can erase one part or all of
-them. The rules live in [`app/src/progressReset.ts`](../app/src/progressReset.ts); the panel is
+**Reset…** in the header's last tray, beside the settings gear, and it can erase one part or all of
+them. The exports and the backup it is the opposite of live in General settings, one row away. The rules live in [`app/src/progressReset.ts`](../app/src/progressReset.ts); the panel is
 [`app/src/components/ResetProgressDialog.tsx`](../app/src/components/ResetProgressDialog.tsx), behind a
 lazy boundary so a learner who never opens it never downloads it.
 
 ```mermaid
 flowchart TB
-    Door["Reset… in the Export and backup tray"] --> Panel["Thirteen named parts, each printing what it holds now"]
+    Door["Reset… in the header's last tray"] --> Panel["Thirteen named parts, each printing what it holds now"]
     Panel --> One["Reset this part"]
     Panel --> All["Reset everything"]
     One --> Armed["First press arms the button: Press again, 4 s"]

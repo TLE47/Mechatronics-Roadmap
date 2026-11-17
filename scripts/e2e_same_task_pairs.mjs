@@ -253,14 +253,9 @@ const CASES = [
       { testid: 'btn-milestone-t1_tr01' },
     ],
   },
-  {
-    name: 'roadmap: milestone toggle then Export Progress shows the new milestone',
-    setup: [{ testid: 'tab-btn-tab-arch' }],
-    pair: [
-      { testid: 'btn-milestone-t1_tr00' },
-      { testid: 'btn-export-portfolio' },
-    ],
-  },
+  // The milestone-then-Export pair is gone with the button: the export lives in General settings
+  // now, so it does not exist to be clicked in the same task as the milestone. What it pinned — the
+  // portfolio naming the milestone — is read in `e2e_review.mjs` and `e2e_browser_workbench.mjs`.
   {
     name: 'roadmap: one milestone toggle twice in one task nets out',
     setup: [{ testid: 'tab-btn-tab-arch' }],
@@ -347,14 +342,14 @@ const CASES = [
 
   // --- Header modals: two independent modals, both open in either order.
   {
-    name: 'header: Cheat Sheet + Export Progress (control)',
+    name: 'header: Cheat Sheet + Reset panel (control)',
     setup: [],
-    pair: [{ testid: 'btn-open-cheatsheet' }, { testid: 'btn-export-portfolio' }],
+    pair: [{ testid: 'btn-open-cheatsheet' }, { testid: 'btn-open-reset' }],
   },
   {
-    name: 'header: Export Progress + Cheat Sheet (control)',
+    name: 'header: Reset panel + Cheat Sheet (control)',
     setup: [],
-    pair: [{ testid: 'btn-export-portfolio' }, { testid: 'btn-open-cheatsheet' }],
+    pair: [{ testid: 'btn-open-reset' }, { testid: 'btn-open-cheatsheet' }],
   },
 ];
 

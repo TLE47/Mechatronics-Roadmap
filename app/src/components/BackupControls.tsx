@@ -147,7 +147,9 @@ export const BackupControls: React.FC<{ testIdSuffix?: string; labelClass?: stri
           data-testid={tid('backup-status')}
           onClick={() => setStatus(null)}
           title="Dismiss"
-          className="fixed bottom-4 right-4 z-50 max-w-[24rem] cursor-pointer rounded-[var(--r-md)] border bg-raise px-3 py-2 text-[11.5px] font-medium text-ink shadow-lg"
+          // Above the General settings dialog (z-70): the buttons live inside it now, and a status
+          // card painted under the overlay would report a restore nobody can read.
+          className="fixed bottom-4 right-4 z-[80] max-w-[24rem] cursor-pointer rounded-[var(--r-md)] border bg-raise px-3 py-2 text-[11.5px] font-medium text-ink shadow-lg"
           style={{
             borderColor: status.tone === 'warn' ? 'var(--rose)' : 'var(--emerald)',
             color: status.tone === 'warn' ? 'var(--rose)' : 'var(--text)',

@@ -1627,7 +1627,12 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     );
 
     assert.ok(await tablet.getByTestId('btn-run-verify').isVisible(), `${name}: Run & Verify is not visible on a tablet`);
+    // Export Progress moved into General settings: what a tablet has to reach is the gear, and the
+    // export on the dialog it opens.
+    await tablet.getByTestId('btn-general-settings').click();
+    await tablet.getByTestId('general-settings').waitFor({ state: 'visible', timeout: 10000 });
     assert.ok(await tablet.getByTestId('btn-export-portfolio').isVisible(), `${name}: Export Progress is not visible on a tablet`);
+    await tablet.getByTestId('btn-general-settings-close').click();
     const layout = await tablet.evaluate(() => {
       const doc = document.documentElement;
       const viewportWidth = window.innerWidth;

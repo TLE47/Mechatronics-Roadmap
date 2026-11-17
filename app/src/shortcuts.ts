@@ -9,7 +9,7 @@
  * The `keys` text is what the learner types, not a code: `⌘` and `⌥` are the Macs the shortcuts were
  * chosen for, and Windows/Linux readers get the same physical keys under Ctrl/Alt.
  *
- * Six rows carry a `keymapAction` and can be rebound in the sheet ([`keymap.ts`](keymap.ts)); their
+ * Eight rows carry a `keymapAction` and can be rebound in the sheet ([`keymap.ts`](keymap.ts)); their
  * keys are read from the map when one is passed. The rest are fixed on purpose: the four presets are
  * a positional family, F9/F12 belong to the caret, Escape and Tab belong to dialogs, and the palette
  * and divider keys move a highlight rather than doing something. ⌥Z is fixed for the same reason a
@@ -72,6 +72,16 @@ export const SHORTCUT_ROWS: ShortcutRow[] = [
     keys: '⌘.',
     action: 'Focus mode on or off: the chrome out of the way, the work left.',
     keymapAction: 'focus',
+  },
+  {
+    keys: '⌥N',
+    action: 'Write a sticky note on the passage you have selected in the lesson text.',
+    keymapAction: 'sticky',
+  },
+  {
+    keys: '⌥H',
+    action: 'Pin the selected passage to the lesson’s notes as a highlight.',
+    keymapAction: 'highlight',
   },
   {
     keys: '⌥Z',

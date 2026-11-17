@@ -186,6 +186,8 @@ async function main() {
     // ---- The export carries the work, not only the ticks ----
     // The portfolio is the file a learner hands to somebody else; a card that exists only on screen
     // is invisible in it, so the same passage, its answer and the measured time must be in the text.
+    await page.getByTestId('btn-general-settings').click();
+    await page.getByTestId('general-settings').waitFor({ state: 'visible', timeout: 20000 });
     await page.getByTestId('btn-export-portfolio').click();
     const portfolio = (await page.getByTestId('portfolio-markdown-preview').textContent()) ?? '';
     assert.match(portfolio, /## 4\. Study Notes and Kept Passages/, 'the export must carry the notes section');

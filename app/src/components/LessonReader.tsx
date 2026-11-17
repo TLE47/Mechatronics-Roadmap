@@ -26,6 +26,8 @@ import {
   Underline,
   X,
 } from 'lucide-react';
+import { chordMatches } from '../keymap';
+import { useKeymap } from '../useKeymap';
 import { MathView } from './MathView';
 import { InlineMarkdown as Inline, inlinePlainText } from './InlineMarkdown';
 import {
@@ -891,6 +893,38 @@ export function LessonReader({
     setStickyPlacement(null);
     setStickyOpen(true);
   };
+
+  /**
+   * The two mark keys, on the selection the reader is holding.
+   *
+   * ⌥N and ⌥H by default, rebindable in the shortcut sheet like the doors: the pair is answered by
+   * the reader rather than by `App`, because only the reader knows which passage is selected. A
+   * press inside a field or the editor is typing and is left alone, and with nothing selected the
+   * keys do nothing at all instead of opening an empty note.
+   */
+  const keymap = useKeymap();
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
+      )
+        return;
+      if (!selection) return;
+      if (chordMatches(keymap.sticky, event)) {
+        event.preventDefault();
+        openStickyOnSelection();
+        return;
+      }
+      if (chordMatches(keymap.highlight, event)) {
+        event.preventDefault();
+        pinSelection();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [keymap, selection, lessonId]);
 
   /** Tick or untick one bullet. The box is only redrawn from the store after the write lands. */
   const toggleItem = (text: string) => {

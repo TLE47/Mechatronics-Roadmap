@@ -15,7 +15,7 @@
  *    now refuse, falls back to its default and leaves the other five alone; a duplicate keeps the
  *    first action in reading order.
  * 5. **The sheet prints the map, not the table.** `shortcutRows(map)` is what the dialog draws, so a
- *    rebind has to reach it, and the six remappable rows are exactly the six actions.
+ *    rebind has to reach it, and the remappable rows are exactly the actions.
  *
  * Run: node --experimental-strip-types scripts/test_keymap.mjs
  */
@@ -95,6 +95,9 @@ check('the shipped keys are the ones the sheet has always printed', () => {
     sheet: '?',
     run: '⌘↵',
     focus: '⌘.',
+    // The reader's two mark keys. ⌥ rather than ⌘: ⌘N and ⌘H belong to the browser.
+    sticky: '⌥N',
+    highlight: '⌥H',
   });
   // The table is the sheet's own copy: the two must not drift apart.
   for (const row of SHORTCUT_ROWS) {
@@ -319,7 +322,7 @@ check('every remappable action has one row, and the fixed rows say so', () => {
   assert.equal(new Set(withAction).size, withAction.length, 'one row per action');
   assert.equal(
     SHORTCUT_ROWS.length,
-    13,
+    15,
     'the sheet keeps its rows: the fixed ones are what a rebinder does not touch'
   );
 });

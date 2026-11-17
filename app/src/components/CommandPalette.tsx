@@ -5,12 +5,14 @@ import { toast } from 'sonner';
 import { CheckCircle2, CornerDownLeft, Search } from 'lucide-react';
 import {
   PALETTE_MODE_TEXT,
+  filterPaletteByTrack,
   filterPaletteMatches,
   groupPalette,
   lessonIdOf,
   paletteFilterCounts,
   paletteFilterLabel,
   paletteFilterOptions,
+  paletteTrackOptions,
   paletteKindLabel,
   rankPalette,
   type PaletteFilter,
@@ -92,6 +94,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
    * is untouched, and pressing a chip is never a second search (`filterPaletteMatches`).
    */
   const [filter, setFilter] = useState<PaletteFilter>('all');
+  /**
+   * The track the answer is narrowed to, or null for every track.
+   *
+   * A second lens, not a second kind: the kind chips say *what sort of row* this is (a lesson, a
+   * page, a command), and this row says *which part of the course* it belongs to. Only search mode
+   * offers it, because only search hits carry a track.
+   */
+  const [track, setTrack] = useState<string | null>(null);
   const lastQuery = useRef<string | null>(null);
   if (lastQuery.current !== query) {
     lastQuery.current = query;
@@ -121,9 +131,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     [mode, search, items, query]
   );
   /** The rows the live chip keeps: the same answer, narrowed by kind. */
-  const visible = useMemo(() => filterPaletteMatches(matches, filter), [matches, filter]);
+  const kindFiltered = useMemo(() => filterPaletteMatches(matches, filter), [matches, filter]);
   const counts = useMemo(() => paletteFilterCounts(matches), [matches]);
   const filterOptions = paletteFilterOptions(mode);
+  /** The tracks the kind-filtered answer actually has, so a track chip never shows nothing. */
+  const trackOptions = useMemo(
+    () => (mode === 'search' ? paletteTrackOptions(kindFiltered) : []),
+    [mode, kindFiltered]
+  );
+  /** Every row on screen: the kind's rows, then the track's rows out of those. */
+  const visible = useMemo(() => filterPaletteByTrack(kindFiltered, track), [kindFiltered, track]);
   /**
    * The matches, grouped, with the group holding the best match drawn first.
    *
@@ -211,6 +228,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     openerRef.current = opener instanceof HTMLElement ? opener : null;
     setQuery('');
     setFilter('all');
+    setTrack(null);
     inputRef.current?.focus();
   }, [isOpen, mode]);
 
@@ -327,6 +345,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                       data-palette-filter={option}
                       onClick={() => {
                         setFilter(option);
+                        setTrack(null);
                         setSelection(undefined);
                       }}
                       className={`inline-flex cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${
@@ -343,11 +362,65 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               </div>
             )}
 
+            {/* The track lens: one chip per track in the answer, under the kind chips. Drawn only in
+                search mode and only when the answer spans more than one track, so a row of identical
+                chips never reads as furniture. */}
+            {trackOptions.length > 1 && (
+              <div
+                role="radiogroup"
+                aria-label="Filter by track"
+                data-testid="palette-tracks"
+                className="flex flex-wrap items-center gap-1.5 border-b border-line px-3.5 py-2"
+              >
+                <span className="mr-0.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-faint">
+                  Track
+                </span>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={track === null}
+                  data-testid="palette-track-all"
+                  onClick={() => {
+                    setTrack(null);
+                    setSelection(undefined);
+                  }}
+                  className={`inline-flex cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+                    track === null ? 'border-accent bg-accent-soft text-accent' : 'border-line text-muted'
+                  }`}
+                >
+                  All tracks
+                </button>
+                {trackOptions.map((option) => {
+                  const on = track === option.track;
+                  return (
+                    <button
+                      key={option.track}
+                      type="button"
+                      role="radio"
+                      aria-checked={on}
+                      data-testid={`palette-track-${option.track}`}
+                      data-palette-track={option.track}
+                      onClick={() => {
+                        setTrack(option.track);
+                        setSelection(undefined);
+                      }}
+                      className={`inline-flex cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+                        on ? 'border-accent bg-accent-soft text-accent' : 'border-line text-muted'
+                      }`}
+                    >
+                      {option.label}
+                      <span className="text-faint">{option.count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             <Command.List
               // A new question is a new list: remounting it re-registers the rows, so the highlight
               // starts at the new head instead of holding a row that used to match. The lens a row
               // is under remounts it too, for the same reason.
-              key={`${query}|${filter}`}
+              key={`${query}|${filter}|${track ?? 'all'}`}
               id="palette-results"
               // cmdk names the listbox through `label` (its own default is "Suggestions"); this is
               // the same name the hand-written list had, so a screen reader hears no change.
