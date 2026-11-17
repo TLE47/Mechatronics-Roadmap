@@ -225,8 +225,13 @@ async function main() {
     // attribute — an attribute the stylesheet has no block for would show dark and pass anyway.
     await lightPage.click('[data-testid="btn-contrast-toggle"]');
     // `body` transitions its background over 200 ms, so the painted colour lags the attribute.
-    // Reading it in the same frame would report the palette that was on screen when the click landed.
-    await lightPage.waitForTimeout(300);
+    // A fixed delay can still catch the last millisecond of the fade on a slower runner; wait for
+    // the painted result instead, and fail loudly if the palette never actually reaches black.
+    await lightPage.waitForFunction(
+      () => getComputedStyle(document.body).backgroundColor === 'rgb(0, 0, 0)',
+      undefined,
+      { timeout: 5000 }
+    );
     const contrast = await lightPage.evaluate(() => ({
       theme: document.documentElement.getAttribute('data-theme'),
       pressed: document.querySelector('[data-testid="btn-contrast-toggle"]').getAttribute('aria-pressed'),
