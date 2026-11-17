@@ -303,7 +303,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
         onClick={() => onShowView(view)}
         // Predict has its own fixed button in the phone bar; its tab would take the width that
         // keeps Run output and Expected on screen.
-        className={`flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border px-2 py-1 font-mono text-[11.5px] transition-colors ${
+        className={`flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border px-2 py-1 font-mono text-[12px] transition-colors ${
           selected
             ? 'border-accent/25 bg-accent/10 text-accent shadow-sm'
             : 'border-transparent text-muted hover:border-line-soft hover:bg-raise hover:text-body'
@@ -344,7 +344,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
                   onOpenHelper(null);
                   onShowView('main');
                 }}
-                className={`flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border px-2 py-1 font-mono text-[11.5px] transition-colors ${
+                className={`flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border px-2 py-1 font-mono text-[12px] transition-colors ${
                   openHelper === null && shownViews.has('main')
                     ? 'border-accent/30 bg-panel text-accent shadow-sm'
                     : 'border-line-soft bg-panel/55 text-muted hover:bg-panel hover:text-body'
@@ -365,7 +365,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
                     onShowView('main');
                   }}
                   title={`${file.name} is read-only: it is the module the checks import. F12 on a name jumps to its definition.`}
-                  className={`flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border px-2 py-1 font-mono text-[11.5px] transition-colors ${
+                  className={`flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border px-2 py-1 font-mono text-[12px] transition-colors ${
                     openHelper === file.name && shownViews.has('main')
                       ? 'border-accent/30 bg-panel text-accent shadow-sm'
                       : 'border-line-soft bg-panel/55 text-muted hover:bg-panel hover:text-body'
@@ -381,7 +381,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
                 the body, not tabs, and they wrap below the files rather than squeezing a rail into
                 one tab per line on a phone. */}
             <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-1.5">
-              <span className="min-w-0 max-w-full truncate whitespace-nowrap font-mono text-[10.5px] tabular-nums text-faint">
+              <span className="min-w-0 max-w-full truncate whitespace-nowrap font-mono text-[11px] tabular-nums text-faint">
                 {symbolMiss ? (
                   <span role="status" data-testid="symbol-miss" style={{ color: 'var(--muted)' }}>
                     no definition for <code style={{ color: 'var(--accent)' }}>{symbolMiss}</code>
@@ -403,7 +403,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
                     role="status"
                     data-testid="vim-mode"
                     title="The mode the editor is reading keys in — Escape for NORMAL, i for INSERT"
-                    className="ml-2 rounded border px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em]"
+                    className="ml-2 rounded border px-1.5 py-0.5 text-[11px] font-semibold tracking-[0.08em]"
                     style={{ borderColor: 'var(--border)', color: 'var(--accent)' }}
                   >
                     {vimModeLabel}
@@ -420,7 +420,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
                         aria-label="Split the editor into panes"
                         title="Split the editor: a second pane beside this one"
                         onClick={() => onPanes(splitPane(panes, undefined, allowedViews))}
-                        className="flex h-7 cursor-pointer items-center gap-1.5 rounded-lg border border-line-soft bg-panel px-2 font-mono text-[11px] text-body transition-colors hover:border-accent/40 hover:text-accent"
+                        className="flex h-7 cursor-pointer items-center gap-1.5 rounded-lg border border-line-soft bg-panel px-2 font-mono text-[12px] text-body transition-colors hover:border-accent/40 hover:text-accent"
                       >
                         <Columns2 className="h-3.5 w-3.5" aria-hidden="true" />
                         <span className="hidden sm:inline">Split</span>
@@ -438,7 +438,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
                       aria-label={bodyCollapsed ? 'Expand editor and goal' : 'Collapse editor and goal'}
                       title={bodyCollapsed ? 'Expand the editor and the goal' : 'Collapse the editor and the goal'}
                       onClick={() => setBodyCollapsed((open) => !open)}
-                      className="flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-lg border border-line-soft bg-panel px-1.5 font-mono text-[11px] text-muted transition-colors hover:border-accent/40 hover:text-accent"
+                      className="flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-lg border border-line-soft bg-panel px-1.5 font-mono text-[12px] text-muted transition-colors hover:border-accent/40 hover:text-accent"
                     >
                       {bodyCollapsed ? (
                         <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
@@ -465,7 +465,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
             >
               {checkViews.length > 0 && (
                 <div className="contents sm:flex sm:min-w-0 sm:flex-1 sm:flex-wrap sm:items-center sm:gap-x-2 sm:gap-y-1">
-                  <span className="hidden shrink-0 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-faint sm:inline">
+                  <span className="hidden shrink-0 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-faint sm:inline">
                     Checks
                   </span>
                   <div
@@ -482,7 +482,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
               )}
               {toolViews.length > 0 && (
                 <div className="contents sm:flex sm:min-w-0 sm:flex-wrap sm:items-center sm:gap-x-2 sm:gap-y-1">
-                  <span className="hidden shrink-0 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-faint sm:inline">
+                  <span className="hidden shrink-0 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-faint sm:inline">
                     Tools
                   </span>
                   <div
