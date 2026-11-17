@@ -6,7 +6,7 @@ Welcome to **Track P**! If you have never written a line of code, never wired a 
 flowchart LR
     Diag["0. School-Math Diagnostic<br/>& Tooling Orientation"] --> Py["P.1–P.6: Python Foundations<br/>Variables, Math, Clamping, Loops, Functions, Assert"]
     Py --> Math["P.7–P.10: Hardware Math<br/>SI Prefixes, Hz/Binary, Scaling, Radians/Trig"]
-    Math --> Phys["P.11–P.13 & P.M: Physics, Datasheets & Milestone<br/>Time Graphs, Lever Torque, DRV8833 Datasheet & Arm Sim"]
+    Math --> Phys["P.11–P.14 & P.M: Physics, Datasheets & Milestone<br/>Time Graphs, Lever Torque, DRV8833 Datasheet & Arm Sim"]
     Phys --> GateP0["Gate P→0 (15-Min Check)<br/>Loop+Assert · 3 SI Conversions · Datasheet Row"]
 ```
 

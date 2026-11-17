@@ -191,12 +191,12 @@ class GeneratorTests(unittest.TestCase):
             f"{tuple(int(value) * 60 for value in total.groups())} minutes, got "
             f"{(low, high, slow_low, slow_high)} - update the total when a target moves",
         )
-        listed = re.findall(r"\| \*\*\[Lesson (P\.[^\]]+)\]", text)
-        expected = ["P.1", "P.2", "P.2.5"] + [f"P.{n}" for n in range(3, 15)]
+        listed = re.findall(r"^\| \*\*\[Lesson (P\.[^\]]+)\]", text, re.M)
+        expected = ["P.1", "P.2"] + [f"P.{n}" for n in range(3, 14)] + ["P.M"]
         self.assertEqual(
             listed, expected,
-            f"expected the Track P table to list {expected} in order, got {listed}; a missing id "
-            f"is a lesson the table cannot point at",
+            f"expected the Track P table to read {expected}, got {listed}; after the 4.0.0 "
+            f"renumber the ids must run without a gap instead of starting again at P.14",
         )
 
     def test_the_committed_readme_is_the_rendered_table(self):

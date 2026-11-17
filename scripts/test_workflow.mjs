@@ -932,7 +932,7 @@ check('a note and a lesson link are card metadata, exported without becoming ano
   assert.equal('lesson' in annotated.nodes[1], false, 'a card without a link gains no field');
   const mermaid = workflowToMermaid(annotated);
   assert.match(mermaid, /^  %% note n1: read the supply first$/m);
-  assert.match(mermaid, /^  %% lesson n1: P\.15$/m);
+  assert.match(mermaid, /^  %% lesson n1: P\.14$/m);
   // A node declaration opens a bracket (`[`, `([[`, `{[`); an arrow line never does.
   assert.equal(
     mermaid.split('\n').filter((line) => /^  n\d+[[({]/.test(line)).length,
@@ -942,7 +942,7 @@ check('a note and a lesson link are card metadata, exported without becoming ano
   const markdown = workflowToMarkdown(annotated);
   assert.match(markdown, /^1\. \*\*Given\*\* — Supply$/m);
   assert.match(markdown, /^ {3}- note: read the supply first$/m);
-  assert.match(markdown, /^ {3}- lesson: P\.15$/m);
+  assert.match(markdown, /^ {3}- lesson: P\.14$/m);
   assert.equal(
     normalizeWorkflow(exporting).nodes[0].note,
     undefined,

@@ -20,14 +20,18 @@ export function isKnownLesson(id: string | null | undefined): boolean {
 /**
  * The id in a query string, or null when it is absent or names nothing the runner lists.
  *
- * An id written before the 4.0.0 renumber is translated first, so a `?lesson=P.15` link still opens
- * the analysis-workflow lesson it named (now `P.14`) instead of a not-found page.
+ * A live id always wins. `P.14` is a lesson again after the 4.0.0 renumber, so its address has to
+ * open the analysis workflow; an old bookmark to the datasheet lesson cannot be told apart from it
+ * by the string alone, and the current page is the one every generated link points at. Only an id
+ * this build no longer lists — the retired `P.15` — falls through to what it meant before, so those
+ * links still land on their lesson instead of a not-found page.
  */
 export function lessonIdFromSearch(search: string): string | null {
   const wanted = new URLSearchParams(search).get(LESSON_QUERY_KEY);
   if (!wanted) return null;
-  const id = canonicalLessonId(wanted);
-  return isKnownLesson(id) ? id : null;
+  if (isKnownLesson(wanted)) return wanted;
+  const renamed = canonicalLessonId(wanted);
+  return isKnownLesson(renamed) ? renamed : null;
 }
 
 /**

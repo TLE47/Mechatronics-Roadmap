@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.0.1`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.0.2`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,21 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-17] — A live lesson keeps its own address, and the Track P table reads straight through
+
+**`?lesson=P.14` is a current address again.** The renumber left a URL alias so old bookmarks still
+opened their lesson, but `P.14` is now the analysis-workflow lesson's live id, and the alias sent it
+to the datasheet page. A string cannot say whether `P.14` was written before or after the renumber, so
+the live id wins: only an id this build no longer lists — the retired `P.15` — is translated. The
+reader-route suite walks all 97 pages by their current ids and is green again.
+
+**Two tests carried the old ids in escaped form.** A regex is not the string `P.15`, so the renumber's
+sweep left `/P\.15/` assertions behind in `scripts/test_workflow.mjs`; they now assert the P.14 the
+seed writes. The Track P table check also expected every lesson in the folder, while that hand-kept
+table has always listed the main path (P.1–P.13 and the milestone, with P.2.5 and the analysis lesson
+carried in the folder's own pages); it now asserts the table's ids run without a gap instead of
+inventing rows, and the table's own P.11–P.14 range label is corrected.
 
 ## [2026-11-17] — The renumber leaves records that already use the new ids alone
 
