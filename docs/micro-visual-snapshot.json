@@ -1,5 +1,5 @@
 {
-  "_why": "The structural visual snapshot of all 46 micro-focus scenes at both placement widths, read by `npm run check:micro-visuals` (`scripts/check_micro_visuals.mjs`). Each scene is measured in a 477 px side stage and a 966 px bottom stage. Text, text-run boxes, element tags, element boxes, resolved visual-style fingerprints and SVG markup are recorded; a box is compared with a 2 px tolerance, text and fingerprints exactly. It is not a pixel diff: the Linux runner and the author’s machine do not rasterise type identically, while this structure is portable. A measurement issue — overflow, clipped text, an element outside the card — is never recorded and always fails. Re-record with `npm run check:micro-visuals -- --record` when a visual change is intended, and read the diff: it is the list of what moved.",
+  "_why": "The structural visual snapshot of all 46 micro-focus scenes at both placement widths, read by `npm run check:micro-visuals` (`scripts/check_micro_visuals.mjs`). Each scene is measured in a 477 px side stage and a 966 px bottom stage. Text, text-run boxes, element tags, element boxes, resolved visual-style fingerprints and SVG markup are recorded; a box is compared with a 2 px tolerance, text and fingerprints exactly. It is not a pixel diff: the Linux runner and the author’s machine do not rasterise type identically, while this structure is portable. A glyph the bundled faces do not carry — ≈ is one — would be painted by whatever font the machine has, so it is measured as `0` in the bundled face and listed in `fallbacks`; the authored text is still recorded verbatim, which is why a re-record here and a read on the Linux runner cannot disagree over a system font. A measurement issue — overflow, clipped text, an element outside the card — is never recorded and always fails. Re-record with `npm run check:micro-visuals -- --record` when a visual change is intended, and read the diff: it is the list of what moved.",
   "version": 1,
   "viewport": {
     "width": 1280,
@@ -73,6 +73,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -291,6 +292,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -547,6 +549,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -882,6 +885,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -1228,6 +1232,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -1551,6 +1556,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -1948,6 +1954,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -2453,6 +2460,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -2879,6 +2887,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -3203,6 +3212,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -3520,6 +3530,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -3816,6 +3827,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -4087,6 +4099,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -4275,6 +4288,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -4528,6 +4542,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -4889,6 +4904,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -5225,6 +5241,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -5659,6 +5676,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -6068,6 +6086,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -6285,6 +6304,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -6504,6 +6524,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -6772,6 +6793,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -7042,6 +7064,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -7290,6 +7313,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -7531,6 +7555,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -7709,6 +7734,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -7952,6 +7978,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -8251,6 +8278,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -8552,6 +8580,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -9038,6 +9067,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -9490,6 +9520,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -9806,6 +9837,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -10124,6 +10156,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -10430,6 +10463,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -10819,6 +10853,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -11404,6 +11439,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -11901,6 +11937,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -12127,6 +12164,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -12391,6 +12429,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -12641,6 +12680,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -12857,6 +12897,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -13103,6 +13144,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -13333,6 +13375,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -13541,6 +13584,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -13769,6 +13813,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -14166,6 +14211,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -14637,6 +14683,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -15075,6 +15122,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -15416,6 +15464,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -15605,6 +15654,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -15796,6 +15846,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -15965,6 +16016,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -16171,6 +16223,9 @@
               14
             ]
           ]
+        ],
+        "fallbacks": [
+          "⁴"
         ],
         "elements": [
           [
@@ -16436,6 +16491,9 @@
               14
             ]
           ]
+        ],
+        "fallbacks": [
+          "⁴"
         ],
         "elements": [
           [
@@ -16713,6 +16771,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -16995,6 +17054,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -17243,6 +17303,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -17419,6 +17480,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -17615,6 +17677,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -17902,6 +17965,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -18182,6 +18246,9 @@
             ]
           ]
         ],
+        "fallbacks": [
+          "≈"
+        ],
         "elements": [
           [
             "figcaption",
@@ -18447,6 +18514,9 @@
             ]
           ]
         ],
+        "fallbacks": [
+          "≈"
+        ],
         "elements": [
           [
             "figcaption",
@@ -18673,7 +18743,7 @@
             [
               197,
               118,
-              28,
+              29,
               16
             ]
           ],
@@ -18695,6 +18765,9 @@
               15
             ]
           ]
+        ],
+        "fallbacks": [
+          "π"
         ],
         "elements": [
           [
@@ -18782,7 +18855,7 @@
             [
               197,
               118,
-              28,
+              29,
               16
             ],
             "f6c35f67c50f5455"
@@ -18809,7 +18882,7 @@
           ]
         ],
         "svgs": [
-          "be6edc4e19542a18"
+          "2941c45e1c7f1b88"
         ],
         "issues": []
       },
@@ -18842,7 +18915,7 @@
             [
               442,
               118,
-              28,
+              29,
               16
             ]
           ],
@@ -18864,6 +18937,9 @@
               15
             ]
           ]
+        ],
+        "fallbacks": [
+          "π"
         ],
         "elements": [
           [
@@ -18951,7 +19027,7 @@
             [
               442,
               118,
-              28,
+              29,
               16
             ],
             "f6c35f67c50f5455"
@@ -18978,7 +19054,7 @@
           ]
         ],
         "svgs": [
-          "be6edc4e19542a18"
+          "2941c45e1c7f1b88"
         ],
         "issues": []
       }
@@ -19004,7 +19080,7 @@
             [
               104,
               166,
-              57,
+              58,
               22
             ]
           ],
@@ -19089,6 +19165,10 @@
               14
             ]
           ]
+        ],
+        "fallbacks": [
+          "θ",
+          "≈"
         ],
         "elements": [
           [
@@ -19176,7 +19256,7 @@
             [
               104,
               166,
-              57,
+              58,
               22
             ],
             "fece3a318d66be9f"
@@ -19293,7 +19373,7 @@
           ]
         ],
         "svgs": [
-          "dbb16a461b7c73b8"
+          "86bcea8eb50101f0"
         ],
         "issues": []
       },
@@ -19317,7 +19397,7 @@
             [
               116,
               181,
-              64,
+              65,
               25
             ]
           ],
@@ -19402,6 +19482,10 @@
               14
             ]
           ]
+        ],
+        "fallbacks": [
+          "θ",
+          "≈"
         ],
         "elements": [
           [
@@ -19489,7 +19573,7 @@
             [
               116,
               181,
-              64,
+              65,
               25
             ],
             "fece3a318d66be9f"
@@ -19606,7 +19690,7 @@
           ]
         ],
         "svgs": [
-          "dbb16a461b7c73b8"
+          "86bcea8eb50101f0"
         ],
         "issues": []
       }
@@ -19655,6 +19739,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -19815,6 +19900,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -19977,6 +20063,9 @@
             ]
           ]
         ],
+        "fallbacks": [
+          "Δ"
+        ],
         "elements": [
           [
             "figcaption",
@@ -20070,7 +20159,7 @@
           ]
         ],
         "svgs": [
-          "54bc3864628cf59e"
+          "ce7a08a80143b40a"
         ],
         "issues": []
       },
@@ -20116,6 +20205,9 @@
               15
             ]
           ]
+        ],
+        "fallbacks": [
+          "Δ"
         ],
         "elements": [
           [
@@ -20210,7 +20302,7 @@
           ]
         ],
         "svgs": [
-          "54bc3864628cf59e"
+          "ce7a08a80143b40a"
         ],
         "issues": []
       }
@@ -20321,6 +20413,9 @@
               14
             ]
           ]
+        ],
+        "fallbacks": [
+          "Δ"
         ],
         "elements": [
           [
@@ -20634,6 +20729,9 @@
               14
             ]
           ]
+        ],
+        "fallbacks": [
+          "Δ"
         ],
         "elements": [
           [
@@ -20949,6 +21047,9 @@
               14
             ]
           ]
+        ],
+        "fallbacks": [
+          "Δ"
         ],
         "elements": [
           [
@@ -21273,6 +21374,9 @@
             ]
           ]
         ],
+        "fallbacks": [
+          "Δ"
+        ],
         "elements": [
           [
             "figcaption",
@@ -21571,6 +21675,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -21868,6 +21973,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -22194,6 +22300,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -22517,6 +22624,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -22756,7 +22864,7 @@
             [
               165,
               116,
-              24,
+              25,
               12
             ]
           ],
@@ -22799,12 +22907,16 @@
           [
             "At θ = 0°, the full horizontal arm is perpendicular to the load.",
             [
-              95,
+              94,
               188,
               288,
               14
             ]
           ]
+        ],
+        "fallbacks": [
+          "θ",
+          "τ"
         ],
         "elements": [
           [
@@ -22969,7 +23081,7 @@
           ]
         ],
         "svgs": [
-          "d1b039cda04365b3"
+          "2111e2252a0d72cb"
         ],
         "issues": []
       },
@@ -22993,7 +23105,7 @@
             [
               409,
               116,
-              24,
+              25,
               12
             ]
           ],
@@ -23042,6 +23154,10 @@
               14
             ]
           ]
+        ],
+        "fallbacks": [
+          "θ",
+          "τ"
         ],
         "elements": [
           [
@@ -23206,7 +23322,7 @@
           ]
         ],
         "svgs": [
-          "d1b039cda04365b3"
+          "2111e2252a0d72cb"
         ],
         "issues": []
       }
@@ -23291,6 +23407,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -23517,6 +23634,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -23745,6 +23863,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -23999,6 +24118,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -24291,6 +24411,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -24583,6 +24704,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -24832,6 +24954,9 @@
             ]
           ]
         ],
+        "fallbacks": [
+          "Ω"
+        ],
         "elements": [
           [
             "figcaption",
@@ -25057,6 +25182,9 @@
             ]
           ]
         ],
+        "fallbacks": [
+          "Ω"
+        ],
         "elements": [
           [
             "figcaption",
@@ -25275,6 +25403,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -25566,6 +25695,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -25850,6 +25980,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",
@@ -26069,6 +26200,7 @@
             ]
           ]
         ],
+        "fallbacks": [],
         "elements": [
           [
             "figcaption",

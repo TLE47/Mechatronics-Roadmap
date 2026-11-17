@@ -38,6 +38,7 @@ const render = () => ({
     ['A label', [14, 32, 60, 12]],
     ['12.0', [80, 32, 28, 12]],
   ],
+  fallbacks: [],
   elements: [
     ['figure', [0, 0, 477, 140], 'figure-style'],
     ['div', [14, 14, 449, 112], 'scene-style'],
@@ -99,6 +100,9 @@ const cases = [
   ['a measured issue fails even when the recording matches', (actual) => {
     actual.variables[477].issues.push('text-clipped:A label');
   }, ['variables@477 issue text-clipped']],
+  ['a changed stand-in glyph list fails', (actual) => {
+    actual.variables[477].fallbacks = ['≈'];
+  }, ['variables@477 font fallbacks']],
   ['a new scene fails', (actual) => {
     actual['datasheet-units'] = { 477: render(), 966: { ...render(), width: 966 } };
   }, ['datasheet-units@* scene new']],

@@ -15,6 +15,12 @@
  * `scripts/snapshot_surfaces.mjs`: antialiasing recorded on one machine does not survive the trip to
  * the Linux runner. The portable evidence is text, geometry, computed styles and SVG markup.
  *
+ * Type is portable only as far as the fonts are: a glyph the bundled faces do not carry is painted
+ * by a system font, whose advances differ between the author's machine and the runner. Every
+ * recorded box is therefore measured in the scene's own faces — a missing glyph is measured as `0`
+ * and listed in `fallbacks`, the authored text is kept verbatim — so a re-record anywhere and a read
+ * on CI cannot disagree over which fonts a machine happens to have.
+ *
  * A scene is measured twice, not once in whichever placement its catalogue index happens to choose:
  * the figure is cloned into an offscreen 477 px stage, measured, then cloned into a 966 px stage.
  * That is how a bottom-only scene can be caught breaking when the cycle or a reader puts it at a
@@ -195,12 +201,96 @@ const measureScenes = async ({ selector, widths, tolerance, clipTolerance, expec
     round(rect.height),
   ];
 
+  /**
+   * A glyph the page's own faces do not carry is painted with whichever system font this machine
+   * happens to have, so its advance — and every box measured from it — is a property of the machine
+   * rather than of the repository. This is how a scene reads portably: measure such a glyph as `0`
+   * in the bundled face, so the recorded box describes the scene's own type, while the authored
+   * text is still recorded verbatim and compared exactly.
+   *
+   * Coverage is decided by drawing the character twice — once in the element's own stack, once in
+   * that same stack with the bundled faces removed, which is where the browser goes when the bundled
+   * face has no such glyph — and comparing the painted pixels. Advances are no good for this: the
+   * gate rounds them to whole pixels, and two different faces can round the same. Ink cannot: if the
+   * bundled face has the glyph, its outline draws; if it does not, both readings are the fallback's
+   * identical pixels. That answer belongs to the font files rather than to the machine.
+   */
+  const bundled = new Set(
+    [...document.fonts].map((face) => face.family.replace(/^["']|["']$/g, ''))
+  );
+  const probe = document.createElement('canvas');
+  probe.width = 160;
+  probe.height = 120;
+  const probeContext = probe.getContext('2d', { willReadFrequently: true });
+  const ink = (fontFamily, char) => {
+    probeContext.clearRect(0, 0, probe.width, probe.height);
+    probeContext.font = `64px ${fontFamily}`;
+    probeContext.fillStyle = '#000';
+    probeContext.fillText(char, 10, 90);
+    const { data } = probeContext.getImageData(0, 0, probe.width, probe.height);
+    let painted = 0;
+    for (let index = 3; index < data.length; index += 4) {
+      if (data[index] === 0) continue;
+      painted = Math.imul(painted ^ index, 16777619) ^ data[index - 3];
+    }
+    return painted >>> 0;
+  };
+  const glyphCache = new Map();
+  const carriesGlyph = (stack, fallbackStack, char) => {
+    const key = `${stack}|${char}`;
+    if (!glyphCache.has(key)) {
+      glyphCache.set(key, ink(stack, char) !== ink(fallbackStack, char));
+    }
+    return glyphCache.get(key);
+  };
+
   const auditFigure = (figure, width) => {
     const frame = figure.getBoundingClientRect();
     const issues = [];
     const textRuns = [];
     const elements = [];
     const scene = figure.querySelector('[data-visual]');
+
+    // Read the authored text before any stand-in glyph replaces it: `text` is the scene's copy, not
+    // the measurement's. Then swap only the glyphs no bundled face carries.
+    const visibleText = (figure.innerText ?? '').replace(/\s+/g, ' ').trim();
+    const originals = new Map();
+    const fallbacks = new Set();
+    {
+      const substitute = document.createTreeWalker(figure, NodeFilter.SHOW_TEXT);
+      let textNode = substitute.nextNode();
+      while (textNode) {
+        const raw = textNode.nodeValue ?? '';
+        const text = raw.replace(/\s+/g, ' ').trim();
+        const parent = textNode.parentElement;
+        if (text && parent && visible(parent)) {
+          const style = getComputedStyle(parent);
+          const tokens = style.fontFamily
+            .split(',')
+            .map((token) => token.trim())
+            .filter(Boolean);
+          const families = tokens.filter(
+            (token) => bundled.has(token.replace(/^["']|["']$/g, ''))
+          );
+          const fallbackStack =
+            tokens.filter((token) => !bundled.has(token.replace(/^["']|["']$/g, ''))).join(', ') ||
+            'sans-serif';
+          const uncovered =
+            families.length === 0
+              ? [...new Set([...text].filter((char) => char.trim()))]
+              : [...new Set([...text].filter((char) => char.trim()))].filter(
+                  (char) => !carriesGlyph(style.fontFamily, fallbackStack, char)
+                );
+          if (uncovered.length > 0) {
+            const missing = new Set(uncovered);
+            for (const char of uncovered) fallbacks.add(char);
+            originals.set(textNode, text);
+            textNode.nodeValue = [...raw].map((char) => (missing.has(char) ? '0' : char)).join('');
+          }
+        }
+        textNode = substitute.nextNode();
+      }
+    }
 
     if (!scene) issues.push('missing-scene');
     if (Math.abs(frame.width - width) > 1) {
@@ -244,7 +334,7 @@ const measureScenes = async ({ selector, widths, tolerance, clipTolerance, expec
     const walker = document.createTreeWalker(figure, NodeFilter.SHOW_TEXT);
     let node = walker.nextNode();
     while (node) {
-      const text = (node.nodeValue ?? '').replace(/\s+/g, ' ').trim();
+      const text = originals.get(node) ?? (node.nodeValue ?? '').replace(/\s+/g, ' ').trim();
       const parent = node.parentElement;
       if (text && parent && visible(parent)) {
         const range = document.createRange();
@@ -306,13 +396,22 @@ const measureScenes = async ({ selector, widths, tolerance, clipTolerance, expec
       width: round(frame.width),
       height: round(frame.height),
       frameStyle: styleFingerprint(getComputedStyle(figure)),
-      text: (figure.innerText ?? textRuns.map(([text]) => text).join(' ')).replace(/\s+/g, ' ').trim(),
+      text: visibleText || textRuns.map(([text]) => text).join(' '),
       textRuns,
+      fallbacks: [...fallbacks].sort(),
       elements,
       svgs,
       issues: unique(issues),
     };
   };
+
+  // The probe draws at a fixed size, so load every bundled face there before the first reading.
+  await Promise.all(
+    [...bundled].map((family) =>
+      document.fonts.load(`64px "${family.replace(/"/g, '\\"')}"`).catch(() => [])
+    )
+  );
+  await document.fonts.ready;
 
   const measured = {};
   for (const width of widths) {
@@ -351,13 +450,14 @@ async function proveDetector(page) {
     host.id = 'micro-gate-selftest';
     host.style.cssText = 'position:fixed;left:-20000px;top:0;width:300px;';
     host.innerHTML = `
-      <figure data-testid="micro-visual-selftest" data-placement="left" style="box-sizing:border-box;width:300px;padding:14px;border:1px solid #000;font:12px monospace">
+      <figure data-testid="micro-visual-selftest" data-placement="left" style="box-sizing:border-box;width:300px;padding:14px;border:1px solid #000;font:12px 'Geist Variable', sans-serif">
         <figcaption>Fixture card</figcaption>
         <div data-visual>
           <div style="width:80px;overflow:hidden;white-space:nowrap">
             <span>THIS LABEL IS LONGER THAN ITS CLIP BOX</span>
           </div>
           <div style="width:600px;height:12px">a shape wider than the card</div>
+          <div>θ = 60° · x ≈ 1.00</div>
         </div>
       </figure>`;
     document.body.append(host);
@@ -383,6 +483,17 @@ async function proveDetector(page) {
       )
     ) {
       throw new Error(`the overflow detector did not name the synthetic wide shape: ${issues.join(' | ')}`);
+    }
+    const fallbacks = measured['300']?.fallbacks ?? [];
+    if (!fallbacks.includes('≈')) {
+      throw new Error(
+        `the font-coverage rule did not stand in for ≈, which Geist does not carry; got ${JSON.stringify(fallbacks)}`
+      );
+    }
+    if (fallbacks.includes('A') || fallbacks.includes('0')) {
+      throw new Error(
+        `the font-coverage rule stood in for a glyph Geist does carry; got ${JSON.stringify(fallbacks)}`
+      );
     }
   } finally {
     await page.evaluate(() => document.getElementById('micro-gate-selftest')?.remove());
@@ -450,12 +561,10 @@ async function main() {
     await page.goto(`${base}?view=home`, { waitUntil: 'domcontentloaded' });
     await page.getByTestId('home-micro').waitFor({ timeout: 30000 });
     await page.evaluate(() => document.fonts.ready);
-    await proveDetector(page);
-
-    await page.getByTestId('home-micro-open').click();
-    await page.getByTestId('tab-micro').waitFor({ timeout: 30000 });
-    // The overview does not use every face a scene does. Load the scene faces up front, so the first
-    // measured scene cannot be the one that pays the font request under `font-display: swap`.
+    // The overview does not use every face a scene does. Load the scene faces up front: the coverage
+    // probe reads a face's own advances, so a face that is only declared would read as coverage it
+    // does not have, and the first measured scene would pay the font request under `font-display:
+    // swap`. This must happen before the self-test, whose fixture is set in Geist.
     await page.evaluate(async () => {
       const faces = [
         '400 12px "Geist Mono Variable"',
@@ -471,6 +580,10 @@ async function main() {
       await Promise.all(faces.map((font) => document.fonts.load(font).catch(() => [])));
       await document.fonts.ready;
     });
+    await proveDetector(page);
+
+    await page.getByTestId('home-micro-open').click();
+    await page.getByTestId('tab-micro').waitFor({ timeout: 30000 });
     const fontReport = await page.evaluate(() => ({
       status: document.fonts.status,
       loaded: [...new Set([...document.fonts].filter((face) => face.status === 'loaded').map((face) => face.family))],
@@ -522,7 +635,7 @@ async function main() {
       const merged = { ...(previous?.scenes ?? {}), ...scenes };
       const next = {
         _why:
-          'The structural visual snapshot of all 46 micro-focus scenes at both placement widths, read by `npm run check:micro-visuals` (`scripts/check_micro_visuals.mjs`). Each scene is measured in a 477 px side stage and a 966 px bottom stage. Text, text-run boxes, element tags, element boxes, resolved visual-style fingerprints and SVG markup are recorded; a box is compared with a 2 px tolerance, text and fingerprints exactly. It is not a pixel diff: the Linux runner and the author’s machine do not rasterise type identically, while this structure is portable. A measurement issue — overflow, clipped text, an element outside the card — is never recorded and always fails. Re-record with `npm run check:micro-visuals -- --record` when a visual change is intended, and read the diff: it is the list of what moved.',
+          'The structural visual snapshot of all 46 micro-focus scenes at both placement widths, read by `npm run check:micro-visuals` (`scripts/check_micro_visuals.mjs`). Each scene is measured in a 477 px side stage and a 966 px bottom stage. Text, text-run boxes, element tags, element boxes, resolved visual-style fingerprints and SVG markup are recorded; a box is compared with a 2 px tolerance, text and fingerprints exactly. It is not a pixel diff: the Linux runner and the author’s machine do not rasterise type identically, while this structure is portable. A glyph the bundled faces do not carry — ≈ is one — would be painted by whatever font the machine has, so it is measured as `0` in the bundled face and listed in `fallbacks`; the authored text is still recorded verbatim, which is why a re-record here and a read on the Linux runner cannot disagree over a system font. A measurement issue — overflow, clipped text, an element outside the card — is never recorded and always fails. Re-record with `npm run check:micro-visuals -- --record` when a visual change is intended, and read the diff: it is the list of what moved.',
         version: 1,
         viewport: VIEWPORT,
         widths: WIDTHS,

@@ -8,9 +8,9 @@
  * or a scene that vanished from one width all read as a pass if the wrong field is ignored.
  *
  * A box is four numbers compared one by one, beyond `tolerance` on any edge. Label text, element
- * tags, style fingerprints and SVG fingerprints are exact. An issue measured in the page — clipped
- * text, an element outside the card, horizontal or vertical overflow — fails regardless of the
- * recording, because `--record` refuses to bless a scene with an issue.
+ * tags, style fingerprints, SVG fingerprints and the `fallbacks` stand-in list are exact. An issue
+ * measured in the page — clipped text, an element outside the card, horizontal or vertical overflow
+ * — fails regardless of the recording, because `--record` refuses to bless a scene with an issue.
  *
  * The baseline is structural rather than a pixel diff for the same reason as the surface snapshot:
  * antialiasing recorded on one machine does not survive the trip to the Linux runner. Text, boxes,
@@ -48,6 +48,13 @@ function compareRender(scene, width, expected, actual, tolerance) {
     add('frame', 'style', expected.frameStyle, actual.frameStyle);
   }
   if (expected.text !== actual.text) add('text', 'visible', expected.text, actual.text);
+
+  // Stand-in glyphs are the scene's own type coverage: a run whose glyph the bundled faces do not
+  // carry was measured as `0`. The list is machine-independent, so a change to it means the type
+  // behind a box changed, not the reader's fonts.
+  if ((expected.fallbacks ?? []).join('') !== (actual.fallbacks ?? []).join('')) {
+    add('font', 'fallbacks', expected.fallbacks ?? [], actual.fallbacks ?? []);
+  }
 
   const wantRuns = expected.textRuns ?? [];
   const gotRuns = actual.textRuns ?? [];
