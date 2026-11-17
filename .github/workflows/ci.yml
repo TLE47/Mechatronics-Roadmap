@@ -335,6 +335,9 @@ jobs:
       - name: Check the roadmap <-> workbench join (every entry claimed once)
         run: npm run test:practice
 
+      - name: Check the Calculator tab's grammar and its plain-sentence refusals
+        run: npm run test:calculator
+
       - name: Check the content bundle (story, missions, reward rules)
         run: npm run test:content
 

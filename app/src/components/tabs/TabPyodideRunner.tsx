@@ -2812,7 +2812,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               panes={{ value: panes, onPanes: commitPanes }}
               gate={gate}
               selfDone={selfDone}
-              run={{ isRunning, passStatus, harnessResult, asksForFinish: gateAsksForFinish }}
+              run={{ isRunning, passStatus, harnessResult, asksForFinish: gateAsksForFinish, traceLine: trace?.steps[Math.min(traceStep, trace.steps.length - 1)]?.line ?? null }}
               slots={{
                 toolbar: runnerToolbar,
                 robotPane: robotPaneFor(selectedId, execution.robot),

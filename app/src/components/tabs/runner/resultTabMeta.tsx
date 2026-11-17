@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Activity, Bug, Bot, CheckSquare, ClipboardList, GitBranch, ListChecks, Sparkles, Terminal } from 'lucide-react';
+import { Activity, Bug, Bot, Calculator, CheckSquare, ClipboardList, GitBranch, ListChecks, Sparkles, Terminal } from 'lucide-react';
 import type { EditorView } from '../../../editorPanes';
 
 /**
@@ -79,6 +79,13 @@ export function resultTabMeta(view: EditorView): ResultTabMeta {
         label: 'Trace',
         title: 'The last run replayed line by line, with the values each frame held',
         icon: <Activity className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
+      };
+    case 'calculator':
+      return {
+        label: 'Calculator',
+        title:
+          'A scientific calculator: trig, logs, powers and factorials with DEG/RAD — it never edits your code',
+        icon: <Calculator className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
       };
     default:
       return { label: 'main.py', title: 'The lesson’s Python file', icon: null };

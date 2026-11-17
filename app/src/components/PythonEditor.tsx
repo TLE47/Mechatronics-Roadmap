@@ -125,6 +125,15 @@ export interface PythonEditorProps {
    */
   initialLine?: number;
   /**
+   * The line to mark with the run box, or null to clear it.
+   *
+   * A prop rather than only the imperative handle because the pane that owns this editor can be
+   * mounted by a view change: a call made before the lazy impl attaches its ref would be lost, and
+   * the box is what makes the Trace tab's step visible in the code. The robot keeps using
+   * `setRunLine` while a run is live; this prop is the resting value.
+   */
+  runLine?: number | null;
+  /**
    * The worker's analysis channel, or null while there is none.
    *
    * A getter rather than a session, because the runner may replace the worker (Reset Runtime) and the

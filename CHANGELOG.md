@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.1.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.2.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,30 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-17] — A scientific calculator, tabs that split by drag, and a trace that keeps its line
+
+**The runner has a scientific calculator.** The editor's tab strip gains a **Calculator** tab: an
+expression field with a live answer, a keypad for sine, cosine, tangent and their inverses, `ln`,
+`log`, square root, powers, factorial, percent, `π`, `e` and `Ans`, a **DEG/RAD** switch beside the
+display, and the last eight calculations one press from the field. It reads what a keypad writes
+(`×`, `÷`, `−`, `2π`, `3(4+1)`), parses it rather than evaluating it as code, and refuses what has no
+real answer — `1 ÷ 0`, `ln(0)`, `2.5!` — with one plain sentence. The tab never reads or writes
+`main.py` and never grades anything, so it works while the interpreter is still loading. It is its own
+lazy chunk, so a lesson that never opens it does not fetch it.
+
+**A result tab can be dragged into the editor and it splits there.** Press a tab — Run output,
+Expected, Trace, the Calculator — and drag it over the editor body: the body outlines itself, and
+releasing it opens that view in a new pane beside the code. A view already on screen is focused
+instead of opened twice, and a full four-pane body swaps the focused pane rather than growing a fifth.
+The drag carries its own type, so dropping a link or selected text on the editor still does what it
+did before. The **Split** control and each pane's own placement chips remain the keyboard path.
+
+**The Trace tab always shows the line it is reading.** While the tab is open, the editor draws its
+line box around the current trace step and moves it as the step moves, so the quoted line and the
+code it belongs to are visible together without pressing **Show line** on every step. It is a
+decoration, not a caret move, so the trace slider keeps the focus. An edit clears the box with the
+rest of the recording, and closing the tab takes it away. The studio's Trace tab uses the same line.
 
 ## [2026-11-17] — The pictures get bigger type, the notes get real maths, and the header loses weight
 

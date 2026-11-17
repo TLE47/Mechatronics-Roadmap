@@ -39,9 +39,18 @@ export const EDITOR_VIEWS = [
   'breakpoints',
   'trace',
   'robot',
+  'calculator',
 ] as const;
 
 export type EditorView = (typeof EDITOR_VIEWS)[number];
+
+/**
+ * The drag type a result tab writes and the editor body reads.
+ *
+ * A custom type rather than `text/plain` means dropping a link or selected text on the body is not a
+ * request to split it: only a tab this card dragged opens a pane.
+ */
+export const EDITOR_TAB_DRAG_TYPE = 'application/x-mechalab-editor-view';
 
 /** What each pane's tab says. `main` is the file's own name, added by the runner. */
 export const EDITOR_VIEW_LABELS: Record<EditorView, string> = {
@@ -55,6 +64,7 @@ export const EDITOR_VIEW_LABELS: Record<EditorView, string> = {
   breakpoints: 'Breakpoints',
   trace: 'Trace',
   robot: 'Robot',
+  calculator: 'Calculator',
 };
 
 /** Which way the panes divide the body. Columns become a grid at three or more. */
@@ -187,7 +197,7 @@ export function viewsForLayout(
   layout: 'study' | 'write' | 'read' | 'debug' | 'compact'
 ): EditorView[] {
   if (layout === 'read') return [];
-  if (layout === 'write') return ['requirements', 'predict', 'cases', 'workflow', 'robot'];
+  if (layout === 'write') return ['requirements', 'predict', 'cases', 'workflow', 'robot', 'calculator'];
   return [
     'requirements',
     'predict',
@@ -198,6 +208,7 @@ export function viewsForLayout(
     'breakpoints',
     'trace',
     'robot',
+    'calculator',
   ];
 }
 

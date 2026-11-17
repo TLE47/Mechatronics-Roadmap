@@ -231,6 +231,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
       vimMode = false,
       onVimMode,
       initialLine,
+      runLine,
     },
     ref
   ) {
@@ -584,6 +585,15 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
       if (!view || !initialLine || !Number.isFinite(initialLine)) return;
       revealLine(view, initialLine);
     }, [initialLine]);
+
+    // The run box is a prop, so it survives the pane remount that a view change causes: the lazy
+    // impl receives it on mount, and a step or a close changes it. An edit still clears it in
+    // `runLineField`; a resting value does not bring it back over a changed document.
+    useEffect(() => {
+      const view = viewRef.current;
+      if (!view) return;
+      showRunLine(view, runLine ?? null);
+    }, [runLine]);
 
     // The Vim preference changed: reconfigure this editor instead of mounting another one, so the
     // document, the undo history and the caret survive the toggle. Also runs on mount, which is how a

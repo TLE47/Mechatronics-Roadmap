@@ -430,12 +430,25 @@ async function main() {
       'a = 1',
       'the trace must quote the program the run executed'
     );
+    const traceBox = () =>
+      page.evaluate(
+        () =>
+          document
+            .querySelector('[data-testid="pane-main"] .cm-robot-trace-line')
+            ?.textContent?.trim() ?? null
+      );
+    assert.equal(
+      await traceBox(),
+      'a = 1',
+      'the open Trace tab must mark the line it quotes in the editor'
+    );
     await page.getByTestId('trace-next').click();
     assert.equal(
       (await page.getByTestId('trace-code').textContent())?.trim(),
       'b = 2',
       'stepping the trace must move to the next executed line'
     );
+    assert.equal(await traceBox(), 'b = 2', 'and the mark must move with the step');
     await page.getByTestId('editor-tab-main').click();
     await page.getByTestId('btn-clear-breakpoint-3').click();
     await page.getByTestId('studio-more').click();

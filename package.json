@@ -1,7 +1,7 @@
 {
   "name": "mechalab",
   "private": true,
-  "version": "4.1.0",
+  "version": "4.2.0",
   "type": "module",
   "scripts": {
     "predev": "python3 scripts/generate_python_lessons_data.py",
@@ -111,6 +111,7 @@
     "test:symbols": "node --experimental-strip-types scripts/test_symbols.mjs",
     "test:layout": "node --experimental-strip-types scripts/test_layout.mjs",
     "test:panes": "node --experimental-strip-types scripts/test_editor_panes.mjs",
+    "test:calculator": "node --experimental-strip-types scripts/test_calculator.mjs",
     "test:robot": "node --experimental-strip-types scripts/test_robot_sim.mjs",
     "test:robot:browser": "node --experimental-strip-types scripts/test_robot_browser.mjs",
     "test:reader": "node --experimental-strip-types scripts/test_reader.mjs",

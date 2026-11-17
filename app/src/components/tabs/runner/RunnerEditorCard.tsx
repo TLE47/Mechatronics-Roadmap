@@ -8,8 +8,11 @@ import { EditorPaneBody } from './EditorPaneBody';
 import { resultTabMeta } from './resultTabMeta';
 import { MAIN_FILE_NAME, type LessonFile } from '../../../lessonFiles';
 import {
+  EDITOR_TAB_DRAG_TYPE,
+  MAX_PANES,
   isSplit,
   showView,
+  slotFor,
   splitPane,
   viewsForLayout,
   visibleViews,
@@ -85,6 +88,8 @@ interface EditorRun {
   passStatus: Parameters<typeof RunVerdict>[0]['passStatus'];
   harnessResult: HarnessGate | null;
   asksForFinish: boolean;
+  /** The line the Trace tab is on, so the code keeps that line marked while the tab is open. */
+  traceLine?: number | null;
 }
 
 /** The regions laid out inside the card but owned by the caller. */
@@ -216,7 +221,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
    */
   const baseResultViews =
     declaredResultViews ??
-    ['requirements', 'predict', 'actual', 'expected', 'cases', 'workflow', 'breakpoints', 'trace'];
+    ['requirements', 'predict', 'actual', 'expected', 'cases', 'workflow', 'breakpoints', 'trace', 'calculator'];
   // The Robot tab exists only where the lesson has a robot reading; every other lesson keeps the
   // same strip. It is a normal result view, so a split can put it beside the code.
   const resultViews: EditorView[] =
@@ -242,7 +247,16 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
     setBodyCollapsed(false);
     onPanes(showView(panes, view));
   };
-  const { isRunning, passStatus, harnessResult, asksForFinish } = props.run;
+  const { isRunning, passStatus, harnessResult, asksForFinish, traceLine } = props.run;
+  /** A result tab released over the body opens in a pane; a full body swaps the focused one. */
+  const onDropView = (view: EditorView) => {
+    setBodyCollapsed(false);
+    if (slotFor(panes, view) !== null) {
+      onPanes(showView(panes, view));
+      return;
+    }
+    onPanes(panes.views.length < MAX_PANES ? splitPane(panes, view, allowedViews) : showView(panes, view));
+  };
   // A failure is read in the traceback that sits under the panes. Study still opens folded, but a
   // red verdict is the one moment the body must come to the learner rather than wait to be found.
   useEffect(() => {
@@ -343,7 +357,12 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
                       role="tab"
                       aria-selected={selected}
                       data-testid={`editor-tab-${view}`}
-                      title={meta.title}
+                      title={`${meta.title} — drag this tab onto the editor to split it`}
+                      draggable
+                      onDragStart={(event) => {
+                        event.dataTransfer.setData(EDITOR_TAB_DRAG_TYPE, view);
+                        event.dataTransfer.effectAllowed = 'copy';
+                      }}
                       onClick={() => onShowView(view)}
                       // Predict has its own fixed button in the phone bar; its tab would take the
                       // width that keeps Run output and Expected on screen.
@@ -505,6 +524,8 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
         slots={props.slots}
         collab={props.collab}
         onClosePredict={onClosePredict}
+        onDropView={onDropView}
+        runLine={shownViews.has('trace') ? traceLine ?? null : null}
       />
       {!bodyCollapsed && feedback}
     </div>

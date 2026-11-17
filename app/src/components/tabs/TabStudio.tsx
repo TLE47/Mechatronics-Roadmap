@@ -466,6 +466,7 @@ export const TabStudio: React.FC = () => {
           passStatus: 'untested',
           harnessResult: null,
           asksForFinish: false,
+          traceLine: result?.trace?.steps[Math.min(traceStep, result.trace.steps.length - 1)]?.line ?? null,
         }}
         slots={{
           toolbar: studioToolbar,

@@ -30,7 +30,7 @@
     "_why": "The same source builds a bigger bundle when the Supabase variables are set, which is how CI builds it (the anon key is a repository variable; the build is local-only on a fresh clone). Run 207 is why this block exists. CI's `entry_gzip` read 532.6 kB against the 480 kB ceiling \u2014 a real breach nobody saw locally \u2014 because `@supabase/supabase-js` was being parked by the catch-all in the statically preloaded `vendor` chunk. The fix is a split, not a ceiling: `vite.config.ts` sends it to its own `vendor-auth` chunk, which the account panel fetches when it opens, so `entry_gzip` measured 475.1 kB with accounts configured and needs no override \u2014 and it should not get one, because a first paint that differs between the two shapes would mean the split regressed. What the library really costs is emitted bytes: 57.8 kB gzipped in `vendor-auth` plus the account panel's own code in the runner chunk. (Both builds emit a `vendor-auth` file; without the variables it is the one-byte stub the folded-away import leaves, which is why the gate tells the shapes apart by that chunk's raw size rather than by its name.) `js_gzip` 801.0 kB measured against 810 kB (9 kB of room) and `total` 1.12 MB against 1.14 MB (20 kB), both by hand and by this measurement. The other five metrics are the same file in both shapes and keep their base ceilings, so a font or a stylesheet cannot grow just because someone built with a key.",
     "budgets": {
       "js_gzip": 1260000,
-      "total": 4005000,
+      "total": 4025000,
       "entry_gzip": 665000,
       "largest_js_gzip": 424000,
       "reader_gzip": 760000
@@ -41,12 +41,12 @@
     "reader_gzip": 760000,
     "entry_gzip": 663000,
     "js_gzip": 1205000,
-    "css_gzip": 32600,
+          "css_gzip": 33000,
     "fonts": 600000,
-    "largest_js_gzip": 424000,
-    "audio": 150000,
-    "music": 2350000,
-    "total": 3945000
+          "largest_js_gzip": 424000,
+      "audio": 150000,
+      "music": 2350000,
+      "total": 3965000
   },
   "measured": {
     "entry_gzip": 608162,
@@ -70,5 +70,6 @@
   "_why_budget_2026_11_15_bridge_batch2": "Bridge Notes cards, batch 2 (2026-11-15): sixteen wrong/right cards (clamp-function, assert-guard, answer-check, datasheet-limits, regulator-budget, timer-wrap, pointer-box, lag-power, water-analogue, count-rate, accumulate, state-slots, matrix-tick, arrow-multiply, bringup, belt-geometry), each its own 1.5-2.2 kB lazy chunk. js_gzip stays inside the 1,205,000 / 1,260,000 ceilings raised earlier today; only the total moves (3,895,000 -> 3,945,000 and 3,950,000 -> 4,005,000) because the total counts every lazy chunk, not just the entry. entry_gzip and largest_js_gzip are unchanged.",
   "_why_budget_2026_11_15_bridge_batch3_lessons": "Bridge Notes, Batch 3 lessons (2026-11-15): 01.1 and S0.6 stop being Falstad-only pages and become graded Python lessons, so two more lesson payloads enter app/public/lesson-pages and the reader total grows by 10.1 kB gzipped (735.0 -> 745.1 kB; reader_gzip ceiling 735,000 -> 760,000). The growth is lesson text plus two 2.1 kB lazy card chunks, not framework code: every other metric stays inside its own ceiling (entry 645.6 kB of 663 kB, largest js and css unchanged).",
   "_why_budget_2026_11_15_prose": "The prose index reached its ceiling on 2026-11-15 with Batch 3: two new reader pages (01.1 and S0.6) plus the Bridge Notes heading and callout each page carries, and the prose-search index that `cmd+shift+F` fetches re-reads every page. Measured $229463 B gzipped against the old 230000 B budget, so the reader had no headroom left and the next sentence anyone wrote would have failed a weight gate for a reason that is content, not payload bloat. Raised to 233000 B: about 3 kB of room, the step the earlier notes used, so CI compression variance does not grade a number nobody edited. Nothing else moved: the shell metrics in this file are unchanged and the entry chunk still measures what it did. If this metric approaches its ceiling again the lever is the index itself (dedupe the repeated heading text each page contributes), not another raise.",
-  "_why_budget_2026_11_15_css": "The micro-focus picture families moved `css_gzip` by hand on 2026-11-15. Each of the 46 concepts now draws one of seventeen figure families (components/micro/MicroFigures.tsx) instead of a single row of chips: the washes, rails, bit grid, dial and plot classes are new Tailwind utilities on a tab the app already ships, and no CSS file, font or dependency was added. Measured local-only 31,505 B against the old 31,800 B ceiling \u2014 295 B of room, a number that fails on CI's compression variance rather than on a regression. The ceiling is 32,600 B, about 1.1 kB above the measurement, the step earlier notes used. Nothing else moved: entry 647.0 of 663 kB, largest_js_gzip 409.9 of 424 kB, js 1.16 of 1.21 MB, prose 229.2 of 233 kB. Hand-raised after the measurement, not recorded first."
+  "_why_budget_2026_11_15_css": "The micro-focus picture families moved `css_gzip` by hand on 2026-11-15. Each of the 46 concepts now draws one of seventeen figure families (components/micro/MicroFigures.tsx) instead of a single row of chips: the washes, rails, bit grid, dial and plot classes are new Tailwind utilities on a tab the app already ships, and no CSS file, font or dependency was added. Measured local-only 31,505 B against the old 31,800 B ceiling \u2014 295 B of room, a number that fails on CI's compression variance rather than on a regression. The ceiling is 32,600 B, about 1.1 kB above the measurement, the step earlier notes used. Nothing else moved: entry 647.0 of 663 kB, largest_js_gzip 409.9 of 424 kB, js 1.16 of 1.21 MB, prose 229.2 of 233 kB. Hand-raised after the measurement, not recorded first.",
+  "_why_budget_2026_11_17_calculator": "The Calculator tab, the tab-to-split drag and the trace's line box moved three ceilings by hand on 2026-11-17. The calculator is its own React.lazy chunk (11.12 kB raw / 4.08 kB gzipped) and is not in index.html's preloads, so entry_gzip only pays the lazy declaration; the drag and the trace effect are app code on the runner chunk. Measured local-only: entry 653534 B, js 1178113 B, css 32584 B, largest_js_gzip 415484 B, total 3938364 B; signed-in js 1237645 B and total 3997894 B. css_gzip had 16 B left under its 32600 B ceiling - a budget that would fail on CI's compression variance rather than on a regression - so it is 33000 B, about 400 B of room. total is 3965000 and 4025000 B: 6-7 kB of room in each shape. entry, js, largest and the page metrics keep their numbers. Hand-raised after the measurement, not recorded first."
 }

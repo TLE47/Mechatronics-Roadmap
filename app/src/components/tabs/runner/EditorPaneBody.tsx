@@ -1,9 +1,11 @@
 import {
   Suspense,
   lazy,
+  useEffect,
   useRef,
   useState,
   type CSSProperties,
+  type DragEvent as ReactDragEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
   type RefObject,
@@ -12,9 +14,11 @@ import { PythonKeys } from '../../PythonKeys';
 import { PythonEditor, type PythonEditorHandle } from '../../PythonEditor';
 import { MAIN_FILE_NAME, type LessonFile } from '../../../lessonFiles';
 import {
+  EDITOR_TAB_DRAG_TYPE,
   EDITOR_VIEW_LABELS,
   EDITOR_VIEWS,
   focusSlot,
+  isEditorView,
   paneColumns,
   paneWidths,
   resizeColumn,
@@ -32,6 +36,12 @@ import type { AnalysisSession } from '../../../analysisClient';
 
 const EditorRequirements = lazy(() =>
   import('./EditorRequirements').then((module) => ({ default: module.EditorRequirements }))
+);
+
+// The calculator is a tool, not a report on the file: it has no reason to sit in the entry chunk of
+// every lesson that never opens the tab.
+const CalculatorPane = lazy(() =>
+  import('./CalculatorPane').then((module) => ({ default: module.CalculatorPane }))
 );
 
 // The placement control only exists in a body of three or more panes; keeping it out of the entry
@@ -137,6 +147,8 @@ export function EditorPaneBody({
   slots,
   collab,
   onClosePredict,
+  onDropView,
+  runLine,
 }: {
   panes: EditorPanes;
   onPanes: (next: EditorPanes) => void;
@@ -155,6 +167,10 @@ export function EditorPaneBody({
   running: boolean;
   slots: PaneSlots;
   collab: PaneCollab;
+  /** A result tab was released over the body: open it in a pane, splitting if there is room. */
+  onDropView?: (view: EditorView) => void;
+  /** The line the open Trace tab is on, marked in the code; null clears the box. */
+  runLine?: number | null;
   onClosePredict?: () => void;
 }) {
   const {
@@ -191,6 +207,7 @@ export function EditorPaneBody({
   const groups =
     !paneSplit || isPhone ? (slotNumbers.length ? [slotNumbers] : []) : paneColumns(panes, slotNumbers);
   const [preview, setPreview] = useState<{ columns?: number[]; rows?: number[] }>({});
+  const [dropActive, setDropActive] = useState(false);
   const dragRef = useRef<{
     axis: 'column' | 'row';
     index: number;
@@ -204,6 +221,53 @@ export function EditorPaneBody({
   const shownWidths = preview.columns ?? columnWidths;
   const rowSharesFor = (count: number) => preview.rows ?? sharesFor(count, panes.rowShares);
   const openHelperFile = helperFiles.find((file) => file.name === openHelper) ?? null;
+
+  /** A tab drag carries the custom type; a link or a selection dropped here must not split the body. */
+  const carriesTab = (event: ReactDragEvent<HTMLDivElement>) =>
+    Array.from(event.dataTransfer.types).includes(EDITOR_TAB_DRAG_TYPE);
+
+  const dragOver = (event: ReactDragEvent<HTMLDivElement>) => {
+    if (!onDropView || !carriesTab(event)) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+    if (!dropActive) setDropActive(true);
+  };
+
+  // A `dragleave` bubbles from every child the pointer crosses, and its `relatedTarget` is null on
+  // most of those, so "still inside the body" is measured rather than inferred from the target.
+  const dragLeave = (event: ReactDragEvent<HTMLDivElement>) => {
+    const box = event.currentTarget.getBoundingClientRect();
+    if (
+      event.clientX >= box.left &&
+      event.clientX <= box.right &&
+      event.clientY >= box.top &&
+      event.clientY <= box.bottom
+    ) {
+      return;
+    }
+    setDropActive(false);
+  };
+
+  const drop = (event: ReactDragEvent<HTMLDivElement>) => {
+    if (!onDropView || !carriesTab(event)) return;
+    event.preventDefault();
+    setDropActive(false);
+    const view = event.dataTransfer.getData(EDITOR_TAB_DRAG_TYPE);
+    if (isEditorView(view)) onDropView(view);
+  };
+
+  // Escape cancels a native drag with `dragend` at the tab, not a `dragleave` here: without this the
+  // offer would outlive the drag it belongs to.
+  useEffect(() => {
+    if (!dropActive) return;
+    const clear = () => setDropActive(false);
+    window.addEventListener('dragend', clear);
+    window.addEventListener('drop', clear);
+    return () => {
+      window.removeEventListener('dragend', clear);
+      window.removeEventListener('drop', clear);
+    };
+  }, [dropActive]);
 
   const resizeMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const drag = dragRef.current;
@@ -402,6 +466,7 @@ export function EditorPaneBody({
               onToggleBreakpoint={breakpoints?.onToggle}
               onBreakpointsMoved={breakpoints?.onMoved}
               breakpoints={breakpoints?.entries}
+              runLine={runLine}
               vimMode={vimOn}
               onVimMode={onVimMode}
               initialLine={pendingJump?.file === MAIN_FILE_NAME ? pendingJump.line : undefined}
@@ -440,6 +505,15 @@ export function EditorPaneBody({
       ) : null;
     }
     if (view === 'breakpoints') return breakpointsPane ?? null;
+    if (view === 'calculator') {
+      // Only the open tab pays for the calculator's chunk: a hidden pane is mounted to keep its
+      // scroll, and a tool nobody asked for has no scroll to keep.
+      return shownViews.has('calculator') ? (
+        <Suspense fallback={null}>
+          <CalculatorPane />
+        </Suspense>
+      ) : null;
+    }
     if (view === 'robot') return robotPane ?? null;
     if (view === 'actual') return actualOutputPane;
     if (view === 'expected') return expectedOutputPane;
@@ -522,8 +596,23 @@ export function EditorPaneBody({
       data-focus={paneSplit ? panes.focus : 0}
       data-views={views.join(',')}
       data-count={shownViews.size}
+      data-tab-drop={dropActive ? 'true' : undefined}
+      onDragOver={dragOver}
+      onDragLeave={dragLeave}
+      onDrop={drop}
       className={`${!paneSplit ? 'flex flex-col' : 'flex gap-px bg-line-soft'}`}
     >
+      {dropActive && (
+        <div
+          data-testid="pane-drop-target"
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-1 z-[4] flex items-center justify-center rounded-lg border-2 border-dashed border-accent bg-accent/10"
+        >
+          <span className="rounded-md bg-canvas/95 px-2 py-1 font-mono text-[11px] text-accent">
+            Release to split
+          </span>
+        </div>
+      )}
       {paneSplit &&
         groups.length > 1 &&
         shownWidths.slice(0, -1).map((_, index) => (

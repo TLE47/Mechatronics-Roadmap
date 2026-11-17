@@ -1748,6 +1748,50 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         'the tab must say it is the view on screen'
       );
 
+      // 5d-i. A result tab dragged onto the body opens a pane there. The synthetic DataTransfer
+      //       drives the same dragstart/dragover/drop contract a pointer does, without making the
+      //       test depend on the scroll position both ends happen to share.
+      await page.evaluate(() => {
+        const tab = document.querySelector('[data-testid="editor-tab-expected"]');
+        const body = document.querySelector('[data-testid="editor-panes"]');
+        const transfer = new DataTransfer();
+        tab.dispatchEvent(new DragEvent('dragstart', { bubbles: true, cancelable: true, dataTransfer: transfer }));
+        body.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: transfer }));
+        window.__tabDrag = transfer;
+      });
+      await page.waitForFunction(
+        () => document.querySelector('[data-testid="editor-panes"]')?.getAttribute('data-tab-drop') === 'true',
+        undefined,
+        { timeout: 5000 }
+      );
+      assert.equal(
+        await page.getByTestId('pane-drop-target').isVisible(),
+        true,
+        'a tab held over the body must offer the split before it is released'
+      );
+      await page.evaluate(() => {
+        document
+          .querySelector('[data-testid="editor-panes"]')
+          .dispatchEvent(
+            new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: window.__tabDrag })
+          );
+      });
+      await page.waitForFunction(
+        () =>
+          document.querySelector('[data-testid="editor-panes"]')?.getAttribute('data-count') === '2' &&
+          document.querySelector('[data-testid="editor-panes"]')?.getAttribute('data-views') ===
+            'actual,expected',
+        undefined,
+        { timeout: 5000 }
+      );
+      assert.equal(
+        await page.getByTestId('pane-expected').isVisible(),
+        true,
+        'dropping a tab must open that view in the new pane'
+      );
+      await page.getByTestId('pane-close-expected').click();
+      await page.getByTestId('pane-actual').waitFor({ state: 'visible', timeout: 5000 });
+
       await page.getByTestId('btn-pane-split').click();
       await page.getByTestId('editor-main').waitFor({ state: 'visible', timeout: 10000 });
       assert.equal(
