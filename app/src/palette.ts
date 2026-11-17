@@ -219,23 +219,14 @@ function itemScore(item: PaletteItem, query: string): number | null {
  * An empty query returns the catalogue as given: the palette then reads as a table of contents
  * rather than a ranked guess about what the learner meant. `limit` bounds the DOM, not the search.
  */
-export function rankPalette(
-  items: PaletteItem[],
-  query: string,
-  limit = 200,
-  /**
-   * How often a row has been used, for the empty query only (`app/src/paletteFrecency.ts`).
-   *
-   * Omitted by every unit test and by every typed query, so the catalogue's own order — lessons in
-   * course order, tabs in rail order — is still what an empty field shows by default. A sort key
-   * that is equal everywhere leaves that order untouched, because the sort is stable.
-   */
-  boost?: (id: string) => number
-): PaletteMatch[] {
+export function rankPalette(items: PaletteItem[], query: string, limit = 200): PaletteMatch[] {
   const wanted = query.trim().toLowerCase();
   if (!wanted) {
-    const ordered = boost ? [...items].sort((a, b) => boost(b.id) - boost(a.id)) : items;
-    return ordered.slice(0, limit).map((item) => ({ item, score: 0 }));
+    // The empty field is the table of contents itself, in the catalogue's own order — lessons from
+    // P.1 to the capstone, then pages, tabs and commands in reading order. Nothing may reorder it,
+    // least of all what this browser happened to open before: a learner scrolling for P.3 must find
+    // it between P.2 and P.4, on the first visit and on the fiftieth.
+    return items.slice(0, limit).map((item) => ({ item, score: 0 }));
   }
   const matches: PaletteMatch[] = [];
   items.forEach((item) => {

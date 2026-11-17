@@ -18,7 +18,6 @@ import {
   type PaletteMatch,
   type PaletteMode,
 } from '../palette';
-import { paletteBoost, readPaletteUses, recordPaletteUse } from '../paletteFrecency';
 
 /**
  * The `↵` on the row cmdk has selected.
@@ -112,14 +111,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   // `search` answers with rows already in reading order and already capped, so it is not ranked
   // again: the index knows which lesson and which line a hit is, and `rankPalette` only knows words.
-  /** What this browser has opened before, for the empty query only (`app/src/paletteFrecency.ts`). */
-  const boost = useMemo(() => paletteBoost(readPaletteUses()), [isOpen]);
+  // The empty query is the catalogue exactly as built — course order, always — and nothing here
+  // reorders it, so a learner who opened P.9 yesterday still finds P.2 second today.
   const matches = useMemo<PaletteMatch[]>(
     () =>
       mode === 'search' && query.trim() !== ''
         ? (search?.(query) ?? []).map((item) => ({ item, score: 0 }))
-        : rankPalette(items, query, 200, boost),
-    [mode, search, items, query, boost]
+        : rankPalette(items, query, 200),
+    [mode, search, items, query]
   );
   /** The rows the live chip keeps: the same answer, narrowed by kind. */
   const visible = useMemo(() => filterPaletteMatches(matches, filter), [matches, filter]);
@@ -227,7 +226,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   };
 
   const choose = (item: PaletteItem) => {
-    recordPaletteUse(item.id);
     onSelect(item);
     onClose();
   };

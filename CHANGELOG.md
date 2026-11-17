@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-****Release identity: `3.6.0`.** `package.json` is the one place the number lives; the workbench's footer
+******Release identity: `3.6.1`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,24 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-16] — The course list keeps its order, and a release cannot forget its number
+
+**The empty search had started reordering itself.** A habit store — rows this browser had opened
+before — was sorted to the top of the empty list, so a learner who opened P.9 and came back found
+P.9 first and the course shuffled around it. The list is the table of contents: it now reads in
+course order every time, P.1, P.2, P.2.5, … whatever was opened yesterday, and the store is gone.
+`rankPalette` has no sort of its own on an empty query, so there is nothing left to drift;
+`scripts/test_palette.mjs` pins the first two rows and the last, and the browser suite reads them
+from a real `⌘⇧F` open.
+
+**`npm run version:check` now also asks whether the change was released.** It compares the paths a
+change touches with the version it carries: uncommitted learner-facing paths must come with a
+`package.json` newer than `HEAD`, and a pushed commit must carry a version its first parent did not
+have. Bookkeeping and gate-only changes (the changelog, docs, scripts, workflow files, tests) are
+neutral, and a merge passes if either side already moved the number. The message names the files and
+the command to run, so a lesson edit that forgot its patch fails with `3 learner-facing file(s)
+changed … but the version is still 3.6.0`, not with a silent header that shows last week's release.
 
 ## [2026-11-16] — The palette opens on the course, with a lens for the row you wanted
 
