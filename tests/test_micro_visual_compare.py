@@ -75,13 +75,24 @@ class MicroVisualCompareTests(unittest.TestCase):
         )
         with open(BASELINE, encoding="utf-8") as handle:
             baseline = json.load(handle)
-        self.assertEqual(baseline.get("widths"), [477, 966])
-        self.assertEqual(len(baseline.get("scenes", {})), 46)
+        self.assertEqual(
+            baseline.get("widths"),
+            [477, 966],
+            msg="expected the recording to name 477 and 966 px; check the widths field, since a "
+            "scene measured at only one placement is the gap this gate exists to close",
+        )
+        self.assertEqual(
+            len(baseline.get("scenes", {})),
+            46,
+            msg="expected all 46 scenes in docs/micro-visual-snapshot.json; check the catalogue "
+            "and re-record the snapshot if a scene was added or removed",
+        )
         for scene, widths in baseline["scenes"].items():
             self.assertEqual(
                 sorted(widths),
                 ["477", "966"],
-                msg=f"{scene} must record both placement widths",
+                msg=f"expected {scene} to record both placement widths; check the scene's 477 "
+                "and 966 px entries, since only one placement leaves the other unmeasured",
             )
 
 
