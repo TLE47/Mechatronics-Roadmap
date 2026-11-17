@@ -52,6 +52,43 @@ function Arrow({ className = '' }: { className?: string }) {
   );
 }
 
+function InlineArrow({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      className={`inline-block shrink-0 ${className}`}
+      style={{ width: '0.95em', height: '0.95em', verticalAlign: '-0.12em' }}
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M2.5 8h10M9 4.5 12.5 8 9 11.5" />
+    </svg>
+  );
+}
+
+function LoopArrow({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      className={`inline-block shrink-0 ${className}`}
+      style={{ width: '1em', height: '1em', verticalAlign: '-0.12em' }}
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M13 6a5 5 0 1 0 .2 4" />
+      <path d="M13 2v4h-4" />
+    </svg>
+  );
+}
+
 function VariablesVisual({ sample }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -258,7 +295,9 @@ function OperatorsVisual() {
           </span>
         ))}
       </div>
-      <p className="font-mono text-[12px] text-ink">2 * 3 → 6</p>
+      <p className="font-mono text-[12px] text-ink">
+        2 * 3 <InlineArrow /> 6
+      </p>
     </div>
   );
 }
@@ -330,7 +369,7 @@ function ComparisonsVisual() {
         </span>
       </div>
       <p className="text-center font-mono text-[9.5px] text-muted">
-        else → <span className="text-ink">print(&quot;fan off&quot;)</span>
+        else <InlineArrow /> <span className="text-ink">print(&quot;fan off&quot;)</span>
       </p>
     </div>
   );
@@ -350,10 +389,14 @@ function ClampingVisual() {
         <span className="absolute right-2 top-2 rounded border border-rose/40 bg-rose/10 px-1.5 py-0.5 font-mono text-[10px] text-rose">
           310
         </span>
-        <span className="absolute right-8 top-9 font-mono text-[9px] text-rose">too high →</span>
+        <span className="absolute right-8 top-9 font-mono text-[9px] text-rose">
+          too high <InlineArrow />
+        </span>
         <div className="absolute left-[64%] top-3 h-6 w-0.5 -translate-x-1/2 bg-emerald" />
       </div>
-      <p className="font-mono text-[11px] text-ink">min(310, 255) → 255</p>
+      <p className="font-mono text-[11px] text-ink">
+        min(310, 255) <InlineArrow /> 255
+      </p>
     </div>
   );
 }
@@ -412,7 +455,7 @@ function ForLoopsVisual() {
         <Arrow />
         <div className="relative grid h-12 w-12 place-items-center rounded-full border-2 border-dashed border-amber/60 bg-amber/5">
           <span className="font-mono text-[10px] font-bold text-amber">for</span>
-          <span className="absolute -right-2 top-1 font-mono text-[13px] text-amber">↻</span>
+          <LoopArrow className="absolute -right-2 top-1 text-amber" />
         </div>
         <Arrow />
         <span className="rounded border border-line bg-panel px-2 py-1 font-mono text-[10px] text-ink">
@@ -422,11 +465,11 @@ function ForLoopsVisual() {
       <div className="flex flex-wrap items-center gap-1 font-mono text-[10px] text-muted">
         <span>total</span>
         <span className="text-ink">0.0</span>
-        <span>→</span>
+        <InlineArrow />
         <span className="text-ink">1.0</span>
-        <span>→</span>
+        <InlineArrow />
         <span className="text-ink">3.0</span>
-        <span>→</span>
+        <InlineArrow />
         <span className="font-bold text-ink">6.0</span>
         <Chip className="border-emerald/30 bg-emerald/10 text-emerald">avg 2.0</Chip>
       </div>
@@ -449,7 +492,7 @@ function IndexErrorVisual() {
             <p className="font-mono text-[11.5px] font-bold text-ink">{value}</p>
           </div>
         ))}
-        <span className="pb-2 text-faint">→</span>
+        <InlineArrow className="mb-1 text-faint" />
         <div className="rounded border border-dashed border-rose/50 bg-rose/10 px-2 py-1.5 text-center">
           <p className="font-mono text-[9px] text-rose">index 3</p>
           <p className="font-mono text-[13px] font-bold text-rose">✕</p>
@@ -496,16 +539,24 @@ function WhileLoopsVisual() {
           <span className="rounded-lg border border-amber/40 bg-amber/10 px-2.5 py-1 font-mono text-[9.5px] text-amber">
             step += 1
           </span>
-          <span className="font-mono text-[14px] text-emerald">↻</span>
+          <LoopArrow className="text-emerald" />
         </div>
         <p className="text-[10.5px] text-muted">Test before every pass; the update is what lets it stop.</p>
       </div>
       <div className="rounded-lg border border-line bg-panel p-2 font-mono text-[9.5px] leading-relaxed">
         <p className="mb-1 text-[8.5px] uppercase tracking-[0.12em] text-faint">trace</p>
-        <p className="text-emerald">0 &lt; 3 → print 0 → step 1</p>
-        <p className="text-emerald">1 &lt; 3 → print 1 → step 2</p>
-        <p className="text-emerald">2 &lt; 3 → print 2 → step 3</p>
-        <p className="text-rose">3 &lt; 3 → False · stop</p>
+        <p className="text-emerald">
+          0 &lt; 3 <InlineArrow /> print 0 <InlineArrow /> step 1
+        </p>
+        <p className="text-emerald">
+          1 &lt; 3 <InlineArrow /> print 1 <InlineArrow /> step 2
+        </p>
+        <p className="text-emerald">
+          2 &lt; 3 <InlineArrow /> print 2 <InlineArrow /> step 3
+        </p>
+        <p className="text-rose">
+          3 &lt; 3 <InlineArrow /> False · stop
+        </p>
       </div>
     </div>
   );
@@ -521,7 +572,9 @@ function NoneVisual() {
       </div>
       <div className="rounded-lg border border-line bg-panel p-2.5">
         <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-faint">print receipt</p>
-        <p className="mt-1 font-mono text-[13px] font-bold text-ink">print(7) → 7</p>
+        <p className="mt-1 font-mono text-[13px] font-bold text-ink">
+          print(7) <InlineArrow /> 7
+        </p>
         <p className="text-[10px] text-muted">printed, not returned</p>
       </div>
     </div>
@@ -1035,7 +1088,9 @@ function DatasheetUnitsVisual() {
       <div className="grid grid-cols-[1.2fr_0.7fr_1fr] items-center gap-2 px-2 py-2 font-mono text-[10.5px]">
         <span className="text-ink">supply current</span>
         <span className="rounded bg-accent/10 px-1 py-0.5 text-accent">mA</span>
-        <span className="text-ink">2.5 → 0.0025 A</span>
+        <span className="text-ink">
+          2.5 <InlineArrow /> 0.0025 A
+        </span>
       </div>
     </div>
   );
@@ -1082,7 +1137,7 @@ function DatasheetConditionsVisual() {
         ))}
       </div>
       <p className="flex items-center gap-1 font-mono text-[10px] text-rose">
-        budget here <span aria-hidden="true">→</span> Max
+        budget here <InlineArrow /> Max
       </p>
     </div>
   );

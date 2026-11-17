@@ -4408,7 +4408,7 @@
         "width": 477,
         "height": 114,
         "frameStyle": "0e10ae2c26e39dea",
-        "text": "EACH ARITHMETIC SYMBOL HAS ONE JOB + add - subtract * multiply / divide ** power 2 * 3 → 6",
+        "text": "EACH ARITHMETIC SYMBOL HAS ONE JOB + add - subtract * multiply / divide ** power 2 * 3 6",
         "textRuns": [
           [
             "Each arithmetic symbol has one job",
@@ -4510,11 +4510,20 @@
             ]
           ],
           [
-            "2 * 3 → 6",
+            "2 * 3",
             [
               15,
               80,
-              68,
+              43,
+              16
+            ]
+          ],
+          [
+            "6",
+            [
+              70,
+              80,
+              14,
               16
             ]
           ]
@@ -4729,16 +4738,38 @@
               19
             ],
             "2ab507585fbbe3c2"
+          ],
+          [
+            "svg",
+            [
+              58,
+              82,
+              11,
+              11
+            ],
+            "f49ead0507761acb"
+          ],
+          [
+            "path",
+            [
+              60,
+              86,
+              7,
+              5
+            ],
+            "f49ead0507761acb"
           ]
         ],
-        "svgs": [],
+        "svgs": [
+          "32e1ec3a9af631ac"
+        ],
         "issues": []
       },
       "966": {
         "width": 966,
         "height": 114,
         "frameStyle": "0e10ae2c26e39dea",
-        "text": "EACH ARITHMETIC SYMBOL HAS ONE JOB + add - subtract * multiply / divide ** power 2 * 3 → 6",
+        "text": "EACH ARITHMETIC SYMBOL HAS ONE JOB + add - subtract * multiply / divide ** power 2 * 3 6",
         "textRuns": [
           [
             "Each arithmetic symbol has one job",
@@ -4840,11 +4871,20 @@
             ]
           ],
           [
-            "2 * 3 → 6",
+            "2 * 3",
             [
               15,
               80,
-              68,
+              43,
+              16
+            ]
+          ],
+          [
+            "6",
+            [
+              70,
+              80,
+              14,
               16
             ]
           ]
@@ -5059,9 +5099,31 @@
               19
             ],
             "2ab507585fbbe3c2"
+          ],
+          [
+            "svg",
+            [
+              58,
+              82,
+              11,
+              11
+            ],
+            "f49ead0507761acb"
+          ],
+          [
+            "path",
+            [
+              60,
+              86,
+              7,
+              5
+            ],
+            "f49ead0507761acb"
           ]
         ],
-        "svgs": [],
+        "svgs": [
+          "32e1ec3a9af631ac"
+        ],
         "issues": []
       }
     },
@@ -6376,7 +6438,7 @@
         "width": 477,
         "height": 174,
         "frameStyle": "0e10ae2c26e39dea",
-        "text": "A QUESTION WITH A YES-OR-NO ANSWER 72 80 72 > 80 False else → print(\"fan off\")",
+        "text": "A QUESTION WITH A YES-OR-NO ANSWER 72 80 72 > 80 False else print(\"fan off\")",
         "textRuns": [
           [
             "A question with a yes-or-no answer",
@@ -6424,18 +6486,18 @@
             ]
           ],
           [
-            "else →",
+            "else",
             [
-              172,
+              171,
               145,
-              42,
+              29,
               13
             ]
           ],
           [
             "print(\"fan off\")",
             [
-              214,
+              215,
               145,
               91,
               13
@@ -6604,9 +6666,29 @@
             "610dc3d2ac3d3800"
           ],
           [
+            "svg",
+            [
+              200,
+              147,
+              9,
+              9
+            ],
+            "a93d5afb2b7a6585"
+          ],
+          [
+            "path",
+            [
+              201,
+              150,
+              6,
+              4
+            ],
+            "a93d5afb2b7a6585"
+          ],
+          [
             "span",
             [
-              214,
+              215,
               145,
               91,
               13
@@ -6615,7 +6697,8 @@
           ]
         ],
         "svgs": [
-          "ee4b48499082cd33"
+          "ee4b48499082cd33",
+          "32e1ec3a9af631ac"
         ],
         "issues": []
       },
@@ -6623,7 +6706,7 @@
         "width": 966,
         "height": 174,
         "frameStyle": "0e10ae2c26e39dea",
-        "text": "A QUESTION WITH A YES-OR-NO ANSWER 72 80 72 > 80 False else → print(\"fan off\")",
+        "text": "A QUESTION WITH A YES-OR-NO ANSWER 72 80 72 > 80 False else print(\"fan off\")",
         "textRuns": [
           [
             "A question with a yes-or-no answer",
@@ -6671,18 +6754,18 @@
             ]
           ],
           [
-            "else →",
+            "else",
             [
               416,
               145,
-              42,
+              29,
               13
             ]
           ],
           [
             "print(\"fan off\")",
             [
-              458,
+              459,
               145,
               91,
               13
@@ -6851,9 +6934,29 @@
             "610dc3d2ac3d3800"
           ],
           [
+            "svg",
+            [
+              444,
+              147,
+              9,
+              9
+            ],
+            "a93d5afb2b7a6585"
+          ],
+          [
+            "path",
+            [
+              446,
+              150,
+              6,
+              4
+            ],
+            "a93d5afb2b7a6585"
+          ],
+          [
             "span",
             [
-              458,
+              459,
               145,
               91,
               13
@@ -6862,7 +6965,8 @@
           ]
         ],
         "svgs": [
-          "ee4b48499082cd33"
+          "ee4b48499082cd33",
+          "32e1ec3a9af631ac"
         ],
         "issues": []
       }
@@ -6872,7 +6976,7 @@
         "width": 477,
         "height": 144,
         "frameStyle": "f4a523f681f2a03c",
-        "text": "PINNED TO THE NEAREST LIMIT 0 255 310 too high → min(310, 255) → 255",
+        "text": "PINNED TO THE NEAREST LIMIT 0 255 310 too high min(310, 255) 255",
         "textRuns": [
           [
             "Pinned to the nearest limit",
@@ -6911,20 +7015,29 @@
             ]
           ],
           [
-            "too high →",
+            "too high",
             [
-              373,
+              372,
               77,
-              56,
+              49,
               12
             ]
           ],
           [
-            "min(310, 255) → 255",
+            "min(310, 255)",
             [
               15,
               112,
-              128,
+              92,
+              14
+            ]
+          ],
+          [
+            "255",
+            [
+              118,
+              112,
+              26,
               14
             ]
           ]
@@ -7033,12 +7146,32 @@
           [
             "span",
             [
-              373,
+              372,
               76,
-              56,
+              57,
               14
             ],
             "bfb351248b342002"
+          ],
+          [
+            "svg",
+            [
+              420,
+              79,
+              9,
+              9
+            ],
+            "c520bdd0583be7f2"
+          ],
+          [
+            "path",
+            [
+              422,
+              81,
+              5,
+              4
+            ],
+            "c520bdd0583be7f2"
           ],
           [
             "div",
@@ -7059,16 +7192,39 @@
               18
             ],
             "6d4d5133165ad2c5"
+          ],
+          [
+            "svg",
+            [
+              107,
+              113,
+              10,
+              10
+            ],
+            "e02f2ababb48cd10"
+          ],
+          [
+            "path",
+            [
+              109,
+              116,
+              7,
+              5
+            ],
+            "e02f2ababb48cd10"
           ]
         ],
-        "svgs": [],
+        "svgs": [
+          "32e1ec3a9af631ac",
+          "32e1ec3a9af631ac"
+        ],
         "issues": []
       },
       "966": {
         "width": 966,
         "height": 144,
         "frameStyle": "f4a523f681f2a03c",
-        "text": "PINNED TO THE NEAREST LIMIT 0 255 310 too high → min(310, 255) → 255",
+        "text": "PINNED TO THE NEAREST LIMIT 0 255 310 too high min(310, 255) 255",
         "textRuns": [
           [
             "Pinned to the nearest limit",
@@ -7107,20 +7263,29 @@
             ]
           ],
           [
-            "too high →",
+            "too high",
             [
-              862,
+              861,
               77,
-              56,
+              49,
               12
             ]
           ],
           [
-            "min(310, 255) → 255",
+            "min(310, 255)",
             [
               15,
               112,
-              128,
+              92,
+              14
+            ]
+          ],
+          [
+            "255",
+            [
+              118,
+              112,
+              26,
               14
             ]
           ]
@@ -7229,12 +7394,32 @@
           [
             "span",
             [
-              862,
+              861,
               76,
-              56,
+              57,
               14
             ],
             "bfb351248b342002"
+          ],
+          [
+            "svg",
+            [
+              909,
+              79,
+              9,
+              9
+            ],
+            "c520bdd0583be7f2"
+          ],
+          [
+            "path",
+            [
+              911,
+              81,
+              5,
+              4
+            ],
+            "c520bdd0583be7f2"
           ],
           [
             "div",
@@ -7255,9 +7440,32 @@
               18
             ],
             "6d4d5133165ad2c5"
+          ],
+          [
+            "svg",
+            [
+              107,
+              113,
+              10,
+              10
+            ],
+            "e02f2ababb48cd10"
+          ],
+          [
+            "path",
+            [
+              109,
+              116,
+              7,
+              5
+            ],
+            "e02f2ababb48cd10"
           ]
         ],
-        "svgs": [],
+        "svgs": [
+          "32e1ec3a9af631ac",
+          "32e1ec3a9af631ac"
+        ],
         "issues": []
       }
     },
@@ -8224,7 +8432,7 @@
         "width": 477,
         "height": 156,
         "frameStyle": "b7276dc972cd147f",
-        "text": "ONE PASS PER ITEM 1.0 2.0 3.0 for ↻ total = total + value total 0.0 → 1.0 → 3.0 → 6.0 avg 2.0 Each item gets one pass; the accumulator starts before the loop.",
+        "text": "ONE PASS PER ITEM 1.0 2.0 3.0 for total = total + value total 0.0 1.0 3.0 6.0 avg 2.0 Each item gets one pass; the accumulator starts before the loop.",
         "textRuns": [
           [
             "One pass per item",
@@ -8272,15 +8480,6 @@
             ]
           ],
           [
-            "↻",
-            [
-              190,
-              46,
-              11,
-              17
-            ]
-          ],
-          [
             "total = total + value",
             [
               232,
@@ -8308,54 +8507,27 @@
             ]
           ],
           [
-            "→",
-            [
-              71,
-              99,
-              8,
-              13
-            ]
-          ],
-          [
             "1.0",
             [
-              83,
+              85,
               99,
               18,
-              13
-            ]
-          ],
-          [
-            "→",
-            [
-              105,
-              99,
-              8,
               13
             ]
           ],
           [
             "3.0",
             [
-              118,
+              120,
               99,
               18,
               13
             ]
           ],
           [
-            "→",
-            [
-              140,
-              99,
-              8,
-              13
-            ]
-          ],
-          [
             "6.0",
             [
-              152,
+              156,
               99,
               18,
               13
@@ -8364,7 +8536,7 @@
           [
             "avg 2.0",
             [
-              183,
+              187,
               99,
               42,
               13
@@ -8522,14 +8694,34 @@
             "3c9d530e5400369c"
           ],
           [
-            "span",
+            "svg",
             [
-              190,
+              185,
               45,
-              11,
-              21
+              16,
+              16
             ],
-            "3c6b93c9affbe15b"
+            "0f939e7536c22a7f"
+          ],
+          [
+            "path",
+            [
+              188,
+              48,
+              10,
+              10
+            ],
+            "0f939e7536c22a7f"
+          ],
+          [
+            "path",
+            [
+              194,
+              47,
+              4,
+              4
+            ],
+            "0f939e7536c22a7f"
           ],
           [
             "span",
@@ -8602,39 +8794,29 @@
             "c29440697db6631b"
           ],
           [
-            "span",
+            "svg",
             [
               71,
-              98,
-              8,
-              16
+              101,
+              10,
+              10
             ],
-            "95425db3ced94f95"
+            "09a23d8c29a4a2ca"
+          ],
+          [
+            "path",
+            [
+              72,
+              104,
+              6,
+              4
+            ],
+            "09a23d8c29a4a2ca"
           ],
           [
             "span",
             [
-              83,
-              98,
-              18,
-              16
-            ],
-            "c29440697db6631b"
-          ],
-          [
-            "span",
-            [
-              105,
-              98,
-              8,
-              16
-            ],
-            "95425db3ced94f95"
-          ],
-          [
-            "span",
-            [
-              118,
+              85,
               98,
               18,
               16
@@ -8642,19 +8824,59 @@
             "c29440697db6631b"
           ],
           [
-            "span",
+            "svg",
             [
-              140,
-              98,
-              8,
-              16
+              107,
+              101,
+              10,
+              10
             ],
-            "95425db3ced94f95"
+            "09a23d8c29a4a2ca"
+          ],
+          [
+            "path",
+            [
+              108,
+              104,
+              6,
+              4
+            ],
+            "09a23d8c29a4a2ca"
           ],
           [
             "span",
             [
-              152,
+              120,
+              98,
+              18,
+              16
+            ],
+            "c29440697db6631b"
+          ],
+          [
+            "svg",
+            [
+              142,
+              101,
+              10,
+              10
+            ],
+            "09a23d8c29a4a2ca"
+          ],
+          [
+            "path",
+            [
+              143,
+              104,
+              6,
+              4
+            ],
+            "09a23d8c29a4a2ca"
+          ],
+          [
+            "span",
+            [
+              156,
               98,
               18,
               16
@@ -8664,7 +8886,7 @@
           [
             "span",
             [
-              174,
+              178,
               95,
               60,
               22
@@ -8684,7 +8906,11 @@
         ],
         "svgs": [
           "ee4b48499082cd33",
-          "ee4b48499082cd33"
+          "72cbb5c385448b19",
+          "ee4b48499082cd33",
+          "32e1ec3a9af631ac",
+          "32e1ec3a9af631ac",
+          "32e1ec3a9af631ac"
         ],
         "issues": []
       },
@@ -8692,7 +8918,7 @@
         "width": 966,
         "height": 156,
         "frameStyle": "b7276dc972cd147f",
-        "text": "ONE PASS PER ITEM 1.0 2.0 3.0 for ↻ total = total + value total 0.0 → 1.0 → 3.0 → 6.0 avg 2.0 Each item gets one pass; the accumulator starts before the loop.",
+        "text": "ONE PASS PER ITEM 1.0 2.0 3.0 for total = total + value total 0.0 1.0 3.0 6.0 avg 2.0 Each item gets one pass; the accumulator starts before the loop.",
         "textRuns": [
           [
             "One pass per item",
@@ -8740,15 +8966,6 @@
             ]
           ],
           [
-            "↻",
-            [
-              190,
-              46,
-              11,
-              17
-            ]
-          ],
-          [
             "total = total + value",
             [
               232,
@@ -8776,54 +8993,27 @@
             ]
           ],
           [
-            "→",
-            [
-              71,
-              99,
-              8,
-              13
-            ]
-          ],
-          [
             "1.0",
             [
-              83,
+              85,
               99,
               18,
-              13
-            ]
-          ],
-          [
-            "→",
-            [
-              105,
-              99,
-              8,
               13
             ]
           ],
           [
             "3.0",
             [
-              118,
+              120,
               99,
               18,
               13
             ]
           ],
           [
-            "→",
-            [
-              140,
-              99,
-              8,
-              13
-            ]
-          ],
-          [
             "6.0",
             [
-              152,
+              156,
               99,
               18,
               13
@@ -8832,7 +9022,7 @@
           [
             "avg 2.0",
             [
-              183,
+              187,
               99,
               42,
               13
@@ -8990,14 +9180,34 @@
             "3c9d530e5400369c"
           ],
           [
-            "span",
+            "svg",
             [
-              190,
+              185,
               45,
-              11,
-              21
+              16,
+              16
             ],
-            "3c6b93c9affbe15b"
+            "0f939e7536c22a7f"
+          ],
+          [
+            "path",
+            [
+              188,
+              48,
+              10,
+              10
+            ],
+            "0f939e7536c22a7f"
+          ],
+          [
+            "path",
+            [
+              194,
+              47,
+              4,
+              4
+            ],
+            "0f939e7536c22a7f"
           ],
           [
             "span",
@@ -9070,39 +9280,29 @@
             "c29440697db6631b"
           ],
           [
-            "span",
+            "svg",
             [
               71,
-              98,
-              8,
-              16
+              101,
+              10,
+              10
             ],
-            "95425db3ced94f95"
+            "09a23d8c29a4a2ca"
+          ],
+          [
+            "path",
+            [
+              72,
+              104,
+              6,
+              4
+            ],
+            "09a23d8c29a4a2ca"
           ],
           [
             "span",
             [
-              83,
-              98,
-              18,
-              16
-            ],
-            "c29440697db6631b"
-          ],
-          [
-            "span",
-            [
-              105,
-              98,
-              8,
-              16
-            ],
-            "95425db3ced94f95"
-          ],
-          [
-            "span",
-            [
-              118,
+              85,
               98,
               18,
               16
@@ -9110,19 +9310,59 @@
             "c29440697db6631b"
           ],
           [
-            "span",
+            "svg",
             [
-              140,
-              98,
-              8,
-              16
+              107,
+              101,
+              10,
+              10
             ],
-            "95425db3ced94f95"
+            "09a23d8c29a4a2ca"
+          ],
+          [
+            "path",
+            [
+              108,
+              104,
+              6,
+              4
+            ],
+            "09a23d8c29a4a2ca"
           ],
           [
             "span",
             [
-              152,
+              120,
+              98,
+              18,
+              16
+            ],
+            "c29440697db6631b"
+          ],
+          [
+            "svg",
+            [
+              142,
+              101,
+              10,
+              10
+            ],
+            "09a23d8c29a4a2ca"
+          ],
+          [
+            "path",
+            [
+              143,
+              104,
+              6,
+              4
+            ],
+            "09a23d8c29a4a2ca"
+          ],
+          [
+            "span",
+            [
+              156,
               98,
               18,
               16
@@ -9132,7 +9372,7 @@
           [
             "span",
             [
-              174,
+              178,
               95,
               60,
               22
@@ -9152,7 +9392,11 @@
         ],
         "svgs": [
           "ee4b48499082cd33",
-          "ee4b48499082cd33"
+          "72cbb5c385448b19",
+          "ee4b48499082cd33",
+          "32e1ec3a9af631ac",
+          "32e1ec3a9af631ac",
+          "32e1ec3a9af631ac"
         ],
         "issues": []
       }
@@ -9162,7 +9406,7 @@
         "width": 477,
         "height": 128,
         "frameStyle": "f4a523f681f2a03c",
-        "text": "THE LAST INDEX IS ONE LESS THAN THE COUNT 0 5 1 6 2 7 → index 3 ✕ len = 3 · last index = 2",
+        "text": "THE LAST INDEX IS ONE LESS THAN THE COUNT 0 5 1 6 2 7 index 3 ✕ len = 3 · last index = 2",
         "textRuns": [
           [
             "The last index is one less than the count",
@@ -9228,18 +9472,9 @@
             ]
           ],
           [
-            "→",
-            [
-              102,
-              56,
-              14,
-              21
-            ]
-          ],
-          [
             "index 3",
             [
-              128,
+              130,
               47,
               38,
               12
@@ -9248,7 +9483,7 @@
           [
             "✕",
             [
-              142,
+              144,
               61,
               11,
               17
@@ -9406,19 +9641,29 @@
             "106d49b5ad250d4f"
           ],
           [
-            "span",
+            "svg",
             [
               102,
-              54,
-              14,
-              34
+              69,
+              16,
+              16
             ],
-            "903bbbc0878e5f2e"
+            "42c6114687f65a74"
+          ],
+          [
+            "path",
+            [
+              104,
+              73,
+              10,
+              7
+            ],
+            "42c6114687f65a74"
           ],
           [
             "div",
             [
-              119,
+              121,
               39,
               56,
               49
@@ -9428,7 +9673,7 @@
           [
             "p",
             [
-              128,
+              130,
               46,
               38,
               14
@@ -9438,7 +9683,7 @@
           [
             "p",
             [
-              128,
+              130,
               60,
               38,
               21
@@ -9456,14 +9701,16 @@
             "f45bca4e9c139bc0"
           ]
         ],
-        "svgs": [],
+        "svgs": [
+          "09c41a55901d7d27"
+        ],
         "issues": []
       },
       "966": {
         "width": 966,
         "height": 128,
         "frameStyle": "f4a523f681f2a03c",
-        "text": "THE LAST INDEX IS ONE LESS THAN THE COUNT 0 5 1 6 2 7 → index 3 ✕ len = 3 · last index = 2",
+        "text": "THE LAST INDEX IS ONE LESS THAN THE COUNT 0 5 1 6 2 7 index 3 ✕ len = 3 · last index = 2",
         "textRuns": [
           [
             "The last index is one less than the count",
@@ -9529,18 +9776,9 @@
             ]
           ],
           [
-            "→",
-            [
-              102,
-              56,
-              14,
-              21
-            ]
-          ],
-          [
             "index 3",
             [
-              128,
+              130,
               47,
               38,
               12
@@ -9549,7 +9787,7 @@
           [
             "✕",
             [
-              142,
+              144,
               61,
               11,
               17
@@ -9707,19 +9945,29 @@
             "106d49b5ad250d4f"
           ],
           [
-            "span",
+            "svg",
             [
               102,
-              54,
-              14,
-              34
+              69,
+              16,
+              16
             ],
-            "903bbbc0878e5f2e"
+            "42c6114687f65a74"
+          ],
+          [
+            "path",
+            [
+              104,
+              73,
+              10,
+              7
+            ],
+            "42c6114687f65a74"
           ],
           [
             "div",
             [
-              119,
+              121,
               39,
               56,
               49
@@ -9729,7 +9977,7 @@
           [
             "p",
             [
-              128,
+              130,
               46,
               38,
               14
@@ -9739,7 +9987,7 @@
           [
             "p",
             [
-              128,
+              130,
               60,
               38,
               21
@@ -9757,7 +10005,9 @@
             "f45bca4e9c139bc0"
           ]
         ],
-        "svgs": [],
+        "svgs": [
+          "09c41a55901d7d27"
+        ],
         "issues": []
       }
     },
@@ -10380,7 +10630,7 @@
         "width": 477,
         "height": 214,
         "frameStyle": "ea06c22c833ce866",
-        "text": "TEST, BODY, TEST AGAIN step = 0 test step < 3 print(step) step += 1 ↻ Test before every pass; the update is what lets it stop. TRACE 0 < 3 → print 0 → step 1 1 < 3 → print 1 → step 2 2 < 3 → print 2 → step 3 3 < 3 → False · stop",
+        "text": "TEST, BODY, TEST AGAIN step = 0 test step < 3 print(step) step += 1 Test before every pass; the update is what lets it stop. TRACE 0 < 3 print 0 step 1 1 < 3 print 1 step 2 2 < 3 print 2 step 3 3 < 3 False · stop",
         "textRuns": [
           [
             "Test, body, test again",
@@ -10428,15 +10678,6 @@
             ]
           ],
           [
-            "↻",
-            [
-              410,
-              42,
-              12,
-              18
-            ]
-          ],
-          [
             "Test before every pass; the update is what lets it stop.",
             [
               15,
@@ -10455,38 +10696,101 @@
             ]
           ],
           [
-            "0 < 3 → print 0 → step 1",
+            "0 < 3",
             [
               24,
               129,
-              141,
+              34,
               13
             ]
           ],
           [
-            "1 < 3 → print 1 → step 2",
+            "print 0",
+            [
+              67,
+              129,
+              51,
+              13
+            ]
+          ],
+          [
+            "step 1",
+            [
+              128,
+              129,
+              40,
+              13
+            ]
+          ],
+          [
+            "1 < 3",
             [
               24,
               144,
-              141,
+              34,
               13
             ]
           ],
           [
-            "2 < 3 → print 2 → step 3",
+            "print 1",
+            [
+              67,
+              144,
+              51,
+              13
+            ]
+          ],
+          [
+            "step 2",
+            [
+              128,
+              144,
+              40,
+              13
+            ]
+          ],
+          [
+            "2 < 3",
             [
               24,
               160,
-              141,
+              34,
               13
             ]
           ],
           [
-            "3 < 3 → False · stop",
+            "print 2",
+            [
+              67,
+              160,
+              51,
+              13
+            ]
+          ],
+          [
+            "step 3",
+            [
+              128,
+              160,
+              40,
+              13
+            ]
+          ],
+          [
+            "3 < 3",
             [
               24,
               175,
-              116,
+              34,
+              13
+            ]
+          ],
+          [
+            "False · stop",
+            [
+              67,
+              175,
+              74,
               13
             ]
           ]
@@ -10653,14 +10957,34 @@
             "dc527e0f719cf1b5"
           ],
           [
-            "span",
+            "svg",
             [
               410,
-              40,
-              12,
-              22
+              43,
+              16,
+              16
             ],
-            "ec2387ebc16352cd"
+            "f73297dfe6f2f031"
+          ],
+          [
+            "path",
+            [
+              414,
+              47,
+              10,
+              10
+            ],
+            "f73297dfe6f2f031"
+          ],
+          [
+            "path",
+            [
+              420,
+              45,
+              4,
+              4
+            ],
+            "f73297dfe6f2f031"
           ],
           [
             "p",
@@ -10703,6 +11027,46 @@
             "3ff0834d2053af7b"
           ],
           [
+            "svg",
+            [
+              58,
+              131,
+              9,
+              9
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
+            "path",
+            [
+              60,
+              133,
+              6,
+              4
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
+            "svg",
+            [
+              119,
+              131,
+              9,
+              9
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
+            "path",
+            [
+              120,
+              133,
+              6,
+              4
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
             "p",
             [
               24,
@@ -10711,6 +11075,46 @@
               15
             ],
             "3ff0834d2053af7b"
+          ],
+          [
+            "svg",
+            [
+              58,
+              146,
+              9,
+              9
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
+            "path",
+            [
+              60,
+              149,
+              6,
+              4
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
+            "svg",
+            [
+              119,
+              146,
+              9,
+              9
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
+            "path",
+            [
+              120,
+              149,
+              6,
+              4
+            ],
+            "80238f8d9e76be7f"
           ],
           [
             "p",
@@ -10723,6 +11127,46 @@
             "3ff0834d2053af7b"
           ],
           [
+            "svg",
+            [
+              58,
+              162,
+              9,
+              9
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
+            "path",
+            [
+              60,
+              164,
+              6,
+              4
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
+            "svg",
+            [
+              119,
+              162,
+              9,
+              9
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
+            "path",
+            [
+              120,
+              164,
+              6,
+              4
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
             "p",
             [
               24,
@@ -10731,11 +11175,39 @@
               15
             ],
             "c128717b4768ac89"
+          ],
+          [
+            "svg",
+            [
+              58,
+              177,
+              9,
+              9
+            ],
+            "97d88b3153450d63"
+          ],
+          [
+            "path",
+            [
+              60,
+              180,
+              6,
+              4
+            ],
+            "97d88b3153450d63"
           ]
         ],
         "svgs": [
           "ee4b48499082cd33",
-          "ee4b48499082cd33"
+          "ee4b48499082cd33",
+          "ab017fb46d989242",
+          "32e1ec3a9af631ac",
+          "32e1ec3a9af631ac",
+          "32e1ec3a9af631ac",
+          "32e1ec3a9af631ac",
+          "32e1ec3a9af631ac",
+          "32e1ec3a9af631ac",
+          "32e1ec3a9af631ac"
         ],
         "issues": []
       },
@@ -10743,7 +11215,7 @@
         "width": 966,
         "height": 152,
         "frameStyle": "ea06c22c833ce866",
-        "text": "TEST, BODY, TEST AGAIN step = 0 test step < 3 print(step) step += 1 ↻ Test before every pass; the update is what lets it stop. TRACE 0 < 3 → print 0 → step 1 1 < 3 → print 1 → step 2 2 < 3 → print 2 → step 3 3 < 3 → False · stop",
+        "text": "TEST, BODY, TEST AGAIN step = 0 test step < 3 print(step) step += 1 Test before every pass; the update is what lets it stop. TRACE 0 < 3 print 0 step 1 1 < 3 print 1 step 2 2 < 3 print 2 step 3 3 < 3 False · stop",
         "textRuns": [
           [
             "Test, body, test again",
@@ -10791,15 +11263,6 @@
             ]
           ],
           [
-            "↻",
-            [
-              410,
-              66,
-              12,
-              18
-            ]
-          ],
-          [
             "Test before every pass; the update is what lets it stop.",
             [
               15,
@@ -10818,38 +11281,101 @@
             ]
           ],
           [
-            "0 < 3 → print 0 → step 1",
+            "0 < 3",
             [
               567,
               67,
-              141,
+              34,
               13
             ]
           ],
           [
-            "1 < 3 → print 1 → step 2",
+            "print 0",
+            [
+              610,
+              67,
+              51,
+              13
+            ]
+          ],
+          [
+            "step 1",
+            [
+              670,
+              67,
+              40,
+              13
+            ]
+          ],
+          [
+            "1 < 3",
             [
               567,
               82,
-              141,
+              34,
               13
             ]
           ],
           [
-            "2 < 3 → print 2 → step 3",
+            "print 1",
+            [
+              610,
+              82,
+              51,
+              13
+            ]
+          ],
+          [
+            "step 2",
+            [
+              670,
+              82,
+              40,
+              13
+            ]
+          ],
+          [
+            "2 < 3",
             [
               567,
               98,
-              141,
+              34,
               13
             ]
           ],
           [
-            "3 < 3 → False · stop",
+            "print 2",
+            [
+              610,
+              98,
+              51,
+              13
+            ]
+          ],
+          [
+            "step 3",
+            [
+              670,
+              98,
+              40,
+              13
+            ]
+          ],
+          [
+            "3 < 3",
             [
               567,
               113,
-              116,
+              34,
+              13
+            ]
+          ],
+          [
+            "False · stop",
+            [
+              610,
+              113,
+              74,
               13
             ]
           ]
@@ -11016,14 +11542,34 @@
             "dc527e0f719cf1b5"
           ],
           [
-            "span",
+            "svg",
             [
               410,
-              64,
-              12,
-              22
+              67,
+              16,
+              16
             ],
-            "ec2387ebc16352cd"
+            "f73297dfe6f2f031"
+          ],
+          [
+            "path",
+            [
+              414,
+              71,
+              10,
+              10
+            ],
+            "f73297dfe6f2f031"
+          ],
+          [
+            "path",
+            [
+              420,
+              69,
+              4,
+              4
+            ],
+            "f73297dfe6f2f031"
           ],
           [
             "p",
@@ -11066,6 +11612,46 @@
             "3ff0834d2053af7b"
           ],
           [
+            "svg",
+            [
+              601,
+              69,
+              9,
+              9
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
+            "path",
+            [
+              602,
+              71,
+              6,
+              4
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
+            "svg",
+            [
+              661,
+              69,
+              9,
+              9
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
+            "path",
+            [
+              663,
+              71,
+              6,
+              4
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
             "p",
             [
               567,
@@ -11074,6 +11660,46 @@
               15
             ],
             "3ff0834d2053af7b"
+          ],
+          [
+            "svg",
+            [
+              601,
+              84,
+              9,
+              9
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
+            "path",
+            [
+              602,
+              87,
+              6,
+              4
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
+            "svg",
+            [
+              661,
+              84,
+              9,
+              9
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
+            "path",
+            [
+              663,
+              87,
+              6,
+              4
+            ],
+            "80238f8d9e76be7f"
           ],
           [
             "p",
@@ -11086,6 +11712,46 @@
             "3ff0834d2053af7b"
           ],
           [
+            "svg",
+            [
+              601,
+              100,
+              9,
+              9
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
+            "path",
+            [
+              602,
+              102,
+              6,
+              4
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
+            "svg",
+            [
+              661,
+              100,
+              9,
+              9
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
+            "path",
+            [
+              663,
+              102,
+              6,
+              4
+            ],
+            "80238f8d9e76be7f"
+          ],
+          [
             "p",
             [
               567,
@@ -11094,11 +11760,39 @@
               15
             ],
             "c128717b4768ac89"
+          ],
+          [
+            "svg",
+            [
+              601,
+              115,
+              9,
+              9
+            ],
+            "97d88b3153450d63"
+          ],
+          [
+            "path",
+            [
+              602,
+              118,
+              6,
+              4
+            ],
+            "97d88b3153450d63"
           ]
         ],
         "svgs": [
           "ee4b48499082cd33",
-          "ee4b48499082cd33"
+          "ee4b48499082cd33",
+          "ab017fb46d989242",
+          "32e1ec3a9af631ac",
+          "32e1ec3a9af631ac",
+          "32e1ec3a9af631ac",
+          "32e1ec3a9af631ac",
+          "32e1ec3a9af631ac",
+          "32e1ec3a9af631ac",
+          "32e1ec3a9af631ac"
         ],
         "issues": []
       }
@@ -11108,7 +11802,7 @@
         "width": 477,
         "height": 131,
         "frameStyle": "b7276dc972cd147f",
-        "text": "NO ANSWER AT ALL RETURN TRAY None nothing was handed back PRINT RECEIPT print(7) → 7 printed, not returned",
+        "text": "NO ANSWER AT ALL RETURN TRAY None nothing was handed back PRINT RECEIPT print(7) 7 printed, not returned",
         "textRuns": [
           [
             "No answer at all",
@@ -11156,11 +11850,20 @@
             ]
           ],
           [
-            "print(7) → 7",
+            "print(7)",
             [
               254,
               69,
-              97,
+              70,
+              17
+            ]
+          ],
+          [
+            "7",
+            [
+              336,
+              69,
+              16,
               17
             ]
           ],
@@ -11286,6 +11989,26 @@
             "d60a4cc6535cc414"
           ],
           [
+            "svg",
+            [
+              324,
+              72,
+              12,
+              12
+            ],
+            "3b52c6dfcde5aab1"
+          ],
+          [
+            "path",
+            [
+              326,
+              75,
+              8,
+              5
+            ],
+            "3b52c6dfcde5aab1"
+          ],
+          [
             "p",
             [
               254,
@@ -11296,14 +12019,16 @@
             "95425db3ced94f95"
           ]
         ],
-        "svgs": [],
+        "svgs": [
+          "32e1ec3a9af631ac"
+        ],
         "issues": []
       },
       "966": {
         "width": 966,
         "height": 131,
         "frameStyle": "b7276dc972cd147f",
-        "text": "NO ANSWER AT ALL RETURN TRAY None nothing was handed back PRINT RECEIPT print(7) → 7 printed, not returned",
+        "text": "NO ANSWER AT ALL RETURN TRAY None nothing was handed back PRINT RECEIPT print(7) 7 printed, not returned",
         "textRuns": [
           [
             "No answer at all",
@@ -11351,11 +12076,20 @@
             ]
           ],
           [
-            "print(7) → 7",
+            "print(7)",
             [
               498,
               69,
-              97,
+              70,
+              17
+            ]
+          ],
+          [
+            "7",
+            [
+              581,
+              69,
+              16,
               17
             ]
           ],
@@ -11481,6 +12215,26 @@
             "d60a4cc6535cc414"
           ],
           [
+            "svg",
+            [
+              568,
+              72,
+              12,
+              12
+            ],
+            "3b52c6dfcde5aab1"
+          ],
+          [
+            "path",
+            [
+              570,
+              75,
+              8,
+              5
+            ],
+            "3b52c6dfcde5aab1"
+          ],
+          [
             "p",
             [
               498,
@@ -11491,7 +12245,9 @@
             "95425db3ced94f95"
           ]
         ],
-        "svgs": [],
+        "svgs": [
+          "32e1ec3a9af631ac"
+        ],
         "issues": []
       }
     },
@@ -22436,7 +23192,7 @@
         "width": 477,
         "height": 115,
         "frameStyle": "0e10ae2c26e39dea",
-        "text": "THE NUMBER AND ITS UNIT PARAMETER UNIT VALUE supply current mA 2.5 → 0.0025 A",
+        "text": "THE NUMBER AND ITS UNIT PARAMETER UNIT VALUE supply current mA 2.5 0.0025 A",
         "textRuns": [
           [
             "The number and its unit",
@@ -22493,11 +23249,20 @@
             ]
           ],
           [
-            "2.5 → 0.0025 A",
+            "2.5",
             [
               311,
               74,
-              91,
+              25,
+              14
+            ]
+          ],
+          [
+            "0.0025 A",
+            [
+              346,
+              74,
+              57,
               14
             ]
           ]
@@ -22622,16 +23387,38 @@
               17
             ],
             "f45bca4e9c139bc0"
+          ],
+          [
+            "svg",
+            [
+              336,
+              75,
+              10,
+              10
+            ],
+            "29b001874910352d"
+          ],
+          [
+            "path",
+            [
+              337,
+              78,
+              6,
+              4
+            ],
+            "29b001874910352d"
           ]
         ],
-        "svgs": [],
+        "svgs": [
+          "32e1ec3a9af631ac"
+        ],
         "issues": []
       },
       "966": {
         "width": 966,
         "height": 115,
         "frameStyle": "0e10ae2c26e39dea",
-        "text": "THE NUMBER AND ITS UNIT PARAMETER UNIT VALUE supply current mA 2.5 → 0.0025 A",
+        "text": "THE NUMBER AND ITS UNIT PARAMETER UNIT VALUE supply current mA 2.5 0.0025 A",
         "textRuns": [
           [
             "The number and its unit",
@@ -22688,11 +23475,20 @@
             ]
           ],
           [
-            "2.5 → 0.0025 A",
+            "2.5",
             [
               631,
               74,
-              91,
+              25,
+              14
+            ]
+          ],
+          [
+            "0.0025 A",
+            [
+              666,
+              74,
+              57,
               14
             ]
           ]
@@ -22817,9 +23613,31 @@
               17
             ],
             "f45bca4e9c139bc0"
+          ],
+          [
+            "svg",
+            [
+              656,
+              75,
+              10,
+              10
+            ],
+            "29b001874910352d"
+          ],
+          [
+            "path",
+            [
+              658,
+              78,
+              6,
+              4
+            ],
+            "29b001874910352d"
           ]
         ],
-        "svgs": [],
+        "svgs": [
+          "32e1ec3a9af631ac"
+        ],
         "issues": []
       }
     },
@@ -23338,7 +24156,7 @@
         "width": 477,
         "height": 131,
         "frameStyle": "b7276dc972cd147f",
-        "text": "TYP IS A USUAL PART, NOT A PROMISE MIN 1.2 mA TYP 1.8 mA MAX 3.0 mA budget here → Max",
+        "text": "TYP IS A USUAL PART, NOT A PROMISE MIN 1.2 mA TYP 1.8 mA MAX 3.0 mA budget here Max",
         "textRuns": [
           [
             "Typ is a usual part, not a promise",
@@ -23440,18 +24258,9 @@
             ]
           ],
           [
-            "→",
-            [
-              85,
-              101,
-              8,
-              13
-            ]
-          ],
-          [
             "Max",
             [
-              97,
+              99,
               101,
               18,
               13
@@ -23610,24 +24419,36 @@
             "0ebedbe2bb5995dc"
           ],
           [
-            "span",
+            "svg",
             [
               85,
-              100,
-              8,
-              16
+              103,
+              10,
+              10
             ],
-            "0ebedbe2bb5995dc"
+            "4877405254f57298"
+          ],
+          [
+            "path",
+            [
+              86,
+              106,
+              6,
+              4
+            ],
+            "4877405254f57298"
           ]
         ],
-        "svgs": [],
+        "svgs": [
+          "32e1ec3a9af631ac"
+        ],
         "issues": []
       },
       "966": {
         "width": 966,
         "height": 131,
         "frameStyle": "b7276dc972cd147f",
-        "text": "TYP IS A USUAL PART, NOT A PROMISE MIN 1.2 mA TYP 1.8 mA MAX 3.0 mA budget here → Max",
+        "text": "TYP IS A USUAL PART, NOT A PROMISE MIN 1.2 mA TYP 1.8 mA MAX 3.0 mA budget here Max",
         "textRuns": [
           [
             "Typ is a usual part, not a promise",
@@ -23729,18 +24550,9 @@
             ]
           ],
           [
-            "→",
-            [
-              85,
-              101,
-              8,
-              13
-            ]
-          ],
-          [
             "Max",
             [
-              97,
+              99,
               101,
               18,
               13
@@ -23899,17 +24711,29 @@
             "0ebedbe2bb5995dc"
           ],
           [
-            "span",
+            "svg",
             [
               85,
-              100,
-              8,
-              16
+              103,
+              10,
+              10
             ],
-            "0ebedbe2bb5995dc"
+            "4877405254f57298"
+          ],
+          [
+            "path",
+            [
+              86,
+              106,
+              6,
+              4
+            ],
+            "4877405254f57298"
           ]
         ],
-        "svgs": [],
+        "svgs": [
+          "32e1ec3a9af631ac"
+        ],
         "issues": []
       }
     },
