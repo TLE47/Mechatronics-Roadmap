@@ -1874,6 +1874,14 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       const stacked = await panes();
       assert.equal(stacked.axis, 'rows');
       assert.equal(stacked.stacked, true, 'the rows split stacks the second pane under the first');
+      assert.ok(
+        await page.evaluate(() => {
+          const body = document.querySelector('[data-testid="editor-panes"]');
+          const floor = Math.min(window.innerHeight * 0.65, 36 * 16);
+          return (body?.getBoundingClientRect().height ?? Infinity) <= Math.ceil(floor) + 2;
+        }),
+        'a stacked split must share one bounded body height instead of growing with both panes'
+      );
 
       // The pane a tab press fills is the one last clicked, so the two outputs can share the split:
       // focus the code pane, then ask the Expected tab for it. Without this the first tab press
@@ -7687,6 +7695,23 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       await page.getByTestId('calculator-history-row').count(),
       0,
       'Clear must empty the history tape without touching the expression'
+    );
+
+    // A slash has to read as a fraction, not as source. The live line and the kept tape both ask the
+    // calculator's own AST for a typeset form, so 1/2 is a stacked fraction in both places.
+    await page.getByTestId('calculator-display').fill('1/2 + 3/4');
+    const typeset = page.getByTestId('calculator-typeset');
+    await typeset.waitFor({ timeout: 5000 });
+    assert.equal(
+      await typeset.locator('.mfrac').count(),
+      2,
+      'both divisions in the active expression must be stacked fractions'
+    );
+    await page.getByTestId('calculator-display').press('Enter');
+    assert.equal(
+      await page.getByTestId('calculator-history-row').first().locator('.mfrac').count(),
+      2,
+      'a kept fraction must stay a stacked fraction on the tape'
     );
     await page.getByTestId('editor-tab-main').click();
     console.log('  ok the calculator keeps its answers in a readable tape and its angle in a pill');

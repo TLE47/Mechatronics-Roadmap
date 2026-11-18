@@ -12,6 +12,7 @@
 
 import assert from 'node:assert/strict';
 import { compileExpression, evaluateExpression, formatNumber } from '../app/src/calculator.ts';
+import { typesetExpression } from '../app/src/calculatorTypeset.ts';
 import {
   fitGraphView,
   graphPointAt,
@@ -239,6 +240,24 @@ check('very large and very small answers keep scientific notation', () => {
   assert.equal(formatNumber(1e-12), '1e-12');
   assert.equal(formatNumber(Number.NaN), '—');
   assert.equal(formatNumber(Number.POSITIVE_INFINITY), '—');
+});
+
+console.log('\nA fraction reads as a fraction');
+check('the display stacks a division and keeps its grouping', () => {
+  assert.equal(typesetExpression('1/2'), '\\frac{1}{2}');
+  assert.equal(typesetExpression('(2+1)/(2-1)'), '\\frac{2 + 1}{2 - 1}');
+  assert.equal(typesetExpression('1-(2+1)'), '1 - \\left(2 + 1\\right)');
+});
+check('functions, powers and postfix operators keep their shape', () => {
+  assert.equal(typesetExpression('sin(pi/4)'), '\\sin\\left(\\frac{\\pi}{4}\\right)');
+  assert.equal(typesetExpression('sqrt(2)'), '\\sqrt{2}');
+  assert.equal(typesetExpression('2^3'), '2^{3}');
+  assert.equal(typesetExpression('5!'), '5!');
+  assert.equal(typesetExpression('2*pi'), '2\\,\\pi');
+});
+check('an expression the calculator cannot read has no typeset form', () => {
+  assert.equal(typesetExpression('2 +'), null);
+  assert.equal(typesetExpression(''), null);
 });
 
 console.log('\nRefusals are sentences, not NaN');

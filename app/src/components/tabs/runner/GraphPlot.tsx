@@ -240,7 +240,7 @@ export function GraphPlot({
         onPointerLeave={() => {
           if (!dragRef.current) setHover(null);
         }}
-        className={`block h-full w-full touch-none ${dragging ? 'cursor-grabbing' : 'cursor-crosshair'}`}
+        className={`absolute inset-0 block h-full w-full touch-none ${dragging ? 'cursor-grabbing' : 'cursor-crosshair'}`}
       />
       <canvas
         ref={glCanvasRef}

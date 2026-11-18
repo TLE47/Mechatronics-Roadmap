@@ -42,7 +42,7 @@ type Token =
   | { type: 'close' };
 
 /** The parsed expression. Parsing once is what lets a graph evaluate a curve thousands of times. */
-type Node =
+export type Node =
   | { type: 'number'; value: number }
   | { type: 'constant'; name: string }
   | { type: 'variable'; name: string }
@@ -544,10 +544,20 @@ function evaluateNode(node: Node, context: Context): number {
  * `asin(2)` are all expressions with no real answer, and a calculator that shows `NaN` is one a
  * beginner cannot tell from a bug in their own arithmetic.
  */
-export function evaluateExpression(input: string, options: EvaluateOptions = {}): number {
+/**
+ * Read one expression into its AST, or throw the sentence the pane should print.
+ *
+ * The calculator's typeset display reuses this grammar instead of growing a second one: a fraction
+ * the calculator accepts is a fraction the display can draw.
+ */
+export function parseExpression(input: string, variables: Iterable<string> = []): Node {
   const tokens = tokenize(input);
   if (tokens.length === 0) throw new Error('Type an expression first');
-  const node = new Parser(tokens).parse();
+  return new Parser(tokens, new Set(variables)).parse();
+}
+
+export function evaluateExpression(input: string, options: EvaluateOptions = {}): number {
+  const node = parseExpression(input);
   const value = evaluateNode(node, {
     angle: options.angle === 'deg' ? 'deg' : 'rad',
     ans: typeof options.ans === 'number' && Number.isFinite(options.ans) ? options.ans : 0,
@@ -568,10 +578,8 @@ export function compileExpression(
   input: string,
   options: { angle?: AngleMode; variable?: string } = {}
 ): (value: number) => number {
-  const tokens = tokenize(input);
-  if (tokens.length === 0) throw new Error('Type an expression first');
   const variable = options.variable ?? 'x';
-  const node = new Parser(tokens, new Set([variable])).parse();
+  const node = parseExpression(input, [variable]);
   const context: Context = {
     angle: options.angle === 'deg' ? 'deg' : 'rad',
     ans: 0,

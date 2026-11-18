@@ -1,5 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { evaluateExpression, formatNumber, type AngleMode } from '../../../calculator';
+import { typesetExpression } from '../../../calculatorTypeset';
+import { MathView } from '../../MathView';
 import { GraphingPane } from './GraphingPane';
 
 /** One entry of the tape: the text that was evaluated and the number it produced. */
@@ -129,6 +131,16 @@ const KEY_CLASSES: Record<KeyTone, string> = {
 };
 
 /**
+ * A kept expression on the tape, typeset instead of printed as source. Invalid text falls back to
+ * the raw string, because the tape must never lose a calculation it accepted.
+ */
+function TapeExpression({ text }: { text: string }) {
+  const tex = useMemo(() => typesetExpression(text), [text]);
+  if (!tex) return <span className="font-mono text-[14px]">{text}</span>;
+  return <MathView math={tex} />;
+}
+
+/**
  * The Calculator tab (`runner/CalculatorPane.tsx`).
  *
  * The runner's other panes report on a Python file; this one is a tool beside the code — the
@@ -179,6 +191,14 @@ export function CalculatorPane({
 
   /** The number under the active line: the live answer, else the last one kept. */
   const shown = live ? live.value : expression.trim() ? null : ans;
+
+  // A fraction is the one thing the plain input cannot show as itself. When there is one, the same
+  // AST the calculator evaluates is also drawn above the input, so `1/2` reads as a stacked
+  // fraction while it is typed. Other lines stay a single input, with no duplicate line.
+  const typeset = useMemo(
+    () => (expression.includes('/') ? typesetExpression(expression) : null),
+    [expression]
+  );
 
   const commit = () => {
     const text = expression.trim();
@@ -379,6 +399,7 @@ export function CalculatorPane({
                 key={`${entry.expression}:${entry.value}`}
                 type="button"
                 data-testid="calculator-history-row"
+                aria-label={`${entry.expression} = ${formatNumber(entry.value)}`}
                 title="Put this expression back on the active line"
                 onClick={() => {
                   setExpression(entry.expression);
@@ -393,8 +414,12 @@ export function CalculatorPane({
                   className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent/35 transition-colors group-hover:bg-accent"
                 />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-right font-mono text-[14px] leading-5 text-muted">
-                    {entry.expression}
+                  <span className="sr-only">{entry.expression}</span>
+                  <span
+                    aria-hidden="true"
+                    className="block min-w-0 overflow-x-auto whitespace-nowrap text-right text-[13px] leading-5 text-muted"
+                  >
+                    <TapeExpression text={entry.expression} />
                   </span>
                   <span className="block truncate text-right font-mono text-[17px] font-semibold leading-6 text-body tabular-nums">
                     {formatNumber(entry.value)}
@@ -412,6 +437,15 @@ export function CalculatorPane({
             <div className="flex items-start gap-2">
               <span aria-hidden="true" className="mt-2.5 h-2 w-2 shrink-0 rounded-full bg-accent" />
               <div className="min-w-0 flex-1">
+                {typeset && (
+                  <div
+                    data-testid="calculator-typeset"
+                    aria-hidden="true"
+                    className="max-h-32 overflow-x-auto overflow-y-hidden pb-0.5 text-right text-[21px] leading-8 text-body"
+                  >
+                    <MathView math={typeset} />
+                  </div>
+                )}
                 <input
                   ref={input}
                   data-testid="calculator-display"
@@ -438,7 +472,9 @@ export function CalculatorPane({
                   spellCheck={false}
                   // The row is the focus target: one ring around the whole line, not a box inside a box.
                   style={{ boxShadow: 'none' }}
-                  className="w-full min-w-0 bg-transparent text-right font-mono text-[21px] leading-8 text-body outline-none placeholder:font-sans placeholder:text-[14px] placeholder:text-faint/70"
+                  className={`w-full min-w-0 bg-transparent text-right font-mono outline-none placeholder:font-sans placeholder:text-[14px] placeholder:text-faint/70 ${
+                    typeset ? 'text-[13px] leading-6 text-muted' : 'text-[21px] leading-8 text-body'
+                  }`}
                 />
                 <div className="flex min-h-6 items-baseline justify-end gap-2">
                   {expression.trim() === '' && shown !== null && (

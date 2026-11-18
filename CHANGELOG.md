@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.7.2`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.7.3`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,27 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-18] — A split calculator keeps its own height
+
+A stacked split sized each row to its content, so the graph's 29rem sheet made the editor card
+grow and push the page down instead of scrolling inside its own pane. A bounded rows split now
+shares one body height (`min(65vh, 36rem)`) and every pane scrolls. The graph sheet keeps a definite
+desktop height as well, and its 2D canvas is positioned out of flow, so a Retina backing size cannot
+feed back into the layout that measured it.
+
+## [2026-11-18] — Dark cards get a visible rim
+
+Dark elevation tokens carry a one-pixel cool rim and a tighter ambient layer. A drop shadow alone is
+darker than this near-black page and was invisible; the rim is what the eye reads as raised. Shadows
+stay outside the theme's colour checks, so both palettes keep their contrast contract.
+
+## [2026-11-18] — The calculator's fractions are stacked, not slashed
+
+The live expression and the history tape now pass the calculator's own AST through a TeX serializer
+when a line contains a division, so `1/2` reads as a stacked fraction. The raw expression stays as
+the accessible value, and the scientific keys and tape keep their existing behaviour. The calculator
+suite covers the serializer and the browser test pins both faces with `.mfrac`.
 
 ## [2026-11-18] — A new expression scrolls the list, not the sheet
 

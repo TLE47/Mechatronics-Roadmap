@@ -260,7 +260,7 @@ export function GraphingPane({
       data-testid="graphing-pane"
       data-view={`${view.xMin.toFixed(6)},${view.xMax.toFixed(6)},${view.yMin.toFixed(6)},${view.yMax.toFixed(6)}`}
       aria-label="Graphing calculator"
-      className="flex min-h-[29rem] w-full flex-col overflow-hidden rounded-2xl border border-line bg-panel shadow-[var(--shadow-md)]"
+      className="flex min-h-[29rem] w-full flex-col overflow-hidden rounded-2xl border border-line bg-panel shadow-[var(--shadow-md)] sm:h-[29rem] sm:min-h-0"
     >
       <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
         <GraphExpressionList

@@ -67,10 +67,24 @@
   --r-xl: 10px;
   --r-full: 999px;
 
-  /* Elevation */
-  --shadow-sm: 0 1px 2px rgba(2, 6, 16, 0.5), 0 4px 12px rgba(2, 6, 16, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  --shadow-md: 0 8px 24px rgba(2, 6, 16, 0.46), 0 20px 48px rgba(2, 6, 16, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  --shadow-lg: 0 24px 64px rgba(2, 6, 16, 0.58), 0 48px 120px rgba(2, 6, 16, 0.42);
+  /* Elevation
+     A shadow is darker than the page, and this page is almost black, so a dark drop shadow alone
+     disappears. Each step therefore also carries a one-pixel cool rim just outside the card's own
+     border, plus a tighter ambient layer: the rim is what the eye reads as "raised" here. */
+  --shadow-sm:
+    0 0 0 1px rgba(148, 163, 184, 0.14),
+    0 1px 2px rgba(0, 0, 0, 0.55),
+    0 6px 16px -8px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-md:
+    0 0 0 1px rgba(148, 163, 184, 0.15),
+    0 10px 28px -14px rgba(0, 0, 0, 0.75),
+    0 24px 56px -28px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-lg:
+    0 0 0 1px rgba(148, 163, 184, 0.16),
+    0 24px 64px -24px rgba(0, 0, 0, 0.9),
+    0 48px 120px -48px rgba(0, 0, 0, 0.8);
   /* A button is a key: a hard edge under it and a short ambient shadow. Every <button> gets this in
      the base layer; a component that already names a shadow (the `=` key, the mode pill) overrides
      it without a second token. */
@@ -937,6 +951,14 @@ header[data-action-labels='on'] .action-tray .btn > kbd {
    property set above; a dragged grip overrides both. */
 [data-bounded][data-split='split'] {
   min-height: var(--pane-floor, min(65vh, 36rem));
+}
+
+/* Stacked panes share one body height. Without a height the rows size themselves to their content,
+   so a tall pane (the graph's 29rem sheet) grows the card and pushes the page down instead of
+   scrolling inside its own pane. A dragged bottom grip still overrides this through
+   `--pane-body-h`, because that rule is the one with `!important`. */
+[data-bounded][data-split='split'][data-axis='rows'] {
+  height: var(--pane-floor, min(65vh, 36rem));
 }
 
 /* A bounded editor fills its pane instead of stopping at the theme's 360 px scroller and leaving
