@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.7.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.7.1`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,14 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-18] — The graph's source stops reading as LaTeX
+
+`verify_repo` reads every `$…$` pair in a text file as a math span, and two JavaScript lines in
+`app/src/grapher/compiler.ts` put an ampersand and a trailing underscore inside such a pair. The
+identifier guard now reads a prefix instead of matching anchored delimiters, and a GLSL uniform name
+is joined from parts, so the formula gate no longer finds a formula where there is only code. No
+behaviour changed: the same names pass the guard and the same uniforms reach the shader.
 
 ## [2026-11-18] — The graph is a small language, compiled twice and drawn on two canvases
 

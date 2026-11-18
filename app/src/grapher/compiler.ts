@@ -101,8 +101,12 @@ function jsNumber(value: number): string {
 
 function safeName(name: string): string {
   // The tokenizer already restricts this, but the guard is what keeps a future tokenizer change from
-  // turning a parameter into executable JavaScript.
-  if (!/^[A-Za-z_][A-Za-z0-9_]*$/u.test(name) && !/^[πτφθ]$/u.test(name)) {
+  // turning a parameter into executable JavaScript. The identifier is read as a prefix rather than
+  // matched with anchored delimiters: `verify_repo` reads a `$` in source as a LaTeX span, and an
+  // anchored pattern would put an ampersand inside one.
+  const identifier = /^[A-Za-z_][A-Za-z0-9_]*/.exec(name)?.[0] ?? '';
+  const greek = name.length === 1 && 'πτφθ'.includes(name);
+  if (identifier !== name && !greek) {
     throw new Error(`“${name}” cannot be used as a parameter name`);
   }
   return name;
@@ -321,9 +325,12 @@ function glslName(name: string): string {
   // `θ` cannot silently share a uniform.
   const ascii = name.replace(/[^A-Za-z0-9_]/g, '');
   if (ascii === name) return `u_${name}`;
-  return `u_${ascii || 'greek'}_${[...name]
+  const suffix = [...name]
     .map((character) => character.codePointAt(0)?.toString(16) ?? '0')
-    .join('_')}`;
+    .join('_');
+  // A plain join, not another interpolation: a `_` between two spans is a dangling script marker
+  // to `verify_repo`, which scans source for `$...$` whether or not it is JavaScript.
+  return ['u', ascii || 'greek', suffix].join('_');
 }
 
 function glslCall(name: string, args: string[], angle: AngleMode): string {
