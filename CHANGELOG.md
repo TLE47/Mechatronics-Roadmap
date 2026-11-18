@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.7.3`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.7.4`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,20 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-18] — Every bounded split keeps its calculator inside the pane
+
+A bounded split had a height floor but no height: only a top-level rows split was pinned to it. A
+column split whose calculator pane held the 29rem graph sheet, or a column split with a nested rows
+group, could therefore size the whole editor body to the sheet. The body now takes the same
+`min(65vh, 36rem)` height for every bounded arrangement, so the graph scrolls inside its pane and
+the page no longer moves when the calculator is switched to graphing. Stacked rows keep the 4.7.3
+behavior: one shared body, a definite graph sheet and an out-of-flow 2D canvas.
+
+A tab left open across a deploy now says so. Once a minute while visible, and on regaining focus, it
+reads the served index and compares its hashed entry module with the one it is running; an update
+bars the page with Reload and Later actions rather than reloading under unsaved editor work. The
+footer and header keep printing the running version, so a report can still name the build.
 
 ## [2026-11-18] — A split calculator keeps its own height
 

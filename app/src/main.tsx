@@ -12,6 +12,7 @@ import '@fontsource-variable/geist-mono';
 // from the `katex` package through `MathView.tsx`.
 import 'katex/dist/katex.min.css';
 import App from './App';
+import { UpdateNotice } from './UpdateNotice';
 import { bulkStorage, flushBulkStorage, hydrateBulkStorage } from './bulkStorage';
 import { migrateRenamedLessonIds } from './lessonRenames';
 import { startPaintTiming } from './paintTiming';
@@ -65,6 +66,7 @@ async function start(): Promise<void> {
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
       <App />
+      <UpdateNotice />
     </React.StrictMode>
   );
 }

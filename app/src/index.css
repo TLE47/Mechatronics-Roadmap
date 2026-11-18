@@ -947,18 +947,14 @@ header[data-action-labels='on'] .action-tray .btn > kbd {
   height: 100%;
 }
 
-/* The floor a bounded split starts from. A phone's Code surface overrides it through the custom
-   property set above; a dragged grip overrides both. */
+/* A bounded split has a height, not only a floor. Every pane shares it and scrolls inside its own
+   box. A height is what stops a tall pane (the graph's 29rem sheet) from sizing the body: in a
+   column split a nested row group sizes to its content just as a top-level rows split does. A
+   dragged bottom grip still overrides this through `--pane-body-h`, because that rule is the one
+   with `!important`. */
 [data-bounded][data-split='split'] {
-  min-height: var(--pane-floor, min(65vh, 36rem));
-}
-
-/* Stacked panes share one body height. Without a height the rows size themselves to their content,
-   so a tall pane (the graph's 29rem sheet) grows the card and pushes the page down instead of
-   scrolling inside its own pane. A dragged bottom grip still overrides this through
-   `--pane-body-h`, because that rule is the one with `!important`. */
-[data-bounded][data-split='split'][data-axis='rows'] {
   height: var(--pane-floor, min(65vh, 36rem));
+  min-height: var(--pane-floor, min(65vh, 36rem));
 }
 
 /* A bounded editor fills its pane instead of stopping at the theme's 360 px scroller and leaving
