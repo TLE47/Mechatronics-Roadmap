@@ -11,7 +11,18 @@
  */
 
 import assert from 'node:assert/strict';
-import { evaluateExpression, formatNumber } from '../app/src/calculator.ts';
+import { compileExpression, evaluateExpression, formatNumber } from '../app/src/calculator.ts';
+import {
+  fitGraphView,
+  graphPointAt,
+  graphStep,
+  graphTickLabel,
+  graphTicksBetween,
+  graphViewFor,
+  panGraphView,
+  sampleCurve,
+  zoomGraphView,
+} from '../app/src/graphing.ts';
 
 let passed = 0;
 let failed = 0;
@@ -105,6 +116,114 @@ check('Ans is the previous answer, and π and e are constants', () => {
   assert.equal(value('ans * 2', { ans: 21 }), 42);
   assert.equal(value('ans + 1'), 1, 'no answer yet is zero, not a refusal');
   near(value('π + e'), Math.PI + Math.E);
+  near(value('tau'), Math.PI * 2);
+  near(value('τ / 2'), Math.PI);
+  near(value('phi'), (1 + Math.sqrt(5)) / 2);
+  near(value('φ - 1'), 1 / ((1 + Math.sqrt(5)) / 2));
+});
+
+console.log('\nThe scientific set');
+check('hyperbolic and inverse hyperbolic functions', () => {
+  near(value('sinh(0)'), 0);
+  near(value('cosh(0)'), 1);
+  near(value('tanh(0)'), 0);
+  near(value('sinh(1)'), Math.sinh(1));
+  near(value('asinh(sinh(2))'), 2);
+  near(value('acosh(1)'), 0);
+  near(value('atanh(0.5)'), Math.atanh(0.5));
+});
+check('sec, csc and cot read the angle mode', () => {
+  near(value('sec(60)', { angle: 'deg' }), 2);
+  near(value('csc(30)', { angle: 'deg' }), 2);
+  near(value('cot(45)', { angle: 'deg' }), 1);
+  near(value('sec(0)'), 1);
+});
+check('arbitrary logs, roots and the exponential', () => {
+  near(value('log2(8)'), 3);
+  near(value('logb(2, 8)'), 3);
+  near(value('logb(9, 81)'), 2);
+  near(value('exp(1)'), Math.E);
+  assert.equal(value('cbrt(27)'), 3);
+  assert.equal(value('cbrt(-8)'), -2);
+  assert.equal(value('nthroot(3, 8)'), 2);
+  assert.equal(value('nthroot(3, -8)'), -2);
+  assert.equal(value('nthroot(2, 16)'), 4);
+});
+check('combinatorics, gcd/lcm and a floored remainder', () => {
+  assert.equal(value('nCr(5, 2)'), 10);
+  assert.equal(value('nPr(5, 2)'), 20);
+  assert.equal(value('nCr(10, 0)'), 1);
+  assert.equal(value('nCr(10, 10)'), 1);
+  assert.equal(value('gcd(48, 18)'), 6);
+  assert.equal(value('gcd(-12, 18)'), 6);
+  assert.equal(value('lcm(4, 6)'), 12);
+  assert.equal(value('mod(7, 3)'), 1);
+  assert.equal(value('mod(-1, 3)'), 2, 'the remainder follows the divisor, not the dividend');
+});
+check('the integer and rounding family, and min/max', () => {
+  assert.equal(value('floor(2.9)'), 2);
+  assert.equal(value('ceil(2.1)'), 3);
+  assert.equal(value('round(2.5)'), 3);
+  assert.equal(value('trunc(-2.9)'), -2);
+  assert.equal(value('sign(-4)'), -1);
+  assert.equal(value('min(3, 1, 2)'), 1);
+  assert.equal(value('max(3, 1, 2)'), 3);
+  assert.equal(value('atan2(1, 1)', { angle: 'deg' }), 45);
+});
+check('an expression compiles once and answers as f(x)', () => {
+  const curve = compileExpression('x^2 + 1');
+  near(curve(3), 10);
+  near(curve(-2), 5);
+  near(compileExpression('sin(x)')(Math.PI / 2), 1);
+  near(compileExpression('sin(x)', { angle: 'deg' })(30), 0.5);
+  assert.ok(Number.isNaN(compileExpression('1 / x')(0)), 'a gap is NaN, not a thrown plot');
+  assert.ok(Number.isNaN(compileExpression('sqrt(x)')(-1)));
+  assert.throws(() => compileExpression('sin('), /incomplete/);
+  assert.throws(() => compileExpression('wibble'), /does not know/);
+});
+
+console.log('\nThe graph paper');
+check('the opening window is square and the grid uses 1-2-5 steps', () => {
+  const view = graphViewFor(800, 400);
+  assert.equal(view.xMin, -10);
+  assert.equal(view.xMax, 10);
+  assert.equal(view.yMin, -5);
+  assert.equal(view.yMax, 5);
+  assert.equal(graphStep(20, 10), 2);
+  assert.equal(graphStep(4, 10), 0.5);
+  assert.equal(graphStep(0.02, 10), 0.002);
+});
+check('ticks are multiples of the step, and labels drop floating-point tails', () => {
+  assert.deepEqual(graphTicksBetween(-2, 2, 1), [-2, -1, 0, 1, 2]);
+  assert.deepEqual(graphTicksBetween(0.05, 0.35, 0.1), [0.1, 0.2, 0.3]);
+  assert.equal(graphTickLabel(0.30000000000000004, 0.1), '0.3');
+  assert.equal(graphTickLabel(-0, 1), '0');
+});
+check('a resize keeps square units, and zoom keeps its anchor still', () => {
+  const fitted = fitGraphView({ xMin: -10, xMax: 10, yMin: -2, yMax: 2 }, 800, 400);
+  assert.equal(fitted.yMin, -5);
+  assert.equal(fitted.yMax, 5);
+  const zoomed = zoomGraphView({ xMin: -10, xMax: 10, yMin: -5, yMax: 5 }, 0.5, { x: 2, y: 1 });
+  assert.equal(zoomed.xMin, -4);
+  assert.equal(zoomed.xMax, 6);
+  assert.equal(zoomed.yMin, -2);
+  assert.equal(zoomed.yMax, 3);
+});
+check('a drag moves the paper with the pointer', () => {
+  const panned = panGraphView({ xMin: -10, xMax: 10, yMin: -5, yMax: 5 }, 100, 50, 400, 200);
+  assert.equal(panned.xMin, -15);
+  assert.equal(panned.xMax, 5);
+  assert.equal(panned.yMin, -2.5);
+  assert.equal(panned.yMax, 7.5);
+  const point = graphPointAt({ xMin: -10, xMax: 10, yMin: -5, yMax: 5 }, 200, 100, 400, 200);
+  assert.equal(point.x, 0);
+  assert.equal(point.y, 0);
+});
+check('a curve breaks at a value it cannot take', () => {
+  const view = { xMin: -1, xMax: 1, yMin: -5, yMax: 5 };
+  assert.equal(sampleCurve(() => 1, view, 200).length, 1);
+  assert.equal(sampleCurve((x) => 1 / x, view, 400).length, 2, '1/x is two branches');
+  assert.ok(sampleCurve((x) => Math.tan(x), { xMin: -2, xMax: 2, yMin: -5, yMax: 5 }, 800).length >= 3);
 });
 
 console.log('\nThe display');
@@ -133,6 +252,17 @@ check('incomplete or malformed expressions', () => {
   refuses('2 + 2)', /something extra/);
   refuses('3 $ 4', /does not know/);
   refuses('wibble', /does not know/);
+});
+check('the scientific set refuses what it cannot answer', () => {
+  refuses('nCr(5.5, 2)', /whole numbers/);
+  refuses('nPr(2, 5)', /0 ≤ r ≤ n/);
+  refuses('nthroot(2, -4)', /even root/);
+  refuses('nthroot(0, 4)', /degree above zero/);
+  refuses('logb(1, 10)', /base above zero/);
+  refuses('mod(4, 0)', /Division by zero/);
+  refuses('min()', /at least one argument/);
+  refuses('sinh(1000)', /no real value/);
+  refuses('acosh(0)', /no real value/);
 });
 check('numbers with no real answer are refused', () => {
   refuses('1 / 0', /Division by zero/);

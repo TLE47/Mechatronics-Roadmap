@@ -4,6 +4,7 @@ import type { PythonEditorHandle } from '../PythonEditor';
 import { RunnerEditorCard } from './runner/RunnerEditorCard';
 import { BreakpointPanel } from './runner/BreakpointPanel';
 import { TracePanel } from '../TracePanel';
+import { StudyPanel } from '../StudyPanel';
 import { WorkflowPanel } from '../WorkflowPanel';
 import { Notebook } from '../Notebook';
 import {
@@ -418,12 +419,12 @@ export const TabStudio: React.FC = () => {
   );
 
   // The runner's editor card, ungraded: same tabs, same splittable panes, same editor settings, with
-  // the views this workspace can honestly offer (the run output and the workflow). What is absent is
-  // absent on purpose rather than wired to a no-op: no prediction (nothing to forecast), no expected
-  // output (nothing graded), no lesson files or go-to-definition (there is no second file), and no
-  // analysis, inline values or run-to-a-cell (studio/pythonRun.ts sends no analysis channel and no
-  // cell budget, so a control that offered any of them would do nothing). Breakpoints and the Trace
-  // tab are wired: the studio sends its own armed lines and reads the same recording a lesson does.
+  // every tool that does not belong to one lesson. What is absent is absent on purpose rather than
+  // wired to a no-op: no prediction (nothing to forecast), no expected output (nothing graded), no
+  // requirements or cases (no lesson authored them here), no robot (no lesson reading to follow) and
+  // no lesson files or go-to-definition (there is no second file). Breakpoints and the Trace tab are
+  // wired: the studio sends its own armed lines and reads the same recording a lesson does, and the
+  // calculator and the study panel are the runner's own, under the studio's document key.
   const codePane = (
     <div data-testid="studio-code" className="min-w-0">
       {studioPaused}
@@ -474,9 +475,14 @@ export const TabStudio: React.FC = () => {
           expectedOutputPane: null,
           workflowPane: studioWorkflow,
           tracePane: studioTrace,
+          studyPane: (
+            <div data-testid="studio-study-pane" className="bg-canvas p-2.5">
+              <StudyPanel lessonId="studio" />
+            </div>
+          ),
         }}
         collab={{ coEdit: null, collabNotice: null, peerLabel: null }}
-        resultViews={['actual', 'workflow', 'trace']}
+        resultViews={['actual', 'trace', 'workflow', 'calculator', 'study']}
       />
       <BreakpointPanel
         open={breakpointsOpen}

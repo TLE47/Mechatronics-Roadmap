@@ -157,7 +157,8 @@ grid and traces were drawn against this ink, and a white plot with the same curv
 
 These do not change between palettes — with the exception of the shadows and the ring, which light
 mode softens because a 60% black shadow on white paper reads as a smudge, and which high contrast
-deepens because a 45% shadow on black is no shadow at all.
+deepens because a 45% shadow on black is no shadow at all. The button key is a shadow too: every
+`<button>` gets it in the base layer, and a component that names its own elevation overrides it.
 
 ```css
 /* Radii, and the alias components should use */
@@ -168,6 +169,7 @@ deepens because a 45% shadow on black is no shadow at all.
 --shadow-sm: 0 1px 2px rgba(2, 6, 16, 0.5), 0 4px 12px rgba(2, 6, 16, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 --shadow-md: 0 8px 24px rgba(2, 6, 16, 0.46), 0 20px 48px rgba(2, 6, 16, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 --shadow-lg: 0 24px 64px rgba(2, 6, 16, 0.58), 0 48px 120px rgba(2, 6, 16, 0.42);
+--shadow-btn: 0 1px 0 rgba(0, 0, 0, 0.42), 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 --ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(56, 189, 248, 0.65);
 
 /* Type: one fluid scale, so a heading is the same size at every breakpoint's extremes */

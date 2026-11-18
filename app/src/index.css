@@ -71,6 +71,10 @@
   --shadow-sm: 0 1px 2px rgba(2, 6, 16, 0.5), 0 4px 12px rgba(2, 6, 16, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   --shadow-md: 0 8px 24px rgba(2, 6, 16, 0.46), 0 20px 48px rgba(2, 6, 16, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   --shadow-lg: 0 24px 64px rgba(2, 6, 16, 0.58), 0 48px 120px rgba(2, 6, 16, 0.42);
+  /* A button is a key: a hard edge under it and a short ambient shadow. Every <button> gets this in
+     the base layer; a component that already names a shadow (the `=` key, the mode pill) overrides
+     it without a second token. */
+  --shadow-btn: 0 1px 0 rgba(0, 0, 0, 0.42), 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   --ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(94, 234, 212, 0.65);
 
   /* Motion */
@@ -138,6 +142,7 @@
   --shadow-sm: 0 1px 2px rgba(20, 26, 36, 0.1), 0 4px 12px rgba(20, 26, 36, 0.09);
   --shadow-md: 0 8px 22px rgba(20, 26, 36, 0.14), 0 22px 52px rgba(20, 26, 36, 0.1);
   --shadow-lg: 0 24px 64px rgba(20, 26, 36, 0.17), 0 48px 110px rgba(20, 26, 36, 0.1);
+  --shadow-btn: 0 1px 0 rgba(20, 26, 36, 0.16), 0 2px 4px rgba(20, 26, 36, 0.12), inset 0 1px 0 #ffffff;
   --ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(15, 118, 110, 0.65);
 }
 
@@ -176,6 +181,7 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.9), 0 4px 12px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.09);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.9), 0 20px 48px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.09);
   --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.95), 0 48px 120px rgba(0, 0, 0, 0.9);
+  --shadow-btn: 0 1px 0 rgba(0, 0, 0, 0.95), 0 2px 5px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   --ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(125, 211, 252, 0.95);
 }
 
@@ -212,6 +218,7 @@
   --shadow-sm: 0 1px 2px rgba(58, 44, 28, 0.15), 0 4px 12px rgba(58, 44, 28, 0.13);
   --shadow-md: 0 8px 22px rgba(58, 44, 28, 0.19), 0 22px 52px rgba(58, 44, 28, 0.14);
   --shadow-lg: 0 24px 64px rgba(58, 44, 28, 0.22), 0 48px 110px rgba(58, 44, 28, 0.15);
+  --shadow-btn: 0 1px 0 rgba(58, 44, 28, 0.18), 0 2px 4px rgba(58, 44, 28, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.8);
   --ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(11, 97, 87, 0.75);
 }
 
@@ -361,6 +368,18 @@ body {
   border: 1px solid var(--plot-line);
   border-radius: var(--r-lg);
   color: var(--text);
+}
+
+/* A button is a key rather than a label: a hard bottom edge and a short ambient shadow, in the base
+   layer so a component's own elevation (the accent `=`, the selected mode pill) still wins. A
+   disabled control is flat, because a depth that cannot be pressed is a promise it cannot keep. */
+@layer base {
+  button {
+    box-shadow: var(--shadow-btn);
+  }
+  button:disabled {
+    box-shadow: none;
+  }
 }
 
 /* Every interactive element gets the same visible ring. This is the one rule

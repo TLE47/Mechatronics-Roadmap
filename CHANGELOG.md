@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.5.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.6.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,36 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-18] — The calculator becomes a suite: the whole scientific set, a graph beside it, and free study's full tool rail
+
+**The scientific face carries every function the reference pad does.** The `func` keypad grew from
+the inverse-trig-and-logs half into six rows and a run row: inverse and hyperbolic trigonometry,
+natural, common, binary and base-*b* logarithms, `e^x`, `10^x`, squares, cubes, square and cube
+roots, `nCr` and `nPr`, `mod`, `gcd`/`lcm`, floor/ceiling/round, and a comma so a two-argument
+function can be typed from the pad. The grammar matches the reference beyond the keys: `sec`/`csc`/
+`cot`, `atan2`, `logb`, `nthroot`, `sign`, `trunc`, `min` and `max` are typeable, as are `τ`, `φ`, a
+name that carries a digit (`log2`), comma-separated arguments, and one plain sentence for each refusal
+(`nCr(5.5, 2)`, an even root of a negative number, `logb(1, 10)`, `min()`).
+
+**A graphing calculator sits beside it, in the same tab.** A `scientific` / `graphing` pill switches
+faces: the graph is an expression list with one coloured curve per line, add, delete and hide, `y =`
+accepted or omitted, and an error sentence under a line while it is typed. The canvas draws 1-2-5
+grid steps, numbered axes that stay on screen when the window is panned past the origin, square
+units, drag-to-pan, wheel zoom about the pointer, zoom/reset controls, and a hover readout that snaps
+to the nearest curve and shows the point. A value the expression cannot take is a gap rather than a
+vertical line through an asymptote, and a pan never reparses a line: the grammar compiles once to
+`f(x)` (`compileExpression`) and the graph samples that.
+
+**Free study's editor card gets the runner's tools, not its homework.** Run output, Trace, Workflow,
+Calculator and Study are now tabs of the free-study card, with Breakpoints still in More. Predict,
+Requirements, Cases, Expected and Robot stay absent, because no lesson authored them for a scratch
+document; every tab that is there reads the studio's own stores and runs an ungraded program.
+
+**Every button sits on a bottom edge.** A new `--shadow-btn` token adds a hard one-pixel edge and a
+short ambient shadow under `<button>` in the base layer, re-pointed for light, paper and high
+contrast. A component that names its own elevation (the accent `=`, the selected mode pill) still
+wins, and a disabled control stays flat.
 
 ## [2026-11-18] — The calculator takes Desmos' shape, and the workbench casts a shadow you can see
 

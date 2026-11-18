@@ -34,7 +34,7 @@ DOC = os.path.join(ROOT, "docs", "THEME.md")
 COLOUR_VALUE = re.compile(r"(#[0-9a-fA-F]{3,8}|rgba?\([^)]*\))")
 DECLARATION = re.compile(r"(--[\w-]+)\s*:\s*([^;]+);")
 # Re-pointed by the light block, but not colours: they belong to the scale section of the page.
-NON_COLOUR_THEMED = {"--shadow-sm", "--shadow-md", "--shadow-lg", "--ring"}
+NON_COLOUR_THEMED = {"--shadow-sm", "--shadow-md", "--shadow-lg", "--shadow-btn", "--ring"}
 DARK_ONLY = "—"
 
 

@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { evaluateExpression, formatNumber, type AngleMode } from '../../../calculator';
+import { GraphingPane } from './GraphingPane';
 
 /** One entry of the tape: the text that was evaluated and the number it produced. */
 interface HistoryEntry {
@@ -67,27 +68,53 @@ const MAIN_KEYS: CalculatorKey[] = [
 ];
 
 /**
- * `func` is the second face: the inverse trigonometry and the logarithms the main page leaves off,
- * the two powers a science lesson writes most, and the absolute value the parser already knows.
+ * `func` is the second face: inverse and hyperbolic trigonometry, the logs, roots, powers,
+ * combinatorics, the integer family, and a comma so a two-argument function can be typed from the
+ * pad. The last two rows repeat the constants and the run controls so a learner can stay on this
+ * face for a whole expression.
  */
 const FUNC_KEYS: CalculatorKey[] = [
   { label: 'sin⁻¹', id: 'asin', insert: 'asin(', tone: 'function' },
   { label: 'cos⁻¹', id: 'acos', insert: 'acos(', tone: 'function' },
   { label: 'tan⁻¹', id: 'atan', insert: 'atan(', tone: 'function' },
+  { label: 'sinh', id: 'sinh', insert: 'sinh(', tone: 'function' },
+  { label: 'cosh', id: 'cosh', insert: 'cosh(', tone: 'function' },
+
+  { label: 'tanh', id: 'tanh', insert: 'tanh(', tone: 'function' },
   { label: 'ln', id: 'ln', insert: 'ln(', tone: 'function' },
   { label: 'log', id: 'log', insert: 'log(', tone: 'function' },
+  { label: 'log₂', id: 'log2', insert: 'log2(', tone: 'function' },
+  { label: 'eˣ', id: 'exp', insert: 'e^', tone: 'function' },
 
-  { label: '|a|', id: 'abs', insert: 'abs(', tone: 'function' },
+  { label: '10ˣ', id: 'tenpow', insert: '10^', tone: 'function' },
   { label: 'a²', id: 'square', insert: '^2', tone: 'function' },
   { label: 'a³', id: 'cube', insert: '^3', tone: 'function' },
   { label: '√', id: 'func-sqrt', insert: 'sqrt(', tone: 'function' },
-  { label: '^', id: 'func-pow', insert: '^', tone: 'function' },
+  { label: '∛', id: 'cbrt', insert: 'cbrt(', tone: 'function' },
 
-  { label: '(', id: 'func-lparen', insert: '(', tone: 'utility' },
-  { label: ')', id: 'func-rparen', insert: ')', tone: 'utility' },
+  { label: '|a|', id: 'abs', insert: 'abs(', tone: 'function' },
+  { label: 'nCr', id: 'ncr', insert: 'nCr(', tone: 'function' },
+  { label: 'nPr', id: 'npr', insert: 'nPr(', tone: 'function' },
+  { label: 'mod', id: 'mod', insert: 'mod(', tone: 'function' },
+  { label: 'gcd', id: 'gcd', insert: 'gcd(', tone: 'function' },
+
+  { label: 'lcm', id: 'lcm', insert: 'lcm(', tone: 'function' },
+  { label: '⌊a⌋', id: 'floor', insert: 'floor(', tone: 'function' },
+  { label: '⌈a⌉', id: 'ceil', insert: 'ceil(', tone: 'function' },
+  { label: 'round', id: 'round', insert: 'round(', tone: 'function' },
+  { label: ',', id: 'comma', insert: ',', tone: 'utility' },
+
   { label: 'π', id: 'func-pi', insert: 'π', tone: 'utility' },
   { label: 'e', id: 'func-e', insert: 'e', tone: 'utility' },
   { label: '%', id: 'func-percent', insert: '%', tone: 'utility' },
+  { label: '(', id: 'func-lparen', insert: '(', tone: 'utility' },
+  { label: ')', id: 'func-rparen', insert: ')', tone: 'utility' },
+
+  { label: '^', id: 'func-pow', insert: '^', tone: 'utility' },
+  { label: 'Ans', id: 'func-ans', insert: 'ans', tone: 'utility' },
+  { label: 'C', id: 'func-clear', action: 'clear', tone: 'clear' },
+  { label: '⌫', id: 'func-back', action: 'back', tone: 'clear' },
+  { label: '=', id: 'func-equals', action: 'equals', tone: 'equals' },
 ];
 
 /** The one place a key's surface is decided, so every function key reads as a family. */
@@ -123,6 +150,10 @@ export function CalculatorPane() {
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [page, setPage] = useState<KeypadPage>('main');
+  // The tab holds both calculators Desmos separates into two pages: the scientific pad this tab has
+  // always drawn, and the graphing sheet, which is a different instrument rather than a third keypad
+  // face. The mode is this visit's choice; the angle unit and the tape stay scientific's.
+  const [mode, setMode] = useState<'scientific' | 'graphing'>('scientific');
   const input = useRef<HTMLInputElement | null>(null);
 
   /** What the active line would print right now, or null while the text is not yet an expression. */
@@ -219,10 +250,41 @@ export function CalculatorPane() {
       data-testid="calculator-pane"
       data-angle={angle}
       data-value={shown === null ? undefined : formatNumber(shown)}
-      aria-label="Scientific calculator"
-      className="flex min-h-0 flex-1 justify-center overflow-y-auto bg-canvas p-2.5 sm:p-3"
+      data-mode={mode}
+      aria-label="Calculator"
+      className="flex min-h-0 flex-1 justify-start overflow-y-auto bg-canvas p-2.5 sm:justify-center sm:p-3"
     >
-      <section
+      <div
+        className={`flex w-full flex-col gap-2 self-start ${
+          mode === 'scientific' ? 'max-w-[27rem]' : 'max-w-[76rem]'
+        }`}
+      >
+        <div
+          role="tablist"
+          aria-label="Calculator mode"
+          className="flex items-center gap-0.5 self-center rounded-full border border-line-soft bg-panel/80 p-0.5"
+        >
+          {(['scientific', 'graphing'] as const).map((name) => (
+            <button
+              key={name}
+              type="button"
+              role="tab"
+              aria-selected={mode === name}
+              data-testid={`calculator-mode-${name}`}
+              onClick={() => setMode(name)}
+              className={`cursor-pointer rounded-full px-3 py-1 font-mono text-[12px] lowercase transition-colors ${
+                mode === name
+                  ? 'bg-accent font-semibold text-inverse shadow-sm'
+                  : 'text-muted hover:text-body'
+              }`}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+
+        {mode === 'scientific' ? (
+          <section
         aria-label="Calculator"
         className="flex w-full max-w-[27rem] flex-col self-start overflow-hidden rounded-2xl border border-line bg-panel shadow-[var(--shadow-md)]"
       >
@@ -419,8 +481,12 @@ export function CalculatorPane() {
             <kbd className="rounded border border-line-soft bg-canvas px-1 py-0.5 text-[11px]">Esc</kbd> clears
             the line
           </span>
-        </footer>
-      </section>
+          </footer>
+          </section>
+        ) : (
+          <GraphingPane angle={angle} onAngle={setAngle} />
+        )}
+      </div>
     </div>
   );
 }
