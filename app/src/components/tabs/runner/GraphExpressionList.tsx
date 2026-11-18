@@ -150,7 +150,16 @@ export function GraphExpressionList({
         </div>
       </div>
 
-      <div className="max-h-[14rem] flex-1 overflow-y-auto sm:max-h-none">
+      {/*
+        The list scrolls inside the card, at every width. Without a cap on desktop, every added
+        row made the column taller, which stretched the graph sheet and re-fitted its y window: the
+        graph appeared to expand each time a learner wrote another expression. The cap is the scroll
+        area a wide card already offers, so past it the rows scroll instead of stretching the sheet.
+      */}
+      <div
+        data-testid="graph-expression-list"
+        className="max-h-[14rem] min-h-0 flex-1 overflow-y-auto sm:max-h-[14.375rem]"
+      >
         {rows.map((row, index) => {
           const entry = compiled[index];
           const linked = entry?.parameterName

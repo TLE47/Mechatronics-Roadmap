@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.7.1`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.7.2`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,13 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-18] — A new expression scrolls the list, not the sheet
+
+The expression column had no height cap above the phone breakpoint, so every row made the column
+taller. The graph stretched to match it, and the resize fit re-derived the y window, which made the
+sheet appear to expand each time a learner added an equation. The list now scrolls inside the card at
+every width, so rows past its scroll area no longer grow the sheet or re-fit its pan/zoom window.
 
 ## [2026-11-18] — The graph's source stops reading as LaTeX
 

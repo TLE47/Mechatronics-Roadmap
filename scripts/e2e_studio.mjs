@@ -532,6 +532,40 @@ async function main() {
       'the graph slider must keep the source slider’s range'
     );
 
+    // Adding lines is a list action, not a resize. Fill the list past its scroll area first; the
+    // next rows then have to leave the sheet exactly as they found it. Before the cap, every row
+    // stretched the plot and its resize fit re-derived y, which made the graph expand forever.
+    for (let index = 0; index < 6; index += 1) {
+      await page.getByTestId('graph-add-row').click();
+    }
+    await page.getByTestId('graph-expression-input').last().fill('y = x');
+    await page.waitForTimeout(200);
+    const sheetAtCap = await graph.boundingBox();
+    const windowAtCap = await graph.getAttribute('data-view');
+    for (let index = 0; index < 6; index += 1) {
+      await page.getByTestId('graph-add-row').click();
+    }
+    await page.waitForTimeout(200);
+    const sheetAfter = await graph.boundingBox();
+    assert.ok(
+      sheetAtCap && sheetAfter && Math.abs(sheetAfter.height - sheetAtCap.height) <= 2,
+      `once the list scrolls, more rows must not grow the sheet: ${sheetAtCap?.height} -> ${sheetAfter?.height}`
+    );
+    assert.equal(
+      await graph.getAttribute('data-view'),
+      windowAtCap,
+      'once the list scrolls, more rows must not re-fit the sheet'
+    );
+    const scroller = await page.getByTestId('graph-expression-list').evaluate((node) => ({
+      client: node.clientHeight,
+      scroll: node.scrollHeight,
+    }));
+    assert.ok(
+      scroller.scroll > scroller.client + 20,
+      `the list must scroll once it fills the card: ${scroller.scroll} > ${scroller.client}`
+    );
+    ok('the expression list scrolls inside the card; rows past its cap do not grow or re-fit the sheet');
+
     await page.getByTestId('editor-tab-main').click();
     ok(
       'the graph keeps its expressions and viewport across faces, paints implicit curves, surfaces a shader failure, and takes Python plots and sliders'
