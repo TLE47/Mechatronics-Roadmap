@@ -84,7 +84,7 @@ export function resultTabMeta(view: EditorView): ResultTabMeta {
       return {
         label: 'Calculator',
         title:
-          'A scientific calculator: trig, logs, powers and factorials with DEG/RAD — it never edits your code',
+          'Scientific and graphing calculators: trig, logs, powers, factorials and plotted expressions — it never edits your code',
         icon: <Calculator className="hidden h-3 w-3 sm:block" aria-hidden="true" />,
       };
     case 'study':

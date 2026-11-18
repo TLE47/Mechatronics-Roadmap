@@ -16,6 +16,19 @@ flowchart LR
 
 ---
 
+## [2026-11-18] — The graph keeps its sheet across the calculator's two faces
+
+**Switching to the scientific pad no longer rebuilds the graph.** Both faces of the calculator stay
+mounted; the inactive one is hidden rather than unmounted, and the graph ignores a zero-size
+measurement while it is hidden. A learner's expression list, the colours they hid, the pan and the
+zoom therefore survive every trip to the scientific pad and back, and the studio's browser suite now
+holds that by comparing the graph's expression and viewport before and after the switch.
+
+**A compact graphing keypad sits under the expression list.** Twelve keys — `sin`, `cos`, `tan`,
+`√`, `ln`, `log`, `|x|`, `^`, `π`, `e`, `x` and `)` — write at the active line's caret, so a graph can
+be built without leaving the tab. A press keeps the input focused and places the caret after the
+inserted text; the geometry, pan and zoom are untouched.
+
 ## [2026-11-18] — The calculator becomes a suite: the whole scientific set, a graph beside it, and free study's full tool rail
 
 **The scientific face carries every function the reference pad does.** The `func` keypad grew from

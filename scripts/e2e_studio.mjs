@@ -346,6 +346,57 @@ async function main() {
     await page.getByTestId('studio-vim').click();
     ok('the studio editor is the runner’s card: split panes and a remembered Vim choice');
 
+    // ---- 2b.1 The graph keeps its sheet when the calculator changes faces ----
+    // The scientific pad and the graph are one tab now. Switching faces used to remount the graph,
+    // which threw away the learner's expressions and their zoom; both faces stay mounted, and the
+    // graph measures only while it is visible. The keypad writes at the active line's caret.
+    await page.getByTestId('editor-tab-calculator').click();
+    await page.getByTestId('calculator-pane').waitFor({ state: 'visible', timeout: 5000 });
+    await page.getByTestId('calculator-mode-graphing').click();
+    const graph = page.getByTestId('graphing-pane');
+    await graph.waitFor({ state: 'visible', timeout: 5000 });
+    const graphExpression = page.getByTestId('graph-expression-input').first();
+    await graphExpression.fill('x^2 - 3');
+    await page.waitForFunction(
+      () => (document.querySelector('[data-testid="graph-canvas"]')?.clientWidth ?? 0) > 100,
+      undefined,
+      { timeout: 5000 }
+    );
+    await page.getByTestId('graph-zoom-in').click();
+    await page.getByTestId('graph-zoom-in').click();
+    const zoomedView = await graph.getAttribute('data-view');
+    assert.ok(zoomedView, 'the graph must expose the window its sheet is showing');
+    await page.getByTestId('calculator-mode-scientific').click();
+    assert.equal(await graph.isVisible(), false, 'the graph hides when the scientific face is up');
+    await page.getByTestId('calculator-mode-graphing').click();
+    assert.equal(
+      await graphExpression.inputValue(),
+      'x^2 - 3',
+      'switching faces must not throw away the expressions'
+    );
+    assert.equal(
+      await graph.getAttribute('data-view'),
+      zoomedView,
+      'switching faces must not reset the zoom or the pan window'
+    );
+
+    await graphExpression.fill('');
+    await page.getByTestId('graph-key-sin').click();
+    await page.getByTestId('graph-key-x').click();
+    await page.getByTestId('graph-key-rparen').click();
+    assert.equal(
+      await graphExpression.inputValue(),
+      'sin(x)',
+      'the graphing keypad must insert functions and the variable at the caret'
+    );
+    assert.equal(
+      await page.getByTestId('graph-expression-error').count(),
+      0,
+      'the expression built from the keypad must be one the graph can read'
+    );
+    await page.getByTestId('editor-tab-main').click();
+    ok('the graph keeps its expressions and viewport across faces, and its keypad inserts functions');
+
     // ---- 2c. The arrangement is this card's own, and it is remembered ----
     // A closed output pane is a chosen layout, not a reset: it has to come back after a reload. And
     // the studio writes its own key, so arranging this card cannot move the lesson editor's split.

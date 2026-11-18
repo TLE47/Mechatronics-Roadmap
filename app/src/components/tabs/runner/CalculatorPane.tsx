@@ -283,11 +283,15 @@ export function CalculatorPane() {
           ))}
         </div>
 
-        {mode === 'scientific' ? (
-          <section
-        aria-label="Calculator"
-        className="flex w-full max-w-[27rem] flex-col self-start overflow-hidden rounded-2xl border border-line bg-panel shadow-[var(--shadow-md)]"
-      >
+        {/*
+          Both faces stay mounted. The graph owns its expression list, viewport and colours in
+          component state, so hiding it for the scientific pad and showing it again must not throw
+          that sheet away — only its pixels are hidden.
+        */}
+        <section
+          aria-label="Calculator"
+          className={`${mode === 'scientific' ? 'flex' : 'hidden'} w-full max-w-[27rem] flex-col self-start overflow-hidden rounded-2xl border border-line bg-panel shadow-[var(--shadow-md)]`}
+        >
         <h2 className="sr-only">Scientific calculator</h2>
 
         <header className="flex items-center justify-between gap-2 px-3 pt-2.5">
@@ -482,10 +486,10 @@ export function CalculatorPane() {
             the line
           </span>
           </footer>
-          </section>
-        ) : (
+        </section>
+        <div className={mode === 'graphing' ? 'w-full' : 'hidden'}>
           <GraphingPane angle={angle} onAngle={setAngle} />
-        )}
+        </div>
       </div>
     </div>
   );

@@ -36,6 +36,40 @@ interface CompiledExpression {
 /** The five curve colours a Desmos sheet starts with, brightened for this app's dark plot face. */
 const CURVE_COLORS = ['#f26d6d', '#5b9dff', '#4cc38a', '#b184f5', '#f2a33c', '#38c6c1'];
 
+/** A graphing keypad key: the face it shows and the text it puts at the caret. */
+interface GraphKey {
+  id: string;
+  label: string;
+  insert: string;
+  tone: 'function' | 'constant' | 'utility';
+}
+
+/**
+ * The small keypad Desmos puts under the expression list: the functions a graph is written from,
+ * the constants and the variable, with the closing parenthesis the opening ones need. It is one
+ * grid rather than a page switch because a graph expression is short.
+ */
+const GRAPH_KEYS: GraphKey[] = [
+  { id: 'sin', label: 'sin', insert: 'sin(', tone: 'function' },
+  { id: 'cos', label: 'cos', insert: 'cos(', tone: 'function' },
+  { id: 'tan', label: 'tan', insert: 'tan(', tone: 'function' },
+  { id: 'sqrt', label: '√', insert: 'sqrt(', tone: 'function' },
+  { id: 'ln', label: 'ln', insert: 'ln(', tone: 'function' },
+  { id: 'log', label: 'log', insert: 'log(', tone: 'function' },
+  { id: 'abs', label: '|x|', insert: 'abs(', tone: 'function' },
+  { id: 'pow', label: '^', insert: '^', tone: 'utility' },
+  { id: 'pi', label: 'π', insert: 'π', tone: 'constant' },
+  { id: 'e', label: 'e', insert: 'e', tone: 'constant' },
+  { id: 'x', label: 'x', insert: 'x', tone: 'constant' },
+  { id: 'rparen', label: ')', insert: ')', tone: 'utility' },
+];
+
+const GRAPH_KEY_CLASS: Record<GraphKey['tone'], string> = {
+  function: 'text-muted hover:border-accent/40 hover:text-body',
+  constant: 'text-accent hover:border-accent/40 hover:bg-accent/10',
+  utility: 'text-body hover:border-accent/40 hover:bg-raise',
+};
+
 const GRID_MINOR = 'rgba(148, 163, 184, 0.055)';
 const GRID_MAJOR = 'rgba(148, 163, 184, 0.14)';
 const AXIS_INK = 'rgba(203, 213, 225, 0.55)';
@@ -81,6 +115,9 @@ export function GraphingPane({ angle, onAngle }: { angle: AngleMode; onAngle: (m
   );
   const [dragging, setDragging] = useState(false);
   const [focusId, setFocusId] = useState<number | null>(null);
+  // The row a keypad press writes to. It follows focus, so a learner can tap a line and then build
+  // its expression from the keys without aiming at the input again.
+  const [activeId, setActiveId] = useState(1);
   const nextId = useRef(2);
   const plotRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -114,8 +151,11 @@ export function GraphingPane({ angle, onAngle }: { angle: AngleMode; onAngle: (m
     if (!node) return;
     const measure = () => {
       const rect = node.getBoundingClientRect();
-      const width = Math.max(1, Math.round(rect.width));
-      const height = Math.max(1, Math.round(rect.height));
+      // The scientific face hides this pane rather than unmounting it, and a hidden element
+      // measures zero. Keeping the last real size is what preserves the window across a switch.
+      if (rect.width <= 0 || rect.height <= 0) return;
+      const width = Math.round(rect.width);
+      const height = Math.round(rect.height);
       setSize((previous) =>
         previous.width === width && previous.height === height ? previous : { width, height }
       );
@@ -322,13 +362,32 @@ export function GraphingPane({ angle, onAngle }: { angle: AngleMode; onAngle: (m
       return next;
     });
     setFocusId(id);
+    setActiveId(id);
   };
 
   const removeRow = (id: number) => {
+    const remaining = rows.filter((row) => row.id !== id);
     setRows((current) => {
       const next = current.filter((row) => row.id !== id);
       return next.length > 0 ? next : current.map((row) => (row.id === id ? { ...row, text: '' } : row));
     });
+    if (remaining[0]) setActiveId(remaining[0].id);
+  };
+
+  /** Put a key's text where the active row's caret is, then leave the caret after it. */
+  const insertAtActive = (text: string) => {
+    const row = rows.find((entry) => entry.id === activeId) ?? rows[0];
+    if (!row) return;
+    const field = inputs.current.get(row.id);
+    const start = field && document.activeElement === field ? field.selectionStart ?? row.text.length : row.text.length;
+    const end = field && document.activeElement === field ? field.selectionEnd ?? start : start;
+    const next = row.text.slice(0, start) + text + row.text.slice(end);
+    updateRow(row.id, { text: next });
+    setActiveId(row.id);
+    window.setTimeout(() => {
+      field?.focus();
+      field?.setSelectionRange(start + text.length, start + text.length);
+    }, 0);
   };
 
   const pointerDown = (event: ReactPointerEvent<HTMLCanvasElement>) => {
@@ -383,6 +442,7 @@ export function GraphingPane({ angle, onAngle }: { angle: AngleMode; onAngle: (m
   return (
     <section
       data-testid="graphing-pane"
+      data-view={`${view.xMin.toFixed(6)},${view.xMax.toFixed(6)},${view.yMin.toFixed(6)},${view.yMax.toFixed(6)}`}
       aria-label="Graphing calculator"
       className="flex min-h-[29rem] w-full flex-col overflow-hidden rounded-2xl border border-line bg-panel shadow-[var(--shadow-md)]"
     >
@@ -461,6 +521,7 @@ export function GraphingPane({ angle, onAngle }: { angle: AngleMode; onAngle: (m
                         data-testid="graph-expression-input"
                         aria-label={`Expression ${index + 1}`}
                         value={row.text}
+                        onFocus={() => setActiveId(row.id)}
                         onChange={(event) => updateRow(row.id, { text: event.target.value })}
                         onKeyDown={(event) => {
                           if (event.key === 'Enter') {
@@ -511,6 +572,25 @@ export function GraphingPane({ angle, onAngle }: { angle: AngleMode; onAngle: (m
               <Plus className="h-3 w-3" aria-hidden="true" />
               Add expression
             </button>
+          </div>
+
+          <div className="border-t border-line-soft bg-canvas/40 p-2">
+            <div role="group" aria-label="Graphing keypad" className="grid grid-cols-4 gap-1">
+              {GRAPH_KEYS.map((key) => (
+                <button
+                  key={key.id}
+                  type="button"
+                  data-testid={`graph-key-${key.id}`}
+                  aria-label={`Insert ${key.label}`}
+                  title={`Insert ${key.label}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => insertAtActive(key.insert)}
+                  className={`h-7 select-none rounded-md border border-line-soft/70 bg-panel-2 font-mono text-[11px] transition-[transform,background-color,border-color,color] duration-75 active:translate-y-px cursor-pointer ${GRAPH_KEY_CLASS[key.tone]}`}
+                >
+                  {key.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <p className="hidden border-t border-line-soft px-3 py-2 font-mono text-[10.5px] leading-relaxed text-faint sm:block">
