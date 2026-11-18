@@ -44,7 +44,7 @@ flowchart LR
 | `EditorRequirements.tsx` | The lesson's pass conditions as their own editor tab: numbered colourful cards with the micro lessons' token styling. |
 | `resultTabMeta.tsx` | What each result tab says: its label, its tooltip and its glyph. |
 | `robotPane.tsx` | The Robot tab's slot: the four lesson views, and the lazy result tab that is null everywhere else. |
-| `CalculatorPane.tsx` | The Calculator tab as a desk instrument: a display that pairs the expression with its answer, a keypad grouped into functions, digits, operators and utilities (trig and inverses, logs, roots, powers, factorial, percent, π, e, Ans), a DEG/RAD pill, and a history tape that stacks beside it or below it. It never reads or writes `main.py`. |
+| `CalculatorPane.tsx` | The Calculator tab in the shape of Desmos' scientific calculator: an expression tape where every kept calculation holds its own answer, an active line that previews its result, lowercase `main`/`func` keypad tabs over one five-column pad (trig and inverses, logs, roots, powers, factorial, percent, π, e, Ans), a lowercase `rad`/`deg` switch, and `clear all` over the tape. It never reads or writes `main.py`. |
 | `CasesPane.tsx` | The behavioural cases: one row per substituted input, with what the last run proved and which cases it never reached. |
 | `readerContinue.ts` | Where the page goes next: Study into Read, Read into Write. |
 | `LessonChooserRail.tsx` | The Study preset's left column, the brief's button that brings a folded rail back, and the grid width that follows the fold. In Read, Write and Debug, which have no rail column, that same button opens the lesson sheet. |

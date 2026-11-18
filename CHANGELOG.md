@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.4.1`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.5.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,31 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-18] — The calculator takes Desmos' shape, and the workbench casts a shadow you can see
+
+**The Calculator tab is an expression tape now, not a display and a separate history.** The shape
+follows [Desmos' scientific calculator](https://www.desmos.com/scientific): a committed calculation
+stays on the sheet with its expression above and its answer underneath, newest nearest the active
+line, and the active line previews its own answer as the text is typed. Tapping a kept row puts its
+expression back, `clear all` sits over the tape, and the empty state is a blank sheet rather than a
+card explaining itself. The pane is one centred column instead of a wide two-column desk, so it
+reads the same at a split pane's width and at full width.
+
+**The keypad has two faces and a plainer switch.** Lowercase `main` and `func` tabs divide the keys
+the way a scientific pad does — arithmetic, trigonometry, roots, constants and `Ans` on the first;
+inverse trigonometry, logarithms, `|a|`, `a²` and `a³` on the second — over one five-column, 44 px
+key grid that keeps the same height on both faces. `rad / deg` is a pair of lowercase text buttons
+beside the tabs rather than a pill, and the `=` key is the one accent fill in the pad. Every key id,
+the `data-value`/`data-angle` attributes and the tape's test ids are unchanged, so the browser suite
+still drives the same calculator.
+
+**Elevation is two layers and a lit edge.** `--shadow-sm` and `--shadow-md` now carry a tight
+contact shadow plus a wider ambient one, and the dark and high-contrast palettes add a one-pixel
+inset highlight so a panel reads as raised on a near-black canvas. Light and paper keep the same
+geometry with lower alpha. The Calculator card uses `--shadow-md`; the editor, the study panel, the
+trace, the reader and the settings dialog keep the tokens they already used, now visibly deeper.
+The theme reference carries the new values.
 
 ## [2026-11-17] — Three workbench blocks can step aside, with the cards sitting on a quieter shadow
 

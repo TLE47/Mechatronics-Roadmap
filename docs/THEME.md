@@ -165,9 +165,9 @@ deepens because a 45% shadow on black is no shadow at all.
 --radius: var(--r-md);
 
 /* Elevation — dark values; light mode keeps the geometry and drops the alpha */
---shadow-sm: 0 1px 2px rgba(2, 6, 16, 0.5);
---shadow-md: 0 8px 24px rgba(2, 6, 16, 0.45);
---shadow-lg: 0 24px 64px rgba(2, 6, 16, 0.6);
+--shadow-sm: 0 1px 2px rgba(2, 6, 16, 0.5), 0 4px 12px rgba(2, 6, 16, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+--shadow-md: 0 8px 24px rgba(2, 6, 16, 0.46), 0 20px 48px rgba(2, 6, 16, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+--shadow-lg: 0 24px 64px rgba(2, 6, 16, 0.58), 0 48px 120px rgba(2, 6, 16, 0.42);
 --ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(56, 189, 248, 0.65);
 
 /* Type: one fluid scale, so a heading is the same size at every breakpoint's extremes */

@@ -68,9 +68,9 @@
   --r-full: 999px;
 
   /* Elevation */
-  --shadow-sm: 0 1px 2px rgba(2, 6, 16, 0.36);
-  --shadow-md: 0 8px 24px rgba(2, 6, 16, 0.3);
-  --shadow-lg: 0 24px 64px rgba(2, 6, 16, 0.42);
+  --shadow-sm: 0 1px 2px rgba(2, 6, 16, 0.5), 0 4px 12px rgba(2, 6, 16, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-md: 0 8px 24px rgba(2, 6, 16, 0.46), 0 20px 48px rgba(2, 6, 16, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-lg: 0 24px 64px rgba(2, 6, 16, 0.58), 0 48px 120px rgba(2, 6, 16, 0.42);
   --ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(94, 234, 212, 0.65);
 
   /* Motion */
@@ -135,9 +135,9 @@
   --rose-strong: #9f1239;
   --purple: #7e22ce;
   --purple-strong: #6b21a8;
-  --shadow-sm: 0 1px 2px rgba(20, 26, 36, 0.05);
-  --shadow-md: 0 8px 24px rgba(20, 26, 36, 0.06);
-  --shadow-lg: 0 24px 64px rgba(20, 26, 36, 0.1);
+  --shadow-sm: 0 1px 2px rgba(20, 26, 36, 0.1), 0 4px 12px rgba(20, 26, 36, 0.09);
+  --shadow-md: 0 8px 22px rgba(20, 26, 36, 0.14), 0 22px 52px rgba(20, 26, 36, 0.1);
+  --shadow-lg: 0 24px 64px rgba(20, 26, 36, 0.17), 0 48px 110px rgba(20, 26, 36, 0.1);
   --ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(15, 118, 110, 0.65);
 }
 
@@ -173,9 +173,9 @@
   --rose-strong: #fecdd3;
   --purple: #d8b4fe;
   --purple-strong: #e9d5ff;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.85);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.8);
-  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.9);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.9), 0 4px 12px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.9), 0 20px 48px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.95), 0 48px 120px rgba(0, 0, 0, 0.9);
   --ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(125, 211, 252, 0.95);
 }
 
@@ -209,9 +209,9 @@
   --rose-strong: #85172c;
   --purple: #6a2a96;
   --purple-strong: #55217a;
-  --shadow-sm: 0 1px 2px rgba(58, 44, 28, 0.1);
-  --shadow-md: 0 8px 24px rgba(58, 44, 28, 0.12);
-  --shadow-lg: 0 24px 64px rgba(58, 44, 28, 0.16);
+  --shadow-sm: 0 1px 2px rgba(58, 44, 28, 0.15), 0 4px 12px rgba(58, 44, 28, 0.13);
+  --shadow-md: 0 8px 22px rgba(58, 44, 28, 0.19), 0 22px 52px rgba(58, 44, 28, 0.14);
+  --shadow-lg: 0 24px 64px rgba(58, 44, 28, 0.22), 0 48px 110px rgba(58, 44, 28, 0.15);
   --ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(11, 97, 87, 0.75);
 }
 
