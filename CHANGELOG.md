@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.6.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.7.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,43 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-18] — The graph is a small language, compiled twice and drawn on two canvases
+
+**The graphing calculator has its own parser and compiler.** `app/src/grapher/parser.ts` is a
+recursive-descent Pratt parser over a typed AST: it reads `sin(x^2) + 2x`, LaTeX fractions and roots,
+`atan2(y, x)`, and juxtaposition (`2x`, `(x+1)(x-1)`, `2sin(x)`), then classifies a line as explicit
+(`y = f(x)` or a bare `f(x)`), implicit (`f(x, y) = g(x, y)`, kept as the difference), or a parameter
+(`L1 = 0.15`, `Kp = 2.5`). `app/src/grapher/compiler.ts` folds constant subtrees once, emits a native
+closure through `new Function('x', 'scope', …)` for explicit curves, emits GLSL ES 3.00 for implicit
+ones, and records which lines depend on which parameters. A slider moves a value in the scope or a
+uniform; it never rebuilds an expression.
+
+**The sheet subdivides where the curve bends and breaks where it does not exist.** `renderer.ts`
+keeps a pan/zoom viewport, draws a 1-2-5 grid whose labels follow the zoom, samples explicit curves
+with adaptive midpoint subdivision, and cuts the stroke at a sign-flipping jump or a non-finite value
+so `tan(x)` and `1/x` have no line across their asymptotes. Implicit curves get a transparent WebGL2
+layer over the grid; the fragment shader estimates distance to `F(x, y) = 0` with screen-space
+derivatives and draws a constant-width anti-aliased line. The layer is absent, with one plain notice,
+where WebGL2 is not available; a shader the driver refuses names that sentence in the corner and
+leaves every curve that did compile drawing, so one bad line cannot blank the sheet.
+
+**Python can put its own work on the sheet.** `plot("cos(x)")` appends an expression row and
+`plot_points([(0, 0), (1, 1)])` appends a scatter row when Run executes; both reach the graph through
+the same validated bridge in a lesson and in Free study. A `# @slider` line in `main.py` appears as a
+source slider, and moving it rewrites that one literal and schedules one re-run after the drag, so the
+code the interpreter executes and the graph on screen cannot disagree. Graph-only parameters keep
+their own range and update their uniforms immediately.
+
+**Pinned without a browser.** `npm run test:grapher` covers precedence,
+juxtaposition, LaTeX, classification, folding, GLSL, the dependency graph, viewport math, grid steps,
+asymptote cuts and the bridge (23 checks). The studio's browser suite drives the graph beside a real
+Python run, reads the implicit layer's own pixels to prove `x^2 + y^2 = 9` is painted rather than
+merely mounted, forces a shader rejection to prove the learner sees it, and checks Python
+expressions, point rows and the source slider. The face itself is three modules — the sheet's state
+(`GraphingPane.tsx`), its expression list (`GraphExpressionList.tsx`) and its drawing
+(`GraphPlot.tsx`) — so the view stays under the runner's size gate. No parser, charting or rendering
+dependency was added.
 
 ## [2026-11-18] — The graph keeps its sheet across the calculator's two faces
 

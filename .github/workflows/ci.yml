@@ -338,6 +338,9 @@ jobs:
       - name: Check the Calculator tab's grammar and its plain-sentence refusals
         run: npm run test:calculator
 
+      - name: Check the grapher (Pratt parser, JIT, GLSL, adaptive sampling, sliders)
+        run: npm run test:grapher
+
       - name: Check the content bundle (story, missions, reward rules)
         run: npm run test:content
 

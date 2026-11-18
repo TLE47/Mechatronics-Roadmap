@@ -18,6 +18,7 @@ import {
 import { StudioMore, type StudioRunSnapshot } from './studio/StudioMore';
 import { useMediaQuery } from '../../useMediaQuery';
 import { readVim, writeVim } from '../../vimMode';
+import { parseSliders } from '../../editor/sliderModel';
 import {
   STORAGE_KEY_STUDIO_PANES,
   STUDIO_PANES,
@@ -179,6 +180,27 @@ export const TabStudio: React.FC = () => {
     runner.current?.stop();
     setPausedLine(null);
   };
+
+  // A graph slider rewrites a `# @slider` literal in the studio's code. That is a parameter change,
+  // not a new program: re-run once after the drag settles, and never start a second run while the
+  // first is still going.
+  const sliderTimer = useRef<number | null>(null);
+  const runtimeRef = useRef(runtime);
+  runtimeRef.current = runtime;
+  const handleSliderCommit = () => {
+    if (sliderTimer.current !== null) window.clearTimeout(sliderTimer.current);
+    sliderTimer.current = window.setTimeout(() => {
+      sliderTimer.current = null;
+      if (runtimeRef.current === 'running' || runtimeRef.current === 'loading') return;
+      run();
+    }, 450);
+  };
+  useEffect(
+    () => () => {
+      if (sliderTimer.current !== null) window.clearTimeout(sliderTimer.current);
+    },
+    []
+  );
 
   const commitBreakpoints = (entries: Breakpoint[]) => {
     setBreakpoints(writeBreakpoints('studio', entries));
@@ -449,10 +471,10 @@ export const TabStudio: React.FC = () => {
           pendingJump: null,
           onClearJump: () => {},
           symbolMiss: null,
-          sliderCount: 0,
+          sliderCount: parseSliders(doc.code).length,
           vim: { on: vimOn, mode: vimMode, onMode: setVimMode },
           lesson: { id: 'studio', question: '', goal: '', requirements: [] },
-          onSliderCommit: () => {},
+          onSliderCommit: handleSliderCommit,
           breakpoints: {
             entries: breakpoints,
             onToggle: toggleBreakpointAt,

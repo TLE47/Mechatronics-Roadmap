@@ -100,6 +100,46 @@ async function runProgram(page, code) {
   await page.getByTestId('studio-run').click();
 }
 
+/**
+ * Count the implicit layer's own pixels. WebGL is the only place an implicit curve exists, so a
+ * canvas that merely exists proves nothing: the buffer has to carry ink. The renderer keeps its
+ * drawing buffer (`preserveDrawingBuffer`), which is what lets this read the frame that was painted
+ * instead of the empty one compositing leaves behind.
+ */
+async function implicitInk(page, minimum, timeout = 5000) {
+  try {
+    await page.waitForFunction(
+      (floor) => {
+        const canvas = document.querySelector('[data-testid="graph-implicit-canvas"]');
+        const gl = canvas?.getContext('webgl2');
+        if (!canvas || !gl || !canvas.width || !canvas.height) return false;
+        const pixels = new Uint8Array(canvas.width * canvas.height * 4);
+        gl.readPixels(0, 0, canvas.width, canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+        let lit = 0;
+        for (let index = 3; index < pixels.length; index += 4) {
+          if (pixels[index] > 24) lit += 1;
+        }
+        return lit >= floor;
+      },
+      minimum,
+      { timeout }
+    );
+  } catch {
+    // Fall through to the read below: its count is what the failing assertion quotes.
+  }
+  return page.getByTestId('graph-implicit-canvas').evaluate((canvas) => {
+    const gl = canvas.getContext('webgl2');
+    if (!gl) return { available: false, lit: 0, width: canvas.width, height: canvas.height };
+    const pixels = new Uint8Array(canvas.width * canvas.height * 4);
+    gl.readPixels(0, 0, canvas.width, canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+    let lit = 0;
+    for (let index = 3; index < pixels.length; index += 4) {
+      if (pixels[index] > 24) lit += 1;
+    }
+    return { available: true, lit, width: canvas.width, height: canvas.height };
+  });
+}
+
 async function waitForStderr(page, pattern, timeout = 120000) {
   await page.waitForFunction(
     ({ source, flags }) =>
@@ -117,6 +157,10 @@ async function main() {
   const executablePath = resolveChromiumExecutable();
   const browser = await chromium.launch({
     ...(executablePath ? { executablePath } : {}),
+    // Implicit curves are the one thing only the GPU process can prove. Force SwiftShader so a
+    // headless machine with no device still paints them; the suite then reads the pixels rather
+    // than trusting that the layer exists.
+    args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
     headless: true,
   });
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'mechalab-studio-'));
@@ -394,8 +438,104 @@ async function main() {
       0,
       'the expression built from the keypad must be one the graph can read'
     );
+
+    // The second renderer is the browser's own: an implicit equation is not an explicit y of x, so
+    // the row must classify as implicit and the transparent WebGL2 layer must exist above the paper.
+    await page.getByTestId('graph-add-row').click();
+    const implicitInput = page.getByTestId('graph-expression-input').last();
+    await implicitInput.fill('x^2 + y^2 = 9');
+    const implicitRow = page.getByTestId('graph-expression-row').last();
+    assert.equal(
+      await implicitRow.getAttribute('data-kind'),
+      'implicit',
+      'a line with x and y on both sides must be an implicit curve'
+    );
+    await page.getByTestId('graph-implicit-canvas').waitFor({ state: 'attached', timeout: 5000 });
+    const circleInk = await implicitInk(page, 100);
+    assert.ok(
+      circleInk.available,
+      'the implicit layer needs WebGL2; without it an implicit curve has nowhere to be drawn'
+    );
+    assert.ok(
+      circleInk.width > 100 && circleInk.height > 100,
+      `the implicit layer must be sized with the plot: ${circleInk.width}×${circleInk.height}`
+    );
+    assert.ok(
+      circleInk.lit > 100,
+      `x^2 + y^2 = 9 must paint the circle's pixels, not merely exist as a canvas: ${circleInk.lit} lit`
+    );
+    assert.ok(
+      circleInk.lit < circleInk.width * circleInk.height * 0.5,
+      'a curve is a line, not a filled sheet'
+    );
+
+    // A shader that will not compile has to be a sentence on the sheet. The browser is asked to
+    // reject the fragment shader and the next implicit line is the one that fails; the circle
+    // already on the sheet must keep painting while the rejection is shown.
+    await page.evaluate(() => {
+      const proto = WebGL2RenderingContext.prototype;
+      const compileStatus = proto.getShaderParameter;
+      const infoLog = proto.getShaderInfoLog;
+      window.__mechalabRestoreShader = () => {
+        proto.getShaderParameter = compileStatus;
+        proto.getShaderInfoLog = infoLog;
+        delete window.__mechalabRestoreShader;
+      };
+      proto.getShaderParameter = function (shader, pname) {
+        if (pname === this.COMPILE_STATUS) return false;
+        return compileStatus.call(this, shader, pname);
+      };
+      proto.getShaderInfoLog = () => 'synthetic swiftshader rejection';
+    });
+    await page.getByTestId('graph-add-row').click();
+    await page.getByTestId('graph-expression-input').last().fill('x^2 - y^2 = 4');
+    const glNotice = page.getByTestId('graph-gl-notice');
+    await glNotice.waitFor({ timeout: 5000 });
+    assert.match(
+      (await glNotice.textContent()) ?? '',
+      /could not compile: synthetic swiftshader rejection/,
+      'a refused shader must name its failure on the sheet instead of leaving a blank layer'
+    );
+    const afterFailure = await implicitInk(page, 100);
+    assert.ok(
+      afterFailure.lit > 100,
+      'one refused shader must not take the curves that did compile down with it'
+    );
+    await page.evaluate(() => window.__mechalabRestoreShader?.());
+    await page.getByTestId('graph-remove-expression').last().click();
+    await page.waitForFunction(
+      () => !document.querySelector('[data-testid="graph-gl-notice"]'),
+      undefined,
+      { timeout: 5000 }
+    );
+
+    // A Python run can add a curve and a point row without the calculator losing the sheet above.
+    await runProgram(page, 'plot("cos(x)")\nplot_points([(0, 0), (1, 1)])\n');
+    await page.getByTestId('graph-points-row').waitFor({ timeout: 120000 });
+    assert.match(
+      (await page.getByTestId('graph-points-row').textContent()) ?? '',
+      /2 points/,
+      'plot_points must put the Python points in the expression list'
+    );
+
+    // `# @slider` is the one parameter syntax the editor and the graph share. The graph reads the
+    // source's own range, so the same Kp/L1 the file runs is the one the graph draws.
+    await setEditorCode(
+      page,
+      'L1 = 0.15  # @slider 0.05 0.40 0.01\nprint(L1)\n',
+      STUDIO_EDITOR
+    );
+    await page.getByTestId('graph-python-slider-L1').waitFor({ timeout: 5000 });
+    assert.equal(
+      await page.getByTestId('graph-python-slider-L1').getAttribute('min'),
+      '0.05',
+      'the graph slider must keep the source slider’s range'
+    );
+
     await page.getByTestId('editor-tab-main').click();
-    ok('the graph keeps its expressions and viewport across faces, and its keypad inserts functions');
+    ok(
+      'the graph keeps its expressions and viewport across faces, paints implicit curves, surfaces a shader failure, and takes Python plots and sliders'
+    );
 
     // ---- 2c. The arrangement is this card's own, and it is remembered ----
     // A closed output pane is a chosen layout, not a reset: it has to come back after a reload. And

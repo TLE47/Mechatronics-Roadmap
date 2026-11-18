@@ -21,6 +21,7 @@
 import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../data/mechalabPlant.ts';
 import { readTrace, TRACE_NAME_CAP, TRACE_STEP_CAP, TRACE_VALUE_CHARS, type TraceSnapshot } from '../runTrace.ts';
 import { pyodideCdn } from '../runtime/pyodideCdn.ts';
+import { emitGraphPush } from '../grapher/bridge.ts';
 import {
   PyodideWorkerSession,
   type PythonFormatAnswer,
@@ -204,7 +205,11 @@ export function createScratchRunner(
           if (message.type === 'paused') {
             const step = (message.step ?? {}) as { line?: number; fn?: string };
             onPause?.({ line: Number(step.line) || 0, fn: step.fn });
+            return;
           }
+          // The scratchpad has a grapher too. Its bridge is the same one the lesson runner uses,
+          // so `plot(...)` in the studio means exactly what it means in a lesson.
+          if (message.type === 'graph') emitGraphPush(message.payload);
         },
       });
     } catch {

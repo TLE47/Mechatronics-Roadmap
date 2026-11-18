@@ -276,7 +276,7 @@ export class PyodideWorkerSession {
       pending.handlers.onMessage?.(data);
       return;
     }
-    if (data.type === 'scope' || data.type === 'paused') {
+    if (data.type === 'scope' || data.type === 'paused' || data.type === 'graph') {
       if (data.runId !== this.nextRunId) return;
       if (data.type === 'paused') this.pauseClock();
       pending.handlers.onMessage?.(data);

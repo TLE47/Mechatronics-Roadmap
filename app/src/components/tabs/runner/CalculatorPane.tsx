@@ -143,7 +143,18 @@ const KEY_CLASSES: Record<KeyTone, string> = {
  * means two different numbers. The expression is the single source of truth: keys insert at the
  * caret, Enter and `=` both commit, and a tape row puts its expression back for one number changed.
  */
-export function CalculatorPane() {
+export function CalculatorPane({
+  source = '',
+  onSourceChange,
+  onSliderCommit,
+}: {
+  /** `main.py` when the calculator is opened inside the runner; empty in a standalone mount. */
+  source?: string;
+  /** Write a source slider's literal back into the editor. */
+  onSourceChange?: (next: string) => void;
+  /** Ask the runner for one re-run after a source slider drag. */
+  onSliderCommit?: () => void;
+} = {}) {
   const [expression, setExpression] = useState('');
   const [angle, setAngle] = useState<AngleMode>('rad');
   const [ans, setAns] = useState<number | null>(null);
@@ -488,7 +499,13 @@ export function CalculatorPane() {
           </footer>
         </section>
         <div className={mode === 'graphing' ? 'w-full' : 'hidden'}>
-          <GraphingPane angle={angle} onAngle={setAngle} />
+          <GraphingPane
+            angle={angle}
+            onAngle={setAngle}
+            source={source}
+            onSourceChange={onSourceChange}
+            onSliderCommit={onSliderCommit}
+          />
         </div>
       </div>
     </div>

@@ -20,6 +20,7 @@ import { harnessForLesson, harnessSourceForLesson } from '../../../lessonHarness
 import { normalizeScopeSeries } from '../../../scopeModel';
 import { isAssertionFailure } from '../../../traceback';
 import { PyodideWorkerSession } from '../../../runtime/pyodideWorker';
+import { emitGraphPush } from '../../../grapher/bridge';
 import type { AnalysisSession } from '../../../analysisClient';
 import type { HarnessReport } from '../../../harnessGrading';
 import type { PausedStep } from './PausedBar';
@@ -557,6 +558,10 @@ export function useRunnerExecution({
             }
             if (data.type === 'scope') {
               setScopeSeries(normalizeScopeSeries(data.series));
+              return;
+            }
+            if (data.type === 'graph') {
+              emitGraphPush(data.payload);
               return;
             }
             const step = (data.step as PausedStep) ?? null;

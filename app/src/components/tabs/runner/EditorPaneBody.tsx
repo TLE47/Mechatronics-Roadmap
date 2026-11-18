@@ -512,7 +512,11 @@ export function EditorPaneBody({
       // scroll, and a tool nobody asked for has no scroll to keep.
       return shownViews.has('calculator') ? (
         <Suspense fallback={null}>
-          <CalculatorPane />
+          <CalculatorPane
+            source={code}
+            onSourceChange={commitCode}
+            onSliderCommit={onSliderCommit}
+          />
         </Suspense>
       ) : null;
     }

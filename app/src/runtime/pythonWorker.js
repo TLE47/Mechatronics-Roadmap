@@ -1077,6 +1077,18 @@ self.onmessage = async (event) => {
 
       py.globals.set('__mechalab_student_code__', studentCode);
       py.globals.set('__mechalab_instructor_code__', instructorTests || '');
+      // The grapher's Python helpers. A run can call `plot("sin(x)")` or
+      // `plot_points([(x, y), ...])`; the payload is validated again on the page before it becomes a
+      // row, because this crosses the worker boundary as JSON.
+      py.globals.set('__mechalab_graph_push__', (raw) => {
+        try {
+          const payload = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          if (!payload || typeof payload !== 'object') return;
+          self.postMessage({ type: 'graph', runId, payload });
+        } catch {
+          // A malformed plot call is the learner's program, not a reason to lose the run's output.
+        }
+      });
       py.globals.set('__mechalab_max_steps__', maxSteps);
       py.globals.set('__mechalab_timeout_sec__', timeoutSec);
       // The trace's caps come from the page (`app/src/runTrace.ts`), so the worker and the panel that
@@ -1130,6 +1142,40 @@ def __mechalab_execute():
         "__name__": "__main__",
         "__mechalab_student_source__": __mechalab_student_code__,
     }
+
+    # The graphing bridge. These names are part of the run's own namespace, so a lesson imports
+    # nothing and a learner can call them beside print: plot("sin(x)") adds an expression,
+    # plot_points([(x, y), ...]) adds a point row. The helper is deliberately tiny: the page owns
+    # the parser, the colours and the expression list.
+    def __mechalab_graph(expressions=None, points=None):
+        payload = {"expressions": [], "points": []}
+        if expressions is not None:
+            if isinstance(expressions, (list, tuple)):
+                payload["expressions"] = [str(value) for value in expressions[:8]]
+            else:
+                payload["expressions"] = [str(expressions)]
+        if points is not None:
+            try:
+                payload["points"] = [[float(px), float(py)] for px, py in list(points)[:5000]]
+            except Exception:
+                payload["points"] = []
+        if payload["expressions"] or payload["points"]:
+            try:
+                __mechalab_graph_push__(_json.dumps(payload))
+            except Exception:
+                # A malformed plot call is the learner's program, not a reason to lose the run's
+                # output or turn a print-only lesson red.
+                pass
+
+    def plot(expression):
+        __mechalab_graph(expressions=expression)
+
+    def plot_points(points):
+        __mechalab_graph(points=points)
+
+    ns["plot"] = plot
+    ns["plot_points"] = plot_points
+
     if __mechalab_robot_source__:
         ns["__mechalab_robot__"] = __mechalab_robot_call__
         exec(__mechalab_robot_source__, ns)
