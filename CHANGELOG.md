@@ -36,7 +36,7 @@ to the nearest curve and shows the point. A value the expression cannot take is 
 vertical line through an asymptote, and a pan never reparses a line: the grammar compiles once to
 `f(x)` (`compileExpression`) and the graph samples that.
 
-**Free study's editor card gets the runner's tools, not its homework.** Run output, Trace, Workflow,
+**Free study's editor card gets the runner's tools, not its homework.** Run output, Workflow, Trace,
 Calculator and Study are now tabs of the free-study card, with Breakpoints still in More. Predict,
 Requirements, Cases, Expected and Robot stay absent, because no lesson authored them for a scratch
 document; every tab that is there reads the studio's own stores and runs an ungraded program.

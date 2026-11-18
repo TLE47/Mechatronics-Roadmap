@@ -482,7 +482,7 @@ export const TabStudio: React.FC = () => {
           ),
         }}
         collab={{ coEdit: null, collabNotice: null, peerLabel: null }}
-        resultViews={['actual', 'trace', 'workflow', 'calculator', 'study']}
+                  resultViews={['actual', 'workflow', 'trace', 'calculator', 'study']}
       />
       <BreakpointPanel
         open={breakpointsOpen}
