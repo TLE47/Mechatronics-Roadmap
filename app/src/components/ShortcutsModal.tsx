@@ -196,8 +196,8 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
                   </button>
                 ) : (
                   <kbd
-                    className="inline-block rounded border px-1.5 py-0.5 font-mono text-[11px]"
-                    style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
+                    className="inline-flex rounded border px-1.5 py-0.5 font-mono text-[11.5px] font-bold"
+                    style={{ borderColor: 'var(--border-strong)', color: 'var(--text)' }}
                   >
                     {row.keys}
                   </kbd>

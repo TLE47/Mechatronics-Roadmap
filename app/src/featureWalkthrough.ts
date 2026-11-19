@@ -19,7 +19,7 @@
 import type { TabId } from './types';
 
 export const FEATURE_WALKTHROUGH_STORAGE_KEY = 'mechalab_feature_walkthrough_v1';
-export const FEATURE_WALKTHROUGH_VERSION = 1;
+export const FEATURE_WALKTHROUGH_VERSION = 2;
 
 export interface WalkthroughStop {
   id: string;
@@ -539,6 +539,8 @@ export interface WalkthroughState {
   version: number;
   status: WalkthroughStatus;
   index: number;
+  /** The stops whose mission was actually performed, by id. A checklist survives a reload. */
+  completed: string[];
   updatedAt: number;
 }
 
@@ -562,7 +564,20 @@ function clampIndex(index: number): number {
 }
 
 export function initialWalkthroughState(now = Date.now()): WalkthroughState {
-  return { version: FEATURE_WALKTHROUGH_VERSION, status: 'not-started', index: 0, updatedAt: now };
+  return {
+    version: FEATURE_WALKTHROUGH_VERSION,
+    status: 'not-started',
+    index: 0,
+    completed: [],
+    updatedAt: now,
+  };
+}
+
+/** The ids in a saved list that name a real stop, in catalogue order and without duplicates. */
+function readCompleted(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const saved = new Set(value.filter((entry): entry is string => typeof entry === 'string'));
+  return FEATURE_WALKTHROUGH.filter((stop) => saved.has(stop.id)).map((stop) => stop.id);
 }
 
 export function readWalkthroughState(store: WalkthroughStore | null = browserStore()): WalkthroughState {
@@ -583,6 +598,7 @@ export function readWalkthroughState(store: WalkthroughStore | null = browserSto
       version: FEATURE_WALKTHROUGH_VERSION,
       status,
       index: clampIndex(typeof record.index === 'number' ? record.index : 0),
+      completed: readCompleted(record.completed),
       updatedAt: typeof record.updatedAt === 'number' ? record.updatedAt : 0,
     };
   } catch {
@@ -602,14 +618,36 @@ export function writeWalkthroughState(
   return state;
 }
 
-/** A finished tour starts from the top; one turned off midway resumes where it was. */
+/** A finished tour starts from the top with a fresh checklist; one turned off midway resumes. */
 export function resumeWalkthroughState(state: WalkthroughState, now = Date.now()): WalkthroughState {
+  const restart = state.status === 'completed';
   return {
     ...state,
     status: 'active',
-    index: state.status === 'completed' ? 0 : clampIndex(state.index),
+    index: restart ? 0 : clampIndex(state.index),
+    completed: restart ? [] : readCompleted(state.completed),
     updatedAt: now,
   };
+}
+
+/** Check one stop off. Repeated calls are a no-op, so a double click cannot score twice. */
+export function completeWalkthroughStop(
+  state: WalkthroughState,
+  id: string,
+  now = Date.now()
+): WalkthroughState {
+  if (state.completed.includes(id)) return state;
+  return {
+    ...state,
+    status: 'active',
+    completed: [...state.completed, id],
+    updatedAt: now,
+  };
+}
+
+/** How many stops are checked, which is the score the card prints. */
+export function walkthroughCheckedCount(state: WalkthroughState): number {
+  return state.completed.length;
 }
 
 export function nextWalkthroughState(state: WalkthroughState, now = Date.now()): WalkthroughState {

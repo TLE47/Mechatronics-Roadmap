@@ -523,11 +523,11 @@ export function CalculatorPane({
 
         <footer className="hidden items-center justify-between gap-3 border-t border-line-soft px-3 py-1.5 font-mono text-[11px] text-faint sm:flex">
           <span>
-            <kbd className="rounded border border-line-soft bg-canvas px-1 py-0.5 text-[11px]">Enter</kbd> keeps
+            <kbd className="rounded border border-line-soft bg-canvas px-1.5 py-0.5 font-mono text-[11.5px] font-bold text-body">Enter</kbd> keeps
             the answer
           </span>
           <span>
-            <kbd className="rounded border border-line-soft bg-canvas px-1 py-0.5 text-[11px]">Esc</kbd> clears
+            <kbd className="rounded border border-line-soft bg-canvas px-1.5 py-0.5 font-mono text-[11.5px] font-bold text-body">Esc</kbd> clears
             the line
           </span>
           </footer>

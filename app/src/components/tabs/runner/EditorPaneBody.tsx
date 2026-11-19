@@ -150,6 +150,8 @@ export function EditorPaneBody({
   onClosePredict,
   onDropView,
   runLine,
+  errorLine,
+  tooltipsEnabled,
 }: {
   panes: EditorPanes;
   onPanes: (next: EditorPanes) => void;
@@ -172,6 +174,10 @@ export function EditorPaneBody({
   onDropView?: (view: EditorView) => void;
   /** The line the open Trace tab is on, marked in the code; null clears the box. */
   runLine?: number | null;
+  /** The line Python failed on, with the exception summary drawn quietly above it. */
+  errorLine?: { line: number; message: string } | null;
+  /** False removes the hover/signature cards without touching completion or linting. */
+  tooltipsEnabled?: boolean;
   onClosePredict?: () => void;
 }) {
   const {
@@ -469,6 +475,8 @@ export function EditorPaneBody({
               onBreakpointsMoved={breakpoints?.onMoved}
               breakpoints={breakpoints?.entries}
               runLine={runLine}
+              errorLine={errorLine}
+              tooltipsEnabled={tooltipsEnabled}
               vimMode={vimOn}
               onVimMode={onVimMode}
               initialLine={pendingJump?.file === MAIN_FILE_NAME ? pendingJump.line : undefined}

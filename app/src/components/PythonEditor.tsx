@@ -134,6 +134,20 @@ export interface PythonEditorProps {
    */
   runLine?: number | null;
   /**
+   * The line Python failed on, with the exception summary drawn quietly above it.
+   *
+   * A prop rather than only an imperative call for the same reason as `runLine`: the pane can be
+   * mounted by a preset change, and a failure that arrived while it was away must still be marked.
+   */
+  errorLine?: { line: number; message: string } | null;
+  /**
+   * Whether hovering a name and typing inside a call may open a `cm-mechalab-tip` card.
+   *
+   * Off removes both the hover card and signature help; completion, linting and inline values are
+   * separate surfaces and stay on. A read-only helper never gets these cards in the first place.
+   */
+  tooltipsEnabled?: boolean;
+  /**
    * The worker's analysis channel, or null while there is none.
    *
    * A getter rather than a session, because the runner may replace the worker (Reset Runtime) and the

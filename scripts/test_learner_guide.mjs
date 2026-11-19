@@ -35,6 +35,7 @@ import {
   FEATURE_WALKTHROUGH,
   FEATURE_WALKTHROUGH_COUNT,
   FEATURE_WALKTHROUGH_STORAGE_KEY,
+  completeWalkthroughStop,
   dismissWalkthroughState,
   initialWalkthroughState,
   nextWalkthroughState,
@@ -42,6 +43,7 @@ import {
   readWalkthroughState,
   resumeWalkthroughState,
   walkthroughAnnouncement,
+  walkthroughCheckedCount,
   writeWalkthroughState,
 } from '../app/src/featureWalkthrough.ts';
 
@@ -343,6 +345,27 @@ check('stopping midway resumes the same feature; finishing starts over', () => {
   const finished = nextWalkthroughState(last, 10);
   assert.equal(finished.status, 'completed');
   assert.equal(resumeWalkthroughState(finished, 11).index, 0, 'a finished tour starts from the top');
+  assert.deepEqual(
+    resumeWalkthroughState(finished, 11).completed,
+    [],
+    'a finished tour starts with a fresh checklist'
+  );
+});
+
+check('the checklist records each stop once and remembers the ticks', () => {
+  let state = resumeWalkthroughState(initialWalkthroughState(0), 0);
+  assert.equal(walkthroughCheckedCount(state), 0);
+  assert.equal(walkthroughCheckedCount(completeWalkthroughStop(state, 'brand', 1)), 1);
+  state = completeWalkthroughStop(state, 'brand', 1);
+  const again = completeWalkthroughStop(state, 'brand', 2);
+  assert.equal(again, state, 'a second click must not score twice');
+  assert.equal(again.completed.length, 1);
+  state = completeWalkthroughStop(again, 'settings', 3);
+  assert.deepEqual(state.completed, ['brand', 'settings']);
+  const store = memoryStore();
+  writeWalkthroughState(state, store);
+  assert.deepEqual(readWalkthroughState(store).completed, ['brand', 'settings']);
+  assert.equal(walkthroughCheckedCount(readWalkthroughState(store)), 2);
 });
 
 check('the walkthrough state round-trips and survives a broken store', () => {

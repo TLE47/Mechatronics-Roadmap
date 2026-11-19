@@ -316,7 +316,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   onClose();
                 }}
               />
-              <kbd className="hidden shrink-0 rounded border border-line px-1.5 py-0.5 text-[10px] font-semibold text-faint sm:inline">
+              <kbd className="hidden shrink-0 rounded border border-line px-1.5 py-0.5 font-mono text-[11px] font-bold text-body sm:inline-flex">
                 esc
               </kbd>
             </div>

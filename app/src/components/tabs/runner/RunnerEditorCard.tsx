@@ -1,11 +1,17 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode, type RefObject } from 'react';
-import { ChevronDown, ChevronRight, ChevronUp, Columns2, FileCode2, Lock } from 'lucide-react';
+import { ChevronDown, ChevronRight, ChevronUp, Columns2, FileCode2, Lock, Settings2 } from 'lucide-react';
 import type { PythonEditorHandle } from '../../PythonEditor';
 import { RunVerdict } from './RunVerdict';
 import { SelfDoneChecklist } from './SelfDoneChecklist';
 import { EditorGoalCard } from './EditorGoal';
 import { EditorPaneBody } from './EditorPaneBody';
+import { EditorSettingsPanel } from './EditorSettingsPanel';
 import { resultTabMeta } from './resultTabMeta';
+import {
+  EDITOR_SETTINGS_EVENT,
+  readEditorSettings,
+  writeEditorSettings,
+} from '../../../editor/editorSettings';
 import { MAIN_FILE_NAME, type LessonFile } from '../../../lessonFiles';
 import {
   EDITOR_TAB_DRAG_TYPE,
@@ -97,6 +103,8 @@ interface EditorRun {
   asksForFinish: boolean;
   /** The line the Trace tab is on, so the code keeps that line marked while the tab is open. */
   traceLine?: number | null;
+  /** The line Python failed on, marked red with a quiet note above it. */
+  errorLine?: { line: number; message: string } | null;
 }
 
 /** The regions laid out inside the card but owned by the caller. */
@@ -195,6 +203,15 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
   const [bodyCollapsed, setBodyCollapsed] = useState(
     (layout === 'study' || layout === 'read') && !isPhone
   );
+  const [editorSettingsOpen, setEditorSettingsOpen] = useState(false);
+  const [editorTooltips, setEditorTooltips] = useState(() => readEditorSettings().tooltips);
+  // Runner lessons and Free study can both be mounted: a change in one editor's menu reaches the
+  // other through the same event the preference writes, rather than leaving two surfaces disagreeing.
+  useEffect(() => {
+    const refresh = () => setEditorTooltips(readEditorSettings().tooltips);
+    window.addEventListener(EDITOR_SETTINGS_EVENT, refresh);
+    return () => window.removeEventListener(EDITOR_SETTINGS_EVENT, refresh);
+  }, []);
   useEffect(() => {
     setBodyCollapsed((layout === 'study' || layout === 'read') && !isPhone);
   }, [layout, isPhone]);
@@ -411,6 +428,23 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
                 )}
               </span>
               <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+                <button
+                  type="button"
+                  data-testid="btn-editor-settings"
+                  aria-expanded={editorSettingsOpen}
+                  aria-controls="editor-settings-panel"
+                  aria-label="Python editor settings"
+                  title="Python editor settings — put the hover cards away, and keep the rest of the editor"
+                  onClick={() => setEditorSettingsOpen((open) => !open)}
+                  className={`flex h-7 cursor-pointer items-center gap-1.5 rounded-lg border px-2 font-mono text-[12px] transition-colors ${
+                    editorSettingsOpen
+                      ? 'border-accent/50 bg-accent-soft text-accent'
+                      : 'border-line-soft bg-panel text-body hover:border-accent/40 hover:text-accent'
+                  }`}
+                >
+                  <Settings2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span className="hidden sm:inline">Editor</span>
+                </button>
                 {allowedViews.length > 0 && (
                   <>
                     {!paneSplit ? (
@@ -496,6 +530,16 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
               )}
             </div>
           )}
+          {editorSettingsOpen && (
+            <EditorSettingsPanel
+              tooltips={editorTooltips}
+              onTooltips={(on) => {
+                const next = writeEditorSettings({ tooltips: on });
+                setEditorTooltips(next.tooltips);
+              }}
+              onClose={() => setEditorSettingsOpen(false)}
+            />
+          )}
         </div>
         {/* The run controls live in the editor's own header: a learner's eyes are in the code, and
             crossing the screen to press Run was the one trip this card can save. Read hides this
@@ -568,6 +612,8 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
         onClosePredict={onClosePredict}
         onDropView={onDropView}
         runLine={shownViews.has('trace') ? traceLine ?? null : null}
+        errorLine={props.run.errorLine}
+        tooltipsEnabled={editorTooltips}
       />
       {!bodyCollapsed && feedback}
     </div>

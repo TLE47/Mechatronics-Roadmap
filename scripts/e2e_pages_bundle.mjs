@@ -119,6 +119,7 @@ const MIME = {
   '.jpg': 'image/jpeg',
   '.woff2': 'font/woff2',
   '.txt': 'text/plain; charset=utf-8',
+  '.webmanifest': 'application/manifest+json',
 };
 
 /**
@@ -232,8 +233,14 @@ export function ensureBuilt() {
   assert.ok(fs.existsSync(path.join(distDir, 'index.html')), 'npm run build produced no dist/index.html');
 }
 
-/** Serve `dist/` under the Pages base path, the way GitHub Pages does for a project site. */
-export function startStaticServer({ isolation = true } = {}) {
+/**
+ * Serve `dist/` under the Pages base path, the way GitHub Pages does for a project site.
+ *
+ * `root` points at a temp build and `cacheControl` reproduces a long-lived document for the stale-shell
+ * regression in `e2e_offline.mjs`; every other caller keeps the fresh default.
+ */
+export function startStaticServer({ isolation = true, root = distDir, cacheControl = '' } = {}) {
+  const servedRoot = path.resolve(root);
   const server = http.createServer((req, res) => {
     const url = new URL(req.url ?? '/', 'http://127.0.0.1');
     let rel = url.pathname;
@@ -243,15 +250,15 @@ export function startStaticServer({ isolation = true } = {}) {
       return;
     }
     rel = decodeURIComponent(rel.slice(BASE.length));
-    const target = path.join(distDir, rel);
-    if (!target.startsWith(distDir)) {
+    const target = path.join(servedRoot, rel);
+    if (target !== servedRoot && !target.startsWith(`${servedRoot}${path.sep}`)) {
       res.writeHead(403);
       res.end('forbidden');
       return;
     }
     let file = target;
     if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
-    if (!fs.existsSync(file) && !path.extname(rel)) file = path.join(distDir, 'index.html'); // SPA route
+    if (!fs.existsSync(file) && !path.extname(rel)) file = path.join(servedRoot, 'index.html'); // SPA route
     if (!fs.existsSync(file)) {
       res.writeHead(404, { 'content-type': 'text/plain' });
       res.end('not found');
@@ -265,6 +272,9 @@ export function startStaticServer({ isolation = true } = {}) {
       headers['Cross-Origin-Opener-Policy'] = 'same-origin';
       headers['Cross-Origin-Embedder-Policy'] = 'require-corp';
     }
+    // A regression fixture can make the document cache long-lived the way GitHub Pages does; the
+    // normal suites leave this off so every request is served fresh.
+    if (cacheControl) headers['cache-control'] = cacheControl;
     res.writeHead(200, headers);
     res.end(fs.readFileSync(file));
   });

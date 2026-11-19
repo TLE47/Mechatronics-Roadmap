@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.11.1`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.12.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,34 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-19] — The walkthrough becomes a checklist, and the editor explains a miss where it happened
+
+The tooltip walkthrough is now a set of 36 missions rather than a slideshow. Each stop leaves the
+spotlighted control live: using it — or the card's **Do it** route for a learner on the keyboard —
+ticks the one-item checklist, plays the workbench's pass phrase, adds 100 XP and unlocks Next. The
+pips across the top keep every checked stop green, the position and the checked ids share the saved
+tour state, and Next stays disabled (with a quiet shake and a low tick) until the current mission is
+actually checked. A finished tour starts again with a fresh checklist; turning it off midway resumes
+with the ticks already earned. The dimming is four panels around the spotlight, not one sheet over
+it, so the real control can take the click.
+
+The `cm-mechalab-tip` hover cards and call signatures are quieter while coding, and the Python
+editor's header now has its own **Editor** settings panel. Its one switch removes hover cards, call
+signatures and keyword help without rebuilding the editor or touching completion, linting or inline
+values; the preference is remembered on this device and reaches every mounted editor (the lesson
+runner and Free study) through a compartment reconfigure. The cards that remain are smaller, closer
+to the code, and have a softer edge.
+
+A failed run now marks the learner's own line in red and draws one compact exception sentence above
+it, cleared by the next edit and redrawn from the same parsed traceback the card below the panes
+reads. The full card is still there; this is the part a learner sees without leaving the code.
+
+Keycaps are physical objects now: a raised cap, a bold 12 px face, and the same rule for every
+printed shortcut. Run, Stop, the four layout presets, Search, Focus, Compact, pane Undo/Redo and the
+sheet all print their keys at a readable size, with an inverted cap on accent-filled buttons for
+contrast. `npm run test:guide` covers the checklist state, and the studio browser suite now proves
+that Next waits for a tick and that checking a stop unlocks it. No dependency was added.
 
 ## [2026-11-19] — The service worker stops serving yesterday's shell
 

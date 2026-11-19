@@ -733,6 +733,27 @@ async function main() {
       'the walkthrough starts from its first feature'
     );
     const firstFeature = (await page.getByTestId('walkthrough-title').innerText()).trim();
+    // A stop is a task now: the checklist must be ticked (by the spotlit control or the card's
+    // Do it route) before Next unlocks. The suite uses the card route so it does not navigate the
+    // background page while it is measuring the card.
+    assert.equal(
+      await page.getByTestId('walkthrough-next').isDisabled(),
+      true,
+      'Next must wait for the checklist'
+    );
+    await page.getByTestId('walkthrough-do-it').click();
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="walkthrough-checklist"]')?.getAttribute('data-done') ===
+        'true',
+      undefined,
+      { timeout: 2000 }
+    );
+    assert.equal(
+      await page.getByTestId('walkthrough-next').isEnabled(),
+      true,
+      'checking the stop off must unlock Next'
+    );
     await page.getByTestId('walkthrough-next').click();
     await page.waitForFunction(
       (previous) =>
@@ -754,6 +775,8 @@ async function main() {
     // Ten forward steps reach the first runner feature. It must actually open the Python tab, not
     // only describe it; the suite returns to the studio for the arrangement tests below.
     for (let step = 0; step < 10; step += 1) {
+      const doIt = page.getByTestId('walkthrough-do-it');
+      if (await doIt.isEnabled()) await doIt.click();
       await page.getByTestId('walkthrough-next').click();
     }
     await page.waitForFunction(

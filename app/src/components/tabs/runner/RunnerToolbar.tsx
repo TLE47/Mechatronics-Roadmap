@@ -215,7 +215,9 @@ export function RunnerToolbar({
                 `?` sheet: the 79 px the four keys cost is what pushed Predict onto a second row at
                 1280 in a real browser, where a classic scrollbar leaves the card 10 px narrower than
                 the overlay-scrollbar Chromium the suite runs in. */}
-            <span className="ml-1 hidden opacity-90 min-[1360px]:inline">{option.shortcut}</span>
+            <kbd className="ml-1 hidden min-[1360px]:inline-flex" aria-hidden="true">
+              {option.shortcut}
+            </kbd>
           </button>
         ))}
       </div>
@@ -260,6 +262,9 @@ export function RunnerToolbar({
         >
           <OctagonX className="w-3.5 h-3.5" />
           <span>Stop</span>
+          <kbd className="ml-0.5 hidden sm:inline-flex" aria-hidden="true">
+            ⌘⇧↵
+          </kbd>
         </button>
       )}
       <button

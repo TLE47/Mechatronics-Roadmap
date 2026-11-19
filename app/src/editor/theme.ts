@@ -113,9 +113,13 @@ export const pythonTheme = EditorView.theme(
     '.cm-tooltip': {
       backgroundColor: 'var(--panel)',
       border: '1px solid var(--border)',
-      borderRadius: 'var(--r-sm)',
+      borderRadius: '8px',
       color: 'var(--text)',
+      // A card about the code should look like a lift of the page, not a second window over it.
+      boxShadow: '0 8px 24px -18px rgba(0, 0, 0, 0.55)',
     },
+    '.cm-tooltip-above': { marginBottom: '3px' },
+    '.cm-tooltip-below': { marginTop: '3px' },
     '.cm-tooltip-autocomplete > ul > li[aria-selected]': {
       backgroundColor: 'var(--accent-soft)',
       color: 'var(--accent)',
@@ -124,20 +128,24 @@ export const pythonTheme = EditorView.theme(
     // definition line, the call, and a plain sentence of docstring - so the words read as prose and
     // the code as code.
     '.cm-mechalab-tip': {
-      padding: '7px 10px',
-      maxWidth: '380px',
+      padding: '5px 8px',
+      maxWidth: '300px',
       fontFamily: 'var(--font-sans, system-ui, sans-serif)',
+      // One step quieter than the code it describes: the learner is typing, and this is a gloss.
+      opacity: '0.97',
     },
     '.cm-mechalab-tip-title': {
       fontFamily: 'var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace)',
-      fontSize: '11px',
+      fontSize: '10.5px',
+      lineHeight: '1.35',
       color: 'var(--accent)',
       whiteSpace: 'pre-wrap',
     },
     '.cm-mechalab-tip-sig': {
       fontFamily: 'var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace)',
-      fontSize: '11.5px',
-      marginTop: '3px',
+      fontSize: '10.8px',
+      lineHeight: '1.35',
+      marginTop: '2px',
       whiteSpace: 'pre-wrap',
     },
     '.cm-mechalab-tip-sig-plain': { color: 'var(--text)' },
@@ -147,11 +155,30 @@ export const pythonTheme = EditorView.theme(
       borderBottom: '1px solid var(--accent)',
     },
     '.cm-mechalab-tip-doc': {
-      fontSize: '11.5px',
-      lineHeight: '1.45',
+      fontSize: '10.5px',
+      lineHeight: '1.35',
       color: 'var(--muted)',
-      marginTop: '5px',
+      marginTop: '3px',
       whiteSpace: 'pre-wrap',
+    },
+    // A failed run: the line is washed red and a quiet sentence sits above it. The row is the note,
+    // not a card — no border box, no shadow, and it never pushes the code sideways.
+    '.cm-error-line': {
+      backgroundColor: 'color-mix(in srgb, var(--rose) 12%, transparent)',
+      boxShadow: 'inset 3px 0 0 var(--rose)',
+    },
+    '.cm-error-note': {
+      margin: '2px 0 1px',
+      padding: '2px 7px',
+      borderLeft: '2px solid var(--rose)',
+      backgroundColor: 'color-mix(in srgb, var(--rose) 7%, transparent)',
+      color: 'var(--rose)',
+      fontFamily: 'var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace)',
+      fontSize: '10.5px',
+      lineHeight: '1.35',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
     },
     // Inline values (`inlineWidget.ts`): a note about the line, not a verdict on it — muted ink,
     // a hairline rule above so it reads as an annotation, and no border to compete with the code.

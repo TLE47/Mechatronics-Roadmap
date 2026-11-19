@@ -833,7 +833,7 @@ export const TabMicro: React.FC<TabMicroProps> = ({ openLesson }) => {
           >
             Let me test that
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            <kbd className="rounded border border-inverse/25 bg-inverse/10 px-1.5 py-0.5 font-mono text-[10px] text-inverse/80">
+            <kbd className="rounded border border-inverse/25 bg-inverse/10 px-1.5 py-0.5 font-mono text-[11.5px] font-bold text-inverse">
               {formatWalkthroughChord(testChord)}
             </kbd>
           </button>

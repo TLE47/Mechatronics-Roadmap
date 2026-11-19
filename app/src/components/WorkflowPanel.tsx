@@ -452,6 +452,9 @@ export function WorkflowPanel({
                 className="btn btn-ghost h-8 px-2 font-mono text-[10.5px]"
               >
                 Undo
+                <kbd className="ml-1 hidden md:inline-flex" aria-hidden="true">
+                  ⌘Z
+                </kbd>
               </button>
             )}
             {historySize.future > 0 && (
@@ -464,6 +467,9 @@ export function WorkflowPanel({
                 className="btn btn-ghost h-8 px-2 font-mono text-[10.5px]"
               >
                 Redo
+                <kbd className="ml-1 hidden md:inline-flex" aria-hidden="true">
+                  ⌘⇧Z
+                </kbd>
               </button>
             )}
           </span>
@@ -546,6 +552,9 @@ export function WorkflowPanel({
             className="btn btn-ghost h-8 px-2 font-mono text-[10.5px] disabled:opacity-40"
           >
             Undo
+            <kbd className="ml-1 hidden md:inline-flex" aria-hidden="true">
+              ⌘Z
+            </kbd>
           </button>
           <button
             type="button"
@@ -557,6 +566,9 @@ export function WorkflowPanel({
             className="btn btn-ghost h-8 px-2 font-mono text-[10.5px] disabled:opacity-40"
           >
             Redo
+            <kbd className="ml-1 hidden md:inline-flex" aria-hidden="true">
+              ⌘⇧Z
+            </kbd>
           </button>
           <button
             type="button"

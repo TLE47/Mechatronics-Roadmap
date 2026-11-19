@@ -58,6 +58,7 @@ import { armedBreakpoints, setBreakpointLines } from '../editor/breakpointState'
 import type { InlineValueAt } from '../inlineValues';
 import { pythonCompletionSource } from '../editor/completions';
 import { analysisHover, analysisSignature } from '../editor/analysisTips';
+import { errorLineExtension, showErrorLine } from '../editor/errorLine';
 import { symbolAt } from '../symbolIndex';
 import { markPaintReady } from '../paintTiming';
 import type { PythonEditorHandle, PythonEditorProps } from './PythonEditor';
@@ -232,6 +233,8 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
       onVimMode,
       initialLine,
       runLine,
+      errorLine = null,
+      tooltipsEnabled = true,
     },
     ref
   ) {
@@ -261,6 +264,17 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
     // the editor is created long before that.
     const analysisRef = useRef(getAnalysis);
     analysisRef.current = getAnalysis;
+    // Hover and signature help live in a compartment so the editor-settings switch can remove them
+    // without rebuilding the state — the document, the caret and the undo history all survive it.
+    const tooltipSlot = useRef(new Compartment());
+    const analysisAvailable = Boolean(getAnalysis);
+    const buildAnalysisTips = useCallback(
+      () => [
+        analysisHover(() => analysisRef.current?.() ?? null),
+        ...analysisSignature(() => analysisRef.current?.() ?? null),
+      ],
+      []
+    );
     onChangeRef.current = onChange;
     onSliderRef.current = onSliderCommit;
     onDefinitionRef.current = onGoToDefinition;
@@ -407,12 +421,11 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           // Hover and signature help read the same session the completion list does, and are only
           // installed where one can exist: the read-only helper tab passes no `getAnalysis`, and a
           // hover card over somebody else's file would be a card about the lesson, not the learner's code.
-          ...(getAnalysis
-            ? [
-                analysisHover(() => analysisRef.current?.() ?? null),
-                ...analysisSignature(() => analysisRef.current?.() ?? null),
-              ]
-            : []),
+          // Empty until the settings say otherwise, or until there is an analysis session to ask:
+          // the read-only helper tab passes no `getAnalysis`, so it never gets a card about the
+          // lesson's code. The effect below reconfigures this slot when the switch changes.
+          tooltipSlot.current.of(analysisAvailable && tooltipsEnabled ? buildAnalysisTips() : []),
+          errorLineExtension,
           EditorView.lineWrapping,
           EditorState.readOnly.of(readOnly),
           EditorView.editable.of(!readOnly),
@@ -594,6 +607,31 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
       if (!view) return;
       showRunLine(view, runLine ?? null);
     }, [runLine]);
+
+    // The failure mark follows the runner's parse: a new run moves it, a cleared failure removes it,
+    // and an edit clears it in the field itself (a stale line number is worse than none).
+    const errorLineNumber = errorLine?.line ?? null;
+    const errorLineMessage = errorLine?.message ?? '';
+    useEffect(() => {
+      const view = viewRef.current;
+      if (!view) return;
+      showErrorLine(
+        view,
+        errorLineNumber === null ? null : { line: errorLineNumber, message: errorLineMessage }
+      );
+    }, [errorLineNumber, errorLineMessage]);
+
+    // The editor-settings switch. A read-only helper has no analysis session, so the slot stays
+    // empty there even when the preference is on.
+    useEffect(() => {
+      const view = viewRef.current;
+      if (!view) return;
+      view.dispatch({
+        effects: tooltipSlot.current.reconfigure(
+          analysisAvailable && tooltipsEnabled ? buildAnalysisTips() : []
+        ),
+      });
+    }, [tooltipsEnabled, analysisAvailable, buildAnalysisTips]);
 
     // The Vim preference changed: reconfigure this editor instead of mounting another one, so the
     // document, the undo history and the caret survive the toggle. Also runs on mount, which is how a

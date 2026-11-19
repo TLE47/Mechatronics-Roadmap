@@ -295,7 +295,7 @@ export function MicroWalkthrough({
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               <span className="sm:hidden">Previous</span>
               <span className="hidden sm:inline">Previous line</span>
-              <kbd className="rounded border border-line-soft bg-canvas px-1.5 py-0.5 font-mono text-[10.5px] text-faint">
+              <kbd className="rounded border border-line-soft bg-canvas px-1.5 py-0.5 font-mono text-[11.5px] font-bold text-body">
                 {formatWalkthroughChord(keys.previous)}
               </kbd>
             </button>
@@ -310,7 +310,7 @@ export function MicroWalkthrough({
                 <span className="sm:hidden">Next</span>
                 <span className="hidden sm:inline">Reveal next line</span>
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                <kbd className="rounded border border-inverse/25 bg-inverse/10 px-1.5 py-0.5 font-mono text-[10.5px] text-inverse/80">
+                <kbd className="rounded border border-inverse/25 bg-inverse/10 px-1.5 py-0.5 font-mono text-[11.5px] font-bold text-inverse">
                   {formatWalkthroughChord(keys.next)}
                 </kbd>
               </button>
@@ -408,7 +408,7 @@ function KeyChoice({
       aria-pressed={capture === action}
     >
       <span>{label}</span>
-      <kbd className="rounded border border-line-soft bg-panel px-1.5 py-0.5 font-mono text-[10.5px] text-faint">
+      <kbd className="rounded border border-line-soft bg-panel px-1.5 py-0.5 font-mono text-[11.5px] font-bold text-body">
         {capture === action ? 'Press a key…' : formatWalkthroughChord(chord)}
       </kbd>
     </button>

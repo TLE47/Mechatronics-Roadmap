@@ -246,7 +246,7 @@ function PaneUndo({ onPanes }: { onPanes: (next: EditorPanes) => void }) {
       <kbd
         aria-hidden="true"
         title="Undo from the keyboard while this offer is on screen"
-        className="rounded border border-line-soft px-1 font-mono text-[10px] text-faint"
+        className="rounded border border-line-soft px-1 font-mono text-[11px] font-bold text-body"
       >
         ⌥Z
       </kbd>
