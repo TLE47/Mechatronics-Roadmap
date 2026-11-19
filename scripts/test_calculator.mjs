@@ -12,7 +12,7 @@
 
 import assert from 'node:assert/strict';
 import { compileExpression, evaluateExpression, formatNumber } from '../app/src/calculator.ts';
-import { typesetExpression } from '../app/src/calculatorTypeset.ts';
+import { TYPESET_SHOWCASE, typesetExpression } from '../app/src/calculatorTypeset.ts';
 import {
   fitGraphView,
   graphPointAt,
@@ -254,6 +254,23 @@ check('functions, powers and postfix operators keep their shape', () => {
   assert.equal(typesetExpression('2^3'), '2^{3}');
   assert.equal(typesetExpression('5!'), '5!');
   assert.equal(typesetExpression('2*pi'), '2\\,\\pi');
+});
+check('the whole scientific vocabulary has a display form', () => {
+  assert.equal(typesetExpression('nthroot(3, 8)'), '\\sqrt[3]{8}');
+  assert.equal(typesetExpression('logb(2, 8)'), '\\log_{2}\\left(8\\right)');
+  assert.equal(typesetExpression('nCr(5, 2)'), '\\binom{5}{2}');
+  assert.equal(typesetExpression('nPr(5, 2)'), '{}_{5}P_{2}');
+  assert.equal(typesetExpression('asinh(1)'), '\\operatorname{asinh}\\left(1\\right)');
+  assert.equal(typesetExpression('mod(7, 3)'), '\\operatorname{mod}\\left(7,\\ 3\\right)');
+  assert.equal(typesetExpression('gcd(12, 18)'), '\\gcd\\left(12,\\ 18\\right)');
+  assert.equal(typesetExpression('50%'), '50\\%');
+  assert.equal(typesetExpression('2e3'), '2000');
+});
+check('the guide’s showcase is all real, renderable calculator input', () => {
+  assert.ok(TYPESET_SHOWCASE.length >= 10);
+  for (const entry of TYPESET_SHOWCASE) {
+    assert.ok(typesetExpression(entry.input), `${entry.id} must have a display form`);
+  }
 });
 check('an expression the calculator cannot read has no typeset form', () => {
   assert.equal(typesetExpression('2 +'), null);

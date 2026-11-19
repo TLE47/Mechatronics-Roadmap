@@ -1,7 +1,7 @@
 {
   "name": "mechalab",
   "private": true,
-  "version": "4.7.6",
+  "version": "4.8.0",
   "type": "module",
   "scripts": {
     "predev": "python3 scripts/generate_python_lessons_data.py",
@@ -71,6 +71,7 @@
     "test:practice": "node --experimental-strip-types scripts/test_practice_links.mjs",
     "test:levels": "node --experimental-strip-types scripts/test_course_levels.mjs",
     "test:firstrun": "node --experimental-strip-types scripts/test_tour.mjs",
+    "test:guide": "node --experimental-strip-types scripts/test_learner_guide.mjs",
     "test:parity": "python3 tests/test_module_parity.py",
     "check:plant": "python3 scripts/generate_plant_data.py --check",
     "test:plant": "python3 tests/test_plant.py",

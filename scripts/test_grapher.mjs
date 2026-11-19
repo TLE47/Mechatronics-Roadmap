@@ -19,6 +19,7 @@ import {
   foldConstants,
 } from '../app/src/grapher/compiler.ts';
 import { parseEquation, normalizeMath } from '../app/src/grapher/parser.ts';
+import { typesetEquation } from '../app/src/grapher/typeset.ts';
 import {
   applyPythonSlider,
   pythonSliderLabel,
@@ -119,6 +120,16 @@ check('constant subtrees fold before code generation', () => {
   const symbolic = foldConstants(parseEquation('2L1 + 3').ast);
   assert.equal(symbolic.kind, 'binary');
   assert.match(compileExplicit(parseEquation('2L1 + 3')).expression, /scope\["L1"\]/);
+});
+check('every line is also an equation on paper', () => {
+  assert.equal(typesetEquation('y = sin(x)'), 'y = \\sin\\left(x\\right)');
+  assert.equal(typesetEquation('x^2 + y^2 = 9'), 'x^{2} + y^{2} = 9');
+  assert.equal(typesetEquation('y = 1/x'), 'y = \\frac{1}{x}');
+  assert.equal(typesetEquation('a = 2.5'), 'a = 2.5');
+  assert.equal(typesetEquation('y = 2x + L1'), 'y = 2\\,x + L_{1}');
+  assert.equal(typesetEquation('2sin(x)'), '2\\,\\sin\\left(x\\right)');
+  assert.equal(typesetEquation('\\frac{x}{2}'), '\\frac{x}{2}');
+  assert.equal(typesetEquation('y ='), null, 'an unfinished equation has no display form');
 });
 check('a parameter slider value reaches the closure without a rebuild', () => {
   const compiled = explicit('a x + b');

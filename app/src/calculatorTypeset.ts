@@ -8,7 +8,15 @@
  * back to the raw text.
  *
  * TeX is only produced here; `MathView` is the one renderer, so the calculator's math looks like the
- * formulas already in the lessons.
+ * formulas already in the lessons. The coverage is deliberately the whole scientific set:
+ *
+ *   fractions · powers · roots (square, cube, any degree) · absolute value · floor · ceiling
+ *   factorial · percent · scientific notation · implicit multiplication · unary minus
+ *   sin/cos/tan/sec/csc/cot · inverse and hyperbolic trigonometry · ln/log/log2/arbitrary base
+ *   min/max · mod · gcd/lcm · nCr/nPr · sign/round/trunc · π, τ, φ and e
+ *
+ * `TYPESET_SHOWCASE` is the same list as data, rendered by the new-learner guide and asserted by
+ * `scripts/test_calculator.mjs`, so a new keypad function cannot quietly go unrendered.
  */
 
 import { parseExpression, type Node } from './calculator.ts';
@@ -26,31 +34,81 @@ const FUNCTIONS: Record<string, string> = {
   sinh: '\\sinh',
   cosh: '\\cosh',
   tanh: '\\tanh',
+  asinh: '\\operatorname{asinh}',
+  acosh: '\\operatorname{acosh}',
+  atanh: '\\operatorname{atanh}',
   ln: '\\ln',
   log: '\\log',
   exp: '\\exp',
   min: '\\min',
   max: '\\max',
   gcd: '\\gcd',
+  lcm: '\\operatorname{lcm}',
+  sign: '\\operatorname{sign}',
+  round: '\\operatorname{round}',
+  trunc: '\\operatorname{trunc}',
 };
 
 const CONSTANTS: Record<string, string> = {
   pi: '\\pi',
+  'π': '\\pi',
   tau: '\\tau',
+  'τ': '\\tau',
   phi: '\\varphi',
+  'φ': '\\varphi',
   e: 'e',
 };
+
+/** Greek spellings a learner may type as variable names; the keypad writes the glyphs. */
+const GREEK: Record<string, string> = {
+  alpha: '\\alpha',
+  beta: '\\beta',
+  gamma: '\\gamma',
+  delta: '\\delta',
+  epsilon: '\\epsilon',
+  zeta: '\\zeta',
+  eta: '\\eta',
+  theta: '\\theta',
+  iota: '\\iota',
+  kappa: '\\kappa',
+  lambda: '\\lambda',
+  mu: '\\mu',
+  nu: '\\nu',
+  xi: '\\xi',
+  rho: '\\rho',
+  sigma: '\\sigma',
+  upsilon: '\\upsilon',
+  chi: '\\chi',
+  psi: '\\psi',
+  omega: '\\omega',
+};
+
+function escapeTex(name: string): string {
+  return name.replace(/[_{}%$#&^~\\]/g, (character) => `\\${character}`);
+}
+
+/**
+ * A name as math, not as code. `x` stays italic; `L1` reads as `L₁`, `Kp` stays upright, and an
+ * underscored name keeps its subscript. Multi-letter identifiers are what the grapher calls
+ * parameters, so they must look like one symbol rather than five multiplied letters.
+ */
+function texName(name: string): string {
+  const greek = GREEK[name];
+  if (greek) return greek;
+  const subscript = /^([A-Za-z])(?:_?([0-9]+))$/.exec(name);
+  if (subscript) return `${subscript[1]}_{${subscript[2]}}`;
+  const underscored = /^(.+?)_(.+)$/.exec(name);
+  if (underscored) {
+    return `\\mathrm{${escapeTex(underscored[1])}}_{\\mathrm{${escapeTex(underscored[2])}}}`;
+  }
+  return name.length === 1 ? escapeTex(name) : `\\mathrm{${escapeTex(name)}}`;
+}
 
 function texNumber(value: number): string {
   const text = String(value);
   const scientific = /^(\d+(?:\.\d+)?)e([+-]?\d+)$/.exec(text);
   if (!scientific) return text;
   return `${scientific[1]} \\times 10^{${Number(scientific[2])}}`;
-}
-
-function texName(name: string): string {
-  const escaped = name.replace(/_/g, '\\_');
-  return escaped.length === 1 ? escaped : `\\mathrm{${escaped}}`;
 }
 
 function isAddition(node: Node): boolean {
@@ -62,16 +120,6 @@ function needsPostfixGrouping(node: Node): boolean {
   return node.type === 'binary' || node.type === 'negate';
 }
 
-/** A value that can sit next to another without an explicit multiplication sign. */
-function isSymbol(node: Node): boolean {
-  return (
-    node.type === 'variable' ||
-    node.type === 'constant' ||
-    node.type === 'answer' ||
-    node.type === 'call'
-  );
-}
-
 function parenthesize(tex: string, needed: boolean): string {
   return needed ? `\\left(${tex}\\right)` : tex;
 }
@@ -79,13 +127,14 @@ function parenthesize(tex: string, needed: boolean): string {
 function texCall(node: Extract<Node, { type: 'call' }>): string {
   const args = node.args.map((argument) => texNode(argument));
   const first = args[0] ?? '';
+  const second = args[1] ?? '';
   switch (node.name) {
     case 'sqrt':
       return `\\sqrt{${first}}`;
     case 'cbrt':
       return `\\sqrt[3]{${first}}`;
     case 'nthroot':
-      return `\\sqrt[${first}]{${args[1] ?? ''}}`;
+      return `\\sqrt[${first}]{${second}}`;
     case 'abs':
       return `\\left|${first}\\right|`;
     case 'floor':
@@ -95,9 +144,15 @@ function texCall(node: Extract<Node, { type: 'call' }>): string {
     case 'log2':
       return `\\log_{2}\\left(${first}\\right)`;
     case 'logb':
-      return `\\log_{${first}}\\left(${args[1] ?? ''}\\right)`;
+      return `\\log_{${first}}\\left(${second}\\right)`;
     case 'atan2':
       return `\\operatorname{atan2}\\left(${args.join(',\\ ')}\\right)`;
+    case 'mod':
+      return `\\operatorname{mod}\\left(${args.join(',\\ ')}\\right)`;
+    case 'ncr':
+      return `\\binom{${first}}{${second}}`;
+    case 'npr':
+      return `{}_{${first}}P_{${second}}`;
     default: {
       const name = FUNCTIONS[node.name] ?? `\\operatorname{${node.name}}`;
       return `${name}\\left(${args.join(',\\ ')}\\right)`;
@@ -139,12 +194,11 @@ function texNode(node: Node): string {
       }
       const leftTex = parenthesize(texNode(node.left), isAddition(node.left));
       const rightTex = parenthesize(texNode(node.right), isAddition(node.right));
-      // `2x` and `xy` are juxtaposition; two plain numbers get the dot they were typed with.
-      const juxtapose =
-        (node.left.type === 'number' && isSymbol(node.right)) ||
-        (isSymbol(node.left) && isSymbol(node.right));
-      // The thin space keeps `\\pi` and `e` from merging into an unknown command like `\\pie`.
-      return juxtapose ? `${leftTex}\\,${rightTex}` : `${leftTex} \\cdot ${rightTex}`;
+      // Multiplication is juxtaposition on paper (`2x`, `(x+1)(x-1)`, `2sin(x)`); only two plain
+      // numbers keep the dot a learner typed. The thin space keeps `\\pi` and `e` from merging into
+      // an unknown command like `\\pie`.
+      const bothNumbers = node.left.type === 'number' && node.right.type === 'number';
+      return bothNumbers ? `${leftTex} \\cdot ${rightTex}` : `${leftTex}\\,${rightTex}`;
     }
     default:
       return '';
@@ -154,8 +208,8 @@ function texNode(node: Node): string {
 /**
  * The display form of one calculator expression, or null when the calculator cannot parse it.
  *
- * The tape uses this for every kept expression; the active line asks the caller to show it only
- * when the raw text contains a fraction, so an ordinary sum does not appear twice.
+ * The live line uses this for every valid expression; the tape uses it for every kept one. An
+ * invalid or empty line returns null, which is the caller's cue to show the plain input alone.
  */
 export function typesetExpression(input: string): string | null {
   try {
@@ -164,3 +218,25 @@ export function typesetExpression(input: string): string | null {
     return null;
   }
 }
+
+/**
+ * The complete visual vocabulary, as data. Each entry is a real calculator input, so the guide and
+ * the test render exactly what a learner can type rather than a hand-written TeX sample that could
+ * drift from the parser.
+ */
+export const TYPESET_SHOWCASE = [
+  { id: 'fraction', label: 'Fractions', input: '1/2' },
+  { id: 'power', label: 'Powers', input: '2^10' },
+  { id: 'root', label: 'Roots', input: 'sqrt(2)' },
+  { id: 'nthroot', label: 'Any root', input: 'nthroot(3, 8)' },
+  { id: 'function', label: 'Functions', input: 'sin(pi/4)' },
+  { id: 'log', label: 'Log bases', input: 'logb(2, 8)' },
+  { id: 'factorial', label: 'Factorial', input: '5!' },
+  { id: 'percent', label: 'Percent', input: '50%' },
+  { id: 'combinatorics', label: 'nCr / nPr', input: 'nCr(5, 2)' },
+  { id: 'absolute', label: 'Absolute value', input: 'abs(-7)' },
+  { id: 'floor', label: 'Floor / ceiling', input: 'floor(2.9)' },
+  { id: 'implicit', label: 'Implicit ×', input: '2pi' },
+] as const;
+
+export type TypesetShowcase = (typeof TYPESET_SHOWCASE)[number];

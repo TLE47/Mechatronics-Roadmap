@@ -253,6 +253,8 @@ async function main() {
     { label: 'symbols', script: 'test_symbols.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'levels', script: 'test_course_levels.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'firstrun', script: 'test_tour.mjs', env: { NODE_OPTIONS: TYPES } },
+    // The guide's completeness contract: a new tab must be considered (or exempted) here.
+    { label: 'guide', script: 'test_learner_guide.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'layout', script: 'test_layout.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'reader', script: 'test_reader.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'visuals', script: 'test_visuals.mjs', env: { NODE_OPTIONS: TYPES } },

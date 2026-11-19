@@ -192,13 +192,11 @@ export function CalculatorPane({
   /** The number under the active line: the live answer, else the last one kept. */
   const shown = live ? live.value : expression.trim() ? null : ans;
 
-  // A fraction is the one thing the plain input cannot show as itself. When there is one, the same
-  // AST the calculator evaluates is also drawn above the input, so `1/2` reads as a stacked
-  // fraction while it is typed. Other lines stay a single input, with no duplicate line.
-  const typeset = useMemo(
-    () => (expression.includes('/') ? typesetExpression(expression) : null),
-    [expression]
-  );
+  // The input is source; the line above it is the paper. Every parseable expression gets a typeset
+  // twin — fractions, powers, roots, logs, factorials, combinatorics — and the raw input drops to a
+  // quiet second line so the math is what the eye reads while typing. An unfinished line gets no
+  // twin and keeps the full-size source, which is exactly when the caret needs the room.
+  const typeset = useMemo(() => typesetExpression(expression), [expression]);
 
   const commit = () => {
     const text = expression.trim();

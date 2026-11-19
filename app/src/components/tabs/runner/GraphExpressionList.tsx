@@ -7,8 +7,10 @@
  * what they compiled into belong to `GraphingPane.tsx`.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
+import { MathView } from '../../MathView';
+import { typesetEquation } from '../../../grapher/typeset';
 import type { AngleMode } from '../../../calculator';
 import { pythonSliderLabel } from '../../../grapher/bridge';
 import type { SliderSpec } from '../../../editor/sliderModel';
@@ -67,6 +69,18 @@ export function GraphExpressionList({
     inputs.current.get(focusId)?.focus();
     setFocusId(null);
   }, [focusId, rows]);
+
+  // The line above each input is the equation as paper, parsed by the same grammar that plots it.
+  // An unfinished or empty line has no display form, so the input alone carries it.
+  const typesetRows = useMemo(() => {
+    const rendered = new Map<number, string>();
+    for (const row of rows) {
+      if (row.points || !row.text.trim()) continue;
+      const tex = typesetEquation(row.text);
+      if (tex) rendered.set(row.id, tex);
+    }
+    return rendered;
+  }, [rows]);
 
   const updateRow = (id: number, patch: Partial<GraphExpression>) => onUpdate(id, patch);
 
@@ -167,6 +181,7 @@ export function GraphExpressionList({
             : null;
           const localValue = entry?.parameterName ? scope[entry.parameterName] ?? 0 : 0;
           const range = defaultRange(localValue);
+          const typeset = typesetRows.get(row.id);
           return (
             <div
               key={row.id}
@@ -209,6 +224,15 @@ export function GraphExpressionList({
                   </div>
                 ) : (
                   <>
+                    {typeset && (
+                      <div
+                        data-testid="graph-typeset"
+                        aria-hidden="true"
+                        className="max-h-16 overflow-x-auto overflow-y-hidden pb-0.5 text-[18px] leading-7 text-body"
+                      >
+                        <MathView math={typeset} />
+                      </div>
+                    )}
                     <div className="flex items-center gap-1.5">
                       <input
                         ref={(node) => {
@@ -236,7 +260,9 @@ export function GraphExpressionList({
                         placeholder={index === 0 ? 'y = sin(x), or x^2 + y^2 = 9' : 'y = …'}
                         autoComplete="off"
                         spellCheck={false}
-                        className="w-full min-w-0 bg-transparent font-mono text-[14px] leading-6 text-body outline-none placeholder:text-faint/60"
+                        className={`w-full min-w-0 bg-transparent font-mono outline-none placeholder:text-faint/60 ${
+                          typeset ? 'text-[11.5px] leading-5 text-muted' : 'text-[14px] leading-6 text-body'
+                        }`}
                         style={{ boxShadow: 'none' }}
                       />
                       <button

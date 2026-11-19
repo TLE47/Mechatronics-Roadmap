@@ -15,6 +15,11 @@ import { termSearchItems } from './termSearch';
 const ReviewModePanel = React.lazy(() =>
   import('./components/ReviewModePanel').then((module) => ({ default: module.ReviewModePanel }))
 );
+// The guide is a destination, not part of the shell: its fourteen drawn panels arrive only when a
+// learner opens it from General settings.
+const LearnerGuideLazy = React.lazy(() =>
+  import('./components/LearnerGuide').then((module) => ({ default: module.LearnerGuide }))
+);
 import { loadProseIndex, proseSearchItems, type ProsePage } from './proseSearch';
 import { SimulatorTierBanner } from './components/SimulatorTierBanner';
 import { PhoneTabPicker } from './components/PhoneTabPicker';
@@ -118,6 +123,7 @@ import { themeViewFromLocation, themeViewSearch } from './themeRoute';
 import { PYTHON_TAB_NAME, labsSwitchLabel } from './tabNames';
 import { APP_BUILD, APP_VERSION } from './appVersion';
 import { isKnownLesson, lessonIdFromLocation } from './lessonRoute';
+import { OPEN_LEARNER_GUIDE_EVENT } from './learnerGuideDoor';
 import { readSharedAttempt, type SharedAttempt } from './shareLink';
 import { readTrySnippet } from './tryLink';
 import { readLastLessonId, lessonOffer } from './lastLesson';
@@ -419,6 +425,15 @@ export const App: React.FC = () => {
   const [requirementRequest, setRequirementRequest] = useState<{ id: string; nonce: number } | null>(null);
   const [tourIndex, setTourIndex] = useState<number>(0);
   const [isCheatSheetOpen, setIsCheatSheetOpen] = useState<boolean>(false);
+  // The new-learner guide is opened by a control inside General settings, which is inside the
+  // header. The event keeps that door from having to thread a callback through Header; App owns
+  // the tab change, so the guide's "take me there" buttons can navigate the workbench.
+  const [isLearnerGuideOpen, setIsLearnerGuideOpen] = useState<boolean>(false);
+  useEffect(() => {
+    const open = () => setIsLearnerGuideOpen(true);
+    window.addEventListener(OPEN_LEARNER_GUIDE_EVENT, open);
+    return () => window.removeEventListener(OPEN_LEARNER_GUIDE_EVENT, open);
+  }, []);
   // `⌘K` is the keyboard's table of contents: one dialog over lessons, tabs and commands. `⌘P` and
   // `⌘⇧F` open the same dialog on a narrower question, so there is one search box to learn
   // (`app/src/palette.ts`).
@@ -2379,6 +2394,17 @@ export const App: React.FC = () => {
         </main>
         </CompactChromeContext.Provider>
       </div>
+
+      {/* The new-learner guide. Mounted only while open, and lazily: a first visit does not pay
+          for fourteen drawn panels until the learner asks for the tour. */}
+      {isLearnerGuideOpen && (
+        <React.Suspense fallback={null}>
+          <LearnerGuideLazy
+            onClose={() => setIsLearnerGuideOpen(false)}
+            onNavigate={openTabFromHome}
+          />
+        </React.Suspense>
+      )}
 
       {/* Cheat sheet modal */}
       <CheatSheetModal

@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { Download, FileJson, Settings2, X } from 'lucide-react';
+import { Compass, Download, FileJson, Settings2, X } from 'lucide-react';
 import {
   GENERAL_SETTINGS_EVENT,
   readShowActionLabels,
@@ -10,6 +10,8 @@ import {
   type WorkspaceBlock,
 } from '../generalSettings';
 import { downloadLearningLog } from '../learningLog';
+import { GUIDE_STEP_COUNT } from '../learnerGuide';
+import { openLearnerGuide } from '../learnerGuideDoor';
 import { BackupControls } from './BackupControls';
 import { cachedSoundPrefs, subscribeSoundPrefs, type SoundPrefs } from '../audio/prefs.ts';
 import { change, install, preview, reset, subscribeArmed, togglePlay } from '../audio/musicManager.ts';
@@ -190,7 +192,43 @@ export const GeneralSettingsPanel: React.FC<{
           </button>
         </div>
         <div className="max-h-[70vh] overflow-y-auto p-3.5">
-          <section aria-label="Action tray" data-testid="general-tray">
+          <section aria-label="New learner guide" data-testid="general-guide">
+            <button
+              type="button"
+              onClick={() => {
+                // The guide is its own surface, above this one: close settings before opening it,
+                // so the learner never sees two dialogs stacked on one another.
+                onClose();
+                openLearnerGuide();
+              }}
+              data-testid="btn-open-new-learner-guide"
+              className="group flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors hover:border-accent/50"
+              style={{ borderColor: 'var(--accent)', backgroundColor: 'var(--accent-soft)' }}
+            >
+              <span
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border"
+                style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
+              >
+                <Compass className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-1.5 text-[12.5px] font-semibold text-ink">
+                  New learner guide
+                  <span className="rounded-full border border-accent/30 px-1.5 py-0.5 font-mono text-[9px] font-normal text-accent">
+                    {GUIDE_STEP_COUNT} steps
+                  </span>
+                </span>
+                <span className="mt-0.5 block text-[11px] leading-snug text-muted">
+                  Start here if the workbench is new: every tab, the learning loop, and the roadmap
+                  in one short walk. Stop any time; it resumes where you left off.
+                </span>
+              </span>
+              <span className="shrink-0 font-mono text-[10px] text-accent transition-transform group-hover:translate-x-0.5">
+                Open →
+              </span>
+            </button>
+          </section>
+          <section aria-label="Action tray" data-testid="general-tray" className="mt-3 border-t pt-3" style={{ borderColor: 'var(--border)' }}>
             <button
               type="button"
               onClick={() => setLabels(writeShowActionLabels(!labels))}

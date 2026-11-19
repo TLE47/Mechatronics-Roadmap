@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.7.6`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.8.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,25 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-19] — The equation looks like paper, and the workbench has a guide
+
+The Calculator tab's live line now typesets every parseable expression, not only division: stacked
+fractions, exponents, square/cube/any-degree roots, absolute value, floor/ceiling, factorial, percent,
+scientific notation, log bases, nCr/nPr, and the whole trigonometric and hyperbolic set. The raw input
+stays as a quiet source line under the math, and the same serializer feeds the kept-calculation tape.
+Graph rows do the same from the grapher's AST — `x^2 + y^2 = 9`, `y = sin(x)/x` and `a = 2.5` are
+drawn above their editable source — with multi-letter parameters (`L1`, `Kp`) kept as one symbol.
+
+General settings now has a **New learner guide**: fourteen steps through every workbench tab, the
+read → predict → run → verify loop and the four-pass roadmap, each with a drawn instrument panel and a
+"take me there" door. Previous, Next, the arrow keys and the step rail move; Turn off stores the step
+so the next open resumes there, and finishing starts the next visit from the top. The guide is its own
+lazy 6.4 kB chunk, so a first lesson does not pay for it.
+
+`npm run test:guide` is the coverage guard: every tab in `workbenchTabs.json` must appear in a step or
+carry an exemption with a reason, so a new tab fails CI until it has been considered. The suite also
+pins resume/complete/malformed-store behaviour and the General settings door.
 
 ## [2026-11-19] — Dark elevation is a halo, not a second border
 
