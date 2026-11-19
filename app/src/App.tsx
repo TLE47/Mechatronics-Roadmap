@@ -20,6 +20,12 @@ const ReviewModePanel = React.lazy(() =>
 const LearnerGuideLazy = React.lazy(() =>
   import('./components/LearnerGuide').then((module) => ({ default: module.LearnerGuide }))
 );
+// The guide's second mode is its own surface: a spotlit tooltip that walks the real workbench.
+const FeatureWalkthroughLazy = React.lazy(() =>
+  import('./components/FeatureWalkthrough').then((module) => ({
+    default: module.FeatureWalkthrough,
+  }))
+);
 import { loadProseIndex, proseSearchItems, type ProsePage } from './proseSearch';
 import { SimulatorTierBanner } from './components/SimulatorTierBanner';
 import { PhoneTabPicker } from './components/PhoneTabPicker';
@@ -429,6 +435,7 @@ export const App: React.FC = () => {
   // header. The event keeps that door from having to thread a callback through Header; App owns
   // the tab change, so the guide's "take me there" buttons can navigate the workbench.
   const [isLearnerGuideOpen, setIsLearnerGuideOpen] = useState<boolean>(false);
+  const [isFeatureWalkthroughOpen, setIsFeatureWalkthroughOpen] = useState<boolean>(false);
   useEffect(() => {
     const open = () => setIsLearnerGuideOpen(true);
     window.addEventListener(OPEN_LEARNER_GUIDE_EVENT, open);
@@ -2401,6 +2408,20 @@ export const App: React.FC = () => {
         <React.Suspense fallback={null}>
           <LearnerGuideLazy
             onClose={() => setIsLearnerGuideOpen(false)}
+            onNavigate={openTabFromHome}
+            onWalkthrough={() => {
+              setIsLearnerGuideOpen(false);
+              setIsFeatureWalkthroughOpen(true);
+            }}
+          />
+        </React.Suspense>
+      )}
+
+      {/* The tooltip walkthrough: the guide's detailed mode, pointing at the real controls. */}
+      {isFeatureWalkthroughOpen && (
+        <React.Suspense fallback={null}>
+          <FeatureWalkthroughLazy
+            onClose={() => setIsFeatureWalkthroughOpen(false)}
             onNavigate={openTabFromHome}
           />
         </React.Suspense>

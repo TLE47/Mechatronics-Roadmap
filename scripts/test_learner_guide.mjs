@@ -31,6 +31,19 @@ import {
   resumeGuideState,
   writeGuideState,
 } from '../app/src/learnerGuide.ts';
+import {
+  FEATURE_WALKTHROUGH,
+  FEATURE_WALKTHROUGH_COUNT,
+  FEATURE_WALKTHROUGH_STORAGE_KEY,
+  dismissWalkthroughState,
+  initialWalkthroughState,
+  nextWalkthroughState,
+  previousWalkthroughState,
+  readWalkthroughState,
+  resumeWalkthroughState,
+  walkthroughAnnouncement,
+  writeWalkthroughState,
+} from '../app/src/featureWalkthrough.ts';
 
 const tabsDoc = JSON.parse(
   fs.readFileSync(new URL('../app/src/data/workbenchTabs.json', import.meta.url), 'utf8')
@@ -40,6 +53,31 @@ const SETTINGS_SOURCE = fs.readFileSync(
   new URL('../app/src/components/GeneralSettingsPanel.tsx', import.meta.url),
   'utf8'
 );
+const GUIDE_SOURCE = fs.readFileSync(
+  new URL('../app/src/components/LearnerGuide.tsx', import.meta.url),
+  'utf8'
+);
+
+/** Every TypeScript source under `app/src`, so an anchor can be checked against the real markup. */
+function appSources(directory = new URL('../app/src/', import.meta.url)) {
+  const files = [];
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const child = new URL(entry.isDirectory() ? `${entry.name}/` : entry.name, directory);
+    if (entry.isDirectory()) files.push(...appSources(child));
+    else if (/\.(tsx?|jsx?)$/.test(entry.name)) files.push(fs.readFileSync(child, 'utf8'));
+  }
+  return files;
+}
+
+const APP_TEST_IDS = new Set();
+for (const text of appSources()) {
+  for (const match of text.matchAll(/data-testid="([^"]+)"/g)) APP_TEST_IDS.add(match[1]);
+}
+
+/** Test ids built from a map rather than written literally in the markup. */
+const DYNAMIC_TEST_IDS = [/^tab-btn-tab-/, /^btn-pass-/];
+const isKnownTestId = (id) =>
+  APP_TEST_IDS.has(id) || DYNAMIC_TEST_IDS.some((pattern) => pattern.test(id));
 
 let passed = 0;
 let failed = 0;
@@ -216,6 +254,116 @@ check('General settings has the guide button and opens the event', () => {
   assert.match(SETTINGS_SOURCE, /openLearnerGuide\(\)/);
   assert.match(SETTINGS_SOURCE, /learnerGuideDoor/);
   assert.match(SETTINGS_SOURCE, /onClose\(\);/);
+});
+
+console.log('\nThe tooltip walkthrough covers the workbench');
+
+check('the walkthrough is a real catalogue, not a second slideshow', () => {
+  assert.ok(FEATURE_WALKTHROUGH_COUNT >= 30, `expected at least 30 features, found ${FEATURE_WALKTHROUGH_COUNT}`);
+  assert.equal(FEATURE_WALKTHROUGH_COUNT, FEATURE_WALKTHROUGH.length);
+  assert.match(walkthroughAnnouncement(0), /^Feature 1 of/);
+});
+
+check('every workbench tab has a walkthrough stop', () => {
+  const covered = new Set(FEATURE_WALKTHROUGH.flatMap((stop) => (stop.tab ? [stop.tab] : [])));
+  for (const tab of TAB_IDS) {
+    assert.ok(
+      covered.has(tab),
+      `The feature walkthrough has no stop for "${tab}". Add one with \`tab: '${tab}'\` in app/src/featureWalkthrough.ts.`
+    );
+  }
+  for (const stop of FEATURE_WALKTHROUGH) {
+    if (!stop.tab) continue;
+    assert.ok(TAB_IDS.includes(stop.tab), `stop "${stop.id}" opens unknown tab "${stop.tab}"`);
+  }
+});
+
+check('walkthrough ids, copy, features and anchors are complete', () => {
+  const ids = new Set();
+  for (const stop of FEATURE_WALKTHROUGH) {
+    assert.ok(!ids.has(stop.id), `duplicate walkthrough id "${stop.id}"`);
+    ids.add(stop.id);
+    assert.match(stop.id, /^[a-z][a-z0-9-]+$/, `walkthrough id "${stop.id}" should be a slug`);
+    assert.ok(stop.section.trim().length > 0, `"${stop.id}" needs a section`);
+    assert.ok(stop.title.trim().length > 8, `"${stop.id}" needs a real title`);
+    assert.ok(stop.body.trim().length > 60, `"${stop.id}" needs a real explanation`);
+    assert.ok(
+      stop.features.length >= 2 && stop.features.length <= 6,
+      `"${stop.id}" needs 2–6 feature lines`
+    );
+    for (const feature of stop.features) {
+      assert.ok(feature.trim().length > 20, `"${stop.id}" has a feature line that is too thin`);
+    }
+    assert.ok(stop.anchors.length >= 1, `"${stop.id}" needs at least one anchor`);
+  }
+});
+
+check('every walkthrough anchor names a control that exists in the app', () => {
+  for (const stop of FEATURE_WALKTHROUGH) {
+    for (const anchor of stop.anchors) {
+      const match = /^\[data-testid="([^"]+)"\]$/.exec(anchor);
+      assert.ok(match, `"${stop.id}" has an anchor that is not a test-id selector: ${anchor}`);
+      assert.ok(
+        isKnownTestId(match[1]),
+        `"${stop.id}" points at "${match[1]}", which no source file declares. Fix the test id or the anchor.`
+      );
+    }
+  }
+});
+
+check('a stop with no target still reads, and no anchor is empty', () => {
+  for (const stop of FEATURE_WALKTHROUGH) {
+    assert.ok(stop.anchors.every((anchor) => anchor.trim().length > 0));
+  }
+});
+
+check('stopping midway resumes the same feature; finishing starts over', () => {
+  let state = resumeWalkthroughState(initialWalkthroughState(0), 0);
+  state = nextWalkthroughState(state, 1);
+  state = nextWalkthroughState(state, 2);
+  assert.equal(state.index, 2);
+  state = previousWalkthroughState(state, 3);
+  assert.equal(state.index, 1);
+  state = previousWalkthroughState(state, 4);
+  state = previousWalkthroughState(state, 5);
+  assert.equal(state.index, 0, 'Back at the first feature stays put');
+
+  const off = dismissWalkthroughState(nextWalkthroughState(state, 6), 7);
+  assert.equal(off.status, 'dismissed');
+  assert.equal(off.index, 1);
+  assert.equal(resumeWalkthroughState(off, 8).index, 1, 'turning it off keeps the place');
+
+  let last = off;
+  while (last.index < FEATURE_WALKTHROUGH_COUNT - 1) last = nextWalkthroughState(last, 9);
+  const finished = nextWalkthroughState(last, 10);
+  assert.equal(finished.status, 'completed');
+  assert.equal(resumeWalkthroughState(finished, 11).index, 0, 'a finished tour starts from the top');
+});
+
+check('the walkthrough state round-trips and survives a broken store', () => {
+  const store = memoryStore();
+  writeWalkthroughState(dismissWalkthroughState(nextWalkthroughState(resumeWalkthroughState(initialWalkthroughState(0), 0), 1), 2), store);
+  const loaded = readWalkthroughState(store);
+  assert.equal(loaded.status, 'dismissed');
+  assert.equal(loaded.index, 1);
+
+  const broken = memoryStore({ [FEATURE_WALKTHROUGH_STORAGE_KEY]: '{nope' });
+  assert.equal(readWalkthroughState(broken).index, 0);
+  assert.doesNotThrow(() =>
+    writeWalkthroughState(initialWalkthroughState(0), {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error('blocked');
+      },
+    })
+  );
+});
+
+check('the guide offers both modes and the walkthrough callback', () => {
+  assert.match(GUIDE_SOURCE, /data-testid="guide-mode-steps"/);
+  assert.match(GUIDE_SOURCE, /data-testid="guide-mode-walkthrough"/);
+  assert.match(GUIDE_SOURCE, /onWalkthrough/);
+  assert.match(GUIDE_SOURCE, /FEATURE_WALKTHROUGH_COUNT/);
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

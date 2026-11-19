@@ -41,6 +41,8 @@ export interface ImplicitCurve {
   expression: string;
   parameters: { name: string; uniform: string }[];
   values: Record<string, number>;
+  /** An inequality shades `F < 0`; strict inequalities draw a dashed boundary. */
+  region: { strict: boolean } | null;
 }
 
 export interface HoverPoint extends GraphPoint {
@@ -483,6 +485,8 @@ interface ProgramEntry {
   resolution: WebGLUniformLocation | null;
   view: WebGLUniformLocation | null;
   dpr: WebGLUniformLocation | null;
+  region: WebGLUniformLocation | null;
+  strict: WebGLUniformLocation | null;
   parameters: Record<string, WebGLUniformLocation | null>;
 }
 
@@ -496,6 +500,8 @@ uniform vec2 u_resolution;
 uniform vec4 u_view;
 uniform vec3 u_color;
 uniform float u_dpr;
+uniform float u_region;
+uniform float u_strict;
 ${declarations}
 out vec4 outColor;
 void main() {
@@ -504,6 +510,21 @@ void main() {
   float y = u_view.z + uv.y * (u_view.w - u_view.z);
   float F = ${expression};
   float gradient = length(vec2(dFdx(F), dFdy(F)));
+  float cssPx = F / max(gradient, 1e-12) / max(u_dpr, 1.0);
+  if (u_region > 0.5) {
+    // F is negative inside the inequality. The screen-space derivative turns F into a signed
+    // distance in CSS pixels, so the wash and its boundary stay one width at every zoom.
+    float inside = 1.0 - smoothstep(-0.75, 0.75, cssPx);
+    float edge = 1.0 - smoothstep(0.55, 1.55, abs(cssPx));
+    if (u_strict > 0.5) {
+      float dash = step(0.5, fract((gl_FragCoord.x + gl_FragCoord.y) / (12.0 * max(u_dpr, 1.0))));
+      edge *= dash;
+    }
+    float alpha = max(inside * 0.22, edge);
+    if (alpha <= 0.002) discard;
+    outColor = vec4(u_color, alpha);
+    return;
+  }
   float distancePx = abs(F) / max(gradient, 1e-12);
   float alpha = 1.0 - smoothstep(0.45, 1.45, distancePx / max(u_dpr, 1.0));
   if (alpha <= 0.002) discard;
@@ -556,7 +577,10 @@ export class ImplicitRenderer {
     gl.bindVertexArray(null);
     gl.disable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    // Separate alpha matters: the shaded region writes 0.22 coverage, and the default
+    // SRC_ALPHA/ONE_MINUS_SRC_ALPHA pair would square that in the alpha channel (0.048),
+    // making the wash disappear when the transparent canvas is composited over the paper.
+    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
   }
 
   get available(): boolean {
@@ -626,6 +650,8 @@ export class ImplicitRenderer {
       resolution: gl.getUniformLocation(program, 'u_resolution'),
       view: gl.getUniformLocation(program, 'u_view'),
       dpr: gl.getUniformLocation(program, 'u_dpr'),
+      region: gl.getUniformLocation(program, 'u_region'),
+      strict: gl.getUniformLocation(program, 'u_strict'),
       parameters: parameterLocations,
     };
     this.programs.set(key, entry);
@@ -665,6 +691,8 @@ export class ImplicitRenderer {
       gl.uniform2f(entry.resolution, this.width, this.height);
       gl.uniform4f(entry.view, viewport.xMin, viewport.xMax, viewport.yMin, viewport.yMax);
       gl.uniform1f(entry.dpr, this.dpr);
+      gl.uniform1f(entry.region, curve.region ? 1 : 0);
+      gl.uniform1f(entry.strict, curve.region?.strict ? 1 : 0);
       const [r, g, b] = hexToRgb(curve.color);
       gl.uniform3f(entry.color, r, g, b);
       for (const parameter of curve.parameters) {

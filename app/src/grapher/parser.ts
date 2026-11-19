@@ -10,8 +10,9 @@
  *  - and whether it is a parameter definition (`a = 2.5`) rather than something to plot.
  *
  * Desmos-style input is accepted as written: `2x`, `(x + 1)(x - 1)`, `2sin(x)`, `atan2(y, x)`,
- * `π`, and the LaTeX spellings `\frac{a}{b}`, `\sqrt{x}`, `\sin`, `\left(`, `\right)`. A syntax
- * error is an `Error` with one sentence the expression list can print under the line.
+ * `π`, piecewise definitions like `{x < 0: -x, x >= 0: x}`, inequalities like `x^2 + y^2 <= 9`,
+ * and the LaTeX spellings `\frac{a}{b}`, `\sqrt{x}`, `\sin`, `\le`, `\left(`, `\right)`. A
+ * syntax error is an `Error` with one sentence the expression list can print under the line.
  */
 
 /** A function the grapher can evaluate in JavaScript and (for implicit curves) compile to GLSL. */
@@ -70,6 +71,9 @@ export const CONSTANTS: Record<string, number> = {
   e: Math.E,
 };
 
+export type InequalityOperator = '<' | '<=' | '>' | '>=';
+export type ComparisonOperator = InequalityOperator | '=' | '!=';
+
 /** A typed expression tree. Variables are the only nodes whose values come from the scope. */
 export type AstNode =
   | { kind: 'number'; value: number }
@@ -79,9 +83,12 @@ export type AstNode =
   | { kind: 'binary'; operator: '+' | '-' | '*' | '/' | '^'; left: AstNode; right: AstNode }
   | { kind: 'call'; name: string; args: AstNode[] }
   | { kind: 'factorial'; operand: AstNode }
-  | { kind: 'percent'; operand: AstNode };
+  | { kind: 'percent'; operand: AstNode }
+  | { kind: 'comparison'; operator: ComparisonOperator; left: AstNode; right: AstNode }
+  | { kind: 'logical'; operator: 'and' | 'or'; left: AstNode; right: AstNode }
+  | { kind: 'piecewise'; branches: { condition: AstNode; value: AstNode }[]; otherwise: AstNode | null };
 
-export type EquationKind = 'explicit' | 'implicit' | 'parameter';
+export type EquationKind = 'explicit' | 'implicit' | 'parameter' | 'inequality';
 
 /** How one line is plotted, and what has to move when a slider moves. */
 export interface ParsedEquation {
@@ -99,6 +106,8 @@ export interface ParsedEquation {
   variables: string[];
   usesX: boolean;
   usesY: boolean;
+  /** For an inequality, the relation and whether its boundary is dashed. `ast` is negative inside. */
+  inequality: { operator: InequalityOperator; strict: boolean } | null;
 }
 
 type Operator = '+' | '-' | '*' | '/' | '^';
@@ -111,6 +120,10 @@ type Token =
   | { kind: 'rparen'; position: number }
   | { kind: 'comma'; position: number }
   | { kind: 'equal'; position: number }
+  | { kind: 'comparison'; value: ComparisonOperator; position: number }
+  | { kind: 'lbrace'; position: number }
+  | { kind: 'rbrace'; position: number }
+  | { kind: 'colon'; position: number }
   | { kind: 'bang'; position: number }
   | { kind: 'percent'; position: number };
 
@@ -163,16 +176,22 @@ export function normalizeMath(raw: string): string {
     .replace(/\\tau\b/g, 'τ')
     .replace(/\\phi\b/g, 'φ')
     .replace(/\\theta\b/g, 'θ')
-    .replace(/\\infty\b/g, 'Infinity');
+    .replace(/\\infty\b/g, 'Infinity')
+    .replace(/\\leq?\b/g, '<=')
+    .replace(/\\geq?\b/g, '>=')
+    .replace(/\\lt\b/g, '<')
+    .replace(/\\gt\b/g, '>')
+    .replace(/\\neq?\b/g, '!=')
+    .replace(/≤/g, '<=')
+    .replace(/≥/g, '>=')
+    .replace(/≠/g, '!=')
   text = rewriteLatexGroups(text);
   text = text.replace(/\\([A-Za-z]+)/g, '$1');
-  // `\sin` is written above; the generic command strip turns it into `sin`. A command's braces
-  // (`\frac` has already been dealt with) are grouping parentheses in this grammar.
+  // `\sin` is written above; the generic command strip turns it into `sin`. Braces stay braces:
+  // they are Desmos' piecewise delimiter, and the parser also reads a brace pair as a group.
   text = text
     .replace(/\^\\circ/g, '')
-    .replace(/°/g, '')
-    .replace(/\{/g, '(')
-    .replace(/\}/g, ')');
+    .replace(/°/g, '');
   return text;
 }
 
@@ -208,6 +227,36 @@ function tokenize(raw: string): Token[] {
     if (char === ')') {
       tokens.push({ kind: 'rparen', position: index });
       index += 1;
+      continue;
+    }
+    if (char === '{') {
+      tokens.push({ kind: 'lbrace', position: index });
+      index += 1;
+      continue;
+    }
+    if (char === '}') {
+      tokens.push({ kind: 'rbrace', position: index });
+      index += 1;
+      continue;
+    }
+    if (char === ':') {
+      tokens.push({ kind: 'colon', position: index });
+      index += 1;
+      continue;
+    }
+    if (char === '!' && rest[1] === '=') {
+      tokens.push({ kind: 'comparison', value: '!=', position: index });
+      index += 2;
+      continue;
+    }
+    if (char === '<' || char === '>') {
+      const operator = rest[1] === '=' ? `${char}=` : char;
+      tokens.push({
+        kind: 'comparison',
+        value: operator as ComparisonOperator,
+        position: index,
+      });
+      index += operator.length;
       continue;
     }
     if (char === ',') {
@@ -246,7 +295,17 @@ function aritySentence(name: string, spec: FunctionSpec): string {
 }
 
 function startsPrimary(token: Token | undefined): boolean {
-  return Boolean(token && (token.kind === 'number' || token.kind === 'name' || token.kind === 'lparen'));
+  return Boolean(
+    token &&
+      (token.kind === 'number' ||
+        token.kind === 'name' ||
+        token.kind === 'lparen' ||
+        token.kind === 'lbrace')
+  );
+}
+
+function isCondition(node: AstNode): boolean {
+  return node.kind === 'comparison' || node.kind === 'logical';
 }
 
 /** Precedence for the infix operators. Implicit multiplication shares multiplication's rung. */
@@ -262,6 +321,10 @@ const BINDING: Record<Operator, { left: number; right: number }> = {
 const IMPLICIT_BINDING = { left: 20, right: 20 };
 const UNARY_BINDING = 30;
 const POSTFIX_BINDING = 50;
+// A relation is looser than arithmetic but tighter than `and` / `or`, so `0 < x + 1 < 2` works.
+const COMPARISON_BINDING = { left: 6, right: 7 };
+const AND_BINDING = { left: 4, right: 5 };
+const OR_BINDING = { left: 2, right: 3 };
 
 /** The Pratt parser. `expression(0)` is the whole grammar; every recursive call raises the floor. */
 class Parser {
@@ -311,6 +374,32 @@ class Parser {
         continue;
       }
 
+      const comparison =
+        token.kind === 'comparison' ? token.value : token.kind === 'equal' ? '=' : null;
+      if (comparison) {
+        if (COMPARISON_BINDING.left <= minBinding) break;
+        this.index += 1;
+        const right = this.expression(COMPARISON_BINDING.right);
+        // `0 < x < 1` is the interval both comparisons describe, not a comparison of a boolean.
+        const next: AstNode = {
+          kind: 'comparison',
+          operator: comparison,
+          left: left.kind === 'comparison' ? left.right : left,
+          right,
+        };
+        left = left.kind === 'comparison' ? { kind: 'logical', operator: 'and', left, right: next } : next;
+        continue;
+      }
+
+      if (token.kind === 'name' && (token.value.toLowerCase() === 'and' || token.value.toLowerCase() === 'or')) {
+        const operator = token.value.toLowerCase() === 'and' ? 'and' : 'or';
+        const binding = operator === 'and' ? AND_BINDING : OR_BINDING;
+        if (binding.left <= minBinding) break;
+        this.index += 1;
+        left = { kind: 'logical', operator, left, right: this.expression(binding.right) };
+        continue;
+      }
+
       if (token.kind === 'operator') {
         const binding = BINDING[token.value];
         if (!binding || binding.left <= minBinding) break;
@@ -343,14 +432,21 @@ class Parser {
       this.index += 1;
       return node;
     }
+    if (token.kind === 'lbrace') return this.braceGroup();
     if (token.kind === 'comma') {
       throw new Error('There is a comma without a function that takes more than one number');
     }
-    if (token.kind === 'rparen') {
-      throw new Error('There is a closing parenthesis without an opening one');
+    if (token.kind === 'rparen' || token.kind === 'rbrace') {
+      throw new Error('There is a closing bracket without an opening one');
+    }
+    if (token.kind === 'colon') {
+      throw new Error('A piecewise definition is written {condition: value, …}');
     }
     if (token.kind === 'equal') {
       throw new Error('That equation has an equals sign in the wrong place');
+    }
+    if (token.kind === 'comparison') {
+      throw new Error('That comparison needs an expression before it');
     }
     if (token.kind === 'bang' || token.kind === 'percent') {
       throw new Error('That operator needs a number before it');
@@ -367,20 +463,22 @@ class Parser {
     const lower = name.toLowerCase();
     const functionSpec = FUNCTIONS[lower];
     if (functionSpec) {
-      if (this.peek()?.kind !== 'lparen') {
+      const opener = this.peek();
+      if (opener?.kind !== 'lparen' && opener?.kind !== 'lbrace') {
         throw new Error(`${lower} needs parentheses, like ${lower}(x)`);
       }
+      const closer = opener.kind === 'lparen' ? 'rparen' : 'rbrace';
       this.index += 1;
       if (!this.peek()) throw new Error(`Add the closing parenthesis after ${lower}`);
       const args: AstNode[] = [];
-      if (this.peek()?.kind !== 'rparen') {
+      if (this.peek()?.kind !== closer) {
         args.push(this.expression(0));
         while (this.peek()?.kind === 'comma') {
           this.index += 1;
           args.push(this.expression(0));
         }
       }
-      if (this.peek()?.kind !== 'rparen') {
+      if (this.peek()?.kind !== closer) {
         throw new Error(`Add the closing parenthesis after ${lower}`);
       }
       this.index += 1;
@@ -396,6 +494,51 @@ class Parser {
     // A name followed by `(` is a parameter times a grouped expression (`a(x + 1)`), not a function:
     // only the names in FUNCTIONS are callable, so a learner cannot invent an unbound `f(x)`.
     return { kind: 'variable', name };
+  }
+
+  /** `{x < 0: -x, x >= 0: x}` is a piecewise; `{x + 1}` is an ordinary group. */
+  private braceGroup(): AstNode {
+    if (this.peek()?.kind === 'rbrace') throw new Error('A brace needs an expression inside');
+    const first = this.expression(0);
+    if (this.peek()?.kind === 'colon') {
+      if (!isCondition(first)) {
+        throw new Error('A piecewise branch needs a condition like x < 0 before the colon');
+      }
+      return this.piecewise(first);
+    }
+    if (this.peek()?.kind !== 'rbrace') throw new Error('Add the closing brace');
+    this.index += 1;
+    return first;
+  }
+
+  private piecewise(first: AstNode): AstNode {
+    const branches: { condition: AstNode; value: AstNode }[] = [];
+    let condition = first;
+    let otherwise: AstNode | null = null;
+    for (;;) {
+      if (this.peek()?.kind !== 'colon') throw new Error('Add a value after the piecewise condition');
+      this.index += 1;
+      const value = this.expression(0);
+      branches.push({ condition, value });
+      if (this.peek()?.kind !== 'comma') break;
+      this.index += 1;
+      if (this.peek()?.kind === 'rbrace') throw new Error('A comma needs another branch after it');
+      const candidate = this.expression(0);
+      if (this.peek()?.kind === 'colon') {
+        if (!isCondition(candidate)) {
+          throw new Error('A piecewise branch needs a condition like x < 0 before the colon');
+        }
+        condition = candidate;
+        continue;
+      }
+      otherwise = candidate;
+      break;
+    }
+    if (this.peek()?.kind !== 'rbrace') {
+      throw new Error('Add the closing brace after the piecewise definition');
+    }
+    this.index += 1;
+    return { kind: 'piecewise', branches, otherwise };
   }
 }
 
@@ -416,6 +559,18 @@ function collect(node: AstNode, variables: Set<string>): void {
     case 'call':
       for (const argument of node.args) collect(argument, variables);
       return;
+    case 'comparison':
+    case 'logical':
+      collect(node.left, variables);
+      collect(node.right, variables);
+      return;
+    case 'piecewise':
+      for (const branch of node.branches) {
+        collect(branch.condition, variables);
+        collect(branch.value, variables);
+      }
+      if (node.otherwise) collect(node.otherwise, variables);
+      return;
     default:
       return;
   }
@@ -428,7 +583,7 @@ export function variablesIn(node: AstNode): string[] {
   return [...names];
 }
 
-function cloneWithKind(node: AstNode, kind: 'explicit' | 'implicit' | 'parameter'): ParsedEquation {
+function cloneWithKind(node: AstNode, kind: EquationKind): ParsedEquation {
   const variables = variablesIn(node);
   const usesX = variables.includes('x');
   const usesY = variables.includes('y');
@@ -442,6 +597,7 @@ function cloneWithKind(node: AstNode, kind: 'explicit' | 'implicit' | 'parameter
     variables,
     usesX,
     usesY,
+    inequality: null,
   };
 }
 
@@ -449,13 +605,28 @@ function isBareName(node: AstNode): node is Extract<AstNode, { kind: 'variable' 
   return node.kind === 'variable';
 }
 
-function splitEquation(tokens: Token[]): { lhs: Token[]; rhs: Token[] } | null {
-  const equals = tokens.findIndex((token) => token.kind === 'equal');
-  if (equals === -1) return null;
-  if (tokens.slice(equals + 1).some((token) => token.kind === 'equal')) {
-    throw new Error('An equation can have only one equals sign');
+/** Find the one relation outside brackets. Piecewise condition equalities stay inside braces. */
+function topLevelRelation(tokens: Token[]): { index: number; operator: ComparisonOperator } | null {
+  let depth = 0;
+  let found: { index: number; operator: ComparisonOperator } | null = null;
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index]!;
+    if (token.kind === 'lparen' || token.kind === 'lbrace') depth += 1;
+    else if (token.kind === 'rparen' || token.kind === 'rbrace') depth -= 1;
+    else if (depth === 0 && (token.kind === 'equal' || token.kind === 'comparison')) {
+      if (found) {
+        if (found.operator === '=' && token.kind === 'equal') {
+          throw new Error('An equation can have only one equals sign');
+        }
+        throw new Error('Use one relation per line');
+      }
+      found = {
+        index,
+        operator: token.kind === 'equal' ? '=' : token.value,
+      };
+    }
   }
-  return { lhs: tokens.slice(0, equals), rhs: tokens.slice(equals + 1) };
+  return found;
 }
 
 /**
@@ -471,22 +642,59 @@ export function parseEquation(raw: string): ParsedEquation {
   if (!text) throw new Error('Type an expression first');
   const tokens = tokenize(text);
   if (tokens.length === 0) throw new Error('Type an expression first');
-  const sides = splitEquation(tokens);
-  if (!sides) {
+  const relation = topLevelRelation(tokens);
+  if (!relation) {
     const node = new Parser(tokens).parseAll();
+    if (node.kind === 'comparison') {
+      throw new Error('Write an inequality like y < sin(x), or put the condition in a piecewise {…}');
+    }
     const variables = variablesIn(node);
     const parsed = cloneWithKind(node, variables.includes('y') ? 'implicit' : 'explicit');
     return { ...parsed, text };
   }
 
+  const sides = {
+    lhs: tokens.slice(0, relation.index),
+    rhs: tokens.slice(relation.index + 1),
+  };
   if (sides.lhs.length === 0 || sides.rhs.length === 0) {
-    throw new Error('Both sides of the equals sign need an expression');
+    throw new Error('Both sides of the relation need an expression');
   }
   const lhs = new Parser(sides.lhs).parseAll();
   const rhs = new Parser(sides.rhs).parseAll();
+
+  if (relation.operator !== '=') {
+    if (relation.operator === '!=') {
+      throw new Error('Use <, <=, > or >= for an inequality; != is only a piecewise condition');
+    }
+    // Store the side that is negative inside the region, so the shader only ever shades F < 0.
+    const insideFirst = relation.operator === '<' || relation.operator === '<=';
+    const difference: AstNode = {
+      kind: 'binary',
+      operator: '-',
+      left: insideFirst ? lhs : rhs,
+      right: insideFirst ? rhs : lhs,
+    };
+    const parsed = cloneWithKind(difference, 'inequality');
+    return {
+      ...parsed,
+      text,
+      lhs,
+      rhs,
+      inequality: {
+        operator: relation.operator,
+        strict: relation.operator === '<' || relation.operator === '>',
+      },
+    };
+  }
+
   const leftNames = variablesIn(lhs);
   const rightNames = variablesIn(rhs);
-  const plotted = leftNames.includes('x') || leftNames.includes('y') || rightNames.includes('x') || rightNames.includes('y');
+  const plotted =
+    leftNames.includes('x') ||
+    leftNames.includes('y') ||
+    rightNames.includes('x') ||
+    rightNames.includes('y');
 
   if (!plotted && isBareName(lhs)) {
     const parsed = cloneWithKind(rhs, 'parameter');
@@ -519,9 +727,16 @@ export function isConstant(node: AstNode): boolean {
     case 'percent':
       return isConstant(node.operand);
     case 'binary':
+    case 'comparison':
+    case 'logical':
       return isConstant(node.left) && isConstant(node.right);
     case 'call':
       return node.args.every(isConstant);
+    case 'piecewise':
+      return (
+        node.branches.every((branch) => isConstant(branch.condition) && isConstant(branch.value)) &&
+        (!node.otherwise || isConstant(node.otherwise))
+      );
     default:
       return false;
   }
@@ -532,6 +747,32 @@ function factorial(value: number): number {
   let result = 1;
   for (let factor = 2; factor <= value; factor += 1) result *= factor;
   return result;
+}
+
+/** A comparison or logical condition as a boolean, for constant folding and piecewise tests. */
+function evaluateCondition(node: AstNode, angle: 'rad' | 'deg'): boolean {
+  if (node.kind === 'logical') {
+    return node.operator === 'and'
+      ? evaluateCondition(node.left, angle) && evaluateCondition(node.right, angle)
+      : evaluateCondition(node.left, angle) || evaluateCondition(node.right, angle);
+  }
+  if (node.kind !== 'comparison') return evaluateConstant(node, angle) !== 0;
+  const left = evaluateConstant(node.left, angle);
+  const right = evaluateConstant(node.right, angle);
+  switch (node.operator) {
+    case '<':
+      return left < right;
+    case '<=':
+      return left <= right;
+    case '>':
+      return left > right;
+    case '>=':
+      return left >= right;
+    case '=':
+      return left === right;
+    case '!=':
+      return left !== right;
+  }
 }
 
 /** Evaluate a constant tree in JavaScript. Used by folding and by parameter rows. */
@@ -564,6 +805,18 @@ export function evaluateConstant(node: AstNode, angle: 'rad' | 'deg' = 'rad'): n
           return Math.pow(left, right);
       }
       return Number.NaN;
+    }
+    case 'comparison':
+      return evaluateCondition(node, angle) ? 1 : 0;
+    case 'logical':
+      return evaluateCondition(node, angle) ? 1 : 0;
+    case 'piecewise': {
+      for (const branch of node.branches) {
+        if (evaluateCondition(branch.condition, angle)) {
+          return evaluateConstant(branch.value, angle);
+        }
+      }
+      return node.otherwise ? evaluateConstant(node.otherwise, angle) : Number.NaN;
     }
     case 'call': {
       const args = node.args.map((argument) => evaluateConstant(argument, angle));

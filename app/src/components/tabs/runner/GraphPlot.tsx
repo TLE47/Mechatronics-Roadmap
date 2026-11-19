@@ -232,7 +232,7 @@ export function GraphPlot({
         ref={canvasRef}
         data-testid="graph-canvas"
         role="img"
-        aria-label="Graph of the explicit expressions and the points in the list. Implicit curves are drawn on the transparent layer above it."
+        aria-label="Graph of the expressions and points in the list: explicit curves, implicit curves, and shaded inequality regions. The implicit curves and regions are drawn on the transparent layer above it."
         onPointerDown={pointerDown}
         onPointerMove={pointerMove}
         onPointerUp={pointerUp}

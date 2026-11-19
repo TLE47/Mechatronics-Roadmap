@@ -406,6 +406,51 @@ async function main() {
       undefined,
       { timeout: 5000 }
     );
+
+    // The divider is the list's own edge. Drag it left to prove the list gives way, then right to
+    // prove it takes the room back; the sheet must stay drawable at both widths. A narrow split pane
+    // may already be at the maximum list width, so the shrink-first order is the one that can always
+    // move; `hover()` puts the pointer on the divider and scrolls it into view before measuring.
+    const resizer = page.getByTestId('graph-list-resizer');
+    await resizer.hover();
+    const beforeResize = await page.getByTestId('graph-expression-list').boundingBox();
+    const resizeHandle = await resizer.boundingBox();
+    assert.ok(
+      beforeResize && resizeHandle,
+      'the graph must expose its expression list and resize handle'
+    );
+    await page.mouse.down();
+    await page.mouse.move(
+      resizeHandle.x + resizeHandle.width / 2 - 64,
+      resizeHandle.y + resizeHandle.height / 2,
+      { steps: 10 }
+    );
+    await page.mouse.up();
+    const narrowed = await page.getByTestId('graph-expression-list').boundingBox();
+    assert.ok(
+      narrowed && narrowed.width <= beforeResize.width - 40,
+      `dragging the divider left must narrow the expression panel: ${beforeResize.width} → ${narrowed?.width}`
+    );
+    await resizer.hover();
+    const narrowedHandle = await resizer.boundingBox();
+    await page.mouse.down();
+    await page.mouse.move(
+      narrowedHandle.x + narrowedHandle.width / 2 + 64,
+      narrowedHandle.y + narrowedHandle.height / 2,
+      { steps: 10 }
+    );
+    await page.mouse.up();
+    const widened = await page.getByTestId('graph-expression-list').boundingBox();
+    assert.ok(
+      widened && widened.width >= narrowed.width + 40,
+      `dragging the divider right must widen it again: ${narrowed.width} → ${widened?.width}`
+    );
+    assert.ok(
+      (await page.getByTestId('graph-canvas').evaluate((canvas) => canvas.clientWidth)) > 100,
+      'the sheet must keep a usable width after the list takes the room back'
+    );
+    ok('the graph’s expression panel resizes by dragging both ways, and the plot keeps its sheet');
+
     await page.getByTestId('graph-zoom-in').click();
     await page.getByTestId('graph-zoom-in').click();
     const zoomedView = await graph.getAttribute('data-view');
@@ -439,6 +484,23 @@ async function main() {
       'the expression built from the keypad must be one the graph can read'
     );
 
+    // The live line above the input is the same AST the renderer plots: a fraction has to arrive
+    // as a stacked fraction, not as `1/x` source. This is the graph's own typesetter, not the
+    // scientific face's.
+    await graphExpression.fill('y = 1/x');
+    const graphPreview = page.getByTestId('graph-typeset').first();
+    await graphPreview.locator('.mfrac').first().waitFor({ timeout: 5000 });
+    assert.equal(
+      await graphPreview.locator('.mfrac').count(),
+      1,
+      'a graph line must typeset its equation preview from the grapher AST'
+    );
+    assert.equal(
+      await page.getByTestId('graph-expression-error').count(),
+      0,
+      'a typeset graph equation must still be one the graph can read'
+    );
+
     // The second renderer is the browser's own: an implicit equation is not an explicit y of x, so
     // the row must classify as implicit and the transparent WebGL2 layer must exist above the paper.
     await page.getByTestId('graph-add-row').click();
@@ -468,6 +530,30 @@ async function main() {
       circleInk.lit < circleInk.width * circleInk.height * 0.5,
       'a curve is a line, not a filled sheet'
     );
+
+    // An inequality is the same implicit shader with its region flag on: the wash must cover the
+    // interior, not merely stroke the boundary. Remove it before the synthetic shader failure so
+    // the circle remains the one curve that has to survive that failure.
+    await page.getByTestId('graph-add-row').click();
+    await page.getByTestId('graph-expression-input').last().fill('x^2 + y^2 <= 9');
+    const inequalityRow = page.getByTestId('graph-expression-row').last();
+    await page.waitForFunction(
+      () =>
+        document.querySelectorAll('[data-testid="graph-expression-row"][data-kind="inequality"]').length === 1,
+      undefined,
+      { timeout: 5000 }
+    );
+    assert.equal(
+      await inequalityRow.getAttribute('data-kind'),
+      'inequality',
+      'an inequality must be classified as a region, not a curve'
+    );
+    const filledInk = await implicitInk(page, 5000);
+    assert.ok(
+      filledInk.available && filledInk.lit > circleInk.lit * 2,
+      `an inequality must shade its interior, not only stroke its boundary: ${circleInk.lit} -> ${filledInk.lit}`
+    );
+    await page.getByTestId('graph-remove-expression').last().click();
 
     // A shader that will not compile has to be a sentence on the sheet. The browser is asked to
     // reject the fragment shader and the next implicit line is the one that fails; the circle
@@ -565,6 +651,124 @@ async function main() {
       `the list must scroll once it fills the card: ${scroller.scroll} > ${scroller.client}`
     );
     ok('the expression list scrolls inside the card; rows past its cap do not grow or re-fit the sheet');
+
+    // ---- 2b.2 General settings is the only door back into the guide, and turning the guide off is
+    // a pause rather than a restart. Walk two steps, come back one, leave it on step two, then open
+    // it again from the same button and demand the same step. This is the resume promise a learner
+    // reads in the settings copy, exercised against real storage rather than component state.
+    await page.getByTestId('btn-general-settings').click();
+    await page.getByTestId('general-settings').waitFor({ state: 'visible', timeout: 5000 });
+    await page.getByTestId('btn-open-new-learner-guide').click();
+    await page.getByTestId('learner-guide').waitFor({ state: 'visible', timeout: 5000 });
+    await page.getByTestId('general-settings').waitFor({ state: 'detached', timeout: 5000 });
+    assert.match(
+      (await page.getByTestId('guide-progress').innerText()).trim(),
+      /^0?1 \/ \d+$/,
+      'a fresh guide must open on its first step'
+    );
+    const firstGuideTitle = (await page.getByTestId('guide-step-title').innerText()).trim();
+    await page.getByTestId('guide-next').click();
+    assert.match(
+      (await page.getByTestId('guide-progress').innerText()).trim(),
+      /^0?2 \/ \d+$/,
+      'Next must advance one step'
+    );
+    const secondGuideTitle = (await page.getByTestId('guide-step-title').innerText()).trim();
+    assert.notEqual(secondGuideTitle, firstGuideTitle, 'the second step must be its own page');
+    await page.getByTestId('guide-prev').click();
+    assert.match(
+      (await page.getByTestId('guide-progress').innerText()).trim(),
+      /^0?1 \/ \d+$/,
+      'Previous must go back one step'
+    );
+    assert.equal(
+      (await page.getByTestId('guide-step-title').innerText()).trim(),
+      firstGuideTitle,
+      'Previous must return to the page it came from'
+    );
+    await page.getByTestId('guide-next').click();
+    const pausedGuideTitle = (await page.getByTestId('guide-step-title').innerText()).trim();
+    await page.getByTestId('guide-turn-off').click();
+    await page.getByTestId('learner-guide').waitFor({ state: 'detached', timeout: 5000 });
+    await page.getByTestId('btn-general-settings').click();
+    await page.getByTestId('general-settings').waitFor({ state: 'visible', timeout: 5000 });
+    await page.getByTestId('btn-open-new-learner-guide').click();
+    await page.getByTestId('learner-guide').waitFor({ state: 'visible', timeout: 5000 });
+    assert.match(
+      (await page.getByTestId('guide-progress').innerText()).trim(),
+      /^0?2 \/ \d+$/,
+      'turning the guide off on step 2 must reopen on step 2'
+    );
+    assert.equal(
+      (await page.getByTestId('guide-step-title').innerText()).trim(),
+      pausedGuideTitle,
+      'the reopened guide must be the page it was left on'
+    );
+    await page.getByTestId('guide-close').click();
+    await page.getByTestId('learner-guide').waitFor({ state: 'detached', timeout: 5000 });
+    ok('General settings opens the guide, Next/Previous walk it, and turn-off resumes on the same step');
+
+    // ---- 2b.3 The guide's second mode is a tooltip that points at the real controls ----
+    // It is not a slideshow behind the dialog: the guide closes, the workbench is dimmed, and each
+    // Next moves the card to another control — including opening the tab the feature lives in.
+    await page.getByTestId('btn-general-settings').click();
+    await page.getByTestId('general-settings').waitFor({ state: 'visible', timeout: 5000 });
+    await page.getByTestId('btn-open-new-learner-guide').click();
+    await page.getByTestId('learner-guide').waitFor({ state: 'visible', timeout: 5000 });
+    await page.getByTestId('guide-mode-walkthrough').click();
+    await page.getByTestId('feature-walkthrough').waitFor({ state: 'visible', timeout: 5000 });
+    await page.getByTestId('learner-guide').waitFor({ state: 'detached', timeout: 5000 });
+    assert.equal(
+      await page.getByTestId('walkthrough-spotlight').count(),
+      1,
+      'the tooltip mode must spotlight a real control, not draw a card in a vacuum'
+    );
+    assert.match(
+      (await page.getByTestId('walkthrough-progress').innerText()).trim(),
+      /^0?1 \/ \d+ · /,
+      'the walkthrough starts from its first feature'
+    );
+    const firstFeature = (await page.getByTestId('walkthrough-title').innerText()).trim();
+    await page.getByTestId('walkthrough-next').click();
+    await page.waitForFunction(
+      (previous) =>
+        document.querySelector('[data-testid="walkthrough-title"]')?.textContent?.trim() !== previous,
+      firstFeature,
+      { timeout: 5000 }
+    );
+    const secondFeature = (await page.getByTestId('walkthrough-title').innerText()).trim();
+    assert.notEqual(secondFeature, firstFeature, 'Next must move to the next feature');
+    await page.getByTestId('walkthrough-prev').click();
+    await page.waitForFunction(
+      (expected) =>
+        document.querySelector('[data-testid="walkthrough-title"]')?.textContent?.trim() === expected,
+      firstFeature,
+      { timeout: 5000 }
+    );
+    ok('the tooltip walkthrough opens from the guide, spotlights a control, and steps back and forward');
+
+    // Ten forward steps reach the first runner feature. It must actually open the Python tab, not
+    // only describe it; the suite returns to the studio for the arrangement tests below.
+    for (let step = 0; step < 10; step += 1) {
+      await page.getByTestId('walkthrough-next').click();
+    }
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="tab-btn-tab-pyodide"]')?.getAttribute('aria-current') ===
+        'page',
+      undefined,
+      { timeout: 5000 }
+    );
+    assert.match(
+      (await page.getByTestId('walkthrough-progress').innerText()).trim(),
+      /^11 \/ \d+ · Python runner/,
+      'the walkthrough must reach the runner features in order'
+    );
+    await page.getByTestId('walkthrough-close').click();
+    await page.getByTestId('feature-walkthrough').waitFor({ state: 'detached', timeout: 5000 });
+    await page.getByTestId('tab-btn-tab-studio').click();
+    await page.getByTestId('studio').waitFor({ state: 'visible', timeout: 30000 });
+    ok('a walkthrough stop opens the tab it describes, and closing it leaves the workbench usable');
 
     await page.getByTestId('editor-tab-main').click();
     ok(
