@@ -401,6 +401,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onOpenPalette}
               data-testid="btn-open-palette"
+              aria-label="Search ⌘⇧F — terms, lesson text and course pages"
               aria-keyshortcuts="Meta+Shift+F Control+Shift+F"
               data-tip="Search — terms, lesson text and course pages (⌘⇧F)"
               className="btn"
@@ -466,7 +467,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={onToggleFocus}
                 data-testid="btn-focus-toggle"                aria-pressed={focus}
                 aria-keyshortcuts="Meta+. Control+."
-                aria-label="Focus"
+                aria-label="Focus ⌘."
                 data-tip={`Focus — ${focusLabel(focus).toLowerCase()} (⌘.)`}
               className="btn"
                 style={pressed(focus)}
@@ -493,7 +494,7 @@ export const Header: React.FC<HeaderProps> = ({
               }}
               data-testid="btn-compact-layout"
               aria-pressed={compactMode}
-              aria-label="Compact lesson layout"
+              aria-label="Compact ⌥5 — lesson layout"
               data-tip="Compact — the text and the editor keep the screen; everything else folds into one strip (⌥5)"
               className="btn"
               style={pressed(compactMode)}

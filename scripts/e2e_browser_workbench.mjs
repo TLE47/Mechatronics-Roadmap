@@ -4387,7 +4387,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         const predict = document.querySelector('[data-testid="btn-predict"]').getBoundingClientRect();
         return {
           gap: Math.round(Math.abs(run.top - predict.top)),
-          keys: [...document.querySelectorAll('[data-testid="layout-presets"] button > span')]
+          keys: [...document.querySelectorAll('[data-testid="layout-presets"] button > span, [data-testid="layout-presets"] button > kbd')]
             .filter((span) => getComputedStyle(span).display !== 'none')
             .map((span) => span.textContent.trim()),
         };

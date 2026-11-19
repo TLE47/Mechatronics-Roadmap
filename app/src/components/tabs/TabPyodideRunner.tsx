@@ -2808,19 +2808,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               panes={{ value: panes, onPanes: commitPanes }}
               gate={gate}
               selfDone={selfDone}
-              run={{
-                isRunning,
-                passStatus,
-                harnessResult,
-                asksForFinish: gateAsksForFinish,
-                traceLine: trace?.steps[Math.min(traceStep, trace.steps.length - 1)]?.line ?? null,
-                // The same parsed frame the traceback card reads, so the red line and the card can
-                // never name two different lines.
-                errorLine:
-                  parsedFailure?.frame
-                    ? { line: parsedFailure.frame.line, message: parsedFailure.summary }
-                    : null,
-              }}
+              run={{ isRunning, passStatus, harnessResult, asksForFinish: gateAsksForFinish, traceLine: trace?.steps[Math.min(traceStep, trace.steps.length - 1)]?.line ?? null, errorLine: parsedFailure?.frame ? { line: parsedFailure.frame.line, message: parsedFailure.summary } : null }}
               slots={{
                 toolbar: runnerToolbar,
                 robotPane: robotPaneFor(selectedId, execution.robot),

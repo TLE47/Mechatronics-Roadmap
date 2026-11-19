@@ -292,7 +292,7 @@ export function RunnerToolbar({
         data-sound="primary"
         data-tour="run-button"
         title="Run & Verify Output — ⌘↵ / Ctrl+↵ runs from anywhere on this screen"
-        className="btn btn-primary ml-1 px-3.5 py-2 text-[13px] font-bold"
+        className="btn btn-primary ml-1 h-10 px-3.5 py-2 text-[13px] font-bold"
       >
         {isRunning ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
@@ -321,7 +321,7 @@ export function RunnerToolbar({
             : 'Predict first: commit to what the code will print, then run it'
         }
         aria-label={`Predict${predictRecord ? (predictRecord.skipped ? ' (skipped)' : ' (answered)') : ''}: commit to what the code will print, then run it`}
-        className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+        className={`px-2.5 py-1.5 h-10 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
           predictPaneOpen ? 'text-amber border-amber/60' : 'text-body border-line'
         }`}
       >
