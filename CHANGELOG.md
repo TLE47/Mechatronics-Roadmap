@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.11.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.11.1`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,17 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-19] — The service worker stops serving yesterday's shell
+
+The worker's navigation path is network-first, but its `fetch` used the browser HTTP cache. GitHub
+Pages sends `index.html` with `max-age=600`, so a normal navigation inside that window could receive
+the previous document, which names the previous hashed entry; the cache-first asset handler then
+served that old bundle and the header kept saying 4.8.0. The shell fetch now uses `cache: 'no-store'`,
+install seeds the cache with `cache: 'reload'`, and the page registers with `updateViaCache: 'none'`
+and calls `registration.update()` even after isolation, reloading once when a new worker takes
+control. The cache names stay stable: the hashed bundle names are the version, and the shell is
+refreshed on every online load, so there is no per-release cache name to forget.
 
 ## [2026-11-19] — Sound is one press again
 

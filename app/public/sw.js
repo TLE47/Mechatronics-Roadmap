@@ -14,8 +14,9 @@
  * 2. **Offline.** The shell, the built assets and the lesson registry are cached on install and updated
  *    in the background, so a second visit starts without the network and a reload offline still opens
  *    the workbench and its lessons. Same-origin assets are cache-first with a background refresh, which
- *    is what makes a repeat visit instant; the shell itself is network-first, so a deploy is picked up
- *    as soon as it is reachable.
+ *    is what makes a repeat visit instant; the shell itself is network-first **with `cache: 'no-store'`**,
+ *    so a deploy is picked up on the first reload rather than waiting out GitHub Pages' ten-minute
+ *    `index.html` cache. The cached shell is only the offline fallback.
  *
  * 3. **The Python runtime.** Pyodide is fetched from a CDN by a worker, so the worker had to stop being
  *    a blob (a service worker controls only real URLs). `pythonWorker.js` is a module worker served from
@@ -26,6 +27,9 @@
  * because the same script has to be served byte-for-byte from `public/`.
  */
 
+// The cache names are deliberately stable: the hashed bundle names are the version, and the shell is
+// refreshed on every online navigation below. Rotating these names per release would only add a second
+// place to forget, not a second source of freshness.
 const VERSION = 'v1';
 const SHELL_CACHE = `mechalab-shell-${VERSION}`;
 const ASSET_CACHE = `mechalab-assets-${VERSION}`;
@@ -38,14 +42,26 @@ const OWN_CACHES = [SHELL_CACHE, ASSET_CACHE, PYODIDE_CACHE];
 const PYODIDE_CDN = 'cdn.jsdelivr.net';
 
 if (typeof window === 'undefined') {
+  /** Resolve a shell URL against the worker's own location, not the page's current path. */
+  const shellUrl = (url) => new URL(url, self.location.href).href;
+
   self.addEventListener('install', (event) => {
     event.waitUntil(
       (async () => {
         const cache = await caches.open(SHELL_CACHE);
         // A first visit that is already offline must not fail the install: whatever can be fetched is
-        // cached, and the missing entries are fetched on the next online load.
+        // cached, and the missing entries are fetched on the next online load. `cache: 'reload'` keeps
+        // the install from seeding the cache with the old `index.html` the HTTP cache is still holding.
         await Promise.all(
-          SHELL_URLS.map((url) => cache.add(url).catch(() => undefined))
+          SHELL_URLS.map(async (url) => {
+            try {
+              const request = new Request(shellUrl(url), { cache: 'reload' });
+              const response = await fetch(request);
+              if (response.ok) await cache.put(request, response);
+            } catch (error) {
+              // One missing shell URL is not a failed install; the next online load fills it in.
+            }
+          })
         );
         await self.skipWaiting();
       })()
@@ -87,18 +103,34 @@ if (typeof window === 'undefined') {
     });
   }
 
-  /** The shell: the network first (so a deploy is picked up), the cached document when it is not there. */
+  /**
+   * The shell: network first, the cached document only when the network is unavailable.
+   *
+   * `cache: 'no-store'` is the important part. The default fetch mode would let the browser answer the
+   * navigation from its HTTP cache; GitHub Pages sends `index.html` with `max-age=600`, so a normal
+   * reload after a deploy could still receive yesterday's HTML, which names yesterday's hashed entry.
+   * That is a cached shell, not a stale offline fallback, and it is exactly what makes the version look
+   * stuck. Bypassing the HTTP cache means the document and its hashed bundle move together on the first
+   * normal reload.
+   */
   async function shellFirst(request) {
     try {
-      const response = await fetch(request);
+      const response = await fetch(request, { cache: 'no-store' });
       if (response && response.ok) {
         const cache = await caches.open(SHELL_CACHE);
-        cache.put('./index.html', response.clone()).catch(() => undefined);
+        const index = response.clone();
+        const root = response.clone();
+        // Keep both keys current: a navigation can arrive as './' or './index.html', and the offline
+        // fallback below tries them in that order.
+        await Promise.all([
+          cache.put(shellUrl('./index.html'), index).catch(() => undefined),
+          cache.put(shellUrl('./'), root).catch(() => undefined),
+        ]);
       }
       return withIsolation(response);
     } catch (error) {
       const cache = await caches.open(SHELL_CACHE);
-      const cached = (await cache.match('./index.html')) ?? (await cache.match('./'));
+      const cached = (await cache.match(shellUrl('./index.html'))) ?? (await cache.match(shellUrl('./')));
       if (cached) return withIsolation(cached);
       throw error;
     }
@@ -217,24 +249,49 @@ if (typeof window === 'undefined') {
     event.respondWith(cacheFirst(request, ASSET_CACHE, event));
   });
 } else {
-  // ---- Page: register, then reload exactly once into the isolated document ----
+  // ---- Page: register or update, then reload once into the new worker's document ----
   (() => {
     // A host that sends the headers itself (`npm run dev`, `preview`) needs no worker, and a worker in
-    // front of the dev server would cache HMR modules. Production is the host that needs this.
-    if (window.crossOriginIsolated) return;
+    // front of the dev server would cache HMR modules. Production is the host that needs this. A page
+    // that is already isolated is the production worker's own response, so it still has to update the
+    // registration: returning the early here was how a released `sw.js` could stay unchanged forever.
     if (!window.isSecureContext || !('serviceWorker' in navigator)) return;
     const script = document.currentScript;
     const swUrl = script && script.src ? script.src : 'sw.js';
-    navigator.serviceWorker
-      .register(swUrl)
-      .then((registration) => {
-        if (registration.active && !navigator.serviceWorker.controller) {
-          // Already running from a previous visit; this document is not covered yet.
-          window.location.reload();
-          return;
-        }
-        navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
-      })
-      .catch((error) => console.error('[sw] registration failed', error));
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      // One reload per worker handoff. The guard also keeps a broken install from looping the page.
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+    const start = async () => {
+      let registration = null;
+      try {
+        registration = await navigator.serviceWorker.getRegistration();
+      } catch {
+        // A failed read is treated like no registration; the register call below is still safe.
+      }
+      if (
+        window.crossOriginIsolated &&
+        !registration &&
+        !navigator.serviceWorker.controller
+      ) {
+        // Dev and preview have the isolation pair from their server and no worker. Registering here
+        // would put the dev server behind a cache of HMR modules.
+        return;
+      }
+      try {
+        // `updateViaCache: 'none'` makes the browser bypass the HTTP cache for sw.js itself, so a
+        // deploy is not held back by the same ten-minute cache that used to hold back index.html.
+        registration = await navigator.serviceWorker.register(swUrl, {
+          updateViaCache: 'none',
+        });
+        await registration.update();
+      } catch (error) {
+        console.error('[sw] registration failed', error);
+      }
+    };
+    void start();
   })();
 }
