@@ -35,6 +35,8 @@ import {
   FEATURE_WALKTHROUGH,
   FEATURE_WALKTHROUGH_COUNT,
   FEATURE_WALKTHROUGH_STORAGE_KEY,
+  FEATURE_WALKTHROUGH_VERSION,
+  WALKTHROUGH_ACTIONS,
   completeWalkthroughStop,
   dismissWalkthroughState,
   initialWalkthroughState,
@@ -42,6 +44,7 @@ import {
   previousWalkthroughState,
   readWalkthroughState,
   resumeWalkthroughState,
+  walkthroughAction,
   walkthroughAnnouncement,
   walkthroughCheckedCount,
   writeWalkthroughState,
@@ -82,7 +85,13 @@ for (const text of appSources()) {
 }
 
 /** Test ids built from a map rather than written literally in the markup. */
-const DYNAMIC_TEST_IDS = [/^tab-btn-tab-/, /^btn-pass-/];
+const DYNAMIC_TEST_IDS = [
+  /^tab-btn-tab-/,
+  /^btn-pass-/,
+  /^layout-(study|read|write|debug)$/,
+  /^editor-tab-/,
+  /^calculator-mode-/,
+];
 const isKnownTestId = (id) =>
   APP_TEST_IDS.has(id) || DYNAMIC_TEST_IDS.some((pattern) => pattern.test(id));
 
@@ -324,6 +333,56 @@ check('a stop with no target still reads, and no anchor is empty', () => {
   }
 });
 
+check('every stop names one exact control that performs its task', () => {
+  assert.equal(
+    Object.keys(WALKTHROUGH_ACTIONS).length,
+    FEATURE_WALKTHROUGH_COUNT,
+    'the action list and the catalogue must have the same number of stops'
+  );
+  const signatures = new Set();
+  const broadPanel = /\b(runner-toolbar|editor-panes|editor-panel|results-column|lesson-reader|calculator-pane|graphing-pane)\b/;
+  for (const stop of FEATURE_WALKTHROUGH) {
+    const action = walkthroughAction(stop.id);
+    assert.ok(action, `"${stop.id}" has no action; Do it could only fake a completion`);
+    assert.ok(action.label.trim().length > 12, `"${stop.id}" needs a real task sentence`);
+    assert.match(action.label, /\.$/, `"${stop.id}" task should be a sentence`);
+    assert.ok(action.selectors.length > 0, `"${stop.id}" needs a real control`);
+    const signature = action.selectors.join(' | ');
+    assert.ok(!signatures.has(signature), `"${stop.id}" reuses another stop's action`);
+    signatures.add(signature);
+    const assertControls = (selectors, role) => {
+      for (const selector of selectors) {
+        assert.ok(selector.trim().startsWith('['), `"${stop.id}" ${role} should be a selector`);
+        assert.ok(!broadPanel.test(selector), `"${stop.id}" must not score from a whole panel: ${selector}`);
+        for (const match of selector.matchAll(/data-testid="([^"]+)"/g)) {
+          assert.ok(
+            isKnownTestId(match[1]),
+            `"${stop.id}" asks for "${match[1]}", which no source file declares`
+          );
+        }
+      }
+    };
+    assertControls(action.selectors, 'action');
+    if (action.reveal) {
+      assert.ok(action.reveal.length > 0, `"${stop.id}" reveal needs a control`);
+      assert.notDeepEqual(action.reveal, action.selectors, `"${stop.id}" reveal cannot be the action`);
+      assertControls(action.reveal, 'reveal');
+    }
+    if (action.opensTab) {
+      assert.ok(stop.tab, `"${stop.id}" can only open a tab when it names one`);
+      assert.ok(
+        action.selectors.includes(`[data-testid="tab-btn-${stop.tab}"]`),
+        `"${stop.id}" opens a tab, so its action must be that tab`
+      );
+    }
+  }
+});
+
+check('the feature copy does not pin a release number that will age', () => {
+  const copy = FEATURE_WALKTHROUGH.flatMap((stop) => stop.features).join('\n');
+  assert.doesNotMatch(copy, /\b\d+\.\d+\.\d+ today\b/);
+});
+
 check('stopping midway resumes the same feature; finishing starts over', () => {
   let state = resumeWalkthroughState(initialWalkthroughState(0), 0);
   state = nextWalkthroughState(state, 1);
@@ -366,6 +425,21 @@ check('the checklist records each stop once and remembers the ticks', () => {
   writeWalkthroughState(state, store);
   assert.deepEqual(readWalkthroughState(store).completed, ['brand', 'settings']);
   assert.equal(walkthroughCheckedCount(readWalkthroughState(store)), 2);
+});
+
+check('a checklist saved under the old action rules is not trusted', () => {
+  const store = memoryStore({
+    [FEATURE_WALKTHROUGH_STORAGE_KEY]: JSON.stringify({
+      ...initialWalkthroughState(0),
+      version: 2,
+      index: 5,
+      completed: ['brand', 'settings'],
+    }),
+  });
+  const loaded = readWalkthroughState(store);
+  assert.equal(loaded.version, FEATURE_WALKTHROUGH_VERSION);
+  assert.equal(loaded.index, 5, 'the learner still resumes where they were');
+  assert.deepEqual(loaded.completed, [], 'ticks earned by the old free-pass card are not carried over');
 });
 
 check('the walkthrough state round-trips and survives a broken store', () => {

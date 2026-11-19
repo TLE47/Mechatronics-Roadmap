@@ -251,6 +251,7 @@ export const TabModels: React.FC<TabModelsProps> = ({ onLoadPreset, highlightedI
           </h2>
           <div className="flex flex-wrap gap-2">
             <button
+              data-testid="models-closed-loop"
               onClick={() => triggerSTOFault('RUN')}
               className="bg-emerald/20 hover:bg-emerald/30 text-emerald border border-emerald px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
             >

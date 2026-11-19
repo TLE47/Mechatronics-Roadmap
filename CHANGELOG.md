@@ -18,14 +18,18 @@ flowchart LR
 
 ## [2026-11-19] — The walkthrough becomes a checklist, and the editor explains a miss where it happened
 
-The tooltip walkthrough is now a set of 36 missions rather than a slideshow. Each stop leaves the
-spotlighted control live: using it — or the card's **Do it** route for a learner on the keyboard —
-ticks the one-item checklist, plays the workbench's pass phrase, adds 100 XP and unlocks Next. The
-pips across the top keep every checked stop green, the position and the checked ids share the saved
-tour state, and Next stays disabled (with a quiet shake and a low tick) until the current mission is
-actually checked. A finished tour starts again with a fresh checklist; turning it off midway resumes
-with the ticks already earned. The dimming is four panels around the spotlight, not one sheet over
-it, so the real control can take the click.
+The tooltip walkthrough is now a set of 36 missions rather than a slideshow, and every mission names
+one exact control. Using that control — or pressing the card's **Do it** button, which presses the
+same control rather than ticking the box itself — checks the one-item checklist, plays the
+workbench's pass phrase, adds 100 XP and unlocks Next. A panel, a toolbar or a neighbouring tab
+cannot check a stop by association; Next stays disabled (with a quiet shake and a low tick) until
+the current mission is actually done. The pips across the top keep every checked stop green, the
+position and the checked ids share the saved tour state, and a finished tour starts again with a
+fresh checklist; turning it off midway resumes with the ticks already earned. Ticks saved by the
+earlier free-pass card are retired by the state version, while the learner keeps their place. The
+dimming is four panels around the spotlight, not one sheet over it, so the real control can take
+the click, and the card follows the wordmark and Home onto the whole-page views instead of
+disappearing with the workbench underneath it.
 
 The `cm-mechalab-tip` hover cards and call signatures are quieter while coding, and the Python
 editor's header now has its own **Editor** settings panel. Its one switch removes hover cards, call
@@ -41,8 +45,10 @@ reads. The full card is still there; this is the part a learner sees without lea
 Keycaps are physical objects now: a raised cap, a bold 12 px face, and the same rule for every
 printed shortcut. Run, Stop, the four layout presets, Search, Focus, Compact, pane Undo/Redo and the
 sheet all print their keys at a readable size, with an inverted cap on accent-filled buttons for
-contrast. `npm run test:guide` covers the checklist state, and the studio browser suite now proves
-that Next waits for a tick and that checking a stop unlocks it. No dependency was added.
+contrast. `npm run test:guide` covers the checklist state and the exact action assigned to every
+stop, and the studio browser suite proves that a different real control cannot check a stop, that
+**Do it** performs the named action, and that an unchecked stop keeps Next locked. No dependency
+was added.
 
 ## [2026-11-19] — The service worker stops serving yesterday's shell
 

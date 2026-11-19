@@ -204,6 +204,7 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
           <h2 className="text-sm font-bold text-accent">3D CAD & 48V/30A PCB Thermal Controls</h2>
           <div className="flex flex-wrap gap-2">
             <button
+              data-testid="cadpcb-part-flexure"
               onClick={() => setActiveCadPart('flexure')}
               aria-pressed={activeCadPart === 'flexure'}
               className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${activeCadPart === 'flexure' ? 'bg-accent/25 border border-accent text-accent' : 'bg-raise border border-line text-muted'}`}

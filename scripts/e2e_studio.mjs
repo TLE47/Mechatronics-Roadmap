@@ -34,6 +34,11 @@ import { getEditorCode, setEditorCode, waitForEditor } from './editor-code.mjs';
 import { seedTourSeen } from './tour_seed.mjs';
 import { clearBulk } from './bulk_store_page.mjs';
 import { fromUtf8, readZip } from '../app/src/backupZip.ts';
+import {
+  FEATURE_WALKTHROUGH,
+  FEATURE_WALKTHROUGH_STORAGE_KEY,
+  FEATURE_WALKTHROUGH_VERSION,
+} from '../app/src/featureWalkthrough.ts';
 
 const STUDIO_EDITOR = 'editor-studio';
 const PHONE = { width: 390, height: 844 };
@@ -733,15 +738,26 @@ async function main() {
       'the walkthrough starts from its first feature'
     );
     const firstFeature = (await page.getByTestId('walkthrough-title').innerText()).trim();
-    // A stop is a task now: the checklist must be ticked (by the spotlit control or the card's
-    // Do it route) before Next unlocks. The suite uses the card route so it does not navigate the
-    // background page while it is measuring the card.
+    // A stop is a task now: only its exact control may tick it. Pressing a different real header
+    // control is an action, but not this mission's action, so the box must stay empty.
     assert.equal(
       await page.getByTestId('walkthrough-next').isDisabled(),
       true,
       'Next must wait for the checklist'
     );
+    await page.evaluate(() => {
+      document.querySelector('[data-testid="btn-theme-toggle"]')?.click();
+    });
+    await page.waitForTimeout(100);
+    assert.equal(
+      await page.getByTestId('walkthrough-checklist').getAttribute('data-done'),
+      'false',
+      'a different control must not check the stop'
+    );
+    // Do it is a shortcut for the same gesture, not a score button. The wordmark must really open
+    // the introduction, and only then may the checklist tick.
     await page.getByTestId('walkthrough-do-it').click();
+    await page.getByTestId('intro-page').waitFor({ state: 'visible', timeout: 10000 });
     await page.waitForFunction(
       () =>
         document.querySelector('[data-testid="walkthrough-checklist"]')?.getAttribute('data-done') ===
@@ -752,8 +768,12 @@ async function main() {
     assert.equal(
       await page.getByTestId('walkthrough-next').isEnabled(),
       true,
-      'checking the stop off must unlock Next'
+      'the real action must unlock Next'
     );
+    ok('only the named control checks a stop; Do it performs that control’s real action');
+
+    // The next stop is a new, unchecked mission: Next must move the card, and the card must not be
+    // able to move again until that second action is done. Previous returns to the earned tick.
     await page.getByTestId('walkthrough-next').click();
     await page.waitForFunction(
       (previous) =>
@@ -761,8 +781,11 @@ async function main() {
       firstFeature,
       { timeout: 5000 }
     );
-    const secondFeature = (await page.getByTestId('walkthrough-title').innerText()).trim();
-    assert.notEqual(secondFeature, firstFeature, 'Next must move to the next feature');
+    assert.equal(
+      await page.getByTestId('walkthrough-next').isDisabled(),
+      true,
+      'an unchecked stop must not be skipped'
+    );
     await page.getByTestId('walkthrough-prev').click();
     await page.waitForFunction(
       (expected) =>
@@ -770,15 +793,40 @@ async function main() {
       firstFeature,
       { timeout: 5000 }
     );
-    ok('the tooltip walkthrough opens from the guide, spotlights a control, and steps back and forward');
+    ok('Next/Previous move the card, and a fresh stop keeps Next locked until its own action');
 
-    // Ten forward steps reach the first runner feature. It must actually open the Python tab, not
-    // only describe it; the suite returns to the studio for the arrangement tests below.
-    for (let step = 0; step < 10; step += 1) {
-      const doIt = page.getByTestId('walkthrough-do-it');
-      if (await doIt.isEnabled()) await doIt.click();
-      await page.getByTestId('walkthrough-next').click();
-    }
+    // The first ten stops open settings, reset, account and search dialogs. Rather than leave four
+    // overlays stacked to reach the runner, keep the one tick the browser just earned and resume the
+    // stored tour at the first Python feature. The walkthrough itself still owns the jump: this is
+    // the same saved state a learner returns to, not a click route through the card.
+    await page.getByTestId('walkthrough-close').click();
+    await page.getByTestId('feature-walkthrough').waitFor({ state: 'detached', timeout: 5000 });
+    await page.evaluate(
+      ({ key, version, completed, index }) => {
+        const raw = JSON.parse(localStorage.getItem(key) ?? '{}');
+        localStorage.setItem(
+          key,
+          JSON.stringify({ ...raw, version, status: 'active', index, completed, updatedAt: Date.now() })
+        );
+        // The lesson-list stop's action is the chooser's fold button, which the Study preset owns.
+        localStorage.setItem('mechalab_workspace_layout_v1', 'study');
+      },
+      {
+        key: FEATURE_WALKTHROUGH_STORAGE_KEY,
+        version: FEATURE_WALKTHROUGH_VERSION,
+        completed: FEATURE_WALKTHROUGH.slice(0, 10).map((stop) => stop.id),
+        index: 10,
+      }
+    );
+    await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });
+    await page.getByTestId('home-dashboard').waitFor({ timeout: 30000 });
+    await page.getByTestId('btn-general-settings').click();
+    await page.getByTestId('general-settings').waitFor({ state: 'visible', timeout: 5000 });
+    await page.getByTestId('btn-open-new-learner-guide').click();
+    await page.getByTestId('learner-guide').waitFor({ state: 'visible', timeout: 5000 });
+    await page.getByTestId('guide-mode-walkthrough').click();
+    await page.getByTestId('feature-walkthrough').waitFor({ state: 'visible', timeout: 5000 });
+    await page.getByTestId('walkthrough-spotlight').waitFor({ state: 'visible', timeout: 5000 });
     await page.waitForFunction(
       () =>
         document.querySelector('[data-testid="tab-btn-tab-pyodide"]')?.getAttribute('aria-current') ===
@@ -789,7 +837,25 @@ async function main() {
     assert.match(
       (await page.getByTestId('walkthrough-progress').innerText()).trim(),
       /^11 \/ \d+ · Python runner/,
-      'the walkthrough must reach the runner features in order'
+      'the stored tour must resume at the first runner feature'
+    );
+    // The runner's own main.py tab is a real control, but it is not this stop's action.
+    await page.evaluate(() => {
+      document.querySelector('[data-testid="editor-tab-main"]')?.click();
+    });
+    await page.waitForTimeout(100);
+    assert.equal(
+      await page.getByTestId('walkthrough-checklist').getAttribute('data-done'),
+      'false',
+      'a neighbouring editor tab must not check the lesson-list stop'
+    );
+    await page.getByTestId('walkthrough-do-it').click();
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="walkthrough-checklist"]')?.getAttribute('data-done') ===
+        'true',
+      undefined,
+      { timeout: 2000 }
     );
     await page.getByTestId('walkthrough-close').click();
     await page.getByTestId('feature-walkthrough').waitFor({ state: 'detached', timeout: 5000 });

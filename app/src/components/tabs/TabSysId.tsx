@@ -198,6 +198,7 @@ export const TabSysId: React.FC<TabSysIdProps> = ({ onLoadPreset, highlightedId,
             </div>
             <button
               id="btn-sysmode-toggle"
+              data-testid="sysid-phase-mode"
               onClick={togglePhaseMode}
               className="w-full bg-accent/20 hover:bg-accent/30 text-accent border border-accent px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
             >

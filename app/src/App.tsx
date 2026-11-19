@@ -1933,6 +1933,31 @@ export const App: React.FC = () => {
         {paletteOverlay}
         {reviewOverlay}
         {accountPanel}
+        {/* The guide's door is in General settings, which every page shares. The guide itself must
+            therefore live above the whole-page branches too, or pressing that door on Home would
+            set a flag no branch draws. */}
+        {isLearnerGuideOpen && (
+          <React.Suspense fallback={null}>
+            <LearnerGuideLazy
+              onClose={() => setIsLearnerGuideOpen(false)}
+              onNavigate={openTabFromHome}
+              onWalkthrough={() => {
+                setIsLearnerGuideOpen(false);
+                setIsFeatureWalkthroughOpen(true);
+              }}
+            />
+          </React.Suspense>
+        )}
+        {/* The walkthrough is a guide across pages, not a workbench drawer: a stop may open Home
+            or the introduction, so the card has to survive the whole-page branch it lands in. */}
+        {isFeatureWalkthroughOpen && (
+          <React.Suspense fallback={null}>
+            <FeatureWalkthroughLazy
+              onClose={() => setIsFeatureWalkthroughOpen(false)}
+              onNavigate={openTabFromHome}
+            />
+          </React.Suspense>
+        )}
       </div>
     );
   }

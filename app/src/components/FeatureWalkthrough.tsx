@@ -18,6 +18,7 @@ import {
   previousWalkthroughState,
   readWalkthroughState,
   resumeWalkthroughState,
+  walkthroughAction,
   walkthroughAnnouncement,
   walkthroughCheckedCount,
   writeWalkthroughState,
@@ -56,10 +57,10 @@ function findVisible(anchors: readonly string[]): HTMLElement | null {
   return null;
 }
 
-/** Whether a click landed inside any of the stop's anchors, not only the first visible one. */
-function clickedAnchor(clicked: EventTarget | null, anchors: readonly string[]): boolean {
+/** Whether a click landed inside one of the exact controls the stop asks the learner to use. */
+function clickedAction(clicked: EventTarget | null, selectors: readonly string[]): boolean {
   if (!(clicked instanceof Node)) return false;
-  for (const selector of anchors) {
+  for (const selector of selectors) {
     let nodes: NodeListOf<HTMLElement>;
     try {
       nodes = document.querySelectorAll<HTMLElement>(selector);
@@ -162,7 +163,7 @@ export function FeatureWalkthrough({
   );
   const [target, setTarget] = useState<TargetRect | null>(null);
   const [justChecked, setJustChecked] = useState(false);
-  const [nudge, setNudge] = useState(false);
+  const [nudge, setNudge] = useState<'check' | 'missing' | null>(null);
   const [viewport, setViewport] = useState(() => ({
     width: typeof window === 'undefined' ? 1280 : window.innerWidth,
     height: typeof window === 'undefined' ? 800 : window.innerHeight,
@@ -174,6 +175,7 @@ export function FeatureWalkthrough({
   stateRef.current = state;
   const celebrateTimer = useRef<number | null>(null);
   const nudgeTimer = useRef<number | null>(null);
+  const revealTimer = useRef<number | null>(null);
 
   const stop = FEATURE_WALKTHROUGH[state.index] ?? FEATURE_WALKTHROUGH[0]!;
   const stopRef = useRef(stop);
@@ -183,6 +185,7 @@ export function FeatureWalkthrough({
   const checkedCount = walkthroughCheckedCount(state);
   const isLast = state.index === FEATURE_WALKTHROUGH_COUNT - 1;
   const score = String(checkedCount * 100).padStart(4, '0');
+  const action = walkthroughAction(stop.id);
 
   const commit = (next: WalkthroughState) => {
     writeWalkthroughState(next);
@@ -216,16 +219,21 @@ export function FeatureWalkthrough({
   const completeRef = useRef(completeCurrent);
   completeRef.current = completeCurrent;
 
+  /** A short shake for a missing action, or for Next pressed before the box is ticked. */
+  const flashNudge = (kind: 'check' | 'missing') => {
+    setNudge(kind);
+    playUi('close');
+    if (nudgeTimer.current !== null) window.clearTimeout(nudgeTimer.current);
+    nudgeTimer.current = window.setTimeout(() => {
+      nudgeTimer.current = null;
+      setNudge(null);
+    }, 900);
+  };
+
   const advance = () => {
     const current = stateRef.current;
     if (!current.completed.includes(stopRef.current.id)) {
-      setNudge(true);
-      playUi('close');
-      if (nudgeTimer.current !== null) window.clearTimeout(nudgeTimer.current);
-      nudgeTimer.current = window.setTimeout(() => {
-        nudgeTimer.current = null;
-        setNudge(false);
-      }, 900);
+      flashNudge('check');
       return;
     }
     const next = nextWalkthroughState(current);
@@ -247,13 +255,40 @@ export function FeatureWalkthrough({
   };
 
   /**
-   * The keyboard route through the checklist. The pointer route is the highlighted control itself;
-   * this button exists for a target that is a panel rather than a button, and for a learner who is
-   * reading the card with the keyboard. It never activates the background control on its own — a
-   * tour must not press a navigation link for somebody who only asked to tick the box.
+   * Do it is a shortcut for the same gesture, not a score button: it presses the stop's exact
+   * control. If that control is missing or disabled, the box stays open and the card says why,
+   * because a tutorial that ticks itself teaches nothing.
    */
   const tryTarget = () => {
-    completeRef.current();
+    const currentAction = walkthroughAction(stopRef.current.id);
+    if (!currentAction) {
+      flashNudge('missing');
+      return;
+    }
+    const node = findVisible(currentAction.selectors);
+    if (node) {
+      if (node.matches(':disabled, [aria-disabled="true"]')) flashNudge('missing');
+      else node.click();
+      return;
+    }
+    // Share and Pair live inside More. Do it opens the disclosure first, then presses the exact
+    // action once React has drawn it; a click on More alone still does not score.
+    const reveal = currentAction.reveal ? findVisible(currentAction.reveal) : null;
+    if (!reveal) {
+      flashNudge('missing');
+      return;
+    }
+    reveal.click();
+    if (revealTimer.current !== null) window.clearTimeout(revealTimer.current);
+    revealTimer.current = window.setTimeout(() => {
+      revealTimer.current = null;
+      const target = findVisible(currentAction.selectors);
+      if (!target || target.matches(':disabled, [aria-disabled="true"]')) {
+        flashNudge('missing');
+        return;
+      }
+      target.click();
+    }, 80);
   };
 
   // The page behind the tooltip is a backdrop with a hole in it. Locking the scroll keeps the
@@ -270,6 +305,7 @@ export function FeatureWalkthrough({
     () => () => {
       if (celebrateTimer.current !== null) window.clearTimeout(celebrateTimer.current);
       if (nudgeTimer.current !== null) window.clearTimeout(nudgeTimer.current);
+      if (revealTimer.current !== null) window.clearTimeout(revealTimer.current);
     },
     []
   );
@@ -286,7 +322,9 @@ export function FeatureWalkthrough({
   // for. A lazy tab can take a moment to arrive, so the search is bounded and retried; a target that
   // never appears leaves the card centred, with the copy still readable.
   useEffect(() => {
-    if (stop.tab) navigateRef.current(stop.tab);
+    // A stop whose action is the tab itself must leave the learner that tab to open; anything else
+    // navigates first so the control it describes is already on screen.
+    if (stop.tab && !walkthroughAction(stop.id)?.opensTab) navigateRef.current(stop.tab);
     let cancelled = false;
     let tries = 0;
     let timer = 0;
@@ -326,23 +364,24 @@ export function FeatureWalkthrough({
     };
   }, [state.index, stop]);
 
-  // The real control is the checklist box. A click inside the highlighted element checks the stop,
-  // whether it came from the pointer or from `tryTarget` activating the element for the keyboard.
+  // The real control is the checklist box. Only a click on the exact action control checks the
+  // stop; a click on the surrounding panel or another control does not.
   useEffect(() => {
-    if (!target) return;
+    const currentAction = walkthroughAction(stop.id);
+    if (!currentAction) return;
     const onClick = (event: MouseEvent) => {
-      if (!clickedAnchor(event.target, stopRef.current.anchors)) return;
+      if (!clickedAction(event.target, currentAction.selectors)) return;
       completeRef.current();
     };
     document.addEventListener('click', onClick, true);
     return () => document.removeEventListener('click', onClick, true);
-  }, [state.index, target]);
+  }, [state.index, stop.id]);
 
   // Focus moves with the card, never into the page behind it. A new mission also clears the
   // celebration and the nudge from the one before it.
   useEffect(() => {
     setJustChecked(false);
-    setNudge(false);
+    setNudge(null);
     cardRef.current?.focus({ preventScroll: true });
   }, [state.index]);
 
@@ -568,6 +607,7 @@ export function FeatureWalkthrough({
           <div
             data-testid="walkthrough-checklist"
             data-done={isChecked ? 'true' : 'false'}
+            data-action={action?.label ?? ''}
             className={`mt-3 rounded-xl border px-2.5 py-2 transition-colors ${
               isChecked
                 ? 'border-emerald/45 bg-emerald/10'
@@ -595,10 +635,10 @@ export function FeatureWalkthrough({
                   <span className="text-emerald">Checked off — nice work.</span>
                 ) : (
                   <>
-                    Use the highlighted control.
+                    {action?.label ?? 'Use the highlighted control.'}
                     <span className="mt-0.5 block text-[11px] font-normal leading-snug text-muted">
-                      Click it, or press <strong className="text-body">Do it</strong>. Next unlocks
-                      when the box is ticked.
+                      Click that control yourself, or press <strong className="text-body">Do it</strong>{' '}
+                      to press it for you. Next unlocks when the box is ticked.
                     </span>
                   </>
                 )}
@@ -607,6 +647,7 @@ export function FeatureWalkthrough({
                 type="button"
                 onClick={tryTarget}
                 disabled={isChecked}
+                title={action?.label ?? 'No action is recorded for this stop'}
                 data-testid="walkthrough-do-it"
                 className={`inline-flex min-h-8 shrink-0 items-center gap-1 rounded-lg border px-2 font-mono text-[11px] font-bold transition-colors ${
                   isChecked
@@ -624,7 +665,9 @@ export function FeatureWalkthrough({
             </div>
             {nudge && !isChecked && (
               <p className="mt-1 font-mono text-[10.5px] text-rose" role="status">
-                Check this stop off before moving on.
+                {nudge === 'missing'
+                  ? `${action?.label ?? 'This stop’s control'} is not on screen. Open its panel first.`
+                  : 'Check this stop off before moving on.'}
               </p>
             )}
           </div>

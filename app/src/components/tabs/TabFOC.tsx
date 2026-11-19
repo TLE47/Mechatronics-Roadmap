@@ -266,6 +266,7 @@ export const TabFOC: React.FC<TabFOCProps> = ({ onLoadPreset, highlightedId, pre
             </div>
             <button
               id="btn-dec-toggle"
+              data-testid="foc-decoupling"
               onClick={toggleDecoupling}
               className="w-full bg-accent/20 hover:bg-accent/30 text-accent border border-accent px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
             >
