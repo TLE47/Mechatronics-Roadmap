@@ -118,7 +118,7 @@ export function GraphExpressionList({
   };
 
   return (
-    <div className="flex w-full shrink-0 flex-col border-b border-line-soft sm:w-[19rem] sm:border-b-0 sm:border-r">
+    <div className="flex w-full shrink-0 flex-col border-b border-line-soft sm:w-[var(--graph-list-width,19rem)] sm:border-b-0">
       <div className="flex items-center justify-between gap-2 px-3 py-2">
         <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
           Expressions
@@ -257,7 +257,11 @@ export function GraphExpressionList({
                             removeRow(row.id);
                           }
                         }}
-                        placeholder={index === 0 ? 'y = sin(x), or x^2 + y^2 = 9' : 'y = …'}
+                        placeholder={
+                          index === 0
+                            ? 'y = sin(x), x^2 + y^2 <= 9, or {x < 0: -x, x >= 0: x}'
+                            : 'y = …'
+                        }
                         autoComplete="off"
                         spellCheck={false}
                         className={`w-full min-w-0 bg-transparent font-mono outline-none placeholder:text-faint/60 ${

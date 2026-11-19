@@ -34,7 +34,7 @@ export function AudioPlayerWidget({
 }: AudioPlayerWidgetProps) {
   const tid = (base: string) => (testIdSuffix ? `${base}-${testIdSuffix}` : base);
   return (
-    <div ref={wrapRef} data-testid={tid(pill ? 'sound-control-pill' : 'sound-control')} className="relative flex items-center">
+    <div ref={wrapRef} data-testid={tid(pill ? 'sound-control-pill' : 'sound-control')} className="relative flex shrink-0 items-center">
       <button
         type="button"
         onClick={onToggle}

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** Search defaults to lessons, and the action area carries no Sound control (`scripts/e2e_mission_checks.mjs`). */
+/** Search defaults to lessons, and the action area carries the one-press Sound control (`scripts/e2e_mission_checks.mjs`). */
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright-core';
 import { resolveChromiumExecutable } from './e2e_browser_workbench.mjs';
@@ -20,11 +20,24 @@ try {
   await page.goto(baseUrl, { waitUntil: 'load' });
   await page.getByTestId('btn-theme-toggle').waitFor({ timeout: 30000 });
 
-  // 1. No sound control anywhere in the header action trays.
+  // 1. Exactly one one-press sound switch in the header's Appearance and sound tray, and no
+  //    second settings door: the full controls are the General settings gear beside it.
   const soundInTrays = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('.action-tray [data-testid*="sound"]')).map((n) => n.getAttribute('data-testid'))
+    Array.from(document.querySelectorAll('.action-tray button[data-testid*="sound"]')).map((n) =>
+      n.getAttribute('data-testid')
+    )
   );
-  if (soundInTrays.length) failures.push(`sound controls still in the action trays: ${soundInTrays.join(', ')}`);
+  if (soundInTrays.length !== 1 || soundInTrays[0] !== 'btn-sound-toggle') {
+    failures.push(`expected the tray's single sound switch, found: ${soundInTrays.join(', ') || 'nothing'}`);
+  } else {
+    const soundButton = page.getByTestId('btn-sound-toggle');
+    const soundBefore = await soundButton.getAttribute('aria-pressed');
+    await soundButton.click();
+    const soundAfter = await soundButton.getAttribute('aria-pressed');
+    if (soundBefore === soundAfter) failures.push(`the tray sound switch did not toggle (${soundBefore})`);
+    await soundButton.click(); // Return to muted so the settings check below starts from rest.
+    console.log(`  ok action tray sound switch: ${soundBefore}→${soundAfter}`);
+  }
 
   // 2. The same settings are reachable and live in General settings.
   await page.getByTestId('btn-general-settings').click();
@@ -65,7 +78,7 @@ try {
   const options = await page.evaluate(() => Array.from(document.querySelectorAll('[id^="palette-option-"]')).map((n) => n.textContent.trim()));
   if (options.length < 10) failures.push(`a fresh search listed ${options.length} rows, not the lessons`);
   if (options.length && !options.some((text) => /P\.\d|M\.\d|X\.\d|lesson/i.test(text))) failures.push(`fresh search rows are not lessons: ${options.slice(0, 4).join(' | ')}`);
-  console.log(`  ok action trays: no sound control; General settings toggled ${before}→${after}`);
+  console.log(`  ok General settings toggled ${before}→${after}`);
   console.log(`  ok fresh search: mode=${mode}, ${options.length} rows, first="${options[0] ?? ''}"`);
 } catch (error) {
   console.error(error.message);

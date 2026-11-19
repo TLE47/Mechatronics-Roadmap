@@ -11,6 +11,7 @@ import {
 import { ResponsiveOverlay } from './ui/ResponsiveOverlay';
 import { MathView } from './MathView';
 import { TYPESET_SHOWCASE, typesetExpression } from '../calculatorTypeset';
+import { FEATURE_WALKTHROUGH_COUNT } from '../featureWalkthrough';
 import {
   GUIDE_STEP_COUNT,
   LEARNER_GUIDE,
@@ -464,9 +465,9 @@ const StartVisual: React.FC = () => (
   <GuideFrame visual="start">
     <div className="space-y-1.5">
       {[
-        ['01', 'Start Here', 'setup + first run'],
-        ['02', 'P.1', 'the learning loop'],
-        ['03', 'P.2', 'the next idea'],
+        ['01', 'Start Here', 'P.1: first program'],
+        ['02', 'P.2', 'the next idea'],
+        ['03', 'Placement', 'only if you know it'],
       ].map(([number, title, detail]) => (
         <div
           key={number}
@@ -537,7 +538,8 @@ const GuideVisual: React.FC<{ id: GuideVisualId }> = ({ id }) => {
 export const LearnerGuide: React.FC<{
   onClose: () => void;
   onNavigate: (tab: TabId) => void;
-}> = ({ onClose, onNavigate }) => {
+  onWalkthrough: () => void;
+}> = ({ onClose, onNavigate, onWalkthrough }) => {
   const [state, setState] = useState<GuideState>(() => resumeGuideState(readGuideState()));
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const bodyRef = useRef<HTMLDivElement | null>(null);
@@ -576,6 +578,13 @@ export const LearnerGuide: React.FC<{
     if (!step.action) return;
     commit(dismissGuideState(state));
     onNavigate(step.action.tab);
+    onClose();
+  };
+
+  /** The second mode: the same walk, but each stop points at the control it describes. */
+  const startWalkthrough = () => {
+    commit(dismissGuideState(state));
+    onWalkthrough();
     onClose();
   };
 
@@ -650,9 +659,31 @@ export const LearnerGuide: React.FC<{
               <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent">
                 New learner guide
               </p>
-              <p className="truncate text-[12px] text-muted">
-                {GUIDE_STEP_COUNT} steps through the whole workbench
-              </p>
+              <div
+                role="tablist"
+                aria-label="Guide mode"
+                className="mt-1 flex flex-wrap items-center gap-1"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected
+                  data-testid="guide-mode-steps"
+                  className="cursor-pointer rounded-full border border-accent/35 bg-accent-soft px-2 py-0.5 font-mono text-[9.5px] font-semibold text-accent"
+                >
+                  Steps · {GUIDE_STEP_COUNT}
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={false}
+                  onClick={startWalkthrough}
+                  data-testid="guide-mode-walkthrough"
+                  className="cursor-pointer rounded-full border border-line-soft px-2 py-0.5 font-mono text-[9.5px] text-muted transition-colors hover:border-accent/40 hover:text-accent"
+                >
+                  Tooltip walkthrough · {FEATURE_WALKTHROUGH_COUNT}
+                </button>
+              </div>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">

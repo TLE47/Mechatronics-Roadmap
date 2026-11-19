@@ -91,6 +91,8 @@ check('LaTeX fractions, roots and commands normalize', () => {
   near(explicit('\\frac{x}{2}').evaluate(8), 4);
   near(explicit('\\sqrt{2}').evaluate(0), Math.SQRT2);
   near(explicit('\\sin(\\pi / 2)').evaluate(0), 1);
+  // Braces still group, now that they are no longer rewritten to parentheses wholesale.
+  near(explicit('\\sin{x}').evaluate(Math.PI / 2), 1);
 });
 check('keypad glyphs are the grammar too', () => {
   near(explicit('2π').evaluate(0), 2 * Math.PI);
@@ -139,6 +141,95 @@ check('a parameter slider value reaches the closure without a rebuild', () => {
 check('degree mode changes both directions of trigonometry', () => {
   near(explicit('sin(30)', { angle: 'deg' }).evaluate(0), 0.5);
   near(explicit('asin(0.5)', { angle: 'deg' }).evaluate(0), 30);
+});
+
+console.log('\nPiecewise definitions and inequalities');
+check('a piecewise picks the first matching branch and a default', () => {
+  const line = parseEquation('y = {x < 0: -x, x = 0: 0, x <= 2: x, 9}');
+  assert.equal(line.kind, 'explicit');
+  const compiled = compileExplicit(line);
+  assert.equal(compiled.evaluate(-2), 2);
+  assert.equal(compiled.evaluate(0), 0);
+  assert.equal(compiled.evaluate(1), 1);
+  assert.equal(compiled.evaluate(5), 9);
+});
+check('piecewise conditions support intervals, and/or, and no default', () => {
+  const interval = compileExplicit(parseEquation('{0 < x < 1: 2, x >= 1: 3}'));
+  assert.equal(interval.evaluate(0.5), 2);
+  assert.equal(interval.evaluate(1.5), 3);
+  assert.ok(Number.isNaN(interval.evaluate(-1)), 'a gap with no default is not zero');
+  const both = compileExplicit(parseEquation('{x > 0 and x < 2: 1, 0}'));
+  assert.equal(both.evaluate(1), 1);
+  assert.equal(both.evaluate(3), 0);
+  const either = compileExplicit(parseEquation('{x < 0 or x > 2: 1, 0}'));
+  assert.equal(either.evaluate(-1), 1);
+  assert.equal(either.evaluate(3), 1);
+  assert.equal(either.evaluate(1), 0);
+});
+check('a piecewise parameter is still a slider value', () => {
+  const line = parseEquation('a = {1 < 2: 3, 4}');
+  assert.equal(line.kind, 'parameter');
+  assert.equal(compileExplicit(line).evaluate(0), 3);
+});
+check('an inequality remembers its relation and the negative side', () => {
+  const below = parseEquation('y < sin(x)');
+  assert.equal(below.kind, 'inequality');
+  assert.deepEqual(below.inequality, { operator: '<', strict: true });
+  const fBelow = compileExplicit(below);
+  assert.ok(fBelow.evaluate(0, { y: -1 }) < 0, 'below the curve is inside');
+  assert.ok(fBelow.evaluate(0, { y: 1 }) > 0, 'above the curve is outside');
+
+  const above = parseEquation('y >= sin(x)');
+  assert.deepEqual(above.inequality, { operator: '>=', strict: false });
+  const fAbove = compileExplicit(above);
+  assert.ok(fAbove.evaluate(0, { y: 1 }) < 0, 'above the curve is inside');
+  assert.ok(fAbove.evaluate(0, { y: -1 }) > 0, 'below the curve is outside');
+});
+check('circles and one-variable inequalities compile to the region shader', () => {
+  const circle = parseEquation('x^2 + y^2 <= 9');
+  const compiled = compileImplicit(circle);
+  assert.equal(circle.kind, 'inequality');
+  assert.match(compiled.expression, /pow\(x, 2\.0\)/);
+  assert.deepEqual(compiled.region, { strict: false });
+
+  const right = parseEquation('x > 0');
+  assert.equal(right.inequality.operator, '>');
+  const fRight = compileExplicit(right);
+  assert.ok(fRight.evaluate(1) < 0, 'x > 0 is negative inside');
+  assert.ok(fRight.evaluate(-1) > 0, 'x < 0 is outside');
+});
+check('piecewise and inequalities have paper forms', () => {
+  assert.equal(
+    typesetEquation('{x < 0: -x, x >= 0: x}'),
+    String.raw`\begin{cases}-x & \text{if } x \lt 0 \\ x & \text{if } x \ge 0\end{cases}`
+  );
+  assert.equal(
+    typesetEquation('y = {0 < x < 1: 1, 2}'),
+    String.raw`y = \begin{cases}1 & \text{if } 0 \lt x \land x \lt 1 \\ 2 & \text{otherwise}\end{cases}`
+  );
+  assert.equal(typesetEquation('x^2 + y^2 <= 9'), String.raw`x^{2} + y^{2} \le 9`);
+  assert.equal(typesetEquation('y < sin(x)'), String.raw`y \lt \sin\left(x\right)`);
+  assert.equal(typesetEquation(String.raw`x \le y`), String.raw`x \le y`);
+});
+check('LaTeX relation spellings normalize before tokenizing', () => {
+  assert.equal(normalizeMath('x \\le 2'), 'x <= 2');
+  assert.equal(normalizeMath('x \\ge 2'), 'x >= 2');
+  assert.equal(normalizeMath('x \\lt 2'), 'x < 2');
+  assert.equal(normalizeMath('x \\ne 2'), 'x != 2');
+});
+check('folding keeps conditions boolean while folding their numeric parts', () => {
+  const folded = foldConstants(parseEquation('{x < 0: sin(pi/4), 0}').ast);
+  assert.equal(folded.kind, 'piecewise');
+  const branch = folded.branches[0];
+  assert.equal(branch.condition.kind, 'comparison');
+  assert.equal(branch.value.kind, 'number');
+  near(branch.value.value, Math.SQRT1_2);
+});
+check('a malformed piecewise is refused with a sentence', () => {
+  assert.throws(() => parseEquation('{x < 0: -x, }'), /comma needs another branch/);
+  assert.throws(() => parseEquation('{x < 0}'), /inequality|piecewise/);
+  assert.throws(() => parseEquation('{x + 1: 2}'), /piecewise branch needs a condition/);
+  assert.throws(() => parseEquation('x != y'), /Use <, <=, > or >=/);
 });
 
 console.log('\nGLSL generation and the dependency graph');

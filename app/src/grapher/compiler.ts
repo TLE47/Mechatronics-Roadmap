@@ -42,6 +42,8 @@ export interface CompiledImplicit {
   expression: string;
   folded: AstNode;
   parameters: { name: string; uniform: string }[];
+  /** An inequality shades `F < 0`; a strict one draws a dashed boundary. */
+  region: { strict: boolean } | null;
 }
 
 export interface CompileOptions {
@@ -54,7 +56,14 @@ const RAD = 180 / Math.PI;
 /** Fold every fully numeric subtree into a number. Static work belongs at compile time. */
 export function foldConstants(node: AstNode, options: CompileOptions = {}): AstNode {
   const angle = options.angle === 'deg' ? 'deg' : 'rad';
-  if (isConstant(node)) {
+  // Conditions stay boolean nodes. Folding `1 < 2` to `1` would make the generated GLSL ternary
+  // condition a float, which is a shader compile error.
+  if (
+    node.kind !== 'comparison' &&
+    node.kind !== 'logical' &&
+    node.kind !== 'piecewise' &&
+    isConstant(node)
+  ) {
     const value = evaluateConstant(node, angle);
     if (Number.isFinite(value)) return { kind: 'number', value };
     // A non-finite constant (`1/0`, `sqrt(-1)`) is left symbolic: the renderer must see the gap or
@@ -91,6 +100,29 @@ export function foldConstants(node: AstNode, options: CompileOptions = {}): AstN
       }
       return call;
     }
+    case 'comparison':
+      return {
+        kind: 'comparison',
+        operator: node.operator,
+        left: foldConstants(node.left, options),
+        right: foldConstants(node.right, options),
+      };
+    case 'logical':
+      return {
+        kind: 'logical',
+        operator: node.operator,
+        left: foldConstants(node.left, options),
+        right: foldConstants(node.right, options),
+      };
+    case 'piecewise':
+      return {
+        kind: 'piecewise',
+        branches: node.branches.map((branch) => ({
+          condition: foldConstants(branch.condition, options),
+          value: foldConstants(branch.value, options),
+        })),
+        otherwise: node.otherwise ? foldConstants(node.otherwise, options) : null,
+      };
   }
 }
 
@@ -231,6 +263,25 @@ function jsExpression(node: AstNode, angle: AngleMode): string {
     }
     case 'call':
       return jsCall(node.name, node.args.map((argument) => jsExpression(argument, angle)), angle);
+    case 'comparison': {
+      const operator = node.operator === '=' ? '===' : node.operator === '!=' ? '!==' : node.operator;
+      return `(${jsExpression(node.left, angle)} ${operator} ${jsExpression(node.right, angle)})`;
+    }
+    case 'logical':
+      return `(${jsExpression(node.left, angle)} ${
+        node.operator === 'and' ? '&&' : '||'
+      } ${jsExpression(node.right, angle)})`;
+    case 'piecewise': {
+      let expression = node.otherwise ? jsExpression(node.otherwise, angle) : 'Number.NaN';
+      for (let index = node.branches.length - 1; index >= 0; index -= 1) {
+        const branch = node.branches[index]!;
+        expression = `(${jsExpression(branch.condition, angle)} ? ${jsExpression(
+          branch.value,
+          angle
+        )} : ${expression})`;
+      }
+      return expression;
+    }
   }
 }
 
@@ -302,6 +353,7 @@ export function evaluateConstantExpression(
       variables: [],
       usesX: false,
       usesY: false,
+      inequality: null,
     },
     options
   );
@@ -447,6 +499,27 @@ function glslExpression(node: AstNode, angle: AngleMode): string {
     }
     case 'call':
       return glslCall(node.name, node.args.map((argument) => glslExpression(argument, angle)), angle);
+    case 'comparison': {
+      const operator = node.operator === '=' ? '==' : node.operator;
+      return `(${glslExpression(node.left, angle)} ${operator} ${glslExpression(node.right, angle)})`;
+    }
+    case 'logical':
+      return `(${glslExpression(node.left, angle)} ${
+        node.operator === 'and' ? '&&' : '||'
+      } ${glslExpression(node.right, angle)})`;
+    case 'piecewise': {
+      // No branch matched means "not on this curve". A huge finite sentinel keeps every driver happy;
+      // GLSL ES 3.00 has no NaN literal that is safe to write here.
+      let expression = node.otherwise ? glslExpression(node.otherwise, angle) : '1e30';
+      for (let index = node.branches.length - 1; index >= 0; index -= 1) {
+        const branch = node.branches[index]!;
+        expression = `(${glslExpression(branch.condition, angle)} ? ${glslExpression(
+          branch.value,
+          angle
+        )} : ${expression})`;
+      }
+      return expression;
+    }
   }
 }
 
@@ -465,6 +538,7 @@ export function compileImplicit(equation: ParsedEquation, options: CompileOption
     expression: glslExpression(folded, angle),
     folded,
     parameters,
+    region: equation.inequality ? { strict: equation.inequality.strict } : null,
   };
 }
 

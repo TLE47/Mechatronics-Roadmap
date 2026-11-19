@@ -16,7 +16,12 @@
  *   `L1`, `Kp` → one upright symbol        `x`, `y` → italic variables
  */
 
-import { parseEquation, type AstNode } from './parser.ts';
+import {
+  parseEquation,
+  type AstNode,
+  type ComparisonOperator,
+  type InequalityOperator,
+} from './parser.ts';
 
 const FUNCTIONS: Record<string, string> = {
   sin: '\\sin',
@@ -96,6 +101,23 @@ function texName(name: string): string {
   return name.length === 1 ? escapeTex(name) : `\\mathrm{${escapeTex(name)}}`;
 }
 
+function texRelation(operator: ComparisonOperator): string {
+  switch (operator) {
+    case '<':
+      return '\\lt';
+    case '<=':
+      return '\\le';
+    case '>':
+      return '\\gt';
+    case '>=':
+      return '\\ge';
+    case '!=':
+      return '\\ne';
+    case '=':
+      return '=';
+  }
+}
+
 function texNumber(value: number): string {
   const text = String(value);
   const scientific = /^(\d+(?:\.\d+)?)e([+-]?\d+)$/.exec(text);
@@ -167,6 +189,20 @@ function texNode(node: AstNode): string {
       return `${parenthesize(texNode(node.operand), needsPostfixGrouping(node.operand))}!`;
     case 'percent':
       return `${parenthesize(texNode(node.operand), needsPostfixGrouping(node.operand))}\\%`;
+    case 'comparison':
+      return `${texNode(node.left)} ${texRelation(node.operator)} ${texNode(node.right)}`;
+    case 'logical':
+      return `${texNode(node.left)} ${node.operator === 'and' ? '\\land' : '\\lor'} ${texNode(
+        node.right
+      )}`;
+    case 'piecewise': {
+      const rows = node.branches.map(
+        (branch) =>
+          `${texNode(branch.value)} & \\text{if } ${texNode(branch.condition)}`
+      );
+      if (node.otherwise) rows.push(`${texNode(node.otherwise)} & \\text{otherwise}`);
+      return `\\begin{cases}${rows.join(' \\\\ ')}\\end{cases}`;
+    }
     case 'binary': {
       if (node.operator === '/') {
         return `\\frac{${texNode(node.left)}}{${texNode(node.right)}}`;
@@ -203,7 +239,10 @@ export function typesetEquation(input: string): string | null {
     const equation = parseEquation(input);
     const lhs = equation.lhs ? texNode(equation.lhs) : null;
     const rhs = equation.rhs ? texNode(equation.rhs) : null;
-    if (lhs !== null && rhs !== null) return `${lhs} = ${rhs}`;
+    if (lhs !== null && rhs !== null) {
+      const relation: InequalityOperator | '=' = equation.inequality?.operator ?? '=';
+      return `${lhs} ${texRelation(relation)} ${rhs}`;
+    }
     return texNode(equation.ast);
   } catch {
     return null;

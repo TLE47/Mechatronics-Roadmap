@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.8.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.11.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,63 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-19] — Sound is one press again
+
+The Appearance and sound tray now carries a direct mute switch. It is the same control Home and the
+focus pill use: one press writes the sound preference, starts the cues and room tone on the gesture,
+and mutes everything on the next press. The button deliberately has no settings door of its own —
+volume, tape, ambience, the click map and the credit remain in General settings, opened by the gear
+beside it. `scripts/e2e_mission_checks.mjs` now asserts that the tray has exactly this one switch and
+that it toggles, instead of asserting the tray had no sound control at all.
+
+## [2026-11-19] — A tooltip walkthrough, and a graph list that gives way
+
+The new-learner guide gained a second mode. **Tooltip walkthrough** closes the dialog and walks the
+real workbench: each stop dims the page, spotlights the control it describes and prints the features
+that control offers with the gesture that uses each one. It covers 36 stops — the header trays,
+settings, search and keys, Home, every Python-runner tool (lesson list, editor, Run and the console,
+checks and hints, predict-first, study and review, share/pair/offline, the scientific and graphing
+calculators, layout presets and the `# @slider` bridge), the roadmap, placement, micro-learning, Free
+study, every lab, the robot arm, the build registers, the board and the link-health survey. A stop
+that names a tab opens it before the tooltip arrives, so the walk is across the app rather than a
+slideshow beside it. Back, Next, the arrow keys and Escape work; turning it off midway resumes on the
+same feature, separately from the guide's own step. `npm run test:guide` now also demands that every
+workbench tab has a walkthrough stop and that every spotlight selector is a `data-testid` the source
+does not lie about.
+
+The graphing calculator's expression column is resizable. The divider between the list and the sheet
+writes a width on the pane, captures the pointer so a drag can cross the canvas, and clamps both
+sides to a usable floor. It is keyboard-operable as a separator (←/→, Shift for a larger step),
+double-click resets it, and the width only applies to the desktop row — a phone keeps the stacked
+full-width list. The studio browser suite drags it and checks that the sheet still paints, opens the
+walkthrough from the guide, steps forward and back, and confirms a runner stop really opens the
+Python tab. No dependency was added.
+
+## [2026-11-19] — Piecewise definitions and shaded inequality regions
+
+The graphing grammar now accepts the Desmos forms it did not have. A piecewise line is written as
+`{x < 0: -x, x >= 0: x}` — condition, colon, value, with an optional default branch, chained
+intervals such as `0 < x < 1`, and `and` / `or` conditions. The line above the editable source is
+set as a real `cases` environment. Inequalities (`x^2 + y^2 <= 9`, `y < sin(x)`, `x > 0`) are their
+own equation kind: the parser keeps both sides and the relation, and stores the difference that is
+negative inside the region.
+
+Both JIT targets consume the new nodes. Explicit piecewise curves become nested JavaScript ternaries
+with a `NaN` gap when no branch matches; implicit and inequality lines become GLSL ternaries (and
+comparisons/logical operators) read from parameter uniforms. Constant folding folds numeric branch
+values but leaves conditions boolean, because a folded `1 < 2` would become an invalid GLSL ternary
+condition. The WebGL layer now shades the negative side with a 0.22 wash, a solid boundary for
+`<=`/`>=`, and a dashed boundary for `<`/`>`. Separate alpha blending keeps that wash visible when
+the transparent canvas is composited over the paper — the ordinary source-alpha blend was squaring
+0.22 into 0.048 and making the fill disappear.
+
+`npm run test:grapher` grew from 24 to 33 checks for branch order, defaults, chained and
+`and`/`or` conditions, parameter pieces, relation polarity, GLSL generation, cases typesetting,
+LaTeX relation spellings, and malformed input. The studio browser suite also asserts that an
+inequality is classified as a region and paints more than its boundary; it opens the new-learner
+guide from General settings, walks it forward and back, turns it off and confirms it resumes on
+the same step, then checks that a graph equation's live preview is typeset. No dependency was added.
 
 ## [2026-11-19] — The equation looks like paper, and the workbench has a guide
 

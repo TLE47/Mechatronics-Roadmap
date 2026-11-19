@@ -264,9 +264,9 @@ export const LEARNER_GUIDE: readonly GuideStep[] = [
     short: 'Start',
     eyebrow: 'Your first week',
     title: 'Three doors, in this order',
-    body: 'Open Start Here and finish its milestones. Then run P.1, then P.2, then take the placement quiz only if you already know the material. After that, follow the roadmap one milestone per sitting and let review keep the old lessons warm.',
+    body: 'Open Start Here and run its first Python program, P.1. Then P.2, then take the placement quiz only if you already know the material. After that, follow the roadmap one milestone per sitting and let review keep the old lessons warm.',
     points: [
-      'Day 1: Start Here + P.1.',
+      'Day 1: Start Here — its first Python program is P.1.',
       'Day 2: P.2 + one micro set.',
       'Day 3 onward: one roadmap milestone per sitting.',
     ],
