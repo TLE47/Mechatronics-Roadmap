@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.10.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.11.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,15 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-19] — Sound is one press again
+
+The Appearance and sound tray now carries a direct mute switch. It is the same control Home and the
+focus pill use: one press writes the sound preference, starts the cues and room tone on the gesture,
+and mutes everything on the next press. The button deliberately has no settings door of its own —
+volume, tape, ambience, the click map and the credit remain in General settings, opened by the gear
+beside it. `scripts/e2e_mission_checks.mjs` now asserts that the tray has exactly this one switch and
+that it toggles, instead of asserting the tray had no sound control at all.
 
 ## [2026-11-19] — A tooltip walkthrough, and a graph list that gives way
 

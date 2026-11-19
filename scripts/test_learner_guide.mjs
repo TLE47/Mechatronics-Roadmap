@@ -72,6 +72,11 @@ function appSources(directory = new URL('../app/src/', import.meta.url)) {
 const APP_TEST_IDS = new Set();
 for (const text of appSources()) {
   for (const match of text.matchAll(/data-testid="([^"]+)"/g)) APP_TEST_IDS.add(match[1]);
+  // A widget that builds its id from a base plus an optional page suffix is still declaring the
+  // base id: the sound control does this in `AudioPlayerWidget.tsx`, so read its `tid(...)` calls.
+  for (const call of text.matchAll(/\btid\(([^)]*)\)/g)) {
+    for (const id of call[1].matchAll(/'([^']+)'/g)) APP_TEST_IDS.add(id[1]);
+  }
 }
 
 /** Test ids built from a map rather than written literally in the markup. */

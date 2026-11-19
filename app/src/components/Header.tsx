@@ -25,6 +25,7 @@ import {
 } from '../generalSettings';
 import { APP_VERSION } from '../appVersion';
 import { HeaderTips } from './HeaderTips';
+import { SoundControlLazy } from './SoundControlLazy';
 // The interface's own ear: one delegated listener for every control's click, mounted once with the
 // header (which every screen renders). It renders nothing and holds no state.
 import { SoundClicks } from './SoundClicks';
@@ -415,8 +416,9 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </div>
 
-          {/* Appearance, motion and sound: six preferences on one surface. Each is its own on/off,
-              so a pressed button states a fact instead of standing for a step in a cycle. */}
+          {/* Appearance, motion, layout and sound: the preferences that shape every screen, on one
+              surface. Each is its own on/off, so a pressed button states a fact instead of standing
+              for a step in a cycle. */}
           <div className="action-tray" role="group" aria-label="Appearance and sound">
             <button
               onClick={toggle}
@@ -456,9 +458,12 @@ export const Header: React.FC<HeaderProps> = ({
               <BookOpen className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span className={labelClass}>Paper</span>
             </button>
-            {/* Sound is a preference, and its controls now live in General settings beside the rest
-                of them: a second switch in this tray said the same thing in one word and could not
-                show the tape, the level or the credit the panel shows. */}
+            {/* The one press that has to be here: sound on starts the cues and room tone, off mutes
+                everything. The volume, tape, ambience and click map stay in General settings, so this
+                button has no settings door of its own — the gear beside it is the door. */}
+            <React.Suspense fallback={null}>
+              <SoundControlLazy settingsDoor={false} />
+            </React.Suspense>
             {onToggleFocus && (
               <button
                 onClick={onToggleFocus}

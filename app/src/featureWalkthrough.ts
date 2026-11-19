@@ -80,14 +80,15 @@ export const FEATURE_WALKTHROUGH: readonly WalkthroughStop[] = [
     id: 'appearance',
     section: 'The shell',
     title: 'Appearance, motion and layout',
-    body: 'Six device preferences sit on the header row and are written once, so every screen and every saved screenshot agree with them.',
+    body: 'Seven device preferences sit on the header row and are written once, so every screen and every saved screenshot agree with them.',
     features: [
+      'Sound is one press: on starts the cues and room tone, off mutes everything. Volume, tape and ambience stay in General settings.',
       'Theme switches light and dark; Contrast is the high-contrast palette; Paper is the print-like reading surface.',
       'Focus (⌘.) hides the chrome and keeps the work; the same shortcut or Escape brings it back.',
       'Compact (⌥5) folds the lesson into one strip; Motion stops every animated figure for a calmer or cheaper visit.',
       'Each control is a real on/off state, and the choice stays on this device.',
     ],
-    anchors: [byTestId('btn-theme-toggle'), byTestId('btn-general-settings')],
+    anchors: [byTestId('btn-sound-toggle'), byTestId('btn-theme-toggle'), byTestId('btn-general-settings')],
   },
   {
     id: 'settings',
