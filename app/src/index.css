@@ -69,22 +69,28 @@
 
   /* Elevation
      A shadow is darker than the page, and this page is almost black, so a dark drop shadow alone
-     disappears. Each step therefore also carries a one-pixel cool rim just outside the card's own
-     border, plus a tighter ambient layer: the rim is what the eye reads as "raised" here. */
+     disappears. Each step therefore carries a cool rim just outside the card's own border and a
+     soft halo beyond it: the rim is the lit edge the eye reads as "raised", the halo is the air
+     around it. The rim is deliberately brighter than --border, because a rim at the border's own
+     tone only redraws the card edge and still leaves the page flat. */
   --shadow-sm:
-    0 0 0 1px rgba(148, 163, 184, 0.14),
-    0 1px 2px rgba(0, 0, 0, 0.55),
-    0 6px 16px -8px rgba(0, 0, 0, 0.65),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 0 0 1px rgba(170, 193, 219, 0.34),
+    0 1px 2px rgba(0, 0, 0, 0.62),
+    0 6px 18px -8px rgba(0, 0, 0, 0.72),
+    0 0 18px -8px rgba(118, 165, 200, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
   --shadow-md:
-    0 0 0 1px rgba(148, 163, 184, 0.15),
-    0 10px 28px -14px rgba(0, 0, 0, 0.75),
-    0 24px 56px -28px rgba(0, 0, 0, 0.65),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 0 0 1px rgba(176, 199, 224, 0.4),
+    0 12px 30px -14px rgba(0, 0, 0, 0.82),
+    0 28px 64px -30px rgba(0, 0, 0, 0.72),
+    0 0 30px -10px rgba(118, 165, 200, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
   --shadow-lg:
-    0 0 0 1px rgba(148, 163, 184, 0.16),
-    0 24px 64px -24px rgba(0, 0, 0, 0.9),
-    0 48px 120px -48px rgba(0, 0, 0, 0.8);
+    0 0 0 1px rgba(184, 207, 232, 0.48),
+    0 26px 70px -26px rgba(0, 0, 0, 0.94),
+    0 54px 126px -48px rgba(0, 0, 0, 0.84),
+    0 0 54px -20px rgba(118, 165, 200, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
   /* A button is a key: a hard edge under it and a short ambient shadow. Every <button> gets this in
      the base layer; a component that already names a shadow (the `=` key, the mode pill) overrides
      it without a second token. */

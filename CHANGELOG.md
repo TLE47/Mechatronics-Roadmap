@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.7.4`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.7.5`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,14 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-19] — Dark elevation is a lit edge, not a hairline
+
+The 4.7.3 rim was 14–16% slate, which composites to almost the card border's own tone; on a
+near-black page it redrew the edge and left the card looking flat. The three steps now carry a cool
+rim at 30–48% — visibly brighter than `--border` — plus a soft halo that widens with elevation and
+a slightly stronger top highlight. Light, paper and high contrast keep their own shadows; the change
+is dark-only, like the elevation it repairs.
 
 ## [2026-11-18] — Every bounded split keeps its calculator inside the pane
 
