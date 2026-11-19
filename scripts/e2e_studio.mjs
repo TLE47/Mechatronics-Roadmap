@@ -718,8 +718,12 @@ async function main() {
     await page.getByTestId('guide-mode-walkthrough').click();
     await page.getByTestId('feature-walkthrough').waitFor({ state: 'visible', timeout: 5000 });
     await page.getByTestId('learner-guide').waitFor({ state: 'detached', timeout: 5000 });
+    // The first spotlight is measured after the card mounts, so it is a separate paint: waiting
+    // for the card alone would race a slow CI runner and assert before the anchor exists.
+    const spotlight = page.getByTestId('walkthrough-spotlight');
+    await spotlight.waitFor({ state: 'visible', timeout: 5000 });
     assert.equal(
-      await page.getByTestId('walkthrough-spotlight').count(),
+      await spotlight.count(),
       1,
       'the tooltip mode must spotlight a real control, not draw a card in a vacuum'
     );
