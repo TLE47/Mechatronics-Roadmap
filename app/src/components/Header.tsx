@@ -408,7 +408,7 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span className={labelClass}>Search</span>
-              <kbd className="ml-0.5 hidden sm:inline-flex" aria-hidden="true">
+              <kbd className="ml-0.5 hidden py-[0.5px] leading-none sm:inline-flex" aria-hidden="true">
                 ⌘⇧F
               </kbd>
             </button>
@@ -478,7 +478,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <Maximize2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 )}
                 <span className={labelClass}>Focus</span>
-                <kbd className="ml-0.5 hidden xl:inline-flex" aria-hidden="true">
+                <kbd className="ml-0.5 hidden py-[0.5px] leading-none xl:inline-flex" aria-hidden="true">
                   ⌘.
                 </kbd>
               </button>
@@ -501,7 +501,7 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <ChevronsDownUp className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span className={labelClass}>Compact</span>
-              <kbd className="ml-0.5 hidden xl:inline-flex" aria-hidden="true">
+              <kbd className="ml-0.5 hidden py-[0.5px] leading-none xl:inline-flex" aria-hidden="true">
                 ⌥5
               </kbd>
             </button>

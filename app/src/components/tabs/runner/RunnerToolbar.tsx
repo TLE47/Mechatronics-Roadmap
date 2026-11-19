@@ -215,7 +215,7 @@ export function RunnerToolbar({
                 `?` sheet: the 79 px the four keys cost is what pushed Predict onto a second row at
                 1280 in a real browser, where a classic scrollbar leaves the card 10 px narrower than
                 the overlay-scrollbar Chromium the suite runs in. */}
-            <kbd className="ml-1 hidden min-[1360px]:inline-flex" aria-hidden="true">
+            <kbd className="ml-1 hidden py-[0.5px] leading-none min-[1360px]:inline-flex" aria-hidden="true">
               {option.shortcut}
             </kbd>
           </button>
@@ -262,7 +262,7 @@ export function RunnerToolbar({
         >
           <OctagonX className="w-3.5 h-3.5" />
           <span>Stop</span>
-          <kbd className="ml-0.5 hidden sm:inline-flex" aria-hidden="true">
+          <kbd className="ml-0.5 hidden py-[0.5px] leading-none sm:inline-flex" aria-hidden="true">
             ⌘⇧↵
           </kbd>
         </button>
@@ -292,7 +292,7 @@ export function RunnerToolbar({
         data-sound="primary"
         data-tour="run-button"
         title="Run & Verify Output — ⌘↵ / Ctrl+↵ runs from anywhere on this screen"
-        className="btn btn-primary ml-1 h-10 px-3.5 py-2 text-[13px] font-bold"
+        className="btn btn-primary ml-1 px-3.5 py-2 text-[13px] font-bold"
       >
         {isRunning ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
@@ -301,7 +301,7 @@ export function RunnerToolbar({
         )}
         <span className="hidden sm:inline">{isRunning ? 'Running in Worker...' : 'Run & Verify Output'}</span>
         <span className="sm:hidden">{isRunning ? 'Running…' : 'Run'}</span>
-        {!isRunning && <span className="kbd ml-0.5 hidden sm:inline-flex">⌘↵</span>}
+        {!isRunning && <span className="kbd ml-0.5 hidden py-[0.5px] leading-none sm:inline-flex">⌘↵</span>}
       </button>
       {/* The gate's own door, beside Run: the question also opens by itself on a lesson's first Run,
           and this is how a learner rereads the verdict or commits a guess before pressing it. It used
@@ -321,7 +321,7 @@ export function RunnerToolbar({
             : 'Predict first: commit to what the code will print, then run it'
         }
         aria-label={`Predict${predictRecord ? (predictRecord.skipped ? ' (skipped)' : ' (answered)') : ''}: commit to what the code will print, then run it`}
-        className={`px-2.5 py-1.5 h-10 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+        className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
           predictPaneOpen ? 'text-amber border-amber/60' : 'text-body border-line'
         }`}
       >
