@@ -69,28 +69,25 @@
 
   /* Elevation
      A shadow is darker than the page, and this page is almost black, so a dark drop shadow alone
-     disappears. Each step therefore carries a cool rim just outside the card's own border and a
-     soft halo beyond it: the rim is the lit edge the eye reads as "raised", the halo is the air
-     around it. The rim is deliberately brighter than --border, because a rim at the border's own
-     tone only redraws the card edge and still leaves the page flat. */
+     disappears. Each step therefore carries a soft cool halo outside the card's own border and a
+     slightly brighter top highlight. There is deliberately no one-pixel rim: on this palette a
+     ring reads as a second border, and around an accent-bordered selection it doubles the outline
+     instead of lifting the card. The halo is the elevation. */
   --shadow-sm:
-    0 0 0 1px rgba(170, 193, 219, 0.34),
     0 1px 2px rgba(0, 0, 0, 0.62),
     0 6px 18px -8px rgba(0, 0, 0, 0.72),
-    0 0 18px -8px rgba(118, 165, 200, 0.24),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 0 26px -4px rgba(118, 165, 200, 0.46),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
   --shadow-md:
-    0 0 0 1px rgba(176, 199, 224, 0.4),
     0 12px 30px -14px rgba(0, 0, 0, 0.82),
     0 28px 64px -30px rgba(0, 0, 0, 0.72),
-    0 0 30px -10px rgba(118, 165, 200, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 0 44px -6px rgba(118, 165, 200, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
   --shadow-lg:
-    0 0 0 1px rgba(184, 207, 232, 0.48),
     0 26px 70px -26px rgba(0, 0, 0, 0.94),
     0 54px 126px -48px rgba(0, 0, 0, 0.84),
-    0 0 54px -20px rgba(118, 165, 200, 0.34),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 0 72px -12px rgba(118, 165, 200, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
   /* A button is a key: a hard edge under it and a short ambient shadow. Every <button> gets this in
      the base layer; a component that already names a shadow (the `=` key, the mode pill) overrides
      it without a second token. */

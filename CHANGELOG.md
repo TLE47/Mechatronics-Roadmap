@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.7.5`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.7.6`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,14 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-19] — Dark elevation is a halo, not a second border
+
+The 4.7.5 dark shadows put a one-pixel rim outside every card border. At 1× it read as a bright
+outline and at 2× as a second edge; around the teal-selected lesson row the neutral ring doubled the
+accent outline. The three steps now drop the ring and carry elevation in a wider cool halo, with a
+brighter top highlight, so the card's own border is the only edge. Light, paper and high contrast are
+unchanged.
 
 ## [2026-11-19] — Dark elevation is a lit edge, not a hairline
 
