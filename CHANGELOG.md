@@ -16,6 +16,19 @@ flowchart LR
 
 ---
 
+## [2026-11-19] — A slider now redraws only the lines that read it
+
+The graph's dependency graph drives the actual slider path: `GraphingPane` diffs the parameter
+scope, expands the changed names through `affectedRows` — including parameter rows such as
+`b = 2a` — and hands the resulting row ids to `GraphPlot`. Explicit curves keep their compiled
+closures and cached samples; only named rows are resampled. The implicit layer still draws every
+curve, but writes parameter uniforms only for the named rows, and each row keeps its own program
+so two equations that share an expression cannot overwrite each other's uniforms. Hidden rows drop
+their cached uniform state so they upload correctly when shown again. The grapher suite now counts
+an independent closure's evaluations and a fake WebGL context's `uniform1f` calls to prove the
+skips; a live browser drag counted 127 dependent evaluations and 0 independent ones. No dependency
+was added.
+
 ## [2026-11-19] — The walkthrough becomes a checklist, and the editor explains a miss where it happened
 
 The tooltip walkthrough is now a set of 36 missions rather than a slideshow, and every mission names

@@ -24,6 +24,7 @@ import {
   panViewport,
   pixelAt,
   pointAt,
+  refreshExplicitSamples,
   viewportFor,
   zoomViewport,
   type ExplicitCurve,
@@ -33,6 +34,9 @@ import {
   type Viewport,
 } from '../../../grapher/renderer';
 import { shortNumber } from './graphModel';
+
+/** A redraw with no parameter move: keep every sample and every uniform. */
+const NO_AFFECTED_ROWS: ReadonlySet<string> = new Set();
 
 /** One Python point in the colour of the row that pushed it. */
 export interface ScatterPoint {
@@ -46,12 +50,18 @@ export function GraphPlot({
   explicitCurves,
   implicitCurves,
   scatter,
+  scope,
+  affectedIds,
 }: {
   view: Viewport;
   onView: Dispatch<SetStateAction<Viewport>>;
   explicitCurves: ExplicitCurve[];
   implicitCurves: ImplicitCurve[];
   scatter: ScatterPoint[];
+  /** The current parameter values. A resampled curve reads them through its compiled closure. */
+  scope: Record<string, number>;
+  /** Rows the dependency graph says a parameter move reached; null/undefined means none specific. */
+  affectedIds: ReadonlySet<string> | null;
 }) {
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [hover, setHover] = useState<HoverPoint | null>(null);
@@ -65,6 +75,17 @@ export function GraphPlot({
   const viewRef = useRef(view);
   viewRef.current = view;
   const fitted = useRef({ width: 0, height: 0 });
+  /** The samples already earned, and the window/curve identity they belong to. */
+  const samplesRef = useRef<ReadonlyMap<string, GraphPoint[][]>>(new Map());
+  const samplesWindowRef = useRef<{
+    view: Viewport;
+    width: number;
+    height: number;
+    curves: readonly ExplicitCurve[];
+  } | null>(null);
+  /** The scope each layer last drew. `affectedIds` only applies on the frame a scope changes. */
+  const drawnScopeRef = useRef<Record<string, number> | null>(null);
+  const uploadedScopeRef = useRef<Record<string, number> | null>(null);
 
   // The sheet is measured, not guessed: a split pane and a full-width tab are both legal widths.
   useEffect(() => {
@@ -138,9 +159,52 @@ export function GraphPlot({
 
   // The drawing itself. Every colour and size is a local number rather than a token: a canvas is an
   // instrument face in both palettes, which is why `--plot` is dark in light mode too.
+  //
+  // A parameter move redraws every curve, but only the curves the dependency graph named are
+  // resampled. Every other curve paints its previous segments; its compiled closure is not called.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || size.width <= 0 || size.height <= 0) return;
+    const previousWindow = samplesWindowRef.current;
+    const curvesChanged =
+      !previousWindow ||
+      previousWindow.curves.length !== explicitCurves.length ||
+      explicitCurves.some((curve, index) => {
+        const previous = previousWindow.curves[index];
+        return !previous || previous.id !== curve.id || previous.evaluate !== curve.evaluate;
+      });
+    const windowChanged =
+      !previousWindow ||
+      previousWindow.view !== view ||
+      previousWindow.width !== size.width ||
+      previousWindow.height !== size.height;
+    // A cached sample is only safe while the scope is the one that earned it. On any other redraw
+    // (hover, colour, points) `affectedIds` may still describe the last drag, so it must not be
+    // read as a fresh move.
+    const scopeMoved = drawnScopeRef.current !== scope;
+    drawnScopeRef.current = scope;
+    const dirty =
+      curvesChanged || windowChanged
+        ? null
+        : scopeMoved
+          ? (affectedIds ?? NO_AFFECTED_ROWS)
+          : NO_AFFECTED_ROWS;
+    const samples = refreshExplicitSamples(
+      explicitCurves,
+      scope,
+      view,
+      size.width,
+      dirty,
+      samplesRef.current
+    );
+    samplesRef.current = samples;
+    samplesWindowRef.current = {
+      view,
+      width: size.width,
+      height: size.height,
+      curves: explicitCurves,
+    };
+
     const density = Math.min(2, window.devicePixelRatio || 1);
     canvas.width = Math.round(size.width * density);
     canvas.height = Math.round(size.height * density);
@@ -151,12 +215,16 @@ export function GraphPlot({
       viewport: view,
       width: size.width,
       height: size.height,
-      curves: explicitCurves,
+      scope,
+      curves: explicitCurves.map((curve) => ({
+        ...curve,
+        segments: samples.get(curve.id),
+      })),
       points: scatter.map((entry) => entry.point),
       pointColor: scatter[0]?.color,
       hover,
     });
-  }, [explicitCurves, hover, scatter, size, view]);
+  }, [affectedIds, explicitCurves, hover, scatter, scope, size, view]);
 
   // The implicit layer sits above the paper. Re-rendering writes uniforms for parameter moves; only
   // an equation's own source change builds another shader. A failure is the shader's sentence, not a
@@ -174,14 +242,24 @@ export function GraphPlot({
     canvas.height = Math.round(size.height * density);
     renderer.resize(size.width, size.height, density);
     try {
-      const failures = renderer.render(implicitCurves, view);
+      // The shader still draws every implicit curve (the layer is cleared each frame), but only
+      // rows the dependency graph named write their parameter uniforms again. The others keep the
+      // values already sitting in their own program. As above, a stale set from the last drag is
+      // not a parameter move; only a new scope makes the set current.
+      const scopeMoved = uploadedScopeRef.current !== scope;
+      uploadedScopeRef.current = scope;
+      const failures = renderer.render(
+        implicitCurves,
+        view,
+        scopeMoved ? affectedIds : NO_AFFECTED_ROWS
+      );
       setGlNotice(failures[0] ?? null);
     } catch (failure) {
       setGlNotice(
         failure instanceof Error ? failure.message : 'An implicit curve could not be drawn'
       );
     }
-  }, [implicitCurves, renderer, size, view]);
+  }, [affectedIds, implicitCurves, renderer, size, view]);
 
   const pointerDown = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     if (event.button !== 0) return;
@@ -206,7 +284,7 @@ export function GraphPlot({
     const point = pointAt(view, px, py, rect.width, rect.height);
     const hits: HoverPoint[] = [];
     for (const curve of explicitCurves) {
-      const y = curve.evaluate(point.x);
+      const y = curve.evaluate(point.x, scope);
       if (!Number.isFinite(y)) continue;
       const yPx = pixelAt(view, { x: point.x, y }, rect.width, rect.height).y;
       if (yPx < -24 || yPx > rect.height + 24) continue;
