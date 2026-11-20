@@ -52,9 +52,12 @@ function findVisible(anchors: readonly string[]): HTMLElement | null {
   return null;
 }
 
-/** Whether a click landed inside one of the exact controls the stop asks the learner to use. */
-function clickedAction(clicked: EventTarget | null, selectors: readonly string[]): boolean {
-  if (!(clicked instanceof Node)) return false;
+/** The exact control a click landed in, or null when it was a neighbour. */
+function clickedActionElement(
+  clicked: EventTarget | null,
+  selectors: readonly string[]
+): HTMLElement | null {
+  if (!(clicked instanceof Node)) return null;
   for (const selector of selectors) {
     let nodes: NodeListOf<HTMLElement>;
     try {
@@ -63,10 +66,10 @@ function clickedAction(clicked: EventTarget | null, selectors: readonly string[]
       continue;
     }
     for (const node of nodes) {
-      if (node.contains(clicked)) return true;
+      if (node.contains(clicked)) return node;
     }
   }
-  return false;
+  return null;
 }
 
 function sameRect(a: TargetRect | null, b: TargetRect | null): boolean {
@@ -125,6 +128,58 @@ function clearDialogsOpenedSince(before: readonly Element[]) {
   }
 }
 
+/** Everything that was already expanded when the tour began, so navigation only closes new things. */
+interface SurfaceBaseline {
+  dialogs: Element[];
+  expanded: HTMLElement[];
+}
+
+function expandedControls(): HTMLElement[] {
+  return Array.from(document.querySelectorAll<HTMLElement>('[aria-expanded="true"]'));
+}
+
+function readSurfaceBaseline(): SurfaceBaseline {
+  return { dialogs: openDialogRoots(), expanded: expandedControls() };
+}
+
+/**
+ * A trigger whose `aria-expanded` belongs to a dialog. Escape already closed that window; pressing
+ * the trigger again would only reopen the surface the tour is trying to clear.
+ */
+function isDialogTrigger(node: HTMLElement): boolean {
+  const popup = node.getAttribute('aria-haspopup');
+  if (popup && popup !== 'false') return true;
+  const controls = node.getAttribute('aria-controls');
+  if (!controls) return false;
+  return controls
+    .split(/\s+/)
+    .some((id) => document.getElementById(id)?.matches('[role="dialog"], [role="alertdialog"]'));
+}
+
+/**
+ * Put the workbench back the way it was before a stop expanded it. Moving on or closing the tour
+ * dismisses the dialogs it opened with Escape, then clicks inline disclosures that were closed at
+ * the start shut. A surface the learner already had open before the tour, and the tour's own card,
+ * are left untouched. Without this the next stop is buried under the last one's panel.
+ */
+function collapseSurfacesSince(baseline: SurfaceBaseline) {
+  for (const node of openDialogRoots()) {
+    if (baseline.dialogs.includes(node)) continue;
+    node.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+    );
+  }
+  window.setTimeout(() => {
+    for (const node of expandedControls()) {
+      if (baseline.expanded.includes(node)) continue;
+      if (node.closest('[data-testid="feature-walkthrough"]')) continue;
+      if (node.closest('[role="dialog"], [role="alertdialog"]')) continue;
+      if (isDialogTrigger(node)) continue;
+      node.click();
+    }
+  }, 0);
+}
+
 /**
  * The tooltip's position. A short control gets the card below it when there is room; a tall panel
  * gets it beside; a control near the bottom gets it above. The card is clamped into the viewport at
@@ -180,10 +235,11 @@ function placeCard(
  * The feature walkthrough (`components/FeatureWalkthrough.tsx`).
  *
  * A non-modal pointer that walks the actual workbench: each stop navigates to its tab, finds the
- * anchor and draws the card beside it. Nothing is dimmed and nothing is blocked — the page keeps
- * every click and scroll, and a press anywhere but the card changes nothing at all. It is the
- * detailed half of the new-learner guide — the guide explains the shape, this names every control
- * and the gesture that uses it.
+ * anchor and draws the card beside it. The page is dimmed just outside the spotlight so the named
+ * control is the brightest thing on screen, but nothing is blocked — the dim is a shadow, not an
+ * interactive scrim, so the page keeps every click and scroll and a press anywhere but the card
+ * changes nothing at all. It is the detailed half of the new-learner guide — the guide explains the
+ * shape, this names every control and the gesture that uses it.
  *
  * **A stop is a task, not a gate.** The highlighted control stays live and is outlined, so the
  * learner can try it themselves; clicking it crosses the stop's checklist row off and sounds the
@@ -193,9 +249,10 @@ function placeCard(
  * left.
  *
  * The card stays until its own Close button is used (Escape is the keyboard equivalent); a misclick
- * is inert. A stop that opens a window closes it again a beat later, so the next stop is never
- * buried under the last one's panel. No scroll is locked, so the card can never strand a learner on
- * a page they cannot move.
+ * is inert. The control the learner presses stays the focus after it expands, so the outline marks
+ * where the click landed rather than snapping to whatever the press popped open. Moving on,
+ * stepping back or closing the tour collapses anything the stop expanded. No scroll is locked, so
+ * the card can never strand a learner on a page they cannot move.
  */
 export function FeatureWalkthrough({
   onClose,
@@ -212,6 +269,8 @@ export function FeatureWalkthrough({
   // is still mounting painted the card centred, then snapped it beside the control a frame later.
   const [placed, setPlaced] = useState(false);
   const [justChecked, setJustChecked] = useState(false);
+  // Which button moved the tour decides the entrance direction; the stop chooses the variant.
+  const [navDirection, setNavDirection] = useState<'start' | 'next' | 'back'>('start');
   const [viewport, setViewport] = useState(() => ({
     width: typeof window === 'undefined' ? 1280 : window.innerWidth,
     height: typeof window === 'undefined' ? 800 : window.innerHeight,
@@ -223,6 +282,9 @@ export function FeatureWalkthrough({
   stateRef.current = state;
   const celebrateTimer = useRef<number | null>(null);
   const surfaceTimer = useRef<number | null>(null);
+  // The control just pressed, kept as the spotlight target even if its menu closes under it.
+  const pinned = useRef<{ element: HTMLElement; rect: TargetRect } | null>(null);
+  const surfaceBaseline = useRef<SurfaceBaseline | null>(null);
 
   const stop = FEATURE_WALKTHROUGH[state.index] ?? FEATURE_WALKTHROUGH[0]!;
   const stopRef = useRef(stop);
@@ -240,8 +302,20 @@ export function FeatureWalkthrough({
     setState(next);
   };
 
+  /** Close what the stop expanded, and cancel the delayed sweep so it cannot reach a later stop. */
+  const collapseOpenedSurfaces = () => {
+    const baseline = surfaceBaseline.current;
+    if (!baseline) return;
+    collapseSurfacesSince(baseline);
+    if (surfaceTimer.current !== null) {
+      window.clearTimeout(surfaceTimer.current);
+      surfaceTimer.current = null;
+    }
+  };
+
   const close = () => {
     const current = stateRef.current;
+    collapseOpenedSurfaces();
     if (current.status !== 'completed') commit(dismissWalkthroughState(current));
     onClose();
   };
@@ -268,6 +342,9 @@ export function FeatureWalkthrough({
 
   /** Moving on never asks whether the box is ticked: the tour points, it does not gate. */
   const advance = () => {
+    collapseOpenedSurfaces();
+    setNavDirection('next');
+    setJustChecked(false);
     const current = stateRef.current;
     const next = nextWalkthroughState(current);
     writeWalkthroughState(next);
@@ -282,11 +359,16 @@ export function FeatureWalkthrough({
 
   const back = () => {
     if (state.index === 0) return;
+    collapseOpenedSurfaces();
+    setNavDirection('back');
+    setJustChecked(false);
     commit(previousWalkthroughState(stateRef.current));
   };
 
   /** Wipe the score and start the walk from its first stop, without leaving the workbench. */
   const resetPoints = () => {
+    collapseOpenedSurfaces();
+    setNavDirection('back');
     const next = resetWalkthroughState();
     writeWalkthroughState(next);
     stateRef.current = next;
@@ -311,6 +393,12 @@ export function FeatureWalkthrough({
     return () => window.removeEventListener('resize', measure);
   }, []);
 
+  // The surfaces already open when the tour starts belong to the learner, not to the tour; every
+  // later expansion is fair game for the collapse on Next / Back / Close.
+  useLayoutEffect(() => {
+    if (!surfaceBaseline.current) surfaceBaseline.current = readSurfaceBaseline();
+  }, []);
+
   // Opening a stop is also a navigation: the target tab is chosen first, then the anchor is looked
   // for. A lazy tab can take a moment to arrive, so the search is bounded and retried. The measure
   // runs before paint, so the card is born in its final place instead of appearing centred first.
@@ -318,6 +406,11 @@ export function FeatureWalkthrough({
     // A stop whose action is the tab itself must leave the learner that tab to open; anything else
     // navigates first so the control it describes is already on screen.
     if (stop.tab && !walkthroughAction(stop.id)?.opensTab) navigateRef.current(stop.tab);
+    pinned.current = null;
+    if (surfaceTimer.current !== null) {
+      window.clearTimeout(surfaceTimer.current);
+      surfaceTimer.current = null;
+    }
     let cancelled = false;
     let tries = 0;
     let scrolls = 0;
@@ -352,7 +445,10 @@ export function FeatureWalkthrough({
     };
 
     const onReflow = () => {
-      const next = readRect(findVisible(spotlightAnchors(stop.id, stop.anchors)));
+      const pin = pinned.current;
+      const next = pin
+        ? ((pin.element.isConnected ? readRect(pin.element) : null) ?? pin.rect)
+        : readRect(findVisible(spotlightAnchors(stop.id, stop.anchors)));
       setTarget(next);
       if (next) setPlaced(true);
     };
@@ -374,6 +470,15 @@ export function FeatureWalkthrough({
   // control, rather than on where it used to be, while the learner is being asked to press it.
   useEffect(() => {
     const follow = () => {
+      // After a press, the control that was clicked is the focus even if its menu or dialog closes.
+      const pin = pinned.current;
+      if (pin) {
+        const measured = pin.element.isConnected ? readRect(pin.element) : null;
+        if (measured) pin.rect = measured;
+        const next = measured ?? pin.rect;
+        setTarget((previous) => (sameRect(previous, next) ? previous : next));
+        return;
+      }
       const next = readRect(findVisible(spotlightAnchors(stop.id, stop.anchors)));
       setTarget((previous) => (sameRect(previous, next) ? previous : next));
       if (next) setPlaced(true);
@@ -390,8 +495,16 @@ export function FeatureWalkthrough({
     const currentAction = walkthroughAction(stop.id);
     if (!currentAction) return;
     const onClick = (event: MouseEvent) => {
-      if (!clickedAction(event.target, currentAction.selectors)) return;
+      const control = clickedActionElement(event.target, currentAction.selectors);
+      if (!control) return;
       const openedBefore = openDialogRoots();
+      // The outline stays on the area that was pressed, not on whatever the press opened. A menu
+      // that closes after the click keeps its last measured rectangle, so the focus does not vanish.
+      const rect = readRect(control);
+      if (rect) {
+        pinned.current = { element: control, rect };
+        setTarget(rect);
+      }
       completeRef.current();
       if (surfaceTimer.current !== null) window.clearTimeout(surfaceTimer.current);
       surfaceTimer.current = window.setTimeout(() => {
@@ -454,8 +567,8 @@ export function FeatureWalkthrough({
       }
     : { dx: 48, dy: 32 };
 
-  // The fixed layer takes no pointer events: every press that is not on the card belongs to the
-  // learner's page and reaches it untouched. There is no scrim, so nothing is dimmed or blocked.
+  // The fixed layer takes no pointer events: the dim is the spotlight's own shadow, not an element,
+  // so every press that is not on the card belongs to the learner's page and reaches it untouched.
   return (
     <div
       className="pointer-events-none fixed inset-0 z-[90]"
@@ -474,13 +587,7 @@ export function FeatureWalkthrough({
           className={`walkthrough-spot pointer-events-none fixed rounded-xl border-2 transition-all duration-200 ${
             justChecked ? 'walkthrough-spot-checked' : ''
           }`}
-          style={{
-            ...spot,
-            borderColor: isChecked ? 'var(--emerald)' : 'var(--accent)',
-            boxShadow: `0 0 0 5px ${
-              isChecked ? 'color-mix(in srgb, var(--emerald) 18%, transparent)' : 'var(--accent-soft)'
-            }, 0 12px 40px -12px rgba(0,0,0,0.6)`,
-          }}
+          style={spot}
         >
           <span
             className="walkthrough-dot"
@@ -499,8 +606,10 @@ export function FeatureWalkthrough({
         data-testid="walkthrough-card"
         data-placed={placed ? 'true' : 'false'}
         data-just-checked={justChecked ? 'true' : 'false'}
+        data-nav={navDirection}
+        data-motion={state.index % 5}
         className={`walkthrough-card pointer-events-auto fixed overflow-y-auto rounded-2xl border border-accent/30 bg-panel/95 text-ink shadow-[var(--shadow-lg)] outline-none backdrop-blur-xl ${
-          placed ? 'opacity-100' : 'pointer-events-none opacity-0'
+          placed ? 'walkthrough-enter' : 'pointer-events-none opacity-0'
         } ${justChecked ? 'walkthrough-card-checked' : ''}`}
       >
         <span aria-hidden="true" className="walkthrough-beam" />
