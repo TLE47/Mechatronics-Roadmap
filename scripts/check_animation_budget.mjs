@@ -16,43 +16,20 @@
  * The count is taken on the built bundle in the headless shell, in the dark palette, after each tab
  * has painted (`data-testid="tab-loading"` gone), so a lazily-mounted tab is not measured as empty.
  */
-import { chromium } from 'playwright-core';
 import fs from 'node:fs';
 import path from 'node:path';
+import { launchHeadlessShell } from './headless_shell.mjs';
 import { ensureBuilt, startStaticServer } from './e2e_pages_bundle.mjs';
 import { seedTourSeen } from './tour_seed.mjs';
 
 const ROOT = process.cwd();
 const BUDGET = path.join(ROOT, 'docs', 'animation-budget.json');
 const RECORD = process.argv.includes('--record');
-const CACHE = path.join(process.env.HOME ?? '', '.cache', 'ms-playwright');
-
-function browserPath() {
-  const override = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
-  if (override && fs.existsSync(override)) return override;
-  if (fs.existsSync(CACHE)) {
-    const builds = fs
-      .readdirSync(CACHE)
-      .filter((name) => name.startsWith('chromium_headless_shell-'))
-      .sort()
-      .reverse();
-    for (const build of builds) {
-      for (const inner of fs.readdirSync(path.join(CACHE, build))) {
-        const candidate = path.join(CACHE, build, inner, 'chrome-headless-shell');
-        if (fs.existsSync(candidate)) return candidate;
-      }
-    }
-  }
-  return chromium.executablePath();
-}
 
 await ensureBuilt();
 const { server, port } = await startStaticServer();
 const baseUrl = `http://127.0.0.1:${port}/Mechatronics-Roadmap/`;
-const browser = await chromium.launch({
-  executablePath: browserPath(),
-  args: ['--no-sandbox', '--force-device-scale-factor=1', '--font-render-hinting=none'],
-});
+const browser = await launchHeadlessShell();
 
 const counts = {};
 try {

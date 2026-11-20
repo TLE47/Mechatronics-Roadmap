@@ -802,10 +802,11 @@ Re-record with `node scripts/check_animation_budget.mjs --record` and say which 
 `npm run test:study-tips` (`scripts/test_study_tips.mjs`) drives the same bundle with Playwright's
 fake clock, because the study note is timed: 35 s after mount, 18 s on screen, only while the tab is
 visible and the learner has been still for 20 s. It opens the page tour before that tick and crosses
-it (the note stays hidden), closes the tour and crosses the next one (the note appears), reopens the
-tour over the visible note (it is cleared at once), then crosses one more window (still clear). The
-clock makes those four 40 s windows cost milliseconds, and the run seeds the intro tour and the
-reopening guide off the way every harness does, so only the feature walkthrough is under test.
+it (the note stays hidden), closes the tour and crosses the next one (the note appears — the control
+that proves the first window was suppression, not a timer that never existed), then reopens the tour
+over the visible note (it is cleared at once). The clock makes those two 40 s windows cost
+milliseconds, and the run seeds the intro tour and the reopening guide off the way every harness
+does, so only the feature walkthrough is under test.
 
 ## The surface snapshot runs on the headless shell
 

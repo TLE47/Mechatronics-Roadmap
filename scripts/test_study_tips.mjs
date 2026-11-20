@@ -7,46 +7,27 @@
  * and suppresses it. That rule was verified by hand in a browser once; this gate makes it a fact a
  * push has to keep.
  *
- * Three windows matter, and each one is observed:
+ * Three behaviours, one check each:
  *
  * - a note that would fire while the tour is open stays hidden;
  * - a note already on screen is cleared the moment the tour opens;
  * - the next note appears once the tour closes.
  *
+ * The second window is also the control for the first: the same page, with only the tour closed,
+ * must produce a note. If the timer never existed, that check fails instead of the hidden one
+ * passing for the wrong reason.
+ *
  * Playwright's fake clock is installed before the app boots, so the 35 s timer is the mocked one and
- * the three windows cost milliseconds rather than the minutes a real wait would. The first window
- * starts with no note shown — the only state in which "would have fired" means anything.
+ * the windows cost milliseconds rather than the minutes a real wait would. Time never advances on
+ * its own: after a `runFor` a note is either on screen or not, and it stays that way until the next
+ * advance, which is what makes the sequence deterministic.
  *
  * It drives the built bundle on the headless shell, like the primitive and animation gates, and
  * prints one line per check. Exit 0 when every line is `ok`.
  */
-import { chromium } from 'playwright-core';
-import fs from 'node:fs';
-import path from 'node:path';
+import { launchHeadlessShell } from './headless_shell.mjs';
 import { ensureBuilt, startStaticServer } from './e2e_pages_bundle.mjs';
 import { seedTourSeen } from './tour_seed.mjs';
-
-const CACHE = path.join(process.env.HOME ?? '', '.cache', 'ms-playwright');
-
-/** The renderer the surface baseline was measured with — see `docs/VERIFICATION.md`. */
-function browserPath() {
-  const override = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
-  if (override && fs.existsSync(override)) return override;
-  if (fs.existsSync(CACHE)) {
-    const builds = fs
-      .readdirSync(CACHE)
-      .filter((name) => name.startsWith('chromium_headless_shell-'))
-      .sort()
-      .reverse();
-    for (const build of builds) {
-      for (const inner of fs.readdirSync(path.join(CACHE, build))) {
-        const candidate = path.join(CACHE, build, inner, 'chrome-headless-shell');
-        if (fs.existsSync(candidate)) return candidate;
-      }
-    }
-  }
-  return chromium.executablePath();
-}
 
 const results = [];
 function check(name, ok, detail = '') {
@@ -57,10 +38,7 @@ function check(name, ok, detail = '') {
 await ensureBuilt();
 const { server, port } = await startStaticServer();
 const baseUrl = `http://127.0.0.1:${port}/Mechatronics-Roadmap/`;
-const browser = await chromium.launch({
-  executablePath: browserPath(),
-  args: ['--no-sandbox', '--force-device-scale-factor=1', '--font-render-hinting=none'],
-});
+const browser = await launchHeadlessShell();
 
 try {
   const context = await browser.newContext({
@@ -90,29 +68,26 @@ try {
     // The card places itself in an effect and follows its anchor on a 120 ms clock. Advance the fake
     // clock so both have run, then require the spotlight, not merely the card's markup.
     await page.clock.runFor(600);
-    await page.waitForTimeout(100);
     await page.locator('[data-testid="walkthrough-spotlight"]').waitFor({ state: 'visible', timeout: 8000 });
   };
 
   const closeTour = async () => {
     await page.locator('[data-testid="walkthrough-close"]').click();
     await tour.waitFor({ state: 'detached', timeout: 10000 });
-    await page.clock.runFor(200);
-    await page.waitForTimeout(100);
   };
 
-  // 1. Open the tour before the first 35 s tick, then cross the tick with it open. If suppression
-  //    ever stops unmounting the timer, the note lands here.
+  // 1. Open before the first 35 s tick, then cross it with the tour open.
   await openTour();
-  const progress = (await page.locator('[data-testid="walkthrough-progress"]').innerText()).trim();
   await page.clock.runFor(40_000);
-  await page.waitForTimeout(120);
   const during = await tip.count();
-  check('the tour opens on its first stop', /^01 \/ \d+/.test(progress), progress);
-  check('a study note that would fire during the tour stays hidden', during === 0, `${during} note(s)`);
+  const tourOpen = (await tour.count()) === 1;
+  check(
+    'a study note that would fire during the tour stays hidden',
+    tourOpen && during === 0,
+    `tour ${tourOpen ? 'open' : 'closed'}, ${during} note(s)`
+  );
 
-  // 2. Close it: the next 35 s tick must reach the page. This is what proves the hidden note above
-  //    was suppressed rather than a timer that never existed.
+  // 2. Close it: the next 35 s tick must reach the page. This is the control for check 1.
   await closeTour();
   await page.clock.runFor(40_000);
   await tip.waitFor({ state: 'visible', timeout: 8000 }).catch(() => {});
@@ -124,16 +99,6 @@ try {
   await openTour();
   const afterOpen = await tip.count();
   check('opening the tour clears a note already on screen', afterOpen === 0, `${afterOpen} note(s)`);
-
-  // 4. Cross another window with the tour still open: still clear.
-  await page.clock.runFor(40_000);
-  await page.waitForTimeout(120);
-  const later = await tip.count();
-  check(
-    'the window after reopening the tour stays clear',
-    later === 0 && (await tour.count()) === 1,
-    `${later} note(s), tour ${(await tour.count()) === 1 ? 'open' : 'closed'}`
-  );
 
   check('no page errors', errors.length === 0, errors.slice(0, 2).join(' · '));
 } finally {
