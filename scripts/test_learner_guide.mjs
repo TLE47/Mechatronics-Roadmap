@@ -512,10 +512,16 @@ check('Reset points clears the checklist and returns to the first stop', () => {
   assert.equal(readWalkthroughState(store).index, 0);
 });
 
-check('the walkthrough points instead of pressing, and carries its own reset', () => {
+check('the walkthrough points instead of pressing, and stays until its own close', () => {
   assert.match(WALKTHROUGH_SOURCE, /data-testid="walkthrough-reset"/);
   assert.doesNotMatch(WALKTHROUGH_SOURCE, /walkthrough-do-it/);
-  assert.match(WALKTHROUGH_SOURCE, /outlined control is live/);
+  assert.match(WALKTHROUGH_SOURCE, /data-testid="walkthrough-close"/);
+  // No scrim and no scroll lock: a misclick belongs to the page, not to the tour.
+  assert.doesNotMatch(WALKTHROUGH_SOURCE, /bg-\[rgba\(4,8,11/);
+  assert.doesNotMatch(WALKTHROUGH_SOURCE, /document\.body\.style\.overflow/);
+  // The window a stop opens is cleared again before the next stop needs the stage.
+  assert.match(WALKTHROUGH_SOURCE, /clearDialogsOpenedSince/);
+  assert.match(WALKTHROUGH_SOURCE, /SURFACE_CLEAR_DELAY/);
 });
 
 check('the guide offers both modes and the walkthrough callback', () => {

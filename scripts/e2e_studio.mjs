@@ -875,8 +875,9 @@ async function main() {
     await guideContext.close();
 
     // ---- 2b.3 The guide's second mode is a tooltip that points at the real controls ----
-    // It is not a slideshow behind the dialog: the guide closes, the workbench is dimmed, and each
-    // Next moves the card to another control — including opening the tab the feature lives in.
+    // It is not a slideshow behind the dialog and it is not modal: the guide closes, nothing is
+    // dimmed or scroll-locked, and each Next moves the card to another control — including opening
+    // the tab the feature lives in. Only the card's Close button dismisses it.
     await page.getByTestId('btn-general-settings').click();
     await page.getByTestId('general-settings').waitFor({ state: 'visible', timeout: 5000 });
     await page.getByTestId('btn-open-new-learner-guide').click();
@@ -893,6 +894,33 @@ async function main() {
       1,
       'the tooltip mode must spotlight a real control, not draw a card in a vacuum'
     );
+    await page
+      .locator('[data-testid="walkthrough-card"][data-placed="true"]')
+      .waitFor({ state: 'visible', timeout: 5000 });
+    assert.equal(
+      await page
+        .getByTestId('feature-walkthrough')
+        .getByRole('button', { name: 'Close the feature walkthrough' })
+        .count(),
+      1,
+      'the card must be the only close target: no scrim may dismiss the tour'
+    );
+    assert.notEqual(
+      await page.evaluate(() => document.body.style.overflow),
+      'hidden',
+      'the walkthrough must not lock the page behind it'
+    );
+    // The card is placed beside the control, never over the click it asks for.
+    const cardBox = await page.getByTestId('walkthrough-card').boundingBox();
+    const spotBox = await spotlight.boundingBox();
+    const apart =
+      cardBox && spotBox
+        ? cardBox.x >= spotBox.x + spotBox.width ||
+          cardBox.x + cardBox.width <= spotBox.x ||
+          cardBox.y >= spotBox.y + spotBox.height ||
+          cardBox.y + cardBox.height <= spotBox.y
+        : false;
+    assert.ok(apart, 'the card must sit beside the spotlight, never over the outlined control');
     assert.match(
       (await page.getByTestId('walkthrough-progress').innerText()).trim(),
       /^0?1 \/ \d+ · /,
@@ -914,6 +942,11 @@ async function main() {
       await page.getByTestId('walkthrough-checklist').getAttribute('data-done'),
       'false',
       'a different control must not check the stop'
+    );
+    assert.equal(
+      await page.getByTestId('feature-walkthrough').isVisible(),
+      true,
+      'a click on another control must not dismiss the walkthrough'
     );
     // Using the outlined control is the whole gesture: the wordmark really opens the introduction
     // and the checklist ticks itself, with no Do it shortcut in the card.
@@ -964,6 +997,47 @@ async function main() {
     );
     assert.match((await page.getByTestId('walkthrough-score').innerText()).trim(), /0000/);
     ok('Next/Previous move freely, and Reset points clears the checklist and returns to the first feature');
+
+    // A stop that opens a window closes it again a beat later. Without that, the settings sheet
+    // from this stop sits over the next one — and over the card's own buttons — until the learner
+    // finds Escape, which is the stuck state this walkthrough must not create.
+    for (let next = 1; next <= 4; next += 1) {
+      await page.getByTestId('walkthrough-next').click();
+      await page.waitForFunction(
+        (index) => {
+          const card = document.querySelector('[data-testid="walkthrough-card"]');
+          return (
+            document
+              .querySelector('[data-testid="feature-walkthrough"]')
+              ?.getAttribute('data-index') === String(index) &&
+            card?.getAttribute('data-placed') === 'true'
+          );
+        },
+        next,
+        { timeout: 15000 }
+      );
+    }
+    assert.match(
+      (await page.getByTestId('walkthrough-progress').innerText()).trim(),
+      /^05 \/ \d+ · /,
+      'the walkthrough must reach its settings stop'
+    );
+    await page.getByTestId('btn-general-settings').click();
+    await page.getByTestId('general-settings').waitFor({ state: 'visible', timeout: 5000 });
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="walkthrough-checklist"]')?.getAttribute('data-done') ===
+        'true',
+      undefined,
+      { timeout: 2000 }
+    );
+    await page.getByTestId('general-settings').waitFor({ state: 'detached', timeout: 4000 });
+    assert.equal(
+      await page.getByTestId('feature-walkthrough').isVisible(),
+      true,
+      'closing the window a stop opened must leave the walkthrough open'
+    );
+    ok('the window a stop opens is cleared again, leaving the next stop unobstructed');
 
     // The first ten stops open settings, reset, account and search dialogs. Rather than leave four
     // overlays stacked to reach the runner, keep the one tick the browser just earned and resume the
