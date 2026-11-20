@@ -410,9 +410,12 @@ export function FeatureWalkthrough({
       ]
     : null;
 
+  // The wrapper must not eat the gesture it is asking for: the spotlighted control lives under this
+  // fixed layer, so the layer is click-through and only the card and the four backdrop panes opt
+  // back into pointer events.
   return (
     <div
-      className="fixed inset-0 z-[90]"
+      className="pointer-events-none fixed inset-0 z-[90]"
       role="dialog"
       aria-labelledby="walkthrough-title"
       data-testid="feature-walkthrough"
@@ -429,7 +432,7 @@ export function FeatureWalkthrough({
             aria-label="Close the feature walkthrough"
             tabIndex={-1}
             onClick={close}
-            className="fixed cursor-default bg-[rgba(4,8,11,0.62)]"
+            className="pointer-events-auto fixed cursor-default bg-[rgba(4,8,11,0.62)]"
             style={piece}
           />
         ))
@@ -439,7 +442,7 @@ export function FeatureWalkthrough({
           aria-label="Close the feature walkthrough"
           tabIndex={-1}
           onClick={close}
-          className="absolute inset-0 h-full w-full cursor-default bg-[rgba(4,8,11,0.62)]"
+          className="pointer-events-auto absolute inset-0 h-full w-full cursor-default bg-[rgba(4,8,11,0.62)]"
         />
       )}
 
@@ -468,7 +471,7 @@ export function FeatureWalkthrough({
         style={cardStyle}
         data-testid="walkthrough-card"
         data-just-checked={justChecked ? 'true' : 'false'}
-        className={`fixed overflow-y-auto rounded-2xl border bg-panel text-ink shadow-[var(--shadow-lg)] outline-none ${
+        className={`pointer-events-auto fixed overflow-y-auto rounded-2xl border bg-panel text-ink shadow-[var(--shadow-lg)] outline-none ${
           justChecked ? 'walkthrough-card-checked' : ''
         }`}
       >

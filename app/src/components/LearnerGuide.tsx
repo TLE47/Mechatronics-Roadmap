@@ -737,7 +737,7 @@ export const LearnerGuide: React.FC<{
                     type="button"
                     onClick={() => jump(index)}
                     aria-current={current ? 'step' : undefined}
-                    aria-label={`Step ${index + 1} of ${GUIDE_STEP_COUNT}: ${entry.title}`}
+                    aria-label={`${guideStepNumber(index)} ${entry.short} — step ${index + 1} of ${GUIDE_STEP_COUNT}`}
                     data-testid={`guide-step-${index}`}
                     className={`flex w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors ${
                       current

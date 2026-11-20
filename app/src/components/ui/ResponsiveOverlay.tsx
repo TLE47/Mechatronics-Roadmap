@@ -90,7 +90,9 @@ export const ResponsiveOverlay: React.FC<ResponsiveOverlayProps> = ({
     };
   }, [open]);
 
-  // The surface itself, so the two branches can never disagree about what a panel is.
+  // The surface itself, so the two branches can never disagree about what a panel is. Both content
+  // branches also carry the label directly: the hidden title supplies the heading, and the direct
+  // name keeps the dialog announced even if that title has not registered yet.
   const body = (
     <>
       <Dialog.Title className="sr-only" id={titleId}>
@@ -120,6 +122,7 @@ export const ResponsiveOverlay: React.FC<ResponsiveOverlayProps> = ({
           <Drawer.Content
             data-overlay-panel=""
             data-testid={testId}
+            aria-label={label}
             aria-describedby={undefined}
             onOpenAutoFocus={focusFirst}
             className="fixed inset-x-0 bottom-0 z-[81] flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-line-strong bg-panel shadow-[var(--shadow-lg)] outline-none"
@@ -148,6 +151,7 @@ export const ResponsiveOverlay: React.FC<ResponsiveOverlayProps> = ({
         <Dialog.Content
           data-overlay-panel=""
           data-testid={testId}
+          aria-label={label}
           aria-describedby={undefined}
           onOpenAutoFocus={focusFirst}
           className={`fixed left-1/2 top-1/2 z-[81] flex max-h-[86vh] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[var(--r-lg)] border border-line-strong bg-panel shadow-[var(--shadow-lg)] outline-none ${SIZE[size]}`}
