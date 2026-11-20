@@ -64,7 +64,7 @@ import { StudyPanel } from '../StudyPanel';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { findDefinition } from '../../symbolIndex';
 
-import { layoutArrangement, layoutShortcutFor, layoutShows, splitGridTemplate } from '../../workspaceLayout';
+import { layoutArrangement, layoutShows, splitGridTemplate } from '../../workspaceLayout';
 import {
   closeView,
   isSplit,
@@ -83,6 +83,7 @@ import { readBreakpoints, setBreakpointCondition, toggleBreakpoint, writeBreakpo
 import { readWatches } from '../../editor/watches';
 
 import { useRunnerArrangement } from './runner/useRunnerArrangement';
+import { useLayoutShortcuts } from './runner/useLayoutShortcuts';
 import { useGuideFold } from './runner/useGuideFold';
 import { GuideOffer, GuideToggle } from './runner/GuideToggle';
 import { usePredictGate } from './runner/usePredictGate';
@@ -1423,21 +1424,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // Vim keys (`runner/useVimKeys.ts`): the remembered opt-in and the mode the editor reads keys in.
   const vim = useVimKeys();
 
-  // ⌥1–⌥4 pick a layout, from anywhere including inside the editor. The buttons in the editor's
-  // header are the discoverable path; this is the shortcut the buttons print.
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || !event.altKey || event.metaKey || event.ctrlKey) return;
-      // The code first: ⌥2 is `™` in `key` on a Mac, and the shortcut is the physical key.
-      const next = layoutShortcutFor(event.code) ?? layoutShortcutFor(event.key);
-      if (!next) return;
-      playShortcut('toggle', event);
-      event.preventDefault();
-      chooseLayout(next);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  useLayoutShortcuts(chooseLayout);
 
   // A slider drag is a parameter change, so the answer is a fresh run - but one run per drag, not
   // one per pixel. The timer is cleared on unmount so a removed tab cannot run in the background.

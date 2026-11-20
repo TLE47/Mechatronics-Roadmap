@@ -30,6 +30,7 @@ flowchart LR
 | `PassNotice.tsx` | The pass card itself — the lesson, both halves of the verdict and the door to the next lesson — handed to sonner's toast, which owns its stack, live region and hold. |
 | `useProgressFlags.ts` | The verified and self-marked lesson stores, parent-owned or local, and the two writers. |
 | `useRunnerArrangement.ts` | The editor/results split share, which side results sit on, and the persisted layout record. |
+| `useLayoutShortcuts.ts` | The runner's global ⌥1–⌥4 keys: the listener, the physical-key lookup and the same sound the preset buttons make, kept out of the tab. |
 | `RunnerToolbar.tsx` | The run controls: presets and dock, Pause/Stop/Run, Predict, and the More panel's actions. |
 | `CompactPageChrome.tsx` | The page's own controls drawn inside the dock: the Beginner/All labs switch with the three tallies, and the simulator tabs as icon chips where only the open tab prints its name. It reads `app/src/compactChrome.tsx`, which `App.tsx` fills from the state the rail and the mode bar already use, so there is one copy of each control. |
 | `CompactShelf.tsx` | The Compact preset's one dock: a single row of module names with the number worth reading while each is closed, and the one panel a press opens under the row. One module at a time, no scrolling inside it, so the dock's height with everything closed is the same whatever the open module holds. |
