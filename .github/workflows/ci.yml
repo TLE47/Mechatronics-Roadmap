@@ -101,12 +101,13 @@ jobs:
       - name: Assert npm ci installed every optional binary recorded for linux/x64
         run: npm run check:native
 
-      # Two gates in the list below grade the built bundle in a browser: the primitive contract
-      # (tokens and focus) and the animation ratchet. Building here rather than inside them keeps
-      # two parallel gates from racing on `dist/`, and the build is the same one every other lane
-      # grades. `prebuild` first, so the generated data the build inlines is newer than its sources
-      # and `ensureBuilt()` in each gate sees a fresh bundle instead of rebuilding it.
-      - name: Build the bundle the two browser gates grade
+      # Three gates in the list below grade the built bundle in a browser: the primitive contract
+      # (tokens and focus), the animation ratchet and the study-note suppression contract. Building
+      # here rather than inside them keeps the parallel gates from racing on `dist/`, and the build is
+      # the same one every other lane grades. `prebuild` first, so the generated data the build inlines
+      # is newer than its sources and `ensureBuilt()` in each gate sees a fresh bundle instead of
+      # rebuilding it.
+      - name: Build the bundle the browser gates grade
         run: |
           npm run prebuild
           npx vite build
@@ -114,7 +115,7 @@ jobs:
       # The cache key follows the Playwright version, not the lockfile hash: a dependency bump that
       # leaves Playwright alone must not throw away the download. Only the headless shell is
       # installed — it is the renderer the surface baseline was measured with and the only one these
-      # two gates launch (see `scripts/test_primitive_contract.mjs`).
+      # gates launch (see `scripts/test_primitive_contract.mjs`).
       - name: Read the installed Playwright version
         id: pw
         run: node -p "'v=' + require('playwright-core/package.json').version" >> "$GITHUB_OUTPUT"

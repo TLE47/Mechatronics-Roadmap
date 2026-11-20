@@ -189,6 +189,7 @@
     "test:runtime": "node scripts/e2e_runtime.mjs",
     "test:primitives": "node scripts/test_primitive_contract.mjs",
     "check:animations": "node scripts/check_animation_budget.mjs",
+    "test:study-tips": "node scripts/test_study_tips.mjs",
     "test:bridge-visuals": "node --experimental-strip-types scripts/test_bridge_visuals.mjs"
   },
   "dependencies": {

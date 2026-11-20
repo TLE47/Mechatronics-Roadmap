@@ -137,6 +137,11 @@ GATES: list[tuple[str, list[str], bool]] = [
     # holding, so they run here, in CI, on every push.
     ("primitives", ["npm", "run", "test:primitives"], False),
     ("animations", ["npm", "run", "check:animations"], False),
+    # The study note is timed (35 s), and the feature walkthrough suppresses it. A real wait would
+    # cost minutes per window; the gate drives the built bundle with a fake clock and pins the three
+    # behaviours a refactor of either surface could quietly break: due-during-tour stays hidden, an
+    # on-screen note is cleared when the tour opens, and the next one appears when it closes.
+    ("study_tips", ["npm", "run", "test:study-tips"], False),
     # Heavy from here down: same commands CI runs, including the report handoff that lets the
     # unittest discovery reuse the sweep instead of running all 48 packages a second time.
     ("exercise_sweep", ["scripts/run_exercise.py", "--verbose"], True),

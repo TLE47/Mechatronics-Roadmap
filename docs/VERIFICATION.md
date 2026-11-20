@@ -176,6 +176,7 @@ npm run check:lighthouse                # Lighthouse on the built bundle: best-p
 npm run check:snapshot                  # the painted surface of all 72 surfaces (sixteen tabs, Home and the Workflow canvas, four palettes) against docs/surface-snapshot.json: geometry (2 px), control counts, resolved styles
 npm run test:primitives                 # the four installed primitives wear the workbench, not their library: the skip link is the first stop, ⌘K puts the caret in the field and names the head row, Tab never leaves the palette, the key sheet traps focus, and every colour a palette row paints is declared in index.css
 npm run check:animations                # at most one looping animation per surface, measured with document.getAnimations() against the ratchet in docs/animation-budget.json
+npm run test:study-tips                 # the timed study note: a note due while the feature walkthrough is open stays hidden, one already on screen is cleared when it opens, and the next appears after it closes
 npm run test:settle                     # the gate that sweep waits on, driven against pages whose count arrives late: a copy of the previous silence-only gate is the failing control, and a count that lands with no loading marker plus one that never finishes pin the other two edges
 npm run check:labels                    # the first screen's type, rendered at 1280x800: eight controls at rest, twelve behind More, primary 13 px, controls 12 px, metadata 11 px, lesson text 17-18 px — and Home's controls and metadata at the same floors
 npm run test:perf                       # the visit, timed: six moments on the built bundle, on a laptop and on a throttled phone, each against docs/perf-budget.json (add --record to write docs/PERF.md)
@@ -761,7 +762,7 @@ it against `signed_in`'s ceilings and deletes it, so a breach that only exists w
 library present fails locally instead of on the runner (Run 226). CI's `dist/` is already signed-in,
 so nothing extra is built there.
 
-## UI primitives: the contract and the animation ratchet
+## UI contracts: the primitives, the animation ratchet and the study note
 
 Two of the rules behind the 2026-11-13 library release could not be seen by any gate that already
 existed, so they have their own. Both are rows in `scripts/check_all.py`, which is the table CI's
@@ -770,10 +771,10 @@ grade the same two rules; `tests/test_check_all.py` keeps that table and the wor
 gate cannot be dropped from CI without its parity test going red.
 
 That job therefore prepares what they measure: it builds the bundle once (`npm run prebuild` then
-`npx vite build`, so the two parallel gates never race on `dist/` and `ensureBuilt()` finds a fresh
-one) and installs the Playwright **headless shell** once, cached on Playwright's version — the shell
-is the renderer the surface baseline was measured with and the only browser these two launch. On a
-warm cache the pair costs about a minute; measured locally at 20 s and 45 s.
+`npx vite build`, so the parallel gates never race on `dist/` and `ensureBuilt()` finds a fresh one)
+and installs the Playwright **headless shell** once, cached on Playwright's version — the shell is the
+renderer the surface baseline was measured with and the only browser these launch. On a warm cache
+the three cost about a minute between them; measured locally at 20 s, 45 s and about 2 s.
 
 `npm run test:primitives` (`scripts/test_primitive_contract.mjs`) drives the built bundle on the
 headless shell and asserts six things a dependency bump could quietly break:
@@ -797,6 +798,14 @@ a diff. It proves the ruler first: it adds a known infinite animation and refuse
 counter cannot see it. Today every tab measures zero (the arm and the hero are JS-driven canvases,
 not CSS loops, and they are the page's one standout), so the file is a floor, not an allowance.
 Re-record with `node scripts/check_animation_budget.mjs --record` and say which element was added.
+
+`npm run test:study-tips` (`scripts/test_study_tips.mjs`) drives the same bundle with Playwright's
+fake clock, because the study note is timed: 35 s after mount, 18 s on screen, only while the tab is
+visible and the learner has been still for 20 s. It opens the page tour before that tick and crosses
+it (the note stays hidden), closes the tour and crosses the next one (the note appears), reopens the
+tour over the visible note (it is cleared at once), then crosses one more window (still clear). The
+clock makes those four 40 s windows cost milliseconds, and the run seeds the intro tour and the
+reopening guide off the way every harness does, so only the feature walkthrough is under test.
 
 ## The surface snapshot runs on the headless shell
 
