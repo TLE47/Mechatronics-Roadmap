@@ -76,6 +76,17 @@ function clickedAction(clicked: EventTarget | null, selectors: readonly string[]
   return false;
 }
 
+function sameRect(a: TargetRect | null, b: TargetRect | null): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return (
+    Math.abs(a.top - b.top) < 0.5 &&
+    Math.abs(a.left - b.left) < 0.5 &&
+    Math.abs(a.width - b.width) < 0.5 &&
+    Math.abs(a.height - b.height) < 0.5
+  );
+}
+
 function readRect(node: HTMLElement | null): TargetRect | null {
   if (!node) return null;
   const rect = node.getBoundingClientRect();
@@ -288,6 +299,7 @@ export function FeatureWalkthrough({
     if (stop.tab && !walkthroughAction(stop.id)?.opensTab) navigateRef.current(stop.tab);
     let cancelled = false;
     let tries = 0;
+    let scrolls = 0;
     let timer = 0;
     setTarget(null);
 
@@ -303,8 +315,11 @@ export function FeatureWalkthrough({
       }
       const rect = node.getBoundingClientRect();
       // A target under the sticky header or below the fold is scrolled into the comfortable middle
-      // before it is measured again.
-      if (rect.top < 80 || rect.bottom > window.innerHeight - 80) {
+      // before it is measured again. The retry is bounded: a control inside a panel that cannot
+      // scroll would otherwise leave the card with no spotlight at all, and every click would land
+      // on the backdrop instead of the control the stop is asking for.
+      if ((rect.top < 80 || rect.bottom > window.innerHeight - 80) && scrolls < 2) {
+        scrolls += 1;
         node.scrollIntoView({ block: 'center', inline: 'nearest' });
         timer = window.setTimeout(locate, 280);
         return;
@@ -323,6 +338,18 @@ export function FeatureWalkthrough({
       window.removeEventListener('resize', onReflow);
       window.removeEventListener('scroll', onReflow, true);
     };
+  }, [state.index, stop]);
+
+  // The anchor can move without a scroll or a resize: a lazy tab finishes loading, a panel folds,
+  // an editor changes height, a dialog closes. Following it on a short clock keeps the hole on the
+  // control, rather than on where it used to be, while the learner is being asked to press it.
+  useEffect(() => {
+    const follow = () => {
+      const next = readRect(findVisible(stop.anchors));
+      setTarget((previous) => (sameRect(previous, next) ? previous : next));
+    };
+    const timer = window.setInterval(follow, 120);
+    return () => window.clearInterval(timer);
   }, [state.index, stop]);
 
   // The real control is the checklist box. Only a click on the exact action control checks the
