@@ -397,6 +397,9 @@ async function main() {
         viewport: { width: 1280, height: 900 },
         reducedMotion: 'reduce',
       });
+      // A reduced-motion reader is still a returning visitor to the harness: without the seed the
+      // guide reopens over the page and its scrim swallows the header switch this block presses.
+      await seedTourSeen(quiet);
       const stillPage = await quiet.newPage();
       await stillPage.goto(`${baseUrl}?view=intro`, { waitUntil: 'domcontentloaded' });
       await stillPage.getByTestId('intro-page').waitFor({ timeout: 30000 });

@@ -28,6 +28,7 @@ import {
   type GuideVisual as GuideVisualId,
 } from '../learnerGuide';
 import type { TabId } from '../types';
+import { readGuideReopen, writeGuideReopen } from '../learnerGuideDoor';
 import { playShortcut } from '../audio/shortcutSound';
 
 const FORMULA_CHIPS = TYPESET_SHOWCASE.slice(0, 6).map((entry) => ({
@@ -533,6 +534,7 @@ const GuideVisual: React.FC<{ id: GuideVisualId }> = ({ id }) => {
  * step rail, the copy, a drawn instrument panel, and Previous / Next / Turn off.
  *
  * The guide never blocks a tab: an action closes it and takes the learner to the tab it names.
+ * It reopens by default on the next visit; the checklist at the foot of the panel turns that off.
  * Turning it off stores the current step, so the next open resumes there. Finishing stores
  * `completed`; opening it again starts from the top.
  */
@@ -542,6 +544,7 @@ export const LearnerGuide: React.FC<{
   onWalkthrough: () => void;
 }> = ({ onClose, onNavigate, onWalkthrough }) => {
   const [state, setState] = useState<GuideState>(() => resumeGuideState(readGuideState()));
+  const [reopen, setReopen] = useState<boolean>(() => readGuideReopen());
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const step = LEARNER_GUIDE[state.stepIndex] ?? LEARNER_GUIDE[0]!;
@@ -734,7 +737,7 @@ export const LearnerGuide: React.FC<{
                     type="button"
                     onClick={() => jump(index)}
                     aria-current={current ? 'step' : undefined}
-                    aria-label={`Step ${index + 1} of ${GUIDE_STEP_COUNT}: ${entry.title}`}
+                    aria-label={`${guideStepNumber(index)} ${entry.short} — step ${index + 1} of ${GUIDE_STEP_COUNT}`}
                     data-testid={`guide-step-${index}`}
                     className={`flex w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors ${
                       current
@@ -752,7 +755,7 @@ export const LearnerGuide: React.FC<{
                       }`}
                     >
                       {done ? <Check className="h-2.5 w-2.5" aria-hidden="true" /> : guideStepNumber(index)}
-                    </span>
+                    </span>{' '}
                     <span className={`truncate text-[11.5px] ${current ? 'font-semibold' : ''}`}>
                       {entry.short}
                     </span>
@@ -848,7 +851,36 @@ export const LearnerGuide: React.FC<{
               </button>
             </div>
           </div>
-          <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-2">
+            {/* A real checkbox, not a second Turn off: the guide keeps coming back by default, and
+                this is the honest place to stop that rather than a settings trip. */}
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={reopen}
+              onClick={() => setReopen(writeGuideReopen(!reopen))}
+              data-testid="guide-reopen-checklist"
+              title="Uncheck to stop the guide opening automatically. You can always open it by hand from General settings."
+              className="flex min-h-7 cursor-pointer items-center gap-2 rounded-lg border px-2 py-1 text-left transition-colors"
+              style={{
+                borderColor: reopen ? 'var(--accent)' : 'var(--border)',
+                backgroundColor: reopen ? 'var(--accent-soft)' : 'transparent',
+              }}
+            >
+              <span
+                aria-hidden="true"
+                className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[4px] border"
+                style={{
+                  borderColor: reopen ? 'var(--emerald)' : 'var(--border-strong)',
+                  backgroundColor: reopen ? 'var(--emerald)' : 'transparent',
+                }}
+              >
+                {reopen && <Check className="h-2.5 w-2.5 text-inverse" />}
+              </span>
+              <span className="text-[10.5px] font-semibold text-body">
+                Keep reopening on every visit
+              </span>
+            </button>
             <button
               type="button"
               onClick={close}

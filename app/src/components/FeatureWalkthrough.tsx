@@ -4,8 +4,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Compass,
+  RotateCcw,
   Square,
-  Target,
   Trophy,
   X,
 } from 'lucide-react';
@@ -17,6 +17,7 @@ import {
   nextWalkthroughState,
   previousWalkthroughState,
   readWalkthroughState,
+  resetWalkthroughState,
   resumeWalkthroughState,
   walkthroughAction,
   walkthroughAnnouncement,
@@ -75,6 +76,17 @@ function clickedAction(clicked: EventTarget | null, selectors: readonly string[]
   return false;
 }
 
+function sameRect(a: TargetRect | null, b: TargetRect | null): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return (
+    Math.abs(a.top - b.top) < 0.5 &&
+    Math.abs(a.left - b.left) < 0.5 &&
+    Math.abs(a.width - b.width) < 0.5 &&
+    Math.abs(a.height - b.height) < 0.5
+  );
+}
+
 function readRect(node: HTMLElement | null): TargetRect | null {
   if (!node) return null;
   const rect = node.getBoundingClientRect();
@@ -108,10 +120,15 @@ function placeCard(
     };
   }
 
-  const fitsBelow = target.bottom + CARD_GAP + CARD_HEIGHT_ESTIMATE < viewport.height - 12;
-  let top = fitsBelow
+  // The room on each side is measured against the target itself, and the card is never allowed to
+  // grow back over it: a card that covers the outlined control takes the very click it asks for.
+  const roomBelow = Math.max(0, viewport.height - 12 - (target.bottom + CARD_GAP));
+  const roomAbove = Math.max(0, target.top - CARD_GAP - 12);
+  const fitsBelow = roomBelow >= CARD_HEIGHT_ESTIMATE || roomBelow >= roomAbove;
+  const top = fitsBelow
     ? target.bottom + CARD_GAP
     : Math.max(12, target.top - CARD_HEIGHT_ESTIMATE - CARD_GAP);
+  const room = fitsBelow ? roomBelow : roomAbove;
 
   // A narrow, tall target — the rail's fold button, a colour dot — is better read beside than
   // above or below, where the card would cover the thing it is describing.
@@ -132,7 +149,7 @@ function placeCard(
     Math.max(12, target.left + target.width / 2 - width / 2),
     viewport.width - width - 12
   );
-  return { left, top, width, maxHeight: Math.max(160, viewport.height - top - 12) };
+  return { left, top, width, maxHeight: Math.max(140, Math.min(room, viewport.height - 24)) };
 }
 
 /**
@@ -143,10 +160,12 @@ function placeCard(
  * new-learner guide — the guide explains the shape, this names every control and the gesture that
  * uses it.
  *
- * **A stop is a task, not a slide.** The highlighted control stays live: clicking it (or pressing
- * the card's *Do it* button, which activates the same control) checks the stop off, sounds the
- * workbench's pass phrase and unlocks Next. The checked ids are stored with the tour position, so a
- * learner can stop midway and come back to the checklist they left.
+ * **A stop is a task, not a gate.** The highlighted control stays live and is outlined, so the
+ * learner can try it themselves; clicking it crosses the stop's checklist row off and sounds the
+ * workbench's pass phrase. Next is always available — the card never demands a click before it will
+ * move on — and *Reset points* clears every tick and returns to the first stop. The checked ids are
+ * stored with the tour position, so a learner can stop midway and come back to the checklist they
+ * left.
  *
  * The dimming is four panels around the spotlight rather than one sheet over it: that is what lets
  * the real control take the click. The card owns the keyboard (← →, Tab and Escape), the background
@@ -164,7 +183,6 @@ export function FeatureWalkthrough({
   );
   const [target, setTarget] = useState<TargetRect | null>(null);
   const [justChecked, setJustChecked] = useState(false);
-  const [nudge, setNudge] = useState<'check' | 'missing' | null>(null);
   const [viewport, setViewport] = useState(() => ({
     width: typeof window === 'undefined' ? 1280 : window.innerWidth,
     height: typeof window === 'undefined' ? 800 : window.innerHeight,
@@ -175,8 +193,6 @@ export function FeatureWalkthrough({
   const stateRef = useRef(state);
   stateRef.current = state;
   const celebrateTimer = useRef<number | null>(null);
-  const nudgeTimer = useRef<number | null>(null);
-  const revealTimer = useRef<number | null>(null);
 
   const stop = FEATURE_WALKTHROUGH[state.index] ?? FEATURE_WALKTHROUGH[0]!;
   const stopRef = useRef(stop);
@@ -220,23 +236,9 @@ export function FeatureWalkthrough({
   const completeRef = useRef(completeCurrent);
   completeRef.current = completeCurrent;
 
-  /** A short shake for a missing action, or for Next pressed before the box is ticked. */
-  const flashNudge = (kind: 'check' | 'missing') => {
-    setNudge(kind);
-    playUi('close');
-    if (nudgeTimer.current !== null) window.clearTimeout(nudgeTimer.current);
-    nudgeTimer.current = window.setTimeout(() => {
-      nudgeTimer.current = null;
-      setNudge(null);
-    }, 900);
-  };
-
+  /** Moving on never asks whether the box is ticked: the tour points, it does not gate. */
   const advance = () => {
     const current = stateRef.current;
-    if (!current.completed.includes(stopRef.current.id)) {
-      flashNudge('check');
-      return;
-    }
     const next = nextWalkthroughState(current);
     writeWalkthroughState(next);
     stateRef.current = next;
@@ -253,41 +255,14 @@ export function FeatureWalkthrough({
     commit(previousWalkthroughState(stateRef.current));
   };
 
-  /**
-   * Do it is a shortcut for the same gesture, not a score button: it presses the stop's exact
-   * control. If that control is missing or disabled, the box stays open and the card says why,
-   * because a tutorial that ticks itself teaches nothing.
-   */
-  const tryTarget = () => {
-    const currentAction = walkthroughAction(stopRef.current.id);
-    if (!currentAction) {
-      flashNudge('missing');
-      return;
-    }
-    const node = findVisible(currentAction.selectors);
-    if (node) {
-      if (node.matches(':disabled, [aria-disabled="true"]')) flashNudge('missing');
-      else node.click();
-      return;
-    }
-    // Share and Pair live inside More. Do it opens the disclosure first, then presses the exact
-    // action once React has drawn it; a click on More alone still does not score.
-    const reveal = currentAction.reveal ? findVisible(currentAction.reveal) : null;
-    if (!reveal) {
-      flashNudge('missing');
-      return;
-    }
-    reveal.click();
-    if (revealTimer.current !== null) window.clearTimeout(revealTimer.current);
-    revealTimer.current = window.setTimeout(() => {
-      revealTimer.current = null;
-      const target = findVisible(currentAction.selectors);
-      if (!target || target.matches(':disabled, [aria-disabled="true"]')) {
-        flashNudge('missing');
-        return;
-      }
-      target.click();
-    }, 80);
+  /** Wipe the score and start the walk from its first stop, without leaving the workbench. */
+  const resetPoints = () => {
+    const next = resetWalkthroughState();
+    writeWalkthroughState(next);
+    stateRef.current = next;
+    setState(next);
+    setJustChecked(false);
+    playUi('close');
   };
 
   // The page behind the tooltip is a backdrop with a hole in it. Locking the scroll keeps the
@@ -303,8 +278,6 @@ export function FeatureWalkthrough({
   useEffect(
     () => () => {
       if (celebrateTimer.current !== null) window.clearTimeout(celebrateTimer.current);
-      if (nudgeTimer.current !== null) window.clearTimeout(nudgeTimer.current);
-      if (revealTimer.current !== null) window.clearTimeout(revealTimer.current);
     },
     []
   );
@@ -326,6 +299,7 @@ export function FeatureWalkthrough({
     if (stop.tab && !walkthroughAction(stop.id)?.opensTab) navigateRef.current(stop.tab);
     let cancelled = false;
     let tries = 0;
+    let scrolls = 0;
     let timer = 0;
     setTarget(null);
 
@@ -341,8 +315,11 @@ export function FeatureWalkthrough({
       }
       const rect = node.getBoundingClientRect();
       // A target under the sticky header or below the fold is scrolled into the comfortable middle
-      // before it is measured again.
-      if (rect.top < 80 || rect.bottom > window.innerHeight - 80) {
+      // before it is measured again. The retry is bounded: a control inside a panel that cannot
+      // scroll would otherwise leave the card with no spotlight at all, and every click would land
+      // on the backdrop instead of the control the stop is asking for.
+      if ((rect.top < 80 || rect.bottom > window.innerHeight - 80) && scrolls < 2) {
+        scrolls += 1;
         node.scrollIntoView({ block: 'center', inline: 'nearest' });
         timer = window.setTimeout(locate, 280);
         return;
@@ -363,6 +340,18 @@ export function FeatureWalkthrough({
     };
   }, [state.index, stop]);
 
+  // The anchor can move without a scroll or a resize: a lazy tab finishes loading, a panel folds,
+  // an editor changes height, a dialog closes. Following it on a short clock keeps the hole on the
+  // control, rather than on where it used to be, while the learner is being asked to press it.
+  useEffect(() => {
+    const follow = () => {
+      const next = readRect(findVisible(stop.anchors));
+      setTarget((previous) => (sameRect(previous, next) ? previous : next));
+    };
+    const timer = window.setInterval(follow, 120);
+    return () => window.clearInterval(timer);
+  }, [state.index, stop]);
+
   // The real control is the checklist box. Only a click on the exact action control checks the
   // stop; a click on the surrounding panel or another control does not.
   useEffect(() => {
@@ -377,10 +366,9 @@ export function FeatureWalkthrough({
   }, [state.index, stop.id]);
 
   // Focus moves with the card, never into the page behind it. A new mission also clears the
-  // celebration and the nudge from the one before it.
+  // celebration from the stop before it.
   useEffect(() => {
     setJustChecked(false);
-    setNudge(null);
     cardRef.current?.focus({ preventScroll: true });
   }, [state.index]);
 
@@ -454,9 +442,12 @@ export function FeatureWalkthrough({
       ]
     : null;
 
+  // The wrapper must not eat the gesture it is asking for: the spotlighted control lives under this
+  // fixed layer, so the layer is click-through and only the card and the four backdrop panes opt
+  // back into pointer events.
   return (
     <div
-      className="fixed inset-0 z-[90]"
+      className="pointer-events-none fixed inset-0 z-[90]"
       role="dialog"
       aria-labelledby="walkthrough-title"
       data-testid="feature-walkthrough"
@@ -473,7 +464,7 @@ export function FeatureWalkthrough({
             aria-label="Close the feature walkthrough"
             tabIndex={-1}
             onClick={close}
-            className="fixed cursor-default bg-[rgba(4,8,11,0.62)]"
+            className="pointer-events-auto fixed cursor-default bg-[rgba(4,8,11,0.62)]"
             style={piece}
           />
         ))
@@ -483,7 +474,7 @@ export function FeatureWalkthrough({
           aria-label="Close the feature walkthrough"
           tabIndex={-1}
           onClick={close}
-          className="absolute inset-0 h-full w-full cursor-default bg-[rgba(4,8,11,0.62)]"
+          className="pointer-events-auto absolute inset-0 h-full w-full cursor-default bg-[rgba(4,8,11,0.62)]"
         />
       )}
 
@@ -512,9 +503,9 @@ export function FeatureWalkthrough({
         style={cardStyle}
         data-testid="walkthrough-card"
         data-just-checked={justChecked ? 'true' : 'false'}
-        className={`fixed overflow-y-auto rounded-2xl border bg-panel text-ink shadow-[var(--shadow-lg)] outline-none ${
+        className={`pointer-events-auto fixed overflow-y-auto rounded-2xl border bg-panel text-ink shadow-[var(--shadow-lg)] outline-none ${
           justChecked ? 'walkthrough-card-checked' : ''
-        } ${nudge ? 'walkthrough-card-nudge' : ''}`}
+        }`}
       >
         <header className="flex items-center justify-between gap-2 border-b border-line-soft px-3.5 py-2.5">
           <span className="flex min-w-0 items-center gap-2">
@@ -551,6 +542,17 @@ export function FeatureWalkthrough({
             >
               ★ {score}
             </span>
+            <button
+              type="button"
+              onClick={resetPoints}
+              data-testid="walkthrough-reset"
+              aria-label="Reset walkthrough points"
+              title="Reset points and start from the first feature"
+              className="flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-lg border border-line-soft px-1.5 font-mono text-[10px] text-muted transition-colors hover:border-line-strong hover:text-ink"
+            >
+              <RotateCcw className="h-3 w-3" aria-hidden="true" />
+              <span className="hidden sm:inline">Reset</span>
+            </button>
             <button
               type="button"
               onClick={close}
@@ -611,11 +613,7 @@ export function FeatureWalkthrough({
             data-done={isChecked ? 'true' : 'false'}
             data-action={action?.label ?? ''}
             className={`mt-3 rounded-xl border px-2.5 py-2 transition-colors ${
-              isChecked
-                ? 'border-emerald/45 bg-emerald/10'
-                : nudge
-                  ? 'border-rose/60 bg-rose/10'
-                  : 'border-line-soft bg-canvas'
+              isChecked ? 'border-emerald/45 bg-emerald/10' : 'border-line-soft bg-canvas'
             }`}
           >
             <div className="flex items-center justify-between gap-2">
@@ -639,39 +637,13 @@ export function FeatureWalkthrough({
                   <>
                     {action?.label ?? 'Use the highlighted control.'}
                     <span className="mt-0.5 block text-[11px] font-normal leading-snug text-muted">
-                      Click that control yourself, or press <strong className="text-body">Do it</strong>{' '}
-                      to press it for you. Next unlocks when the box is ticked.
+                      The outlined control is live. Use it and this row ticks itself; Next is always
+                      available if you would rather read on.
                     </span>
                   </>
                 )}
               </span>
-              <button
-                type="button"
-                onClick={tryTarget}
-                disabled={isChecked}
-                title={action?.label ?? 'No action is recorded for this stop'}
-                data-testid="walkthrough-do-it"
-                className={`inline-flex min-h-8 shrink-0 items-center gap-1 rounded-lg border px-2 font-mono text-[11px] font-bold transition-colors ${
-                  isChecked
-                    ? 'cursor-default border-emerald/40 text-emerald'
-                    : 'cursor-pointer border-accent/50 bg-accent-soft text-accent hover:bg-accent/20'
-                }`}
-              >
-                {isChecked ? (
-                  <Check className="h-3 w-3" aria-hidden="true" />
-                ) : (
-                  <Target className="h-3 w-3" aria-hidden="true" />
-                )}
-                {isChecked ? 'Done' : 'Do it'}
-              </button>
             </div>
-            {nudge && !isChecked && (
-              <p className="mt-1 font-mono text-[10.5px] text-rose" role="status">
-                {nudge === 'missing'
-                  ? `${action?.label ?? 'This stop’s control'} is not on screen. Open its panel first.`
-                  : 'Check this stop off before moving on.'}
-              </p>
-            )}
           </div>
         </div>
 
@@ -705,9 +677,7 @@ export function FeatureWalkthrough({
             <button
               type="button"
               onClick={advance}
-              disabled={!isChecked}
-              aria-disabled={!isChecked}
-              title={isChecked ? 'Next mission' : 'Check the highlighted control off first'}
+              title="Next mission"
               data-testid="walkthrough-next"
               className="inline-flex min-h-8 cursor-pointer items-center gap-0.5 rounded-lg bg-accent px-2.5 text-[11px] font-semibold text-inverse transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -722,7 +692,7 @@ export function FeatureWalkthrough({
           <p className="mt-1.5 hidden font-mono text-[9px] text-faint sm:block">
             {isChecked
               ? '✓ Checked · → next · ← back · Esc to close · your place is kept'
-              : 'Do the spotlit control to check the box · ← back · Esc to close'}
+              : 'Use the outlined control to tick it · → next · ← back · Esc to close'}
           </p>
         </footer>
       </div>

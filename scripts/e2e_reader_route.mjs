@@ -38,7 +38,8 @@ import path from 'node:path';
 import { chromium } from 'playwright-core';
 import { resolveChromiumExecutable } from './e2e_browser_workbench.mjs';
 import { BASE, startStaticServer } from './e2e_pages_bundle.mjs';
-import { seedTourSeen } from './tour_seed.mjs';
+import { TOUR_SEEN_RECORD, seedTourSeen } from './tour_seed.mjs';
+import { GUIDE_REOPEN_STORAGE_KEY } from '../app/src/learnerGuideDoor.ts';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 import { CONCEPT_VISUAL_SCENES, visualPlacementForConcept } from '../app/src/micro/visuals.ts';
 
@@ -156,10 +157,17 @@ async function visit(lesson) {
   const evidence = { id: lesson.id };
 
   try {
-    await page.addInitScript(() => {
-      window.__mechalabPredictFirst = false;
-      window.localStorage.clear();
-    });
+    // The page starts from an empty store, but the harness identity is not the page's progress:
+    // clearing it here would also wipe the context seed and reopen the guide over the reader.
+    await page.addInitScript(
+      ({ tour, guideKey }) => {
+        window.__mechalabPredictFirst = false;
+        window.localStorage.clear();
+        window.localStorage.setItem('mechalab_tour_v1', tour);
+        window.localStorage.setItem(guideKey, '0');
+      },
+      { tour: TOUR_SEEN_RECORD, guideKey: GUIDE_REOPEN_STORAGE_KEY }
+    );
     await page.goto(`${base}?lesson=${encodeURIComponent(lesson.id)}`, {
       waitUntil: 'domcontentloaded',
       timeout: 45000,
@@ -388,6 +396,7 @@ async function visitGallery() {
     viewport: { width: 1440, height: 900 },
     serviceWorkers: 'block',
   });
+  await seedTourSeen(context);
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (error) => errors.push(String(error)));
