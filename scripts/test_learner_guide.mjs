@@ -516,11 +516,14 @@ check('the walkthrough points instead of pressing, and stays until its own close
   assert.match(WALKTHROUGH_SOURCE, /data-testid="walkthrough-reset"/);
   assert.doesNotMatch(WALKTHROUGH_SOURCE, /walkthrough-do-it/);
   assert.match(WALKTHROUGH_SOURCE, /data-testid="walkthrough-close"/);
-  // No scrim and no scroll lock: a misclick belongs to the page, not to the tour.
-  assert.doesNotMatch(WALKTHROUGH_SOURCE, /bg-\[rgba\(4,8,11/);
+  // The dim is the spotlight's own shadow, not an interactive scrim, and there is no scroll lock:
+  // a misclick still belongs to the page, not to the tour.
+  assert.match(WALKTHROUGH_SOURCE, /walkthrough-spot/);
   assert.doesNotMatch(WALKTHROUGH_SOURCE, /document\.body\.style\.overflow/);
-  // The window a stop opens is cleared again before the next stop needs the stage.
+  // The surface a stop opened is cleared on the click timer and again when the tour moves on, so
+  // the next stop is never buried under it.
   assert.match(WALKTHROUGH_SOURCE, /clearDialogsOpenedSince/);
+  assert.match(WALKTHROUGH_SOURCE, /collapseOpenedSurfaces/);
   assert.match(WALKTHROUGH_SOURCE, /SURFACE_CLEAR_DELAY/);
 });
 

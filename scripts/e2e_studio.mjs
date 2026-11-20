@@ -875,9 +875,10 @@ async function main() {
     await guideContext.close();
 
     // ---- 2b.3 The guide's second mode is a tooltip that points at the real controls ----
-    // It is not a slideshow behind the dialog and it is not modal: the guide closes, nothing is
-    // dimmed or scroll-locked, and each Next moves the card to another control — including opening
-    // the tab the feature lives in. Only the card's Close button dismisses it.
+    // It is not a slideshow behind the dialog and it is not modal: the guide closes, the page is
+    // only dimmed outside the spotlight, scroll is never locked, and each Next moves the card to
+    // another control — including opening the tab the feature lives in. Only the card's Close
+    // button dismisses it.
     await page.getByTestId('btn-general-settings').click();
     await page.getByTestId('general-settings').waitFor({ state: 'visible', timeout: 5000 });
     await page.getByTestId('btn-open-new-learner-guide').click();

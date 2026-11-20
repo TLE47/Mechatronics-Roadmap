@@ -694,18 +694,98 @@ body {
     transform: scale(2.1);
   }
 }
+@keyframes walkthrough-in-slide {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--enter-x, 1) * 54px)) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+@keyframes walkthrough-in-lift {
+  from {
+    opacity: 0;
+    transform: translateY(30px) translateX(calc(var(--enter-x, 1) * 14px))
+      rotate(calc(var(--enter-x, 1) * -1.2deg)) scale(0.965);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes walkthrough-in-tilt {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--enter-x, 1) * 42px))
+      rotate(calc(var(--enter-x, 1) * 2.4deg)) scale(0.94);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(calc(var(--enter-x, 1) * -3px))
+      rotate(calc(var(--enter-x, 1) * -0.4deg)) scale(1.005);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes walkthrough-in-flip {
+  from {
+    opacity: 0;
+    transform: perspective(900px) rotateY(calc(var(--enter-x, 1) * 18deg))
+      translateX(calc(var(--enter-x, 1) * 28px)) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(900px) rotateY(0deg) translateX(0) scale(1);
+  }
+}
+@keyframes walkthrough-in-rise {
+  from {
+    opacity: 0;
+    transform: translateY(38px) scale(0.9);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.012);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* The card is keyed by stop, so every move replays one entrance. The button that moved the tour
+   sets the horizontal sign and the stop picks one of five paths; only transform and opacity run. */
 .walkthrough-card {
   transition:
-    opacity 220ms var(--ease-out),
-    transform 260ms var(--ease-spring),
-    left 220ms var(--ease-out),
-    top 220ms var(--ease-out);
+    left 240ms var(--ease-out),
+    top 240ms var(--ease-out);
+}
+.walkthrough-card[data-nav='next'],
+.walkthrough-card[data-nav='start'] {
+  --enter-x: 1;
+}
+.walkthrough-card[data-nav='back'] {
+  --enter-x: -1;
+}
+.walkthrough-enter[data-motion='0'] {
+  animation: walkthrough-in-slide 420ms var(--ease-out) both;
+}
+.walkthrough-enter[data-motion='1'] {
+  animation: walkthrough-in-lift 460ms var(--ease-spring) both;
+}
+.walkthrough-enter[data-motion='2'] {
+  animation: walkthrough-in-tilt 440ms var(--ease-out) both;
+}
+.walkthrough-enter[data-motion='3'] {
+  animation: walkthrough-in-flip 480ms var(--ease-out) both;
+}
+.walkthrough-enter[data-motion='4'] {
+  animation: walkthrough-in-rise 500ms var(--ease-spring) both;
 }
 @starting-style {
-  .walkthrough-card {
-    opacity: 0;
-    transform: translateY(10px) scale(0.98);
-  }
   .walkthrough-spot {
     opacity: 0;
   }
@@ -719,6 +799,30 @@ body {
   pointer-events: none;
   background: linear-gradient(90deg, transparent, var(--accent), transparent);
   animation: walkthrough-beam 1100ms var(--ease-out) 120ms both;
+}
+/* The dim is a shadow with a hole, not an element: the page under it keeps every click, and the
+   control inside the hole is the one surface that is not darkened. */
+.walkthrough-spot {
+  --walkthrough-dim: rgba(2, 6, 12, 0.24);
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 5px var(--accent-soft),
+    0 0 0 100vmax var(--walkthrough-dim),
+    0 12px 40px -12px rgba(0, 0, 0, 0.6);
+}
+[data-theme='light'] .walkthrough-spot,
+[data-theme='paper'] .walkthrough-spot {
+  --walkthrough-dim: rgba(18, 24, 32, 0.12);
+}
+[data-theme='contrast'] .walkthrough-spot {
+  --walkthrough-dim: rgba(0, 0, 0, 0.5);
+}
+.walkthrough-spot[data-checked='true'] {
+  border-color: var(--emerald);
+  box-shadow:
+    0 0 0 5px color-mix(in srgb, var(--emerald) 18%, transparent),
+    0 0 0 100vmax var(--walkthrough-dim),
+    0 12px 40px -12px rgba(0, 0, 0, 0.6);
 }
 .walkthrough-spot::before {
   content: '';
@@ -813,7 +917,7 @@ body {
     transform: translateX(-1px);
   }
 }
-.walkthrough-card-checked {
+.walkthrough-card.walkthrough-card-checked {
   animation: walkthrough-check 560ms var(--ease-out) both;
 }
 .walkthrough-card-nudge {
