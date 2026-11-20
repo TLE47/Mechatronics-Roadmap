@@ -34,6 +34,7 @@ import {
 import {
   FEATURE_WALKTHROUGH,
   FEATURE_WALKTHROUGH_COUNT,
+  FEATURE_WALKTHROUGH_SECTIONS,
   FEATURE_WALKTHROUGH_STORAGE_KEY,
   FEATURE_WALKTHROUGH_VERSION,
   WALKTHROUGH_ACTIONS,
@@ -48,8 +49,11 @@ import {
   walkthroughAction,
   walkthroughAnnouncement,
   walkthroughCheckedCount,
+  walkthroughIndicesForTab,
+  walkthroughSectionAt,
   writeWalkthroughState,
 } from '../app/src/featureWalkthrough.ts';
+import { WALKTHROUGH_TAB_COUNTS } from '../app/src/walkthroughTabs.ts';
 import {
   GUIDE_REOPEN_STORAGE_KEY,
   readGuideReopen,
@@ -70,6 +74,10 @@ const GUIDE_SOURCE = fs.readFileSync(
 );
 const WALKTHROUGH_SOURCE = fs.readFileSync(
   new URL('../app/src/components/FeatureWalkthrough.tsx', import.meta.url),
+  'utf8'
+);
+const HEADER_SOURCE = fs.readFileSync(
+  new URL('../app/src/components/Header.tsx', import.meta.url),
   'utf8'
 );
 
@@ -361,6 +369,49 @@ check('every walkthrough anchor names a control that exists in the app', () => {
   }
 });
 
+check('the walkthrough is split into contiguous chapters that cover every stop', () => {
+  assert.ok(
+    FEATURE_WALKTHROUGH_SECTIONS.length >= 3,
+    'the catalogue needs at least three chapters so a beginner is not handed all 36 stops at once'
+  );
+  let nextFirst = 0;
+  for (const section of FEATURE_WALKTHROUGH_SECTIONS) {
+    assert.equal(section.first, nextFirst, `chapter "${section.name}" must start where the last one ended`);
+    assert.ok(section.count > 0, `chapter "${section.name}" has no stops`);
+    assert.ok(section.short.trim().length > 0, `chapter "${section.name}" needs a short name`);
+    for (let index = section.first; index < section.first + section.count; index += 1) {
+      assert.equal(FEATURE_WALKTHROUGH[index].section, section.name);
+      assert.equal(walkthroughSectionAt(index).name, section.name);
+    }
+    nextFirst += section.count;
+  }
+  assert.equal(
+    nextFirst,
+    FEATURE_WALKTHROUGH_COUNT,
+    'every stop must belong to one chapter; a gap would hide stops from the section rail'
+  );
+});
+
+check('the header page-tour map is derived from the same catalogue', () => {
+  const derived = {};
+  for (const stop of FEATURE_WALKTHROUGH) {
+    if (!stop.tab) continue;
+    derived[stop.tab] = (derived[stop.tab] ?? 0) + 1;
+  }
+  assert.deepEqual(
+    { ...WALKTHROUGH_TAB_COUNTS },
+    derived,
+    'app/src/walkthroughTabs.ts drifted from the catalogue; update both or derive the map'
+  );
+  for (const [tab, count] of Object.entries(WALKTHROUGH_TAB_COUNTS)) {
+    assert.equal(
+      walkthroughIndicesForTab(tab).length,
+      count,
+      `the page tour for "${tab}" would walk a different number of stops`
+    );
+  }
+});
+
 check('a stop with no target still reads, and no anchor is empty', () => {
   for (const stop of FEATURE_WALKTHROUGH) {
     assert.ok(stop.anchors.every((anchor) => anchor.trim().length > 0));
@@ -525,6 +576,12 @@ check('the walkthrough points instead of pressing, and stays until its own close
   assert.match(WALKTHROUGH_SOURCE, /clearDialogsOpenedSince/);
   assert.match(WALKTHROUGH_SOURCE, /collapseOpenedSurfaces/);
   assert.match(WALKTHROUGH_SOURCE, /SURFACE_CLEAR_DELAY/);
+  // The header's page tour is the same engine with a tab scope, and the card keeps its own scroll
+  // bar out of the page.
+  assert.match(WALKTHROUGH_SOURCE, /scopeTab/);
+  assert.match(WALKTHROUGH_SOURCE, /data-testid="walkthrough-sections"/);
+  assert.match(HEADER_SOURCE, /data-testid="btn-page-walkthrough"/);
+  assert.match(WALKTHROUGH_SOURCE, /overflow-x-hidden/);
 });
 
 check('the guide offers both modes and the walkthrough callback', () => {

@@ -1,8 +1,9 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Check, ChevronLeft, ChevronRight, Compass, RotateCcw, Trophy, X } from 'lucide-react';
 import {
   FEATURE_WALKTHROUGH,
   FEATURE_WALKTHROUGH_COUNT,
+  FEATURE_WALKTHROUGH_SECTIONS,
   completeWalkthroughStop,
   dismissWalkthroughState,
   nextWalkthroughState,
@@ -13,6 +14,8 @@ import {
   walkthroughAction,
   walkthroughAnnouncement,
   walkthroughCheckedCount,
+  walkthroughIndicesForTab,
+  walkthroughSectionAt,
   writeWalkthroughState,
   type WalkthroughState,
 } from '../featureWalkthrough';
@@ -22,7 +25,7 @@ import type { TabId } from '../types';
 
 const CARD_GAP = 14;
 const CARD_WIDTH = 384;
-const CARD_HEIGHT_ESTIMATE = 300;
+const CARD_HEIGHT_ESTIMATE = 360;
 const SPOT_PAD = 5;
 /** How long the control a stop opens is left on screen before the card clears it away. */
 const SURFACE_CLEAR_DELAY = 1000;
@@ -128,7 +131,7 @@ function clearDialogsOpenedSince(before: readonly Element[]) {
   }
 }
 
-/** Everything that was already expanded when the tour began, so navigation only closes new things. */
+/** Everything already expanded when the stop arrived, so moving on closes only what that stop opened. */
 interface SurfaceBaseline {
   dialogs: Element[];
   expanded: HTMLElement[];
@@ -189,6 +192,40 @@ function placeCard(
   target: TargetRect | null,
   viewport: { width: number; height: number }
 ): CSSProperties {
+  // A phone has no gutter to sit a tooltip in, so the card becomes an edge sheet: it docks opposite
+  // the spotlight and leaves the outlined control visible. It keeps the spotlight, the copy and
+  // both buttons usable at 360 px where the desktop two-column placement has nowhere to go.
+  if (viewport.width < 640) {
+    const width = Math.max(0, viewport.width - 16);
+    const sheetMax = Math.max(220, Math.min(viewport.height - 24, 520));
+    if (!target) {
+      return {
+        left: 8,
+        top: Math.max(8, viewport.height - sheetMax - 8),
+        width,
+        maxHeight: sheetMax,
+      };
+    }
+    // The card is docked on the side of the viewport the spot is not: below a header control, above
+    // a footer one. Either way it stops before the spot rather than growing back over it.
+    const targetIsLow = target.top + target.height / 2 > viewport.height / 2;
+    if (targetIsLow) {
+      return {
+        left: 8,
+        top: 8,
+        width,
+        maxHeight: Math.max(180, Math.min(sheetMax, target.top - 20)),
+      };
+    }
+    const top = Math.max(96, target.bottom + 12);
+    return {
+      left: 8,
+      top,
+      width,
+      maxHeight: Math.max(180, Math.min(sheetMax, viewport.height - top - 8)),
+    };
+  }
+
   const width = Math.min(CARD_WIDTH, viewport.width - 24);
   if (!target) {
     return {
@@ -257,9 +294,12 @@ function placeCard(
 export function FeatureWalkthrough({
   onClose,
   onNavigate,
+  scopeTab,
 }: {
   onClose: () => void;
   onNavigate: (tab: TabId) => void;
+  /** When set, the tour walks only the stops that belong to this tab (the header's page tour). */
+  scopeTab?: TabId;
 }) {
   const [state, setState] = useState<WalkthroughState>(() =>
     resumeWalkthroughState(readWalkthroughState())
@@ -269,8 +309,14 @@ export function FeatureWalkthrough({
   // is still mounting painted the card centred, then snapped it beside the control a frame later.
   const [placed, setPlaced] = useState(false);
   const [justChecked, setJustChecked] = useState(false);
+  // The entrance is a one-shot: it is detached on its own `animationend`, so the checked pulse
+  // cannot re-attach it and replay the slide 700 ms after a click.
+  const [entering, setEntering] = useState(true);
   // Which button moved the tour decides the entrance direction; the stop chooses the variant.
   const [navDirection, setNavDirection] = useState<'start' | 'next' | 'back'>('start');
+  // A page tour is a cursor into the tab's stops, not a second saved position: closing it leaves the
+  // learner's place in the full 36-stop walk untouched.
+  const [scopeCursor, setScopeCursor] = useState(0);
   const [viewport, setViewport] = useState(() => ({
     width: typeof window === 'undefined' ? 1280 : window.innerWidth,
     height: typeof window === 'undefined' ? 800 : window.innerHeight,
@@ -286,13 +332,31 @@ export function FeatureWalkthrough({
   const pinned = useRef<{ element: HTMLElement; rect: TargetRect } | null>(null);
   const surfaceBaseline = useRef<SurfaceBaseline | null>(null);
 
-  const stop = FEATURE_WALKTHROUGH[state.index] ?? FEATURE_WALKTHROUGH[0]!;
+  const scopeIndices = useMemo(
+    () => (scopeTab ? walkthroughIndicesForTab(scopeTab) : []),
+    [scopeTab]
+  );
+  const scoped = scopeIndices.length > 0;
+  const scopePosition = scoped
+    ? Math.min(scopeCursor, Math.max(0, scopeIndices.length - 1))
+    : 0;
+  const activeIndex = scoped ? (scopeIndices[scopePosition] ?? 0) : state.index;
+  const stop = FEATURE_WALKTHROUGH[activeIndex] ?? FEATURE_WALKTHROUGH[0]!;
   const stopRef = useRef(stop);
   stopRef.current = stop;
   const checked = new Set(state.completed);
   const isChecked = checked.has(stop.id);
   const checkedCount = walkthroughCheckedCount(state);
-  const isLast = state.index === FEATURE_WALKTHROUGH_COUNT - 1;
+  const section = walkthroughSectionAt(activeIndex);
+  const sectionIndex = FEATURE_WALKTHROUGH_SECTIONS.indexOf(section);
+  const sectionStops = FEATURE_WALKTHROUGH.slice(section.first, section.first + section.count);
+  const visibleStops = scoped
+    ? scopeIndices.map((index) => FEATURE_WALKTHROUGH[index]!)
+    : sectionStops;
+  const cursor = scoped ? scopePosition : Math.max(0, activeIndex - section.first);
+  const isLast = cursor >= visibleStops.length - 1;
+  const atSectionEnd = !scoped && isLast && activeIndex < FEATURE_WALKTHROUGH_COUNT - 1;
+  const checkedVisible = visibleStops.filter((entry) => checked.has(entry.id)).length;
   const score = String(checkedCount * 100).padStart(4, '0');
   const action = walkthroughAction(stop.id);
 
@@ -345,6 +409,16 @@ export function FeatureWalkthrough({
     collapseOpenedSurfaces();
     setNavDirection('next');
     setJustChecked(false);
+    // A page tour ends at its own last stop and closes; it never marks the full walk completed.
+    if (scoped) {
+      if (scopePosition >= scopeIndices.length - 1) {
+        playCue('verify');
+        onClose();
+        return;
+      }
+      setScopeCursor(scopePosition + 1);
+      return;
+    }
     const current = stateRef.current;
     const next = nextWalkthroughState(current);
     writeWalkthroughState(next);
@@ -358,10 +432,14 @@ export function FeatureWalkthrough({
   };
 
   const back = () => {
-    if (state.index === 0) return;
+    if (scoped ? scopePosition === 0 : state.index === 0) return;
     collapseOpenedSurfaces();
     setNavDirection('back');
     setJustChecked(false);
+    if (scoped) {
+      setScopeCursor(scopePosition - 1);
+      return;
+    }
     commit(previousWalkthroughState(stateRef.current));
   };
 
@@ -373,8 +451,20 @@ export function FeatureWalkthrough({
     writeWalkthroughState(next);
     stateRef.current = next;
     setState(next);
+    setScopeCursor(0);
     setJustChecked(false);
     playUi('close');
+  };
+
+  /** Jump to a chapter's first stop without changing what has been checked. */
+  const jumpToSection = (nextSection: number) => {
+    if (nextSection === sectionIndex) return;
+    collapseOpenedSurfaces();
+    setNavDirection(nextSection > sectionIndex ? 'next' : 'back');
+    setJustChecked(false);
+    const next = FEATURE_WALKTHROUGH_SECTIONS[nextSection];
+    if (!next) return;
+    commit({ ...stateRef.current, status: 'active', index: next.first, updatedAt: Date.now() });
   };
 
   useEffect(
@@ -393,11 +483,6 @@ export function FeatureWalkthrough({
     return () => window.removeEventListener('resize', measure);
   }, []);
 
-  // The surfaces already open when the tour starts belong to the learner, not to the tour; every
-  // later expansion is fair game for the collapse on Next / Back / Close.
-  useLayoutEffect(() => {
-    if (!surfaceBaseline.current) surfaceBaseline.current = readSurfaceBaseline();
-  }, []);
 
   // Opening a stop is also a navigation: the target tab is chosen first, then the anchor is looked
   // for. A lazy tab can take a moment to arrive, so the search is bounded and retried. The measure
@@ -406,6 +491,10 @@ export function FeatureWalkthrough({
     // A stop whose action is the tab itself must leave the learner that tab to open; anything else
     // navigates first so the control it describes is already on screen.
     if (stop.tab && !walkthroughAction(stop.id)?.opensTab) navigateRef.current(stop.tab);
+    // Only what this stop opened may be folded on the next move. A surface that was already open
+    // when the stop arrived belongs to the learner, so the baseline is taken per stop.
+    surfaceBaseline.current = readSurfaceBaseline();
+    setEntering(true);
     pinned.current = null;
     if (surfaceTimer.current !== null) {
       window.clearTimeout(surfaceTimer.current);
@@ -463,7 +552,7 @@ export function FeatureWalkthrough({
       window.removeEventListener('resize', onReflow);
       window.removeEventListener('scroll', onReflow, true);
     };
-  }, [state.index, stop]);
+  }, [activeIndex, stop]);
 
   // The anchor can move without a scroll or a resize: a lazy tab finishes loading, a panel folds,
   // an editor changes height, a dialog closes. Following it on a short clock keeps the hole on the
@@ -485,7 +574,7 @@ export function FeatureWalkthrough({
     };
     const timer = window.setInterval(follow, 120);
     return () => window.clearInterval(timer);
-  }, [state.index, stop]);
+  }, [activeIndex, stop]);
 
   // The real control is the checklist box. Only a click on the exact action control checks the
   // stop; a click on the surrounding panel or another control does not. The window that press
@@ -506,6 +595,8 @@ export function FeatureWalkthrough({
         setTarget(rect);
       }
       completeRef.current();
+      // Drop the entrance now: the checked pulse is the only animation the card should replay.
+      setEntering(false);
       if (surfaceTimer.current !== null) window.clearTimeout(surfaceTimer.current);
       surfaceTimer.current = window.setTimeout(() => {
         surfaceTimer.current = null;
@@ -514,38 +605,58 @@ export function FeatureWalkthrough({
     };
     document.addEventListener('click', onClick, true);
     return () => document.removeEventListener('click', onClick, true);
-  }, [state.index, stop.id]);
+  }, [activeIndex, stop.id]);
 
   // Focus moves with the card, never into the page behind it. A new mission also clears the
   // celebration from the stop before it.
   useEffect(() => {
     setJustChecked(false);
     if (placed) cardRef.current?.focus({ preventScroll: true });
-  }, [state.index, placed]);
+  }, [activeIndex, placed]);
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape') {
       playUi('close');
       event.preventDefault();
       close();
-      return;
-    }
-    if (event.key === 'ArrowRight') {
-      playShortcut('nav', event);
-      event.preventDefault();
-      advance();
-      return;
-    }
-    if (event.key === 'ArrowLeft') {
-      playShortcut('nav', event);
-      event.preventDefault();
-      back();
     }
   };
 
+  // The arrows belong to the tour wherever focus is, not only while the card holds it: pressing a
+  // stop's button must not strand the learner on the mouse. Editable fields keep their own arrows,
+  // and an open sheet or palette (which owns the keyboard) keeps them too.
+  const advanceRef = useRef(advance);
+  advanceRef.current = advance;
+  const backRef = useRef(back);
+  backRef.current = back;
+  useEffect(() => {
+    const onArrow = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+      const targetNode = event.target instanceof HTMLElement ? event.target : null;
+      if (targetNode?.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (openDialogRoots().length > 0) return;
+      playShortcut('nav', event);
+      event.preventDefault();
+      if (event.key === 'ArrowRight') advanceRef.current();
+      else backRef.current();
+    };
+    document.addEventListener('keydown', onArrow);
+    return () => document.removeEventListener('keydown', onArrow);
+  }, []);
+
+  // A page tour always begins at its first stop, even if the component survives a scope change.
+  useEffect(() => {
+    setScopeCursor(0);
+  }, [scopeTab]);
+
   const cardStyle = placeCard(target, viewport);
-  const progress = `${String(state.index + 1).padStart(2, '0')} / ${FEATURE_WALKTHROUGH_COUNT}`;
-  const progressPercent = (checkedCount / FEATURE_WALKTHROUGH_COUNT) * 100;
+  const progress = scoped
+    ? `${String(scopePosition + 1).padStart(2, '0')} / ${String(scopeIndices.length).padStart(2, '0')}`
+    : `${String(activeIndex + 1).padStart(2, '0')} / ${FEATURE_WALKTHROUGH_COUNT}`;
+  const progressPercent =
+    visibleStops.length > 0 ? (checkedVisible / visibleStops.length) * 100 : 0;
+  const nextLabel = isLast ? (atSectionEnd ? 'Next section' : 'Finish') : 'Next';
   const spot = target
     ? {
         top: Math.max(4, target.top - SPOT_PAD),
@@ -571,12 +682,13 @@ export function FeatureWalkthrough({
   // so every press that is not on the card belongs to the learner's page and reaches it untouched.
   return (
     <div
-      className="pointer-events-none fixed inset-0 z-[90]"
+      className={`tour-accent-${sectionIndex} pointer-events-none fixed inset-0 z-[90]`}
       role="dialog"
       aria-labelledby="walkthrough-title"
       data-testid="feature-walkthrough"
-      data-index={state.index}
+      data-index={activeIndex}
       data-checked={isChecked ? 'true' : 'false'}
+      data-scope={scoped ? 'page' : 'all'}
     >
       {spot && (
         <div
@@ -607,20 +719,34 @@ export function FeatureWalkthrough({
         data-placed={placed ? 'true' : 'false'}
         data-just-checked={justChecked ? 'true' : 'false'}
         data-nav={navDirection}
-        data-motion={state.index % 5}
-        className={`walkthrough-card pointer-events-auto fixed overflow-y-auto rounded-2xl border border-accent/30 bg-panel/95 text-ink shadow-[var(--shadow-lg)] outline-none backdrop-blur-xl ${
-          placed ? 'walkthrough-enter' : 'pointer-events-none opacity-0'
+        data-motion={activeIndex % 5}
+        onAnimationEnd={(event) => {
+          // Detach the entrance when it finishes. Leaving it applied lets the checked pulse re-run
+          // the slide on the next paint, which is the second entrance learners were seeing.
+          if (event.animationName.startsWith('walkthrough-in-')) setEntering(false);
+        }}
+        className={`walkthrough-card pointer-events-auto fixed overflow-y-auto overflow-x-hidden rounded-2xl border bg-panel/95 text-ink shadow-[var(--shadow-lg)] outline-none backdrop-blur-xl ${
+          placed ? (entering ? 'walkthrough-enter' : '') : 'pointer-events-none opacity-0'
         } ${justChecked ? 'walkthrough-card-checked' : ''}`}
       >
-        <span aria-hidden="true" className="walkthrough-beam" />
+        <span aria-hidden="true" className="walkthrough-beam-clip">
+          <span className="walkthrough-beam" />
+        </span>
         <header className="flex items-center justify-between gap-2 border-b border-line-soft px-3.5 py-2.5">
           <span className="flex min-w-0 items-center gap-2">
             <span
               className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors ${
-                isChecked
-                  ? 'border-emerald/50 bg-emerald/15 text-emerald'
-                  : 'border-accent/30 bg-accent-soft text-accent'
+                isChecked ? 'border-emerald/50 bg-emerald/15 text-emerald' : ''
               }`}
+              style={
+                isChecked
+                  ? undefined
+                  : {
+                      borderColor: 'color-mix(in srgb, var(--tour-accent) 40%, var(--border))',
+                      background: 'color-mix(in srgb, var(--tour-accent) 13%, transparent)',
+                      color: 'var(--tour-accent-text)',
+                    }
+              }
             >
               {isChecked ? (
                 <Trophy className="h-3.5 w-3.5" aria-hidden="true" />
@@ -629,13 +755,16 @@ export function FeatureWalkthrough({
               )}
             </span>
             <span className="min-w-0">
-              <span className="block font-mono text-[9px] uppercase tracking-[0.18em] text-accent">
-                Walkthrough
+              <span
+                className="block font-mono text-[9px] uppercase tracking-[0.18em]"
+                style={{ color: 'var(--tour-accent-text)' }}
+              >
+                {scoped ? 'Page walkthrough' : 'Walkthrough'}
               </span>
               <span className="block font-mono text-[10px] text-faint">
                 <span className="uppercase tracking-[0.1em]">Mission</span>{' '}
                 <span data-testid="walkthrough-progress">
-                  {progress} · {stop.section}
+                  {progress} · {scoped ? 'Page tour' : stop.section}
                 </span>
               </span>
             </span>
@@ -643,7 +772,8 @@ export function FeatureWalkthrough({
           <span className="flex shrink-0 items-center gap-1.5">
             <span
               data-testid="walkthrough-score"
-              className="rounded-md border border-line-soft bg-canvas px-1.5 py-0.5 font-mono text-[10px] font-bold tabular-nums text-accent"
+              className="rounded-md border border-line-soft bg-canvas px-1.5 py-0.5 font-mono text-[10px] font-bold tabular-nums"
+              style={{ color: 'var(--tour-accent-text)' }}
               title={`${checkedCount * 100} XP — 100 for every mission checked`}
             >
               ★ {score}
@@ -671,27 +801,72 @@ export function FeatureWalkthrough({
           </span>
         </header>
 
+        {!scoped && (
+          <div
+            data-testid="walkthrough-sections"
+            aria-label="Walkthrough sections"
+            className="flex flex-wrap gap-1 border-b border-line-soft px-3.5 py-1.5"
+          >
+            {FEATURE_WALKTHROUGH_SECTIONS.map((entry, index) => {
+              const current = index === sectionIndex;
+              return (
+                <button
+                  key={entry.name}
+                  type="button"
+                  onClick={() => jumpToSection(index)}
+                  data-testid={`walkthrough-section-${index}`}
+                  aria-pressed={current}
+                  aria-label={`${entry.name} — ${entry.count} stops`}
+                  title={`${entry.name} — ${entry.count} stops`}
+                  className="cursor-pointer rounded-md border border-line-soft px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.08em] text-muted transition-colors hover:border-line-strong hover:text-ink"
+                  style={
+                    current
+                      ? {
+                          borderColor: 'color-mix(in srgb, var(--tour-accent) 50%, var(--border))',
+                          background: 'color-mix(in srgb, var(--tour-accent) 14%, transparent)',
+                          color: 'var(--tour-accent-text)',
+                        }
+                      : undefined
+                  }
+                >
+                  {entry.short}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <div className="px-3.5 pb-2 pt-2.5">
-          {/* Thirty-six pips are a map of the whole tour, not a second progress bar: a checked stop
-              stays green after the learner walks past it. */}
-          <div className="flex gap-[3px]" aria-hidden="true" data-testid="walkthrough-pips">
-            {FEATURE_WALKTHROUGH.map((entry, index) => (
+          {/* The pips map the section the learner is in, not all 36 stops: a checked stop stays
+              green after they walk past it, and the rail above moves between chapters. */}
+          <div
+            className="flex gap-[3px]"
+            aria-hidden="true"
+            data-testid="walkthrough-pips"
+            data-section={sectionIndex}
+          >
+            {visibleStops.map((entry) => (
               <span
                 key={entry.id}
                 title={entry.title}
-                className={`h-[3px] flex-1 rounded-full transition-colors ${
-                  checked.has(entry.id)
-                    ? 'bg-emerald'
-                    : index === state.index
-                      ? 'bg-accent'
-                      : 'bg-line-soft'
-                }`}
+                className={`h-[3px] rounded-full transition-colors ${
+                  visibleStops.length === 1 ? 'w-8' : 'flex-1'
+                } ${checked.has(entry.id) ? 'bg-emerald' : entry.id === stop.id ? '' : 'bg-line-soft'}`}
+                style={
+                  !checked.has(entry.id) && entry.id === stop.id
+                    ? { background: 'var(--tour-accent)' }
+                    : undefined
+                }
               />
             ))}
           </div>
 
-          <p className="mt-3 font-mono text-[9px] uppercase tracking-[0.18em] text-accent/80">
-            {stop.section}
+          <p
+            className="mt-3 font-mono text-[9px] uppercase tracking-[0.18em]"
+            style={{ color: 'var(--tour-accent-text)' }}
+          >
+            {scoped ? 'This page' : stop.section}
+            <span className="text-faint"> · {cursor + 1} of {visibleStops.length}</span>
           </p>
           <h2
             id="walkthrough-title"
@@ -733,12 +908,12 @@ export function FeatureWalkthrough({
           </div>
         </div>
 
-        <footer className="border-t border-line-soft bg-panel/95 px-3.5 py-2.5">
+        <footer className="sticky bottom-0 z-10 border-t border-line-soft bg-panel/95 px-3.5 py-2.5 backdrop-blur-xl">
           <div className="flex items-center justify-between gap-2">
             <button
               type="button"
               onClick={back}
-              disabled={state.index === 0}
+              disabled={scoped ? scopePosition === 0 : state.index === 0}
               data-testid="walkthrough-prev"
               className="inline-flex min-h-8 cursor-pointer items-center gap-0.5 rounded-lg border border-line-soft px-2 text-[11px] font-semibold text-muted transition-colors hover:border-line-strong hover:text-ink disabled:cursor-default disabled:opacity-40"
             >
@@ -750,8 +925,8 @@ export function FeatureWalkthrough({
               role="progressbar"
               aria-label="Walkthrough checklist progress"
               aria-valuemin={0}
-              aria-valuemax={FEATURE_WALKTHROUGH_COUNT}
-              aria-valuenow={checkedCount}
+              aria-valuemax={visibleStops.length}
+              aria-valuenow={checkedVisible}
               className="hidden h-1 min-w-10 max-w-[7rem] flex-1 overflow-hidden rounded-full bg-line-soft sm:block"
             >
               <div
@@ -763,12 +938,24 @@ export function FeatureWalkthrough({
             <button
               type="button"
               onClick={advance}
-              title="Next mission"
+              title={
+                isLast
+                  ? scoped
+                    ? 'Finish this page tour'
+                    : 'Finish the walkthrough'
+                  : atSectionEnd
+                    ? 'Next section'
+                    : 'Next mission'
+              }
               data-testid="walkthrough-next"
-              className="inline-flex min-h-8 cursor-pointer items-center gap-0.5 rounded-lg bg-accent px-2.5 text-[11px] font-semibold text-inverse shadow-[0_0_18px_-6px_var(--accent)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex min-h-8 cursor-pointer items-center gap-0.5 rounded-lg px-2.5 text-[11px] font-semibold shadow-[0_0_18px_-6px_var(--tour-accent)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+              style={{
+                background: 'var(--tour-accent)',
+                color: 'var(--tour-accent-ink, var(--inverse))',
+              }}
             >
-              {isLast ? 'Finish' : 'Next'}
-              {isLast ? (
+              {nextLabel}
+              {isLast && !atSectionEnd ? (
                 <Check className="h-3 w-3" aria-hidden="true" />
               ) : (
                 <ChevronRight className="h-3 w-3" aria-hidden="true" />
@@ -779,7 +966,7 @@ export function FeatureWalkthrough({
       </div>
 
       <p className="sr-only" aria-live="polite">
-        {walkthroughAnnouncement(state.index)}
+        {walkthroughAnnouncement(activeIndex)}
         {isChecked ? ' Checked.' : ' Not checked yet.'}
       </p>
     </div>

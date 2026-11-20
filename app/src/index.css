@@ -645,10 +645,10 @@ body {
 }
 @keyframes walkthrough-halo {
   0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 42%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--tour-accent) 42%, transparent);
   }
   100% {
-    box-shadow: 0 0 0 16px color-mix(in srgb, var(--accent) 0%, transparent);
+    box-shadow: 0 0 0 16px color-mix(in srgb, var(--tour-accent) 0%, transparent);
   }
 }
 @keyframes walkthrough-demo {
@@ -756,12 +756,59 @@ body {
     transform: none;
   }
 }
+/* Each chapter of the tour has its own accent, so a learner can feel the subject change before
+   reading the heading. The five tokens are the palette's own: the card, its chips, the spotlight
+   ring and the pointer all read them, and checked work stays emerald. `--tour-accent-ink` is the
+   ink that sits on the accent as a fill (the Next button); `--inverse` is that ink in every theme. */
+.tour-accent-0 {
+  --tour-accent: var(--accent);
+}
+.tour-accent-1 {
+  --tour-accent: var(--purple);
+}
+.tour-accent-2 {
+  --tour-accent: var(--amber);
+}
+.tour-accent-3 {
+  --tour-accent: var(--rose);
+}
+.tour-accent-4 {
+  --tour-accent: var(--emerald);
+}
+.tour-accent-0,
+.tour-accent-1,
+.tour-accent-2,
+.tour-accent-3,
+.tour-accent-4 {
+  --tour-accent-text: var(--tour-accent);
+  --tour-accent-ink: var(--inverse);
+}
+
 /* The card is keyed by stop, so every move replays one entrance. The button that moved the tour
    sets the horizontal sign and the stop picks one of five paths; only transform and opacity run. */
 .walkthrough-card {
+  border-color: color-mix(in srgb, var(--tour-accent) 34%, var(--border));
+  background-image:
+    radial-gradient(
+      120% 90% at 100% 0%,
+      color-mix(in srgb, var(--tour-accent) 14%, transparent),
+      transparent 62%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--tour-accent) 7%, transparent),
+      transparent 46%
+    );
+  /* The card scrolls its own copy, but the bar belongs to the page, not to this tooltip. */
+  scrollbar-width: none;
+  overscroll-behavior: contain;
   transition:
     left 240ms var(--ease-out),
     top 240ms var(--ease-out);
+}
+.walkthrough-card::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 .walkthrough-card[data-nav='next'],
 .walkthrough-card[data-nav='start'] {
@@ -790,6 +837,18 @@ body {
     opacity: 0;
   }
 }
+/* The sweep leaves the card by translating a full width past its right edge. Without this one-pixel
+   clipping wrapper that transform stays in the scroll area (the beam's `both` fill holds it at
+   100%), which is what put a horizontal scrollbar under the card. */
+.walkthrough-beam-clip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 1px;
+  width: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
 .walkthrough-beam {
   position: absolute;
   top: 0;
@@ -797,16 +856,16 @@ body {
   height: 1px;
   width: 100%;
   pointer-events: none;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  background: linear-gradient(90deg, transparent, var(--tour-accent), transparent);
   animation: walkthrough-beam 1100ms var(--ease-out) 120ms both;
 }
 /* The dim is a shadow with a hole, not an element: the page under it keeps every click, and the
    control inside the hole is the one surface that is not darkened. */
 .walkthrough-spot {
   --walkthrough-dim: rgba(2, 6, 12, 0.24);
-  border-color: var(--accent);
+  border-color: var(--tour-accent);
   box-shadow:
-    0 0 0 5px var(--accent-soft),
+    0 0 0 5px color-mix(in srgb, var(--tour-accent) 16%, transparent),
     0 0 0 100vmax var(--walkthrough-dim),
     0 12px 40px -12px rgba(0, 0, 0, 0.6);
 }
@@ -845,7 +904,7 @@ body {
   border: 2px solid var(--panel);
   background: var(--text);
   box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--accent) 80%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--tour-accent) 80%, transparent),
     0 6px 16px -4px rgba(0, 0, 0, 0.45);
   animation: walkthrough-demo 1300ms var(--ease-out) 240ms both;
 }
@@ -868,9 +927,9 @@ body {
   height: 20px;
   flex: none;
   border-radius: 7px;
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
-  background: color-mix(in srgb, var(--accent) 10%, var(--panel));
-  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--tour-accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--tour-accent) 10%, var(--panel));
+  color: var(--tour-accent);
   transition:
     border-color 180ms var(--ease-out),
     background-color 180ms var(--ease-out);
@@ -884,8 +943,8 @@ body {
   width: 6px;
   height: 6px;
   border-radius: 9999px;
-  background: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-soft);
+  background: var(--tour-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--tour-accent) 12%, transparent);
 }
 
 /* The walkthrough's two reactions: a checked box gets one short lift, and pressing Next too early

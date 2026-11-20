@@ -120,6 +120,7 @@ import { SoundClicks } from './components/SoundClicks';
 import { attemptsByLesson, downloadLearningLog, readLearningLog, replaceLearningLog } from './learningLog';
 import type { Session } from '@supabase/supabase-js';
 import { TabId } from './types';
+import { WALKTHROUGH_TAB_COUNTS } from './walkthroughTabs';
 import { PYTHON_LESSONS } from './data/pythonLessonsData';
 import { useTheme } from './useTheme';
 import { actionForEvent } from './keymap';
@@ -437,6 +438,14 @@ export const App: React.FC = () => {
   // the tab change, so the guide's "take me there" buttons can navigate the workbench.
   const [isLearnerGuideOpen, setIsLearnerGuideOpen] = useState<boolean>(false);
   const [isFeatureWalkthroughOpen, setIsFeatureWalkthroughOpen] = useState<boolean>(false);
+  // The header's page tour scopes the same tooltip engine to the tab it was opened from; null is
+  // the full 36-stop walk that General settings opens.
+  const [walkthroughScope, setWalkthroughScope] = useState<TabId | null>(null);
+  const openPageWalkthrough = () => {
+    setWalkthroughScope(activeTab);
+    setIsLearnerGuideOpen(false);
+    setIsFeatureWalkthroughOpen(true);
+  };
   useEffect(() => {
     const open = () => setIsLearnerGuideOpen(true);
     window.addEventListener(OPEN_LEARNER_GUIDE_EVENT, open);
@@ -1955,6 +1964,7 @@ export const App: React.FC = () => {
               onClose={() => setIsLearnerGuideOpen(false)}
               onNavigate={openTabFromHome}
               onWalkthrough={() => {
+                setWalkthroughScope(null);
                 setIsLearnerGuideOpen(false);
                 setIsFeatureWalkthroughOpen(true);
               }}
@@ -1966,7 +1976,12 @@ export const App: React.FC = () => {
         {isFeatureWalkthroughOpen && (
           <React.Suspense fallback={null}>
             <FeatureWalkthroughLazy
-              onClose={() => setIsFeatureWalkthroughOpen(false)}
+              key={walkthroughScope ?? 'all'}
+              scopeTab={walkthroughScope ?? undefined}
+              onClose={() => {
+                setIsFeatureWalkthroughOpen(false);
+                setWalkthroughScope(null);
+              }}
               onNavigate={openTabFromHome}
             />
           </React.Suspense>
@@ -2130,6 +2145,9 @@ export const App: React.FC = () => {
         // The workbench renders its own header branch; without this line the tray's Micro door
         // vanished the moment a learner left Home for a lesson.
         onOpenMicro={microEnabled ? () => openTabFromHome('tab-micro') : undefined}
+        // Only a tab with stops offers a page tour; the full walk stays in General settings.
+        onOpenPageTour={WALKTHROUGH_TAB_COUNTS[activeTab] ? openPageWalkthrough : undefined}
+        pageTourStops={WALKTHROUGH_TAB_COUNTS[activeTab]}
         onOpenIntro={() => openPage('intro')}
         focus={focus}
         onToggleFocus={toggleFocusMode}
@@ -2448,6 +2466,7 @@ export const App: React.FC = () => {
             onClose={() => setIsLearnerGuideOpen(false)}
             onNavigate={openTabFromHome}
             onWalkthrough={() => {
+              setWalkthroughScope(null);
               setIsLearnerGuideOpen(false);
               setIsFeatureWalkthroughOpen(true);
             }}
@@ -2455,11 +2474,17 @@ export const App: React.FC = () => {
         </React.Suspense>
       )}
 
-      {/* The tooltip walkthrough: the guide's detailed mode, pointing at the real controls. */}
+      {/* The tooltip walkthrough: General settings opens the full walk; the header's Tour button
+          scopes the same card to the tab it was pressed on. */}
       {isFeatureWalkthroughOpen && (
         <React.Suspense fallback={null}>
           <FeatureWalkthroughLazy
-            onClose={() => setIsFeatureWalkthroughOpen(false)}
+            key={walkthroughScope ?? 'all'}
+            scopeTab={walkthroughScope ?? undefined}
+            onClose={() => {
+              setIsFeatureWalkthroughOpen(false);
+              setWalkthroughScope(null);
+            }}
             onNavigate={openTabFromHome}
           />
         </React.Suspense>

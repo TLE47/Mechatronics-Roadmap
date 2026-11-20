@@ -534,6 +534,59 @@ export const FEATURE_WALKTHROUGH: readonly WalkthroughStop[] = [
 
 export const FEATURE_WALKTHROUGH_COUNT = FEATURE_WALKTHROUGH.length;
 
+/** A chapter of the tour: the stops that share a `section`, in catalogue order. */
+export interface WalkthroughSection {
+  name: string;
+  /** The global index of the section's first stop. */
+  first: number;
+  count: number;
+  /** The compact name the card's section rail has room to draw. */
+  short: string;
+}
+
+const SECTION_SHORT_NAMES: Readonly<Record<string, string>> = {
+  'The shell': 'Shell',
+  'Python runner': 'Runner',
+  'Course and practice': 'Course',
+  Labs: 'Labs',
+  'The build': 'Build',
+};
+
+function buildSections(): WalkthroughSection[] {
+  const sections: WalkthroughSection[] = [];
+  for (const [index, stop] of FEATURE_WALKTHROUGH.entries()) {
+    const current = sections[sections.length - 1];
+    if (current && current.name === stop.section) {
+      current.count += 1;
+    } else {
+      sections.push({
+        name: stop.section,
+        first: index,
+        count: 1,
+        short: SECTION_SHORT_NAMES[stop.section] ?? stop.section,
+      });
+    }
+  }
+  return sections;
+}
+
+/** The tour's chapters, derived from the catalogue so a new stop cannot fall between them. */
+export const FEATURE_WALKTHROUGH_SECTIONS: readonly WalkthroughSection[] = buildSections();
+
+/** The chapter a global stop index belongs to. */
+export function walkthroughSectionAt(index: number): WalkthroughSection {
+  return (
+    FEATURE_WALKTHROUGH_SECTIONS.find(
+      (section) => index >= section.first && index < section.first + section.count
+    ) ?? FEATURE_WALKTHROUGH_SECTIONS[0]!
+  );
+}
+
+/** The global indices of every stop that belongs to one tab, in tour order. */
+export function walkthroughIndicesForTab(tab: TabId): number[] {
+  return FEATURE_WALKTHROUGH.flatMap((stop, index) => (stop.tab === tab ? [index] : []));
+}
+
 /**
  * The one control a stop asks the learner to use.
  *
