@@ -65,7 +65,7 @@ interface HeaderProps {
   onOpenMicro?: () => void;
   /**
    * Opens the tooltip walkthrough for the current tab. Absent on a page with no stops: General
-   * settings still holds the full 36-stop walk on every screen.
+   * settings still holds the full walk on every screen.
    */
   onOpenPageTour?: () => void;
   /** The number of stops this page's tour will walk, for the button's tooltip. */

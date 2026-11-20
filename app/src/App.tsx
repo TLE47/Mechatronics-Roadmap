@@ -439,9 +439,12 @@ export const App: React.FC = () => {
   const [isLearnerGuideOpen, setIsLearnerGuideOpen] = useState<boolean>(false);
   const [isFeatureWalkthroughOpen, setIsFeatureWalkthroughOpen] = useState<boolean>(false);
   // The header's page tour scopes the same tooltip engine to the tab it was opened from; null is
-  // the full 36-stop walk that General settings opens.
+  // the full walk that General settings opens.
   const [walkthroughScope, setWalkthroughScope] = useState<TabId | null>(null);
   const openPageWalkthrough = () => {
+    // The header already hides the door on a tab with no stops. Guarding here too keeps a stale or
+    // programmatic call from mounting an empty scope, which used to fall back to the full walk.
+    if (!WALKTHROUGH_TAB_COUNTS[activeTab]) return;
     setWalkthroughScope(activeTab);
     setIsLearnerGuideOpen(false);
     setIsFeatureWalkthroughOpen(true);

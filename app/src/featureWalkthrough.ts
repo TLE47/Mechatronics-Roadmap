@@ -19,7 +19,22 @@
 import type { TabId } from './types';
 
 export const FEATURE_WALKTHROUGH_STORAGE_KEY = 'mechalab_feature_walkthrough_v1';
-export const FEATURE_WALKTHROUGH_VERSION = 3;
+/**
+ * Version 4 stores the current stop's stable id beside its index. Version 3 saved only the index;
+ * `workflow` was inserted at index 21 in version 4, so older positions at or after it migrate one
+ * step forward before they are read.
+ */
+export const FEATURE_WALKTHROUGH_VERSION = 4;
+
+/** The first version whose checklist required each stop's real control; later versions keep it. */
+const WALKTHROUGH_COMPLETION_VERSION = 3;
+
+/**
+ * The catalogue index where `workflow` was inserted in version 4, frozen at its first-ship
+ * position. Deriving this from today's catalogue would move the migration whenever a later stop
+ * is inserted before Workflow.
+ */
+const V4_WORKFLOW_INSERTION_INDEX = 21;
 
 export interface WalkthroughStop {
   id: string;
@@ -325,6 +340,21 @@ export const FEATURE_WALKTHROUGH: readonly WalkthroughStop[] = [
     ],
     tab: 'tab-pyodide',
     anchors: [byTestId('layout-presets'), byTestId('editor-panes'), byTestId('editor-panel')],
+  },
+  {
+    id: 'workflow',
+    section: 'Python runner',
+    title: 'Draw the method on the Workflow canvas',
+    body: 'The Workflow pane is the learner’s own diagram of the method: one card per idea, arrows where one leads to the next, and a lesson example to edit rather than a blank page.',
+    features: [
+      'Workflow is an editor tab beside main.py, Actual and Expected; open it before typing.',
+      'Start from this lesson’s example, browse templates, or start blank; nothing here is graded.',
+      'Cards, forks, joins, groups and lanes are drawn on the canvas; drag a card to rearrange it.',
+      'The run bar walks the cards in order, and the checks list names a missing title, unit or connector.',
+      'Export the plan as Mermaid or Markdown, or open it again in Free study from More.',
+    ],
+    tab: 'tab-pyodide',
+    anchors: [byTestId('panel-workflow'), byTestId('editor-tab-workflow'), tabAnchor('tab-pyodide')],
   },
 
   {
@@ -698,6 +728,10 @@ export const WALKTHROUGH_ACTIONS: Readonly<Record<string, WalkthroughAction>> = 
     label: 'Choose the Debug layout preset.',
     selectors: [byTestId('layout-debug')],
   },
+  workflow: {
+    label: 'Open the Workflow tab in the editor strip.',
+    selectors: [byTestId('editor-tab-workflow')],
+  },
   roadmap: {
     label: 'Switch the roadmap to Linear.',
     selectors: [byTestId('btn-arch-linear')],
@@ -773,10 +807,16 @@ export type WalkthroughStatus = 'not-started' | 'active' | 'completed' | 'dismis
 export interface WalkthroughState {
   version: number;
   status: WalkthroughStatus;
+  /** The 0-based catalogue index; persisted with a stable stop id so insertions cannot move it. */
   index: number;
   /** The stops whose mission was actually performed, by id. A checklist survives a reload. */
   completed: string[];
   updatedAt: number;
+}
+
+/** What is written to storage: the state plus the stable id of its current stop. */
+interface StoredWalkthroughState extends WalkthroughState {
+  stopId?: string;
 }
 
 /** The tiny part of `Storage` this module uses, so the unit suite can pass a plain object. */
@@ -815,13 +855,40 @@ function readCompleted(value: unknown): string[] {
   return FEATURE_WALKTHROUGH.filter((stop) => saved.has(stop.id)).map((stop) => stop.id);
 }
 
+/** The current index of a stable stop id, or null when the id is unknown. */
+function walkthroughIndexForId(value: unknown): number | null {
+  if (typeof value !== 'string') return null;
+  const index = FEATURE_WALKTHROUGH.findIndex((stop) => stop.id === value);
+  return index >= 0 ? index : null;
+}
+
+/**
+ * Resolve a saved position to today's catalogue.
+ *
+ * The stop id wins whenever it names a real stop, so a later insertion anywhere in the catalogue
+ * leaves the learner on the same feature. A version-3 record has no id, so its numeric position is
+ * shifted past the Workflow stop before it is clamped. A version-4 record with a missing or stale
+ * id falls back to its number rather than losing the place entirely.
+ */
+function readWalkthroughIndex(record: Partial<StoredWalkthroughState>): number {
+  const stable = walkthroughIndexForId(record.stopId);
+  if (stable !== null) return stable;
+  const saved = typeof record.index === 'number' ? record.index : 0;
+  const version = typeof record.version === 'number' ? record.version : 0;
+  const migrated =
+    version < FEATURE_WALKTHROUGH_VERSION && saved >= V4_WORKFLOW_INSERTION_INDEX
+      ? saved + 1
+      : saved;
+  return clampIndex(migrated);
+}
+
 export function readWalkthroughState(store: WalkthroughStore | null = browserStore()): WalkthroughState {
   try {
     const raw = store?.getItem(FEATURE_WALKTHROUGH_STORAGE_KEY);
     if (!raw) return initialWalkthroughState();
     const parsed: unknown = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object') return initialWalkthroughState();
-    const record = parsed as Partial<WalkthroughState>;
+    const record = parsed as Partial<StoredWalkthroughState>;
     const status: WalkthroughStatus =
       record.status === 'active' ||
       record.status === 'completed' ||
@@ -831,13 +898,15 @@ export function readWalkthroughState(store: WalkthroughStore | null = browserSto
         : 'not-started';
     // A checklist is honest only if it was earned under the current action rules. Version 3 made
     // every stop require its real control; a list saved by the old free-pass card is dropped while
-    // the learner's place in the tour is kept.
+    // the learner's place in the tour is kept. Version 4 only added the stable position, so the
+    // version-3 ticks are still valid.
     const version = typeof record.version === 'number' ? record.version : 0;
     return {
       version: FEATURE_WALKTHROUGH_VERSION,
       status,
-      index: clampIndex(typeof record.index === 'number' ? record.index : 0),
-      completed: version === FEATURE_WALKTHROUGH_VERSION ? readCompleted(record.completed) : [],
+      index: readWalkthroughIndex(record),
+      completed:
+        version >= WALKTHROUGH_COMPLETION_VERSION ? readCompleted(record.completed) : [],
       updatedAt: typeof record.updatedAt === 'number' ? record.updatedAt : 0,
     };
   } catch {
@@ -850,7 +919,15 @@ export function writeWalkthroughState(
   store: WalkthroughStore | null = browserStore()
 ): WalkthroughState {
   try {
-    store?.setItem(FEATURE_WALKTHROUGH_STORAGE_KEY, JSON.stringify(state));
+    const index = clampIndex(state.index);
+    const stop = FEATURE_WALKTHROUGH[index]!;
+    const stored: StoredWalkthroughState = {
+      ...state,
+      version: FEATURE_WALKTHROUGH_VERSION,
+      index,
+      stopId: stop.id,
+    };
+    store?.setItem(FEATURE_WALKTHROUGH_STORAGE_KEY, JSON.stringify(stored));
   } catch {
     // A blocked store costs the memory, never the tour.
   }
@@ -867,6 +944,22 @@ export function resumeWalkthroughState(state: WalkthroughState, now = Date.now()
     completed: restart ? [] : readCompleted(state.completed),
     updatedAt: now,
   };
+}
+
+/**
+ * The state a tour opens with.
+ *
+ * The full walk resumes the learner's place and starts over only after a completed walk. A page
+ * tour must never rewrite that place, so it reads the saved state exactly as stored — including a
+ * completed index — and keeps every scoped move in component-local state. This is the one door the
+ * card uses, so a page tour cannot reset the full walk by opening or checking a stop.
+ */
+export function entryWalkthroughState(
+  scoped: boolean,
+  store: WalkthroughStore | null = browserStore()
+): WalkthroughState {
+  const saved = readWalkthroughState(store);
+  return scoped ? saved : resumeWalkthroughState(saved);
 }
 
 /**

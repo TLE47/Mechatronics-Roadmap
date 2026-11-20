@@ -1047,11 +1047,19 @@ async function main() {
     await page.getByTestId('walkthrough-close').click();
     await page.getByTestId('feature-walkthrough').waitFor({ state: 'detached', timeout: 5000 });
     await page.evaluate(
-      ({ key, version, completed, index }) => {
+      ({ key, version, completed, index, stopId }) => {
         const raw = JSON.parse(localStorage.getItem(key) ?? '{}');
         localStorage.setItem(
           key,
-          JSON.stringify({ ...raw, version, status: 'active', index, completed, updatedAt: Date.now() })
+          JSON.stringify({
+            ...raw,
+            version,
+            status: 'active',
+            index,
+            stopId,
+            completed,
+            updatedAt: Date.now(),
+          })
         );
         // The lesson-list stop's action is the chooser's fold button, which the Study preset owns.
         localStorage.setItem('mechalab_workspace_layout_v1', 'study');
@@ -1061,6 +1069,7 @@ async function main() {
         version: FEATURE_WALKTHROUGH_VERSION,
         completed: FEATURE_WALKTHROUGH.slice(0, 10).map((stop) => stop.id),
         index: 10,
+        stopId: FEATURE_WALKTHROUGH[10].id,
       }
     );
     await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });

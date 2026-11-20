@@ -6,11 +6,10 @@ import {
   FEATURE_WALKTHROUGH_SECTIONS,
   completeWalkthroughStop,
   dismissWalkthroughState,
+  entryWalkthroughState,
   nextWalkthroughState,
   previousWalkthroughState,
-  readWalkthroughState,
   resetWalkthroughState,
-  resumeWalkthroughState,
   walkthroughAction,
   walkthroughAnnouncement,
   walkthroughCheckedCount,
@@ -301,8 +300,10 @@ export function FeatureWalkthrough({
   /** When set, the tour walks only the stops that belong to this tab (the header's page tour). */
   scopeTab?: TabId;
 }) {
+  // A page tour reads the saved full-tour place but never resumes or rewrites it: only the full
+  // walk restarts after a completed tour. See `entryWalkthroughState`.
   const [state, setState] = useState<WalkthroughState>(() =>
-    resumeWalkthroughState(readWalkthroughState())
+    entryWalkthroughState(Boolean(scopeTab))
   );
   const [target, setTarget] = useState<TargetRect | null>(null);
   // The card is not drawn until the new stop's anchor is measured. Without this a stop whose tab
@@ -315,7 +316,7 @@ export function FeatureWalkthrough({
   // Which button moved the tour decides the entrance direction; the stop chooses the variant.
   const [navDirection, setNavDirection] = useState<'start' | 'next' | 'back'>('start');
   // A page tour is a cursor into the tab's stops, not a second saved position: closing it leaves the
-  // learner's place in the full 36-stop walk untouched.
+  // learner's place in the full walk untouched.
   const [scopeCursor, setScopeCursor] = useState(0);
   const [viewport, setViewport] = useState(() => ({
     width: typeof window === 'undefined' ? 1280 : window.innerWidth,
@@ -380,7 +381,9 @@ export function FeatureWalkthrough({
   const close = () => {
     const current = stateRef.current;
     collapseOpenedSurfaces();
-    if (current.status !== 'completed') commit(dismissWalkthroughState(current));
+    // Closing a page tour is not closing the full walk: it leaves both the saved place and the
+    // full walk's status alone. The full walk still records a dismissal.
+    if (!scoped && current.status !== 'completed') commit(dismissWalkthroughState(current));
     onClose();
   };
 
@@ -778,17 +781,22 @@ export function FeatureWalkthrough({
             >
               ★ {score}
             </span>
-            <button
-              type="button"
-              onClick={resetPoints}
-              data-testid="walkthrough-reset"
-              aria-label="Reset walkthrough points"
-              title="Reset points and start from the first feature"
-              className="flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-lg border border-line-soft px-1.5 font-mono text-[10px] text-muted transition-colors hover:border-line-strong hover:text-ink"
-            >
-              <RotateCcw className="h-3 w-3" aria-hidden="true" />
-              <span className="hidden sm:inline">Reset</span>
-            </button>
+            {/* Reset is the full walk's control. A page tour has no saved points of its own, and a
+                reset here would rewrite the full walk's saved place; it restarts at its first stop
+                every time it is opened instead. */}
+            {!scoped && (
+              <button
+                type="button"
+                onClick={resetPoints}
+                data-testid="walkthrough-reset"
+                aria-label="Reset walkthrough points"
+                title="Reset points and start from the first feature"
+                className="flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-lg border border-line-soft px-1.5 font-mono text-[10px] text-muted transition-colors hover:border-line-strong hover:text-ink"
+              >
+                <RotateCcw className="h-3 w-3" aria-hidden="true" />
+                <span className="hidden sm:inline">Reset</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={close}
@@ -837,8 +845,8 @@ export function FeatureWalkthrough({
         )}
 
         <div className="px-3.5 pb-2 pt-2.5">
-          {/* The pips map the section the learner is in, not all 36 stops: a checked stop stays
-              green after they walk past it, and the rail above moves between chapters. */}
+          {/* The pips map the section the learner is in, not the whole catalogue: a checked stop
+              stays green after they walk past it, and the rail above moves between chapters. */}
           <div
             className="flex gap-[3px]"
             aria-hidden="true"

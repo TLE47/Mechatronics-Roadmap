@@ -40,6 +40,7 @@ import {
   WALKTHROUGH_ACTIONS,
   completeWalkthroughStop,
   dismissWalkthroughState,
+  entryWalkthroughState,
   initialWalkthroughState,
   nextWalkthroughState,
   previousWalkthroughState,
@@ -372,7 +373,7 @@ check('every walkthrough anchor names a control that exists in the app', () => {
 check('the walkthrough is split into contiguous chapters that cover every stop', () => {
   assert.ok(
     FEATURE_WALKTHROUGH_SECTIONS.length >= 3,
-    'the catalogue needs at least three chapters so a beginner is not handed all 36 stops at once'
+    'the catalogue needs at least three chapters so a beginner is not handed the whole tour at once'
   );
   let nextFirst = 0;
   for (const section of FEATURE_WALKTHROUGH_SECTIONS) {
@@ -410,6 +411,137 @@ check('the header page-tour map is derived from the same catalogue', () => {
       `the page tour for "${tab}" would walk a different number of stops`
     );
   }
+  // Every workbench tab is a page a learner can open, so every one must have a page tour. The map
+  // is partial only so an added tab does not grant the header an empty door by accident: this
+  // assertion makes that addition fail loudly instead.
+  assert.deepEqual(
+    Object.keys(WALKTHROUGH_TAB_COUNTS).sort(),
+    [...TAB_IDS].sort(),
+    'every workbench tab needs page-tour stops; add stops and the count together'
+  );
+  for (const tab of TAB_IDS) {
+    assert.ok(
+      walkthroughIndicesForTab(tab).length > 0,
+      `the page tour for "${tab}" has no stops`
+    );
+  }
+});
+
+check('the workflow surface is a page stop in the Python tab', () => {
+  const index = FEATURE_WALKTHROUGH.findIndex((stop) => stop.id === 'workflow');
+  assert.ok(index >= 0, 'the Workflow canvas is a page, so it needs a stop');
+  assert.equal(FEATURE_WALKTHROUGH[index].tab, 'tab-pyodide');
+  assert.ok(walkthroughIndicesForTab('tab-pyodide').includes(index));
+  assert.deepEqual(
+    walkthroughAction('workflow')?.selectors,
+    ['[data-testid="editor-tab-workflow"]'],
+    'the workflow stop must open the editor tab that owns the canvas'
+  );
+});
+
+check('a version-3 position migrates across the inserted Workflow stop', () => {
+  const legacy = FEATURE_WALKTHROUGH.filter((stop) => stop.id !== 'workflow');
+  assert.equal(legacy.length, FEATURE_WALKTHROUGH_COUNT - 1);
+  assert.equal(legacy[20].id, 'studio-layout', 'the stop before the insertion must not move');
+  assert.equal(legacy[21].id, 'roadmap', 'the old roadmap position is the first one after it');
+  assert.equal(FEATURE_WALKTHROUGH[21].id, 'workflow');
+  assert.equal(FEATURE_WALKTHROUGH[22].id, 'roadmap');
+
+  for (let oldIndex = 0; oldIndex < legacy.length; oldIndex += 1) {
+    const store = memoryStore({
+      [FEATURE_WALKTHROUGH_STORAGE_KEY]: JSON.stringify({
+        version: 3,
+        status: 'active',
+        index: oldIndex,
+        completed: ['brand', 'studio-layout'],
+        updatedAt: 1,
+      }),
+    });
+    const loaded = readWalkthroughState(store);
+    const expected = FEATURE_WALKTHROUGH.findIndex((stop) => stop.id === legacy[oldIndex].id);
+    assert.equal(
+      loaded.index,
+      expected,
+      `a version-3 position at ${oldIndex} should resume at "${legacy[oldIndex].id}"`
+    );
+    assert.deepEqual(
+      loaded.completed,
+      ['brand', 'studio-layout'],
+      'version-3 checklist ticks survive the schema bump'
+    );
+  }
+
+  const resumeStore = memoryStore({
+    [FEATURE_WALKTHROUGH_STORAGE_KEY]: JSON.stringify({
+      version: 3,
+      status: 'active',
+      index: 21,
+      completed: [],
+      updatedAt: 1,
+    }),
+  });
+  assert.equal(
+    entryWalkthroughState(false, resumeStore).index,
+    FEATURE_WALKTHROUGH.findIndex((stop) => stop.id === 'roadmap'),
+    'a full tour saved on the old Roadmap position resumes at Roadmap, not Workflow'
+  );
+});
+
+check('a saved stop id keeps its place when the catalogue moves', () => {
+  const workflowIndex = FEATURE_WALKTHROUGH.findIndex((stop) => stop.id === 'workflow');
+  const store = memoryStore({
+    [FEATURE_WALKTHROUGH_STORAGE_KEY]: JSON.stringify({
+      version: FEATURE_WALKTHROUGH_VERSION,
+      status: 'active',
+      // A deliberately stale number: the stable id is the authority for a version-4 record.
+      index: 2,
+      stopId: 'workflow',
+      completed: [],
+      updatedAt: 1,
+    }),
+  });
+  const loaded = readWalkthroughState(store);
+  assert.equal(loaded.index, workflowIndex, 'the saved id, not the stale index, names the stop');
+
+  writeWalkthroughState({ ...loaded, index: workflowIndex + 1 }, store);
+  const raw = JSON.parse(store.getItem(FEATURE_WALKTHROUGH_STORAGE_KEY));
+  assert.equal(raw.index, workflowIndex + 1);
+  assert.equal(raw.stopId, 'roadmap', 'every write records the stable id of its current stop');
+  assert.equal(readWalkthroughState(store).index, workflowIndex + 1);
+});
+
+check('a page tour reads the saved full-tour place without resetting it', () => {
+  const saved = {
+    ...initialWalkthroughState(0),
+    status: 'completed',
+    index: FEATURE_WALKTHROUGH_COUNT - 1,
+    completed: [],
+  };
+  const store = memoryStore({
+    [FEATURE_WALKTHROUGH_STORAGE_KEY]: JSON.stringify({
+      ...saved,
+      stopId: FEATURE_WALKTHROUGH[FEATURE_WALKTHROUGH_COUNT - 1].id,
+    }),
+  });
+  const pageState = entryWalkthroughState(true, store);
+  assert.equal(pageState.index, FEATURE_WALKTHROUGH_COUNT - 1, 'a page tour must read the saved index');
+  assert.equal(pageState.status, 'completed', 'a page tour must not resume the full walk');
+  assert.equal(
+    entryWalkthroughState(false, store).index,
+    0,
+    'only the full walk restarts after a completed tour'
+  );
+  const checked = completeWalkthroughStop(pageState, 'workflow', 1);
+  assert.equal(checked.index, FEATURE_WALKTHROUGH_COUNT - 1, 'checking a page stop must keep the index');
+  writeWalkthroughState(checked, store);
+  const raw = JSON.parse(store.getItem(FEATURE_WALKTHROUGH_STORAGE_KEY));
+  assert.equal(raw.index, FEATURE_WALKTHROUGH_COUNT - 1);
+  assert.equal(
+    raw.stopId,
+    FEATURE_WALKTHROUGH[FEATURE_WALKTHROUGH_COUNT - 1].id,
+    'checking a page stop must keep the full tour on the same stop'
+  );
+  assert.equal(readWalkthroughState(store).index, FEATURE_WALKTHROUGH_COUNT - 1);
 });
 
 check('a stop with no target still reads, and no anchor is empty', () => {
