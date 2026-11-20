@@ -226,7 +226,11 @@ async function auditAtWidth(browser, baseUrl, name, { label, width, height }) {
       const heading = headings[3];
       scroll.scrollTop = heading.offsetTop + 24;
       scroll.dispatchEvent(new Event('scroll'));
-      return { anchor: heading.dataset.readerAnchor, at: Math.round(scroll.scrollTop) };
+      return {
+        anchor: heading.dataset.readerAnchor,
+        at: Math.round(scroll.scrollTop),
+        anchorAt: Math.round(heading.offsetTop),
+      };
     });
     assert.ok(before.at > 0, `${name}/${label}: the reader did not scroll before the reload`);
 
@@ -253,29 +257,39 @@ async function auditAtWidth(browser, baseUrl, name, { label, width, height }) {
     const restored = await page.evaluate(() => {
       const scroll = document.querySelector('[data-testid="reader-scroll"]');
       let anchor = '';
+      let anchorAt = 0;
       for (const heading of document.querySelectorAll(
         '[data-testid="lesson-reader"] [data-reader-anchor]'
       )) {
-        if (heading.offsetTop <= scroll.scrollTop + 8) anchor = heading.dataset.readerAnchor;
-        else break;
+        if (heading.offsetTop <= scroll.scrollTop + 8) {
+          anchor = heading.dataset.readerAnchor;
+          anchorAt = heading.offsetTop;
+        } else break;
       }
-      return { anchor, at: Math.round(scroll.scrollTop) };
+      return { anchor, at: Math.round(scroll.scrollTop), anchorAt: Math.round(anchorAt) };
     });
     assert.equal(
       restored.anchor,
       before.anchor,
       `${name}/${label}: the reader came back under "${restored.anchor}", not "${before.anchor}"`
     );
+    // A reflow above the heading changes its absolute `offsetTop`, but the distance the learner
+    // read *into* the heading is what the restore promises to keep. Compare that distance, not the
+    // raw scroll offset; the anchor assertion above already proves they are in the same section.
+    const savedInto = before.at - before.anchorAt;
+    const restoredInto = restored.at - restored.anchorAt;
     assert.ok(
-      Math.abs(restored.at - before.at) < 160,
-      `${name}/${label}: the reader saved ${before.at}px but restored at ${restored.at}px`
+      Math.abs(restoredInto - savedInto) < 160,
+      `${name}/${label}: the reader saved ${savedInto}px into "${before.anchor}" ` +
+        `(${before.at}px) but restored ${restoredInto}px in (${restored.at}px)`
     );
     assert.equal(pageErrors.length, 0, `${name}/${label}: page errors: ${pageErrors.join(' | ')}`);
 
     console.log(
       `  ok ${name}/${label}: P.6 Requirements ${requirements.cards} cards/${requirements.columns} column(s), ` +
         `two-pane header ${arrangement.stripWidth}px/${arrangement.rows} rows with ${arrangement.controls} controls, ` +
-        `reader restored "${restored.anchor}" at ${restored.at}px`
+        `reader restored "${restored.anchor}" at ${restored.at}px ` +
+        `(${restored.at - restored.anchorAt}px into the heading)`
     );
   } finally {
     await context.close();
