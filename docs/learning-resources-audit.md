@@ -490,6 +490,24 @@ explicit local-file reason. The resolver suite covers all 155 external entries.
 - Reader Mode: deferred pending per-provider licensing; no excerpt or snapshot exists.
 - Provider pages themselves are external and not cached; no offline claim is made for them.
 
+**Questions for the maintainer**
+
+- **Q1 — an isolation decision, not a code change.** Should MechaLab change its cross-origin
+  isolation policy, or add a separate, deliberately non-isolated resource window, so provider pages
+  can be framed? The evidence is §3: the workbench needs `COEP: require-corp` for
+  `SharedArrayBuffer` and the Python Stop/Pause, CS50P sends `X-Frame-Options: SAMEORIGIN` with
+  `frame-ancestors 'self'`, futurecoder sends no CORP, and **0 of P.1's 2 unique URLs is embeddable**
+  (point-in-time header probe, 20 November 2026). Either answer needs a Chromium/Firefox/Safari
+  matrix, a security review, a provider-terms review, and a browser test that Stop/Pause still works;
+  none of that can be settled by editing the resource layer. The recommended answer remains
+  external-first.
+- **Q2 — a licensing decision, not a code change.** Which providers, if any, permit a local excerpt
+  or snapshot in Reader Mode, and what attribution would ship beside it? §4 records CS50P's
+  CC BY-NC-SA 4.0, futurecoder's MIT code with asset-level exceptions to confirm, the PSF licence for
+  the Python docs, and the providers whose terms were not audited; "free to read" is not permission
+  to reproduce. Until that list is answered provider by provider, no excerpt, snapshot or local copy
+  is stored or served.
+
 ## Appendix A — Reproducing the inventory
 
 The counts above were produced from the repository root with a Python 3 regex inventory. The generated file includes every URL and source path for both scopes. The probe used:
