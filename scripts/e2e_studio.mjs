@@ -395,6 +395,98 @@ async function main() {
     await page.getByTestId('studio-vim').click();
     ok('the studio editor is the runner’s card: split panes and a remembered Vim choice');
 
+    // ---- 2b.0 The editor's Settings door is a real, keyboard-closable disclosure ----
+    // The button is in the shared "python-runner-editor" header, opens a named region with its own
+    // persisted switch, moves focus into that region, and Escape returns focus to the door. Pressing
+    // the door again is the second way out.
+    assert.equal(
+      await page.locator('#python-runner-editor').count(),
+      1,
+      'the runner editor card must be the surface that owns Settings'
+    );
+    const editorSettingsButton = page.getByTestId('btn-editor-settings');
+    assert.equal(await editorSettingsButton.count(), 1, 'the runner editor must render a Settings button');
+    assert.equal(
+      await editorSettingsButton.getAttribute('aria-label'),
+      'Python runner editor settings',
+      'the Settings door needs an accessible name'
+    );
+    assert.equal(
+      await editorSettingsButton.getAttribute('aria-expanded'),
+      'false',
+      'the closed door must say so'
+    );
+    await editorSettingsButton.focus();
+    await page.keyboard.press('Enter');
+    const editorSettingsPanel = page.getByTestId('editor-settings');
+    await editorSettingsPanel.waitFor({ state: 'visible', timeout: 5000 });
+    assert.equal(
+      await editorSettingsButton.getAttribute('aria-expanded'),
+      'true',
+      'Enter on the focused door must open the panel'
+    );
+    assert.equal(
+      await editorSettingsPanel.getAttribute('role'),
+      'region',
+      'the panel must identify itself as the named settings region'
+    );
+    assert.equal(
+      await page.evaluate(() => document.activeElement?.getAttribute('data-testid')),
+      'btn-editor-settings-close',
+      'opening the panel must move focus into it'
+    );
+    const tooltipSwitch = page.getByTestId('editor-tooltips-toggle');
+    assert.equal(await tooltipSwitch.getAttribute('aria-checked'), 'true');
+    await tooltipSwitch.click();
+    assert.equal(
+      await tooltipSwitch.getAttribute('aria-checked'),
+      'false',
+      'the panel switch must change the editor preference'
+    );
+    assert.match(
+      await page.evaluate(() => localStorage.getItem('mechalab_editor_settings_v1') ?? ''),
+      /"tooltips":false/,
+      'the editor preference must be persisted by the existing settings store'
+    );
+    await page.keyboard.press('Escape');
+    await editorSettingsPanel.waitFor({ state: 'hidden', timeout: 5000 });
+    assert.equal(
+      await page.evaluate(() => document.activeElement?.getAttribute('data-testid')),
+      'btn-editor-settings',
+      'Escape must close the panel and return focus to Settings'
+    );
+    await editorSettingsButton.click();
+    await editorSettingsPanel.waitFor({ state: 'visible', timeout: 5000 });
+    assert.equal(
+      await tooltipSwitch.getAttribute('aria-checked'),
+      'false',
+      'reopening the panel must read the persisted switch'
+    );
+    await editorSettingsButton.click();
+    await editorSettingsPanel.waitFor({ state: 'hidden', timeout: 5000 });
+    assert.equal(
+      await editorSettingsButton.getAttribute('aria-expanded'),
+      'false',
+      'the same Settings button must close the panel'
+    );
+    await editorSettingsButton.click();
+    await editorSettingsPanel.waitFor({ state: 'visible', timeout: 5000 });
+    await page.getByTestId('btn-editor-settings-close').click();
+    await editorSettingsPanel.waitFor({ state: 'hidden', timeout: 5000 });
+    assert.equal(
+      await page.evaluate(() => document.activeElement?.getAttribute('data-testid')),
+      'btn-editor-settings',
+      "the panel's own Close must return focus to Settings too"
+    );
+    // Leave the preference at its default for the rest of the suite.
+    await editorSettingsButton.click();
+    await editorSettingsPanel.waitFor({ state: 'visible', timeout: 5000 });
+    await tooltipSwitch.click();
+    assert.equal(await tooltipSwitch.getAttribute('aria-checked'), 'true');
+    await editorSettingsButton.click();
+    await editorSettingsPanel.waitFor({ state: 'hidden', timeout: 5000 });
+    ok('Settings opens from the runner header, toggles and Escape close it, and focus returns to the door');
+
     // ---- 2b.1 The graph keeps its sheet when the calculator changes faces ----
     // The scientific pad and the graph are one tab now. Switching faces used to remount the graph,
     // which threw away the learner's expressions and their zoom; both faces stay mounted, and the
@@ -621,6 +713,33 @@ async function main() {
       await page.getByTestId('graph-python-slider-L1').getAttribute('min'),
       '0.05',
       'the graph slider must keep the source slider’s range'
+    );
+    const sourceSlider = page.getByTestId('graph-python-slider-L1');
+    await sourceSlider.focus();
+    await page.keyboard.press('ArrowRight');
+    await page.waitForFunction(
+      () => (window.__mechalabEditors?.['editor-studio']?.get() ?? '').includes('L1 = 0.16'),
+      undefined,
+      { timeout: 5000 }
+    );
+    assert.match(
+      await getEditorCode(page, STUDIO_EDITOR),
+      /L1 = 0\.16/,
+      'moving the graph’s Python slider must rewrite main.py’s # @slider literal'
+    );
+    await page.waitForFunction(
+      () =>
+        document
+          .querySelector('[data-testid="graph-python-slider-L1"]')
+          ?.closest('label')
+          ?.textContent?.includes('L1 = 0.16'),
+      undefined,
+      { timeout: 5000 }
+    );
+    assert.match(
+      (await sourceSlider.evaluate((node) => node.closest('label')?.textContent ?? '')) ?? '',
+      /L1 = 0\.16/,
+      'the graph’s Python slider must read the new value back from the same source'
     );
 
     // Adding lines is a list action, not a resize. Fill the list past its scroll area first; the

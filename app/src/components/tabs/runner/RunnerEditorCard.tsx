@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, type ReactNode, type RefObject } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { ChevronDown, ChevronRight, ChevronUp, Columns2, FileCode2, Lock, Settings2 } from 'lucide-react';
 import type { PythonEditorHandle } from '../../PythonEditor';
 import { RunVerdict } from './RunVerdict';
@@ -205,6 +205,24 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
   );
   const [editorSettingsOpen, setEditorSettingsOpen] = useState(false);
   const [editorTooltips, setEditorTooltips] = useState(() => readEditorSettings().tooltips);
+  const settingsButtonRef = useRef<HTMLButtonElement>(null);
+  const closeEditorSettings = () => {
+    setEditorSettingsOpen(false);
+    settingsButtonRef.current?.focus();
+  };
+  // Escape belongs to the open panel before any page-level shortcut: the panel is a disclosure,
+  // and closing it must put focus back on the door that opened it.
+  useEffect(() => {
+    if (!editorSettingsOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeEditorSettings();
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [editorSettingsOpen]);
   // Runner lessons and Free study can both be mounted: a change in one editor's menu reaches the
   // other through the same event the preference writes, rather than leaving two surfaces disagreeing.
   useEffect(() => {
@@ -429,13 +447,16 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
               </span>
               <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
                 <button
+                  ref={settingsButtonRef}
                   type="button"
                   data-testid="btn-editor-settings"
                   aria-expanded={editorSettingsOpen}
                   aria-controls="editor-settings-panel"
                   aria-label="Python runner editor settings"
                   title="Python runner editor settings — put the hover cards away, and keep the rest of the editor"
-                  onClick={() => setEditorSettingsOpen((open) => !open)}
+                  onClick={() =>
+                    editorSettingsOpen ? closeEditorSettings() : setEditorSettingsOpen(true)
+                  }
                   className={`flex h-7 cursor-pointer items-center gap-1.5 rounded-lg border px-2 font-mono text-[12px] transition-colors ${
                     editorSettingsOpen
                       ? 'border-accent/50 bg-accent-soft text-accent'
@@ -537,7 +558,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
                 const next = writeEditorSettings({ tooltips: on });
                 setEditorTooltips(next.tooltips);
               }}
-              onClose={() => setEditorSettingsOpen(false)}
+              onClose={closeEditorSettings}
             />
           )}
         </div>

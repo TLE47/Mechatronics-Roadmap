@@ -21,12 +21,13 @@ export function EditorSettingsPanel({
     <section
       id="editor-settings-panel"
       data-testid="editor-settings"
-      aria-label="Python editor settings"
+      role="region"
+      aria-labelledby="editor-settings-title"
       className="border-t border-line-soft px-3 py-2.5"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="flex items-center gap-1.5 text-[12px] font-semibold text-ink">
+          <p id="editor-settings-title" className="flex items-center gap-1.5 text-[12px] font-semibold text-ink">
             <Settings2 className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
             Python editor settings
           </p>
@@ -36,6 +37,7 @@ export function EditorSettingsPanel({
         </div>
         <button
           type="button"
+          autoFocus
           onClick={onClose}
           data-testid="btn-editor-settings-close"
           aria-label="Close editor settings"
