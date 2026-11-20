@@ -625,6 +625,156 @@ body {
   animation: pop 420ms var(--ease-spring) both;
 }
 
+/* The walkthrough is a pointer, not a modal: no scrim, no scroll lock, no tab trap. Its motion is
+   the demonstration — a ghost click travels from the card to the outlined control, one halo marks
+   the target, and the card is born in its final place instead of flying there from the centre. The
+   card is keyed by stop, so each new stop replays these once; nothing here loops. All of it is gone
+   under reduce motion through the global dampener above. */
+@keyframes walkthrough-beam {
+  0% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  20% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+@keyframes walkthrough-halo {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 42%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 16px color-mix(in srgb, var(--accent) 0%, transparent);
+  }
+}
+@keyframes walkthrough-demo {
+  0% {
+    opacity: 0;
+    transform: translate(var(--demo-dx, 48px), var(--demo-dy, 32px)) scale(0.6);
+  }
+  15% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  62% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.72);
+  }
+  78% {
+    opacity: 0.65;
+    transform: translate(0, 0) scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0, 0) scale(1);
+  }
+}
+@keyframes walkthrough-ripple {
+  0%,
+  46% {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+  58% {
+    opacity: 0.65;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+.walkthrough-card {
+  transition:
+    opacity 220ms var(--ease-out),
+    transform 260ms var(--ease-spring),
+    left 220ms var(--ease-out),
+    top 220ms var(--ease-out);
+}
+@starting-style {
+  .walkthrough-card {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  .walkthrough-spot {
+    opacity: 0;
+  }
+}
+.walkthrough-beam {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 1px;
+  width: 100%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: walkthrough-beam 1100ms var(--ease-out) 120ms both;
+}
+.walkthrough-spot::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: walkthrough-halo 1100ms var(--ease-out) 160ms both;
+}
+.walkthrough-dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  margin: -5.5px 0 0 -5.5px;
+  border-radius: 9999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 18%, transparent);
+  animation: walkthrough-demo 1150ms var(--ease-out) 220ms both;
+}
+.walkthrough-ripple {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border-radius: 9999px;
+  border: 2px solid var(--accent);
+  opacity: 0;
+  animation: walkthrough-ripple 1150ms var(--ease-out) 220ms both;
+}
+.walkthrough-check {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 7px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, var(--panel));
+  color: var(--accent);
+  transition:
+    border-color 180ms var(--ease-out),
+    background-color 180ms var(--ease-out);
+}
+.walkthrough-check-done {
+  border-color: color-mix(in srgb, var(--emerald) 55%, var(--border));
+  background: color-mix(in srgb, var(--emerald) 16%, var(--panel));
+  color: var(--emerald);
+}
+.walkthrough-check-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
 /* The walkthrough's two reactions: a checked box gets one short lift, and pressing Next too early
    shakes the card without moving the page. Both are gone under reduce motion through the global
    dampener above. */
