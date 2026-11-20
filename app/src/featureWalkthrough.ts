@@ -540,13 +540,14 @@ export const FEATURE_WALKTHROUGH_COUNT = FEATURE_WALKTHROUGH.length;
  * A stop's `anchors` only choose what the spotlight measures; they are allowed to fall back to a
  * whole panel so the card still has somewhere to point when a lazy tab has not drawn yet. The
  * action is deliberately narrower: it names the exact buttons that do what the stop describes, and
- * only a click on one of those checks the mission off. `Do it` presses the same control, so there
- * is no card-only route that scores without touching the workbench.
+ * only a click on one of those crosses the checklist row off. The card never presses the control
+ * for the learner, and Next never waits for the tick — the walkthrough points at the workbench,
+ * it does not gate it.
  */
 export interface WalkthroughAction {
   /** The sentence in the checklist: the task, not a description of the stop. */
   label: string;
-  /** Controls in preference order. The first one on screen is the one `Do it` presses. */
+  /** Controls in preference order. The first one on screen is the one the card outlines. */
   selectors: readonly string[];
   /** A disclosure that must be opened first when the real action lives inside it. */
   reveal?: readonly string[];
@@ -813,6 +814,16 @@ export function resumeWalkthroughState(state: WalkthroughState, now = Date.now()
     completed: restart ? [] : readCompleted(state.completed),
     updatedAt: now,
   };
+}
+
+/**
+ * Clear every earned point and start the tour from its first stop.
+ *
+ * Only the checklist is erased: the tour stays open, and a learner who resets can walk it again
+ * from the top without reloading the page or losing their place in the workbench.
+ */
+export function resetWalkthroughState(now = Date.now()): WalkthroughState {
+  return { ...initialWalkthroughState(now), status: 'active' };
 }
 
 /** Check one stop off. Repeated calls are a no-op, so a double click cannot score twice. */

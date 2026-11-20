@@ -205,6 +205,15 @@ async function main() {
 
   const fresh = async (options = {}) => {
     const context = await browser.newContext(options);
+    // This suite is about the lesson coach mark, not the new-learner guide: the guide reopens by
+    // default now, and a second dialog over the first would eat the clicks aimed at its card.
+    await context.addInitScript(() => {
+      try {
+        localStorage.setItem('mechalab_guide_reopen_v1', '0');
+      } catch {
+        // A blocked store costs the seed, not the suite.
+      }
+    });
     const page = await context.newPage();
     return { context, page };
   };

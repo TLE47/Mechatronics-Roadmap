@@ -11,7 +11,7 @@ import {
 } from '../generalSettings';
 import { downloadLearningLog } from '../learningLog';
 import { GUIDE_STEP_COUNT } from '../learnerGuide';
-import { openLearnerGuide } from '../learnerGuideDoor';
+import { openLearnerGuide, readGuideReopen, writeGuideReopen } from '../learnerGuideDoor';
 import { BackupControls } from './BackupControls';
 import { cachedSoundPrefs, subscribeSoundPrefs, type SoundPrefs } from '../audio/prefs.ts';
 import { change, install, preview, reset, subscribeArmed, togglePlay } from '../audio/musicManager.ts';
@@ -127,6 +127,7 @@ export const GeneralSettingsPanel: React.FC<{
 }> = ({ open, onClose, onExportPortfolio }) => {
   const [labels, setLabels] = React.useState(readShowActionLabels());
   const [blocks, setBlocks] = React.useState(readWorkspaceBlocks);
+  const [guideReopen, setGuideReopen] = React.useState(readGuideReopen);
   const closeRef = React.useRef<HTMLButtonElement | null>(null);
   // Whoever opened the dialog gets the focus back: the gear, or the speaker's detail button, which
   // is the same door now that sound lives here.
@@ -140,6 +141,7 @@ export const GeneralSettingsPanel: React.FC<{
     const refresh = () => {
       setLabels(readShowActionLabels());
       setBlocks(readWorkspaceBlocks());
+      setGuideReopen(readGuideReopen());
     };
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
@@ -225,6 +227,30 @@ export const GeneralSettingsPanel: React.FC<{
               </span>
               <span className="shrink-0 font-mono text-[10px] text-accent transition-transform group-hover:translate-x-0.5">
                 Open →
+              </span>
+            </button>
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={guideReopen}
+              onClick={() => setGuideReopen(writeGuideReopen(!guideReopen))}
+              data-testid="btn-guide-reopen"
+              title="Open the new learner guide automatically on every visit, until you turn it off here or in the guide's own checklist."
+              className="mt-1.5 flex w-full items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-left"
+              style={{
+                borderColor: guideReopen ? 'var(--accent)' : 'var(--border)',
+                backgroundColor: guideReopen ? 'var(--accent-soft)' : 'transparent',
+              }}
+            >
+              <span>
+                <span className="block text-[12px] font-semibold">Reopen on every visit</span>
+                <span className="block text-[11px] leading-snug" style={{ color: 'var(--dim)' }}>
+                  Open this guide automatically when the workbench loads. Turn it off here or from
+                  the checklist at the foot of the guide; opening it by hand always works.
+                </span>
+              </span>
+              <span aria-hidden="true" className="shrink-0 font-mono text-[11px]">
+                {guideReopen ? 'on' : 'off'}
               </span>
             </button>
           </section>

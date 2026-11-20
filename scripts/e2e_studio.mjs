@@ -31,7 +31,7 @@ import path from 'node:path';
 import { chromium } from 'playwright-core';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
 import { getEditorCode, setEditorCode, waitForEditor } from './editor-code.mjs';
-import { seedTourSeen } from './tour_seed.mjs';
+import { TOUR_SEEN_RECORD, seedTourSeen } from './tour_seed.mjs';
 import { clearBulk } from './bulk_store_page.mjs';
 import { fromUtf8, readZip } from '../app/src/backupZip.ts';
 import {
@@ -832,6 +832,48 @@ async function main() {
     await page.getByTestId('learner-guide').waitFor({ state: 'detached', timeout: 5000 });
     ok('General settings opens the guide, Next/Previous walk it, and turn-off resumes on the same step');
 
+    // ---- 2b.1 The guide reopens by default, and its own checklist turns that off ----
+    // This context is a first-time device, so it deliberately does not use `seedTourSeen` (that
+    // seed marks a returning visitor and switches the guide off). Only the lesson coach mark is
+    // seeded, because this suite is measuring the guide, not the tour.
+    const guideContext = await browser.newContext();
+    await guideContext.addInitScript((record) => {
+      try {
+        localStorage.setItem('mechalab_tour_v1', record);
+      } catch {
+        // A blocked store costs the seed, not the suite.
+      }
+    }, TOUR_SEEN_RECORD);
+    const guidePage = await guideContext.newPage();
+    await guidePage.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });
+    await guidePage.getByTestId('learner-guide').waitFor({ state: 'visible', timeout: 30000 });
+    assert.equal(
+      await guidePage.getByTestId('guide-reopen-checklist').getAttribute('aria-checked'),
+      'true',
+      'a new learner must meet the guide without having to find it in settings'
+    );
+    await guidePage.getByTestId('guide-reopen-checklist').click();
+    assert.equal(
+      await guidePage.getByTestId('guide-reopen-checklist').getAttribute('aria-checked'),
+      'false',
+      'the guide’s own checklist must turn the reopen off'
+    );
+    await guidePage.getByTestId('guide-close').click();
+    await guidePage.getByTestId('learner-guide').waitFor({ state: 'detached', timeout: 5000 });
+    await guidePage.getByTestId('btn-general-settings').click();
+    await guidePage.getByTestId('general-settings').waitFor({ state: 'visible', timeout: 5000 });
+    assert.equal(
+      await guidePage.getByTestId('btn-guide-reopen').getAttribute('aria-checked'),
+      'false',
+      'the settings toggle must read the same record as the guide checklist'
+    );
+    await guidePage.getByTestId('btn-guide-reopen').click();
+    await guidePage.getByTestId('btn-general-settings-close').click();
+    await guidePage.reload({ waitUntil: 'domcontentloaded' });
+    await guidePage.getByTestId('learner-guide').waitFor({ state: 'visible', timeout: 30000 });
+    ok('the guide reopens by default; its checklist and the settings toggle both control that');
+    await guideContext.close();
+
     // ---- 2b.3 The guide's second mode is a tooltip that points at the real controls ----
     // It is not a slideshow behind the dialog: the guide closes, the workbench is dimmed, and each
     // Next moves the card to another control — including opening the tab the feature lives in.
@@ -857,12 +899,12 @@ async function main() {
       'the walkthrough starts from its first feature'
     );
     const firstFeature = (await page.getByTestId('walkthrough-title').innerText()).trim();
-    // A stop is a task now: only its exact control may tick it. Pressing a different real header
-    // control is an action, but not this mission's action, so the box must stay empty.
+    // The walkthrough points, it does not gate: Next is available immediately, and only the
+    // outlined control — not a neighbour that happens to be on screen — can tick the row.
     assert.equal(
-      await page.getByTestId('walkthrough-next').isDisabled(),
+      await page.getByTestId('walkthrough-next').isEnabled(),
       true,
-      'Next must wait for the checklist'
+      'Next must never wait for the checklist'
     );
     await page.evaluate(() => {
       document.querySelector('[data-testid="btn-theme-toggle"]')?.click();
@@ -873,9 +915,9 @@ async function main() {
       'false',
       'a different control must not check the stop'
     );
-    // Do it is a shortcut for the same gesture, not a score button. The wordmark must really open
-    // the introduction, and only then may the checklist tick.
-    await page.getByTestId('walkthrough-do-it').click();
+    // Using the outlined control is the whole gesture: the wordmark really opens the introduction
+    // and the checklist ticks itself, with no Do it shortcut in the card.
+    await page.getByTestId('link-brand').click();
     await page.getByTestId('intro-page').waitFor({ state: 'visible', timeout: 10000 });
     await page.waitForFunction(
       () =>
@@ -884,15 +926,9 @@ async function main() {
       undefined,
       { timeout: 2000 }
     );
-    assert.equal(
-      await page.getByTestId('walkthrough-next').isEnabled(),
-      true,
-      'the real action must unlock Next'
-    );
-    ok('only the named control checks a stop; Do it performs that control’s real action');
+    ok('the outlined control checks its own row, and the walkthrough never gates Next');
 
-    // The next stop is a new, unchecked mission: Next must move the card, and the card must not be
-    // able to move again until that second action is done. Previous returns to the earned tick.
+    // A fresh stop is not a locked stop: Next moves straight on, and Previous returns to the tick.
     await page.getByTestId('walkthrough-next').click();
     await page.waitForFunction(
       (previous) =>
@@ -901,9 +937,9 @@ async function main() {
       { timeout: 5000 }
     );
     assert.equal(
-      await page.getByTestId('walkthrough-next').isDisabled(),
+      await page.getByTestId('walkthrough-next').isEnabled(),
       true,
-      'an unchecked stop must not be skipped'
+      'an unchecked stop must still move on'
     );
     await page.getByTestId('walkthrough-prev').click();
     await page.waitForFunction(
@@ -912,7 +948,22 @@ async function main() {
       firstFeature,
       { timeout: 5000 }
     );
-    ok('Next/Previous move the card, and a fresh stop keeps Next locked until its own action');
+    // Reset points is the one destructive control the card carries: it clears every tick, returns
+    // to the first feature, and leaves the tour itself open.
+    assert.match((await page.getByTestId('walkthrough-score').innerText()).trim(), /0100/);
+    await page.getByTestId('walkthrough-reset').click();
+    await page.waitForFunction(
+      () =>
+        document
+          .querySelector('[data-testid="walkthrough-progress"]')
+          ?.textContent?.includes('01 /') === true &&
+        document.querySelector('[data-testid="walkthrough-checklist"]')?.getAttribute('data-done') ===
+          'false',
+      undefined,
+      { timeout: 3000 }
+    );
+    assert.match((await page.getByTestId('walkthrough-score').innerText()).trim(), /0000/);
+    ok('Next/Previous move freely, and Reset points clears the checklist and returns to the first feature');
 
     // The first ten stops open settings, reset, account and search dialogs. Rather than leave four
     // overlays stacked to reach the runner, keep the one tick the browser just earned and resume the
@@ -968,7 +1019,8 @@ async function main() {
       'false',
       'a neighbouring editor tab must not check the lesson-list stop'
     );
-    await page.getByTestId('walkthrough-do-it').click();
+    // The spotlight outlines the chooser's fold button; using that real control ticks the row.
+    await page.getByTestId('btn-lessons-toggle').click();
     await page.waitForFunction(
       () =>
         document.querySelector('[data-testid="walkthrough-checklist"]')?.getAttribute('data-done') ===
