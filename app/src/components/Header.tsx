@@ -1,5 +1,5 @@
 import React from 'react';
-import { Printer, User, ChevronRight, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, ChevronsDownUp, House, Pause, Play, RotateCcw, FlaskConical, Brain, Settings2, ListChecks } from 'lucide-react';
+import { Printer, User, ChevronRight, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2, ChevronsDownUp, House, Pause, Play, RotateCcw, FlaskConical, Brain, Settings2, ListChecks, Compass } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
 import { ResetProgressLazy } from './ResetProgressLazy';
 import {
@@ -63,6 +63,13 @@ interface HeaderProps {
    * hidden then, and a door to a hidden tab would only look broken.
    */
   onOpenMicro?: () => void;
+  /**
+   * Opens the tooltip walkthrough for the current tab. Absent on a page with no stops: General
+   * settings still holds the full 36-stop walk on every screen.
+   */
+  onOpenPageTour?: () => void;
+  /** The number of stops this page's tour will walk, for the button's tooltip. */
+  pageTourStops?: number;
   /** Opens review mode: every lesson this device has verified, in one place. */
   onOpenReview?: () => void;
   /**
@@ -120,6 +127,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenStudio,
   onOpenLessons,
   onOpenMicro,
+  onOpenPageTour,
+  pageTourStops,
   onOpenReview,
   onOpenIntro,
   focus = false,
@@ -395,6 +404,18 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Brain className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 <span className={labelClass}>Micro</span>
+              </button>
+            )}
+            {onOpenPageTour && (
+              <button
+                onClick={onOpenPageTour}
+                data-testid="btn-page-walkthrough"
+                aria-label="Walkthrough this page"
+                data-tip={`Walkthrough — ${pageTourStops ?? 0} stops on this page`}
+                className="btn"
+              >
+                <Compass className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span className={labelClass}>Tour</span>
               </button>
             )}
             {/* The palette is a shortcut first, but a shortcut nobody can see is a secret. */}
