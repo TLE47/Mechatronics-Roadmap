@@ -271,6 +271,7 @@ export const TabBode: React.FC<TabBodeProps> = ({ onLoadPreset, highlightedId, p
 
           <div className="pt-2 flex flex-wrap gap-2">
             <button
+              data-testid="bode-auto-tune"
               onClick={snapNotch}
               className="bg-accent/20 hover:bg-accent/30 text-accent border border-accent px-3 py-1.5 rounded-md text-xs font-bold cursor-pointer transition-all shadow-sm"
             >

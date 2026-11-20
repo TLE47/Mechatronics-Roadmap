@@ -123,6 +123,7 @@ import { TabId } from './types';
 import { PYTHON_LESSONS } from './data/pythonLessonsData';
 import { useTheme } from './useTheme';
 import { actionForEvent } from './keymap';
+import { playShortcut } from './audio/shortcutSound';
 import { useKeymap } from './useKeymap';
 import { ThemeTokens } from './components/ThemeTokens';
 import { themeViewFromLocation, themeViewSearch } from './themeRoute';
@@ -1503,6 +1504,7 @@ export const App: React.FC = () => {
       // answered; a rebind changes which press lands here, never what the press does.
       const action = actionForEvent(keymapRef.current, event);
       if (action === 'palette') {
+        playShortcut('primary', event);
         event.preventDefault();
         showPalette('all');
         return;
@@ -1510,11 +1512,13 @@ export const App: React.FC = () => {
       // ⌘P is the browser's Print on every platform; this app takes it for quick-open the way a
       // code editor does, and the cheat sheet's own Print button stays the way to print the page.
       if (action === 'lessons') {
+        playShortcut('primary', event);
         event.preventDefault();
         showPalette('lessons');
         return;
       }
       if (action === 'search') {
+        playShortcut('primary', event);
         event.preventDefault();
         showPalette('search');
         return;
@@ -1526,11 +1530,13 @@ export const App: React.FC = () => {
         const chord = keymapRef.current.sheet;
         if (event.defaultPrevented) return;
         if (!chord.mod && !chord.alt && typing(event.target)) return;
+        playShortcut('primary', event);
         event.preventDefault();
         setIsShortcutsOpen((open) => !open);
         return;
       }
       if (action === 'focus') {
+        playShortcut('toggle', event);
         event.preventDefault();
         apply(!focusRef.current);
         return;
@@ -1538,6 +1544,7 @@ export const App: React.FC = () => {
       // Escape leaves focus, unless a dialog already claimed it: `defaultPrevented` is how a modal
       // that closes on Escape says so, and closing two things with one press is not a shortcut.
       if (event.key === 'Escape' && focusRef.current && !event.defaultPrevented) {
+        playShortcut('close', event);
         event.preventDefault();
         apply(false);
       }
@@ -1933,6 +1940,31 @@ export const App: React.FC = () => {
         {paletteOverlay}
         {reviewOverlay}
         {accountPanel}
+        {/* The guide's door is in General settings, which every page shares. The guide itself must
+            therefore live above the whole-page branches too, or pressing that door on Home would
+            set a flag no branch draws. */}
+        {isLearnerGuideOpen && (
+          <React.Suspense fallback={null}>
+            <LearnerGuideLazy
+              onClose={() => setIsLearnerGuideOpen(false)}
+              onNavigate={openTabFromHome}
+              onWalkthrough={() => {
+                setIsLearnerGuideOpen(false);
+                setIsFeatureWalkthroughOpen(true);
+              }}
+            />
+          </React.Suspense>
+        )}
+        {/* The walkthrough is a guide across pages, not a workbench drawer: a stop may open Home
+            or the introduction, so the card has to survive the whole-page branch it lands in. */}
+        {isFeatureWalkthroughOpen && (
+          <React.Suspense fallback={null}>
+            <FeatureWalkthroughLazy
+              onClose={() => setIsFeatureWalkthroughOpen(false)}
+              onNavigate={openTabFromHome}
+            />
+          </React.Suspense>
+        )}
       </div>
     );
   }

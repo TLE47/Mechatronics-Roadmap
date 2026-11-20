@@ -35,6 +35,7 @@ import { FirstRunTour } from '../FirstRunTour';
 import { layoutForStep } from '../../tour';
 import { resumeLabel } from '../../tourState';
 import { playCue } from '../../audio/facade';
+import { playShortcut } from '../../audio/shortcutSound';
 import { GENERAL_SETTINGS_EVENT, readWorkspaceBlocks, type WorkspaceBlocks } from '../../generalSettings';
 
 import { harnessGate } from '../../harnessGrading.ts';
@@ -63,7 +64,7 @@ import { StudyPanel } from '../StudyPanel';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { findDefinition } from '../../symbolIndex';
 
-import { layoutArrangement, layoutShortcutFor, layoutShows, splitGridTemplate } from '../../workspaceLayout';
+import { layoutArrangement, layoutShows, splitGridTemplate } from '../../workspaceLayout';
 import {
   closeView,
   isSplit,
@@ -82,6 +83,7 @@ import { readBreakpoints, setBreakpointCondition, toggleBreakpoint, writeBreakpo
 import { readWatches } from '../../editor/watches';
 
 import { useRunnerArrangement } from './runner/useRunnerArrangement';
+import { useLayoutShortcuts } from './runner/useLayoutShortcuts';
 import { useGuideFold } from './runner/useGuideFold';
 import { GuideOffer, GuideToggle } from './runner/GuideToggle';
 import { usePredictGate } from './runner/usePredictGate';
@@ -1422,20 +1424,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // Vim keys (`runner/useVimKeys.ts`): the remembered opt-in and the mode the editor reads keys in.
   const vim = useVimKeys();
 
-  // ⌥1–⌥4 pick a layout, from anywhere including inside the editor. The buttons in the editor's
-  // header are the discoverable path; this is the shortcut the buttons print.
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || !event.altKey || event.metaKey || event.ctrlKey) return;
-      // The code first: ⌥2 is `™` in `key` on a Mac, and the shortcut is the physical key.
-      const next = layoutShortcutFor(event.code) ?? layoutShortcutFor(event.key);
-      if (!next) return;
-      event.preventDefault();
-      chooseLayout(next);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  useLayoutShortcuts(chooseLayout);
 
   // A slider drag is a parameter change, so the answer is a fresh run - but one run per drag, not
   // one per pixel. The timer is cleared on unmount so a removed tab cannot run in the background.
@@ -1667,11 +1656,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // the discoverable path; this is the one keyboard habit a code editor trains. The key is read from
   // the sheet's keymap (`app/src/keymap.ts`), so a learner who rebinds Run is not left with the old
   // chord still running the lesson and the new one doing nothing.
-  const runShortcutRef = useRef<() => void>(() => {});
+  const runShortcutRef = useRef<() => boolean>(() => false);
   runShortcutRef.current = () => {
-    if (isRunning) return;
+    if (isRunning) return false;
     const lesson = PYTHON_LESSONS.find((l) => l.id === lessonIdRef.current) || PYTHON_LESSONS[0];
     gate.requestRun(codeRef.current, lesson);
+    return true;
   };
   const keymapRef = useKeymapRef();
   useEffect(() => {
@@ -1679,7 +1669,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       if (event.defaultPrevented) return;
       if (actionForEvent(keymapRef.current, event) === 'run') {
         event.preventDefault();
-        runShortcutRef.current();
+        if (runShortcutRef.current()) playShortcut('primary', event);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -2808,7 +2798,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               panes={{ value: panes, onPanes: commitPanes }}
               gate={gate}
               selfDone={selfDone}
-              run={{ isRunning, passStatus, harnessResult, asksForFinish: gateAsksForFinish, traceLine: trace?.steps[Math.min(traceStep, trace.steps.length - 1)]?.line ?? null }}
+              run={{ isRunning, passStatus, harnessResult, asksForFinish: gateAsksForFinish, traceLine: trace?.steps[Math.min(traceStep, trace.steps.length - 1)]?.line ?? null, errorLine: parsedFailure?.frame ? { line: parsedFailure.frame.line, message: parsedFailure.summary } : null }}
               slots={{
                 toolbar: runnerToolbar,
                 robotPane: robotPaneFor(selectedId, execution.robot),

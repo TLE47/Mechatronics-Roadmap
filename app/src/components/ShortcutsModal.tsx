@@ -14,6 +14,7 @@ import {
 } from '../keymap';
 import { useKeymap } from '../useKeymap';
 import { showUndo } from '../toastPolicy';
+import { playShortcut } from '../audio/shortcutSound';
 
 interface ShortcutsModalProps {
   isOpen: boolean;
@@ -58,6 +59,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
       if (event.key === 'Escape') {
         // A row waiting for a key gave Escape back as "never mind" already (the capture listener
         // above stops it from reaching here); closing the sheet would be a second meaning.
+        playShortcut('close', event);
         event.preventDefault();
         onClose();
         return;
@@ -196,8 +198,8 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
                   </button>
                 ) : (
                   <kbd
-                    className="inline-block rounded border px-1.5 py-0.5 font-mono text-[11px]"
-                    style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
+                    className="inline-flex rounded border px-1.5 py-0.5 font-mono text-[11.5px] font-bold"
+                    style={{ borderColor: 'var(--border-strong)', color: 'var(--text)' }}
                   >
                     {row.keys}
                   </kbd>

@@ -16,6 +16,7 @@ import {
   compileImplicit,
   buildDependencyGraph,
   affectedBy,
+  affectedRows,
   foldConstants,
 } from '../app/src/grapher/compiler.ts';
 import { parseEquation, normalizeMath } from '../app/src/grapher/parser.ts';
@@ -26,8 +27,11 @@ import {
   readGraphPush,
 } from '../app/src/grapher/bridge.ts';
 import {
+  ImplicitRenderer,
   panViewport,
+  parameterUniformsForUpload,
   pointAt,
+  refreshExplicitSamples,
   sampleExplicit,
   tickLabel,
   tickStep,
@@ -259,6 +263,197 @@ check('the dependency graph names exactly the downstream lines', () => {
   assert.deepEqual(affectedBy(graph, 'L1').sort(), ['one', 'two']);
   assert.deepEqual(affectedBy(graph, 'Kp'), ['one']);
   assert.deepEqual(affectedBy(graph, 'missing'), []);
+});
+check('a parameter row carries a move through to the curves that read it', () => {
+  const graph = buildDependencyGraph([
+    { id: 'define-a', parameters: [], defines: 'a' },
+    { id: 'define-b', parameters: ['a'], defines: 'b' },
+    { id: 'curve-b', parameters: ['b'] },
+    { id: 'curve-kp', parameters: ['Kp'] },
+    { id: 'curve-none', parameters: [] },
+  ]);
+  assert.deepEqual(affectedRows(graph, ['a']).sort(), ['curve-b', 'define-b']);
+  assert.deepEqual(affectedRows(graph, ['Kp']), ['curve-kp']);
+  assert.deepEqual(affectedRows(graph, ['a', 'Kp']).sort(), ['curve-b', 'curve-kp', 'define-b']);
+  assert.deepEqual(affectedRows(graph, ['missing']), []);
+  assert.deepEqual(graph.definitions['define-b'], ['b']);
+});
+check('a parameter move resamples only the curves the graph named', () => {
+  const dependent = compileExplicit(parseEquation('a * x'));
+  const independent = compileExplicit(parseEquation('sin(x)'));
+  let dependentCalls = 0;
+  let independentCalls = 0;
+  const curves = [
+    {
+      id: 'curve-a',
+      color: '#f26d6d',
+      evaluate: (x, scope) => {
+        dependentCalls += 1;
+        return dependent.evaluate(x, scope);
+      },
+    },
+    {
+      id: 'curve-sin',
+      color: '#5b9dff',
+      evaluate: (x, scope) => {
+        independentCalls += 1;
+        return independent.evaluate(x, scope);
+      },
+    },
+  ];
+  const view = viewportFor(240, 160);
+  const first = refreshExplicitSamples(curves, { a: 1 }, view, 240, null, new Map());
+  assert.ok(dependentCalls > 0, 'the opening draw samples every curve');
+  assert.ok(independentCalls > 0, 'the opening draw samples every curve');
+  const dependentBefore = dependentCalls;
+  const independentBefore = independentCalls;
+  const graph = buildDependencyGraph([
+    { id: 'curve-a', parameters: ['a'] },
+    { id: 'curve-sin', parameters: [] },
+  ]);
+  const affected = new Set(affectedRows(graph, ['a']));
+  assert.deepEqual([...affected], ['curve-a']);
+  const second = refreshExplicitSamples(curves, { a: 2 }, view, 240, affected, first);
+  assert.ok(dependentCalls > dependentBefore, 'the dependent curve is resampled');
+  assert.equal(
+    independentCalls,
+    independentBefore,
+    'the independent curve\'s compiled closure must not be invoked again'
+  );
+  assert.equal(
+    second.get('curve-sin'),
+    first.get('curve-sin'),
+    'the independent curve reuses its exact sample array'
+  );
+  assert.notEqual(second.get('curve-a'), first.get('curve-a'));
+});
+check('the implicit renderer writes only the affected row’s parameter uniform', () => {
+  const uniformCalls = [];
+  const gl = {
+    VERTEX_SHADER: 1,
+    FRAGMENT_SHADER: 2,
+    COMPILE_STATUS: 3,
+    LINK_STATUS: 4,
+    ARRAY_BUFFER: 5,
+    STATIC_DRAW: 6,
+    FLOAT: 7,
+    BLEND: 8,
+    DEPTH_TEST: 9,
+    SRC_ALPHA: 10,
+    ONE_MINUS_SRC_ALPHA: 11,
+    ONE: 12,
+    COLOR_BUFFER_BIT: 13,
+    TRIANGLES: 14,
+    createBuffer: () => ({}),
+    bindBuffer: () => {},
+    bufferData: () => {},
+    createVertexArray: () => ({}),
+    bindVertexArray: () => {},
+    enableVertexAttribArray: () => {},
+    vertexAttribPointer: () => {},
+    disable: () => {},
+    enable: () => {},
+    blendFuncSeparate: () => {},
+    createShader: () => ({}),
+    shaderSource: () => {},
+    compileShader: () => {},
+    getShaderParameter: () => true,
+    getShaderInfoLog: () => '',
+    deleteShader: () => {},
+    createProgram: () => ({}),
+    attachShader: () => {},
+    bindAttribLocation: () => {},
+    linkProgram: () => {},
+    deleteProgram: () => {},
+    getProgramParameter: () => true,
+    getProgramInfoLog: () => '',
+    getUniformLocation: (_program, name) => ({ name }),
+    useProgram: () => {},
+    uniform2f: () => {},
+    uniform4f: () => {},
+    uniform1f: (location, value) => {
+      uniformCalls.push({ name: location.name, value });
+    },
+    uniform3f: () => {},
+    drawArrays: () => {},
+    viewport: () => {},
+    clearColor: () => {},
+    clear: () => {},
+  };
+  const renderer = new ImplicitRenderer({ getContext: () => gl });
+  renderer.resize(120, 80, 1);
+  const view = viewportFor(120, 80);
+  const curveA = {
+    id: 'circle-a',
+    color: '#f26d6d',
+    expression: 'length(vec2(x, y)) - u_a',
+    parameters: [{ name: 'a', uniform: 'u_a' }],
+    values: { a: 2 },
+    region: null,
+  };
+  const curveB = {
+    id: 'circle-b',
+    color: '#4cc38a',
+    expression: 'length(vec2(x, y)) - u_b',
+    parameters: [{ name: 'b', uniform: 'u_b' }],
+    values: { b: 3 },
+    region: null,
+  };
+  const parameterCalls = () =>
+    uniformCalls.filter((call) => call.name === 'u_a' || call.name === 'u_b');
+
+  renderer.render([curveA, curveB], view, new Set());
+  assert.deepEqual(
+    parameterCalls().map((call) => call.name).sort(),
+    ['u_a', 'u_b'],
+    'a first draw initializes every program'
+  );
+
+  uniformCalls.length = 0;
+  renderer.render(
+    [
+      { ...curveA, values: { a: 2.5 } },
+      { ...curveB, values: { b: 3.5 } },
+    ],
+    view,
+    new Set(['circle-a'])
+  );
+  assert.deepEqual(
+    parameterCalls(),
+    [{ name: 'u_a', value: 2.5 }],
+    'the unaffected circle must not write u_b, even though its value changed in the shared scope'
+  );
+});
+check('an unaffected implicit row does not upload its parameter uniforms', () => {
+  const independent = {
+    id: 'circle-b',
+    color: '#4cc38a',
+    expression: 'length(vec2(x, y)) - u_b',
+    parameters: [{ name: 'b', uniform: 'u_b' }],
+    values: { b: 2 },
+    region: null,
+  };
+  const affected = {
+    id: 'circle-a',
+    color: '#f26d6d',
+    expression: 'length(vec2(x, y)) - u_a',
+    parameters: [{ name: 'a', uniform: 'u_a' }],
+    values: { a: 2 },
+    region: null,
+  };
+  const onlyA = new Set(['circle-a']);
+  assert.deepEqual(parameterUniformsForUpload(independent, onlyA, false), []);
+  assert.deepEqual(parameterUniformsForUpload(affected, onlyA, false), [
+    { uniform: 'u_a', value: 2 },
+  ]);
+  assert.deepEqual(parameterUniformsForUpload(independent, null, false), [
+    { uniform: 'u_b', value: 2 },
+  ]);
+  assert.deepEqual(
+    parameterUniformsForUpload(independent, onlyA, true),
+    [{ uniform: 'u_b', value: 2 }],
+    'a first draw must initialize the program even when the set is empty for this row'
+  );
 });
 
 console.log('\nViewport, grid and adaptive sampling');

@@ -73,9 +73,12 @@ export const SoundClicks: React.FC = () => {
     };
 
     // Enter and Space activate a focused control without a pointer, and a keyboard learner deserves
-    // the same room. `repeat` is a held key typing into the interface, not a press.
+    // the same room. `repeat` is a held key typing into the interface, not a press. A chord is not
+    // native button activation: `App` and the runner sound it as the control it invokes, so a
+    // modified Enter/Space must not also sound the control that happens to hold focus.
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.repeat) return;
+      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
       if (event.key !== 'Enter' && event.key !== ' ') return;
       const active = document.activeElement;
       if (!active || active === document.body) return;

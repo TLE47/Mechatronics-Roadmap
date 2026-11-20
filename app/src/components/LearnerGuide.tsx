@@ -28,6 +28,7 @@ import {
   type GuideVisual as GuideVisualId,
 } from '../learnerGuide';
 import type { TabId } from '../types';
+import { playShortcut } from '../audio/shortcutSound';
 
 const FORMULA_CHIPS = TYPESET_SHOWCASE.slice(0, 6).map((entry) => ({
   ...entry,
@@ -598,9 +599,11 @@ export const LearnerGuide: React.FC<{
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'ArrowRight') {
+        playShortcut('nav', event);
         event.preventDefault();
         advance();
       } else if (event.key === 'ArrowLeft') {
+        playShortcut('nav', event);
         event.preventDefault();
         back();
       }

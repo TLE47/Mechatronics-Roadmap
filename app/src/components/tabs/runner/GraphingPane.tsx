@@ -25,6 +25,8 @@ import {
 import type { AngleMode } from '../../../calculator';
 import { applyPythonSlider, onGraphPush } from '../../../grapher/bridge';
 import {
+  affectedRows,
+  buildDependencyGraph,
   compileExplicit,
   compileImplicit,
   evaluateConstantExpression,
@@ -48,6 +50,8 @@ const MIN_PLOT_WIDTH = 200;
 const MAX_LIST_WIDTH = 640;
 /** The divider's own width, so the sheet's floor is measured on the sheet rather than the pane. */
 const RESIZER_WIDTH = 10;
+/** The common redraw after nothing moved: keep every sample and every uniform. */
+const NO_AFFECTED_ROWS: ReadonlySet<string> = new Set();
 
 function clampListWidth(width: number, total: number): number {
   const max = Math.max(
@@ -254,6 +258,45 @@ export function GraphingPane({
     return values;
   }, [angle, compiled, parameterValues, sourceValues]);
 
+  /**
+   * The dependency graph is rebuilt with the compiled rows, not with the scope: a slider changes
+   * values, not what each line reads. It includes parameter rows (`b = 2a`) as bridges, so a move
+   * in `a` reaches the curves that read `b` as well as the ones that name `a` directly.
+   */
+  const dependencyGraph = useMemo(
+    () =>
+      buildDependencyGraph(
+        compiled.map((entry, index) => {
+          const row = rows[index]!;
+          return {
+            id: String(row.id),
+            parameters: entry.parsed?.parameters ?? [],
+            defines: entry.parameterName,
+          };
+        })
+      ),
+    [compiled, rows]
+  );
+
+  // The baseline is a committed ref, not a state copy and never a render-time write. React
+  // StrictMode renders twice before the effect runs, so both passes see the same previous scope
+  // and compute the same move; the effect settles the baseline only after this frame has drawn.
+  const previousScopeRef = useRef<Record<string, number>>({});
+  useEffect(() => {
+    previousScopeRef.current = scope;
+  }, [scope]);
+
+  const changedParameters = useMemo(() => {
+    const previousScope = previousScopeRef.current;
+    const names = new Set([...Object.keys(previousScope), ...Object.keys(scope)]);
+    return [...names].filter((name) => previousScope[name] !== scope[name]);
+  }, [scope]);
+
+  const affectedIds = useMemo<ReadonlySet<string>>(() => {
+    if (changedParameters.length === 0) return NO_AFFECTED_ROWS;
+    return new Set(affectedRows(dependencyGraph, changedParameters));
+  }, [changedParameters, dependencyGraph]);
+
   const explicitCurves = useMemo(
     () =>
       compiled
@@ -263,11 +306,13 @@ export function GraphingPane({
           return {
             id: String(row.id),
             color: row.color,
-            evaluate: (x: number) => entry.explicit!.evaluate(x, scope),
+            // The compiled closure is stable while the text and unit are unchanged. A slider moves
+            // the scope it reads, so this closure is not rebuilt for a parameter drag.
+            evaluate: entry.explicit.evaluate,
           };
         })
         .filter((curve): curve is NonNullable<typeof curve> => curve !== null),
-    [compiled, rows, scope]
+    [compiled, rows]
   );
 
   const implicitCurves: ImplicitCurve[] = useMemo(
@@ -419,6 +464,8 @@ export function GraphingPane({
           explicitCurves={explicitCurves}
           implicitCurves={implicitCurves}
           scatter={scatter}
+          scope={scope}
+          affectedIds={affectedIds}
         />
       </div>
     </section>

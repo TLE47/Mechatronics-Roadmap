@@ -34,6 +34,11 @@ import { getEditorCode, setEditorCode, waitForEditor } from './editor-code.mjs';
 import { seedTourSeen } from './tour_seed.mjs';
 import { clearBulk } from './bulk_store_page.mjs';
 import { fromUtf8, readZip } from '../app/src/backupZip.ts';
+import {
+  FEATURE_WALKTHROUGH,
+  FEATURE_WALKTHROUGH_STORAGE_KEY,
+  FEATURE_WALKTHROUGH_VERSION,
+} from '../app/src/featureWalkthrough.ts';
 
 const STUDIO_EDITOR = 'editor-studio';
 const PHONE = { width: 390, height: 844 };
@@ -390,6 +395,98 @@ async function main() {
     await page.getByTestId('studio-vim').click();
     ok('the studio editor is the runner’s card: split panes and a remembered Vim choice');
 
+    // ---- 2b.0 The editor's Settings door is a real, keyboard-closable disclosure ----
+    // The button is in the shared "python-runner-editor" header, opens a named region with its own
+    // persisted switch, moves focus into that region, and Escape returns focus to the door. Pressing
+    // the door again is the second way out.
+    assert.equal(
+      await page.locator('#python-runner-editor').count(),
+      1,
+      'the runner editor card must be the surface that owns Settings'
+    );
+    const editorSettingsButton = page.getByTestId('btn-editor-settings');
+    assert.equal(await editorSettingsButton.count(), 1, 'the runner editor must render a Settings button');
+    assert.equal(
+      await editorSettingsButton.getAttribute('aria-label'),
+      'Python runner editor settings',
+      'the Settings door needs an accessible name'
+    );
+    assert.equal(
+      await editorSettingsButton.getAttribute('aria-expanded'),
+      'false',
+      'the closed door must say so'
+    );
+    await editorSettingsButton.focus();
+    await page.keyboard.press('Enter');
+    const editorSettingsPanel = page.getByTestId('editor-settings');
+    await editorSettingsPanel.waitFor({ state: 'visible', timeout: 5000 });
+    assert.equal(
+      await editorSettingsButton.getAttribute('aria-expanded'),
+      'true',
+      'Enter on the focused door must open the panel'
+    );
+    assert.equal(
+      await editorSettingsPanel.getAttribute('role'),
+      'region',
+      'the panel must identify itself as the named settings region'
+    );
+    assert.equal(
+      await page.evaluate(() => document.activeElement?.getAttribute('data-testid')),
+      'btn-editor-settings-close',
+      'opening the panel must move focus into it'
+    );
+    const tooltipSwitch = page.getByTestId('editor-tooltips-toggle');
+    assert.equal(await tooltipSwitch.getAttribute('aria-checked'), 'true');
+    await tooltipSwitch.click();
+    assert.equal(
+      await tooltipSwitch.getAttribute('aria-checked'),
+      'false',
+      'the panel switch must change the editor preference'
+    );
+    assert.match(
+      await page.evaluate(() => localStorage.getItem('mechalab_editor_settings_v1') ?? ''),
+      /"tooltips":false/,
+      'the editor preference must be persisted by the existing settings store'
+    );
+    await page.keyboard.press('Escape');
+    await editorSettingsPanel.waitFor({ state: 'hidden', timeout: 5000 });
+    assert.equal(
+      await page.evaluate(() => document.activeElement?.getAttribute('data-testid')),
+      'btn-editor-settings',
+      'Escape must close the panel and return focus to Settings'
+    );
+    await editorSettingsButton.click();
+    await editorSettingsPanel.waitFor({ state: 'visible', timeout: 5000 });
+    assert.equal(
+      await tooltipSwitch.getAttribute('aria-checked'),
+      'false',
+      'reopening the panel must read the persisted switch'
+    );
+    await editorSettingsButton.click();
+    await editorSettingsPanel.waitFor({ state: 'hidden', timeout: 5000 });
+    assert.equal(
+      await editorSettingsButton.getAttribute('aria-expanded'),
+      'false',
+      'the same Settings button must close the panel'
+    );
+    await editorSettingsButton.click();
+    await editorSettingsPanel.waitFor({ state: 'visible', timeout: 5000 });
+    await page.getByTestId('btn-editor-settings-close').click();
+    await editorSettingsPanel.waitFor({ state: 'hidden', timeout: 5000 });
+    assert.equal(
+      await page.evaluate(() => document.activeElement?.getAttribute('data-testid')),
+      'btn-editor-settings',
+      "the panel's own Close must return focus to Settings too"
+    );
+    // Leave the preference at its default for the rest of the suite.
+    await editorSettingsButton.click();
+    await editorSettingsPanel.waitFor({ state: 'visible', timeout: 5000 });
+    await tooltipSwitch.click();
+    assert.equal(await tooltipSwitch.getAttribute('aria-checked'), 'true');
+    await editorSettingsButton.click();
+    await editorSettingsPanel.waitFor({ state: 'hidden', timeout: 5000 });
+    ok('Settings opens from the runner header, toggles and Escape close it, and focus returns to the door');
+
     // ---- 2b.1 The graph keeps its sheet when the calculator changes faces ----
     // The scientific pad and the graph are one tab now. Switching faces used to remount the graph,
     // which threw away the learner's expressions and their zoom; both faces stay mounted, and the
@@ -617,6 +714,33 @@ async function main() {
       '0.05',
       'the graph slider must keep the source slider’s range'
     );
+    const sourceSlider = page.getByTestId('graph-python-slider-L1');
+    await sourceSlider.focus();
+    await page.keyboard.press('ArrowRight');
+    await page.waitForFunction(
+      () => (window.__mechalabEditors?.['editor-studio']?.get() ?? '').includes('L1 = 0.16'),
+      undefined,
+      { timeout: 5000 }
+    );
+    assert.match(
+      await getEditorCode(page, STUDIO_EDITOR),
+      /L1 = 0\.16/,
+      'moving the graph’s Python slider must rewrite main.py’s # @slider literal'
+    );
+    await page.waitForFunction(
+      () =>
+        document
+          .querySelector('[data-testid="graph-python-slider-L1"]')
+          ?.closest('label')
+          ?.textContent?.includes('L1 = 0.16'),
+      undefined,
+      { timeout: 5000 }
+    );
+    assert.match(
+      (await sourceSlider.evaluate((node) => node.closest('label')?.textContent ?? '')) ?? '',
+      /L1 = 0\.16/,
+      'the graph’s Python slider must read the new value back from the same source'
+    );
 
     // Adding lines is a list action, not a resize. Fill the list past its scroll area first; the
     // next rows then have to leave the sheet exactly as they found it. Before the cap, every row
@@ -733,6 +857,42 @@ async function main() {
       'the walkthrough starts from its first feature'
     );
     const firstFeature = (await page.getByTestId('walkthrough-title').innerText()).trim();
+    // A stop is a task now: only its exact control may tick it. Pressing a different real header
+    // control is an action, but not this mission's action, so the box must stay empty.
+    assert.equal(
+      await page.getByTestId('walkthrough-next').isDisabled(),
+      true,
+      'Next must wait for the checklist'
+    );
+    await page.evaluate(() => {
+      document.querySelector('[data-testid="btn-theme-toggle"]')?.click();
+    });
+    await page.waitForTimeout(100);
+    assert.equal(
+      await page.getByTestId('walkthrough-checklist').getAttribute('data-done'),
+      'false',
+      'a different control must not check the stop'
+    );
+    // Do it is a shortcut for the same gesture, not a score button. The wordmark must really open
+    // the introduction, and only then may the checklist tick.
+    await page.getByTestId('walkthrough-do-it').click();
+    await page.getByTestId('intro-page').waitFor({ state: 'visible', timeout: 10000 });
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="walkthrough-checklist"]')?.getAttribute('data-done') ===
+        'true',
+      undefined,
+      { timeout: 2000 }
+    );
+    assert.equal(
+      await page.getByTestId('walkthrough-next').isEnabled(),
+      true,
+      'the real action must unlock Next'
+    );
+    ok('only the named control checks a stop; Do it performs that control’s real action');
+
+    // The next stop is a new, unchecked mission: Next must move the card, and the card must not be
+    // able to move again until that second action is done. Previous returns to the earned tick.
     await page.getByTestId('walkthrough-next').click();
     await page.waitForFunction(
       (previous) =>
@@ -740,8 +900,11 @@ async function main() {
       firstFeature,
       { timeout: 5000 }
     );
-    const secondFeature = (await page.getByTestId('walkthrough-title').innerText()).trim();
-    assert.notEqual(secondFeature, firstFeature, 'Next must move to the next feature');
+    assert.equal(
+      await page.getByTestId('walkthrough-next').isDisabled(),
+      true,
+      'an unchecked stop must not be skipped'
+    );
     await page.getByTestId('walkthrough-prev').click();
     await page.waitForFunction(
       (expected) =>
@@ -749,13 +912,40 @@ async function main() {
       firstFeature,
       { timeout: 5000 }
     );
-    ok('the tooltip walkthrough opens from the guide, spotlights a control, and steps back and forward');
+    ok('Next/Previous move the card, and a fresh stop keeps Next locked until its own action');
 
-    // Ten forward steps reach the first runner feature. It must actually open the Python tab, not
-    // only describe it; the suite returns to the studio for the arrangement tests below.
-    for (let step = 0; step < 10; step += 1) {
-      await page.getByTestId('walkthrough-next').click();
-    }
+    // The first ten stops open settings, reset, account and search dialogs. Rather than leave four
+    // overlays stacked to reach the runner, keep the one tick the browser just earned and resume the
+    // stored tour at the first Python feature. The walkthrough itself still owns the jump: this is
+    // the same saved state a learner returns to, not a click route through the card.
+    await page.getByTestId('walkthrough-close').click();
+    await page.getByTestId('feature-walkthrough').waitFor({ state: 'detached', timeout: 5000 });
+    await page.evaluate(
+      ({ key, version, completed, index }) => {
+        const raw = JSON.parse(localStorage.getItem(key) ?? '{}');
+        localStorage.setItem(
+          key,
+          JSON.stringify({ ...raw, version, status: 'active', index, completed, updatedAt: Date.now() })
+        );
+        // The lesson-list stop's action is the chooser's fold button, which the Study preset owns.
+        localStorage.setItem('mechalab_workspace_layout_v1', 'study');
+      },
+      {
+        key: FEATURE_WALKTHROUGH_STORAGE_KEY,
+        version: FEATURE_WALKTHROUGH_VERSION,
+        completed: FEATURE_WALKTHROUGH.slice(0, 10).map((stop) => stop.id),
+        index: 10,
+      }
+    );
+    await page.goto(`${baseUrl}?view=home`, { waitUntil: 'domcontentloaded' });
+    await page.getByTestId('home-dashboard').waitFor({ timeout: 30000 });
+    await page.getByTestId('btn-general-settings').click();
+    await page.getByTestId('general-settings').waitFor({ state: 'visible', timeout: 5000 });
+    await page.getByTestId('btn-open-new-learner-guide').click();
+    await page.getByTestId('learner-guide').waitFor({ state: 'visible', timeout: 5000 });
+    await page.getByTestId('guide-mode-walkthrough').click();
+    await page.getByTestId('feature-walkthrough').waitFor({ state: 'visible', timeout: 5000 });
+    await page.getByTestId('walkthrough-spotlight').waitFor({ state: 'visible', timeout: 5000 });
     await page.waitForFunction(
       () =>
         document.querySelector('[data-testid="tab-btn-tab-pyodide"]')?.getAttribute('aria-current') ===
@@ -766,7 +956,25 @@ async function main() {
     assert.match(
       (await page.getByTestId('walkthrough-progress').innerText()).trim(),
       /^11 \/ \d+ · Python runner/,
-      'the walkthrough must reach the runner features in order'
+      'the stored tour must resume at the first runner feature'
+    );
+    // The runner's own main.py tab is a real control, but it is not this stop's action.
+    await page.evaluate(() => {
+      document.querySelector('[data-testid="editor-tab-main"]')?.click();
+    });
+    await page.waitForTimeout(100);
+    assert.equal(
+      await page.getByTestId('walkthrough-checklist').getAttribute('data-done'),
+      'false',
+      'a neighbouring editor tab must not check the lesson-list stop'
+    );
+    await page.getByTestId('walkthrough-do-it').click();
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="walkthrough-checklist"]')?.getAttribute('data-done') ===
+        'true',
+      undefined,
+      { timeout: 2000 }
     );
     await page.getByTestId('walkthrough-close').click();
     await page.getByTestId('feature-walkthrough').waitFor({ state: 'detached', timeout: 5000 });

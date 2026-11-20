@@ -31,7 +31,10 @@ export interface GraphPoint {
 export interface ExplicitCurve {
   id: string;
   color: string;
-  evaluate: (x: number) => number;
+  /** The compiled closure. `scope` carries the current parameter values. */
+  evaluate: (x: number, scope?: Record<string, number>) => number;
+  /** A cache from `refreshExplicitSamples`; absent means the curve has not been sampled yet. */
+  segments?: GraphPoint[][];
 }
 
 export interface ImplicitCurve {
@@ -294,11 +297,43 @@ export function sampleExplicit(
   return segments;
 }
 
+/**
+ * Reuse the samples of curves whose parameters did not move, and resample the ones that did.
+ *
+ * `dirty` is the set the dependency graph says a parameter move reached. `null` means the window
+ * or the curve list changed, so every curve has to be sampled again; an empty set is a pure redraw
+ * (a hover move or a colour edit) and reuses every sample.
+ */
+export function refreshExplicitSamples(
+  curves: readonly ExplicitCurve[],
+  scope: Record<string, number>,
+  viewport: Viewport,
+  width: number,
+  dirty: ReadonlySet<string> | null,
+  previous: ReadonlyMap<string, GraphPoint[][]>
+): Map<string, GraphPoint[][]> {
+  const next = new Map<string, GraphPoint[][]>();
+  for (const curve of curves) {
+    const cached = previous.get(curve.id);
+    if (dirty !== null && !dirty.has(curve.id) && cached) {
+      next.set(curve.id, cached);
+      continue;
+    }
+    next.set(
+      curve.id,
+      sampleExplicit((x) => curve.evaluate(x, scope), viewport, width)
+    );
+  }
+  return next;
+}
+
 export interface Scene {
   viewport: Viewport;
   width: number;
   height: number;
   curves: ExplicitCurve[];
+  /** Parameter values for curves that arrive without cached segments. */
+  scope?: Record<string, number>;
   points: GraphPoint[];
   pointColor?: string;
   hover?: HoverPoint | null;
@@ -417,7 +452,10 @@ export function drawScene(context: CanvasRenderingContext2D, scene: Scene): void
     context.lineWidth = 2;
     context.lineJoin = 'round';
     context.lineCap = 'round';
-    for (const segment of sampleExplicit(curve.evaluate, viewport, width)) {
+    const segments =
+      curve.segments ??
+      sampleExplicit((x) => curve.evaluate(x, scene.scope), viewport, width);
+    for (const segment of segments) {
       context.beginPath();
       segment.forEach((point, index) => {
         const x = toPixelX(point.x);
@@ -467,6 +505,31 @@ export function drawScene(context: CanvasRenderingContext2D, scene: Scene): void
   context.restore();
 }
 
+/** One parameter uniform to write for a curve. */
+export interface ImplicitUniformUpload {
+  uniform: string;
+  value: number;
+}
+
+/**
+ * The parameter uniforms a curve must upload this frame.
+ *
+ * `affected` is the dependency graph's answer for the parameter that moved; `null` means there was
+ * no parameter move (or this is a full redraw) and every curve must upload. A first draw must
+ * upload even when the set is empty, because its program has no uniforms yet.
+ */
+export function parameterUniformsForUpload(
+  curve: ImplicitCurve,
+  affected: ReadonlySet<string> | null,
+  firstDraw: boolean
+): ImplicitUniformUpload[] {
+  if (!firstDraw && affected !== null && !affected.has(curve.id)) return [];
+  return curve.parameters.map((parameter) => ({
+    uniform: parameter.uniform,
+    value: curve.values[parameter.name] ?? 0,
+  }));
+}
+
 function hexToRgb(color: string): [number, number, number] {
   const match = /^#([0-9a-f]{6})$/i.exec(color.trim());
   if (!match) return [1, 1, 1];
@@ -480,6 +543,8 @@ void main() { gl_Position = vec4(a_position, 0.0, 1.0); }
 `;
 
 interface ProgramEntry {
+  /** The curve id, expression and uniform names this program was built for. */
+  key: string;
   program: WebGLProgram;
   color: WebGLUniformLocation | null;
   resolution: WebGLUniformLocation | null;
@@ -536,9 +601,10 @@ void main() {
 /**
  * The transparent WebGL2 layer.
  *
- * Programs are cached by their GLSL expression. A parameter move writes a uniform; only a changed
- * equation text compiles a new program. The layer clears to transparent each frame so the 2D paper
- * underneath is never dimmed by an old implicit curve.
+ * Programs are cached per row and GLSL expression. A parameter move writes a uniform only for the
+ * rows the dependency graph named; only a changed equation text compiles a new program. The layer
+ * clears to transparent each frame so the 2D paper underneath is never dimmed by an old implicit
+ * curve.
  */
 export class ImplicitRenderer {
   private readonly gl: WebGL2RenderingContext | null;
@@ -546,6 +612,8 @@ export class ImplicitRenderer {
   private readonly vao: WebGLVertexArrayObject | null;
   private programs = new Map<string, ProgramEntry>();
   private failed = new Set<string>();
+  /** The uniform state of each curve's own program, so an unaffected curve skips its upload. */
+  private uploads = new Map<string, { key: string }>();
   private width = 0;
   private height = 0;
   private dpr = 1;
@@ -593,10 +661,19 @@ export class ImplicitRenderer {
     this.dpr = Math.max(1, dpr);
   }
 
-  private compile(expression: string, parameters: { name: string; uniform: string }[]): ProgramEntry | null {
+  private compile(
+    id: string,
+    expression: string,
+    parameters: { name: string; uniform: string }[]
+  ): ProgramEntry | null {
     const gl = this.gl;
     if (!gl) return null;
-    const key = `${expression}\u0000${parameters.map((parameter) => parameter.uniform).join(',')}`;
+    // The id is part of the key because parameter uniforms live in the program. Two rows may plot
+    // the same expression with different values; sharing a program would make one overwrite the
+    // other's uniforms when only one row is redrawn.
+    const key = `${id}\u0000${expression}\u0000${parameters
+      .map((parameter) => parameter.uniform)
+      .join(',')}`;
     const cached = this.programs.get(key);
     if (cached) return cached;
     if (this.failed.has(key)) return null;
@@ -645,6 +722,7 @@ export class ImplicitRenderer {
       parameterLocations[parameter.uniform] = gl.getUniformLocation(program, parameter.uniform);
     }
     const entry: ProgramEntry = {
+      key,
       program,
       color: gl.getUniformLocation(program, 'u_color'),
       resolution: gl.getUniformLocation(program, 'u_resolution'),
@@ -658,32 +736,42 @@ export class ImplicitRenderer {
     return entry;
   }
 
-  render(curves: ImplicitCurve[], viewport: Viewport): string[] {
+  render(
+    curves: ImplicitCurve[],
+    viewport: Viewport,
+    affected: ReadonlySet<string> | null = null
+  ): string[] {
     const gl = this.gl;
     if (!gl || !this.buffer || !this.vao || this.width <= 0 || this.height <= 0) return [];
     gl.viewport(0, 0, this.width, this.height);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    if (curves.length === 0) return [];
+    if (curves.length === 0) {
+      this.uploads.clear();
+      return [];
+    }
 
     // Every curve that compiles is drawn; every one that does not leaves its sentence here. A shader
     // failure is a fact about one line, so it must neither blank the sheet nor stay invisible.
     const failures: string[] = [];
+    const drawn = new Set<string>();
     gl.useProgram(null);
     gl.bindVertexArray(this.vao);
     for (const curve of curves) {
       let entry: ProgramEntry | null = null;
       try {
-        entry = this.compile(curve.expression, curve.parameters);
+        entry = this.compile(curve.id, curve.expression, curve.parameters);
       } catch (failure) {
         failures.push(
           failure instanceof Error
             ? failure.message
             : 'An implicit curve could not be compiled'
         );
+        this.uploads.delete(curve.id);
         continue;
       }
       if (!entry) continue;
+      drawn.add(curve.id);
       gl.useProgram(entry.program);
       gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
       gl.enableVertexAttribArray(0);
@@ -695,10 +783,20 @@ export class ImplicitRenderer {
       gl.uniform1f(entry.strict, curve.region?.strict ? 1 : 0);
       const [r, g, b] = hexToRgb(curve.color);
       gl.uniform3f(entry.color, r, g, b);
-      for (const parameter of curve.parameters) {
-        gl.uniform1f(entry.parameters[parameter.uniform] ?? null, curve.values[parameter.name] ?? 0);
+      const previous = this.uploads.get(curve.id);
+      const firstDraw = !previous || previous.key !== entry.key;
+      for (const upload of parameterUniformsForUpload(curve, affected, firstDraw)) {
+        gl.uniform1f(entry.parameters[upload.uniform] ?? null, upload.value);
       }
+      // Record the program even when the parameter upload was skipped: its uniform state is still
+      // allowed to satisfy the next frame, and a new program key will force a fresh upload.
+      this.uploads.set(curve.id, { key: entry.key });
       gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+    // A hidden row is not drawn, so its cached uniform state must not be trusted when it returns:
+    // the parameter may have moved while it was hidden.
+    for (const id of this.uploads.keys()) {
+      if (!drawn.has(id)) this.uploads.delete(id);
     }
     gl.bindVertexArray(null);
     gl.useProgram(null);

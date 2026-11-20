@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.11.1`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.12.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,67 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-20] — Shortcuts sound like their buttons, and the editor's settings door is named
+
+Keyboard shortcuts now speak the same interface vocabulary as the controls they invoke: the palette,
+lesson chooser and search are `primary`, Focus and the layout presets are `toggle`, Run is `primary`,
+reader marks and pane Undo are `primary`, F9 is `toggle`, F12 is `nav`, and Escape is `close`. A
+shortcut is one guarded tick: auto-repeat is ignored, a second dispatch inside 40 ms is dropped, and
+`SoundClicks` no longer treats a modified Enter/Space as native button activation, so a focused
+control and its chord cannot sound twice. The palette's arrows and Enter, both dialog Escapes, the
+feature walkthrough's arrows/Escape, and the learner guide's arrows now use the same path. The Python
+runner editor's header button is labelled **Settings** at every width and still opens the in-place
+editor settings panel; the phone check kept it visible with the panel open and no horizontal overflow.
+The built-bundle reader check now compares the distance into the anchored heading instead of the raw
+scroll offset, so a reflow above a correctly restored heading cannot turn the check red.
+
+## [2026-11-19] — A slider now redraws only the lines that read it
+
+The graph's dependency graph drives the actual slider path: `GraphingPane` diffs the parameter
+scope, expands the changed names through `affectedRows` — including parameter rows such as
+`b = 2a` — and hands the resulting row ids to `GraphPlot`. Explicit curves keep their compiled
+closures and cached samples; only named rows are resampled. The implicit layer still draws every
+curve, but writes parameter uniforms only for the named rows, and each row keeps its own program
+so two equations that share an expression cannot overwrite each other's uniforms. Hidden rows drop
+their cached uniform state so they upload correctly when shown again. The grapher suite now counts
+an independent closure's evaluations and a fake WebGL context's `uniform1f` calls to prove the
+skips; a live browser drag counted 127 dependent evaluations and 0 independent ones. No dependency
+was added.
+
+## [2026-11-19] — The walkthrough becomes a checklist, and the editor explains a miss where it happened
+
+The tooltip walkthrough is now a set of 36 missions rather than a slideshow, and every mission names
+one exact control. Using that control — or pressing the card's **Do it** button, which presses the
+same control rather than ticking the box itself — checks the one-item checklist, plays the
+workbench's pass phrase, adds 100 XP and unlocks Next. A panel, a toolbar or a neighbouring tab
+cannot check a stop by association; Next stays disabled (with a quiet shake and a low tick) until
+the current mission is actually done. The pips across the top keep every checked stop green, the
+position and the checked ids share the saved tour state, and a finished tour starts again with a
+fresh checklist; turning it off midway resumes with the ticks already earned. Ticks saved by the
+earlier free-pass card are retired by the state version, while the learner keeps their place. The
+dimming is four panels around the spotlight, not one sheet over it, so the real control can take
+the click, and the card follows the wordmark and Home onto the whole-page views instead of
+disappearing with the workbench underneath it.
+
+The `cm-mechalab-tip` hover cards and call signatures are quieter while coding, and the Python
+editor's header now has its own **Editor** settings panel. Its one switch removes hover cards, call
+signatures and keyword help without rebuilding the editor or touching completion, linting or inline
+values; the preference is remembered on this device and reaches every mounted editor (the lesson
+runner and Free study) through a compartment reconfigure. The cards that remain are smaller, closer
+to the code, and have a softer edge.
+
+A failed run now marks the learner's own line in red and draws one compact exception sentence above
+it, cleared by the next edit and redrawn from the same parsed traceback the card below the panes
+reads. The full card is still there; this is the part a learner sees without leaving the code.
+
+Keycaps are physical objects now: a raised cap, a bold 12 px face, and the same rule for every
+printed shortcut. Run, Stop, the four layout presets, Search, Focus, Compact, pane Undo/Redo and the
+sheet all print their keys at a readable size, with an inverted cap on accent-filled buttons for
+contrast. `npm run test:guide` covers the checklist state and the exact action assigned to every
+stop, and the studio browser suite proves that a different real control cannot check a stop, that
+**Do it** performs the named action, and that an unchecked stop keeps Next locked. No dependency
+was added.
 
 ## [2026-11-19] — The service worker stops serving yesterday's shell
 

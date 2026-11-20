@@ -299,6 +299,7 @@ export const TabPendulum: React.FC<TabPendulumProps> = ({ onLoadPreset, highligh
               <span>Reset Hanging (θ₀ = 175°)</span>
             </button>
             <button
+              data-testid="pendulum-impulse"
               onClick={() => injectImpulse(3.2)}
               className="bg-raise hover:bg-elevate text-amber border border-line px-2.5 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
             >

@@ -9,6 +9,7 @@ import {
   type EditorPanes,
   type EditorView,
 } from '../../../editorPanes';
+import { playShortcut } from '../../../audio/shortcutSound';
 
 /** Pixels a press must travel before it becomes a drag rather than a click on the grip. */
 const DRAG_THRESHOLD = 4;
@@ -213,6 +214,7 @@ function PaneUndo({ onPanes }: { onPanes: (next: EditorPanes) => void }) {
       if (event.code !== 'KeyZ') return;
       const target = event.target instanceof Element ? event.target : null;
       if (target?.closest('[role="dialog"]')) return;
+      playShortcut('primary', event);
       event.preventDefault();
       current.current(entry.snapshot);
       clearClose();
@@ -246,7 +248,7 @@ function PaneUndo({ onPanes }: { onPanes: (next: EditorPanes) => void }) {
       <kbd
         aria-hidden="true"
         title="Undo from the keyboard while this offer is on screen"
-        className="rounded border border-line-soft px-1 font-mono text-[10px] text-faint"
+        className="rounded border border-line-soft px-1 font-mono text-[11px] font-bold text-body"
       >
         ⌥Z
       </kbd>

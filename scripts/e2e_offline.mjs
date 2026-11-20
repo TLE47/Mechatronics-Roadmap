@@ -20,6 +20,10 @@
  *    origin, so `cacheFirst` keeps them — then the browser's own HTTP cache is cleared, the context
  *    goes offline, and the page is reloaded. A formula that renders after that can only have come from
  *    `mechalab-assets-v1`, which is the claim the self-hosted stylesheet exists for.
+ * 6. **a deploy replaces the old worker on one normal reload.** A temp build is served with a
+ *    long-lived `index.html` cache and the frozen 4.11.0 worker; its index and worker are then replaced,
+ *    and one reload must reach the new entry with the new worker controlling. This is the regression
+ *    test for the stale-shell bug: the request path must not fall back to the cached document.
  *
  * Starting from the button rather than from a run is the point of the suite: the run path used to be
  * the only thing that pulled Pyodide in, and a learner about to board had no way to ask for it.
@@ -28,6 +32,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { chromium } from 'playwright-core';
 import { waitForEditor } from './editor-code.mjs';
@@ -39,6 +44,7 @@ import { resolveChromiumExecutable } from './e2e_browser_workbench.mjs';
 
 const repoRoot = process.cwd();
 const distDir = path.join(repoRoot, 'dist');
+const staleWorkerFixture = path.join(repoRoot, 'scripts', 'fixtures', 'sw-stale-shell.js');
 
 function ensureBuilt() {
   if (fs.existsSync(path.join(distDir, 'index.html'))) return;
@@ -76,6 +82,201 @@ async function waitForIsolated(page, timeoutMs = 30000) {
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
   throw new Error(`the service worker never produced an isolated document (${lastError})`);
+}
+
+/** Wait across the worker's own reload for a build marker written by `writeShellBuild`. */
+async function waitForEntry(page, expected, timeoutMs = 30000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    try {
+      if (
+        await page.evaluate(
+          (want) => document.documentElement.dataset.entry === want,
+          expected
+        )
+      ) {
+        return;
+      }
+    } catch (error) {
+      // A controllerchange reload can destroy the execution context between polls; retry.
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  throw new Error(`the page never reached the ${expected} entry`);
+}
+
+/** Write a tiny static build whose only job is to carry a build marker and a worker URL. */
+function writeShellBuild(root, { marker, worker }) {
+  fs.mkdirSync(path.join(root, 'assets'), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, 'manifest.webmanifest'),
+    JSON.stringify({ name: `stale-shell-${marker}`, short_name: 'stale-shell', start_url: './' })
+  );
+  fs.writeFileSync(
+    path.join(root, 'favicon.svg'),
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><rect width="8" height="8" fill="#333"/></svg>'
+  );
+  fs.writeFileSync(
+    path.join(root, 'assets', `entry-${marker}.js`),
+    `window.__MECHALAB_ENTRY = ${JSON.stringify(marker)};\n` +
+      `document.documentElement.dataset.entry = ${JSON.stringify(marker)};\n` +
+      `document.getElementById('shell-marker').textContent = ${JSON.stringify(marker)};\n`
+  );
+  fs.writeFileSync(
+    path.join(root, 'index.html'),
+    `<!doctype html>\n` +
+      `<html lang="en">\n` +
+      `<head>\n` +
+      `  <meta charset="utf-8" />\n` +
+      `  <meta name="mechalab-build" content="${marker}" />\n` +
+      `  <meta name="viewport" content="width=device-width, initial-scale=1" />\n` +
+      `  <link rel="manifest" href="manifest.webmanifest" />\n` +
+      `  <title>stale shell ${marker}</title>\n` +
+      `</head>\n` +
+      `<body>\n` +
+      `  <p id="shell-marker">${marker}</p>\n` +
+      `  <script src="${worker}"></script>\n` +
+      `  <script src="assets/entry-${marker}.js"></script>\n` +
+      `</body>\n` +
+      `</html>\n`
+  );
+}
+
+/** Read the document the worker cached as its shell, whichever key it used. */
+async function readCachedShell(page) {
+  return page.evaluate(async () => {
+    const cache = await caches.open('mechalab-shell-v1');
+    const response =
+      (await cache.match(new URL('index.html', location.href).href)) ??
+      (await cache.match(new URL('./', location.href).href));
+    return response ? response.text() : '';
+  });
+}
+
+/**
+ * Ask the worker that currently controls the page for its test build id.
+ *
+ * The current worker copy gets a tiny test-only message handler appended. The old fixture has no
+ * handler, so a page that never installs the new worker times out here even if the new HTML loaded.
+ */
+async function activeWorkerBuild(page, timeoutMs = 15000) {
+  const deadline = Date.now() + timeoutMs;
+  let last = 'no reply';
+  while (Date.now() < deadline) {
+    try {
+      const build = await page.evaluate(async () => {
+        const controller = navigator.serviceWorker.controller;
+        if (!controller) return 'no controller';
+        return await new Promise((resolve) => {
+          const channel = new MessageChannel();
+          const timer = setTimeout(() => resolve('no reply'), 1000);
+          channel.port1.onmessage = (event) => {
+            clearTimeout(timer);
+            resolve(event.data?.build ?? 'bad reply');
+          };
+          controller.postMessage({ type: 'mechalab-test-worker' }, [channel.port2]);
+        });
+      });
+      last = build;
+      if (build === 'new') return build;
+    } catch (error) {
+      last = String(error.message ?? error);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  return last;
+}
+
+/**
+ * The stale-shell deploy regression: old worker + a long-lived HTML cache, then a new index and worker.
+ * One caller reload must reach the new entry and leave the new worker in control.
+ */
+async function checkStaleShellRefresh(browser) {
+  const oldWorker = fs.readFileSync(staleWorkerFixture, 'utf8');
+  assert.doesNotMatch(
+    oldWorker,
+    /fetch\(\s*request\s*,\s*\{\s*cache:\s*'no-store'\s*\}\s*\)/,
+    'the stale-shell fixture must stay the pre-fix worker, not a copy of the current one'
+  );
+  const currentWorker = fs.readFileSync(path.join(distDir, 'sw.js'), 'utf8');
+  assert.match(
+    currentWorker,
+    /fetch\(\s*request\s*,\s*\{\s*cache:\s*'no-store'\s*\}\s*\)/,
+    'the built worker must keep the no-store shell fetch that makes a deploy fresh'
+  );
+
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'mechalab-stale-shell-'));
+  writeShellBuild(tempRoot, { marker: 'old', worker: 'sw-old.js' });
+  fs.writeFileSync(path.join(tempRoot, 'sw-old.js'), oldWorker);
+  // The test-only handler identifies the active worker; it is appended to a copy, never to the build.
+  fs.writeFileSync(
+    path.join(tempRoot, 'sw-new.js'),
+    `${currentWorker}\n` +
+      `if (typeof window === 'undefined') {\n` +
+      `  self.addEventListener('message', (event) => {\n` +
+      `    if (!event.data || event.data.type !== 'mechalab-test-worker') return;\n` +
+      `    const port = event.ports && event.ports[0];\n` +
+      `    if (port) port.postMessage({ type: 'mechalab-test-worker', build: 'new' });\n` +
+      `  });\n` +
+      `}\n`
+  );
+
+  const { server, port } = await startStaticServer({
+    isolation: false,
+    root: tempRoot,
+    cacheControl: 'max-age=3600',
+  });
+  const baseUrl = `http://127.0.0.1:${port}${BASE}`;
+  const context = await browser.newContext();
+  const pageErrors = [];
+  try {
+    const page = await context.newPage();
+    page.on('pageerror', (error) => pageErrors.push(error.message));
+
+    await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+    await waitForIsolated(page);
+    await waitForEntry(page, 'old');
+    await page.waitForFunction(
+      () => Boolean(navigator.serviceWorker.controller?.scriptURL.endsWith('/sw-old.js')),
+      undefined,
+      { timeout: 30000 }
+    );
+    assert.match(
+      await readCachedShell(page),
+      /name="mechalab-build" content="old"/,
+      'the old worker must have cached the old shell before the deploy'
+    );
+    console.log('  ok stale shell: the 4.11.0 worker controls and its old shell is cached');
+
+    // Deploy: new document, new entry, new worker. The server keeps serving max-age=3600.
+    writeShellBuild(tempRoot, { marker: 'new', worker: 'sw-new.js' });
+
+    // One caller-initiated reload. The worker's own controllerchange reload is the handoff, not a
+    // second attempt by the test.
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await waitForEntry(page, 'new');
+    assert.equal(
+      await activeWorkerBuild(page, 20000),
+      'new',
+      'one normal reload must leave the new worker controlling, not the old worker serving its cached page'
+    );
+    assert.match(
+      await page.evaluate(() => navigator.serviceWorker.controller?.scriptURL ?? ''),
+      /\/sw-new\.js$/,
+      'the controlling worker must be the newly deployed worker'
+    );
+    assert.match(
+      await readCachedShell(page),
+      /name="mechalab-build" content="new"/,
+      'the new worker must have refreshed the cached shell to the new document'
+    );
+    assert.deepEqual(pageErrors, [], `the stale-shell page threw: ${pageErrors.join(' | ')}`);
+    console.log('  ok stale shell: one normal reload reached entry-new with the new worker controlling');
+  } finally {
+    await context.close();
+    server.close();
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
 }
 
 async function main() {
@@ -324,11 +525,14 @@ async function main() {
       `  ok offline: lesson 01.4 still sets ${offlineMath.formulas} formulas in KaTeX_Main, from the cache`
     );
 
+    await checkStaleShellRefresh(browser);
+
     assert.deepEqual(pageErrors, [], `the page threw while offline: ${pageErrors.join(' | ')}`);
     console.log(
       `[PASS] Offline workbench: worker-supplied isolation, cached shell + ${cached.assets.length} assets + ` +
         `${pyodideCached.length} runtime files, with the network off and the HTTP cache cleared: reload, ` +
-        `deep link, a lesson run, and 01.4's formulas from the cached stylesheet and faces`
+        `deep link, a lesson run, and 01.4's formulas from the cached stylesheet and faces; ` +
+        `a max-age deploy with the old worker reaches the new entry on one normal reload`
     );
   } finally {
     await browser.close();

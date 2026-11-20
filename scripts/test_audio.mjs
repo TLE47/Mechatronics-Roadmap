@@ -57,6 +57,7 @@ import {
   tapeCredit,
 } from '../app/src/audio/musicCatalogue.ts';
 import { panFromX, roleForControl } from '../app/src/audio/clickMap.ts';
+import { playShortcut } from '../app/src/audio/shortcutSound.ts';
 import {
   DEFAULT_SOUND_PREFS,
   SOUND_STORAGE_KEY,
@@ -603,6 +604,13 @@ await check('the map knows what a control is, and a disabled one says nothing', 
   assert.equal(panFromX(500, 1000), 0);
   assert.equal(panFromX(Number.NaN, 1000), 0);
   assert.equal(panFromX(10, 0), 0, 'a zero-width viewport must not divide by zero');
+});
+
+await check('a keyboard shortcut is one guarded tick, not a held key', () => {
+  assert.equal(playShortcut('chip', { repeat: true }), false, 'auto-repeat is not a second press');
+  assert.equal(playShortcut('chip', { repeat: false }), true, 'the press itself sounds');
+  assert.equal(playShortcut('chip', { repeat: false }), false, 'the same press bubbled twice is silent');
+  assert.equal(playShortcut('row', { repeat: false }), true, 'a different role is a different press');
 });
 
 await check('a click is panned, and the cue and click budgets never eat each other', async () => {

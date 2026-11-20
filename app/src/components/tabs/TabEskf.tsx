@@ -211,6 +211,7 @@ export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId, p
             </div>
             <button
               id="btn-seqlock-toggle"
+              data-testid="eskf-seqlock"
               onClick={toggleSeqLock}
               className="w-full bg-accent/20 hover:bg-accent/30 text-accent border border-accent px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
             >

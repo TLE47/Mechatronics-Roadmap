@@ -401,16 +401,14 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onOpenPalette}
               data-testid="btn-open-palette"
+              aria-label="Search ⌘⇧F — terms, lesson text and course pages"
               aria-keyshortcuts="Meta+Shift+F Control+Shift+F"
               data-tip="Search — terms, lesson text and course pages (⌘⇧F)"
               className="btn"
             >
               <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span className={labelClass}>Search</span>
-              <kbd
-                className="ml-0.5 hidden rounded border px-1 py-0.5 text-[9.5px] font-semibold sm:inline"
-                style={{ borderColor: 'var(--border)', color: 'var(--dim)' }}
-              >
+              <kbd className="ml-0.5 hidden py-[0.5px] leading-none sm:inline-flex" aria-hidden="true">
                 ⌘⇧F
               </kbd>
             </button>
@@ -469,7 +467,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={onToggleFocus}
                 data-testid="btn-focus-toggle"                aria-pressed={focus}
                 aria-keyshortcuts="Meta+. Control+."
-                aria-label="Focus"
+                aria-label="Focus ⌘."
                 data-tip={`Focus — ${focusLabel(focus).toLowerCase()} (⌘.)`}
               className="btn"
                 style={pressed(focus)}
@@ -480,6 +478,9 @@ export const Header: React.FC<HeaderProps> = ({
                   <Maximize2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 )}
                 <span className={labelClass}>Focus</span>
+                <kbd className="ml-0.5 hidden py-[0.5px] leading-none xl:inline-flex" aria-hidden="true">
+                  ⌘.
+                </kbd>
               </button>
             )}
             {/* Compact is a lesson-layout preset, but it belongs here rather than on the runner's
@@ -493,13 +494,16 @@ export const Header: React.FC<HeaderProps> = ({
               }}
               data-testid="btn-compact-layout"
               aria-pressed={compactMode}
-              aria-label="Compact lesson layout"
+              aria-label="Compact ⌥5 — lesson layout"
               data-tip="Compact — the text and the editor keep the screen; everything else folds into one strip (⌥5)"
               className="btn"
               style={pressed(compactMode)}
             >
               <ChevronsDownUp className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span className={labelClass}>Compact</span>
+              <kbd className="ml-0.5 hidden py-[0.5px] leading-none xl:inline-flex" aria-hidden="true">
+                ⌥5
+              </kbd>
             </button>
             {/* One switch for the moving drawings, on every screen. Off is also the cheap setting:
                 each figure stops its frame loop instead of drawing frames nobody sees. */}

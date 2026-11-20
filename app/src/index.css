@@ -538,18 +538,40 @@ body {
     white-space: nowrap;
   }
 
-  .kbd {
+  /*
+   * A key is a physical object: a cap with a raised face, not a faint parenthetical. The same rule
+   * covers the `.kbd` spans the runner prints and every literal `<kbd>` in a sheet, so a button's
+   * shortcut cannot become unreadable just because it was written somewhere else.
+   */
+  .kbd,
+  kbd {
     display: inline-flex;
     align-items: center;
-    gap: 0.15rem;
-    padding: 0.05rem 0.35rem;
+    justify-content: center;
+    min-width: 1.35em;
+    gap: 0.12rem;
+    padding: 0.12rem 0.38rem;
     border-radius: 5px;
     border: 1px solid var(--border-strong);
-    background: color-mix(in srgb, var(--bg) 50%, transparent);
-    color: var(--muted);
+    border-bottom-width: 2px;
+    background: var(--panel-2);
+    color: var(--text);
     font-family: var(--font-mono);
-    font-size: 0.7rem;
-    line-height: 1.4;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
+  }
+  /* On the accent-filled Run / Next buttons the cap inverts with the label, so the key stays legible
+     instead of turning into a light chip on a light button. */
+  .btn-primary .kbd,
+  .btn-primary kbd {
+    border-color: color-mix(in srgb, var(--inverse) 38%, transparent);
+    background: color-mix(in srgb, var(--inverse) 14%, transparent);
+    color: var(--inverse);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--inverse) 16%, transparent);
   }
 }
 
@@ -601,6 +623,45 @@ body {
 }
 .animate-pop {
   animation: pop 420ms var(--ease-spring) both;
+}
+
+/* The walkthrough's two reactions: a checked box gets one short lift, and pressing Next too early
+   shakes the card without moving the page. Both are gone under reduce motion through the global
+   dampener above. */
+@keyframes walkthrough-check {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--emerald) 45%, transparent);
+  }
+  55% {
+    box-shadow: 0 0 0 7px color-mix(in srgb, var(--emerald) 0%, transparent);
+  }
+  100% {
+    box-shadow: var(--shadow-lg);
+  }
+}
+@keyframes walkthrough-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  55% {
+    transform: translateX(3px);
+  }
+  80% {
+    transform: translateX(-1px);
+  }
+}
+.walkthrough-card-checked {
+  animation: walkthrough-check 560ms var(--ease-out) both;
+}
+.walkthrough-card-nudge {
+  animation: walkthrough-nudge 340ms var(--ease-out) both;
+}
+.walkthrough-spot-checked {
+  animation: pop 440ms var(--ease-spring) both;
 }
 
 /* ----------------------------------------------------------------------------

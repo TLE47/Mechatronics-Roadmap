@@ -19,7 +19,7 @@
 import type { TabId } from './types';
 
 export const FEATURE_WALKTHROUGH_STORAGE_KEY = 'mechalab_feature_walkthrough_v1';
-export const FEATURE_WALKTHROUGH_VERSION = 1;
+export const FEATURE_WALKTHROUGH_VERSION = 3;
 
 export interface WalkthroughStop {
   id: string;
@@ -46,7 +46,7 @@ export const FEATURE_WALKTHROUGH: readonly WalkthroughStop[] = [
     body: 'The mark is the first door and the smallest one: a plain click opens the course introduction without losing your place in the workbench.',
     features: [
       'Click the MechaLab wordmark to read what the course is before any progress exists.',
-      'The release number beside the word names this exact build (4.10.0 today).',
+      'The release number beside the word names this exact build.',
       'A middle click or ⌘-click still opens the introduction in a new tab, like any link.',
     ],
     anchors: [byTestId('link-brand')],
@@ -61,6 +61,7 @@ export const FEATURE_WALKTHROUGH: readonly WalkthroughStop[] = [
       'Beginner, Applied and Advanced move the roadmap to that pass and keep the highlighted link in step.',
       'The links only appear on screens that read the pass, so a press always changes something.',
     ],
+    tab: 'tab-arch',
     anchors: [byTestId('btn-pass-level0'), byTestId('tab-rail-nav')],
   },
   {
@@ -190,7 +191,7 @@ export const FEATURE_WALKTHROUGH: readonly WalkthroughStop[] = [
     features: [
       'New ideas defines the vocabulary the checks will use.',
       'The roadmap breadcrumb and step cost say where this sits and how long it usually takes.',
-      '“Read the full lesson” opens the long-form page; the guide card offers the first run.',
+      '“View source on GitHub” opens the lesson page in a new tab; the guide card offers the first run.',
       'Read, Write, Study and Debug are layout presets, not different lessons.',
     ],
     tab: 'tab-pyodide',
@@ -533,12 +534,194 @@ export const FEATURE_WALKTHROUGH: readonly WalkthroughStop[] = [
 
 export const FEATURE_WALKTHROUGH_COUNT = FEATURE_WALKTHROUGH.length;
 
+/**
+ * The one control a stop asks the learner to use.
+ *
+ * A stop's `anchors` only choose what the spotlight measures; they are allowed to fall back to a
+ * whole panel so the card still has somewhere to point when a lazy tab has not drawn yet. The
+ * action is deliberately narrower: it names the exact buttons that do what the stop describes, and
+ * only a click on one of those checks the mission off. `Do it` presses the same control, so there
+ * is no card-only route that scores without touching the workbench.
+ */
+export interface WalkthroughAction {
+  /** The sentence in the checklist: the task, not a description of the stop. */
+  label: string;
+  /** Controls in preference order. The first one on screen is the one `Do it` presses. */
+  selectors: readonly string[];
+  /** A disclosure that must be opened first when the real action lives inside it. */
+  reveal?: readonly string[];
+  /** The target is a tab the learner must open, so the tour leaves the current tab alone. */
+  opensTab?: boolean;
+}
+
+/**
+ * Every stop's real action. Kept beside the catalogue instead of inside each object so the audit is
+ * one readable list: a new stop without an entry fails `scripts/test_learner_guide.mjs`.
+ */
+export const WALKTHROUGH_ACTIONS: Readonly<Record<string, WalkthroughAction>> = {
+  brand: {
+    label: 'Open the introduction from the wordmark.',
+    selectors: [byTestId('link-brand')],
+  },
+  levels: {
+    label: 'Choose the Start Here level link.',
+    selectors: [byTestId('btn-pass-level0')],
+  },
+  navigate: {
+    label: 'Open Review from the Navigate tray.',
+    selectors: [byTestId('btn-open-review')],
+  },
+  appearance: {
+    label: 'Press the theme toggle.',
+    selectors: [byTestId('btn-theme-toggle')],
+  },
+  settings: {
+    label: 'Open General settings.',
+    selectors: [byTestId('btn-general-settings')],
+  },
+  reset: {
+    label: 'Open the Reset panel.',
+    selectors: [byTestId('btn-open-reset')],
+  },
+  account: {
+    label: 'Open the account chip.',
+    selectors: [byTestId('btn-account')],
+  },
+  rail: {
+    label: 'Collapse or expand the workbench rail.',
+    selectors: [byTestId('btn-rail-toggle')],
+  },
+  palette: {
+    label: 'Open Search for course text.',
+    selectors: [byTestId('btn-open-palette')],
+  },
+  home: {
+    label: 'Go to the Home page.',
+    selectors: [byTestId('btn-home')],
+  },
+  'lesson-list': {
+    label: 'Open the lesson chooser.',
+    selectors: [byTestId('btn-lessons-toggle'), byTestId('btn-lessons')],
+  },
+  'lesson-reader': {
+    label: 'Choose the Study layout to put the brief beside the editor.',
+    selectors: [byTestId('layout-study')],
+  },
+  editor: {
+    label: 'Open main.py in the editor.',
+    selectors: [byTestId('editor-tab-main')],
+  },
+  run: {
+    label: 'Run and verify the lesson.',
+    selectors: [byTestId('btn-run-verify')],
+  },
+  checks: {
+    label: 'Open the Cases checks pane.',
+    selectors: [byTestId('editor-tab-cases')],
+  },
+  predict: {
+    label: 'Open the Predict gate.',
+    selectors: [byTestId('btn-predict')],
+  },
+  'study-tools': {
+    label: 'Open the Study pane.',
+    selectors: [byTestId('editor-tab-study')],
+  },
+  collaboration: {
+    label: 'Open More, then press Share to package this attempt.',
+    selectors: [byTestId('btn-share-attempt')],
+    reveal: [byTestId('btn-more')],
+  },
+  calculator: {
+    label: 'Open the Calculator pane.',
+    selectors: [byTestId('editor-tab-calculator')],
+  },
+  graphing: {
+    label: 'Switch the calculator to Graphing.',
+    selectors: [byTestId('calculator-mode-graphing')],
+  },
+  'studio-layout': {
+    label: 'Choose the Debug layout preset.',
+    selectors: [byTestId('layout-debug')],
+  },
+  roadmap: {
+    label: 'Switch the roadmap to Linear.',
+    selectors: [byTestId('btn-arch-linear')],
+  },
+  placement: {
+    label: 'Open the school-math diagnostic.',
+    selectors: [byTestId('tab-math-diagnostic')],
+  },
+  micro: {
+    label: 'Start the next micro concept.',
+    selectors: [byTestId('micro-next')],
+  },
+  studio: {
+    label: 'Run the studio file.',
+    selectors: [byTestId('studio-run')],
+  },
+  bode: {
+    label: 'Auto-tune the notch to the resonance.',
+    selectors: [byTestId('bode-auto-tune')],
+  },
+  foc: {
+    label: 'Toggle decoupling feedforward.',
+    selectors: [byTestId('foc-decoupling')],
+  },
+  pendulum: {
+    label: 'Inject a kick into the pendulum.',
+    selectors: [byTestId('pendulum-impulse')],
+  },
+  sysid: {
+    label: 'Toggle the phase schedule mode.',
+    selectors: [byTestId('sysid-phase-mode')],
+  },
+  eskf: {
+    label: 'Toggle the seqlock protection.',
+    selectors: [byTestId('eskf-seqlock')],
+  },
+  models: {
+    label: 'Enable the arm closed loop.',
+    selectors: [byTestId('models-closed-loop')],
+  },
+  cadpcb: {
+    label: 'Open the flexure part on the board.',
+    selectors: [byTestId('cadpcb-part-flexure')],
+  },
+  project: {
+    label: 'Copy the selected part id.',
+    selectors: [byTestId('project-copy-id')],
+  },
+  requirements: {
+    label: 'Open a part that meets the selected requirement.',
+    // The part buttons carry their stable part id rather than a generated index, so this names
+    // every part link on the requirement without depending on the list's order.
+    selectors: ['[data-testid="requirements-mode"] [data-part-id]'],
+  },
+  board: {
+    label: 'Run the selected Arduino sketch.',
+    selectors: [byTestId('board-tab-run')],
+  },
+  links: {
+    label: 'Open the Link Health tab.',
+    selectors: [tabAnchor('tab-links')],
+    opensTab: true,
+  },
+};
+
+/** The action for a stop, or null when the catalogue and the action list have drifted apart. */
+export function walkthroughAction(stopId: string): WalkthroughAction | null {
+  return WALKTHROUGH_ACTIONS[stopId] ?? null;
+}
+
 export type WalkthroughStatus = 'not-started' | 'active' | 'completed' | 'dismissed';
 
 export interface WalkthroughState {
   version: number;
   status: WalkthroughStatus;
   index: number;
+  /** The stops whose mission was actually performed, by id. A checklist survives a reload. */
+  completed: string[];
   updatedAt: number;
 }
 
@@ -562,7 +745,20 @@ function clampIndex(index: number): number {
 }
 
 export function initialWalkthroughState(now = Date.now()): WalkthroughState {
-  return { version: FEATURE_WALKTHROUGH_VERSION, status: 'not-started', index: 0, updatedAt: now };
+  return {
+    version: FEATURE_WALKTHROUGH_VERSION,
+    status: 'not-started',
+    index: 0,
+    completed: [],
+    updatedAt: now,
+  };
+}
+
+/** The ids in a saved list that name a real stop, in catalogue order and without duplicates. */
+function readCompleted(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const saved = new Set(value.filter((entry): entry is string => typeof entry === 'string'));
+  return FEATURE_WALKTHROUGH.filter((stop) => saved.has(stop.id)).map((stop) => stop.id);
 }
 
 export function readWalkthroughState(store: WalkthroughStore | null = browserStore()): WalkthroughState {
@@ -579,10 +775,15 @@ export function readWalkthroughState(store: WalkthroughStore | null = browserSto
       record.status === 'not-started'
         ? record.status
         : 'not-started';
+    // A checklist is honest only if it was earned under the current action rules. Version 3 made
+    // every stop require its real control; a list saved by the old free-pass card is dropped while
+    // the learner's place in the tour is kept.
+    const version = typeof record.version === 'number' ? record.version : 0;
     return {
       version: FEATURE_WALKTHROUGH_VERSION,
       status,
       index: clampIndex(typeof record.index === 'number' ? record.index : 0),
+      completed: version === FEATURE_WALKTHROUGH_VERSION ? readCompleted(record.completed) : [],
       updatedAt: typeof record.updatedAt === 'number' ? record.updatedAt : 0,
     };
   } catch {
@@ -602,14 +803,36 @@ export function writeWalkthroughState(
   return state;
 }
 
-/** A finished tour starts from the top; one turned off midway resumes where it was. */
+/** A finished tour starts from the top with a fresh checklist; one turned off midway resumes. */
 export function resumeWalkthroughState(state: WalkthroughState, now = Date.now()): WalkthroughState {
+  const restart = state.status === 'completed';
   return {
     ...state,
     status: 'active',
-    index: state.status === 'completed' ? 0 : clampIndex(state.index),
+    index: restart ? 0 : clampIndex(state.index),
+    completed: restart ? [] : readCompleted(state.completed),
     updatedAt: now,
   };
+}
+
+/** Check one stop off. Repeated calls are a no-op, so a double click cannot score twice. */
+export function completeWalkthroughStop(
+  state: WalkthroughState,
+  id: string,
+  now = Date.now()
+): WalkthroughState {
+  if (state.completed.includes(id)) return state;
+  return {
+    ...state,
+    status: 'active',
+    completed: [...state.completed, id],
+    updatedAt: now,
+  };
+}
+
+/** How many stops are checked, which is the score the card prints. */
+export function walkthroughCheckedCount(state: WalkthroughState): number {
+  return state.completed.length;
 }
 
 export function nextWalkthroughState(state: WalkthroughState, now = Date.now()): WalkthroughState {

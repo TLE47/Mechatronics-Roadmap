@@ -546,28 +546,72 @@ export function compileImplicit(equation: ParsedEquation, options: CompileOption
 export interface DependencyGraph {
   parameters: Record<string, string[]>;
   equations: Record<string, string[]>;
+  /** The parameter names each row defines. A parameter row is a bridge to its readers. */
+  definitions: Record<string, string[]>;
 }
 
-/** One drawable line's id and the parameter names its folded tree reads. */
+/** One line's id, the parameter names its folded tree reads, and the name it may define. */
 export interface DependencyInput {
   id: string;
   parameters: string[];
+  defines?: string | null;
 }
 
 export function buildDependencyGraph(lines: DependencyInput[]): DependencyGraph {
   const parameters: Record<string, string[]> = {};
   const equations: Record<string, string[]> = {};
+  const definitions: Record<string, string[]> = {};
   for (const line of lines) {
     equations[line.id] = [...line.parameters];
+    if (line.defines) {
+      const defined = definitions[line.id] ?? (definitions[line.id] = []);
+      if (!defined.includes(line.defines)) defined.push(line.defines);
+    }
     for (const parameter of line.parameters) {
       const dependents = parameters[parameter] ?? (parameters[parameter] = []);
       if (!dependents.includes(line.id)) dependents.push(line.id);
     }
   }
-  return { parameters, equations };
+  return { parameters, equations, definitions };
 }
 
 /** The lines a parameter move has to redraw. An empty list means the write was a no-op for the sheet. */
 export function affectedBy(graph: DependencyGraph, parameter: string): string[] {
   return graph.parameters[parameter] ?? [];
+}
+
+/**
+ * Every row a set of parameter moves reaches, including downstream parameter rows.
+ *
+ * `b = 2a` does not itself draw, but a move in `a` has to reach the rows that read `b`; following
+ * the definitions is what turns a one-parameter slider into the complete set of affected curves.
+ * The result is deterministic in discovery order: direct readers first, then their readers.
+ */
+export function affectedRows(
+  graph: DependencyGraph,
+  parameters: readonly string[]
+): string[] {
+  const affected = new Set<string>();
+  const seen = new Set<string>();
+  const queue: string[] = [];
+  for (const parameter of parameters) {
+    if (!seen.has(parameter)) {
+      seen.add(parameter);
+      queue.push(parameter);
+    }
+  }
+
+  for (let index = 0; index < queue.length; index += 1) {
+    const parameter = queue[index]!;
+    for (const id of affectedBy(graph, parameter)) {
+      affected.add(id);
+      for (const defined of graph.definitions[id] ?? []) {
+        if (!seen.has(defined)) {
+          seen.add(defined);
+          queue.push(defined);
+        }
+      }
+    }
+  }
+  return [...affected];
 }

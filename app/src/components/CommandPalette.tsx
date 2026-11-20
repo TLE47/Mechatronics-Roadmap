@@ -3,6 +3,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { Command, useCommandState } from 'cmdk';
 import { toast } from 'sonner';
 import { CheckCircle2, CornerDownLeft, Search } from 'lucide-react';
+import { playShortcut } from '../audio/shortcutSound';
 import {
   PALETTE_MODE_TEXT,
   filterPaletteByTrack,
@@ -269,6 +270,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             event.preventDefault();
             opener.focus({ preventScroll: true });
           }}
+          // Escape is Radix's own door and it stops the event before the field's handler sees it,
+          // so the palette sounds the close here, at the hook that actually owns the press.
+          onEscapeKeyDown={() => playShortcut('close')}
           className="fixed left-1/2 top-[12vh] z-50 w-[min(42rem,calc(100%-2rem))] -translate-x-1/2 overflow-hidden rounded-[var(--r-lg)] border border-line-strong bg-panel shadow-[var(--shadow-lg)] outline-none max-sm:inset-x-0 max-sm:bottom-0 max-sm:top-auto max-sm:w-full max-sm:translate-x-0 max-sm:rounded-b-none max-sm:rounded-t-2xl max-sm:border-x-0 max-sm:border-b-0 max-sm:pb-[env(safe-area-inset-bottom)]"
         >
           <Dialog.Title className="sr-only">
@@ -284,6 +288,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             label={text.label}
             value={activeRowId}
             onValueChange={setSelection}
+            onKeyDown={(event) => {
+              // The palette is one focused field, so its rows do not activate a DOM control and
+              // `SoundClicks` never sees them. Sound the same categories the pointer would: arrows
+              // move the highlight (`nav`) and plain Enter opens the row (`row`). Escape is Radix's
+              // own door and is sounded at the dialog hook above, where that press can be seen.
+              if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Home' || event.key === 'End') {
+                playShortcut('nav', event);
+              } else if (event.key === 'Enter' && !event.metaKey && !event.ctrlKey && !event.altKey) {
+                playShortcut('row', event);
+              }
+            }}
           >
             <div className="flex items-center gap-2 border-b border-line px-3.5 py-3">
               <Search className="h-4 w-4 shrink-0 text-faint" aria-hidden="true" />
@@ -316,7 +331,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   onClose();
                 }}
               />
-              <kbd className="hidden shrink-0 rounded border border-line px-1.5 py-0.5 text-[10px] font-semibold text-faint sm:inline">
+              <kbd className="hidden shrink-0 rounded border border-line px-1.5 py-0.5 font-mono text-[11px] font-bold text-body sm:inline-flex">
                 esc
               </kbd>
             </div>

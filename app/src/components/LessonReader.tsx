@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { chordMatches } from '../keymap';
 import { useKeymap } from '../useKeymap';
+import { playShortcut } from '../audio/shortcutSound';
 import { MathView } from './MathView';
 import { InlineMarkdown as Inline, inlinePlainText } from './InlineMarkdown';
 import {
@@ -913,11 +914,13 @@ export function LessonReader({
         return;
       if (!selection) return;
       if (chordMatches(keymap.sticky, event)) {
+        playShortcut('primary', event);
         event.preventDefault();
         openStickyOnSelection();
         return;
       }
       if (chordMatches(keymap.highlight, event)) {
+        playShortcut('primary', event);
         event.preventDefault();
         pinSelection();
       }

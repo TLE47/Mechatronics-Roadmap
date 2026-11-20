@@ -215,7 +215,9 @@ export function RunnerToolbar({
                 `?` sheet: the 79 px the four keys cost is what pushed Predict onto a second row at
                 1280 in a real browser, where a classic scrollbar leaves the card 10 px narrower than
                 the overlay-scrollbar Chromium the suite runs in. */}
-            <span className="ml-1 hidden opacity-90 min-[1360px]:inline">{option.shortcut}</span>
+            <kbd className="ml-1 hidden py-[0.5px] leading-none min-[1360px]:inline-flex" aria-hidden="true">
+              {option.shortcut}
+            </kbd>
           </button>
         ))}
       </div>
@@ -260,6 +262,9 @@ export function RunnerToolbar({
         >
           <OctagonX className="w-3.5 h-3.5" />
           <span>Stop</span>
+          <kbd className="ml-0.5 hidden py-[0.5px] leading-none sm:inline-flex" aria-hidden="true">
+            ⌘⇧↵
+          </kbd>
         </button>
       )}
       <button
@@ -296,7 +301,7 @@ export function RunnerToolbar({
         )}
         <span className="hidden sm:inline">{isRunning ? 'Running in Worker...' : 'Run & Verify Output'}</span>
         <span className="sm:hidden">{isRunning ? 'Running…' : 'Run'}</span>
-        {!isRunning && <span className="kbd ml-0.5 hidden sm:inline-flex">⌘↵</span>}
+        {!isRunning && <span className="kbd ml-0.5 hidden py-[0.5px] leading-none sm:inline-flex">⌘↵</span>}
       </button>
       {/* The gate's own door, beside Run: the question also opens by itself on a lesson's first Run,
           and this is how a learner rereads the verdict or commits a guess before pressing it. It used
