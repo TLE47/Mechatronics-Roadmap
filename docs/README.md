@@ -33,6 +33,7 @@ flowchart LR
 | [`QUALITY_SPEC.md`](QUALITY_SPEC.md) | The rules a page must satisfy to ship (sections, asserts, resources). |
 | [`STEP_SIZE_AUDIT.md`](STEP_SIZE_AUDIT.md) | Word counts and prerequisite breaks for the pages nearest the flag line. |
 | [`UNVERIFIED_CITATIONS.md`](UNVERIFIED_CITATIONS.md) | The external links a host would not answer, kept visible rather than dropped. |
+| [`learning-resources-audit.md`](learning-resources-audit.md) | The resource layer's decision record: the COEP/CORP finding that rules out an embedded split view, the licensing matrix, the generated registry, and the browser evidence for every external, lesson-route and local-file disposition. |
 | [`coverage-table.md`](coverage-table.md) | Concept coverage across the modules. |
 
 ## The story and the repository

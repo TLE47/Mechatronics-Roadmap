@@ -74,7 +74,7 @@ function isTyping(): boolean {
   );
 }
 
-export function StudyTips() {
+export function StudyTips({ suppressed = false }: { suppressed?: boolean }) {
   const [tip, setTip] = useState<StudyTip | null>(null);
   const lastTip = useRef<string | null>(null);
   const lastActivity = useRef(Date.now());
@@ -88,6 +88,10 @@ export function StudyTips() {
   }, []);
 
   useEffect(() => {
+    if (suppressed) {
+      setTip(null);
+      return;
+    }
     const noteActivity = () => {
       lastActivity.current = Date.now();
     };
@@ -117,9 +121,9 @@ export function StudyTips() {
       window.removeEventListener('keydown', noteActivity, true);
       window.removeEventListener('scroll', noteActivity, true);
     };
-  }, []);
+  }, [suppressed]);
 
-  if (!tip) return null;
+  if (!tip || suppressed) return null;
 
   return (
     <aside

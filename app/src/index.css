@@ -799,14 +799,16 @@ body {
       color-mix(in srgb, var(--tour-accent) 7%, transparent),
       transparent 46%
     );
-  /* The card scrolls its own copy, but the bar belongs to the page, not to this tooltip. */
-  scrollbar-width: none;
-  overscroll-behavior: contain;
   transition:
     left 240ms var(--ease-out),
     top 240ms var(--ease-out);
 }
-.walkthrough-card::-webkit-scrollbar {
+/* The copy scrolls inside a fixed footer, so Next never leaves the phone screen. */
+.walkthrough-card-scroll {
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
+.walkthrough-card-scroll::-webkit-scrollbar {
   width: 0;
   height: 0;
 }

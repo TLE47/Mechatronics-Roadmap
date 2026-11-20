@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Header } from './components/Header';
 import { StudyTips } from './components/StudyTips';
 import { GuidedTourBar, TourStepInfo } from './components/GuidedTourBar';
@@ -438,6 +438,12 @@ export const App: React.FC = () => {
   // the tab change, so the guide's "take me there" buttons can navigate the workbench.
   const [isLearnerGuideOpen, setIsLearnerGuideOpen] = useState<boolean>(false);
   const [isFeatureWalkthroughOpen, setIsFeatureWalkthroughOpen] = useState<boolean>(false);
+  // Beginner View hides the non-core tabs. A tour stop may still name one (the final Link Health
+  // stop); the walkthrough lends that tab to the rail for the stop's lifetime, without navigating.
+  const [walkthroughPeekTab, setWalkthroughPeekTab] = useState<TabId | null>(null);
+  const peekWalkthroughTab = useCallback((tab: TabId | null) => {
+    setWalkthroughPeekTab(tab);
+  }, []);
   // The header's page tour scopes the same tooltip engine to the tab it was opened from; null is
   // the full walk that General settings opens.
   const [walkthroughScope, setWalkthroughScope] = useState<TabId | null>(null);
@@ -1658,7 +1664,9 @@ export const App: React.FC = () => {
   const visibleLabs = microEnabled ? HOME_LABS : HOME_LABS.filter((lab) => lab.id !== 'tab-micro');
   const visibleTabs = (
     viewMode === 'beginner'
-      ? WORKBENCH_TABS.filter((t) => t.isBeginnerCore || t.id === activeTab)
+      ? WORKBENCH_TABS.filter(
+          (t) => t.isBeginnerCore || t.id === activeTab || t.id === walkthroughPeekTab
+        )
       : WORKBENCH_TABS
   ).filter((t) => microEnabled || t.id !== 'tab-micro');
 
@@ -1985,6 +1993,7 @@ export const App: React.FC = () => {
                 setIsFeatureWalkthroughOpen(false);
                 setWalkthroughScope(null);
               }}
+              onPeekTab={peekWalkthroughTab}
               onNavigate={openTabFromHome}
             />
           </React.Suspense>
@@ -2488,6 +2497,7 @@ export const App: React.FC = () => {
               setIsFeatureWalkthroughOpen(false);
               setWalkthroughScope(null);
             }}
+            onPeekTab={peekWalkthroughTab}
             onNavigate={openTabFromHome}
           />
         </React.Suspense>
@@ -2601,7 +2611,7 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      <StudyTips />
+      <StudyTips suppressed={isFeatureWalkthroughOpen} />
 
       <SiteFooter onOpenIntro={() => openPage('intro')} />
     </div>

@@ -634,6 +634,13 @@ export interface WalkthroughAction {
   selectors: readonly string[];
   /** A disclosure that must be opened first when the real action lives inside it. */
   reveal?: readonly string[];
+  /**
+   * Controls that open the surface the action lives in, pressed in order when `selectors` has no
+   * control on screen. Unlike `reveal`, which the card only outlines, these are doors the tour
+   * opens itself: a folded editor body, a tool behind another tab, or a panel a preset hides. A
+   * spotlight on a control the learner cannot press is a dead end, not a pointer.
+   */
+  open?: readonly string[];
   /** The target is a tab the learner must open, so the tour leaves the current tab alone. */
   opensTab?: boolean;
 }
@@ -648,8 +655,10 @@ export const WALKTHROUGH_ACTIONS: Readonly<Record<string, WalkthroughAction>> = 
     selectors: [byTestId('link-brand')],
   },
   levels: {
-    label: 'Choose the Start Here level link.',
-    selectors: [byTestId('btn-pass-level0')],
+    label: 'Choose the Start Here level.',
+    // The phone header omits the four course-level links; the roadmap's depth bar is its level
+    // control, and its Beginner card is the same on-ramp the Start here link selects.
+    selectors: [byTestId('btn-pass-level0'), byTestId('btn-pass-card-tier1')],
   },
   navigate: {
     label: 'Open Review from the Navigate tray.',
@@ -672,8 +681,10 @@ export const WALKTHROUGH_ACTIONS: Readonly<Record<string, WalkthroughAction>> = 
     selectors: [byTestId('btn-account')],
   },
   rail: {
-    label: 'Collapse or expand the workbench rail.',
-    selectors: [byTestId('btn-rail-toggle')],
+    label: 'Open or close the workbench tab list.',
+    // The desktop rail's fold button is not mounted on a phone; the tab picker is the phone's
+    // equivalent and opens the same list as a sheet.
+    selectors: [byTestId('btn-rail-toggle'), byTestId('btn-tab-picker')],
   },
   palette: {
     label: 'Open Search for course text.',
@@ -688,8 +699,11 @@ export const WALKTHROUGH_ACTIONS: Readonly<Record<string, WalkthroughAction>> = 
     selectors: [byTestId('btn-lessons-toggle'), byTestId('btn-lessons')],
   },
   'lesson-reader': {
-    label: 'Choose the Study layout to put the brief beside the editor.',
-    selectors: [byTestId('layout-study')],
+    label: 'Choose the Study view.',
+    // The desktop presets are buttons; a phone gets the same four layouts in one native select. The
+    // Study surface bar is suppressed while the tour uses its own preset, so the select is the
+    // control that is actually on screen there.
+    selectors: [byTestId('layout-study'), byTestId('layout-select')],
   },
   editor: {
     label: 'Open main.py in the editor.',
@@ -712,21 +726,43 @@ export const WALKTHROUGH_ACTIONS: Readonly<Record<string, WalkthroughAction>> = 
     selectors: [byTestId('editor-tab-study')],
   },
   collaboration: {
-    label: 'Open More, then press Share to package this attempt.',
+    label: 'Press Share to package this attempt.',
     selectors: [byTestId('btn-share-attempt')],
+    // Share lives behind More. Open the disclosure before measuring so the outline lands on Share
+    // and one press finishes the task; `reveal` stays as the fallback if the menu cannot open.
+    open: [byTestId('btn-more')],
     reveal: [byTestId('btn-more')],
   },
   calculator: {
     label: 'Open the Calculator pane.',
     selectors: [byTestId('editor-tab-calculator')],
+    // The Calculator is an editor view, and a phone can be sitting in Read where no editor tab
+    // exists. Read's own "Back to Study" is the visible door on any width; on a phone the Code
+    // surface then reveals the tab strip. A folded desktop body is the last door.
+    open: [
+      byTestId('btn-reader-back'),
+      byTestId('phone-surface-code'),
+      byTestId('layout-study'),
+    ],
   },
   graphing: {
     label: 'Switch the calculator to Graphing.',
     selectors: [byTestId('calculator-mode-graphing')],
+    // The mode pill lives inside the Calculator view, and Study opens with the editor body folded.
+    // Open the view (which also expands the body). Read hides the editor's tabs altogether — its
+    // "Back to Study" is the only visible door there — and a phone then keeps the code behind its
+    // Code surface, so those are the two fallback doors before the desktop preset.
+    open: [
+      byTestId('btn-reader-back'),
+      byTestId('editor-tab-calculator'),
+      byTestId('phone-surface-code'),
+      byTestId('layout-study'),
+    ],
   },
   'studio-layout': {
-    label: 'Choose the Debug layout preset.',
-    selectors: [byTestId('layout-debug')],
+    label: 'Choose the editor layout.',
+    // The Debug preset is a desktop button; the phone's layout select holds the same four choices.
+    selectors: [byTestId('layout-debug'), byTestId('layout-select')],
   },
   workflow: {
     label: 'Open the Workflow tab in the editor strip.',
@@ -792,7 +828,11 @@ export const WALKTHROUGH_ACTIONS: Readonly<Record<string, WalkthroughAction>> = 
   },
   links: {
     label: 'Open the Link Health tab.',
-    selectors: [tabAnchor('tab-links')],
+    // The desktop rail and the phone picker are two different controls for the same tab. A phone
+    // has no rail; its picker lists every tab under a sheet, so the stop opens that sheet first and
+    // then points at the row. On desktop the picker trigger is hidden, so the opener is skipped.
+    selectors: [tabAnchor('tab-links'), byTestId('tab-picker-item-tab-links')],
+    open: [byTestId('btn-tab-picker')],
     opensTab: true,
   },
 };
@@ -800,6 +840,42 @@ export const WALKTHROUGH_ACTIONS: Readonly<Record<string, WalkthroughAction>> = 
 /** The action for a stop, or null when the catalogue and the action list have drifted apart. */
 export function walkthroughAction(stopId: string): WalkthroughAction | null {
   return WALKTHROUGH_ACTIONS[stopId] ?? null;
+}
+
+/** What a stop should do before it measures its action: press a door, or look again. */
+export type WalkthroughOpenerStep =
+  | { kind: 'visible' }
+  | { kind: 'press'; selector: string }
+  | { kind: 'exhausted' };
+
+/**
+ * Which surface opener to press next, when a stop's action is not on screen.
+ *
+ * Pure so the fold rules can be pinned without a browser: `find` answers whether a selector has a
+ * control on screen, and the caller owns the press. An opener that is already open — a disclosure
+ * with `aria-expanded`, or a pressed tab/preset with `aria-pressed` — is skipped rather than toggled
+ * shut, because opening the panel the stop lives in is the whole point. One that is not on screen is
+ * skipped so the next door can be tried. `exhausted` is the honest answer for a stop whose action
+ * cannot be reached: the card then falls back to its own anchors instead of pressing the same door
+ * on every retry.
+ */
+export function walkthroughOpenerStep(
+  action: Pick<WalkthroughAction, 'selectors' | 'open'>,
+  pressed: ReadonlySet<string>,
+  find: (selector: string) => HTMLElement | null
+): WalkthroughOpenerStep {
+  if (action.selectors.some((selector) => find(selector))) return { kind: 'visible' };
+  for (const selector of action.open ?? []) {
+    if (pressed.has(selector)) continue;
+    const node = find(selector);
+    if (!node) continue;
+    const open =
+      node.getAttribute('aria-expanded') === 'true' ||
+      node.getAttribute('aria-pressed') === 'true';
+    if (open) continue;
+    return { kind: 'press', selector };
+  }
+  return { kind: 'exhausted' };
 }
 
 export type WalkthroughStatus = 'not-started' | 'active' | 'completed' | 'dismissed';

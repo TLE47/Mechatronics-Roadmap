@@ -14,6 +14,7 @@ import {
   walkthroughAnnouncement,
   walkthroughCheckedCount,
   walkthroughIndicesForTab,
+  walkthroughOpenerStep,
   walkthroughSectionAt,
   writeWalkthroughState,
   type WalkthroughState,
@@ -99,6 +100,11 @@ function readRect(node: HTMLElement | null): TargetRect | null {
   };
 }
 
+/** A control under the sticky header or the bottom edge would leave the card pointing off-screen. */
+function outOfView(rect: TargetRect): boolean {
+  return rect.top < 80 || rect.bottom > window.innerHeight - 80;
+}
+
 /**
  * What the spotlight measures, in order: the control the mission actually names, then the disclosure
  * that reveals it, then the stop's broader anchors. Without the first two a stop like Appearance
@@ -164,7 +170,7 @@ function isDialogTrigger(node: HTMLElement): boolean {
  * the start shut. A surface the learner already had open before the tour, and the tour's own card,
  * are left untouched. Without this the next stop is buried under the last one's panel.
  */
-function collapseSurfacesSince(baseline: SurfaceBaseline) {
+function collapseSurfacesSince(baseline: SurfaceBaseline, done: () => void) {
   for (const node of openDialogRoots()) {
     if (baseline.dialogs.includes(node)) continue;
     node.dispatchEvent(
@@ -179,6 +185,8 @@ function collapseSurfacesSince(baseline: SurfaceBaseline) {
       if (isDialogTrigger(node)) continue;
       node.click();
     }
+    // The next stop waits for this: its opener must run after the fold, not before it.
+    done();
   }, 0);
 }
 
@@ -196,7 +204,7 @@ function placeCard(
   // both buttons usable at 360 px where the desktop two-column placement has nowhere to go.
   if (viewport.width < 640) {
     const width = Math.max(0, viewport.width - 16);
-    const sheetMax = Math.max(220, Math.min(viewport.height - 24, 520));
+    const sheetMax = Math.min(viewport.height - 16, 520);
     if (!target) {
       return {
         left: 8,
@@ -205,23 +213,33 @@ function placeCard(
         maxHeight: sheetMax,
       };
     }
-    // The card is docked on the side of the viewport the spot is not: below a header control, above
-    // a footer one. Either way it stops before the spot rather than growing back over it.
-    const targetIsLow = target.top + target.height / 2 > viewport.height / 2;
-    if (targetIsLow) {
+    // Prefer the side with a full card's worth of room. A tall target can leave less than that
+    // below and above; then the card becomes a viewport-fitted sheet rather than hanging its
+    // buttons off the bottom edge.
+    const belowTop = Math.max(96, target.bottom + 12);
+    const belowRoom = viewport.height - belowTop - 8;
+    if (belowRoom >= 180) {
+      return {
+        left: 8,
+        top: belowTop,
+        width,
+        maxHeight: Math.min(sheetMax, belowRoom),
+      };
+    }
+    const aboveRoom = target.top - 20;
+    if (aboveRoom >= 180) {
       return {
         left: 8,
         top: 8,
         width,
-        maxHeight: Math.max(180, Math.min(sheetMax, target.top - 20)),
+        maxHeight: Math.min(sheetMax, aboveRoom),
       };
     }
-    const top = Math.max(96, target.bottom + 12);
     return {
       left: 8,
-      top,
+      top: Math.max(8, viewport.height - sheetMax - 8),
       width,
-      maxHeight: Math.max(180, Math.min(sheetMax, viewport.height - top - 8)),
+      maxHeight: sheetMax,
     };
   }
 
@@ -293,10 +311,16 @@ function placeCard(
 export function FeatureWalkthrough({
   onClose,
   onNavigate,
+  onPeekTab,
   scopeTab,
 }: {
   onClose: () => void;
   onNavigate: (tab: TabId) => void;
+  /**
+   * A stop can name a tab the current mode filters out of the rail. `App` lends that tab back for
+   * the stop's lifetime, so the learner's own press opens it rather than a programmatic navigation.
+   */
+  onPeekTab?: (tab: TabId | null) => void;
   /** When set, the tour walks only the stops that belong to this tab (the header's page tour). */
   scopeTab?: TabId;
 }) {
@@ -329,6 +353,8 @@ export function FeatureWalkthrough({
   stateRef.current = state;
   const celebrateTimer = useRef<number | null>(null);
   const surfaceTimer = useRef<number | null>(null);
+  /** Surface cleanups still waiting for their fold tick; a stop opens nothing until this is zero. */
+  const pendingCleanups = useRef(0);
   // The control just pressed, kept as the spotlight target even if its menu closes under it.
   const pinned = useRef<{ element: HTMLElement; rect: TargetRect } | null>(null);
   const surfaceBaseline = useRef<SurfaceBaseline | null>(null);
@@ -371,7 +397,10 @@ export function FeatureWalkthrough({
   const collapseOpenedSurfaces = () => {
     const baseline = surfaceBaseline.current;
     if (!baseline) return;
-    collapseSurfacesSince(baseline);
+    pendingCleanups.current += 1;
+    collapseSurfacesSince(baseline, () => {
+      pendingCleanups.current = Math.max(0, pendingCleanups.current - 1);
+    });
     if (surfaceTimer.current !== null) {
       window.clearTimeout(surfaceTimer.current);
       surfaceTimer.current = null;
@@ -511,11 +540,47 @@ export function FeatureWalkthrough({
     setPlaced(false);
     // A stop whose anchor has genuinely gone still gets readable copy, centred, after a beat.
     const fallback = window.setTimeout(() => setPlaced(true), 2200);
+    // Doors this stop has already pressed, so a retry cannot toggle one shut again.
+    const openers = new Set<string>();
 
     const locate = () => {
       if (cancelled) return;
+      // The previous stop's cleanup folds what that stop opened on the next tick. Pressing a door
+      // before that fold would leave the editor body collapsed again a moment after opening it, so
+      // the opener waits until every cleanup has run.
+      if (pendingCleanups.current > 0) {
+        if (tries < 24) {
+          tries += 1;
+          timer = window.setTimeout(locate, 120);
+        }
+        return;
+      }
+      // A stop's action can live behind a fold: Study opens the runner with its editor body
+      // collapsed, and the Graphing pill is inside the Calculator view. Open the declared surface
+      // first and only then measure, so the spotlight marks a control the learner can really press.
+      const stopAction = walkthroughAction(stop.id);
+      if (stopAction?.open?.length) {
+        const step = walkthroughOpenerStep(stopAction, openers, (selector) =>
+          findVisible([selector])
+        );
+        if (step.kind === 'press') {
+          openers.add(step.selector);
+          findVisible([step.selector])?.click();
+          if (tries < 24) {
+            tries += 1;
+            timer = window.setTimeout(locate, 120);
+          }
+          return;
+        }
+      }
       const node = findVisible(spotlightAnchors(stop.id, stop.anchors));
       if (!node) {
+        // An `opensTab` stop leaves the press to the learner, so it does not navigate first. If the
+        // tab is not in the rail at all (the tour resumed on Home, where the workbench is closed),
+        // open the workbench once so the learner still has a tab to press.
+        if (stopAction?.opensTab && stop.tab && tries === 6) {
+          navigateRef.current(stop.tab);
+        }
         if (tries < 24) {
           tries += 1;
           timer = window.setTimeout(locate, 120);
@@ -524,11 +589,12 @@ export function FeatureWalkthrough({
       }
       const rect = node.getBoundingClientRect();
       // A target under the sticky header or below the fold is scrolled into the comfortable middle
-      // before it is measured again. The retry is bounded: a control inside a panel that cannot
-      // scroll would otherwise leave the spotlight with no control to point at.
-      if ((rect.top < 80 || rect.bottom > window.innerHeight - 80) && scrolls < 2) {
+      // before it is measured again. Instant, not the page's smooth default: the retry has to read
+      // the settled position, not an animation halfway through it. The retry is bounded: a control
+      // inside a panel that cannot scroll would otherwise leave the spotlight with no target.
+      if (outOfView(rect) && scrolls < 2) {
         scrolls += 1;
-        node.scrollIntoView({ block: 'center', inline: 'nearest' });
+        node.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
         timer = window.setTimeout(locate, 280);
         return;
       }
@@ -561,6 +627,7 @@ export function FeatureWalkthrough({
   // an editor changes height, a dialog closes. Following it on a short clock keeps the hole on the
   // control, rather than on where it used to be, while the learner is being asked to press it.
   useEffect(() => {
+    let followScrolls = 0;
     const follow = () => {
       // After a press, the control that was clicked is the focus even if its menu or dialog closes.
       const pin = pinned.current;
@@ -571,7 +638,15 @@ export function FeatureWalkthrough({
         setTarget((previous) => (sameRect(previous, next) ? previous : next));
         return;
       }
-      const next = readRect(findVisible(spotlightAnchors(stop.id, stop.anchors)));
+      const node = findVisible(spotlightAnchors(stop.id, stop.anchors));
+      const next = readRect(node);
+      // A lazy tab can mount after `locate` has given up. Scroll the new target into view once,
+      // then measure on the next tick, so a late control is never spotlighted off-screen.
+      if (node && next && followScrolls < 1 && outOfView(next)) {
+        followScrolls += 1;
+        node.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
+        return;
+      }
       setTarget((previous) => (sameRect(previous, next) ? previous : next));
       if (next) setPlaced(true);
     };
@@ -653,6 +728,15 @@ export function FeatureWalkthrough({
     setScopeCursor(0);
   }, [scopeTab]);
 
+  // Beginner View filters the non-core maintainer tabs out of the rail. A stop whose task is to
+  // press such a tab (Link Health) lends it back for the stop's lifetime without navigating: the
+  // learner's click is still what opens it, and the default beginner rail stays unchanged.
+  useEffect(() => {
+    const action = walkthroughAction(stop.id);
+    onPeekTab?.(action?.opensTab ? (stop.tab ?? null) : null);
+    return () => onPeekTab?.(null);
+  }, [stop.id, stop.tab, onPeekTab]);
+
   const cardStyle = placeCard(target, viewport);
   const progress = scoped
     ? `${String(scopePosition + 1).padStart(2, '0')} / ${String(scopeIndices.length).padStart(2, '0')}`
@@ -728,13 +812,14 @@ export function FeatureWalkthrough({
           // the slide on the next paint, which is the second entrance learners were seeing.
           if (event.animationName.startsWith('walkthrough-in-')) setEntering(false);
         }}
-        className={`walkthrough-card pointer-events-auto fixed overflow-y-auto overflow-x-hidden rounded-2xl border bg-panel/95 text-ink shadow-[var(--shadow-lg)] outline-none backdrop-blur-xl ${
+        className={`walkthrough-card pointer-events-auto fixed flex flex-col overflow-hidden rounded-2xl border bg-panel/95 text-ink shadow-[var(--shadow-lg)] outline-none backdrop-blur-xl ${
           placed ? (entering ? 'walkthrough-enter' : '') : 'pointer-events-none opacity-0'
         } ${justChecked ? 'walkthrough-card-checked' : ''}`}
       >
         <span aria-hidden="true" className="walkthrough-beam-clip">
           <span className="walkthrough-beam" />
         </span>
+        <div className="walkthrough-card-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
         <header className="flex items-center justify-between gap-2 border-b border-line-soft px-3.5 py-2.5">
           <span className="flex min-w-0 items-center gap-2">
             <span
@@ -915,8 +1000,9 @@ export function FeatureWalkthrough({
             </span>
           </div>
         </div>
+        </div>
 
-        <footer className="sticky bottom-0 z-10 border-t border-line-soft bg-panel/95 px-3.5 py-2.5 backdrop-blur-xl">
+        <footer className="shrink-0 border-t border-line-soft bg-panel/95 px-3.5 py-2.5 backdrop-blur-xl">
           <div className="flex items-center justify-between gap-2">
             <button
               type="button"

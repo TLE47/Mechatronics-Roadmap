@@ -73,6 +73,10 @@ GATES: list[tuple[str, list[str], bool]] = [
     ("plant_data", ["scripts/generate_plant_data.py", "--check"], False),
     ("term_order", ["scripts/check_term_order.py"], False),
     ("python_lessons_data", ["scripts/generate_python_lessons_data.py", "--check"], False),
+    # The authored resource guides are generated from the same lesson pages and are served on demand.
+    # The gate checks both the registry and its small reader index, so editing a guide without
+    # regenerating cannot leave the panel showing last week's instructions.
+    ("learning_resources", ["npm", "run", "test:resources"], False),
     # The joins a lesson spans, across five registries: a page that becomes runnable can be
     # half-wired while every individual `--check` above stays green. Reads the registry, the
     # payloads, the visual map and the callouts, and names the page and file that disagree.

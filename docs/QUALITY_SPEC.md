@@ -189,6 +189,8 @@ score cannot do.
 - [ ] The Transfer task changes parameters or requirements and is graded by behaviour only
 - [ ] Absolute maths claims state their assumptions
 - [ ] You have done the module yourself, logged it in `docs/dogfood-log.md`, and fixed what broke
+- [ ] Every resource line names a real link, keeps its authored guide, and `npm run check:resources`
+      is green
 - [ ] The track is still at or above its ratchet, and `scripts/module_parity.py --check` is green
 
 The reference module that satisfies all of these today is `02-mechanics.T2.02a` — see §7.
@@ -239,3 +241,35 @@ What keeps it honest, and what a later module inherits:
 
 Effort, as a guide only (the plan's estimate): a micro-lesson built to this standard, with tests, is
 **4-8 hours** of writing and verifying, plus the time to do it yourself as a learner.
+
+## 8. The resource line
+
+This applies to every page with a `## Learn` block, not only the bridge modules. The authored resource
+prose is the single source of the Resources panel, so its shape is a shipping rule: the generator
+reads these lines, and nothing else on the page becomes a resource.
+
+- **One block per idea.** A page may cite at most one `- **Primary resource:**` and one
+  `- **Alternative resource:**` under each `### Idea` block, each a top-level bullet with at least
+  one Markdown link. A resource line with no link fails generation — a resource without an address is
+  not a resource.
+- **The guide is authored, not inferred.** The read/complete instruction sits inline on the line or
+  in child bullets `**What to read:**` / `**What to complete:**`, `**What to skip:**` and
+  `**Key takeaway:**`. They are copied into the registry as written; the card is useless without
+  them even though only the link is required.
+- **Every occurrence is a card.** Two roles in one idea are two tasks, and the same URL may appear
+  twice with different instructions (P.1 cites futurecoder and CS50P once per idea). The card count
+  and the panel both follow the authored lines, never a de-duplicated URL list.
+- **External means absolute http(s).** A relative link is resolved against the page that authored it;
+  it becomes an in-app `?lesson=` route only when it names a lesson in the build. Any other local file
+  stays visible with its guide and an explicit reason it cannot be opened here — never dropped, and
+  never copied into the app.
+- **Link out, never rehost.** "Free to read" is not permission to reproduce: no excerpts, snapshots
+  or local copies, and no `iframe`. The document is cross-origin isolated with `COEP: require-corp`
+  for `SharedArrayBuffer`, so the side-by-side mechanism is the browser's own split view. The
+  provider and licensing evidence is in
+  [`docs/learning-resources-audit.md`](learning-resources-audit.md).
+- **The panel is read-only.** Opening a resource writes no progress, note, check or lesson state, and
+  a provider page is never cached by the service worker.
+- **Generated, then checked.** `npm run generate:resources` writes the registry and the index;
+  `npm run check:resources` fails when either is stale; `npm run test:resources` adds the generator and
+  resolver suites. A page that edits a guide without regenerating is a red build, not a stale panel.

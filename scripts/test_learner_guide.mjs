@@ -51,6 +51,7 @@ import {
   walkthroughAnnouncement,
   walkthroughCheckedCount,
   walkthroughIndicesForTab,
+  walkthroughOpenerStep,
   walkthroughSectionAt,
   writeWalkthroughState,
 } from '../app/src/featureWalkthrough.ts';
@@ -106,6 +107,7 @@ for (const text of appSources()) {
 /** Test ids built from a map rather than written literally in the markup. */
 const DYNAMIC_TEST_IDS = [
   /^tab-btn-tab-/,
+  /^tab-picker-item-/,
   /^btn-pass-/,
   /^layout-(study|read|write|debug)$/,
   /^editor-tab-/,
@@ -439,6 +441,181 @@ check('the workflow surface is a page stop in the Python tab', () => {
   );
 });
 
+check('the graphing stop opens the calculator before it asks for the mode', () => {
+  const action = walkthroughAction('graphing');
+  assert.ok(action, 'the graphing stop needs an action');
+  assert.deepEqual(
+    action.open,
+    [
+      '[data-testid="btn-reader-back"]',
+      '[data-testid="editor-tab-calculator"]',
+      '[data-testid="phone-surface-code"]',
+      '[data-testid="layout-study"]',
+    ],
+    'the Graphing pill lives inside the Calculator view, and Read hides the editor entirely'
+  );
+  assert.ok(
+    !action.open.includes(action.selectors[0]),
+    'opening the surface must not press the action the learner is asked for'
+  );
+  // The card must decide which door to open before it measures, not outline a folded panel.
+  assert.match(
+    WALKTHROUGH_SOURCE,
+    /walkthroughOpenerStep\(stopAction/,
+    'the walkthrough must open the surface a folded action lives in before it points at it'
+  );
+  // The previous stop's cleanup folds the surfaces it opened on the next tick. The next stop must
+  // wait for that fold before pressing a door, or the door's body would be collapsed again.
+  const cleanupWait = WALKTHROUGH_SOURCE.indexOf('pendingCleanups.current > 0');
+  const openerPress = WALKTHROUGH_SOURCE.indexOf('walkthroughOpenerStep(stopAction');
+  assert.ok(
+    cleanupWait >= 0 && openerPress >= 0 && cleanupWait < openerPress,
+    'the surface cleanup must finish before the next stop presses an opener'
+  );
+  assert.match(
+    WALKTHROUGH_SOURCE,
+    /collapseSurfacesSince\(baseline, \(\) =>/,
+    'the cleanup must report when its delayed fold has run'
+  );
+  assert.doesNotMatch(
+    WALKTHROUGH_SOURCE,
+    /isWorkspaceFold/,
+    'the runner editor fold must not be exempt from the normal cleanup'
+  );
+});
+
+check('the calculator stops leave Read before they point inside the editor', () => {
+  for (const id of ['calculator', 'graphing']) {
+    const action = walkthroughAction(id);
+    assert.ok(action, `the ${id} stop needs an action`);
+    assert.deepEqual(
+      action.open?.[0],
+      '[data-testid="btn-reader-back"]',
+      '"' + id + '" must leave Read first: its target is an editor view a phone cannot see there'
+    );
+    assert.ok(
+      !action.open.includes(action.selectors[0]),
+      '"' + id + '" must not press the control it asks the learner for'
+    );
+  }
+  assert.ok(
+    walkthroughAction('calculator')?.open.includes('[data-testid="phone-surface-code"]'),
+    'the Calculator stop needs the phone Code surface, not only the desktop tab strip'
+  );
+});
+
+check('the collaboration stop opens More before it asks for Share', () => {
+  const action = walkthroughAction('collaboration');
+  assert.ok(action, 'the collaboration stop needs an action');
+  assert.deepEqual(action.selectors, ['[data-testid="btn-share-attempt"]']);
+  assert.deepEqual(action.open, ['[data-testid="btn-more"]']);
+  assert.ok(
+    !action.open.includes(action.selectors[0]),
+    'opening More must not press Share for the learner'
+  );
+});
+
+check('the Links stop reaches the phone tab picker', () => {
+  const action = walkthroughAction('links');
+  assert.ok(action, 'the Links stop needs an action');
+  assert.deepEqual(
+    action.open,
+    ['[data-testid="btn-tab-picker"]'],
+    'a phone picker sheet must be opened before its Link Health row can be pressed'
+  );
+  assert.ok(
+    action.selectors.includes('[data-testid="tab-picker-item-tab-links"]'),
+    'the phone picker row is the Link Health tab on a phone'
+  );
+});
+
+check('the hidden phone controls have visible equivalents', () => {
+  const expectations = {
+    levels: '[data-testid="btn-pass-card-tier1"]',
+    rail: '[data-testid="btn-tab-picker"]',
+    'lesson-reader': '[data-testid="layout-select"]',
+    'studio-layout': '[data-testid="layout-select"]',
+  };
+  for (const [id, selector] of Object.entries(expectations)) {
+    assert.ok(
+      walkthroughAction(id)?.selectors.includes(selector),
+      `"${id}" needs ${selector} on a phone, where its desktop control is not mounted`
+    );
+  }
+});
+
+check('late targets and filtered tabs are kept in reach', () => {
+  // A lazy tab can mount after `locate` has given up; the follow pass must scroll the new target
+  // once and measure it again, rather than place a spotlight off-screen.
+  assert.match(WALKTHROUGH_SOURCE, /followScrolls/, 'the follow pass must scroll a late target once');
+  assert.match(
+    WALKTHROUGH_SOURCE,
+    /behavior: 'instant'/,
+    'the tour must measure after an instant scroll, not mid-animation'
+  );
+  // Beginner View filters non-core tabs; the walkthrough lends its own tab back while it asks for
+  // it, so the learner's press, not a programmatic navigation, is what opens Link Health.
+  const appSource = fs.readFileSync(new URL('../app/src/App.tsx', import.meta.url), 'utf8');
+  assert.match(appSource, /t\.id === walkthroughPeekTab/);
+  assert.match(WALKTHROUGH_SOURCE, /onPeekTab\?\.\(action\?\.opensTab/);
+  // If the rail is not mounted at all (the tour resumed on Home), the stop opens the workbench
+  // after the peek has had time to render, so the tab is never permanently unreachable.
+  assert.match(WALKTHROUGH_SOURCE, /stopAction\?\.opensTab && stop\.tab && tries === 6/);
+});
+
+check('a folded action opens its surface once before falling back', () => {
+  const action = walkthroughAction('graphing');
+  const folded = { getAttribute: () => null };
+  const expanded = { getAttribute: () => 'true' };
+  const findFrom = (nodes) => (selector) => nodes[selector] ?? null;
+  // The action is already on screen: no door is pressed.
+  assert.deepEqual(
+    walkthroughOpenerStep(action, new Set(), findFrom({ [action.selectors[0]]: folded })),
+    { kind: 'visible' }
+  );
+  // The tab is on screen but the body is folded: press it, then look again.
+  const doors = Object.fromEntries(action.open.map((selector) => [selector, folded]));
+  const both = findFrom(doors);
+  assert.deepEqual(walkthroughOpenerStep(action, new Set(), both), {
+    kind: 'press',
+    selector: action.open[0],
+  });
+  // A phone's Lesson surface hides the editor's tab; its Code switch is the door that reveals it.
+  assert.deepEqual(walkthroughOpenerStep(action, new Set([action.open[0]]), both), {
+    kind: 'press',
+    selector: action.open[1],
+  });
+  assert.deepEqual(walkthroughOpenerStep(action, new Set(action.open.slice(0, 2)), both), {
+    kind: 'press',
+    selector: action.open[2],
+  });
+  // A door already open is not toggled shut, and a door that is gone is skipped.
+  assert.deepEqual(
+    walkthroughOpenerStep(
+      { selectors: action.selectors, open: ['[data-testid="btn-more"]'] },
+      new Set(),
+      findFrom({ '[data-testid="btn-more"]': expanded })
+    ),
+    { kind: 'exhausted' }
+  );
+  // The last door is the desktop Study preset; with the three phone doors already taken it is the
+  // one pressed, and a preset already pressed is not toggled shut.
+  assert.deepEqual(walkthroughOpenerStep(action, new Set(action.open.slice(0, 3)), both), {
+    kind: 'press',
+    selector: action.open[3],
+  });
+  const pressed = { getAttribute: (name) => (name === 'aria-pressed' ? 'true' : null) };
+  assert.deepEqual(
+    walkthroughOpenerStep(
+      action,
+      new Set(action.open.slice(0, 3)),
+      findFrom({ ...doors, [action.open[3]]: pressed })
+    ),
+    { kind: 'exhausted' }
+  );
+  assert.deepEqual(walkthroughOpenerStep(action, new Set(), () => null), { kind: 'exhausted' });
+});
+
 check('a version-3 position migrates across the inserted Workflow stop', () => {
   const legacy = FEATURE_WALKTHROUGH.filter((stop) => stop.id !== 'workflow');
   assert.equal(legacy.length, FEATURE_WALKTHROUGH_COUNT - 1);
@@ -584,6 +761,11 @@ check('every stop names one exact control that performs its task', () => {
       assert.ok(action.reveal.length > 0, `"${stop.id}" reveal needs a control`);
       assert.notDeepEqual(action.reveal, action.selectors, `"${stop.id}" reveal cannot be the action`);
       assertControls(action.reveal, 'reveal');
+    }
+    if (action.open) {
+      assert.ok(action.open.length > 0, `"${stop.id}" open needs a control`);
+      assert.notDeepEqual(action.open, action.selectors, `"${stop.id}" open cannot be the action`);
+      assertControls(action.open, 'open');
     }
     if (action.opensTab) {
       assert.ok(stop.tab, `"${stop.id}" can only open a tab when it names one`);

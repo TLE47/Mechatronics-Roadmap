@@ -61,6 +61,8 @@ import { STORE_RESTORED_EVENT } from '../backupBundle';
 import { markQuotes, unlocatedQuotes } from '../lessonMarks';
 import { RESET_EVENT } from '../resetEvent';
 import { lessonPageUrl as sourceUrl } from '../startHere';
+import { LEARNING_RESOURCE_COUNTS } from '../data/learningResourceIndex';
+import { ResourceGuides } from '../features/learning-resources/ResourceGuides';
 import { StudyClockReminder } from './StudyClockReminder';
 import StickyNoteEditor, { type StickyNoteEditorHandle } from './StickyNoteEditor';
 import { LazyPending } from './LazyPending';
@@ -361,6 +363,9 @@ export function LessonReader({
 }: LessonReaderProps) {
   /** Whether the reader is showing its one-line split-view suggestion. */
   const [splitTip, setSplitTip] = useState(false);
+  /** The authored resource guides, when this lesson has any and the reader has opened the panel. */
+  const [resourceGuidesOpen, setResourceGuidesOpen] = useState(false);
+  const resourceCount = LEARNING_RESOURCE_COUNTS[lessonId] ?? 0;
   /** The lesson text can step out of the grid entirely; the hover tab is the way back. */
   const [collapsed, setCollapsed] = useState(false);
   const [page, setPage] = useState<LessonPage | null>(null);
@@ -423,6 +428,11 @@ export function LessonReader({
   };
   const pendingRef = useRef<ReadingPosition | null>(null);
   const anchors = useMemo(() => headingAnchors(page?.blocks ?? []), [page]);
+
+  useEffect(() => {
+    // A lesson change is a new page: the previous lesson's guides must not stay open over it.
+    setResourceGuidesOpen(false);
+  }, [lessonId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1383,6 +1393,22 @@ export function LessonReader({
               <Highlighter className="h-3 w-3" /> Highlight
             </button>
           )}
+          {resourceCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setResourceGuidesOpen((open) => !open)}
+              aria-expanded={resourceGuidesOpen}
+              aria-controls="resource-guide-panel"
+              data-testid="btn-resources"
+              title="Open the authored reading guides for this lesson"
+              className="flex items-center gap-1 rounded border border-line-soft bg-canvas px-2 py-1 text-[13px] font-mono text-muted hover:text-ink cursor-pointer"
+            >
+              <BookOpen className="h-3 w-3" aria-hidden="true" /> Resources
+              <span className="rounded bg-accent/10 px-1 font-mono text-[10.5px] text-accent">
+                {resourceCount}
+              </span>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setSplitTip((open) => !open)}
@@ -1418,6 +1444,14 @@ export function LessonReader({
       </div>
 
       {panel}
+
+      {resourceGuidesOpen && resourceCount > 0 && (
+        <ResourceGuides
+          key={lessonId}
+          lessonId={lessonId}
+          onClose={() => setResourceGuidesOpen(false)}
+        />
+      )}
 
       {splitTip && (
         <p

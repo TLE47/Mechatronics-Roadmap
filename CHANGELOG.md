@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.12.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.13.0`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -13,6 +13,33 @@ flowchart LR
     S0 --> B1["Pass 1 Tier 1 (23 Files: 00.1–08.1 across Tracks 00–08)"]
     B1 --> QA["Automated CI: verify_repo + validate_modules + lint_lessons + lint_modules + check_term_order + clean_tex + audit_math + test_exercises + run_all_labs + smoke & browser E2E (dev server and built Pages bundle)"]
 ```
+
+---
+
+## [2026-11-20] — The authored reading guides get a panel, and the walkthrough opens what it points at
+
+Every lesson that authors a `Primary` or `Alternative resource` block now carries a **Resources**
+button. The panel renders one card per authored occurrence — 160 across 51 lessons, 155 external and
+5 local — with the read/skip/takeaway the page already writes, and no second hand-kept list: the
+registry is generated from the same Markdown (`npm run check:resources` is the drift gate) and served
+on demand. An external resource opens in a new tab. A local Markdown link is resolved against its own
+page: the four that name lessons become same-tab `?lesson=` routes, and the Falstad file 01.4 cites
+stays visible with its guide and a sentence saying why it cannot be opened here. There is no iframe:
+the document is isolated with `COEP: require-corp` for `SharedArrayBuffer`, so the panel is a link-out
+guide and the browser's split view remains the side-by-side mechanism. Opening a resource writes no
+progress, note or lesson state.
+
+The feature walkthrough now opens the surface a stop lives in before it points at a control, instead
+of spotlighting a control the learner cannot press. A stop declares the doors to try (`open`); Study's
+folded editor body, the Calculator's mode pill, Share behind More, and Link Health behind the phone's
+tab picker are opened for the stop, while a door already open is left alone and one that is not on
+screen is skipped. The next stop waits for the previous stop's cleanup to finish, so it cannot press a
+door and then have the fold close it a moment later. On a phone the stops fall back to the controls
+that actually exist there — the tab picker for the rail, the layout select for the presets, the
+Beginner card for the Start Here level — and Beginner View lends a maintainer tab to the rail for the
+stop that asks for it without changing the learner's default rail. The card's copy now scrolls above a
+fixed footer, so Next stays on screen on a short phone; the account sheet answers Escape; and study
+tips are suppressed while the tour is open.
 
 ---
 

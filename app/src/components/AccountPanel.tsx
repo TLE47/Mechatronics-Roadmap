@@ -126,6 +126,21 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
     if (recovery) setMode('password');
   }, [recovery]);
 
+  // A modal must answer Escape. The walkthrough's surface cleanup presses Escape to clear a stop's
+  // window; without this the account sheet stayed over the next stop. Capture so this claims the
+  // key before the global focus-mode shortcut, and claim it so that shortcut sees defaultPrevented.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
+      event.preventDefault();
+      event.stopPropagation();
+      onClose();
+    };
+    document.addEventListener('keydown', onEscape, true);
+    return () => document.removeEventListener('keydown', onEscape, true);
+  }, [isOpen, onClose]);
+
   // The assurance level is a property of the session, so it is read when the panel opens and after
   // a code is verified — signing in again on another device starts back at aal1.
   useEffect(() => {
