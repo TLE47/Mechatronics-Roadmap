@@ -27,12 +27,20 @@ export const TOUR_SEEN_RECORD = JSON.stringify({
  * Passed as a function plus an argument rather than a string so the key and the shape live in one
  * place here. The guard keeps a suite that sets its own record (none does today) from being overwritten
  * on the second navigation.
+ *
+ * The new learner guide reopens by default, which is right for a person and wrong for a harness: a
+ * dialog over the workbench swallows the header presses every suite makes. A returning visitor is
+ * also a learner who has turned that off, so the same seed writes the reopen preference; a suite
+ * that measures the default seeds `mechalab_guide_reopen_v1` itself and this guard leaves it alone.
  */
 export async function seedTourSeen(target) {
   await target.addInitScript((record) => {
     try {
       if (!localStorage.getItem('mechalab_tour_v1')) {
         localStorage.setItem('mechalab_tour_v1', record);
+      }
+      if (!localStorage.getItem('mechalab_guide_reopen_v1')) {
+        localStorage.setItem('mechalab_guide_reopen_v1', '0');
       }
     } catch {
       // A context that refuses storage still loads; it just cannot be seeded, and the tour stays shut

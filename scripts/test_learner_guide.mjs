@@ -43,12 +43,18 @@ import {
   nextWalkthroughState,
   previousWalkthroughState,
   readWalkthroughState,
+  resetWalkthroughState,
   resumeWalkthroughState,
   walkthroughAction,
   walkthroughAnnouncement,
   walkthroughCheckedCount,
   writeWalkthroughState,
 } from '../app/src/featureWalkthrough.ts';
+import {
+  GUIDE_REOPEN_STORAGE_KEY,
+  readGuideReopen,
+  writeGuideReopen,
+} from '../app/src/learnerGuideDoor.ts';
 
 const tabsDoc = JSON.parse(
   fs.readFileSync(new URL('../app/src/data/workbenchTabs.json', import.meta.url), 'utf8')
@@ -60,6 +66,10 @@ const SETTINGS_SOURCE = fs.readFileSync(
 );
 const GUIDE_SOURCE = fs.readFileSync(
   new URL('../app/src/components/LearnerGuide.tsx', import.meta.url),
+  'utf8'
+);
+const WALKTHROUGH_SOURCE = fs.readFileSync(
+  new URL('../app/src/components/FeatureWalkthrough.tsx', import.meta.url),
   'utf8'
 );
 
@@ -272,6 +282,30 @@ check('General settings has the guide button and opens the event', () => {
   assert.match(SETTINGS_SOURCE, /onClose\(\);/);
 });
 
+check('the guide reopens by default, and both doors can turn that off', () => {
+  assert.equal(readGuideReopen(memoryStore()), true, 'a device with no record is a new learner');
+  const store = memoryStore();
+  writeGuideReopen(false, store);
+  assert.equal(store.getItem(GUIDE_REOPEN_STORAGE_KEY), '0');
+  assert.equal(readGuideReopen(store), false);
+  writeGuideReopen(true, store);
+  assert.equal(readGuideReopen(store), true);
+  assert.equal(
+    readGuideReopen({
+      getItem: () => {
+        throw new Error('blocked');
+      },
+      setItem: () => {},
+    }),
+    true,
+    'a blocked store keeps the default rather than hiding the guide'
+  );
+  assert.match(SETTINGS_SOURCE, /data-testid="btn-guide-reopen"/);
+  assert.match(SETTINGS_SOURCE, /writeGuideReopen/);
+  assert.match(GUIDE_SOURCE, /data-testid="guide-reopen-checklist"/);
+  assert.match(GUIDE_SOURCE, /readGuideReopen/);
+});
+
 console.log('\nThe tooltip walkthrough covers the workbench');
 
 check('the walkthrough is a real catalogue, not a second slideshow', () => {
@@ -343,7 +377,7 @@ check('every stop names one exact control that performs its task', () => {
   const broadPanel = /\b(runner-toolbar|editor-panes|editor-panel|results-column|lesson-reader|calculator-pane|graphing-pane)\b/;
   for (const stop of FEATURE_WALKTHROUGH) {
     const action = walkthroughAction(stop.id);
-    assert.ok(action, `"${stop.id}" has no action; Do it could only fake a completion`);
+    assert.ok(action, `"${stop.id}" has no action; the checklist needs an exact control`);
     assert.ok(action.label.trim().length > 12, `"${stop.id}" needs a real task sentence`);
     assert.match(action.label, /\.$/, `"${stop.id}" task should be a sentence`);
     assert.ok(action.selectors.length > 0, `"${stop.id}" needs a real control`);
@@ -459,6 +493,29 @@ check('the walkthrough state round-trips and survives a broken store', () => {
       },
     })
   );
+});
+
+check('Reset points clears the checklist and returns to the first stop', () => {
+  let state = resumeWalkthroughState(initialWalkthroughState(0), 0);
+  state = completeWalkthroughStop(state, 'brand', 1);
+  state = completeWalkthroughStop(state, 'settings', 2);
+  state = nextWalkthroughState(state, 3);
+  assert.equal(walkthroughCheckedCount(state), 2);
+  const reset = resetWalkthroughState(4);
+  assert.equal(reset.index, 0);
+  assert.equal(reset.status, 'active');
+  assert.deepEqual(reset.completed, []);
+  assert.equal(walkthroughCheckedCount(reset), 0);
+  const store = memoryStore();
+  writeWalkthroughState(reset, store);
+  assert.deepEqual(readWalkthroughState(store).completed, []);
+  assert.equal(readWalkthroughState(store).index, 0);
+});
+
+check('the walkthrough points instead of pressing, and carries its own reset', () => {
+  assert.match(WALKTHROUGH_SOURCE, /data-testid="walkthrough-reset"/);
+  assert.doesNotMatch(WALKTHROUGH_SOURCE, /walkthrough-do-it/);
+  assert.match(WALKTHROUGH_SOURCE, /outlined control is live/);
 });
 
 check('the guide offers both modes and the walkthrough callback', () => {

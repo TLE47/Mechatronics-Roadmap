@@ -130,7 +130,7 @@ import { themeViewFromLocation, themeViewSearch } from './themeRoute';
 import { PYTHON_TAB_NAME, labsSwitchLabel } from './tabNames';
 import { APP_BUILD, APP_VERSION } from './appVersion';
 import { isKnownLesson, lessonIdFromLocation } from './lessonRoute';
-import { OPEN_LEARNER_GUIDE_EVENT } from './learnerGuideDoor';
+import { OPEN_LEARNER_GUIDE_EVENT, readGuideReopen } from './learnerGuideDoor';
 import { readSharedAttempt, type SharedAttempt } from './shareLink';
 import { readTrySnippet } from './tryLink';
 import { readLastLessonId, lessonOffer } from './lastLesson';
@@ -441,6 +441,12 @@ export const App: React.FC = () => {
     const open = () => setIsLearnerGuideOpen(true);
     window.addEventListener(OPEN_LEARNER_GUIDE_EVENT, open);
     return () => window.removeEventListener(OPEN_LEARNER_GUIDE_EVENT, open);
+  }, []);
+  // Reopening on a visit is the guide's default, not an opt-in: a first-run walkthrough hidden in
+  // General settings is one most learners never find. The preference is read once per boot, so
+  // closing the guide is still closing it for this visit; the next boot honours the stored answer.
+  useEffect(() => {
+    if (readGuideReopen()) setIsLearnerGuideOpen(true);
   }, []);
   // `⌘K` is the keyboard's table of contents: one dialog over lessons, tabs and commands. `⌘P` and
   // `⌘⇧F` open the same dialog on a narrower question, so there is one search box to learn
