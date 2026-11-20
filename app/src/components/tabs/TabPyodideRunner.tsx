@@ -35,6 +35,7 @@ import { FirstRunTour } from '../FirstRunTour';
 import { layoutForStep } from '../../tour';
 import { resumeLabel } from '../../tourState';
 import { playCue } from '../../audio/facade';
+import { playShortcut } from '../../audio/shortcutSound';
 import { GENERAL_SETTINGS_EVENT, readWorkspaceBlocks, type WorkspaceBlocks } from '../../generalSettings';
 
 import { harnessGate } from '../../harnessGrading.ts';
@@ -1430,6 +1431,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       // The code first: ⌥2 is `™` in `key` on a Mac, and the shortcut is the physical key.
       const next = layoutShortcutFor(event.code) ?? layoutShortcutFor(event.key);
       if (!next) return;
+      playShortcut('toggle', event);
       event.preventDefault();
       chooseLayout(next);
     };
@@ -1667,11 +1669,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // the discoverable path; this is the one keyboard habit a code editor trains. The key is read from
   // the sheet's keymap (`app/src/keymap.ts`), so a learner who rebinds Run is not left with the old
   // chord still running the lesson and the new one doing nothing.
-  const runShortcutRef = useRef<() => void>(() => {});
+  const runShortcutRef = useRef<() => boolean>(() => false);
   runShortcutRef.current = () => {
-    if (isRunning) return;
+    if (isRunning) return false;
     const lesson = PYTHON_LESSONS.find((l) => l.id === lessonIdRef.current) || PYTHON_LESSONS[0];
     gate.requestRun(codeRef.current, lesson);
+    return true;
   };
   const keymapRef = useKeymapRef();
   useEffect(() => {
@@ -1679,7 +1682,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       if (event.defaultPrevented) return;
       if (actionForEvent(keymapRef.current, event) === 'run') {
         event.preventDefault();
-        runShortcutRef.current();
+        if (runShortcutRef.current()) playShortcut('primary', event);
       }
     };
     window.addEventListener('keydown', onKey);

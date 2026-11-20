@@ -16,6 +16,20 @@ flowchart LR
 
 ---
 
+## [2026-11-20] — Shortcuts sound like their buttons, and the editor's settings door is named
+
+Keyboard shortcuts now speak the same interface vocabulary as the controls they invoke: the palette,
+lesson chooser and search are `primary`, Focus and the layout presets are `toggle`, Run is `primary`,
+reader marks and pane Undo are `primary`, F9 is `toggle`, F12 is `nav`, and Escape is `close`. A
+shortcut is one guarded tick: auto-repeat is ignored, a second dispatch inside 40 ms is dropped, and
+`SoundClicks` no longer treats a modified Enter/Space as native button activation, so a focused
+control and its chord cannot sound twice. The palette's arrows and Enter, both dialog Escapes, the
+feature walkthrough's arrows/Escape, and the learner guide's arrows now use the same path. The Python
+runner editor's header button is labelled **Settings** at every width and still opens the in-place
+editor settings panel; the phone check kept it visible with the panel open and no horizontal overflow.
+The built-bundle reader check now compares the distance into the anchored heading instead of the raw
+scroll offset, so a reflow above a correctly restored heading cannot turn the check red.
+
 ## [2026-11-19] — A slider now redraws only the lines that read it
 
 The graph's dependency graph drives the actual slider path: `GraphingPane` diffs the parameter

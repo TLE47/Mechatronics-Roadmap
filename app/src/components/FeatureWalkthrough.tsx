@@ -25,6 +25,7 @@ import {
   type WalkthroughState,
 } from '../featureWalkthrough';
 import { playCue, playUi } from '../audio/facade';
+import { playShortcut } from '../audio/shortcutSound';
 import type { TabId } from '../types';
 
 const CARD_GAP = 14;
@@ -237,7 +238,6 @@ export function FeatureWalkthrough({
       return;
     }
     const next = nextWalkthroughState(current);
-    playUi('nav');
     writeWalkthroughState(next);
     stateRef.current = next;
     if (next.status === 'completed') {
@@ -250,7 +250,6 @@ export function FeatureWalkthrough({
 
   const back = () => {
     if (state.index === 0) return;
-    playUi('nav');
     commit(previousWalkthroughState(stateRef.current));
   };
 
@@ -387,16 +386,19 @@ export function FeatureWalkthrough({
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape') {
+      playUi('close');
       event.preventDefault();
       close();
       return;
     }
     if (event.key === 'ArrowRight') {
+      playShortcut('nav', event);
       event.preventDefault();
       advance();
       return;
     }
     if (event.key === 'ArrowLeft') {
+      playShortcut('nav', event);
       event.preventDefault();
       back();
       return;

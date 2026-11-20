@@ -9,6 +9,7 @@ import {
   type EditorPanes,
   type EditorView,
 } from '../../../editorPanes';
+import { playShortcut } from '../../../audio/shortcutSound';
 
 /** Pixels a press must travel before it becomes a drag rather than a click on the grip. */
 const DRAG_THRESHOLD = 4;
@@ -213,6 +214,7 @@ function PaneUndo({ onPanes }: { onPanes: (next: EditorPanes) => void }) {
       if (event.code !== 'KeyZ') return;
       const target = event.target instanceof Element ? event.target : null;
       if (target?.closest('[role="dialog"]')) return;
+      playShortcut('primary', event);
       event.preventDefault();
       current.current(entry.snapshot);
       clearClose();

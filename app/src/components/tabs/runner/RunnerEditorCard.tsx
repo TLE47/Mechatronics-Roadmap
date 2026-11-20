@@ -433,8 +433,8 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
                   data-testid="btn-editor-settings"
                   aria-expanded={editorSettingsOpen}
                   aria-controls="editor-settings-panel"
-                  aria-label="Python editor settings"
-                  title="Python editor settings — put the hover cards away, and keep the rest of the editor"
+                  aria-label="Python runner editor settings"
+                  title="Python runner editor settings — put the hover cards away, and keep the rest of the editor"
                   onClick={() => setEditorSettingsOpen((open) => !open)}
                   className={`flex h-7 cursor-pointer items-center gap-1.5 rounded-lg border px-2 font-mono text-[12px] transition-colors ${
                     editorSettingsOpen
@@ -443,7 +443,7 @@ export function RunnerEditorCard(props: RunnerEditorCardProps) {
                   }`}
                 >
                   <Settings2 className="h-3.5 w-3.5" aria-hidden="true" />
-                  <span className="hidden sm:inline">Editor</span>
+                  <span>Settings</span>
                 </button>
                 {allowedViews.length > 0 && (
                   <>

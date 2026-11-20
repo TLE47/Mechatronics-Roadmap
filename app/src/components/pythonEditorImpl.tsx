@@ -59,6 +59,7 @@ import type { InlineValueAt } from '../inlineValues';
 import { pythonCompletionSource } from '../editor/completions';
 import { analysisHover, analysisSignature } from '../editor/analysisTips';
 import { errorLineExtension, showErrorLine } from '../editor/errorLine';
+import { playShortcut } from '../audio/shortcutSound';
 import { symbolAt } from '../symbolIndex';
 import { markPaintReady } from '../paintTiming';
 import type { PythonEditorHandle, PythonEditorProps } from './PythonEditor';
@@ -454,6 +455,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
                     key: 'F9',
                     run: (view: EditorView) => {
                       const line = view.state.doc.lineAt(view.state.selection.main.head).number;
+                      playShortcut('toggle');
                       view.dom.dispatchEvent(
                         new CustomEvent(BREAKPOINT_TOGGLE_EVENT, { detail: { line }, bubbles: true })
                       );
@@ -469,6 +471,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
               run: (view) => {
                 const at = symbolAt(view.state.doc.toString(), view.state.selection.main.head);
                 if (!at || at.attribute || !onDefinitionRef.current) return false;
+                playShortcut('nav');
                 onDefinitionRef.current(at.name);
                 return true;
               },
