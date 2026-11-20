@@ -755,7 +755,7 @@ export const LearnerGuide: React.FC<{
                       }`}
                     >
                       {done ? <Check className="h-2.5 w-2.5" aria-hidden="true" /> : guideStepNumber(index)}
-                    </span>
+                    </span>{' '}
                     <span className={`truncate text-[11.5px] ${current ? 'font-semibold' : ''}`}>
                       {entry.short}
                     </span>

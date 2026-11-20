@@ -109,10 +109,15 @@ function placeCard(
     };
   }
 
-  const fitsBelow = target.bottom + CARD_GAP + CARD_HEIGHT_ESTIMATE < viewport.height - 12;
-  let top = fitsBelow
+  // The room on each side is measured against the target itself, and the card is never allowed to
+  // grow back over it: a card that covers the outlined control takes the very click it asks for.
+  const roomBelow = Math.max(0, viewport.height - 12 - (target.bottom + CARD_GAP));
+  const roomAbove = Math.max(0, target.top - CARD_GAP - 12);
+  const fitsBelow = roomBelow >= CARD_HEIGHT_ESTIMATE || roomBelow >= roomAbove;
+  const top = fitsBelow
     ? target.bottom + CARD_GAP
     : Math.max(12, target.top - CARD_HEIGHT_ESTIMATE - CARD_GAP);
+  const room = fitsBelow ? roomBelow : roomAbove;
 
   // A narrow, tall target — the rail's fold button, a colour dot — is better read beside than
   // above or below, where the card would cover the thing it is describing.
@@ -133,7 +138,7 @@ function placeCard(
     Math.max(12, target.left + target.width / 2 - width / 2),
     viewport.width - width - 12
   );
-  return { left, top, width, maxHeight: Math.max(160, viewport.height - top - 12) };
+  return { left, top, width, maxHeight: Math.max(140, Math.min(room, viewport.height - 24)) };
 }
 
 /**
