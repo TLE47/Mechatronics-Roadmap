@@ -58,11 +58,13 @@ Two consequences are stated rather than hidden:
 
 1. **The count comes from the registry.** `labsSwitchLabel(count)` in
    [`app/src/tabNames.ts`](../app/src/tabNames.ts) is called with `WORKBENCH_TABS.length`; the switch
-   renders *All 12 Engineering Labs (Technical Names)*. `scripts/check_tab_names.py` now fails if
+   renders *All 12 Engineering Labs (Technical Names)* at this slice — *All 16* today, and never a typed
+   number. `scripts/check_tab_names.py` now fails if
    App.tsx stops passing the registry count or hard-codes `All <number> Engineering Labs` again, and
    `npm run test:smoke` reads the rendered label in both views.
-2. **The release identity is settled at 2.0.0.** `package.json` is the one place it lives; the footer
-   prints `v2.0.0` through [`app/src/appVersion.ts`](../app/src/appVersion.ts), so a bug report can name
+2. **The release identity is settled in `package.json`** — 2.0.0 at this slice, 4.14.1 today. It is
+   the one place it lives; the footer prints `v` and that number through
+   [`app/src/appVersion.ts`](../app/src/appVersion.ts), so a bug report can name
    the build it came from. `test:smoke` pins the footer against `package.json` and the version against
    semver — a second literal anywhere fails the suite.
 
@@ -165,7 +167,7 @@ the passed card, and everything else is one press away behind More:
 | Paused at a breakpoint | Continue, Step, Stop (in the park bar) |
 | Failed run | Explain this error, the check's own hint rung |
 | Passed | Next lesson, review card if a comment exists |
-| Under More | Format with Black, History, Diff, Load Solution, Reset Starter, Reset Runtime, Breakpoints, Share, Pair, Vim keys, Watch, Self-Mark |
+| Under More | Format with Black, History, Diff, Load Solution, Reset Starter, Reset Runtime, Breakpoints, Trace, Share, Pair, Vim keys, Watch, Self-Mark |
 
 More is a disclosure, not a menu: `aria-expanded` / `aria-controls`, a `role="group"` panel, and
 `Escape` closes it and puts focus back on the button. Every folded control keeps its testid and its
@@ -192,7 +194,7 @@ visibility moved.
 Acceptance, all run in this slice (green):
 
 ```bash
-npm run check:labels    # PASS: 8 controls at rest, 12 behind More, lesson text 17 px at 1280x800
+npm run check:labels    # PASS: 8 controls at rest, 13 behind More, lesson text 17 px at 1280x800
 npm run test:e2e        # PASS: every moved action is still reached through More
 npm run test:e2e:pages  # PASS on the built bundle, chromium and firefox
 npm run test:runtime    # PASS: Breakpoints and Format with Black, now via More
@@ -228,8 +230,9 @@ become a second variable.
 
 The numbers live in [`docs/PERF.md`](PERF.md), one row per date, machine and profile, written by
 `--record`; a number without the machine and the date is not a measurement. What is **gated** is the
-ceilings in [`docs/perf-budget.json`](perf-budget.json), at roughly two to three times the recorded
-value: a doubling fails, a busy afternoon does not. A moment the run could not measure, or one the
+ceilings in [`docs/perf-budget.json`](perf-budget.json), at roughly three to four times the recorded
+value and looser where the number is small enough for noise to dominate: a regression that matters
+fails, a busy afternoon does not. A moment the run could not measure, or one the
 budget does not name, is a failure too — otherwise the gate would pass by omission.
 
 **Why it is not a CI step.** CI's runner is a shared virtual machine, and the six moments would be a
@@ -268,7 +271,7 @@ written by one command, and every claim is refused without its evidence.
 | Finds the first lesson, unaided | `reached_lesson_1`, `minutes_to_lesson_1` | `--debrief` | yes with no minute; a minute past the sitting; `no` beside a minute |
 | Where they stopped | `stops[]` (minute, page, tried, kind) | `--stop` as it happens | a stop with no minute, page or kind |
 | Edits and runs | `runs`, `active_minutes`, `elapsed_minutes` | `--finish`, from the export | numbers that drifted from the export's sittings |
-| Understands one failure | `understood_error` (+ `--error-quote`) | `--debrief` | the export contradicts the help type |
+| Understands one failure | `understood_error` (+ `--error-quote`) | `--debrief` | an answer outside yes/partly/no; a quote with no answer |
 | Continues without guidance | `knew_next`, `help`, `person_hints` | `--debrief`, `--finish` | `person` help with no count; a hint the log does not record |
 | Finished | `finished`, `run_verify`, `finished_minutes` | `--debrief` | finished without a verified export and the graded loop |
 | The finding leaves the room | — | `--issue` | any of the above, since the body is withheld |
@@ -293,8 +296,11 @@ because the walk typed into an editor that Study opens folded, so it timed a bod
 in. `scripts/perf_walk.mjs` now presses **Expand** where a desktop learner does (the phone already
 tapped Code), those two moments include the press, and [`docs/PERF.md`](PERF.md) says so; the walk
 passes on both profiles and `--record` wrote its two rows. The counts printed in this page are the
-slice's own and have grown since (97 pages, 42 reader checks, 33 generator tests); the properties they
-prove are unchanged. What is still owed is §5 and only §5: three non-author beginners.
+slice's own and have grown since (97 pages, 42 reader checks, 25 layout checks, 33 generator tests,
+16 tabs — the switch reads *All 16* — version 4.14.1, 13 folded controls, reader gzip 745.3 kB of
+760 kB); the properties they prove are unchanged. Re-checked at `d297c76`, the head this audit
+started from: same commands, same result, and the counts in this sentence are that tree's. What is still
+owed is §5 and only §5: three non-author beginners.
 
 ## Order, and what this plan refuses
 

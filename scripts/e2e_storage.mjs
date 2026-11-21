@@ -24,7 +24,7 @@ import { chromium } from 'playwright-core';
 import { bulkKeys, readBulk, waitForBulk } from './bulk_store_page.mjs';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
 import { seedTourSeen } from './tour_seed.mjs';
-import { getEditorCode, waitForEditor } from './editor-code.mjs';
+import { getEditorCode, setEditorCode, waitForEditor } from './editor-code.mjs';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 
 const LESSON = PYTHON_LESSONS[0];
@@ -203,6 +203,47 @@ async function main() {
       'a reload must read the note back from IndexedDB, not from a bucket the move emptied'
     );
     console.log('  ok the reload reads the note back from the database');
+
+    // ---- A browser that refuses the store says so, instead of losing the next draft silently ----
+    // Both doors `bulkStorage.ts` tries are shut: opening the database throws and the bucket refuses
+    // every write but the harness's own two records, which is a private-mode browser with a full
+    // disk. The draft still has to reach the screen, and the line under the editor has to say that a
+    // reload will not bring it back.
+    const blocked = await browser.newContext();
+    await blocked.addInitScript(() => {
+      // Only the draft store is shut: the database refuses to open, and the bucket refuses the key
+      // the fallback would use. Blocking every key would take the palette and the tour with it, and
+      // this check is about what the learner is told when their code cannot be stored.
+      const realSet = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (key, value) {
+        if (String(key).startsWith('mechalab_drafts')) {
+          throw new DOMException('storage is full', 'QuotaExceededError');
+        }
+        return realSet.call(this, key, value);
+      };
+      IDBFactory.prototype.open = function () {
+        throw new Error('storage is blocked');
+      };
+    });
+    await seedTourSeen(blocked);
+    const refused = await blocked.newPage();
+    await refused.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+    await openLesson(refused);
+    // Study opens the editor body folded; the bridge is mounted either way, and a learner's first act
+    // is the press that unfolds it.
+    const foldedRefused = refused.locator('[data-testid="btn-toggle-editor"][aria-expanded="false"]');
+    if (await foldedRefused.count()) await foldedRefused.first().click();
+    await waitForEditor(refused);
+    await setEditorCode(refused, `${DRAFT}# never stored\n`);
+    const draftStatus = refused.getByTestId('draft-status');
+    await draftStatus.waitFor({ state: 'visible', timeout: 15000 });
+    assert.match(
+      (await draftStatus.textContent()) ?? '',
+      /Not saved — storage is blocked or full/,
+      'a draft the browser refused must say so under the editor, not wait for the reload to lose it'
+    );
+    console.log('  ok a browser that refuses the store shows Not saved under the editor');
+    await blocked.close();
 
     assert.deepEqual(pageErrors, [], `the page must not throw while the store moves: ${pageErrors[0] ?? ''}`);
     console.log('[PASS] Storage: a pre-IndexedDB bucket migrates whole, the screen shows it, and new work stays in the database');

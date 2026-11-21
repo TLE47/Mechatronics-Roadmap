@@ -2,7 +2,7 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
-**Release identity: `4.14.0`.** `package.json` is the one place the number lives; the workbench's footer
+**Release identity: `4.14.1`.** `package.json` is the one place the number lives; the workbench's footer
 prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
 `npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
 with; they are a record, not a second version.
@@ -15,6 +15,22 @@ flowchart LR
 ```
 
 ---
+
+## [2026-11-21] — The editor says when a draft did not land
+
+`saveDraft` has returned `false` since the retention slice, so the study panel, the reader and a
+restore could each say *Not saved — storage is blocked or full* — but the runner ignored its own
+answer. A learner whose browser refused the write kept typing into a draft a reload would not bring
+back, and nothing on screen said so. `TabPyodideRunner` now carries that answer: the debounced write
+and the write before a lesson switch both set a status line under the editor with the same sentence,
+cleared the next time a write lands. `scripts/e2e_storage.mjs` shuts both of `bulkStorage.ts`'s doors
+(the database refuses to open, the bucket refuses the draft key), types, and asserts the line
+appears, so the promise is a browser check rather than a comment.
+
+`docs/PLAN-2.1a.md` was re-audited against `d297c76`: the §5 table named a refusal that belongs to
+`help` rather than `understood_error`, §3's folded list was missing Trace, and the remaining numbers
+were the slice's own (12 tabs, 2.0.0, 12 folded controls). The note at the end of §5 now names each
+number that has moved, and the current counts.
 
 ## [2026-11-21] — Reader Mode for permission-cleared sources, links for everything else
 
